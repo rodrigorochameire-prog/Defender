@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
 import { Badge } from "@/components/ui/badge";
@@ -101,6 +102,8 @@ import { BancoObjecoes } from "@/components/juri/cockpit/banco-objecoes";
 import { HistoricoPerguntas } from "@/components/juri/cockpit/historico-perguntas";
 import { TimerSustentacao } from "@/components/juri/cockpit/timer-sustentacao";
 import { AvaliacaoInline, AvaliacaoLiveFeed } from "@/components/juri/cockpit/avaliacao-inline";
+import { EncerrarSessaoButton } from "@/components/juri/cockpit/encerrar-sessao";
+import { BriefingJuradoButton } from "@/components/juri/cockpit/briefing-jurado";
 
 // ============================================
 // CONFIGURAÇÃO DAS FASES
@@ -830,6 +833,18 @@ const STORAGE_KEYS = {
 // COMPONENTE PRINCIPAL
 // ============================================
 export default function PlenarioCockpitPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-2 border-emerald-500 rounded-full border-t-transparent" /></div>}>
+      <PlenarioCockpitContent />
+    </Suspense>
+  );
+}
+
+function PlenarioCockpitContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const sessaoJuriId = searchParams.get("sessaoId") ? parseInt(searchParams.get("sessaoId")!) : null;
+
   // Função helper para ler localStorage com segurança (SSR-safe)
   const readStorage = useCallback((key: string, fallback: string): string => {
     if (typeof window === "undefined") return fallback;
@@ -1400,6 +1415,15 @@ export default function PlenarioCockpitPage() {
               </div>
 
               <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700" />
+
+              {/* Encerrar Sessão */}
+              <EncerrarSessaoButton
+                sessaoJuriId={sessaoJuriId}
+                isDarkMode={isDarkMode}
+                conselhoSentenca={conselhoSentenca}
+                anotacoes={anotacoes}
+                onSucessoEncerramento={() => router.push("/admin/juri")}
+              />
 
               <Button
                 variant="ghost"
@@ -1973,13 +1997,20 @@ export default function PlenarioCockpitPage() {
                                       {jurado.profissao} • {jurado.idade} anos
                                     </p>
                                   </div>
-                                  {/* Badge de Tendência Elegante */}
-                                  <div className={cn(
-                                    "px-2.5 py-1 rounded-lg text-[10px] font-medium flex items-center gap-1.5",
-                                    tendenciaInfo.bg, tendenciaInfo.color
-                                  )}>
-                                    <span className="tabular-nums font-bold">{jurado.taxaAbsolvicao}%</span>
-                                    <span className="opacity-70">{tendenciaInfo.label}</span>
+                                  {/* Badge de Tendência + Briefing */}
+                                  <div className="flex items-center gap-1">
+                                    <BriefingJuradoButton
+                                      juradoId={jurado.id}
+                                      juradoNome={jurado.nome}
+                                      isDarkMode={isDarkMode}
+                                    />
+                                    <div className={cn(
+                                      "px-2.5 py-1 rounded-lg text-[10px] font-medium flex items-center gap-1.5",
+                                      tendenciaInfo.bg, tendenciaInfo.color
+                                    )}>
+                                      <span className="tabular-nums font-bold">{jurado.taxaAbsolvicao}%</span>
+                                      <span className="opacity-70">{tendenciaInfo.label}</span>
+                                    </div>
                                   </div>
                                 </div>
                                 

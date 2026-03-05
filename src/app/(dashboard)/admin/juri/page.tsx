@@ -296,8 +296,8 @@ export default function JuriPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             { id: "cockpit", label: "Plenário Live", desc: "Cockpit do julgamento", href: "/admin/juri/cockpit", icon: Zap, premium: true },
+            { id: "inteligencia", label: "Inteligência", desc: "Padrões cruzados", href: "/admin/juri/inteligencia", icon: Brain, premium: true },
             { id: "jurados", label: "Banco de Jurados", desc: "Perfis psicológicos", href: "/admin/juri/jurados", icon: Users },
-            { id: "investigacao", label: "Investigação", desc: "OSINT e diligências", href: "/admin/juri/investigacao", icon: FileSearch },
             { id: "teses", label: "Teses do Júri", desc: "Narrativa e argumentos", href: "/admin/juri/teses", icon: Target },
           ].map((tool) => {
             const Icon = tool.icon;

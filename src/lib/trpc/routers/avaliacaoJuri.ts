@@ -10,7 +10,7 @@ import {
   jurados,
   personagensJuri,
 } from "@/lib/db/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 // Schema de validação para jurado na avaliação
@@ -342,6 +342,299 @@ export const avaliacaoJuriRouter = router({
       }
     }),
 
+  // ==========================================
+  // ENCERRAR SESSÃO — Salva TUDO do cockpit → banco
+  // ==========================================
+  encerrarSessao: protectedProcedure
+    .input(
+      z.object({
+        sessaoJuriId: z.number(),
+        resultado: z.enum(["absolvicao", "condenacao", "desclassificacao", "nulidade"]),
+        // Formulário de avaliação completo
+        avaliacao: z.object({
+          processoNumero: z.string().optional(),
+          nomeReu: z.string().optional(),
+          dataJulgamento: z.string(),
+          observador: z.string(),
+          horarioInicio: z.string().optional(),
+          duracaoEstimada: z.string().optional(),
+          descricaoAmbiente: z.string().optional(),
+          disposicaoFisica: z.string().optional(),
+          climaEmocionalInicial: z.string().optional(),
+          presencaPublicoMidia: z.string().optional(),
+          // Interrogatório
+          interrogatorio: z.object({
+            reacaoGeral: z.string().optional(),
+            juradosAcreditaram: z.string().optional(),
+            juradosCeticos: z.string().optional(),
+            momentosImpacto: z.string().optional(),
+            contradicoes: z.string().optional(),
+            impressaoCredibilidade: z.string().optional(),
+            nivelCredibilidade: z.number().nullable().optional(),
+          }).optional(),
+          // MP
+          mpEstrategiaGeral: z.string().optional(),
+          mpImpactoGeral: z.number().nullable().optional(),
+          mpInclinacaoCondenar: z.string().optional(),
+          // Defesa
+          defesaEstrategiaGeral: z.string().optional(),
+          defesaImpactoGeral: z.number().nullable().optional(),
+          defesaDuvidaRazoavel: z.string().optional(),
+          // Réplica
+          replica: z.object({
+            refutacoes: z.string().optional(),
+            argumentosNovos: z.string().optional(),
+            reacaoGeral: z.string().optional(),
+            impacto: z.number().nullable().optional(),
+            mudancaOpiniao: z.string().optional(),
+          }).optional(),
+          // Tréplica
+          treplica: z.object({
+            refutacoes: z.string().optional(),
+            apeloFinal: z.string().optional(),
+            reacaoGeral: z.string().optional(),
+            momentoImpactante: z.string().optional(),
+            impacto: z.number().nullable().optional(),
+            reconquistaIndecisos: z.string().optional(),
+          }).optional(),
+          // Análise Final
+          analise: z.object({
+            ladoMaisPersuasivo: z.string().optional(),
+            qualReacoesIndicam: z.string().optional(),
+            impactoAcusacao: z.number().nullable().optional(),
+            impactoDefesa: z.number().nullable().optional(),
+            previsaoVoto: z.array(z.object({
+              tendencia: z.string(),
+              confianca: z.string(),
+              justificativa: z.string(),
+            })).optional(),
+            impressaoLeiga: z.string().optional(),
+            argumentoMaisImpactante: z.string().optional(),
+            pontosNaoExplorados: z.string().optional(),
+            climaGeral: z.string().optional(),
+            momentosVirada: z.string().optional(),
+            surpresas: z.string().optional(),
+            observacoesAdicionais: z.string().optional(),
+          }).optional(),
+        }),
+        // Jurados observados
+        jurados: z.array(z.object({
+          juradoId: z.number().optional(),
+          posicao: z.number(),
+          nome: z.string().optional(),
+          profissao: z.string().optional(),
+          idadeAproximada: z.string().optional(),
+          sexo: z.string().optional(),
+          aparenciaPrimeiraImpressao: z.string().optional(),
+          linguagemCorporalInicial: z.string().optional(),
+          tendenciaVoto: z.string().optional(),
+          confianca: z.string().optional(),
+          justificativa: z.string().optional(),
+        })).optional(),
+        // Testemunhas observadas
+        testemunhas: z.array(z.object({
+          nome: z.string(),
+          ordem: z.number(),
+          resumoDepoimento: z.string().optional(),
+          reacaoJurados: z.string().optional(),
+          expressoesFaciaisLinguagem: z.string().optional(),
+          credibilidade: z.number().nullable().optional(),
+          observacoesComplementares: z.string().optional(),
+        })).optional(),
+        // Argumentos MP
+        argumentosMp: z.array(z.object({
+          ordem: z.number(),
+          descricao: z.string().optional(),
+          reacaoJurados: z.string().optional(),
+          nivelPersuasao: z.number().nullable().optional(),
+        })).optional(),
+        // Argumentos Defesa
+        argumentosDefesa: z.array(z.object({
+          ordem: z.number(),
+          descricao: z.string().optional(),
+          reacaoJurados: z.string().optional(),
+          nivelPersuasao: z.number().nullable().optional(),
+        })).optional(),
+        // Anotações livres do cockpit
+        anotacoes: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { sessaoJuriId, resultado, avaliacao: av } = input;
+
+      // Verificar se a sessão existe
+      const sessao = await db.query.sessoesJuri.findFirst({
+        where: eq(sessoesJuri.id, sessaoJuriId),
+      });
+      if (!sessao) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Sessão não encontrada" });
+      }
+
+      // 1. Criar a avaliação principal
+      const [avaliacao] = await db
+        .insert(avaliacoesJuri)
+        .values({
+          sessaoJuriId,
+          processoId: sessao.processoId,
+          observador: av.observador || "Estagiária",
+          dataJulgamento: av.dataJulgamento || new Date().toISOString().split("T")[0],
+          horarioInicio: av.horarioInicio || null,
+          duracaoEstimada: av.duracaoEstimada || null,
+          descricaoAmbiente: av.descricaoAmbiente || null,
+          disposicaoFisica: av.disposicaoFisica || null,
+          climaEmocionalInicial: av.climaEmocionalInicial || null,
+          presencaPublicoMidia: av.presencaPublicoMidia || null,
+          // Interrogatório
+          interrogatorioReacaoGeral: av.interrogatorio?.reacaoGeral || null,
+          interrogatorioJuradosAcreditaram: av.interrogatorio?.juradosAcreditaram || null,
+          interrogatorioJuradosCeticos: av.interrogatorio?.juradosCeticos || null,
+          interrogatorioMomentosImpacto: av.interrogatorio?.momentosImpacto || null,
+          interrogatorioContradicoes: av.interrogatorio?.contradicoes || null,
+          interrogatorioImpressaoCredibilidade: av.interrogatorio?.impressaoCredibilidade || null,
+          interrogatorioNivelCredibilidade: av.interrogatorio?.nivelCredibilidade ?? null,
+          // MP
+          mpEstrategiaGeral: av.mpEstrategiaGeral || null,
+          mpImpactoGeral: av.mpImpactoGeral ?? null,
+          mpInclinacaoCondenar: av.mpInclinacaoCondenar || null,
+          // Defesa
+          defesaEstrategiaGeral: av.defesaEstrategiaGeral || null,
+          defesaImpactoGeral: av.defesaImpactoGeral ?? null,
+          defesaDuvidaRazoavel: av.defesaDuvidaRazoavel || null,
+          // Réplica
+          replicaRefutacoes: av.replica?.refutacoes || null,
+          replicaArgumentosNovos: av.replica?.argumentosNovos || null,
+          replicaReacaoGeral: av.replica?.reacaoGeral || null,
+          replicaImpacto: av.replica?.impacto ?? null,
+          replicaMudancaOpiniao: av.replica?.mudancaOpiniao || null,
+          // Tréplica
+          treplicaRefutacoes: av.treplica?.refutacoes || null,
+          treplicaApeloFinal: av.treplica?.apeloFinal || null,
+          treplicaReacaoGeral: av.treplica?.reacaoGeral || null,
+          treplicaMomentoImpactante: av.treplica?.momentoImpactante || null,
+          treplicaImpacto: av.treplica?.impacto ?? null,
+          treplicaReconquistaIndecisos: av.treplica?.reconquistaIndecisos || null,
+          // Análise Final
+          ladoMaisPersuasivo: av.analise?.ladoMaisPersuasivo || null,
+          impactoAcusacao: av.analise?.impactoAcusacao ?? null,
+          impactoDefesa: av.analise?.impactoDefesa ?? null,
+          impressaoFinalLeiga: av.analise?.impressaoLeiga || null,
+          argumentoMaisImpactante: av.analise?.argumentoMaisImpactante || null,
+          pontosNaoExplorados: av.analise?.pontosNaoExplorados || null,
+          climaGeralJulgamento: av.analise?.climaGeral || null,
+          momentosVirada: av.analise?.momentosVirada || null,
+          surpresasJulgamento: av.analise?.surpresas || null,
+          observacoesAdicionais: av.analise?.observacoesAdicionais || null,
+          // Status
+          status: "concluida",
+          criadoPorId: ctx.user.id,
+        })
+        .returning();
+
+      // 2. Salvar jurados da avaliação
+      const juradosInput = input.jurados || [];
+      if (juradosInput.length > 0) {
+        const juradosData = juradosInput.map((j, i) => ({
+          avaliacaoJuriId: avaliacao.id,
+          juradoId: j.juradoId || null,
+          posicao: j.posicao || i + 1,
+          nome: j.nome || null,
+          profissao: j.profissao || null,
+          idadeAproximada: j.idadeAproximada ? parseInt(j.idadeAproximada) || null : null,
+          sexo: j.sexo || null,
+          aparenciaPrimeiraImpressao: j.aparenciaPrimeiraImpressao || null,
+          linguagemCorporalInicial: j.linguagemCorporalInicial || null,
+          tendenciaVoto: (j.tendenciaVoto === "CONDENAR" || j.tendenciaVoto === "ABSOLVER" || j.tendenciaVoto === "INDECISO") ? j.tendenciaVoto as "CONDENAR" | "ABSOLVER" | "INDECISO" : null,
+          nivelConfianca: (j.confianca === "BAIXA" || j.confianca === "MEDIA" || j.confianca === "ALTA") ? j.confianca as "BAIXA" | "MEDIA" | "ALTA" : null,
+          justificativaTendencia: j.justificativa || null,
+        }));
+        await db.insert(avaliacaoJurados).values(juradosData);
+      }
+
+      // 3. Salvar testemunhas
+      const testemunhasInput = (input.testemunhas || []).filter(t => t.nome?.trim());
+      if (testemunhasInput.length > 0) {
+        const testemunhasData = testemunhasInput.map((t) => ({
+          avaliacaoJuriId: avaliacao.id,
+          ordem: t.ordem,
+          nome: t.nome,
+          resumoDepoimento: t.resumoDepoimento || null,
+          reacaoJurados: t.reacaoJurados || null,
+          expressoesFaciaisLinguagem: t.expressoesFaciaisLinguagem || null,
+          credibilidade: t.credibilidade ?? null,
+          observacoesComplementares: t.observacoesComplementares || null,
+        }));
+        await db.insert(avaliacaoTestemunhasJuri).values(testemunhasData);
+      }
+
+      // 4. Salvar argumentos MP
+      const argsMp = (input.argumentosMp || []).filter(a => a.descricao?.trim());
+      if (argsMp.length > 0) {
+        await db.insert(argumentosSustentacao).values(
+          argsMp.map(a => ({
+            avaliacaoJuriId: avaliacao.id,
+            tipo: "mp" as const,
+            ordem: a.ordem,
+            descricaoArgumento: a.descricao || null,
+            reacaoJurados: a.reacaoJurados || null,
+            nivelPersuasao: a.nivelPersuasao ?? null,
+          }))
+        );
+      }
+
+      // 5. Salvar argumentos Defesa
+      const argsDefesa = (input.argumentosDefesa || []).filter(a => a.descricao?.trim());
+      if (argsDefesa.length > 0) {
+        await db.insert(argumentosSustentacao).values(
+          argsDefesa.map(a => ({
+            avaliacaoJuriId: avaliacao.id,
+            tipo: "defesa" as const,
+            ordem: a.ordem,
+            descricaoArgumento: a.descricao || null,
+            reacaoJurados: a.reacaoJurados || null,
+            nivelPersuasao: a.nivelPersuasao ?? null,
+          }))
+        );
+      }
+
+      // 6. Atualizar sessão como "realizada" com resultado
+      await db
+        .update(sessoesJuri)
+        .set({
+          status: "realizada",
+          resultado,
+          observacoes: input.anotacoes || null,
+          updatedAt: new Date(),
+        })
+        .where(eq(sessoesJuri.id, sessaoJuriId));
+
+      // 7. Atualizar histórico de votos dos jurados no banco mestre
+      const juradosComId = juradosInput.filter(j => j.juradoId);
+      for (const j of juradosComId) {
+        if (!j.juradoId) continue;
+
+        const votoField = resultado === "absolvicao"
+          ? "votos_absolvicao"
+          : resultado === "condenacao"
+          ? "votos_condenacao"
+          : "votos_desclassificacao";
+
+        await db.execute(sql`
+          UPDATE jurados SET
+            total_sessoes = COALESCE(total_sessoes, 0) + 1,
+            ${sql.raw(votoField)} = COALESCE(${sql.raw(votoField)}, 0) + 1,
+            updated_at = NOW()
+          WHERE id = ${j.juradoId}
+        `);
+      }
+
+      return {
+        avaliacaoId: avaliacao.id,
+        sessaoJuriId,
+        resultado,
+        juradosAtualizados: juradosComId.length,
+      };
+    }),
+
   // Finalizar avaliação
   finalizar: protectedProcedure
     .input(z.object({ id: z.number() }))
@@ -354,9 +647,6 @@ export const avaliacaoJuriRouter = router({
         })
         .where(eq(avaliacoesJuri.id, input.id))
         .returning();
-
-      // TODO: Atualizar histórico de jurados e personagens do júri
-      // com base nos dados coletados
 
       return atualizado;
     }),
@@ -460,5 +750,183 @@ export const avaliacaoJuriRouter = router({
         .returning();
 
       return atualizado;
+    }),
+
+  // ==========================================
+  // BRIEFING PRÉ-JÚRI — Consulta inteligente
+  // ==========================================
+  briefingJurado: protectedProcedure
+    .input(z.object({ juradoId: z.number() }))
+    .query(async ({ input }) => {
+      const [jurado] = await db
+        .select()
+        .from(jurados)
+        .where(eq(jurados.id, input.juradoId));
+
+      if (!jurado) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Jurado não encontrado" });
+      }
+
+      // Buscar avaliações onde esse jurado participou
+      const avaliacoesJurado = await db.query.avaliacaoJurados.findMany({
+        where: eq(avaliacaoJurados.juradoId, input.juradoId),
+        with: {
+          avaliacaoJuri: {
+            with: {
+              sessaoJuri: true,
+            },
+          },
+        },
+        orderBy: desc(avaliacaoJurados.createdAt),
+      });
+
+      const participacoes = avaliacoesJurado.map(aj => ({
+        data: aj.avaliacaoJuri?.dataJulgamento,
+        resultado: aj.avaliacaoJuri?.sessaoJuri?.resultado,
+        tendenciaRegistrada: aj.tendenciaVoto,
+        confianca: aj.nivelConfianca,
+        aparencia: aj.aparenciaPrimeiraImpressao,
+        linguagemCorporal: aj.linguagemCorporalInicial,
+        anotacoesGerais: aj.anotacoesGerais,
+      }));
+
+      const totalSessoes = jurado.totalSessoes || 0;
+      const taxaAbsolvicao = totalSessoes > 0
+        ? Math.round(((jurado.votosAbsolvicao || 0) / totalSessoes) * 100)
+        : 50;
+
+      return {
+        jurado: {
+          id: jurado.id,
+          nome: jurado.nome,
+          profissao: jurado.profissao,
+          idade: jurado.idade,
+          bairro: jurado.bairro,
+          genero: jurado.genero,
+          perfilPsicologico: jurado.perfilPsicologico,
+          perfilTendencia: jurado.perfilTendencia,
+          observacoes: jurado.observacoes,
+        },
+        stats: {
+          totalSessoes,
+          votosAbsolvicao: jurado.votosAbsolvicao || 0,
+          votosCondenacao: jurado.votosCondenacao || 0,
+          votosDesclassificacao: jurado.votosDesclassificacao || 0,
+          taxaAbsolvicao,
+        },
+        participacoes,
+      };
+    }),
+
+  // ==========================================
+  // INTELIGÊNCIA CRUZADA — Analytics
+  // ==========================================
+  analytics: protectedProcedure
+    .query(async () => {
+      // Buscar todas as avaliações concluídas com dados relacionados
+      const avaliacoes = await db.query.avaliacoesJuri.findMany({
+        where: eq(avaliacoesJuri.status, "concluida"),
+        with: {
+          sessaoJuri: true,
+          avaliacaoJurados: true,
+          avaliacaoTestemunhas: true,
+          argumentos: true,
+        },
+        orderBy: desc(avaliacoesJuri.createdAt),
+      });
+
+      // Buscar todas as sessões com resultado
+      const sessoes = await db.query.sessoesJuri.findMany({
+        where: eq(sessoesJuri.status, "realizada"),
+        orderBy: desc(sessoesJuri.dataSessao),
+      });
+
+      // Buscar todos os jurados com histórico
+      const todosJurados = await db
+        .select()
+        .from(jurados)
+        .where(eq(jurados.ativo, true));
+
+      const juradosComHistorico = todosJurados.filter(j => (j.totalSessoes || 0) > 0);
+
+      // Stats gerais
+      const totalSessoes = sessoes.length;
+      const absolvicoes = sessoes.filter(s => s.resultado === "absolvicao").length;
+      const condenacoes = sessoes.filter(s => s.resultado === "condenacao").length;
+      const desclassificacoes = sessoes.filter(s => s.resultado === "desclassificacao").length;
+
+      // Média de impacto por lado
+      const avaliacoesComImpacto = avaliacoes.filter(a => a.impactoAcusacao && a.impactoDefesa);
+      const mediaImpactoAcusacao = avaliacoesComImpacto.length > 0
+        ? Math.round(avaliacoesComImpacto.reduce((acc, a) => acc + (a.impactoAcusacao || 0), 0) / avaliacoesComImpacto.length * 10) / 10
+        : null;
+      const mediaImpactoDefesa = avaliacoesComImpacto.length > 0
+        ? Math.round(avaliacoesComImpacto.reduce((acc, a) => acc + (a.impactoDefesa || 0), 0) / avaliacoesComImpacto.length * 10) / 10
+        : null;
+
+      // Argumentos mais persuasivos (top por nível de persuasão)
+      const todosArgumentos = avaliacoes.flatMap(a => (a.argumentos || []).map(arg => ({
+        ...arg,
+        resultado: a.sessaoJuri?.resultado || null,
+      })));
+      const argsMpTop = todosArgumentos
+        .filter(a => a.tipo === "mp" && a.nivelPersuasao && a.nivelPersuasao >= 7)
+        .sort((a, b) => (b.nivelPersuasao || 0) - (a.nivelPersuasao || 0))
+        .slice(0, 5);
+      const argsDefesaTop = todosArgumentos
+        .filter(a => a.tipo === "defesa" && a.nivelPersuasao && a.nivelPersuasao >= 7)
+        .sort((a, b) => (b.nivelPersuasao || 0) - (a.nivelPersuasao || 0))
+        .slice(0, 5);
+
+      // Jurados mais previsíveis (muitas sessões com tendência clara)
+      const juradosMaisPrevistos = juradosComHistorico
+        .map(j => {
+          const total = j.totalSessoes || 1;
+          const taxaAbsolvicao = Math.round(((j.votosAbsolvicao || 0) / total) * 100);
+          const taxaCondenacao = Math.round(((j.votosCondenacao || 0) / total) * 100);
+          const tendenciaDominante = taxaAbsolvicao >= 70 ? "absolutorio" : taxaCondenacao >= 70 ? "condenatorio" : "neutro";
+          return {
+            id: j.id,
+            nome: j.nome,
+            profissao: j.profissao,
+            totalSessoes: j.totalSessoes || 0,
+            taxaAbsolvicao,
+            taxaCondenacao,
+            tendenciaDominante,
+          };
+        })
+        .filter(j => j.totalSessoes >= 2)
+        .sort((a, b) => b.totalSessoes - a.totalSessoes)
+        .slice(0, 10);
+
+      // Histórico de resultados (timeline)
+      const timeline = sessoes.slice(0, 20).map(s => ({
+        id: s.id,
+        data: s.dataSessao,
+        resultado: s.resultado,
+        assistido: s.assistidoNome,
+      }));
+
+      return {
+        resumo: {
+          totalSessoes,
+          absolvicoes,
+          condenacoes,
+          desclassificacoes,
+          taxaAbsolvicao: totalSessoes > 0 ? Math.round((absolvicoes / totalSessoes) * 100) : 0,
+          totalJurados: todosJurados.length,
+          juradosComHistorico: juradosComHistorico.length,
+        },
+        impacto: {
+          mediaAcusacao: mediaImpactoAcusacao,
+          mediaDefesa: mediaImpactoDefesa,
+        },
+        argumentosTop: {
+          mp: argsMpTop,
+          defesa: argsDefesaTop,
+        },
+        juradosMaisPrevistos,
+        timeline,
+      };
     }),
 });
