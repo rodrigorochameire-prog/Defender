@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { processos, assistidos, assistidosProcessos, audiencias, movimentacoes, demandas, calendarEvents, driveFiles, users } from "@/lib/db/schema";
+import { processos, assistidos, assistidosProcessos, audiencias, movimentacoes, demandas, calendarEvents, driveFiles, users, testemunhas } from "@/lib/db/schema";
 import { eq, ilike, or, desc, asc, sql, and, isNull, ne } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { TRPCError } from "@trpc/server";
@@ -685,5 +685,107 @@ export const processosRouter = router({
       
       // Retornar os 10 atos mais recentes/importantes
       return timeline.slice(0, 10);
+    }),
+
+  /**
+   * Status da instrução de um processo.
+   * Quem foi ouvido, quem falta, intimações, desistências, intercorrências por audiência.
+   */
+  instrucaoStatus: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      // 1. Get all testemunhas for this processo
+      const testemunhasList = await db
+        .select({
+          id: testemunhas.id,
+          nome: testemunhas.nome,
+          tipo: testemunhas.tipo,
+          status: testemunhas.status,
+          audienciaId: testemunhas.audienciaId,
+          resumoDepoimento: testemunhas.resumoDepoimento,
+          observacoes: testemunhas.observacoes,
+        })
+        .from(testemunhas)
+        .where(eq(testemunhas.processoId, input.processoId))
+        .orderBy(testemunhas.ordemInquiricao, testemunhas.nome);
+
+      // 2. Get all audiencias for this processo
+      const audienciasList = await db
+        .select({
+          id: audiencias.id,
+          dataAudiencia: audiencias.dataAudiencia,
+          tipo: audiencias.tipo,
+          status: audiencias.status,
+          resultado: audiencias.resultado,
+          observacoes: audiencias.observacoes,
+          local: audiencias.local,
+        })
+        .from(audiencias)
+        .where(eq(audiencias.processoId, input.processoId))
+        .orderBy(desc(audiencias.dataAudiencia));
+
+      // 3. Classify testemunhas
+      const ouvidas = testemunhasList.filter(t => t.status === "OUVIDA");
+      const pendentes = testemunhasList.filter(t => t.status === "ARROLADA" || t.status === "INTIMADA");
+      const desistidas = testemunhasList.filter(t => t.status === "DESISTIDA");
+      const naoLocalizadas = testemunhasList.filter(t => t.status === "NAO_LOCALIZADA");
+      const cartaPrecatoria = testemunhasList.filter(t => t.status === "CARTA_PRECATORIA");
+
+      // 4. Build intercorrências from audiencias
+      type Intercorrencia = {
+        audienciaId: number;
+        data: string;
+        tipo: string;
+        descricao: string;
+      };
+
+      const intercorrencias: Intercorrencia[] = [];
+      for (const aud of audienciasList) {
+        if (aud.status === "adiada") {
+          intercorrencias.push({
+            audienciaId: aud.id,
+            data: aud.dataAudiencia.toISOString(),
+            tipo: "adiamento",
+            descricao: aud.resultado || aud.observacoes || "Audiencia adiada",
+          });
+        } else if (aud.status === "cancelada") {
+          intercorrencias.push({
+            audienciaId: aud.id,
+            data: aud.dataAudiencia.toISOString(),
+            tipo: "cancelamento",
+            descricao: aud.resultado || aud.observacoes || "Audiencia cancelada",
+          });
+        }
+        // Check for intercorrências in observações (e.g., réu não apresentado, falta de transporte)
+        if (aud.observacoes && aud.status === "realizada") {
+          const lower = aud.observacoes.toLowerCase();
+          if (lower.includes("intercorrencia") || lower.includes("incidente") || lower.includes("nao apresentado") || lower.includes("não apresentado")) {
+            intercorrencias.push({
+              audienciaId: aud.id,
+              data: aud.dataAudiencia.toISOString(),
+              tipo: "intercorrencia",
+              descricao: aud.observacoes,
+            });
+          }
+        }
+      }
+
+      return {
+        testemunhas: {
+          total: testemunhasList.length,
+          ouvidas: ouvidas.map(t => ({ id: t.id, nome: t.nome, tipo: t.tipo })),
+          pendentes: pendentes.map(t => ({ id: t.id, nome: t.nome, tipo: t.tipo, status: t.status })),
+          desistidas: desistidas.map(t => ({ id: t.id, nome: t.nome, tipo: t.tipo })),
+          naoLocalizadas: naoLocalizadas.map(t => ({ id: t.id, nome: t.nome, tipo: t.tipo })),
+          cartaPrecatoria: cartaPrecatoria.map(t => ({ id: t.id, nome: t.nome, tipo: t.tipo })),
+        },
+        audiencias: {
+          total: audienciasList.length,
+          realizadas: audienciasList.filter(a => a.status === "realizada").length,
+          adiadas: audienciasList.filter(a => a.status === "adiada").length,
+          proxima: audienciasList.find(a => a.status === "agendada" && new Date(a.dataAudiencia) > new Date()),
+        },
+        intercorrencias,
+      };
     }),
 });

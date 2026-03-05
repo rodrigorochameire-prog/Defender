@@ -715,6 +715,169 @@ export const enrichmentRouter = router({
 
       return { results };
     }),
+
+  /**
+   * Global enrichment stats for dashboard
+   */
+  globalStats: adminProcedure.query(async () => {
+    // File counts by enrichment status
+    const fileStats = await db
+      .select({
+        total: sql<number>`count(*)::int`,
+        enriched: sql<number>`count(*) filter (where ${driveFiles.enrichmentStatus} = 'completed')::int`,
+        processing: sql<number>`count(*) filter (where ${driveFiles.enrichmentStatus} = 'processing')::int`,
+        failed: sql<number>`count(*) filter (where ${driveFiles.enrichmentStatus} = 'failed')::int`,
+        pending: sql<number>`count(*) filter (where ${driveFiles.enrichmentStatus} is null and ${driveFiles.isFolder} = false)::int`,
+      })
+      .from(driveFiles);
+
+    // Enrichment by atribuição
+    const byAtribuicao = await db
+      .select({
+        atribuicao: assistidos.atribuicaoPrimaria,
+        totalFiles: sql<number>`count(${driveFiles.id})::int`,
+        enriched: sql<number>`count(*) filter (where ${driveFiles.enrichmentStatus} = 'completed')::int`,
+      })
+      .from(driveFiles)
+      .innerJoin(assistidos, eq(driveFiles.driveFolderId, assistidos.driveFolderId))
+      .where(eq(driveFiles.isFolder, false))
+      .groupBy(assistidos.atribuicaoPrimaria);
+
+    // Pendentes revisão (reverse sync duplicates)
+    const pendentesRevisao = await db
+      .select({
+        id: assistidos.id,
+        nome: assistidos.nome,
+        atribuicaoPrimaria: assistidos.atribuicaoPrimaria,
+        duplicataSugerida: assistidos.duplicataSugerida,
+        createdAt: assistidos.createdAt,
+      })
+      .from(assistidos)
+      .where(and(
+        sql`${assistidos.duplicataSugerida} is not null`,
+        isNull(assistidos.deletedAt),
+      ));
+
+    return {
+      files: fileStats[0] || { total: 0, enriched: 0, processing: 0, failed: 0, pending: 0 },
+      byAtribuicao,
+      pendentesRevisao,
+    };
+  }),
+
+  /**
+   * Batch process enrichment for multiple files
+   */
+  batchProcess: adminProcedure
+    .input(z.object({
+      scope: z.enum(["all_pending", "by_atribuicao", "by_ids"]),
+      atribuicao: z.string().optional(),
+      assistidoIds: z.array(z.number()).optional(),
+      onlyNew: z.boolean().default(true),
+    }))
+    .mutation(async ({ input }) => {
+      const { inngest } = await import("@/lib/inngest/client");
+
+      // Build filter conditions
+      const conditions = [
+        eq(driveFiles.isFolder, false),
+      ];
+
+      if (input.onlyNew) {
+        conditions.push(isNull(driveFiles.enrichmentStatus));
+      }
+
+      let query = db
+        .select({
+          assistidoId: assistidos.id,
+          driveFolderId: assistidos.driveFolderId,
+        })
+        .from(assistidos)
+        .where(and(
+          sql`${assistidos.driveFolderId} is not null`,
+          isNull(assistidos.deletedAt),
+          ...(input.scope === "by_atribuicao" && input.atribuicao
+            ? [sql`${assistidos.atribuicaoPrimaria} = ${input.atribuicao}`]
+            : []),
+          ...(input.scope === "by_ids" && input.assistidoIds
+            ? [sql`${assistidos.id} = ANY(${input.assistidoIds})`]
+            : []),
+        ));
+
+      const targets = await query;
+      let queued = 0;
+
+      for (const target of targets) {
+        if (!target.driveFolderId) continue;
+        await inngest.send({
+          name: "enrichment/process-folder",
+          data: {
+            assistidoId: target.assistidoId,
+            driveFolderId: target.driveFolderId,
+          },
+        });
+        queued++;
+      }
+
+      return { queued, total: targets.length };
+    }),
+
+  /**
+   * Resolve a pendente_revisao: confirm as new or merge with existing
+   */
+  resolvePendente: adminProcedure
+    .input(z.object({
+      assistidoId: z.number(),
+      action: z.enum(["confirm_new", "merge"]),
+      mergeTargetId: z.number().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      if (input.action === "confirm_new") {
+        await db
+          .update(assistidos)
+          .set({
+            duplicataSugerida: null,
+            updatedAt: new Date(),
+          })
+          .where(eq(assistidos.id, input.assistidoId));
+
+        return { action: "confirmed", assistidoId: input.assistidoId };
+      }
+
+      if (input.action === "merge" && input.mergeTargetId) {
+        // Get the pending assistido
+        const [pending] = await db
+          .select({ driveFolderId: assistidos.driveFolderId })
+          .from(assistidos)
+          .where(eq(assistidos.id, input.assistidoId))
+          .limit(1);
+
+        if (pending?.driveFolderId) {
+          // Transfer the folder to the existing assistido
+          await db
+            .update(assistidos)
+            .set({
+              driveFolderId: pending.driveFolderId,
+              updatedAt: new Date(),
+            })
+            .where(eq(assistidos.id, input.mergeTargetId));
+        }
+
+        // Soft-delete the duplicate
+        await db
+          .update(assistidos)
+          .set({
+            deletedAt: new Date(),
+            driveFolderId: null,
+            updatedAt: new Date(),
+          })
+          .where(eq(assistidos.id, input.assistidoId));
+
+        return { action: "merged", assistidoId: input.assistidoId, mergedInto: input.mergeTargetId };
+      }
+
+      throw new Error("Invalid action or missing mergeTargetId");
+    }),
 });
 
 export type EnrichmentRouter = typeof enrichmentRouter;

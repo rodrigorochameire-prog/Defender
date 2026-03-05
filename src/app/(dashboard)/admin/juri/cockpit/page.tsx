@@ -88,6 +88,7 @@ import {
   Bell,
   BookOpen,
   Send,
+  ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnotacoesAprimoradas } from "@/components/juri/cockpit/anotacoes-aprimoradas";
@@ -99,6 +100,7 @@ import { MapaQuesitosVivo } from "@/components/juri/cockpit/mapa-quesitos-vivo";
 import { BancoObjecoes } from "@/components/juri/cockpit/banco-objecoes";
 import { HistoricoPerguntas } from "@/components/juri/cockpit/historico-perguntas";
 import { TimerSustentacao } from "@/components/juri/cockpit/timer-sustentacao";
+import { AvaliacaoInline, AvaliacaoLiveFeed } from "@/components/juri/cockpit/avaliacao-inline";
 
 // ============================================
 // CONFIGURAÇÃO DAS FASES
@@ -840,7 +842,7 @@ export default function PlenarioCockpitPage() {
   const [totalTime, setTotalTime] = useState(phases[0].minutes * 60);
   const [timeLeft, setTimeLeft] = useState(phases[0].mode === "stopwatch" ? 0 : phases[0].minutes * 60);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [activeTab, setActiveTab] = useState<"conselho" | "anotacoes" | "relatorio" | "roteiro" | "alertas" | "quesitos" | "objecoes" | "perguntas">("conselho");
+  const [activeTab, setActiveTab] = useState<"conselho" | "anotacoes" | "relatorio" | "roteiro" | "alertas" | "quesitos" | "objecoes" | "perguntas" | "avaliacao" | "feed">("avaliacao");
   const [cockpitMode, setCockpitMode] = useState<"registro" | "estrategia">("registro");
   const [searchJurado, setSearchJurado] = useState("");
   const [showRecusados, setShowRecusados] = useState(false);
@@ -1321,9 +1323,9 @@ export default function PlenarioCockpitPage() {
   const recusadosMP = corpoAtual.filter(j => j.recusadoPor === "mp").length;
   const recusadosDefesa = corpoAtual.filter(j => j.recusadoPor === "defesa").length;
 
-  // Classes condicionais
+  // Classes condicionais — `dark` class enables all Tailwind `dark:` variants
   const containerClass = isDarkMode
-    ? "min-h-screen bg-[#0f0f11] text-zinc-100"
+    ? "dark min-h-screen bg-[#0f0f11] text-zinc-100"
     : "min-h-screen bg-zinc-100 text-zinc-900";
 
   const cardClass = isDarkMode
@@ -1352,10 +1354,27 @@ export default function PlenarioCockpitPage() {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Auto-save indicator */}
+              {isLoaded && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 text-[10px] text-emerald-500 dark:text-emerald-400">
+                      <CheckCircle2 className="w-3 h-3" />
+                      <span className="hidden sm:inline">Salvando</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">
+                    Dados salvos automaticamente no navegador
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
+              <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700 hidden sm:block" />
+
               {/* Mode Toggle */}
               <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
                 <button
-                  onClick={() => setCockpitMode("registro")}
+                  onClick={() => { setCockpitMode("registro"); setActiveTab("avaliacao"); }}
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200",
                     cockpitMode === "registro"
@@ -1367,7 +1386,7 @@ export default function PlenarioCockpitPage() {
                   <span className="hidden sm:inline">Registro</span>
                 </button>
                 <button
-                  onClick={() => setCockpitMode("estrategia")}
+                  onClick={() => { setCockpitMode("estrategia"); setActiveTab("feed"); }}
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200",
                     cockpitMode === "estrategia"
@@ -1500,11 +1519,10 @@ export default function PlenarioCockpitPage() {
             {cockpitMode === "registro" ? (
               <>
                 {([
+                  { id: "avaliacao" as const, icon: ClipboardCheck, label: "📋 Formulário" },
                   { id: "conselho" as const, icon: Users, label: "Conselho" },
                   { id: "anotacoes" as const, icon: PenLine, label: `Anotações (${anotacoes.length})` },
-                  { id: "perguntas" as const, icon: MessageSquare, label: "Perguntas" },
                   { id: "alertas" as const, icon: Bell, label: "Alertas" },
-                  { id: "relatorio" as const, icon: FileBarChart, label: "Relatório" },
                 ]).map((tab) => (
                   <Button
                     key={tab.id}
@@ -1514,10 +1532,13 @@ export default function PlenarioCockpitPage() {
                     className={cn(
                       "transition-all duration-200 flex-shrink-0",
                       activeTab === tab.id
-                        ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
-                        : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                        ? (tab.id === "avaliacao"
+                            ? "bg-emerald-600 dark:bg-emerald-500 text-white hover:bg-emerald-700 dark:hover:bg-emerald-400"
+                            : "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200")
+                        : (tab.id === "avaliacao"
+                            ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800"
+                            : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100")
                     )}
-                    disabled={tab.id === "relatorio" && juradosAtivos.length === 0}
                   >
                     <tab.icon className="w-4 h-4 mr-1.5" />
                     <span className="whitespace-nowrap">{tab.label}</span>
@@ -1527,6 +1548,7 @@ export default function PlenarioCockpitPage() {
             ) : (
               <>
                 {([
+                  { id: "feed" as const, icon: Eye, label: "🔴 Feed ao Vivo" },
                   { id: "estrategia" as const, icon: Crosshair, label: "Estratégia" },
                   { id: "roteiro" as const, icon: BookOpen, label: "Roteiro" },
                   { id: "quesitos" as const, icon: Vote, label: "Quesitos" },
@@ -1535,14 +1557,18 @@ export default function PlenarioCockpitPage() {
                 ]).map((tab) => (
                   <Button
                     key={tab.id}
-                    variant={activeTab === tab.id || (tab.id === "estrategia" && !["roteiro", "quesitos", "objecoes", "alertas"].includes(activeTab)) ? "default" : "ghost"}
+                    variant={activeTab === tab.id || (tab.id === "estrategia" && !["feed", "roteiro", "quesitos", "objecoes", "alertas"].includes(activeTab)) ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setActiveTab(tab.id === "estrategia" ? "conselho" : tab.id)}
                     className={cn(
                       "transition-all duration-200 flex-shrink-0",
-                      (activeTab === tab.id || (tab.id === "estrategia" && !["roteiro", "quesitos", "objecoes", "alertas"].includes(activeTab)))
-                        ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
-                        : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                      (activeTab === tab.id || (tab.id === "estrategia" && !["feed", "roteiro", "quesitos", "objecoes", "alertas"].includes(activeTab)))
+                        ? (tab.id === "feed"
+                            ? "bg-rose-600 dark:bg-rose-500 text-white hover:bg-rose-700 dark:hover:bg-rose-400"
+                            : "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200")
+                        : (tab.id === "feed"
+                            ? "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950/50 border border-rose-200 dark:border-rose-800"
+                            : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100")
                     )}
                   >
                     <tab.icon className="w-4 h-4 mr-1.5" />
@@ -2175,7 +2201,7 @@ export default function PlenarioCockpitPage() {
           )}
 
           {/* Strategic Mode Panel (default view in estrategia mode) */}
-          {cockpitMode === "estrategia" && !["roteiro", "quesitos", "objecoes", "alertas"].includes(activeTab) && (
+          {cockpitMode === "estrategia" && !["feed", "roteiro", "quesitos", "objecoes", "alertas"].includes(activeTab) && (
             <PainelEstrategico
               anotacoes={anotacoes}
               conselhoSentenca={conselhoSentenca}
@@ -2226,12 +2252,33 @@ export default function PlenarioCockpitPage() {
             />
           )}
 
+          {/* Tab: Banco de Objeções - Selecionar (Registro mode - estagiária) */}
+          {activeTab === "objecoes" && cockpitMode === "registro" && (
+            <BancoObjecoes
+              isDarkMode={isDarkMode}
+              mode="selecionar"
+            />
+          )}
+
           {/* Tab: Banco de Objeções - Visualizar (Estrategia mode) */}
           {activeTab === "objecoes" && cockpitMode === "estrategia" && (
             <BancoObjecoes
               isDarkMode={isDarkMode}
               mode="visualizar"
             />
+          )}
+
+          {/* Tab: Formulário de Observação (Registro mode - estagiária) */}
+          {activeTab === "avaliacao" && cockpitMode === "registro" && (
+            <AvaliacaoInline
+              isDarkMode={isDarkMode}
+              faseSelecionada={faseSelecionada}
+            />
+          )}
+
+          {/* Tab: Feed ao Vivo da Estagiária (Estrategia mode - defensor) */}
+          {activeTab === "feed" && cockpitMode === "estrategia" && (
+            <AvaliacaoLiveFeed isDarkMode={isDarkMode} />
           )}
 
           {/* Tab: Relatório & Análise */}

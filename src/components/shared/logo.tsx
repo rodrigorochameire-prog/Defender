@@ -168,21 +168,31 @@ export function SidebarLogo({ collapsed = false, className }: SidebarLogoProps) 
     <div className={cn("sidebar-logo flex items-center", collapsed ? "justify-center" : "justify-start", className)}>
       <Link href="/admin" className="flex items-center gap-3 transition-opacity hover:opacity-90">
         <div className="relative flex-shrink-0" style={{ width: iconSize, height: iconSize }}>
+          {/* Logo modo claro */}
+          <Image
+            src="/logo-light.png"
+            alt="OMBUDS"
+            width={iconSize}
+            height={iconSize}
+            priority
+            className="absolute inset-0 object-contain drop-shadow-[0_0_6px_rgba(16,185,129,0.15)] dark:hidden"
+          />
+          {/* Logo modo escuro */}
           <Image
             src="/logo-dark.png"
             alt="OMBUDS"
             width={iconSize}
             height={iconSize}
             priority
-            className="object-contain drop-shadow-[0_0_6px_rgba(16,185,129,0.25)]"
+            className="absolute inset-0 object-contain drop-shadow-[0_0_6px_rgba(16,185,129,0.25)] hidden dark:block"
           />
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <span className="font-serif text-lg font-semibold tracking-tight text-zinc-100 block leading-tight">
+            <span className="font-serif text-lg font-semibold tracking-tight text-zinc-700 dark:text-zinc-100 block leading-tight">
               OMBUDS
             </span>
-            <span className="text-[9px] font-light tracking-[0.12em] uppercase text-zinc-500 block leading-tight">
+            <span className="text-[9px] font-light tracking-[0.12em] uppercase text-zinc-400 dark:text-zinc-500 block leading-tight">
               Ecossistema de Defesa Criminal
             </span>
           </div>

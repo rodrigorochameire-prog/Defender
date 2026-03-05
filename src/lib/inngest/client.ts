@@ -185,6 +185,14 @@ export type InngestEvents = {
     };
   };
 
+  // Reverse Sync: Enrichment Processing for a folder
+  "enrichment/process-folder": {
+    data: {
+      assistidoId: number;
+      driveFolderId: string;
+    };
+  };
+
   // Transcription (async via Inngest to avoid Vercel timeout)
   "drive/transcribe.file": {
     data: {

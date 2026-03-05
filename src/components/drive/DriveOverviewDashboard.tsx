@@ -70,6 +70,16 @@ function AtribuicaoCard({
     }
   }, [lastSyncAt]);
 
+  const accentColorMap: Record<string, string> = {
+    emerald: "bg-emerald-500",
+    rose: "bg-rose-500",
+    amber: "bg-amber-500",
+    sky: "bg-sky-500",
+    orange: "bg-orange-500",
+    violet: "bg-violet-500",
+    cyan: "bg-cyan-500",
+  };
+
   const handleClick = () => {
     ctx.setSelectedAtribuicao(atribuicao.key);
     if (atribuicao.folderId) {
@@ -81,45 +91,48 @@ function AtribuicaoCard({
     <button
       onClick={handleClick}
       className={cn(
-        "group bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-4 cursor-pointer text-left",
-        "transition-all duration-200 hover:shadow-lg hover:shadow-zinc-200/50 dark:hover:shadow-black/20 hover:-translate-y-0.5",
+        "group relative overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-4 cursor-pointer text-left",
+        "transition-all duration-250 hover:shadow-lg hover:shadow-zinc-200/60 dark:hover:shadow-black/20 hover:-translate-y-0.5",
+        "hover:border-zinc-300/80 dark:hover:border-zinc-700/80",
         atribuicao.hoverClass
       )}
     >
-      <div className="flex items-center gap-3 mb-3">
-        <span
-          className={cn("h-2 w-2 rounded-full shrink-0", atribuicao.dotClass)}
-        />
-        <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center", atribuicao.iconBgClass)}>
-          <Icon className={cn("h-4 w-4", atribuicao.iconClass)} />
-        </div>
-        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-          {atribuicao.label}
-        </span>
-      </div>
+      {/* Top accent strip */}
+      <div className={cn("absolute top-0 left-3 right-3 h-[2px] rounded-b-full opacity-40 group-hover:opacity-80 transition-opacity duration-200", accentColorMap[atribuicao.color] || "bg-zinc-300")} />
 
-      <div className="flex items-center justify-between mb-2.5">
-        <div className="flex items-center gap-1.5">
-          <FileText className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
-          <span className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
-            {fileCount} arquivo{fileCount !== 1 ? "s" : ""}
+      {/* Header: icon + name + sync dot */}
+      <div className="flex items-center gap-3 mb-3">
+        <div className={cn(
+          "h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105",
+          atribuicao.iconBgClass
+        )}>
+          <Icon className={cn("h-5 w-5", atribuicao.iconClass)} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+              {atribuicao.label}
+            </span>
+            <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", atribuicao.dotClass)} />
+          </div>
+          <span className="text-[11px] text-zinc-400 dark:text-zinc-500">
+            {fileCount} arquivo{fileCount !== 1 ? "s" : ""} · {syncTimeStr}
           </span>
         </div>
-        <div className="flex items-center gap-1">
-          <Clock className="h-3 w-3 text-zinc-400 dark:text-zinc-600" />
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-500">{syncTimeStr}</span>
-        </div>
       </div>
 
-      {/* Mini vinculação progress bar */}
-      <div className="flex items-center gap-2">
-        <div className="flex-1 h-1 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+      {/* Vinculação progress bar */}
+      <div className="flex items-center gap-2.5" title={`${Math.round(linkedPercent * fileCount / 100)} de ${fileCount} vinculados (${linkedPercent}%)`}>
+        <div className="flex-1 h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
           <div
-            className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+            className={cn(
+              "h-full rounded-full transition-all duration-500",
+              linkedPercent >= 80 ? "bg-emerald-500" : linkedPercent >= 40 ? "bg-amber-500" : linkedPercent >= 10 ? "bg-zinc-400" : "bg-red-400"
+            )}
             style={{ width: `${Math.min(linkedPercent, 100)}%` }}
           />
         </div>
-        <span className="text-[10px] font-medium tabular-nums text-zinc-400 dark:text-zinc-500 min-w-[3ch] text-right">
+        <span className="text-[10px] font-medium tabular-nums text-zinc-500 dark:text-zinc-500 min-w-[3ch] text-right">
           {linkedPercent}%
         </span>
       </div>
@@ -150,23 +163,24 @@ function SpecialFolderCard({
     <button
       onClick={handleClick}
       className={cn(
-        "group bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-4 cursor-pointer text-left",
-        "transition-all duration-200 hover:shadow-lg hover:shadow-zinc-200/50 dark:hover:shadow-black/20 hover:-translate-y-0.5",
+        "group bg-zinc-50/50 dark:bg-zinc-900/50 border border-dashed border-zinc-300/80 dark:border-zinc-700/60 rounded-xl p-4 cursor-pointer text-left",
+        "transition-all duration-250 hover:shadow-lg hover:shadow-zinc-200/60 dark:hover:shadow-black/20 hover:-translate-y-0.5",
+        "hover:border-zinc-400/80 dark:hover:border-zinc-600/80",
         folder.hoverClass
       )}
     >
       <div className="flex items-center gap-3">
         <div
           className={cn(
-            "h-9 w-9 rounded-lg flex items-center justify-center",
+            "h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105",
             folder.iconBgClass
           )}
         >
           <Icon className={cn("h-5 w-5", folder.iconClass)} />
         </div>
-        <div>
-          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{folder.label}</p>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">{folder.label}</p>
+          <p className="text-[11px] text-zinc-400 dark:text-zinc-500 tabular-nums">
             {fileCount} arquivo{fileCount !== 1 ? "s" : ""}
           </p>
         </div>
@@ -200,10 +214,18 @@ function InsightCard({
     red: "text-red-500 dark:text-red-400",
     zinc: "text-zinc-400 dark:text-zinc-500",
   };
+  const iconBgClasses = {
+    emerald: "bg-emerald-100/80 dark:bg-emerald-500/10",
+    amber: "bg-amber-100/80 dark:bg-amber-500/10",
+    red: "bg-red-100/80 dark:bg-red-500/10",
+    zinc: "bg-zinc-100/80 dark:bg-zinc-800/60",
+  };
 
   return (
     <div className={cn("px-4 py-3 rounded-xl border flex items-center gap-3", colorClasses[color])}>
-      <Icon className={cn("h-4 w-4 shrink-0", iconClasses[color])} />
+      <div className={cn("h-8 w-8 rounded-full flex items-center justify-center shrink-0", iconBgClasses[color])}>
+        <Icon className={cn("h-4 w-4", iconClasses[color])} />
+      </div>
       <div className="min-w-0">
         <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{value}</p>
         <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{label}</p>
@@ -251,6 +273,14 @@ function RecentFileItem({
       className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors group cursor-pointer"
     >
       <Icon className="h-4 w-4 text-zinc-400 dark:text-zinc-500 shrink-0" />
+      {(() => {
+        const typeLabel = file.documentType || (file.mimeType?.includes('pdf') ? 'PDF' : file.mimeType?.includes('image') ? 'IMG' : file.mimeType?.includes('audio') ? 'AUDIO' : null);
+        return typeLabel ? (
+          <span className="text-[9px] font-semibold uppercase px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 shrink-0">
+            {typeLabel}
+          </span>
+        ) : null;
+      })()}
       <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate flex-1 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors">
         {file.name}
       </span>
@@ -432,12 +462,12 @@ export function DriveOverviewDashboard() {
       {/* --- Header Padrão Defender --- */}
       <div className="relative px-5 md:px-8 py-6 md:py-8 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
         {/* Gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/30 via-transparent to-transparent dark:from-emerald-950/15 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-emerald-25/10 to-transparent dark:from-emerald-950/20 dark:via-emerald-950/5 pointer-events-none" />
 
         <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           {/* Left: Icon + Title + Subtitle */}
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-900 dark:from-white dark:to-zinc-100 flex items-center justify-center shadow-lg shadow-zinc-900/10 dark:shadow-black/10 ring-4 ring-zinc-900/5 dark:ring-white/10">
               <HardDrive className="w-6 h-6 text-white dark:text-zinc-900" />
             </div>
             <div>
@@ -587,7 +617,10 @@ export function DriveOverviewDashboard() {
                 {/* Progress bar (larger) */}
                 <div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-emerald-500 transition-all duration-700 ease-out"
+                    className={cn(
+                      "h-full rounded-full bg-emerald-500 transition-all duration-1000 ease-out",
+                      enrichedPercent < 100 && "animate-pulse"
+                    )}
                     style={{ width: `${enrichedPercent}%` }}
                   />
                 </div>
@@ -660,6 +693,21 @@ export function DriveOverviewDashboard() {
                   atribuicaoLabel={folderToAtribuicao[file.driveFolderId] ?? null}
                 />
               ))}
+            </div>
+          </div>
+        )}
+
+        {(!recentFiles || recentFiles.length === 0) && !isLoadingStats && (
+          <div>
+            <h3 className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <Clock className="h-3 w-3" />
+              Atividade Recente
+            </h3>
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl">
+              <div className="text-center py-8">
+                <Clock className="h-6 w-6 text-zinc-300 dark:text-zinc-600 mx-auto mb-2" />
+                <p className="text-sm text-zinc-400 dark:text-zinc-500">Nenhuma atividade recente</p>
+              </div>
             </div>
           </div>
         )}

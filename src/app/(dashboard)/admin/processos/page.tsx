@@ -99,6 +99,9 @@ import { cn } from "@/lib/utils";
 import { format, differenceInDays, isToday, isTomorrow, isPast, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc/client";
+import { useOfflineQuery } from "@/hooks/use-offline-query";
+import { useProgressiveList } from "@/hooks/use-progressive-list";
+import { getOfflineProcessos } from "@/lib/offline/queries";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Componentes estruturais padronizados
@@ -1541,10 +1544,12 @@ export default function ProcessosPage() {
   const [sortBy, setSortBy] = useState<"prioridade" | "recente" | "comarca" | "assistido">("prioridade");
   const [groupBy, setGroupBy] = useState<"none" | "comarca" | "area" | "defensor">("none");
 
-  // Buscar processos do banco de dados
-  const { data: processosData, isLoading } = trpc.processos.list.useQuery({
-    limit: 100,
-  });
+  // Buscar processos do banco de dados (com fallback offline)
+  const processosQuery = trpc.processos.list.useQuery({ limit: 100 });
+  const { data: processosData, isLoading } = useOfflineQuery(
+    processosQuery,
+    getOfflineProcessos,
+  );
 
   // Transformar dados do banco para o formato esperado pela UI
   const realProcessos = useMemo(() => {
@@ -1672,6 +1677,9 @@ export default function ProcessosPage() {
     
     return Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
   }, [filteredProcessos, groupBy]);
+
+  // Progressive rendering — show first 24 instantly, render rest incrementally
+  const { visibleItems: visibleProcessos } = useProgressiveList(filteredProcessos, 24, 24);
 
   // Estatísticas Premium
   const stats = useMemo(() => {
@@ -2030,7 +2038,7 @@ export default function ProcessosPage() {
             ) : (
               // Grid simples com animação
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredProcessos.map((processo, idx) => (
+                {visibleProcessos.map((processo, idx) => (
                   <ProcessoCard 
                     key={processo.id} 
                     processo={processo as any} 
@@ -2057,7 +2065,7 @@ export default function ProcessosPage() {
                   </tr>
                 </DataTableHeader>
                 <DataTableBody>
-                  {filteredProcessos.map((processo) => (
+                  {visibleProcessos.map((processo) => (
                     <ProcessoRow key={processo.id} processo={processo as any} />
                   ))}
                 </DataTableBody>

@@ -22,7 +22,7 @@ interface DriveState {
   breadcrumbPath: BreadcrumbItem[];
 
   // View
-  viewMode: "grid" | "list";
+  viewMode: "grid" | "list" | "compact";
   searchQuery: string;
   filters: DriveFilters;
 
@@ -36,7 +36,7 @@ interface DriveState {
   navigateBack: () => void;
   navigateToBreadcrumb: (index: number) => void;
   resetNavigation: () => void;
-  setViewMode: (mode: "grid" | "list") => void;
+  setViewMode: (mode: "grid" | "list" | "compact") => void;
   setSearchQuery: (query: string) => void;
   setFilters: (filters: Partial<DriveFilters>) => void;
   toggleFileSelection: (fileId: number) => void;
@@ -59,8 +59,8 @@ export function DriveProvider({ children }: { children: ReactNode }) {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [rootSyncFolderId, setRootSyncFolderId] = useState<string | null>(null);
   const [breadcrumbPath, setBreadcrumbPath] = useState<BreadcrumbItem[]>([]);
-  const [viewMode, setViewModeState] = useState<"grid" | "list">(
-    () => (typeof window !== "undefined" ? (localStorage.getItem("drive-view-mode") as "grid" | "list") || "grid" : "grid")
+  const [viewMode, setViewModeState] = useState<"grid" | "list" | "compact">(
+    () => (typeof window !== "undefined" ? (localStorage.getItem("drive-view-mode") as "grid" | "list" | "compact") || "grid" : "grid")
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFiltersState] = useState<DriveFilters>({ type: null, dateRange: null, enrichmentStatus: null });
@@ -111,7 +111,7 @@ export function DriveProvider({ children }: { children: ReactNode }) {
     setSearchQuery("");
   }, []);
 
-  const setViewMode = useCallback((mode: "grid" | "list") => {
+  const setViewMode = useCallback((mode: "grid" | "list" | "compact") => {
     setViewModeState(mode);
     if (typeof window !== "undefined") localStorage.setItem("drive-view-mode", mode);
   }, []);

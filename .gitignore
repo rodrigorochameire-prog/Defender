@@ -53,3 +53,8 @@ CREDENCIAIS.md
 
 # MCP config (contém API tokens)
 .claude/mcp.json
+
+# Serwist generated service worker
+public/sw.js
+public/sw.js.map
+public/swe-worker-*.js

@@ -99,6 +99,9 @@ import { cn } from "@/lib/utils";
 import { useAssignment } from "@/contexts/assignment-context";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
+import { useOfflineQuery } from "@/hooks/use-offline-query";
+import { useProgressiveList } from "@/hooks/use-progressive-list";
+import { getOfflineAssistidos } from "@/lib/offline/queries";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Componentes estruturais padronizados
@@ -1567,10 +1570,12 @@ export default function AssistidosPage() {
   const { currentAssignment } = useAssignment();
   const utils = trpc.useUtils();
 
-  // Buscar assistidos do banco de dados
-  const { data: assistidosData, isLoading } = trpc.assistidos.list.useQuery({
-    limit: 100,
-  });
+  // Buscar assistidos do banco de dados (com fallback offline)
+  const assistidosQuery = trpc.assistidos.list.useQuery({ limit: 100 });
+  const { data: assistidosData, isLoading } = useOfflineQuery(
+    assistidosQuery,
+    getOfflineAssistidos,
+  );
   
   // Transformar dados do banco para o formato esperado pela UI
   const realAssistidos = useMemo(() => {
@@ -1785,6 +1790,9 @@ export default function AssistidosPage() {
 
     return result;
   }, [realAssistidos, searchTerm, statusFilter, areaFilter, comarcaFilter, sortBy, pinnedIds, showPinnedOnly, atribuicaoFilter, showNaoIdentificados]);
+
+  // Progressive rendering — show first 24 instantly (6 cols × 4 rows), render rest incrementally
+  const { visibleItems: visibleAssistidos } = useProgressiveList(filteredAssistidos, 24, 24);
 
   // Detectar potenciais duplicados (nomes muito similares) - Otimizado com hash map
   const potentialDuplicates = useMemo(() => {
@@ -2311,7 +2319,7 @@ export default function AssistidosPage() {
         ) : (
           // Exibição normal (sem agrupamento)
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
-            {filteredAssistidos.map((a) => (
+            {visibleAssistidos.map((a) => (
               <div key={a.id} className="relative">
                 {batchSelectMode && (
                   <button
@@ -2345,7 +2353,7 @@ export default function AssistidosPage() {
         )
       ) : (
         <div className="space-y-1.5 max-h-[calc(100vh-320px)] overflow-y-auto custom-scrollbar pr-1">
-          {filteredAssistidos.map((a) => (
+          {visibleAssistidos.map((a) => (
             <AssistidoRow
               key={a.id}
               assistido={a}

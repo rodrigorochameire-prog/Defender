@@ -8,6 +8,7 @@ import { DriveBreadcrumbs } from "./DriveBreadcrumbs";
 import { DriveFilters } from "./DriveFilters";
 import { DriveFileGrid } from "./DriveFileGrid";
 import { DriveFileList } from "./DriveFileList";
+import { DriveFileCompact } from "./DriveFileCompact";
 import { DriveBatchActions } from "./DriveBatchActions";
 import { DriveOverviewDashboard } from "./DriveOverviewDashboard";
 
@@ -126,10 +127,12 @@ export function DriveContentArea() {
         <DriveFilters />
       </div>
 
-      {/* ─── File List / Grid ─── */}
+      {/* ─── File List / Grid / Compact ─── */}
       <div className="flex-1 overflow-y-auto p-3 sm:p-4">
         {ctx.viewMode === "grid" ? (
           <DriveFileGrid files={filteredFiles} isLoading={isLoading} />
+        ) : ctx.viewMode === "compact" ? (
+          <DriveFileCompact files={filteredFiles} isLoading={isLoading} />
         ) : (
           <DriveFileList files={filteredFiles} isLoading={isLoading} />
         )}

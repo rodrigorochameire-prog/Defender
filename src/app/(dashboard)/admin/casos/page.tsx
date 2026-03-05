@@ -58,6 +58,8 @@ import {
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
+import { useOfflineQuery } from "@/hooks/use-offline-query";
+import { getOfflineCasos } from "@/lib/offline/queries";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -1232,24 +1234,30 @@ export default function CasosPage() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterAtribuicao, setFilterAtribuicao] = useState<string>("all");
 
-  // Query de casos com filtros
-  const { data: casosFromDB = [], isLoading } = trpc.casos.list.useQuery({
+  // Query de casos com filtros (com fallback offline)
+  const casosQuery = trpc.casos.list.useQuery({
     atribuicao: filterAtribuicao === "all" ? undefined : filterAtribuicao,
     status: filterStatus === "all" ? undefined : filterStatus,
     fase: filterFase === "all" ? undefined : filterFase,
     search: searchTerm || undefined,
     limit: 50,
   });
+  const { data: casosFromDB = [], isLoading } = useOfflineQuery(
+    casosQuery,
+    getOfflineCasos,
+  );
 
   // Query de estatísticas
   const { data: statsFromDB } = trpc.casos.getDashboardStats.useQuery({
     atribuicao: filterAtribuicao === "all" ? undefined : filterAtribuicao,
   });
 
-  // Query de todos os casos para contagem
-  const { data: allCasosFromDB = [] } = trpc.casos.list.useQuery({
-    limit: 100,
-  });
+  // Query de todos os casos para contagem (com fallback offline)
+  const allCasosQuery = trpc.casos.list.useQuery({ limit: 100 });
+  const { data: allCasosFromDB = [] } = useOfflineQuery(
+    allCasosQuery,
+    getOfflineCasos,
+  );
 
   // ==========================================
   // USAR APENAS DADOS DO BANCO (sem mock)

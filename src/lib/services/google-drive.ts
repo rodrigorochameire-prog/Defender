@@ -9,7 +9,10 @@
 
 import { db } from "@/lib/db";
 import { processos, driveFiles, driveSyncFolders, driveSyncLogs, driveWebhooks, assistidos, casos } from "@/lib/db/schema";
-import { eq, and, desc, ilike, or, sql, gt, lt } from "drizzle-orm";
+import { eq, and, desc, ilike, or, sql, gt, lt, isNull } from "drizzle-orm";
+import { ATRIBUICAO_FOLDER_IDS, SPECIAL_FOLDER_IDS, normalizeName, toTitleCase } from "@/lib/utils/text-extraction";
+export { ATRIBUICAO_FOLDER_IDS, SPECIAL_FOLDER_IDS };
+import { inngest } from "@/lib/inngest/client";
 
 // ==========================================
 // TIPOS
@@ -3177,12 +3180,6 @@ export async function verificarIntegridadeSincronizacao(
 // FUNÇÕES DE DISTRIBUIÇÃO HIERÁRQUICA
 // ==========================================
 
-import {
-  ATRIBUICAO_FOLDER_IDS,
-  SPECIAL_FOLDER_IDS,
-  toTitleCase,
-} from "@/lib/utils/text-extraction";
-
 import type { TipoProcesso } from "./gemini";
 
 // Tipos dependentes (vão dentro de uma AP)
@@ -4125,4 +4122,238 @@ export async function distributeFileIntelligent(
       error: error instanceof Error ? error.message : "Erro desconhecido",
     };
   }
+}
+
+// ==========================================
+// REVERSE SYNC: DRIVE → ASSISTIDO
+// ==========================================
+
+/**
+ * Reverse mapping: Google Drive folder ID → atribuição enum value
+ * Used to detect when a new folder is created inside an atribuição root folder
+ */
+const FOLDER_ID_TO_ATRIBUICAO: Record<string, string> = Object.fromEntries(
+  Object.entries({
+    [ATRIBUICAO_FOLDER_IDS.JURI]: "JURI_CAMACARI",
+    [ATRIBUICAO_FOLDER_IDS.VVD]: "VVD_CAMACARI",
+    [ATRIBUICAO_FOLDER_IDS.EP]: "EXECUCAO_PENAL",
+    [ATRIBUICAO_FOLDER_IDS.SUBSTITUICAO]: "SUBSTITUICAO",
+    [ATRIBUICAO_FOLDER_IDS.GRUPO_JURI]: "GRUPO_JURI",
+  })
+);
+
+/**
+ * Calcula similaridade normalizada entre duas strings (Levenshtein)
+ */
+function calculateSimilarityNormalized(str1: string, str2: string): number {
+  const s1 = str1.toLowerCase();
+  const s2 = str2.toLowerCase();
+  if (s1 === s2) return 1;
+  if (s1.length === 0 || s2.length === 0) return 0;
+
+  const matrix: number[][] = [];
+  for (let i = 0; i <= s1.length; i++) matrix[i] = [i];
+  for (let j = 0; j <= s2.length; j++) matrix[0][j] = j;
+
+  for (let i = 1; i <= s1.length; i++) {
+    for (let j = 1; j <= s2.length; j++) {
+      const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+    }
+  }
+  return 1 - matrix[s1.length][s2.length] / Math.max(s1.length, s2.length);
+}
+
+export interface ReverseSyncResult {
+  action: "linked" | "created" | "created_pending" | "skipped";
+  assistidoId: number;
+  assistidoNome: string;
+  folderName: string;
+  folderId: string;
+  atribuicao: string;
+  duplicata?: { assistidoId: number; nome: string; confidence: number };
+}
+
+/**
+ * Handles a new folder detected in an atribuição root folder.
+ *
+ * Reverse Sync logic:
+ * 1. Identifies atribuição from parent folder ID
+ * 2. Normalizes folder name → Title Case
+ * 3. Searches for existing assistido with similar name
+ * 4. If match ≥ 0.85: links driveFolderId (if not already linked)
+ * 5. If match 0.60-0.84: creates with pendente_revisao + duplicataSugerida
+ * 6. If no match: creates new assistido
+ * 7. Schedules enrichment processing with 5min delay
+ */
+export async function handleNewAssistidoFolder(
+  folderId: string,
+  folderName: string,
+  parentFolderId: string
+): Promise<ReverseSyncResult | null> {
+  // 1. Check if parent is an atribuição root folder
+  const atribuicao = FOLDER_ID_TO_ATRIBUICAO[parentFolderId];
+  if (!atribuicao) {
+    return null; // Not a direct child of an atribuição folder — skip
+  }
+
+  // 2. Check if this folder is already linked to an assistido
+  const alreadyLinked = await db
+    .select({ id: assistidos.id, nome: assistidos.nome })
+    .from(assistidos)
+    .where(eq(assistidos.driveFolderId, folderId))
+    .limit(1);
+
+  if (alreadyLinked.length > 0) {
+    return {
+      action: "skipped",
+      assistidoId: alreadyLinked[0].id,
+      assistidoNome: alreadyLinked[0].nome,
+      folderName,
+      folderId,
+      atribuicao,
+    };
+  }
+
+  // 3. Normalize folder name
+  const normalizedFolderName = normalizeName(folderName);
+  const titleCaseName = toTitleCase(folderName);
+
+  // 4. Search for existing assistidos (all, to find best match)
+  const allAssistidos = await db
+    .select({ id: assistidos.id, nome: assistidos.nome, driveFolderId: assistidos.driveFolderId })
+    .from(assistidos)
+    .where(isNull(assistidos.deletedAt));
+
+  let bestMatch: { id: number; nome: string; confidence: number; hasFolder: boolean } | null = null;
+
+  for (const a of allAssistidos) {
+    const normalizedAssistido = normalizeName(a.nome);
+    const similarity = calculateSimilarityNormalized(normalizedFolderName, normalizedAssistido);
+
+    if (similarity >= 0.60 && (!bestMatch || similarity > bestMatch.confidence)) {
+      bestMatch = {
+        id: a.id,
+        nome: a.nome,
+        confidence: similarity,
+        hasFolder: !!a.driveFolderId,
+      };
+    }
+  }
+
+  // 5. Decision tree
+  if (bestMatch && bestMatch.confidence >= 0.85) {
+    // High-confidence match — link directly
+    if (!bestMatch.hasFolder) {
+      await db
+        .update(assistidos)
+        .set({ driveFolderId: folderId, updatedAt: new Date() })
+        .where(eq(assistidos.id, bestMatch.id));
+
+      console.log(`[ReverseSync] Linked folder "${folderName}" → assistido "${bestMatch.nome}" (${bestMatch.confidence.toFixed(2)})`);
+    } else {
+      console.log(`[ReverseSync] High match for "${folderName}" → "${bestMatch.nome}" but assistido already has folder. Skipping.`);
+      return {
+        action: "skipped",
+        assistidoId: bestMatch.id,
+        assistidoNome: bestMatch.nome,
+        folderName,
+        folderId,
+        atribuicao,
+      };
+    }
+
+    // Schedule enrichment
+    await scheduleEnrichment(bestMatch.id, folderId);
+
+    return {
+      action: "linked",
+      assistidoId: bestMatch.id,
+      assistidoNome: bestMatch.nome,
+      folderName,
+      folderId,
+      atribuicao,
+    };
+  }
+
+  if (bestMatch && bestMatch.confidence >= 0.60) {
+    // Partial match — create with pendente_revisao
+    const [created] = await db.insert(assistidos).values({
+      nome: titleCaseName,
+      atribuicaoPrimaria: atribuicao as typeof assistidos.$inferInsert.atribuicaoPrimaria,
+      driveFolderId: folderId,
+      origemCadastro: "drive_sync",
+      duplicataSugerida: {
+        assistidoId: bestMatch.id,
+        nome: bestMatch.nome,
+        confidence: bestMatch.confidence,
+      },
+    }).returning({ id: assistidos.id });
+
+    console.log(`[ReverseSync] Created PENDING "${titleCaseName}" (possible duplicate of "${bestMatch.nome}", ${bestMatch.confidence.toFixed(2)})`);
+
+    await scheduleEnrichment(created.id, folderId);
+
+    return {
+      action: "created_pending",
+      assistidoId: created.id,
+      assistidoNome: titleCaseName,
+      folderName,
+      folderId,
+      atribuicao,
+      duplicata: {
+        assistidoId: bestMatch.id,
+        nome: bestMatch.nome,
+        confidence: bestMatch.confidence,
+      },
+    };
+  }
+
+  // 6. No match — create new assistido
+  const [created] = await db.insert(assistidos).values({
+    nome: titleCaseName,
+    atribuicaoPrimaria: atribuicao as typeof assistidos.$inferInsert.atribuicaoPrimaria,
+    driveFolderId: folderId,
+    origemCadastro: "drive_sync",
+  }).returning({ id: assistidos.id });
+
+  console.log(`[ReverseSync] Created NEW "${titleCaseName}" (${atribuicao}, no match found)`);
+
+  await scheduleEnrichment(created.id, folderId);
+
+  return {
+    action: "created",
+    assistidoId: created.id,
+    assistidoNome: titleCaseName,
+    folderName,
+    folderId,
+    atribuicao,
+  };
+}
+
+/**
+ * Schedules enrichment processing for a folder with a 5-minute delay
+ */
+async function scheduleEnrichment(assistidoId: number, driveFolderId: string) {
+  try {
+    await inngest.send({
+      name: "enrichment/process-folder",
+      data: { assistidoId, driveFolderId },
+    });
+  } catch (error) {
+    console.error(`[ReverseSync] Failed to schedule enrichment for assistido ${assistidoId}:`, error);
+  }
+}
+
+/**
+ * Checks if a Drive file/folder is a direct child of an atribuição root folder.
+ * Used by syncIncremental to detect new assistido folders.
+ */
+export function isAtribuicaoRootChild(parentDriveId: string | undefined): boolean {
+  if (!parentDriveId) return false;
+  return parentDriveId in FOLDER_ID_TO_ATRIBUICAO;
 }

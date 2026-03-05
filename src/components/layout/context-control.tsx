@@ -119,11 +119,23 @@ export function useAtribuicaoFiltro() {
 }
 
 // ==========================================
+// HELPER: Extrair inicial sem prefixos profissionais
+// ==========================================
+
+function getDisplayInitial(name: string): string {
+  // Strip common professional prefixes (Dr., Dra., Dr , Dra )
+  const cleaned = name
+    .replace(/^(Dr\.|Dra\.|Dr |Dra )/i, '')
+    .trim();
+  return (cleaned.charAt(0) || name.charAt(0)).toUpperCase();
+}
+
+// ==========================================
 // HELPER: Gerar dados de display para um defensor
 // ==========================================
 
 function getDefensorDisplayData(config: ProfissionalConfig): { id: string; nome: string; nomeCurto: string; inicial: string; cor: string; grupo: string } {
-  const inicial = config.nomeCurto?.[0]?.toUpperCase() || config.nome[0]?.toUpperCase() || "?";
+  const inicial = getDisplayInitial(config.nomeCurto || config.nome);
 
   // Cores distintas baseadas no ID (match do estilo original)
   let cor = "bg-zinc-600 text-white";
@@ -279,7 +291,7 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
   if (!mounted) {
     return (
       <div className="px-3 py-2">
-        <div className="h-12 bg-[#2a2a2f]/50 rounded-xl animate-pulse" />
+        <div className="h-12 bg-black/[0.04] dark:bg-white/[0.04] rounded-xl animate-pulse" />
       </div>
     );
   }
@@ -305,7 +317,7 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
               {defensorAtual.inicial}
             </button>
           </PopoverTrigger>
-          <PopoverContent side="right" align="start" className="w-72 p-0 bg-[#1f1f23] border-zinc-700/40 shadow-xl shadow-black/30">
+          <PopoverContent side="right" align="start" className="w-72 p-0 bg-white dark:bg-[#1f1f23] border-zinc-200 dark:border-zinc-700/40 shadow-xl shadow-black/10 dark:shadow-black/30">
             <ContextPopoverContent
               defensor={defensor}
               atribuicao={atribuicao}
@@ -338,10 +350,10 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
         <PopoverTrigger asChild>
           <button className={cn(
             "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all duration-200",
-            "bg-gradient-to-r from-[#2a2a2f]/70 to-[#252529]/70",
-            "border border-zinc-600/30",
-            "hover:border-emerald-600/40",
-            "hover:shadow-md hover:shadow-emerald-900/10",
+            "bg-gradient-to-r from-white/50 to-white/30 dark:from-white/[0.04] dark:to-white/[0.02]",
+            "border border-black/[0.06] dark:border-white/[0.06]",
+            "hover:border-emerald-400/30 dark:hover:border-emerald-600/40",
+            "hover:shadow-md hover:shadow-emerald-100/50 dark:hover:shadow-emerald-900/10",
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20",
             "group"
           )}>
@@ -356,7 +368,7 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
             {/* Info */}
             <div className="flex-1 min-w-0 text-left">
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold text-zinc-100 truncate">
+                <span className="text-[11px] font-bold text-zinc-800 dark:text-zinc-100 truncate">
                   {defensorAtual.nome}
                 </span>
                 {isCriminalGeral && (
@@ -381,14 +393,14 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
 
             {/* Chevron */}
             <Settings2 className={cn(
-              "w-4 h-4 text-zinc-500 transition-all duration-200 flex-shrink-0",
-              "group-hover:text-zinc-300",
+              "w-4 h-4 text-zinc-400 dark:text-zinc-500 transition-all duration-200 flex-shrink-0",
+              "group-hover:text-zinc-600 dark:group-hover:text-zinc-300",
               open && "rotate-90"
             )} />
           </button>
         </PopoverTrigger>
 
-        <PopoverContent align="start" className="w-72 p-0 bg-[#1f1f23] border-zinc-700/40 shadow-xl shadow-black/30">
+        <PopoverContent align="start" className="w-72 p-0 bg-white dark:bg-[#1f1f23] border-zinc-200 dark:border-zinc-700/40 shadow-xl shadow-black/10 dark:shadow-black/30">
           <ContextPopoverContent
             defensor={defensor}
             atribuicao={atribuicao}
@@ -449,10 +461,10 @@ function ContextPopoverContent({
   const geralOption = defensoresDisplay.find(d => d.id === "GERAL");
 
   return (
-    <div className="divide-y divide-zinc-600/30">
+    <div className="divide-y divide-zinc-200/80 dark:divide-zinc-700/40">
       {/* Secao: Defensor Principal */}
       <div className="p-3">
-        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">
+        <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-2">
           Defensor
         </p>
 
@@ -464,19 +476,24 @@ function ContextPopoverContent({
               onClick={() => updateDefensor(d.id)}
               className={cn(
                 "flex-1 py-2.5 px-2 rounded-xl transition-all duration-200 text-center",
-                "border-2",
                 defensor === d.id
-                  ? "border-emerald-500 bg-emerald-900/30 shadow-lg shadow-emerald-900/20"
-                  : "border-zinc-700/50 hover:bg-zinc-700/50 hover:border-zinc-600"
+                  ? "border-2 border-emerald-500/60 bg-emerald-50/60 dark:bg-emerald-900/30 shadow-sm shadow-emerald-500/5 dark:shadow-emerald-900/20"
+                  : "border border-zinc-200 dark:border-zinc-700/50 opacity-70 hover:opacity-100 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 hover:border-zinc-300 dark:hover:border-zinc-600"
               )}
             >
               <div className={cn(
-                "w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm mx-auto mb-1 shadow-md",
+                "w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm mx-auto mb-1.5 shadow-md",
+                defensor === d.id ? "ring-2 ring-emerald-500/20" : "",
                 d.cor
               )}>
                 {d.inicial}
               </div>
-              <p className="text-[10px] font-semibold text-zinc-200 leading-tight">
+              <p className={cn(
+                "text-[10px] leading-tight",
+                defensor === d.id
+                  ? "font-semibold text-zinc-900 dark:text-zinc-100"
+                  : "font-medium text-zinc-600 dark:text-zinc-300"
+              )}>
                 {d.nomeCurto.split(' ').slice(0, 2).join(' ')}
               </p>
             </button>
@@ -489,19 +506,19 @@ function ContextPopoverContent({
             onClick={() => updateDefensor(geralOption.id)}
             className={cn(
               "w-full py-2.5 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-3",
-              "border-2 mt-2",
+              "mt-2",
               defensor === geralOption.id
-                ? "border-emerald-500 bg-gradient-to-r from-emerald-900/40 to-emerald-800/30 shadow-lg shadow-emerald-900/20"
-                : "border-zinc-600/50 hover:bg-zinc-700/50 hover:border-zinc-500 bg-zinc-800/30"
+                ? "border-2 border-emerald-500/60 bg-gradient-to-r from-emerald-50 to-emerald-50/60 dark:from-emerald-900/40 dark:to-emerald-800/30 shadow-sm shadow-emerald-500/5 dark:shadow-emerald-900/20"
+                : "border border-zinc-200/80 dark:border-zinc-700/50 bg-gradient-to-r from-zinc-100 to-zinc-50 dark:from-zinc-800 dark:to-zinc-800/60 hover:from-zinc-200 hover:to-zinc-100 dark:hover:from-zinc-700 dark:hover:to-zinc-700/60"
             )}
           >
             <Eye className={cn(
               "w-5 h-5",
-              defensor === geralOption.id ? "text-emerald-400" : "text-zinc-400"
+              defensor === geralOption.id ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-500 dark:text-zinc-400"
             )} />
             <p className={cn(
               "text-sm font-semibold",
-              defensor === geralOption.id ? "text-emerald-300" : "text-zinc-300"
+              defensor === geralOption.id ? "text-emerald-700 dark:text-emerald-300" : "text-zinc-600 dark:text-zinc-300"
             )}>
               Visão Geral
             </p>
@@ -511,12 +528,12 @@ function ContextPopoverContent({
         {/* Varas Criminais - Seção colapsável para admin */}
         {varasCriminaisDefensores.length > 0 && (
           <Collapsible className="mt-3">
-            <CollapsibleTrigger className="w-full pt-2 border-t border-zinc-700/30 flex items-center justify-between group">
-              <p className="text-[9px] font-medium text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+            <CollapsibleTrigger className="w-full pt-2 border-t border-zinc-200/60 dark:border-zinc-700/30 flex items-center justify-between group">
+              <p className="text-[9px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
                 <Settings2 className="w-3 h-3" />
                 Modo Admin
               </p>
-              <ChevronRight className="w-3 h-3 text-zinc-600 transition-transform group-data-[state=open]:rotate-90" />
+              <ChevronRight className="w-3 h-3 text-zinc-400 dark:text-zinc-600 transition-transform group-data-[state=open]:rotate-90" />
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-2">
               <div className="flex gap-2">
@@ -528,8 +545,8 @@ function ContextPopoverContent({
                       "flex-1 py-1.5 px-2 rounded-lg transition-all duration-200 text-center",
                       "border opacity-50 hover:opacity-100",
                       defensor === d.id
-                        ? "border-zinc-500 bg-zinc-700/50 opacity-100"
-                        : "border-zinc-700/30 hover:bg-zinc-800/50"
+                        ? "border-zinc-400 dark:border-zinc-500 bg-zinc-100 dark:bg-zinc-700/50 opacity-100"
+                        : "border-zinc-200 dark:border-zinc-700/30 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                     )}
                   >
                     <div className={cn(
@@ -538,7 +555,7 @@ function ContextPopoverContent({
                     )}>
                       {d.inicial}
                     </div>
-                    <p className="text-[9px] font-medium text-zinc-400 truncate">
+                    <p className="text-[9px] font-medium text-zinc-500 dark:text-zinc-400 truncate">
                       {d.nomeCurto}
                     </p>
                   </button>
@@ -551,7 +568,7 @@ function ContextPopoverContent({
 
       {/* Secao: Workspace */}
       <div className="p-3">
-        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">
+        <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-2">
           Workspace
         </p>
         <div className="space-y-1">
@@ -562,16 +579,21 @@ function ContextPopoverContent({
               className={cn(
                 "w-full flex items-center gap-2 py-2 px-2.5 rounded-lg transition-all duration-200",
                 workspace === w.id
-                  ? "bg-emerald-900/30 ring-1 ring-emerald-500/50"
-                  : "hover:bg-zinc-700/50"
+                  ? "bg-emerald-50/60 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/20"
+                  : "hover:bg-zinc-100 dark:hover:bg-zinc-700/50 border border-transparent"
               )}
             >
               <w.icon className={cn("w-4 h-4 flex-shrink-0", w.cor)} />
-              <span className="text-xs font-medium text-zinc-200 flex-1 text-left">
+              <span className={cn(
+                "text-xs font-medium flex-1 text-left",
+                workspace === w.id
+                  ? "text-emerald-800 dark:text-emerald-200"
+                  : "text-zinc-700 dark:text-zinc-200"
+              )}>
                 {w.nome}
               </span>
               {workspace === w.id && (
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               )}
             </button>
           ))}
@@ -582,12 +604,12 @@ function ContextPopoverContent({
       <div className="p-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Eye className="w-4 h-4 text-zinc-400" />
+            <Eye className="w-4 h-4 text-zinc-400 dark:text-zinc-400" />
             <div>
-              <p className="text-xs font-medium text-zinc-200">
+              <p className="text-xs font-medium text-zinc-700 dark:text-zinc-200">
                 Visao Integrada
               </p>
-              <p className="text-[10px] text-zinc-500">
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
                 Incluir workspaces especiais
               </p>
             </div>

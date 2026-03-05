@@ -234,6 +234,14 @@ export const assistidos = pgTable("assistidos", {
   analyzedAt: timestamp("analyzed_at"),
   analysisVersion: integer("analysis_version").default(0),
 
+  // Origem do cadastro e detecção de duplicatas (Reverse Sync)
+  origemCadastro: varchar("origem_cadastro", { length: 20 }).default("manual"), // 'manual' | 'drive_sync' | 'solar' | 'pje'
+  duplicataSugerida: jsonb("duplicata_sugerida").$type<{
+    assistidoId: number;
+    nome: string;
+    confidence: number;
+  } | null>(),
+
   // Metadados
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

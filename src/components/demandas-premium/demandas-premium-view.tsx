@@ -3,27 +3,34 @@
 
 import { DemandaCreateModal, type DemandaFormData } from "@/components/demandas-premium/demanda-create-modal";
 import { ConfigModal } from "@/components/demandas-premium/config-modal";
-import { DynamicChart } from "@/components/demandas-premium/dynamic-charts";
-import { HistoricoChart } from "@/components/demandas-premium/historico-chart";
 import { FilterSectionsCompact } from "@/components/demandas-premium/filter-sections-compact";
 import { InfographicSelector } from "@/components/demandas-premium/infographic-selector";
-import { ChartConfigModal } from "@/components/demandas-premium/chart-config-modal";
-import { ImportModal } from "@/components/demandas-premium/import-modal";
-import { PJeImportModal } from "@/components/demandas-premium/pje-import-modal";
-import { ExportModal } from "@/components/demandas-premium/export-modal";
-import { AdminConfigModal } from "@/components/demandas-premium/admin-config-modal";
 import { ImportDropdown } from "@/components/demandas-premium/import-dropdown";
-import { SheetsImportModal } from "@/components/demandas-premium/sheets-import-modal";
-import { SEEUImportModal } from "@/components/demandas-premium/seeu-import-modal";
-import { DuplicatesModal } from "@/components/demandas-premium/duplicates-modal";
-import { DelegacaoModal } from "@/components/demandas/delegacao-modal";
-import { DelegacaoBatchModal } from "@/components/demandas/delegacao-batch-modal";
+import dynamic from "next/dynamic";
+
+// Lazy-loaded heavy components (charts: recharts ~300KB, export: jspdf+xlsx ~400KB)
+const DynamicChart = dynamic(() => import("@/components/demandas-premium/dynamic-charts").then(m => ({ default: m.DynamicChart })), { ssr: false });
+const HistoricoChart = dynamic(() => import("@/components/demandas-premium/historico-chart").then(m => ({ default: m.HistoricoChart })), { ssr: false });
+const ChartConfigModal = dynamic(() => import("@/components/demandas-premium/chart-config-modal").then(m => ({ default: m.ChartConfigModal })), { ssr: false });
+const ExportModal = dynamic(() => import("@/components/demandas-premium/export-modal").then(m => ({ default: m.ExportModal })), { ssr: false });
+const ImportModal = dynamic(() => import("@/components/demandas-premium/import-modal").then(m => ({ default: m.ImportModal })), { ssr: false });
+const PJeImportModal = dynamic(() => import("@/components/demandas-premium/pje-import-modal").then(m => ({ default: m.PJeImportModal })), { ssr: false });
+const AdminConfigModal = dynamic(() => import("@/components/demandas-premium/admin-config-modal").then(m => ({ default: m.AdminConfigModal })), { ssr: false });
+const SheetsImportModal = dynamic(() => import("@/components/demandas-premium/sheets-import-modal").then(m => ({ default: m.SheetsImportModal })), { ssr: false });
+const SEEUImportModal = dynamic(() => import("@/components/demandas-premium/seeu-import-modal").then(m => ({ default: m.SEEUImportModal })), { ssr: false });
+const DuplicatesModal = dynamic(() => import("@/components/demandas-premium/duplicates-modal").then(m => ({ default: m.DuplicatesModal })), { ssr: false });
+const DelegacaoModal = dynamic(() => import("@/components/demandas/delegacao-modal").then(m => ({ default: m.DelegacaoModal })), { ssr: false });
+const DelegacaoBatchModal = dynamic(() => import("@/components/demandas/delegacao-batch-modal").then(m => ({ default: m.DelegacaoBatchModal })), { ssr: false });
 import { getStatusConfig, STATUS_GROUPS, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO, ATO_PRIORITY } from "@/config/atos-por-atribuicao";
 import { copyToClipboard } from "@/lib/clipboard";
 import React, { useState, useMemo, useEffect, useCallback, Fragment } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
+import { useOfflineQuery } from "@/hooks/use-offline-query";
+import { useOfflineMutation } from "@/hooks/use-offline-mutation";
+import { useProgressiveList } from "@/hooks/use-progressive-list";
+import { getOfflineDemandas } from "@/lib/offline/queries";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -590,9 +597,11 @@ export default function Demandas() {
   // ==========================================
   // BUSCA DADOS REAIS DO BANCO DE DADOS
   // ==========================================
-  const { data: demandasDB = [], isLoading: loadingDemandas } = trpc.demandas.list.useQuery({
-    limit: 100,
-  });
+  const demandasQuery = trpc.demandas.list.useQuery({ limit: 100 });
+  const { data: demandasDB = [], isLoading: loadingDemandas } = useOfflineQuery(
+    demandasQuery,
+    getOfflineDemandas,
+  );
 
   const utils = trpc.useUtils();
 
@@ -622,8 +631,8 @@ export default function Demandas() {
     },
   });
 
-  // Mutation para atualizar demanda
-  const updateDemandaMutation = trpc.demandas.update.useMutation({
+  // Mutation para atualizar demanda (com suporte offline)
+  const trpcUpdateDemanda = trpc.demandas.update.useMutation({
     onSuccess: () => {
       toast.success("Demanda atualizada!");
       utils.demandas.list.invalidate();
@@ -632,17 +641,35 @@ export default function Demandas() {
       toast.error("Erro ao atualizar: " + error.message);
     },
   });
+  const updateDemandaMutation = useOfflineMutation({
+    mutation: trpcUpdateDemanda,
+    table: "demandas",
+    operation: "update",
+    getRecordId: (input: any) => input.id,
+    onSuccess: () => {
+      if (!navigator.onLine) toast.success("Salvo offline — será sincronizado");
+    },
+  });
 
-  // Mutation para deletar demanda (soft delete)
+  // Mutation para deletar demanda (soft delete, com suporte offline)
   const reordenarMutation = trpc.demandas.reordenar.useMutation();
 
-  const deleteDemandaMutation = trpc.demandas.delete.useMutation({
+  const trpcDeleteDemanda = trpc.demandas.delete.useMutation({
     onSuccess: () => {
       toast.success("Demanda deletada!");
       utils.demandas.list.invalidate();
     },
     onError: (error) => {
       toast.error("Erro ao deletar: " + error.message);
+    },
+  });
+  const deleteDemandaMutation = useOfflineMutation({
+    mutation: trpcDeleteDemanda,
+    table: "demandas",
+    operation: "delete",
+    getRecordId: (input: any) => input.id,
+    onSuccess: () => {
+      if (!navigator.onLine) toast.success("Deletado offline — será sincronizado");
     },
   });
 
@@ -1460,6 +1487,9 @@ export default function Demandas() {
     });
   }, [demandasFiltradas, sortStack]);
 
+  // Progressive rendering — show first 20 instantly, reveal rest incrementally
+  const { visibleItems: visibleDemandas, isComplete: allDemandasRendered } = useProgressiveList(demandasOrdenadas, 20, 20);
+
   // Estatísticas
   const statsData = useMemo(() => {
     const demandasAtivas = demandas.filter((d) => !d.arquivado);
@@ -1868,7 +1898,7 @@ export default function Demandas() {
                       </p>
                     </div>
                   ) : (
-                    demandasOrdenadas.map((demanda) => {
+                    visibleDemandas.map((demanda) => {
                       const statusConfig = getStatusConfig(demanda.status);
                       const borderColor = STATUS_GROUPS[statusConfig.group].color;
 
@@ -1955,7 +1985,7 @@ export default function Demandas() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {demandasOrdenadas.map((demanda) => {
+                      {visibleDemandas.map((demanda) => {
                         const statusConfig = getStatusConfig(demanda.status);
                         const borderColor = STATUS_GROUPS[statusConfig.group].color;
 

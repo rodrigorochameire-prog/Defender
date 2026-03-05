@@ -108,9 +108,9 @@ function FileGridCard({ file }: { file: DriveFile }) {
     <div
       onClick={handleClick}
       className={cn(
-        "group relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-lg p-3 cursor-pointer",
-        "hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/5 hover:shadow-lg hover:shadow-zinc-200/50 dark:hover:shadow-black/20",
-        "transition-all duration-200",
+        "group relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 cursor-pointer shadow-sm",
+        "hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 hover:shadow-md hover:shadow-zinc-200/60 dark:hover:shadow-black/20",
+        "transition-all duration-200 hover:-translate-y-0.5",
         isSelected && "border-emerald-300 dark:border-emerald-500/50 bg-emerald-50 dark:bg-emerald-500/10"
       )}
     >
@@ -192,25 +192,32 @@ function FileGridCard({ file }: { file: DriveFile }) {
       )}
 
       {/* Icon / Thumbnail */}
-      <div className="flex items-center justify-center h-14 sm:h-20 mb-2 sm:mb-3">
+      <div className="flex items-center justify-center h-12 sm:h-16 mb-2 sm:mb-2.5">
         {isImage && file.thumbnailLink ? (
           <img
             src={file.thumbnailLink}
             alt={file.name}
-            className="max-h-14 sm:max-h-20 max-w-full object-contain rounded"
+            className="max-h-12 sm:max-h-16 max-w-full object-contain rounded"
           />
         ) : (
-          <Icon
-            className={cn(
-              "w-8 h-8 sm:w-10 sm:h-10",
-              file.isFolder ? "text-emerald-600 dark:text-emerald-500" : "text-zinc-400 dark:text-zinc-400"
-            )}
-          />
+          <div className={cn(
+            "w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center",
+            file.isFolder
+              ? "bg-emerald-50 dark:bg-emerald-500/10"
+              : "bg-zinc-100 dark:bg-zinc-800"
+          )}>
+            <Icon
+              className={cn(
+                "w-5 h-5 sm:w-6 sm:h-6",
+                file.isFolder ? "text-emerald-600 dark:text-emerald-500" : "text-zinc-400 dark:text-zinc-400"
+              )}
+            />
+          </div>
         )}
       </div>
 
       {/* Name */}
-      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-200 truncate" title={file.name}>
+      <p className="text-[13px] font-medium text-zinc-900 dark:text-zinc-200 truncate" title={file.name}>
         {file.name}
       </p>
 
@@ -266,7 +273,7 @@ export function DriveFileGrid({ files, isLoading }: DriveFileGridProps) {
   // Loading state
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
         {Array.from({ length: 8 }).map((_, i) => (
           <SkeletonCard key={i} />
         ))}
@@ -290,7 +297,7 @@ export function DriveFileGrid({ files, isLoading }: DriveFileGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
       {sortedFiles.map((file) => (
         <FileGridCard key={file.id} file={file} />
       ))}

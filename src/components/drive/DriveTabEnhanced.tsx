@@ -406,6 +406,16 @@ export function DriveTabEnhanced({ files, assistidoId, processoId }: DriveTabEnh
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFile, setSelectedFile] = useState<DriveFileData | null>(null);
 
+  // Get the driveFolderId from the first file (all files share same root)
+  const driveFolderId = files[0]?.driveFolderId;
+
+  const processFolder = trpc.enrichment.batchProcess.useMutation({
+    onSuccess: (data) => {
+      toast.success(`${data.queued} arquivos enfileirados para processamento`);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   // Filter files by search
   const filteredFiles = useMemo(() => {
     if (!searchQuery.trim()) return files;
@@ -482,6 +492,28 @@ export function DriveTabEnhanced({ files, assistidoId, processoId }: DriveTabEnh
         <span className="text-[10px] text-zinc-400 shrink-0">
           {filteredFiles.filter((f) => !f.isFolder).length} arquivo{filteredFiles.filter((f) => !f.isFolder).length !== 1 ? "s" : ""}
         </span>
+
+        {/* Processar Pasta Completa */}
+        {assistidoId && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-[10px] gap-1 shrink-0"
+            disabled={processFolder.isPending}
+            onClick={() => processFolder.mutate({
+              scope: "by_ids",
+              assistidoIds: [assistidoId],
+              onlyNew: true,
+            })}
+          >
+            {processFolder.isPending ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Brain className="h-3 w-3" />
+            )}
+            Processar Pasta
+          </Button>
+        )}
       </div>
 
       {/* View content */}

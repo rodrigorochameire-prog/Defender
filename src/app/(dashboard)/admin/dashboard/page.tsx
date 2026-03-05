@@ -776,7 +776,7 @@ export default function DashboardJuriPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/40 via-transparent to-transparent dark:from-emerald-950/20 dark:via-transparent pointer-events-none" />
         <div className="relative flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg ring-4 ring-zinc-900/5 dark:ring-white/10">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-900 dark:from-white dark:to-zinc-100 flex items-center justify-center shadow-lg shadow-zinc-900/10 dark:shadow-black/10 ring-4 ring-zinc-900/5 dark:ring-white/10">
               <Briefcase className="w-5.5 h-5.5 text-white dark:text-zinc-900" />
             </div>
             <div>

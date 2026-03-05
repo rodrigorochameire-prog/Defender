@@ -49,7 +49,7 @@ import {
   // Auth
   getAccessToken,
 } from "@/lib/services/google-drive";
-import { processos, assistidos, casos, demandas, atendimentos } from "@/lib/db/schema";
+import { processos, assistidos, casos, demandas, atendimentos, audiencias, driveDocumentSections, driveFileContents } from "@/lib/db/schema";
 import {
   enrichmentClient,
   type TranscribeOutput,
@@ -901,6 +901,107 @@ export const driveRouter = router({
           totalOrphanFolders: orphanFolders.length,
           totalDriveFolders: drivefolders.length,
         },
+      };
+    }),
+
+  /**
+   * Reverse Sync on-demand: Scan atribuição folders for orphan folders
+   * and create assistido records for them.
+   *
+   * dryRun=true: Returns preview of what would be created
+   * dryRun=false: Actually creates the assistidos
+   */
+  detectNewFolders: adminProcedure
+    .input(z.object({
+      dryRun: z.boolean().default(true),
+      atribuicao: z.enum(["JURI", "VVD", "EP", "SUBSTITUICAO", "GRUPO_JURI"]).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { ATRIBUICAO_FOLDER_IDS, normalizeName } = await import("@/lib/utils/text-extraction");
+      const { handleNewAssistidoFolder } = await import("@/lib/services/google-drive");
+
+      // 1. Determine which atribuição folders to scan
+      type AtribKey = keyof typeof ATRIBUICAO_FOLDER_IDS;
+      const atribuicoes: AtribKey[] = input.atribuicao
+        ? [input.atribuicao]
+        : ["JURI", "VVD", "EP", "SUBSTITUICAO", "GRUPO_JURI"];
+
+      // 2. Get all existing assistidos with driveFolderId
+      const linkedAssistidos = await db
+        .select({ driveFolderId: assistidos.driveFolderId })
+        .from(assistidos)
+        .where(and(
+          not(isNull(assistidos.driveFolderId)),
+          isNull(assistidos.deletedAt),
+        ));
+      const linkedFolderIds = new Set(linkedAssistidos.map(a => a.driveFolderId).filter(Boolean));
+
+      // 3. Scan each atribuição folder
+      const orphans: Array<{
+        folderId: string;
+        folderName: string;
+        atribuicao: string;
+        parentFolderId: string;
+      }> = [];
+
+      for (const atribKey of atribuicoes) {
+        const parentFolderId = ATRIBUICAO_FOLDER_IDS[atribKey];
+        const subfolders = await listAllItemsInFolder(parentFolderId);
+
+        for (const folder of subfolders) {
+          if (folder.mimeType !== "application/vnd.google-apps.folder") continue;
+          if (linkedFolderIds.has(folder.id)) continue;
+
+          orphans.push({
+            folderId: folder.id,
+            folderName: folder.name,
+            atribuicao: atribKey,
+            parentFolderId,
+          });
+        }
+      }
+
+      if (input.dryRun) {
+        return {
+          dryRun: true,
+          orphanCount: orphans.length,
+          orphans: orphans.map(o => ({
+            folderId: o.folderId,
+            folderName: o.folderName,
+            atribuicao: o.atribuicao,
+          })),
+          results: [],
+        };
+      }
+
+      // 4. Process each orphan folder
+      const results = [];
+      for (const orphan of orphans) {
+        try {
+          const result = await handleNewAssistidoFolder(
+            orphan.folderId,
+            orphan.folderName,
+            orphan.parentFolderId
+          );
+          if (result) {
+            results.push(result);
+          }
+        } catch (error) {
+          results.push({
+            action: "error" as const,
+            folderName: orphan.folderName,
+            folderId: orphan.folderId,
+            atribuicao: orphan.atribuicao,
+            error: error instanceof Error ? error.message : "Unknown error",
+          });
+        }
+      }
+
+      return {
+        dryRun: false,
+        orphanCount: orphans.length,
+        orphans: [],
+        results,
       };
     }),
 
@@ -3289,5 +3390,436 @@ export const driveRouter = router({
       }
 
       return { total: missing.length, created, failed, errors: errors.slice(0, 20) };
+    }),
+
+  // ==========================================
+  // SISTEMA NERVOSO VIVO — QUERIES
+  // ==========================================
+
+  /**
+   * Timeline de atos processuais para um processo.
+   * Combina driveDocumentSections + driveFiles para gerar timeline cronologica.
+   * Inclui midias com status de transcricao.
+   */
+  timelineByProcesso: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      // 1. Get all driveFiles linked to this processo
+      const files = await db
+        .select({
+          id: driveFiles.id,
+          driveFileId: driveFiles.driveFileId,
+          name: driveFiles.name,
+          mimeType: driveFiles.mimeType,
+          webViewLink: driveFiles.webViewLink,
+          webContentLink: driveFiles.webContentLink,
+          lastModifiedTime: driveFiles.lastModifiedTime,
+          enrichmentStatus: driveFiles.enrichmentStatus,
+          documentType: driveFiles.documentType,
+          isFolder: driveFiles.isFolder,
+        })
+        .from(driveFiles)
+        .where(and(
+          eq(driveFiles.processoId, input.processoId),
+          eq(driveFiles.isFolder, false),
+        ))
+        .orderBy(desc(driveFiles.lastModifiedTime));
+
+      if (files.length === 0) return { events: [], stats: { total: 0, enriched: 0, media: 0 } };
+
+      const fileIds = files.map(f => f.id);
+
+      // 2. Get document sections for these files
+      const sections = await db
+        .select({
+          id: driveDocumentSections.id,
+          driveFileId: driveDocumentSections.driveFileId,
+          tipo: driveDocumentSections.tipo,
+          titulo: driveDocumentSections.titulo,
+          paginaInicio: driveDocumentSections.paginaInicio,
+          paginaFim: driveDocumentSections.paginaFim,
+          resumo: driveDocumentSections.resumo,
+          metadata: driveDocumentSections.metadata,
+          confianca: driveDocumentSections.confianca,
+        })
+        .from(driveDocumentSections)
+        .where(inArray(driveDocumentSections.driveFileId, fileIds))
+        .orderBy(driveDocumentSections.paginaInicio);
+
+      // 3. Build timeline events
+      type TimelineEvent = {
+        id: string;
+        tipo: string;
+        titulo: string;
+        data: string | null;
+        resumo: string | null;
+        fileId: number;
+        fileName: string;
+        webViewLink: string | null;
+        webContentLink: string | null;
+        mimeType: string | null;
+        isMedia: boolean;
+        enrichmentStatus: string | null;
+        paginaInicio?: number;
+        paginaFim?: number;
+        confianca?: number;
+        metadata?: Record<string, unknown> | null;
+      };
+
+      const events: TimelineEvent[] = [];
+
+      // Group sections by file
+      const sectionsByFile = new Map<number, typeof sections>();
+      for (const s of sections) {
+        const existing = sectionsByFile.get(s.driveFileId) || [];
+        existing.push(s);
+        sectionsByFile.set(s.driveFileId, existing);
+      }
+
+      for (const file of files) {
+        const fileSections = sectionsByFile.get(file.id);
+        const isMedia = !!(file.mimeType?.startsWith("audio/") || file.mimeType?.startsWith("video/"));
+
+        if (fileSections && fileSections.length > 0) {
+          // File has classified sections — create event per section
+          for (const section of fileSections) {
+            const datasExtraidas = (section.metadata as Record<string, unknown>)?.datasExtraidas as string[] | undefined;
+            events.push({
+              id: `section-${section.id}`,
+              tipo: section.tipo,
+              titulo: section.titulo,
+              data: datasExtraidas?.[0] || (file.lastModifiedTime ? new Date(file.lastModifiedTime).toISOString() : null),
+              resumo: section.resumo,
+              fileId: file.id,
+              fileName: file.name,
+              webViewLink: file.webViewLink,
+              webContentLink: file.webContentLink,
+              mimeType: file.mimeType,
+              isMedia,
+              enrichmentStatus: file.enrichmentStatus,
+              paginaInicio: section.paginaInicio,
+              paginaFim: section.paginaFim,
+              confianca: section.confianca ?? undefined,
+              metadata: section.metadata as Record<string, unknown> | null,
+            });
+          }
+        } else {
+          // No sections — create event from file metadata
+          events.push({
+            id: `file-${file.id}`,
+            tipo: isMedia ? "midia" : (file.documentType || "documento"),
+            titulo: file.name,
+            data: file.lastModifiedTime ? new Date(file.lastModifiedTime).toISOString() : null,
+            resumo: null,
+            fileId: file.id,
+            fileName: file.name,
+            webViewLink: file.webViewLink,
+            webContentLink: file.webContentLink,
+            mimeType: file.mimeType,
+            isMedia,
+            enrichmentStatus: file.enrichmentStatus,
+          });
+        }
+      }
+
+      // Sort by date (newest first), nulls last
+      events.sort((a, b) => {
+        if (!a.data && !b.data) return 0;
+        if (!a.data) return 1;
+        if (!b.data) return -1;
+        return new Date(b.data).getTime() - new Date(a.data).getTime();
+      });
+
+      return {
+        events,
+        stats: {
+          total: files.length,
+          enriched: files.filter(f => f.enrichmentStatus === "completed").length,
+          media: files.filter(f => f.mimeType?.startsWith("audio/") || f.mimeType?.startsWith("video/")).length,
+        },
+      };
+    }),
+
+  /**
+   * Timeline consolidada para um assistido (todos os processos).
+   * Retorna eventos de todos os processos com seções classificadas e arquivos brutos.
+   */
+  timelineByAssistido: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input }) => {
+      // Get assistido's processos (via many-to-many + legacy direct FK)
+      const assistidoProcessos = await db
+        .select({ id: processos.id, numeroAutos: processos.numeroAutos })
+        .from(processos)
+        .where(or(
+          eq(processos.assistidoId, input.assistidoId),
+          sql`${processos.id} IN (SELECT processo_id FROM assistidos_processos WHERE assistido_id = ${input.assistidoId})`,
+        ));
+
+      if (assistidoProcessos.length === 0) return { processos: [], stats: { totalEvents: 0, totalProcessos: 0 } };
+
+      const processoIds = assistidoProcessos.map(p => p.id);
+      const processoMap = new Map(assistidoProcessos.map(p => [p.id, p.numeroAutos]));
+
+      // Get files from all processos
+      const files = await db
+        .select({
+          id: driveFiles.id,
+          driveFileId: driveFiles.driveFileId,
+          name: driveFiles.name,
+          mimeType: driveFiles.mimeType,
+          webViewLink: driveFiles.webViewLink,
+          webContentLink: driveFiles.webContentLink,
+          lastModifiedTime: driveFiles.lastModifiedTime,
+          enrichmentStatus: driveFiles.enrichmentStatus,
+          documentType: driveFiles.documentType,
+          processoId: driveFiles.processoId,
+        })
+        .from(driveFiles)
+        .where(and(
+          inArray(driveFiles.processoId, processoIds),
+          eq(driveFiles.isFolder, false),
+        ))
+        .orderBy(desc(driveFiles.lastModifiedTime));
+
+      if (files.length === 0) return { processos: [], stats: { totalEvents: 0, totalProcessos: assistidoProcessos.length } };
+
+      const fileIds = files.map(f => f.id);
+
+      // Get document sections
+      const sections = await db
+        .select({
+          id: driveDocumentSections.id,
+          driveFileId: driveDocumentSections.driveFileId,
+          tipo: driveDocumentSections.tipo,
+          titulo: driveDocumentSections.titulo,
+          resumo: driveDocumentSections.resumo,
+          paginaInicio: driveDocumentSections.paginaInicio,
+          paginaFim: driveDocumentSections.paginaFim,
+          metadata: driveDocumentSections.metadata,
+          confianca: driveDocumentSections.confianca,
+        })
+        .from(driveDocumentSections)
+        .where(inArray(driveDocumentSections.driveFileId, fileIds));
+
+      const sectionsByFile = new Map<number, typeof sections>();
+      for (const s of sections) {
+        const existing = sectionsByFile.get(s.driveFileId) || [];
+        existing.push(s);
+        sectionsByFile.set(s.driveFileId, existing);
+      }
+
+      // Build events grouped by processo
+      type TimelineEvent = {
+        id: string;
+        tipo: string;
+        titulo: string;
+        data: string | null;
+        resumo: string | null;
+        fileId: number;
+        fileName: string;
+        webViewLink: string | null;
+        webContentLink: string | null;
+        mimeType: string | null;
+        isMedia: boolean;
+        enrichmentStatus: string | null;
+      };
+
+      const processoGroups: { processoId: number; numeroAutos: string; events: TimelineEvent[] }[] = [];
+
+      for (const pId of processoIds) {
+        const processoFiles = files.filter(f => f.processoId === pId);
+        const events: TimelineEvent[] = [];
+
+        for (const file of processoFiles) {
+          const fileSections = sectionsByFile.get(file.id);
+          const isMedia = !!(file.mimeType?.startsWith("audio/") || file.mimeType?.startsWith("video/"));
+
+          if (fileSections && fileSections.length > 0) {
+            for (const section of fileSections) {
+              const datasExtraidas = (section.metadata as Record<string, unknown>)?.datasExtraidas as string[] | undefined;
+              events.push({
+                id: `section-${section.id}`,
+                tipo: section.tipo,
+                titulo: section.titulo,
+                data: datasExtraidas?.[0] || (file.lastModifiedTime ? new Date(file.lastModifiedTime).toISOString() : null),
+                resumo: section.resumo,
+                fileId: file.id,
+                fileName: file.name,
+                webViewLink: file.webViewLink,
+                webContentLink: file.webContentLink,
+                mimeType: file.mimeType,
+                isMedia,
+                enrichmentStatus: file.enrichmentStatus,
+              });
+            }
+          } else {
+            events.push({
+              id: `file-${file.id}`,
+              tipo: isMedia ? "midia" : (file.documentType || "documento"),
+              titulo: file.name,
+              data: file.lastModifiedTime ? new Date(file.lastModifiedTime).toISOString() : null,
+              resumo: null,
+              fileId: file.id,
+              fileName: file.name,
+              webViewLink: file.webViewLink,
+              webContentLink: file.webContentLink,
+              mimeType: file.mimeType,
+              isMedia,
+              enrichmentStatus: file.enrichmentStatus,
+            });
+          }
+        }
+
+        events.sort((a, b) => {
+          if (!a.data && !b.data) return 0;
+          if (!a.data) return 1;
+          if (!b.data) return -1;
+          return new Date(b.data).getTime() - new Date(a.data).getTime();
+        });
+
+        if (events.length > 0) {
+          processoGroups.push({
+            processoId: pId,
+            numeroAutos: processoMap.get(pId) || `Processo #${pId}`,
+            events,
+          });
+        }
+      }
+
+      return {
+        processos: processoGroups,
+        stats: {
+          totalEvents: processoGroups.reduce((sum, g) => sum + g.events.length, 0),
+          totalProcessos: processoGroups.length,
+        },
+      };
+    }),
+
+  /**
+   * Midias agrupadas por processo para um assistido.
+   * Retorna audio/video files com enrichmentData (transcricao, analise).
+   */
+  midiasByAssistido: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input }) => {
+      // Get all media files linked to this assistido's folder
+      const [assistido] = await db
+        .select({ driveFolderId: assistidos.driveFolderId })
+        .from(assistidos)
+        .where(eq(assistidos.id, input.assistidoId))
+        .limit(1);
+
+      if (!assistido?.driveFolderId) return { processos: [], ungrouped: [], stats: { total: 0, transcribed: 0, analyzed: 0 } };
+
+      // Get media files
+      const mediaFiles = await db
+        .select({
+          id: driveFiles.id,
+          driveFileId: driveFiles.driveFileId,
+          name: driveFiles.name,
+          mimeType: driveFiles.mimeType,
+          webViewLink: driveFiles.webViewLink,
+          webContentLink: driveFiles.webContentLink,
+          lastModifiedTime: driveFiles.lastModifiedTime,
+          enrichmentStatus: driveFiles.enrichmentStatus,
+          enrichmentData: driveFiles.enrichmentData,
+          documentType: driveFiles.documentType,
+          processoId: driveFiles.processoId,
+          fileSize: driveFiles.fileSize,
+        })
+        .from(driveFiles)
+        .where(and(
+          eq(driveFiles.driveFolderId, assistido.driveFolderId),
+          eq(driveFiles.isFolder, false),
+          or(
+            sql`${driveFiles.mimeType} LIKE 'audio/%'`,
+            sql`${driveFiles.mimeType} LIKE 'video/%'`,
+            eq(driveFiles.documentType, "transcricao_plaud"),
+          ),
+        ))
+        .orderBy(desc(driveFiles.lastModifiedTime));
+
+      // Get processo names for grouping
+      const processoIds = [...new Set(mediaFiles.filter(f => f.processoId).map(f => f.processoId!))];
+      const processoNames = processoIds.length > 0
+        ? await db
+            .select({ id: processos.id, numeroAutos: processos.numeroAutos })
+            .from(processos)
+            .where(inArray(processos.id, processoIds))
+        : [];
+
+      const processoMap = new Map(processoNames.map(p => [p.id, p.numeroAutos]));
+
+      // Group by processo
+      type MediaFile = typeof mediaFiles[number] & {
+        hasTranscript: boolean;
+        hasAnalysis: boolean;
+        transcript_plain?: string;
+        summary?: string;
+        speakers?: unknown[];
+        analysisHighlights?: {
+          pontosFavoraveis?: number;
+          pontosDesfavoraveis?: number;
+          contradicoes?: number;
+        };
+      };
+
+      const enrichMedia = (file: typeof mediaFiles[number]): MediaFile => {
+        const ed = file.enrichmentData as Record<string, unknown> | null;
+        const analysis = ed?.analysis as Record<string, unknown> | null;
+        return {
+          ...file,
+          hasTranscript: !!(ed?.transcript || ed?.transcript_plain),
+          hasAnalysis: !!analysis,
+          transcript_plain: (ed?.transcript_plain as string) || undefined,
+          summary: (ed?.summary as string) || (analysis?.resumo_defesa as string) || undefined,
+          speakers: (ed?.speakers as unknown[]) || undefined,
+          analysisHighlights: analysis ? {
+            pontosFavoraveis: (analysis.pontos_favoraveis as unknown[])?.length || 0,
+            pontosDesfavoraveis: (analysis.pontos_desfavoraveis as unknown[])?.length || 0,
+            contradicoes: (analysis.contradicoes as unknown[])?.length || 0,
+          } : undefined,
+        };
+      };
+
+      const grouped = new Map<number, MediaFile[]>();
+      const ungrouped: MediaFile[] = [];
+
+      for (const file of mediaFiles) {
+        const enriched = enrichMedia(file);
+        if (file.processoId) {
+          const existing = grouped.get(file.processoId) || [];
+          existing.push(enriched);
+          grouped.set(file.processoId, existing);
+        } else {
+          ungrouped.push(enriched);
+        }
+      }
+
+      const processoGroups = Array.from(grouped.entries()).map(([pId, files]) => ({
+        processoId: pId,
+        numeroAutos: processoMap.get(pId) || `Processo #${pId}`,
+        files,
+      }));
+
+      const transcribed = mediaFiles.filter(f => {
+        const ed = f.enrichmentData as Record<string, unknown> | null;
+        return !!(ed?.transcript || ed?.transcript_plain);
+      }).length;
+      const analyzed = mediaFiles.filter(f => {
+        const ed = f.enrichmentData as Record<string, unknown> | null;
+        return !!(ed?.analysis);
+      }).length;
+
+      return {
+        processos: processoGroups,
+        ungrouped: ungrouped,
+        stats: {
+          total: mediaFiles.length,
+          transcribed,
+          analyzed,
+        },
+      };
     }),
 });

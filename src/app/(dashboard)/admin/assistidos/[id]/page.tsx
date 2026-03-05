@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, Lock, User, Mic, Music, Video, Loader2, Sun, ExternalLink, CheckCircle2, AlertCircle, Brain, FileText, Plus, Sparkles, Pencil, Clock, Send, Scale, Calendar, FolderOpen, ChevronDown } from "lucide-react";
+import { ArrowLeft, Lock, User, Loader2, Sun, ExternalLink, CheckCircle2, AlertCircle, Brain, FileText, Plus, Sparkles, Pencil, Clock, Send, Scale, Calendar, FolderOpen, ChevronDown } from "lucide-react";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,10 +19,12 @@ import { DriveStatusBar } from "@/components/drive/DriveStatusBar";
 import { DriveTabEnhanced } from "@/components/drive/DriveTabEnhanced";
 import { MarkdownViewerModal } from "@/components/drive/MarkdownViewerModal";
 import { useRealtimeFileStatus } from "@/hooks/use-realtime-file-status";
+import { MidiasHub } from "@/components/midias/MidiasHub";
+import { TimelineVivaAssistido } from "@/components/processos/TimelineViva";
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
-type Tab = "processos" | "demandas" | "drive" | "audiencias" | "midias" | "oficios" | "inteligencia";
+type Tab = "processos" | "demandas" | "drive" | "audiencias" | "midias" | "timeline" | "oficios" | "inteligencia";
 
 interface TranscriptionData {
   transcript: string;
@@ -148,8 +150,9 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           next.delete(update.drive_file_id);
           return next;
         });
-        // Invalidate just the enrichment data, and refetch assistido for status badges
+        // Invalidate enrichment data, midias hub, and assistido for status badges
         utils.drive.getFilesEnrichmentData.invalidate();
+        utils.drive.midiasByAssistido.invalidate({ assistidoId: Number(id) });
         utils.assistidos.getById.invalidate({ id: Number(id) });
       } else if (update.enrichment_status === "failed") {
         toast.error(`Transcrição de "${update.name}" falhou`);
@@ -158,6 +161,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           next.delete(update.drive_file_id);
           return next;
         });
+        utils.drive.midiasByAssistido.invalidate({ assistidoId: Number(id) });
         utils.assistidos.getById.invalidate({ id: Number(id) });
       }
     },
@@ -188,21 +192,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     [data?.driveFiles]
   );
 
-  // Lazy-load enrichmentData only for media files when Mídias tab is active
-  const mediaFileIds = useMemo(() => mediaFiles.map((f) => f.id), [mediaFiles]);
-  const { data: mediaEnrichments } = trpc.drive.getFilesEnrichmentData.useQuery(
-    { fileIds: mediaFileIds },
-    { enabled: tab === "midias" && mediaFileIds.length > 0, staleTime: 60_000 },
-  );
-  const enrichmentMap = useMemo(() => {
-    const map = new Map<number, Record<string, unknown>>();
-    if (mediaEnrichments) {
-      for (const e of mediaEnrichments) {
-        if (e.enrichmentData) map.set(e.id, e.enrichmentData as Record<string, unknown>);
-      }
-    }
-    return map;
-  }, [mediaEnrichments]);
+  // Note: enrichmentData for midias now handled by MidiasHub component
 
   // Sync processingFiles with actual status from server (fallback for Realtime)
   useEffect(() => {
@@ -295,6 +285,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     { key: "drive", label: "Drive", count: data.driveFiles.length },
     { key: "audiencias", label: "Audiências", count: data.audiencias.length },
     { key: "midias", label: "Mídias", count: mediaFiles.length },
+    { key: "timeline", label: "Timeline" },
     { key: "oficios", label: "Ofícios", count: oficiosData?.total ?? 0 },
     { key: "inteligencia", label: "Inteligência" },
   ];
@@ -757,192 +748,30 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         )}
 
         {tab === "midias" && (
-          <div className="space-y-2">
-            {mediaFiles.length === 0 ? (
-              <div className="text-center py-12">
-                <Music className="h-8 w-8 mx-auto mb-2 text-zinc-300" />
-                <p className="text-sm text-zinc-400">Nenhum arquivo de mídia encontrado</p>
-                <p className="text-[11px] text-zinc-300 mt-1">Arquivos de áudio e vídeo do Drive aparecerão aqui</p>
-              </div>
-            ) : (
-              mediaFiles.map((f) => {
-                // Plaud transcription card
-                if (f.documentType === "transcricao_plaud") {
-                  return (
-                    <div
-                      key={f.id}
-                      className="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-                    >
-                      <div className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center shrink-0">
-                        <FileText className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{f.name}</p>
-                        {enrichmentMap.get(f.id)?.summary && (
-                          <p className="text-xs text-zinc-500 line-clamp-1 mt-0.5">
-                            {(enrichmentMap.get(f.id)!.summary as string).slice(0, 100)}...
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Badge variant="secondary" className="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 text-[10px]">plaud</Badge>
-                        {f.enrichmentStatus === "completed" && (
-                          <Badge variant="secondary" className="text-[10px]">transcrito</Badge>
-                        )}
-                        <Button variant="outline" size="sm" onClick={() => setMarkdownViewerFile(f)} className="gap-1.5">
-                          <FileText className="w-3.5 h-3.5" />
-                          Ver transcricao
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                }
-
-                // Audio/video card
-                const isAudio = f.mimeType?.startsWith("audio/");
-                // Check both local state AND enrichmentData from DB
-                // transcript may be plain text or JSON string — extract plain text
-                const enrichData = enrichmentMap.get(f.id) ?? null;
-                const rawTranscript = enrichData?.transcript as string | undefined;
-                const rawTranscriptPlain = enrichData?.transcript_plain as string | undefined;
-                let enrichmentTranscript: string | undefined;
-                if (rawTranscriptPlain && !rawTranscriptPlain.startsWith("{")) {
-                  enrichmentTranscript = rawTranscriptPlain;
-                } else if (rawTranscript && !rawTranscript.startsWith("{")) {
-                  enrichmentTranscript = rawTranscript;
-                } else if (rawTranscript) {
-                  // transcript is a JSON string — try to extract plain text
-                  try {
-                    const parsed = JSON.parse(rawTranscript);
-                    enrichmentTranscript = parsed.transcript_plain || parsed.transcript || rawTranscript;
-                  } catch {
-                    enrichmentTranscript = rawTranscript;
-                  }
-                }
-                const hasEnrichmentTranscript = !!enrichmentTranscript;
-                const fileKey = f.driveFileId ?? String(f.id); // Use Drive ID as key, fallback to DB id
-                const isTranscribed = transcriptions.has(fileKey) || hasEnrichmentTranscript;
-                const isProcessing = f.enrichmentStatus === "processing";
-                const isFailed = f.enrichmentStatus === "failed";
-                const isCurrentlyTranscribing = transcribing.has(fileKey) || isProcessing;
-
-                // Progress data from backend
-                const progress = (enrichData?.progress as { step?: string; percent?: number; detail?: string } | null);
-                const progressPercent = isProcessing ? (progress?.percent ?? 15) : 0;
-                const progressDetail = progress?.detail ?? "Processando...";
-                if (hasEnrichmentTranscript && !transcriptions.has(fileKey)) {
-                  // Populate local state from DB (lazy)
-                  transcriptions.set(fileKey, {
-                    transcript: enrichmentTranscript,
-                    speakers: (enrichData?.speakers as string[]) ?? undefined,
-                    duration: (enrichData?.duration as number) ?? undefined,
-                    analysis: (enrichData?.analysis as AnalysisData) ?? undefined,
-                  });
-                }
-                const transcriptionData = transcriptions.get(fileKey);
-                const hasAnalysis = !!(transcriptionData?.analysis?.resumo_defesa);
-
-                return (
-                  <div
-                    key={f.id}
-                    className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      {isAudio ? (
-                        <Music className="h-5 w-5 text-cyan-500 shrink-0" />
-                      ) : (
-                        <Video className="h-5 w-5 text-violet-500 shrink-0" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-medium text-zinc-700 dark:text-zinc-300 truncate">
-                          {f.name}
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          {!isAudio && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
-                              vídeo
-                            </span>
-                          )}
-                          <span className="text-[10px] text-zinc-400">
-                            {f.mimeType}
-                          </span>
-                          {isFailed && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 font-medium">
-                              falhou
-                            </span>
-                          )}
-                          {isTranscribed && !isProcessing && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium">
-                              transcrito
-                            </span>
-                          )}
-                          {hasAnalysis && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 font-medium flex items-center gap-0.5">
-                              <Brain className="h-2.5 w-2.5" />
-                              analisado
-                            </span>
-                          )}
-                        </div>
-                        {/* Progress bar with steps */}
-                        {isCurrentlyTranscribing && (
-                          <div className="mt-2 space-y-1">
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-                                <div
-                                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 transition-all duration-1000 ease-out"
-                                  style={{ width: `${progressPercent}%` }}
-                                />
-                              </div>
-                              <span className="text-[9px] font-mono text-zinc-400 tabular-nums w-7 text-right shrink-0">
-                                {progressPercent}%
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <Loader2 className="h-2.5 w-2.5 animate-spin text-cyan-500" />
-                              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
-                                {progressDetail}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {isTranscribed && !isProcessing && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 text-[11px] text-violet-600 hover:text-violet-700 px-2"
-                            onClick={() => setTranscriptViewerFile(fileKey)}
-                          >
-                            Ver transcrição
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-[11px] px-2 gap-1.5"
-                          onClick={() => handleTranscribe(fileKey)}
-                          disabled={isCurrentlyTranscribing}
-                        >
-                          {isCurrentlyTranscribing ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Mic className="h-3 w-3 text-cyan-500" />
-                          )}
-                          {isCurrentlyTranscribing
-                            ? "Transcrevendo..."
-                            : isTranscribed
-                            ? "Retranscrever"
-                            : "Transcrever"}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+          <MidiasHub
+            assistidoId={Number(id)}
+            processingFiles={processingFiles}
+            onTranscribe={handleTranscribe}
+            onViewTranscript={(fileKey, data) => {
+              setTranscriptions((prev) => {
+                const next = new Map(prev);
+                next.set(fileKey, {
+                  transcript: data.transcript,
+                  summary: data.summary,
+                  speakers: data.speakers as string[] | undefined,
+                });
+                return next;
+              });
+              setTranscriptViewerFile(fileKey);
+            }}
+            onViewPlaud={(file) => setMarkdownViewerFile(file)}
+          />
         )}
+
+        {tab === "timeline" && (
+          <TimelineVivaAssistido assistidoId={Number(id)} />
+        )}
+
         {tab === "oficios" && (
           <div className="space-y-3">
             {/* Header */}

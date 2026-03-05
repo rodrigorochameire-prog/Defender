@@ -992,6 +992,54 @@ export const incrementalSyncFn = inngest.createFunction(
           },
         });
       });
+
+      // Reverse Sync: Check if any new files are folders inside atribuição roots
+      await step.run("reverse-sync-new-folders", async () => {
+        const { driveFiles } = await import("@/lib/db/schema");
+        const { inArray } = await import("drizzle-orm");
+        const { handleNewAssistidoFolder, isAtribuicaoRootChild } = await import("@/lib/services/google-drive");
+
+        // Query newly inserted driveFiles to find folders
+        const newFiles = await db
+          .select({
+            id: driveFiles.id,
+            driveFileId: driveFiles.driveFileId,
+            name: driveFiles.name,
+            isFolder: driveFiles.isFolder,
+            mimeType: driveFiles.mimeType,
+          })
+          .from(driveFiles)
+          .where(inArray(driveFiles.id, syncResult.newFileIds));
+
+        const results = [];
+        for (const file of newFiles) {
+          if (!file.isFolder || !file.driveFileId) continue;
+
+          // Fetch the file's parent from Drive API to check if it's an atribuição root
+          const { getAccessToken } = await import("@/lib/services/google-drive");
+          const accessToken = await getAccessToken();
+          if (!accessToken) continue;
+
+          const res = await fetch(
+            `https://www.googleapis.com/drive/v3/files/${file.driveFileId}?fields=parents&supportsAllDrives=true`,
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+          if (!res.ok) continue;
+
+          const fileData = await res.json();
+          const parentId = fileData.parents?.[0];
+          if (!parentId || !isAtribuicaoRootChild(parentId)) continue;
+
+          const result = await handleNewAssistidoFolder(
+            file.driveFileId,
+            file.name,
+            parentId
+          );
+          if (result) results.push(result);
+        }
+
+        return { reverseSyncResults: results };
+      });
     }
 
     return { folderId, triggerSource, ...syncResult };
@@ -1021,6 +1069,100 @@ export const renewChannelsFn = inngest.createFunction(
       return renewExpiringChannels(webhookBaseUrl);
     });
     return result;
+  }
+);
+
+// ============================================
+// ENRICHMENT: PROCESS FOLDER (REVERSE SYNC)
+// ============================================
+
+/**
+ * Processes all files in a folder for enrichment.
+ * Triggered after reverse sync creates/links an assistido.
+ * Delay of 5 minutes to allow time for additional uploads.
+ */
+export const enrichmentProcessFolderFn = inngest.createFunction(
+  {
+    id: "enrichment-process-folder",
+    name: "Enrichment Process Folder",
+    retries: 2,
+    concurrency: { limit: 5 },
+  },
+  { event: "enrichment/process-folder" },
+  async ({ event, step }) => {
+    const { assistidoId, driveFolderId } = event.data;
+
+    // Step 1: Wait 5 minutes to let additional uploads settle
+    await step.sleep("wait-for-uploads", "5m");
+
+    // Step 2: List all files in the folder
+    const files = await step.run("list-folder-files", async () => {
+      const { listAllItemsInFolder } = await import("@/lib/services/google-drive");
+      return listAllItemsInFolder(driveFolderId);
+    });
+
+    if (!files || files.length === 0) {
+      return { assistidoId, processed: 0, skipped: 0, queued: 0 };
+    }
+
+    // Step 3: Check which files already have enrichment
+    const enrichResult = await step.run("enqueue-enrichment-jobs", async () => {
+      const { driveFiles } = await import("@/lib/db/schema");
+      const { eq, and, isNull: drizzleIsNull } = await import("drizzle-orm");
+
+      // Get tracked files that haven't been enriched
+      const unenrichedFiles = await db
+        .select({
+          id: driveFiles.id,
+          driveFileId: driveFiles.driveFileId,
+          mimeType: driveFiles.mimeType,
+          enrichmentStatus: driveFiles.enrichmentStatus,
+        })
+        .from(driveFiles)
+        .where(
+          and(
+            eq(driveFiles.driveFolderId, driveFolderId),
+            eq(driveFiles.isFolder, false),
+          )
+        );
+
+      const ENRICHABLE_TYPES = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "image/jpeg",
+        "image/png",
+        "image/tiff",
+      ];
+
+      let queued = 0;
+      let skipped = 0;
+
+      for (const file of unenrichedFiles) {
+        if (file.enrichmentStatus === "completed" || file.enrichmentStatus === "processing") {
+          skipped++;
+          continue;
+        }
+        if (!file.mimeType || !ENRICHABLE_TYPES.includes(file.mimeType)) {
+          skipped++;
+          continue;
+        }
+        if (file.driveFileId && file.mimeType === "application/pdf") {
+          await inngest.send({
+            name: "pdf/extract-and-classify",
+            data: {
+              driveFileId: file.id,
+              driveGoogleId: file.driveFileId,
+            },
+          });
+          queued++;
+        }
+      }
+
+      return { total: unenrichedFiles.length, queued, skipped };
+    });
+
+    return { assistidoId, ...enrichResult };
   }
 );
 
@@ -1667,4 +1809,5 @@ export const functions = [
   pdfInsertBookmarksFn,
   sectionGenerateFichaFn,
   transcribeDriveFileFn,
+  enrichmentProcessFolderFn,
 ];

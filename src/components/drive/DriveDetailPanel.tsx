@@ -2024,6 +2024,9 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
           fileName={file.name}
           webViewLink={file.webViewLink}
           driveFileId={file.driveFileId}
+          mimeType={file.mimeType}
+          fileSize={file.size ? `${(file.size / 1024).toFixed(0)} KB` : null}
+          enrichmentStatus={file.enrichmentStatus}
         />
       )}
 

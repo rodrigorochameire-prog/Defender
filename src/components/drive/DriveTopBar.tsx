@@ -21,6 +21,7 @@ import {
   Upload,
   LayoutGrid,
   List,
+  AlignJustify,
   FilePlus2,
   FileText,
   Scale,
@@ -483,14 +484,14 @@ export function DriveTopBar() {
                   <LayoutGrid className="h-4 w-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">Visualizacao em grade</TooltipContent>
+              <TooltipContent side="bottom">Grade</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={() => ctx.setViewMode("list")}
                   className={cn(
-                    "p-1.5 rounded-r-lg transition-colors duration-150",
+                    "p-1.5 transition-colors duration-150",
                     ctx.viewMode === "list"
                       ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-200 shadow-sm"
                       : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
@@ -499,7 +500,23 @@ export function DriveTopBar() {
                   <List className="h-4 w-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">Visualizacao em lista</TooltipContent>
+              <TooltipContent side="bottom">Lista</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => ctx.setViewMode("compact")}
+                  className={cn(
+                    "p-1.5 rounded-r-lg transition-colors duration-150",
+                    ctx.viewMode === "compact"
+                      ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-200 shadow-sm"
+                      : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
+                  )}
+                >
+                  <AlignJustify className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Compacto</TooltipContent>
             </Tooltip>
           </div>
         </div>

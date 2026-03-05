@@ -56,6 +56,7 @@ import { tesesRouter } from "./teses";
 import { oficiosRouter } from "./oficios";
 import { templatesRouter } from "./templates";
 import { preparacaoRouter } from "./preparacao";
+import { offlineRouter } from "./offline";
 
 
 export const appRouter = router({
@@ -237,6 +238,11 @@ export const appRouter = router({
   // PREPARAÇÃO PRÉ-JÚRI (CHECKLIST, DOSSIE, WAR ROOM, QUESITOS, SIMULAÇÃO)
   // ==========================================
   preparacao: preparacaoRouter,
+
+  // ==========================================
+  // OFFLINE SYNC (PWA / INDEXEDDB)
+  // ==========================================
+  offline: offlineRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -15,6 +15,7 @@ import { IntelligenceTab } from "@/components/intelligence/IntelligenceTab";
 import { DriveStatusBar } from "@/components/drive/DriveStatusBar";
 import { DriveTabEnhanced } from "@/components/drive/DriveTabEnhanced";
 import { ProcessoTimeline } from "@/components/processos/ProcessoTimeline";
+import { InstrucaoStatus } from "@/components/processos/InstrucaoStatus";
 
 type Tab = "partes" | "demandas" | "drive" | "audiencias" | "timeline" | "vinculados" | "inteligencia";
 
@@ -291,6 +292,11 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
 
       {/* Drive Status Bar */}
       <DriveStatusBar processoId={Number(id)} />
+
+      {/* Status da Instrução */}
+      <div className="px-6 py-2">
+        <InstrucaoStatus processoId={data.id} />
+      </div>
 
       {/* Tabs */}
       <div className="flex items-center gap-0 border-b border-zinc-100 dark:border-zinc-800 px-6">

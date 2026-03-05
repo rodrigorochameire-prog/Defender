@@ -2350,6 +2350,20 @@ export function PdfViewerModal({
 
   const [isBatchExporting, setIsBatchExporting] = useState(false);
 
+  // Load sections from DB
+  const { data: sections, isLoading: sectionsLoading, refetch: refetchSections } =
+    trpc.documentSections.listByFile.useQuery(
+      { driveFileId: fileId },
+      { enabled: isOpen && fileId > 0 }
+    );
+
+  // Review progress for Caso panel
+  const { data: reviewProgress, refetch: refetchProgress } =
+    trpc.documentSections.getReviewProgress.useQuery(
+      { driveFileId: fileId },
+      { enabled: isOpen && fileId > 0 }
+    );
+
   const handleBatchExport = useCallback(async () => {
     if (selectedSectionIds.size === 0 || !sections || !pdfUrl) return;
 
@@ -2429,20 +2443,6 @@ export function PdfViewerModal({
       setIsBatchExporting(false);
     }
   }, [selectedSectionIds, sections, pdfUrl]);
-
-  // Load sections from DB
-  const { data: sections, isLoading: sectionsLoading, refetch: refetchSections } =
-    trpc.documentSections.listByFile.useQuery(
-      { driveFileId: fileId },
-      { enabled: isOpen && fileId > 0 }
-    );
-
-  // Review progress for Caso panel
-  const { data: reviewProgress, refetch: refetchProgress } =
-    trpc.documentSections.getReviewProgress.useQuery(
-      { driveFileId: fileId },
-      { enabled: isOpen && fileId > 0 }
-    );
 
   // Approval mutations
   const approveSection = trpc.documentSections.approveSection.useMutation({

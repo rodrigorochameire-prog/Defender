@@ -162,9 +162,11 @@ function FileRow({ file }: { file: DriveFile }) {
     <div
       onClick={handleClick}
       className={cn(
-        "group flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors duration-150",
+        "group flex items-center gap-3 px-4 py-2 cursor-pointer transition-colors duration-150",
+        "border-b border-zinc-100 dark:border-zinc-800/50 last:border-0",
         "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
-        isSelected && "bg-emerald-50 dark:bg-emerald-500/10"
+        file.isFolder && "bg-zinc-50/50 dark:bg-zinc-800/30",
+        isSelected && "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/10"
       )}
     >
       {/* Checkbox */}
@@ -176,11 +178,16 @@ function FileRow({ file }: { file: DriveFile }) {
         />
       </div>
 
-      {/* Icon */}
-      <div className="shrink-0">
+      {/* Icon in container */}
+      <div className={cn(
+        "shrink-0 w-8 h-8 rounded-lg flex items-center justify-center",
+        file.isFolder
+          ? "bg-emerald-50 dark:bg-emerald-500/10"
+          : "bg-zinc-100 dark:bg-zinc-800"
+      )}>
         <Icon
           className={cn(
-            "w-5 h-5",
+            "w-4 h-4",
             file.isFolder ? "text-emerald-600 dark:text-emerald-500" : "text-zinc-400 dark:text-zinc-400"
           )}
         />
@@ -188,7 +195,7 @@ function FileRow({ file }: { file: DriveFile }) {
 
       {/* Name */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-zinc-900 dark:text-zinc-200 truncate" title={file.name}>
+        <p className="text-[13px] text-zinc-900 dark:text-zinc-200 truncate" title={file.name}>
           {file.name}
         </p>
       </div>
@@ -394,7 +401,7 @@ export function DriveFileList({ files, isLoading }: DriveFileListProps) {
             className="h-4 w-4 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
           />
         </div>
-        <div className="w-5" /> {/* icon spacer */}
+        <div className="w-8" /> {/* icon spacer */}
         <div className="flex-1">
           <SortHeader
             label="Nome"
