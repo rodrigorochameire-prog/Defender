@@ -572,6 +572,8 @@ export default function Demandas() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingDemanda, setEditingDemanda] = useState<DemandaFormData | null>(null);
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
+  const [showColumnFilters, setShowColumnFilters] = useState(false);
+  const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] = useState(false);
   const [isInfographicsExpanded, setIsInfographicsExpanded] = useState(false);
   const [isStatsCollapsed, setIsStatsCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -1579,17 +1581,25 @@ export default function Demandas() {
   }, [demandasFiltradas, columnFilters]);
 
   const demandasOrdenadas = useMemo(() => {
-    if (sortStack.length === 0) return demandasColFiltered;
-
     const sorted = [...demandasColFiltered];
-    return sorted.sort((a, b) => {
+    sorted.sort((a, b) => {
+      // When groupBy is active, cluster by group first to avoid repeated headers
+      if (groupBy) {
+        const aGroup = groupBy === "status" ? a.status : a.atribuicao;
+        const bGroup = groupBy === "status" ? b.status : b.atribuicao;
+        if (aGroup !== bGroup) {
+          return (aGroup || "").localeCompare(bGroup || "");
+        }
+      }
+      // Then apply user's sort within each group
       for (const criterion of sortStack) {
         const cmp = compareByColumn(a, b, criterion.column);
         if (cmp !== 0) return criterion.direction === "asc" ? cmp : -cmp;
       }
       return 0;
     });
-  }, [demandasColFiltered, sortStack]);
+    return sorted;
+  }, [demandasColFiltered, sortStack, groupBy]);
 
   // Progressive rendering — show first 20 instantly, reveal rest incrementally
   const { visibleItems: visibleDemandas, isComplete: allDemandasRendered } = useProgressiveList(demandasOrdenadas, 20, 20);
@@ -1704,350 +1714,296 @@ export default function Demandas() {
 
   return (
     <div className="w-full min-h-screen bg-zinc-100 dark:bg-[#0f0f11] overflow-x-hidden">
-      {/* Compact Header — Notion-style */}
-      <div className="px-4 sm:px-5 md:px-8 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
-        <div className="flex items-center justify-between gap-3">
-          {/* Left: Title + Inline Counters */}
-          <div className="flex items-center gap-3 min-w-0">
-            <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight shrink-0">Demandas</h1>
-            {/* Mobile counter (compact) */}
-            <span className="sm:hidden text-xs font-mono tabular-nums text-zinc-400">{demandas.filter(d => !d.arquivado).length}</span>
-            {/* Desktop counters */}
-            <div className="hidden sm:flex items-center gap-1.5 text-sm text-zinc-400 dark:text-zinc-500">
-              <span className="font-mono tabular-nums">{demandas.filter(d => !d.arquivado).length}</span>
-              <span>ativas</span>
-              {(() => {
-                const urgentes = demandas.filter(d => !d.arquivado && (d.prioridade === "URGENTE" || d.prioridade === "REU_PRESO")).length;
-                const presos = demandas.filter(d => !d.arquivado && d.estadoPrisional === "preso").length;
-                return (
-                  <>
-                    {urgentes > 0 && (
-                      <>
-                        <span className="text-zinc-300 dark:text-zinc-600">·</span>
-                        <span className="text-rose-500 font-medium">{urgentes} urgente{urgentes !== 1 ? "s" : ""}</span>
-                      </>
-                    )}
-                    {presos > 0 && (
-                      <>
-                        <span className="text-zinc-300 dark:text-zinc-600">·</span>
-                        <span className="text-amber-500 font-medium">{presos} preso{presos !== 1 ? "s" : ""}</span>
-                      </>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
+      {/* Compact Header — Single-line with Tabs + Toolbar */}
+      <div className="px-3 sm:px-5 md:px-8 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Left: Title + Tabs + Counters */}
+          <h1 className="text-base sm:text-lg font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight shrink-0">Demandas</h1>
+          {/* Tabs inline */}
+          <div className="flex items-center gap-0 shrink-0">
+            {[
+              { key: "lista" as const, label: "Lista" },
+              { key: "analytics" as const, label: "Analytics" },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`relative px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer rounded-md ${
+                  activeTab === tab.key
+                    ? "text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800"
+                    : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
+          {/* Counters */}
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-zinc-400 dark:text-zinc-500 min-w-0">
+            <span className="font-mono tabular-nums">{demandas.filter(d => !d.arquivado).length}</span>
+            <span className="hidden md:inline">ativas</span>
+            {(() => {
+              const urgentes = demandas.filter(d => !d.arquivado && (d.prioridade === "URGENTE" || d.prioridade === "REU_PRESO")).length;
+              const presos = demandas.filter(d => !d.arquivado && d.estadoPrisional === "preso").length;
+              return (
+                <>
+                  {urgentes > 0 && (
+                    <>
+                      <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                      <span className="text-rose-500 font-medium">{urgentes} urg.</span>
+                    </>
+                  )}
+                  {presos > 0 && (
+                    <>
+                      <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                      <span className="text-amber-500 font-medium">{presos} preso{presos !== 1 ? "s" : ""}</span>
+                    </>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+          <span className="sm:hidden text-[10px] font-mono tabular-nums text-zinc-400">{demandas.filter(d => !d.arquivado).length}</span>
 
-          {/* Right: Action Icons + Nova Button */}
+          {/* Spacer */}
+          <div className="flex-1 min-w-0" />
+
+          {/* Right: Toolbar icons */}
           <div className="flex items-center gap-0.5 shrink-0">
-            <Button variant="ghost" size="sm" onClick={() => setIsAdminConfigModalOpen(true)} title="Configurações" className="hidden sm:flex h-7 w-7 p-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
-              <Settings className="w-3.5 h-3.5" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setIsChartConfigModalOpen(true)} title="Infográficos" className="hidden sm:flex h-7 w-7 p-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
-              <BarChartIcon className="w-3.5 h-3.5" />
-            </Button>
-            <span className="hidden sm:inline-flex">
-              <ImportDropdown
-                onImportExcel={() => setIsImportModalOpen(true)}
-                onImportPJe={() => setIsPJeImportModalOpen(true)}
-                onImportSheets={() => setIsSheetsImportModalOpen(true)}
-                onImportSEEU={() => setIsSEEUImportModalOpen(true)}
+            {/* Search toggle (mobile) / inline (desktop) */}
+            {isMobileSearchOpen ? (
+              <div className="flex-1 min-w-0 relative md:hidden animate-in slide-in-from-right-2 duration-200">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+                <Input
+                  ref={mobileSearchRef}
+                  placeholder="Buscar..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onBlur={() => { if (!searchTerm) setIsMobileSearchOpen(false); }}
+                  autoFocus
+                  className="pl-8 pr-7 h-7 text-xs bg-zinc-100 dark:bg-zinc-800 border-zinc-200/80 dark:border-zinc-700/80 focus:border-emerald-400 rounded-lg"
+                />
+                <button onClick={() => { setSearchTerm(""); setIsMobileSearchOpen(false); }} className="absolute right-2 top-1/2 -translate-y-1/2">
+                  <X className="w-3 h-3 text-zinc-400" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => { setIsMobileSearchOpen(true); setTimeout(() => mobileSearchRef.current?.focus(), 100); }}
+                className="md:hidden h-7 w-7 flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                title="Buscar"
+              >
+                <Search className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {/* Desktop search */}
+            <div className="hidden md:block relative w-44 lg:w-56">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+              <Input
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 h-7 text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200/80 dark:border-zinc-700/80 focus:border-emerald-400 rounded-lg"
               />
-            </span>
-            <Button variant="ghost" size="sm" onClick={() => setIsDuplicatesModalOpen(true)} title="Encontrar Duplicatas" className="hidden sm:flex h-7 w-7 p-0 text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
-              <Copy className="w-3.5 h-3.5" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setIsExportModalOpen(true)} title="Exportar" className="hidden sm:flex h-7 w-7 p-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
-              <Upload className="w-3.5 h-3.5" />
-            </Button>
+              {searchTerm && (
+                <button onClick={() => setSearchTerm("")} className="absolute right-2 top-1/2 -translate-y-1/2">
+                  <XCircle className="w-3 h-3 text-zinc-400 hover:text-zinc-600" />
+                </button>
+              )}
+            </div>
+
+            {/* Sort */}
+            <div className="relative">
+              <button
+                onClick={() => { const el = document.getElementById('sort-dropdown'); if (el) el.classList.toggle('hidden'); }}
+                className="h-7 w-7 flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                title={`Ordenar: ${sortStack[0]?.column === "recentes" ? "Importação" : sortStack[0]?.column || "Ordenar"}`}
+              >
+                <ArrowUpDown className="w-3.5 h-3.5" />
+              </button>
+              <div id="sort-dropdown" className="hidden absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl shadow-lg py-1 min-w-[160px]">
+                {[
+                  { key: "recentes", label: "Importação ↓" },
+                  { key: "status", label: "Status" },
+                  { key: "prazo", label: "Prazo" },
+                  { key: "assistido", label: "Assistido (A-Z)" },
+                  { key: "ato", label: "Ato" },
+                ].map(opt => (
+                  <button key={opt.key} onClick={() => { setSortStack([{ column: opt.key, direction: "asc" }]); document.getElementById('sort-dropdown')?.classList.add('hidden'); }}
+                    className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${sortStack[0]?.column === opt.key ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                  >
+                    {sortStack[0]?.column === opt.key && <span className="text-emerald-500">✓</span>}
+                    <span>{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Group By */}
+            <div className="relative hidden sm:block">
+              <button
+                onClick={() => { const el = document.getElementById('group-dropdown'); if (el) el.classList.toggle('hidden'); }}
+                className={`h-7 w-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer ${groupBy ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
+                title="Agrupar por"
+              >
+                <Layers className="w-3.5 h-3.5" />
+              </button>
+              <div id="group-dropdown" className="hidden absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl shadow-lg py-1 min-w-[160px]">
+                {[
+                  { key: null as "status" | "atribuicao" | null, label: "Sem agrupamento" },
+                  { key: "status" as const, label: "Status" },
+                  { key: "atribuicao" as const, label: "Atribuição" },
+                ].map(opt => (
+                  <button key={opt.key ?? "none"} onClick={() => { setGroupBy(opt.key); setCollapsedGroups(new Set()); if (opt.key) localStorage.setItem("defender_demandas_groupby", opt.key); else localStorage.removeItem("defender_demandas_groupby"); document.getElementById('group-dropdown')?.classList.add('hidden'); }}
+                    className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${groupBy === opt.key ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                  >
+                    {groupBy === opt.key && <span className="text-emerald-500">✓</span>}
+                    <span>{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* View Mode — single toggle cycling through modes */}
+            <button
+              onClick={() => {
+                const modes: Array<"compact" | "grid" | "cards"> = ["compact", "grid", "cards"];
+                const idx = modes.indexOf(viewMode as "compact" | "grid" | "cards");
+                const next = modes[(idx + 1) % modes.length];
+                setViewMode(next);
+                localStorage.setItem("defender_demandas_view_mode", next);
+              }}
+              className="h-7 w-7 flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              title={`Vista: ${viewMode === "compact" ? "Planilha" : viewMode === "grid" ? "Grid" : "Cards"}`}
+            >
+              {viewMode === "compact" ? <Rows3 className="w-3.5 h-3.5" /> : viewMode === "grid" ? <LayoutGrid className="w-3.5 h-3.5" /> : <LayoutList className="w-3.5 h-3.5" />}
+            </button>
+
+            {/* Filters toggle */}
+            <button
+              onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+              className={`h-7 w-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer relative ${
+                isFiltersExpanded || selectedStatusGroup || selectedEstadoPrisional || selectedTipoAto
+                  ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20"
+                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              }`}
+              title="Filtros"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              {(selectedStatusGroup || selectedEstadoPrisional || selectedTipoAto) && (
+                <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 text-white text-[8px] font-bold flex items-center justify-center">
+                  {[selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto].filter(Boolean).length}
+                </span>
+              )}
+            </button>
+
+            {/* Column filters toggle (for compact view) */}
+            {viewMode === "compact" && (
+              <button
+                onClick={() => setShowColumnFilters(!showColumnFilters)}
+                className={`h-7 w-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer ${
+                  showColumnFilters ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                }`}
+                title="Filtros por coluna"
+              >
+                <Table2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            {/* Preso quick filter */}
+            <button
+              onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "PRESO" ? null : "PRESO")}
+              className={`hidden sm:flex h-7 w-7 items-center justify-center rounded-lg transition-colors cursor-pointer ${
+                selectedEstadoPrisional === "PRESO"
+                  ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20"
+                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              }`}
+              title="Filtrar presos"
+            >
+              <Lock className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Archive toggle */}
+            <button
+              onClick={() => setShowArchived(!showArchived)}
+              className={`hidden sm:flex h-7 w-7 items-center justify-center rounded-lg transition-colors cursor-pointer ${
+                showArchived
+                  ? "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20"
+                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              }`}
+              title={showArchived ? "Ver ativos" : "Ver arquivados"}
+            >
+              <Archive className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Settings dropdown (absorbs Infográficos, Import, Export, Duplicatas) */}
+            <div className="relative">
+              <button
+                onClick={() => setIsSettingsDropdownOpen(!isSettingsDropdownOpen)}
+                className="h-7 w-7 flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                title="Mais opções"
+              >
+                <Settings className="w-3.5 h-3.5" />
+              </button>
+              {isSettingsDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsSettingsDropdownOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl shadow-lg py-1 min-w-[180px]">
+                    <button onClick={() => { setIsAdminConfigModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                      <Settings className="w-3.5 h-3.5 text-zinc-400" /> Configurações
+                    </button>
+                    <button onClick={() => { setIsChartConfigModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                      <BarChartIcon className="w-3.5 h-3.5 text-zinc-400" /> Infográficos
+                    </button>
+                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
+                    <button onClick={() => { setIsImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                      <Download className="w-3.5 h-3.5 text-zinc-400" /> Importar Excel
+                    </button>
+                    <button onClick={() => { setIsPJeImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                      <Download className="w-3.5 h-3.5 text-zinc-400" /> Importar PJe
+                    </button>
+                    <button onClick={() => { setIsSheetsImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                      <Download className="w-3.5 h-3.5 text-zinc-400" /> Importar Sheets
+                    </button>
+                    <button onClick={() => { setIsSEEUImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                      <Download className="w-3.5 h-3.5 text-zinc-400" /> Importar SEEU
+                    </button>
+                    <button onClick={() => { setIsExportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                      <Upload className="w-3.5 h-3.5 text-zinc-400" /> Exportar
+                    </button>
+                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
+                    <button onClick={() => { setIsDuplicatesModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                      <Copy className="w-3.5 h-3.5 text-amber-500" /> Encontrar Duplicatas
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Nova Demanda button */}
             <Button
               size="sm"
               onClick={() => setIsCreateModalOpen(true)}
               title="Nova Demanda"
-              className="h-8 px-3 sm:ml-1 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+              className="h-7 px-2.5 ml-0.5 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-[11px] font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              <span className="hidden sm:inline">Nova</span>
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline ml-1">Nova</span>
             </Button>
           </div>
         </div>
       </div>
 
       {/* Conteúdo Principal */}
-      <div className="p-3 md:p-5 space-y-3 md:space-y-4">
-        {/* Tabs — Lista / Analytics + Inline Deadline Stats */}
-        <div className="flex items-center gap-0 border-b border-zinc-200/80 dark:border-zinc-800/80 -mx-3 md:-mx-5 px-3 md:px-5">
-          {[
-            { key: "lista" as const, label: "Lista" },
-            { key: "analytics" as const, label: "Analytics" },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`relative px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
-                activeTab === tab.key
-                  ? "text-zinc-900 dark:text-zinc-100"
-                  : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
-              }`}
-            >
-              {tab.label}
-              {activeTab === tab.key && (
-                <div className="absolute bottom-0 left-2 right-2 h-0.5 bg-zinc-900 dark:bg-zinc-100 rounded-full" />
-              )}
-            </button>
-          ))}
-          {/* Inline deadline stats — same line as tabs */}
-          {deadlineStats.total > 0 && (
-            <div className="ml-auto flex items-center gap-1.5 text-[10px] sm:text-xs pr-1">
-              {deadlineStats.vencidas > 0 && (
-                <button
-                  onClick={() => setSelectedPrazoFilter(selectedPrazoFilter === "vencidos" ? null : "vencidos")}
-                  className={`font-semibold px-1.5 py-0.5 rounded-md transition-colors cursor-pointer ${
-                    selectedPrazoFilter === "vencidos"
-                      ? "bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400"
-                      : "text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20"
-                  }`}
-                >
-                  {deadlineStats.vencidas} vencida{deadlineStats.vencidas !== 1 ? "s" : ""}
-                </button>
-              )}
-              {deadlineStats.hoje > 0 && (
-                <button
-                  onClick={() => setSelectedPrazoFilter(selectedPrazoFilter === "hoje" ? null : "hoje")}
-                  className={`font-semibold px-1.5 py-0.5 rounded-md transition-colors cursor-pointer ${
-                    selectedPrazoFilter === "hoje"
-                      ? "bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400"
-                      : "text-amber-500 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20"
-                  }`}
-                >
-                  {deadlineStats.hoje} hoje
-                </button>
-              )}
-              {deadlineStats.semana > 0 && (
-                <button
-                  onClick={() => setSelectedPrazoFilter(selectedPrazoFilter === "semana" ? null : "semana")}
-                  className={`font-medium px-1.5 py-0.5 rounded-md transition-colors cursor-pointer ${
-                    selectedPrazoFilter === "semana"
-                      ? "bg-yellow-100 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400"
-                      : "text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-950/20"
-                  }`}
-                >
-                  {deadlineStats.semana} semana
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
+      <div className="p-2 md:p-4 space-y-2 md:space-y-3">
         {activeTab === "lista" ? (
         <>
 
         {/* Lista de Demandas */}
         <div className="group/card relative bg-white dark:bg-zinc-900">
-            <div className="px-4 md:px-5 py-3">
-              {/* Toolbar Row */}
-              <div className="flex items-center gap-2">
-                {/* Search — expandable on mobile */}
-                {isMobileSearchOpen ? (
-                  <div className="flex-1 min-w-0 relative md:hidden animate-in slide-in-from-right-2 duration-200">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
-                    <Input
-                      ref={mobileSearchRef}
-                      placeholder="Buscar..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      onBlur={() => { if (!searchTerm) setIsMobileSearchOpen(false); }}
-                      autoFocus
-                      className="pl-9 pr-8 h-8 text-xs bg-zinc-100 dark:bg-zinc-800 border-zinc-200/80 dark:border-zinc-700/80 focus:border-emerald-400 dark:focus:border-emerald-600 focus:ring-1 focus:ring-emerald-400/30 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 rounded-lg transition-colors"
-                    />
-                    <button
-                      onClick={() => { setSearchTerm(""); setIsMobileSearchOpen(false); }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded p-0.5 transition-colors"
-                    >
-                      <X className="w-3.5 h-3.5 text-zinc-400 hover:text-zinc-600" />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => { setIsMobileSearchOpen(true); setTimeout(() => mobileSearchRef.current?.focus(), 100); }}
-                    className="md:hidden h-8 w-8 flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
-                    title="Buscar"
-                  >
-                    <Search className="w-3.5 h-3.5" />
-                  </button>
-                )}
-                {/* Desktop search (always visible) */}
-                <div className="hidden md:block flex-1 min-w-0 relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
-                  <Input
-                    placeholder="Buscar assistido, processo..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 h-8 text-xs bg-zinc-100 dark:bg-zinc-800 border-zinc-200/80 dark:border-zinc-700/80 focus:border-emerald-400 dark:focus:border-emerald-600 focus:ring-1 focus:ring-emerald-400/30 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 rounded-lg transition-colors"
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm("")}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded p-0.5 transition-colors"
-                    >
-                      <XCircle className="w-3.5 h-3.5 text-zinc-400 hover:text-zinc-600" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Sort Dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={() => {
-                      const el = document.getElementById('sort-dropdown');
-                      if (el) el.classList.toggle('hidden');
-                    }}
-                    className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-zinc-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors whitespace-nowrap cursor-pointer"
-                  >
-                    <ArrowUpDown className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>{sortStack[0]?.column === "recentes" ? "Importação ↓" : sortStack[0]?.column === "status" ? "Status" : sortStack[0]?.column === "prazo" ? "Prazo" : sortStack[0]?.column === "assistido" ? "Assistido" : sortStack[0]?.column === "ato" ? "Ato" : "Ordenar"}</span>
-                  </button>
-                  <div id="sort-dropdown" className="hidden absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl shadow-apple-hover dark:shadow-apple-dark-hover py-1 min-w-[160px]">
-                    {[
-                      { key: "recentes", label: "Importação ↓", sublabel: "mais recente" },
-                      { key: "status", label: "Status" },
-                      { key: "prazo", label: "Prazo" },
-                      { key: "assistido", label: "Assistido (A-Z)" },
-                      { key: "ato", label: "Ato" },
-                    ].map(opt => (
-                      <button
-                        key={opt.key}
-                        onClick={() => {
-                          setSortStack([{ column: opt.key, direction: "asc" }]);
-                          document.getElementById('sort-dropdown')?.classList.add('hidden');
-                        }}
-                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${
-                          sortStack[0]?.column === opt.key
-                            ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold"
-                            : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                        }`}
-                      >
-                        {sortStack[0]?.column === opt.key && <span className="text-emerald-500">✓</span>}
-                        <span>{opt.label}</span>
-                        {opt.sublabel && <span className="text-[10px] text-zinc-400">({opt.sublabel})</span>}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Group By Dropdown */}
-                <div className="relative hidden md:block">
-                  <button
-                    onClick={() => {
-                      const el = document.getElementById('group-dropdown');
-                      if (el) el.classList.toggle('hidden');
-                    }}
-                    className={`flex items-center gap-1.5 h-8 px-2.5 rounded-lg border text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                      groupBy
-                        ? "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400"
-                        : "border-zinc-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600"
-                    }`}
-                    title="Agrupar por"
-                  >
-                    <Layers className="w-3.5 h-3.5" />
-                  </button>
-                  <div id="group-dropdown" className="hidden absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl shadow-apple-hover dark:shadow-apple-dark-hover py-1 min-w-[160px]">
-                    {[
-                      { key: null as "status" | "atribuicao" | null, label: "Sem agrupamento" },
-                      { key: "status" as const, label: "Status" },
-                      { key: "atribuicao" as const, label: "Atribuição" },
-                    ].map(opt => (
-                      <button
-                        key={opt.key ?? "none"}
-                        onClick={() => {
-                          setGroupBy(opt.key);
-                          setCollapsedGroups(new Set());
-                          if (opt.key) localStorage.setItem("defender_demandas_groupby", opt.key);
-                          else localStorage.removeItem("defender_demandas_groupby");
-                          document.getElementById('group-dropdown')?.classList.add('hidden');
-                        }}
-                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${
-                          groupBy === opt.key
-                            ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold"
-                            : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                        }`}
-                      >
-                        {groupBy === opt.key && <span className="text-emerald-500">✓</span>}
-                        <span>{opt.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* View Mode Toggle — Defender style */}
-                <div className="flex items-center bg-zinc-100 dark:bg-zinc-800/80 rounded-xl p-0.5 gap-0.5">
-                  {[
-                    { mode: "compact" as const, icon: Rows3, title: "Planilha" },
-                    { mode: "grid" as const, icon: LayoutGrid, title: "Grid" },
-                    { mode: "cards" as const, icon: LayoutList, title: "Cards" },
-                  ].map(({ mode, icon: Icon, title }) => (
-                    <button
-                      key={mode}
-                      onClick={() => { setViewMode(mode); localStorage.setItem("defender_demandas_view_mode", mode); }}
-                      className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all cursor-pointer ${
-                        viewMode === mode
-                          ? "bg-white dark:bg-zinc-700 text-emerald-600 dark:text-emerald-400 shadow-sm ring-1 ring-zinc-200/50 dark:ring-zinc-600/50"
-                          : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
-                      }`}
-                      title={title}
-                    >
-                      <Icon className="w-4 h-4" />
-                    </button>
-                  ))}
-                </div>
-
-                {/* Secondary Filters Button */}
-                <button
-                  onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-                  className={`flex items-center gap-1 h-8 px-2.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
-                    isFiltersExpanded || selectedStatusGroup || selectedEstadoPrisional || selectedTipoAto
-                      ? "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400"
-                      : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300"
-                  }`}
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Filtros</span>
-                  {(selectedStatusGroup || selectedEstadoPrisional || selectedTipoAto) && (
-                    <span className="w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] font-bold flex items-center justify-center">
-                      {[selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto].filter(Boolean).length}
-                    </span>
-                  )}
-                </button>
-
-                {/* Preso Quick Filter */}
-                <button
-                  onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "PRESO" ? null : "PRESO")}
-                  className={`h-8 px-2.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
-                    selectedEstadoPrisional === "PRESO"
-                      ? "bg-rose-100 dark:bg-rose-950/30 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-700"
-                      : "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300"
-                  }`}
-                  title="Filtrar réus presos"
-                >
-                  <Lock className="w-3.5 h-3.5 inline" />
-                </button>
-
-                {/* Archive Toggle */}
-                <button
-                  onClick={() => setShowArchived(!showArchived)}
-                  className={`h-8 px-2.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                    showArchived
-                      ? "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
-                      : "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300"
-                  }`}
-                >
-                  <Archive className="w-3.5 h-3.5 inline" />
-                </button>
-              </div>
-
-              {/* Atribuicao Tabs — multi-select, clean professional pills */}
-              <div className="flex items-center gap-1.5 mt-2 overflow-x-auto scrollbar-none -mx-1 px-1 pb-0.5">
+            <div className="px-3 md:px-4 py-2">
+              {/* Atribuição pills + Deadline stats — Line 2 */}
+              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1 pb-0.5">
                 {atribuicaoOptions.filter(o => o.value !== "Todas").map((opt) => {
                   const isActive = selectedAtribuicoes.includes(opt.value);
                   const color = ATRIBUICAO_BORDER_COLORS[opt.label] || "#71717a";
@@ -2089,6 +2045,33 @@ export default function Demandas() {
                   >
                     <X className="w-3 h-3" />
                   </button>
+                )}
+
+                {/* Deadline stats — right-aligned */}
+                {deadlineStats.total > 0 && (
+                  <div className="ml-auto flex items-center gap-1 shrink-0">
+                    {deadlineStats.vencidas > 0 && (
+                      <button onClick={() => setSelectedPrazoFilter(selectedPrazoFilter === "vencidos" ? null : "vencidos")}
+                        className={`font-semibold px-1.5 py-0.5 rounded-md text-[10px] transition-colors cursor-pointer ${selectedPrazoFilter === "vencidos" ? "bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400" : "text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20"}`}
+                      >
+                        {deadlineStats.vencidas} venc.
+                      </button>
+                    )}
+                    {deadlineStats.hoje > 0 && (
+                      <button onClick={() => setSelectedPrazoFilter(selectedPrazoFilter === "hoje" ? null : "hoje")}
+                        className={`font-semibold px-1.5 py-0.5 rounded-md text-[10px] transition-colors cursor-pointer ${selectedPrazoFilter === "hoje" ? "bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400" : "text-amber-500 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20"}`}
+                      >
+                        {deadlineStats.hoje} hoje
+                      </button>
+                    )}
+                    {deadlineStats.semana > 0 && (
+                      <button onClick={() => setSelectedPrazoFilter(selectedPrazoFilter === "semana" ? null : "semana")}
+                        className={`font-medium px-1.5 py-0.5 rounded-md text-[10px] transition-colors cursor-pointer ${selectedPrazoFilter === "semana" ? "bg-yellow-100 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400" : "text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-950/20"}`}
+                      >
+                        {deadlineStats.semana} sem.
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -2251,6 +2234,7 @@ export default function Demandas() {
                   onColumnResize={handleColumnResize}
                   columnFilters={columnFilters}
                   onColumnFilterChange={(colId: string, value: string) => setColumnFilters(prev => ({ ...prev, [colId]: value }))}
+                  showColumnFilters={showColumnFilters}
                   onPreview={setPreviewDemandaId}
                   previewDemandaId={previewDemandaId}
                   groupBy={groupBy}

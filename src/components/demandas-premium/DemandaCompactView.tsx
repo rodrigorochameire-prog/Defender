@@ -125,6 +125,7 @@ interface DemandaCompactViewProps {
   // Per-column filters
   columnFilters?: Record<string, string>;
   onColumnFilterChange?: (columnId: string, value: string) => void;
+  showColumnFilters?: boolean;
   // Quick-preview
   onPreview?: (id: string) => void;
   previewDemandaId?: string | null;
@@ -603,6 +604,17 @@ const CompactRow = React.memo(function CompactRow({
           )}
         </button>
 
+        {/* Eye - Ver detalhes */}
+        {onPreview && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onPreview(demanda.id); }}
+            className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+            title="Ver detalhes"
+          >
+            <Eye className="w-3.5 h-3.5" />
+          </button>
+        )}
+
         {/* Menu */}
         <div ref={menuRef} className="relative">
           <button
@@ -767,7 +779,7 @@ const CompactRow = React.memo(function CompactRow({
               }}
               className={`px-2 py-3 group/cell transition-all duration-100 ${columnWidths?.[col.id] ? "" : col.width || ""} ${
                 !isFocused(col.colIndex) ? "hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30" : ""
-              }`}
+              } ${col.id === "providencias" ? "hidden md:table-cell" : ""}`}
               onClick={() => onCellFocus(index, col.colIndex)}
               onFocus={() => onCellFocus(index, col.colIndex)}
             >
@@ -827,6 +839,7 @@ export function DemandaCompactView({
   onColumnResize,
   columnFilters,
   onColumnFilterChange,
+  showColumnFilters,
   onPreview,
   previewDemandaId,
   groupBy,
@@ -1113,7 +1126,7 @@ export function DemandaCompactView({
                         style={columnWidths?.[col.id] ? { width: columnWidths[col.id], position: "relative" } : undefined}
                         className={`px-3 py-2.5 text-${col.align || "left"} text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ${columnWidths?.[col.id] ? "" : col.width || ""} ${
                           sortable && onColumnSort ? "cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100/80 dark:hover:bg-zinc-700/40 select-none transition-all" : ""
-                        } ${sortInfo ? "text-emerald-600 dark:text-emerald-400" : ""} ${canResize ? "relative" : ""}`}
+                        } ${sortInfo ? "text-emerald-600 dark:text-emerald-400" : ""} ${canResize ? "relative" : ""} ${col.id === "providencias" ? "hidden md:table-cell" : ""}`}
                       >
                         <div className="flex items-center gap-1.5">
                           <span>{col.header}</span>
@@ -1139,7 +1152,7 @@ export function DemandaCompactView({
                     );
                   })}
                 </tr>
-                {onColumnFilterChange && columnFilters && (
+                {showColumnFilters && onColumnFilterChange && columnFilters && (
                   <ColumnFilterRow
                     columns={COLUMN_ORDER}
                     filters={columnFilters}

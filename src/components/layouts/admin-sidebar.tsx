@@ -57,6 +57,7 @@ const MAIN_NAV: AssignmentMenuItem[] = [
   { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
   { label: "Demandas", path: "/admin/demandas", icon: "ListTodo" },
   { label: "Agenda", path: "/admin/agenda", icon: "Calendar" },
+  { label: "Drive", path: "/admin/drive", icon: "FolderOpen" },
 ];
 
 // 2. Cadastros - Assistidos, Processos, Casos, Solar (azul)
@@ -69,7 +70,6 @@ const CADASTROS_NAV: AssignmentMenuItem[] = [
 
 // 3. Documentos - Drive, Distribuição, Ofícios, Modelos, Jurisprudência (laranja)
 const DOCUMENTOS_NAV: AssignmentMenuItem[] = [
-  { label: "Drive", path: "/admin/drive", icon: "FolderOpen" },
   { label: "Distribuição", path: "/admin/distribuicao", icon: "FolderInput" },
   { label: "Ofícios", path: "/admin/oficios", icon: "Mail" },
   { label: "Modelos", path: "/admin/modelos", icon: "FileText" },
@@ -97,14 +97,45 @@ const TOOLS_NAV: AssignmentMenuItem[] = [
 ];
 
 // 6. Módulos específicos por especialidade
-const JURI_MODULES: AssignmentMenuItem[] = [
-  { label: "Sessões do Júri", path: "/admin/juri", icon: "Gavel" },
-  { label: "Plenário Live", path: "/admin/juri/cockpit", icon: "Zap" },
-  { label: "Avaliação", path: "/admin/juri/avaliacao", icon: "ClipboardList" },
-  { label: "Banco de Jurados", path: "/admin/juri/jurados", icon: "Users" },
-  { label: "Palácio da Mente", path: "/admin/palacio-mente", icon: "Network" },
-  { label: "Simulador 3D", path: "/admin/simulador-3d", icon: "Box" },
+
+// Tipo para agrupamento por seção/fase
+type SidebarSection = {
+  title?: string; // undefined = sem header (itens de topo)
+  items: AssignmentMenuItem[];
+};
+
+// JÚRI — Organizado por fase do trabalho
+const JURI_SECTIONS: SidebarSection[] = [
+  {
+    // Gestão — sem header, itens de topo
+    items: [
+      { label: "Sessões", path: "/admin/juri", icon: "Gavel" },
+      { label: "Banco de Jurados", path: "/admin/juri/jurados", icon: "Users" },
+    ],
+  },
+  {
+    title: "Preparação",
+    items: [
+      { label: "Palácio da Mente", path: "/admin/palacio-mente", icon: "Network" },
+      { label: "Simulador 3D", path: "/admin/simulador-3d", icon: "Box" },
+    ],
+  },
+  {
+    title: "Plenário",
+    items: [
+      { label: "Plenário Live", path: "/admin/juri/cockpit", icon: "Zap" },
+    ],
+  },
+  {
+    title: "Pós-Júri",
+    items: [
+      { label: "Calculadora", path: "/admin/juri/calculadora", icon: "Calculator" },
+      { label: "Cosmovisão", path: "/admin/juri/cosmovisao", icon: "PieChart" },
+    ],
+  },
 ];
+// Flat array derivado (para detecção de item ativo)
+const JURI_MODULES = JURI_SECTIONS.flatMap(s => s.items);
 
 const VVD_MODULES: AssignmentMenuItem[] = [
   { label: "Dashboard VVD", path: "/admin/vvd", icon: "LayoutDashboard" },
@@ -118,6 +149,10 @@ const EP_MODULES: AssignmentMenuItem[] = [
   { label: "Execução Penal", path: "/admin/execucao-penal", icon: "Lock" },
   { label: "Calc. Execução Penal", path: "/admin/calculadoras?tipo=ep", icon: "Calculator" },
 ];
+
+// Wrappers de seção para VVD e EP (sem agrupamento por fase)
+const VVD_SECTIONS: SidebarSection[] = [{ items: VVD_MODULES }];
+const EP_SECTIONS: SidebarSection[] = [{ items: EP_MODULES }];
 
 // Itens do menu "Mais" (utilidades)
 const MORE_NAV: AssignmentMenuItem[] = [
@@ -1197,10 +1232,10 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
   const [expanded, setExpanded] = useState(false);
   const [especialidade, setEspecialidade] = useState<Especialidade>("JURI");
 
-  // Determinar módulos baseado na especialidade selecionada
-  const modules = especialidade === "JURI" ? JURI_MODULES
-    : especialidade === "VVD" ? VVD_MODULES
-    : EP_MODULES;
+  // Determinar seções baseado na especialidade selecionada
+  const sections = especialidade === "JURI" ? JURI_SECTIONS
+    : especialidade === "VVD" ? VVD_SECTIONS
+    : EP_SECTIONS;
 
   const hasActiveItem = [...JURI_MODULES, ...VVD_MODULES, ...EP_MODULES].some(
     item => pathname.startsWith(item.path)
@@ -1270,29 +1305,42 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
               ))}
             </div>
 
-            {modules.map((item) => {
-              if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
-                return null;
-              }
-              const Icon = iconMap[item.icon] || Briefcase;
-              const isActive = pathname.startsWith(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  onClick={onNavigate}
-                  className={cn(
-                    "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
-                    isActive
-                      ? "bg-emerald-500/20 text-emerald-400 font-medium"
-                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
+            {sections.map((section, sIdx) => (
+              <div key={section.title || `pop-section-${sIdx}`}>
+                {section.title && (
+                  <div className="flex items-center gap-2 px-2 pt-2.5 pb-1">
+                    <div className="h-px flex-1 bg-zinc-200/60 dark:bg-zinc-700/30" />
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 select-none">
+                      {section.title}
+                    </span>
+                    <div className="h-px flex-1 bg-zinc-200/60 dark:bg-zinc-700/30" />
+                  </div>
+                )}
+                {section.items.map((item) => {
+                  if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
+                    return null;
+                  }
+                  const Icon = iconMap[item.icon] || Briefcase;
+                  const isActive = pathname.startsWith(item.path);
+                  return (
+                    <Link
+                      key={item.path}
+                      href={item.path}
+                      onClick={onNavigate}
+                      className={cn(
+                        "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
+                        isActive
+                          ? "bg-emerald-500/20 text-emerald-400 font-medium"
+                          : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
           </PopoverContent>
         </Popover>
       </SidebarMenuItem>
@@ -1364,53 +1412,66 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
             ))}
           </div>
 
-          {modules.map((item) => {
-            if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
-              return null;
-            }
-            const Icon = iconMap[item.icon] || Briefcase;
-            const isActive = pathname.startsWith(item.path);
-            const activeColor = ESPECIALIDADE_COLORS[especialidade];
-            return (
-              <SidebarMenuItem key={item.path}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive}
-                  className={cn(
-                    "h-9 transition-all duration-300 rounded-lg group/subitem relative",
-                    isActive
-                      ? `${activeColor.bg} ${activeColor.text} font-medium`
-                      : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                  )}
-                >
-                  <Link href={item.path} prefetch={true} onClick={onNavigate}>
-                    {/* Indicador de conexão */}
-                    <div className={cn(
-                      "absolute left-[-12px] w-2 h-px transition-all duration-200",
-                      isActive
-                        ? especialidade === "JURI" ? "bg-emerald-500/50"
-                          : especialidade === "VVD" ? "bg-yellow-500/50"
-                          : "bg-blue-500/50"
-                        : "bg-black/[0.06] dark:bg-white/[0.06]"
-                    )} />
-                    <Icon className={cn(
-                      "h-3.5 w-3.5 mr-2 transition-all duration-300",
-                      isActive ? activeColor.text : "text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-600 dark:group-hover/subitem:text-zinc-300"
-                    )} />
-                    <span className="text-[12px] truncate">{item.label}</span>
-                    {isActive && (
-                      <div className={cn(
-                        "absolute right-2 w-1 h-1 rounded-full",
-                        especialidade === "JURI" ? "bg-emerald-400"
-                          : especialidade === "VVD" ? "bg-yellow-400"
-                          : "bg-blue-400"
-                      )} />
-                    )}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
+          {sections.map((section, sIdx) => (
+            <div key={section.title || `section-${sIdx}`}>
+              {section.title && (
+                <div className="flex items-center gap-2 pr-2 pt-2.5 pb-0.5">
+                  <div className="h-px flex-1 bg-zinc-200/60 dark:bg-zinc-700/30" />
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 select-none whitespace-nowrap">
+                    {section.title}
+                  </span>
+                  <div className="h-px flex-1 bg-zinc-200/60 dark:bg-zinc-700/30" />
+                </div>
+              )}
+              {section.items.map((item) => {
+                if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
+                  return null;
+                }
+                const Icon = iconMap[item.icon] || Briefcase;
+                const isActive = pathname.startsWith(item.path);
+                const activeColor = ESPECIALIDADE_COLORS[especialidade];
+                return (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      className={cn(
+                        "h-9 transition-all duration-300 rounded-lg group/subitem relative",
+                        isActive
+                          ? `${activeColor.bg} ${activeColor.text} font-medium`
+                          : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                      )}
+                    >
+                      <Link href={item.path} prefetch={true} onClick={onNavigate}>
+                        {/* Indicador de conexão */}
+                        <div className={cn(
+                          "absolute left-[-12px] w-2 h-px transition-all duration-200",
+                          isActive
+                            ? especialidade === "JURI" ? "bg-emerald-500/50"
+                              : especialidade === "VVD" ? "bg-yellow-500/50"
+                              : "bg-blue-500/50"
+                            : "bg-black/[0.06] dark:bg-white/[0.06]"
+                        )} />
+                        <Icon className={cn(
+                          "h-3.5 w-3.5 mr-2 transition-all duration-300",
+                          isActive ? activeColor.text : "text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-600 dark:group-hover/subitem:text-zinc-300"
+                        )} />
+                        <span className="text-[12px] truncate">{item.label}</span>
+                        {isActive && (
+                          <div className={cn(
+                            "absolute right-2 w-1 h-1 rounded-full",
+                            especialidade === "JURI" ? "bg-emerald-400"
+                              : especialidade === "VVD" ? "bg-yellow-400"
+                              : "bg-blue-400"
+                          )} />
+                        )}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </div>
+          ))}
         </div>
       </div>
     </div>
