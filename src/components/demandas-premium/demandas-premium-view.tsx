@@ -1738,241 +1738,218 @@ export default function Demandas() {
               </button>
             ))}
           </div>
-          {/* Counters */}
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-zinc-400 dark:text-zinc-500 min-w-0">
+          {/* Counters — whitespace-nowrap to prevent wrapping */}
+          <div className="flex items-center gap-1 text-[11px] text-zinc-400 dark:text-zinc-500 whitespace-nowrap shrink-0">
             <span className="font-mono tabular-nums">{demandas.filter(d => !d.arquivado).length}</span>
-            <span className="hidden md:inline">ativas</span>
             {(() => {
               const urgentes = demandas.filter(d => !d.arquivado && (d.prioridade === "URGENTE" || d.prioridade === "REU_PRESO")).length;
               const presos = demandas.filter(d => !d.arquivado && d.estadoPrisional === "preso").length;
               return (
                 <>
-                  {urgentes > 0 && (
-                    <>
-                      <span className="text-zinc-300 dark:text-zinc-600">·</span>
-                      <span className="text-rose-500 font-medium">{urgentes} urg.</span>
-                    </>
-                  )}
-                  {presos > 0 && (
-                    <>
-                      <span className="text-zinc-300 dark:text-zinc-600">·</span>
-                      <span className="text-amber-500 font-medium">{presos} preso{presos !== 1 ? "s" : ""}</span>
-                    </>
-                  )}
+                  {urgentes > 0 && <span className="text-rose-500 font-medium">· {urgentes}⚠</span>}
+                  {presos > 0 && <span className="text-amber-500 font-medium">· {presos}🔒</span>}
                 </>
               );
             })()}
           </div>
-          <span className="sm:hidden text-[10px] font-mono tabular-nums text-zinc-400">{demandas.filter(d => !d.arquivado).length}</span>
 
           {/* Spacer */}
           <div className="flex-1 min-w-0" />
 
-          {/* Right: Toolbar icons */}
-          <div className="flex items-center gap-0.5 shrink-0">
-            {/* Search toggle (mobile) / inline (desktop) */}
+          {/* Right: 4 Toolbar buttons only — Search, Filtros, Settings, Nova */}
+          <div className="flex items-center gap-1 shrink-0">
+            {/* 1. Search — expandable */}
             {isMobileSearchOpen ? (
-              <div className="flex-1 min-w-0 relative md:hidden animate-in slide-in-from-right-2 duration-200">
+              <div className="flex-1 min-w-0 relative animate-in slide-in-from-right-2 duration-200">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
                 <Input
                   ref={mobileSearchRef}
-                  placeholder="Buscar..."
+                  placeholder="Buscar assistido, processo..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onBlur={() => { if (!searchTerm) setIsMobileSearchOpen(false); }}
                   autoFocus
-                  className="pl-8 pr-7 h-7 text-xs bg-zinc-100 dark:bg-zinc-800 border-zinc-200/80 dark:border-zinc-700/80 focus:border-emerald-400 rounded-lg"
+                  className="pl-8 pr-7 h-7 text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200/80 dark:border-zinc-700/80 focus:border-emerald-400 rounded-lg w-48 sm:w-56"
                 />
-                <button onClick={() => { setSearchTerm(""); setIsMobileSearchOpen(false); }} className="absolute right-2 top-1/2 -translate-y-1/2">
-                  <X className="w-3 h-3 text-zinc-400" />
+                <button onClick={() => { setSearchTerm(""); setIsMobileSearchOpen(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer">
+                  <X className="w-3 h-3 text-zinc-400 hover:text-zinc-600" />
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => { setIsMobileSearchOpen(true); setTimeout(() => mobileSearchRef.current?.focus(), 100); }}
-                className="md:hidden h-7 w-7 flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                className={`h-7 w-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer ${
+                  searchTerm ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20" : "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                }`}
                 title="Buscar"
               >
-                <Search className="w-3.5 h-3.5" />
+                <Search className="w-4 h-4" />
               </button>
             )}
-            {/* Desktop search */}
-            <div className="hidden md:block relative w-44 lg:w-56">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
-              <Input
-                placeholder="Buscar..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 h-7 text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200/80 dark:border-zinc-700/80 focus:border-emerald-400 rounded-lg"
-              />
-              {searchTerm && (
-                <button onClick={() => setSearchTerm("")} className="absolute right-2 top-1/2 -translate-y-1/2">
-                  <XCircle className="w-3 h-3 text-zinc-400 hover:text-zinc-600" />
-                </button>
-              )}
-            </div>
 
-            {/* Sort */}
+            {/* 2. Filtros — unified dropdown with Sort, Group, View, Column Filters, Preso, Archive */}
             <div className="relative">
               <button
-                onClick={() => { const el = document.getElementById('sort-dropdown'); if (el) el.classList.toggle('hidden'); }}
-                className="h-7 w-7 flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                title={`Ordenar: ${sortStack[0]?.column === "recentes" ? "Importação" : sortStack[0]?.column || "Ordenar"}`}
-              >
-                <ArrowUpDown className="w-3.5 h-3.5" />
-              </button>
-              <div id="sort-dropdown" className="hidden absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl shadow-lg py-1 min-w-[160px]">
-                {[
-                  { key: "recentes", label: "Importação ↓" },
-                  { key: "status", label: "Status" },
-                  { key: "prazo", label: "Prazo" },
-                  { key: "assistido", label: "Assistido (A-Z)" },
-                  { key: "ato", label: "Ato" },
-                ].map(opt => (
-                  <button key={opt.key} onClick={() => { setSortStack([{ column: opt.key, direction: "asc" }]); document.getElementById('sort-dropdown')?.classList.add('hidden'); }}
-                    className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${sortStack[0]?.column === opt.key ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
-                  >
-                    {sortStack[0]?.column === opt.key && <span className="text-emerald-500">✓</span>}
-                    <span>{opt.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Group By */}
-            <div className="relative hidden sm:block">
-              <button
-                onClick={() => { const el = document.getElementById('group-dropdown'); if (el) el.classList.toggle('hidden'); }}
-                className={`h-7 w-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer ${groupBy ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
-                title="Agrupar por"
-              >
-                <Layers className="w-3.5 h-3.5" />
-              </button>
-              <div id="group-dropdown" className="hidden absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl shadow-lg py-1 min-w-[160px]">
-                {[
-                  { key: null as "status" | "atribuicao" | null, label: "Sem agrupamento" },
-                  { key: "status" as const, label: "Status" },
-                  { key: "atribuicao" as const, label: "Atribuição" },
-                ].map(opt => (
-                  <button key={opt.key ?? "none"} onClick={() => { setGroupBy(opt.key); setCollapsedGroups(new Set()); if (opt.key) localStorage.setItem("defender_demandas_groupby", opt.key); else localStorage.removeItem("defender_demandas_groupby"); document.getElementById('group-dropdown')?.classList.add('hidden'); }}
-                    className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${groupBy === opt.key ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
-                  >
-                    {groupBy === opt.key && <span className="text-emerald-500">✓</span>}
-                    <span>{opt.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* View Mode — single toggle cycling through modes */}
-            <button
-              onClick={() => {
-                const modes: Array<"compact" | "grid" | "cards"> = ["compact", "grid", "cards"];
-                const idx = modes.indexOf(viewMode as "compact" | "grid" | "cards");
-                const next = modes[(idx + 1) % modes.length];
-                setViewMode(next);
-                localStorage.setItem("defender_demandas_view_mode", next);
-              }}
-              className="h-7 w-7 flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-              title={`Vista: ${viewMode === "compact" ? "Planilha" : viewMode === "grid" ? "Grid" : "Cards"}`}
-            >
-              {viewMode === "compact" ? <Rows3 className="w-3.5 h-3.5" /> : viewMode === "grid" ? <LayoutGrid className="w-3.5 h-3.5" /> : <LayoutList className="w-3.5 h-3.5" />}
-            </button>
-
-            {/* Filters toggle */}
-            <button
-              onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-              className={`h-7 w-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer relative ${
-                isFiltersExpanded || selectedStatusGroup || selectedEstadoPrisional || selectedTipoAto
-                  ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20"
-                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              }`}
-              title="Filtros"
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              {(selectedStatusGroup || selectedEstadoPrisional || selectedTipoAto) && (
-                <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 text-white text-[8px] font-bold flex items-center justify-center">
-                  {[selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto].filter(Boolean).length}
-                </span>
-              )}
-            </button>
-
-            {/* Column filters toggle (for compact view) */}
-            {viewMode === "compact" && (
-              <button
-                onClick={() => setShowColumnFilters(!showColumnFilters)}
-                className={`h-7 w-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer ${
-                  showColumnFilters ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+                className={`h-7 w-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer relative ${
+                  isFiltersExpanded || selectedStatusGroup || selectedEstadoPrisional || selectedTipoAto || groupBy || showColumnFilters || showArchived
+                    ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20"
+                    : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 }`}
-                title="Filtros por coluna"
+                title="Filtros e opções de visualização"
               >
-                <Table2 className="w-3.5 h-3.5" />
+                <SlidersHorizontal className="w-4 h-4" />
+                {(() => {
+                  const count = [selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto, groupBy, showColumnFilters, showArchived].filter(Boolean).length;
+                  return count > 0 ? (
+                    <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 text-white text-[8px] font-bold flex items-center justify-center">{count}</span>
+                  ) : null;
+                })()}
               </button>
-            )}
+              {isFiltersExpanded && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsFiltersExpanded(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl shadow-lg py-1.5 min-w-[220px]">
+                    {/* Sort */}
+                    <div className="px-3 py-1.5">
+                      <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Ordenar</span>
+                    </div>
+                    {[
+                      { key: "recentes", label: "Importação ↓" },
+                      { key: "status", label: "Status" },
+                      { key: "prazo", label: "Prazo" },
+                      { key: "assistido", label: "Assistido (A-Z)" },
+                      { key: "ato", label: "Ato" },
+                    ].map(opt => (
+                      <button key={opt.key} onClick={() => setSortStack([{ column: opt.key, direction: "asc" }])}
+                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${sortStack[0]?.column === opt.key ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                      >
+                        {sortStack[0]?.column === opt.key && <span className="text-emerald-500">✓</span>}
+                        <span>{opt.label}</span>
+                      </button>
+                    ))}
+                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1.5" />
+                    {/* Group By */}
+                    <div className="px-3 py-1.5">
+                      <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Agrupar</span>
+                    </div>
+                    {[
+                      { key: null as "status" | "atribuicao" | null, label: "Sem agrupamento" },
+                      { key: "status" as const, label: "Por Status" },
+                      { key: "atribuicao" as const, label: "Por Atribuição" },
+                    ].map(opt => (
+                      <button key={opt.key ?? "none"} onClick={() => { setGroupBy(opt.key); setCollapsedGroups(new Set()); if (opt.key) localStorage.setItem("defender_demandas_groupby", opt.key); else localStorage.removeItem("defender_demandas_groupby"); }}
+                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${groupBy === opt.key ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                      >
+                        {groupBy === opt.key && <span className="text-emerald-500">✓</span>}
+                        <span>{opt.label}</span>
+                      </button>
+                    ))}
+                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1.5" />
+                    {/* View Mode */}
+                    <div className="px-3 py-1.5">
+                      <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Vista</span>
+                    </div>
+                    {[
+                      { mode: "compact" as const, label: "Planilha", icon: Rows3 },
+                      { mode: "grid" as const, label: "Grid", icon: LayoutGrid },
+                      { mode: "cards" as const, label: "Cards", icon: LayoutList },
+                    ].map(({ mode, label, icon: Icon }) => (
+                      <button key={mode} onClick={() => { setViewMode(mode); localStorage.setItem("defender_demandas_view_mode", mode); }}
+                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${viewMode === mode ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                        <span>{label}</span>
+                        {viewMode === mode && <span className="ml-auto text-emerald-500">✓</span>}
+                      </button>
+                    ))}
+                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1.5" />
+                    {/* Toggle options */}
+                    <button onClick={() => setShowColumnFilters(!showColumnFilters)}
+                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${showColumnFilters ? "text-emerald-700 dark:text-emerald-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                    >
+                      <Table2 className="w-3.5 h-3.5" />
+                      <span>Filtros por coluna</span>
+                      {showColumnFilters && <span className="ml-auto text-emerald-500">✓</span>}
+                    </button>
+                    <button onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "PRESO" ? null : "PRESO")}
+                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${selectedEstadoPrisional === "PRESO" ? "text-rose-700 dark:text-rose-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Apenas presos</span>
+                      {selectedEstadoPrisional === "PRESO" && <span className="ml-auto text-rose-500">✓</span>}
+                    </button>
+                    <button onClick={() => setShowArchived(!showArchived)}
+                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${showArchived ? "text-amber-700 dark:text-amber-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                    >
+                      <Archive className="w-3.5 h-3.5" />
+                      <span>Ver arquivados</span>
+                      {showArchived && <span className="ml-auto text-amber-500">✓</span>}
+                    </button>
+                    {/* Advanced filters section */}
+                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1.5" />
+                    <div className="px-2 py-1">
+                      <FilterSectionsCompact
+                        selectedPrazoFilter={selectedPrazoFilter}
+                        setSelectedPrazoFilter={setSelectedPrazoFilter}
+                        selectedAtribuicao={selectedAtribuicoes[0] || null}
+                        setSelectedAtribuicao={(v: string | null) => setSelectedAtribuicoes(v ? [v] : [])}
+                        selectedEstadoPrisional={selectedEstadoPrisional}
+                        setSelectedEstadoPrisional={setSelectedEstadoPrisional}
+                        selectedTipoAto={selectedTipoAto}
+                        setSelectedTipoAto={setSelectedTipoAto}
+                        selectedStatusGroup={selectedStatusGroup}
+                        setSelectedStatusGroup={setSelectedStatusGroup}
+                        atribuicaoOptions={atribuicaoOptions}
+                        atribuicaoIcons={atribuicaoIcons}
+                        atribuicaoColors={atribuicaoColors}
+                        atoOptions={atoOptionsFiltered}
+                        isExpanded={true}
+                        onToggleExpand={() => {}}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
 
-            {/* Preso quick filter */}
-            <button
-              onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "PRESO" ? null : "PRESO")}
-              className={`hidden sm:flex h-7 w-7 items-center justify-center rounded-lg transition-colors cursor-pointer ${
-                selectedEstadoPrisional === "PRESO"
-                  ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20"
-                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              }`}
-              title="Filtrar presos"
-            >
-              <Lock className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Archive toggle */}
-            <button
-              onClick={() => setShowArchived(!showArchived)}
-              className={`hidden sm:flex h-7 w-7 items-center justify-center rounded-lg transition-colors cursor-pointer ${
-                showArchived
-                  ? "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20"
-                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              }`}
-              title={showArchived ? "Ver ativos" : "Ver arquivados"}
-            >
-              <Archive className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Settings dropdown (absorbs Infográficos, Import, Export, Duplicatas) */}
+            {/* 3. Settings — Import, Export, Infográficos, Duplicatas, Config */}
             <div className="relative">
               <button
                 onClick={() => setIsSettingsDropdownOpen(!isSettingsDropdownOpen)}
                 className="h-7 w-7 flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                title="Mais opções"
+                title="Configurações e importação"
               >
-                <Settings className="w-3.5 h-3.5" />
+                <Settings className="w-4 h-4" />
               </button>
               {isSettingsDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setIsSettingsDropdownOpen(false)} />
                   <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl shadow-lg py-1 min-w-[180px]">
-                    <button onClick={() => { setIsAdminConfigModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                    <button onClick={() => { setIsAdminConfigModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
                       <Settings className="w-3.5 h-3.5 text-zinc-400" /> Configurações
                     </button>
-                    <button onClick={() => { setIsChartConfigModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                    <button onClick={() => { setIsChartConfigModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
                       <BarChartIcon className="w-3.5 h-3.5 text-zinc-400" /> Infográficos
                     </button>
                     <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
-                    <button onClick={() => { setIsImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                    <button onClick={() => { setIsImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
                       <Download className="w-3.5 h-3.5 text-zinc-400" /> Importar Excel
                     </button>
-                    <button onClick={() => { setIsPJeImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                    <button onClick={() => { setIsPJeImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
                       <Download className="w-3.5 h-3.5 text-zinc-400" /> Importar PJe
                     </button>
-                    <button onClick={() => { setIsSheetsImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                    <button onClick={() => { setIsSheetsImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
                       <Download className="w-3.5 h-3.5 text-zinc-400" /> Importar Sheets
                     </button>
-                    <button onClick={() => { setIsSEEUImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                    <button onClick={() => { setIsSEEUImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
                       <Download className="w-3.5 h-3.5 text-zinc-400" /> Importar SEEU
                     </button>
-                    <button onClick={() => { setIsExportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                    <button onClick={() => { setIsExportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
                       <Upload className="w-3.5 h-3.5 text-zinc-400" /> Exportar
                     </button>
                     <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
-                    <button onClick={() => { setIsDuplicatesModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                    <button onClick={() => { setIsDuplicatesModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
                       <Copy className="w-3.5 h-3.5 text-amber-500" /> Encontrar Duplicatas
                     </button>
                   </div>
@@ -1980,7 +1957,7 @@ export default function Demandas() {
               )}
             </div>
 
-            {/* Nova Demanda button */}
+            {/* 4. Nova Demanda — primary action */}
             <Button
               size="sm"
               onClick={() => setIsCreateModalOpen(true)}
@@ -2075,29 +2052,7 @@ export default function Demandas() {
                 )}
               </div>
 
-              {/* Secondary Filters Popover (collapsible) */}
-              {isFiltersExpanded && (
-                <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap gap-2">
-                  <FilterSectionsCompact
-                    selectedPrazoFilter={selectedPrazoFilter}
-                    setSelectedPrazoFilter={setSelectedPrazoFilter}
-                    selectedAtribuicao={selectedAtribuicoes[0] || null}
-                    setSelectedAtribuicao={(v: string | null) => setSelectedAtribuicoes(v ? [v] : [])}
-                    selectedEstadoPrisional={selectedEstadoPrisional}
-                    setSelectedEstadoPrisional={setSelectedEstadoPrisional}
-                    selectedTipoAto={selectedTipoAto}
-                    setSelectedTipoAto={setSelectedTipoAto}
-                    selectedStatusGroup={selectedStatusGroup}
-                    setSelectedStatusGroup={setSelectedStatusGroup}
-                    atribuicaoOptions={atribuicaoOptions}
-                    atribuicaoIcons={atribuicaoIcons}
-                    atribuicaoColors={atribuicaoColors}
-                    atoOptions={atoOptionsFiltered}
-                    isExpanded={true}
-                    onToggleExpand={() => setIsFiltersExpanded(false)}
-                  />
-                </div>
-              )}
+              {/* Secondary Filters now inside the unified Filtros dropdown in the header */}
             </div>
 
             {showArchived && (
