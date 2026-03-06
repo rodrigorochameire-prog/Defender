@@ -1,0 +1,540 @@
+// @ts-nocheck
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  Lock,
+  Flame,
+  ExternalLink,
+  Copy,
+  Check,
+  Archive,
+  Trash2,
+  ChevronUp,
+  ChevronDown,
+  ChevronRight,
+  Scale,
+  Calendar,
+  FileText,
+  User,
+  Briefcase,
+  Clock,
+  X,
+  AlertCircle,
+} from "lucide-react";
+import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from "@/config/demanda-status";
+import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
+import { InlineDropdown } from "@/components/shared/inline-dropdown";
+import { InlineDatePicker } from "@/components/shared/inline-date-picker";
+import { EditableTextInline } from "@/components/shared/editable-text-inline";
+
+// ============================================
+// TYPES
+// ============================================
+
+interface Processo {
+  tipo: string;
+  numero: string;
+}
+
+interface Demanda {
+  id: string;
+  assistido: string;
+  assistidoId?: number | null;
+  processoId?: number | null;
+  status: string;
+  substatus?: string;
+  prazo: string;
+  data: string;
+  dataInclusao?: string;
+  processos: Processo[];
+  ato: string;
+  providencias: string;
+  atribuicao: string;
+  estadoPrisional?: string;
+  prioridade?: string;
+  arquivado?: boolean;
+  importBatchId?: string | null;
+  ordemOriginal?: number | null;
+}
+
+interface DemandaQuickPreviewProps {
+  demanda: Demanda | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onStatusChange: (id: string, status: string) => void;
+  onAtoChange: (id: string, ato: string) => void;
+  onProvidenciasChange: (id: string, providencias: string) => void;
+  onPrazoChange: (id: string, prazo: string) => void;
+  onAtribuicaoChange: (id: string, atribuicao: string) => void;
+  onArchive: (id: string) => void;
+  onDelete: (id: string) => void;
+  onNavigate?: (direction: "prev" | "next") => void;
+  copyToClipboard: (text: string, msg: string) => void;
+  atribuicaoIcons: Record<string, React.ComponentType<{ className?: string }>>;
+  currentIndex?: number;
+  totalCount?: number;
+}
+
+// ============================================
+// CONSTANTS
+// ============================================
+
+const ATRIBUICAO_BORDER_COLORS: Record<string, string> = {
+  "Tribunal do Júri": "#22c55e",
+  "Grupo Especial do Júri": "#f97316",
+  "Violência Doméstica": "#f59e0b",
+  "Execução Penal": "#3b82f6",
+  "Substituição Criminal": "#8b5cf6",
+  "Curadoria Especial": "#71717a",
+};
+
+const ATRIBUICAO_OPTIONS = [
+  { value: "Tribunal do Júri", label: "Tribunal do Júri" },
+  { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri" },
+  { value: "Violência Doméstica", label: "Violência Doméstica" },
+  { value: "Execução Penal", label: "Execução Penal" },
+  { value: "Substituição Criminal", label: "Substituição Criminal" },
+  { value: "Curadoria Especial", label: "Curadoria Especial" },
+];
+
+// Pipeline stages for progress bar (mapped from status groups)
+const PIPELINE_STAGES: { key: StatusGroup; label: string }[] = [
+  { key: "preparacao", label: "Preparação" },
+  { key: "delegacao", label: "Protocolar" },
+  { key: "monitoramento", label: "Monitorar" },
+  { key: "concluida", label: "Concluído" },
+];
+
+function getStageIndex(group: StatusGroup): number {
+  if (group === "urgente") return 0; // maps to Preparação
+  if (group === "fila") return 0;
+  if (group === "diligencias") return 0;
+  return PIPELINE_STAGES.findIndex(s => s.key === group);
+}
+
+// ============================================
+// AVATAR COMPONENT
+// ============================================
+
+function Avatar({ name, color, size = 48 }: { name: string; color: string; size?: number }) {
+  const initials = name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(w => w[0]?.toUpperCase() || "")
+    .join("");
+
+  return (
+    <div
+      className="flex items-center justify-center rounded-full text-white font-semibold select-none flex-shrink-0"
+      style={{
+        width: size,
+        height: size,
+        backgroundColor: color,
+        fontSize: size * 0.38,
+      }}
+    >
+      {initials || "?"}
+    </div>
+  );
+}
+
+// ============================================
+// PRAZO BADGE
+// ============================================
+
+function calcularPrazoBadge(prazoStr: string): { texto: string; cor: "red" | "amber" | "green" | "gray" | "none" } | null {
+  if (!prazoStr) return null;
+  try {
+    const parts = prazoStr.split("/").map(Number);
+    if (parts.length < 3) return null;
+    const [dia, mes, ano] = parts;
+    const fullYear = ano < 100 ? 2000 + ano : ano;
+    const prazo = new Date(fullYear, mes - 1, dia);
+    prazo.setHours(0, 0, 0, 0);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((prazo.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+    if (diff < 0) return { texto: `${Math.abs(diff)}d vencido`, cor: "red" };
+    if (diff === 0) return { texto: "Hoje", cor: "red" };
+    if (diff <= 3) return { texto: `${diff}d`, cor: "amber" };
+    if (diff <= 7) return { texto: `${diff}d`, cor: "green" };
+    return { texto: `${diff}d`, cor: "gray" };
+  } catch {
+    return null;
+  }
+}
+
+// ============================================
+// COMPONENT
+// ============================================
+
+export function DemandaQuickPreview({
+  demanda,
+  open,
+  onOpenChange,
+  onStatusChange,
+  onAtoChange,
+  onProvidenciasChange,
+  onPrazoChange,
+  onAtribuicaoChange,
+  onArchive,
+  onDelete,
+  onNavigate,
+  copyToClipboard,
+  atribuicaoIcons,
+  currentIndex,
+  totalCount,
+}: DemandaQuickPreviewProps) {
+  const [metadataOpen, setMetadataOpen] = useState(true);
+
+  if (!demanda) return null;
+
+  const statusConfig = getStatusConfig(demanda.status);
+  const statusColor = STATUS_GROUPS[statusConfig.group]?.color || "#A1A1AA";
+  const atribuicaoColor = ATRIBUICAO_BORDER_COLORS[demanda.atribuicao] || "#71717a";
+  const AtribuicaoIcon = atribuicaoIcons[demanda.atribuicao] || Scale;
+  const isPreso = demanda.estadoPrisional === "preso";
+  const isUrgente = demanda.prioridade === "URGENTE" || demanda.prioridade === "REU_PRESO";
+
+  const statusOptions = Object.entries(DEMANDA_STATUS).map(([k, v]) => ({
+    value: k,
+    label: v.label,
+    color: STATUS_GROUPS[v.group].color,
+    group: v.group,
+  }));
+
+  const atoOptions = getAtosPorAtribuicao(demanda.atribuicao)
+    .filter((a) => a.value !== "Todos")
+    .map((a) => ({ value: a.value, label: a.label }));
+
+  const processo = demanda.processos?.[0];
+  const prazoBadge = calcularPrazoBadge(demanda.prazo);
+  const currentStageIdx = getStageIndex(statusConfig.group);
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:w-[420px] md:w-[460px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden" style={{ borderLeft: `3px solid ${atribuicaoColor}` }}>
+        {/* ===== STICKY NAV HEADER ===== */}
+        <div className="sticky top-0 z-10 bg-white dark:bg-zinc-900 border-b border-zinc-200/50 dark:border-zinc-800/50 px-4 py-2 flex items-center justify-between">
+          <SheetHeader className="p-0 space-y-0">
+            <SheetTitle className="text-xs font-medium text-zinc-400 dark:text-zinc-500">
+              Demanda
+            </SheetTitle>
+          </SheetHeader>
+          <div className="flex items-center gap-1">
+            {onNavigate && (
+              <>
+                <button
+                  onClick={() => onNavigate("prev")}
+                  className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+                  title="Anterior (↑)"
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </button>
+                {currentIndex != null && totalCount != null && (
+                  <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 tabular-nums min-w-[40px] text-center">
+                    {currentIndex + 1}/{totalCount}
+                  </span>
+                )}
+                <button
+                  onClick={() => onNavigate("next")}
+                  className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+                  title="Próximo (↓)"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </>
+            )}
+            {/* Close button */}
+            <button
+              onClick={() => onOpenChange(false)}
+              className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer ml-1"
+              title="Fechar (Esc)"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* ===== SCROLLABLE CONTENT ===== */}
+        <div className="flex-1 overflow-y-auto">
+          {/* ===== HERO HEADER with gradient ===== */}
+          <div
+            className="px-5 pt-5 pb-4"
+            style={{
+              background: `linear-gradient(180deg, ${atribuicaoColor}08 0%, transparent 100%)`,
+            }}
+          >
+            <div className="flex items-start gap-3.5">
+              <Avatar name={demanda.assistido} color={atribuicaoColor} size={48} />
+              <div className="flex-1 min-w-0">
+                <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 leading-tight truncate">
+                  {demanda.assistido}
+                </h2>
+                {/* Chips */}
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  {isPreso && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400">
+                      <Lock className="w-3 h-3" /> Preso
+                    </span>
+                  )}
+                  {isUrgente && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400">
+                      <Flame className="w-3 h-3" /> Urgente
+                    </span>
+                  )}
+                </div>
+                {/* Links */}
+                <div className="flex items-center gap-3 mt-2">
+                  {demanda.assistidoId && (
+                    <Link
+                      href={`/admin/assistidos/${demanda.assistidoId}`}
+                      className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 hover:underline transition-colors"
+                    >
+                      <User className="w-3 h-3" />
+                      Ver assistido
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </Link>
+                  )}
+                  {demanda.processoId && (
+                    <Link
+                      href={`/admin/processos/${demanda.processoId}`}
+                      className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 hover:underline transition-colors"
+                    >
+                      <Briefcase className="w-3 h-3" />
+                      Ver processo
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Processo number */}
+            {processo && (
+              <div className="mt-3 flex items-center gap-2 pl-[60px]">
+                <span className="font-mono text-xs text-zinc-500 dark:text-zinc-400">{processo.numero}</span>
+                <button
+                  onClick={() => copyToClipboard(processo.numero, "Processo copiado!")}
+                  className="p-0.5 rounded hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 transition-colors cursor-pointer"
+                >
+                  <Copy className="w-3 h-3 text-zinc-400" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* ===== PROGRESS BAR (Status Pipeline) ===== */}
+          <div className="px-5 py-3 border-t border-zinc-100 dark:border-zinc-800/50">
+            <div className="flex items-center gap-0">
+              {PIPELINE_STAGES.map((stage, i) => {
+                const isActive = i === currentStageIdx;
+                const isCompleted = i < currentStageIdx;
+                const stageColor = isActive ? statusColor : isCompleted ? "#84CC9B" : "#d4d4d8";
+
+                return (
+                  <React.Fragment key={stage.key}>
+                    {i > 0 && (
+                      <div
+                        className="flex-shrink-0 h-0.5 w-4"
+                        style={{ backgroundColor: isCompleted || isActive ? "#84CC9B" : "#e4e4e7" }}
+                      />
+                    )}
+                    <button
+                      onClick={() => {
+                        // Find first status in this group
+                        const entry = Object.entries(DEMANDA_STATUS).find(([, v]) => v.group === stage.key);
+                        if (entry) onStatusChange(demanda.id, entry[0]);
+                      }}
+                      className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-all cursor-pointer whitespace-nowrap ${
+                        isActive
+                          ? "ring-1 ring-offset-1 dark:ring-offset-zinc-900"
+                          : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      }`}
+                      style={{
+                        color: isActive ? statusColor : isCompleted ? "#84CC9B" : "#a1a1aa",
+                        ...(isActive ? { ringColor: statusColor } : {}),
+                      }}
+                      title={`Mudar para ${stage.label}`}
+                    >
+                      {isCompleted ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <span
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: stageColor }}
+                        />
+                      )}
+                      {stage.label}
+                    </button>
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ===== CARD SECTIONS ===== */}
+          <div className="px-5 pb-4 space-y-3">
+            {/* Card 1: Classificação */}
+            <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/40 p-4 space-y-3">
+              <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-semibold">Classificação</p>
+              <div className="flex items-start gap-4">
+                <div className="flex-1">
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mb-1">Status</p>
+                  <InlineDropdown
+                    value={demanda.status}
+                    compact
+                    displayValue={
+                      <div className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: statusColor }}>
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: statusColor }} />
+                        {statusConfig.label}
+                      </div>
+                    }
+                    options={statusOptions}
+                    onChange={(v) => onStatusChange(demanda.id, v)}
+                  />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mb-1">Atribuição</p>
+                  <InlineDropdown
+                    value={demanda.atribuicao}
+                    compact
+                    displayValue={
+                      <div className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: atribuicaoColor }}>
+                        <AtribuicaoIcon className="w-4 h-4" />
+                        {demanda.atribuicao}
+                      </div>
+                    }
+                    options={ATRIBUICAO_OPTIONS}
+                    onChange={(v) => onAtribuicaoChange(demanda.id, v)}
+                  />
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mb-1">Ato / Tipo</p>
+                <InlineDropdown
+                  value={demanda.ato}
+                  compact
+                  displayValue={
+                    <span className="text-sm text-zinc-700 dark:text-zinc-300 font-medium">
+                      {demanda.ato || <span className="text-zinc-400 italic">Selecionar ato</span>}
+                    </span>
+                  }
+                  options={atoOptions}
+                  onChange={(v) => onAtoChange(demanda.id, v)}
+                />
+              </div>
+            </div>
+
+            {/* Card 2: Prazo & Providências */}
+            <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/40 p-4 space-y-3">
+              <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-semibold">Prazo & Providências</p>
+              <div>
+                <div className="flex items-center gap-2">
+                  <InlineDatePicker
+                    value={demanda.prazo}
+                    onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
+                    placeholder="Definir prazo"
+                    showEditIcon
+                  />
+                  {prazoBadge && (
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${
+                      prazoBadge.cor === "red" ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 animate-pulse" :
+                      prazoBadge.cor === "amber" ? "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
+                      prazoBadge.cor === "green" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" :
+                      "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                    }`}>
+                      {prazoBadge.texto}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mb-1">Providências</p>
+                <EditableTextInline
+                  value={demanda.providencias || ""}
+                  onSave={(v) => onProvidenciasChange(demanda.id, v)}
+                  placeholder="Clique para adicionar providências..."
+                  className="text-sm text-zinc-700 dark:text-zinc-300 min-h-[80px] bg-white dark:bg-zinc-900 rounded-lg p-2 border border-zinc-200/50 dark:border-zinc-700/50"
+                  multiline
+                />
+              </div>
+            </div>
+
+            {/* Card 3: Metadados (collapsible) */}
+            <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/40 overflow-hidden">
+              <button
+                onClick={() => setMetadataOpen(!metadataOpen)}
+                className="w-full flex items-center gap-2 px-4 py-3 text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-semibold hover:bg-zinc-100/50 dark:hover:bg-zinc-700/30 transition-colors cursor-pointer"
+              >
+                {metadataOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                Metadados
+              </button>
+              {metadataOpen && (
+                <div className="px-4 pb-3 space-y-2">
+                  {demanda.dataInclusao && (
+                    <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      <Clock className="w-3 h-3 flex-shrink-0" />
+                      <span>Importado em {new Date(demanda.dataInclusao).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                    </div>
+                  )}
+                  {demanda.estadoPrisional && (
+                    <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      <Lock className="w-3 h-3 flex-shrink-0" />
+                      <span>Estado prisional: {demanda.estadoPrisional}</span>
+                    </div>
+                  )}
+                  {processo?.tipo && (
+                    <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      <FileText className="w-3 h-3 flex-shrink-0" />
+                      <span>Tipo: {processo.tipo}</span>
+                    </div>
+                  )}
+                  {demanda.importBatchId && (
+                    <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                      <span>Batch: {demanda.importBatchId.slice(0, 8)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ===== STICKY ACTIONS BOTTOM BAR ===== */}
+        <div className="sticky bottom-0 bg-white dark:bg-zinc-900 border-t border-zinc-200/80 dark:border-zinc-800/80 px-5 py-3 flex items-center gap-2">
+          <button
+            onClick={() => { onStatusChange(demanda.id, "resolvido"); onOpenChange(false); }}
+            className="flex-1 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <Check className="w-3.5 h-3.5" />
+            Resolver
+          </button>
+          <button
+            onClick={() => { onArchive(demanda.id); onOpenChange(false); }}
+            className="h-9 px-4 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 text-xs font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <Archive className="w-3.5 h-3.5" />
+            Arquivar
+          </button>
+          <button
+            onClick={() => { onDelete(demanda.id); onOpenChange(false); }}
+            className="h-9 px-3 rounded-lg border border-rose-200 dark:border-rose-800/50 text-rose-500 dark:text-rose-400 text-xs font-medium hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}

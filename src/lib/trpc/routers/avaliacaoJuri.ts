@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { router, protectedProcedure } from "../init";
+import { router, protectedProcedure, publicProcedure } from "../init";
 import { db } from "@/lib/db";
 import {
   avaliacoesJuri,
@@ -9,8 +9,11 @@ import {
   sessoesJuri,
   jurados,
   personagensJuri,
+  dosimetriaJuri,
+  documentosJuri,
+  quesitos,
 } from "@/lib/db/schema";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, or, isNull, asc, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 // Schema de validação para jurado na avaliação
@@ -928,5 +931,302 @@ export const avaliacaoJuriRouter = router({
         juradosMaisPrevistos,
         timeline,
       };
+    }),
+
+  // ==========================================
+  // REGISTRO PÓS-JÚRI — Novas procedures
+  // ==========================================
+
+  // Listar sessões pendentes de registro completo
+  registroPendentes: publicProcedure.query(async () => {
+    const pendentes = await db.query.sessoesJuri.findMany({
+      where: and(
+        eq(sessoesJuri.status, "realizada"),
+        or(eq(sessoesJuri.registroCompleto, false), isNull(sessoesJuri.registroCompleto))
+      ),
+      with: {
+        processo: { with: { assistido: true } },
+        defensor: true,
+      },
+      orderBy: desc(sessoesJuri.dataSessao),
+    });
+
+    return pendentes;
+  }),
+
+  // Buscar registro completo de uma sessão (sessão + dosimetria + documentos + quesitos)
+  getRegistro: publicProcedure
+    .input(z.object({ sessaoJuriId: z.number() }))
+    .query(async ({ input }) => {
+      const sessao = await db.query.sessoesJuri.findFirst({
+        where: eq(sessoesJuri.id, input.sessaoJuriId),
+        with: {
+          processo: { with: { assistido: true } },
+          defensor: true,
+          dosimetria: true,
+          documentos: true,
+          conselho: { with: { jurado: true } },
+        },
+      });
+
+      if (!sessao) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Sessão não encontrada" });
+      }
+
+      // Buscar quesitos vinculados a esta sessão separadamente
+      // (não há relação many definida em sessoesJuriRelations para quesitos)
+      const quesitosData = await db.query.quesitos.findMany({
+        where: eq(quesitos.sessaoJuriId, input.sessaoJuriId),
+        orderBy: [asc(quesitos.numero)],
+      });
+
+      return { ...sessao, quesitos: quesitosData };
+    }),
+
+  // Upload de documento do júri (quesitos, sentença, ata)
+  uploadDocumento: publicProcedure
+    .input(
+      z.object({
+        sessaoJuriId: z.number(),
+        tipo: z.enum(["quesitos", "sentenca", "ata"]),
+        fileUrl: z.string(),
+        fileName: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const [doc] = await db
+        .insert(documentosJuri)
+        .values({
+          sessaoJuriId: input.sessaoJuriId,
+          tipo: input.tipo,
+          fileName: input.fileName,
+          url: input.fileUrl,
+          statusProcessamento: "pendente",
+        })
+        .returning();
+
+      return doc;
+    }),
+
+  // Processar documento via enrichment engine (extração de dados por IA)
+  processarDocumento: publicProcedure
+    .input(z.object({ documentoId: z.number() }))
+    .mutation(async ({ input }) => {
+      const doc = await db.query.documentosJuri.findFirst({
+        where: eq(documentosJuri.id, input.documentoId),
+      });
+
+      if (!doc) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Documento não encontrado" });
+      }
+
+      // Atualizar status para processando
+      await db
+        .update(documentosJuri)
+        .set({ statusProcessamento: "processando" })
+        .where(eq(documentosJuri.id, input.documentoId));
+
+      try {
+        const enrichmentUrl = (process.env.ENRICHMENT_ENGINE_URL || "https://enrichment-engine-production.up.railway.app").trim();
+        const apiKey = (process.env.ENRICHMENT_ENGINE_API_KEY || "").trim();
+
+        const response = await fetch(`${enrichmentUrl}/api/juri/extrair`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": apiKey,
+          },
+          body: JSON.stringify({ file_url: doc.url, tipo: doc.tipo }),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => "Unknown error");
+          throw new Error(`Enrichment failed: ${response.status} — ${errorText}`);
+        }
+
+        const data = await response.json();
+
+        const [updated] = await db
+          .update(documentosJuri)
+          .set({
+            dadosExtraidos: data.dados_extraidos,
+            processadoEm: new Date(),
+            statusProcessamento: "concluido",
+          })
+          .where(eq(documentosJuri.id, input.documentoId))
+          .returning();
+
+        return updated;
+      } catch (error) {
+        await db
+          .update(documentosJuri)
+          .set({ statusProcessamento: "erro" })
+          .where(eq(documentosJuri.id, input.documentoId));
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Falha na extração de dados",
+        });
+      }
+    }),
+
+  // Salvar registro completo pós-júri (contexto + dosimetria + quesitos)
+  salvarRegistro: publicProcedure
+    .input(
+      z.object({
+        sessaoJuriId: z.number(),
+        // Contexto da sessão
+        juizPresidente: z.string().optional(),
+        promotor: z.string().optional(),
+        duracaoMinutos: z.number().optional(),
+        localFato: z.string().optional(),
+        tipoPenal: z.enum([
+          "homicidio_simples",
+          "homicidio_qualificado",
+          "homicidio_privilegiado",
+          "homicidio_privilegiado_qualificado",
+          "homicidio_tentado",
+          "feminicidio",
+        ]).optional(),
+        tesePrincipal: z.string().optional(),
+        reuPrimario: z.boolean().optional(),
+        reuIdade: z.number().optional(),
+        vitimaGenero: z.string().optional(),
+        vitimaIdade: z.number().optional(),
+        usouAlgemas: z.boolean().optional(),
+        incidentesProcessuais: z.string().optional(),
+        // Dosimetria
+        dosimetria: z.object({
+          penaBase: z.string().optional(),
+          circunstanciasJudiciais: z.string().optional(),
+          agravantes: z.string().optional(),
+          atenuantes: z.string().optional(),
+          causasAumento: z.string().optional(),
+          causasDiminuicao: z.string().optional(),
+          penaTotalMeses: z.number().optional(),
+          regimeInicial: z.enum(["fechado", "semiaberto", "aberto"]).optional(),
+          detracaoInicio: z.string().optional(),
+          detracaoFim: z.string().optional(),
+          detracaoDias: z.number().optional(),
+          dataFato: z.string().optional(),
+          fracaoProgressao: z.string().optional(),
+          incisoAplicado: z.string().optional(),
+          vedadoLivramento: z.boolean().optional(),
+          resultouMorte: z.boolean().optional(),
+          reuReincidente: z.boolean().optional(),
+        }).optional(),
+        // Resultados dos quesitos
+        quesitosResultados: z.array(
+          z.object({
+            quesitoId: z.number(),
+            resultado: z.enum(["sim", "nao", "prejudicado"]),
+            ordemVotacao: z.number().optional(),
+          })
+        ).optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { sessaoJuriId, dosimetria: dosimetriaInput, quesitosResultados, ...contexto } = input;
+
+      // Verificar se a sessão existe
+      const sessao = await db.query.sessoesJuri.findFirst({
+        where: eq(sessoesJuri.id, sessaoJuriId),
+      });
+
+      if (!sessao) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Sessão não encontrada" });
+      }
+
+      // 1. Atualizar sessoesJuri com campos de contexto + marcar registro completo
+      const [sessaoAtualizada] = await db
+        .update(sessoesJuri)
+        .set({
+          registroCompleto: true,
+          juizPresidente: contexto.juizPresidente ?? null,
+          promotor: contexto.promotor ?? null,
+          duracaoMinutos: contexto.duracaoMinutos ?? null,
+          localFato: contexto.localFato ?? null,
+          tipoPenal: contexto.tipoPenal ?? null,
+          tesePrincipal: contexto.tesePrincipal ?? null,
+          reuPrimario: contexto.reuPrimario ?? null,
+          reuIdade: contexto.reuIdade ?? null,
+          vitimaGenero: contexto.vitimaGenero ?? null,
+          vitimaIdade: contexto.vitimaIdade ?? null,
+          usouAlgemas: contexto.usouAlgemas ?? null,
+          incidentesProcessuais: contexto.incidentesProcessuais ?? null,
+          updatedAt: new Date(),
+        })
+        .where(eq(sessoesJuri.id, sessaoJuriId))
+        .returning();
+
+      // 2. Upsert dosimetria (se fornecida)
+      if (dosimetriaInput) {
+        const existingDosimetria = await db.query.dosimetriaJuri.findFirst({
+          where: eq(dosimetriaJuri.sessaoJuriId, sessaoJuriId),
+        });
+
+        if (existingDosimetria) {
+          await db
+            .update(dosimetriaJuri)
+            .set({
+              penaBase: dosimetriaInput.penaBase ?? null,
+              circunstanciasJudiciais: dosimetriaInput.circunstanciasJudiciais ?? null,
+              agravantes: dosimetriaInput.agravantes ?? null,
+              atenuantes: dosimetriaInput.atenuantes ?? null,
+              causasAumento: dosimetriaInput.causasAumento ?? null,
+              causasDiminuicao: dosimetriaInput.causasDiminuicao ?? null,
+              penaTotalMeses: dosimetriaInput.penaTotalMeses ?? null,
+              regimeInicial: dosimetriaInput.regimeInicial ?? null,
+              detracaoInicio: dosimetriaInput.detracaoInicio ?? null,
+              detracaoFim: dosimetriaInput.detracaoFim ?? null,
+              detracaoDias: dosimetriaInput.detracaoDias ?? null,
+              dataFato: dosimetriaInput.dataFato ?? null,
+              fracaoProgressao: dosimetriaInput.fracaoProgressao ?? null,
+              incisoAplicado: dosimetriaInput.incisoAplicado ?? null,
+              vedadoLivramento: dosimetriaInput.vedadoLivramento ?? null,
+              resultouMorte: dosimetriaInput.resultouMorte ?? null,
+              reuReincidente: dosimetriaInput.reuReincidente ?? null,
+              updatedAt: new Date(),
+            })
+            .where(eq(dosimetriaJuri.id, existingDosimetria.id));
+        } else {
+          await db.insert(dosimetriaJuri).values({
+            sessaoJuriId,
+            penaBase: dosimetriaInput.penaBase ?? null,
+            circunstanciasJudiciais: dosimetriaInput.circunstanciasJudiciais ?? null,
+            agravantes: dosimetriaInput.agravantes ?? null,
+            atenuantes: dosimetriaInput.atenuantes ?? null,
+            causasAumento: dosimetriaInput.causasAumento ?? null,
+            causasDiminuicao: dosimetriaInput.causasDiminuicao ?? null,
+            penaTotalMeses: dosimetriaInput.penaTotalMeses ?? null,
+            regimeInicial: dosimetriaInput.regimeInicial ?? null,
+            detracaoInicio: dosimetriaInput.detracaoInicio ?? null,
+            detracaoFim: dosimetriaInput.detracaoFim ?? null,
+            detracaoDias: dosimetriaInput.detracaoDias ?? null,
+            dataFato: dosimetriaInput.dataFato ?? null,
+            fracaoProgressao: dosimetriaInput.fracaoProgressao ?? null,
+            incisoAplicado: dosimetriaInput.incisoAplicado ?? null,
+            vedadoLivramento: dosimetriaInput.vedadoLivramento ?? null,
+            resultouMorte: dosimetriaInput.resultouMorte ?? null,
+            reuReincidente: dosimetriaInput.reuReincidente ?? null,
+          });
+        }
+      }
+
+      // 3. Atualizar resultados dos quesitos (se fornecidos)
+      if (quesitosResultados && quesitosResultados.length > 0) {
+        for (const qr of quesitosResultados) {
+          await db
+            .update(quesitos)
+            .set({
+              resultado: qr.resultado,
+              ordemVotacao: qr.ordemVotacao ?? null,
+              updatedAt: new Date(),
+            })
+            .where(eq(quesitos.id, qr.quesitoId));
+        }
+      }
+
+      return sessaoAtualizada;
     }),
 });

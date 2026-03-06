@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   Lock,
@@ -18,6 +18,9 @@ import {
   AlertCircle,
   Scale,
   GripVertical,
+  Eye,
+  ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
@@ -122,6 +125,13 @@ interface DemandaCompactViewProps {
   // Per-column filters
   columnFilters?: Record<string, string>;
   onColumnFilterChange?: (columnId: string, value: string) => void;
+  // Quick-preview
+  onPreview?: (id: string) => void;
+  previewDemandaId?: string | null;
+  // Agrupamento visual
+  groupBy?: "status" | "atribuicao" | null;
+  collapsedGroups?: Set<string>;
+  onToggleGroupCollapse?: (group: string) => void;
 }
 
 // ============================================
@@ -253,6 +263,8 @@ const CompactRow = React.memo(function CompactRow({
   cellRefs,
   onReorder,
   columnWidths,
+  onPreview,
+  previewDemandaId,
 }: {
   demanda: Demanda;
   index: number;
@@ -285,6 +297,8 @@ const CompactRow = React.memo(function CompactRow({
   cellRefs: React.MutableRefObject<Map<string, HTMLTableCellElement>>;
   onReorder?: (activeId: string, overId: string) => void;
   columnWidths?: Record<string, number>;
+  onPreview?: (id: string) => void;
+  previewDemandaId?: string | null;
 }) {
   const [showMenu, setShowMenu] = useState(false);
   const [copiedCell, setCopiedCell] = useState<string | null>(null);
@@ -340,6 +354,7 @@ const CompactRow = React.memo(function CompactRow({
     setTimeout(() => setCopiedCell(null), 1500);
   }, [copyToClipboard]);
 
+  const isPreviewActive = previewDemandaId === demanda.id;
   const rowBg = isUrgente || isPreso
     ? "bg-rose-50/40 dark:bg-rose-950/20"
     : "";
@@ -358,24 +373,9 @@ const CompactRow = React.memo(function CompactRow({
   // ---- Cell Renderers (keyed by column id) ----
 
   const cellRenderers: Record<string, () => React.ReactNode> = {
-    // # (número) + barra de cor de atribuição à direita
+    // # (número) — left border on <tr> handles atribuição color
     index: () => (
-      <div className="flex items-center gap-0">
-        <span className="mr-1">{index + 1}</span>
-        <InlineDropdown
-          value={demanda.atribuicao}
-          compact
-          displayValue={
-            <span
-              className="absolute right-0 inset-y-0 w-1.5 cursor-pointer hover:w-2.5 transition-all rounded-r"
-              style={{ backgroundColor: atribuicaoColor }}
-              title={`Atribuição: ${demanda.atribuicao}\nClique para alterar`}
-            />
-          }
-          options={ATRIBUICAO_OPTIONS}
-          onChange={(v) => onAtribuicaoChange(demanda.id, v)}
-        />
-      </div>
+      <span>{index + 1}</span>
     ),
 
     // Assistido - autocomplete de vinculacao + editavel inline + Copy + Link
@@ -405,26 +405,6 @@ const CompactRow = React.memo(function CompactRow({
             />
           )}
         </div>
-        <button
-          onClick={(e) => { e.stopPropagation(); copyCell(demanda.assistido, "Nome"); }}
-          className="opacity-0 group-hover/cell:opacity-100 transition-opacity flex-shrink-0 p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700"
-          title="Copiar nome"
-        >
-          {copiedCell === "Nome" ? (
-            <Check className="w-3 h-3 text-emerald-500" />
-          ) : (
-            <Copy className="w-3 h-3 text-zinc-400" />
-          )}
-        </button>
-        {demanda.assistidoId && (
-          <Link
-            href={`/admin/assistidos/${demanda.assistidoId}`}
-            className="opacity-0 group-hover/cell:opacity-100 transition-opacity flex-shrink-0"
-            title="Abrir ficha"
-          >
-            <ExternalLink className="w-3 h-3 text-zinc-400 hover:text-emerald-500" />
-          </Link>
-        )}
       </div>
     ),
 
@@ -669,18 +649,44 @@ const CompactRow = React.memo(function CompactRow({
     ),
   };
 
+  // Atribuição dropdown state for left border click
+  const [showAtribDropdown, setShowAtribDropdown] = useState(false);
+  const atribDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showAtribDropdown) return;
+    const handler = (e: MouseEvent) => {
+      if (atribDropdownRef.current && !atribDropdownRef.current.contains(e.target as Node)) setShowAtribDropdown(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showAtribDropdown]);
+
   return (
     <tr
       ref={setNodeRef}
-      style={{ ...style, ...(isSelected ? { backgroundColor: `${atribuicaoColor}12` } : {}) }}
+      style={{
+        ...style,
+        borderLeft: `3px solid ${atribuicaoColor}`,
+        ...(isSelected ? { backgroundColor: `${atribuicaoColor}12` } : {}),
+        ...(isPreviewActive ? { backgroundColor: "rgba(16, 185, 129, 0.06)" } : {}),
+      }}
       {...attributes}
       onClick={(e) => {
+        // Ctrl/Cmd+Click = toggle selection
         if ((e.ctrlKey || e.metaKey) && onToggleSelect) {
           e.preventDefault();
           onToggleSelect(demanda.id, { shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey });
+          return;
+        }
+        // Normal click = open preview Sheet (if not clicking an interactive element)
+        const target = e.target as HTMLElement;
+        const isInteractive = target.closest("button, a, input, select, textarea, [data-edit-trigger], [role='combobox'], [role='listbox']");
+        if (!isInteractive && onPreview) {
+          onPreview(demanda.id);
         }
       }}
-      className={`group/row border-b border-zinc-100 dark:border-zinc-800/60 transition-colors duration-100 ${rowBg} ${index % 2 === 1 ? "bg-zinc-50/60 dark:bg-zinc-800/25" : "bg-white dark:bg-zinc-900"} ${isDragging ? "shadow-lg bg-white dark:bg-zinc-900 ring-1 ring-emerald-400/30" : ""} ${!isSelected ? "hover:bg-zinc-50 dark:hover:bg-zinc-800/40" : ""}`}
+      className={`group/row border-b border-zinc-100/50 dark:border-zinc-800/50 transition-colors duration-100 cursor-pointer ${rowBg} ${isPreviewActive ? "ring-1 ring-emerald-200/50 dark:ring-emerald-800/40" : ""} ${index % 2 === 1 && !isPreviewActive ? "bg-zinc-50/40 dark:bg-zinc-800/20" : !isPreviewActive ? "bg-white dark:bg-zinc-900" : ""} ${isDragging ? "shadow-lg bg-white dark:bg-zinc-900 ring-1 ring-emerald-400/30" : ""} ${!isSelected && !isPreviewActive ? "hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30" : ""}`}
     >
       {/* Drag handle */}
       {onReorder && (
@@ -714,15 +720,33 @@ const CompactRow = React.memo(function CompactRow({
 
         if (isIndexCol) {
           return (
-            <td key={col.id} className="px-3 py-2 text-zinc-400 font-mono text-[10px] relative w-8">
+            <td key={col.id} className="px-3 py-3 text-zinc-400 font-mono text-[10px] relative w-8 cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors" onClick={() => setShowAtribDropdown(!showAtribDropdown)} title={`Atribuição: ${demanda.atribuicao}\nClique para alterar`}>
               {renderer()}
+              {showAtribDropdown && (
+                <div ref={atribDropdownRef} className="absolute left-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl py-1 min-w-[140px]">
+                  {ATRIBUICAO_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={(e) => { e.stopPropagation(); onAtribuicaoChange(demanda.id, opt.value); setShowAtribDropdown(false); }}
+                      className={`w-full px-3 py-1.5 text-left text-[11px] flex items-center gap-2 transition-colors ${
+                        demanda.atribuicao === opt.value
+                          ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold"
+                          : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                      }`}
+                    >
+                      {demanda.atribuicao === opt.value && <span className="text-emerald-500">✓</span>}
+                      <span>{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </td>
           );
         }
 
         if (isAcoesCol) {
           return (
-            <td key={col.id} className="px-2 py-2 w-[70px]">
+            <td key={col.id} className="px-2 py-3 w-[70px]">
               {renderer()}
             </td>
           );
@@ -741,7 +765,7 @@ const CompactRow = React.memo(function CompactRow({
                   ? { boxShadow: `inset 0 0 0 2px ${atribuicaoColor}99`, backgroundColor: `${atribuicaoColor}08` }
                   : {}),
               }}
-              className={`px-2 py-1.5 group/cell transition-all duration-100 ${columnWidths?.[col.id] ? "" : col.width || ""} ${
+              className={`px-2 py-3 group/cell transition-all duration-100 ${columnWidths?.[col.id] ? "" : col.width || ""} ${
                 !isFocused(col.colIndex) ? "hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30" : ""
               }`}
               onClick={() => onCellFocus(index, col.colIndex)}
@@ -803,6 +827,11 @@ export function DemandaCompactView({
   onColumnResize,
   columnFilters,
   onColumnFilterChange,
+  onPreview,
+  previewDemandaId,
+  groupBy,
+  collapsedGroups,
+  onToggleGroupCollapse,
 }: DemandaCompactViewProps) {
   const [focusedCell, setFocusedCell] = useState<{ row: number; col: number } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -818,6 +847,32 @@ export function DemandaCompactView({
     container.addEventListener("scroll", handler, { passive: true });
     return () => container.removeEventListener("scroll", handler);
   }, []);
+
+  // Group boundaries: compute which index starts a new group
+  const groupBoundaries = useMemo(() => {
+    if (!groupBy) return null;
+    const boundaries: { index: number; key: string; label: string; color: string; count: number }[] = [];
+    let lastKey = "";
+    for (let i = 0; i < demandas.length; i++) {
+      const d = demandas[i];
+      const key = groupBy === "status" ? d.status : d.atribuicao;
+      if (key !== lastKey) {
+        const count = demandas.filter(dd => (groupBy === "status" ? dd.status : dd.atribuicao) === key).length;
+        let label = key;
+        let color = "#71717a";
+        if (groupBy === "status") {
+          const cfg = getStatusConfig(key);
+          label = cfg.label;
+          color = STATUS_GROUPS[cfg.group]?.color || "#71717a";
+        } else {
+          color = ATRIBUICAO_BORDER_COLORS[key] || "#71717a";
+        }
+        boundaries.push({ index: i, key, label, color, count });
+        lastKey = key;
+      }
+    }
+    return boundaries;
+  }, [demandas, groupBy]);
 
   // Mobile: atribuicao picker state
   const [atribuicaoPickerOpenId, setAtribuicaoPickerOpenId] = useState<string | null>(null);
@@ -1022,7 +1077,7 @@ export function DemandaCompactView({
         {/* Header: keyboard hint (atribuição tabs moved to parent toolbar) */}
         <div className="px-4 py-1.5 bg-zinc-50/50 dark:bg-zinc-800/40 border-b border-zinc-100 dark:border-zinc-800/80 flex items-center justify-end">
           <span className="text-[9px] text-zinc-400 dark:text-zinc-600 whitespace-nowrap flex-shrink-0 hidden lg:inline tracking-wide">
-            Click = edita &middot; &uarr;&darr;&larr;&rarr; navega &middot; Enter = edita &middot; Esc = sai &middot; Ctrl+C/V = copia/cola &middot; Ctrl+Click = seleciona
+            Click = detalhes &middot; Dbl-click = edita &middot; &uarr;&darr;&larr;&rarr; navega &middot; Ctrl+C/V = copia/cola &middot; Ctrl+Click = seleciona
           </span>
         </div>
 
@@ -1097,17 +1152,52 @@ export function DemandaCompactView({
               </thead>
               <tbody>
                 {demandas.map((demanda, index) => {
+                  // Group header for desktop
+                  const totalCols = COLUMN_ORDER.length + (onReorder ? 1 : 0) + (isSelectMode ? 1 : 0);
+                  const groupHeader = groupBoundaries?.find(b => b.index === index);
+                  const currentGroupKey = groupBy ? (groupBy === "status" ? demanda.status : demanda.atribuicao) : null;
+                  const isCollapsed = currentGroupKey ? collapsedGroups?.has(currentGroupKey) : false;
+
+                  // Skip rendering row if group is collapsed
+                  if (isCollapsed && !groupHeader) return null;
+
                   // Import batch separator for desktop
                   const prevDemandaDesktop = index > 0 ? demandas[index - 1] : null;
-                  const showDesktopBatchSep = demanda.importBatchId && demanda.importBatchId !== prevDemandaDesktop?.importBatchId;
+                  const showDesktopBatchSep = !groupBy && demanda.importBatchId && demanda.importBatchId !== prevDemandaDesktop?.importBatchId;
                   const desktopImportDate = demanda.dataInclusao
                     ? new Date(demanda.dataInclusao).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })
                     : "";
                   const desktopBatchCount = demanda.importBatchId ? demandas.filter(d => d.importBatchId === demanda.importBatchId).length : 0;
-                  const totalCols = COLUMN_ORDER.length + (onReorder ? 1 : 0) + (isSelectMode ? 1 : 0);
 
                   return (
                   <React.Fragment key={demanda.id}>
+                  {/* Group header row */}
+                  {groupHeader && (
+                    <tr
+                      className="bg-zinc-50/80 dark:bg-zinc-800/40 cursor-pointer hover:bg-zinc-100/80 dark:hover:bg-zinc-800/60 transition-colors"
+                      onClick={() => onToggleGroupCollapse?.(groupHeader.key)}
+                    >
+                      <td colSpan={totalCols} className="px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          {isCollapsed
+                            ? <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                            : <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                          }
+                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: groupHeader.color }} />
+                          <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                            {groupHeader.label}
+                          </span>
+                          <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                            ({groupHeader.count})
+                          </span>
+                          <div className="flex-1 h-px bg-zinc-200/40 dark:bg-zinc-700/40" />
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  {/* Skip rows if collapsed */}
+                  {isCollapsed ? null : (
+                  <>
                   {showDesktopBatchSep && (
                     <tr className="bg-zinc-100/60 dark:bg-zinc-800/30">
                       <td colSpan={totalCols} className="px-3 py-1">
@@ -1155,7 +1245,11 @@ export function DemandaCompactView({
                     cellRefs={cellRefs}
                     onReorder={onReorder}
                     columnWidths={columnWidths}
+                    onPreview={onPreview}
+                    previewDemandaId={previewDemandaId}
                   />
+                  </>
+                  )}
                   </React.Fragment>
                   );
                 })}
@@ -1189,11 +1283,19 @@ export function DemandaCompactView({
                   value: k, label: v.label, color: STATUS_GROUPS[v.group].color, group: v.group,
                 }));
 
+                // Group header for mobile
+                const mobileGroupHeader = groupBoundaries?.find(b => b.index === idx);
+                const mobileGroupKey = groupBy ? (groupBy === "status" ? demanda.status : demanda.atribuicao) : null;
+                const mobileIsCollapsed = mobileGroupKey ? collapsedGroups?.has(mobileGroupKey) : false;
+
+                // Skip rendering card if group is collapsed
+                if (mobileIsCollapsed && !mobileGroupHeader) return null;
+
                 // Import batch separator: show header when batch changes
                 const prevDemanda = idx > 0 ? demandas[idx - 1] : null;
                 const currentBatch = demanda.importBatchId;
                 const prevBatch = prevDemanda?.importBatchId;
-                const showBatchSeparator = currentBatch && currentBatch !== prevBatch;
+                const showBatchSeparator = !groupBy && currentBatch && currentBatch !== prevBatch;
                 // Format import date from dataInclusao (createdAt)
                 const importDateStr = demanda.dataInclusao
                   ? new Date(demanda.dataInclusao).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })
@@ -1203,6 +1305,28 @@ export function DemandaCompactView({
 
                 return (
                   <React.Fragment key={demanda.id}>
+                  {/* Mobile group header */}
+                  {mobileGroupHeader && (
+                    <div
+                      className="flex items-center gap-2 px-3 py-2 bg-zinc-50/80 dark:bg-zinc-800/40 border-b border-zinc-200/50 dark:border-zinc-700/50 cursor-pointer"
+                      onClick={() => onToggleGroupCollapse?.(mobileGroupHeader.key)}
+                    >
+                      {mobileIsCollapsed
+                        ? <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                        : <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                      }
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: mobileGroupHeader.color }} />
+                      <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">
+                        {mobileGroupHeader.label}
+                      </span>
+                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                        ({mobileGroupHeader.count})
+                      </span>
+                      <div className="flex-1 h-px bg-zinc-200/50 dark:bg-zinc-700/50" />
+                    </div>
+                  )}
+                  {mobileIsCollapsed ? null : (
+                  <>
                   {showBatchSeparator && (
                     <div className="flex items-center gap-2 px-3 py-1 bg-zinc-100/80 dark:bg-zinc-800/40 border-b border-zinc-200/50 dark:border-zinc-700/50">
                       <span className="text-[9px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
@@ -1216,24 +1340,36 @@ export function DemandaCompactView({
                   )}
                   <div
                     key={demanda.id}
-                    style={selectedIds?.has(demanda.id) ? { backgroundColor: `${atribuicaoColor}12` } : undefined}
-                    className={`relative transition-colors ${
-                      !selectedIds?.has(demanda.id)
+                    style={{
+                      borderLeft: `3px solid ${atribuicaoColor}`,
+                      ...(selectedIds?.has(demanda.id) ? { backgroundColor: `${atribuicaoColor}12` } : {}),
+                      ...(previewDemandaId === demanda.id ? { backgroundColor: "rgba(16, 185, 129, 0.06)" } : {}),
+                    }}
+                    className={`relative transition-colors cursor-pointer ${
+                      previewDemandaId === demanda.id ? "ring-1 ring-emerald-200/50 dark:ring-emerald-800/40" : ""
+                    } ${
+                      !selectedIds?.has(demanda.id) && previewDemandaId !== demanda.id
                         ? isUrgente || isPreso
                           ? "bg-rose-50/40 dark:bg-rose-950/10"
                           : idx % 2 === 1 ? "bg-zinc-50/30 dark:bg-zinc-800/10" : ""
                         : ""
                     }`}
+                    onClick={(e) => {
+                      // Click on left edge (first 12px) opens atribuição picker
+                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                      if (e.clientX - rect.left < 12) {
+                        setAtribuicaoPickerOpenId(atribuicaoPickerOpenId === demanda.id ? null : demanda.id);
+                        return;
+                      }
+                      // Normal tap opens preview Sheet
+                      const target = e.target as HTMLElement;
+                      const isInteractive = target.closest("button, a, input, select, textarea, [data-edit-trigger], [role='combobox'], [role='listbox']");
+                      if (!isInteractive && onPreview) {
+                        onPreview(demanda.id);
+                      }
+                    }}
                   >
-                    {/* Clickable color bar left (opens atribuicao picker) */}
-                    <button
-                      className="absolute left-0 inset-y-0 w-2 cursor-pointer hover:w-3 transition-all z-10 active:opacity-70"
-                      style={{ backgroundColor: atribuicaoColor }}
-                      onClick={() => setAtribuicaoPickerOpenId(atribuicaoPickerOpenId === demanda.id ? null : demanda.id)}
-                      title={`Atribuicao: ${demanda.atribuicao}`}
-                    />
-
-                    <div className="pl-4 pr-2 py-1.5">
+                    <div className="pl-2 pr-2 py-1.5">
                       {/* Line 1: #, status, assistido, prazo, menu */}
                       <div className="flex items-center gap-1 min-w-0">
                         {/* Select checkbox */}
@@ -1326,6 +1462,14 @@ export function DemandaCompactView({
                               ref={mobileMenuRef}
                               className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 min-w-[140px]"
                             >
+                              {onPreview && (
+                                <button
+                                  onClick={() => { onPreview(demanda.id); setMobileMenuOpenId(null); }}
+                                  className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 font-medium"
+                                >
+                                  <Eye className="w-3 h-3" /> Ver detalhes
+                                </button>
+                              )}
                               <button
                                 onClick={() => { copyToClipboard(getRowTSV(demanda), "Linha copiada!"); setMobileMenuOpenId(null); }}
                                 className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
@@ -1441,6 +1585,8 @@ export function DemandaCompactView({
                       </div>
                     </div>
                   </div>
+                  </>
+                  )}
                   </React.Fragment>
                 );
               })}

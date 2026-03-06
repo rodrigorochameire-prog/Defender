@@ -57,6 +57,8 @@ import { oficiosRouter } from "./oficios";
 import { templatesRouter } from "./templates";
 import { preparacaoRouter } from "./preparacao";
 import { offlineRouter } from "./offline";
+import { speakerLabelsRouter } from "./speakerLabels";
+import { juriAnalyticsRouter } from "./juriAnalytics";
 
 
 export const appRouter = router({
@@ -243,6 +245,16 @@ export const appRouter = router({
   // OFFLINE SYNC (PWA / INDEXEDDB)
   // ==========================================
   offline: offlineRouter,
+
+  // ==========================================
+  // SPEAKER LABELS (DIARIZAÇÃO DE TRANSCRIÇÕES)
+  // ==========================================
+  speakerLabels: speakerLabelsRouter,
+
+  // ==========================================
+  // ANALYTICS DO JÚRI (COSMOVISÃO)
+  // ==========================================
+  juriAnalytics: juriAnalyticsRouter,
 });
 
 export type AppRouter = typeof appRouter;

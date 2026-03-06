@@ -56,7 +56,6 @@ interface Anotacao {
 interface EncerrarSessaoProps {
   sessaoJuriId: number | null;
   isDarkMode: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   conselhoSentenca: (any | null)[];
   anotacoes: Anotacao[];
   onSucessoEncerramento: () => void;

@@ -21,6 +21,7 @@ const SEEUImportModal = dynamic(() => import("@/components/demandas-premium/seeu
 const DuplicatesModal = dynamic(() => import("@/components/demandas-premium/duplicates-modal").then(m => ({ default: m.DuplicatesModal })), { ssr: false });
 const DelegacaoModal = dynamic(() => import("@/components/demandas/delegacao-modal").then(m => ({ default: m.DelegacaoModal })), { ssr: false });
 const DelegacaoBatchModal = dynamic(() => import("@/components/demandas/delegacao-batch-modal").then(m => ({ default: m.DelegacaoBatchModal })), { ssr: false });
+import { DemandaQuickPreview } from "@/components/demandas-premium/DemandaQuickPreview";
 import { getStatusConfig, STATUS_GROUPS, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO, ATO_PRIORITY } from "@/config/atos-por-atribuicao";
 import { copyToClipboard } from "@/lib/clipboard";
@@ -585,6 +586,13 @@ export default function Demandas() {
   const lastSelectedIndex = useRef<number | null>(null);
   const { widths: columnWidths, setColumnWidth: handleColumnResize } = useColumnWidths();
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  const [groupBy, setGroupBy] = useState<"status" | "atribuicao" | null>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("defender_demandas_groupby") as "status" | "atribuicao" | null) || null;
+    }
+    return null;
+  });
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
   // Estado para o modal de delegação
   const [delegacaoModalOpen, setDelegacaoModalOpen] = useState(false);
@@ -1422,10 +1430,26 @@ export default function Demandas() {
         demanda.assistido.toLowerCase().includes(searchTerm.toLowerCase()) ||
         processosText.toLowerCase().includes(searchTerm.toLowerCase()) ||
         demanda.ato.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchPrazoFilter =
-        !selectedPrazoFilter ||
-        (selectedPrazoFilter === "prazo" && demanda.prazo) ||
-        (selectedPrazoFilter === "sem-prazo" && !demanda.prazo);
+      const matchPrazoFilter = (() => {
+        if (!selectedPrazoFilter) return true;
+        if (selectedPrazoFilter === "prazo") return !!demanda.prazo;
+        if (selectedPrazoFilter === "sem-prazo") return !demanda.prazo;
+        if (!demanda.prazo) return false;
+        try {
+          const parts = demanda.prazo.split("/").map(Number);
+          if (parts.length < 3) return false;
+          const [dia, mes, ano] = parts;
+          const fullYear = ano < 100 ? 2000 + ano : ano;
+          const prazoDate = new Date(fullYear, mes - 1, dia);
+          prazoDate.setHours(0, 0, 0, 0);
+          const hojeDate = new Date(); hojeDate.setHours(0, 0, 0, 0);
+          const diff = Math.ceil((prazoDate.getTime() - hojeDate.getTime()) / (1000 * 60 * 60 * 24));
+          if (selectedPrazoFilter === "vencidos") return diff < 0;
+          if (selectedPrazoFilter === "hoje") return diff === 0;
+          if (selectedPrazoFilter === "semana") return diff > 0 && diff <= 7;
+        } catch { return false; }
+        return true;
+      })();
       const matchAtribuicao =
         selectedAtribuicoes.length === 0 || selectedAtribuicoes.includes(demanda.atribuicao);
       const matchEstadoPrisional =
@@ -1630,6 +1654,54 @@ export default function Demandas() {
     ];
   }, [demandas]);
 
+  // Deadline urgency stats
+  const deadlineStats = useMemo(() => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const ativas = demandas.filter(d => !d.arquivado && d.prazo);
+    let vencidas = 0, hojeCnt = 0, semanaCnt = 0;
+    for (const d of ativas) {
+      try {
+        const parts = d.prazo.split("/").map(Number);
+        if (parts.length < 3) continue;
+        const [dia, mes, ano] = parts;
+        const fullYear = ano < 100 ? 2000 + ano : ano;
+        const prazo = new Date(fullYear, mes - 1, dia);
+        prazo.setHours(0, 0, 0, 0);
+        const diff = Math.ceil((prazo.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+        if (diff < 0) vencidas++;
+        else if (diff === 0) hojeCnt++;
+        else if (diff <= 7) semanaCnt++;
+      } catch { /* skip invalid */ }
+    }
+    return { vencidas, hoje: hojeCnt, semana: semanaCnt, total: vencidas + hojeCnt + semanaCnt };
+  }, [demandas]);
+  const [deadlineBannerDismissed, setDeadlineBannerDismissed] = useState(false);
+
+  // Quick-preview sheet
+  const [previewDemandaId, setPreviewDemandaId] = useState<string | null>(null);
+  const previewDemanda = previewDemandaId ? demandasOrdenadas.find(d => d.id === previewDemandaId) || null : null;
+  const previewIndex = previewDemandaId ? demandasOrdenadas.findIndex(d => d.id === previewDemandaId) : -1;
+  const handlePreviewNavigate = useCallback((direction: "prev" | "next") => {
+    if (!previewDemandaId) return;
+    const idx = demandasOrdenadas.findIndex(d => d.id === previewDemandaId);
+    if (idx < 0) return;
+    const newIdx = direction === "prev" ? Math.max(0, idx - 1) : Math.min(demandasOrdenadas.length - 1, idx + 1);
+    setPreviewDemandaId(demandasOrdenadas[newIdx].id);
+  }, [previewDemandaId, demandasOrdenadas]);
+
+  // Keyboard ↑↓ navigation when preview sheet is open
+  useEffect(() => {
+    if (!previewDemandaId) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowUp") { e.preventDefault(); handlePreviewNavigate("prev"); }
+      if (e.key === "ArrowDown") { e.preventDefault(); handlePreviewNavigate("next"); }
+      if (e.key === "Escape") { setPreviewDemandaId(null); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [previewDemandaId, handlePreviewNavigate]);
+
   return (
     <div className="w-full min-h-screen bg-zinc-100 dark:bg-[#0f0f11] overflow-x-hidden">
       {/* Compact Header — Notion-style */}
@@ -1684,7 +1756,7 @@ export default function Demandas() {
               />
             </span>
             <Button variant="ghost" size="sm" onClick={() => setIsDuplicatesModalOpen(true)} title="Encontrar Duplicatas" className="hidden sm:flex h-7 w-7 p-0 text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
-              <Layers className="w-3.5 h-3.5" />
+              <Copy className="w-3.5 h-3.5" />
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setIsExportModalOpen(true)} title="Exportar" className="hidden sm:flex h-7 w-7 p-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
               <Upload className="w-3.5 h-3.5" />
@@ -1704,7 +1776,7 @@ export default function Demandas() {
 
       {/* Conteúdo Principal */}
       <div className="p-3 md:p-5 space-y-3 md:space-y-4">
-        {/* Tabs — Lista / Analytics */}
+        {/* Tabs — Lista / Analytics + Inline Deadline Stats */}
         <div className="flex items-center gap-0 border-b border-zinc-200/80 dark:border-zinc-800/80 -mx-3 md:-mx-5 px-3 md:px-5">
           {[
             { key: "lista" as const, label: "Lista" },
@@ -1725,10 +1797,52 @@ export default function Demandas() {
               )}
             </button>
           ))}
+          {/* Inline deadline stats — same line as tabs */}
+          {deadlineStats.total > 0 && (
+            <div className="ml-auto flex items-center gap-1.5 text-[10px] sm:text-xs pr-1">
+              {deadlineStats.vencidas > 0 && (
+                <button
+                  onClick={() => setSelectedPrazoFilter(selectedPrazoFilter === "vencidos" ? null : "vencidos")}
+                  className={`font-semibold px-1.5 py-0.5 rounded-md transition-colors cursor-pointer ${
+                    selectedPrazoFilter === "vencidos"
+                      ? "bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400"
+                      : "text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20"
+                  }`}
+                >
+                  {deadlineStats.vencidas} vencida{deadlineStats.vencidas !== 1 ? "s" : ""}
+                </button>
+              )}
+              {deadlineStats.hoje > 0 && (
+                <button
+                  onClick={() => setSelectedPrazoFilter(selectedPrazoFilter === "hoje" ? null : "hoje")}
+                  className={`font-semibold px-1.5 py-0.5 rounded-md transition-colors cursor-pointer ${
+                    selectedPrazoFilter === "hoje"
+                      ? "bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400"
+                      : "text-amber-500 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20"
+                  }`}
+                >
+                  {deadlineStats.hoje} hoje
+                </button>
+              )}
+              {deadlineStats.semana > 0 && (
+                <button
+                  onClick={() => setSelectedPrazoFilter(selectedPrazoFilter === "semana" ? null : "semana")}
+                  className={`font-medium px-1.5 py-0.5 rounded-md transition-colors cursor-pointer ${
+                    selectedPrazoFilter === "semana"
+                      ? "bg-yellow-100 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400"
+                      : "text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-950/20"
+                  }`}
+                >
+                  {deadlineStats.semana} semana
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {activeTab === "lista" ? (
         <>
+
         {/* Lista de Demandas */}
         <div className="group/card relative bg-white dark:bg-zinc-900">
             <div className="px-4 md:px-5 py-3">
@@ -1822,6 +1936,50 @@ export default function Demandas() {
                   </div>
                 </div>
 
+                {/* Group By Dropdown */}
+                <div className="relative hidden md:block">
+                  <button
+                    onClick={() => {
+                      const el = document.getElementById('group-dropdown');
+                      if (el) el.classList.toggle('hidden');
+                    }}
+                    className={`flex items-center gap-1.5 h-8 px-2.5 rounded-lg border text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                      groupBy
+                        ? "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400"
+                        : "border-zinc-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600"
+                    }`}
+                    title="Agrupar por"
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                  </button>
+                  <div id="group-dropdown" className="hidden absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl shadow-apple-hover dark:shadow-apple-dark-hover py-1 min-w-[160px]">
+                    {[
+                      { key: null as "status" | "atribuicao" | null, label: "Sem agrupamento" },
+                      { key: "status" as const, label: "Status" },
+                      { key: "atribuicao" as const, label: "Atribuição" },
+                    ].map(opt => (
+                      <button
+                        key={opt.key ?? "none"}
+                        onClick={() => {
+                          setGroupBy(opt.key);
+                          setCollapsedGroups(new Set());
+                          if (opt.key) localStorage.setItem("defender_demandas_groupby", opt.key);
+                          else localStorage.removeItem("defender_demandas_groupby");
+                          document.getElementById('group-dropdown')?.classList.add('hidden');
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${
+                          groupBy === opt.key
+                            ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold"
+                            : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                        }`}
+                      >
+                        {groupBy === opt.key && <span className="text-emerald-500">✓</span>}
+                        <span>{opt.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* View Mode Toggle — Defender style */}
                 <div className="flex items-center bg-zinc-100 dark:bg-zinc-800/80 rounded-xl p-0.5 gap-0.5">
                   {[
@@ -1888,8 +2046,8 @@ export default function Demandas() {
                 </button>
               </div>
 
-              {/* Atribuicao Tabs — multi-select, clicar toggle individual */}
-              <div className="flex items-center gap-1 mt-2 overflow-x-auto scrollbar-none -mx-1 px-1">
+              {/* Atribuicao Tabs — multi-select, clean professional pills */}
+              <div className="flex items-center gap-1.5 mt-2 overflow-x-auto scrollbar-none -mx-1 px-1 pb-0.5">
                 {atribuicaoOptions.filter(o => o.value !== "Todas").map((opt) => {
                   const isActive = selectedAtribuicoes.includes(opt.value);
                   const color = ATRIBUICAO_BORDER_COLORS[opt.label] || "#71717a";
@@ -1903,32 +2061,33 @@ export default function Demandas() {
                           ? prev.filter(v => v !== opt.value)
                           : [...prev, opt.value]
                       )}
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap transition-all ${
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap transition-all duration-200 border cursor-pointer ${
                         isActive
-                          ? "text-white shadow-sm scale-[1.02]"
-                          : "hover:opacity-80"
+                          ? "shadow-sm"
+                          : "hover:shadow-sm"
                       }`}
                       style={isActive ? {
-                        backgroundColor: color,
-                        boxShadow: `0 2px 8px ${color}40`
-                      } : {
-                        backgroundColor: `${color}15`,
+                        backgroundColor: `${color}12`,
+                        borderColor: `${color}50`,
                         color: color,
+                      } : {
+                        backgroundColor: "transparent",
+                        borderColor: "transparent",
+                        color: `${color}99`,
                       }}
                     >
                       {TabIcon && <TabIcon className="w-3 h-3 flex-shrink-0" />}
                       <span>{opt.label}</span>
-                      <span className={`text-[9px] font-mono ${isActive ? 'text-white/70' : 'opacity-50'}`}>{count}</span>
+                      <span className="text-[9px] font-mono tabular-nums opacity-50">{count}</span>
                     </button>
                   );
                 })}
                 {selectedAtribuicoes.length > 0 && (
                   <button
                     onClick={() => setSelectedAtribuicoes([])}
-                    className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
                   >
                     <X className="w-3 h-3" />
-                    <span>Limpar</span>
                   </button>
                 )}
               </div>
@@ -2092,6 +2251,15 @@ export default function Demandas() {
                   onColumnResize={handleColumnResize}
                   columnFilters={columnFilters}
                   onColumnFilterChange={(colId: string, value: string) => setColumnFilters(prev => ({ ...prev, [colId]: value }))}
+                  onPreview={setPreviewDemandaId}
+                  previewDemandaId={previewDemandaId}
+                  groupBy={groupBy}
+                  collapsedGroups={collapsedGroups}
+                  onToggleGroupCollapse={(group) => setCollapsedGroups(prev => {
+                    const next = new Set(prev);
+                    if (next.has(group)) next.delete(group); else next.add(group);
+                    return next;
+                  })}
                 />
               ) : (
                 /* ========== MODO GRID PREMIUM ========== */
@@ -2435,6 +2603,25 @@ export default function Demandas() {
           setBatchDelegacaoOpen(false);
           utils.demandas.list.invalidate();
         }}
+      />
+
+      {/* Quick-preview Sheet lateral */}
+      <DemandaQuickPreview
+        demanda={previewDemanda}
+        open={!!previewDemandaId}
+        onOpenChange={(open) => { if (!open) setPreviewDemandaId(null); }}
+        onStatusChange={handleStatusChange}
+        onAtoChange={handleAtoChange}
+        onProvidenciasChange={handleProvidenciasChange}
+        onPrazoChange={handlePrazoChange}
+        onAtribuicaoChange={handleAtribuicaoChange}
+        onArchive={handleArchiveDemanda}
+        onDelete={handleDeleteDemanda}
+        onNavigate={handlePreviewNavigate}
+        copyToClipboard={copyToClipboard}
+        atribuicaoIcons={atribuicaoIcons}
+        currentIndex={previewIndex >= 0 ? previewIndex : undefined}
+        totalCount={demandasOrdenadas.length}
       />
     </div>
   );

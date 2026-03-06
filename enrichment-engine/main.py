@@ -27,6 +27,9 @@ from routers.ocr import router as ocr_router
 from routers.ficha import router as ficha_router
 from routers.analysis import router as analysis_router
 from routers.cross_analysis import router as cross_analysis_router
+from routers.diarization import router as diarization_router
+from routers.semantic_search import router as semantic_search_router
+from routers.juri import router as juri_router
 
 # Logging estruturado (sem PII)
 logging.basicConfig(
@@ -103,6 +106,9 @@ def create_app() -> FastAPI:
     app.include_router(ficha_router, prefix="/enrich", tags=["Ficha"])
     app.include_router(analysis_router, prefix="/api", tags=["Analysis"])
     app.include_router(cross_analysis_router, prefix="/api", tags=["Cross-Analysis"])
+    app.include_router(diarization_router, prefix="/api", tags=["Diarization"])
+    app.include_router(semantic_search_router, prefix="/api", tags=["Semantic Search"])
+    app.include_router(juri_router, prefix="/api", tags=["Juri"])
 
     return app
 

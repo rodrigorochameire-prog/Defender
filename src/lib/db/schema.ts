@@ -94,6 +94,37 @@ export const statusProcessoEnum = pgEnum("status_processo", [
   "ARQUIVADO",
 ]);
 
+// Tipo penal do juri
+export const tipoPenalJuriEnum = pgEnum("tipo_penal_juri", [
+  "homicidio_simples",
+  "homicidio_qualificado",
+  "homicidio_privilegiado",
+  "homicidio_privilegiado_qualificado",
+  "homicidio_tentado",
+  "feminicidio",
+]);
+
+// Resultado do quesito
+export const quesitosResultadoEnum = pgEnum("quesitos_resultado", [
+  "sim",
+  "nao",
+  "prejudicado",
+]);
+
+// Regime inicial
+export const regimeInicialEnum = pgEnum("regime_inicial", [
+  "fechado",
+  "semiaberto",
+  "aberto",
+]);
+
+// Tipo de documento do juri
+export const documentoJuriTipoEnum = pgEnum("documento_juri_tipo", [
+  "quesitos",
+  "sentenca",
+  "ata",
+]);
+
 // ==========================================
 // WORKSPACES (Universos de dados)
 // ==========================================
@@ -619,6 +650,23 @@ export const sessoesJuri = pgTable("sessoes_juri", {
   // Simulação IA (resultado salvo)
   simulacaoResultado: jsonb("simulacao_resultado"),
 
+  // Registro completo pós-júri
+  registroCompleto: boolean("registro_completo").default(false),
+
+  // Contexto da sessão (preenchido via AI ou manual)
+  juizPresidente: text("juiz_presidente"),
+  promotor: text("promotor"),
+  duracaoMinutos: integer("duracao_minutos"),
+  localFato: text("local_fato"),
+  tipoPenal: tipoPenalJuriEnum("tipo_penal"),
+  tesePrincipal: text("tese_principal"),
+  reuPrimario: boolean("reu_primario"),
+  reuIdade: integer("reu_idade"),
+  vitimaGenero: varchar("vitima_genero", { length: 20 }),
+  vitimaIdade: integer("vitima_idade"),
+  usouAlgemas: boolean("usou_algemas"),
+  incidentesProcessuais: text("incidentes_processuais"),
+
   // Metadados
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -632,6 +680,82 @@ export const sessoesJuri = pgTable("sessoes_juri", {
 
 export type SessaoJuri = typeof sessoesJuri.$inferSelect;
 export type InsertSessaoJuri = typeof sessoesJuri.$inferInsert;
+
+// ==========================================
+// DOSIMETRIA DO JURI (Pós-Sentença)
+// ==========================================
+
+export const dosimetriaJuri = pgTable("dosimetria_juri", {
+  id: serial("id").primaryKey(),
+  sessaoJuriId: integer("sessao_juri_id")
+    .notNull()
+    .references(() => sessoesJuri.id, { onDelete: "cascade" }),
+
+  // Dosimetria (3 fases)
+  penaBase: text("pena_base"),
+  circunstanciasJudiciais: text("circunstancias_judiciais"),
+  agravantes: text("agravantes"),
+  atenuantes: text("atenuantes"),
+  causasAumento: text("causas_aumento"),
+  causasDiminuicao: text("causas_diminuicao"),
+
+  // Pena final
+  penaTotalMeses: integer("pena_total_meses"),
+  regimeInicial: regimeInicialEnum("regime_inicial"),
+
+  // Detração
+  detracaoInicio: date("detracao_inicio"),
+  detracaoFim: date("detracao_fim"),
+  detracaoDias: integer("detracao_dias"),
+
+  // Data do fato (irretroatividade)
+  dataFato: date("data_fato"),
+
+  // Execução penal
+  fracaoProgressao: varchar("fracao_progressao", { length: 10 }),
+  incisoAplicado: varchar("inciso_aplicado", { length: 30 }),
+  vedadoLivramento: boolean("vedado_livramento").default(false),
+  resultouMorte: boolean("resultou_morte").default(false),
+  reuReincidente: boolean("reu_reincidente").default(false),
+
+  // Metadados
+  extraidoPorIA: boolean("extraido_por_ia").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("dosimetria_juri_sessao_idx").on(table.sessaoJuriId),
+]);
+
+export type DosimetriaJuri = typeof dosimetriaJuri.$inferSelect;
+export type InsertDosimetriaJuri = typeof dosimetriaJuri.$inferInsert;
+
+// ==========================================
+// DOCUMENTOS DO JURI (PDFs/Fotos)
+// ==========================================
+
+export const documentosJuri = pgTable("documentos_juri", {
+  id: serial("id").primaryKey(),
+  sessaoJuriId: integer("sessao_juri_id")
+    .notNull()
+    .references(() => sessoesJuri.id, { onDelete: "cascade" }),
+
+  tipo: documentoJuriTipoEnum("tipo").notNull(),
+  fileName: text("file_name"),
+  url: text("url").notNull(),
+
+  // Dados extraídos pela AI
+  dadosExtraidos: jsonb("dados_extraidos"),
+  processadoEm: timestamp("processado_em"),
+  statusProcessamento: varchar("status_processamento", { length: 20 }).default("pendente"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("documentos_juri_sessao_idx").on(table.sessaoJuriId),
+  index("documentos_juri_tipo_idx").on(table.tipo),
+]);
+
+export type DocumentoJuri = typeof documentosJuri.$inferSelect;
+export type InsertDocumentoJuri = typeof documentosJuri.$inferInsert;
 
 // ==========================================
 // AUDIÊNCIAS
@@ -2535,6 +2659,16 @@ export const sessoesJuriRelations = relations(sessoesJuri, ({ one, many }) => ({
   jurados: many(jurados),
   conselho: many(conselhoJuri),
   scriptItems: many(juriScriptItems),
+  dosimetria: many(dosimetriaJuri),
+  documentos: many(documentosJuri),
+}));
+
+export const dosimetriaJuriRelations = relations(dosimetriaJuri, ({ one }) => ({
+  sessao: one(sessoesJuri, { fields: [dosimetriaJuri.sessaoJuriId], references: [sessoesJuri.id] }),
+}));
+
+export const documentosJuriRelations = relations(documentosJuri, ({ one }) => ({
+  sessao: one(sessoesJuri, { fields: [documentosJuri.sessaoJuriId], references: [sessoesJuri.id] }),
 }));
 
 export const audienciasRelations = relations(audiencias, ({ one }) => ({
@@ -5489,6 +5623,34 @@ export const crossAnalysesRelations = relations(crossAnalyses, ({ one }) => ({
 }));
 
 // ==========================================
+// SPEAKER LABELS — Diarização de Transcrições
+// ==========================================
+
+export const speakerLabels = pgTable("speaker_labels", {
+  id: serial("id").primaryKey(),
+  assistidoId: integer("assistido_id").notNull().references(() => assistidos.id, { onDelete: "cascade" }),
+  fileId: integer("file_id").references(() => driveFiles.id, { onDelete: "set null" }),
+  speakerKey: varchar("speaker_key", { length: 50 }).notNull(), // "Speaker 1", "Speaker 2"
+  label: varchar("label", { length: 200 }).notNull(), // "Defensor", "Juiz", nome da pessoa
+  role: varchar("role", { length: 50 }), // "defensor", "assistido", "juiz", "promotor", "testemunha", "perito", "outro"
+  confidence: real("confidence"), // 0-1 confidence score
+  isManual: boolean("is_manual").default(false).notNull(), // true if user corrected
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("speaker_labels_assistido_idx").on(table.assistidoId),
+  index("speaker_labels_file_idx").on(table.fileId),
+]);
+
+export type SpeakerLabel = typeof speakerLabels.$inferSelect;
+export type InsertSpeakerLabel = typeof speakerLabels.$inferInsert;
+
+export const speakerLabelsRelations = relations(speakerLabels, ({ one }) => ({
+  assistido: one(assistidos, { fields: [speakerLabels.assistidoId], references: [assistidos.id] }),
+  file: one(driveFiles, { fields: [speakerLabels.fileId], references: [driveFiles.id] }),
+}));
+
+// ==========================================
 // QUESITOS DO JÚRI (Preparação)
 // ==========================================
 
@@ -5517,6 +5679,10 @@ export const quesitos = pgTable("quesitos", {
   // IA
   geradoPorIA: boolean("gerado_por_ia").default(false),
 
+  // Resultado pós-júri (preenchido após julgamento)
+  resultado: quesitosResultadoEnum("resultado"),
+  ordemVotacao: integer("ordem_votacao"),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
@@ -5533,4 +5699,34 @@ export const quesitosRelations = relations(quesitos, ({ one }) => ({
   caso: one(casos, { fields: [quesitos.casoId], references: [casos.id] }),
   sessaoJuri: one(sessoesJuri, { fields: [quesitos.sessaoJuriId], references: [sessoesJuri.id] }),
   tese: one(tesesDefensivas, { fields: [quesitos.teseId], references: [tesesDefensivas.id] }),
+}));
+
+// ==========================================
+// DOCUMENT EMBEDDINGS (BUSCA SEMANTICA - PGVECTOR)
+// ==========================================
+
+// Note: document_embeddings uses pgvector which Drizzle doesn't support natively.
+// The table is created via raw SQL migration (drizzle/0013_semantic_search.sql).
+// This is a partial representation for basic queries — the embedding column is omitted.
+export const documentEmbeddings = pgTable("document_embeddings", {
+  id: serial("id").primaryKey(),
+  fileId: integer("file_id").notNull().references(() => driveFiles.id, { onDelete: "cascade" }),
+  assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "cascade" }),
+  chunkIndex: integer("chunk_index").notNull().default(0),
+  chunkText: text("chunk_text").notNull(),
+  // embedding field omitted — managed via raw SQL (pgvector type)
+  metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("document_embeddings_file_idx").on(table.fileId),
+  index("document_embeddings_assistido_idx").on(table.assistidoId),
+]);
+
+export type DocumentEmbedding = typeof documentEmbeddings.$inferSelect;
+export type InsertDocumentEmbedding = typeof documentEmbeddings.$inferInsert;
+
+export const documentEmbeddingsRelations = relations(documentEmbeddings, ({ one }) => ({
+  driveFile: one(driveFiles, { fields: [documentEmbeddings.fileId], references: [driveFiles.id] }),
+  assistido: one(assistidos, { fields: [documentEmbeddings.assistidoId], references: [assistidos.id] }),
 }));

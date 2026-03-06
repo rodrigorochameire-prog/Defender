@@ -15,8 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { 
-  Gavel, 
+import {
+  Gavel,
   Plus,
   Search,
   Download,
@@ -24,11 +24,14 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
+  AlertCircle,
   User,
   Users,
   ArrowRight,
   FileSearch,
+  FileEdit,
   ClipboardCheck,
+  ClipboardList,
   Target,
   Mic,
   Zap,
@@ -110,6 +113,9 @@ export default function JuriPage() {
   });
 
   const { data: proximasSessoes, isLoading: loadingProximas } = trpc.juri.proximas.useQuery({ dias: 30 });
+
+  // Sessões realizadas sem registro completo
+  const { data: pendentes } = trpc.avaliacaoJuri.registroPendentes.useQuery();
 
   // Filtrar por busca
   const sessoesFiltradas = useMemo(() => {
@@ -235,6 +241,45 @@ export default function JuriPage() {
           })}
         </div>
 
+        {/* REGISTRO PENDENTE — sessões realizadas sem registro completo */}
+        {pendentes && pendentes.length > 0 && (
+          <Card className="border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-950/20">
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <ClipboardList className="w-4 h-4 text-amber-600" />
+                <CardTitle className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                  Registro Pendente
+                </CardTitle>
+                <Badge className="bg-amber-500 text-white border-0 text-[10px]">
+                  {pendentes.length}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
+                {pendentes.map((s) => (
+                  <Link key={s.id} href={`/admin/juri/registro/${s.id}`}>
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-white dark:bg-zinc-900 border border-amber-200 dark:border-amber-800/40 hover:border-emerald-300 dark:hover:border-emerald-700 transition-all cursor-pointer group">
+                      <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                        <FileEdit className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                          {s.assistidoNome || "Reu"}
+                        </p>
+                        <p className="text-[10px] text-zinc-500 font-mono">
+                          {s.dataSessao ? format(new Date(s.dataSessao), "dd/MM/yyyy") : "\u2014"}
+                        </p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-emerald-500 transition-colors" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* PRÓXIMAS SESSÕES - Suavizado */}
         {(loadingProximas || (proximasSessoes && proximasSessoes.length > 0)) && (
           <Card className="border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
@@ -293,12 +338,13 @@ export default function JuriPage() {
         )}
 
         {/* FERRAMENTAS - Padrão Defender (neutro) */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           {[
-            { id: "cockpit", label: "Plenário Live", desc: "Cockpit do julgamento", href: "/admin/juri/cockpit", icon: Zap, premium: true },
-            { id: "inteligencia", label: "Inteligência", desc: "Padrões cruzados", href: "/admin/juri/inteligencia", icon: Brain, premium: true },
+            { id: "cockpit", label: "Plenario Live", desc: "Cockpit do julgamento", href: "/admin/juri/cockpit", icon: Zap, premium: true },
+            { id: "cosmovisao", label: "Cosmovisao", desc: "Analytics do juri", href: "/admin/juri/cosmovisao", icon: Brain, premium: true },
             { id: "jurados", label: "Banco de Jurados", desc: "Perfis psicológicos", href: "/admin/juri/jurados", icon: Users },
-            { id: "teses", label: "Teses do Júri", desc: "Narrativa e argumentos", href: "/admin/juri/teses", icon: Target },
+            { id: "teses", label: "Teses do Juri", desc: "Narrativa e argumentos", href: "/admin/juri/teses", icon: Target },
+            { id: "calculadora", label: "Calculadora", desc: "Execucao penal", href: "/admin/juri/calculadora", icon: Scale, premium: true },
           ].map((tool) => {
             const Icon = tool.icon;
             
