@@ -8,6 +8,7 @@ import {
   Flame,
   Copy,
   Check,
+  CheckCircle2,
   MoreHorizontal,
   Edit,
   Archive,
@@ -183,7 +184,7 @@ const ATRIBUICAO_OPTIONS = [
 // ============================================
 
 function calcularPrazo(prazoStr: string) {
-  if (!prazoStr) return { texto: "-", cor: "none", dias: null };
+  if (!prazoStr) return { texto: "", cor: "none", dias: null };
   try {
     const [dia, mes, ano] = prazoStr.split("/").map(Number);
     const fullYear = ano < 100 ? 2000 + ano : ano;
@@ -494,7 +495,7 @@ const CompactRow = React.memo(function CompactRow({
       />
     ),
 
-    // Prazo — badge style
+    // Prazo — badge style, empty = show nothing
     prazo: () => {
       const hasPrazo = demanda.prazo && prazoInfo.cor !== "none";
       const badgeColors: Record<string, string> = {
@@ -508,6 +509,7 @@ const CompactRow = React.memo(function CompactRow({
           <InlineDatePicker
             value={demanda.prazo}
             onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
+            placeholder=""
           />
           {hasPrazo && prazoInfo.cor !== "gray" && (
             <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap ${badgeColors[prazoInfo.cor] || ""} ${prazoInfo.cor === "red" ? "animate-pulse" : ""}`}>
@@ -518,20 +520,17 @@ const CompactRow = React.memo(function CompactRow({
       );
     },
 
-    // Status
+    // Status — simplified: ● dot + text, no pill background
     status: () => (
       <InlineDropdown
         value={demanda.status}
         compact
         displayValue={
           <div
-            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
-            style={{
-              backgroundColor: `${statusColor}20`,
-              color: statusColor,
-            }}
+            className="inline-flex items-center gap-1.5 text-[10px] font-medium"
+            style={{ color: statusColor }}
           >
-            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
+            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
             <span className="truncate max-w-[80px]">{statusConfig.label}</span>
           </div>
         }
@@ -589,7 +588,7 @@ const CompactRow = React.memo(function CompactRow({
             <EditableTextInline
               value={isPlaceholder ? "" : ""}
               onSave={(v) => onProvidenciasChange(demanda.id, v)}
-              placeholder="—"
+              placeholder=""
               className="text-[10px] text-zinc-400"
             />
           )}
@@ -597,9 +596,20 @@ const CompactRow = React.memo(function CompactRow({
       );
     },
 
-    // Ações
+    // Ações — hover quick actions: ✓ Resolver + Copy + ⋮ Menu
     acoes: () => (
       <div className="flex items-center gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity">
+        {/* Quick Resolve */}
+        {demanda.status !== "resolvido" && demanda.status !== "protocolado" && demanda.status !== "ciencia" && demanda.status !== "sem_atuacao" && (
+          <button
+            onClick={() => onStatusChange(demanda.id, "resolvido")}
+            className="p-1 rounded hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors"
+            title="Resolver"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+          </button>
+        )}
+
         {/* Copy row */}
         <button
           onClick={() => { copyToClipboard(getRowTSV(demanda), "Linha copiada!"); setCopiedCell("row"); setTimeout(() => setCopiedCell(null), 1500); }}
@@ -1252,8 +1262,8 @@ export function DemandaCompactView({
                             compact
                             displayValue={
                               <div
-                                className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-semibold leading-none"
-                                style={{ backgroundColor: `${statusColor}15`, color: statusColor }}
+                                className="inline-flex items-center gap-1 text-[9px] font-medium leading-none"
+                                style={{ color: statusColor }}
                               >
                                 <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
                                 <span className="truncate max-w-[60px]">{statusConfig.label}</span>
@@ -1286,11 +1296,12 @@ export function DemandaCompactView({
                             />
                           )}
                         </div>
-                        {/* Prazo — badge style */}
+                        {/* Prazo — badge style, empty = show nothing */}
                         <div className="flex-shrink-0 flex items-center gap-1">
                           <InlineDatePicker
                             value={demanda.prazo}
                             onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
+                            placeholder=""
                           />
                           {demanda.prazo && prazoInfo.cor !== "none" && prazoInfo.cor !== "gray" && (
                             <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap ${

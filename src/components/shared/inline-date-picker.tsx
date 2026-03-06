@@ -65,11 +65,11 @@ export function InlineDatePicker({
         >
           {value ? (
             <span>{value}</span>
-          ) : (
+          ) : placeholder ? (
             <span className="text-zinc-400 dark:text-zinc-500 italic">{placeholder}</span>
-          )}
+          ) : null}
           <CalendarIcon className={`w-3 h-3 text-zinc-300 dark:text-zinc-600 transition-opacity ${
-            showEditIcon ? "opacity-40 group-hover/date:opacity-100" : "opacity-0 group-hover/date:opacity-100"
+            showEditIcon ? "opacity-40 group-hover/date:opacity-100" : !value && !placeholder ? "opacity-30 group-hover/date:opacity-100" : "opacity-0 group-hover/date:opacity-100"
           }`} />
         </button>
       </PopoverTrigger>

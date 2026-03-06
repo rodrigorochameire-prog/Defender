@@ -76,7 +76,7 @@ interface DemandaTableViewProps {
 // ============================================
 
 function calcularPrazo(prazoStr: string) {
-  if (!prazoStr) return { texto: "-", cor: "none", dias: null };
+  if (!prazoStr) return { texto: "", cor: "none", dias: null };
 
   try {
     const [dia, mes, ano] = prazoStr.split("/").map(Number);

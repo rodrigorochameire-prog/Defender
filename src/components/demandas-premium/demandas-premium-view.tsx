@@ -577,6 +577,8 @@ export default function Demandas() {
     return localStorage.getItem("defender_stats_collapsed") === "true";
   });
   const [activeTab, setActiveTab] = useState<"lista" | "analytics">("lista");
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const mobileSearchRef = useRef<HTMLInputElement>(null);
   const [isAdminConfigModalOpen, setIsAdminConfigModalOpen] = useState(false);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -1728,12 +1730,41 @@ export default function Demandas() {
         {activeTab === "lista" ? (
         <>
         {/* Lista de Demandas */}
-        <Card className="group/card relative border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
-            <div className="px-4 md:px-5 py-3.5 border-b border-zinc-200/80 dark:border-zinc-800/80">
+        <div className="group/card relative bg-white dark:bg-zinc-900">
+            <div className="px-4 md:px-5 py-3">
               {/* Toolbar Row */}
               <div className="flex items-center gap-2">
-                {/* Search */}
-                <div className="flex-1 min-w-0 relative">
+                {/* Search — expandable on mobile */}
+                {isMobileSearchOpen ? (
+                  <div className="flex-1 min-w-0 relative md:hidden animate-in slide-in-from-right-2 duration-200">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+                    <Input
+                      ref={mobileSearchRef}
+                      placeholder="Buscar..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onBlur={() => { if (!searchTerm) setIsMobileSearchOpen(false); }}
+                      autoFocus
+                      className="pl-9 pr-8 h-8 text-xs bg-zinc-100 dark:bg-zinc-800 border-zinc-200/80 dark:border-zinc-700/80 focus:border-emerald-400 dark:focus:border-emerald-600 focus:ring-1 focus:ring-emerald-400/30 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 rounded-lg transition-colors"
+                    />
+                    <button
+                      onClick={() => { setSearchTerm(""); setIsMobileSearchOpen(false); }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded p-0.5 transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5 text-zinc-400 hover:text-zinc-600" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setIsMobileSearchOpen(true); setTimeout(() => mobileSearchRef.current?.focus(), 100); }}
+                    className="md:hidden h-8 w-8 flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+                    title="Buscar"
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {/* Desktop search (always visible) */}
+                <div className="hidden md:block flex-1 min-w-0 relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
                   <Input
                     placeholder="Buscar assistido, processo..."
@@ -2109,7 +2140,7 @@ export default function Demandas() {
               )}
             </div>
 
-            <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/30 flex items-center justify-between">
+            <div className="px-4 md:px-5 py-3 border-t border-zinc-100 dark:border-zinc-800/60 flex items-center justify-between">
               {isSelectMode ? (
                 <div className="flex items-center gap-3 w-full">
                   <button
@@ -2230,7 +2261,7 @@ export default function Demandas() {
                 </>
               )}
             </div>
-          </Card>
+          </div>
         </>
         ) : (
           /* ========== TAB ANALYTICS ========== */
