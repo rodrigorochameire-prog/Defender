@@ -771,24 +771,24 @@ export default function DashboardJuriPage() {
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
 
       {/* Header — Premium hero-style */}
-      <div className="relative px-5 md:px-8 py-6 md:py-8 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
+      <div className="relative px-4 sm:px-5 md:px-8 py-5 sm:py-6 md:py-8 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
         {/* Subtle gradient accent */}
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/40 via-transparent to-transparent dark:from-emerald-950/20 dark:via-transparent pointer-events-none" />
-        <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-900 dark:from-white dark:to-zinc-100 flex items-center justify-center shadow-lg shadow-zinc-900/10 dark:shadow-black/10 ring-4 ring-zinc-900/5 dark:ring-white/10">
-              <Briefcase className="w-5.5 h-5.5 text-white dark:text-zinc-900" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-900 dark:from-white dark:to-zinc-100 flex items-center justify-center shadow-lg shadow-zinc-900/10 dark:shadow-black/10 ring-4 ring-zinc-900/5 dark:ring-white/10 shrink-0">
+              <Briefcase className="w-5 h-5 sm:w-5.5 sm:h-5.5 text-white dark:text-zinc-900" />
             </div>
             <div>
-              <h1 className="font-serif text-3xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">Dashboard</h1>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Painel de atividades e acompanhamento</p>
+              <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">Dashboard</h1>
+              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Painel de atividades e acompanhamento</p>
             </div>
           </div>
 
           <Button
             size="sm"
             onClick={() => setIsCreateModalOpen(true)}
-            className="h-9 px-4 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-emerald-500 dark:hover:text-white text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer"
+            className="h-9 px-4 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-emerald-500 dark:hover:text-white text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer w-full sm:w-auto"
           >
             <Plus className="w-4 h-4 mr-1.5" />
             Nova Demanda
@@ -1102,7 +1102,7 @@ export default function DashboardJuriPage() {
             </div>
 
             {/* Tipo de Registro (estilo padronizado com Cowork) */}
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
               {tiposRegistro.map((tipo) => {
                 const Icon = tipo.icon;
                 const isSelected = atendimentoRapido.tipo === tipo.id;
@@ -1118,7 +1118,7 @@ export default function DashboardJuriPage() {
                       }
                     }}
                     className={cn(
-                      "flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200",
+                      "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200",
                       isDelegacao
                         ? cn(
                             "border border-rose-200 dark:border-rose-800/50",
@@ -1148,7 +1148,7 @@ export default function DashboardJuriPage() {
                         : "text-zinc-400"
                     )} />
                     <span className={cn(
-                      "text-xs font-medium",
+                      "text-[10px] sm:text-xs font-medium truncate",
                       isDelegacao ? "text-rose-600 dark:text-rose-400"
                         : isSelected ? "text-emerald-700 dark:text-emerald-300 font-semibold"
                         : "text-zinc-500 dark:text-zinc-400"
@@ -1647,7 +1647,7 @@ export default function DashboardJuriPage() {
         {!isDefensorCriminalGeral && (
           <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
             <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
                     <Gavel className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
@@ -1658,7 +1658,7 @@ export default function DashboardJuriPage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-md p-0.5">
+                  <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
                     {[
                       { id: "todos", label: "Todos" },
                       { id: "rodrigo", label: "Dr. Rodrigo" },
@@ -1667,7 +1667,7 @@ export default function DashboardJuriPage() {
                       <button
                         key={opt.id}
                         onClick={() => setFiltroDefensorJuri(opt.id as typeof filtroDefensorJuri)}
-                        className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
+                        className={`px-2.5 py-1 text-[10px] sm:text-[11px] rounded-md transition-colors whitespace-nowrap ${
                           filtroDefensorJuri === opt.id
                             ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 shadow-sm"
                             : "text-zinc-500 hover:text-zinc-700"

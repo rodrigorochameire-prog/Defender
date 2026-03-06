@@ -37,6 +37,7 @@ import { OfflineSyncProvider } from "@/components/layout/offline-sync-provider";
 import { MobileBottomNav } from "@/components/shared/mobile-bottom-nav";
 import { type AssignmentMenuItem } from "@/contexts/assignment-context";
 import { useProfissional } from "@/contexts/profissional-context";
+import { useTheme } from "@/contexts/theme-context";
 import { logoutAction } from "@/app/(dashboard)/actions";
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -662,7 +663,7 @@ function PrincipalMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                     "h-9 transition-all duration-200 rounded-lg group/subitem relative",
                     isActive
                       ? "bg-emerald-500/15 text-emerald-400 font-semibold"
-                      : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                   )}
                 >
                   <Link href={item.path} prefetch={true} onClick={onNavigate}>
@@ -673,7 +674,7 @@ function PrincipalMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                     )} />
                     <Icon className={cn(
                       "h-3.5 w-3.5 mr-2 transition-all duration-200",
-                      isActive ? "text-emerald-400" : "text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-600 dark:group-hover/subitem:text-zinc-300"
+                      isActive ? "text-emerald-400" : "text-zinc-500 dark:text-zinc-400 group-hover/subitem:text-zinc-700 dark:group-hover/subitem:text-zinc-300"
                     )} />
                     <span className="text-[12px] truncate">{item.label}</span>
                   </Link>
@@ -1428,6 +1429,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
 }) {
   const pathname = usePathname();
   const { state, open, setOpen, openMobile, setOpenMobile } = useSidebar();
+  const { theme } = useTheme();
   const { user: sessionUser } = usePermissions();
   const { profissionalLogado } = useProfissional();
 
@@ -1473,7 +1475,8 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
         className={cn(
           "glass-sidebar",
           "z-40",
-          "transition-all duration-300 ease-out"
+          "transition-all duration-300 ease-out",
+          theme === "medium" && "dark"
         )}
       >
         {/* Header */}
@@ -1482,7 +1485,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
         </SidebarHeader>
 
         {/* Content com Scroll Suave */}
-        <SidebarContent className="px-0 py-0 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+        <SidebarContent className="px-0 py-0 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
           {/* Painel de Contexto - Seletor de Defensor */}
           <ContextControl collapsed={isCollapsed} />
 
@@ -1623,7 +1626,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
       </Sidebar>
 
       {/* Main Content */}
-      <SidebarInset className="flex flex-col min-h-screen bg-zinc-50 dark:bg-zinc-950">
+      <SidebarInset className={cn("flex flex-col min-h-screen", theme === "dark" ? "bg-zinc-950" : theme === "medium" ? "bg-zinc-50" : "bg-white")}>
         {/* Header - Light clean com accent emerald */}
         <header className={cn(
           "relative overflow-hidden",
@@ -1648,7 +1651,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
           </div>
 
           {/* Conteúdo - Direita: Indicador + Data + Controles */}
-          <div className="flex items-center gap-3 px-3">
+          <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3">
             {/* Indicador ativo */}
             <div className="hidden md:flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-sm shadow-emerald-500/50" />

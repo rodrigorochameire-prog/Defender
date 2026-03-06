@@ -27,7 +27,7 @@ import * as React from "react";
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = "17rem";
-const SIDEBAR_WIDTH_MOBILE = "18rem";
+const SIDEBAR_WIDTH_MOBILE = "16rem";
 const SIDEBAR_WIDTH_ICON = "4.5rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
@@ -181,7 +181,7 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="bg-white/85 dark:bg-zinc-900/90 backdrop-blur-2xl text-zinc-700 dark:text-zinc-100 w-[var(--sidebar-width)] p-0 [&>button]:hidden border-zinc-200/40 dark:border-zinc-700/40"
+          className={cn("bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl text-zinc-700 dark:text-zinc-100 w-[var(--sidebar-width)] max-w-[85vw] p-0 [&>button]:hidden border-zinc-200/40 dark:border-zinc-700/40", className)}
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,

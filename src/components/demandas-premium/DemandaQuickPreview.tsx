@@ -222,9 +222,9 @@ export function DemandaQuickPreview({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:w-[420px] md:w-[460px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden" style={{ borderLeft: `3px solid ${atribuicaoColor}` }}>
+      <SheetContent className="w-[calc(100vw-3rem)] sm:w-[420px] md:w-[460px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl" style={{ borderLeft: `3px solid ${atribuicaoColor}` }}>
         {/* ===== STICKY NAV HEADER ===== */}
-        <div className="sticky top-0 z-10 bg-white dark:bg-zinc-900 border-b border-zinc-200/50 dark:border-zinc-800/50 px-4 py-2 flex items-center justify-between">
+        <div className="sticky top-0 z-10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-zinc-200/50 dark:border-zinc-800/50 px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 space-y-0">
             <SheetTitle className="text-xs font-medium text-zinc-400 dark:text-zinc-500">
               Demanda
@@ -269,7 +269,7 @@ export function DemandaQuickPreview({
         <div className="flex-1 overflow-y-auto">
           {/* ===== HERO HEADER with gradient ===== */}
           <div
-            className="px-5 pt-5 pb-4"
+            className="px-5 pt-4 pb-3"
             style={{
               background: `linear-gradient(180deg, ${atribuicaoColor}08 0%, transparent 100%)`,
             }}
@@ -277,7 +277,7 @@ export function DemandaQuickPreview({
             <div className="flex items-start gap-3.5">
               <Avatar name={demanda.assistido} color={atribuicaoColor} size={48} />
               <div className="flex-1 min-w-0">
-                <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 leading-tight truncate">
+                <h2 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-100 leading-tight truncate">
                   {demanda.assistido}
                 </h2>
                 {/* Chips */}
@@ -334,7 +334,7 @@ export function DemandaQuickPreview({
           </div>
 
           {/* ===== PROGRESS BAR (Status Pipeline) ===== */}
-          <div className="px-5 py-3 border-t border-zinc-100 dark:border-zinc-800/50">
+          <div className="px-4 sm:px-5 py-2.5 border-t border-zinc-100 dark:border-zinc-800/50">
             <div className="flex items-center gap-0">
               {PIPELINE_STAGES.map((stage, i) => {
                 const isActive = i === currentStageIdx;
@@ -383,9 +383,9 @@ export function DemandaQuickPreview({
           </div>
 
           {/* ===== CARD SECTIONS ===== */}
-          <div className="px-5 pb-4 space-y-3">
+          <div className="px-4 sm:px-5 pb-4 space-y-2.5">
             {/* Card 1: Classificação */}
-            <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/40 p-4 space-y-3">
+            <div className="rounded-xl bg-zinc-50/80 dark:bg-zinc-800/30 p-3.5 sm:p-4 space-y-2.5">
               <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-semibold">Classificação</p>
               <div className="flex items-start gap-4">
                 <div className="flex-1">
@@ -436,7 +436,7 @@ export function DemandaQuickPreview({
             </div>
 
             {/* Card 2: Prazo & Providências */}
-            <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/40 p-4 space-y-3">
+            <div className="rounded-xl bg-zinc-50/80 dark:bg-zinc-800/30 p-3.5 sm:p-4 space-y-2.5">
               <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-semibold">Prazo & Providências</p>
               <div>
                 <div className="flex items-center gap-2">
@@ -471,7 +471,7 @@ export function DemandaQuickPreview({
             </div>
 
             {/* Card 3: Metadados (collapsible) */}
-            <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/40 overflow-hidden">
+            <div className="rounded-xl bg-zinc-50/80 dark:bg-zinc-800/30 overflow-hidden">
               <button
                 onClick={() => setMetadataOpen(!metadataOpen)}
                 className="w-full flex items-center gap-2 px-4 py-3 text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-semibold hover:bg-zinc-100/50 dark:hover:bg-zinc-700/30 transition-colors cursor-pointer"
@@ -512,7 +512,7 @@ export function DemandaQuickPreview({
         </div>
 
         {/* ===== STICKY ACTIONS BOTTOM BAR ===== */}
-        <div className="sticky bottom-0 bg-white dark:bg-zinc-900 border-t border-zinc-200/80 dark:border-zinc-800/80 px-5 py-3 flex items-center gap-2">
+        <div className="sticky bottom-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-zinc-200/80 dark:border-zinc-800/80 px-4 sm:px-5 py-2.5 sm:py-3 flex items-center gap-2">
           <button
             onClick={() => { onStatusChange(demanda.id, "resolvido"); onOpenChange(false); }}
             className="flex-1 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
