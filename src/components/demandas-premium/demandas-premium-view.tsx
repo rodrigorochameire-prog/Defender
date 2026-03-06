@@ -576,6 +576,7 @@ export default function Demandas() {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("defender_stats_collapsed") === "true";
   });
+  const [activeTab, setActiveTab] = useState<"lista" | "analytics">("lista");
   const [isAdminConfigModalOpen, setIsAdminConfigModalOpen] = useState(false);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -1629,28 +1630,47 @@ export default function Demandas() {
 
   return (
     <div className="w-full min-h-screen bg-zinc-100 dark:bg-[#0f0f11] overflow-x-hidden">
-      {/* Header */}
-      <PageHeader
-        title="Demandas"
-        subtitle="Gerenciamento de prazos e solicitações"
-        actions={
-          <div className="flex items-center gap-0.5">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsAdminConfigModalOpen(true)}
-              title="Configurações"
-              className="hidden sm:flex h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-            >
+      {/* Compact Header — Notion-style */}
+      <div className="px-4 sm:px-5 md:px-8 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
+        <div className="flex items-center justify-between gap-3">
+          {/* Left: Title + Inline Counters */}
+          <div className="flex items-center gap-3 min-w-0">
+            <h1 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight shrink-0">Demandas</h1>
+            {/* Mobile counter (compact) */}
+            <span className="sm:hidden text-xs font-mono tabular-nums text-zinc-400">{demandas.filter(d => !d.arquivado).length}</span>
+            {/* Desktop counters */}
+            <div className="hidden sm:flex items-center gap-1.5 text-sm text-zinc-400 dark:text-zinc-500">
+              <span className="font-mono tabular-nums">{demandas.filter(d => !d.arquivado).length}</span>
+              <span>ativas</span>
+              {(() => {
+                const urgentes = demandas.filter(d => !d.arquivado && (d.prioridade === "URGENTE" || d.prioridade === "REU_PRESO")).length;
+                const presos = demandas.filter(d => !d.arquivado && d.estadoPrisional === "preso").length;
+                return (
+                  <>
+                    {urgentes > 0 && (
+                      <>
+                        <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                        <span className="text-rose-500 font-medium">{urgentes} urgente{urgentes !== 1 ? "s" : ""}</span>
+                      </>
+                    )}
+                    {presos > 0 && (
+                      <>
+                        <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                        <span className="text-amber-500 font-medium">{presos} preso{presos !== 1 ? "s" : ""}</span>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* Right: Action Icons + Nova Button */}
+          <div className="flex items-center gap-0.5 shrink-0">
+            <Button variant="ghost" size="sm" onClick={() => setIsAdminConfigModalOpen(true)} title="Configurações" className="hidden sm:flex h-7 w-7 p-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
               <Settings className="w-3.5 h-3.5" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsChartConfigModalOpen(true)}
-              title="Infográficos"
-              className="hidden sm:flex h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-            >
+            <Button variant="ghost" size="sm" onClick={() => setIsChartConfigModalOpen(true)} title="Infográficos" className="hidden sm:flex h-7 w-7 p-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
               <BarChartIcon className="w-3.5 h-3.5" />
             </Button>
             <span className="hidden sm:inline-flex">
@@ -1661,71 +1681,52 @@ export default function Demandas() {
                 onImportSEEU={() => setIsSEEUImportModalOpen(true)}
               />
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsDuplicatesModalOpen(true)}
-              title="Encontrar Duplicatas"
-              className="hidden sm:flex h-8 w-8 p-0 text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-            >
+            <Button variant="ghost" size="sm" onClick={() => setIsDuplicatesModalOpen(true)} title="Encontrar Duplicatas" className="hidden sm:flex h-7 w-7 p-0 text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
               <Layers className="w-3.5 h-3.5" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsExportModalOpen(true)}
-              title="Exportar"
-              className="hidden sm:flex h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-            >
+            <Button variant="ghost" size="sm" onClick={() => setIsExportModalOpen(true)} title="Exportar" className="hidden sm:flex h-7 w-7 p-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
               <Upload className="w-3.5 h-3.5" />
             </Button>
             <Button
               size="sm"
               onClick={() => setIsCreateModalOpen(true)}
               title="Nova Demanda"
-              className="h-9 px-3 sm:px-4 sm:ml-1.5 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer"
+              className="h-8 px-3 sm:ml-1 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
             >
-              <Plus className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Nova </span>Demanda
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              <span className="hidden sm:inline">Nova</span>
             </Button>
           </div>
-        }
-      />
+        </div>
+      </div>
 
       {/* Conteúdo Principal */}
       <div className="p-3 md:p-5 space-y-3 md:space-y-4">
-        {/* Stats Ribbon — compact inline KPIs (collapsible) */}
-        <div className="flex items-center gap-2.5 px-4 py-2 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-apple dark:shadow-apple-dark">
-          <button
-            onClick={() => {
-              const next = !isStatsCollapsed;
-              setIsStatsCollapsed(next);
-              localStorage.setItem("defender_stats_collapsed", String(next));
-            }}
-            className="flex-shrink-0 p-0.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            title={isStatsCollapsed ? "Expandir stats" : "Recolher stats"}
-          >
-            {isStatsCollapsed ? <ChevronDown className="w-3.5 h-3.5 text-zinc-400" /> : <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />}
-          </button>
-          {!isStatsCollapsed && statsData.map((stat, index) => {
-            const Icon = stat.icon;
-            const isAlert = stat.gradient === "rose" || stat.gradient === "amber";
-            const hasValue = Number(String(stat.value).replace('%','')) > 0;
-            return (
-              <Fragment key={index}>
-                {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
-                <div className={`flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800 ${isAlert && hasValue ? 'bg-rose-50 dark:bg-rose-950/20' : ''}`}>
-                  <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${isAlert && hasValue ? 'text-rose-500 dark:text-rose-400' : 'text-zinc-400 dark:text-zinc-500'}`} />
-                  <span className={`font-bold tabular-nums ${isAlert && hasValue ? 'text-rose-600 dark:text-rose-400' : 'text-zinc-800 dark:text-zinc-100'}`}>{stat.value}</span>
-                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.title.toLowerCase()}</span>
-                </div>
-              </Fragment>
-            );
-          })}
-          <div className="flex-1" />
-          <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px] tabular-nums whitespace-nowrap">{demandas.filter(d => !d.arquivado).length} total</span>
+        {/* Tabs — Lista / Analytics */}
+        <div className="flex items-center gap-0 border-b border-zinc-200/80 dark:border-zinc-800/80 -mx-3 md:-mx-5 px-3 md:px-5">
+          {[
+            { key: "lista" as const, label: "Lista" },
+            { key: "analytics" as const, label: "Analytics" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`relative px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
+                activeTab === tab.key
+                  ? "text-zinc-900 dark:text-zinc-100"
+                  : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
+              }`}
+            >
+              {tab.label}
+              {activeTab === tab.key && (
+                <div className="absolute bottom-0 left-2 right-2 h-0.5 bg-zinc-900 dark:bg-zinc-100 rounded-full" />
+              )}
+            </button>
+          ))}
         </div>
 
+        {activeTab === "lista" ? (
+        <>
         {/* Lista de Demandas */}
         <Card className="group/card relative border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
             <div className="px-4 md:px-5 py-3.5 border-b border-zinc-200/80 dark:border-zinc-800/80">
@@ -2230,66 +2231,72 @@ export default function Demandas() {
               )}
             </div>
           </Card>
-
-          {/* Infográficos */}
-          {selectedCharts.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-                    <svg className="w-4 h-4 text-zinc-500 dark:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
+        </>
+        ) : (
+          /* ========== TAB ANALYTICS ========== */
+          <div className="space-y-6">
+            {/* Stats KPIs */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {statsData.map((stat, index) => {
+                const Icon = stat.icon;
+                const isAlert = stat.gradient === "rose" || stat.gradient === "amber";
+                const hasValue = Number(String(stat.value).replace('%','')) > 0;
+                return (
+                  <div key={index} className={`flex items-center gap-3 p-4 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 ${isAlert && hasValue ? 'border-rose-200 dark:border-rose-800/50' : ''}`}>
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isAlert && hasValue ? 'bg-rose-100 dark:bg-rose-950/30' : 'bg-zinc-100 dark:bg-zinc-800'}`}>
+                      <Icon className={`w-4 h-4 ${isAlert && hasValue ? 'text-rose-500' : 'text-zinc-400'}`} />
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold tabular-nums text-zinc-900 dark:text-zinc-100">{stat.value}</p>
+                      <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{stat.title}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Infográficos</h3>
-                    <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
-                      Visualização de dados e estatísticas
-                    </p>
-                  </div>
-                </div>
-              </div>
+                );
+              })}
+            </div>
 
+            {/* Infográficos */}
+            {selectedCharts.length > 0 && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {selectedCharts.map((chartKey) => {
                   const chartConfig = chartOptions.find(opt => opt.value === chartKey);
                   const Icon = chartConfig?.icon || BarChartIcon;
-                  
+
                   return (
                     <Card key={chartKey} className="group/chart relative p-4 border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/[0.02]">
-                      {/* Linha superior sutil no hover */}
                       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover/chart:via-emerald-500/20 transition-all duration-300 rounded-t-xl" />
-                      
                       <div className="flex items-center gap-3 mb-4">
                         <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover/chart:border-emerald-300/30 dark:group-hover/chart:border-emerald-700/30 group-hover/chart:bg-emerald-50 dark:group-hover/chart:bg-emerald-900/20 transition-all duration-300">
                           <Icon className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 group-hover/chart:text-emerald-600 dark:group-hover/chart:text-emerald-400 transition-colors duration-300" />
                         </div>
                         <div>
-                          <h4 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 group-hover/chart:text-zinc-800 dark:group-hover/chart:text-zinc-200 transition-colors">
-                            {chartConfig?.label || chartKey}
-                          </h4>
-                          <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
-                            {chartConfig?.category}
-                          </p>
+                          <h4 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{chartConfig?.label || chartKey}</h4>
+                          <p className="text-[10px] text-zinc-400 dark:text-zinc-500">{chartConfig?.category}</p>
                         </div>
                       </div>
                       <div className="h-[300px] w-full">
-                        <DynamicChart
-                          type={chartKey}
-                          demandas={demandasFiltradas}
-                          visualizationType={chartTypes[chartKey] || "pizza"}
-                        />
+                        <DynamicChart type={chartKey} demandas={demandasFiltradas} visualizationType={chartTypes[chartKey] || "pizza"} />
                       </div>
                     </Card>
                   );
                 })}
               </div>
-            </div>
-          )}
+            )}
 
-        {/* Timeline */}
-        <HistoricoChart demandas={demandasFiltradas} />
+            {/* Timeline */}
+            <HistoricoChart demandas={demandasFiltradas} />
+          </div>
+        )}
       </div>
+
+      {/* Mobile FAB — floating "+" button */}
+      <button
+        onClick={() => setIsCreateModalOpen(true)}
+        className="sm:hidden fixed bottom-20 right-4 z-40 w-12 h-12 rounded-full bg-zinc-900 dark:bg-zinc-700 hover:bg-emerald-600 dark:hover:bg-emerald-600 text-white shadow-lg shadow-zinc-900/30 dark:shadow-black/50 flex items-center justify-center transition-all duration-200 active:scale-95 cursor-pointer"
+        title="Nova Demanda"
+      >
+        <Plus className="w-5 h-5" />
+      </button>
 
       {/* Modals */}
       <DemandaCreateModal

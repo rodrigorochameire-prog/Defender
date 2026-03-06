@@ -494,16 +494,29 @@ const CompactRow = React.memo(function CompactRow({
       />
     ),
 
-    // Prazo
-    prazo: () => (
-      <div className="flex items-center">
-        <InlineDatePicker
-          value={demanda.prazo}
-          onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
+    // Prazo — badge style
+    prazo: () => {
+      const hasPrazo = demanda.prazo && prazoInfo.cor !== "none";
+      const badgeColors: Record<string, string> = {
+        red: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400",
+        amber: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
+        yellow: "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400",
+        gray: "text-zinc-400 dark:text-zinc-500",
+      };
+      return (
+        <div className="flex items-center gap-1">
+          <InlineDatePicker
+            value={demanda.prazo}
+            onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
           />
-        {prazoInfo.cor === "red" && <AlertCircle className="w-3 h-3 text-rose-500 flex-shrink-0 ml-0.5" />}
-      </div>
-    ),
+          {hasPrazo && prazoInfo.cor !== "gray" && (
+            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap ${badgeColors[prazoInfo.cor] || ""} ${prazoInfo.cor === "red" ? "animate-pulse" : ""}`}>
+              {prazoInfo.texto}
+            </span>
+          )}
+        </div>
+      );
+    },
 
     // Status
     status: () => (
@@ -546,10 +559,11 @@ const CompactRow = React.memo(function CompactRow({
       />
     ),
 
-    // Providências — colapsado, mostra ícone + preview curto, expande ao dbl-click para editar
+    // Providências — hide placeholder text, show clean state
     providencias: () => {
       const text = demanda.providencias || "";
-      const hasText = text.trim().length > 0;
+      const isPlaceholder = /^\(ajustar|^\(peticionar/i.test(text.trim());
+      const hasText = text.trim().length > 0 && !isPlaceholder;
       return (
         <div className="group/prov flex items-center gap-1 min-w-0">
           {hasText ? (
@@ -573,7 +587,7 @@ const CompactRow = React.memo(function CompactRow({
             </Tooltip>
           ) : (
             <EditableTextInline
-              value=""
+              value={isPlaceholder ? "" : ""}
               onSave={(v) => onProvidenciasChange(demanda.id, v)}
               placeholder="—"
               className="text-[10px] text-zinc-400"
@@ -1272,14 +1286,22 @@ export function DemandaCompactView({
                             />
                           )}
                         </div>
-                        {/* Prazo */}
-                        <div className="flex-shrink-0">
+                        {/* Prazo — badge style */}
+                        <div className="flex-shrink-0 flex items-center gap-1">
                           <InlineDatePicker
                             value={demanda.prazo}
                             onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
                           />
+                          {demanda.prazo && prazoInfo.cor !== "none" && prazoInfo.cor !== "gray" && (
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap ${
+                              prazoInfo.cor === "red" ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 animate-pulse" :
+                              prazoInfo.cor === "amber" ? "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
+                              "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
+                            }`}>
+                              {prazoInfo.texto}
+                            </span>
+                          )}
                         </div>
-                        {prazoInfo.cor === "red" && <AlertCircle className="w-3 h-3 text-rose-500 flex-shrink-0" />}
                         {/* Actions menu (three dots) */}
                         <div className="relative flex-shrink-0">
                           <button
@@ -1386,29 +1408,25 @@ export function DemandaCompactView({
                             onChange={(v) => onAtoChange(demanda.id, v)}
                           />
                         </div>
-                        {/* Providencias (if exists) */}
-                        {demanda.providencias ? (
-                          <>
-                            <span className="text-[10px] text-zinc-300 dark:text-zinc-600 flex-shrink-0">&middot;</span>
-                            <div className="min-w-0 flex-1 truncate">
-                              <EditableTextInline
-                                value={demanda.providencias}
-                                onSave={(v) => onProvidenciasChange(demanda.id, v)}
-                                placeholder=""
-                                className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 text-[10px] italic text-zinc-400 dark:text-zinc-500"
-                              />
-                            </div>
-                          </>
-                        ) : (
-                          <div className="min-w-0 flex-1">
-                            <EditableTextInline
-                              value=""
-                              onSave={(v) => onProvidenciasChange(demanda.id, v)}
-                              placeholder="+ prov."
-                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 text-[10px] italic text-zinc-300 dark:text-zinc-600"
-                            />
-                          </div>
-                        )}
+                        {/* Providencias (hide placeholders) */}
+                        {(() => {
+                          const provText = demanda.providencias || "";
+                          const isPlaceholder = /^\(ajustar|^\(peticionar/i.test(provText.trim());
+                          const showProv = provText.trim().length > 0 && !isPlaceholder;
+                          return showProv ? (
+                            <>
+                              <span className="text-[10px] text-zinc-300 dark:text-zinc-600 flex-shrink-0">&middot;</span>
+                              <div className="min-w-0 flex-1 truncate">
+                                <EditableTextInline
+                                  value={provText}
+                                  onSave={(v) => onProvidenciasChange(demanda.id, v)}
+                                  placeholder=""
+                                  className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 text-[10px] italic text-zinc-400 dark:text-zinc-500"
+                                />
+                              </div>
+                            </>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
                   </div>
