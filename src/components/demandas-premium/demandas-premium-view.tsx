@@ -22,6 +22,8 @@ const DuplicatesModal = dynamic(() => import("@/components/demandas-premium/dupl
 const DelegacaoModal = dynamic(() => import("@/components/demandas/delegacao-modal").then(m => ({ default: m.DelegacaoModal })), { ssr: false });
 const DelegacaoBatchModal = dynamic(() => import("@/components/demandas/delegacao-batch-modal").then(m => ({ default: m.DelegacaoBatchModal })), { ssr: false });
 import { DemandaQuickPreview } from "@/components/demandas-premium/DemandaQuickPreview";
+import { KanbanPremium } from "@/components/demandas-premium/kanban-premium";
+import { PrazosTab } from "@/components/demandas-premium/prazos-tab";
 import { getStatusConfig, STATUS_GROUPS, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO, ATO_PRIORITY } from "@/config/atos-por-atribuicao";
 import { copyToClipboard } from "@/lib/clipboard";
@@ -103,6 +105,9 @@ import {
   SlidersHorizontal,
   Filter,
   Layers,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   type LucideIcon,
 } from "lucide-react";
 
@@ -720,7 +725,7 @@ export default function Demandas() {
       assistidoId: d.assistido?.id || d.assistidoId || null,
       processoId: d.processo?.id || d.processoId || null,
       // Usar substatus granular quando disponível, senão mapear do status coarse do DB
-      status: d.substatus || DB_STATUS_TO_UI[d.status] || d.status?.toLowerCase().replace(/_/g, " ") || "fila",
+      status: d.substatus || DB_STATUS_TO_UI[d.status] || d.status?.toLowerCase().replace(/_/g, " ") || "fila", // "fila" is a valid substatus key in DEMANDA_STATUS
       prazo: d.prazo ? new Date(d.prazo + "T12:00:00").toLocaleDateString("pt-BR") : "",
       data: d.dataEntrada ? new Date(d.dataEntrada + "T12:00:00").toLocaleDateString("pt-BR") : new Date(d.createdAt).toLocaleDateString("pt-BR"),
       // dataInclusao: timestamp ISO para ordenação por recentes (usado na importação do PJe)
@@ -1535,7 +1540,7 @@ export default function Demandas() {
   }, []);
 
   // Função de comparação por coluna
-  const STATUS_GROUP_ORDER = ["urgente", "preparacao", "delegacao", "monitoramento", "fila", "diligencias", "concluida"];
+  const STATUS_GROUP_ORDER = ["triagem", "preparacao", "diligencias", "saida", "concluida", "arquivado"];
 
   function compareByColumn(a: any, b: any, column: string): number {
     switch (column) {
@@ -1730,6 +1735,26 @@ export default function Demandas() {
       prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
     );
   };
+
+  // Single-select: always replaces (for kanban/planilha)
+  const handleSingleAtribuicaoSelect = useCallback((value: string) => {
+    setSelectedAtribuicoes([value]);
+  }, []);
+
+  // Auto-select first atribuição in kanban/planilha if none selected
+  useEffect(() => {
+    if ((activeTab === "kanban" || activeTab === "planilha") && selectedAtribuicoes.length === 0) {
+      const firstOpt = atribuicaoOptions.find(o => o.value !== "Todas");
+      if (firstOpt) setSelectedAtribuicoes([firstOpt.value]);
+    }
+  }, [activeTab, selectedAtribuicoes.length]);
+
+  // When switching TO kanban/planilha from multi-select, narrow to first selection
+  useEffect(() => {
+    if ((activeTab === "kanban" || activeTab === "planilha") && selectedAtribuicoes.length > 1) {
+      setSelectedAtribuicoes([selectedAtribuicoes[0]]);
+    }
+  }, [activeTab]);
 
   // Quick-preview sheet
   const [previewDemandaId, setPreviewDemandaId] = useState<string | null>(null);
@@ -2041,9 +2066,10 @@ export default function Demandas() {
               <AtribuicaoPills
                 options={atribuicaoOptions}
                 selectedValues={selectedAtribuicoes}
-                onToggle={handleAtribuicaoToggle}
-                onClear={() => setSelectedAtribuicoes([])}
+                onToggle={handleSingleAtribuicaoSelect}
+                onClear={() => {}}
                 counts={atribuicaoCounts}
+                singleSelect
                 className="flex items-center gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1 pb-0.5"
               >
                 {/* Deadline stats — right-aligned */}
@@ -2302,8 +2328,12 @@ export default function Demandas() {
                             <option value="elaborar">Elaborar</option>
                             <option value="revisar">Revisar</option>
                           </optgroup>
-                          <optgroup label="Fila / Monitorar">
+                          <optgroup label="Triagem">
                             <option value="fila">Fila</option>
+                            <option value="atender">Atender</option>
+                          </optgroup>
+                          <optgroup label="Saída">
+                            <option value="protocolar">Protocolar</option>
                             <option value="monitorar">Monitorar</option>
                           </optgroup>
                           <optgroup label="Concluída">
@@ -2394,253 +2424,41 @@ export default function Demandas() {
           </div>
         </>
         ) : activeTab === "kanban" ? (
-          /* ========== TAB KANBAN ========== */
+          /* ========== TAB KANBAN PREMIUM ========== */
           <div className="space-y-3">
             {/* Atribuição pills */}
             <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 px-3 py-2">
               <AtribuicaoPills
                 options={atribuicaoOptions}
                 selectedValues={selectedAtribuicoes}
-                onToggle={handleAtribuicaoToggle}
-                onClear={() => setSelectedAtribuicoes([])}
+                onToggle={handleSingleAtribuicaoSelect}
+                onClear={() => {}}
                 counts={atribuicaoCounts}
+                singleSelect
               />
             </div>
 
-            {/* Kanban Board */}
-            <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-700">
-              {Object.entries(STATUS_GROUPS).map(([key, config]) => {
-                const columnDemandas = demandasFiltradas.filter(d => {
-                  const statusConfig = getStatusConfig(d.status);
-                  return statusConfig?.group === key;
-                });
-                // Hide empty columns
-                if (columnDemandas.length === 0) return null;
-                const color = config.color || "#71717a";
-                return (
-                  <div key={key} className="flex-shrink-0 w-64 sm:w-72 flex flex-col">
-                    {/* Column header */}
-                    <div className="flex items-center gap-2 px-3 py-2 mb-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-                      <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{config.label}</span>
-                      <span className="ml-auto text-[10px] font-mono tabular-nums text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">{columnDemandas.length}</span>
-                    </div>
-                    {/* Cards */}
-                    <div className="space-y-2 flex-1 min-h-[100px]">
-                      {columnDemandas.slice(0, 30).map((d) => {
-                        const statusCfg = getStatusConfig(d.status);
-                        const atribColor = ATRIBUICAO_BORDER_COLORS[d.atribuicao] || "#71717a";
-                        const AtribIcon = atribuicaoIcons[d.atribuicao];
-                        const processo = d.processos?.[0]?.numero || "";
-                        const isUrgente = d.prioridade === "URGENTE" || d.prioridade === "REU_PRESO";
-                        const isPreso = d.estadoPrisional === "preso";
-                        // Prazo diff
-                        let prazoDiff: number | null = null;
-                        if (d.prazo) {
-                          const [dd, mm, yy] = d.prazo.split("/").map(Number);
-                          const prazoDate = new Date(2000 + yy, mm - 1, dd);
-                          prazoDiff = Math.ceil((prazoDate.getTime() - Date.now()) / 86400000);
-                        }
-                        return (
-                          <div
-                            key={d.id}
-                            onClick={() => setPreviewDemandaId(d.id)}
-                            className={`relative rounded-lg bg-white dark:bg-zinc-900 border hover:border-emerald-200/50 dark:hover:border-emerald-800/30 hover:shadow-md transition-all duration-200 cursor-pointer group/kcard overflow-hidden ${
-                              isUrgente || isPreso ? "border-rose-200/80 dark:border-rose-800/40" : "border-zinc-200/80 dark:border-zinc-800/80"
-                            }`}
-                          >
-                            {/* Barra lateral de atribuição — oculta quando 1 atribuição filtrada */}
-                            {selectedAtribuicoes.length !== 1 && (
-                              <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg" style={{ backgroundColor: atribColor }} />
-                            )}
-
-                            <div className={`pr-2.5 py-2 sm:pr-3 sm:py-2.5 ${selectedAtribuicoes.length !== 1 ? "pl-3 sm:pl-3.5" : "pl-2.5 sm:pl-3"}`}>
-                              {/* Linha 1: Nome + badges */}
-                              <div className="flex items-center gap-1.5 mb-1">
-                                <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate flex-1">{d.assistido}</p>
-                                {isPreso && (
-                                  <span className="flex items-center gap-0.5 text-[9px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-1 py-0.5 rounded shrink-0">
-                                    <Lock className="w-2.5 h-2.5" />
-                                  </span>
-                                )}
-                                {isUrgente && (
-                                  <span className="flex items-center gap-0.5 text-[9px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 px-1 py-0.5 rounded shrink-0">
-                                    <AlertTriangle className="w-2.5 h-2.5" />
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Linha 2: Ato */}
-                              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate mb-1.5">{d.ato}</p>
-
-                              {/* Linha 3: Processo (copiável) */}
-                              {processo && (
-                                <div className="flex items-center gap-1 mb-1.5">
-                                  <span
-                                    className="text-[10px] font-mono tabular-nums text-zinc-400 dark:text-zinc-500 truncate hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-                                    onClick={(e) => { e.stopPropagation(); copyToClipboard(processo); }}
-                                    title="Copiar número"
-                                  >
-                                    {processo}
-                                  </span>
-                                  <Copy className="w-2.5 h-2.5 text-zinc-300 dark:text-zinc-600 opacity-0 group-hover/kcard:opacity-100 transition-opacity shrink-0" />
-                                </div>
-                              )}
-
-                              {/* Linha 4: Prazo + Status badge */}
-                              <div className="flex items-center gap-2">
-                                {d.prazo && (
-                                  <span className={`text-[10px] font-mono tabular-nums ${
-                                    prazoDiff !== null && prazoDiff < 0 ? "text-rose-500 font-semibold" :
-                                    prazoDiff !== null && prazoDiff <= 3 ? "text-amber-500 font-medium" :
-                                    "text-zinc-400"
-                                  }`}>
-                                    {d.prazo}
-                                  </span>
-                                )}
-                                <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: `${statusCfg?.color || color}15`, color: statusCfg?.color || color }}>
-                                  {statusCfg?.label || d.status}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                      {columnDemandas.length > 30 && (
-                        <p className="text-[10px] text-center text-zinc-400 py-2">+{columnDemandas.length - 30} mais</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            {/* Kanban Premium Board */}
+            <KanbanPremium
+              demandas={demandasFiltradas}
+              onCardClick={(id) => setPreviewDemandaId(id)}
+              onStatusChange={handleStatusChange}
+              copyToClipboard={copyToClipboard}
+              selectedAtribuicoes={selectedAtribuicoes}
+              showArchived={showArchived}
+            />
           </div>
         ) : activeTab === "prazos" ? (
           /* ========== TAB PRAZOS (AGENDA) ========== */
-          <div className="space-y-3">
-            {/* Atribuição pills */}
-            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 px-3 py-2">
-              <AtribuicaoPills
-                options={atribuicaoOptions}
-                selectedValues={selectedAtribuicoes}
-                onToggle={handleAtribuicaoToggle}
-                onClear={() => setSelectedAtribuicoes([])}
-                counts={atribuicaoCounts}
-              />
-            </div>
-
-            {/* Prazos por período */}
-            {(() => {
-              const hoje = new Date();
-              hoje.setHours(0, 0, 0, 0);
-              const comPrazo = demandasFiltradas.filter(d => d.prazo && !d.arquivado).map(d => {
-                const [dd, mm, yy] = d.prazo.split("/").map(Number);
-                const prazoDate = new Date(2000 + yy, mm - 1, dd);
-                prazoDate.setHours(0, 0, 0, 0);
-                const diff = Math.ceil((prazoDate.getTime() - hoje.getTime()) / 86400000);
-                return { ...d, prazoDate, diff };
-              }).sort((a, b) => a.diff - b.diff);
-
-              const vencidas = comPrazo.filter(d => d.diff < 0);
-              const hojeList = comPrazo.filter(d => d.diff === 0);
-              const amanha = comPrazo.filter(d => d.diff === 1);
-              const semana = comPrazo.filter(d => d.diff >= 2 && d.diff <= 7);
-              const quinzena = comPrazo.filter(d => d.diff > 7 && d.diff <= 15);
-              const mes = comPrazo.filter(d => d.diff > 15 && d.diff <= 30);
-              const futuro = comPrazo.filter(d => d.diff > 30);
-              const semPrazo = demandasFiltradas.filter(d => !d.prazo && !d.arquivado);
-
-              const sections = [
-                { label: "Vencidas", items: vencidas, color: "rose", icon: AlertTriangle },
-                { label: "Hoje", items: hojeList, color: "amber", icon: Zap },
-                { label: "Amanhã", items: amanha, color: "yellow", icon: Clock },
-                { label: "Esta semana", items: semana, color: "emerald", icon: Clock },
-                { label: "Próximos 15 dias", items: quinzena, color: "sky", icon: Clock },
-                { label: "Este mês", items: mes, color: "zinc", icon: Clock },
-                { label: "Futuro", items: futuro, color: "zinc", icon: Clock },
-                { label: "Sem prazo", items: semPrazo, color: "zinc", icon: HelpCircle },
-              ].filter(s => s.items.length > 0);
-
-              return (
-                <div className="space-y-3">
-                  {/* Resumo visual */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {[
-                      { label: "Vencidas", count: vencidas.length, color: "rose" },
-                      { label: "Hoje", count: hojeList.length, color: "amber" },
-                      { label: "7 dias", count: semana.length + amanha.length, color: "emerald" },
-                      { label: "Sem prazo", count: semPrazo.length, color: "zinc" },
-                    ].map(kpi => (
-                      <div key={kpi.label} className={`flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl border bg-white dark:bg-zinc-900 ${
-                        kpi.color === "rose" && kpi.count > 0 ? "border-rose-200 dark:border-rose-800/50" :
-                        kpi.color === "amber" && kpi.count > 0 ? "border-amber-200 dark:border-amber-800/50" :
-                        "border-zinc-200/80 dark:border-zinc-800/80"
-                      }`}>
-                        <p className={`text-xl font-bold tabular-nums ${
-                          kpi.color === "rose" && kpi.count > 0 ? "text-rose-600 dark:text-rose-400" :
-                          kpi.color === "amber" && kpi.count > 0 ? "text-amber-600 dark:text-amber-400" :
-                          "text-zinc-900 dark:text-zinc-100"
-                        }`}>{kpi.count}</p>
-                        <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{kpi.label}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Seções por período */}
-                  {sections.map(section => {
-                    const SectionIcon = section.icon;
-                    return (
-                      <div key={section.label} className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80">
-                        <div className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 border-b border-zinc-100 dark:border-zinc-800/50`}>
-                          <SectionIcon className={`w-3.5 h-3.5 ${
-                            section.color === "rose" ? "text-rose-500" :
-                            section.color === "amber" ? "text-amber-500" :
-                            section.color === "yellow" ? "text-yellow-500" :
-                            section.color === "emerald" ? "text-emerald-500" :
-                            section.color === "sky" ? "text-sky-500" :
-                            "text-zinc-400"
-                          }`} />
-                          <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{section.label}</span>
-                          <span className="text-[10px] font-mono tabular-nums text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">{section.items.length}</span>
-                        </div>
-                        <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
-                          {section.items.slice(0, 15).map((d: any) => {
-                            const statusCfg = getStatusConfig(d.status);
-                            const atribColor = ATRIBUICAO_BORDER_COLORS[d.atribuicao] || "#71717a";
-                            return (
-                              <div
-                                key={d.id}
-                                onClick={() => setPreviewDemandaId(d.id)}
-                                className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
-                              >
-                                {selectedAtribuicoes.length !== 1 && (
-                                  <div className="w-1 h-8 rounded-full shrink-0" style={{ backgroundColor: atribColor }} />
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate">{d.assistido}</p>
-                                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate">{d.ato}</p>
-                                </div>
-                                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                                  {d.estadoPrisional === "preso" && <Lock className="w-3 h-3 text-amber-500" />}
-                                  {d.prazo && <span className="text-[10px] font-mono tabular-nums text-zinc-500 hidden sm:inline">{d.prazo}</span>}
-                                  <span className="text-[9px] px-1.5 py-0.5 rounded font-medium whitespace-nowrap" style={{ backgroundColor: `${statusCfg?.color || "#71717a"}15`, color: statusCfg?.color || "#71717a" }}>
-                                    {statusCfg?.label || d.status}
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                          {section.items.length > 15 && (
-                            <p className="text-[10px] text-center text-zinc-400 py-2">+{section.items.length - 15} mais</p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
-          </div>
+          <PrazosTab
+            demandas={demandasFiltradas}
+            atribuicaoOptions={atribuicaoOptions}
+            selectedAtribuicoes={selectedAtribuicoes}
+            handleAtribuicaoToggle={handleAtribuicaoToggle}
+            setSelectedAtribuicoes={setSelectedAtribuicoes}
+            atribuicaoCounts={atribuicaoCounts}
+            onCardClick={(id) => setPreviewDemandaId(id)}
+          />
         ) : (
           /* ========== TAB ANALYTICS ========== */
           <div className="space-y-6">
