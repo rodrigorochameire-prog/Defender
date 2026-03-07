@@ -110,12 +110,12 @@ const ATRIBUICAO_OPTIONS = [
 ];
 
 // Pipeline stages for progress bar (mapped from status groups)
-const PIPELINE_STAGES: { key: StatusGroup; label: string }[] = [
-  { key: "triagem", label: "Triagem" },
-  { key: "preparacao", label: "Preparação" },
-  { key: "diligencias", label: "Diligências" },
-  { key: "saida", label: "Saída" },
-  { key: "concluida", label: "Concluído" },
+const PIPELINE_STAGES: { key: StatusGroup; label: string; short: string }[] = [
+  { key: "triagem", label: "Triagem", short: "Triagem" },
+  { key: "preparacao", label: "Preparação", short: "Prep." },
+  { key: "diligencias", label: "Diligências", short: "Dilig." },
+  { key: "saida", label: "Saída", short: "Saída" },
+  { key: "concluida", label: "Concluída", short: "Concl." },
 ];
 
 function getStageIndex(group: StatusGroup): number {
@@ -337,109 +337,129 @@ export function DemandaQuickPreview({
               background: `linear-gradient(180deg, ${atribuicaoColor}08 0%, transparent 100%)`,
             }}
           >
-            <div className="flex items-start gap-3.5">
-              <Avatar name={demanda.assistido} color={atribuicaoColor} size={48} />
-              <div className="flex-1 min-w-0">
-                <h2 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-100 leading-tight truncate">
-                  {demanda.assistido}
-                </h2>
-                {/* Chips */}
-                <div className="flex items-center gap-1.5 mt-1.5">
+            <div className="flex items-start gap-3">
+              <Avatar name={demanda.assistido} color={atribuicaoColor} size={44} />
+              <div className="flex-1 min-w-0 pt-0.5">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 leading-tight truncate">
+                    {demanda.assistido}
+                  </h2>
+                  {/* Flags inline com nome */}
                   {isPreso && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400">
-                      <Lock className="w-3 h-3" /> Preso
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 shrink-0">
+                      <Lock className="w-2.5 h-2.5" /> Preso
                     </span>
                   )}
                   {isUrgente && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400">
-                      <Flame className="w-3 h-3" /> Urgente
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 shrink-0">
+                      <Flame className="w-2.5 h-2.5" /> Urgente
                     </span>
                   )}
                 </div>
-                {/* Links */}
-                <div className="flex items-center gap-3 mt-2">
+
+                {/* Processo number inline */}
+                {processo && (
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="font-mono text-[11px] text-zinc-400 dark:text-zinc-500">{processo.numero}</span>
+                    <button
+                      onClick={() => copyToClipboard(processo.numero, "Processo copiado!")}
+                      className="p-0.5 rounded hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 transition-colors cursor-pointer"
+                    >
+                      <Copy className="w-2.5 h-2.5 text-zinc-300 dark:text-zinc-600" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Action links — compact icon buttons */}
+                <div className="flex items-center gap-2 mt-2">
                   {demanda.assistidoId && (
                     <Link
                       href={`/admin/assistidos/${demanda.assistidoId}`}
-                      className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 hover:underline transition-colors"
+                      className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline transition-colors"
                     >
                       <User className="w-3 h-3" />
-                      Ver assistido
-                      <ExternalLink className="w-2.5 h-2.5" />
+                      Ver assistido <ExternalLink className="w-2.5 h-2.5 opacity-60" />
                     </Link>
                   )}
                   {demanda.processoId && (
                     <Link
                       href={`/admin/processos/${demanda.processoId}`}
-                      className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 hover:underline transition-colors"
+                      className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline transition-colors"
                     >
                       <Briefcase className="w-3 h-3" />
-                      Ver processo
-                      <ExternalLink className="w-2.5 h-2.5" />
+                      Ver processo <ExternalLink className="w-2.5 h-2.5 opacity-60" />
                     </Link>
                   )}
                 </div>
               </div>
             </div>
-
-            {/* Processo number */}
-            {processo && (
-              <div className="mt-3 flex items-center gap-2 pl-[60px]">
-                <span className="font-mono text-xs text-zinc-500 dark:text-zinc-400">{processo.numero}</span>
-                <button
-                  onClick={() => copyToClipboard(processo.numero, "Processo copiado!")}
-                  className="p-0.5 rounded hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 transition-colors cursor-pointer"
-                >
-                  <Copy className="w-3 h-3 text-zinc-400" />
-                </button>
-              </div>
-            )}
           </div>
 
-          {/* ===== PROGRESS BAR (Status Pipeline) ===== */}
-          <div className="px-4 sm:px-5 py-2.5 border-t border-zinc-100 dark:border-zinc-800/50">
-            <div className="flex items-center gap-0">
+          {/* ===== PIPELINE STEPPER ===== */}
+          <div className="px-5 py-3 border-t border-zinc-100 dark:border-zinc-800/50">
+            {/* Track + nodes */}
+            <div className="relative flex items-center">
+              {/* Background track */}
+              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] bg-zinc-200 dark:bg-zinc-700/60 rounded-full" />
+              {/* Filled track */}
+              <div
+                className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] rounded-full transition-all duration-500"
+                style={{
+                  width: currentStageIdx >= 0 ? `${(currentStageIdx / (PIPELINE_STAGES.length - 1)) * 100}%` : "0%",
+                  backgroundColor: "#84CC9B",
+                }}
+              />
+              {/* Stage nodes */}
               {PIPELINE_STAGES.map((stage, i) => {
                 const isActive = i === currentStageIdx;
                 const isCompleted = i < currentStageIdx;
-                const stageColor = isActive ? statusColor : isCompleted ? "#84CC9B" : "#d4d4d8";
+                const stageColor = STATUS_GROUPS[stage.key]?.color || "#A1A1AA";
 
                 return (
-                  <React.Fragment key={stage.key}>
-                    {i > 0 && (
-                      <div
-                        className="flex-shrink-0 h-0.5 w-4"
-                        style={{ backgroundColor: isCompleted || isActive ? "#84CC9B" : "#e4e4e7" }}
-                      />
-                    )}
-                    <button
-                      onClick={() => {
-                        // Find first status in this group
-                        const entry = Object.entries(DEMANDA_STATUS).find(([, v]) => v.group === stage.key);
-                        if (entry) onStatusChange(demanda.id, entry[0]);
-                      }}
-                      className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-all cursor-pointer whitespace-nowrap ${
+                  <button
+                    key={stage.key}
+                    onClick={() => {
+                      const entry = Object.entries(DEMANDA_STATUS).find(([, v]) => v.group === stage.key);
+                      if (entry) onStatusChange(demanda.id, entry[0]);
+                    }}
+                    className={`relative z-10 flex flex-col items-center cursor-pointer group/stage transition-all ${
+                      i === 0 ? "" : "flex-1"
+                    }`}
+                    title={`Mudar para ${stage.label}`}
+                    style={{ minWidth: i === 0 ? "auto" : undefined }}
+                  >
+                    {/* Node */}
+                    <div
+                      className={`flex items-center justify-center rounded-full transition-all duration-300 ${
                         isActive
-                          ? "ring-1 ring-offset-1 dark:ring-offset-zinc-900"
-                          : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                          ? "w-6 h-6 ring-2 ring-offset-2 dark:ring-offset-zinc-900"
+                          : isCompleted
+                            ? "w-5 h-5"
+                            : "w-4 h-4 group-hover/stage:w-5 group-hover/stage:h-5"
                       }`}
                       style={{
-                        color: isActive ? statusColor : isCompleted ? "#84CC9B" : "#a1a1aa",
-                        ...(isActive ? { ringColor: statusColor } : {}),
+                        backgroundColor: isCompleted ? "#84CC9B" : isActive ? stageColor : "#e4e4e7",
+                        ringColor: isActive ? `${stageColor}40` : undefined,
                       }}
-                      title={`Mudar para ${stage.label}`}
                     >
-                      {isCompleted ? (
-                        <Check className="w-3 h-3" />
-                      ) : (
-                        <span
-                          className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: stageColor }}
-                        />
+                      {isCompleted && <Check className="w-3 h-3 text-white" />}
+                      {isActive && (
+                        <div className="w-2 h-2 rounded-full bg-white" />
                       )}
-                      {stage.label}
-                    </button>
-                  </React.Fragment>
+                    </div>
+                    {/* Label */}
+                    <span
+                      className={`mt-1.5 text-[8px] sm:text-[9px] font-medium whitespace-nowrap transition-colors ${
+                        isActive ? "font-bold" : isCompleted ? "" : "text-zinc-400 dark:text-zinc-500"
+                      }`}
+                      style={{
+                        color: isActive ? stageColor : isCompleted ? "#84CC9B" : undefined,
+                      }}
+                    >
+                      <span className="hidden sm:inline">{stage.label}</span>
+                      <span className="sm:hidden">{stage.short}</span>
+                    </span>
+                  </button>
                 );
               })}
             </div>
@@ -447,18 +467,19 @@ export function DemandaQuickPreview({
 
           {/* ===== CARD SECTIONS ===== */}
           <div className="px-4 sm:px-5 pb-4 space-y-2.5">
-            {/* Card 1: Classificação */}
-            <div className="rounded-xl bg-zinc-50/80 dark:bg-zinc-800/30 p-3.5 sm:p-4 space-y-2.5">
-              <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-semibold">Classificação</p>
-              <div className="flex items-start gap-4">
-                <div className="flex-1">
-                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mb-1">Status</p>
+            {/* Card 1: Classificação — 3-row grid */}
+            <div className="rounded-xl bg-zinc-50/80 dark:bg-zinc-800/30 p-3.5 sm:p-4">
+              <p className="text-[9px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-bold mb-3">Classificação</p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                {/* Status */}
+                <div>
+                  <p className="text-[9px] text-zinc-400 dark:text-zinc-500 font-medium mb-1">Status</p>
                   <InlineDropdown
                     value={demanda.status}
                     compact
                     displayValue={
-                      <div className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: statusColor }}>
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: statusColor }} />
+                      <div className="inline-flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: statusColor }}>
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: statusColor }} />
                         {statusConfig.label}
                       </div>
                     }
@@ -466,14 +487,15 @@ export function DemandaQuickPreview({
                     onChange={(v) => onStatusChange(demanda.id, v)}
                   />
                 </div>
-                <div className="flex-1">
-                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mb-1">Atribuição</p>
+                {/* Atribuição */}
+                <div>
+                  <p className="text-[9px] text-zinc-400 dark:text-zinc-500 font-medium mb-1">Atribuição</p>
                   <InlineDropdown
                     value={demanda.atribuicao}
                     compact
                     displayValue={
-                      <div className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: atribuicaoColor }}>
-                        <AtribuicaoIcon className="w-4 h-4" />
+                      <div className="inline-flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: atribuicaoColor }}>
+                        <AtribuicaoIcon className="w-3.5 h-3.5 shrink-0" />
                         {demanda.atribuicao}
                       </div>
                     }
@@ -481,28 +503,30 @@ export function DemandaQuickPreview({
                     onChange={(v) => onAtribuicaoChange(demanda.id, v)}
                   />
                 </div>
-              </div>
-              <div>
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mb-1">Ato / Tipo</p>
-                <InlineDropdown
-                  value={demanda.ato}
-                  compact
-                  displayValue={
-                    <span className="text-sm text-zinc-700 dark:text-zinc-300 font-medium">
-                      {demanda.ato || <span className="text-zinc-400 italic">Selecionar ato</span>}
-                    </span>
-                  }
-                  options={atoOptions}
-                  onChange={(v) => onAtoChange(demanda.id, v)}
-                />
+                {/* Ato — full width */}
+                <div className="col-span-2">
+                  <p className="text-[9px] text-zinc-400 dark:text-zinc-500 font-medium mb-1">Ato / Tipo</p>
+                  <InlineDropdown
+                    value={demanda.ato}
+                    compact
+                    displayValue={
+                      <span className="text-[13px] text-zinc-800 dark:text-zinc-200 font-semibold">
+                        {demanda.ato || <span className="text-zinc-400 dark:text-zinc-500 italic font-normal">Selecionar ato</span>}
+                      </span>
+                    }
+                    options={atoOptions}
+                    onChange={(v) => onAtoChange(demanda.id, v)}
+                  />
+                </div>
               </div>
             </div>
 
             {/* Card 2: Prazo & Providências */}
-            <div className="rounded-xl bg-zinc-50/80 dark:bg-zinc-800/30 p-3.5 sm:p-4 space-y-2.5">
-              <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-semibold">Prazo & Providências</p>
-              <div>
+            <div className="rounded-xl bg-zinc-50/80 dark:bg-zinc-800/30 p-3.5 sm:p-4">
+              <p className="text-[9px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-bold mb-3">Prazo & Providências</p>
+              <div className="mb-3">
                 <div className="flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                   <InlineDatePicker
                     value={demanda.prazo}
                     onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
@@ -510,7 +534,7 @@ export function DemandaQuickPreview({
                     showEditIcon
                   />
                   {prazoBadge && (
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${
                       prazoBadge.cor === "red" ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 animate-pulse" :
                       prazoBadge.cor === "amber" ? "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
                       prazoBadge.cor === "green" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" :
@@ -523,7 +547,7 @@ export function DemandaQuickPreview({
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500">Providências</p>
+                  <p className="text-[9px] text-zinc-400 dark:text-zinc-500 font-medium">Providências</p>
                   <div className="flex items-center gap-0.5">
                     <AudioRecorderButton
                       compact
@@ -559,7 +583,7 @@ export function DemandaQuickPreview({
             <div className="rounded-xl bg-zinc-50/80 dark:bg-zinc-800/30 overflow-hidden">
               <button
                 onClick={() => setMetadataOpen(!metadataOpen)}
-                className="w-full flex items-center gap-2 px-4 py-3 text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-semibold hover:bg-zinc-100/50 dark:hover:bg-zinc-700/30 transition-colors cursor-pointer"
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-[9px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-bold hover:bg-zinc-100/50 dark:hover:bg-zinc-700/30 transition-colors cursor-pointer"
               >
                 {metadataOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                 Metadados
@@ -597,26 +621,26 @@ export function DemandaQuickPreview({
         </div>
 
         {/* ===== STICKY ACTIONS BOTTOM BAR ===== */}
-        <div className="sticky bottom-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-zinc-200/80 dark:border-zinc-800/80 px-4 sm:px-5 py-2.5 sm:py-3 flex items-center gap-2">
+        <div className="sticky bottom-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-zinc-200/80 dark:border-zinc-800/80 px-5 py-2.5 flex items-center gap-2">
           <button
             onClick={() => { onStatusChange(demanda.id, "resolvido"); onOpenChange(false); }}
-            className="flex-1 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+            className="flex-1 h-8 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold hover:bg-emerald-500/20 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
           >
             <Check className="w-3.5 h-3.5" />
             Resolver
           </button>
           <button
             onClick={() => { onArchive(demanda.id); onOpenChange(false); }}
-            className="h-9 px-4 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 text-xs font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-1.5"
+            className="h-8 px-3.5 rounded-lg border border-zinc-200/80 dark:border-zinc-700/80 text-zinc-500 dark:text-zinc-400 text-[11px] font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-1.5"
           >
-            <Archive className="w-3.5 h-3.5" />
+            <Archive className="w-3 h-3" />
             Arquivar
           </button>
           <button
             onClick={() => { onDelete(demanda.id); onOpenChange(false); }}
-            className="h-9 px-3 rounded-lg border border-rose-200 dark:border-rose-800/50 text-rose-500 dark:text-rose-400 text-xs font-medium hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors cursor-pointer flex items-center gap-1.5"
+            className="h-8 w-8 rounded-lg border border-rose-200/80 dark:border-rose-800/40 text-rose-400 dark:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors cursor-pointer flex items-center justify-center"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-3 h-3" />
           </button>
         </div>
       </SheetContent>

@@ -414,7 +414,7 @@ function ColumnHeader({
   return (
     <div
       className={`
-        flex items-center gap-2 px-3 py-2 rounded-lg
+        flex items-center gap-2 px-3 py-2 rounded-lg min-h-[44px]
         bg-white dark:bg-zinc-900
         border border-zinc-200/80 dark:border-zinc-800/80
         ${onToggleExpand ? "cursor-pointer hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors" : ""}
@@ -427,7 +427,7 @@ function ColumnHeader({
         style={{ backgroundColor: color }}
       />
       <span style={{ color }}><Icon className="w-3.5 h-3.5 shrink-0" /></span>
-      <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 tracking-tight">
+      <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 tracking-tight whitespace-nowrap">
         {config.label}
       </span>
       <span
@@ -932,7 +932,7 @@ export function KanbanPremium({
                   <div className="mb-2">
                     <div
                       className="
-                        flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer
+                        flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer min-h-[44px]
                         bg-white dark:bg-zinc-900
                         border border-zinc-200/80 dark:border-zinc-800/80
                         hover:border-zinc-300 dark:hover:border-zinc-700
@@ -942,7 +942,7 @@ export function KanbanPremium({
                       onClick={() => setEmAndamentoExpanded((p) => !p)}
                     >
                       <Activity className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 shrink-0" />
-                      <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 tracking-tight">
+                      <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 tracking-tight whitespace-nowrap">
                         Em Andamento
                       </span>
                       {/* Sub-group mini counts (collapsed only) */}
