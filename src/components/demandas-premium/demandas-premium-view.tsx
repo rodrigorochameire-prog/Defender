@@ -579,7 +579,7 @@ export default function Demandas() {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("defender_stats_collapsed") === "true";
   });
-  const [activeTab, setActiveTab] = useState<"lista" | "analytics">("lista");
+  const [activeTab, setActiveTab] = useState<"planilha" | "kanban" | "prazos" | "analytics">("kanban");
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const mobileSearchRef = useRef<HTMLInputElement>(null);
   const [isAdminConfigModalOpen, setIsAdminConfigModalOpen] = useState(false);
@@ -678,6 +678,15 @@ export default function Demandas() {
 
   // Mutation para deletar demanda (soft delete, com suporte offline)
   const reordenarMutation = trpc.demandas.reordenar.useMutation();
+
+  const batchUpdateMutation = trpc.demandas.batchUpdate.useMutation({
+    onSuccess: (result) => {
+      utils.demandas.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error("Erro no batch update: " + error.message);
+    },
+  });
 
   const trpcDeleteDemanda = trpc.demandas.delete.useMutation({
     onSuccess: () => {
@@ -1139,6 +1148,8 @@ export default function Demandas() {
         }
         return next;
       });
+      // Update lastSelectedIndex so subsequent shift+clicks extend from here
+      lastSelectedIndex.current = currentIndex;
     } else {
       // Individual toggle
       setSelectedIds((prev) => {
@@ -1181,22 +1192,36 @@ export default function Demandas() {
 
   const handleBatchStatusChange = (newStatus: string) => {
     if (selectedIds.size === 0) return;
-    for (const id of selectedIds) {
-      handleStatusChange(id, newStatus);
-    }
-    toast.success(`Status de ${selectedIds.size} demanda(s) atualizado para "${DEMANDA_STATUS[newStatus as keyof typeof DEMANDA_STATUS]?.label || newStatus}"`);
-    setSelectedIds(new Set());
-    setIsSelectMode(false);
+    const numericIds = Array.from(selectedIds).map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+    if (numericIds.length === 0) return;
+
+    batchUpdateMutation.mutate(
+      { ids: numericIds, status: newStatus as any },
+      {
+        onSuccess: (result) => {
+          toast.success(`Status de ${result.updated} demanda(s) atualizado para "${DEMANDA_STATUS[newStatus as keyof typeof DEMANDA_STATUS]?.label || newStatus}"`);
+          setSelectedIds(new Set());
+          setIsSelectMode(false);
+        },
+      }
+    );
   };
 
   const handleBatchAtoChange = (newAto: string) => {
     if (selectedIds.size === 0) return;
-    for (const id of selectedIds) {
-      handleAtoChange(id, newAto);
-    }
-    toast.success(`Ato de ${selectedIds.size} demanda(s) alterado para "${newAto}"`);
-    setSelectedIds(new Set());
-    setIsSelectMode(false);
+    const numericIds = Array.from(selectedIds).map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+    if (numericIds.length === 0) return;
+
+    batchUpdateMutation.mutate(
+      { ids: numericIds, ato: newAto },
+      {
+        onSuccess: (result) => {
+          toast.success(`Ato de ${result.updated} demanda(s) alterado para "${newAto}"`);
+          setSelectedIds(new Set());
+          setIsSelectMode(false);
+        },
+      }
+    );
   };
 
   const handleBatchCopy = () => {
@@ -1717,37 +1742,48 @@ export default function Demandas() {
       {/* Compact Header — Single-line with Tabs + Toolbar */}
       <div className="px-3 sm:px-5 md:px-8 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Left: Title + Tabs + Counters */}
-          <h1 className="text-base sm:text-lg font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight shrink-0">Demandas</h1>
-          {/* Tabs inline */}
-          <div className="flex items-center gap-0 shrink-0">
+          {/* Left: Tabs + Counters (título já está no breadcrumb) */}
+          <div className="flex items-center gap-0.5 shrink-0">
             {[
-              { key: "lista" as const, label: "Lista" },
-              { key: "analytics" as const, label: "Analytics" },
+              { key: "planilha" as const, label: "Planilha", icon: Table2 },
+              { key: "kanban" as const, label: "Kanban", icon: Layers },
+              { key: "prazos" as const, label: "Prazos", icon: Clock },
+              { key: "analytics" as const, label: "Analytics", icon: BarChartIcon },
             ].map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`relative px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer rounded-md ${
+                className={`relative flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all duration-200 cursor-pointer rounded-md ${
                   activeTab === tab.key
                     ? "text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800"
                     : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
                 }`}
               >
-                {tab.label}
+                <tab.icon className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{tab.label}</span>
               </button>
             ))}
           </div>
-          {/* Counters — whitespace-nowrap to prevent wrapping */}
-          <div className="flex items-center gap-1 text-[11px] text-zinc-400 dark:text-zinc-500 whitespace-nowrap shrink-0">
-            <span className="font-mono tabular-nums">{demandas.filter(d => !d.arquivado).length}</span>
+          {/* Counters — badges compactos com Lucide icons */}
+          <div className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
+            <span className="text-xs font-mono tabular-nums text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">{demandas.filter(d => !d.arquivado).length}</span>
             {(() => {
               const urgentes = demandas.filter(d => !d.arquivado && (d.prioridade === "URGENTE" || d.prioridade === "REU_PRESO")).length;
               const presos = demandas.filter(d => !d.arquivado && d.estadoPrisional === "preso").length;
               return (
                 <>
-                  {urgentes > 0 && <span className="text-rose-500 font-medium">· {urgentes}⚠</span>}
-                  {presos > 0 && <span className="text-amber-500 font-medium">· {presos}🔒</span>}
+                  {urgentes > 0 && (
+                    <span className="flex items-center gap-1 text-[10px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 px-1.5 py-0.5 rounded-md">
+                      <AlertTriangle className="w-3 h-3" />
+                      {urgentes}
+                    </span>
+                  )}
+                  {presos > 0 && (
+                    <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-1.5 py-0.5 rounded-md">
+                      <Lock className="w-3 h-3" />
+                      {presos}
+                    </span>
+                  )}
                 </>
               );
             })()}
@@ -1973,7 +2009,7 @@ export default function Demandas() {
 
       {/* Conteúdo Principal */}
       <div className="p-2 md:p-4 space-y-2 md:space-y-3">
-        {activeTab === "lista" ? (
+        {activeTab === "planilha" ? (
         <>
 
         {/* Lista de Demandas */}
@@ -2370,9 +2406,321 @@ export default function Demandas() {
             </div>
           </div>
         </>
+        ) : activeTab === "kanban" ? (
+          /* ========== TAB KANBAN ========== */
+          <div className="space-y-3">
+            {/* Atribuição pills (same as planilha) */}
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 px-3 py-2">
+              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+                {atribuicaoOptions.filter(o => o.value !== "Todas").map((opt) => {
+                  const isActive = selectedAtribuicoes.includes(opt.value);
+                  const color = ATRIBUICAO_BORDER_COLORS[opt.label] || "#71717a";
+                  const TabIcon = atribuicaoIcons[opt.label];
+                  const count = demandas.filter(d => !d.arquivado && d.atribuicao === opt.label).length;
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => setSelectedAtribuicoes(prev =>
+                        prev.includes(opt.value) ? prev.filter(v => v !== opt.value) : [...prev, opt.value]
+                      )}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap transition-all duration-200 border cursor-pointer ${isActive ? "shadow-sm" : "hover:shadow-sm"}`}
+                      style={isActive ? { backgroundColor: `${color}12`, borderColor: `${color}50`, color } : { backgroundColor: "transparent", borderColor: "transparent", color: `${color}99` }}
+                    >
+                      {TabIcon && <TabIcon className="w-3 h-3 flex-shrink-0" />}
+                      <span>{opt.label}</span>
+                      <span className="text-[9px] font-mono tabular-nums opacity-50">{count}</span>
+                    </button>
+                  );
+                })}
+                {selectedAtribuicoes.length > 0 && (
+                  <button onClick={() => setSelectedAtribuicoes([])} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer">
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Kanban Board */}
+            <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-700">
+              {Object.entries(STATUS_GROUPS).map(([key, config]) => {
+                const columnDemandas = demandasFiltradas.filter(d => {
+                  const statusConfig = getStatusConfig(d.status);
+                  return statusConfig?.group === key;
+                });
+                const color = config.color || "#71717a";
+                return (
+                  <div key={key} className="flex-shrink-0 w-72 flex flex-col">
+                    {/* Column header */}
+                    <div className="flex items-center gap-2 px-3 py-2 mb-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                      <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{config.label}</span>
+                      <span className="ml-auto text-[10px] font-mono tabular-nums text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">{columnDemandas.length}</span>
+                    </div>
+                    {/* Cards */}
+                    <div className="space-y-2 flex-1 min-h-[200px]">
+                      {columnDemandas.slice(0, 30).map((d) => {
+                        const statusCfg = getStatusConfig(d.status);
+                        const atribColor = ATRIBUICAO_BORDER_COLORS[d.atribuicao] || "#71717a";
+                        const AtribIcon = atribuicaoIcons[d.atribuicao];
+                        const processo = d.processos?.[0]?.numero || "";
+                        const isUrgente = d.prioridade === "URGENTE" || d.prioridade === "REU_PRESO";
+                        const isPreso = d.estadoPrisional === "preso";
+                        // Prazo diff
+                        let prazoDiff: number | null = null;
+                        if (d.prazo) {
+                          const [dd, mm, yy] = d.prazo.split("/").map(Number);
+                          const prazoDate = new Date(2000 + yy, mm - 1, dd);
+                          prazoDiff = Math.ceil((prazoDate.getTime() - Date.now()) / 86400000);
+                        }
+                        return (
+                          <div
+                            key={d.id}
+                            onClick={() => setPreviewDemandaId(d.id)}
+                            className={`relative rounded-lg bg-white dark:bg-zinc-900 border hover:border-emerald-200/50 dark:hover:border-emerald-800/30 hover:shadow-md transition-all duration-200 cursor-pointer group/kcard overflow-hidden ${
+                              isUrgente || isPreso ? "border-rose-200/80 dark:border-rose-800/40" : "border-zinc-200/80 dark:border-zinc-800/80"
+                            }`}
+                          >
+                            {/* Barra lateral de atribuição */}
+                            <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg" style={{ backgroundColor: atribColor }} />
+
+                            <div className="pl-3.5 pr-3 py-2.5">
+                              {/* Linha 1: Nome + badges */}
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate flex-1">{d.assistido}</p>
+                                {isPreso && (
+                                  <span className="flex items-center gap-0.5 text-[9px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-1 py-0.5 rounded shrink-0">
+                                    <Lock className="w-2.5 h-2.5" />
+                                  </span>
+                                )}
+                                {isUrgente && (
+                                  <span className="flex items-center gap-0.5 text-[9px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 px-1 py-0.5 rounded shrink-0">
+                                    <AlertTriangle className="w-2.5 h-2.5" />
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Linha 2: Ato */}
+                              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate mb-1.5">{d.ato}</p>
+
+                              {/* Linha 3: Processo (copiável) */}
+                              {processo && (
+                                <div className="flex items-center gap-1 mb-1.5">
+                                  <span
+                                    className="text-[10px] font-mono tabular-nums text-zinc-400 dark:text-zinc-500 truncate hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                                    onClick={(e) => { e.stopPropagation(); copyToClipboard(processo); }}
+                                    title="Copiar número"
+                                  >
+                                    {processo}
+                                  </span>
+                                  <Copy className="w-2.5 h-2.5 text-zinc-300 dark:text-zinc-600 opacity-0 group-hover/kcard:opacity-100 transition-opacity shrink-0" />
+                                </div>
+                              )}
+
+                              {/* Linha 4: Prazo + Status badge */}
+                              <div className="flex items-center gap-2">
+                                {d.prazo && (
+                                  <span className={`text-[10px] font-mono tabular-nums ${
+                                    prazoDiff !== null && prazoDiff < 0 ? "text-rose-500 font-semibold" :
+                                    prazoDiff !== null && prazoDiff <= 3 ? "text-amber-500 font-medium" :
+                                    "text-zinc-400"
+                                  }`}>
+                                    {d.prazo}
+                                  </span>
+                                )}
+                                <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: `${statusCfg?.color || color}15`, color: statusCfg?.color || color }}>
+                                  {statusCfg?.label || d.status}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {columnDemandas.length > 30 && (
+                        <p className="text-[10px] text-center text-zinc-400 py-2">+{columnDemandas.length - 30} mais</p>
+                      )}
+                      {columnDemandas.length === 0 && (
+                        <div className="flex items-center justify-center h-24 text-[10px] text-zinc-400 dark:text-zinc-600">
+                          Nenhuma demanda
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : activeTab === "prazos" ? (
+          /* ========== TAB PRAZOS (AGENDA) ========== */
+          <div className="space-y-3">
+            {/* Atribuição pills */}
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 px-3 py-2">
+              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+                {atribuicaoOptions.filter(o => o.value !== "Todas").map((opt) => {
+                  const isActive = selectedAtribuicoes.includes(opt.value);
+                  const color = ATRIBUICAO_BORDER_COLORS[opt.label] || "#71717a";
+                  const TabIcon = atribuicaoIcons[opt.label];
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => setSelectedAtribuicoes(prev =>
+                        prev.includes(opt.value) ? prev.filter(v => v !== opt.value) : [...prev, opt.value]
+                      )}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap transition-all duration-200 border cursor-pointer ${isActive ? "shadow-sm" : "hover:shadow-sm"}`}
+                      style={isActive ? { backgroundColor: `${color}12`, borderColor: `${color}50`, color } : { backgroundColor: "transparent", borderColor: "transparent", color: `${color}99` }}
+                    >
+                      {TabIcon && <TabIcon className="w-3 h-3 flex-shrink-0" />}
+                      <span>{opt.label}</span>
+                    </button>
+                  );
+                })}
+                {selectedAtribuicoes.length > 0 && (
+                  <button onClick={() => setSelectedAtribuicoes([])} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer">
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Prazos por período */}
+            {(() => {
+              const hoje = new Date();
+              hoje.setHours(0, 0, 0, 0);
+              const comPrazo = demandasFiltradas.filter(d => d.prazo && !d.arquivado).map(d => {
+                const [dd, mm, yy] = d.prazo.split("/").map(Number);
+                const prazoDate = new Date(2000 + yy, mm - 1, dd);
+                prazoDate.setHours(0, 0, 0, 0);
+                const diff = Math.ceil((prazoDate.getTime() - hoje.getTime()) / 86400000);
+                return { ...d, prazoDate, diff };
+              }).sort((a, b) => a.diff - b.diff);
+
+              const vencidas = comPrazo.filter(d => d.diff < 0);
+              const hojeList = comPrazo.filter(d => d.diff === 0);
+              const amanha = comPrazo.filter(d => d.diff === 1);
+              const semana = comPrazo.filter(d => d.diff >= 2 && d.diff <= 7);
+              const quinzena = comPrazo.filter(d => d.diff > 7 && d.diff <= 15);
+              const mes = comPrazo.filter(d => d.diff > 15 && d.diff <= 30);
+              const futuro = comPrazo.filter(d => d.diff > 30);
+              const semPrazo = demandasFiltradas.filter(d => !d.prazo && !d.arquivado);
+
+              const sections = [
+                { label: "Vencidas", items: vencidas, color: "rose", icon: AlertTriangle },
+                { label: "Hoje", items: hojeList, color: "amber", icon: Zap },
+                { label: "Amanhã", items: amanha, color: "yellow", icon: Clock },
+                { label: "Esta semana", items: semana, color: "emerald", icon: Clock },
+                { label: "Próximos 15 dias", items: quinzena, color: "sky", icon: Clock },
+                { label: "Este mês", items: mes, color: "zinc", icon: Clock },
+                { label: "Futuro", items: futuro, color: "zinc", icon: Clock },
+                { label: "Sem prazo", items: semPrazo, color: "zinc", icon: HelpCircle },
+              ].filter(s => s.items.length > 0);
+
+              return (
+                <div className="space-y-3">
+                  {/* Resumo visual */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { label: "Vencidas", count: vencidas.length, color: "rose" },
+                      { label: "Hoje", count: hojeList.length, color: "amber" },
+                      { label: "7 dias", count: semana.length + amanha.length, color: "emerald" },
+                      { label: "Sem prazo", count: semPrazo.length, color: "zinc" },
+                    ].map(kpi => (
+                      <div key={kpi.label} className={`flex items-center gap-3 p-3 rounded-xl border bg-white dark:bg-zinc-900 ${
+                        kpi.color === "rose" && kpi.count > 0 ? "border-rose-200 dark:border-rose-800/50" :
+                        kpi.color === "amber" && kpi.count > 0 ? "border-amber-200 dark:border-amber-800/50" :
+                        "border-zinc-200/80 dark:border-zinc-800/80"
+                      }`}>
+                        <p className={`text-xl font-bold tabular-nums ${
+                          kpi.color === "rose" && kpi.count > 0 ? "text-rose-600 dark:text-rose-400" :
+                          kpi.color === "amber" && kpi.count > 0 ? "text-amber-600 dark:text-amber-400" :
+                          "text-zinc-900 dark:text-zinc-100"
+                        }`}>{kpi.count}</p>
+                        <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{kpi.label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Seções por período */}
+                  {sections.map(section => {
+                    const SectionIcon = section.icon;
+                    return (
+                      <div key={section.label} className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80">
+                        <div className={`flex items-center gap-2 px-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/50`}>
+                          <SectionIcon className={`w-3.5 h-3.5 ${
+                            section.color === "rose" ? "text-rose-500" :
+                            section.color === "amber" ? "text-amber-500" :
+                            section.color === "yellow" ? "text-yellow-500" :
+                            section.color === "emerald" ? "text-emerald-500" :
+                            section.color === "sky" ? "text-sky-500" :
+                            "text-zinc-400"
+                          }`} />
+                          <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{section.label}</span>
+                          <span className="text-[10px] font-mono tabular-nums text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">{section.items.length}</span>
+                        </div>
+                        <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+                          {section.items.slice(0, 15).map((d: any) => {
+                            const statusCfg = getStatusConfig(d.status);
+                            const atribColor = ATRIBUICAO_BORDER_COLORS[d.atribuicao] || "#71717a";
+                            return (
+                              <div
+                                key={d.id}
+                                onClick={() => setPreviewDemandaId(d.id)}
+                                className="flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                              >
+                                <div className="w-1 h-8 rounded-full shrink-0" style={{ backgroundColor: atribColor }} />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate">{d.assistido}</p>
+                                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate">{d.ato}</p>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  {d.estadoPrisional === "preso" && <Lock className="w-3 h-3 text-amber-500" />}
+                                  {d.prazo && <span className="text-[10px] font-mono tabular-nums text-zinc-500">{d.prazo}</span>}
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: `${statusCfg?.color || "#71717a"}15`, color: statusCfg?.color || "#71717a" }}>
+                                    {statusCfg?.label || d.status}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {section.items.length > 15 && (
+                            <p className="text-[10px] text-center text-zinc-400 py-2">+{section.items.length - 15} mais</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
         ) : (
           /* ========== TAB ANALYTICS ========== */
           <div className="space-y-6">
+            {/* Filtro por atribuição no Analytics */}
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 px-3 py-2">
+              {atribuicaoOptions.filter(o => o.value !== "Todas").map((opt) => {
+                const isActive = selectedAtribuicoes.includes(opt.value);
+                const color = ATRIBUICAO_BORDER_COLORS[opt.label] || "#71717a";
+                const TabIcon = atribuicaoIcons[opt.label];
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => setSelectedAtribuicoes(prev =>
+                      prev.includes(opt.value) ? prev.filter(v => v !== opt.value) : [...prev, opt.value]
+                    )}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap transition-all duration-200 border cursor-pointer ${isActive ? "shadow-sm" : "hover:shadow-sm"}`}
+                    style={isActive ? { backgroundColor: `${color}12`, borderColor: `${color}50`, color } : { backgroundColor: "transparent", borderColor: "transparent", color: `${color}99` }}
+                  >
+                    {TabIcon && <TabIcon className="w-3 h-3 flex-shrink-0" />}
+                    <span>{opt.label}</span>
+                  </button>
+                );
+              })}
+              {selectedAtribuicoes.length > 0 && (
+                <button onClick={() => setSelectedAtribuicoes([])} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer">
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+
             {/* Stats KPIs */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {statsData.map((stat, index) => {

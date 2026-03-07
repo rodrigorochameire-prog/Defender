@@ -1144,6 +1144,68 @@ export const demandasRouter = router({
     return result;
   }),
 
+  // Atualizar demandas em batch (status e/ou ato)
+  batchUpdate: protectedProcedure
+    .input(z.object({
+      ids: z.array(z.number()).min(1),
+      status: z.enum([
+        "2_ATENDER", "4_MONITORAR", "5_FILA", "7_PROTOCOLADO",
+        "7_CIENCIA", "7_SEM_ATUACAO", "URGENTE", "CONCLUIDO", "ARQUIVADO"
+      ]).optional(),
+      ato: z.string().min(1).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { ids, ...data } = input;
+      const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
+
+      if (!data.status && !data.ato) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Informe ao menos status ou ato para atualizar",
+        });
+      }
+
+      // Build update payload
+      const updateData: Record<string, unknown> = { updatedAt: new Date() };
+      if (data.status) {
+        updateData.status = data.status;
+        if (data.status === "CONCLUIDO") {
+          updateData.concluidoEm = new Date();
+        }
+      }
+      if (data.ato) {
+        updateData.ato = data.ato;
+      }
+
+      // Build access condition
+      let accessCondition;
+      if (defensoresVisiveis === "all") {
+        accessCondition = and(
+          inArray(demandas.id, ids),
+          isNull(demandas.deletedAt),
+        );
+      } else if (defensoresVisiveis.length > 0) {
+        accessCondition = and(
+          inArray(demandas.id, ids),
+          inArray(demandas.defensorId, defensoresVisiveis),
+          isNull(demandas.deletedAt),
+        );
+      } else {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Você não tem permissão para atualizar demandas",
+        });
+      }
+
+      const atualizados = await db
+        .update(demandas)
+        .set(updateData)
+        .where(accessCondition)
+        .returning({ id: demandas.id });
+
+      return { updated: atualizados.length };
+    }),
+
   // Excluir duplicatas em batch (soft delete)
   deleteBatch: protectedProcedure
     .input(z.object({ ids: z.array(z.number()).min(1) }))
