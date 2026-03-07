@@ -41,6 +41,7 @@ import { PageHeader } from "@/components/demandas-premium/PageHeader";
 import { DemandaCard } from "@/components/demandas-premium/DemandaCard";
 import { DemandaTableView } from "@/components/demandas-premium/DemandaTableView";
 import { DemandaCompactView } from "@/components/demandas-premium/DemandaCompactView";
+import { AtribuicaoPills } from "@/components/demandas-premium/AtribuicaoPills";
 import { arrayMove } from "@dnd-kit/sortable";
 import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 import {
@@ -1713,6 +1714,23 @@ export default function Demandas() {
   }, [demandas]);
   const [deadlineBannerDismissed, setDeadlineBannerDismissed] = useState(false);
 
+  // Atribuição counts for pills
+  const atribuicaoCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const d of demandas) {
+      if (!d.arquivado && d.atribuicao) {
+        counts[d.atribuicao] = (counts[d.atribuicao] || 0) + 1;
+      }
+    }
+    return counts;
+  }, [demandas]);
+
+  const handleAtribuicaoToggle = (value: string) => {
+    setSelectedAtribuicoes(prev =>
+      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
+    );
+  };
+
   // Quick-preview sheet
   const [previewDemandaId, setPreviewDemandaId] = useState<string | null>(null);
   const previewDemanda = previewDemandaId ? demandasOrdenadas.find(d => d.id === previewDemandaId) || null : null;
@@ -2015,51 +2033,15 @@ export default function Demandas() {
         {/* Lista de Demandas */}
         <div className="group/card relative bg-white dark:bg-zinc-900">
             <div className="px-3 md:px-4 py-2">
-              {/* Atribuição pills + Deadline stats — Line 2 */}
-              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1 pb-0.5">
-                {atribuicaoOptions.filter(o => o.value !== "Todas").map((opt) => {
-                  const isActive = selectedAtribuicoes.includes(opt.value);
-                  const color = ATRIBUICAO_BORDER_COLORS[opt.label] || "#71717a";
-                  const TabIcon = atribuicaoIcons[opt.label];
-                  const count = demandas.filter(d => !d.arquivado && d.atribuicao === opt.label).length;
-                  return (
-                    <button
-                      key={opt.value}
-                      onClick={() => setSelectedAtribuicoes(prev =>
-                        prev.includes(opt.value)
-                          ? prev.filter(v => v !== opt.value)
-                          : [...prev, opt.value]
-                      )}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap transition-all duration-200 border cursor-pointer ${
-                        isActive
-                          ? "shadow-sm"
-                          : "hover:shadow-sm"
-                      }`}
-                      style={isActive ? {
-                        backgroundColor: `${color}12`,
-                        borderColor: `${color}50`,
-                        color: color,
-                      } : {
-                        backgroundColor: "transparent",
-                        borderColor: "transparent",
-                        color: `${color}99`,
-                      }}
-                    >
-                      {TabIcon && <TabIcon className="w-3 h-3 flex-shrink-0" />}
-                      <span>{opt.label}</span>
-                      <span className="text-[9px] font-mono tabular-nums opacity-50">{count}</span>
-                    </button>
-                  );
-                })}
-                {selectedAtribuicoes.length > 0 && (
-                  <button
-                    onClick={() => setSelectedAtribuicoes([])}
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-
+              {/* Atribuição pills + Deadline stats */}
+              <AtribuicaoPills
+                options={atribuicaoOptions}
+                selectedValues={selectedAtribuicoes}
+                onToggle={handleAtribuicaoToggle}
+                onClear={() => setSelectedAtribuicoes([])}
+                counts={atribuicaoCounts}
+                className="flex items-center gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1 pb-0.5"
+              >
                 {/* Deadline stats — right-aligned */}
                 {deadlineStats.total > 0 && (
                   <div className="ml-auto flex items-center gap-1 shrink-0">
@@ -2086,7 +2068,7 @@ export default function Demandas() {
                     )}
                   </div>
                 )}
-              </div>
+              </AtribuicaoPills>
 
               {/* Secondary Filters now inside the unified Filtros dropdown in the header */}
             </div>
@@ -2409,35 +2391,15 @@ export default function Demandas() {
         ) : activeTab === "kanban" ? (
           /* ========== TAB KANBAN ========== */
           <div className="space-y-3">
-            {/* Atribuição pills (same as planilha) */}
+            {/* Atribuição pills */}
             <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 px-3 py-2">
-              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-                {atribuicaoOptions.filter(o => o.value !== "Todas").map((opt) => {
-                  const isActive = selectedAtribuicoes.includes(opt.value);
-                  const color = ATRIBUICAO_BORDER_COLORS[opt.label] || "#71717a";
-                  const TabIcon = atribuicaoIcons[opt.label];
-                  const count = demandas.filter(d => !d.arquivado && d.atribuicao === opt.label).length;
-                  return (
-                    <button
-                      key={opt.value}
-                      onClick={() => setSelectedAtribuicoes(prev =>
-                        prev.includes(opt.value) ? prev.filter(v => v !== opt.value) : [...prev, opt.value]
-                      )}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap transition-all duration-200 border cursor-pointer ${isActive ? "shadow-sm" : "hover:shadow-sm"}`}
-                      style={isActive ? { backgroundColor: `${color}12`, borderColor: `${color}50`, color } : { backgroundColor: "transparent", borderColor: "transparent", color: `${color}99` }}
-                    >
-                      {TabIcon && <TabIcon className="w-3 h-3 flex-shrink-0" />}
-                      <span>{opt.label}</span>
-                      <span className="text-[9px] font-mono tabular-nums opacity-50">{count}</span>
-                    </button>
-                  );
-                })}
-                {selectedAtribuicoes.length > 0 && (
-                  <button onClick={() => setSelectedAtribuicoes([])} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer">
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
+              <AtribuicaoPills
+                options={atribuicaoOptions}
+                selectedValues={selectedAtribuicoes}
+                onToggle={handleAtribuicaoToggle}
+                onClear={() => setSelectedAtribuicoes([])}
+                counts={atribuicaoCounts}
+              />
             </div>
 
             {/* Kanban Board */}
@@ -2554,31 +2516,13 @@ export default function Demandas() {
           <div className="space-y-3">
             {/* Atribuição pills */}
             <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 px-3 py-2">
-              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-                {atribuicaoOptions.filter(o => o.value !== "Todas").map((opt) => {
-                  const isActive = selectedAtribuicoes.includes(opt.value);
-                  const color = ATRIBUICAO_BORDER_COLORS[opt.label] || "#71717a";
-                  const TabIcon = atribuicaoIcons[opt.label];
-                  return (
-                    <button
-                      key={opt.value}
-                      onClick={() => setSelectedAtribuicoes(prev =>
-                        prev.includes(opt.value) ? prev.filter(v => v !== opt.value) : [...prev, opt.value]
-                      )}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap transition-all duration-200 border cursor-pointer ${isActive ? "shadow-sm" : "hover:shadow-sm"}`}
-                      style={isActive ? { backgroundColor: `${color}12`, borderColor: `${color}50`, color } : { backgroundColor: "transparent", borderColor: "transparent", color: `${color}99` }}
-                    >
-                      {TabIcon && <TabIcon className="w-3 h-3 flex-shrink-0" />}
-                      <span>{opt.label}</span>
-                    </button>
-                  );
-                })}
-                {selectedAtribuicoes.length > 0 && (
-                  <button onClick={() => setSelectedAtribuicoes([])} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer">
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
+              <AtribuicaoPills
+                options={atribuicaoOptions}
+                selectedValues={selectedAtribuicoes}
+                onToggle={handleAtribuicaoToggle}
+                onClear={() => setSelectedAtribuicoes([])}
+                counts={atribuicaoCounts}
+              />
             </div>
 
             {/* Prazos por período */}
@@ -2695,30 +2639,14 @@ export default function Demandas() {
           /* ========== TAB ANALYTICS ========== */
           <div className="space-y-6">
             {/* Filtro por atribuição no Analytics */}
-            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 px-3 py-2">
-              {atribuicaoOptions.filter(o => o.value !== "Todas").map((opt) => {
-                const isActive = selectedAtribuicoes.includes(opt.value);
-                const color = ATRIBUICAO_BORDER_COLORS[opt.label] || "#71717a";
-                const TabIcon = atribuicaoIcons[opt.label];
-                return (
-                  <button
-                    key={opt.value}
-                    onClick={() => setSelectedAtribuicoes(prev =>
-                      prev.includes(opt.value) ? prev.filter(v => v !== opt.value) : [...prev, opt.value]
-                    )}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap transition-all duration-200 border cursor-pointer ${isActive ? "shadow-sm" : "hover:shadow-sm"}`}
-                    style={isActive ? { backgroundColor: `${color}12`, borderColor: `${color}50`, color } : { backgroundColor: "transparent", borderColor: "transparent", color: `${color}99` }}
-                  >
-                    {TabIcon && <TabIcon className="w-3 h-3 flex-shrink-0" />}
-                    <span>{opt.label}</span>
-                  </button>
-                );
-              })}
-              {selectedAtribuicoes.length > 0 && (
-                <button onClick={() => setSelectedAtribuicoes([])} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer">
-                  <X className="w-3 h-3" />
-                </button>
-              )}
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 px-3 py-2">
+              <AtribuicaoPills
+                options={atribuicaoOptions}
+                selectedValues={selectedAtribuicoes}
+                onToggle={handleAtribuicaoToggle}
+                onClear={() => setSelectedAtribuicoes([])}
+                counts={atribuicaoCounts}
+              />
             </div>
 
             {/* Stats KPIs */}
