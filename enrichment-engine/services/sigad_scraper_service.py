@@ -52,6 +52,7 @@ Seletores corretos confirmados (2026-02-23):
   - resultado: table#lst_assistido tbody tr
   - "nenhum resultado": td[colspan="2"] com texto "Nenhum Assistido Presente."
 """
+from __future__ import annotations
 
 import logging
 import re

@@ -472,6 +472,51 @@ export interface SemanticSearchOutput {
   query: string;
 }
 
+// === Document Embedding Types (Hybrid Search) ===
+
+export interface DocumentSearchInput {
+  query: string;
+  assistidoId?: number;
+  threshold?: number;
+  limit?: number;
+}
+
+export interface DocumentSearchResultItem {
+  id: number;
+  file_id: number;
+  assistido_id: number | null;
+  chunk_index: number;
+  chunk_text: string;
+  metadata: Record<string, unknown>;
+  semantic_similarity: number;
+  text_similarity: number;
+  combined_score: number;
+}
+
+export interface DocumentSearchOutput {
+  results: DocumentSearchResultItem[];
+  count: number;
+}
+
+export interface EmbedDocumentInput {
+  fileId: number;
+  assistidoId?: number;
+  text: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface EmbedDocumentOutput {
+  status: string;
+  message: string;
+  file_id: number;
+}
+
+export interface EmbedStatusOutput {
+  hasEmbeddings: boolean;
+  chunkCount: number;
+  fileId: number;
+}
+
 // === OCR Types ===
 
 export interface OcrOutput {
@@ -982,6 +1027,78 @@ class EnrichmentClient {
         analysis: a.analysis,
       })),
     }, 30_000);
+  }
+
+  /**
+   * Diarização async de speakers — retorna 202 Accepted imediatamente.
+   * Identifica speakers com Claude Sonnet em background.
+   * Resultado salvo na tabela speaker_labels via Supabase.
+   */
+  async diarizeAsync(input: {
+    fileId: number;
+    assistidoId: number;
+    transcriptionText: string;
+    existingLabels?: Array<{ speaker_key: string; label: string; role: string }>;
+    casoContexto?: string;
+  }): Promise<{ status: string; message: string; file_id: number }> {
+    return await this.request<{ status: string; message: string; file_id: number }>("/api/diarize", {
+      file_id: input.fileId,
+      assistido_id: input.assistidoId,
+      transcription_text: input.transcriptionText,
+      existing_labels: input.existingLabels ?? null,
+      caso_contexto: input.casoContexto ?? null,
+    }, 30_000);
+  }
+
+  // === Document Embedding Methods (Hybrid Search) ===
+
+  /**
+   * Busca hibrida semantica + texto em document_embeddings (OpenAI embeddings).
+   * Chamado pelo: tRPC search.documentSearch
+   */
+  async documentSearch(input: DocumentSearchInput): Promise<DocumentSearchOutput> {
+    return this.request<DocumentSearchOutput>("/api/search", {
+      query: input.query,
+      assistido_id: input.assistidoId,
+      threshold: input.threshold ?? 0.3,
+      limit: input.limit ?? 20,
+    });
+  }
+
+  /**
+   * Indexar documento em background: chunk + embed + store.
+   * Retorna 202 Accepted imediatamente.
+   * Chamado pelo: tRPC search.embedFile
+   */
+  async embedDocument(input: EmbedDocumentInput): Promise<EmbedDocumentOutput> {
+    return this.request<EmbedDocumentOutput>("/api/embed", {
+      file_id: input.fileId,
+      assistido_id: input.assistidoId,
+      text: input.text,
+      metadata: input.metadata,
+    });
+  }
+
+  /**
+   * Verificar status de embedding de um arquivo.
+   * Chamado pelo: tRPC search.embedStatus
+   */
+  async embedStatus(fileId: number): Promise<EmbedStatusOutput> {
+    if (!this.isConfigured) {
+      return { hasEmbeddings: false, chunkCount: 0, fileId };
+    }
+
+    const response = await fetch(`${this.baseUrl}/api/embed-status/${fileId}`, {
+      method: "GET",
+      headers: { "X-API-Key": this.apiKey },
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    if (!response.ok) {
+      return { hasEmbeddings: false, chunkCount: 0, fileId };
+    }
+
+    return (await response.json()) as EmbedStatusOutput;
   }
 
   /**

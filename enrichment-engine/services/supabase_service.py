@@ -2,6 +2,7 @@
 Supabase Service — CRUD de enriquecimentos nas tabelas do OMBUDS.
 Usa service_role_key (bypassa RLS) para gravar dados processados.
 """
+from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone

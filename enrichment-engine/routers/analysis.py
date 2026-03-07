@@ -150,6 +150,139 @@ async def _maybe_trigger_cross_analysis(client, db_record_id: int, analysis: dic
         )
 
 
+async def _maybe_trigger_diarization(client, db_record_id: int):
+    """
+    Auto-trigger speaker identification after analysis completes.
+    Only runs if no labels exist yet for this file.
+    """
+    try:
+        # Get file info
+        file_row = client.table("drive_files").select(
+            "assistido_id, enrichment_data"
+        ).eq("id", db_record_id).single().execute()
+
+        if not file_row.data or not file_row.data.get("assistido_id"):
+            return
+
+        assistido_id = file_row.data["assistido_id"]
+        enrichment_data = file_row.data.get("enrichment_data") or {}
+
+        # Get transcription text
+        transcription = (
+            enrichment_data.get("transcript")
+            or enrichment_data.get("transcript_plain")
+            or enrichment_data.get("markdown_content")
+            or ""
+        )
+
+        if not transcription or len(transcription) < 100:
+            return
+
+        # Check if labels already exist for this file
+        existing = client.table("speaker_labels").select("id").eq(
+            "file_id", db_record_id
+        ).execute()
+        if existing.data:
+            logger.info(
+                "Diarization skip — labels already exist for file=%d",
+                db_record_id,
+            )
+            return
+
+        # Get existing manual labels for this assistido (from other files)
+        existing_labels = []
+        manual_resp = client.table("speaker_labels").select(
+            "speaker_key, label, role"
+        ).eq("assistido_id", assistido_id).eq("is_manual", True).execute()
+        if manual_resp.data:
+            existing_labels = manual_resp.data
+
+        logger.info(
+            "Auto-triggering diarization | file_id=%d | assistido_id=%d",
+            db_record_id, assistido_id,
+        )
+
+        from services.diarization_service import get_diarization_service
+        service = get_diarization_service()
+        if not service.available:
+            return
+
+        speakers = await service.identify_speakers(
+            transcription_text=transcription,
+            existing_labels=existing_labels if existing_labels else None,
+        )
+
+        if not speakers:
+            logger.info("Auto-diarization returned no speakers for file=%d", db_record_id)
+            return
+
+        for speaker in speakers:
+            row = {
+                "assistido_id": assistido_id,
+                "file_id": db_record_id,
+                "speaker_key": speaker["speaker_key"],
+                "label": speaker.get("label", speaker["speaker_key"]),
+                "role": speaker.get("role", "outro"),
+                "confidence": speaker.get("confidence", 0.5),
+                "is_manual": False,
+            }
+            client.table("speaker_labels").insert(row).execute()
+
+        logger.info(
+            "Auto-diarization COMPLETED | file_id=%d | speakers=%d",
+            db_record_id, len(speakers),
+        )
+
+    except Exception as e:
+        logger.warning(
+            "Auto-diarization failed (non-critical) | file_id=%d | error=%s",
+            db_record_id, str(e),
+        )
+
+
+async def _maybe_trigger_embedding(client, db_record_id: int, input_data: AnalyzeAsyncInput):
+    """Auto-trigger document embedding generation after analysis completes."""
+    try:
+        # Get file info including assistido_id
+        file_row = client.table("drive_files").select(
+            "assistido_id"
+        ).eq("id", db_record_id).single().execute()
+
+        if not file_row.data:
+            return
+
+        assistido_id = file_row.data.get("assistido_id")
+
+        # Use the transcript text for embedding
+        text = input_data.transcript
+        if not text or len(text.strip()) < 50:
+            return
+
+        from services.document_embedding_service import get_document_embedding_service
+        service = get_document_embedding_service()
+        if not service.available:
+            logger.info("Document embedding skipped — service not configured")
+            return
+
+        count = await service.embed_document(
+            file_id=db_record_id,
+            assistido_id=assistido_id,
+            text=text,
+            metadata={"file_name": input_data.file_name, "source": "auto_analysis"},
+        )
+
+        logger.info(
+            "Auto-embedded %d chunks for file %d (assistido=%s)",
+            count, db_record_id, assistido_id,
+        )
+
+    except Exception as e:
+        logger.warning(
+            "Auto embedding failed (non-critical) | db_id=%d | error=%s",
+            db_record_id, str(e),
+        )
+
+
 async def _process_analysis_background(input_data: AnalyzeAsyncInput):
     """Background task: analisa transcricao e salva resultado no Supabase."""
     db_record_id = input_data.db_record_id
@@ -207,6 +340,12 @@ async def _process_analysis_background(input_data: AnalyzeAsyncInput):
 
         # Auto-trigger cross-analysis if 2+ analyses exist for this assistido
         await _maybe_trigger_cross_analysis(client, db_record_id, analysis)
+
+        # Auto-trigger diarization to identify speakers
+        await _maybe_trigger_diarization(client, db_record_id)
+
+        # Auto-trigger document embedding for semantic search
+        await _maybe_trigger_embedding(client, db_record_id, input_data)
 
     except Exception as e:
         logger.error("Analysis FAILED | db_id=%d | error=%s", db_record_id, str(e))

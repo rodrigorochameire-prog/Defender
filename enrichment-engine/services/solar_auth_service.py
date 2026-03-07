@@ -2,6 +2,7 @@
 Solar Auth Service — Autenticação Keycloak via Playwright.
 Gerencia login, sessão, e re-autenticação automática no Solar (DPEBA).
 """
+from __future__ import annotations
 
 import asyncio
 import logging

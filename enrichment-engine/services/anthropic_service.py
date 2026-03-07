@@ -4,6 +4,7 @@ Anthropic Claude Service — Revisão e análise de dados estruturados.
 - Claude Sonnet 4.6: Revisão de documentos, coerência, tom jurídico
 - Claude Opus 4.6: High reasoning sobre dados ESTRUTURADOS (uso restrito)
 """
+from __future__ import annotations
 
 import json
 import logging

@@ -169,11 +169,11 @@ export function CommandPalette() {
       <Button
         variant="outline"
         size="sm"
-        className="gap-2 text-xs bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white hover:border-emerald-500/50 dark:hover:border-emerald-500/50"
+        className="gap-2 text-xs bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white hover:border-emerald-500/50 dark:hover:border-emerald-500/50 h-8 px-2 sm:px-3"
         onClick={() => setOpen(true)}
       >
         <Search className="h-4 w-4" />
-        Cmd + K
+        <span className="hidden sm:inline">Cmd + K</span>
       </Button>
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput

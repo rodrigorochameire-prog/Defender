@@ -2,6 +2,7 @@
 POST /api/ocr — OCR extraction from scanned PDFs via Tesseract.
 Fluxo: Download PDF → pdf2image → Tesseract OCR → output per page
 """
+from __future__ import annotations
 
 import logging
 

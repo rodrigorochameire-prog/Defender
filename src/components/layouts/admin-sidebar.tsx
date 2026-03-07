@@ -109,15 +109,8 @@ const JURI_SECTIONS: SidebarSection[] = [
   {
     // Gestão — sem header, itens de topo
     items: [
-      { label: "Sessões", path: "/admin/juri", icon: "Gavel" },
-      { label: "Banco de Jurados", path: "/admin/juri/jurados", icon: "Users" },
-    ],
-  },
-  {
-    title: "Preparação",
-    items: [
-      { label: "Palácio da Mente", path: "/admin/palacio-mente", icon: "Network" },
-      { label: "Simulador 3D", path: "/admin/simulador-3d", icon: "Box" },
+      { label: "Sessões", path: "/admin/juri", icon: "Gavel", exactMatch: true },
+      { label: "Jurados", path: "/admin/juri/jurados", icon: "Users" },
     ],
   },
   {
@@ -129,8 +122,15 @@ const JURI_SECTIONS: SidebarSection[] = [
   {
     title: "Pós-Júri",
     items: [
-      { label: "Calculadora", path: "/admin/juri/calculadora", icon: "Calculator" },
       { label: "Cosmovisão", path: "/admin/juri/cosmovisao", icon: "PieChart" },
+    ],
+  },
+  {
+    title: "Ferramentas",
+    items: [
+      { label: "Palácio da Mente", path: "/admin/palacio-mente", icon: "Network" },
+      { label: "Simulador 3D", path: "/admin/simulador-3d", icon: "Box" },
+      { label: "Calculadora", path: "/admin/juri/calculadora", icon: "Calculator" },
     ],
   },
 ];
@@ -1238,7 +1238,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
     : EP_SECTIONS;
 
   const hasActiveItem = [...JURI_MODULES, ...VVD_MODULES, ...EP_MODULES].some(
-    item => pathname.startsWith(item.path)
+    item => item.exactMatch ? pathname === item.path : pathname.startsWith(item.path)
   );
 
   // Auto-expandir se um item está ativo
@@ -1282,27 +1282,30 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
               Especialidades
             </p>
 
-            {/* Seletor de especialidade com cores distintas */}
-            <div className="flex gap-1 px-2 pb-2 mb-2 border-b border-zinc-200/60 dark:border-zinc-700/30">
+            {/* Seletor de especialidade — ícones compactos, label só no selecionado */}
+            <div className="flex items-center gap-1 px-2 pb-2 mb-2 border-b border-zinc-200/60 dark:border-zinc-700/30">
               {[
                 { id: "JURI" as Especialidade, label: "Júri", icon: Gavel, colors: ESPECIALIDADE_COLORS.JURI },
                 { id: "VVD" as Especialidade, label: "VVD", icon: Shield, colors: ESPECIALIDADE_COLORS.VVD },
                 { id: "EP" as Especialidade, label: "EP", icon: Lock, colors: ESPECIALIDADE_COLORS.EP },
-              ].map((esp) => (
-                <button
-                  key={esp.id}
-                  onClick={() => setEspecialidade(esp.id)}
-                  className={cn(
-                    "flex-1 py-1.5 px-2 rounded-lg text-[10px] font-semibold transition-all duration-200 flex items-center justify-center gap-1",
-                    especialidade === esp.id
-                      ? `${esp.colors.bg} ${esp.colors.text} ring-1 ${esp.colors.ring}`
-                      : "text-zinc-600 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                  )}
-                >
-                  <esp.icon className={cn("h-3 w-3", especialidade === esp.id && esp.colors.text)} />
-                  {esp.label}
-                </button>
-              ))}
+              ].map((esp) => {
+                const isSelected = especialidade === esp.id;
+                return (
+                  <button
+                    key={esp.id}
+                    onClick={() => setEspecialidade(esp.id)}
+                    className={cn(
+                      "py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer",
+                      isSelected
+                        ? `${esp.colors.bg} ${esp.colors.text} ring-1 ${esp.colors.ring} px-3`
+                        : "text-zinc-500 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] px-2"
+                    )}
+                  >
+                    <esp.icon className={cn("h-3.5 w-3.5", isSelected && esp.colors.text)} />
+                    {isSelected && <span>{esp.label}</span>}
+                  </button>
+                );
+              })}
             </div>
 
             {sections.map((section, sIdx) => (
@@ -1321,7 +1324,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
                     return null;
                   }
                   const Icon = iconMap[item.icon] || Briefcase;
-                  const isActive = pathname.startsWith(item.path);
+                  const isActive = item.exactMatch ? pathname === item.path : pathname.startsWith(item.path);
                   return (
                     <Link
                       key={item.path}
@@ -1368,8 +1371,15 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
               hasActiveItem ? "text-emerald-500" : "text-zinc-900 dark:text-zinc-400 group-hover/item:text-zinc-950 dark:group-hover/item:text-zinc-200"
             )} />
           </div>
-          <span className="text-[13px] font-medium">Especialidades</span>
-          {hasActiveItem && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 ml-1.5" />}
+          <span className="text-xs font-medium">Especialidades</span>
+          {hasActiveItem && (
+            <span className={cn(
+              "h-1.5 w-1.5 rounded-full shrink-0 ml-1.5 shadow-[0_0_4px]",
+              especialidade === "JURI" ? "bg-emerald-400 shadow-emerald-400/50"
+                : especialidade === "VVD" ? "bg-yellow-400 shadow-yellow-400/50"
+                : "bg-blue-400 shadow-blue-400/50"
+            )} />
+          )}
           <ChevronDown className={cn(
             "h-4 w-4 ml-auto transition-transform duration-300",
             expanded && "rotate-180"
@@ -1389,27 +1399,30 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
             ESPECIALIDADE_COLORS[especialidade].line
           )} />
 
-          {/* Seletor de especialidade inline com cores distintas */}
-          <div className="flex gap-1 py-1.5 pr-2">
+          {/* Seletor de especialidade — ícones compactos, label só no selecionado */}
+          <div className="flex items-center gap-1 py-1.5 pr-2">
             {[
               { id: "JURI" as Especialidade, label: "Júri", icon: Gavel, colors: ESPECIALIDADE_COLORS.JURI },
               { id: "VVD" as Especialidade, label: "VVD", icon: Shield, colors: ESPECIALIDADE_COLORS.VVD },
               { id: "EP" as Especialidade, label: "EP", icon: Lock, colors: ESPECIALIDADE_COLORS.EP },
-            ].map((esp) => (
-              <button
-                key={esp.id}
-                onClick={() => setEspecialidade(esp.id)}
-                className={cn(
-                  "flex-1 py-1.5 px-2 rounded-lg text-[10px] font-semibold transition-all duration-200 flex items-center justify-center gap-1",
-                  especialidade === esp.id
-                    ? `${esp.colors.bg} ${esp.colors.text} ring-1 ${esp.colors.ring}`
-                    : "text-zinc-600 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                )}
-              >
-                <esp.icon className={cn("h-3 w-3", especialidade === esp.id && esp.colors.text)} />
-                {esp.label}
-              </button>
-            ))}
+            ].map((esp) => {
+              const isSelected = especialidade === esp.id;
+              return (
+                <button
+                  key={esp.id}
+                  onClick={() => setEspecialidade(esp.id)}
+                  className={cn(
+                    "py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer",
+                    isSelected
+                      ? `${esp.colors.bg} ${esp.colors.text} ring-1 ${esp.colors.ring} px-3`
+                      : "text-zinc-500 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] px-2"
+                  )}
+                >
+                  <esp.icon className={cn("h-3.5 w-3.5", isSelected && esp.colors.text)} />
+                  {isSelected && <span>{esp.label}</span>}
+                </button>
+              );
+            })}
           </div>
 
           {sections.map((section, sIdx) => (
@@ -1428,7 +1441,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
                   return null;
                 }
                 const Icon = iconMap[item.icon] || Briefcase;
-                const isActive = pathname.startsWith(item.path);
+                const isActive = item.exactMatch ? pathname === item.path : pathname.startsWith(item.path);
                 const activeColor = ESPECIALIDADE_COLORS[especialidade];
                 return (
                   <SidebarMenuItem key={item.path}>
@@ -1456,13 +1469,13 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
                           "h-3.5 w-3.5 mr-2 transition-all duration-300",
                           isActive ? activeColor.text : "text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-600 dark:group-hover/subitem:text-zinc-300"
                         )} />
-                        <span className="text-[12px] truncate">{item.label}</span>
+                        <span className="text-xs truncate">{item.label}</span>
                         {isActive && (
                           <div className={cn(
-                            "absolute right-2 w-1 h-1 rounded-full",
-                            especialidade === "JURI" ? "bg-emerald-400"
-                              : especialidade === "VVD" ? "bg-yellow-400"
-                              : "bg-blue-400"
+                            "absolute right-0.5 top-1/2 -translate-y-1/2 w-[3px] h-3.5 rounded-full transition-all duration-300",
+                            especialidade === "JURI" ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.4)]"
+                              : especialidade === "VVD" ? "bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.4)]"
+                              : "bg-blue-400 shadow-[0_0_6px_rgba(96,165,250,0.4)]"
                           )} />
                         )}
                       </Link>
@@ -1535,7 +1548,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
         variant="floating"
         className={cn(
           "glass-sidebar",
-          "z-40",
+          "md:z-40",
           "transition-all duration-300 ease-out",
           theme === "medium" && "dark"
         )}

@@ -48,11 +48,11 @@ interface WorkflowStatusProps {
 
 // Definir fluxo de trabalho padrão
 const WORKFLOW_STEPS: { status: string; label: string; group: StatusGroup }[] = [
-  { status: "urgente", label: "Urgente", group: "urgente" },
+  { status: "fila", label: "Triagem", group: "triagem" },
   { status: "analisar", label: "Analisar", group: "preparacao" },
   { status: "elaborar", label: "Elaborar", group: "preparacao" },
   { status: "revisar", label: "Revisar", group: "preparacao" },
-  { status: "protocolar", label: "Protocolar", group: "delegacao" },
+  { status: "protocolar", label: "Protocolar", group: "saida" },
   { status: "protocolado", label: "Protocolado", group: "concluida" },
 ];
 
@@ -115,7 +115,7 @@ export function WorkflowStatus({
 
   const normalizedStatus = currentStatus?.toLowerCase().replace(/\s+/g, "_") || "fila";
   const statusConfig = DEMANDA_STATUS[normalizedStatus as keyof typeof DEMANDA_STATUS];
-  const groupConfig = statusConfig ? STATUS_GROUPS[statusConfig.group] : STATUS_GROUPS.fila;
+  const groupConfig = statusConfig ? STATUS_GROUPS[statusConfig.group] : STATUS_GROUPS.triagem;
   const Icon = statusConfig?.icon || Inbox;
 
   const handleStatusChange = async (newStatus: string) => {
@@ -133,13 +133,12 @@ export function WorkflowStatus({
 
   // Agrupar status por grupo para o dropdown
   const statusPorGrupo: Record<StatusGroup, { status: string; config: typeof statusConfig }[]> = {
-    urgente: [],
+    triagem: [],
     preparacao: [],
-    delegacao: [],
-    monitoramento: [],
-    fila: [],
     diligencias: [],
+    saida: [],
     concluida: [],
+    arquivado: [],
   };
 
   proximosStatus.forEach((status) => {

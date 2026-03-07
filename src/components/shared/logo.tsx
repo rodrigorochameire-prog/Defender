@@ -189,10 +189,10 @@ export function SidebarLogo({ collapsed = false, className }: SidebarLogoProps) 
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <span className="font-serif text-lg font-semibold tracking-tight text-zinc-700 dark:text-zinc-100 block leading-tight">
+            <span className="font-serif text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 block leading-tight">
               OMBUDS
             </span>
-            <span className="text-[9px] font-light tracking-[0.12em] uppercase text-zinc-400 dark:text-zinc-500 block leading-tight">
+            <span className="text-[9px] font-light tracking-[0.12em] uppercase text-zinc-500 dark:text-zinc-500 block leading-tight">
               Ecossistema de Defesa Criminal
             </span>
           </div>

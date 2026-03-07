@@ -4,6 +4,7 @@ Ofícios Service — Geração de minutas e análise de ofícios.
 - Gemini 2.5 Flash: Classificação rápida de ofícios (alto volume)
 - Gemini 2.5 Pro / 3.1 Pro: Redação de minutas, análise processual
 """
+from __future__ import annotations
 
 import json
 import logging

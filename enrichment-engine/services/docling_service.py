@@ -2,6 +2,7 @@
 Docling Service — Parsing de documentos (PDF, DOCX, imagens) para Markdown.
 Usa IBM Docling para extração com alta fidelidade de layout, tabelas e OCR.
 """
+from __future__ import annotations
 
 import logging
 import tempfile

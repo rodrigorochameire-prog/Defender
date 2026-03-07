@@ -887,7 +887,7 @@ export default function JuradosPage() {
               <Users className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
             </div>
             <div>
-              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Banco de Jurados</h1>
+              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Jurados</h1>
               <p className="text-[10px] text-zinc-500">Análise comportamental</p>
             </div>
           </div>

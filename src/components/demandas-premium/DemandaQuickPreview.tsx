@@ -111,16 +111,15 @@ const ATRIBUICAO_OPTIONS = [
 
 // Pipeline stages for progress bar (mapped from status groups)
 const PIPELINE_STAGES: { key: StatusGroup; label: string }[] = [
+  { key: "triagem", label: "Triagem" },
   { key: "preparacao", label: "Preparação" },
-  { key: "delegacao", label: "Protocolar" },
-  { key: "monitoramento", label: "Monitorar" },
+  { key: "diligencias", label: "Diligências" },
+  { key: "saida", label: "Saída" },
   { key: "concluida", label: "Concluído" },
 ];
 
 function getStageIndex(group: StatusGroup): number {
-  if (group === "urgente") return 0; // maps to Preparação
-  if (group === "fila") return 0;
-  if (group === "diligencias") return 0;
+  if (group === "arquivado") return PIPELINE_STAGES.length - 1; // maps to last stage
   return PIPELINE_STAGES.findIndex(s => s.key === group);
 }
 

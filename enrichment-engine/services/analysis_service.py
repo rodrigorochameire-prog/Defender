@@ -10,6 +10,7 @@ Recebe transcrição e produz análise completa para defesa criminal:
 - Highlights com timestamps
 - Providências sugeridas
 """
+from __future__ import annotations
 
 import json
 import logging

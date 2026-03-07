@@ -318,7 +318,7 @@ function PjeReviewRow({
   const confidenceClass = getConfidenceDot(row.atoConfidence);
 
   const statusConfig = DEMANDA_STATUS[row.status as keyof typeof DEMANDA_STATUS];
-  const statusGroup = statusConfig?.group || "fila";
+  const statusGroup = statusConfig?.group || "triagem";
   const statusColor = STATUS_GROUPS[statusGroup]?.color || "#A1A1AA";
 
   return (

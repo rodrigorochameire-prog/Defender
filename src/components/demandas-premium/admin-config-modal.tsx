@@ -41,15 +41,15 @@ export function AdminConfigModal({ isOpen, onClose }: AdminConfigModalProps) {
 
   // Estados para Status
   const [statusList, setStatusList] = useState<StatusConfig[]>([
-    { value: "urgente", label: "Urgente", group: "urgente", color: "#DC2626" },
+    { value: "urgente", label: "Urgente", group: "triagem", color: "#DC2626" },
+    { value: "fila", label: "Fila", group: "triagem", color: "#64748B" },
     { value: "analisar", label: "Analisar", group: "preparacao", color: "#F59E0B" },
     { value: "elaborar", label: "Elaborar", group: "preparacao", color: "#3B82F6" },
     { value: "elaborando", label: "Elaborando", group: "preparacao", color: "#6366F1" },
     { value: "revisar", label: "Revisar", group: "preparacao", color: "#8B5CF6" },
-    { value: "protocolar", label: "Protocolar", group: "delegacao", color: "#EC4899" },
-    { value: "fila", label: "Fila", group: "fila", color: "#64748B" },
-    { value: "protocolado", label: "Protocolado", group: "monitoramento", color: "#10B981" },
-    { value: "monitorar", label: "Monitorar", group: "monitoramento", color: "#14B8A6" },
+    { value: "protocolar", label: "Protocolar", group: "saida", color: "#EC4899" },
+    { value: "monitorar", label: "Monitorar", group: "saida", color: "#14B8A6" },
+    { value: "protocolado", label: "Protocolado", group: "concluida", color: "#10B981" },
     { value: "resolvido", label: "Resolvido", group: "concluida", color: "#22C55E" },
   ]);
 
@@ -299,12 +299,12 @@ export function AdminConfigModal({ isOpen, onClose }: AdminConfigModalProps) {
                     onChange={(e) => setNewStatus({ ...newStatus, group: e.target.value })}
                     className="h-9 px-2 text-xs border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
                   >
+                    <option value="triagem">Triagem</option>
                     <option value="preparacao">Preparação</option>
-                    <option value="delegacao">Delegação</option>
-                    <option value="monitoramento">Monitoramento</option>
-                    <option value="fila">Fila</option>
+                    <option value="diligencias">Diligências</option>
+                    <option value="saida">Saída</option>
                     <option value="concluida">Concluída</option>
-                    <option value="urgente">Urgente</option>
+                    <option value="arquivado">Arquivado</option>
                   </select>
                   <input
                     type="color"

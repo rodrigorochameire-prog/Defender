@@ -342,7 +342,7 @@ export default function JuriPage() {
           {[
             { id: "cockpit", label: "Plenario Live", desc: "Cockpit do julgamento", href: "/admin/juri/cockpit", icon: Zap, premium: true },
             { id: "cosmovisao", label: "Cosmovisao", desc: "Analytics do juri", href: "/admin/juri/cosmovisao", icon: Brain, premium: true },
-            { id: "jurados", label: "Banco de Jurados", desc: "Perfis psicológicos", href: "/admin/juri/jurados", icon: Users },
+            { id: "jurados", label: "Jurados", desc: "Perfis psicológicos", href: "/admin/juri/jurados", icon: Users },
             { id: "teses", label: "Teses do Juri", desc: "Narrativa e argumentos", href: "/admin/juri/teses", icon: Target },
             { id: "calculadora", label: "Calculadora", desc: "Execucao penal", href: "/admin/juri/calculadora", icon: Scale, premium: true },
           ].map((tool) => {

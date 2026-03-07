@@ -368,7 +368,7 @@ export default function AvaliacoesListPage() {
               <div className="rounded-xl border border-blue-200/60 bg-blue-50/40 dark:bg-blue-950/20 p-4 hover:shadow-md transition-shadow cursor-pointer">
                 <div className="flex items-center gap-3 mb-2">
                   <Users className="h-5 w-5 text-blue-600" />
-                  <h3 className="font-semibold text-sm">Banco de Jurados</h3>
+                  <h3 className="font-semibold text-sm">Jurados</h3>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Histórico e tendências de votação dos jurados observados

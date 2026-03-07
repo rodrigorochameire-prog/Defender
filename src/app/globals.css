@@ -522,20 +522,72 @@
     border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
+  /* ===== SIDEBAR — 3 THEME MODES ===== */
+
+  /* Light: solid zinc-100, clean separation from white page */
   .glass-sidebar {
-    background: rgba(250, 250, 252, 0.72);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-    border-right: 1px solid rgba(0, 0, 0, 0.04);
+    background: #f4f4f5;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-right: 1px solid #e4e4e7;
     box-shadow: none;
   }
 
-  .dark .glass-sidebar {
-    background: rgba(24, 24, 28, 0.82);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-    border-right: none;
+  /* Medium: dark sidebar (zinc-800) against warm-gray page */
+  .medium .glass-sidebar {
+    background: #27272a;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-right: 1px solid #3f3f46;
     box-shadow: none;
+  }
+
+  /* Dark/Noturno: deep sidebar */
+  .dark .glass-sidebar {
+    background: #18181b;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-right: 1px solid #27272a;
+    box-shadow: none;
+  }
+
+  /* ===== MOBILE SIDEBAR — 3 THEME MODES ===== */
+  /* Sheet portal renders outside Sidebar, so glass-sidebar doesn't apply */
+
+  /* Light: solid zinc-100 to match desktop */
+  [data-mobile="true"][data-sidebar="sidebar"] {
+    background: #f4f4f5 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-color: #e4e4e7 !important;
+  }
+
+  /* Medium: dark zinc-800 to match desktop */
+  .medium [data-mobile="true"][data-sidebar="sidebar"] {
+    background: #27272a !important;
+    color: #f4f4f5 !important;
+    border-color: #3f3f46 !important;
+  }
+
+  /* Dark: deep zinc-900 to match desktop */
+  .dark [data-mobile="true"][data-sidebar="sidebar"] {
+    background: #18181b !important;
+    color: #f4f4f5 !important;
+    border-color: #27272a !important;
+  }
+
+  /* ===== PAGE BACKGROUNDS — MEDIUM MODE ===== */
+
+  /* Medium: pages get a subtle off-white */
+  .medium body,
+  .medium main {
+    background-color: #fafafa;
+  }
+
+  /* Medium: cards stay white for contrast */
+  .medium .glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(0, 0, 0, 0.06);
   }
 
   /* ===== GRADIENT TEXT ===== */

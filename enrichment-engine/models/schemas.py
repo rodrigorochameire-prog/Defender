@@ -2,9 +2,11 @@
 Pydantic models para Input/Output de todos os endpoints.
 Validação estrita — rejeita campos extras.
 """
+from __future__ import annotations
 
 from pydantic import BaseModel, Field
 from enum import Enum
+from typing import Optional
 
 
 # === Enums ===
@@ -707,6 +709,33 @@ class CrossAnalyzeInput(BaseModel):
         ..., min_length=2, max_length=20,
         description="Lista de análises individuais (min 2, max 20)",
     )
+
+
+# === Diarization (Speaker Identification) ===
+
+class ExistingLabel(BaseModel):
+    """Label existente de gravacoes anteriores."""
+    speaker_key: str = Field("", description="Key do speaker (ex: Speaker 1)")
+    label: str = Field("", description="Label atribuido (ex: Defensor)")
+    role: str = Field("outro", description="Role do speaker")
+
+
+class DiarizeInput(BaseModel):
+    """Input para /api/diarize — identificacao de speakers em transcricao."""
+    file_id: int = Field(..., description="ID do drive_file")
+    assistido_id: int = Field(..., description="ID do assistido")
+    transcription_text: str = Field(..., min_length=50, description="Texto da transcricao")
+    caso_contexto: str | None = Field(None, description="Contexto do caso")
+    existing_labels: list[ExistingLabel] | None = Field(None, description="Labels ja conhecidos")
+
+
+class SpeakerLabelUpdate(BaseModel):
+    """Input para atualizar um speaker label manualmente."""
+    file_id: int = Field(..., description="ID do drive_file")
+    assistido_id: int = Field(..., description="ID do assistido")
+    speaker_key: str = Field(..., description="Key do speaker")
+    label: str = Field(..., description="Novo label")
+    role: str = Field(..., description="Novo role")
 
 
 # === Health ===

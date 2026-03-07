@@ -2,6 +2,7 @@
 Solar Orchestrator — Coordena: Scraper → Gemini → Supabase → Drive (via base64).
 Fluxo completo de sincronização de processos do Solar com OMBUDS.
 """
+from __future__ import annotations
 
 import asyncio
 import base64

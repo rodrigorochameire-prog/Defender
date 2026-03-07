@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/collapsible";
 import { trpc } from "@/lib/trpc/client";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { SpeakerLabelsEditor } from "./SpeakerLabelsEditor";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -98,6 +99,12 @@ export function MarkdownViewerModal({
     { enabled: isOpen && !!assistidoId && isPlaud, refetchOnWindowFocus: false },
   );
 
+  // Fetch speaker labels for this file (for inline replacement)
+  const { data: speakerLabels } = trpc.speakerLabels.getByFile.useQuery(
+    { fileId: fileDbId! },
+    { enabled: isOpen && !!fileDbId && isPlaud, staleTime: 30_000 },
+  );
+
   // Fetch content from Drive proxy
   useEffect(() => {
     if (!isOpen || preloadedContent || !fileId) return;
@@ -130,6 +137,28 @@ export function MarkdownViewerModal({
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [isOpen, onClose]);
+
+  // Replace speaker keys with labels in displayed content
+  const displayContent = useMemo(() => {
+    if (!content || !speakerLabels || speakerLabels.length === 0) return content;
+    let replaced = content;
+    for (const sl of speakerLabels) {
+      // Replace patterns like "Speaker 1:" with "Dr. Joao (Defensor):"
+      const roleLabel = sl.role ? ` (${sl.role.charAt(0).toUpperCase() + sl.role.slice(1)})` : "";
+      const replacement = `**${sl.label}${roleLabel}**`;
+      // Replace "Speaker X:" pattern
+      replaced = replaced.replace(
+        new RegExp(`${sl.speakerKey.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*:`, "g"),
+        `${replacement}:`,
+      );
+      // Replace standalone "Speaker X" (in bold or not)
+      replaced = replaced.replace(
+        new RegExp(`\\*\\*${sl.speakerKey.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\*\\*`, "g"),
+        replacement,
+      );
+    }
+    return replaced;
+  }, [content, speakerLabels]);
 
   if (!isOpen) return null;
 
@@ -177,9 +206,9 @@ export function MarkdownViewerModal({
                 <p className="text-sm">Erro ao carregar: {error}</p>
               </div>
             )}
-            {content && !loading && (
+            {displayContent && !loading && (
               <article className="prose prose-zinc dark:prose-invert prose-sm max-w-none">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayContent}</ReactMarkdown>
               </article>
             )}
           </div>
@@ -336,6 +365,13 @@ export function MarkdownViewerModal({
                   </SidebarSection>
                 );
               })()}
+
+              {/* Speaker Labels */}
+              {isPlaud && fileDbId && assistidoId && (
+                <SidebarSection title="Speakers" icon={<Users className="w-3.5 h-3.5 text-cyan-500" />}>
+                  <SpeakerLabelsEditor fileDbId={fileDbId} assistidoId={assistidoId} />
+                </SidebarSection>
+              )}
 
               {/* Analysis in progress */}
               {effectiveEnrichmentData?.progress && effectiveEnrichmentData.progress.step !== "completed" && (

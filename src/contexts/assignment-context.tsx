@@ -49,6 +49,7 @@ export interface AssignmentMenuItem {
   description?: string;
   isPremium?: boolean; // Para recursos avançados
   requiredRoles?: UserRole[]; // Roles que podem acessar este item
+  exactMatch?: boolean; // Se true, isActive usa === ao invés de startsWith
 }
 
 export interface MenuSection {
@@ -81,7 +82,7 @@ const JURI_MODULES: MenuSection[] = [
     collapsible: true,
     defaultOpen: true,
     items: [
-      { label: "Banco de Jurados", path: "/admin/juri/jurados", icon: "Users", description: "Perfis psicológicos e análise comportamental" },
+      { label: "Jurados", path: "/admin/juri/jurados", icon: "Users", description: "Perfis psicológicos e análise comportamental" },
       { label: "Mapa de Afinidades", path: "/admin/juri/jurados?tab=afinidades", icon: "Network", description: "Grupos e influências entre jurados" },
     ],
   },
@@ -167,7 +168,7 @@ const GRUPO_JURI_MODULES: MenuSection[] = [
     collapsible: true,
     defaultOpen: true,
     items: [
-      { label: "Banco de Jurados", path: "/admin/juri/jurados", icon: "Users", description: "Perfis psicológicos e análise" },
+      { label: "Jurados", path: "/admin/juri/jurados", icon: "Users", description: "Perfis psicológicos e análise" },
       { label: "Mapa de Afinidades", path: "/admin/juri/jurados?tab=afinidades", icon: "Network", description: "Grupos entre jurados" },
     ],
   },

@@ -1992,16 +1992,16 @@ export default function AssistidosPage() {
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
       {/* Header Premium */}
-      <div className="relative px-5 md:px-8 py-6 md:py-8 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
+      <div className="relative px-4 sm:px-5 md:px-8 py-5 sm:py-6 md:py-8 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/30 via-transparent to-transparent dark:from-emerald-950/15 dark:via-transparent pointer-events-none" />
-        <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg ring-4 ring-zinc-900/5 dark:ring-white/10">
-              <Users className="w-5.5 h-5.5 text-white dark:text-zinc-900" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg ring-4 ring-zinc-900/5 dark:ring-white/10 shrink-0">
+              <Users className="w-5 h-5 sm:w-5.5 sm:h-5.5 text-white dark:text-zinc-900" />
             </div>
             <div>
-              <h1 className="font-serif text-3xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">Assistidos</h1>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Cadastro e gestão de assistidos</p>
+              <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">Assistidos</h1>
+              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Cadastro e gestão de assistidos</p>
             </div>
           </div>
           
@@ -2013,7 +2013,7 @@ export default function AssistidosPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar por nome, CPF, vulgo..."
-                className="pl-8 w-[200px] md:w-[280px] h-8 text-xs border-zinc-200/80 dark:border-zinc-700/80 bg-zinc-100 dark:bg-zinc-800 rounded-lg transition-colors"
+                className="pl-8 w-[140px] sm:w-[200px] md:w-[280px] h-8 text-xs border-zinc-200/80 dark:border-zinc-700/80 bg-zinc-100 dark:bg-zinc-800 rounded-lg transition-colors"
               />
             </div>
             <Link href="/admin/inteligencia">

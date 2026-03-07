@@ -9,6 +9,7 @@ Estratégia de extração (descoberta via Chrome MCP Discovery 2026-02-22):
   /procapi/processo/{numero_sem_pontos}{grau}/documento/{documento_id}/
 - Isso permite extração via JavaScript injection ao invés de CSS scraping
 """
+from __future__ import annotations
 
 import asyncio
 import base64

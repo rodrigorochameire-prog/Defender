@@ -2,6 +2,7 @@
 Enrichment Orchestrator — Orquestra: Docling → Gemini → Supabase.
 Coordena o fluxo completo de enriquecimento para cada tipo de dado.
 """
+from __future__ import annotations
 
 import logging
 import time

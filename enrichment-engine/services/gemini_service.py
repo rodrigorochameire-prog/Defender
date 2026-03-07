@@ -4,6 +4,7 @@ Wrapper com retry, rate limiting e response JSON.
 
 Usa o pacote `google-genai` (novo SDK unificado do Google).
 """
+from __future__ import annotations
 
 import json
 import logging

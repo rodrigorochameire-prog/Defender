@@ -1,6 +1,7 @@
 """
 Rotas de Ofícios — Geração de minutas e revisão com IA.
 """
+from __future__ import annotations
 
 import logging
 from typing import Any

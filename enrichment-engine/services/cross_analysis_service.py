@@ -8,6 +8,7 @@ Compara múltiplas análises individuais de depoimentos para encontrar:
 - Timeline unificada dos fatos
 - Mapa de atores
 """
+from __future__ import annotations
 
 import json
 import logging

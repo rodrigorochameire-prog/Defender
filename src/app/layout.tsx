@@ -87,10 +87,13 @@ const themeScript = `
     try {
       var theme = localStorage.getItem('theme');
       var fontSize = localStorage.getItem('ombuds-font-size');
+      document.documentElement.classList.remove('light', 'medium', 'dark');
       if (theme === 'dark') {
         document.documentElement.classList.add('dark');
+      } else if (theme === 'medium') {
+        document.documentElement.classList.add('medium');
       } else {
-        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
       }
       if (fontSize === 'large') {
         document.documentElement.classList.add('font-large');
@@ -109,7 +112,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={`${inter.className} ${inter.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} bg-stone-50 dark:bg-zinc-950`}>
+      <body className={`${inter.className} ${inter.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} bg-white dark:bg-zinc-950`}>
         <Providers>
           {children}
         </Providers>

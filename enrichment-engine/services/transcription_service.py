@@ -11,6 +11,7 @@ Fluxo:
 5. Opcionalmente: diariza speakers com pyannote (apenas Whisper path)
 6. Combina transcrição + speakers em output formatado
 """
+from __future__ import annotations
 
 import asyncio
 import json
