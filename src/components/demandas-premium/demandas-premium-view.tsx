@@ -2212,6 +2212,7 @@ export default function Demandas() {
                   columnFilters={columnFilters}
                   onColumnFilterChange={(colId: string, value: string) => setColumnFilters(prev => ({ ...prev, [colId]: value }))}
                   showColumnFilters={showColumnFilters}
+                  hideAtribuicaoColor={selectedAtribuicoes.length === 1}
                   onPreview={setPreviewDemandaId}
                   previewDemandaId={previewDemandaId}
                   groupBy={groupBy}
@@ -2448,10 +2449,12 @@ export default function Demandas() {
                               isUrgente || isPreso ? "border-rose-200/80 dark:border-rose-800/40" : "border-zinc-200/80 dark:border-zinc-800/80"
                             }`}
                           >
-                            {/* Barra lateral de atribuição */}
-                            <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg" style={{ backgroundColor: atribColor }} />
+                            {/* Barra lateral de atribuição — oculta quando 1 atribuição filtrada */}
+                            {selectedAtribuicoes.length !== 1 && (
+                              <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg" style={{ backgroundColor: atribColor }} />
+                            )}
 
-                            <div className="pl-3 pr-2.5 py-2 sm:pl-3.5 sm:pr-3 sm:py-2.5">
+                            <div className={`pr-2.5 py-2 sm:pr-3 sm:py-2.5 ${selectedAtribuicoes.length !== 1 ? "pl-3 sm:pl-3.5" : "pl-2.5 sm:pl-3"}`}>
                               {/* Linha 1: Nome + badges */}
                               <div className="flex items-center gap-1.5 mb-1">
                                 <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate flex-1">{d.assistido}</p>
@@ -2610,7 +2613,9 @@ export default function Demandas() {
                                 onClick={() => setPreviewDemandaId(d.id)}
                                 className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
                               >
-                                <div className="w-1 h-8 rounded-full shrink-0" style={{ backgroundColor: atribColor }} />
+                                {selectedAtribuicoes.length !== 1 && (
+                                  <div className="w-1 h-8 rounded-full shrink-0" style={{ backgroundColor: atribColor }} />
+                                )}
                                 <div className="flex-1 min-w-0">
                                   <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate">{d.assistido}</p>
                                   <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate">{d.ato}</p>

@@ -126,6 +126,8 @@ interface DemandaCompactViewProps {
   columnFilters?: Record<string, string>;
   onColumnFilterChange?: (columnId: string, value: string) => void;
   showColumnFilters?: boolean;
+  // Hide atribuição color when single atribuição is filtered
+  hideAtribuicaoColor?: boolean;
   // Quick-preview
   onPreview?: (id: string) => void;
   previewDemandaId?: string | null;
@@ -264,6 +266,7 @@ const CompactRow = React.memo(function CompactRow({
   cellRefs,
   onReorder,
   columnWidths,
+  hideAtribuicaoColor,
   onPreview,
   previewDemandaId,
 }: {
@@ -298,6 +301,7 @@ const CompactRow = React.memo(function CompactRow({
   cellRefs: React.MutableRefObject<Map<string, HTMLTableCellElement>>;
   onReorder?: (activeId: string, overId: string) => void;
   columnWidths?: Record<string, number>;
+  hideAtribuicaoColor?: boolean;
   onPreview?: (id: string) => void;
   previewDemandaId?: string | null;
 }) {
@@ -679,7 +683,7 @@ const CompactRow = React.memo(function CompactRow({
       ref={setNodeRef}
       style={{
         ...style,
-        borderLeft: `3px solid ${atribuicaoColor}`,
+        ...(hideAtribuicaoColor ? {} : { borderLeft: `3px solid ${atribuicaoColor}` }),
         ...(isSelected ? { backgroundColor: `${atribuicaoColor}12` } : {}),
         ...(isPreviewActive ? { backgroundColor: "rgba(16, 185, 129, 0.06)" } : {}),
       }}
@@ -840,6 +844,7 @@ export function DemandaCompactView({
   columnFilters,
   onColumnFilterChange,
   showColumnFilters,
+  hideAtribuicaoColor,
   onPreview,
   previewDemandaId,
   groupBy,
@@ -1258,6 +1263,7 @@ export function DemandaCompactView({
                     cellRefs={cellRefs}
                     onReorder={onReorder}
                     columnWidths={columnWidths}
+                    hideAtribuicaoColor={hideAtribuicaoColor}
                     onPreview={onPreview}
                     previewDemandaId={previewDemandaId}
                   />
@@ -1354,7 +1360,7 @@ export function DemandaCompactView({
                   <div
                     key={demanda.id}
                     style={{
-                      borderLeft: `3px solid ${atribuicaoColor}`,
+                      ...(hideAtribuicaoColor ? {} : { borderLeft: `3px solid ${atribuicaoColor}` }),
                       ...(selectedIds?.has(demanda.id) ? { backgroundColor: `${atribuicaoColor}12` } : {}),
                       ...(previewDemandaId === demanda.id ? { backgroundColor: "rgba(16, 185, 129, 0.06)" } : {}),
                     }}
