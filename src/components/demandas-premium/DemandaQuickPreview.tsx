@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
 import {
   Sheet,
@@ -30,6 +30,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from "@/config/demanda-status";
+import { createPortal } from "react-dom";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
@@ -177,6 +178,124 @@ function calcularPrazoBadge(prazoStr: string): { texto: string; cor: "red" | "am
 }
 
 // ============================================
+// STAGE SUBSTATUS POPOVER
+// ============================================
+
+function StageSubstatusPopover({
+  stage,
+  anchorRect,
+  currentStatus,
+  onSelect,
+  onClose,
+}: {
+  stage: (typeof PIPELINE_STAGES)[number];
+  anchorRect: DOMRect;
+  currentStatus: string;
+  onSelect: (status: string) => void;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const stageColor = STATUS_GROUPS[stage.key]?.color || "#A1A1AA";
+
+  // Get substatus options for this group
+  const options = Object.entries(DEMANDA_STATUS)
+    .filter(([, v]) => v.group === stage.key)
+    .map(([key, v]) => ({ key, ...v }));
+
+  // Close on click-outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    // Delay to avoid immediate close from the same click
+    const timer = setTimeout(() => document.addEventListener("mousedown", handler), 10);
+    return () => { clearTimeout(timer); document.removeEventListener("mousedown", handler); };
+  }, [onClose]);
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  // Position: centered below the node
+  const popoverWidth = 160;
+  const left = Math.max(8, Math.min(
+    anchorRect.left + anchorRect.width / 2 - popoverWidth / 2,
+    window.innerWidth - popoverWidth - 8
+  ));
+  const top = anchorRect.bottom + 8;
+
+  // Normalize current status for comparison
+  const normalizedCurrent = currentStatus.toLowerCase().replace(/\s+/g, "_");
+
+  return createPortal(
+    <div
+      ref={ref}
+      className="fixed z-[9999] rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-700/80 shadow-xl shadow-black/10 dark:shadow-black/40 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
+      style={{ top, left, width: popoverWidth }}
+    >
+      {/* Header with stage color accent */}
+      <div
+        className="px-3 py-2 flex items-center gap-2"
+        style={{ borderBottom: `2px solid ${stageColor}30` }}
+      >
+        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: stageColor }} />
+        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: stageColor }}>
+          {stage.label}
+        </span>
+      </div>
+
+      {/* Options */}
+      <div className="py-1">
+        {options.map((opt) => {
+          const isActive = opt.key === normalizedCurrent;
+          const Icon = opt.icon;
+          return (
+            <button
+              key={opt.key}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(opt.key);
+              }}
+              className={`
+                w-full px-3 py-1.5 flex items-center gap-2 text-left
+                transition-colors duration-100 cursor-pointer
+                ${isActive
+                  ? "bg-emerald-50/80 dark:bg-emerald-950/20"
+                  : "hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                }
+              `}
+            >
+              <Icon
+                className="w-3 h-3 shrink-0"
+                style={{ color: isActive ? stageColor : `${stageColor}80` }}
+              />
+              <span
+                className={`text-[11px] flex-1 truncate ${
+                  isActive
+                    ? "font-semibold text-zinc-900 dark:text-zinc-100"
+                    : "font-medium text-zinc-600 dark:text-zinc-400"
+                }`}
+              >
+                {opt.label}
+              </span>
+              {isActive && (
+                <Check className="w-3 h-3 shrink-0" style={{ color: stageColor }} />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// ============================================
 // COMPONENT
 // ============================================
 
@@ -198,7 +317,15 @@ export function DemandaQuickPreview({
   totalCount,
 }: DemandaQuickPreviewProps) {
   const [metadataOpen, setMetadataOpen] = useState(true);
+  const [activeStagePopover, setActiveStagePopover] = useState<number | null>(null);
+  const stageRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [stageRect, setStageRect] = useState<DOMRect | null>(null);
   const uploadFile = trpc.drive.uploadFile.useMutation();
+
+  // Close popover when demanda changes or sheet closes
+  useEffect(() => {
+    setActiveStagePopover(null);
+  }, [demanda?.id, open]);
 
   // Upload audio to assistido's Drive folder
   const handleAudioUpload = useCallback(
@@ -413,19 +540,28 @@ export function DemandaQuickPreview({
               {PIPELINE_STAGES.map((stage, i) => {
                 const isActive = i === currentStageIdx;
                 const isCompleted = i < currentStageIdx;
+                const isPopoverOpen = activeStagePopover === i;
                 const stageColor = STATUS_GROUPS[stage.key]?.color || "#A1A1AA";
 
                 return (
                   <button
                     key={stage.key}
+                    ref={(el) => { stageRefs.current[i] = el; }}
                     onClick={() => {
-                      const entry = Object.entries(DEMANDA_STATUS).find(([, v]) => v.group === stage.key);
-                      if (entry) onStatusChange(demanda.id, entry[0]);
+                      if (activeStagePopover === i) {
+                        setActiveStagePopover(null);
+                        return;
+                      }
+                      const rect = stageRefs.current[i]?.getBoundingClientRect();
+                      if (rect) {
+                        setStageRect(rect);
+                        setActiveStagePopover(i);
+                      }
                     }}
                     className={`relative z-10 flex flex-col items-center cursor-pointer group/stage transition-all ${
                       i === 0 ? "" : "flex-1"
                     }`}
-                    title={`Mudar para ${stage.label}`}
+                    title={`${stage.label} — clique para escolher substatus`}
                     style={{ minWidth: i === 0 ? "auto" : undefined }}
                   >
                     {/* Node */}
@@ -435,11 +571,13 @@ export function DemandaQuickPreview({
                           ? "w-6 h-6 ring-2 ring-offset-2 dark:ring-offset-zinc-900"
                           : isCompleted
                             ? "w-5 h-5"
-                            : "w-4 h-4 group-hover/stage:w-5 group-hover/stage:h-5"
+                            : isPopoverOpen
+                              ? "w-5 h-5 ring-2 ring-offset-1 dark:ring-offset-zinc-900"
+                              : "w-4 h-4 group-hover/stage:w-5 group-hover/stage:h-5"
                       }`}
                       style={{
-                        backgroundColor: isCompleted ? "#84CC9B" : isActive ? stageColor : "#e4e4e7",
-                        ringColor: isActive ? `${stageColor}40` : undefined,
+                        backgroundColor: isCompleted ? "#84CC9B" : isActive ? stageColor : isPopoverOpen ? `${stageColor}80` : "#e4e4e7",
+                        ringColor: (isActive || isPopoverOpen) ? `${stageColor}40` : undefined,
                       }}
                     >
                       {isCompleted && <Check className="w-3 h-3 text-white" />}
@@ -450,10 +588,10 @@ export function DemandaQuickPreview({
                     {/* Label */}
                     <span
                       className={`mt-1.5 text-[8px] sm:text-[9px] font-medium whitespace-nowrap transition-colors ${
-                        isActive ? "font-bold" : isCompleted ? "" : "text-zinc-400 dark:text-zinc-500"
+                        isActive || isPopoverOpen ? "font-bold" : isCompleted ? "" : "text-zinc-400 dark:text-zinc-500"
                       }`}
                       style={{
-                        color: isActive ? stageColor : isCompleted ? "#84CC9B" : undefined,
+                        color: isActive || isPopoverOpen ? stageColor : isCompleted ? "#84CC9B" : undefined,
                       }}
                     >
                       <span className="hidden sm:inline">{stage.label}</span>
@@ -463,6 +601,20 @@ export function DemandaQuickPreview({
                 );
               })}
             </div>
+
+            {/* Stage substatus popover */}
+            {activeStagePopover !== null && stageRect && (
+              <StageSubstatusPopover
+                stage={PIPELINE_STAGES[activeStagePopover]}
+                anchorRect={stageRect}
+                currentStatus={demanda.substatus || demanda.status}
+                onSelect={(status) => {
+                  onStatusChange(demanda.id, status);
+                  setActiveStagePopover(null);
+                }}
+                onClose={() => setActiveStagePopover(null)}
+              />
+            )}
           </div>
 
           {/* ===== CARD SECTIONS ===== */}
