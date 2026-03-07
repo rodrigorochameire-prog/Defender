@@ -1760,27 +1760,31 @@ export default function Demandas() {
       {/* Compact Header — Single-line with Tabs + Toolbar */}
       <div className="px-3 sm:px-5 md:px-8 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Left: Tabs + Counters (título já está no breadcrumb) */}
+          {/* Left: Tabs (icon-only, label when active) */}
           <div className="flex items-center gap-0.5 shrink-0">
             {[
               { key: "planilha" as const, label: "Planilha", icon: Table2 },
               { key: "kanban" as const, label: "Kanban", icon: Layers },
               { key: "prazos" as const, label: "Prazos", icon: Clock },
               { key: "analytics" as const, label: "Analytics", icon: BarChartIcon },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`relative flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all duration-200 cursor-pointer rounded-md ${
-                  activeTab === tab.key
-                    ? "text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800"
-                    : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
-                }`}
-              >
-                <tab.icon className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{tab.label}</span>
-              </button>
-            ))}
+            ].map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  title={tab.label}
+                  className={`relative flex items-center gap-1.5 py-1.5 text-xs font-medium transition-all duration-200 cursor-pointer rounded-md ${
+                    isActive
+                      ? "px-2.5 text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800"
+                      : "px-2 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                  }`}
+                >
+                  <tab.icon className="w-3.5 h-3.5" />
+                  {isActive && <span>{tab.label}</span>}
+                </button>
+              );
+            })}
           </div>
           {/* Counters — badges compactos com Lucide icons */}
           <div className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
@@ -2403,15 +2407,17 @@ export default function Demandas() {
             </div>
 
             {/* Kanban Board */}
-            <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-700">
+            <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-700">
               {Object.entries(STATUS_GROUPS).map(([key, config]) => {
                 const columnDemandas = demandasFiltradas.filter(d => {
                   const statusConfig = getStatusConfig(d.status);
                   return statusConfig?.group === key;
                 });
+                // Hide empty columns
+                if (columnDemandas.length === 0) return null;
                 const color = config.color || "#71717a";
                 return (
-                  <div key={key} className="flex-shrink-0 w-72 flex flex-col">
+                  <div key={key} className="flex-shrink-0 w-64 sm:w-72 flex flex-col">
                     {/* Column header */}
                     <div className="flex items-center gap-2 px-3 py-2 mb-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80">
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
@@ -2419,7 +2425,7 @@ export default function Demandas() {
                       <span className="ml-auto text-[10px] font-mono tabular-nums text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">{columnDemandas.length}</span>
                     </div>
                     {/* Cards */}
-                    <div className="space-y-2 flex-1 min-h-[200px]">
+                    <div className="space-y-2 flex-1 min-h-[100px]">
                       {columnDemandas.slice(0, 30).map((d) => {
                         const statusCfg = getStatusConfig(d.status);
                         const atribColor = ATRIBUICAO_BORDER_COLORS[d.atribuicao] || "#71717a";
@@ -2445,7 +2451,7 @@ export default function Demandas() {
                             {/* Barra lateral de atribuição */}
                             <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg" style={{ backgroundColor: atribColor }} />
 
-                            <div className="pl-3.5 pr-3 py-2.5">
+                            <div className="pl-3 pr-2.5 py-2 sm:pl-3.5 sm:pr-3 sm:py-2.5">
                               {/* Linha 1: Nome + badges */}
                               <div className="flex items-center gap-1.5 mb-1">
                                 <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate flex-1">{d.assistido}</p>
@@ -2499,11 +2505,6 @@ export default function Demandas() {
                       })}
                       {columnDemandas.length > 30 && (
                         <p className="text-[10px] text-center text-zinc-400 py-2">+{columnDemandas.length - 30} mais</p>
-                      )}
-                      {columnDemandas.length === 0 && (
-                        <div className="flex items-center justify-center h-24 text-[10px] text-zinc-400 dark:text-zinc-600">
-                          Nenhuma demanda
-                        </div>
                       )}
                     </div>
                   </div>
@@ -2567,7 +2568,7 @@ export default function Demandas() {
                       { label: "7 dias", count: semana.length + amanha.length, color: "emerald" },
                       { label: "Sem prazo", count: semPrazo.length, color: "zinc" },
                     ].map(kpi => (
-                      <div key={kpi.label} className={`flex items-center gap-3 p-3 rounded-xl border bg-white dark:bg-zinc-900 ${
+                      <div key={kpi.label} className={`flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl border bg-white dark:bg-zinc-900 ${
                         kpi.color === "rose" && kpi.count > 0 ? "border-rose-200 dark:border-rose-800/50" :
                         kpi.color === "amber" && kpi.count > 0 ? "border-amber-200 dark:border-amber-800/50" :
                         "border-zinc-200/80 dark:border-zinc-800/80"
@@ -2587,7 +2588,7 @@ export default function Demandas() {
                     const SectionIcon = section.icon;
                     return (
                       <div key={section.label} className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80">
-                        <div className={`flex items-center gap-2 px-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/50`}>
+                        <div className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 border-b border-zinc-100 dark:border-zinc-800/50`}>
                           <SectionIcon className={`w-3.5 h-3.5 ${
                             section.color === "rose" ? "text-rose-500" :
                             section.color === "amber" ? "text-amber-500" :
@@ -2607,17 +2608,17 @@ export default function Demandas() {
                               <div
                                 key={d.id}
                                 onClick={() => setPreviewDemandaId(d.id)}
-                                className="flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                                className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
                               >
                                 <div className="w-1 h-8 rounded-full shrink-0" style={{ backgroundColor: atribColor }} />
                                 <div className="flex-1 min-w-0">
                                   <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate">{d.assistido}</p>
                                   <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate">{d.ato}</p>
                                 </div>
-                                <div className="flex items-center gap-2 shrink-0">
+                                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                                   {d.estadoPrisional === "preso" && <Lock className="w-3 h-3 text-amber-500" />}
-                                  {d.prazo && <span className="text-[10px] font-mono tabular-nums text-zinc-500">{d.prazo}</span>}
-                                  <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: `${statusCfg?.color || "#71717a"}15`, color: statusCfg?.color || "#71717a" }}>
+                                  {d.prazo && <span className="text-[10px] font-mono tabular-nums text-zinc-500 hidden sm:inline">{d.prazo}</span>}
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded font-medium whitespace-nowrap" style={{ backgroundColor: `${statusCfg?.color || "#71717a"}15`, color: statusCfg?.color || "#71717a" }}>
                                     {statusCfg?.label || d.status}
                                   </span>
                                 </div>
