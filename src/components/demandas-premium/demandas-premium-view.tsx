@@ -1788,8 +1788,8 @@ export default function Demandas() {
           {/* Left: Tabs (icon-only, label when active) */}
           <div className="flex items-center gap-0.5 shrink-0">
             {[
-              { key: "planilha" as const, label: "Planilha", icon: Table2 },
               { key: "kanban" as const, label: "Kanban", icon: Layers },
+              { key: "planilha" as const, label: "Planilha", icon: Table2 },
               { key: "prazos" as const, label: "Prazos", icon: Clock },
               { key: "analytics" as const, label: "Analytics", icon: BarChartIcon },
             ].map((tab) => {
@@ -1820,13 +1820,13 @@ export default function Demandas() {
               return (
                 <>
                   {urgentes > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 px-1.5 py-0.5 rounded-md">
+                    <span className="flex items-center gap-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-md">
                       <AlertTriangle className="w-3 h-3" />
                       {urgentes}
                     </span>
                   )}
                   {presos > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-1.5 py-0.5 rounded-md">
+                    <span className="flex items-center gap-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-md">
                       <Lock className="w-3 h-3" />
                       {presos}
                     </span>

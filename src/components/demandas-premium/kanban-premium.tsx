@@ -250,14 +250,6 @@ function KanbanCard({
     }
   }
 
-  // Initials
-  const initials = demanda.assistido
-    ?.split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase())
-    .join("") || "?";
-
   const currentStatusKey = (demanda.substatus || demanda.status || "fila").toLowerCase().replace(/\s+/g, "_");
 
   return (
@@ -281,17 +273,8 @@ function KanbanCard({
       />
 
       <div className="pl-3.5 pr-2.5 py-2.5">
-        {/* Row 1: Avatar + Nome + Flags */}
+        {/* Row 1: Nome + Flags */}
         <div className="flex items-center gap-2 mb-1">
-          <div
-            className="w-6 h-6 rounded-md flex items-center justify-center text-[9px] font-bold shrink-0"
-            style={{
-              backgroundColor: `${groupColor}18`,
-              color: groupColor,
-            }}
-          >
-            {initials}
-          </div>
           <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate flex-1 leading-tight">
             {demanda.assistido}
           </p>
@@ -308,13 +291,13 @@ function KanbanCard({
         </div>
 
         {/* Row 2: Ato */}
-        <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate mb-1 pl-8">
+        <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate mb-1">
           {demanda.ato}
         </p>
 
         {/* Row 3: Processo */}
         {processo && (
-          <div className="flex items-center gap-1 mb-1 pl-8">
+          <div className="flex items-center gap-1 mb-1">
             <span
               className="text-[10px] font-mono tabular-nums text-zinc-400 dark:text-zinc-500 truncate hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
               onClick={(e) => {
@@ -330,7 +313,7 @@ function KanbanCard({
         )}
 
         {/* Row 4: Prazo + Status badge (clickable) */}
-        <div className="flex items-center gap-1.5 pl-8">
+        <div className="flex items-center gap-1.5">
           {demanda.prazo && (
             <span
               className={`text-[10px] font-mono tabular-nums ${
