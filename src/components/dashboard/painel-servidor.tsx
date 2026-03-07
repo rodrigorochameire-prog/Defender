@@ -50,6 +50,7 @@ import {
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { AudioRecorderButton } from "@/components/shared/audio-recorder";
+import { VoiceMemosButton } from "@/components/shared/voice-memos-button";
 import { TranscriptViewer } from "@/components/shared/transcript-viewer";
 import { format, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -855,6 +856,12 @@ export function PainelServidor({ user }: PainelServidorProps) {
                   <AudioRecorderButton
                     compact
                     onTranscriptReady={handleTranscriptReady}
+                  />
+                  <VoiceMemosButton
+                    compact
+                    onTranscriptReady={handleTranscriptReady}
+                    assistidoId={registroRapido.assistidoId}
+                    processoId={registroRapido.processoId}
                   />
                   <Button
                     type="button"

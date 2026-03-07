@@ -14,6 +14,8 @@ export type RecordingState =
 
 interface UseAudioRecorderOptions {
   onTranscriptReady?: (transcript: string) => void;
+  /** Called with the audio blob after successful transcription */
+  onAudioBlob?: (blob: Blob, mimeType: string) => void;
 }
 
 export function useAudioRecorder(options?: UseAudioRecorderOptions) {
@@ -102,6 +104,7 @@ export function useAudioRecorder(options?: UseAudioRecorderOptions) {
           setTranscript(text);
           setRecordingState("done");
           options?.onTranscriptReady?.(text);
+          options?.onAudioBlob?.(audioBlob, mimeType);
         } catch (err) {
           const message =
             err instanceof Error ? err.message : "Erro ao transcrever.";
@@ -170,17 +173,20 @@ function formatTime(seconds: number): string {
 
 interface AudioRecorderButtonProps {
   onTranscriptReady?: (transcript: string) => void;
+  /** Called with the audio blob after successful transcription */
+  onAudioBlob?: (blob: Blob, mimeType: string) => void;
   compact?: boolean;
   className?: string;
 }
 
 export function AudioRecorderButton({
   onTranscriptReady,
+  onAudioBlob,
   compact = false,
   className,
 }: AudioRecorderButtonProps) {
   const { recordingState, recordingSeconds, startRecording, stopRecording } =
-    useAudioRecorder({ onTranscriptReady });
+    useAudioRecorder({ onTranscriptReady, onAudioBlob });
 
   const isRecording = recordingState === "recording";
   const isProcessing = recordingState === "processing";

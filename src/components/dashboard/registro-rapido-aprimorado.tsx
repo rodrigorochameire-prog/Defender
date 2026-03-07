@@ -47,6 +47,7 @@ import {
 import { cn } from "@/lib/utils";
 import { DelegacaoModal } from "@/components/demandas/delegacao-modal";
 import { AudioRecorderButton } from "@/components/shared/audio-recorder";
+import { VoiceMemosButton } from "@/components/shared/voice-memos-button";
 import { TranscriptViewer } from "@/components/shared/transcript-viewer";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { format, addDays } from "date-fns";
@@ -766,6 +767,12 @@ export function RegistroRapidoAprimorado({
               <AudioRecorderButton
                 compact
                 onTranscriptReady={handleTranscriptReady}
+              />
+              <VoiceMemosButton
+                compact
+                onTranscriptReady={handleTranscriptReady}
+                assistidoId={data.assistidoId}
+                processoId={data.processoId}
               />
               <Button
                 type="button"

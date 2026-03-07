@@ -92,6 +92,7 @@ import { DashboardPorPerfil } from "@/components/dashboard/dashboard-por-perfil"
 import { PainelServidor } from "@/components/dashboard/painel-servidor";
 import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 import { AudioRecorderButton } from "@/components/shared/audio-recorder";
+import { VoiceMemosButton } from "@/components/shared/voice-memos-button";
 import { TranscriptViewer } from "@/components/shared/transcript-viewer";
 import { EquipeCoworkCard } from "@/components/dashboard/equipe-cowork-card";
 
@@ -1167,6 +1168,12 @@ export default function DashboardJuriPage() {
                   <AudioRecorderButton
                     compact
                     onTranscriptReady={handleTranscriptReady}
+                  />
+                  <VoiceMemosButton
+                    compact
+                    onTranscriptReady={handleTranscriptReady}
+                    assistidoId={atendimentoRapido.assistidoId}
+                    processoId={atendimentoRapido.processoId}
                   />
                   <Button
                     type="button"

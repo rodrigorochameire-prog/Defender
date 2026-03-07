@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import Link from "next/link";
 import {
   Sheet,
@@ -34,6 +34,10 @@ import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
 import { EditableTextInline } from "@/components/shared/editable-text-inline";
+import { AudioRecorderButton } from "@/components/shared/audio-recorder";
+import { VoiceMemosButton } from "@/components/shared/voice-memos-button";
+import { trpc } from "@/lib/trpc/client";
+import { toast } from "sonner";
 
 // ============================================
 // TYPES
@@ -195,6 +199,66 @@ export function DemandaQuickPreview({
   totalCount,
 }: DemandaQuickPreviewProps) {
   const [metadataOpen, setMetadataOpen] = useState(true);
+  const uploadFile = trpc.drive.uploadFile.useMutation();
+
+  // Upload audio to assistido's Drive folder
+  const handleAudioUpload = useCallback(
+    async (fileOrBlob: File | Blob, mimeTypeOrName?: string) => {
+      if (!demanda?.assistidoId) return;
+
+      try {
+        // Get assistido's driveFolderId
+        const isFile = fileOrBlob instanceof File;
+        const fileName = isFile
+          ? (fileOrBlob as File).name
+          : `gravacao-${new Date().toISOString().slice(0, 16).replace(/[T:]/g, "-")}.webm`;
+        const mimeType = isFile
+          ? (fileOrBlob as File).type || "audio/mp4"
+          : mimeTypeOrName || "audio/webm";
+
+        // Convert to base64
+        const arrayBuffer = await fileOrBlob.arrayBuffer();
+        const base64 = btoa(
+          new Uint8Array(arrayBuffer).reduce(
+            (data, byte) => data + String.fromCharCode(byte),
+            ""
+          )
+        );
+
+        // We need the assistido's folder — fetch it
+        const res = await fetch(
+          `/api/trpc/assistidos.getById?batch=1&input=${encodeURIComponent(
+            JSON.stringify({ "0": { json: { id: demanda.assistidoId } } })
+          )}`
+        );
+        const data = await res.json();
+        const folderId = data?.[0]?.result?.data?.json?.driveFolderId;
+
+        if (!folderId) {
+          toast.info("Audio transcrito", {
+            description: "Assistido sem pasta no Drive — audio nao foi salvo.",
+          });
+          return;
+        }
+
+        await uploadFile.mutateAsync({
+          folderId,
+          fileName,
+          mimeType,
+          fileBase64: `data:${mimeType};base64,${base64}`,
+          description: `Audio gravado via OMBUDS — Demanda ${demanda.id}`,
+        });
+
+        toast.success("Audio salvo no Drive", {
+          description: `${fileName} vinculado ao assistido.`,
+        });
+      } catch (err) {
+        console.error("[DemandaQuickPreview] Upload audio error:", err);
+        // Don't show error toast — transcription already succeeded
+      }
+    },
+    [demanda?.assistidoId, demanda?.id, uploadFile]
+  );
 
   if (!demanda) return null;
 
@@ -459,7 +523,29 @@ export function DemandaQuickPreview({
                 </div>
               </div>
               <div>
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mb-1">Providências</p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500">Providências</p>
+                  <div className="flex items-center gap-0.5">
+                    <AudioRecorderButton
+                      compact
+                      onTranscriptReady={(text) => {
+                        const current = demanda.providencias || "";
+                        onProvidenciasChange(demanda.id, current ? `${current}\n\n${text}` : text);
+                      }}
+                      onAudioBlob={(blob, mimeType) => handleAudioUpload(blob, mimeType)}
+                    />
+                    <VoiceMemosButton
+                      compact
+                      onTranscriptReady={(text) => {
+                        const current = demanda.providencias || "";
+                        onProvidenciasChange(demanda.id, current ? `${current}\n\n${text}` : text);
+                      }}
+                      onAudioFile={(file) => handleAudioUpload(file)}
+                      assistidoId={demanda.assistidoId}
+                      processoId={demanda.processoId}
+                    />
+                  </div>
+                </div>
                 <EditableTextInline
                   value={demanda.providencias || ""}
                   onSave={(v) => onProvidenciasChange(demanda.id, v)}
