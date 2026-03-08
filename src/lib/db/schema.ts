@@ -817,7 +817,12 @@ export const audiencias = pgTable("audiencias", {
   // Anotações com versionamento
   anotacoes: text("anotacoes"),
   anotacoesVersao: integer("anotacoes_versao").default(1),
-  
+
+  // Registro de audiência completo (JSONB)
+  // Armazena: depoentes, manifestações, estratégias, encaminhamentos, etc.
+  // Migration: ALTER TABLE audiencias ADD COLUMN registro_audiencia jsonb;
+  registroAudiencia: jsonb("registro_audiencia"),
+
   // Resumo da defesa (puxado da Teoria do Caso)
   resumoDefesa: text("resumo_defesa"),
   

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -76,12 +77,47 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                 )}
               </div>
               <p className="text-xs md:text-sm font-semibold text-zinc-700 dark:text-zinc-300 truncate">
-                {evento.assistido}
+                {(() => {
+                  const assistidoName = typeof evento.assistido === "string" ? evento.assistido : evento.assistido?.nome;
+                  const assistidoId = typeof evento.assistido === "object" ? evento.assistido?.id : evento.assistidoId;
+                  if (assistidoId) {
+                    return (
+                      <Link
+                        href={`/admin/assistidos/${assistidoId}`}
+                        target="_blank"
+                        rel="noopener"
+                        className="text-zinc-700 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline transition-colors truncate"
+                      >
+                        {assistidoName}
+                      </Link>
+                    );
+                  }
+                  return assistidoName;
+                })()}
               </p>
               <div className="flex items-center gap-2">
                 <p className="text-[10px] md:text-xs text-zinc-500 dark:text-zinc-400 truncate">
                   {new Date(evento.data).toLocaleDateString("pt-BR")} • {evento.horarioInicio}
-                  {evento.processo && ` • ${evento.processo}`}
+                  {evento.processo && (() => {
+                    const processoDisplay = typeof evento.processo === "string" ? evento.processo : evento.processo?.numero;
+                    const processoId = typeof evento.processo === "object" ? evento.processo?.id : evento.processoId;
+                    if (processoId) {
+                      return (
+                        <>
+                          {" • "}
+                          <Link
+                            href={`/admin/processos/${processoId}`}
+                            target="_blank"
+                            rel="noopener"
+                            className="font-mono text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline transition-colors"
+                          >
+                            {processoDisplay}
+                          </Link>
+                        </>
+                      );
+                    }
+                    return ` • ${processoDisplay}`;
+                  })()}
                 </p>
                 {evento.atribuicao && (
                   <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400">

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Eye, CheckCircle2, Users, Calendar, Gavel, AlertTriangle,
   FileText, ChevronRight, Mail, Check, Target, BookOpen, Quote,
-  Scale, Shield, Notebook,
+  Scale, Shield,
 } from "lucide-react";
 import { getDepoenteStyle } from "../constants";
 import type { StatusAudiencia, TabKey } from "../hooks/use-registro-form";
@@ -36,13 +36,13 @@ export function TabRegistro({
       : "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800";
 
   return (
-    <div className="space-y-4 max-w-5xl mx-auto">
+    <div className="space-y-3 max-w-5xl mx-auto">
       {/* Header */}
       <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center">
-              <Eye className="w-5 h-5 text-white dark:text-zinc-900" />
+            <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center">
+              <Eye className="w-4 h-4 text-white dark:text-zinc-900" />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -69,8 +69,8 @@ export function TabRegistro({
       </div>
 
       {/* Status Geral - 3 cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className={`p-3 rounded-xl border ${
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+        <div className={`p-2.5 rounded-xl border ${
           statusAudiencia === "concluida"
             ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800"
             : "bg-zinc-50 dark:bg-zinc-900/30 border-zinc-300 dark:border-zinc-700"
@@ -92,7 +92,7 @@ export function TabRegistro({
           </p>
         </div>
 
-        <div className="p-3 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
+        <div className="p-2.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
           <div className="flex items-center gap-2 mb-1">
             <Users className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
             <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Depoentes</Label>
@@ -102,7 +102,7 @@ export function TabRegistro({
           </p>
         </div>
 
-        <div className="p-3 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
+        <div className="p-2.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
           <div className="flex items-center gap-2 mb-1">
             <Calendar className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
             <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Data/Hora</Label>
@@ -116,8 +116,7 @@ export function TabRegistro({
       {/* Resultado */}
       {registro.resultado && (
         <div className="bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-4">
-          <Label className="text-sm font-semibold mb-2 block text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
-            <Gavel className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+          <Label className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 mb-2 block">
             Resultado da Audiência
           </Label>
           <p className="text-sm text-zinc-700 dark:text-zinc-300">{registro.resultado}</p>
@@ -127,11 +126,10 @@ export function TabRegistro({
       {/* Depoentes */}
       {registro.depoentes.length > 0 && (
         <div className="bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-4">
-          <Label className="text-sm font-semibold mb-3 block text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
-            <Users className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+          <Label className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 mb-3 block">
             Depoentes ({registro.depoentes.length})
           </Label>
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {registro.depoentes.map((dep) => {
               const style = getDepoenteStyle(dep.tipo);
               return (
@@ -199,8 +197,7 @@ export function TabRegistro({
       {/* Redesignação */}
       {statusAudiencia === "redesignada" && (
         <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-4">
-          <Label className="text-sm font-semibold mb-3 block text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+          <Label className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 mb-3 block">
             Informações de Redesignação
           </Label>
           <div className="space-y-2">
@@ -245,7 +242,7 @@ export function TabRegistro({
       {/* Manifestações */}
       {(registro.manifestacaoMP || registro.manifestacaoDefesa || registro.decisaoJuiz) && (
         <div className="space-y-2">
-          <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Manifestações e Decisões</Label>
+          <Label className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500">Manifestações e Decisões</Label>
           <div className="grid grid-cols-1 gap-2">
             {registro.manifestacaoMP && (
               <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-3">
@@ -278,8 +275,7 @@ export function TabRegistro({
       {/* Anotações */}
       {registro.anotacoesGerais && (
         <div className="bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-4">
-          <Label className="text-sm font-semibold mb-2 block text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
-            <Notebook className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+          <Label className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 mb-2 block">
             Anotações Gerais
           </Label>
           <p className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">{registro.anotacoesGerais}</p>
@@ -300,7 +296,7 @@ export function TabRegistro({
 
         return camposPendentes.length > 0 ? (
           <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-3">
-            <Label className="text-xs font-semibold mb-2 block text-zinc-600 dark:text-zinc-400 flex items-center gap-2">
+            <Label className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 mb-2 block flex items-center gap-2">
               <AlertTriangle className="w-3.5 h-3.5" />
               Campos Recomendados ({camposPendentes.length})
             </Label>
@@ -328,7 +324,7 @@ export function TabRegistro({
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
             <FileText className="w-3.5 h-3.5" />
-            <span>Registro será salvo automaticamente</span>
+            <span>Resumo do registro atual</span>
           </div>
           <div className="text-zinc-500 dark:text-zinc-500">
             {new Date().toLocaleDateString("pt-BR")} • {new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}

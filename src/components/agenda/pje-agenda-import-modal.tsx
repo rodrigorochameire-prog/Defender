@@ -30,6 +30,12 @@ interface PJeAgendaImportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onImport: (eventos: any[]) => void;
+  /** Título customizável do modal */
+  title?: string;
+  /** Descrição customizável */
+  description?: string;
+  /** Atribuição pré-selecionada (ex: "Execução Penal" para SEEU) */
+  defaultAtribuicao?: string;
 }
 
 interface AssistidoInfo {
@@ -64,11 +70,11 @@ const ATRIBUICAO_OPTIONS = [
   { value: "Criminal Geral", label: "Criminal Geral", description: "AIJ, PAP, Custódia, ANPP, Justificação", icon: Folder },
 ] as const;
 
-export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImportModalProps) {
+export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, description, defaultAtribuicao }: PJeAgendaImportModalProps) {
   const [htmlContent, setHtmlContent] = useState("");
   const [parsedEventos, setParsedEventos] = useState<ParsedEvento[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [forcedAtribuicao, setForcedAtribuicao] = useState<string>("auto");
+  const [forcedAtribuicao, setForcedAtribuicao] = useState<string>(defaultAtribuicao || "auto");
 
   // Conectivos que devem permanecer em minúsculo no Title Case
   const conectivos = ["de", "da", "do", "das", "dos", "e", "em", "para", "por", "com", "sem", "a", "o", "as", "os"];
@@ -770,6 +776,153 @@ Status: ${sit}`;
         }
       }
 
+      // ============================================
+      // MÉTODO 3: Parser SEEU — Pauta de Execução Penal
+      // Formato: header com "Pauta ( Tipo )" + "Data: DD/MM/YYYY"
+      // Blocos: Estado da Bahia → NOME → PROCESSO SITUAÇÃO → Classe
+      // ============================================
+      if (eventos.length === 0) {
+        const isSEEUPauta =
+          conteudo.match(/Pauta\s*\(/i) ||
+          (conteudo.includes("Estado da Bahia") && conteudo.match(/Data:\s*\d{2}\/\d{2}\/\d{4}/));
+
+        if (isSEEUPauta) {
+          // 1. Extrair header: vara, tipo de audiência, data, hora
+          const varaMatch = conteudo.match(/^(.+?)\s*-\s*(Aberto|Fechado|Em andamento)/im);
+          const vara = varaMatch ? varaMatch[1].trim() : "";
+
+          const tipoPautaMatch = conteudo.match(/Pauta\s*\(\s*(.+?)\s*\)/i);
+          const tipoPautaRaw = tipoPautaMatch ? tipoPautaMatch[1].trim() : "";
+
+          const dataMatch = conteudo.match(/Data:\s*(\d{2})\/(\d{2})\/(\d{4})/);
+          const dataSEEU = dataMatch
+            ? `${dataMatch[3]}-${dataMatch[2]}-${dataMatch[1]}`
+            : "";
+
+          // Hora: aparece uma vez após "Hora Processo Partes Situação" ou no início dos blocos
+          const horaMatch = conteudo.match(/(?:Hora\s+Processo\s+Partes\s+Situa[çc][aã]o\s*\n?)(\d{2}:\d{2})/i)
+            || conteudo.match(/\n(\d{2}:\d{2})\s+Estado da Bahia/i)
+            || conteudo.match(/\n(\d{2}:\d{2})\s/);
+          const horaSEEU = horaMatch ? horaMatch[1] : "08:00";
+
+          // 2. Detectar atribuição e tipo de audiência a partir do header
+          const atribuicaoSEEU = forcedAtribuicao !== "auto"
+            ? forcedAtribuicao
+            : mapearAtribuicao(vara, "", `${vara} ${tipoPautaRaw} Execução Penal`);
+
+          const tipoAudienciaSEEU = mapearTipoAudiencia(tipoPautaRaw, atribuicaoSEEU);
+
+          // 3. Extrair blocos de eventos
+          // Cada bloco segue o padrão:
+          //   Estado da Bahia\nNOME EM CAPS\nPROCESSO SITUAÇÃO\nClasse Processual
+          // Ou variações com "Ministério Público" no lugar de "Estado da Bahia"
+          const regexProcessoSEEU = /(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})\s+(DESIGNADA|CANCELADA|REDESIGNADA|REALIZADA|NÃO[\s-]*REALIZADA)/gi;
+          let procMatch;
+          const blocosSeeu: { processo: string; situacao: string; posicao: number }[] = [];
+
+          while ((procMatch = regexProcessoSEEU.exec(conteudo)) !== null) {
+            blocosSeeu.push({
+              processo: procMatch[1],
+              situacao: procMatch[2],
+              posicao: procMatch.index,
+            });
+          }
+
+          for (const bloco of blocosSeeu) {
+            // Pegar texto ANTES do processo para encontrar o nome do réu
+            // O nome geralmente está 1-3 linhas antes do processo
+            const textoAntes = conteudo.substring(Math.max(0, bloco.posicao - 300), bloco.posicao);
+            const linhasAntes = textoAntes.split("\n").map(l => l.trim()).filter(Boolean);
+
+            // Pegar texto DEPOIS do processo para encontrar a classe processual
+            const textoDepois = conteudo.substring(
+              bloco.posicao + bloco.processo.length + bloco.situacao.length + 1,
+              bloco.posicao + bloco.processo.length + bloco.situacao.length + 200
+            );
+            const linhasDepois = textoDepois.split("\n").map(l => l.trim()).filter(Boolean);
+
+            // Nome do réu: linha em CAPS logo antes do processo
+            // Filtrar linhas que não são nomes (Estado da Bahia, Ministério Público, cabeçalhos, etc.)
+            const naoEhNome = (linha: string) =>
+              /^(Estado|Minist[eé]rio|Hora|Processo|Partes|Situa[çc][aã]o|TRIBUNAL|PODER|BAHIA|Data:|Pauta|Vara|\d{2}:\d{2}|\d{2}\/\d{2}\/|Página)/i.test(linha) ||
+              linha.length < 3 ||
+              /^\d+$/.test(linha);
+
+            let nomeReu = "";
+            // Procurar de trás para frente nas linhas antes do processo
+            for (let i = linhasAntes.length - 1; i >= 0; i--) {
+              const linha = linhasAntes[i];
+              if (!naoEhNome(linha) && linha === linha.toUpperCase() && /[A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ]/.test(linha)) {
+                nomeReu = linha;
+                break;
+              }
+            }
+
+            // Classe processual: primeira linha válida depois do processo
+            let classeProcessual = "";
+            for (const linha of linhasDepois) {
+              if (linha && !naoEhNome(linha) && !/^(Estado|Minist)/i.test(linha) && !/^\d{7}/.test(linha)) {
+                classeProcessual = linha;
+                break;
+              }
+            }
+
+            // Formatar nome em Title Case
+            const nomeFormatado = nomeReu ? toTitleCase(nomeReu) : "";
+
+            // Calcular horário fim (admonitória = 15min, justificação = 30min)
+            const [hSEEU, mSEEU] = horaSEEU.split(":").map(Number);
+            const duracaoSEEU = tipoAudienciaSEEU.sigla === "Admonitória" ? 15 : 30;
+            const fimMinSEEU = (hSEEU * 60 + mSEEU + duracaoSEEU) % 1440;
+            const horFimSEEU = `${String(Math.floor(fimMinSEEU / 60)).padStart(2, "0")}:${String(fimMinSEEU % 60).padStart(2, "0")}`;
+
+            const situacaoSEEU = bloco.situacao.toLowerCase().includes("design") ? "designada"
+              : bloco.situacao.toLowerCase().includes("cancel") ? "cancelada"
+              : bloco.situacao.toLowerCase().includes("redesign") ? "redesignada"
+              : bloco.situacao.toLowerCase().includes("realiz") ? "realizada"
+              : "designada";
+
+            const tituloSEEU = `${tipoAudienciaSEEU.sigla} - ${nomeFormatado || "Sem assistido"} - ${bloco.processo}`;
+
+            const descricaoSEEU = `INFORMAÇÕES DA AUDIÊNCIA
+
+Órgão Julgador: ${vara || "Não informado"}
+
+Tipo de Audiência: ${tipoAudienciaSEEU.descricao}
+
+Processo: ${bloco.processo}
+
+Classe Processual: ${classeProcessual || "Execução da Pena"}
+
+Parte(s) Assistida(s): ${nomeFormatado || "Não identificado"}
+
+Data e Horário: ${dataSEEU.substring(8, 10)}/${dataSEEU.substring(5, 7)}/${dataSEEU.substring(0, 4)} ${horaSEEU}
+
+Status: ${situacaoSEEU}
+
+Fonte: Pauta SEEU - ${tipoPautaRaw}`;
+
+            eventos.push({
+              titulo: tituloSEEU,
+              tipo: tipoAudienciaSEEU.descricao || tipoPautaRaw,
+              data: dataSEEU,
+              horarioInicio: horaSEEU,
+              horarioFim: horFimSEEU,
+              local: "Fórum Clemente Mariani - Camaçari",
+              processo: bloco.processo,
+              assistido: nomeFormatado,
+              assistidos: nomeFormatado ? [{ nome: nomeFormatado, cpf: "" }] : [],
+              atribuicao: atribuicaoSEEU,
+              status: mapearSituacao(situacaoSEEU),
+              descricao: descricaoSEEU,
+              classeJudicial: classeProcessual || "Execução da Pena",
+              situacaoAudiencia: situacaoSEEU,
+              orgaoJulgador: vara,
+            });
+          }
+        }
+      }
+
       setParsedEventos(eventos);
 
       if (eventos.length > 0) {
@@ -795,7 +948,7 @@ Status: ${sit}`;
   const handleReset = () => {
     setHtmlContent("");
     setParsedEventos([]);
-    setForcedAtribuicao("auto");
+    setForcedAtribuicao(defaultAtribuicao || "auto");
   };
 
   const getAtribuicaoIcon = (atribuicao: string) => {
@@ -811,11 +964,10 @@ Status: ${sit}`;
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
             <Upload className="w-6 h-6 text-blue-600" />
-            Importar Pauta de Audiências do PJe
+            {title || "Importar Pauta de Audiências do PJe"}
           </DialogTitle>
           <DialogDescription className="text-sm text-zinc-500 dark:text-zinc-400">
-            Cole o HTML completo da pauta de audiências do PJe. O sistema irá extrair automaticamente
-            todos os dados importantes.
+            {description || "Cole o HTML completo da pauta de audiências do PJe. O sistema irá extrair automaticamente todos os dados importantes."}
           </DialogDescription>
         </DialogHeader>
 

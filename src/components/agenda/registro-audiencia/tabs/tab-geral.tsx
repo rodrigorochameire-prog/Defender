@@ -46,6 +46,41 @@ interface TabGeralProps {
   setNovoHorarioPopoverOpen: (v: boolean) => void;
 }
 
+// --- Status options ---
+const statusOptions: {
+  key: StatusAudiencia;
+  label: string;
+  icon: typeof CheckCircle2;
+  activeBg: string;
+  activeText: string;
+  activeIcon: string;
+}[] = [
+  {
+    key: "concluida",
+    label: "Concluída",
+    icon: CheckCircle2,
+    activeBg: "bg-emerald-50 dark:bg-emerald-950/30",
+    activeText: "text-emerald-700 dark:text-emerald-400",
+    activeIcon: "text-emerald-600 dark:text-emerald-400",
+  },
+  {
+    key: "redesignada",
+    label: "Redesignada",
+    icon: AlertTriangle,
+    activeBg: "bg-zinc-100 dark:bg-zinc-800/50",
+    activeText: "text-zinc-800 dark:text-zinc-200",
+    activeIcon: "text-zinc-700 dark:text-zinc-300",
+  },
+  {
+    key: "suspensa",
+    label: "Suspensa",
+    icon: Clock,
+    activeBg: "bg-zinc-100 dark:bg-zinc-800/50",
+    activeText: "text-zinc-700 dark:text-zinc-300",
+    activeIcon: "text-zinc-600 dark:text-zinc-400",
+  },
+];
+
 export function TabGeral({
   registro,
   updateRegistro,
@@ -68,21 +103,16 @@ export function TabGeral({
   const resultadosDisponiveis = resultadoOptionsPorAtribuicao[evento.atribuicao] || resultadoOptionsPorAtribuicao["Criminal Geral"];
 
   return (
-    <div className="space-y-4 max-w-5xl mx-auto">
-      {/* Status + Comparecimento */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Status */}
-        <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-4">
-          <Label className="text-xs font-semibold mb-3 block flex items-center gap-2 text-zinc-700 dark:text-zinc-300">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-500" />
+    <div className="space-y-3 max-w-5xl mx-auto">
+      {/* ── Status + Comparecimento ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Status — segmented control */}
+        <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-3">
+          <p className="text-[10px] uppercase tracking-wider font-semibold mb-2 text-zinc-400 dark:text-zinc-500">
             Status da Audiência
-          </Label>
-          <div className="grid grid-cols-3 gap-2">
-            {([
-              { key: "concluida" as const, label: "Concluída", icon: CheckCircle2, activeClasses: "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30", activeIcon: "text-emerald-600" },
-              { key: "redesignada" as const, label: "Redesignada", icon: AlertTriangle, activeClasses: "border-zinc-500 bg-zinc-100 dark:bg-zinc-800/50", activeIcon: "text-zinc-700 dark:text-zinc-300" },
-              { key: "suspensa" as const, label: "Suspensa", icon: Clock, activeClasses: "border-zinc-400 bg-zinc-100 dark:bg-zinc-800/50", activeIcon: "text-zinc-600 dark:text-zinc-400" },
-            ]).map((s) => {
+          </p>
+          <div className="flex rounded-lg border border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
+            {statusOptions.map((s, idx) => {
               const Icon = s.icon;
               const isActive = statusAudiencia === s.key;
               return (
@@ -96,85 +126,87 @@ export function TabGeral({
                     if (s.key === "suspensa") updateRegistro({ realizada: true, resultado: "suspensa" });
                   }}
                   className={cn(
-                    "p-2.5 rounded-xl border transition-all cursor-pointer",
-                    isActive ? s.activeClasses : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700"
+                    "flex-1 px-2 py-2 flex items-center justify-center gap-1.5 text-xs font-semibold transition-all cursor-pointer",
+                    idx < statusOptions.length - 1 && "border-r border-zinc-200/80 dark:border-zinc-800/80",
+                    isActive
+                      ? `${s.activeBg} ${s.activeText}`
+                      : "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                   )}
                 >
-                  <Icon className={cn("w-5 h-5 mx-auto mb-0.5", isActive ? s.activeIcon : "text-zinc-400")} />
-                  <p className="font-semibold text-xs text-center">{s.label}</p>
+                  <Icon className={cn("w-3.5 h-3.5 shrink-0", isActive ? s.activeIcon : "text-zinc-400 dark:text-zinc-500")} />
+                  <span className="hidden sm:inline">{s.label}</span>
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Comparecimento */}
-        <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-4">
-          <Label className="text-xs font-semibold mb-3 block flex items-center gap-2 text-zinc-700 dark:text-zinc-300">
-            <UserCheck className="w-4 h-4 text-zinc-600 dark:text-zinc-500" />
+        {/* Comparecimento — segmented control */}
+        <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-3">
+          <p className="text-[10px] uppercase tracking-wider font-semibold mb-2 text-zinc-400 dark:text-zinc-500">
             Comparecimento do Assistido
-          </Label>
-          <div className="grid grid-cols-2 gap-3">
+          </p>
+          <div className="flex rounded-lg border border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
             <button
               type="button"
               onClick={() => { updateRegistro({ assistidoCompareceu: true }); setDecretoRevelia(null); }}
               className={cn(
-                "p-3 rounded-xl border transition-all cursor-pointer",
+                "flex-1 px-3 py-2 flex items-center justify-center gap-1.5 text-xs font-semibold transition-all cursor-pointer border-r border-zinc-200/80 dark:border-zinc-800/80",
                 registro.assistidoCompareceu
-                  ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30"
-                  : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-emerald-200"
+                  ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400"
+                  : "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
               )}
             >
-              <UserCheck className={cn("w-6 h-6 mx-auto mb-1", registro.assistidoCompareceu ? "text-emerald-600" : "text-zinc-400")} />
-              <p className="font-semibold text-sm text-center">Presente</p>
+              <UserCheck className={cn("w-3.5 h-3.5 shrink-0", registro.assistidoCompareceu ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400")} />
+              Presente
             </button>
             <button
               type="button"
               onClick={() => { updateRegistro({ assistidoCompareceu: false }); setDecretoRevelia(null); }}
               className={cn(
-                "p-3 rounded-xl border transition-all cursor-pointer",
+                "flex-1 px-3 py-2 flex items-center justify-center gap-1.5 text-xs font-semibold transition-all cursor-pointer",
                 !registro.assistidoCompareceu
-                  ? "border-rose-500 bg-rose-50 dark:bg-rose-950/30"
-                  : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-rose-200"
+                  ? "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400"
+                  : "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
               )}
             >
-              <UserX className={cn("w-6 h-6 mx-auto mb-1", !registro.assistidoCompareceu ? "text-rose-600" : "text-zinc-400")} />
-              <p className="font-semibold text-sm text-center">Ausente</p>
+              <UserX className={cn("w-3.5 h-3.5 shrink-0", !registro.assistidoCompareceu ? "text-rose-600 dark:text-rose-400" : "text-zinc-400")} />
+              Ausente
             </button>
           </div>
 
-          {/* Decreto de Revelia */}
+          {/* Revelia — inline toggle */}
           {!registro.assistidoCompareceu && (
-            <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-800 animate-in fade-in-50 slide-in-from-top-2">
-              <Label className="text-xs font-semibold mb-2 block text-zinc-700 dark:text-zinc-300">
-                Foi decretada revelia?
-              </Label>
-              <div className="grid grid-cols-2 gap-2">
+            <div className="mt-2.5 flex items-center gap-2.5 animate-in fade-in-50 slide-in-from-top-2">
+              <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+                Revelia?
+              </span>
+              <div className="flex rounded-lg border border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden flex-1">
                 <button
                   type="button"
                   onClick={() => setDecretoRevelia(true)}
                   className={cn(
-                    "p-2 rounded-lg border text-xs font-semibold transition-all cursor-pointer",
+                    "flex-1 px-2.5 py-1.5 text-xs font-semibold transition-all cursor-pointer border-r border-zinc-200/80 dark:border-zinc-800/80 flex items-center justify-center gap-1",
                     decretoRevelia === true
-                      ? "border-rose-500 bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300"
-                      : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
+                      ? "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300"
+                      : "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                   )}
                 >
-                  <Gavel className="inline w-3 h-3 mr-1" />
-                  Sim, decretou revelia
+                  <Gavel className="w-3 h-3 shrink-0" />
+                  Sim, decretou
                 </button>
                 <button
                   type="button"
                   onClick={() => setDecretoRevelia(false)}
                   className={cn(
-                    "p-2 rounded-lg border text-xs font-semibold transition-all cursor-pointer",
+                    "flex-1 px-2.5 py-1.5 text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1",
                     decretoRevelia === false
-                      ? "border-zinc-500 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
-                      : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
+                      ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                      : "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                   )}
                 >
-                  <X className="inline w-3 h-3 mr-1" />
-                  Não decretou revelia
+                  <X className="w-3 h-3 shrink-0" />
+                  Não decretou
                 </button>
               </div>
             </div>
@@ -182,40 +214,38 @@ export function TabGeral({
         </div>
       </div>
 
-      {/* Redesignação */}
+      {/* ── Redesignação ── */}
       {statusAudiencia === "redesignada" && (
-        <div className="space-y-4 animate-in fade-in-50 slide-in-from-top-2">
+        <div className="space-y-3 animate-in fade-in-50 slide-in-from-top-2">
           {/* Motivo */}
-          <div className="bg-zinc-50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-5">
-            <div className="border-l-4 border-zinc-400 dark:border-zinc-600 pl-3 -ml-2 mb-3">
-              <Label className="text-sm font-semibold mb-0.5 block text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-zinc-600 dark:text-zinc-500" />
+          <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-3">
+            <div className="flex items-center gap-2 mb-2.5">
+              <AlertTriangle className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 shrink-0" />
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500">
                 Motivo da Redesignação
-                <span className="ml-auto text-xs font-semibold text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded">
-                  Obrigatório
-                </span>
-              </Label>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Selecione ou descreva o motivo da redesignação</p>
+              </p>
+              <Badge variant="outline" className="ml-auto text-[9px] px-1.5 py-0 border-zinc-300 dark:border-zinc-700 text-zinc-500">
+                Obrigatório
+              </Badge>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 mb-3">
+            <div className="flex flex-wrap gap-1.5 mb-2.5">
               {motivoNaoRealizacaoOptions.map((opt) => {
                 const Icon = opt.icon;
+                const isActive = registro.motivoNaoRealizacao === opt.value;
                 return (
                   <button
                     key={opt.value}
                     type="button"
                     onClick={() => updateRegistro({ motivoNaoRealizacao: opt.value })}
                     className={cn(
-                      "p-2.5 rounded-lg border text-left transition-all cursor-pointer",
-                      registro.motivoNaoRealizacao === opt.value
-                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30"
-                        : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-300"
+                      "px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer",
+                      isActive
+                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400"
+                        : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700"
                     )}
                   >
-                    <div className="flex items-center gap-2">
-                      <Icon className={cn("w-4 h-4 shrink-0", registro.motivoNaoRealizacao === opt.value ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400")} />
-                      <span className="text-xs font-semibold">{opt.label}</span>
-                    </div>
+                    <Icon className={cn("w-3.5 h-3.5 shrink-0", isActive ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400")} />
+                    {opt.label}
                   </button>
                 );
               })}
@@ -224,21 +254,21 @@ export function TabGeral({
               value={registro.motivoRedesignacao || ""}
               onChange={(e) => updateRegistro({ motivoRedesignacao: e.target.value })}
               placeholder="Detalhe o motivo da redesignação (opcional)"
-              rows={3}
+              rows={2}
               className="text-sm bg-white dark:bg-zinc-950"
             />
 
-            {/* Witness details for redesignation */}
+            {/* Witness details */}
             {registro.motivoNaoRealizacao === "ausencia-testemunha" && (
-              <div className="mt-4 space-y-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-                <Label className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Detalhes sobre a Testemunha</Label>
+              <div className="mt-3 space-y-2.5 pt-3 border-t border-zinc-200/80 dark:border-zinc-800/80">
+                <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Detalhes sobre a Testemunha</p>
 
                 {registro.depoentes && registro.depoentes.length > 0 && (
                   <div>
-                    <Label className="text-xs font-semibold mb-2 block text-zinc-700 dark:text-zinc-300">
-                      Quais depoentes motivaram a redesignação?
-                    </Label>
-                    <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-2">
+                    <p className="text-[10px] uppercase tracking-wider font-semibold mb-1.5 text-zinc-400 dark:text-zinc-500">
+                      Depoentes que motivaram
+                    </p>
+                    <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto pr-1">
                       {registro.depoentes.map((depoente, idx) => {
                         const isSelected = depoentesRedesignacao.includes(depoente.nome);
                         const depoenteStyle = getDepoenteStyle(depoente.tipo);
@@ -246,7 +276,7 @@ export function TabGeral({
                           <label
                             key={idx}
                             className={cn(
-                              "p-3 rounded-lg border text-xs font-semibold text-left transition-all cursor-pointer flex items-center gap-3",
+                              "px-2.5 py-2 rounded-lg border text-xs font-semibold cursor-pointer flex items-center gap-2.5 transition-all",
                               isSelected
                                 ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30"
                                 : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-300"
@@ -259,10 +289,8 @@ export function TabGeral({
                                 else setDepoentesRedesignacao(depoentesRedesignacao.filter((n) => n !== depoente.nome));
                               }}
                             />
-                            <div className="flex items-center gap-2">
-                              <span className="text-zinc-700 dark:text-zinc-300">{depoente.nome}</span>
-                              <Badge className={`${depoenteStyle.bg} ${depoenteStyle.text} text-[10px] px-1.5 py-0`}>{depoenteStyle.label}</Badge>
-                            </div>
+                            <span className="text-zinc-700 dark:text-zinc-300">{depoente.nome}</span>
+                            <Badge className={`${depoenteStyle.bg} ${depoenteStyle.text} text-[10px] px-1.5 py-0`}>{depoenteStyle.label}</Badge>
                           </label>
                         );
                       })}
@@ -270,51 +298,60 @@ export function TabGeral({
                   </div>
                 )}
 
-                <div>
-                  <Label className="text-xs font-semibold mb-2 block text-zinc-700 dark:text-zinc-300">A testemunha foi intimada?</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { value: "nao-intimada", label: "Não foi intimada" },
-                      { value: "nao-compareceu", label: "Foi intimada e não compareceu" },
-                    ].map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => setTestemunhaIntimada(opt.value)}
-                        className={cn(
-                          "p-2 rounded-lg border text-xs font-semibold transition-all cursor-pointer",
-                          testemunhaIntimada === opt.value
-                            ? "border-zinc-500 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
-                            : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
-                        )}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
+                {/* Intimada + Parte insistiu — side by side */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold mb-1.5 text-zinc-400 dark:text-zinc-500">
+                      Testemunha intimada?
+                    </p>
+                    <div className="flex rounded-lg border border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
+                      {[
+                        { value: "nao-intimada", label: "Não intimada" },
+                        { value: "nao-compareceu", label: "Intimada, não compareceu" },
+                      ].map((opt, idx) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setTestemunhaIntimada(opt.value)}
+                          className={cn(
+                            "flex-1 px-2 py-1.5 text-[10px] font-semibold transition-all cursor-pointer leading-tight",
+                            idx === 0 && "border-r border-zinc-200/80 dark:border-zinc-800/80",
+                            testemunhaIntimada === opt.value
+                              ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                              : "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <Label className="text-xs font-semibold mb-2 block text-zinc-700 dark:text-zinc-300">Qual parte insistiu no depoimento?</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { value: "mp", label: "Ministério Público" },
-                      { value: "defesa", label: "Defesa" },
-                    ].map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => setParteInsistiu(opt.value)}
-                        className={cn(
-                          "p-2 rounded-lg border text-xs font-semibold transition-all cursor-pointer",
-                          parteInsistiu === opt.value
-                            ? "border-zinc-500 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
-                            : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
-                        )}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold mb-1.5 text-zinc-400 dark:text-zinc-500">
+                      Parte que insistiu
+                    </p>
+                    <div className="flex rounded-lg border border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
+                      {[
+                        { value: "mp", label: "Ministério Público" },
+                        { value: "defesa", label: "Defesa" },
+                      ].map((opt, idx) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setParteInsistiu(opt.value)}
+                          className={cn(
+                            "flex-1 px-2 py-1.5 text-[10px] font-semibold transition-all cursor-pointer",
+                            idx === 0 && "border-r border-zinc-200/80 dark:border-zinc-800/80",
+                            parteInsistiu === opt.value
+                              ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                              : "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -322,24 +359,24 @@ export function TabGeral({
           </div>
 
           {/* Nova Data e Horário */}
-          <div className="bg-zinc-50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-5">
-            <div className="border-l-4 border-zinc-400 dark:border-zinc-600 pl-3 -ml-2 mb-3">
-              <Label className="text-sm font-semibold mb-0.5 block text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-zinc-600 dark:text-zinc-500" />
-                Nova Data e Horário da Audiência
-                <span className="ml-auto text-xs font-normal text-zinc-500 dark:text-zinc-400">(Opcional)</span>
-              </Label>
+          <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-3">
+            <div className="flex items-center gap-2 mb-2.5">
+              <Calendar className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 shrink-0" />
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500">
+                Nova Data e Horário
+              </p>
+              <span className="ml-auto text-[10px] text-zinc-400 dark:text-zinc-500">Opcional</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-semibold mb-1.5 block text-zinc-700 dark:text-zinc-300">Nova Data</Label>
+                <Label className="text-xs font-semibold mb-1.5 block text-zinc-600 dark:text-zinc-400">Nova Data</Label>
                 <Popover open={novaDataPopoverOpen} onOpenChange={setNovaDataPopoverOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className={cn("w-full justify-start text-left font-normal text-sm bg-white dark:bg-zinc-950 cursor-pointer", !registro.dataRedesignacao && "text-zinc-500 dark:text-zinc-400")}
+                      className={cn("w-full justify-start text-left font-normal text-sm h-8 bg-white dark:bg-zinc-950 cursor-pointer", !registro.dataRedesignacao && "text-zinc-500 dark:text-zinc-400")}
                     >
-                      <Calendar className="mr-2 h-4 w-4" />
+                      <Calendar className="mr-2 h-3.5 w-3.5" />
                       {registro.dataRedesignacao ? format(new Date(registro.dataRedesignacao + "T12:00:00"), "PPP", { locale: ptBR }) : "Selecione uma data"}
                     </Button>
                   </PopoverTrigger>
@@ -363,26 +400,24 @@ export function TabGeral({
                 </Popover>
               </div>
               <div>
-                <Label className="text-xs font-semibold mb-1.5 block text-zinc-700 dark:text-zinc-300">Novo Horário</Label>
-                <div className="flex gap-2">
-                  <input
-                    type="time"
-                    value={registro.horarioRedesignacao || ""}
-                    onChange={(e) => updateRegistro({ horarioRedesignacao: e.target.value })}
-                    className="flex-1 px-3 py-2 text-sm border border-zinc-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                  />
-                </div>
-                <div className="flex gap-1 mt-2 flex-wrap">
+                <Label className="text-xs font-semibold mb-1.5 block text-zinc-600 dark:text-zinc-400">Novo Horário</Label>
+                <input
+                  type="time"
+                  value={registro.horarioRedesignacao || ""}
+                  onChange={(e) => updateRegistro({ horarioRedesignacao: e.target.value })}
+                  className="w-full px-3 py-1.5 text-sm h-8 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                />
+                <div className="flex gap-1 mt-1.5 flex-wrap">
                   {["08:00", "09:00", "10:00", "13:00", "14:00", "15:00"].map((h) => (
                     <button
                       key={h}
                       type="button"
                       onClick={() => updateRegistro({ horarioRedesignacao: h })}
                       className={cn(
-                        "px-2 py-1 text-[10px] font-semibold rounded-lg border transition-all cursor-pointer",
+                        "px-2 py-0.5 text-[10px] font-semibold rounded-md border transition-all cursor-pointer",
                         registro.horarioRedesignacao === h
                           ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400"
-                          : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300"
+                          : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300"
                       )}
                     >
                       {h}
@@ -395,31 +430,37 @@ export function TabGeral({
         </div>
       )}
 
-      {/* Resultado */}
+      {/* ── Resultado ── */}
       {statusAudiencia === "concluida" && (
         <>
-          <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-4">
-            <Label className="text-xs font-semibold mb-3 block flex items-center gap-2 text-zinc-700 dark:text-zinc-300">
-              <Scale className="w-4 h-4 text-zinc-600 dark:text-zinc-500" />
-              Resultado da Audiência *
-            </Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+          <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-3">
+            <div className="flex items-center gap-2 mb-2.5">
+              <Scale className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 shrink-0" />
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500">
+                Resultado da Audiência
+              </p>
+              <Badge variant="outline" className="ml-auto text-[9px] px-1.5 py-0 border-zinc-300 dark:border-zinc-700 text-zinc-500">
+                Obrigatório
+              </Badge>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
               {resultadosDisponiveis.map((opt) => {
                 const Icon = opt.icon;
+                const isActive = registro.resultado === opt.value;
                 return (
                   <button
                     key={opt.value}
                     type="button"
                     onClick={() => updateRegistro({ resultado: opt.value, motivoRedesignacao: opt.value !== "redesignada" ? undefined : registro.motivoRedesignacao })}
                     className={cn(
-                      "p-2.5 rounded-lg border transition-all cursor-pointer",
-                      registro.resultado === opt.value
-                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30"
-                        : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-300"
+                      "px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer",
+                      isActive
+                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400"
+                        : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700"
                     )}
                   >
-                    <Icon className={cn("w-5 h-5 mx-auto mb-1", registro.resultado === opt.value ? "text-emerald-600" : "text-zinc-400")} />
-                    <p className="text-xs font-semibold text-center leading-tight">{opt.label}</p>
+                    <Icon className={cn("w-3.5 h-3.5 shrink-0", isActive ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400")} />
+                    {opt.label}
                   </button>
                 );
               })}
@@ -428,18 +469,18 @@ export function TabGeral({
 
           {/* Tipo de Extinção */}
           {registro.resultado === "extincao" && (
-            <div className="bg-zinc-50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-5">
-              <div className="border-l-4 border-zinc-400 dark:border-zinc-600 pl-3 -ml-2 mb-3">
-                <Label className="text-sm font-semibold mb-0.5 block text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <X className="w-4 h-4 text-zinc-600 dark:text-zinc-500" />
+            <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-3 animate-in fade-in-50 slide-in-from-top-2">
+              <div className="flex items-center gap-2 mb-2">
+                <X className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 shrink-0" />
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500">
                   Tipo de Extinção
-                </Label>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Especifique qual foi o tipo de extinção</p>
+                </p>
               </div>
               <Textarea
                 value={registro.tipoExtincao || ""}
                 onChange={(e) => updateRegistro({ tipoExtincao: e.target.value })}
-                rows={5}
+                placeholder="Especifique qual foi o tipo de extinção"
+                rows={3}
                 className="text-sm bg-white dark:bg-zinc-950"
               />
             </div>

@@ -536,6 +536,7 @@ export default function AgendaPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isPJeImportModalOpen, setIsPJeImportModalOpen] = useState(false);
+  const [isSEEUImportModalOpen, setIsSEEUImportModalOpen] = useState(false);
   const [isGoogleConfigModalOpen, setIsGoogleConfigModalOpen] = useState(false);
   const [isGoogleSyncModalOpen, setIsGoogleSyncModalOpen] = useState(false);
   const [isICalImportModalOpen, setIsICalImportModalOpen] = useState(false);
@@ -1354,6 +1355,10 @@ export default function AgendaPage() {
                 <FileUp className="w-4 h-4 mr-2" />
                 Importar do PJe
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsSEEUImportModalOpen(true)}>
+                <Lock className="w-4 h-4 mr-2" />
+                Importar do SEEU
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setIsICalImportModalOpen(true)}>
                 <Upload className="w-4 h-4 mr-2" />
                 Importar iCal
@@ -1710,6 +1715,15 @@ export default function AgendaPage() {
         isOpen={isPJeImportModalOpen}
         onClose={() => setIsPJeImportModalOpen(false)}
         onImport={handleImportPJe}
+      />
+
+      <PJeAgendaImportModal
+        isOpen={isSEEUImportModalOpen}
+        onClose={() => setIsSEEUImportModalOpen(false)}
+        onImport={handleImportPJe}
+        title="Importar Pauta do SEEU"
+        description="Cole o texto da pauta de audiências do SEEU (Execução Penal). O sistema detecta automaticamente admonitórias, justificações e demais tipos."
+        defaultAtribuicao="Execução Penal"
       />
 
       <GoogleCalendarConfigModal

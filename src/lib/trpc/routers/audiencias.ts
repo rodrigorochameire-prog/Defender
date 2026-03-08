@@ -225,6 +225,78 @@ export const audienciasRouter = router({
       return { success: true };
     }),
 
+  // ==========================================
+  // REGISTRO DE AUDIÊNCIA (JSONB persistence)
+  // ==========================================
+
+  // Salvar registro de audiência (cria ou atualiza)
+  salvarRegistro: protectedProcedure
+    .input(z.object({
+      audienciaId: z.number(),
+      registro: z.any(), // RegistroAudienciaData as JSON
+    }))
+    .mutation(async ({ input }) => {
+      const registroData = input.registro as Record<string, unknown>;
+      const [updated] = await db
+        .update(audiencias)
+        .set({
+          registroAudiencia: registroData,
+          status: registroData.realizada ? "realizada" : "reagendada",
+          resultado: (registroData.resultado as string) || null,
+          anotacoes: (registroData.anotacoesGerais as string) || null,
+          updatedAt: new Date(),
+        })
+        .where(eq(audiencias.id, input.audienciaId))
+        .returning();
+      return updated;
+    }),
+
+  // Buscar registro de audiência por ID da audiência
+  buscarRegistro: protectedProcedure
+    .input(z.object({
+      audienciaId: z.number(),
+    }))
+    .query(async ({ input }) => {
+      const [audiencia] = await db
+        .select({
+          id: audiencias.id,
+          registroAudiencia: audiencias.registroAudiencia,
+          status: audiencias.status,
+        })
+        .from(audiencias)
+        .where(eq(audiencias.id, input.audienciaId))
+        .limit(1);
+      return audiencia?.registroAudiencia || null;
+    }),
+
+  // Buscar histórico de registros por processo ou assistido
+  buscarHistoricoRegistros: protectedProcedure
+    .input(z.object({
+      processoId: z.number().optional(),
+      assistidoId: z.number().optional(),
+    }))
+    .query(async ({ input }) => {
+      const conditions = [];
+      if (input.processoId) conditions.push(eq(audiencias.processoId, input.processoId));
+      if (input.assistidoId) conditions.push(eq(audiencias.assistidoId, input.assistidoId));
+
+      if (conditions.length === 0) return [];
+
+      const results = await db
+        .select({
+          id: audiencias.id,
+          registroAudiencia: audiencias.registroAudiencia,
+          dataAudiencia: audiencias.dataAudiencia,
+          status: audiencias.status,
+          resultado: audiencias.resultado,
+        })
+        .from(audiencias)
+        .where(or(...conditions))
+        .orderBy(desc(audiencias.dataAudiencia));
+
+      return results.filter(r => r.registroAudiencia != null);
+    }),
+
   // Importar audiências em batch (do PJe)
   // Verifica duplicatas por número do processo + data + horário
   // Cria assistidos automaticamente se não existirem

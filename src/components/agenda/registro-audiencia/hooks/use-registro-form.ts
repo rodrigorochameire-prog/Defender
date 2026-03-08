@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc/client";
 import {
   adicionarRegistroHistorico,
   buscarHistoricoPorEvento,
@@ -20,6 +21,42 @@ interface UseRegistroFormProps {
 }
 
 export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: UseRegistroFormProps) {
+  // Determine if this is a DB-backed audiencia (numeric ID) or local event (string ID)
+  const audienciaId = typeof evento.id === "number" ? evento.id : null;
+
+  // Extract numeric processoId and assistidoId for DB queries
+  const processoId = (() => {
+    const pid = evento.processo?.id ?? evento.processoId;
+    return typeof pid === "number" ? pid : undefined;
+  })();
+  const assistidoIdNum = (() => {
+    const aid = evento.assistido?.id ?? evento.assistidoId;
+    return typeof aid === "number" ? aid : undefined;
+  })();
+
+  // ==========================================
+  // tRPC hooks (must be at top level)
+  // ==========================================
+
+  // Load saved registro from DB
+  const { data: savedRegistro } = trpc.audiencias.buscarRegistro.useQuery(
+    { audienciaId: audienciaId! },
+    { enabled: isOpen && audienciaId !== null }
+  );
+
+  // Load historical registros from DB (by processo or assistido)
+  const { data: historicoDb } = trpc.audiencias.buscarHistoricoRegistros.useQuery(
+    { processoId, assistidoId: assistidoIdNum },
+    { enabled: isOpen && (!!processoId || !!assistidoIdNum) }
+  );
+
+  // Save mutation
+  const salvarMutation = trpc.audiencias.salvarRegistro.useMutation();
+
+  // ==========================================
+  // Local state
+  // ==========================================
+
   const [registro, setRegistro] = useState<RegistroAudienciaData>({
     eventoId: evento.id,
     dataRealizacao: new Date().toISOString().split("T")[0],
@@ -55,7 +92,7 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
   const [registroSalvo, setRegistroSalvo] = useState(false);
   const [ultimoSalvamento, setUltimoSalvamento] = useState<string | null>(null);
 
-  // Redesignação detail states
+  // Redesignacao detail states
   const [testemunhaIntimada, setTestemunhaIntimada] = useState("");
   const [parteInsistiu, setParteInsistiu] = useState("");
   const [depoentesRedesignacao, setDepoentesRedesignacao] = useState<string[]>([]);
@@ -64,39 +101,81 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
   const [novaDataPopoverOpen, setNovaDataPopoverOpen] = useState(false);
   const [novoHorarioPopoverOpen, setNovoHorarioPopoverOpen] = useState(false);
 
-  // Load historical records
+  // Track whether we already loaded from DB to avoid overwriting user edits
+  const dbLoadedRef = useRef(false);
+
+  // ==========================================
+  // Load saved registro from DB when modal opens
+  // ==========================================
   useEffect(() => {
-    if (isOpen && evento.id) {
+    if (savedRegistro && isOpen && !dbLoadedRef.current) {
+      const saved = savedRegistro as Record<string, any>;
+      setRegistro((prev) => ({
+        ...prev,
+        ...saved,
+        // Ensure depoentes is always an array
+        depoentes: Array.isArray(saved.depoentes) ? saved.depoentes : prev.depoentes,
+      }));
+      setRegistroSalvo(true);
+      dbLoadedRef.current = true;
+    }
+  }, [savedRegistro, isOpen]);
+
+  // ==========================================
+  // Load historico from DB
+  // ==========================================
+  useEffect(() => {
+    if (historicoDb && historicoDb.length > 0) {
+      const transformed = historicoDb.map((h) => ({
+        ...((h.registroAudiencia || {}) as Record<string, any>),
+        historicoId: `DB-${h.id}`,
+        dataRealizacao: h.dataAudiencia,
+        realizada: h.status === "realizada",
+      }));
+      setRegistrosAnteriores(transformed);
+    }
+  }, [historicoDb]);
+
+  // ==========================================
+  // Fallback: Load from localStorage for local events
+  // ==========================================
+  useEffect(() => {
+    if (isOpen && evento.id && audienciaId === null) {
+      // Local event -- use in-memory historico
       let historico = buscarHistoricoPorEvento(evento.id);
 
       if (historico.length === 0 && (evento.processo?.id || evento.processoId)) {
-        const processoId = evento.processo?.id || evento.processoId;
-        historico = buscarHistoricoPorProcesso(processoId || "");
+        const pid = evento.processo?.id || evento.processoId;
+        historico = buscarHistoricoPorProcesso(pid || "");
       }
 
       if (historico.length === 0 && (evento.assistido?.id || evento.assistidoId)) {
-        const assistidoId = evento.assistido?.id || evento.assistidoId;
-        historico = buscarHistoricoPorAssistido(assistidoId || "");
+        const aid = evento.assistido?.id || evento.assistidoId;
+        historico = buscarHistoricoPorAssistido(aid || "");
       }
 
       setRegistrosAnteriores(historico);
     } else if (!isOpen) {
       setRegistroSalvo(false);
       setUltimoSalvamento(null);
+      dbLoadedRef.current = false;
     }
-  }, [isOpen, evento.id]);
+  }, [isOpen, evento.id, audienciaId]);
 
-  const handleSubmit = useCallback(() => {
+  // ==========================================
+  // Submit handler (async for DB persistence)
+  // ==========================================
+  const handleSubmit = useCallback(async () => {
     if (!registro.dataRealizacao) {
-      toast.error("Data de realização é obrigatória");
+      toast.error("Data de realizacao e obrigatoria");
       return;
     }
     if (statusAudiencia === "concluida" && !registro.resultado) {
-      toast.error("Resultado da audiência é obrigatório");
+      toast.error("Resultado da audiencia e obrigatorio");
       return;
     }
     if (statusAudiencia === "redesignada" && !registro.motivoNaoRealizacao) {
-      toast.error("Motivo da redesignação é obrigatório");
+      toast.error("Motivo da redesignacao e obrigatorio");
       return;
     }
 
@@ -108,60 +187,110 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
       assistidoId: evento.assistido?.id || evento.assistidoId,
     };
 
-    const historicoSalvo = adicionarRegistroHistorico(registroComVinculo);
+    try {
+      if (audienciaId) {
+        // Save to Supabase via tRPC
+        await salvarMutation.mutateAsync({
+          audienciaId,
+          registro: registroComVinculo,
+        });
+      } else {
+        // Fallback to in-memory store for local events
+        const historicoSalvo = adicionarRegistroHistorico(registroComVinculo);
 
-    if (!registro.realizada && registro.dataRedesignacao && onCriarNovoEvento) {
-      const novoEventoId = `EVT-${Date.now()}`;
-      const novoEvento = {
-        id: novoEventoId,
-        titulo: evento.titulo,
-        assistido: evento.assistido,
-        processo: evento.processo,
-        atribuicao: evento.atribuicao,
-        data: registro.dataRedesignacao,
-        horarioInicio: registro.horarioRedesignacao || evento.horarioInicio || "09:00",
-        horarioFim: evento.horarioFim || "10:00",
-        local: evento.local,
-        tipo: evento.tipo || "audiencia",
-        status: "agendado",
-        descricao: `Audiência redesignada. Motivo: ${registro.motivoRedesignacao || "Não informado"}`,
-        prioridade: evento.prioridade || "media",
-        recorrencia: "nenhuma",
-        lembretes: ["1d"],
-        tags: ["Redesignada"],
-        participantes: evento.participantes || [],
-        observacoes: `Audiência redesignada. Motivo: ${registro.motivoRedesignacao || "Não informado"}`,
-        documentos: [],
-        dataInclusao: new Date().toISOString(),
-        responsavel: evento.responsavel,
-      };
+        if (!registro.realizada && registro.dataRedesignacao && onCriarNovoEvento) {
+          const novoEventoId = `EVT-${Date.now()}`;
+          const novoEvento = {
+            id: novoEventoId,
+            titulo: evento.titulo,
+            assistido: evento.assistido,
+            processo: evento.processo,
+            atribuicao: evento.atribuicao,
+            data: registro.dataRedesignacao,
+            horarioInicio: registro.horarioRedesignacao || evento.horarioInicio || "09:00",
+            horarioFim: evento.horarioFim || "10:00",
+            local: evento.local,
+            tipo: evento.tipo || "audiencia",
+            status: "agendado",
+            descricao: `Audiencia redesignada. Motivo: ${registro.motivoRedesignacao || "Nao informado"}`,
+            prioridade: evento.prioridade || "media",
+            recorrencia: "nenhuma",
+            lembretes: ["1d"],
+            tags: ["Redesignada"],
+            participantes: evento.participantes || [],
+            observacoes: `Audiencia redesignada. Motivo: ${registro.motivoRedesignacao || "Nao informado"}`,
+            documentos: [],
+            dataInclusao: new Date().toISOString(),
+            responsavel: evento.responsavel,
+          };
 
-      onCriarNovoEvento(novoEvento);
-      vincularEventoRedesignado(historicoSalvo.historicoId, novoEventoId);
-      toast.success("Novo evento criado para a data redesignada!");
+          onCriarNovoEvento(novoEvento);
+          vincularEventoRedesignado(historicoSalvo.historicoId, novoEventoId);
+          toast.success("Novo evento criado para a data redesignada!");
+        }
+      }
+
+      // Also handle redesignacao for DB-backed events
+      if (audienciaId && !registro.realizada && registro.dataRedesignacao && onCriarNovoEvento) {
+        const novoEvento = {
+          id: `EVT-${Date.now()}`,
+          titulo: evento.titulo,
+          assistido: evento.assistido,
+          processo: evento.processo,
+          atribuicao: evento.atribuicao,
+          data: registro.dataRedesignacao,
+          horarioInicio: registro.horarioRedesignacao || evento.horarioInicio || "09:00",
+          horarioFim: evento.horarioFim || "10:00",
+          local: evento.local,
+          tipo: evento.tipo || "audiencia",
+          status: "agendado",
+          descricao: `Audiencia redesignada. Motivo: ${registro.motivoRedesignacao || "Nao informado"}`,
+          prioridade: evento.prioridade || "media",
+          recorrencia: "nenhuma",
+          lembretes: ["1d"],
+          tags: ["Redesignada"],
+          participantes: evento.participantes || [],
+          observacoes: `Audiencia redesignada. Motivo: ${registro.motivoRedesignacao || "Nao informado"}`,
+          documentos: [],
+          dataInclusao: new Date().toISOString(),
+          responsavel: evento.responsavel,
+        };
+
+        onCriarNovoEvento(novoEvento);
+        toast.success("Novo evento criado para a data redesignada!");
+      }
+
+      onSave(registroComVinculo);
+
+      const isAtualizacao = registroSalvo;
+      setRegistroSalvo(true);
+      setUltimoSalvamento(
+        new Date().toLocaleString("pt-BR", {
+          hour: "2-digit",
+          minute: "2-digit",
+          day: "2-digit",
+          month: "2-digit",
+        })
+      );
+
+      toast.success(isAtualizacao ? "Registro atualizado com sucesso!" : "Registro salvo com sucesso!", {
+        description: audienciaId
+          ? "Salvo no banco de dados"
+          : isAtualizacao
+            ? "As alteracoes foram salvas no historico"
+            : "Voce pode continuar editando ou fechar o modal",
+      });
+    } catch (error) {
+      console.error("Erro ao salvar registro:", error);
+      toast.error("Erro ao salvar registro", {
+        description: "Tente novamente",
+      });
     }
-
-    onSave(registroComVinculo);
-
-    const isAtualizacao = registroSalvo;
-    setRegistroSalvo(true);
-    setUltimoSalvamento(
-      new Date().toLocaleString("pt-BR", {
-        hour: "2-digit",
-        minute: "2-digit",
-        day: "2-digit",
-        month: "2-digit",
-      })
-    );
-
-    toast.success(isAtualizacao ? "Registro atualizado com sucesso!" : "Registro salvo com sucesso!", {
-      description: isAtualizacao ? "As alterações foram salvas no histórico" : "Você pode continuar editando ou fechar o modal",
-    });
-  }, [registro, statusAudiencia, registroSalvo, evento, onSave, onCriarNovoEvento]);
+  }, [registro, statusAudiencia, registroSalvo, evento, onSave, onCriarNovoEvento, audienciaId, salvarMutation]);
 
   const handleAddDepoente = useCallback(() => {
     if (!novoDepoenteNome.trim()) {
-      toast.error("Nome do depoente é obrigatório");
+      toast.error("Nome do depoente e obrigatorio");
       return;
     }
     const novoDepoente: Depoente = {
