@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DayEventsPopup } from "@/components/agenda/day-events-popup";
+import { DayEventsSheet } from "@/components/agenda/day-events-sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { buscarHistoricoPorProcesso, buscarHistoricoPorAssistido } from "@/lib/data/historico-audiencias";
 import {
@@ -58,11 +58,13 @@ interface CalendarMonthViewProps {
   onEditEvento?: (evento: any) => void;
   onDeleteEvento?: (id: string) => void;
   onArchiveEvento?: (id: string) => void;
+  /** Extra content rendered inline in the header (defensor avatars, stats, etc.) */
+  headerRight?: React.ReactNode;
 }
 
 import { getAtribuicaoColors, ATRIBUICAO_COLORS } from "@/lib/config/atribuicoes";
 
-// Ícones por tipo/atribuição
+// Ícones por tipo/atribuição (labels)
 const atribuicaoIcons: Record<string, any> = {
   "Tribunal do Júri": Gavel,
   "Grupo Especial do Júri": Gavel,
@@ -71,6 +73,16 @@ const atribuicaoIcons: Record<string, any> = {
   "Criminal Geral": Folder,
   "Substituição": RefreshCw,
   "Curadoria Especial": Shield,
+};
+
+// Ícones por atribuicaoKey (para cards do calendário)
+const atribuicaoKeyIcons: Record<string, any> = {
+  JURI: Gavel,
+  VVD: Shield,
+  EXECUCAO: Lock,
+  SUBSTITUICAO: RefreshCw,
+  SUBSTITUICAO_CIVEL: Folder,
+  CRIMINAL: Folder,
 };
 
 // Usar cores centralizadas
@@ -125,7 +137,7 @@ const isEventoCancelado = (status: string) =>
 // Cor neutra para eventos que não ocorrerão
 const COR_EVENTO_CANCELADO = "#a1a1aa"; // zinc-400
 
-// Componente de Evento Compacto - Visual sofisticado
+// Componente de Evento Compacto — Top-bar + Ícone (Padrão Defender)
 function EventoCompacto({
   evento,
   onEventClick,
@@ -137,31 +149,49 @@ function EventoCompacto({
   onEditEvento?: (evento: any) => void;
   onDeleteEvento?: (id: string) => void;
 }) {
-  // Usar atribuicaoKey se disponível, senão buscar por atribuicao (label)
   const colors = getAtribuicaoColors(evento.atribuicaoKey || evento.atribuicao);
   const solidColor = (colors as any).color || "#71717a";
   const hasRegistro = !!evento.registro;
   const eventoCancelado = isEventoCancelado(evento.status);
-
-  // Usar cor neutra se evento cancelado/redesignado
   const displayColor = eventoCancelado ? COR_EVENTO_CANCELADO : solidColor;
+
+  // Ícone da atribuição
+  const AtribIcon = atribuicaoKeyIcons[evento.atribuicaoKey] || Folder;
+
+  // Extrair nome do assistido abreviado (primeiro + último nome)
+  const assistidoAbrev = evento.assistido
+    ? evento.assistido.split(" ").length > 1
+      ? `${evento.assistido.split(" ")[0]} ${evento.assistido.split(" ").pop()?.charAt(0)}.`
+      : evento.assistido
+    : null;
 
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button
           onClick={(e) => e.stopPropagation()}
-          className={`group w-full text-left rounded-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 overflow-hidden ${
-            eventoCancelado ? "opacity-60" : ""
+          className={`group w-full text-left rounded-lg transition-all duration-200 overflow-hidden hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${
+            eventoCancelado ? "opacity-50" : ""
           }`}
-          style={{
-            backgroundColor: `${displayColor}15`,
-            borderLeft: `3px solid ${displayColor}`,
-          }}
         >
-          <div className="px-2 py-1.5">
-            <div className="flex items-center gap-1.5">
-              {/* Ícone de cancelado/redesignado */}
+          {/* Top-bar colorida */}
+          <div
+            className="h-[3px] w-full rounded-t-lg"
+            style={{ backgroundColor: displayColor }}
+          />
+
+          {/* Conteúdo do card */}
+          <div
+            className="px-1 sm:px-1.5 py-0.5 sm:py-1 bg-white dark:bg-zinc-800/80 border border-t-0 border-zinc-200/60 dark:border-zinc-700/40 rounded-b-lg group-hover:border-zinc-300 dark:group-hover:border-zinc-600 transition-colors"
+          >
+            {/* Linha 1: ícone + horário + indicadores */}
+            <div className="flex items-center gap-0.5 sm:gap-1">
+              <AtribIcon
+                className="w-2.5 h-2.5 shrink-0 hidden sm:block"
+                style={{ color: displayColor }}
+              />
+
+              {/* Status cancelado */}
               {(evento.status === "cancelado" || evento.status === "cancelada") && (
                 <XCircle className="w-2.5 h-2.5 text-zinc-400 shrink-0" />
               )}
@@ -169,32 +199,35 @@ function EventoCompacto({
                 <CalendarX2 className="w-2.5 h-2.5 text-zinc-400 shrink-0" />
               )}
 
-              {/* Horário com cor da atribuição (ou neutra se cancelado) */}
               <span
-                className={`text-[10px] font-bold shrink-0 ${eventoCancelado ? "line-through" : ""}`}
+                className={`text-[9px] sm:text-[10px] font-bold tabular-nums shrink-0 ${eventoCancelado ? "line-through" : ""}`}
                 style={{ color: displayColor }}
               >
                 {evento.horarioInicio}
               </span>
 
-              {/* Indicador de prioridade urgente (só mostra se não cancelado) */}
-              {!eventoCancelado && evento.prioridade === "urgente" && (
-                <AlertTriangle className="w-2.5 h-2.5 text-red-500 shrink-0" />
-              )}
+              {/* Spacer */}
+              <span className="flex-1" />
 
-              {/* Indicador de registro salvo */}
+              {/* Indicadores (urgente, registro) — desktop only */}
+              {!eventoCancelado && evento.prioridade === "urgente" && (
+                <AlertTriangle className="w-2.5 h-2.5 text-rose-500 shrink-0 hidden sm:block" />
+              )}
               {hasRegistro && (
-                <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
+                <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500 shrink-0 hidden sm:block" />
               )}
             </div>
 
-            {/* Título */}
-            <p className={`text-[10px] font-medium truncate leading-tight mt-0.5 ${
+            {/* Linha 2: tipo abreviado + assistido — hidden on mobile */}
+            <p className={`hidden sm:block text-[10px] font-medium truncate leading-tight mt-0.5 ${
               eventoCancelado
                 ? "text-zinc-400 dark:text-zinc-500 line-through"
-                : "text-zinc-700 dark:text-zinc-300"
+                : "text-zinc-700 dark:text-zinc-200"
             }`}>
               {abreviarTitulo(evento.titulo)}
+              {assistidoAbrev && !eventoCancelado && (
+                <span className="text-zinc-400 dark:text-zinc-500 font-normal"> — {assistidoAbrev}</span>
+              )}
             </p>
           </div>
         </button>
@@ -421,9 +454,9 @@ export function CalendarMonthView({
   onEditEvento,
   onDeleteEvento,
   onArchiveEvento,
+  headerRight,
 }: CalendarMonthViewProps) {
-  const [popupDate, setPopupDate] = useState<Date | null>(null);
-  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
+  const [sheetDate, setSheetDate] = useState<Date | null>(null);
 
   // Cálculo das datas do mês
   const monthStart = startOfMonth(currentDate);
@@ -453,9 +486,7 @@ export function CalendarMonthView({
   const handleDayClick = (date: Date, event: React.MouseEvent) => {
     const dayEvents = getEventosForDate(date);
     if (dayEvents.length > 0) {
-      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-      setPopupPosition({ x: rect.left, y: rect.bottom + 8 });
-      setPopupDate(date);
+      setSheetDate(date);
     } else {
       onDateClick(date);
     }
@@ -464,38 +495,49 @@ export function CalendarMonthView({
   return (
     <div className="space-y-4">
       {/* ==========================================
-          HEADER DO CALENDÁRIO
+          HEADER DO CALENDÁRIO — linha única compacta
           ========================================== */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => onDateChange(subMonths(currentDate, 1))}
-            className="h-9 w-9"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-          
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 min-w-[180px] text-center capitalize">
-            {format(currentDate, "MMMM yyyy", { locale: ptBR })}
+      <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+        {/* Month navigation */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onDateChange(subMonths(currentDate, 1))}
+          className="h-7 w-7 shrink-0"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </Button>
+
+        <div className="flex items-baseline gap-1.5 shrink-0">
+          <h2 className="font-serif text-xl font-semibold text-zinc-900 dark:text-zinc-100 capitalize leading-none">
+            {format(currentDate, "MMMM", { locale: ptBR })}
           </h2>
-          
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => onDateChange(addMonths(currentDate, 1))}
-            className="h-9 w-9"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </Button>
+          <span className="text-sm text-zinc-400 dark:text-zinc-500 font-normal tabular-nums">
+            {format(currentDate, "yyyy")}
+          </span>
         </div>
-        
-        <Button 
-          variant="outline" 
-          size="sm" 
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onDateChange(addMonths(currentDate, 1))}
+          className="h-7 w-7 shrink-0"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </Button>
+
+        {/* Extra content: stats — hidden on mobile to avoid overlap */}
+        {headerRight && (
+          <div className="hidden sm:flex flex-1 min-w-0 items-center justify-end gap-2">
+            {headerRight}
+          </div>
+        )}
+
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => onDateChange(new Date())}
-          className="h-9"
+          className="h-6 px-2 text-[10px] shrink-0 rounded-md"
         >
           Hoje
         </Button>
@@ -540,7 +582,7 @@ export function CalendarMonthView({
                     key={dayIndex}
                     onClick={(e) => handleDayClick(date, e)}
                     className={`
-                      relative min-h-[120px] p-2 border-r border-zinc-100 dark:border-zinc-800 last:border-r-0
+                      relative min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 border-r border-zinc-100 dark:border-zinc-800 last:border-r-0
                       transition-colors duration-150 cursor-pointer
                       ${isCurrentMonth 
                         ? isWeekendDay 
@@ -598,7 +640,7 @@ export function CalendarMonthView({
                           e.stopPropagation();
                           handleDayClick(date, e);
                         }}
-                        className="mt-1 text-[10px] font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                        className="mt-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
                       >
                         Ver todos
                       </button>
@@ -611,20 +653,16 @@ export function CalendarMonthView({
         </div>
       </Card>
 
-      {/* Popup de Eventos do Dia */}
-      {popupDate && (
-        <DayEventsPopup
-          isOpen={!!popupDate}
-          date={popupDate}
-          eventos={getEventosForDate(popupDate)}
-          position={popupPosition}
-          onClose={() => setPopupDate(null)}
-          onEventClick={onEventClick}
-          onEditEvento={onEditEvento}
-          onDeleteEvento={onDeleteEvento}
-          onArchiveEvento={onArchiveEvento}
-        />
-      )}
+      {/* Sheet lateral de eventos do dia */}
+      <DayEventsSheet
+        isOpen={!!sheetDate}
+        date={sheetDate || new Date()}
+        eventos={sheetDate ? getEventosForDate(sheetDate) : []}
+        onClose={() => setSheetDate(null)}
+        onEventClick={onEventClick}
+        onEditEvento={onEditEvento}
+        onDeleteEvento={onDeleteEvento}
+      />
     </div>
   );
 }

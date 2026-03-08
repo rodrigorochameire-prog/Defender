@@ -1,11 +1,19 @@
 "use client";
 
-import { useState, useMemo, useEffect, Fragment } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -145,14 +153,24 @@ import {
 // CONSTANTES - DESIGN SUÍÇO PREMIUM
 // ==========================================
 
+// Cores HEX por chave de filtro
+const FILTER_HEX: Record<string, string> = {
+  all: "#71717a",
+  VVD: "#f59e0b",
+  JURI: "#10b981",
+  EXECUCAO: "#3b82f6",
+  SUBSTITUICAO: "#f43f5e",
+  SUBSTITUICAO_CIVEL: "#f97316",
+};
+
 // Opções de filtro para a agenda (sem duplicatas)
 const AGENDA_FILTER_OPTIONS = [
-  { key: "all", icon: CalendarIcon, ...getAtribuicaoColors("all") },
-  { key: "VVD", icon: Shield, ...getAtribuicaoColors("VVD") },
-  { key: "JURI", icon: Gavel, ...getAtribuicaoColors("JURI") },
-  { key: "EXECUCAO", icon: Lock, ...getAtribuicaoColors("EXECUCAO") },
-  { key: "SUBSTITUICAO", icon: RefreshCw, ...getAtribuicaoColors("SUBSTITUICAO") },
-  { key: "SUBSTITUICAO_CIVEL", icon: Briefcase, ...getAtribuicaoColors("SUBSTITUICAO_CIVEL") },
+  { key: "all", icon: CalendarIcon, hex: FILTER_HEX.all, ...getAtribuicaoColors("all") },
+  { key: "VVD", icon: Shield, hex: FILTER_HEX.VVD, ...getAtribuicaoColors("VVD") },
+  { key: "JURI", icon: Gavel, hex: FILTER_HEX.JURI, ...getAtribuicaoColors("JURI") },
+  { key: "EXECUCAO", icon: Lock, hex: FILTER_HEX.EXECUCAO, ...getAtribuicaoColors("EXECUCAO") },
+  { key: "SUBSTITUICAO", icon: RefreshCw, hex: FILTER_HEX.SUBSTITUICAO, ...getAtribuicaoColors("SUBSTITUICAO") },
+  { key: "SUBSTITUICAO_CIVEL", icon: Briefcase, hex: FILTER_HEX.SUBSTITUICAO_CIVEL, ...getAtribuicaoColors("SUBSTITUICAO_CIVEL") },
 ];
 
 // Criar config com ícones JSX para este componente
@@ -161,7 +179,7 @@ AGENDA_FILTER_OPTIONS.forEach(option => {
   const IconComponent = option.icon;
   ATRIBUICAO_CONFIG[option.key] = {
     ...option,
-    icon: <IconComponent className="w-4 h-4" />,
+    icon: <IconComponent className="w-3.5 h-3.5" />,
   };
 });
 
@@ -449,55 +467,39 @@ function SemanaView({
   );
 }
 
-function FilterPill({ 
-  label, 
-  isActive, 
+function FilterPill({
+  label,
+  isActive,
   count,
   config,
-  onClick 
-}: { 
+  onClick
+}: {
   label: string;
   isActive: boolean;
   count: number;
   config: typeof ATRIBUICAO_CONFIG[string];
   onClick: () => void;
 }) {
+  const color = config.hex || "#71717a";
   return (
     <button
       onClick={onClick}
+      title={label}
       className={cn(
-        "group relative flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300",
-        "border overflow-hidden",
-        isActive 
-          ? "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 shadow-sm"
-          : "bg-white/80 dark:bg-zinc-900/50 border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 hover:bg-white dark:hover:bg-zinc-900"
+        "flex items-center gap-1.5 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap transition-all duration-200 border cursor-pointer",
+        isActive ? "px-2.5 shadow-sm" : "px-1.5 hover:shadow-sm"
       )}
+      style={
+        isActive
+          ? { backgroundColor: `${color}12`, borderColor: `${color}50`, color }
+          : { backgroundColor: "transparent", borderColor: "transparent", color: `${color}99` }
+      }
     >
-      {/* Borda lateral colorida */}
-      <div className={cn(
-        "absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full transition-all duration-300",
-        isActive ? config.indicator : "bg-zinc-200 dark:bg-zinc-700 group-hover:bg-zinc-300 dark:group-hover:bg-zinc-600"
-      )} />
-      
-      <span className={cn(
-        "transition-all duration-300 ml-1",
-        isActive ? config.text : "text-zinc-400 dark:text-zinc-500"
-      )}>
-        {config.icon}
-      </span>
-      <span className={cn(
-        "transition-colors duration-300",
-        isActive ? "text-zinc-700 dark:text-zinc-200" : "text-zinc-500 dark:text-zinc-400"
-      )}>{label}</span>
+      <span className="flex-shrink-0 [&>svg]:w-3.5 [&>svg]:h-3.5">{config.icon}</span>
+      {/* Label visible only when selected */}
+      {isActive && <span>{label}</span>}
       {count > 0 && (
-        <span className={cn(
-          "min-w-[1.25rem] px-1.5 py-0.5 rounded text-[10px] font-semibold text-center transition-all duration-300",
-          isActive 
-            ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300" 
-            : "bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 dark:text-zinc-500"
-        )}>
-          {count}
-        </span>
+        <span className="text-[9px] font-mono tabular-nums opacity-50">{count}</span>
       )}
     </button>
   );
@@ -511,6 +513,8 @@ export default function AgendaPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<"calendar" | "week" | "list">("calendar");
   const [searchTerm, setSearchTerm] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [sortBy, setSortBy] = useState("data");
   const [areaFilter, setAreaFilter] = useState("all");
 
@@ -1052,6 +1056,79 @@ export default function AgendaPage() {
     selectedDefensor,
   ].filter(Boolean).length;
 
+  // Escala do mês exibido no calendário — quais defensores estão atuando
+  const escalaDoMes = useMemo(() => {
+    const mesKey = format(currentDate, "yyyy-MM");
+    const escalaMes = escalaConfig.escalas.find((e: any) => e.mes === mesKey);
+    if (!escalaMes) return null;
+
+    // Agrupar atribuições por defensor
+    const defMap: Record<string, string[]> = {};
+    const atribLabels: Record<string, string> = {
+      "tribunal-do-juri": "Júri",
+      "violencia-domestica": "VVD",
+      "execucao-penal": "EP",
+      "criminal-geral": "Criminal",
+    };
+
+    for (const [atribKey, defId] of Object.entries(escalaMes.atribuicoes)) {
+      const id = defId as string;
+      if (!defMap[id]) defMap[id] = [];
+      defMap[id].push(atribLabels[atribKey] || atribKey);
+    }
+
+    return escalaConfig.defensores.map((d: any) => ({
+      ...d,
+      atribuicoes: defMap[d.id] || [],
+    }));
+  }, [currentDate, escalaConfig]);
+
+  // G/R/J defensor avatars — dados
+  const defensorAvatars: { id: string | null; label: string; tooltip: string }[] = [
+    { id: null, label: "G", tooltip: "Geral (todos)" },
+    ...escalaConfig.defensores.map((d: any) => ({
+      id: d.id,
+      label: d.nome.replace(/^(Dr\.|Dra\.|Dr |Dra )/i, "").trim().charAt(0).toUpperCase(),
+      tooltip: d.nome + (escalaDoMes?.find((e: any) => e.id === d.id)?.atribuicoes?.length ? ` — ${escalaDoMes.find((e: any) => e.id === d.id)!.atribuicoes.join(", ")}` : ""),
+    })),
+  ];
+
+  // Portal: renderiza G/R/J no header-slot do breadcrumb
+  const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setHeaderSlot(document.getElementById("header-slot"));
+    return () => {
+      // Limpa o slot ao desmontar
+      const slot = document.getElementById("header-slot");
+      if (slot) slot.innerHTML = "";
+    };
+  }, []);
+
+  // Stats compactos para o header do calendário (sem G/R/J)
+  const calendarHeaderRight = (
+    <div className="flex items-center gap-1.5">
+      {[
+        { value: stats.hoje, label: format(new Date(), "EEE", { locale: ptBR }), periodo: "hoje" as const },
+        { value: stats.amanha, label: "amanhã", periodo: "amanha" as const },
+        { value: stats.semana, label: "sem", periodo: "semana" as const },
+      ].map((s) => (
+        <button
+          key={s.periodo}
+          onClick={() => setSelectedPeriodo(selectedPeriodo === s.periodo ? null : s.periodo)}
+          className={cn(
+            "flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] transition-colors cursor-pointer shrink-0 whitespace-nowrap",
+            selectedPeriodo === s.periodo
+              ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
+              : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
+          )}
+        >
+          <span className="font-bold tabular-nums">{s.value}</span>
+          <span className="font-medium">{s.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+
   // Loading state
   if (isLoading) {
     return (
@@ -1076,276 +1153,236 @@ export default function AgendaPage() {
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-      {/* Header Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
-              <CalendarIcon className="w-5 h-5 text-white dark:text-zinc-900" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Agenda</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Audiências e compromissos · {format(currentDate, "MMMM yyyy", { locale: ptBR })}</p>
-            </div>
+      {/* G/R/J avatars — portal no header breadcrumb */}
+      {headerSlot && createPortal(
+        <TooltipProvider delayDuration={200}>
+          <div className="flex items-center gap-1">
+            {defensorAvatars.map((av) => (
+              <Tooltip key={av.label}>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setSelectedDefensor(selectedDefensor === av.id ? null : av.id)}
+                    className={cn(
+                      "w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold transition-all duration-200 cursor-pointer shrink-0",
+                      selectedDefensor === av.id
+                        ? "bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900 ring-2 ring-zinc-400 dark:ring-zinc-500 ring-offset-1 ring-offset-white dark:ring-offset-zinc-900 scale-110"
+                        : "bg-zinc-300 dark:bg-zinc-600 text-zinc-600 dark:text-zinc-300 opacity-60 hover:opacity-100 hover:scale-105"
+                    )}
+                  >
+                    {av.label}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  {av.tooltip}
+                </TooltipContent>
+              </Tooltip>
+            ))}
           </div>
-          
-          <div className="flex items-center gap-0.5">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => setIsGoogleConfigModalOpen(true)} 
-              title="Configurações"
-              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              <Settings className="w-3.5 h-3.5" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => setIsBuscaRegistrosModalOpen(true)} 
-              title="Buscar Registros"
-              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              <Database className="w-3.5 h-3.5" />
-            </Button>
-            
-            {/* Dropdown de Opções */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  <MoreHorizontal className="w-3.5 h-3.5" />
-                </Button>
-              </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => setIsEscalaModalOpen(true)}>
-                  <UserCog className="w-4 h-4 mr-2" />
-                  Configurar Escalas
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setIsPJeImportModalOpen(true)}>
-                  <FileUp className="w-4 h-4 mr-2" />
-                  Importar do PJe
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsICalImportModalOpen(true)}>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Importar iCal
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsGoogleSyncModalOpen(true)}>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Sincronizar Google
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setIsExportModalOpen(true)}>
-                  <FileDown className="w-4 h-4 mr-2" />
-                  Exportar Agenda
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+        </TooltipProvider>,
+        headerSlot
+      )}
+      {/* Header unificado — stats + atribuição + busca + filtros + view + ações */}
+      <div className="px-3 md:px-4 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+          {/* Atribuição pills (icon-only, text when selected) */}
+          {Object.entries(ATRIBUICAO_CONFIG).map(([key, config]) => (
+            <FilterPill
+              key={key}
+              label={config.shortLabel}
+              isActive={areaFilter === key}
+              count={countByArea[key] || 0}
+              config={config}
+              onClick={() => setAreaFilter(key)}
+            />
+          ))}
 
-            {/* Botão Principal */}
-            <Button 
-              size="sm"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="h-7 px-2.5 ml-1.5 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+          {/* Flexible space */}
+          <div className="flex-1 min-w-2" />
+
+          {/* Search toggle — icon that expands to input */}
+          {isSearchOpen ? (
+            <div className="relative shrink-0 animate-in slide-in-from-right-2 duration-200">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+              <Input
+                ref={searchInputRef}
+                autoFocus
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onBlur={() => { if (!searchTerm) setIsSearchOpen(false); }}
+                onKeyDown={(e) => { if (e.key === "Escape") { setSearchTerm(""); setIsSearchOpen(false); } }}
+                className="pl-8 pr-7 h-7 w-40 text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200/80 dark:border-zinc-700/80 rounded-md"
+              />
+              <button
+                onClick={() => { setSearchTerm(""); setIsSearchOpen(false); }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 cursor-pointer"
+              >
+                <XCircle className="w-3 h-3" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => { setIsSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
+              className={cn(
+                "h-7 w-7 p-0 flex items-center justify-center rounded-md transition-colors cursor-pointer shrink-0",
+                searchTerm
+                  ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400"
+                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              )}
+              title="Buscar"
             >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Novo
-            </Button>
-          </div>
+              <Search className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {/* Filter dropdown — defensor + tipo */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={cn(
+                  "relative h-7 w-7 p-0 flex items-center justify-center rounded-md transition-colors cursor-pointer shrink-0",
+                  (selectedTipo || selectedDefensor)
+                    ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400"
+                    : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                )}
+                title="Filtros"
+              >
+                <Filter className="w-3.5 h-3.5" />
+                {(selectedTipo || selectedDefensor) && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500" />
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52 p-2">
+              <div className="space-y-2">
+                <div>
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Defensor</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {[
+                      { value: "def-1", label: "Dr. Rodrigo" },
+                      { value: "def-2", label: "Dra. Juliane" },
+                    ].map((d) => (
+                      <button
+                        key={d.value}
+                        onClick={() => setSelectedDefensor(selectedDefensor === d.value ? null : d.value)}
+                        className={cn(
+                          "px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer",
+                          selectedDefensor === d.value
+                            ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                        )}
+                      >
+                        {d.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Tipo</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {[
+                      { value: "audiencia", label: "Audiência" },
+                      { value: "reuniao", label: "Reunião" },
+                      { value: "prazo", label: "Prazo" },
+                      { value: "compromisso", label: "Compromisso" },
+                      { value: "diligencia", label: "Diligência" },
+                    ].map((t) => (
+                      <button
+                        key={t.value}
+                        onClick={() => setSelectedTipo(selectedTipo === t.value ? null : t.value)}
+                        className={cn(
+                          "px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer",
+                          selectedTipo === t.value
+                            ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                        )}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {(selectedTipo || selectedDefensor) && (
+                  <button
+                    onClick={() => { setSelectedTipo(null); setSelectedDefensor(null); }}
+                    className="w-full text-center text-[11px] text-zinc-400 hover:text-rose-500 py-1 cursor-pointer transition-colors"
+                  >
+                    Limpar filtros
+                  </button>
+                )}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* View mode — single cycling button */}
+          <button
+            onClick={() => {
+              const modes = ["calendar", "week", "list"] as const;
+              const currentIdx = modes.indexOf(viewMode as any);
+              const nextMode = modes[(currentIdx + 1) % modes.length];
+              setViewMode(nextMode);
+              setSelectedPeriodo(null);
+            }}
+            className="h-7 w-7 p-0 flex items-center justify-center rounded-md text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
+            title={viewMode === "calendar" ? "Mês (clique para Semana)" : viewMode === "week" ? "Semana (clique para Lista)" : "Lista (clique para Mês)"}
+          >
+            {viewMode === "calendar" ? <Grid3x3 className="w-3.5 h-3.5" /> : viewMode === "week" ? <CalendarDays className="w-3.5 h-3.5" /> : <List className="w-3.5 h-3.5" />}
+          </button>
+
+          {/* Overflow menu — settings + imports/exports */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="h-7 w-7 p-0 flex items-center justify-center rounded-md text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer shrink-0">
+                <MoreHorizontal className="w-3.5 h-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => setIsGoogleConfigModalOpen(true)}>
+                <Settings className="w-4 h-4 mr-2" />
+                Configurações
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsBuscaRegistrosModalOpen(true)}>
+                <Database className="w-4 h-4 mr-2" />
+                Buscar Registros
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsEscalaModalOpen(true)}>
+                <UserCog className="w-4 h-4 mr-2" />
+                Configurar Escalas
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setIsPJeImportModalOpen(true)}>
+                <FileUp className="w-4 h-4 mr-2" />
+                Importar do PJe
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsICalImportModalOpen(true)}>
+                <Upload className="w-4 h-4 mr-2" />
+                Importar iCal
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsGoogleSyncModalOpen(true)}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Sincronizar Google
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setIsExportModalOpen(true)}>
+                <FileDown className="w-4 h-4 mr-2" />
+                Exportar Agenda
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* New event — icon only */}
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="h-7 w-7 p-0 flex items-center justify-center rounded-md bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white transition-colors cursor-pointer shrink-0"
+            title="Novo evento"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Stats Ribbon — compact inline KPIs */}
-        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
-          {[
-            { icon: Clock, value: stats.hoje, label: format(new Date(), "EEEE", { locale: ptBR }), onClick: () => setSelectedPeriodo(selectedPeriodo === "hoje" ? null : "hoje"), active: selectedPeriodo === "hoje" },
-            { icon: CalendarDays, value: stats.amanha, label: `amanhã ${format(addDays(new Date(), 1), "dd/MM")}`, onClick: () => setSelectedPeriodo(selectedPeriodo === "amanha" ? null : "amanha"), active: selectedPeriodo === "amanha" },
-            { icon: CalendarRange, value: stats.semana, label: "esta semana", onClick: () => setSelectedPeriodo(selectedPeriodo === "semana" ? null : "semana"), active: selectedPeriodo === "semana" },
-            { icon: CalendarCheck, value: stats.total, label: "total" },
-          ].map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <Fragment key={index}>
-                {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
-                <button
-                  onClick={stat.onClick}
-                  className={cn(
-                    "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors",
-                    stat.onClick && "cursor-pointer",
-                    stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                  )}
-                >
-                  <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.active ? "text-emerald-500 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500")} />
-                  <span className="font-bold tabular-nums text-zinc-800 dark:text-zinc-100">{stat.value}</span>
-                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.label}</span>
-                </button>
-              </Fragment>
-            );
-          })}
-          <div className="flex-1" />
-          <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px] tabular-nums whitespace-nowrap">{stats.total} eventos</span>
-        </div>
-
-      {/* Card de Filtros e Busca */}
-      <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden">
-        {/* Header com Filtros por Atribuição */}
-        <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Filtrar por Atribuição</span>
-            <div className="flex flex-wrap gap-1.5 overflow-x-auto scrollbar-hide">
-              {Object.entries(ATRIBUICAO_CONFIG).map(([key, config]) => (
-                <FilterPill
-                  key={key}
-                  label={config.shortLabel}
-                  isActive={areaFilter === key}
-                  count={countByArea[key] || 0}
-                  config={config}
-                  onClick={() => setAreaFilter(key)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Toolbar - Busca + Filtros + Views */}
-        <div className="px-4 py-3 flex flex-col sm:flex-row gap-3">
-          {/* Busca */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-            <Input
-              placeholder="Buscar eventos, processos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-9 bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
-              >
-                <XCircle className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          {/* Filtros Avançados */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-            className={cn(
-              "h-9 gap-2",
-              activeFiltersCount > 0 && "border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-900/20"
-            )}
-          >
-            <Filter className="w-4 h-4" />
-            <span>Filtros</span>
-            {activeFiltersCount > 0 && (
-              <Badge className="h-5 px-1.5 text-xs bg-emerald-600 text-white">
-                {activeFiltersCount}
-              </Badge>
-            )}
-            <ChevronDown className={cn(
-              "w-4 h-4 transition-transform",
-              isFiltersExpanded && "rotate-180"
-            )} />
-          </Button>
-
-          {/* Toggle Cancelados/Redesignados */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowCanceladosRedesignados(!showCanceladosRedesignados)}
-            className={cn(
-              "h-9 gap-1.5",
-              !showCanceladosRedesignados
-                ? "border-zinc-400 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-800"
-                : "border-zinc-200 dark:border-zinc-700"
-            )}
-            title={showCanceladosRedesignados ? "Esconder eventos cancelados" : "Mostrar eventos cancelados"}
-          >
-            {showCanceladosRedesignados ? (
-              <Eye className="w-3.5 h-3.5 text-zinc-500" />
-            ) : (
-              <EyeOff className="w-3.5 h-3.5 text-zinc-400" />
-            )}
-            <span className="hidden sm:inline text-xs">
-              {showCanceladosRedesignados ? "Cancelados" : "Ocultos"}
-            </span>
-          </Button>
-
-          {/* Toggle Views - Compacto */}
-          <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
-            <button
-              onClick={() => { setViewMode("calendar"); setSelectedPeriodo(null); }}
-              className={cn(
-                "flex items-center gap-1.5 px-2.5 h-9 text-xs font-medium rounded-md transition-all",
-                viewMode === "calendar" && !selectedPeriodo
-                  ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm"
-                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
-              )}
-              title="Visualização mensal"
-            >
-              <Grid3x3 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Mês</span>
-            </button>
-            <button
-              onClick={() => { setViewMode("week"); setSelectedPeriodo(null); }}
-              className={cn(
-                "flex items-center gap-1.5 px-2.5 h-9 text-xs font-medium rounded-md transition-all",
-                viewMode === "week" && !selectedPeriodo
-                  ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm"
-                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
-              )}
-              title="Visualização semanal"
-            >
-              <CalendarDays className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Semana</span>
-            </button>
-            <button
-              onClick={() => { setViewMode("list"); setSelectedPeriodo(null); }}
-              className={cn(
-                "flex items-center gap-1.5 px-2.5 h-9 text-xs font-medium rounded-md transition-all",
-                viewMode === "list" && !selectedPeriodo
-                  ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm"
-                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
-              )}
-              title="Visualização em lista"
-            >
-              <List className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Lista</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Painel de Filtros Expandido (dentro do Card) */}
-        {isFiltersExpanded && (
-          <div className="px-4 py-3 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-900/30">
-            <AgendaFilters
-            selectedTipo={selectedTipo}
-            setSelectedTipo={setSelectedTipo}
-            selectedStatus={selectedStatus}
-            setSelectedStatus={setSelectedStatus}
-            selectedAtribuicao={selectedAtribuicao}
-            setSelectedAtribuicao={setSelectedAtribuicao}
-            selectedPrioridade={selectedPrioridade}
-            setSelectedPrioridade={setSelectedPrioridade}
-            selectedPeriodo={selectedPeriodo}
-            setSelectedPeriodo={setSelectedPeriodo}
-            selectedDefensor={selectedDefensor}
-            setSelectedDefensor={setSelectedDefensor}
-            isExpanded={true}
-            onToggleExpand={() => {}}
-          />
-          </div>
-        )}
-      </Card>
+      <div className="p-3 md:p-4 space-y-3">
 
       {/* ==========================================
           VISUALIZAÇÃO PRINCIPAL
@@ -1471,6 +1508,7 @@ export default function AgendaPage() {
               }}
               onEditEvento={handleEditEvento}
               onDeleteEvento={handleDeleteEvento}
+              headerRight={calendarHeaderRight}
             />
           ) : viewMode === "week" ? (
             <CalendarWeekView
@@ -1484,6 +1522,7 @@ export default function AgendaPage() {
               }}
               onEditEvento={handleEditEvento}
               onDeleteEvento={handleDeleteEvento}
+              headerRight={calendarHeaderRight}
             />
           ) : (
             <Card className="border border-zinc-200 dark:border-zinc-800 overflow-hidden">

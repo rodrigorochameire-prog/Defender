@@ -1,0 +1,310 @@
+"use client";
+
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  BookOpen, Calendar, CheckCircle2, Clock, MapPin,
+  Users, UserCheck, UserX, Mail, Check, XCircle,
+  Target, Quote, Eye, AlertTriangle, Gavel,
+} from "lucide-react";
+import { getDepoenteStyle } from "../constants";
+
+interface TabHistoricoProps {
+  registrosAnteriores: any[];
+}
+
+export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
+  return (
+    <div className="space-y-4 max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-5">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center">
+            <BookOpen className="w-5 h-5 text-white dark:text-zinc-900" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              Histórico de Audiências
+            </h3>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              {registrosAnteriores.length} registro{registrosAnteriores.length !== 1 ? "s" : ""} encontrado{registrosAnteriores.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Timeline */}
+      <div className="space-y-4 relative">
+        <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-zinc-200 dark:bg-zinc-800" />
+
+        {registrosAnteriores.map((reg, idx) => (
+          <div key={reg.historicoId} className="relative pl-16">
+            {/* Timeline indicator */}
+            <div className="absolute left-3 top-6 w-6 h-6 rounded-full bg-zinc-600 dark:bg-zinc-400 border-4 border-white dark:border-zinc-950 shadow-md flex items-center justify-center">
+              <span className="text-[10px] font-bold text-white dark:text-zinc-900">{idx + 1}</span>
+            </div>
+
+            {/* Card */}
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
+              {/* Card Header */}
+              <div className="bg-zinc-50/50 dark:bg-zinc-900/50 p-4 border-b border-zinc-200/80 dark:border-zinc-800/80">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                    <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">
+                      {new Date(reg.dataRealizacao).toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                        weekday: "long",
+                      })}
+                    </span>
+                    {reg.horarioInicio && (
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">às {reg.horarioInicio}</span>
+                    )}
+                  </div>
+                  <Badge
+                    className={
+                      reg.realizada
+                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                    }
+                  >
+                    {reg.realizada ? (
+                      <><CheckCircle2 className="w-3 h-3 mr-1" />Concluída</>
+                    ) : (
+                      <><Calendar className="w-3 h-3 mr-1" />Redesignada</>
+                    )}
+                  </Badge>
+                </div>
+                {reg.local && (
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+                    <MapPin className="w-3.5 h-3.5" />
+                    {reg.local}
+                  </div>
+                )}
+              </div>
+
+              {/* Card Content */}
+              <div className="p-4 space-y-4">
+                {/* Resultado */}
+                {reg.realizada && reg.resultado && (
+                  <InfoBlock icon={Gavel} label="Resultado da Audiência" borderColor="border-l-zinc-400 dark:border-l-zinc-600">
+                    <Badge variant="outline" className="text-xs capitalize mt-1">{reg.resultado}</Badge>
+                  </InfoBlock>
+                )}
+
+                {/* Motivo não realização */}
+                {!reg.realizada && reg.motivoNaoRealizacao && (
+                  <InfoBlock icon={AlertTriangle} label="Motivo da Não Realização" borderColor="border-l-amber-500 dark:border-l-amber-400">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">{reg.motivoNaoRealizacao}</p>
+                  </InfoBlock>
+                )}
+
+                {/* Redesignação */}
+                {reg.resultado === "redesignada" && (
+                  <InfoBlock icon={Calendar} label="Audiência Redesignada" borderColor="border-l-zinc-400 dark:border-l-zinc-600">
+                    {reg.motivoRedesignacao && (
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-2">
+                        <span className="font-semibold">Motivo:</span> {reg.motivoRedesignacao}
+                      </p>
+                    )}
+                    {reg.dataRedesignacao && (
+                      <div className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span className="font-semibold">Nova data:</span>
+                        {new Date(reg.dataRedesignacao).toLocaleDateString("pt-BR")}
+                        {reg.horarioRedesignacao && ` às ${reg.horarioRedesignacao}`}
+                      </div>
+                    )}
+                  </InfoBlock>
+                )}
+
+                {/* Presença do Assistido */}
+                <InfoBlock icon={Users} label="Presença do Assistido" borderColor="border-l-zinc-400 dark:border-l-zinc-600">
+                  <Badge
+                    className={
+                      reg.assistidoPresente
+                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 mt-1"
+                        : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 mt-1"
+                    }
+                  >
+                    {reg.assistidoPresente ? (
+                      <><UserCheck className="w-3 h-3 mr-1" />Presente</>
+                    ) : (
+                      <><UserX className="w-3 h-3 mr-1" />Ausente</>
+                    )}
+                  </Badge>
+                </InfoBlock>
+
+                {/* Depoentes */}
+                {reg.depoentes && reg.depoentes.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
+                      Depoentes ({reg.depoentes.length})
+                    </Label>
+                    <div className="space-y-2.5">
+                      {reg.depoentes.map((dep: any) => {
+                        const style = getDepoenteStyle(dep.tipo);
+                        const temConteudo = dep.estrategiaInquiricao || dep.perguntasDefesa || dep.depoimentoLiteral || dep.analisePercepcoes;
+
+                        return (
+                          <div key={dep.id} className={`rounded-lg border ${style.border} overflow-hidden`}>
+                            <div className={`p-2.5 border-b border-zinc-200 dark:border-zinc-800 ${style.bg}`}>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Badge className={`${style.bg} ${style.text} text-[10px] px-1.5 py-0.5`}>{style.label}</Badge>
+                                  <span className={`text-sm font-semibold ${style.text}`}>{dep.nome}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  {dep.intimado !== undefined && (
+                                    <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+                                      <Mail className="w-2.5 h-2.5 mr-0.5" />
+                                      {dep.intimado ? "Intimado" : "Não Intimado"}
+                                    </Badge>
+                                  )}
+                                  {dep.presente !== undefined && (
+                                    <Badge
+                                      className={
+                                        dep.presente
+                                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[9px] px-1.5 py-0"
+                                          : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-[9px] px-1.5 py-0"
+                                      }
+                                    >
+                                      {dep.presente ? (
+                                        <><Check className="w-2.5 h-2.5 mr-0.5" />Presente</>
+                                      ) : (
+                                        <><XCircle className="w-2.5 h-2.5 mr-0.5" />Ausente</>
+                                      )}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {temConteudo && (
+                              <div className="p-3 space-y-2.5 bg-white dark:bg-zinc-950">
+                                {dep.estrategiaInquiricao && (
+                                  <DepoenteField icon={Target} label="Estratégia de Inquirição" text={dep.estrategiaInquiricao} />
+                                )}
+                                {dep.perguntasDefesa && (
+                                  <DepoenteField icon={BookOpen} label="Perguntas da Defesa" text={dep.perguntasDefesa} />
+                                )}
+                                {dep.depoimentoLiteral && (
+                                  <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-lg border border-zinc-200/80 dark:border-zinc-800/80 p-2">
+                                    <Label className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 flex items-center gap-1 mb-1">
+                                      <Quote className="w-2.5 h-2.5" /> Depoimento Literal
+                                    </Label>
+                                    <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed italic">
+                                      &ldquo;{dep.depoimentoLiteral}&rdquo;
+                                    </p>
+                                  </div>
+                                )}
+                                {dep.analisePercepcoes && (
+                                  <DepoenteField icon={Eye} label="Análise e Percepções" text={dep.analisePercepcoes} />
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Manifestações */}
+                {(reg.manifestacaoMP || reg.manifestacaoDefesa || reg.decisaoJuiz) && (
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Manifestações e Decisões</Label>
+                    {reg.manifestacaoMP && (
+                      <InfoBlock icon={Gavel} label="Ministério Público" borderColor="border-l-zinc-400 dark:border-l-zinc-600">
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400">{reg.manifestacaoMP}</p>
+                      </InfoBlock>
+                    )}
+                    {reg.manifestacaoDefesa && (
+                      <InfoBlock icon={Gavel} label="Defesa" borderColor="border-l-emerald-500 dark:border-l-emerald-400">
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400">{reg.manifestacaoDefesa}</p>
+                      </InfoBlock>
+                    )}
+                    {reg.decisaoJuiz && (
+                      <InfoBlock icon={Gavel} label="Decisão Judicial" borderColor="border-l-zinc-400 dark:border-l-zinc-600">
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400">{reg.decisaoJuiz}</p>
+                      </InfoBlock>
+                    )}
+                  </div>
+                )}
+
+                {/* Encaminhamentos */}
+                {reg.encaminhamentos && (
+                  <InfoBlock icon={Gavel} label="Encaminhamentos" borderColor="border-l-zinc-400 dark:border-l-zinc-600">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400">{reg.encaminhamentos}</p>
+                  </InfoBlock>
+                )}
+
+                {/* Anotações */}
+                {reg.anotacoesGerais && (
+                  <InfoBlock icon={Gavel} label="Anotações Gerais" borderColor="border-l-zinc-400 dark:border-l-zinc-600">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400">{reg.anotacoesGerais}</p>
+                  </InfoBlock>
+                )}
+              </div>
+
+              {/* Card Footer */}
+              <div className="bg-zinc-50/50 dark:bg-zinc-900/50 p-3 border-t border-zinc-200/80 dark:border-zinc-800/80 flex items-center justify-between">
+                <span className="text-[10px] text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  Registrado em{" "}
+                  {new Date(reg.dataRegistro).toLocaleDateString("pt-BR", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+                <span className="text-[10px] font-mono text-zinc-400 bg-zinc-200 dark:bg-zinc-800 px-2 py-0.5 rounded">
+                  #{reg.historicoId.slice(-8).toUpperCase()}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* --- Helper components --- */
+
+function InfoBlock({
+  icon: Icon,
+  label,
+  borderColor,
+  children,
+}: {
+  icon: any;
+  label: string;
+  borderColor: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-3">
+      <div className={`border-l-4 ${borderColor} pl-3 -ml-2`}>
+        <Label className="text-xs font-semibold mb-0.5 block text-zinc-700 dark:text-zinc-300">{label}</Label>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function DepoenteField({ icon: Icon, label, text }: { icon: any; label: string; text: string }) {
+  return (
+    <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-lg border border-zinc-200/80 dark:border-zinc-800/80 p-2">
+      <Label className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 flex items-center gap-1 mb-1">
+        <Icon className="w-2.5 h-2.5" /> {label}
+      </Label>
+      <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">{text}</p>
+    </div>
+  );
+}

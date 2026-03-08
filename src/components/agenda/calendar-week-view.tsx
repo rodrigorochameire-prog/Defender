@@ -57,6 +57,8 @@ interface CalendarWeekViewProps {
   onDateClick: (date: Date) => void;
   onEditEvento?: (evento: any) => void;
   onDeleteEvento?: (id: string) => void;
+  /** Extra content rendered in the header (e.g. defensor avatars) */
+  headerRight?: React.ReactNode;
 }
 
 // Ícones por tipo/atribuição
@@ -296,6 +298,7 @@ export function CalendarWeekView({
   onDateClick,
   onEditEvento,
   onDeleteEvento,
+  headerRight,
 }: CalendarWeekViewProps) {
   // Calcular dias da semana
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
@@ -345,24 +348,24 @@ export function CalendarWeekView({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-0.5 shrink-0">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => onDateChange(subWeeks(currentDate, 1))}
-            className="h-9 w-9"
+            className="h-8 w-8"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-4 h-4" />
           </Button>
 
-          <div className="text-center min-w-[220px]">
+          <div className="text-center min-w-[200px]">
             <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
               {format(weekStart, "d", { locale: ptBR })} -{" "}
               {format(weekEnd, "d 'de' MMMM", { locale: ptBR })}
             </h2>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              {stats.total} eventos · {stats.urgentes > 0 && `${stats.urgentes} urgentes`}
+              {stats.total} eventos{stats.urgentes > 0 ? ` · ${stats.urgentes} urgentes` : ""}
             </p>
           </div>
 
@@ -370,13 +373,20 @@ export function CalendarWeekView({
             variant="ghost"
             size="icon"
             onClick={() => onDateChange(addWeeks(currentDate, 1))}
-            className="h-9 w-9"
+            className="h-8 w-8"
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
 
-        <Button variant="outline" size="sm" onClick={() => onDateChange(new Date())} className="h-9">
+        {/* Optional extra content (defensor avatars, etc.) */}
+        {headerRight && (
+          <div className="flex-1 min-w-0 flex items-center justify-end">
+            {headerRight}
+          </div>
+        )}
+
+        <Button variant="outline" size="sm" onClick={() => onDateChange(new Date())} className="h-7 text-xs shrink-0">
           Hoje
         </Button>
       </div>
