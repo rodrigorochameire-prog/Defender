@@ -125,6 +125,23 @@ export const documentoJuriTipoEnum = pgEnum("documento_juri_tipo", [
   "ata",
 ]);
 
+// Status da apelação (pós-júri)
+export const statusApelacaoEnum = pgEnum("status_apelacao", [
+  "interposta",
+  "admitida",
+  "em_julgamento",
+  "julgada",
+  "transitada",
+]);
+
+// Resultado da apelação/recurso
+export const resultadoRecursoEnum = pgEnum("resultado_recurso", [
+  "provido",
+  "parcialmente_provido",
+  "improvido",
+  "nao_conhecido",
+]);
+
 // ==========================================
 // WORKSPACES (Universos de dados)
 // ==========================================
@@ -5730,3 +5747,93 @@ export const documentEmbeddingsRelations = relations(documentEmbeddings, ({ one 
   driveFile: one(driveFiles, { fields: [documentEmbeddings.fileId], references: [driveFiles.id] }),
   assistido: one(assistidos, { fields: [documentEmbeddings.assistidoId], references: [assistidos.id] }),
 }));
+
+// ==========================================
+// RECURSOS JÚRI (APELAÇÕES PÓS-JULGAMENTO)
+// ==========================================
+
+export const recursosJuri = pgTable("recursos_juri", {
+  id: serial("id").primaryKey(),
+  sessaoJuriId: integer("sessao_juri_id")
+    .notNull()
+    .references(() => sessoesJuri.id, { onDelete: "cascade" }),
+  casoId: integer("caso_id")
+    .references(() => casos.id, { onDelete: "set null" }),
+  processoId: integer("processo_id")
+    .notNull()
+    .references(() => processos.id, { onDelete: "cascade" }),
+
+  // Dados do réu (desnormalizado para lista rápida)
+  reuNome: text("reu_nome"),
+
+  // Status da apelação
+  status: statusApelacaoEnum("status").default("interposta").notNull(),
+  dataInterposicao: date("data_interposicao"),
+  dataAdmissao: date("data_admissao"),
+  dataJulgamento: date("data_julgamento"),
+
+  // TJBA - Turma/Câmara
+  turmaTJBA: text("turma_tjba"),
+  camaraTJBA: text("camara_tjba"),
+  relator: text("relator"),
+
+  // Resultado da apelação
+  resultadoApelacao: resultadoRecursoEnum("resultado_apelacao"),
+
+  // Recurso Especial (STJ)
+  houveREsp: boolean("houve_resp").default(false),
+  resultadoREsp: resultadoRecursoEnum("resultado_resp"),
+
+  // Recurso Extraordinário (STF)
+  houveRE: boolean("houve_re").default(false),
+  resultadoRE: resultadoRecursoEnum("resultado_re"),
+
+  // Observações
+  observacoes: text("observacoes"),
+
+  // Metadata
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("recursos_juri_sessao_idx").on(table.sessaoJuriId),
+  index("recursos_juri_processo_idx").on(table.processoId),
+  index("recursos_juri_status_idx").on(table.status),
+]);
+
+export type RecursoJuri = typeof recursosJuri.$inferSelect;
+export type InsertRecursoJuri = typeof recursosJuri.$inferInsert;
+
+export const recursosJuriRelations = relations(recursosJuri, ({ one }) => ({
+  sessaoJuri: one(sessoesJuri, { fields: [recursosJuri.sessaoJuriId], references: [sessoesJuri.id] }),
+  caso: one(casos, { fields: [recursosJuri.casoId], references: [casos.id] }),
+  processo: one(processos, { fields: [recursosJuri.processoId], references: [processos.id] }),
+}));
+
+// ==========================================
+// HANDOFF CONFIG (INFORMAÇÕES POR COMARCA)
+// ==========================================
+
+export const handoffConfig = pgTable("handoff_config", {
+  id: serial("id").primaryKey(),
+  comarca: text("comarca").notNull().unique(),
+
+  // Defensor do 2º Grau
+  defensor2grauInfo: text("defensor_2grau_info"),
+
+  // Defensor da Execução Penal
+  defensorEPInfo: text("defensor_ep_info"),
+
+  // Núcleo de Execução Penal
+  nucleoEPEndereco: text("nucleo_ep_endereco"),
+  nucleoEPTelefone: text("nucleo_ep_telefone"),
+  nucleoEPHorario: text("nucleo_ep_horario"),
+
+  // Mensagem personalizada
+  mensagemPersonalizada: text("mensagem_personalizada"),
+
+  // Metadata
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("handoff_config_comarca_idx").on(table.comarca),
+]);
