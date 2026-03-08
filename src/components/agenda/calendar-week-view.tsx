@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger, PopoverClose } from "@/components/ui/popover";
 import {
   format,
   startOfWeek,
@@ -45,6 +45,8 @@ import {
   User,
   Copy,
   Plus,
+  Scale,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
@@ -80,6 +82,34 @@ const isEventoCancelado = (status: string) =>
 // Cor neutra para eventos que não ocorrerão
 const COR_EVENTO_CANCELADO = "#a1a1aa";
 
+// Detectar "ADV" (advogado constituído) no prefixo do título
+const detectarAdvogadoConstituido = (titulo: string): boolean => {
+  const tipoRaw = titulo.split(" - ")[0]?.trim() || "";
+  return /^ADV\b/i.test(tipoRaw);
+};
+
+// Extrair tipo de audiência do título, removendo prefixo "ADV"
+const extrairTipoDoTitulo = (titulo: string): string => {
+  const parts = titulo.split(" - ");
+  if (parts.length >= 2) {
+    return parts[0].trim().replace(/^ADV\s+/i, "");
+  }
+  return titulo.replace(/^ADV\s+/i, "");
+};
+
+// Mapa de abreviações → nome completo (tipo de audiência)
+const tipoNomeCompleto: Record<string, string> = {
+  "AIJ": "Instrução e Julgamento",
+  "Júri": "Sessão do Tribunal do Júri",
+  "Custódia": "Audiência de Custódia",
+  "Justificação": "Audiência de Justificação",
+  "PAP": "Produção Antecipada de Provas",
+  "ANPP": "Acordo de Não Persecução Penal",
+  "Admonitória": "Audiência Admonitória",
+  "Concentrada": "Audiência Concentrada",
+  "Conciliação": "Audiência de Conciliação",
+};
+
 // Horários do dia (6h às 22h)
 const HORAS_DIA = Array.from({ length: 17 }, (_, i) => i + 6);
 
@@ -100,6 +130,13 @@ function EventoSemana({
   const eventoCancelado = isEventoCancelado(evento.status);
   const displayColor = eventoCancelado ? COR_EVENTO_CANCELADO : solidColor;
   const hasRegistro = !!evento.registro;
+
+  // Advogado constituído (detecta prefixo "ADV" no título)
+  const temAdvogado = detectarAdvogadoConstituido(evento.titulo);
+
+  // Tipo de audiência extraído e expandido
+  const tipoAbrev = extrairTipoDoTitulo(evento.titulo);
+  const tipoCompleto = tipoNomeCompleto[tipoAbrev] || tipoAbrev;
 
   return (
     <Popover>
@@ -133,6 +170,9 @@ function EventoSemana({
               </span>
 
               {/* Indicadores */}
+              {temAdvogado && !eventoCancelado && (
+                <Scale className="w-2.5 h-2.5 text-rose-500 shrink-0" />
+              )}
               {!eventoCancelado && evento.prioridade === "urgente" && (
                 <AlertTriangle className="w-2.5 h-2.5 text-red-500 shrink-0" />
               )}
@@ -149,7 +189,7 @@ function EventoSemana({
                   : "text-zinc-700 dark:text-zinc-300"
               }`}
             >
-              {evento.titulo}
+              {evento.titulo.replace(/^ADV\s+/i, "")}
             </p>
 
             {/* Assistido */}
@@ -163,125 +203,172 @@ function EventoSemana({
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-[320px] p-0 border-0 shadow-2xl rounded-xl overflow-hidden"
+        className="w-[320px] p-0 border border-zinc-200/80 dark:border-zinc-800/80 shadow-2xl rounded-xl overflow-hidden bg-white dark:bg-zinc-900"
         side="right"
         align="start"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header com cor da atribuição */}
-        <div className="px-4 py-3" style={{ backgroundColor: `${displayColor}15` }}>
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              {eventoCancelado && (
-                <div className="flex items-center gap-1.5 mb-2">
-                  {evento.status === "cancelado" ? (
-                    <XCircle className="w-3.5 h-3.5 text-red-500" />
-                  ) : (
-                    <CalendarX2 className="w-3.5 h-3.5 text-amber-500" />
-                  )}
-                  <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
-                    {evento.status === "cancelado" ? "Cancelado" : "Redesignado"}
-                  </span>
-                </div>
-              )}
-
-              <h4
-                className={`font-bold text-sm leading-tight ${
-                  eventoCancelado ? "text-zinc-400 line-through" : "text-zinc-900 dark:text-zinc-100"
-                }`}
+        {/* ── Seção 1: Header — tipo + ações ── */}
+        <div className="flex items-center gap-3 px-4 pt-3.5 pb-2">
+          {(() => {
+            const AtribIcon = atribuicaoIcons[evento.atribuicao] || Folder;
+            return (
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                style={{ backgroundColor: eventoCancelado ? undefined : `${displayColor}15` }}
               >
-                {evento.titulo}
-              </h4>
-
-              {evento.assistido && (
-                <div className="flex items-center gap-1.5 mt-1">
-                  <User className="w-3 h-3 text-zinc-400" />
-                  <span className="text-xs text-zinc-600 dark:text-zinc-400">{evento.assistido}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Ações rápidas */}
-            <div className="flex items-center gap-0.5">
-              {onEditEvento && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEditEvento(evento);
-                  }}
-                  className="p-1.5 rounded-lg hover:bg-zinc-200/80 dark:hover:bg-zinc-700 transition-colors"
-                  title="Editar"
-                >
-                  <Edit3 className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
-                </button>
-              )}
-              {onDeleteEvento && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (confirm("Excluir este evento?")) {
-                      onDeleteEvento(evento.id);
-                    }
-                  }}
-                  className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                  title="Excluir"
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-red-500 dark:text-red-400" />
-                </button>
-              )}
-            </div>
+                <AtribIcon
+                  className={`w-4 h-4 ${eventoCancelado ? "text-zinc-400 dark:text-zinc-500" : ""}`}
+                  style={eventoCancelado ? undefined : { color: displayColor }}
+                />
+              </div>
+            );
+          })()}
+          <div className="flex-1 min-w-0">
+            {eventoCancelado && (
+              <div className="flex items-center gap-1.5 mb-0.5">
+                {(evento.status === "cancelado" || evento.status === "cancelada") ? (
+                  <XCircle className="w-3 h-3 text-rose-500" />
+                ) : (
+                  <CalendarX2 className="w-3 h-3 text-amber-500" />
+                )}
+                <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                  {(evento.status === "cancelado" || evento.status === "cancelada") ? "Cancelada" : "Redesignada"}
+                </span>
+              </div>
+            )}
+            <h4
+              className={`font-semibold text-[13px] leading-tight ${
+                eventoCancelado
+                  ? "text-zinc-400 dark:text-zinc-500 line-through"
+                  : "text-zinc-900 dark:text-zinc-100"
+              }`}
+            >
+              {tipoCompleto}
+            </h4>
+            {temAdvogado && !eventoCancelado && (
+              <div className="flex items-center gap-1 mt-1">
+                <Scale className="w-3 h-3 text-rose-500" />
+                <span className="text-[10px] font-medium text-rose-600 dark:text-rose-400">
+                  Advogado constituído
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-0.5 shrink-0">
+            {onEditEvento && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onEditEvento(evento); }}
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                title="Editar"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {onDeleteEvento && (
+              <button
+                onClick={(e) => { e.stopPropagation(); if (confirm("Excluir este evento?")) onDeleteEvento(evento.id); }}
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                title="Excluir"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <PopoverClose
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              title="Fechar"
+            >
+              <X className="w-3.5 h-3.5" />
+            </PopoverClose>
           </div>
         </div>
 
-        {/* Conteúdo */}
-        <div className="px-4 py-3 space-y-2 bg-white dark:bg-zinc-900">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-zinc-400" />
-            <span className="text-sm text-zinc-700 dark:text-zinc-300">
-              {evento.horarioInicio}
-              {evento.horarioFim && ` - ${evento.horarioFim}`}
-            </span>
+        {/* ── Seção 2: Assistido — destaque com fundo ── */}
+        {evento.assistido && (
+          <div className="mx-3 mb-2 px-3 py-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
+            <div className="flex items-center gap-2.5">
+              <User className="w-4 h-4 text-zinc-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 leading-none mb-0.5">Assistido</p>
+                {evento.assistidoId ? (
+                  <a
+                    href={`/admin/assistidos/${evento.assistidoId}`}
+                    className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 hover:text-zinc-600 dark:hover:text-zinc-300 hover:underline leading-tight block"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {evento.assistido}
+                  </a>
+                ) : (
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-tight">
+                    {evento.assistido}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Seção 3: Dados — processo, horário, local ── */}
+        <div className="px-4 pt-1 pb-3 space-y-2">
+          {evento.processo && (
+            <div className="flex items-center gap-2.5">
+              <FileText className="w-4 h-4 text-zinc-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 leading-none mb-0.5">Processo</p>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-mono text-zinc-700 dark:text-zinc-300 truncate">{evento.processo}</span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(evento.processo); toast.success("Número copiado!"); }}
+                    className="p-0.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
+                    title="Copiar"
+                  >
+                    <Copy className="w-3 h-3 text-zinc-400" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2.5">
+            <Clock className="w-4 h-4 text-zinc-400 shrink-0" />
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 leading-none mb-0.5">Horário</p>
+              <span className={`text-xs font-semibold ${eventoCancelado ? "text-zinc-400 line-through" : "text-zinc-900 dark:text-zinc-100"}`}>
+                {evento.horarioInicio}{evento.horarioFim && ` – ${evento.horarioFim}`}
+              </span>
+            </div>
           </div>
 
           {evento.local && (
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-zinc-400" />
-              <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate">{evento.local}</span>
+            <div className="flex items-center gap-2.5">
+              <MapPin className="w-4 h-4 text-zinc-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 leading-none mb-0.5">Local</p>
+                <span className="text-xs text-zinc-700 dark:text-zinc-300 truncate block">{evento.local}</span>
+              </div>
             </div>
           )}
 
-          {evento.processo && (
-            <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-zinc-400" />
-              <span className="text-xs font-mono text-zinc-600 dark:text-zinc-400 truncate">
-                {evento.processo}
-              </span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigator.clipboard.writeText(evento.processo);
-                  toast.success("Número copiado!");
-                }}
-                className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              >
-                <Copy className="w-3 h-3 text-zinc-400" />
-              </button>
+          {hasRegistro && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/40 mt-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Registro documentado</span>
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="px-4 py-2 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+        {/* ── Seção 4: Footer ── */}
+        <div className="px-4 py-3 border-t border-zinc-100 dark:border-zinc-800/50">
           <Button
             size="sm"
-            className="w-full h-8 bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEventClick(evento);
-            }}
+            className="w-full h-8 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 text-xs cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); onEventClick(evento); }}
           >
-            <ExternalLink className="w-3 h-3 mr-1.5" />
-            {hasRegistro ? "Ver Detalhes" : "Registrar"}
+            {hasRegistro ? (
+              <><ExternalLink className="w-3 h-3 mr-1.5" />Ver Registro</>
+            ) : (
+              <><FileText className="w-3 h-3 mr-1.5" />Registrar</>
+            )}
           </Button>
         </div>
       </PopoverContent>
