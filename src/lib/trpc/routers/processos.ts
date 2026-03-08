@@ -236,9 +236,16 @@ export const processosRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
-      const assistido = await db.query.assistidos.findFirst({
-        where: eq(assistidos.id, input.assistidoId),
-      });
+      // Busca apenas campos necessários (exclui analysisData JSONB e outros campos pesados)
+      const [assistido] = await db
+        .select({
+          id: assistidos.id,
+          workspaceId: assistidos.workspaceId,
+          driveFolderId: assistidos.driveFolderId,
+        })
+        .from(assistidos)
+        .where(eq(assistidos.id, input.assistidoId))
+        .limit(1);
 
       if (!assistido) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db } from "@/lib/db";
+import { db, withTransaction } from "@/lib/db";
 import {
   atendimentos,
   assistidos,
@@ -252,9 +252,12 @@ export const atendimentosRouter = router({
   extractKeyPoints: protectedProcedure
     .input(z.object({ atendimentoId: z.number() }))
     .mutation(async ({ input }) => {
-      // Busca o atendimento
+      // Busca apenas a transcrição (evita carregar JSONB pesados: enrichmentData, pontosChave etc.)
       const [atendimento] = await db
-        .select()
+        .select({
+          id: atendimentos.id,
+          transcricao: atendimentos.transcricao,
+        })
         .from(atendimentos)
         .where(eq(atendimentos.id, input.atendimentoId))
         .limit(1);
@@ -588,7 +591,29 @@ export const atendimentosRouter = router({
    * Lista gravações pendentes de revisão
    */
   pendingRecordings: protectedProcedure.query(async () => {
-    return db.select().from(plaudRecordings)
+    return db
+      .select({
+        id: plaudRecordings.id,
+        configId: plaudRecordings.configId,
+        plaudRecordingId: plaudRecordings.plaudRecordingId,
+        plaudDeviceId: plaudRecordings.plaudDeviceId,
+        title: plaudRecordings.title,
+        duration: plaudRecordings.duration,
+        recordedAt: plaudRecordings.recordedAt,
+        fileSize: plaudRecordings.fileSize,
+        status: plaudRecordings.status,
+        errorMessage: plaudRecordings.errorMessage,
+        // Inclui resumo para preview, mas exclui transcription e rawPayload (pesados)
+        summary: plaudRecordings.summary,
+        atendimentoId: plaudRecordings.atendimentoId,
+        assistidoId: plaudRecordings.assistidoId,
+        processoId: plaudRecordings.processoId,
+        driveFileId: plaudRecordings.driveFileId,
+        driveFileUrl: plaudRecordings.driveFileUrl,
+        createdAt: plaudRecordings.createdAt,
+        updatedAt: plaudRecordings.updatedAt,
+      })
+      .from(plaudRecordings)
       .where(eq(plaudRecordings.status, "pending_review"))
       .orderBy(desc(plaudRecordings.createdAt));
   }),
@@ -630,68 +655,84 @@ export const atendimentosRouter = router({
       })).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      // 1. Find the pending recording
-      const [recording] = await db.select().from(plaudRecordings)
-        .where(and(
-          eq(plaudRecordings.id, input.recordingId),
-          eq(plaudRecordings.status, "pending_review")
-        ))
-        .limit(1);
+      // Steps 1-4 wrapped in a transaction for atomicity
+      const { recording, atendimentoId } = await withTransaction(async (tx) => {
+        // 1. Find the pending recording (select only needed fields, skip speakers JSONB)
+        const [rec] = await tx
+          .select({
+            id: plaudRecordings.id,
+            plaudRecordingId: plaudRecordings.plaudRecordingId,
+            plaudDeviceId: plaudRecordings.plaudDeviceId,
+            duration: plaudRecordings.duration,
+            transcription: plaudRecordings.transcription,
+            summary: plaudRecordings.summary,
+            rawPayload: plaudRecordings.rawPayload,
+          })
+          .from(plaudRecordings)
+          .where(and(
+            eq(plaudRecordings.id, input.recordingId),
+            eq(plaudRecordings.status, "pending_review")
+          ))
+          .limit(1);
 
-      if (!recording) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Gravação não encontrada ou já processada" });
-      }
+        if (!rec) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Gravação não encontrada ou já processada" });
+        }
 
-      let atendimentoId = input.atendimentoId;
+        let atenId = input.atendimentoId;
 
-      // 2. Create new atendimento if needed
-      if (!atendimentoId && input.novoAtendimento) {
-        const [novo] = await db.insert(atendimentos).values({
+        // 2. Create new atendimento if needed
+        if (!atenId && input.novoAtendimento) {
+          const [novo] = await tx.insert(atendimentos).values({
+            assistidoId: input.assistidoId,
+            processoId: input.processoId || null,
+            workspaceId: ctx.user.workspaceId,
+            dataAtendimento: new Date(),
+            tipo: input.novoAtendimento.tipo,
+            descricao: input.novoAtendimento.descricao || null,
+            status: "realizado",
+            transcricaoStatus: "completed",
+            atendidoPorId: ctx.user.id,
+          }).returning();
+          atenId = novo.id;
+        }
+
+        // 3. Update recording with all links and metadata
+        const interlocutorData = {
+          ...(rec.rawPayload as Record<string, unknown> || {}),
+          ...(input.interlocutor && { interlocutor: input.interlocutor }),
+          ...(input.tipoGravacao && { tipoGravacao: input.tipoGravacao }),
+          ...(input.subtipoGravacao && { subtipoGravacao: input.subtipoGravacao }),
+          ...(input.depoentes && { depoentes: input.depoentes }),
+        };
+
+        await tx.update(plaudRecordings).set({
+          status: "completed",
           assistidoId: input.assistidoId,
           processoId: input.processoId || null,
-          workspaceId: ctx.user.workspaceId,
-          dataAtendimento: new Date(),
-          tipo: input.novoAtendimento.tipo,
-          descricao: input.novoAtendimento.descricao || null,
-          status: "realizado",
-          transcricaoStatus: "completed",
-          atendidoPorId: ctx.user.id,
-        }).returning();
-        atendimentoId = novo.id;
-      }
-
-      // 3. Update recording with all links and metadata
-      const interlocutorData = {
-        ...(recording.rawPayload as Record<string, unknown> || {}),
-        ...(input.interlocutor && { interlocutor: input.interlocutor }),
-        ...(input.tipoGravacao && { tipoGravacao: input.tipoGravacao }),
-        ...(input.subtipoGravacao && { subtipoGravacao: input.subtipoGravacao }),
-        ...(input.depoentes && { depoentes: input.depoentes }),
-      };
-
-      await db.update(plaudRecordings).set({
-        status: "completed",
-        assistidoId: input.assistidoId,
-        processoId: input.processoId || null,
-        atendimentoId: atendimentoId || null,
-        rawPayload: interlocutorData,
-        updatedAt: new Date(),
-      }).where(eq(plaudRecordings.id, input.recordingId));
-
-      // 4. Update atendimento with transcription data + duration if linked
-      if (atendimentoId) {
-        await db.update(atendimentos).set({
-          plaudRecordingId: recording.plaudRecordingId,
-          plaudDeviceId: recording.plaudDeviceId,
-          transcricao: recording.transcription,
-          transcricaoResumo: recording.summary,
-          transcricaoStatus: "completed",
-          duracao: recording.duration || null,
+          atendimentoId: atenId || null,
+          rawPayload: interlocutorData,
           updatedAt: new Date(),
-        }).where(eq(atendimentos.id, atendimentoId));
-      }
+        }).where(eq(plaudRecordings.id, input.recordingId));
+
+        // 4. Update atendimento with transcription data + duration if linked
+        if (atenId) {
+          await tx.update(atendimentos).set({
+            plaudRecordingId: rec.plaudRecordingId,
+            plaudDeviceId: rec.plaudDeviceId,
+            transcricao: rec.transcription,
+            transcricaoResumo: rec.summary,
+            transcricaoStatus: "completed",
+            duracao: rec.duration || null,
+            updatedAt: new Date(),
+          }).where(eq(atendimentos.id, atenId));
+        }
+
+        return { recording: rec, atendimentoId: atenId };
+      });
 
       // 5. Fire-and-forget: post-approval pipeline (Drive upload + enrichment)
+      // Kept outside transaction — non-critical async work
       processApprovedRecording(
         input.recordingId,
         input.assistidoId,
@@ -711,8 +752,14 @@ export const atendimentosRouter = router({
   reprocessRecording: protectedProcedure
     .input(z.object({ recordingId: z.number() }))
     .mutation(async ({ input }) => {
+      // Busca apenas campos necessários (exclui transcription, rawPayload, speakers)
       const [recording] = await db
-        .select()
+        .select({
+          id: plaudRecordings.id,
+          assistidoId: plaudRecordings.assistidoId,
+          atendimentoId: plaudRecordings.atendimentoId,
+          processoId: plaudRecordings.processoId,
+        })
         .from(plaudRecordings)
         .where(eq(plaudRecordings.id, input.recordingId))
         .limit(1);

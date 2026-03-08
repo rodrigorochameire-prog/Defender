@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
-import { db } from "@/lib/db";
+import { db, withTransaction } from "@/lib/db";
 import { demandas, processos, assistidos, users } from "@/lib/db/schema";
 import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -954,12 +954,14 @@ export const demandasRouter = router({
       items: z.array(z.object({ id: z.number(), ordem: z.number() })),
     }))
     .mutation(async ({ input }) => {
-      for (const item of input.items) {
-        await db
-          .update(demandas)
-          .set({ ordemManual: item.ordem })
-          .where(eq(demandas.id, item.id));
-      }
+      await withTransaction(async (tx) => {
+        for (const item of input.items) {
+          await tx
+            .update(demandas)
+            .set({ ordemManual: item.ordem })
+            .where(eq(demandas.id, item.id));
+        }
+      });
       return { success: true };
     }),
 

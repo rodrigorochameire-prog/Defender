@@ -76,10 +76,16 @@ export const briefingRouter = router({
         tipo: t.tipo as "ACUSACAO" | "DEFESA",
       }));
 
-      // 3. Buscar arquivos do Drive vinculados ao processo
-      const arquivosDb = await db.query.driveFiles.findMany({
-        where: eq(driveFiles.processoId, input.processoId),
-      });
+      // 3. Buscar arquivos do Drive vinculados ao processo (exclui enrichmentData JSONB — pesado e não usado aqui)
+      const arquivosDb = await db
+        .select({
+          id: driveFiles.id,
+          driveFileId: driveFiles.driveFileId,
+          name: driveFiles.name,
+          mimeType: driveFiles.mimeType,
+        })
+        .from(driveFiles)
+        .where(eq(driveFiles.processoId, input.processoId));
 
       // 4. Processar arquivos para extrair conteúdo
       const arquivosProcessados: ArquivoProcessado[] = [];
@@ -509,9 +515,16 @@ export const briefingRouter = router({
       })
     )
     .query(async ({ ctx, input }) => {
-      const arquivos = await db.query.driveFiles.findMany({
-        where: eq(driveFiles.processoId, input.processoId),
-      });
+      // Busca apenas campos necessários para listagem (exclui enrichmentData JSONB)
+      const arquivos = await db
+        .select({
+          id: driveFiles.id,
+          driveFileId: driveFiles.driveFileId,
+          name: driveFiles.name,
+          mimeType: driveFiles.mimeType,
+        })
+        .from(driveFiles)
+        .where(eq(driveFiles.processoId, input.processoId));
 
       // Filtrar apenas arquivos que podem conter depoimentos
       const arquivosFiltrados = arquivos.filter((a) => {

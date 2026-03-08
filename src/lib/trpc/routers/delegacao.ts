@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
-import { db } from "@/lib/db";
+import { db, withTransaction } from "@/lib/db";
 import { demandas, delegacoesHistorico, users, notifications } from "@/lib/db/schema";
 import { eq, and, desc, isNull, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -440,48 +440,53 @@ export const delegacaoRouter = router({
         columns: { name: true },
       });
 
-      const delegacoes = [];
       const prazo = input.prazoSugerido ? new Date(input.prazoSugerido).toISOString().split("T")[0] : null;
 
-      for (const demandaId of input.demandaIds) {
-        // Atualizar demanda
-        await db.update(demandas)
-          .set({
-            delegadoParaId: input.destinatarioId,
-            dataDelegacao: new Date(),
-            motivoDelegacao: input.instrucoes,
-            statusDelegacao: "pendente",
-            prazoSugerido: prazo,
-            updatedAt: new Date(),
-          })
-          .where(eq(demandas.id, demandaId));
+      const delegacoes = await withTransaction(async (tx) => {
+        const results = [];
 
-        // Criar registro no histórico
-        const [delegacao] = await db.insert(delegacoesHistorico)
-          .values({
-            tipo: "delegacao_generica",
-            demandaId,
-            delegadoDeId: userId,
-            delegadoParaId: input.destinatarioId,
-            instrucoes: input.instrucoes,
-            prazoSugerido: prazo,
-            prioridade: input.prioridade,
-            status: "pendente",
-            workspaceId: ctx.user.workspaceId || null,
-          })
-          .returning();
+        for (const demandaId of input.demandaIds) {
+          // Atualizar demanda
+          await tx.update(demandas)
+            .set({
+              delegadoParaId: input.destinatarioId,
+              dataDelegacao: new Date(),
+              motivoDelegacao: input.instrucoes,
+              statusDelegacao: "pendente",
+              prazoSugerido: prazo,
+              updatedAt: new Date(),
+            })
+            .where(eq(demandas.id, demandaId));
 
-        delegacoes.push(delegacao);
-      }
+          // Criar registro no histórico
+          const [delegacao] = await tx.insert(delegacoesHistorico)
+            .values({
+              tipo: "delegacao_generica",
+              demandaId,
+              delegadoDeId: userId,
+              delegadoParaId: input.destinatarioId,
+              instrucoes: input.instrucoes,
+              prazoSugerido: prazo,
+              prioridade: input.prioridade,
+              status: "pendente",
+              workspaceId: ctx.user.workspaceId || null,
+            })
+            .returning();
 
-      // Uma única notificação consolidada
-      await db.insert(notifications).values({
-        userId: input.destinatarioId,
-        title: `${input.demandaIds.length} novas tarefas delegadas`,
-        message: `${remetente?.name || "Um defensor"} delegou ${input.demandaIds.length} demanda(s) para você.`,
-        type: input.prioridade === "URGENTE" ? "warning" : "info",
-        actionUrl: "/admin/delegacoes",
-        isRead: false,
+          results.push(delegacao);
+        }
+
+        // Uma única notificação consolidada
+        await tx.insert(notifications).values({
+          userId: input.destinatarioId,
+          title: `${input.demandaIds.length} novas tarefas delegadas`,
+          message: `${remetente?.name || "Um defensor"} delegou ${input.demandaIds.length} demanda(s) para você.`,
+          type: input.prioridade === "URGENTE" ? "warning" : "info",
+          actionUrl: "/admin/delegacoes",
+          isRead: false,
+        });
+
+        return results;
       });
 
       return { count: delegacoes.length, delegacoes };

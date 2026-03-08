@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { sql } from "drizzle-orm";
+import { sql, SQL } from "drizzle-orm";
 import { getWorkspaceScope } from "../workspace";
 
 // ==========================================
@@ -15,26 +15,28 @@ const filtrosInput = z.object({
 }).optional();
 
 /**
- * Monta cláusula WHERE baseada nos filtros
+ * Monta cláusula WHERE baseada nos filtros (parameterized)
  * Sempre filtra por status = 'realizada' e resultado NOT NULL
+ * Retorna um SQL chunk do Drizzle ORM — todos os valores são parametrizados
  */
-function buildWhereClause(filtros?: z.infer<typeof filtrosInput>) {
-  const conditions: string[] = [
-    "s.status = 'realizada'",
-    "s.resultado IS NOT NULL",
+function buildWhereClause(filtros?: z.infer<typeof filtrosInput>): SQL {
+  const conditions: SQL[] = [
+    sql`s.status = 'realizada'`,
+    sql`s.resultado IS NOT NULL`,
   ];
 
   if (filtros?.periodoInicio) {
-    conditions.push(`s.data_sessao >= '${filtros.periodoInicio}'::timestamp`);
+    conditions.push(sql`s.data_sessao >= ${filtros.periodoInicio}::timestamp`);
   }
   if (filtros?.periodoFim) {
-    conditions.push(`s.data_sessao <= '${filtros.periodoFim}'::timestamp + interval '1 day'`);
+    conditions.push(sql`s.data_sessao <= ${filtros.periodoFim}::timestamp + interval '1 day'`);
   }
   if (filtros?.defensorId) {
-    conditions.push(`s.defensor_id = ${filtros.defensorId}`);
+    conditions.push(sql`s.defensor_id = ${filtros.defensorId}`);
   }
 
-  return conditions.join(" AND ");
+  // Join all conditions with AND
+  return sql.join(conditions, sql` AND `);
 }
 
 /**
@@ -68,6 +70,22 @@ function calcPeriodoAnterior(inicio?: string, fim?: string) {
 }
 
 // ==========================================
+// TIPOS DE RESULTADO DAS QUERIES
+// ==========================================
+
+type DbRow = Record<string, unknown>;
+
+/** Helper para extrair número seguro de uma row */
+function num(value: unknown): number {
+  return Number(value) || 0;
+}
+
+/** Helper para extrair string segura de uma row */
+function str(value: unknown): string {
+  return String(value ?? "");
+}
+
+// ==========================================
 // ROUTER DE ANALYTICS DO JURI
 // ==========================================
 
@@ -89,7 +107,7 @@ export const juriAnalyticsRouter = router({
         defensorId: input?.defensorId,
       });
 
-      const result = await db.execute(sql.raw(`
+      const result = await db.execute<DbRow>(sql`
         SELECT
           -- Período atual
           COUNT(*) FILTER (WHERE ${where}) AS total,
@@ -103,21 +121,21 @@ export const juriAnalyticsRouter = router({
           COUNT(*) FILTER (WHERE ${whereAnterior} AND s.resultado = 'condenacao') AS prev_condenacoes,
           COUNT(*) FILTER (WHERE ${whereAnterior} AND s.resultado = 'desclassificacao') AS prev_desclassificacoes
         FROM sessoes_juri s
-      `));
+      `);
 
-      const row = (result as any)[0] || {};
+      const row: DbRow = result[0] || {};
 
       return {
-        total: Number(row.total) || 0,
-        absolvicoes: Number(row.absolvicoes) || 0,
-        condenacoes: Number(row.condenacoes) || 0,
-        desclassificacoes: Number(row.desclassificacoes) || 0,
-        nulidades: Number(row.nulidades) || 0,
+        total: num(row.total),
+        absolvicoes: num(row.absolvicoes),
+        condenacoes: num(row.condenacoes),
+        desclassificacoes: num(row.desclassificacoes),
+        nulidades: num(row.nulidades),
         periodoAnterior: {
-          total: Number(row.prev_total) || 0,
-          absolvicoes: Number(row.prev_absolvicoes) || 0,
-          condenacoes: Number(row.prev_condenacoes) || 0,
-          desclassificacoes: Number(row.prev_desclassificacoes) || 0,
+          total: num(row.prev_total),
+          absolvicoes: num(row.prev_absolvicoes),
+          condenacoes: num(row.prev_condenacoes),
+          desclassificacoes: num(row.prev_desclassificacoes),
         },
       };
     }),
@@ -132,7 +150,7 @@ export const juriAnalyticsRouter = router({
 
       const where = buildWhereClause(input);
 
-      const result = await db.execute(sql.raw(`
+      const result = await db.execute<DbRow>(sql`
         SELECT
           to_char(s.data_sessao, 'YYYY-MM') AS mes,
           COUNT(*) AS total,
@@ -144,15 +162,15 @@ export const juriAnalyticsRouter = router({
         WHERE ${where}
         GROUP BY to_char(s.data_sessao, 'YYYY-MM')
         ORDER BY mes ASC
-      `));
+      `);
 
-      return ((result as any) || []).map((row: any) => ({
-        mes: row.mes,
-        total: Number(row.total) || 0,
-        absolvicoes: Number(row.absolvicoes) || 0,
-        condenacoes: Number(row.condenacoes) || 0,
-        desclassificacoes: Number(row.desclassificacoes) || 0,
-        nulidades: Number(row.nulidades) || 0,
+      return [...result].map((row) => ({
+        mes: str(row.mes),
+        total: num(row.total),
+        absolvicoes: num(row.absolvicoes),
+        condenacoes: num(row.condenacoes),
+        desclassificacoes: num(row.desclassificacoes),
+        nulidades: num(row.nulidades),
       }));
     }),
 
@@ -166,7 +184,7 @@ export const juriAnalyticsRouter = router({
 
       const where = buildWhereClause(input);
 
-      const result = await db.execute(sql.raw(`
+      const result = await db.execute<DbRow>(sql`
         SELECT
           COALESCE(s.tipo_penal, 'nao_informado') AS tipo_penal,
           COUNT(*) AS total,
@@ -181,15 +199,15 @@ export const juriAnalyticsRouter = router({
         WHERE ${where}
         GROUP BY COALESCE(s.tipo_penal, 'nao_informado')
         ORDER BY total DESC
-      `));
+      `);
 
-      return ((result as any) || []).map((row: any) => ({
-        tipoPenal: row.tipo_penal,
-        total: Number(row.total) || 0,
-        absolvicoes: Number(row.absolvicoes) || 0,
-        condenacoes: Number(row.condenacoes) || 0,
-        desclassificacoes: Number(row.desclassificacoes) || 0,
-        taxaAbsolvicao: Number(row.taxa_absolvicao) || 0,
+      return [...result].map((row) => ({
+        tipoPenal: str(row.tipo_penal),
+        total: num(row.total),
+        absolvicoes: num(row.absolvicoes),
+        condenacoes: num(row.condenacoes),
+        desclassificacoes: num(row.desclassificacoes),
+        taxaAbsolvicao: num(row.taxa_absolvicao),
       }));
     }),
 
@@ -203,7 +221,7 @@ export const juriAnalyticsRouter = router({
 
       const where = buildWhereClause(input);
 
-      const result = await db.execute(sql.raw(`
+      const result = await db.execute<DbRow>(sql`
         SELECT
           COALESCE(s.tese_principal, 'Nao informada') AS tese,
           COUNT(*) AS total,
@@ -217,14 +235,14 @@ export const juriAnalyticsRouter = router({
         WHERE ${where}
         GROUP BY COALESCE(s.tese_principal, 'Nao informada')
         ORDER BY total DESC
-      `));
+      `);
 
-      return ((result as any) || []).map((row: any) => ({
-        tese: row.tese,
-        total: Number(row.total) || 0,
-        absolvicoes: Number(row.absolvicoes) || 0,
-        condenacoes: Number(row.condenacoes) || 0,
-        taxaAbsolvicao: Number(row.taxa_absolvicao) || 0,
+      return [...result].map((row) => ({
+        tese: str(row.tese),
+        total: num(row.total),
+        absolvicoes: num(row.absolvicoes),
+        condenacoes: num(row.condenacoes),
+        taxaAbsolvicao: num(row.taxa_absolvicao),
       }));
     }),
 
@@ -238,7 +256,7 @@ export const juriAnalyticsRouter = router({
 
       const where = buildWhereClause(input);
 
-      const result = await db.execute(sql.raw(`
+      const result = await db.execute<DbRow>(sql`
         SELECT
           CASE
             WHEN s.duracao_minutos IS NULL THEN 'Nao informado'
@@ -267,14 +285,14 @@ export const juriAnalyticsRouter = router({
         WHERE ${where}
         GROUP BY faixa, ordem
         ORDER BY ordem ASC
-      `));
+      `);
 
-      return ((result as any) || []).map((row: any) => ({
-        faixa: row.faixa,
-        total: Number(row.total) || 0,
-        absolvicoes: Number(row.absolvicoes) || 0,
-        condenacoes: Number(row.condenacoes) || 0,
-        taxaAbsolvicao: Number(row.taxa_absolvicao) || 0,
+      return [...result].map((row) => ({
+        faixa: str(row.faixa),
+        total: num(row.total),
+        absolvicoes: num(row.absolvicoes),
+        condenacoes: num(row.condenacoes),
+        taxaAbsolvicao: num(row.taxa_absolvicao),
       }));
     }),
 
@@ -289,7 +307,7 @@ export const juriAnalyticsRouter = router({
       const where = buildWhereClause(input);
 
       // Primariedade
-      const resultPrimario = await db.execute(sql.raw(`
+      const resultPrimario = await db.execute<DbRow>(sql`
         SELECT
           CASE
             WHEN s.reu_primario IS NULL THEN 'Nao informado'
@@ -307,10 +325,10 @@ export const juriAnalyticsRouter = router({
         WHERE ${where}
         GROUP BY categoria
         ORDER BY total DESC
-      `));
+      `);
 
       // Local do fato
-      const resultLocal = await db.execute(sql.raw(`
+      const resultLocal = await db.execute<DbRow>(sql`
         SELECT
           COALESCE(s.local_fato, 'Nao informado') AS local,
           COUNT(*) AS total,
@@ -325,22 +343,22 @@ export const juriAnalyticsRouter = router({
         GROUP BY COALESCE(s.local_fato, 'Nao informado')
         ORDER BY total DESC
         LIMIT 15
-      `));
+      `);
 
       return {
-        porPrimariedade: ((resultPrimario as any) || []).map((row: any) => ({
-          categoria: row.categoria,
-          total: Number(row.total) || 0,
-          absolvicoes: Number(row.absolvicoes) || 0,
-          condenacoes: Number(row.condenacoes) || 0,
-          taxaAbsolvicao: Number(row.taxa_absolvicao) || 0,
+        porPrimariedade: [...resultPrimario].map((row) => ({
+          categoria: str(row.categoria),
+          total: num(row.total),
+          absolvicoes: num(row.absolvicoes),
+          condenacoes: num(row.condenacoes),
+          taxaAbsolvicao: num(row.taxa_absolvicao),
         })),
-        porLocalFato: ((resultLocal as any) || []).map((row: any) => ({
-          local: row.local,
-          total: Number(row.total) || 0,
-          absolvicoes: Number(row.absolvicoes) || 0,
-          condenacoes: Number(row.condenacoes) || 0,
-          taxaAbsolvicao: Number(row.taxa_absolvicao) || 0,
+        porLocalFato: [...resultLocal].map((row) => ({
+          local: str(row.local),
+          total: num(row.total),
+          absolvicoes: num(row.absolvicoes),
+          condenacoes: num(row.condenacoes),
+          taxaAbsolvicao: num(row.taxa_absolvicao),
         })),
       };
     }),
@@ -355,8 +373,8 @@ export const juriAnalyticsRouter = router({
 
       const where = buildWhereClause(input);
 
-      // Top jurados com tendência
-      const juradosResult = await db.execute(sql.raw(`
+      // Top jurados com tendência (no dynamic filters, static query)
+      const juradosResult = await db.execute<DbRow>(sql`
         SELECT
           j.id,
           j.nome,
@@ -369,10 +387,10 @@ export const juriAnalyticsRouter = router({
         WHERE j.ativo = true
         ORDER BY j.total_sessoes DESC NULLS LAST
         LIMIT 20
-      `));
+      `);
 
       // Juízes — group by juiz_presidente nas sessões filtradas
-      const juizesResult = await db.execute(sql.raw(`
+      const juizesResult = await db.execute<DbRow>(sql`
         SELECT
           s.juiz_presidente AS nome,
           COUNT(*) AS total,
@@ -386,10 +404,10 @@ export const juriAnalyticsRouter = router({
         WHERE ${where} AND s.juiz_presidente IS NOT NULL
         GROUP BY s.juiz_presidente
         ORDER BY total DESC
-      `));
+      `);
 
       // Promotores
-      const promotoresResult = await db.execute(sql.raw(`
+      const promotoresResult = await db.execute<DbRow>(sql`
         SELECT
           s.promotor AS nome,
           COUNT(*) AS total,
@@ -403,31 +421,31 @@ export const juriAnalyticsRouter = router({
         WHERE ${where} AND s.promotor IS NOT NULL
         GROUP BY s.promotor
         ORDER BY total DESC
-      `));
+      `);
 
       return {
-        jurados: ((juradosResult as any) || []).map((row: any) => ({
-          id: Number(row.id),
-          nome: row.nome,
-          totalSessoes: Number(row.total_sessoes) || 0,
-          votosCondenacao: Number(row.votos_condenacao) || 0,
-          votosAbsolvicao: Number(row.votos_absolvicao) || 0,
-          votosDesclassificacao: Number(row.votos_desclassificacao) || 0,
-          perfilTendencia: row.perfil_tendencia,
+        jurados: [...juradosResult].map((row) => ({
+          id: num(row.id),
+          nome: str(row.nome),
+          totalSessoes: num(row.total_sessoes),
+          votosCondenacao: num(row.votos_condenacao),
+          votosAbsolvicao: num(row.votos_absolvicao),
+          votosDesclassificacao: num(row.votos_desclassificacao),
+          perfilTendencia: str(row.perfil_tendencia),
         })),
-        juizes: ((juizesResult as any) || []).map((row: any) => ({
-          nome: row.nome,
-          total: Number(row.total) || 0,
-          absolvicoes: Number(row.absolvicoes) || 0,
-          condenacoes: Number(row.condenacoes) || 0,
-          taxaAbsolvicao: Number(row.taxa_absolvicao) || 0,
+        juizes: [...juizesResult].map((row) => ({
+          nome: str(row.nome),
+          total: num(row.total),
+          absolvicoes: num(row.absolvicoes),
+          condenacoes: num(row.condenacoes),
+          taxaAbsolvicao: num(row.taxa_absolvicao),
         })),
-        promotores: ((promotoresResult as any) || []).map((row: any) => ({
-          nome: row.nome,
-          total: Number(row.total) || 0,
-          absolvicoes: Number(row.absolvicoes) || 0,
-          condenacoes: Number(row.condenacoes) || 0,
-          taxaAbsolvicao: Number(row.taxa_absolvicao) || 0,
+        promotores: [...promotoresResult].map((row) => ({
+          nome: str(row.nome),
+          total: num(row.total),
+          absolvicoes: num(row.absolvicoes),
+          condenacoes: num(row.condenacoes),
+          taxaAbsolvicao: num(row.taxa_absolvicao),
         })),
       };
     }),
@@ -447,7 +465,7 @@ export const juriAnalyticsRouter = router({
       // Insight: Duração longa = mais condenação?
       // ----------------------------------------------------------
       try {
-        const duracaoResult = await db.execute(sql.raw(`
+        const duracaoResult = await db.execute<DbRow>(sql`
           SELECT
             CASE WHEN s.duracao_minutos >= 360 THEN 'longa' ELSE 'curta' END AS tipo,
             COUNT(*) AS total,
@@ -456,15 +474,15 @@ export const juriAnalyticsRouter = router({
           FROM sessoes_juri s
           WHERE ${where} AND s.duracao_minutos IS NOT NULL
           GROUP BY tipo
-        `));
+        `);
 
-        const rows = (duracaoResult as any) || [];
-        const longa = rows.find((r: any) => r.tipo === "longa");
-        const curta = rows.find((r: any) => r.tipo === "curta");
+        const rows = [...duracaoResult];
+        const longa = rows.find((r) => r.tipo === "longa");
+        const curta = rows.find((r) => r.tipo === "curta");
 
-        if (longa && Number(longa.total) >= 5 && curta && Number(curta.total) >= 5) {
-          const taxaCondLonga = (Number(longa.condenacoes) / Number(longa.total)) * 100;
-          const taxaCondCurta = (Number(curta.condenacoes) / Number(curta.total)) * 100;
+        if (longa && num(longa.total) >= 5 && curta && num(curta.total) >= 5) {
+          const taxaCondLonga = (num(longa.condenacoes) / num(longa.total)) * 100;
+          const taxaCondCurta = (num(curta.condenacoes) / num(curta.total)) * 100;
           const diff = taxaCondLonga - taxaCondCurta;
 
           if (Math.abs(diff) >= 10) {
@@ -472,13 +490,13 @@ export const juriAnalyticsRouter = router({
               insights.push({
                 insight: `Sessoes com mais de 6h tem ${Math.round(taxaCondLonga)}% de condenacao, contra ${Math.round(taxaCondCurta)}% nas mais curtas`,
                 confianca: Math.min(90, 50 + Math.abs(diff)),
-                n: Number(longa.total) + Number(curta.total),
+                n: num(longa.total) + num(curta.total),
               });
             } else {
               insights.push({
                 insight: `Sessoes mais longas (6h+) tem taxa de absolvicao maior: ${Math.round(100 - taxaCondLonga)}% vs ${Math.round(100 - taxaCondCurta)}%`,
                 confianca: Math.min(90, 50 + Math.abs(diff)),
-                n: Number(longa.total) + Number(curta.total),
+                n: num(longa.total) + num(curta.total),
               });
             }
           }
@@ -489,7 +507,7 @@ export const juriAnalyticsRouter = router({
       // Insight: Réu primário vs reincidente
       // ----------------------------------------------------------
       try {
-        const primarioResult = await db.execute(sql.raw(`
+        const primarioResult = await db.execute<DbRow>(sql`
           SELECT
             s.reu_primario AS primario,
             COUNT(*) AS total,
@@ -497,22 +515,22 @@ export const juriAnalyticsRouter = router({
           FROM sessoes_juri s
           WHERE ${where} AND s.reu_primario IS NOT NULL
           GROUP BY s.reu_primario
-        `));
+        `);
 
-        const rows = (primarioResult as any) || [];
-        const prim = rows.find((r: any) => r.primario === true);
-        const reincid = rows.find((r: any) => r.primario === false);
+        const rows = [...primarioResult];
+        const prim = rows.find((r) => r.primario === true);
+        const reincid = rows.find((r) => r.primario === false);
 
-        if (prim && Number(prim.total) >= 5 && reincid && Number(reincid.total) >= 3) {
-          const taxaPrim = (Number(prim.absolvicoes) / Number(prim.total)) * 100;
-          const taxaReincid = (Number(reincid.absolvicoes) / Number(reincid.total)) * 100;
+        if (prim && num(prim.total) >= 5 && reincid && num(reincid.total) >= 3) {
+          const taxaPrim = (num(prim.absolvicoes) / num(prim.total)) * 100;
+          const taxaReincid = (num(reincid.absolvicoes) / num(reincid.total)) * 100;
           const diff = taxaPrim - taxaReincid;
 
           if (diff > 10) {
             insights.push({
               insight: `Reus primarios tem ${Math.round(taxaPrim)}% de absolvicao contra ${Math.round(taxaReincid)}% dos reincidentes`,
               confianca: Math.min(85, 50 + diff / 2),
-              n: Number(prim.total) + Number(reincid.total),
+              n: num(prim.total) + num(reincid.total),
             });
           }
         }
@@ -522,7 +540,7 @@ export const juriAnalyticsRouter = router({
       // Insight: Tese + resultado (melhor e pior tese)
       // ----------------------------------------------------------
       try {
-        const teseResult = await db.execute(sql.raw(`
+        const teseResult = await db.execute<DbRow>(sql`
           SELECT
             s.tese_principal AS tese,
             COUNT(*) AS total,
@@ -533,26 +551,26 @@ export const juriAnalyticsRouter = router({
           GROUP BY s.tese_principal
           HAVING COUNT(*) >= 3
           ORDER BY taxa DESC
-        `));
+        `);
 
-        const rows = (teseResult as any) || [];
+        const rows = [...teseResult];
         if (rows.length >= 2) {
           const melhor = rows[0];
           const pior = rows[rows.length - 1];
 
-          if (Number(melhor.taxa) > 60) {
+          if (num(melhor.taxa) > 60) {
             insights.push({
               insight: `A tese "${melhor.tese}" tem a melhor taxa de absolvicao: ${melhor.taxa}% em ${melhor.total} sessoes`,
-              confianca: Math.min(85, 40 + Number(melhor.total) * 5),
-              n: Number(melhor.total),
+              confianca: Math.min(85, 40 + num(melhor.total) * 5),
+              n: num(melhor.total),
             });
           }
 
-          if (Number(pior.taxa) < 30 && Number(pior.total) >= 3) {
+          if (num(pior.taxa) < 30 && num(pior.total) >= 3) {
             insights.push({
               insight: `A tese "${pior.tese}" tem a menor taxa de absolvicao: ${pior.taxa}% em ${pior.total} sessoes`,
-              confianca: Math.min(80, 40 + Number(pior.total) * 5),
-              n: Number(pior.total),
+              confianca: Math.min(80, 40 + num(pior.total) * 5),
+              n: num(pior.total),
             });
           }
         }
@@ -562,7 +580,7 @@ export const juriAnalyticsRouter = router({
       // Insight: Tipo penal mais favorável
       // ----------------------------------------------------------
       try {
-        const tipoPenalResult = await db.execute(sql.raw(`
+        const tipoPenalResult = await db.execute<DbRow>(sql`
           SELECT
             s.tipo_penal,
             COUNT(*) AS total,
@@ -572,16 +590,16 @@ export const juriAnalyticsRouter = router({
           GROUP BY s.tipo_penal
           HAVING COUNT(*) >= 5
           ORDER BY taxa DESC
-        `));
+        `);
 
-        const rows = (tipoPenalResult as any) || [];
+        const rows = [...tipoPenalResult];
         if (rows.length >= 1) {
           const melhor = rows[0];
           const label = String(melhor.tipo_penal).replace(/_/g, " ");
           insights.push({
             insight: `Em casos de ${label}, a taxa de absolvicao e de ${melhor.taxa}% (n=${melhor.total})`,
-            confianca: Math.min(85, 40 + Number(melhor.total) * 3),
-            n: Number(melhor.total),
+            confianca: Math.min(85, 40 + num(melhor.total) * 3),
+            n: num(melhor.total),
           });
         }
       } catch (e) { /* skip insight */ }
@@ -590,7 +608,7 @@ export const juriAnalyticsRouter = router({
       // Insight: Tese + réu primário combo
       // ----------------------------------------------------------
       try {
-        const comboResult = await db.execute(sql.raw(`
+        const comboResult = await db.execute<DbRow>(sql`
           SELECT
             s.tese_principal AS tese,
             COUNT(*) AS total,
@@ -601,14 +619,14 @@ export const juriAnalyticsRouter = router({
           HAVING COUNT(*) >= 5
           ORDER BY taxa DESC
           LIMIT 1
-        `));
+        `);
 
-        const rows = (comboResult as any) || [];
-        if (rows.length >= 1 && Number(rows[0].taxa) >= 50) {
+        const rows = [...comboResult];
+        if (rows.length >= 1 && num(rows[0].taxa) >= 50) {
           insights.push({
             insight: `Tese "${rows[0].tese}" + reu primario = ${rows[0].taxa}% de absolvicao`,
-            confianca: Math.min(80, 40 + Number(rows[0].total) * 4),
-            n: Number(rows[0].total),
+            confianca: Math.min(80, 40 + num(rows[0].total) * 4),
+            n: num(rows[0].total),
           });
         }
       } catch (e) { /* skip insight */ }

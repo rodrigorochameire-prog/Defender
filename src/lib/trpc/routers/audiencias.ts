@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
-import { db, audiencias, processos, assistidos, sessoesJuri } from "@/lib/db";
+import { db, withTransaction, audiencias, processos, assistidos, sessoesJuri } from "@/lib/db";
 import { eq, and, gte, desc, asc, isNull, or, sql, ilike } from "drizzle-orm";
 import { addDays } from "date-fns";
 import { getWorkspaceScope } from "../workspace";
@@ -325,11 +325,7 @@ export const audienciasRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const { eventos } = input;
-      const importados: number[] = [];
-      const duplicados: string[] = [];
-      const atualizados: number[] = [];
-      const assistidosCriados: number[] = [];
-      
+
       // Obter workspaceId do usuário (ou usar 1 como padrão)
       const { workspaceId } = getWorkspaceScope(ctx.user);
       const targetWorkspaceId = workspaceId || 1;
@@ -346,7 +342,7 @@ export const audienciasRouter = router({
         if (a.includes("CÍVEL") || a.includes("CIVEL") || a.includes("FAMÍLIA") || a.includes("FAMILIA") || a.includes("NÃO PENAL") || a.includes("NAO PENAL")) return "SUBSTITUICAO_CIVEL";
         return "SUBSTITUICAO";
       };
-      
+
       // Mapear área para o enum do banco de dados
       // Valores válidos: JURI, EXECUCAO_PENAL, VIOLENCIA_DOMESTICA, SUBSTITUICAO, CURADORIA, FAMILIA, CIVEL, FAZENDA_PUBLICA
       const mapArea = (atrib: string | undefined): "JURI" | "EXECUCAO_PENAL" | "VIOLENCIA_DOMESTICA" | "SUBSTITUICAO" | "CURADORIA" | "FAMILIA" | "CIVEL" | "FAZENDA_PUBLICA" => {
@@ -377,32 +373,38 @@ export const audienciasRouter = router({
         const s1 = normalizarNome(str1);
         const s2 = normalizarNome(str2);
         if (s1 === s2) return 1;
-        
+
         const longer = s1.length > s2.length ? s1 : s2;
         const shorter = s1.length > s2.length ? s2 : s1;
-        
+
         if (longer.length === 0) return 1;
-        
+
         // Verificar se um contém o outro
         if (longer.includes(shorter) || shorter.includes(longer)) {
           return shorter.length / longer.length;
         }
-        
+
         // Comparar palavras
         const palavras1 = s1.split(" ");
         const palavras2 = s2.split(" ");
         const palavrasComuns = palavras1.filter(p => palavras2.includes(p));
-        
+
         return palavrasComuns.length / Math.max(palavras1.length, palavras2.length);
       };
 
-      for (const evento of eventos) {
-        try {
+      // Entire batch wrapped in a transaction — on error, everything rolls back
+      return await withTransaction(async (tx) => {
+        const importados: number[] = [];
+        const duplicados: string[] = [];
+        const atualizados: number[] = [];
+        const assistidosCriados: number[] = [];
+
+        for (const evento of eventos) {
           // Construir data/hora completa
           const dataHora = new Date(`${evento.data}T${evento.horarioInicio}:00`);
-          
+
           // Verificar se já existe uma audiência com mesmo processo, data e horário
-          const existente = await db
+          const existente = await tx
             .select({
               id: audiencias.id,
               processoId: audiencias.processoId,
@@ -423,7 +425,7 @@ export const audienciasRouter = router({
             const audienciaExistente = existente[0];
 
             // Atualizar audiência existente com novos dados
-            await db
+            await tx
               .update(audiencias)
               .set({
                 tipo: evento.tipo,
@@ -442,7 +444,7 @@ export const audienciasRouter = router({
               const atribuicaoEnum = mapAtribuicao(evento.atribuicao);
               const areaEnum = mapArea(evento.atribuicao);
 
-              await db
+              await tx
                 .update(processos)
                 .set({
                   atribuicao: atribuicaoEnum as any,
@@ -461,34 +463,34 @@ export const audienciasRouter = router({
           // Buscar ou criar assistido (primeiro da lista)
           let assistidoId: number | undefined;
           const listaAssistidos = evento.assistidos || [];
-          
+
           if (listaAssistidos.length > 0) {
             const primeiroAssistido = listaAssistidos[0];
             const nomeNormalizado = normalizarNome(primeiroAssistido.nome);
-            
+
             // Buscar por CPF se disponível (identificador único confiável)
             if (primeiroAssistido.cpf) {
               const cpfLimpo = primeiroAssistido.cpf.replace(/\D/g, "");
-              const [assistidoExistente] = await db
+              const [assistidoExistente] = await tx
                 .select({ id: assistidos.id })
                 .from(assistidos)
                 .where(sql`REPLACE(REPLACE(REPLACE(${assistidos.cpf}, '.', ''), '-', ''), ' ', '') = ${cpfLimpo}`)
                 .limit(1);
-              
+
               if (assistidoExistente) {
                 assistidoId = assistidoExistente.id;
               }
             }
-            
+
             // Se não encontrou por CPF, buscar por nome normalizado (case-insensitive)
             if (!assistidoId) {
               // Busca case-insensitive com ilike
-              const candidatos = await db
+              const candidatos = await tx
                 .select({ id: assistidos.id, nome: assistidos.nome })
                 .from(assistidos)
                 .where(ilike(assistidos.nome, `%${primeiroAssistido.nome.split(" ")[0]}%`))
                 .limit(10);
-              
+
               // Encontrar match exato normalizado ou mais similar
               for (const candidato of candidatos) {
                 const similaridade = calcularSimilaridade(candidato.nome, primeiroAssistido.nome);
@@ -498,7 +500,7 @@ export const audienciasRouter = router({
                 }
               }
             }
-            
+
             // Se não encontrou, criar novo assistido
             if (!assistidoId) {
               // Formatar nome corretamente (capitalizar cada palavra)
@@ -513,8 +515,8 @@ export const audienciasRouter = router({
                   return palavra.charAt(0).toUpperCase() + palavra.slice(1);
                 })
                 .join(" ");
-              
-              const [novoAssistido] = await db
+
+              const [novoAssistido] = await tx
                 .insert(assistidos)
                 .values({
                   nome: nomeFormatado,
@@ -531,15 +533,15 @@ export const audienciasRouter = router({
           } else {
             // Se não tem assistido identificado, buscar ou criar
             const nomeGenerico = evento.assistido || "Não identificado";
-            
+
             // Tentar encontrar existente primeiro
             if (nomeGenerico !== "Não identificado") {
-              const candidatos = await db
+              const candidatos = await tx
                 .select({ id: assistidos.id, nome: assistidos.nome })
                 .from(assistidos)
                 .where(ilike(assistidos.nome, `%${nomeGenerico.split(" ")[0]}%`))
                 .limit(10);
-              
+
               for (const candidato of candidatos) {
                 const similaridade = calcularSimilaridade(candidato.nome, nomeGenerico);
                 if (similaridade >= 0.9) {
@@ -548,7 +550,7 @@ export const audienciasRouter = router({
                 }
               }
             }
-            
+
             if (!assistidoId) {
               const nomeFormatado = nomeGenerico
                 .toLowerCase()
@@ -560,8 +562,8 @@ export const audienciasRouter = router({
                   return palavra.charAt(0).toUpperCase() + palavra.slice(1);
                 })
                 .join(" ");
-              
-              const [novoAssistido] = await db
+
+              const [novoAssistido] = await tx
                 .insert(assistidos)
                 .values({
                   nome: nomeFormatado,
@@ -578,14 +580,14 @@ export const audienciasRouter = router({
 
           // Backfill atribuicaoPrimaria if null
           if (assistidoId) {
-            const [existingAssistido] = await db
+            const [existingAssistido] = await tx
               .select({ atribuicaoPrimaria: assistidos.atribuicaoPrimaria })
               .from(assistidos)
               .where(eq(assistidos.id, assistidoId))
               .limit(1);
 
             if (existingAssistido && !existingAssistido.atribuicaoPrimaria) {
-              await db.update(assistidos)
+              await tx.update(assistidos)
                 .set({ atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as any })
                 .where(eq(assistidos.id, assistidoId));
             }
@@ -593,7 +595,7 @@ export const audienciasRouter = router({
 
           // Buscar ou criar processo
           let processoId: number | undefined;
-          const [processoExistente] = await db
+          const [processoExistente] = await tx
             .select({ id: processos.id })
             .from(processos)
             .where(eq(processos.numeroAutos, evento.processo))
@@ -603,7 +605,7 @@ export const audienciasRouter = router({
             processoId = processoExistente.id;
 
             // Backfill processo data if incomplete
-            const [processoData] = await db
+            const [processoData] = await tx
               .select({ classeProcessual: processos.classeProcessual, vara: processos.vara, isJuri: processos.isJuri })
               .from(processos)
               .where(eq(processos.id, processoExistente.id))
@@ -617,14 +619,14 @@ export const audienciasRouter = router({
               updates.vara = evento.orgaoJulgador;
             }
             if (Object.keys(updates).length > 0) {
-              await db.update(processos).set(updates).where(eq(processos.id, processoExistente.id));
+              await tx.update(processos).set(updates).where(eq(processos.id, processoExistente.id));
             }
           } else {
             // Criar processo com todos os campos obrigatórios
             const atribuicaoEnum = mapAtribuicao(evento.atribuicao);
             const areaEnum = mapArea(evento.atribuicao);
-            
-            const [novoProcesso] = await db
+
+            const [novoProcesso] = await tx
               .insert(processos)
               .values({
                 assistidoId: assistidoId!,
@@ -636,7 +638,7 @@ export const audienciasRouter = router({
                 workspaceId: targetWorkspaceId as number,
               })
               .returning({ id: processos.id });
-            
+
             processoId = novoProcesso.id;
           }
 
@@ -653,7 +655,7 @@ export const audienciasRouter = router({
 
           if (ehSessaoJuri) {
             // Criar sessão de júri na tabela correta
-            const [sessao] = await db
+            const [sessao] = await tx
               .insert(sessoesJuri)
               .values({
                 processoId: processoId!,
@@ -668,14 +670,14 @@ export const audienciasRouter = router({
               .returning({ id: sessoesJuri.id });
 
             // Atualizar processo com flag de júri
-            await db.update(processos)
+            await tx.update(processos)
               .set({ isJuri: true })
               .where(eq(processos.id, processoId!));
 
             importados.push(sessao.id);
           } else {
             // Criar audiência comum
-            const [audiencia] = await db
+            const [audiencia] = await tx
               .insert(audiencias)
               .values({
                 processoId,
@@ -695,18 +697,15 @@ export const audienciasRouter = router({
 
             importados.push(audiencia.id);
           }
-        } catch (error) {
-          console.error(`Erro ao importar evento ${evento.processo}:`, error);
-          // Continuar com os próximos eventos
         }
-      }
 
-      return {
-        importados: importados.length,
-        duplicados: duplicados.length,
-        atualizados: atualizados.length,
-        duplicadosProcessos: duplicados,
-        assistidosCriados: assistidosCriados.length,
-      };
+        return {
+          importados: importados.length,
+          duplicados: duplicados.length,
+          atualizados: atualizados.length,
+          duplicadosProcessos: duplicados,
+          assistidosCriados: assistidosCriados.length,
+        };
+      });
     }),
 });

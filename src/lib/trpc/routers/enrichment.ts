@@ -89,9 +89,17 @@ export const enrichmentRouter = router({
     .mutation(async ({ input, ctx }) => {
       const { documentoId } = input;
 
-      // 1. Buscar documento no banco
+      // 1. Buscar documento no banco (exclui enrichmentData e conteudoCompleto — pesados e desnecessários aqui)
       const [doc] = await db
-        .select()
+        .select({
+          id: documentos.id,
+          enrichmentStatus: documentos.enrichmentStatus,
+          fileUrl: documentos.fileUrl,
+          mimeType: documentos.mimeType,
+          assistidoId: documentos.assistidoId,
+          processoId: documentos.processoId,
+          casoId: documentos.casoId,
+        })
         .from(documentos)
         .where(eq(documentos.id, documentoId))
         .limit(1);
@@ -198,9 +206,17 @@ export const enrichmentRouter = router({
     .mutation(async ({ input, ctx }) => {
       const { atendimentoId, context } = input;
 
-      // 1. Buscar atendimento
+      // 1. Buscar atendimento (apenas campos necessários, exclui enrichmentData/pontosChave/transcricaoMetadados)
       const [atendimento] = await db
-        .select()
+        .select({
+          id: atendimentos.id,
+          transcricao: atendimentos.transcricao,
+          resumo: atendimentos.resumo,
+          enrichmentStatus: atendimentos.enrichmentStatus,
+          assistidoId: atendimentos.assistidoId,
+          processoId: atendimentos.processoId,
+          casoId: atendimentos.casoId,
+        })
         .from(atendimentos)
         .where(eq(atendimentos.id, atendimentoId))
         .limit(1);
@@ -386,8 +402,16 @@ export const enrichmentRouter = router({
           );
 
         // Re-trigger (reusa a mutation enrichDocument internamente)
+        // Exclui enrichmentData e conteudoCompleto — pesados e desnecessários aqui
         const [doc] = await db
-          .select()
+          .select({
+            id: documentos.id,
+            fileUrl: documentos.fileUrl,
+            mimeType: documentos.mimeType,
+            assistidoId: documentos.assistidoId,
+            processoId: documentos.processoId,
+            casoId: documentos.casoId,
+          })
           .from(documentos)
           .where(eq(documentos.id, entityId))
           .limit(1);
@@ -518,9 +542,21 @@ export const enrichmentRouter = router({
   suggestActionsFromEnrichment: protectedProcedure
     .input(z.object({ driveFileId: z.number() }))
     .query(async ({ input }) => {
-      const file = await db.query.driveFiles.findFirst({
-        where: eq(driveFiles.id, input.driveFileId),
-      });
+      // Busca apenas campos necessários para sugestões (exclui links, checksums etc.)
+      const [file] = await db
+        .select({
+          id: driveFiles.id,
+          name: driveFiles.name,
+          documentType: driveFiles.documentType,
+          categoria: driveFiles.categoria,
+          enrichmentData: driveFiles.enrichmentData,
+          enrichmentStatus: driveFiles.enrichmentStatus,
+          processoId: driveFiles.processoId,
+          assistidoId: driveFiles.assistidoId,
+        })
+        .from(driveFiles)
+        .where(eq(driveFiles.id, input.driveFileId))
+        .limit(1);
 
       if (!file) return { suggestions: [] };
 
@@ -655,9 +691,19 @@ export const enrichmentRouter = router({
     .mutation(async ({ input, ctx }) => {
       const results: Array<{ type: string; success: boolean; id?: number; error?: string }> = [];
 
-      const file = await db.query.driveFiles.findFirst({
-        where: eq(driveFiles.id, input.driveFileId),
-      });
+      // Busca apenas campos necessários (exclui enrichmentData JSONB e links pesados)
+      const [file] = await db
+        .select({
+          id: driveFiles.id,
+          name: driveFiles.name,
+          documentType: driveFiles.documentType,
+          categoria: driveFiles.categoria,
+          processoId: driveFiles.processoId,
+          assistidoId: driveFiles.assistidoId,
+        })
+        .from(driveFiles)
+        .where(eq(driveFiles.id, input.driveFileId))
+        .limit(1);
       if (!file) return { results: [{ type: "error", success: false, error: "Arquivo não encontrado" }] };
 
       const processoId = input.actions[0]?.processoId || file.processoId;

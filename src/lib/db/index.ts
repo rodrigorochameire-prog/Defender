@@ -26,7 +26,7 @@ const POOL_CONFIG = {
   prepare: false,
   
   // Timeout máximo para queries (milissegundos)
-  max_lifetime: 60 * 1000, // 1 minuto
+  max_lifetime: 5 * 60 * 1000, // 5 minutos
   
   // Configurações SSL para Supabase
   ssl: process.env.NODE_ENV === "production" ? "require" : undefined,
