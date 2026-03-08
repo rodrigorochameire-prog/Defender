@@ -100,6 +100,7 @@ export const demandasRouter = router({
           importBatchId: demandas.importBatchId,
           ordemOriginal: demandas.ordemOriginal,
           createdAt: demandas.createdAt,
+          updatedAt: demandas.updatedAt,
           processo: {
             id: processos.id,
             numeroAutos: processos.numeroAutos,

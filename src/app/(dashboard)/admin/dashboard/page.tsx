@@ -671,45 +671,7 @@ export default function DashboardJuriPage() {
       .slice(0, 10);
   }, [assistidos, assistidoSearchQuery, atribuicaoFilter]);
 
-  // Stats para KPI cards — reformulados
-  const totalDemandas = demandasFiltradas.length;
-  const emAndamento = demandasFiltradas.filter((d: any) =>
-    !isStatusConcluido(d.status)
-  ).length;
   const totalJuris = jurisFiltrados.length;
-
-  const statsData = [
-    {
-      title: "Vencidos",
-      value: isLoading ? "..." : estatisticasPrazos.vencidos.toString(),
-      subtitle: estatisticasPrazos.vencidos > 0 ? "requerem atenção" : "nenhum pendente",
-      icon: AlertCircle,
-      gradient: "zinc" as const,
-    },
-    {
-      title: "Esta Semana",
-      value: isLoading ? "..." : (estatisticasPrazos.venceHoje + estatisticasPrazos.proximosDias).toString(),
-      subtitle: `${estatisticasPrazos.venceHoje} hoje + ${estatisticasPrazos.proximosDias} próximos`,
-      icon: Calendar,
-      gradient: "zinc" as const,
-    },
-    {
-      title: "Em Andamento",
-      value: isLoading ? "..." : emAndamento.toString(),
-      subtitle: `${totalDemandas} total`,
-      icon: FileText,
-      gradient: "zinc" as const,
-    },
-    {
-      title: isDefensorCriminalGeral ? "Audiências" : "Próximos Júris",
-      value: isLoading ? "..." : (isDefensorCriminalGeral ? audienciasExibir.length : totalJuris).toString(),
-      subtitle: isDefensorCriminalGeral
-        ? (audienciasExibir.length > 0 ? "agendadas" : "nenhuma")
-        : (totalJuris > 0 ? "agendados" : "nenhum"),
-      icon: isDefensorCriminalGeral ? CalendarDays : Gavel,
-      gradient: "zinc" as const,
-    },
-  ];
 
   // Delegações ativas (enviadas pelo defensor)
   const delegacoesAtivas = useMemo(() => {
@@ -1467,35 +1429,7 @@ export default function DashboardJuriPage() {
           </Card>
         )}
 
-        {/* ===== STATS RIBBON ===== */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 px-1">
-            <div className="w-1.5 h-5 rounded-full bg-emerald-500" />
-            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Resumo</h2>
-          </div>
-          <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
-            {statsData.map((stat, index) => {
-              const Icon = stat.icon;
-              const isAlert = stat.gradient === "rose" || stat.gradient === "amber";
-              const hasValue = Number(String(stat.value).replace('%','')) > 0 && stat.value !== "...";
-              return (
-                <Fragment key={index}>
-                  {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
-                  <div className={cn(
-                    "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800",
-                    isAlert && hasValue ? "bg-rose-50 dark:bg-rose-950/20" : ""
-                  )}>
-                    <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", isAlert && hasValue ? "text-rose-500 dark:text-rose-400" : "text-zinc-400 dark:text-zinc-500")} />
-                    <span className={cn("font-bold tabular-nums", isAlert && hasValue ? "text-rose-600 dark:text-rose-400" : "text-zinc-800 dark:text-zinc-100")}>{stat.value}</span>
-                    <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.title.toLowerCase()}</span>
-                  </div>
-                </Fragment>
-              );
-            })}
-            <div className="flex-1" />
-            <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px] tabular-nums whitespace-nowrap">{totalDemandas} demandas</span>
-          </div>
-        </div>
+        {/* Stats ribbon removido — dados redundantes com cards abaixo */}
 
         {/* ===== 4. ALERTA CRÍTICO - Réu Preso com Prazo Vencido ===== */}
         {estatisticasPrazos.reuPresoVencido > 0 && (
@@ -1526,7 +1460,7 @@ export default function DashboardJuriPage() {
         {/* ===== 5. PRAZOS + JÚRIS ===== */}
         <div className="space-y-3">
           <div className="flex items-center gap-2 px-1">
-            <div className="w-1.5 h-5 rounded-full bg-rose-500" />
+            <div className="w-1.5 h-5 rounded-full bg-emerald-500" />
             <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Prazos & Agenda</h2>
           </div>
         <div className={cn("grid gap-6", isDefensorCriminalGeral ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2")}>
@@ -1536,8 +1470,8 @@ export default function DashboardJuriPage() {
           <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/30 flex items-center justify-center">
-                  <AlertCircle className="w-4 h-4 text-rose-500 dark:text-rose-400" />
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                  <AlertCircle className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                 </div>
                 <h3 className="text-base font-bold text-zinc-800 dark:text-zinc-200 tracking-tight">Prazos</h3>
                 {estatisticasPrazos.vencidos > 0 && (

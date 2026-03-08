@@ -11,7 +11,7 @@ import {
   Columns3, History, PieChart, Handshake, CalendarDays, Sparkles, MessageCircle,
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
   MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput, Sun,
-  MessageSquare, FileCheck, ArrowLeftRight
+  MessageSquare, FileCheck, ArrowLeftRight, Timer
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -92,8 +92,11 @@ const TOOLS_NAV: AssignmentMenuItem[] = [
   { label: "Lógica", path: "/admin/logica", icon: "Brain" },
   { label: "Calculadoras", path: "/admin/calculadoras", icon: "Calculator" },
   { label: "Calc. Prazos", path: "/admin/calculadora-prazos", icon: "Clock" },
+  { label: "Calc. Exec. Penal", path: "/admin/calculadoras?tipo=ep", icon: "Clock" },
   { label: "Inteligência", path: "/admin/inteligencia", icon: "Sparkles" },
   { label: "Investigação", path: "/admin/diligencias", icon: "FileSearch" },
+  { label: "Palácio da Mente", path: "/admin/palacio-mente", icon: "Network" },
+  { label: "Simulador 3D", path: "/admin/simulador-3d", icon: "Box" },
 ];
 
 // 6. Módulos específicos por especialidade
@@ -107,7 +110,7 @@ type SidebarSection = {
 // JÚRI — Organizado por fase do trabalho
 const JURI_SECTIONS: SidebarSection[] = [
   {
-    // Gestão — sem header, itens de topo
+    title: "Gestão",
     items: [
       { label: "Sessões", path: "/admin/juri", icon: "Gavel", exactMatch: true },
       { label: "Jurados", path: "/admin/juri/jurados", icon: "Users" },
@@ -123,14 +126,8 @@ const JURI_SECTIONS: SidebarSection[] = [
     title: "Pós-Júri",
     items: [
       { label: "Cosmovisão", path: "/admin/juri/cosmovisao", icon: "PieChart" },
-    ],
-  },
-  {
-    title: "Ferramentas",
-    items: [
-      { label: "Palácio da Mente", path: "/admin/palacio-mente", icon: "Network" },
-      { label: "Simulador 3D", path: "/admin/simulador-3d", icon: "Box" },
-      { label: "Calculadora", path: "/admin/juri/calculadora", icon: "Calculator" },
+      { label: "Recursos", path: "/admin/juri/recursos", icon: "Scale" },
+      { label: "Execução", path: "/admin/juri/execucao", icon: "Timer" },
     ],
   },
 ];
@@ -147,7 +144,6 @@ const VVD_MODULES: AssignmentMenuItem[] = [
 
 const EP_MODULES: AssignmentMenuItem[] = [
   { label: "Execução Penal", path: "/admin/execucao-penal", icon: "Lock" },
-  { label: "Calc. Execução Penal", path: "/admin/calculadoras?tipo=ep", icon: "Calculator" },
 ];
 
 // Wrappers de seção para VVD e EP (sem agrupamento por fase)
@@ -172,7 +168,7 @@ const iconMap: Record<string, React.ElementType> = {
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
   ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
   BookUser, Users2, Home, FolderInput, Sun, MessageSquare, FileCheck,
-  ArrowLeftRight
+  ArrowLeftRight, Timer
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
@@ -1247,11 +1243,11 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
       setExpanded(true);
     }
     // Detectar especialidade ativa baseado no path
-    if (pathname.includes('/juri') || pathname.includes('/palacio-mente') || pathname.includes('/simulador-3d')) {
+    if (pathname.includes('/juri')) {
       setEspecialidade("JURI");
     } else if (pathname.includes('/vvd')) {
       setEspecialidade("VVD");
-    } else if (pathname.includes('/execucao-penal') || pathname.includes('tipo=ep')) {
+    } else if (pathname.includes('/execucao-penal')) {
       setEspecialidade("EP");
     }
   }, [hasActiveItem, pathname]);
@@ -1722,6 +1718,9 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
 
             {/* Breadcrumbs navegáveis */}
             <Breadcrumbs />
+
+            {/* Slot para conteúdo injetado por páginas (ex: filtros G/R/J da Agenda) */}
+            <div id="header-slot" className="flex items-center" />
           </div>
 
           {/* Conteúdo - Direita: Indicador + Data + Controles */}

@@ -643,8 +643,8 @@ export const vvdRouter = router({
             pjeDocumentoId: intimacao.pjeDocumentoId,
             pjeTipoDocumento: intimacao.pjeTipoDocumento,
             providencias: intimacao.tipoIntimacao === "CIENCIA"
-              ? "(ajustar status e ato)"
-              : "(peticionar nos autos)",
+              ? "Classificar demanda"
+              : "Peticionar nos autos",
             defensorId: ctx.user.id,
             createdAt: createdAtPreciso, // Timestamp com hora/minuto da expedição
           });

@@ -37,6 +37,7 @@ import { InlineDatePicker } from "@/components/shared/inline-date-picker";
 import { EditableTextInline } from "@/components/shared/editable-text-inline";
 import { AudioRecorderButton } from "@/components/shared/audio-recorder";
 import { VoiceMemosButton } from "@/components/shared/voice-memos-button";
+import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 
@@ -63,11 +64,14 @@ interface Demanda {
   ato: string;
   providencias: string;
   atribuicao: string;
+  atribuicaoEnum?: string | null;
   estadoPrisional?: string;
   prioridade?: string;
   arquivado?: boolean;
   importBatchId?: string | null;
   ordemOriginal?: number | null;
+  photoUrl?: string | null;
+  updatedAt?: string | null;
 }
 
 interface DemandaQuickPreviewProps {
@@ -125,31 +129,8 @@ function getStageIndex(group: StatusGroup): number {
 }
 
 // ============================================
-// AVATAR COMPONENT
+// AVATAR (uses shared AssistidoAvatar)
 // ============================================
-
-function Avatar({ name, color, size = 48 }: { name: string; color: string; size?: number }) {
-  const initials = name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(w => w[0]?.toUpperCase() || "")
-    .join("");
-
-  return (
-    <div
-      className="flex items-center justify-center rounded-full text-white font-semibold select-none flex-shrink-0"
-      style={{
-        width: size,
-        height: size,
-        backgroundColor: color,
-        fontSize: size * 0.38,
-      }}
-    >
-      {initials || "?"}
-    </div>
-  );
-}
 
 // ============================================
 // PRAZO BADGE
@@ -275,7 +256,7 @@ function StageSubstatusPopover({
                 style={{ color: isActive ? stageColor : `${stageColor}80` }}
               />
               <span
-                className={`text-[11px] flex-1 truncate ${
+                className={`text-xs flex-1 truncate ${
                   isActive
                     ? "font-semibold text-zinc-900 dark:text-zinc-100"
                     : "font-medium text-zinc-600 dark:text-zinc-400"
@@ -459,62 +440,70 @@ export function DemandaQuickPreview({
         <div className="flex-1 overflow-y-auto">
           {/* ===== HERO HEADER with gradient ===== */}
           <div
-            className="px-5 pt-4 pb-3"
+            className="px-5 pt-5 pb-4"
             style={{
-              background: `linear-gradient(180deg, ${atribuicaoColor}08 0%, transparent 100%)`,
+              background: `linear-gradient(180deg, ${atribuicaoColor}14 0%, transparent 100%)`,
             }}
           >
-            <div className="flex items-start gap-3">
-              <Avatar name={demanda.assistido} color={atribuicaoColor} size={44} />
+            <div className="flex items-start gap-3.5">
+              <AssistidoAvatar
+                nome={demanda.assistido}
+                photoUrl={demanda.photoUrl}
+                atribuicao={demanda.atribuicaoEnum || demanda.atribuicao}
+                statusPrisional={demanda.estadoPrisional}
+                showStatusDot={isPreso}
+                size="xl"
+              />
               <div className="flex-1 min-w-0 pt-0.5">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 leading-tight truncate">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="font-serif text-lg sm:text-xl font-semibold text-zinc-900 dark:text-zinc-100 leading-tight truncate">
                     {demanda.assistido}
                   </h2>
                   {/* Flags inline com nome */}
                   {isPreso && (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 shrink-0">
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 shrink-0">
                       <Lock className="w-2.5 h-2.5" /> Preso
                     </span>
                   )}
                   {isUrgente && (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 shrink-0">
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 shrink-0">
                       <Flame className="w-2.5 h-2.5" /> Urgente
                     </span>
                   )}
                 </div>
 
-                {/* Processo number inline */}
+                {/* Processo — chip copiável */}
                 {processo && (
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="font-mono text-[11px] text-zinc-400 dark:text-zinc-500">{processo.numero}</span>
-                    <button
-                      onClick={() => copyToClipboard(processo.numero, "Processo copiado!")}
-                      className="p-0.5 rounded hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 transition-colors cursor-pointer"
-                    >
-                      <Copy className="w-2.5 h-2.5 text-zinc-300 dark:text-zinc-600" />
-                    </button>
-                  </div>
+                  <button
+                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 group/proc cursor-pointer transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      copyToClipboard(processo.numero, "Processo copiado!");
+                    }}
+                    title="Copiar número do processo"
+                  >
+                    <span className="font-mono text-xs text-zinc-500 dark:text-zinc-400 group-hover/proc:text-emerald-700 dark:group-hover/proc:text-emerald-400 transition-colors">{processo.numero}</span>
+                    <Copy className="w-3 h-3 text-zinc-300 dark:text-zinc-600 group-hover/proc:text-emerald-500 transition-colors" />
+                  </button>
                 )}
 
-                {/* Action links — compact icon buttons */}
-                <div className="flex items-center gap-2 mt-2">
+                {/* Action links — underline on hover */}
+                <div className="flex items-center gap-3 mt-2">
                   {demanda.assistidoId && (
                     <Link
                       href={`/admin/assistidos/${demanda.assistidoId}`}
-                      className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline transition-colors"
+                      className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:underline underline-offset-2 transition-colors"
                     >
-                      <User className="w-3 h-3" />
-                      Ver assistido <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                      Ver assistido
                     </Link>
                   )}
                   {demanda.processoId && (
                     <Link
                       href={`/admin/processos/${demanda.processoId}`}
-                      className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline transition-colors"
+                      className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:underline underline-offset-2 transition-colors"
                     >
-                      <Briefcase className="w-3 h-3" />
-                      Ver processo <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                      Ver processo
                     </Link>
                   )}
                 </div>
@@ -523,7 +512,7 @@ export function DemandaQuickPreview({
           </div>
 
           {/* ===== PIPELINE STEPPER ===== */}
-          <div className="px-5 py-3 border-t border-zinc-100 dark:border-zinc-800/50">
+          <div className="px-5 py-5 border-t border-zinc-100 dark:border-zinc-800/50">
             {/* Track + nodes */}
             <div className="relative flex items-center">
               {/* Background track */}
@@ -577,7 +566,7 @@ export function DemandaQuickPreview({
                       }`}
                       style={{
                         backgroundColor: isCompleted ? "#84CC9B" : isActive ? stageColor : isPopoverOpen ? `${stageColor}80` : "#e4e4e7",
-                        ringColor: (isActive || isPopoverOpen) ? `${stageColor}40` : undefined,
+                        ['--tw-ring-color' as any]: (isActive || isPopoverOpen) ? `${stageColor}40` : undefined,
                       }}
                     >
                       {isCompleted && <Check className="w-3 h-3 text-white" />}
@@ -587,7 +576,7 @@ export function DemandaQuickPreview({
                     </div>
                     {/* Label */}
                     <span
-                      className={`mt-1.5 text-[8px] sm:text-[9px] font-medium whitespace-nowrap transition-colors ${
+                      className={`mt-1.5 text-[10px] font-medium whitespace-nowrap transition-colors ${
                         isActive || isPopoverOpen ? "font-bold" : isCompleted ? "" : "text-zinc-400 dark:text-zinc-500"
                       }`}
                       style={{
@@ -618,88 +607,44 @@ export function DemandaQuickPreview({
           </div>
 
           {/* ===== CARD SECTIONS ===== */}
-          <div className="px-4 sm:px-5 pb-4 space-y-2.5">
-            {/* Card 1: Classificação — 3-row grid */}
-            <div className="rounded-xl bg-zinc-50/80 dark:bg-zinc-800/30 p-3.5 sm:p-4">
-              <p className="text-[9px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-bold mb-3">Classificação</p>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                {/* Status */}
-                <div>
-                  <p className="text-[9px] text-zinc-400 dark:text-zinc-500 font-medium mb-1">Status</p>
-                  <InlineDropdown
-                    value={demanda.status}
-                    compact
-                    displayValue={
-                      <div className="inline-flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: statusColor }}>
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: statusColor }} />
-                        {statusConfig.label}
-                      </div>
-                    }
-                    options={statusOptions}
-                    onChange={(v) => onStatusChange(demanda.id, v)}
-                  />
-                </div>
-                {/* Atribuição */}
-                <div>
-                  <p className="text-[9px] text-zinc-400 dark:text-zinc-500 font-medium mb-1">Atribuição</p>
-                  <InlineDropdown
-                    value={demanda.atribuicao}
-                    compact
-                    displayValue={
-                      <div className="inline-flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: atribuicaoColor }}>
-                        <AtribuicaoIcon className="w-3.5 h-3.5 shrink-0" />
-                        {demanda.atribuicao}
-                      </div>
-                    }
-                    options={ATRIBUICAO_OPTIONS}
-                    onChange={(v) => onAtribuicaoChange(demanda.id, v)}
-                  />
-                </div>
-                {/* Ato — full width */}
-                <div className="col-span-2">
-                  <p className="text-[9px] text-zinc-400 dark:text-zinc-500 font-medium mb-1">Ato / Tipo</p>
-                  <InlineDropdown
-                    value={demanda.ato}
-                    compact
-                    displayValue={
-                      <span className="text-[13px] text-zinc-800 dark:text-zinc-200 font-semibold">
-                        {demanda.ato || <span className="text-zinc-400 dark:text-zinc-500 italic font-normal">Selecionar ato</span>}
-                      </span>
-                    }
-                    options={atoOptions}
-                    onChange={(v) => onAtoChange(demanda.id, v)}
-                  />
-                </div>
-              </div>
+          <div className="px-4 sm:px-5 pb-4 space-y-4">
+            {/* Section label: AÇÃO */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-bold">Ação</span>
+              <div className="flex-1 h-px bg-zinc-200/50 dark:bg-zinc-700/30" />
             </div>
 
-            {/* Card 2: Prazo & Providências */}
-            <div className="rounded-xl bg-zinc-50/80 dark:bg-zinc-800/30 p-3.5 sm:p-4">
-              <p className="text-[9px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-bold mb-3">Prazo & Providências</p>
-              <div className="mb-3">
+            {/* Card 1: Prazo + Providências — unified with border */}
+            <div className="rounded-xl bg-zinc-50/80 dark:bg-zinc-800/30 border border-zinc-200/60 dark:border-zinc-700/40 overflow-hidden">
+              {/* Prazo row */}
+              <div className="flex items-center justify-between px-3.5 sm:px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                  <Calendar className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
+                  <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-bold">Prazo</span>
                   <InlineDatePicker
                     value={demanda.prazo}
                     onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
                     placeholder="Definir prazo"
                     showEditIcon
                   />
-                  {prazoBadge && (
-                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${
-                      prazoBadge.cor === "red" ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 animate-pulse" :
-                      prazoBadge.cor === "amber" ? "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
-                      prazoBadge.cor === "green" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" :
-                      "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
-                    }`}>
-                      {prazoBadge.texto}
-                    </span>
-                  )}
                 </div>
+                {prazoBadge && (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap ${
+                    prazoBadge.cor === "red" ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 animate-pulse" :
+                    prazoBadge.cor === "amber" ? "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
+                    prazoBadge.cor === "green" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" :
+                    "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                  }`}>
+                    {prazoBadge.texto}
+                  </span>
+                )}
               </div>
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-[9px] text-zinc-400 dark:text-zinc-500 font-medium">Providências</p>
+              {/* Divider */}
+              <div className="border-t border-zinc-200/40 dark:border-zinc-700/30" />
+              {/* Providências */}
+              <div className="px-3.5 sm:px-4 pt-2.5 pb-3.5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-bold">Providências</span>
                   <div className="flex items-center gap-0.5">
                     <AudioRecorderButton
                       compact
@@ -724,49 +669,140 @@ export function DemandaQuickPreview({
                 <EditableTextInline
                   value={demanda.providencias || ""}
                   onSave={(v) => onProvidenciasChange(demanda.id, v)}
-                  placeholder="Clique para adicionar providências..."
-                  className="text-sm text-zinc-700 dark:text-zinc-300 min-h-[80px] bg-white dark:bg-zinc-900 rounded-lg p-2 border border-zinc-200/50 dark:border-zinc-700/50"
+                  placeholder="O que precisa ser feito?"
+                  className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 min-h-[64px] bg-white/60 dark:bg-zinc-900/40 rounded-lg p-2.5 transition-colors group/edit"
                   multiline
                 />
+                {/* Timestamp última edição */}
+                {demanda.updatedAt && (
+                  <div className="flex items-center gap-1 mt-1.5 px-1">
+                    <Clock className="w-2.5 h-2.5 text-zinc-300 dark:text-zinc-600" />
+                    <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                      Editado {new Date(demanda.updatedAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Card 3: Metadados (collapsible) */}
-            <div className="rounded-xl bg-zinc-50/80 dark:bg-zinc-800/30 overflow-hidden">
+            {/* Section label: CLASSIFICAÇÃO */}
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-bold">Classificação</span>
+              <div className="flex-1 h-px bg-zinc-200/50 dark:bg-zinc-700/30" />
+            </div>
+
+            {/* Detalhes — floating rows without card bg */}
+            <div className="overflow-hidden divide-y divide-zinc-200/40 dark:divide-zinc-700/25">
+              {/* Status row */}
+              <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
+                <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${statusColor}18` }}>
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColor }} />
+                </div>
+                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium w-14 shrink-0">Status</span>
+                <div className="flex-1 text-right">
+                  <InlineDropdown
+                    value={demanda.status}
+                    compact
+                    displayValue={
+                      <span className="text-xs text-zinc-600 dark:text-zinc-300">
+                        {statusConfig.label}
+                      </span>
+                    }
+                    options={statusOptions}
+                    onChange={(v) => onStatusChange(demanda.id, v)}
+                  />
+                </div>
+              </div>
+              {/* Atribuição row */}
+              <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
+                <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${atribuicaoColor}18` }}>
+                  <AtribuicaoIcon className="w-3 h-3" style={{ color: atribuicaoColor }} />
+                </div>
+                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium w-14 shrink-0">Atribuição</span>
+                <div className="flex-1 text-right">
+                  <InlineDropdown
+                    value={demanda.atribuicao}
+                    compact
+                    displayValue={
+                      <span className="text-xs text-zinc-600 dark:text-zinc-300">
+                        {demanda.atribuicao}
+                      </span>
+                    }
+                    options={ATRIBUICAO_OPTIONS}
+                    onChange={(v) => onAtribuicaoChange(demanda.id, v)}
+                  />
+                </div>
+              </div>
+              {/* Ato row */}
+              <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
+                <div className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-700/40 flex items-center justify-center shrink-0">
+                  <Scale className="w-3 h-3 text-zinc-400 dark:text-zinc-500" />
+                </div>
+                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium w-14 shrink-0">Ato</span>
+                <div className="flex-1 text-right">
+                  <InlineDropdown
+                    value={demanda.ato}
+                    compact
+                    displayValue={
+                      <span className="text-xs text-zinc-600 dark:text-zinc-300">
+                        {demanda.ato || <span className="text-zinc-400 dark:text-zinc-500 italic">Selecionar</span>}
+                      </span>
+                    }
+                    options={atoOptions}
+                    onChange={(v) => onAtoChange(demanda.id, v)}
+                  />
+                </div>
+              </div>
+
+              {/* Metadados — collapsible */}
               <button
                 onClick={() => setMetadataOpen(!metadataOpen)}
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-[9px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-bold hover:bg-zinc-100/50 dark:hover:bg-zinc-700/30 transition-colors cursor-pointer"
+                className="w-full flex items-center gap-3 px-3.5 sm:px-4 py-2 text-[10px] text-zinc-400 dark:text-zinc-500 hover:bg-zinc-100/50 dark:hover:bg-zinc-700/20 transition-colors cursor-pointer"
               >
-                {metadataOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                Metadados
+                <div className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-700/40 flex items-center justify-center shrink-0">
+                  {metadataOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                </div>
+                <span className="font-medium">Metadados</span>
               </button>
               {metadataOpen && (
-                <div className="px-4 pb-3 space-y-2">
+                <>
                   {demanda.dataInclusao && (
-                    <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                      <Clock className="w-3 h-3 flex-shrink-0" />
-                      <span>Importado em {new Date(demanda.dataInclusao).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                    <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
+                      <div className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-700/40 flex items-center justify-center shrink-0">
+                        <Clock className="w-3 h-3 text-zinc-400" />
+                      </div>
+                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium w-14 shrink-0">Importado</span>
+                      <span className="flex-1 text-right text-xs text-zinc-500 dark:text-zinc-400">{new Date(demanda.dataInclusao).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
                     </div>
                   )}
                   {demanda.estadoPrisional && (
-                    <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                      <Lock className="w-3 h-3 flex-shrink-0" />
-                      <span>Estado prisional: {demanda.estadoPrisional}</span>
+                    <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
+                      <div className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-700/40 flex items-center justify-center shrink-0">
+                        <Lock className="w-3 h-3 text-zinc-400" />
+                      </div>
+                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium w-14 shrink-0">Prisional</span>
+                      <span className="flex-1 text-right text-xs text-zinc-500 dark:text-zinc-400 capitalize">{demanda.estadoPrisional}</span>
                     </div>
                   )}
                   {processo?.tipo && (
-                    <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                      <FileText className="w-3 h-3 flex-shrink-0" />
-                      <span>Tipo: {processo.tipo}</span>
+                    <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
+                      <div className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-700/40 flex items-center justify-center shrink-0">
+                        <FileText className="w-3 h-3 text-zinc-400" />
+                      </div>
+                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium w-14 shrink-0">Tipo</span>
+                      <span className="flex-1 text-right text-xs text-zinc-500 dark:text-zinc-400">{processo.tipo}</span>
                     </div>
                   )}
                   {demanda.importBatchId && (
-                    <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                      <AlertCircle className="w-3 h-3 flex-shrink-0" />
-                      <span>Batch: {demanda.importBatchId.slice(0, 8)}</span>
+                    <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
+                      <div className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-700/40 flex items-center justify-center shrink-0">
+                        <AlertCircle className="w-3 h-3 text-zinc-400" />
+                      </div>
+                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium w-14 shrink-0">Batch</span>
+                      <span className="flex-1 text-right text-xs font-mono text-zinc-500 dark:text-zinc-400">{demanda.importBatchId.slice(0, 8)}</span>
                     </div>
                   )}
-                </div>
+                </>
               )}
             </div>
           </div>
@@ -776,14 +812,14 @@ export function DemandaQuickPreview({
         <div className="sticky bottom-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-zinc-200/80 dark:border-zinc-800/80 px-5 py-2.5 flex items-center gap-2">
           <button
             onClick={() => { onStatusChange(demanda.id, "resolvido"); onOpenChange(false); }}
-            className="flex-1 h-8 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold hover:bg-emerald-500/20 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+            className="flex-1 h-8 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
           >
             <Check className="w-3.5 h-3.5" />
             Resolver
           </button>
           <button
             onClick={() => { onArchive(demanda.id); onOpenChange(false); }}
-            className="h-8 px-3.5 rounded-lg border border-zinc-200/80 dark:border-zinc-700/80 text-zinc-500 dark:text-zinc-400 text-[11px] font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-1.5"
+            className="h-8 px-3.5 rounded-lg border border-zinc-200/80 dark:border-zinc-700/80 text-zinc-500 dark:text-zinc-400 text-xs font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-1.5"
           >
             <Archive className="w-3 h-3" />
             Arquivar

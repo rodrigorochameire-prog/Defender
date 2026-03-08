@@ -111,7 +111,7 @@ export default function JuradosPage() {
 
   return (
     <PageLayout
-      header="Banco de Jurados"
+      header="Jurados"
       description="Inteligência e perfilamento do conselho de sentença"
       actions={
         <Button className="gap-2">

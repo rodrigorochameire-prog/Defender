@@ -663,13 +663,18 @@ export default function Demandas() {
   });
 
   // Mutation para atualizar demanda (com suporte offline)
+  // Nota: cada handler individual mostra seu próprio toast de sucesso (optimistic update),
+  // então não mostramos toast genérico aqui para evitar double-toasting
   const trpcUpdateDemanda = trpc.demandas.update.useMutation({
     onSuccess: () => {
-      toast.success("Demanda atualizada!");
       utils.demandas.list.invalidate();
     },
     onError: (error) => {
-      toast.error("Erro ao atualizar: " + error.message);
+      // Tratar respostas não-JSON do servidor (ex: "Internal Server Error" em texto puro)
+      const msg = error.message?.includes("is not valid JSON")
+        ? "Erro de comunicação com o servidor. Tente novamente."
+        : error.message;
+      toast.error("Erro ao atualizar: " + msg);
     },
   });
   const updateDemandaMutation = useOfflineMutation({
@@ -736,11 +741,14 @@ export default function Demandas() {
       ato: d.ato || d.titulo || "",
       providencias: d.providencias || "",
       atribuicao: ATRIBUICAO_ENUM_TO_LABEL[d.processo?.atribuicao] || d.atribuicao || "Substituição Criminal",
+      atribuicaoEnum: d.processo?.atribuicao || null,
       estadoPrisional: d.reuPreso ? "preso" : (d.assistido?.statusPrisional || "solto"),
       prioridade: d.prioridade || "normal",
       arquivado: d.status === "ARQUIVADO",
       reuPreso: d.reuPreso || false,
       substatus: d.substatus || null,
+      photoUrl: d.assistido?.photoUrl || null,
+      updatedAt: d.updatedAt ? new Date(d.updatedAt).toISOString() : null,
       // Rastreamento de importação
       importBatchId: d.importBatchId || null,
       ordemOriginal: d.ordemOriginal ?? null,

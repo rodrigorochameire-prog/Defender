@@ -95,7 +95,7 @@ export default function VVDPage() {
       prazo: data.prazo || undefined,
       dataEntrada: data.data || data.dataExpedicao || undefined,
       status: "fila",
-      providencias: data.providencias || "(ajustar status e ato)",
+      providencias: data.providencias || "Classificar demanda",
       atribuicao: "Violência Doméstica",
     }));
 
