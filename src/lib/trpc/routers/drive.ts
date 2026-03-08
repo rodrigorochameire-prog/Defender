@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db, driveFiles, driveSyncFolders, driveSyncLogs } from "@/lib/db";
-import { eq, and, desc, sql, isNull, or, like, not, gt, lt, inArray } from "drizzle-orm";
+import { eq, and, desc, asc, sql, isNull, or, like, not, gt, lt, inArray } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
 import {
   listFilesInFolder,
@@ -1168,6 +1168,7 @@ export const driveRouter = router({
         mimeType: z.string().optional(),
         limit: z.number().default(100),
         offset: z.number().default(0),
+        cursor: z.number().optional(), // Cursor-based pagination: files with id > cursor (ascending by id)
       })
     )
     .query(async ({ input }) => {
@@ -1186,7 +1187,7 @@ export const driveRouter = router({
             conditions.push(eq(driveFiles.parentFileId, parentFolder.id));
           } else {
             // Parent não encontrado, retornar vazio
-            return { files: [], total: 0 };
+            return { files: [], total: 0, nextCursor: null };
           }
         } else if (input.parentFileId !== undefined) {
           if (input.parentFileId === null) {
@@ -1204,22 +1205,48 @@ export const driveRouter = router({
           conditions.push(eq(driveFiles.mimeType, input.mimeType));
         }
 
+        // When cursor is provided, use id-based pagination
+        if (input.cursor) {
+          conditions.push(gt(driveFiles.id, input.cursor));
+        }
+
+        const fetchLimit = input.cursor ? input.limit + 1 : input.limit;
+
         const files = await db
           .select()
           .from(driveFiles)
           .where(and(...conditions))
-          .orderBy(desc(driveFiles.isFolder), driveFiles.name)
-          .limit(input.limit)
-          .offset(input.offset);
+          .orderBy(...(input.cursor
+            ? [asc(driveFiles.id)]
+            : [desc(driveFiles.isFolder), driveFiles.name]
+          ))
+          .limit(fetchLimit)
+          .offset(input.cursor ? 0 : input.offset); // When using cursor, ignore offset
 
-        const [countResult] = await db
-          .select({ count: sql<number>`count(*)::int` })
-          .from(driveFiles)
-          .where(and(...conditions));
+        // Detect if there are more results
+        const hasMore = input.cursor ? files.length > input.limit : false;
+        if (input.cursor && files.length > input.limit) {
+          files.pop(); // Remove extra detection item
+        }
+
+        const nextCursor = hasMore && files.length > 0
+          ? files[files.length - 1].id
+          : null;
+
+        // Only run expensive COUNT when not using cursor pagination
+        let total = 0;
+        if (!input.cursor) {
+          const [countResult] = await db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(driveFiles)
+            .where(and(...conditions));
+          total = countResult?.count || 0;
+        }
 
         return {
           files,
-          total: countResult?.count || 0,
+          total,
+          nextCursor,
         };
       }, "Erro ao listar arquivos");
     }),
@@ -2843,6 +2870,7 @@ export const driveRouter = router({
       search: z.string().optional(),
       limit: z.number().default(100),
       offset: z.number().default(0),
+      cursor: z.number().optional(), // Cursor-based pagination: files with id < cursor (reverse chronological)
     }))
     .query(async ({ input }) => {
       const conditions = [];
@@ -2850,6 +2878,13 @@ export const driveRouter = router({
       if (input.processoId) conditions.push(eq(driveFiles.processoId, input.processoId));
       if (input.enrichmentStatus) conditions.push(eq(driveFiles.enrichmentStatus, input.enrichmentStatus));
       if (input.search) conditions.push(like(driveFiles.name, `%${input.search}%`));
+
+      // When cursor is provided, use id-based pagination (reverse chronological)
+      if (input.cursor) {
+        conditions.push(lt(driveFiles.id, input.cursor));
+      }
+
+      const fetchLimit = input.cursor ? input.limit + 1 : input.limit;
 
       const files = await db
         .select({
@@ -2877,18 +2912,34 @@ export const driveRouter = router({
         })
         .from(driveFiles)
         .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(desc(driveFiles.lastModifiedTime))
-        .limit(input.limit)
-        .offset(input.offset);
+        .orderBy(input.cursor ? desc(driveFiles.id) : desc(driveFiles.lastModifiedTime))
+        .limit(fetchLimit)
+        .offset(input.cursor ? 0 : input.offset); // When using cursor, ignore offset
 
-      const [countResult] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(driveFiles)
-        .where(conditions.length > 0 ? and(...conditions) : undefined);
+      // Detect if there are more results
+      const hasMore = input.cursor ? files.length > input.limit : false;
+      if (input.cursor && files.length > input.limit) {
+        files.pop(); // Remove extra detection item
+      }
+
+      const nextCursor = hasMore && files.length > 0
+        ? files[files.length - 1].id
+        : null;
+
+      // Only run expensive COUNT when not using cursor pagination
+      let total = 0;
+      if (!input.cursor) {
+        const [countResult] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(driveFiles)
+          .where(conditions.length > 0 ? and(...conditions) : undefined);
+        total = countResult?.count || 0;
+      }
 
       return {
         files,
-        total: countResult?.count || 0,
+        total,
+        nextCursor,
       };
     }),
 

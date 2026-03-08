@@ -1,0 +1,479 @@
+import {
+  pgTable,
+  serial,
+  text,
+  varchar,
+  boolean,
+  timestamp,
+  integer,
+  date,
+  index,
+  uniqueIndex,
+  jsonb,
+} from "drizzle-orm/pg-core";
+import { relations, sql } from "drizzle-orm";
+import {
+  atribuicaoEnum,
+  statusPrisionalEnum,
+  statusDemandaEnum,
+  prioridadeEnum,
+  areaEnum,
+  papelProcessoEnum,
+} from "./enums";
+
+// ==========================================
+// WORKSPACES (Universos de dados)
+// ==========================================
+
+export const workspaces = pgTable("workspaces", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("workspaces_name_idx").on(table.name),
+  index("workspaces_active_idx").on(table.isActive),
+]);
+
+export type Workspace = typeof workspaces.$inferSelect;
+export type InsertWorkspace = typeof workspaces.$inferInsert;
+
+// ==========================================
+// USUÁRIOS (DEFENSORES)
+// ==========================================
+
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash"),
+  role: varchar("role", { length: 20 }).default("defensor").notNull(),
+  phone: text("phone"),
+  oab: varchar("oab", { length: 50 }),
+  comarca: varchar("comarca", { length: 100 }),
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  approvalStatus: varchar("approval_status", { length: 20 }).default("pending").notNull(),
+  supervisorId: integer("supervisor_id"),
+  funcao: varchar("funcao", { length: 30 }),
+  nucleo: varchar("nucleo", { length: 30 }),
+  isAdmin: boolean("is_admin").default(false),
+  podeVerTodosAssistidos: boolean("pode_ver_todos_assistidos").default(true),
+  podeVerTodosProcessos: boolean("pode_ver_todos_processos").default(true),
+  deletedAt: timestamp("deleted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("users_role_idx").on(table.role),
+  index("users_approval_status_idx").on(table.approvalStatus),
+  index("users_deleted_at_idx").on(table.deletedAt),
+  index("users_comarca_idx").on(table.comarca),
+  index("users_workspace_id_idx").on(table.workspaceId),
+  index("users_supervisor_id_idx").on(table.supervisorId),
+  index("users_nucleo_idx").on(table.nucleo),
+]);
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+
+// ==========================================
+// ASSISTIDOS (Centro da Aplicação)
+// ==========================================
+
+export const assistidos = pgTable("assistidos", {
+  id: serial("id").primaryKey(),
+  nome: text("nome").notNull(),
+  cpf: varchar("cpf", { length: 14 }),
+  rg: varchar("rg", { length: 20 }),
+  nomeMae: text("nome_mae"),
+  nomePai: text("nome_pai"),
+  dataNascimento: date("data_nascimento"),
+  naturalidade: varchar("naturalidade", { length: 100 }),
+  nacionalidade: varchar("nacionalidade", { length: 50 }).default("Brasileira"),
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  statusPrisional: statusPrisionalEnum("status_prisional").default("SOLTO"),
+  localPrisao: text("local_prisao"),
+  unidadePrisional: text("unidade_prisional"),
+  dataPrisao: date("data_prisao"),
+  telefone: varchar("telefone", { length: 20 }),
+  telefoneContato: varchar("telefone_contato", { length: 20 }),
+  nomeContato: text("nome_contato"),
+  parentescoContato: varchar("parentesco_contato", { length: 50 }),
+  endereco: text("endereco"),
+  photoUrl: text("photo_url"),
+  observacoes: text("observacoes"),
+  defensorId: integer("defensor_id").references(() => users.id),
+  casoId: integer("caso_id"),
+  atribuicaoPrimaria: atribuicaoEnum("atribuicao_primaria").default("SUBSTITUICAO"),
+  driveFolderId: text("drive_folder_id"),
+  sigadId: varchar("sigad_id", { length: 20 }),
+  sigadExportadoEm: timestamp("sigad_exportado_em"),
+  solarExportadoEm: timestamp("solar_exportado_em"),
+  analysisStatus: varchar("analysis_status", { length: 20 }),
+  analysisData: jsonb("analysis_data").$type<{
+    resumo?: string;
+    achadosChave?: string[];
+    recomendacoes?: string[];
+    inconsistencias?: string[];
+    kpis?: {
+      totalPessoas: number;
+      totalAcusacoes: number;
+      totalDocumentosAnalisados: number;
+      totalEventos: number;
+      totalNulidades: number;
+      totalRelacoes: number;
+    };
+    documentosProcessados?: number;
+    documentosTotal?: number;
+    ultimoDocumentoProcessado?: string;
+    versaoModelo?: string;
+  }>(),
+  analyzedAt: timestamp("analyzed_at"),
+  analysisVersion: integer("analysis_version").default(0),
+  origemCadastro: varchar("origem_cadastro", { length: 20 }).default("manual"),
+  duplicataSugerida: jsonb("duplicata_sugerida").$type<{
+    assistidoId: number;
+    nome: string;
+    confidence: number;
+  } | null>(),
+  deletedAt: timestamp("deleted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("assistidos_nome_idx").on(table.nome),
+  index("assistidos_cpf_idx").on(table.cpf),
+  index("assistidos_status_prisional_idx").on(table.statusPrisional),
+  index("assistidos_defensor_id_idx").on(table.defensorId),
+  index("assistidos_deleted_at_idx").on(table.deletedAt),
+  index("assistidos_caso_id_idx").on(table.casoId),
+  index("assistidos_workspace_id_idx").on(table.workspaceId),
+  index("assistidos_atribuicao_primaria_idx").on(table.atribuicaoPrimaria),
+  index("assistidos_analysis_status_idx").on(table.analysisStatus),
+]);
+
+export type Assistido = typeof assistidos.$inferSelect;
+export type InsertAssistido = typeof assistidos.$inferInsert;
+
+// ==========================================
+// PROCESSOS (Ligados ao Assistido)
+// ==========================================
+
+export const processos = pgTable("processos", {
+  id: serial("id").primaryKey(),
+  assistidoId: integer("assistido_id")
+    .notNull()
+    .references(() => assistidos.id, { onDelete: "cascade" }),
+  atribuicao: atribuicaoEnum("atribuicao").notNull().default("SUBSTITUICAO"),
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  numeroAutos: text("numero_autos").notNull(),
+  numeroAntigo: text("numero_antigo"),
+  comarca: varchar("comarca", { length: 100 }),
+  vara: varchar("vara", { length: 100 }),
+  area: areaEnum("area").notNull(),
+  classeProcessual: varchar("classe_processual", { length: 100 }),
+  assunto: text("assunto"),
+  valorCausa: integer("valor_causa"),
+  parteContraria: text("parte_contraria"),
+  advogadoContrario: text("advogado_contrario"),
+  fase: varchar("fase", { length: 50 }),
+  situacao: varchar("situacao", { length: 50 }).default("ativo"),
+  isJuri: boolean("is_juri").default(false),
+  dataSessaoJuri: timestamp("data_sessao_juri"),
+  resultadoJuri: text("resultado_juri"),
+  defensorId: integer("defensor_id").references(() => users.id),
+  observacoes: text("observacoes"),
+  linkDrive: text("link_drive"),
+  driveFolderId: text("drive_folder_id"),
+  casoId: integer("caso_id"),
+  analysisStatus: varchar("analysis_status", { length: 20 }),
+  analysisData: jsonb("analysis_data").$type<{
+    resumo?: string;
+    achadosChave?: string[];
+    recomendacoes?: string[];
+    inconsistencias?: string[];
+    teses?: string[];
+    nulidades?: Array<{
+      tipo: string;
+      descricao: string;
+      severidade: "alta" | "media" | "baixa";
+      fundamentacao: string;
+      documentoRef?: string;
+    }>;
+    kpis?: {
+      totalPessoas: number;
+      totalAcusacoes: number;
+      totalDocumentosAnalisados: number;
+      totalEventos: number;
+      totalNulidades: number;
+      totalRelacoes: number;
+    };
+    documentosProcessados?: number;
+    documentosTotal?: number;
+    versaoModelo?: string;
+  }>(),
+  analyzedAt: timestamp("analyzed_at"),
+  analysisVersion: integer("analysis_version").default(0),
+  deletedAt: timestamp("deleted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("processos_assistido_id_idx").on(table.assistidoId),
+  index("processos_numero_autos_idx").on(table.numeroAutos),
+  index("processos_comarca_idx").on(table.comarca),
+  index("processos_area_idx").on(table.area),
+  index("processos_is_juri_idx").on(table.isJuri),
+  index("processos_defensor_id_idx").on(table.defensorId),
+  index("processos_situacao_idx").on(table.situacao),
+  index("processos_deleted_at_idx").on(table.deletedAt),
+  index("processos_caso_id_idx").on(table.casoId),
+  index("processos_workspace_id_idx").on(table.workspaceId),
+  index("processos_analysis_status_idx").on(table.analysisStatus),
+]);
+
+export type Processo = typeof processos.$inferSelect;
+export type InsertProcesso = typeof processos.$inferInsert;
+
+// ==========================================
+// DEMANDAS/PRAZOS (Coração da Gestão)
+// ==========================================
+
+export const demandas = pgTable("demandas", {
+  id: serial("id").primaryKey(),
+  processoId: integer("processo_id")
+    .notNull()
+    .references(() => processos.id, { onDelete: "cascade" }),
+  assistidoId: integer("assistido_id")
+    .notNull()
+    .references(() => assistidos.id, { onDelete: "cascade" }),
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  ato: text("ato").notNull(),
+  tipoAto: varchar("tipo_ato", { length: 50 }),
+  prazo: date("prazo"),
+  dataEntrada: date("data_entrada"),
+  dataIntimacao: date("data_intimacao"),
+  dataExpedicao: date("data_expedicao"),
+  dataConclusao: timestamp("data_conclusao"),
+  tipoPrazoId: integer("tipo_prazo_id"),
+  status: statusDemandaEnum("status").default("5_FILA"),
+  substatus: varchar("substatus", { length: 50 }),
+  prioridade: prioridadeEnum("prioridade").default("NORMAL"),
+  providencias: text("providencias"),
+  defensorId: integer("defensor_id").references(() => users.id),
+  delegadoParaId: integer("delegado_para_id").references(() => users.id),
+  dataDelegacao: timestamp("data_delegacao"),
+  motivoDelegacao: text("motivo_delegacao"),
+  statusDelegacao: varchar("status_delegacao", { length: 20 }),
+  prazoSugerido: date("prazo_sugerido"),
+  reuPreso: boolean("reu_preso").default(false),
+  googleCalendarEventId: text("google_calendar_event_id"),
+  casoId: integer("caso_id"),
+  ordemManual: integer("ordem_manual"),
+  importBatchId: text("import_batch_id"),
+  ordemOriginal: integer("ordem_original"),
+  enrichmentData: jsonb("enrichment_data").$type<{
+    crime?: string;
+    artigos?: string[];
+    qualificadoras?: string[];
+    fase_processual?: string;
+    atribuicao_detectada?: string;
+    reu_preso_detectado?: boolean;
+    intimado?: string;
+    correus?: string[];
+    vitima?: string;
+    urgencia?: string;
+    confidence?: number;
+    tipo_documento_pje?: string;
+    tipo_processo?: string;
+    id_documento_pje?: string;
+    vara?: string;
+  }>(),
+  deletedAt: timestamp("deleted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("demandas_processo_id_idx").on(table.processoId),
+  index("demandas_assistido_id_idx").on(table.assistidoId),
+  index("demandas_prazo_idx").on(table.prazo),
+  index("demandas_status_idx").on(table.status),
+  index("demandas_prioridade_idx").on(table.prioridade),
+  index("demandas_delegado_para_id_idx").on(table.delegadoParaId),
+  index("demandas_defensor_id_idx").on(table.defensorId),
+  index("demandas_reu_preso_idx").on(table.reuPreso),
+  index("demandas_deleted_at_idx").on(table.deletedAt),
+  index("demandas_caso_id_idx").on(table.casoId),
+  index("demandas_workspace_id_idx").on(table.workspaceId),
+  index("demandas_import_batch_id_idx").on(table.importBatchId),
+]);
+
+export type Demanda = typeof demandas.$inferSelect;
+export type InsertDemanda = typeof demandas.$inferInsert;
+
+// ==========================================
+// HISTÓRICO DE DELEGAÇÕES
+// ==========================================
+
+export const delegacoesHistorico = pgTable("delegacoes_historico", {
+  id: serial("id").primaryKey(),
+  demandaId: integer("demanda_id")
+    .references(() => demandas.id, { onDelete: "cascade" }),
+  delegadoDeId: integer("delegado_de_id")
+    .notNull()
+    .references(() => users.id),
+  delegadoParaId: integer("delegado_para_id")
+    .notNull()
+    .references(() => users.id),
+  dataDelegacao: timestamp("data_delegacao").defaultNow().notNull(),
+  dataAceitacao: timestamp("data_aceitacao"),
+  dataConclusao: timestamp("data_conclusao"),
+  tipo: varchar("tipo", { length: 30 }).default("delegacao_generica"),
+  instrucoes: text("instrucoes"),
+  orientacoes: text("orientacoes"),
+  observacoes: text("observacoes"),
+  prazoSugerido: date("prazo_sugerido"),
+  status: varchar("status", { length: 25 }).default("pendente").notNull(),
+  assistidoId: integer("assistido_id").references(() => assistidos.id),
+  processoId: integer("processo_id").references(() => processos.id),
+  prioridade: varchar("prioridade", { length: 10 }).default("NORMAL"),
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("delegacoes_historico_demanda_id_idx").on(table.demandaId),
+  index("delegacoes_historico_delegado_de_id_idx").on(table.delegadoDeId),
+  index("delegacoes_historico_delegado_para_id_idx").on(table.delegadoParaId),
+  index("delegacoes_historico_status_idx").on(table.status),
+  index("delegacoes_historico_tipo_idx").on(table.tipo),
+  index("delegacoes_historico_assistido_id_idx").on(table.assistidoId),
+  index("delegacoes_historico_processo_id_idx").on(table.processoId),
+  index("delegacoes_historico_workspace_id_idx").on(table.workspaceId),
+]);
+
+export type DelegacaoHistorico = typeof delegacoesHistorico.$inferSelect;
+export type InsertDelegacaoHistorico = typeof delegacoesHistorico.$inferInsert;
+
+// ==========================================
+// AFASTAMENTOS (Cobertura entre Defensores)
+// ==========================================
+
+export const afastamentos = pgTable("afastamentos", {
+  id: serial("id").primaryKey(),
+  defensorId: integer("defensor_id")
+    .notNull()
+    .references(() => users.id),
+  substitutoId: integer("substituto_id")
+    .notNull()
+    .references(() => users.id),
+  dataInicio: date("data_inicio").notNull(),
+  dataFim: date("data_fim"),
+  tipo: varchar("tipo", { length: 20 }).default("FERIAS").notNull(),
+  motivo: text("motivo"),
+  ativo: boolean("ativo").default(true).notNull(),
+  acessoDemandas: boolean("acesso_demandas").default(true),
+  acessoEquipe: boolean("acesso_equipe").default(false),
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("afastamentos_defensor_id_idx").on(table.defensorId),
+  index("afastamentos_substituto_id_idx").on(table.substitutoId),
+  index("afastamentos_ativo_idx").on(table.ativo),
+  index("afastamentos_data_inicio_idx").on(table.dataInicio),
+  index("afastamentos_workspace_id_idx").on(table.workspaceId),
+]);
+
+export type Afastamento = typeof afastamentos.$inferSelect;
+export type InsertAfastamento = typeof afastamentos.$inferInsert;
+
+// ==========================================
+// VINCULAÇÃO ASSISTIDOS-PROCESSOS (MUITOS-PARA-MUITOS)
+// ==========================================
+
+export const assistidosProcessos = pgTable("assistidos_processos", {
+  id: serial("id").primaryKey(),
+  assistidoId: integer("assistido_id")
+    .notNull()
+    .references(() => assistidos.id, { onDelete: "cascade" }),
+  processoId: integer("processo_id")
+    .notNull()
+    .references(() => processos.id, { onDelete: "cascade" }),
+  papel: papelProcessoEnum("papel").default("REU").notNull(),
+  isPrincipal: boolean("is_principal").default(true),
+  observacoes: text("observacoes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("assistidos_processos_assistido_id_idx").on(table.assistidoId),
+  index("assistidos_processos_processo_id_idx").on(table.processoId),
+  index("assistidos_processos_papel_idx").on(table.papel),
+  uniqueIndex("assistidos_processos_unique_idx").on(table.assistidoId, table.processoId, table.papel),
+]);
+
+export type AssistidoProcesso = typeof assistidosProcessos.$inferSelect;
+export type InsertAssistidoProcesso = typeof assistidosProcessos.$inferInsert;
+
+// ==========================================
+// USER SETTINGS
+// ==========================================
+
+export const userSettings = pgTable("user_settings", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  settings: jsonb("settings").default({}).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("user_settings_user_id_idx").on(table.userId),
+]);
+
+export type UserSettings = typeof userSettings.$inferSelect;
+export type InsertUserSettings = typeof userSettings.$inferInsert;
+
+// ==========================================
+// USER INVITATIONS
+// ==========================================
+
+export const userInvitations = pgTable("user_invitations", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  nome: text("nome").notNull(),
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  nucleo: varchar("nucleo", { length: 30 }),
+  funcao: varchar("funcao", { length: 30 }).default("defensor_titular"),
+  oab: varchar("oab", { length: 50 }),
+  podeVerTodosAssistidos: boolean("pode_ver_todos_assistidos").default(true),
+  podeVerTodosProcessos: boolean("pode_ver_todos_processos").default(true),
+  mensagem: text("mensagem"),
+  invitedById: integer("invited_by_id").references(() => users.id, { onDelete: "set null" }),
+  status: varchar("status", { length: 20 }).default("pending").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  acceptedAt: timestamp("accepted_at"),
+  acceptedUserId: integer("accepted_user_id").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("user_invitations_email_idx").on(table.email),
+  index("user_invitations_token_idx").on(table.token),
+  index("user_invitations_status_idx").on(table.status),
+]);
+
+export type UserInvitation = typeof userInvitations.$inferSelect;
+export type InsertUserInvitation = typeof userInvitations.$inferInsert;
+
+// ==========================================
+// HANDOFF CONFIG (INFORMAÇÕES POR COMARCA)
+// ==========================================
+
+export const handoffConfig = pgTable("handoff_config", {
+  id: serial("id").primaryKey(),
+  comarca: text("comarca").notNull().unique(),
+  defensor2grauInfo: text("defensor_2grau_info"),
+  defensorEPInfo: text("defensor_ep_info"),
+  nucleoEPEndereco: text("nucleo_ep_endereco"),
+  nucleoEPTelefone: text("nucleo_ep_telefone"),
+  nucleoEPHorario: text("nucleo_ep_horario"),
+  mensagemPersonalizada: text("mensagem_personalizada"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("handoff_config_comarca_idx").on(table.comarca),
+]);

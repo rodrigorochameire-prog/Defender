@@ -472,27 +472,32 @@ export const solarRouter = router({
         message?: string | null;
       }> = [];
 
+      // Batch-fetch all assistidos with processos (1 query instead of N)
+      const allAssistidos = await db.query.assistidos.findMany({
+        where: inArray(assistidos.id, input.assistidoIds),
+        columns: {
+          id: true,
+          nome: true,
+          cpf: true,
+          nomeMae: true,
+          dataNascimento: true,
+          naturalidade: true,
+          telefone: true,
+        },
+        with: {
+          processos: {
+            columns: { id: true, numeroAutos: true },
+            where: (p, { isNotNull }) => isNotNull(p.numeroAutos),
+          },
+        },
+      });
+
+      const assistidosMap = new Map(allAssistidos.map(a => [a.id, a]));
+
       for (const assistidoId of input.assistidoIds) {
         try {
-          // Buscar assistido com processos
-          const assistido = await db.query.assistidos.findFirst({
-            where: eq(assistidos.id, assistidoId),
-            columns: {
-              id: true,
-              nome: true,
-              cpf: true,
-              nomeMae: true,
-              dataNascimento: true,
-              naturalidade: true,
-              telefone: true,
-            },
-            with: {
-              processos: {
-                columns: { id: true, numeroAutos: true },
-                where: (p, { isNotNull }) => isNotNull(p.numeroAutos),
-              },
-            },
-          });
+          // Lookup from pre-fetched map (0 queries instead of 1)
+          const assistido = assistidosMap.get(assistidoId);
 
           if (!assistido?.cpf) {
             results.push({

@@ -14,7 +14,7 @@ import {
   whatsappChatMessages,
   assistidos,
 } from "@/lib/db/schema";
-import { eq, and, desc, asc, like, sql, or, isNull } from "drizzle-orm";
+import { eq, and, desc, asc, like, sql, or, isNull, lt, gt } from "drizzle-orm";
 import {
   evolutionApi,
   EvolutionApiClient,
@@ -735,37 +735,59 @@ export const whatsappChatRouter = router({
         contactId: z.number(),
         limit: z.number().min(1).max(100).optional(),
         offset: z.number().min(0).optional(),
-        beforeId: z.number().optional(), // Para paginação baseada em cursor
+        beforeId: z.number().optional(), // Legacy: alias for cursor (loads older messages)
+        cursor: z.number().optional(), // Cursor-based pagination: ID-based, loads messages with id < cursor (older)
       })
     )
     .query(async ({ input }) => {
-      const { contactId, limit = 50, offset = 0, beforeId } = input;
+      const { contactId, limit = 50, offset = 0, beforeId, cursor } = input;
 
       const conditions = [eq(whatsappChatMessages.contactId, contactId)];
 
-      if (beforeId) {
-        conditions.push(sql`${whatsappChatMessages.id} < ${beforeId}`);
+      // Cursor takes precedence over beforeId (both do the same thing)
+      const cursorId = cursor ?? beforeId;
+      if (cursorId) {
+        conditions.push(lt(whatsappChatMessages.id, cursorId));
       }
+
+      // Fetch one extra to determine if there are more results
+      const fetchLimit = cursorId ? limit + 1 : limit;
 
       const messages = await db
         .select()
         .from(whatsappChatMessages)
         .where(and(...conditions))
-        .orderBy(desc(whatsappChatMessages.createdAt))
-        .limit(limit)
-        .offset(offset);
+        .orderBy(desc(whatsappChatMessages.id))
+        .limit(fetchLimit)
+        .offset(cursorId ? 0 : offset); // When using cursor, ignore offset
 
-      // Conta total
-      const [{ count }] = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(whatsappChatMessages)
-        .where(eq(whatsappChatMessages.contactId, contactId));
+      // Detect if there are more messages beyond this page
+      const hasMore = cursorId ? messages.length > limit : messages.length === limit;
+      if (cursorId && messages.length > limit) {
+        messages.pop(); // Remove the extra detection item
+      }
+
+      // Conta total (only when not using cursor, to avoid expensive COUNT on every scroll)
+      let total: number | null = null;
+      if (!cursorId) {
+        const [{ count }] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(whatsappChatMessages)
+          .where(eq(whatsappChatMessages.contactId, contactId));
+        total = Number(count);
+      }
+
+      // nextCursor = the smallest ID in the current page (for loading older messages)
+      const nextCursor = hasMore && messages.length > 0
+        ? messages[messages.length - 1].id
+        : null;
 
       // Retorna em ordem cronológica
       return {
         messages: messages.reverse(),
-        total: Number(count),
-        hasMore: messages.length === limit,
+        total: total ?? 0,
+        hasMore,
+        nextCursor,
       };
     }),
 
@@ -1014,26 +1036,33 @@ export const whatsappChatRouter = router({
         }
       }
 
-      // Atualiza contatos existentes
+      // Atualiza contatos existentes — parallel batches instead of sequential
       let updatedCount = 0;
-      for (const update of contactsToUpdate) {
-        const updateData: Record<string, unknown> = {
-          updatedAt: new Date(),
-        };
+      if (contactsToUpdate.length > 0) {
+        const updateBatchSize = 50;
+        for (let i = 0; i < contactsToUpdate.length; i += updateBatchSize) {
+          const batch = contactsToUpdate.slice(i, i + updateBatchSize);
+          await Promise.all(
+            batch.map((update) => {
+              const updateData: Record<string, unknown> = {
+                updatedAt: new Date(),
+              };
+              if (update.pushName) updateData.pushName = update.pushName;
+              if (update.profilePicUrl) updateData.profilePicUrl = update.profilePicUrl;
 
-        if (update.pushName) updateData.pushName = update.pushName;
-        if (update.profilePicUrl) updateData.profilePicUrl = update.profilePicUrl;
-
-        await db
-          .update(whatsappContacts)
-          .set(updateData)
-          .where(
-            and(
-              eq(whatsappContacts.configId, input.configId),
-              eq(whatsappContacts.phone, update.phone)
-            )
+              return db
+                .update(whatsappContacts)
+                .set(updateData)
+                .where(
+                  and(
+                    eq(whatsappContacts.configId, input.configId),
+                    eq(whatsappContacts.phone, update.phone)
+                  )
+                );
+            })
           );
-        updatedCount++;
+          updatedCount += batch.length;
+        }
       }
 
       return {

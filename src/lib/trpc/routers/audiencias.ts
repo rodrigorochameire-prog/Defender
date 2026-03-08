@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction, audiencias, processos, assistidos, sessoesJuri } from "@/lib/db";
-import { eq, and, gte, desc, asc, isNull, or, sql, ilike } from "drizzle-orm";
+import { eq, and, gte, desc, asc, isNull, or, sql, ilike, inArray } from "drizzle-orm";
 import { addDays } from "date-fns";
 import { getWorkspaceScope } from "../workspace";
 
@@ -392,6 +392,118 @@ export const audienciasRouter = router({
         return palavrasComuns.length / Math.max(palavras1.length, palavras2.length);
       };
 
+      // ==========================================
+      // BATCH PRE-FETCH: Eliminate N+1 queries
+      // ==========================================
+
+      // 1. Collect all unique CPFs from import events
+      const allCpfs: string[] = [];
+      for (const evento of eventos) {
+        const lista = evento.assistidos || [];
+        for (const a of lista) {
+          if (a.cpf) {
+            const cpfLimpo = a.cpf.replace(/\D/g, "");
+            if (cpfLimpo && !allCpfs.includes(cpfLimpo)) allCpfs.push(cpfLimpo);
+          }
+        }
+      }
+
+      // 2. Collect all unique processo numbers from import events
+      const allProcessoNumbers = [...new Set(eventos.map(e => e.processo))];
+
+      // 3. Batch-fetch all assistidos that have any of those CPFs (1 query instead of N)
+      let cpfToAssistido = new Map<string, { id: number }>();
+      if (allCpfs.length > 0) {
+        const assistidosByCpf = await db
+          .select({ id: assistidos.id, cpf: assistidos.cpf })
+          .from(assistidos)
+          .where(sql`REPLACE(REPLACE(REPLACE(${assistidos.cpf}, '.', ''), '-', ''), ' ', '') IN (${sql.join(allCpfs.map(c => sql`${c}`), sql`, `)})`);
+
+        for (const a of assistidosByCpf) {
+          if (a.cpf) {
+            const cpfLimpo = a.cpf.replace(/\D/g, "");
+            cpfToAssistido.set(cpfLimpo, { id: a.id });
+          }
+        }
+      }
+
+      // 4. Batch-fetch all assistidos for name matching (1 query instead of N)
+      // We fetch all assistidos to do in-memory similarity matching
+      const allAssistidosForMatching = await db
+        .select({ id: assistidos.id, nome: assistidos.nome, atribuicaoPrimaria: assistidos.atribuicaoPrimaria })
+        .from(assistidos);
+
+      // Pre-normalize all names for similarity matching
+      const assistidosNormalizados = allAssistidosForMatching.map(a => ({
+        ...a,
+        nomeNormalizado: normalizarNome(a.nome),
+      }));
+
+      // 5. Batch-fetch all processos by numeroAutos (1 query instead of N)
+      let numeroToProcesso = new Map<string, { id: number; classeProcessual: string | null; vara: string | null; isJuri: boolean | null }>();
+      if (allProcessoNumbers.length > 0) {
+        const processosByNumero = await db
+          .select({
+            id: processos.id,
+            numeroAutos: processos.numeroAutos,
+            classeProcessual: processos.classeProcessual,
+            vara: processos.vara,
+            isJuri: processos.isJuri,
+          })
+          .from(processos)
+          .where(inArray(processos.numeroAutos, allProcessoNumbers));
+
+        for (const p of processosByNumero) {
+          numeroToProcesso.set(p.numeroAutos, {
+            id: p.id,
+            classeProcessual: p.classeProcessual,
+            vara: p.vara,
+            isJuri: p.isJuri,
+          });
+        }
+      }
+
+      // 6. Batch-fetch existing audiências for duplicate detection (1 query instead of N)
+      // Build all dataHora + processo combos to check
+      const allDataHoras = eventos.map(e => new Date(`${e.data}T${e.horarioInicio}:00`));
+      const existingAudiencias = await db
+        .select({
+          id: audiencias.id,
+          processoId: audiencias.processoId,
+          assistidoId: audiencias.assistidoId,
+          dataAudiencia: audiencias.dataAudiencia,
+          numeroAutos: processos.numeroAutos,
+        })
+        .from(audiencias)
+        .leftJoin(processos, eq(audiencias.processoId, processos.id))
+        .where(
+          and(
+            inArray(audiencias.dataAudiencia, allDataHoras),
+            inArray(processos.numeroAutos, allProcessoNumbers)
+          )
+        );
+
+      // Build lookup: "processo|dataISO" -> audiência data
+      const duplicateMap = new Map<string, { id: number; processoId: number | null; assistidoId: number | null }>();
+      for (const ea of existingAudiencias) {
+        if (ea.numeroAutos && ea.dataAudiencia) {
+          const key = `${ea.numeroAutos}|${ea.dataAudiencia.toISOString()}`;
+          duplicateMap.set(key, { id: ea.id, processoId: ea.processoId, assistidoId: ea.assistidoId });
+        }
+      }
+
+      // Helper: find assistido by name similarity from pre-fetched data
+      const findAssistidoByName = (nome: string): number | undefined => {
+        const nomeNorm = normalizarNome(nome);
+        for (const candidato of assistidosNormalizados) {
+          const similaridade = calcularSimilaridade(candidato.nomeNormalizado, nomeNorm);
+          if (similaridade >= 0.9) {
+            return candidato.id;
+          }
+        }
+        return undefined;
+      };
+
       // Entire batch wrapped in a transaction — on error, everything rolls back
       return await withTransaction(async (tx) => {
         const importados: number[] = [];
@@ -403,27 +515,12 @@ export const audienciasRouter = router({
           // Construir data/hora completa
           const dataHora = new Date(`${evento.data}T${evento.horarioInicio}:00`);
 
-          // Verificar se já existe uma audiência com mesmo processo, data e horário
-          const existente = await tx
-            .select({
-              id: audiencias.id,
-              processoId: audiencias.processoId,
-              assistidoId: audiencias.assistidoId,
-            })
-            .from(audiencias)
-            .leftJoin(processos, eq(audiencias.processoId, processos.id))
-            .where(
-              and(
-                eq(audiencias.dataAudiencia, dataHora),
-                eq(processos.numeroAutos, evento.processo)
-              )
-            )
-            .limit(1);
+          // Check duplicate from pre-fetched map (0 queries instead of 1)
+          const dupKey = `${evento.processo}|${dataHora.toISOString()}`;
+          const audienciaExistente = duplicateMap.get(dupKey);
 
           // Se encontrou duplicata, atualizar com os novos dados (exceto processo e assistido já vinculados)
-          if (existente.length > 0) {
-            const audienciaExistente = existente[0];
-
+          if (audienciaExistente) {
             // Atualizar audiência existente com novos dados
             await tx
               .update(audiencias)
@@ -460,55 +557,33 @@ export const audienciasRouter = router({
             continue;
           }
 
-          // Buscar ou criar assistido (primeiro da lista)
+          // Buscar ou criar assistido (primeiro da lista) — using pre-fetched Maps
           let assistidoId: number | undefined;
           const listaAssistidos = evento.assistidos || [];
 
           if (listaAssistidos.length > 0) {
             const primeiroAssistido = listaAssistidos[0];
-            const nomeNormalizado = normalizarNome(primeiroAssistido.nome);
 
-            // Buscar por CPF se disponível (identificador único confiável)
+            // Lookup by CPF from pre-fetched map (0 queries instead of 1)
             if (primeiroAssistido.cpf) {
               const cpfLimpo = primeiroAssistido.cpf.replace(/\D/g, "");
-              const [assistidoExistente] = await tx
-                .select({ id: assistidos.id })
-                .from(assistidos)
-                .where(sql`REPLACE(REPLACE(REPLACE(${assistidos.cpf}, '.', ''), '-', ''), ' ', '') = ${cpfLimpo}`)
-                .limit(1);
-
-              if (assistidoExistente) {
-                assistidoId = assistidoExistente.id;
+              const match = cpfToAssistido.get(cpfLimpo);
+              if (match) {
+                assistidoId = match.id;
               }
             }
 
-            // Se não encontrou por CPF, buscar por nome normalizado (case-insensitive)
+            // Lookup by name from pre-fetched list (0 queries instead of 1)
             if (!assistidoId) {
-              // Busca case-insensitive com ilike
-              const candidatos = await tx
-                .select({ id: assistidos.id, nome: assistidos.nome })
-                .from(assistidos)
-                .where(ilike(assistidos.nome, `%${primeiroAssistido.nome.split(" ")[0]}%`))
-                .limit(10);
-
-              // Encontrar match exato normalizado ou mais similar
-              for (const candidato of candidatos) {
-                const similaridade = calcularSimilaridade(candidato.nome, primeiroAssistido.nome);
-                if (similaridade >= 0.9) { // 90% de similaridade = mesmo assistido
-                  assistidoId = candidato.id;
-                  break;
-                }
-              }
+              assistidoId = findAssistidoByName(primeiroAssistido.nome);
             }
 
-            // Se não encontrou, criar novo assistido
+            // Se não encontrou, criar novo assistido (INSERT still needs to be sequential)
             if (!assistidoId) {
-              // Formatar nome corretamente (capitalizar cada palavra)
               const nomeFormatado = primeiroAssistido.nome
                 .toLowerCase()
                 .split(" ")
                 .map((palavra: string) => {
-                  // Manter preposições em minúsculo
                   if (["de", "da", "do", "das", "dos", "e"].includes(palavra)) {
                     return palavra;
                   }
@@ -529,26 +604,26 @@ export const audienciasRouter = router({
 
               assistidoId = novoAssistido.id;
               assistidosCriados.push(novoAssistido.id);
+
+              // Update in-memory caches so subsequent iterations find this new record
+              if (primeiroAssistido.cpf) {
+                const cpfLimpo = primeiroAssistido.cpf.replace(/\D/g, "");
+                cpfToAssistido.set(cpfLimpo, { id: novoAssistido.id });
+              }
+              assistidosNormalizados.push({
+                id: novoAssistido.id,
+                nome: nomeFormatado,
+                atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as any,
+                nomeNormalizado: normalizarNome(nomeFormatado),
+              });
             }
           } else {
             // Se não tem assistido identificado, buscar ou criar
             const nomeGenerico = evento.assistido || "Não identificado";
 
-            // Tentar encontrar existente primeiro
+            // Lookup by name from pre-fetched list (0 queries instead of 1)
             if (nomeGenerico !== "Não identificado") {
-              const candidatos = await tx
-                .select({ id: assistidos.id, nome: assistidos.nome })
-                .from(assistidos)
-                .where(ilike(assistidos.nome, `%${nomeGenerico.split(" ")[0]}%`))
-                .limit(10);
-
-              for (const candidato of candidatos) {
-                const similaridade = calcularSimilaridade(candidato.nome, nomeGenerico);
-                if (similaridade >= 0.9) {
-                  assistidoId = candidato.id;
-                  break;
-                }
-              }
+              assistidoId = findAssistidoByName(nomeGenerico);
             }
 
             if (!assistidoId) {
@@ -575,51 +650,49 @@ export const audienciasRouter = router({
 
               assistidoId = novoAssistido.id;
               assistidosCriados.push(novoAssistido.id);
+
+              // Update in-memory cache
+              assistidosNormalizados.push({
+                id: novoAssistido.id,
+                nome: nomeFormatado,
+                atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as any,
+                nomeNormalizado: normalizarNome(nomeFormatado),
+              });
             }
           }
 
-          // Backfill atribuicaoPrimaria if null
+          // Backfill atribuicaoPrimaria if null — using pre-fetched data (0 queries instead of 1)
           if (assistidoId) {
-            const [existingAssistido] = await tx
-              .select({ atribuicaoPrimaria: assistidos.atribuicaoPrimaria })
-              .from(assistidos)
-              .where(eq(assistidos.id, assistidoId))
-              .limit(1);
-
-            if (existingAssistido && !existingAssistido.atribuicaoPrimaria) {
+            const cached = assistidosNormalizados.find(a => a.id === assistidoId);
+            if (cached && !cached.atribuicaoPrimaria) {
               await tx.update(assistidos)
                 .set({ atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as any })
                 .where(eq(assistidos.id, assistidoId));
+              // Update in-memory cache
+              cached.atribuicaoPrimaria = mapAtribuicao(evento.atribuicao) as any;
             }
           }
 
-          // Buscar ou criar processo
+          // Buscar ou criar processo — using pre-fetched Map (0 queries instead of 1-2)
           let processoId: number | undefined;
-          const [processoExistente] = await tx
-            .select({ id: processos.id })
-            .from(processos)
-            .where(eq(processos.numeroAutos, evento.processo))
-            .limit(1);
+          const processoCache = numeroToProcesso.get(evento.processo);
 
-          if (processoExistente) {
-            processoId = processoExistente.id;
+          if (processoCache) {
+            processoId = processoCache.id;
 
-            // Backfill processo data if incomplete
-            const [processoData] = await tx
-              .select({ classeProcessual: processos.classeProcessual, vara: processos.vara, isJuri: processos.isJuri })
-              .from(processos)
-              .where(eq(processos.id, processoExistente.id))
-              .limit(1);
-
+            // Backfill processo data if incomplete (using cached data, 0 extra SELECT)
             const updates: Record<string, any> = {};
-            if ((!processoData?.classeProcessual || processoData.classeProcessual === "Não informado") && evento.classeJudicial) {
+            if ((!processoCache.classeProcessual || processoCache.classeProcessual === "Não informado") && evento.classeJudicial) {
               updates.classeProcessual = evento.classeJudicial;
             }
-            if ((!processoData?.vara || processoData.vara === "Não informado") && evento.orgaoJulgador) {
+            if ((!processoCache.vara || processoCache.vara === "Não informado") && evento.orgaoJulgador) {
               updates.vara = evento.orgaoJulgador;
             }
             if (Object.keys(updates).length > 0) {
-              await tx.update(processos).set(updates).where(eq(processos.id, processoExistente.id));
+              await tx.update(processos).set(updates).where(eq(processos.id, processoCache.id));
+              // Update cache
+              if (updates.classeProcessual) processoCache.classeProcessual = updates.classeProcessual;
+              if (updates.vara) processoCache.vara = updates.vara;
             }
           } else {
             // Criar processo com todos os campos obrigatórios
@@ -640,6 +713,14 @@ export const audienciasRouter = router({
               .returning({ id: processos.id });
 
             processoId = novoProcesso.id;
+
+            // Update in-memory cache so subsequent iterations find this new processo
+            numeroToProcesso.set(evento.processo, {
+              id: novoProcesso.id,
+              classeProcessual: evento.classeJudicial || "Não informado",
+              vara: evento.orgaoJulgador || "Não informado",
+              isJuri: null,
+            });
           }
 
           // Verificar se é SESSÃO DE JÚRI (não apenas audiência na Vara do Júri)

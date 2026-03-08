@@ -954,13 +954,17 @@ export const demandasRouter = router({
       items: z.array(z.object({ id: z.number(), ordem: z.number() })),
     }))
     .mutation(async ({ input }) => {
+      if (input.items.length === 0) return { success: true };
+
+      // Single CASE WHEN UPDATE instead of N individual UPDATEs
       await withTransaction(async (tx) => {
-        for (const item of input.items) {
-          await tx
-            .update(demandas)
-            .set({ ordemManual: item.ordem })
-            .where(eq(demandas.id, item.id));
-        }
+        const ids = input.items.map(i => i.id);
+        await tx.execute(sql`
+          UPDATE demandas SET ordem_manual = CASE id
+            ${sql.join(input.items.map(i => sql`WHEN ${i.id} THEN ${i.ordem}`), sql` `)}
+          END
+          WHERE id IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})
+        `);
       });
       return { success: true };
     }),

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { compartilhamentos, profissionais, assistidos, processos } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 // ==========================================
@@ -158,35 +158,52 @@ export const acompanhamentoRouter = router({
         orderBy: [desc(compartilhamentos.createdAt)],
       });
 
-      // Enriquecer com dados da entidade
-      const resultado = await Promise.all(
-        acompanhamentos.map(async (a) => {
-          let entidadeNome = "";
-          let entidadeDetalhe = "";
+      // Batch-fetch all related entities instead of N+1 per-item queries
+      const assistidoIds = acompanhamentos
+        .filter(a => a.entidadeTipo === "assistido")
+        .map(a => a.entidadeId);
+      const processoIds = acompanhamentos
+        .filter(a => a.entidadeTipo === "processo")
+        .map(a => a.entidadeId);
 
-          if (a.entidadeTipo === "assistido") {
-            const assistido = await db.query.assistidos.findFirst({
-              where: eq(assistidos.id, a.entidadeId),
-              columns: { id: true, nome: true, cpf: true },
-            });
-            entidadeNome = assistido?.nome || "Assistido não encontrado";
-            entidadeDetalhe = assistido?.cpf || "";
-          } else if (a.entidadeTipo === "processo") {
-            const processo = await db.query.processos.findFirst({
-              where: eq(processos.id, a.entidadeId),
-              columns: { id: true, numeroAutos: true, vara: true },
-            });
-            entidadeNome = processo?.numeroAutos || "Processo não encontrado";
-            entidadeDetalhe = processo?.vara || "";
-          }
+      // 2 batch queries instead of N individual queries
+      const [assistidosData, processosData] = await Promise.all([
+        assistidoIds.length > 0
+          ? db.select({ id: assistidos.id, nome: assistidos.nome, cpf: assistidos.cpf })
+              .from(assistidos)
+              .where(inArray(assistidos.id, assistidoIds))
+          : Promise.resolve([]),
+        processoIds.length > 0
+          ? db.select({ id: processos.id, numeroAutos: processos.numeroAutos, vara: processos.vara })
+              .from(processos)
+              .where(inArray(processos.id, processoIds))
+          : Promise.resolve([]),
+      ]);
 
-          return {
-            ...a,
-            entidadeNome,
-            entidadeDetalhe,
-          };
-        })
-      );
+      const assistidosMap = new Map(assistidosData.map(a => [a.id, a]));
+      const processosMap = new Map(processosData.map(p => [p.id, p]));
+
+      // Merge in-memory
+      const resultado = acompanhamentos.map(a => {
+        let entidadeNome = "";
+        let entidadeDetalhe = "";
+
+        if (a.entidadeTipo === "assistido") {
+          const assistido = assistidosMap.get(a.entidadeId);
+          entidadeNome = assistido?.nome || "Assistido não encontrado";
+          entidadeDetalhe = assistido?.cpf || "";
+        } else if (a.entidadeTipo === "processo") {
+          const processo = processosMap.get(a.entidadeId);
+          entidadeNome = processo?.numeroAutos || "Processo não encontrado";
+          entidadeDetalhe = processo?.vara || "";
+        }
+
+        return {
+          ...a,
+          entidadeNome,
+          entidadeDetalhe,
+        };
+      });
 
       return resultado;
     }),

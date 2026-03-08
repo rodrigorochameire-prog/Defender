@@ -2,7 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { activityLogs, users } from "@/lib/db/schema";
-import { eq, desc, and, gte, lte, count } from "drizzle-orm";
+import { eq, desc, and, gte, lte, lt, count } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 // ==========================================
@@ -59,11 +59,12 @@ export const activityLogsRouter = router({
       endDate: z.date().optional(),
       limit: z.number().min(1).max(100).default(50),
       offset: z.number().default(0),
+      cursor: z.number().optional(), // Cursor-based pagination: logs with id < cursor (older)
     }))
     .query(async ({ ctx, input }) => {
       checkCanViewLogs(ctx.user.role);
       const conditions = [];
-      
+
       if (input.userId) {
         conditions.push(eq(activityLogs.userId, input.userId));
       }
@@ -80,6 +81,13 @@ export const activityLogsRouter = router({
         conditions.push(lte(activityLogs.createdAt, input.endDate));
       }
 
+      // When cursor is provided, add id < cursor condition for reverse chronological pagination
+      if (input.cursor) {
+        conditions.push(lt(activityLogs.id, input.cursor));
+      }
+
+      const fetchLimit = input.cursor ? input.limit + 1 : input.limit;
+
       const logs = await db.query.activityLogs.findMany({
         where: conditions.length > 0 ? and(...conditions) : undefined,
         with: {
@@ -92,12 +100,26 @@ export const activityLogsRouter = router({
             },
           },
         },
-        orderBy: [desc(activityLogs.createdAt)],
-        limit: input.limit,
-        offset: input.offset,
+        orderBy: [desc(activityLogs.id)],
+        limit: fetchLimit,
+        offset: input.cursor ? 0 : input.offset, // When using cursor, ignore offset
       });
 
-      return logs;
+      // Detect if there are more results
+      const hasMore = input.cursor ? logs.length > input.limit : logs.length === input.limit;
+      if (input.cursor && logs.length > input.limit) {
+        logs.pop(); // Remove extra detection item
+      }
+
+      // nextCursor = the smallest ID in the current page (last item, since ordered DESC)
+      const nextCursor = hasMore && logs.length > 0
+        ? logs[logs.length - 1].id
+        : null;
+
+      return {
+        items: logs,
+        nextCursor,
+      };
     }),
 
   /**

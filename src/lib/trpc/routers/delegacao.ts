@@ -2,7 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction } from "@/lib/db";
 import { demandas, delegacoesHistorico, users, notifications } from "@/lib/db/schema";
-import { eq, and, desc, isNull, inArray } from "drizzle-orm";
+import { eq, and, desc, isNull, inArray, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 // ==========================================
@@ -443,38 +443,32 @@ export const delegacaoRouter = router({
       const prazo = input.prazoSugerido ? new Date(input.prazoSugerido).toISOString().split("T")[0] : null;
 
       const delegacoes = await withTransaction(async (tx) => {
-        const results = [];
+        // Single UPDATE for all demandas (1 query instead of N)
+        await tx.update(demandas)
+          .set({
+            delegadoParaId: input.destinatarioId,
+            dataDelegacao: new Date(),
+            motivoDelegacao: input.instrucoes,
+            statusDelegacao: "pendente",
+            prazoSugerido: prazo,
+            updatedAt: new Date(),
+          })
+          .where(inArray(demandas.id, input.demandaIds));
 
-        for (const demandaId of input.demandaIds) {
-          // Atualizar demanda
-          await tx.update(demandas)
-            .set({
-              delegadoParaId: input.destinatarioId,
-              dataDelegacao: new Date(),
-              motivoDelegacao: input.instrucoes,
-              statusDelegacao: "pendente",
-              prazoSugerido: prazo,
-              updatedAt: new Date(),
-            })
-            .where(eq(demandas.id, demandaId));
-
-          // Criar registro no histórico
-          const [delegacao] = await tx.insert(delegacoesHistorico)
-            .values({
-              tipo: "delegacao_generica",
-              demandaId,
-              delegadoDeId: userId,
-              delegadoParaId: input.destinatarioId,
-              instrucoes: input.instrucoes,
-              prazoSugerido: prazo,
-              prioridade: input.prioridade,
-              status: "pendente",
-              workspaceId: ctx.user.workspaceId || null,
-            })
-            .returning();
-
-          results.push(delegacao);
-        }
+        // Batch INSERT all delegações historico (1 query instead of N)
+        const results = await tx.insert(delegacoesHistorico)
+          .values(input.demandaIds.map(demandaId => ({
+            tipo: "delegacao_generica" as const,
+            demandaId,
+            delegadoDeId: userId,
+            delegadoParaId: input.destinatarioId,
+            instrucoes: input.instrucoes,
+            prazoSugerido: prazo,
+            prioridade: input.prioridade,
+            status: "pendente",
+            workspaceId: ctx.user.workspaceId || null,
+          })))
+          .returning();
 
         // Uma única notificação consolidada
         await tx.insert(notifications).values({
