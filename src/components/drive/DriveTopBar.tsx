@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
 import { useDriveContext } from "./DriveContext";
+import { getAtribuicaoByKey } from "./drive-constants";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -35,6 +36,11 @@ import {
   Loader2,
   ExternalLink,
   Activity,
+  Search,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useProcessingQueue } from "@/contexts/processing-queue";
@@ -59,59 +65,34 @@ function SyncHealthDot() {
     );
   }
 
-  // Determine color based on health status
   const statusConfig = {
-    healthy: {
-      dotClass: "bg-emerald-500",
-      label: "Sincronizacao saudavel",
-    },
-    degraded: {
-      dotClass: "bg-amber-500",
-      label: "Sincronizacao degradada",
-    },
-    critical: {
-      dotClass: "bg-red-500",
-      label: "Sincronizacao critica",
-    },
+    healthy: { dotClass: "bg-emerald-500", label: "Sync OK" },
+    degraded: { dotClass: "bg-amber-500", label: "Sync degradado" },
+    critical: { dotClass: "bg-red-500", label: "Sync critico" },
   };
 
   const config = statusConfig[health.status] || statusConfig.healthy;
 
-  // Calculate time since last sync
   let timeSinceSync = "";
   if (health.lastSyncAgo !== null) {
     const minutes = Math.floor(health.lastSyncAgo / 60_000);
-    if (minutes < 1) {
-      timeSinceSync = "ha menos de 1 min";
-    } else if (minutes < 60) {
-      timeSinceSync = `ha ${minutes} min`;
-    } else {
-      const hours = Math.floor(minutes / 60);
-      timeSinceSync = `ha ${hours}h`;
-    }
-  } else {
-    // Fallback: use the most recent lastSyncAt from syncFolders
-    if (syncFolders && syncFolders.length > 0) {
-      const mostRecent = syncFolders
-        .filter((f: { lastSyncAt: Date | null }) => f.lastSyncAt)
-        .sort((a: { lastSyncAt: Date | null }, b: { lastSyncAt: Date | null }) =>
-          new Date(b.lastSyncAt!).getTime() - new Date(a.lastSyncAt!).getTime()
-        )[0];
-      if (mostRecent?.lastSyncAt) {
-        const diff = Date.now() - new Date(mostRecent.lastSyncAt).getTime();
-        const minutes = Math.floor(diff / 60_000);
-        if (minutes < 1) timeSinceSync = "ha menos de 1 min";
-        else if (minutes < 60) timeSinceSync = `ha ${minutes} min`;
-        else {
-          const hours = Math.floor(minutes / 60);
-          timeSinceSync = `ha ${hours}h`;
-        }
-      }
-    }
-    if (!timeSinceSync) {
-      timeSinceSync = "nunca sincronizado";
+    if (minutes < 1) timeSinceSync = "< 1 min";
+    else if (minutes < 60) timeSinceSync = `${minutes} min`;
+    else timeSinceSync = `${Math.floor(minutes / 60)}h`;
+  } else if (syncFolders && syncFolders.length > 0) {
+    const mostRecent = syncFolders
+      .filter((f: { lastSyncAt: Date | null }) => f.lastSyncAt)
+      .sort((a: { lastSyncAt: Date | null }, b: { lastSyncAt: Date | null }) =>
+        new Date(b.lastSyncAt!).getTime() - new Date(a.lastSyncAt!).getTime()
+      )[0];
+    if (mostRecent?.lastSyncAt) {
+      const minutes = Math.floor((Date.now() - new Date(mostRecent.lastSyncAt).getTime()) / 60_000);
+      if (minutes < 1) timeSinceSync = "< 1 min";
+      else if (minutes < 60) timeSinceSync = `${minutes} min`;
+      else timeSinceSync = `${Math.floor(minutes / 60)}h`;
     }
   }
+  if (!timeSinceSync) timeSinceSync = "nunca";
 
   return (
     <Tooltip>
@@ -119,8 +100,8 @@ function SyncHealthDot() {
         <span className={cn("h-2 w-2 rounded-full shrink-0 cursor-default", config.dotClass)} />
       </TooltipTrigger>
       <TooltipContent side="bottom">
-        <div className="space-y-1">
-          <p className="font-medium">{config.label}</p>
+        <div className="space-y-0.5">
+          <p className="font-medium text-[11px]">{config.label}</p>
           <p className="text-zinc-400 text-[10px]">{timeSinceSync}</p>
           {health.issues.length > 0 && (
             <ul className="text-zinc-400 text-[10px] space-y-0.5">
@@ -175,7 +156,6 @@ function NewDocumentButton() {
     },
   });
 
-  // Group templates by category
   const grouped = useMemo(() => {
     if (!templates) return {};
     const map: Record<string, typeof templates> = {};
@@ -195,11 +175,7 @@ function NewDocumentButton() {
       toast.error("Navegue ate uma pasta antes de criar um documento");
       return;
     }
-    generateMutation.mutate({
-      templateId,
-      targetFolderId,
-      fileName: templateName,
-    });
+    generateMutation.mutate({ templateId, targetFolderId, fileName: templateName });
   };
 
   return (
@@ -210,28 +186,21 @@ function NewDocumentButton() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-zinc-500 hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400"
+              className="h-7 w-7 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400"
               disabled={!targetFolderId}
             >
-              <FilePlus2 className="h-4 w-4" />
+              <FilePlus2 className="h-3.5 w-3.5" />
             </Button>
           </PopoverTrigger>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          {targetFolderId ? "Novo documento a partir de template" : "Navegue ate uma pasta para criar documentos"}
+          {targetFolderId ? "Novo documento" : "Navegue ate uma pasta"}
         </TooltipContent>
       </Tooltip>
-      <PopoverContent
-        align="end"
-        className="w-72 p-0 max-h-[400px] overflow-y-auto"
-      >
+      <PopoverContent align="end" className="w-72 p-0 max-h-[400px] overflow-y-auto">
         <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800">
-          <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-            Novo Documento
-          </p>
-          <p className="text-[10px] text-zinc-400 mt-0.5">
-            Escolha um template para criar na pasta atual
-          </p>
+          <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Novo Documento</p>
+          <p className="text-[10px] text-zinc-400 mt-0.5">Template para a pasta atual</p>
         </div>
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
@@ -240,12 +209,7 @@ function NewDocumentButton() {
         ) : sortedCategories.length === 0 ? (
           <div className="py-6 text-center">
             <FileText className="h-6 w-6 mx-auto mb-2 text-zinc-300" />
-            <p className="text-xs text-zinc-400">
-              Nenhum template cadastrado
-            </p>
-            <p className="text-[10px] text-zinc-400 mt-1">
-              Cadastre templates na area de administracao
-            </p>
+            <p className="text-xs text-zinc-400">Nenhum template cadastrado</p>
           </div>
         ) : (
           <div className="py-1">
@@ -274,13 +238,9 @@ function NewDocumentButton() {
                     >
                       <FileText className="h-3.5 w-3.5 text-emerald-600/60 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-zinc-700 dark:text-zinc-300 truncate">
-                          {t.name}
-                        </p>
+                        <p className="text-xs text-zinc-700 dark:text-zinc-300 truncate">{t.name}</p>
                         {t.description && (
-                          <p className="text-[10px] text-zinc-400 truncate">
-                            {t.description}
-                          </p>
+                          <p className="text-[10px] text-zinc-400 truncate">{t.description}</p>
                         )}
                       </div>
                       {generateMutation.isPending && generateMutation.variables?.templateId === t.id ? (
@@ -324,11 +284,7 @@ function NewFolderButton() {
     }
     const name = window.prompt("Nome da nova pasta:");
     if (!name?.trim()) return;
-
-    createFolder.mutate({
-      name: name.trim(),
-      parentFolderId: targetFolderId,
-    });
+    createFolder.mutate({ name: name.trim(), parentFolderId: targetFolderId });
   };
 
   return (
@@ -337,27 +293,363 @@ function NewFolderButton() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-zinc-500 hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400"
+          className="h-7 w-7 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400"
           onClick={handleCreateFolder}
           disabled={!targetFolderId || createFolder.isPending}
         >
           {createFolder.isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <FolderPlus className="h-4 w-4" />
+            <FolderPlus className="h-3.5 w-3.5" />
           )}
         </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom">
-        {targetFolderId ? "Criar nova pasta" : "Navegue ate uma pasta para criar subpastas"}
+        {targetFolderId ? "Nova pasta" : "Navegue ate uma pasta"}
       </TooltipContent>
+    </Tooltip>
+  );
+}
+
+// ─── Inline Breadcrumbs ─────────────────────────────────────────────
+
+function InlineBreadcrumbs({ fileCount }: { fileCount?: number }) {
+  const ctx = useDriveContext();
+  const atribuicao = ctx.selectedAtribuicao
+    ? getAtribuicaoByKey(ctx.selectedAtribuicao)
+    : null;
+
+  if (ctx.breadcrumbPath.length === 0 && !ctx.selectedAtribuicao) {
+    return null;
+  }
+
+  return (
+    <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+      {/* Back button */}
+      {ctx.breadcrumbPath.length > 0 && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 mr-0.5 text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 shrink-0"
+          onClick={() => ctx.navigateBack()}
+        >
+          <ChevronLeft className="h-3.5 w-3.5" />
+        </Button>
+      )}
+
+      {/* Atribuicao root */}
+      {atribuicao && (
+        <>
+          <button
+            onClick={() => ctx.setSelectedAtribuicao(ctx.selectedAtribuicao)}
+            className={cn(
+              "flex items-center gap-1 text-[12px] font-medium transition-colors shrink-0",
+              ctx.breadcrumbPath.length === 0
+                ? "text-zinc-800 dark:text-zinc-200 cursor-default"
+                : "text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 cursor-pointer"
+            )}
+          >
+            <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", atribuicao.dotClass)} />
+            <span>{atribuicao.label}</span>
+          </button>
+          {ctx.breadcrumbPath.length > 0 && (
+            <ChevronRight className="h-3 w-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
+          )}
+        </>
+      )}
+
+      {/* Path segments */}
+      {ctx.breadcrumbPath.map((segment, index) => {
+        const isLast = index === ctx.breadcrumbPath.length - 1;
+        return (
+          <div key={segment.id} className="flex items-center gap-0.5 shrink-0 min-w-0">
+            <button
+              onClick={() => { if (!isLast) ctx.navigateToBreadcrumb(index); }}
+              className={cn(
+                "text-[12px] transition-colors max-w-[160px] truncate",
+                isLast
+                  ? "text-zinc-800 dark:text-zinc-200 font-medium cursor-default"
+                  : "text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 cursor-pointer"
+              )}
+            >
+              {segment.name}
+            </button>
+            {!isLast && (
+              <ChevronRight className="h-3 w-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
+            )}
+          </div>
+        );
+      })}
+
+      {/* File count */}
+      {fileCount != null && fileCount > 0 && (
+        <span className="text-[10px] text-zinc-400 dark:text-zinc-500 tabular-nums ml-1.5 shrink-0">
+          {fileCount} arquivo{fileCount !== 1 ? "s" : ""}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ─── Expandable Search ──────────────────────────────────────────────
+
+function ExpandableSearch() {
+  const ctx = useDriveContext();
+  const [expanded, setExpanded] = useState(false);
+  const [localSearch, setLocalSearch] = useState(ctx.searchQuery);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleChange = useCallback(
+    (value: string) => {
+      setLocalSearch(value);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => ctx.setSearchQuery(value), 300);
+    },
+    [ctx]
+  );
+
+  useEffect(() => {
+    setLocalSearch(ctx.searchQuery);
+    if (ctx.searchQuery) setExpanded(true);
+  }, [ctx.searchQuery]);
+
+  useEffect(() => {
+    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
+  }, []);
+
+  useEffect(() => {
+    if (expanded) inputRef.current?.focus();
+  }, [expanded]);
+
+  const handleClose = () => {
+    setLocalSearch("");
+    ctx.setSearchQuery("");
+    setExpanded(false);
+  };
+
+  if (!expanded) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+            onClick={() => setExpanded(true)}
+          >
+            <Search className="h-3.5 w-3.5" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Buscar (Ctrl+K)</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <div className="relative flex items-center">
+      <Search className="absolute left-2 h-3 w-3 text-zinc-400 pointer-events-none" />
+      <input
+        ref={inputRef}
+        type="text"
+        value={localSearch}
+        onChange={(e) => handleChange(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Escape") handleClose(); }}
+        placeholder="Buscar..."
+        className={cn(
+          "h-7 w-40 pl-7 pr-7 rounded-md text-xs",
+          "bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/40",
+          "text-zinc-700 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500",
+          "focus:outline-none focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-500/30",
+          "transition-all duration-200"
+        )}
+      />
+      <button
+        onClick={handleClose}
+        className="absolute right-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
+// ─── Add Menu (unified create actions) ───────────────────────────────
+
+function AddMenu() {
+  const ctx = useDriveContext();
+  const utils = trpc.useUtils();
+  const [open, setOpen] = useState(false);
+  const targetFolderId = ctx.selectedFolderId || ctx.rootSyncFolderId;
+
+  const createFolder = trpc.drive.createFolder.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Pasta "${result.name}" criada`);
+      utils.drive.files.invalidate();
+    },
+    onError: (err) => toast.error(`Erro ao criar pasta: ${err.message}`),
+  });
+
+  const { data: templates } = trpc.templates.list.useQuery(undefined, {
+    enabled: open,
+    staleTime: 60_000,
+  });
+
+  const generateMutation = trpc.templates.generateFromTemplate.useMutation({
+    onSuccess: (result) => {
+      setOpen(false);
+      toast.success(`Documento "${result.fileName}" criado!`, {
+        action: { label: "Abrir", onClick: () => window.open(result.webViewLink, "_blank") },
+      });
+    },
+    onError: (err) => toast.error(`Erro ao criar documento: ${err.message}`),
+  });
+
+  const handleNewFolder = () => {
+    setOpen(false);
+    if (!targetFolderId) {
+      toast.error("Navegue ate uma pasta antes de criar subpastas");
+      return;
+    }
+    const name = window.prompt("Nome da nova pasta:");
+    if (!name?.trim()) return;
+    createFolder.mutate({ name: name.trim(), parentFolderId: targetFolderId });
+  };
+
+  const handleUpload = () => {
+    setOpen(false);
+    // TODO: trigger upload flow
+  };
+
+  const grouped = useMemo(() => {
+    if (!templates) return {};
+    const map: Record<string, typeof templates> = {};
+    for (const t of templates) {
+      const cat = t.category || "outros";
+      if (!map[cat]) map[cat] = [];
+      map[cat].push(t);
+    }
+    return map;
+  }, [templates]);
+
+  const categoryOrder = ["peticao", "hc", "alegacoes", "resposta", "recurso", "oficio", "outros"];
+  const sortedCategories = categoryOrder.filter((c) => grouped[c]?.length);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Adicionar</TooltipContent>
+      </Tooltip>
+      <PopoverContent align="end" className="w-56 p-0 max-h-[420px] overflow-y-auto">
+        {/* Quick actions */}
+        <div className="p-1 border-b border-zinc-100 dark:border-zinc-800">
+          <button
+            onClick={handleNewFolder}
+            disabled={!targetFolderId || createFolder.isPending}
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-left transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <FolderPlus className="h-3.5 w-3.5 text-zinc-500" />
+            <span className="text-[11px] text-zinc-700 dark:text-zinc-300">Nova pasta</span>
+          </button>
+          <button
+            onClick={handleUpload}
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-left transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          >
+            <Upload className="h-3.5 w-3.5 text-zinc-500" />
+            <span className="text-[11px] text-zinc-700 dark:text-zinc-300">Upload</span>
+          </button>
+        </div>
+
+        {/* Templates */}
+        {sortedCategories.length > 0 ? (
+          <div className="py-1">
+            <div className="px-2.5 py-1">
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-zinc-400">Templates</span>
+            </div>
+            {sortedCategories.map((cat) => {
+              const config = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.outros;
+              const CatIcon = config.icon;
+              const items = grouped[cat] || [];
+              return items.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    if (!targetFolderId) { toast.error("Navegue ate uma pasta"); return; }
+                    generateMutation.mutate({ templateId: t.id, targetFolderId, fileName: t.name });
+                  }}
+                  disabled={generateMutation.isPending}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 text-left transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/30 disabled:opacity-50"
+                >
+                  <CatIcon className="h-3 w-3 text-emerald-600/60 shrink-0" />
+                  <span className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate flex-1">{t.name}</span>
+                  {generateMutation.isPending && generateMutation.variables?.templateId === t.id && (
+                    <Loader2 className="h-3 w-3 animate-spin text-emerald-500 shrink-0" />
+                  )}
+                </button>
+              ));
+            })}
+          </div>
+        ) : templates && templates.length === 0 ? (
+          <div className="py-4 text-center">
+            <p className="text-[10px] text-zinc-400">Nenhum template</p>
+          </div>
+        ) : null}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// ─── View Mode Cycle Button ──────────────────────────────────────────
+
+const VIEW_MODES = ["list", "grid", "compact"] as const;
+const VIEW_MODE_CONFIG: Record<string, { icon: React.ElementType; label: string }> = {
+  list: { icon: List, label: "Lista" },
+  grid: { icon: LayoutGrid, label: "Grade" },
+  compact: { icon: AlignJustify, label: "Compacto" },
+};
+
+function ViewModeCycleButton() {
+  const ctx = useDriveContext();
+  const current = VIEW_MODE_CONFIG[ctx.viewMode] || VIEW_MODE_CONFIG.list;
+  const Icon = current.icon;
+
+  const handleCycle = () => {
+    const idx = VIEW_MODES.indexOf(ctx.viewMode as typeof VIEW_MODES[number]);
+    const next = VIEW_MODES[(idx + 1) % VIEW_MODES.length];
+    ctx.setViewMode(next);
+  };
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
+          onClick={handleCycle}
+        >
+          <Icon className="h-3.5 w-3.5" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">{current.label}</TooltipContent>
     </Tooltip>
   );
 }
 
 // ─── Main TopBar ────────────────────────────────────────────────────
 
-export function DriveTopBar() {
+export function DriveTopBar({ fileCount }: { fileCount?: number }) {
   const ctx = useDriveContext();
 
   const syncAll = trpc.drive.syncAll.useMutation();
@@ -386,72 +678,49 @@ export function DriveTopBar() {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex items-center gap-1.5 sm:gap-2 h-10 px-3 sm:px-4 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shrink-0">
-        {/* ─── Spacer for mobile hamburger area ─── */}
+      <div className="flex items-center gap-1.5 h-10 px-3 border-b border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shrink-0">
+        {/* Mobile hamburger spacer */}
         <div className="w-8 lg:hidden" />
 
-        {/* ─── Health + Actions ─── */}
-        <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
-          {/* Sync Health Indicator */}
+        {/* Breadcrumbs (inline) */}
+        <div className="flex-1 min-w-0 overflow-hidden">
+          <InlineBreadcrumbs fileCount={fileCount} />
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+          {/* Search */}
+          <ExpandableSearch />
+
+          {/* Sync Health */}
           <SyncHealthDot />
 
-          {/* Sync All Button */}
+          {/* Sync All */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
                 onClick={handleSyncAll}
                 disabled={syncAll.isPending}
               >
-                <RefreshCw
-                  className={cn(
-                    "h-4 w-4",
-                    syncAll.isPending && "animate-spin"
-                  )}
-                />
+                <RefreshCw className={cn("h-3.5 w-3.5", syncAll.isPending && "animate-spin")} />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              {syncAll.isPending
-                ? "Sincronizando..."
-                : "Sincronizar todas as pastas"}
+              {syncAll.isPending ? "Sincronizando..." : "Sincronizar"}
             </TooltipContent>
           </Tooltip>
 
-          {/* New Folder */}
-          <span className="hidden sm:inline-flex">
-            <NewFolderButton />
-          </span>
-
-          {/* Upload Placeholder */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hidden sm:inline-flex h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-                onClick={() => {
-                  // TODO: implement upload
-                }}
-              >
-                <Upload className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Upload de arquivo</TooltipContent>
-          </Tooltip>
-
-          {/* New Document from Template */}
-          <span className="hidden sm:inline-flex">
-            <NewDocumentButton />
-          </span>
+          {/* Add Menu (New Folder + Upload + New Document) */}
+          <AddMenu />
 
           {/* Processing Queue */}
           <ProcessingQueuePanel>
             <button
               className={cn(
-                "h-8 w-8 inline-flex items-center justify-center gap-1 rounded-md transition-colors",
+                "h-7 w-7 inline-flex items-center justify-center gap-0.5 rounded-md transition-colors",
                 activeCount > 0
                   ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400"
                   : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
@@ -460,65 +729,16 @@ export function DriveTopBar() {
             >
               <Activity className={cn("h-3.5 w-3.5", activeCount > 0 && "animate-pulse")} />
               {activeCount > 0 && (
-                <span className="text-[10px] font-medium">{activeCount}</span>
+                <span className="text-[9px] font-medium">{activeCount}</span>
               )}
             </button>
           </ProcessingQueuePanel>
 
-          {/* ─── Separator ─── */}
-          <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-700 mx-0.5 hidden sm:block" />
+          {/* Separator */}
+          <div className="h-4 w-px bg-zinc-200/80 dark:bg-zinc-700/50 mx-0.5" />
 
-          {/* ─── View Mode Toggle ─── */}
-          <div className="hidden sm:flex items-center rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => ctx.setViewMode("grid")}
-                  className={cn(
-                    "p-1.5 rounded-l-lg transition-colors duration-150",
-                    ctx.viewMode === "grid"
-                      ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-200 shadow-sm"
-                      : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
-                  )}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Grade</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => ctx.setViewMode("list")}
-                  className={cn(
-                    "p-1.5 transition-colors duration-150",
-                    ctx.viewMode === "list"
-                      ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-200 shadow-sm"
-                      : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
-                  )}
-                >
-                  <List className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Lista</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => ctx.setViewMode("compact")}
-                  className={cn(
-                    "p-1.5 rounded-r-lg transition-colors duration-150",
-                    ctx.viewMode === "compact"
-                      ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-200 shadow-sm"
-                      : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
-                  )}
-                >
-                  <AlignJustify className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Compacto</TooltipContent>
-            </Tooltip>
-          </div>
+          {/* View Mode Cycle Button */}
+          <ViewModeCycleButton />
         </div>
       </div>
     </TooltipProvider>

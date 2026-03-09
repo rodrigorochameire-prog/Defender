@@ -5,7 +5,8 @@
       "name": "nextjs-dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "port": 3000
+      "port": 3000,
+      "autoPort": false
     },
     {
       "name": "enrichment-engine",

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "rm -rf .next/cache && next dev --turbopack",
     "dev:clean": "rm -rf .next && next dev --turbopack",
+    "dev:webpack": "next dev",
     "prebuild": "rm -rf .next",
     "build": "next build",
     "start": "next start",

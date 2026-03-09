@@ -6,21 +6,14 @@ import {
   X,
   MapPin,
   FileText,
-  Gavel,
-  Users,
   Clock,
   Calendar as CalendarIcon,
-  Home,
-  Lock,
-  Folder,
-  RefreshCw,
-  Shield,
   Edit3,
   Trash2,
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
@@ -29,6 +22,12 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import {
+  getAtribuicaoColors,
+  getAtribuicaoIcon,
+  normalizeAreaToFilter,
+  SOLID_COLOR_MAP,
+} from "@/lib/config/atribuicoes";
 
 interface DayEventsSheetProps {
   isOpen: boolean;
@@ -45,15 +44,15 @@ const isEventoCancelado = (status: string) =>
   status === "cancelado" || status === "cancelada" ||
   status === "remarcado" || status === "redesignado" || status === "reagendada";
 
-// Abreviações para títulos de eventos
-const abreviacoes: Record<string, string> = {
+// Extrair tipo de audiência do título (sem o nome do assistido)
+const tipoAbreviacoes: Record<string, string> = {
   "Audiência de Instrução e Julgamento": "AIJ",
   "Instrução e Julgamento": "AIJ",
   "Audiência de Custódia": "Custódia",
   "Audiência de Justificação": "Justificação",
-  "Audiência Preliminar": "AP",
+  "Audiência Preliminar": "Preliminar",
   "Audiência de Apresentação": "Apresentação",
-  "Audiência Concentrada": "Aud. Concentrada",
+  "Audiência Concentrada": "Concentrada",
   "Audiência de Conciliação": "Conciliação",
   "Sessão de Julgamento do Tribunal do Júri": "Júri",
   "Sessão do Tribunal do Júri": "Júri",
@@ -63,9 +62,9 @@ const abreviacoes: Record<string, string> = {
   "Produção Antecipada de Provas": "PAP",
   "Acordo de Não Persecução Penal": "ANPP",
   "Audiência Admonitória": "Admonitória",
-  "Oitiva Especial": "Oitiva especial",
+  "Oitiva Especial": "Oitiva Especial",
   "Audiência de Retratação": "Retratação",
-  "Audiência de Execução": "Exec",
+  "Audiência de Execução": "Execução",
   "Audiência de Progressão": "Progressão",
   "Audiência de Livramento": "Livramento",
   "Audiência de Unificação": "Unificação",
@@ -74,41 +73,27 @@ const abreviacoes: Record<string, string> = {
   "Retratação": "Retratação",
   "Audiência de Medidas Protetivas": "Med. Protetivas",
   "Medidas Protetivas": "Med. Protetivas",
-  "Audiência": "Aud",
-  "Atendimento": "Atend",
+  "Audiência": "Audiência",
+  "Atendimento": "Atendimento",
   "Reunião": "Reunião",
-  "Diligência": "Dilig",
+  "Diligência": "Diligência",
 };
 
-const abreviarTitulo = (titulo: string): string => {
-  if (abreviacoes[titulo]) return abreviacoes[titulo];
-  for (const [chave, abrev] of Object.entries(abreviacoes)) {
-    if (titulo.includes(chave)) return abrev;
+function extrairTipo(titulo: string): string {
+  // Remove prefixo ADV se presente
+  const clean = titulo.replace(/^ADV\s*[-–]\s*/i, "").replace(/^ADV\s+/i, "");
+  // Tenta encontrar tipo no título antes do primeiro " - "
+  const firstSegment = clean.split(/\s*[-–]\s*/)[0]?.trim() || "";
+
+  // Verificar match direto ou parcial
+  if (tipoAbreviacoes[firstSegment]) return tipoAbreviacoes[firstSegment];
+  for (const [chave, abrev] of Object.entries(tipoAbreviacoes)) {
+    if (firstSegment.includes(chave)) return abrev;
   }
-  return titulo.length > 24 ? titulo.substring(0, 24) + "..." : titulo;
-};
-
-// Cores da barra lateral por atribuição
-const borderLeftColors: Record<string, string> = {
-  "Tribunal do Júri": "bg-emerald-500",
-  "Grupo Especial do Júri": "bg-teal-600",
-  "Violência Doméstica": "bg-amber-500",
-  "Execução Penal": "bg-blue-600",
-  "Criminal Geral": "bg-rose-600",
-  "Substituição": "bg-zinc-500",
-  "Curadoria Especial": "bg-purple-600",
-  "Geral": "bg-zinc-400",
-};
-
-const atribuicaoIcons: Record<string, any> = {
-  "Tribunal do Júri": Gavel,
-  "Grupo Especial do Júri": Gavel,
-  "Violência Doméstica": Home,
-  "Execução Penal": Lock,
-  "Criminal Geral": Folder,
-  "Substituição": RefreshCw,
-  "Curadoria Especial": Shield,
-};
+  // Se o primeiro segmento é muito curto (tipo "AIJ"), retornar como está
+  if (firstSegment.length <= 20) return firstSegment;
+  return firstSegment.substring(0, 20) + "…";
+}
 
 export function DayEventsSheet({
   isOpen,
@@ -120,10 +105,32 @@ export function DayEventsSheet({
   onDeleteEvento,
 }: DayEventsSheetProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [activeAtribFilter, setActiveAtribFilter] = useState<string | null>(null);
 
   const sortedEventos = [...eventos].sort((a, b) =>
     (a.horarioInicio || "").localeCompare(b.horarioInicio || "")
   );
+
+  // Atribuições presentes no dia (deduplicadas por filterKey)
+  const dayAtribuicoes = useMemo(() => {
+    const seen = new Map<string, { key: string; color: string; Icon: any }>();
+    for (const ev of eventos) {
+      const filterKey = normalizeAreaToFilter(ev.atribuicaoKey || ev.atribuicao);
+      if (filterKey === "all" || seen.has(filterKey)) continue;
+      const color = SOLID_COLOR_MAP[filterKey] || "#71717a";
+      const Icon = getAtribuicaoIcon(filterKey);
+      seen.set(filterKey, { key: filterKey, color, Icon });
+    }
+    return Array.from(seen.values());
+  }, [eventos]);
+
+  // Filtrar por atribuição se ativo
+  const filteredEventos = activeAtribFilter
+    ? sortedEventos.filter((ev) => {
+        const filterKey = normalizeAreaToFilter(ev.atribuicaoKey || ev.atribuicao);
+        return filterKey === activeAtribFilter;
+      })
+    : sortedEventos;
 
   const dayName = format(date, "EEEE", { locale: ptBR });
   const dayDate = format(date, "d 'de' MMMM", { locale: ptBR });
@@ -136,88 +143,98 @@ export function DayEventsSheet({
       >
         {/* Header */}
         <SheetHeader className="px-5 py-4 border-b border-zinc-200/80 dark:border-zinc-800/80 space-y-0">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-medium">
-                {dayName}
-              </p>
-              <SheetTitle className="text-lg font-serif font-semibold text-zinc-900 dark:text-zinc-100">
-                {dayDate}
-              </SheetTitle>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-medium tabular-nums">
-                {eventos.length} evento{eventos.length !== 1 ? "s" : ""}
-              </span>
-            </div>
+          <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-medium">
+            {dayName}
+          </p>
+          <div className="flex items-center gap-2">
+            <SheetTitle className="text-lg font-serif font-semibold text-zinc-900 dark:text-zinc-100">
+              {dayDate}
+            </SheetTitle>
+
+            {/* Filtro de atribuições inline — só ícones presentes no dia */}
+            {dayAtribuicoes.length > 1 && (
+              <>
+                <span className="w-px h-4 bg-zinc-200 dark:bg-zinc-700" />
+                {dayAtribuicoes.map(({ key, color, Icon }) => {
+                  const isActive = activeAtribFilter === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setActiveAtribFilter(isActive ? null : key)}
+                      className={cn(
+                        "w-6 h-6 rounded-md flex items-center justify-center transition-all cursor-pointer",
+                        isActive ? "shadow-sm" : "opacity-40 hover:opacity-75"
+                      )}
+                      style={isActive ? { backgroundColor: `${color}18`, color } : { color }}
+                      title={getAtribuicaoColors(key).label}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                    </button>
+                  );
+                })}
+              </>
+            )}
+
+            <span className="flex-1" />
+            <span className="text-[10px] font-medium tabular-nums text-zinc-400 dark:text-zinc-500 px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">
+              {eventos.length}
+            </span>
           </div>
         </SheetHeader>
 
         {/* Event list */}
         <div className="flex-1 overflow-y-auto">
-          {sortedEventos.length === 0 ? (
+          {filteredEventos.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-zinc-400">
               <CalendarIcon className="w-8 h-8 mb-2" />
               <p className="text-sm">Nenhum evento neste dia</p>
             </div>
           ) : (
             <div className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
-              {sortedEventos.map((evento) => {
+              {filteredEventos.map((evento) => {
                 const cancelado = isEventoCancelado(evento.status);
                 const isExpanded = expandedId === evento.id;
-                const barColor = cancelado
-                  ? "bg-zinc-300 dark:bg-zinc-600"
-                  : borderLeftColors[evento.atribuicao] || "bg-zinc-400";
-                const tipoAbrev = abreviarTitulo(evento.titulo);
+                const colors = getAtribuicaoColors(evento.atribuicaoKey || evento.atribuicao);
+                const solidColor = cancelado ? "#a1a1aa" : (colors as any).color || "#71717a";
+                const tipo = extrairTipo(evento.titulo);
                 const assistidoNome = evento.assistido || "";
+                const processo = evento.processo || "";
 
                 return (
                   <div key={evento.id} className="group">
-                    {/* Compact row */}
+                    {/* Row */}
                     <button
                       onClick={() => setExpandedId(isExpanded ? null : evento.id)}
                       className={cn(
-                        "w-full text-left flex items-stretch gap-0 transition-colors",
+                        "w-full text-left flex items-stretch gap-0 transition-colors cursor-pointer",
                         cancelado
-                          ? "opacity-50"
+                          ? "opacity-45"
                           : "hover:bg-zinc-50 dark:hover:bg-zinc-800/40"
                       )}
                     >
                       {/* Color bar */}
-                      <div className={cn("w-1 flex-shrink-0 my-2 ml-1 rounded-full", barColor)} />
+                      <div
+                        className="w-[3px] flex-shrink-0 my-2.5 ml-1.5 rounded-full"
+                        style={{ backgroundColor: solidColor }}
+                      />
 
-                      <div className="flex-1 min-w-0 px-4 py-2.5">
-                        {/* Line 1: Time + Type + Name */}
+                      <div className="flex-1 min-w-0 px-3 py-2.5">
+                        {/* Linha 1: Horário + Tipo */}
                         <div className="flex items-center gap-2">
                           <span className={cn(
-                            "text-xs font-bold tabular-nums shrink-0",
+                            "text-sm font-bold tabular-nums shrink-0",
                             cancelado ? "text-zinc-400 line-through" : "text-zinc-800 dark:text-zinc-200"
                           )}>
                             {evento.horarioInicio || "--:--"}
                           </span>
-                          <span className={cn(
-                            "text-xs font-semibold shrink-0",
-                            cancelado ? "text-zinc-400" : "text-zinc-500 dark:text-zinc-400"
-                          )}>
-                            {tipoAbrev}
-                          </span>
-                          <span className="text-[10px] text-zinc-300 dark:text-zinc-600">·</span>
-                          <span className={cn(
-                            "text-xs truncate",
-                            cancelado ? "text-zinc-400 line-through" : "text-zinc-700 dark:text-zinc-300"
-                          )}>
-                            {assistidoNome || "—"}
-                          </span>
-                        </div>
-
-                        {/* Line 2: Process number */}
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <FileText className="w-3 h-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
-                          <span className={cn(
-                            "text-[11px] font-mono truncate",
-                            cancelado ? "text-zinc-400" : "text-zinc-400 dark:text-zinc-500"
-                          )}>
-                            {evento.processo || "Sem processo"}
+                          <span
+                            className={cn(
+                              "text-xs font-medium shrink-0",
+                              cancelado ? "text-zinc-400" : ""
+                            )}
+                            style={cancelado ? undefined : { color: solidColor }}
+                          >
+                            {tipo}
                           </span>
                           {cancelado && (
                             <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 font-medium ml-auto shrink-0">
@@ -225,6 +242,29 @@ export function DayEventsSheet({
                             </span>
                           )}
                         </div>
+
+                        {/* Linha 2: Nome do assistido */}
+                        {assistidoNome && (
+                          <p className={cn(
+                            "text-[13px] font-medium truncate mt-0.5",
+                            cancelado ? "text-zinc-400 line-through" : "text-zinc-700 dark:text-zinc-300"
+                          )}>
+                            {assistidoNome}
+                          </p>
+                        )}
+
+                        {/* Linha 3: Processo */}
+                        {processo && (
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <FileText className="w-3 h-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
+                            <span className={cn(
+                              "text-[11px] font-mono truncate",
+                              cancelado ? "text-zinc-400" : "text-zinc-400 dark:text-zinc-500"
+                            )}>
+                              {processo}
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Expand indicator */}
@@ -239,7 +279,7 @@ export function DayEventsSheet({
 
                     {/* Expanded details */}
                     {isExpanded && (
-                      <div className="bg-zinc-50/50 dark:bg-zinc-800/20 px-5 py-3 ml-1 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-2">
+                      <div className="bg-zinc-50/50 dark:bg-zinc-800/20 px-5 py-3 ml-1.5 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-2">
                         {evento.local && (
                           <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                             <MapPin className="w-3.5 h-3.5 shrink-0" />
@@ -249,7 +289,7 @@ export function DayEventsSheet({
                         {evento.atribuicao && (
                           <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                             {(() => {
-                              const Icon = atribuicaoIcons[evento.atribuicao] || Folder;
+                              const Icon = getAtribuicaoIcon(evento.atribuicaoKey || evento.atribuicao);
                               return <Icon className="w-3.5 h-3.5 shrink-0" />;
                             })()}
                             <span>{evento.atribuicao}</span>
@@ -266,7 +306,7 @@ export function DayEventsSheet({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 text-xs text-zinc-500 hover:text-emerald-600 cursor-pointer"
+                            className="h-7 text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 cursor-pointer"
                             onClick={(e) => {
                               e.stopPropagation();
                               onEventClick(evento);

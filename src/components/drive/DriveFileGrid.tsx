@@ -7,6 +7,7 @@ import {
   getFileIcon,
   formatFileSize,
   getEnrichmentBadge,
+  DRIVE_ATRIBUICOES,
 } from "./drive-constants";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -17,6 +18,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FolderOpen, MoreVertical, ExternalLink, Pencil, FolderInput, Download, Trash2 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { MoveFileModal } from "./MoveFileModal";
@@ -46,18 +49,29 @@ interface DriveFileGridProps {
   isLoading?: boolean;
 }
 
+// ─── Helpers ────────────────────────────────────────────────────────
+
+function getFileTypeShort(mimeType: string | null): string {
+  if (!mimeType) return "";
+  if (mimeType.includes("pdf")) return "PDF";
+  if (mimeType.includes("image")) return "IMG";
+  if (mimeType.includes("audio")) return "MP3";
+  if (mimeType.includes("video")) return "MP4";
+  if (mimeType.includes("spreadsheet") || mimeType.includes("excel")) return "XLS";
+  if (mimeType.includes("document") || mimeType.includes("word")) return "DOC";
+  if (mimeType.includes("markdown") || mimeType.includes("text/plain")) return "TXT";
+  return "";
+}
+
 // ─── Skeleton Card ──────────────────────────────────────────────────
 
 function SkeletonCard() {
   return (
-    <div className="bg-zinc-200/50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50 rounded-lg p-3 animate-pulse">
-      <div className="flex items-center justify-center h-14 sm:h-20 mb-2 sm:mb-3">
-        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-zinc-200/50 dark:bg-zinc-700/50" />
-      </div>
-      <div className="h-4 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-3/4 mb-2" />
-      <div className="flex items-center justify-between">
-        <div className="h-3 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-1/3" />
-        <div className="h-4 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-1/4" />
+    <div className="bg-zinc-100/50 dark:bg-zinc-800/50 border border-zinc-200/40 dark:border-zinc-700/40 rounded-lg overflow-hidden animate-pulse">
+      <div className="h-24 sm:h-28 bg-zinc-200/30 dark:bg-zinc-700/30" />
+      <div className="p-2">
+        <div className="h-3 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-3/4 mb-1" />
+        <div className="h-2.5 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-1/3" />
       </div>
     </div>
   );
@@ -69,181 +83,148 @@ function FileGridCard({ file }: { file: DriveFile }) {
   const ctx = useDriveContext();
   const utils = trpc.useUtils();
   const [showMoveModal, setShowMoveModal] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const isSelected = ctx.selectedFileIds.has(file.id);
   const Icon = file.isFolder ? FolderOpen : getFileIcon(file.mimeType);
   const enrichment = getEnrichmentBadge(file.enrichmentStatus);
-  const isImage = file.mimeType?.startsWith("image/");
+  const typeShort = getFileTypeShort(file.mimeType);
+  const hasThumbnail = !file.isFolder && file.thumbnailLink && !imgError;
+  const atribuicao = DRIVE_ATRIBUICOES.find((a) => a.folderId === file.driveFolderId);
 
   const deleteFile = trpc.drive.deleteFile.useMutation({
-    onSuccess: () => {
-      toast.success("Arquivo excluido com sucesso");
-      utils.drive.files.invalidate();
-    },
-    onError: (error) => {
-      toast.error(error.message || "Erro ao excluir arquivo");
-    },
+    onSuccess: () => { toast.success("Arquivo excluido"); utils.drive.files.invalidate(); },
+    onError: (error) => { toast.error(error.message || "Erro ao excluir"); },
   });
 
   const handleClick = () => {
-    if (file.isFolder) {
-      ctx.navigateToFolder(file.driveFileId, file.name);
-    } else {
-      ctx.openDetailPanel(file.id);
-    }
-  };
-
-  const handleCheckboxChange = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    ctx.toggleFileSelection(file.id);
+    if (file.isFolder) ctx.navigateToFolder(file.driveFileId, file.name);
+    else ctx.openDetailPanel(file.id);
   };
 
   const handleDelete = () => {
-    const confirmed = window.confirm(`Excluir "${file.name}"? Esta acao nao pode ser desfeita.`);
-    if (confirmed) {
+    if (window.confirm(`Excluir "${file.name}"?`)) {
       deleteFile.mutate({ fileId: file.driveFileId });
     }
   };
+
+  const dateStr = useMemo(() => {
+    const d = file.modifiedAt || file.createdAt;
+    if (!d) return "";
+    try { return formatDistanceToNow(new Date(d), { addSuffix: false, locale: ptBR }); }
+    catch { return ""; }
+  }, [file.modifiedAt, file.createdAt]);
 
   return (
     <div
       onClick={handleClick}
       className={cn(
-        "group relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 cursor-pointer shadow-sm",
-        "hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 hover:shadow-md hover:shadow-zinc-200/60 dark:hover:shadow-black/20",
-        "transition-all duration-200 hover:-translate-y-0.5",
-        isSelected && "border-emerald-300 dark:border-emerald-500/50 bg-emerald-50 dark:bg-emerald-500/10"
+        "group relative bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/60 rounded-lg overflow-hidden cursor-pointer",
+        "hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50/20 dark:hover:bg-emerald-500/5",
+        "transition-colors duration-200",
+        isSelected && "border-emerald-300 dark:border-emerald-500/50 bg-emerald-50/80 dark:bg-emerald-500/10"
       )}
     >
-      {/* Checkbox */}
+      {/* Checkbox - top left */}
       <div
         className={cn(
-          "absolute top-2 left-2 z-10 transition-opacity duration-150",
+          "absolute top-1.5 left-1.5 z-10 transition-opacity duration-150",
           isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         )}
-        onClick={handleCheckboxChange}
+        onClick={(e) => { e.stopPropagation(); ctx.toggleFileSelection(file.id); }}
       >
         <Checkbox
           checked={isSelected}
           onCheckedChange={() => ctx.toggleFileSelection(file.id)}
-          className="h-4 w-4 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+          className="h-4 w-4 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm"
         />
       </div>
 
-      {/* Context Menu (files only) */}
+      {/* Context Menu - top right */}
       {!file.isFolder && (
         <div
           className={cn(
-            "absolute top-2 right-2 z-10 transition-opacity duration-150",
+            "absolute top-1.5 right-1.5 z-10 transition-opacity duration-150",
             "opacity-0 group-hover:opacity-100"
           )}
           onClick={(e) => e.stopPropagation()}
         >
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
-                <MoreVertical className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+              <button className="h-6 w-6 flex items-center justify-center rounded-md bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                <MoreVertical className="h-3.5 w-3.5 text-zinc-500" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuItem
-                className="text-xs gap-2 cursor-pointer"
-                onClick={() => {
-                  if (file.webViewLink) window.open(file.webViewLink, "_blank");
-                }}
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Abrir
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem className="text-[11px] gap-2 cursor-pointer" onClick={() => { if (file.webViewLink) window.open(file.webViewLink, "_blank"); }}>
+                <ExternalLink className="h-3 w-3" /> Abrir
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-xs gap-2 cursor-pointer"
-                onClick={() => ctx.openDetailPanel(file.id)}
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                Renomear
+              <DropdownMenuItem className="text-[11px] gap-2 cursor-pointer" onClick={() => ctx.openDetailPanel(file.id)}>
+                <Pencil className="h-3 w-3" /> Renomear
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-xs gap-2 cursor-pointer"
-                onClick={() => setShowMoveModal(true)}
-              >
-                <FolderInput className="h-3.5 w-3.5" />
-                Mover para...
+              <DropdownMenuItem className="text-[11px] gap-2 cursor-pointer" onClick={() => setShowMoveModal(true)}>
+                <FolderInput className="h-3 w-3" /> Mover
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-xs gap-2 cursor-pointer"
-                onClick={() => {
-                  const link = file.webContentLink || file.webViewLink;
-                  if (link) window.open(link, "_blank");
-                }}
-              >
-                <Download className="h-3.5 w-3.5" />
-                Baixar
+              <DropdownMenuItem className="text-[11px] gap-2 cursor-pointer" onClick={() => { const link = file.webContentLink || file.webViewLink; if (link) window.open(link, "_blank"); }}>
+                <Download className="h-3 w-3" /> Baixar
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-xs gap-2 cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-500/10"
-                onClick={handleDelete}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Excluir
+              <DropdownMenuItem className="text-[11px] gap-2 cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-500/10" onClick={handleDelete}>
+                <Trash2 className="h-3 w-3" /> Excluir
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       )}
 
-      {/* Icon / Thumbnail */}
-      <div className="flex items-center justify-center h-12 sm:h-16 mb-2 sm:mb-2.5">
-        {isImage && file.thumbnailLink ? (
+      {/* Preview area */}
+      <div className={cn(
+        "relative h-24 sm:h-28 flex items-center justify-center",
+        hasThumbnail ? "bg-zinc-50 dark:bg-zinc-800/50" : file.isFolder ? "bg-emerald-50/50 dark:bg-emerald-500/5" : "bg-zinc-50 dark:bg-zinc-800/30"
+      )}>
+        {hasThumbnail ? (
           <img
-            src={file.thumbnailLink}
+            src={file.thumbnailLink!}
             alt={file.name}
-            className="max-h-12 sm:max-h-16 max-w-full object-contain rounded"
+            className="w-full h-full object-cover"
+            onError={() => setImgError(true)}
           />
         ) : (
-          <div className={cn(
-            "w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center",
-            file.isFolder
-              ? "bg-emerald-50 dark:bg-emerald-500/10"
-              : "bg-zinc-100 dark:bg-zinc-800"
-          )}>
-            <Icon
-              className={cn(
-                "w-5 h-5 sm:w-6 sm:h-6",
-                file.isFolder ? "text-emerald-600 dark:text-emerald-500" : "text-zinc-400 dark:text-zinc-400"
-              )}
-            />
-          </div>
+          <Icon className={cn(
+            "w-8 h-8",
+            file.isFolder ? "text-emerald-500/60 dark:text-emerald-500/40" : "text-zinc-300 dark:text-zinc-600"
+          )} />
         )}
-      </div>
 
-      {/* Name */}
-      <p className="text-[13px] font-medium text-zinc-900 dark:text-zinc-200 truncate" title={file.name}>
-        {file.name}
-      </p>
-
-      {/* Bottom row */}
-      <div className="flex items-center justify-between mt-1.5 gap-2">
-        {file.isFolder ? (
-          <span className="text-xs text-zinc-500 dark:text-zinc-500">Pasta</span>
-        ) : (
-          <span className="text-xs text-zinc-500 dark:text-zinc-500">
-            {formatFileSize(file.size)}
+        {/* Type badge - bottom right of preview */}
+        {!file.isFolder && typeShort && (
+          <span className="absolute bottom-1 right-1 text-[8px] font-bold uppercase px-1 py-0.5 rounded bg-black/60 text-white leading-none">
+            {typeShort}
           </span>
         )}
 
-        {!file.isFolder && enrichment.label && (
-          <span
-            className={cn(
-              "text-[10px] px-1.5 py-0.5 rounded-full border shrink-0",
-              enrichment.class
-            )}
-          >
-            {enrichment.label}
-          </span>
+        {/* Atribuicao dot - bottom left */}
+        {atribuicao && (
+          <span className={cn("absolute bottom-1.5 left-1.5 h-2 w-2 rounded-full ring-1 ring-white dark:ring-zinc-900", atribuicao.dotClass)} />
         )}
       </div>
 
-      {/* Move File Modal */}
+      {/* Info */}
+      <div className="p-2">
+        <p className="text-[11px] font-medium text-zinc-800 dark:text-zinc-200 truncate leading-tight" title={file.name}>
+          {file.name}
+        </p>
+        <div className="flex items-center justify-between mt-0.5">
+          <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+            {file.isFolder ? "Pasta" : [formatFileSize(file.size), dateStr].filter(Boolean).join(" · ")}
+          </span>
+          {!file.isFolder && enrichment.label && (
+            <span className={cn("text-[8px] px-1 py-0.5 rounded-full border shrink-0", enrichment.class)}>
+              {enrichment.label}
+            </span>
+          )}
+        </div>
+      </div>
+
       {!file.isFolder && (
         <MoveFileModal
           open={showMoveModal}
@@ -262,7 +243,6 @@ function FileGridCard({ file }: { file: DriveFile }) {
 
 export function DriveFileGrid({ files, isLoading }: DriveFileGridProps) {
   const sortedFiles = useMemo(() => {
-    // Folders first, then files
     return [...files].sort((a, b) => {
       if (a.isFolder && !b.isFolder) return -1;
       if (!a.isFolder && b.isFolder) return 1;
@@ -270,34 +250,26 @@ export function DriveFileGrid({ files, isLoading }: DriveFileGridProps) {
     });
   }, [files]);
 
-  // Loading state
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <SkeletonCard key={i} />
-        ))}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+        {Array.from({ length: 12 }).map((_, i) => <SkeletonCard key={i} />)}
       </div>
     );
   }
 
-  // Empty state
   if (sortedFiles.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-10 sm:py-16 text-center">
-        <FolderOpen className="w-10 h-10 sm:w-12 sm:h-12 text-zinc-300 dark:text-zinc-600 mb-3" />
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
-          Nenhum arquivo nesta pasta
-        </p>
-        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
-          Sincronize ou faca upload de arquivos para visualizar
-        </p>
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <FolderOpen className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mb-2" />
+        <p className="text-[12px] text-zinc-500 font-medium">Nenhum arquivo nesta pasta</p>
+        <p className="text-[11px] text-zinc-400 mt-0.5">Sincronize ou faca upload</p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
       {sortedFiles.map((file) => (
         <FileGridCard key={file.id} file={file} />
       ))}

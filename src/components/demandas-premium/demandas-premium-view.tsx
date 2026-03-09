@@ -1819,8 +1819,8 @@ export default function Demandas() {
               );
             })}
           </div>
-          {/* Counters — badges compactos com Lucide icons */}
-          <div className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
+          {/* Counters — badges compactos com Lucide icons (hidden on mobile) */}
+          <div className="hidden sm:flex items-center gap-1.5 whitespace-nowrap shrink-0">
             <span className="text-xs font-mono tabular-nums text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">{demandas.filter(d => !d.arquivado).length}</span>
             {(() => {
               const urgentes = demandas.filter(d => !d.arquivado && (d.prioridade === "URGENTE" || d.prioridade === "REU_PRESO")).length;

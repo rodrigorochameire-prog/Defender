@@ -60,7 +60,7 @@ export function DriveProvider({ children }: { children: ReactNode }) {
   const [rootSyncFolderId, setRootSyncFolderId] = useState<string | null>(null);
   const [breadcrumbPath, setBreadcrumbPath] = useState<BreadcrumbItem[]>([]);
   const [viewMode, setViewModeState] = useState<"grid" | "list" | "compact">(
-    () => (typeof window !== "undefined" ? (localStorage.getItem("drive-view-mode") as "grid" | "list" | "compact") || "grid" : "grid")
+    () => (typeof window !== "undefined" ? (localStorage.getItem("drive-view-mode") as "grid" | "list" | "compact") || "list" : "list")
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFiltersState] = useState<DriveFilters>({ type: null, dateRange: null, enrichmentStatus: null });

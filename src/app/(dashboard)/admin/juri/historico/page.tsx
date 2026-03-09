@@ -1,130 +1,232 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { 
-  History, 
-  ArrowLeft,
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  History,
   Search,
   CheckCircle2,
   XCircle,
-  Calendar,
-  User,
+  ArrowDownRight,
+  Clock,
   Gavel,
+  TrendingUp,
   Filter,
 } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { trpc } from "@/lib/trpc/client";
 
-// Mock data
-const HISTORICO = [
-  { id: 1, data: new Date(2025, 11, 15), reu: "Carlos Eduardo Santos", resultado: "ABSOLVIDO", crime: "Homicídio Simples" },
-  { id: 2, data: new Date(2025, 10, 28), reu: "Pedro Henrique Silva", resultado: "CONDENADO", crime: "Homicídio Qualificado" },
-  { id: 3, data: new Date(2025, 10, 10), reu: "Lucas Ferreira", resultado: "ABSOLVIDO", crime: "Tentativa de Homicídio" },
-  { id: 4, data: new Date(2025, 9, 22), reu: "André Costa", resultado: "DESCLASSIFICADO", crime: "Homicídio Qualificado" },
-  { id: 5, data: new Date(2025, 9, 5), reu: "Marcos Oliveira", resultado: "CONDENADO", crime: "Homicídio Simples" },
-];
+const RESULTADO_MAP: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+  absolvicao: { label: "Absolvido", color: "bg-emerald-500 text-white", icon: CheckCircle2 },
+  condenacao: { label: "Condenado", color: "bg-rose-500 text-white", icon: XCircle },
+  desclassificacao: { label: "Desclassificado", color: "bg-amber-500 text-white", icon: ArrowDownRight },
+  nulidade: { label: "Nulidade", color: "bg-violet-500 text-white", icon: Clock },
+  redesignado: { label: "Redesignado", color: "bg-zinc-500 text-white", icon: Clock },
+};
 
 export default function HistoricoJuriPage() {
+  const [busca, setBusca] = useState("");
+  const [filtroResultado, setFiltroResultado] = useState("all");
+
+  const { data: sessoes, isLoading } = trpc.juri.list.useQuery({
+    status: "realizada",
+    limit: 100,
+  });
+
+  // Stats calculadas dos dados reais
+  const stats = useMemo(() => {
+    if (!sessoes) return { absolvicoes: 0, condenacoes: 0, desclassificacoes: 0, total: 0 };
+    return {
+      absolvicoes: sessoes.filter((s) => s.resultado === "absolvicao").length,
+      condenacoes: sessoes.filter((s) => s.resultado === "condenacao").length,
+      desclassificacoes: sessoes.filter((s) => s.resultado === "desclassificacao").length,
+      total: sessoes.length,
+    };
+  }, [sessoes]);
+
+  // Filtros
+  const sessoeFiltradas = useMemo(() => {
+    if (!sessoes) return [];
+    let result = sessoes;
+
+    if (busca.trim()) {
+      const q = busca.toLowerCase();
+      result = result.filter(
+        (s) =>
+          s.assistidoNome?.toLowerCase().includes(q) ||
+          s.processo?.numeroAutos?.toLowerCase().includes(q)
+      );
+    }
+
+    if (filtroResultado !== "all") {
+      result = result.filter((s) => s.resultado === filtroResultado);
+    }
+
+    return result;
+  }, [sessoes, busca, filtroResultado]);
+
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-      {/* SUB-HEADER - Padrão Defender */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Link href="/admin/juri">
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <div className="w-8 h-8 rounded-lg bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center border border-zinc-300 dark:border-zinc-700">
-              <History className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-            </div>
-            <div>
-              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Histórico de Plenários</h1>
-              <p className="text-[10px] text-zinc-500">Sessões realizadas e resultados</p>
-            </div>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+            <History className="w-5 h-5 text-white dark:text-zinc-900" />
+          </div>
+          <div>
+            <h1 className="font-serif text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+              Histórico de Plenários
+            </h1>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Sessões realizadas e resultados
+            </p>
           </div>
         </div>
-      </div>
 
-      <div className="p-4 md:p-6 space-y-4">
-
-      {/* Filtros */}
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar por réu..." className="pl-10 h-9" />
-        </div>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <Filter className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Filtros</span>
-        </Button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <Card>
-          <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-emerald-600">12</p>
-            <p className="text-xs text-muted-foreground">Absolvições</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-rose-600">8</p>
-            <p className="text-xs text-muted-foreground">Condenações</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-amber-600">3</p>
-            <p className="text-xs text-muted-foreground">Desclassificações</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Lista */}
-      <div className="space-y-3">
-        {HISTORICO.map((sessao) => (
-          <Card key={sessao.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge 
-                      className={cn(
-                        "text-xs",
-                        sessao.resultado === "ABSOLVIDO" && "bg-emerald-500 text-white",
-                        sessao.resultado === "CONDENADO" && "bg-rose-500 text-white",
-                        sessao.resultado === "DESCLASSIFICADO" && "bg-amber-500 text-white",
-                      )}
-                    >
-                      {sessao.resultado === "ABSOLVIDO" && <CheckCircle2 className="w-3 h-3 mr-0.5" />}
-                      {sessao.resultado === "CONDENADO" && <XCircle className="w-3 h-3 mr-0.5" />}
-                      {sessao.resultado}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {format(sessao.data, "dd/MM/yyyy", { locale: ptBR })}
-                    </span>
-                  </div>
-                  <p className="font-semibold text-sm truncate">{sessao.reu}</p>
-                  <p className="text-xs text-muted-foreground">{sessao.crime}</p>
-                </div>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href={`/admin/juri/${sessao.id}`}>
-                    Ver detalhes
-                  </Link>
-                </Button>
+        {/* Stats */}
+        {isLoading ? (
+          <div className="flex gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-16 flex-1 rounded-lg" />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-800/80">
+              <Gavel className="w-4 h-4 text-zinc-400" />
+              <span className="text-xs text-zinc-500">Total</span>
+              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{stats.total}</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-800/30">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              <span className="text-xs text-emerald-600 dark:text-emerald-400">Absolvições</span>
+              <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">{stats.absolvicoes}</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-50 dark:bg-rose-950/20 border border-rose-200/50 dark:border-rose-800/30">
+              <XCircle className="w-4 h-4 text-rose-500" />
+              <span className="text-xs text-rose-600 dark:text-rose-400">Condenações</span>
+              <span className="text-sm font-semibold text-rose-700 dark:text-rose-300">{stats.condenacoes}</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/30">
+              <ArrowDownRight className="w-4 h-4 text-amber-500" />
+              <span className="text-xs text-amber-600 dark:text-amber-400">Desclassificações</span>
+              <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">{stats.desclassificacoes}</span>
+            </div>
+            {stats.total > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-800/80">
+                <TrendingUp className="w-4 h-4 text-zinc-400" />
+                <span className="text-xs text-zinc-500">Taxa absolvição</span>
+                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                  {Math.round((stats.absolvicoes / stats.total) * 100)}%
+                </span>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            )}
+          </div>
+        )}
+
+        {/* Filtros */}
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400" />
+            <Input
+              placeholder="Buscar por réu ou nº processo..."
+              className="pl-10 h-9"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
+          </div>
+          <Select value={filtroResultado} onValueChange={setFiltroResultado}>
+            <SelectTrigger className="w-44">
+              <Filter className="w-3.5 h-3.5 mr-1" />
+              <SelectValue placeholder="Resultado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="absolvicao">Absolvições</SelectItem>
+              <SelectItem value="condenacao">Condenações</SelectItem>
+              <SelectItem value="desclassificacao">Desclassificações</SelectItem>
+              <SelectItem value="nulidade">Nulidades</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Lista */}
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-20 rounded-xl" />
+            ))}
+          </div>
+        ) : sessoeFiltradas.length > 0 ? (
+          <div className="space-y-3">
+            {sessoeFiltradas.map((sessao) => {
+              const res = RESULTADO_MAP[sessao.resultado || ""] || {
+                label: sessao.resultado || "Sem resultado",
+                color: "bg-zinc-400 text-white",
+                icon: Clock,
+              };
+              const Icon = res.icon;
+
+              return (
+                <Link key={sessao.id} href={`/admin/juri/${sessao.id}`}>
+                  <div className="group p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 hover:shadow-md transition-all duration-200 cursor-pointer">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge className={cn("text-xs gap-1", res.color)}>
+                            <Icon className="w-3 h-3" />
+                            {res.label}
+                          </Badge>
+                          <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                            {sessao.dataSessao
+                              ? new Date(sessao.dataSessao).toLocaleDateString("pt-BR")
+                              : "—"}
+                          </span>
+                        </div>
+                        <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                          {sessao.assistidoNome || "Réu não identificado"}
+                        </p>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 font-mono">
+                          {sessao.processo?.numeroAutos || "Processo S/N"}
+                        </p>
+                      </div>
+                      <span className="text-xs text-zinc-400 group-hover:text-emerald-500 transition-colors">
+                        Ver detalhes →
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-20">
+            <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+              <History className="w-8 h-8 text-zinc-300 dark:text-zinc-600" />
+            </div>
+            <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+              {busca || filtroResultado !== "all"
+                ? "Nenhum resultado encontrado"
+                : "Nenhuma sessão realizada"}
+            </h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              {busca || filtroResultado !== "all"
+                ? "Tente ajustar os filtros de busca"
+                : "As sessões realizadas aparecerão aqui"}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

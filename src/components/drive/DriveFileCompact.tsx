@@ -6,8 +6,8 @@ import { useDriveContext } from "./DriveContext";
 import {
   getFileIcon,
   formatFileSize,
+  DRIVE_ATRIBUICOES,
 } from "./drive-constants";
-import { Checkbox } from "@/components/ui/checkbox";
 import { FolderOpen } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -41,95 +41,71 @@ interface DriveFileCompactProps {
 
 function SkeletonRow() {
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 animate-pulse">
-      <div className="w-4 h-4 rounded bg-zinc-200/50 dark:bg-zinc-700/50" />
-      <div className="flex-1 h-3 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-1/3" />
-      <div className="h-3 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-12" />
-      <div className="h-3 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-20" />
+    <div className="flex items-center gap-1.5 px-2 h-6 animate-pulse">
+      <div className="w-3.5 h-3.5 rounded bg-zinc-200/50 dark:bg-zinc-700/50" />
+      <div className="flex-1 h-2.5 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-1/3" />
+      <div className="h-2.5 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-10" />
     </div>
   );
 }
 
-// ─── Compact File Row ───────────────────────────────────────────────
+// ─── Ultra-Dense Row (24px) ─────────────────────────────────────────
 
 function CompactRow({ file }: { file: DriveFile }) {
   const ctx = useDriveContext();
-  const isSelected = ctx.selectedFileIds.has(file.id);
   const Icon = file.isFolder ? FolderOpen : getFileIcon(file.mimeType);
+  const atribuicao = DRIVE_ATRIBUICOES.find((a) => a.folderId === file.driveFolderId);
 
-  const dateStr = useMemo(() => {
+  const meta = useMemo(() => {
+    if (file.isFolder) return "";
+    const parts: string[] = [];
+    if (file.size) parts.push(formatFileSize(file.size));
     const d = file.modifiedAt || file.createdAt;
-    if (!d) return "-";
-    try {
-      return formatDistanceToNow(new Date(d), {
-        addSuffix: true,
-        locale: ptBR,
-      });
-    } catch {
-      return "-";
+    if (d) {
+      try { parts.push(formatDistanceToNow(new Date(d), { addSuffix: false, locale: ptBR })); }
+      catch { /* skip */ }
     }
-  }, [file.modifiedAt, file.createdAt]);
+    return parts.join(" · ");
+  }, [file]);
 
   const handleClick = () => {
-    if (file.isFolder) {
-      ctx.navigateToFolder(file.driveFileId, file.name);
-    } else {
-      ctx.openDetailPanel(file.id);
-    }
-  };
-
-  const handleCheckboxClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    if (file.isFolder) ctx.navigateToFolder(file.driveFileId, file.name);
+    else ctx.openDetailPanel(file.id);
   };
 
   return (
     <div
       onClick={handleClick}
       className={cn(
-        "group flex items-center gap-2 px-3 py-1.5 cursor-pointer transition-colors duration-100",
-        "border-b border-zinc-50 dark:border-zinc-800/30 last:border-0",
+        "flex items-center gap-1.5 px-2 h-6 cursor-pointer transition-colors duration-100",
         "hover:bg-zinc-50 dark:hover:bg-zinc-800/60",
-        file.isFolder && "bg-zinc-50/30 dark:bg-zinc-800/20",
-        isSelected && "bg-emerald-50 dark:bg-emerald-500/10"
+        file.isFolder && "font-medium"
       )}
     >
-      {/* Checkbox - only visible on hover or when selected */}
-      <div
-        className={cn(
-          "transition-opacity duration-100",
-          isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-        )}
-        onClick={handleCheckboxClick}
-      >
-        <Checkbox
-          checked={isSelected}
-          onCheckedChange={() => ctx.toggleFileSelection(file.id)}
-          className="h-3.5 w-3.5 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
-        />
-      </div>
+      {/* Atribuicao dot or spacer */}
+      {atribuicao ? (
+        <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", atribuicao.dotClass)} />
+      ) : (
+        <span className="w-1.5 shrink-0" />
+      )}
 
-      {/* Icon (small) */}
-      <Icon
-        className={cn(
-          "w-3.5 h-3.5 shrink-0",
-          file.isFolder ? "text-emerald-600 dark:text-emerald-500" : "text-zinc-400 dark:text-zinc-500"
-        )}
-      />
+      {/* Icon */}
+      <Icon className={cn(
+        "w-3 h-3 shrink-0",
+        file.isFolder ? "text-emerald-600 dark:text-emerald-500" : "text-zinc-400 dark:text-zinc-500"
+      )} />
 
       {/* Name */}
-      <span className="text-xs text-zinc-800 dark:text-zinc-200 truncate flex-1" title={file.name}>
+      <span className="text-[11px] text-zinc-800 dark:text-zinc-200 truncate flex-1" title={file.name}>
         {file.name}
       </span>
 
-      {/* Size */}
-      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 tabular-nums shrink-0 w-14 text-right">
-        {file.isFolder ? "-" : formatFileSize(file.size)}
-      </span>
-
-      {/* Date */}
-      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 shrink-0 w-24 text-right hidden sm:block">
-        {dateStr}
-      </span>
+      {/* Inline metadata */}
+      {meta && (
+        <span className="text-[9px] text-zinc-400 dark:text-zinc-600 shrink-0 tabular-nums">
+          {meta}
+        </span>
+      )}
     </div>
   );
 }
@@ -147,24 +123,23 @@ export function DriveFileCompact({ files, isLoading }: DriveFileCompactProps) {
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden bg-white dark:bg-zinc-900">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <SkeletonRow key={i} />
-        ))}
+      <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800/60 overflow-hidden bg-white dark:bg-zinc-900">
+        {Array.from({ length: 16 }).map((_, i) => <SkeletonRow key={i} />)}
       </div>
     );
   }
 
   if (sortedFiles.length === 0) {
     return (
-      <div className="flex items-center justify-center py-12 text-zinc-400 dark:text-zinc-500 text-sm">
-        Nenhum arquivo encontrado
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <FolderOpen className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mb-2" />
+        <p className="text-[12px] text-zinc-500 font-medium">Nenhum arquivo</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden bg-white dark:bg-zinc-900">
+    <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800/60 overflow-hidden bg-white dark:bg-zinc-900 divide-y divide-zinc-100/50 dark:divide-zinc-800/30">
       {sortedFiles.map((file) => (
         <CompactRow key={file.id} file={file} />
       ))}

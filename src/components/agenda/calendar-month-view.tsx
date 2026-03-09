@@ -219,35 +219,41 @@ function EventoCompacto({
   const tipoAbrev = extrairTipoDoTitulo(evento.titulo);
   const tipoCompleto = tipoNomeCompleto[tipoAbrev] || tipoAbrev;
 
-  // Extrair nome do assistido abreviado (primeiro + último nome)
-  const assistidoAbrev = evento.assistido
-    ? evento.assistido.split(" ").length > 1
-      ? `${evento.assistido.split(" ")[0]} ${evento.assistido.split(" ").pop()?.charAt(0)}.`
-      : evento.assistido
-    : null;
+  // Nome do assistido — completo, truncado via CSS
+  const assistidoNome = evento.assistido || null;
+
+  // Controlled popover — on mobile, bypass and go directly to event
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   return (
-    <Popover>
+    <Popover
+      open={popoverOpen}
+      onOpenChange={(newOpen) => {
+        if (newOpen && typeof window !== "undefined" && window.innerWidth < 640) {
+          onEventClick(evento);
+          return;
+        }
+        setPopoverOpen(newOpen);
+      }}
+    >
       <PopoverTrigger asChild>
         <button
           onClick={(e) => e.stopPropagation()}
-          className={`group w-full text-left rounded-lg transition-all duration-200 overflow-hidden hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${
-            eventoCancelado ? "opacity-50" : ""
+          className={`group w-full text-left rounded-xl transition-all duration-200 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${
+            eventoCancelado ? "opacity-45" : ""
           }`}
         >
-          {/* Top-bar colorida */}
+          {/* Top-bar — fina com fade lateral */}
           <div
-            className="h-[3px] w-full rounded-t-lg"
-            style={{ backgroundColor: displayColor }}
+            className="h-[2px] w-full rounded-t-xl"
+            style={{ background: `linear-gradient(90deg, ${displayColor}, ${displayColor}60)` }}
           />
 
           {/* Conteúdo do card */}
-          <div
-            className="px-1 sm:px-1.5 py-0.5 sm:py-1 bg-white dark:bg-zinc-800/80 border border-t-0 border-zinc-200/60 dark:border-zinc-700/40 rounded-b-lg group-hover:border-zinc-300 dark:group-hover:border-zinc-600 transition-colors"
-          >
-            {/* Linha 1: horário + tipo abreviado + dots indicadores */}
-            <div className="flex items-center gap-0.5 sm:gap-1">
-              {/* Status cancelado icon (mobile + desktop) */}
+          <div className="px-1.5 sm:px-2 py-1 sm:py-1.5 bg-white dark:bg-zinc-800/90 border border-t-0 border-zinc-100 dark:border-zinc-700/30 rounded-b-xl group-hover:bg-zinc-50/80 dark:group-hover:bg-zinc-800 transition-colors">
+            {/* Linha 1: horário + tipo + dots */}
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              {/* Status icons */}
               {(evento.status === "cancelado" || evento.status === "cancelada") && (
                 <XCircle className="w-2.5 h-2.5 text-zinc-400 shrink-0" />
               )}
@@ -262,34 +268,33 @@ function EventoCompacto({
                 {evento.horarioInicio}
               </span>
 
-              {/* Tipo abreviado inline — desktop only */}
+              {/* Tipo — separado por dot sutil */}
               {tipoAbrev && !eventoCancelado && (
-                <span className="hidden sm:inline text-[9px] font-semibold text-zinc-400 dark:text-zinc-500 shrink-0">
+                <span className="text-[9px] font-medium text-zinc-400 dark:text-zinc-500 shrink-0 truncate">
                   {tipoAbrev}
                 </span>
               )}
 
-              {/* Spacer */}
               <span className="flex-1" />
 
-              {/* Dot indicators — compactos, desktop only */}
+              {/* Dot indicators */}
               <span className="hidden sm:flex items-center gap-0.5">
                 {temAdvogado && !eventoCancelado && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" title="Advogado constituído" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400/80 shrink-0" title="Advogado constituído" />
                 )}
                 {!eventoCancelado && evento.prioridade === "urgente" && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" title="Urgente" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400/80 shrink-0" title="Urgente" />
                 )}
                 {hasRegistro && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="Registro feito" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 shrink-0" title="Registro feito" />
                 )}
               </span>
             </div>
 
-            {/* Linha 2: assistido (info mais relevante) — hidden on mobile */}
-            {assistidoAbrev && !eventoCancelado ? (
-              <p className="hidden sm:block text-[10px] font-medium text-zinc-700 dark:text-zinc-200 truncate leading-tight mt-0.5">
-                {assistidoAbrev}
+            {/* Linha 2: nome completo do assistido — truncate via CSS */}
+            {assistidoNome && !eventoCancelado ? (
+              <p className="hidden sm:block text-[10px] font-medium text-zinc-600 dark:text-zinc-300 truncate leading-tight mt-0.5">
+                {assistidoNome}
               </p>
             ) : !eventoCancelado ? (
               <p className="hidden sm:block text-[10px] text-zinc-400 dark:text-zinc-500 truncate leading-tight mt-0.5">
@@ -304,6 +309,7 @@ function EventoCompacto({
         className="w-[340px] p-0 border border-zinc-200/80 dark:border-zinc-800/80 shadow-2xl rounded-xl overflow-hidden bg-white dark:bg-zinc-900"
         side="right"
         align="start"
+        collisionPadding={16}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Seção 1: Header — tipo + ações ── */}

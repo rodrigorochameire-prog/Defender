@@ -7,6 +7,7 @@ import {
   getFileIcon,
   formatFileSize,
   getEnrichmentBadge,
+  DRIVE_ATRIBUICOES,
 } from "./drive-constants";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -48,20 +49,39 @@ interface DriveFileListProps {
   isLoading?: boolean;
 }
 
-type SortKey = "name" | "size" | "date";
+type SortKey = "name" | "type" | "size" | "date" | "status";
 type SortDir = "asc" | "desc";
+
+// ─── Helpers ────────────────────────────────────────────────────────
+
+function getFileTypeLabel(mimeType: string | null, isFolder: boolean): string {
+  if (isFolder) return "Pasta";
+  if (!mimeType) return "Arquivo";
+  if (mimeType.includes("pdf")) return "PDF";
+  if (mimeType.includes("image")) return "Imagem";
+  if (mimeType.includes("audio")) return "Audio";
+  if (mimeType.includes("video")) return "Video";
+  if (mimeType.includes("spreadsheet") || mimeType.includes("excel")) return "Planilha";
+  if (mimeType.includes("document") || mimeType.includes("word")) return "Doc";
+  if (mimeType.includes("text/markdown") || mimeType.includes("text/plain")) return "Texto";
+  return "Arquivo";
+}
+
+function getAtribuicaoForFolder(folderId: string) {
+  return DRIVE_ATRIBUICOES.find((a) => a.folderId === folderId) ?? null;
+}
 
 // ─── Skeleton Row ───────────────────────────────────────────────────
 
 function SkeletonRow() {
   return (
-    <div className="flex items-center gap-3 px-4 py-3 animate-pulse">
-      <div className="w-4 h-4 rounded bg-zinc-200/50 dark:bg-zinc-700/50" />
-      <div className="w-8 h-8 rounded bg-zinc-200/50 dark:bg-zinc-700/50" />
-      <div className="flex-1 h-4 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-1/3" />
-      <div className="h-3 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-16" />
-      <div className="h-3 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-24" />
-      <div className="h-4 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-16" />
+    <div className="flex items-center gap-2.5 px-3 h-11 animate-pulse">
+      <div className="w-3.5 h-3.5 rounded bg-zinc-200/50 dark:bg-zinc-700/50" />
+      <div className="w-7 h-7 rounded-md bg-zinc-200/50 dark:bg-zinc-700/50" />
+      <div className="flex-1 space-y-1">
+        <div className="h-3 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-1/3" />
+        <div className="h-2.5 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-1/4" />
+      </div>
     </div>
   );
 }
@@ -89,24 +109,28 @@ function SortHeader({
     <button
       onClick={() => onSort(sortKey)}
       className={cn(
-        "flex items-center gap-1 text-xs font-medium uppercase tracking-wider transition-colors duration-150",
-        isActive ? "text-zinc-900 dark:text-zinc-200" : "text-zinc-500 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300",
+        "flex items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors duration-150",
+        isActive ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-400",
         className
       )}
     >
       {label}
       {isActive && (
-        currentDir === "asc" ? (
-          <ChevronUp className="h-3 w-3" />
-        ) : (
-          <ChevronDown className="h-3 w-3" />
-        )
+        currentDir === "asc" ? <ChevronUp className="h-2.5 w-2.5" /> : <ChevronDown className="h-2.5 w-2.5" />
       )}
     </button>
   );
 }
 
-// ─── File Row ───────────────────────────────────────────────────────
+// ─── Column widths (shared between header and rows) ─────────────────
+const COL = {
+  type: "w-[72px] shrink-0",
+  size: "w-[80px] shrink-0",
+  date: "w-[88px] shrink-0",
+  status: "w-[88px] shrink-0",
+} as const;
+
+// ─── File Row with Columns ──────────────────────────────────────────
 
 function FileRow({ file }: { file: DriveFile }) {
   const ctx = useDriveContext();
@@ -115,178 +139,138 @@ function FileRow({ file }: { file: DriveFile }) {
   const isSelected = ctx.selectedFileIds.has(file.id);
   const Icon = file.isFolder ? FolderOpen : getFileIcon(file.mimeType);
   const enrichment = getEnrichmentBadge(file.enrichmentStatus);
+  const atribuicao = getAtribuicaoForFolder(file.driveFolderId);
 
   const deleteFile = trpc.drive.deleteFile.useMutation({
-    onSuccess: () => {
-      toast.success("Arquivo excluido com sucesso");
-      utils.drive.files.invalidate();
-    },
-    onError: (error) => {
-      toast.error(error.message || "Erro ao excluir arquivo");
-    },
+    onSuccess: () => { toast.success("Arquivo excluido"); utils.drive.files.invalidate(); },
+    onError: (error) => { toast.error(error.message || "Erro ao excluir"); },
   });
 
   const handleClick = () => {
-    if (file.isFolder) {
-      ctx.navigateToFolder(file.driveFileId, file.name);
-    } else {
-      ctx.openDetailPanel(file.id);
-    }
-  };
-
-  const handleCheckboxClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    if (file.isFolder) ctx.navigateToFolder(file.driveFileId, file.name);
+    else ctx.openDetailPanel(file.id);
   };
 
   const handleDelete = () => {
-    const confirmed = window.confirm(`Excluir "${file.name}"? Esta acao nao pode ser desfeita.`);
-    if (confirmed) {
+    if (window.confirm(`Excluir "${file.name}"?`)) {
       deleteFile.mutate({ fileId: file.driveFileId });
     }
   };
 
   const dateStr = useMemo(() => {
     const d = file.modifiedAt || file.createdAt;
-    if (!d) return "-";
+    if (!d) return "";
     try {
-      return formatDistanceToNow(new Date(d), {
-        addSuffix: true,
-        locale: ptBR,
-      });
+      return formatDistanceToNow(new Date(d), { addSuffix: false, locale: ptBR });
     } catch {
-      return "-";
+      return "";
     }
   }, [file.modifiedAt, file.createdAt]);
+
+  const typeLabel = getFileTypeLabel(file.mimeType, file.isFolder);
 
   return (
     <div
       onClick={handleClick}
       className={cn(
-        "group flex items-center gap-3 px-4 py-2 cursor-pointer transition-colors duration-150",
-        "border-b border-zinc-100 dark:border-zinc-800/50 last:border-0",
-        "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
-        file.isFolder && "bg-zinc-50/50 dark:bg-zinc-800/30",
-        isSelected && "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/10"
+        "group flex items-center gap-2.5 px-3 h-10 cursor-pointer transition-colors duration-150",
+        "border-b border-zinc-100/80 dark:border-zinc-800/40 last:border-0",
+        "hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
+        file.isFolder && "bg-zinc-50/30 dark:bg-zinc-800/20",
+        isSelected && "bg-emerald-50/80 dark:bg-emerald-500/8 border-emerald-100 dark:border-emerald-500/10",
       )}
     >
       {/* Checkbox */}
-      <div onClick={handleCheckboxClick}>
+      <div onClick={(e) => e.stopPropagation()} className="shrink-0">
         <Checkbox
           checked={isSelected}
           onCheckedChange={() => ctx.toggleFileSelection(file.id)}
-          className="h-4 w-4 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+          className="h-3.5 w-3.5 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
         />
       </div>
 
-      {/* Icon in container */}
-      <div className={cn(
-        "shrink-0 w-8 h-8 rounded-lg flex items-center justify-center",
-        file.isFolder
-          ? "bg-emerald-50 dark:bg-emerald-500/10"
-          : "bg-zinc-100 dark:bg-zinc-800"
-      )}>
-        <Icon
-          className={cn(
-            "w-4 h-4",
-            file.isFolder ? "text-emerald-600 dark:text-emerald-500" : "text-zinc-400 dark:text-zinc-400"
-          )}
-        />
+      {/* Icon with atribuicao dot */}
+      <div className="relative shrink-0">
+        <div className={cn(
+          "w-7 h-7 rounded-md flex items-center justify-center",
+          file.isFolder ? "bg-emerald-50 dark:bg-emerald-500/10" : "bg-zinc-100 dark:bg-zinc-800",
+        )}>
+          <Icon className={cn(
+            "w-3.5 h-3.5",
+            file.isFolder ? "text-emerald-600 dark:text-emerald-500" : "text-zinc-400",
+          )} />
+        </div>
+        {atribuicao && (
+          <span className={cn("absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full ring-1 ring-white dark:ring-zinc-900", atribuicao.dotClass)} />
+        )}
       </div>
 
       {/* Name */}
       <div className="flex-1 min-w-0">
-        <p className="text-[13px] text-zinc-900 dark:text-zinc-200 truncate" title={file.name}>
+        <p className="text-[12px] text-zinc-800 dark:text-zinc-200 truncate leading-tight" title={file.name}>
           {file.name}
         </p>
       </div>
 
+      {/* Type */}
+      <span className={cn(COL.type, "text-[11px] text-zinc-400 dark:text-zinc-500 truncate")}>
+        {typeLabel}
+      </span>
+
       {/* Size */}
-      <div className="w-20 text-right shrink-0">
-        <span className="text-xs text-zinc-500">
-          {file.isFolder ? "-" : formatFileSize(file.size)}
-        </span>
-      </div>
+      <span className={cn(COL.size, "text-[11px] text-zinc-400 dark:text-zinc-500 truncate tabular-nums")}>
+        {!file.isFolder && file.size ? formatFileSize(file.size) : "—"}
+      </span>
 
-      {/* Modified date */}
-      <div className="w-32 text-right shrink-0 hidden sm:block">
-        <span className="text-xs text-zinc-500">{dateStr}</span>
-      </div>
+      {/* Date */}
+      <span className={cn(COL.date, "text-[11px] text-zinc-400 dark:text-zinc-500 truncate")}>
+        {dateStr || "—"}
+      </span>
 
-      {/* Enrichment */}
-      <div className="w-24 text-right shrink-0">
+      {/* Status / Enrichment */}
+      <div className={cn(COL.status)}>
         {!file.isFolder && enrichment.label ? (
-          <span
-            className={cn(
-              "text-[10px] px-1.5 py-0.5 rounded-full border inline-block",
-              enrichment.class
-            )}
-          >
+          <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full border", enrichment.class)}>
             {enrichment.label}
           </span>
         ) : (
-          <span className="text-xs text-zinc-400 dark:text-zinc-600">-</span>
+          <span className="text-[11px] text-zinc-300 dark:text-zinc-700">—</span>
         )}
       </div>
 
       {/* Actions */}
-      <div className="w-8 shrink-0 flex justify-center" onClick={(e) => e.stopPropagation()}>
+      <div className="w-7 shrink-0 flex justify-center" onClick={(e) => e.stopPropagation()}>
         {!file.isFolder ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="h-7 w-7 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all">
-                <MoreVertical className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+              <button className="h-6 w-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all">
+                <MoreVertical className="h-3.5 w-3.5 text-zinc-400" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuItem
-                className="text-xs gap-2 cursor-pointer"
-                onClick={() => {
-                  if (file.webViewLink) window.open(file.webViewLink, "_blank");
-                }}
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Abrir
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem className="text-[11px] gap-2 cursor-pointer" onClick={() => { if (file.webViewLink) window.open(file.webViewLink, "_blank"); }}>
+                <ExternalLink className="h-3 w-3" /> Abrir
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-xs gap-2 cursor-pointer"
-                onClick={() => ctx.openDetailPanel(file.id)}
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                Renomear
+              <DropdownMenuItem className="text-[11px] gap-2 cursor-pointer" onClick={() => ctx.openDetailPanel(file.id)}>
+                <Pencil className="h-3 w-3" /> Renomear
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-xs gap-2 cursor-pointer"
-                onClick={() => setShowMoveModal(true)}
-              >
-                <FolderInput className="h-3.5 w-3.5" />
-                Mover para...
+              <DropdownMenuItem className="text-[11px] gap-2 cursor-pointer" onClick={() => setShowMoveModal(true)}>
+                <FolderInput className="h-3 w-3" /> Mover
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-xs gap-2 cursor-pointer"
-                onClick={() => {
-                  const link = file.webContentLink || file.webViewLink;
-                  if (link) window.open(link, "_blank");
-                }}
-              >
-                <Download className="h-3.5 w-3.5" />
-                Baixar
+              <DropdownMenuItem className="text-[11px] gap-2 cursor-pointer" onClick={() => { const link = file.webContentLink || file.webViewLink; if (link) window.open(link, "_blank"); }}>
+                <Download className="h-3 w-3" /> Baixar
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-xs gap-2 cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-500/10"
-                onClick={handleDelete}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Excluir
+              <DropdownMenuItem className="text-[11px] gap-2 cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-500/10" onClick={handleDelete}>
+                <Trash2 className="h-3 w-3" /> Excluir
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <div className="w-7" />
+          <div className="w-6" />
         )}
       </div>
 
-      {/* Move File Modal */}
       {!file.isFolder && (
         <MoveFileModal
           open={showMoveModal}
@@ -310,12 +294,8 @@ export function DriveFileList({ files, isLoading }: DriveFileListProps) {
 
   const handleSort = useCallback(
     (key: SortKey) => {
-      if (sortKey === key) {
-        setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
-      } else {
-        setSortKey(key);
-        setSortDir("asc");
-      }
+      if (sortKey === key) setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
+      else { setSortKey(key); setSortDir("asc"); }
     },
     [sortKey]
   );
@@ -328,64 +308,47 @@ export function DriveFileList({ files, isLoading }: DriveFileListProps) {
 
       let cmp = 0;
       switch (sortKey) {
-        case "name":
-          cmp = a.name.localeCompare(b.name);
-          break;
-        case "size":
-          cmp = (a.size || 0) - (b.size || 0);
-          break;
+        case "name": cmp = a.name.localeCompare(b.name); break;
+        case "type": cmp = (a.mimeType || "").localeCompare(b.mimeType || ""); break;
+        case "size": cmp = (a.size || 0) - (b.size || 0); break;
         case "date": {
           const da = new Date(a.modifiedAt || a.createdAt).getTime();
           const db = new Date(b.modifiedAt || b.createdAt).getTime();
           cmp = da - db;
           break;
         }
+        case "status": cmp = (a.enrichmentStatus || "").localeCompare(b.enrichmentStatus || ""); break;
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
     return sorted;
   }, [files, sortKey, sortDir]);
 
-  // Check all / none
-  const allSelected =
-    files.length > 0 &&
-    files.every((f) => ctx.selectedFileIds.has(f.id));
+  const allSelected = files.length > 0 && files.every((f) => ctx.selectedFileIds.has(f.id));
 
   const handleSelectAll = () => {
-    if (allSelected) {
-      ctx.clearSelection();
-    } else {
-      ctx.selectAllFiles(files.map((f) => f.id));
-    }
+    if (allSelected) ctx.clearSelection();
+    else ctx.selectAllFiles(files.map((f) => f.id));
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <div>
-        <div className="flex items-center gap-3 px-4 py-2 border-b border-zinc-200 dark:border-zinc-800">
-          <div className="w-4" />
-          <div className="w-5" />
+        <div className="flex items-center gap-2.5 px-3 py-1.5 border-b border-zinc-200/60 dark:border-zinc-800/40">
+          <div className="w-3.5" /><div className="w-7" />
           <div className="flex-1 h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-16" />
         </div>
-        {Array.from({ length: 6 }).map((_, i) => (
-          <SkeletonRow key={i} />
-        ))}
+        {Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} />)}
       </div>
     );
   }
 
-  // Empty state
   if (sortedFiles.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <FolderOpen className="w-12 h-12 text-zinc-300 dark:text-zinc-600 mb-3" />
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
-          Nenhum arquivo nesta pasta
-        </p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-          Sincronize ou faca upload de arquivos para visualizar
-        </p>
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <FolderOpen className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mb-2" />
+        <p className="text-[12px] text-zinc-500 font-medium">Nenhum arquivo nesta pasta</p>
+        <p className="text-[11px] text-zinc-400 mt-0.5">Sincronize ou faca upload</p>
       </div>
     );
   }
@@ -393,58 +356,29 @@ export function DriveFileList({ files, isLoading }: DriveFileListProps) {
   return (
     <div>
       {/* Table Header */}
-      <div className="flex items-center gap-3 px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/50 sticky top-0 z-10">
-        <div onClick={(e) => e.stopPropagation()}>
+      <div className="flex items-center gap-2.5 px-3 py-1.5 border-b border-zinc-200/60 dark:border-zinc-800/40 bg-zinc-50/50 dark:bg-zinc-900/30 sticky top-0 z-10">
+        <div onClick={(e) => e.stopPropagation()} className="shrink-0">
           <Checkbox
             checked={allSelected}
             onCheckedChange={handleSelectAll}
-            className="h-4 w-4 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+            className="h-3.5 w-3.5 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
           />
         </div>
-        <div className="w-8" /> {/* icon spacer */}
-        <div className="flex-1">
-          <SortHeader
-            label="Nome"
-            sortKey="name"
-            currentSort={sortKey}
-            currentDir={sortDir}
-            onSort={handleSort}
-          />
+        <div className="w-7" />
+        <div className="flex-1 min-w-0">
+          <SortHeader label="Nome" sortKey="name" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
         </div>
-        <div className="w-20 text-right">
-          <SortHeader
-            label="Tamanho"
-            sortKey="size"
-            currentSort={sortKey}
-            currentDir={sortDir}
-            onSort={handleSort}
-            className="justify-end"
-          />
-        </div>
-        <div className="w-32 text-right hidden sm:block">
-          <SortHeader
-            label="Modificado"
-            sortKey="date"
-            currentSort={sortKey}
-            currentDir={sortDir}
-            onSort={handleSort}
-            className="justify-end"
-          />
-        </div>
-        <div className="w-24 text-right">
-          <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-            Enrichment
-          </span>
-        </div>
-        <div className="w-8" /> {/* actions spacer */}
+        <SortHeader label="Tipo" sortKey="type" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className={COL.type} />
+        <SortHeader label="Tamanho" sortKey="size" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className={COL.size} />
+        <SortHeader label="Data" sortKey="date" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className={COL.date} />
+        <SortHeader label="Status" sortKey="status" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className={COL.status} />
+        <div className="w-7" />
       </div>
 
       {/* Rows */}
-      <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
-        {sortedFiles.map((file) => (
-          <FileRow key={file.id} file={file} />
-        ))}
-      </div>
+      {sortedFiles.map((file) => (
+        <FileRow key={file.id} file={file} />
+      ))}
     </div>
   );
 }

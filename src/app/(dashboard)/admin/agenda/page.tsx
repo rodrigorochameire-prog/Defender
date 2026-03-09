@@ -72,6 +72,7 @@ import {
   MapPin,
   Eye,
   EyeOff,
+  CheckCircle2,
 } from "lucide-react";
 import {
   isToday,
@@ -516,7 +517,7 @@ export default function AgendaPage() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [sortBy, setSortBy] = useState("data");
-  const [areaFilter, setAreaFilter] = useState("all");
+  const [areaFilters, setAreaFilters] = useState<Set<string>>(new Set(["all"]));
 
   // Filtros
   const [selectedTipo, setSelectedTipo] = useState<string | null>(null);
@@ -530,6 +531,28 @@ export default function AgendaPage() {
   const [showCanceladosRedesignados, setShowCanceladosRedesignados] = useState(true);
   // Filtro para mostrar eventos passados no modo lista (padrão: não mostra)
   const [showPastEventsInList, setShowPastEventsInList] = useState(false);
+
+  // Handler para multi-select de atribuição
+  const handleAreaFilterToggle = (key: string) => {
+    setAreaFilters(prev => {
+      const next = new Set(prev);
+      if (key === "all") {
+        return new Set(["all"]);
+      }
+      next.delete("all");
+      if (next.has(key)) {
+        next.delete(key);
+        if (next.size === 0) return new Set(["all"]);
+      } else {
+        next.add(key);
+      }
+      const allSpecificKeys = Object.keys(ATRIBUICAO_CONFIG).filter(k => k !== "all");
+      if (allSpecificKeys.every(k => next.has(k))) {
+        return new Set(["all"]);
+      }
+      return next;
+    });
+  };
 
   // Modais
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -932,7 +955,7 @@ export default function AgendaPage() {
         !selectedDefensor || evento.responsavel === selectedDefensor;
       
       // Filtro por área (tabs de atribuição)
-      const matchAreaFilter = areaFilter === "all" || evento.atribuicaoKey === areaFilter;
+      const matchAreaFilter = areaFilters.has("all") || (evento.atribuicaoKey != null && areaFilters.has(evento.atribuicaoKey));
 
       // Filtro para esconder eventos cancelados/redesignados
       const isCanceladoOuRedesignado =
@@ -982,7 +1005,7 @@ export default function AgendaPage() {
   }, [
     eventos,
     searchTerm,
-    areaFilter,
+    areaFilters,
     selectedTipo,
     selectedStatus,
     selectedAtribuicao,
@@ -1045,7 +1068,9 @@ export default function AgendaPage() {
   }, [eventos]);
 
   // Configuração visual da atribuição selecionada
-  const currentConfig = ATRIBUICAO_CONFIG[areaFilter] || ATRIBUICAO_CONFIG.all;
+  const currentConfig = areaFilters.size === 1 && !areaFilters.has("all")
+    ? ATRIBUICAO_CONFIG[Array.from(areaFilters)[0]] || ATRIBUICAO_CONFIG.all
+    : ATRIBUICAO_CONFIG.all;
 
   // Número de filtros ativos
   const activeFiltersCount = [
@@ -1185,17 +1210,64 @@ export default function AgendaPage() {
       {/* Header unificado — stats + atribuição + busca + filtros + view + ações */}
       <div className="px-3 md:px-4 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-          {/* Atribuição pills (icon-only, text when selected) */}
-          {Object.entries(ATRIBUICAO_CONFIG).map(([key, config]) => (
-            <FilterPill
-              key={key}
-              label={config.shortLabel}
-              isActive={areaFilter === key}
-              count={countByArea[key] || 0}
-              config={config}
-              onClick={() => setAreaFilter(key)}
-            />
-          ))}
+          {/* Mobile: Atribuição dropdown button */}
+          <div className="flex sm:hidden shrink-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(
+                    "flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer",
+                    areaFilters.has("all")
+                      ? "border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 bg-white dark:bg-zinc-900"
+                      : "border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20"
+                  )}
+                >
+                  <Filter className="w-3.5 h-3.5" />
+                  {areaFilters.has("all") ? "Todos" : `${areaFilters.size}`}
+                  <ChevronDown className="w-3 h-3 opacity-50" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-52 p-1.5">
+                {Object.entries(ATRIBUICAO_CONFIG).map(([key, config]) => {
+                  const isActive = areaFilters.has(key);
+                  const color = config.hex || "#71717a";
+                  return (
+                    <DropdownMenuItem
+                      key={key}
+                      onClick={(e) => { e.preventDefault(); handleAreaFilterToggle(key); }}
+                      className="flex items-center gap-2 px-2.5 py-2 cursor-pointer"
+                    >
+                      <span
+                        className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 [&>svg]:w-3 [&>svg]:h-3"
+                        style={{ backgroundColor: isActive ? `${color}18` : "transparent", color }}
+                      >
+                        {config.icon}
+                      </span>
+                      <span className="flex-1 text-xs font-medium">{config.shortLabel}</span>
+                      <span className="text-[10px] font-mono tabular-nums text-zinc-400">{countByArea[key] || 0}</span>
+                      {isActive && (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                      )}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Desktop: Atribuição pills (icon-only, text when selected) */}
+          <div className="hidden sm:flex items-center gap-1.5">
+            {Object.entries(ATRIBUICAO_CONFIG).map(([key, config]) => (
+              <FilterPill
+                key={key}
+                label={config.shortLabel}
+                isActive={areaFilters.has(key)}
+                count={countByArea[key] || 0}
+                config={config}
+                onClick={() => handleAreaFilterToggle(key)}
+              />
+            ))}
+          </div>
 
           {/* Flexible space */}
           <div className="flex-1 min-w-2" />

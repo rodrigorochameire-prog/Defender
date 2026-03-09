@@ -4,7 +4,6 @@ import { useMemo, useEffect } from "react";
 import { useDriveContext } from "./DriveContext";
 import { getAtribuicaoFolderId, getAtribuicaoByKey } from "./drive-constants";
 import { trpc } from "@/lib/trpc/client";
-import { DriveBreadcrumbs } from "./DriveBreadcrumbs";
 import { DriveFilters } from "./DriveFilters";
 import { DriveFileGrid } from "./DriveFileGrid";
 import { DriveFileList } from "./DriveFileList";
@@ -95,7 +94,6 @@ export function DriveContentArea() {
   }, [data?.files, ctx.filters]);
 
   // Set initial breadcrumb when atribuicao is selected but breadcrumb is empty
-  // (e.g. when user clicks an atribuicao card on the overview dashboard)
   useEffect(() => {
     if (
       ctx.selectedAtribuicao &&
@@ -105,7 +103,6 @@ export function DriveContentArea() {
     ) {
       const atrib = getAtribuicaoByKey(ctx.selectedAtribuicao);
       if (atrib) {
-        // Push the atribuicao root as the first breadcrumb entry
         ctx.navigateToFolder(atrib.folderId, atrib.label);
       }
     }
@@ -119,22 +116,19 @@ export function DriveContentArea() {
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-      {/* ─── Breadcrumbs ─── */}
-      <DriveBreadcrumbs />
-
       {/* ─── Filters Row ─── */}
-      <div className="px-3 sm:px-4 pt-2 sm:pt-3 pb-1 shrink-0">
+      <div className="px-3 pt-2 pb-1 shrink-0">
         <DriveFilters />
       </div>
 
       {/* ─── File List / Grid / Compact ─── */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4">
-        {ctx.viewMode === "grid" ? (
-          <DriveFileGrid files={filteredFiles} isLoading={isLoading} />
-        ) : ctx.viewMode === "compact" ? (
-          <DriveFileCompact files={filteredFiles} isLoading={isLoading} />
-        ) : (
+      <div className="flex-1 overflow-y-auto p-3">
+        {ctx.viewMode === "list" ? (
           <DriveFileList files={filteredFiles} isLoading={isLoading} />
+        ) : ctx.viewMode === "grid" ? (
+          <DriveFileGrid files={filteredFiles} isLoading={isLoading} />
+        ) : (
+          <DriveFileCompact files={filteredFiles} isLoading={isLoading} />
         )}
       </div>
 
