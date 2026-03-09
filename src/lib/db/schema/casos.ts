@@ -13,7 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { atribuicaoEnum, prioridadeEnum, quesitosResultadoEnum } from "./enums";
-import { workspaces, users, processos, assistidos } from "./core";
+import { users, processos, assistidos } from "./core";
 
 // ==========================================
 // CASOS (Entidade Mestre - Case-Centric)
@@ -24,7 +24,6 @@ export const casos = pgTable("casos", {
   titulo: text("titulo").notNull(),
   codigo: varchar("codigo", { length: 50 }),
   atribuicao: atribuicaoEnum("atribuicao").notNull().default("SUBSTITUICAO"),
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   teoriaFatos: text("teoria_fatos"),
   teoriaProvas: text("teoria_provas"),
   teoriaDireito: text("teoria_direito"),
@@ -45,7 +44,6 @@ export const casos = pgTable("casos", {
   index("casos_status_idx").on(table.status),
   index("casos_defensor_id_idx").on(table.defensorId),
   index("casos_deleted_at_idx").on(table.deletedAt),
-  index("casos_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type Caso = typeof casos.$inferSelect;

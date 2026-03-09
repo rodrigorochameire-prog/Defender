@@ -8,14 +8,18 @@ import {
   integer,
   date,
   index,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { statusMPUEnum, tipoIntimacaoEnum } from "./enums";
-import { workspaces, users, processos, assistidos, demandas } from "./core";
+import { statusMPUEnum, tipoIntimacaoEnum, canalEntradaVVDEnum, tipoRelatoVVDEnum } from "./enums";
+import { users, processos, assistidos, demandas } from "./core";
+import { audiencias } from "./agenda";
 
 // ==========================================
-// MÓDULO VVD - MEDIDAS PROTETIVAS
+// MÓDULO VVD - MEDIDAS PROTETIVAS (LEGADO)
 // ==========================================
+// Tabela legada — NÃO usar em novas features.
+// O novo modelo VVD usa partes_vvd + processos_vvd + intimacoes_vvd + historico_mpu.
 
 export const medidasProtetivas = pgTable("medidas_protetivas", {
   id: serial("id").primaryKey(),
@@ -58,8 +62,10 @@ export type MedidaProtetiva = typeof medidasProtetivas.$inferSelect;
 export type InsertMedidaProtetiva = typeof medidasProtetivas.$inferInsert;
 
 // ==========================================
-// MÓDULO VVD - PARTES
+// MÓDULO VVD - PARTES (Requeridos e Requerentes)
 // ==========================================
+// Requerido = contra quem a MPU é pedida (assistido da DPE)
+// Requerente = quem pede a MPU (vítima/denunciante)
 
 export const partesVVD = pgTable("partes_vvd", {
   id: serial("id").primaryKey(),
@@ -70,7 +76,7 @@ export const partesVVD = pgTable("partes_vvd", {
   rg: varchar("rg", { length: 20 }),
   dataNascimento: date("data_nascimento"),
 
-  // Tipo da parte
+  // Tipo da parte: 'requerido' (assistido DPE) | 'requerente' (quem pede a MPU)
   tipoParte: varchar("tipo_parte", { length: 20 }).notNull(),
 
   // Contato
@@ -81,14 +87,21 @@ export const partesVVD = pgTable("partes_vvd", {
   bairro: varchar("bairro", { length: 100 }),
   cidade: varchar("cidade", { length: 100 }),
 
-  // Relacionamento
+  // Relacionamento (parentesco com a outra parte)
   parentesco: varchar("parentesco", { length: 50 }),
 
   // Observações
   observacoes: text("observacoes"),
 
-  // Workspace e responsável
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  // === NOVOS CAMPOS - VVD Redesign ===
+
+  // Link de promoção ao sistema geral (quando caso demanda atuação ativa)
+  assistidoId: integer("assistido_id").references(() => assistidos.id),
+
+  // Dados analíticos
+  sexo: varchar("sexo", { length: 10 }), // M, F, outro
+
+  // Responsável
   defensorId: integer("defensor_id").references(() => users.id),
 
   // Metadados
@@ -99,8 +112,9 @@ export const partesVVD = pgTable("partes_vvd", {
   index("partes_vvd_nome_idx").on(table.nome),
   index("partes_vvd_cpf_idx").on(table.cpf),
   index("partes_vvd_tipo_parte_idx").on(table.tipoParte),
-  index("partes_vvd_workspace_id_idx").on(table.workspaceId),
   index("partes_vvd_deleted_at_idx").on(table.deletedAt),
+  index("partes_vvd_assistido_id_idx").on(table.assistidoId),
+  index("partes_vvd_sexo_idx").on(table.sexo),
 ]);
 
 export type ParteVVD = typeof partesVVD.$inferSelect;
@@ -113,11 +127,11 @@ export type InsertParteVVD = typeof partesVVD.$inferInsert;
 export const processosVVD = pgTable("processos_vvd", {
   id: serial("id").primaryKey(),
 
-  // Partes do processo
-  autorId: integer("autor_id")
+  // Partes do processo (renomeados: autor→requerido, vitima→requerente)
+  requeridoId: integer("requerido_id")
     .notNull()
     .references(() => partesVVD.id, { onDelete: "cascade" }),
-  vitimaId: integer("vitima_id")
+  requerenteId: integer("requerente_id")
     .references(() => partesVVD.id, { onDelete: "set null" }),
 
   // Identificação do Processo
@@ -143,7 +157,7 @@ export const processosVVD = pgTable("processos_vvd", {
   // Medida Protetiva vigente
   mpuAtiva: boolean("mpu_ativa").default(false),
   dataDecisaoMPU: date("data_decisao_mpu"),
-  tiposMPU: text("tipos_mpu"),
+  tiposMPU: text("tipos_mpu"), // Legado — manter para compatibilidade
   dataVencimentoMPU: date("data_vencimento_mpu"),
   distanciaMinima: integer("distancia_minima"),
 
@@ -157,22 +171,44 @@ export const processosVVD = pgTable("processos_vvd", {
   pjeDocumentoId: varchar("pje_documento_id", { length: 20 }),
   pjeUltimaAtualizacao: timestamp("pje_ultima_atualizacao"),
 
-  // Workspace
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
+
+  // === NOVOS CAMPOS - VVD Redesign ===
+
+  // Link de promoção ao sistema geral
+  processoId: integer("processo_id").references(() => processos.id),
+
+  // Dados analíticos - Canal e Relato
+  canalEntrada: canalEntradaVVDEnum("canal_entrada"),
+  tipoRelato: tipoRelatoVVDEnum("tipo_relato"),
+
+  // Dados analíticos - Conexão com ação de família
+  temAcaoFamilia: boolean("tem_acao_familia").default(false),
+  tipoAcaoFamilia: varchar("tipo_acao_familia", { length: 30 }),
+  suspeitaMaFe: boolean("suspeita_ma_fe").default(false),
+
+  // Dados analíticos - Temporalidade
+  dataFato: date("data_fato"),
+
+  // Dados analíticos - Medidas deferidas (JSONB array de medidas específicas)
+  medidasDeferidas: jsonb("medidas_deferidas").$type<string[]>(),
 
   // Metadados
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
-  index("processos_vvd_autor_id_idx").on(table.autorId),
-  index("processos_vvd_vitima_id_idx").on(table.vitimaId),
+  index("processos_vvd_requerido_id_idx").on(table.requeridoId),
+  index("processos_vvd_requerente_id_idx").on(table.requerenteId),
   index("processos_vvd_numero_autos_idx").on(table.numeroAutos),
   index("processos_vvd_mpu_ativa_idx").on(table.mpuAtiva),
   index("processos_vvd_data_vencimento_mpu_idx").on(table.dataVencimentoMPU),
   index("processos_vvd_defensor_id_idx").on(table.defensorId),
-  index("processos_vvd_workspace_id_idx").on(table.workspaceId),
   index("processos_vvd_deleted_at_idx").on(table.deletedAt),
+  index("processos_vvd_processo_id_idx").on(table.processoId),
+  index("processos_vvd_canal_entrada_idx").on(table.canalEntrada),
+  index("processos_vvd_tipo_relato_idx").on(table.tipoRelato),
+  index("processos_vvd_tem_acao_familia_idx").on(table.temAcaoFamilia),
+  index("processos_vvd_data_fato_idx").on(table.dataFato),
 ]);
 
 export type ProcessoVVD = typeof processosVVD.$inferSelect;
@@ -213,11 +249,13 @@ export const intimacoesVVD = pgTable("intimacoes_vvd", {
   // Se for tipo PETICIONAR, referência para a demanda normal
   demandaId: integer("demanda_id").references(() => demandas.id),
 
+  // === NOVO CAMPO - VVD Redesign ===
+  // Se for tipo AUDIENCIA, referência para o evento no calendário
+  audienciaId: integer("audiencia_id").references(() => audiencias.id),
+
   // Responsável
   defensorId: integer("defensor_id").references(() => users.id),
 
-  // Workspace
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
 
   // Metadados
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -228,7 +266,7 @@ export const intimacoesVVD = pgTable("intimacoes_vvd", {
   index("intimacoes_vvd_status_idx").on(table.status),
   index("intimacoes_vvd_prazo_idx").on(table.prazo),
   index("intimacoes_vvd_defensor_id_idx").on(table.defensorId),
-  index("intimacoes_vvd_workspace_id_idx").on(table.workspaceId),
+  index("intimacoes_vvd_audiencia_id_idx").on(table.audienciaId),
 ]);
 
 export type IntimacaoVVD = typeof intimacoesVVD.$inferSelect;
@@ -276,15 +314,23 @@ export type InsertHistoricoMPU = typeof historicoMPU.$inferInsert;
 // ==========================================
 
 export const partesVVDRelations = relations(partesVVD, ({ one }) => ({
-  workspace: one(workspaces, { fields: [partesVVD.workspaceId], references: [workspaces.id] }),
   defensor: one(users, { fields: [partesVVD.defensorId], references: [users.id] }),
+  assistido: one(assistidos, { fields: [partesVVD.assistidoId], references: [assistidos.id] }),
 }));
 
 export const processosVVDRelations = relations(processosVVD, ({ one, many }) => ({
-  autor: one(partesVVD, { fields: [processosVVD.autorId], references: [partesVVD.id] }),
-  vitima: one(partesVVD, { fields: [processosVVD.vitimaId], references: [partesVVD.id] }),
+  requerido: one(partesVVD, {
+    fields: [processosVVD.requeridoId],
+    references: [partesVVD.id],
+    relationName: "processoRequerido",
+  }),
+  requerente: one(partesVVD, {
+    fields: [processosVVD.requerenteId],
+    references: [partesVVD.id],
+    relationName: "processoRequerente",
+  }),
   defensor: one(users, { fields: [processosVVD.defensorId], references: [users.id] }),
-  workspace: one(workspaces, { fields: [processosVVD.workspaceId], references: [workspaces.id] }),
+  processo: one(processos, { fields: [processosVVD.processoId], references: [processos.id] }),
   intimacoes: many(intimacoesVVD),
   historico: many(historicoMPU),
 }));
@@ -292,8 +338,8 @@ export const processosVVDRelations = relations(processosVVD, ({ one, many }) => 
 export const intimacoesVVDRelations = relations(intimacoesVVD, ({ one }) => ({
   processoVVD: one(processosVVD, { fields: [intimacoesVVD.processoVVDId], references: [processosVVD.id] }),
   demanda: one(demandas, { fields: [intimacoesVVD.demandaId], references: [demandas.id] }),
+  audiencia: one(audiencias, { fields: [intimacoesVVD.audienciaId], references: [audiencias.id] }),
   defensor: one(users, { fields: [intimacoesVVD.defensorId], references: [users.id] }),
-  workspace: one(workspaces, { fields: [intimacoesVVD.workspaceId], references: [workspaces.id] }),
 }));
 
 export const historicoMPURelations = relations(historicoMPU, ({ one }) => ({

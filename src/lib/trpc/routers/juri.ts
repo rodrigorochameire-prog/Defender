@@ -2,10 +2,9 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { sessoesJuri, processos } from "@/lib/db/schema";
-import { eq, desc, sql, gte, and } from "drizzle-orm";
+import { eq, sql, gte, and } from "drizzle-orm";
 import { addDays } from "date-fns";
 import { TRPCError } from "@trpc/server";
-import { getWorkspaceScope } from "../workspace";
 
 export const juriRouter = router({
   // Listar todas as sessões do júri
@@ -21,7 +20,7 @@ export const juriRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const { status, defensor, limit = 50, offset = 0 } = input || {};
-      getWorkspaceScope(ctx.user); // Validar autenticação
+
       
       let conditions = [];
       
@@ -70,7 +69,7 @@ export const juriRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const { dias, limite } = input || {};
-      getWorkspaceScope(ctx.user); // Validar autenticação
+
       const hoje = new Date();
       
       // Construir condições WHERE dinamicamente
@@ -110,20 +109,51 @@ export const juriRouter = router({
     }),
 
   // Buscar sessão por ID
+  // Júris são compartilhados (filtrados no frontend pela atribuição)
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       const [sessao] = await db
-        .select()
+        .select({
+          id: sessoesJuri.id,
+          processoId: sessoesJuri.processoId,
+          dataSessao: sessoesJuri.dataSessao,
+          horario: sessoesJuri.horario,
+          sala: sessoesJuri.sala,
+          defensorId: sessoesJuri.defensorId,
+          defensorNome: sessoesJuri.defensorNome,
+          assistidoNome: sessoesJuri.assistidoNome,
+          status: sessoesJuri.status,
+          resultado: sessoesJuri.resultado,
+          penaAplicada: sessoesJuri.penaAplicada,
+          observacoes: sessoesJuri.observacoes,
+          registroCompleto: sessoesJuri.registroCompleto,
+          juizPresidente: sessoesJuri.juizPresidente,
+          promotor: sessoesJuri.promotor,
+          duracaoMinutos: sessoesJuri.duracaoMinutos,
+          localFato: sessoesJuri.localFato,
+          tipoPenal: sessoesJuri.tipoPenal,
+          tesePrincipal: sessoesJuri.tesePrincipal,
+          reuPrimario: sessoesJuri.reuPrimario,
+          reuIdade: sessoesJuri.reuIdade,
+          vitimaGenero: sessoesJuri.vitimaGenero,
+          vitimaIdade: sessoesJuri.vitimaIdade,
+          usouAlgemas: sessoesJuri.usouAlgemas,
+          incidentesProcessuais: sessoesJuri.incidentesProcessuais,
+          createdAt: sessoesJuri.createdAt,
+          updatedAt: sessoesJuri.updatedAt,
+          // Join processo
+          processo: {
+            id: processos.id,
+            numeroAutos: processos.numeroAutos,
+            comarca: processos.comarca,
+            vara: processos.vara,
+          },
+        })
         .from(sessoesJuri)
-        .where(
-          and(
-            eq(sessoesJuri.id, input.id),
-            ...(isAdmin ? [] : [eq(sessoesJuri.workspaceId, workspaceId)])
-          )
-        );
-      
+        .leftJoin(processos, eq(sessoesJuri.processoId, processos.id))
+        .where(eq(sessoesJuri.id, input.id));
+
       return sessao || null;
     }),
 
@@ -141,7 +171,6 @@ export const juriRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       const processo = await db.query.processos.findFirst({
         where: eq(processos.id, input.processoId),
       });
@@ -150,29 +179,14 @@ export const juriRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Processo não encontrado" });
       }
 
-      if (!processo.workspaceId) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Processo sem workspace atribuído.",
-        });
-      }
-
-      if (!isAdmin && processo.workspaceId !== workspaceId) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Você não tem acesso ao workspace deste processo.",
-        });
-      }
-
       const [novaSessao] = await db
         .insert(sessoesJuri)
         .values({
           ...input,
           dataSessao: new Date(input.dataSessao),
-          workspaceId: processo.workspaceId,
         })
         .returning();
-      
+
       return novaSessao;
     }),
 
@@ -190,28 +204,22 @@ export const juriRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const { id, dataSessao, ...data } = input;
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
-      
+
       const updateData: any = {
         ...data,
         updatedAt: new Date(),
       };
-      
+
       if (dataSessao) {
         updateData.dataSessao = new Date(dataSessao);
       }
-      
+
       const [atualizado] = await db
         .update(sessoesJuri)
         .set(updateData)
-        .where(
-          and(
-            eq(sessoesJuri.id, id),
-            ...(isAdmin ? [] : [eq(sessoesJuri.workspaceId, workspaceId)])
-          )
-        )
+        .where(eq(sessoesJuri.id, id))
         .returning();
-      
+
       return atualizado;
     }),
 
@@ -219,52 +227,28 @@ export const juriRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       const [excluido] = await db
         .delete(sessoesJuri)
-        .where(
-          and(
-            eq(sessoesJuri.id, input.id),
-            ...(isAdmin ? [] : [eq(sessoesJuri.workspaceId, workspaceId)])
-          )
-        )
+        .where(eq(sessoesJuri.id, input.id))
         .returning();
-      
+
       return excluido;
     }),
 
   // Estatísticas
-  stats: protectedProcedure.query(async ({ ctx }) => {
-    const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
-    const baseCondition = isAdmin ? undefined : eq(sessoesJuri.workspaceId, workspaceId);
+  stats: protectedProcedure.query(async () => {
+    const [result] = await db
+      .select({
+        total: sql<number>`count(*)`,
+        agendadas: sql<number>`count(*) filter (where ${sessoesJuri.status} = 'agendada')`,
+        realizadas: sql<number>`count(*) filter (where ${sessoesJuri.status} = 'realizada')`,
+      })
+      .from(sessoesJuri);
 
-    const total = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(sessoesJuri)
-      .where(baseCondition);
-    
-    const agendadas = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(sessoesJuri)
-      .where(
-        baseCondition
-          ? and(baseCondition, eq(sessoesJuri.status, "AGENDADA"))
-          : eq(sessoesJuri.status, "AGENDADA")
-      );
-    
-    const realizadas = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(sessoesJuri)
-      .where(
-        baseCondition
-          ? and(baseCondition, eq(sessoesJuri.status, "REALIZADA"))
-          : eq(sessoesJuri.status, "REALIZADA")
-      );
-    
     return {
-      total: Number(total[0]?.count || 0),
-      agendadas: Number(agendadas[0]?.count || 0),
-      realizadas: Number(realizadas[0]?.count || 0),
+      total: Number(result?.total || 0),
+      agendadas: Number(result?.agendadas || 0),
+      realizadas: Number(result?.realizadas || 0),
     };
   }),
 });

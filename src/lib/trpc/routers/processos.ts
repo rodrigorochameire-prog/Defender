@@ -5,7 +5,6 @@ import { processos, assistidos, assistidosProcessos, audiencias, movimentacoes, 
 import { eq, ilike, or, desc, asc, sql, and, isNull, ne } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { TRPCError } from "@trpc/server";
-import { getWorkspaceScope } from "../workspace";
 
 export const processosRouter = router({
   // Listar todos os processos
@@ -21,7 +20,7 @@ export const processosRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const { search, area, isJuri, limit = 50, offset = 0 } = input || {};
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
       
       let conditions = [];
       
@@ -43,7 +42,6 @@ export const processosRouter = router({
       }
 
       if (!isAdmin) {
-        conditions.push(eq(processos.workspaceId, workspaceId));
       }
       
       const defensorAlias = alias(users, "defensor");
@@ -85,11 +83,10 @@ export const processosRouter = router({
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
 
       const baseConditions = [eq(processos.id, input.id)];
       if (!isAdmin) {
-        baseConditions.push(eq(processos.workspaceId, workspaceId));
       }
 
       // Alias para assistidos na query de demandas (evita conflito de nome com o join de partes)
@@ -235,12 +232,11 @@ export const processosRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
       // Busca apenas campos necessários (exclui analysisData JSONB e outros campos pesados)
       const [assistido] = await db
         .select({
           id: assistidos.id,
-          workspaceId: assistidos.workspaceId,
           driveFolderId: assistidos.driveFolderId,
         })
         .from(assistidos)
@@ -251,25 +247,10 @@ export const processosRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
       }
 
-      if (!assistido.workspaceId) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Assistido sem workspace atribuído.",
-        });
-      }
-
-      if (!isAdmin && assistido.workspaceId !== workspaceId) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Você não tem acesso ao workspace deste assistido.",
-        });
-      }
-
       const [novoProcesso] = await db
         .insert(processos)
         .values({
           ...input,
-          workspaceId: assistido.workspaceId,
         })
         .returning();
 
@@ -347,7 +328,7 @@ export const processosRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
 
       // Create the assistido with minimal data
       const [novoAssistido] = await db
@@ -355,7 +336,6 @@ export const processosRouter = router({
         .values({
           nome: input.nome,
           atribuicaoPrimaria: input.atribuicaoPrimaria,
-          workspaceId: workspaceId,
           statusPrisional: "SOLTO",
         })
         .returning();
@@ -405,7 +385,6 @@ export const processosRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { workspaceId } = getWorkspaceScope(ctx.user);
 
       // Derive area from atribuicao if not provided
       const area = input.area || (() => {
@@ -429,7 +408,6 @@ export const processosRouter = router({
         .values({
           assistidoId: input.assistidoId,
           atribuicao: input.atribuicao,
-          workspaceId,
           numeroAutos: input.numero,
           area,
           fase: "conhecimento",
@@ -507,7 +485,7 @@ export const processosRouter = router({
       if (dataSessaoJuri !== undefined) {
         data.dataSessaoJuri = dataSessaoJuri ? new Date(dataSessaoJuri) : null;
       }
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
       
       const [atualizado] = await db
         .update(processos)
@@ -518,7 +496,7 @@ export const processosRouter = router({
         .where(
           isAdmin
             ? eq(processos.id, id)
-            : and(eq(processos.id, id), eq(processos.workspaceId, workspaceId))
+            : eq(processos.id, id)
         )
         .returning();
       
@@ -529,7 +507,7 @@ export const processosRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
 
       const [excluido] = await db
         .update(processos)
@@ -537,7 +515,7 @@ export const processosRouter = router({
         .where(
           isAdmin
             ? eq(processos.id, input.id)
-            : and(eq(processos.id, input.id), eq(processos.workspaceId, workspaceId))
+            : eq(processos.id, input.id)
         )
         .returning();
       
@@ -546,8 +524,8 @@ export const processosRouter = router({
 
   // Estatísticas
   stats: protectedProcedure.query(async ({ ctx }) => {
-    const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
-    const baseCondition = isAdmin ? undefined : eq(processos.workspaceId, workspaceId);
+    const isAdmin = ctx.user.role === "admin";
+    const baseCondition = undefined;
 
     const total = await db
       .select({ count: sql<number>`count(*)` })

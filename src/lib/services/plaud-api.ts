@@ -76,16 +76,11 @@ export interface TranscriptionKeyPoints {
 /**
  * Busca a configuração ativa do Plaud
  */
-export async function getActiveConfig(workspaceId?: number) {
+export async function getActiveConfig() {
   const [config] = await db
     .select()
     .from(plaudConfig)
-    .where(
-      and(
-        eq(plaudConfig.isActive, true),
-        workspaceId ? eq(plaudConfig.workspaceId, workspaceId) : undefined
-      )
-    )
+    .where(eq(plaudConfig.isActive, true))
     .limit(1);
 
   return config;
@@ -319,12 +314,7 @@ async function handleRecordingCompleted(
       .select()
       .from(atendimentos)
       .where(
-        and(
-          eq(atendimentos.transcricaoStatus, "awaiting_plaud"),
-          config.workspaceId
-            ? eq(atendimentos.workspaceId, config.workspaceId)
-            : undefined
-        )
+        eq(atendimentos.transcricaoStatus, "awaiting_plaud")
       )
       .orderBy(desc(atendimentos.createdAt))
       .limit(1);
@@ -407,14 +397,7 @@ async function handleTranscriptionCompleted(
       const [awaiting] = await db
         .select()
         .from(atendimentos)
-        .where(
-          and(
-            eq(atendimentos.transcricaoStatus, "awaiting_plaud"),
-            config.workspaceId
-              ? eq(atendimentos.workspaceId, config.workspaceId)
-              : undefined
-          )
-        )
+        .where(eq(atendimentos.transcricaoStatus, "awaiting_plaud"))
         .orderBy(desc(atendimentos.createdAt))
         .limit(1);
 

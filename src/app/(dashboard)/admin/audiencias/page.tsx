@@ -33,7 +33,6 @@ import { trpc } from "@/lib/trpc/client";
 // CONSTANTES - DESIGN SUÍÇO
 // ==========================================
 
-// Cores alinhadas com os workspaces
 // Cores de atribuição NEUTRAS para reduzir poluição visual
 const ATRIBUICAO_COLORS: Record<string, { 
   border: string; 
@@ -281,7 +280,7 @@ export default function AudienciasPage() {
             </div>
           </div>
 
-          {/* Seletor de Atribuição - Tabs com cores dos workspaces */}
+          {/* Seletor de Atribuição */}
           <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
             <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-zinc-200 dark:border-zinc-800 pb-px">
               {ATRIBUICAO_OPTIONS.map((option) => {

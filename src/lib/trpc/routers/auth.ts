@@ -27,7 +27,6 @@ export const authRouter = router({
       phone: ctx.user.phone,
       emailVerified: ctx.user.emailVerified,
       createdAt: ctx.user.createdAt,
-      workspaceId: ctx.user.workspaceId,
     };
   }),
 });

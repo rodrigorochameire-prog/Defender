@@ -47,7 +47,6 @@ const ROUTE_LABELS: Record<string, string> = {
   integracoes: "Integrações",
   templates: "Templates",
   notifications: "Notificações",
-  workspaces: "Workspaces",
   avaliacao: "Avaliação",
   cockpit: "Cockpit",
   historico: "Histórico",

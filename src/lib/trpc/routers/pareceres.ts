@@ -93,7 +93,6 @@ export const pareceresRouter = router({
           assistidoId: input.assistidoId ?? null,
           processoId: input.processoId ?? null,
           status: "solicitado",
-          workspaceId: ctx.user.workspaceId ?? 0,
         })
         .returning();
 

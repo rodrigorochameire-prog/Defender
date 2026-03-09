@@ -29,7 +29,6 @@ export const muralRouter = router({
           assistidoId: input.assistidoId ?? null,
           processoId: input.processoId ?? null,
           fixado: input.fixado ?? false,
-          workspaceId: ctx.user.workspaceId ?? 0,
         })
         .returning();
 
@@ -134,14 +133,11 @@ export const muralRouter = router({
     }),
 
   // ==========================================
-  // 5. Listar notas do workspace
+  // 5. Listar notas da equipe
   // ==========================================
   listarNotas: protectedProcedure
     .query(async ({ ctx }) => {
-      const workspaceId = ctx.user.workspaceId ?? 0;
-
       const notas = await db.query.muralNotas.findMany({
-        where: eq(muralNotas.workspaceId, workspaceId),
         with: {
           autor: {
             columns: { id: true, name: true, email: true, role: true },

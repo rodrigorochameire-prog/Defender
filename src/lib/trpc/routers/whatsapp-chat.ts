@@ -104,11 +104,7 @@ export const whatsappChatRouter = router({
     const configs = await db
       .select()
       .from(evolutionConfig)
-      .where(
-        ctx.user.role === "admin"
-          ? undefined
-          : eq(evolutionConfig.workspaceId, ctx.user.workspaceId!)
-      )
+      .where(undefined)
       .orderBy(desc(evolutionConfig.createdAt));
 
     return configs;
@@ -165,7 +161,6 @@ export const whatsappChatRouter = router({
     const [config] = await db
       .insert(evolutionConfig)
       .values({
-        workspaceId: ctx.user.workspaceId,
         instanceName: input.instanceName,
         apiUrl: input.apiUrl,
         apiKey: input.apiKey,

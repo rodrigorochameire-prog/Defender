@@ -69,7 +69,6 @@ export const atendimentosRouter = router({
             assistidoId: atendimentos.assistidoId,
             processoId: atendimentos.processoId,
             casoId: atendimentos.casoId,
-            workspaceId: atendimentos.workspaceId,
             dataAtendimento: atendimentos.dataAtendimento,
             duracao: atendimentos.duracao,
             tipo: atendimentos.tipo,
@@ -157,7 +156,6 @@ export const atendimentosRouter = router({
         assunto: z.string().optional(),
         resumo: z.string().optional(),
         status: z.string().default("agendado"),
-        workspaceId: z.number().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -282,7 +280,7 @@ export const atendimentosRouter = router({
    * Busca configuração ativa do Plaud
    */
   getPlaudConfig: adminProcedure.query(async ({ ctx }) => {
-    const config = await getActiveConfig(ctx.user.workspaceId ?? undefined);
+    const config = await getActiveConfig();
     return config;
   }),
 
@@ -316,7 +314,6 @@ export const atendimentosRouter = router({
 
       return await createConfig({
         ...input,
-        workspaceId: ctx.user.workspaceId,
         createdById: ctx.user.id,
       });
     }),
@@ -336,20 +333,12 @@ export const atendimentosRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const workspaceId = ctx.user.workspaceId;
 
-      // 1. Limpar qualquer "awaiting_plaud" anterior do mesmo workspace
-      if (workspaceId) {
-        await db
-          .update(atendimentos)
-          .set({ transcricaoStatus: "pending", updatedAt: new Date() })
-          .where(
-            and(
-              eq(atendimentos.transcricaoStatus, "awaiting_plaud"),
-              eq(atendimentos.workspaceId, workspaceId)
-            )
-          );
-      }
+      // 1. Limpar qualquer "awaiting_plaud" anterior
+      await db
+        .update(atendimentos)
+        .set({ transcricaoStatus: "pending", updatedAt: new Date() })
+        .where(eq(atendimentos.transcricaoStatus, "awaiting_plaud"));
 
       // 2. Criar atendimento com status "awaiting_plaud"
       const [atendimento] = await db
@@ -358,7 +347,6 @@ export const atendimentosRouter = router({
           assistidoId: input.assistidoId,
           processoId: input.processoId ?? null,
           casoId: input.casoId ?? null,
-          workspaceId,
           dataAtendimento: new Date(),
           tipo: input.tipo,
           descricao: input.descricao,
@@ -375,7 +363,7 @@ export const atendimentosRouter = router({
    * Lista gravações não vinculadas
    */
   unlinkedRecordings: protectedProcedure.query(async ({ ctx }) => {
-    const config = await getActiveConfig(ctx.user.workspaceId ?? undefined);
+    const config = await getActiveConfig();
     if (!config) return [];
 
     return await getUnlinkedRecordings(config.id);
@@ -426,7 +414,7 @@ export const atendimentosRouter = router({
    * Estatísticas de gravações
    */
   recordingStats: adminProcedure.query(async ({ ctx }) => {
-    const config = await getActiveConfig(ctx.user.workspaceId ?? undefined);
+    const config = await getActiveConfig();
     if (!config) {
       return {
         total: 0,
@@ -686,7 +674,6 @@ export const atendimentosRouter = router({
           const [novo] = await tx.insert(atendimentos).values({
             assistidoId: input.assistidoId,
             processoId: input.processoId || null,
-            workspaceId: ctx.user.workspaceId,
             dataAtendimento: new Date(),
             tipo: input.novoAtendimento.tipo,
             descricao: input.novoAtendimento.descricao || null,

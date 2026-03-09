@@ -12,7 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { areaEnum, tipoPecaProcessualEnum, modeloCategoriaEnum, oficioAnaliseStatusEnum } from "./enums";
-import { workspaces, users, processos, assistidos, demandas } from "./core";
+import { users, processos, assistidos, demandas } from "./core";
 import { casos } from "./casos";
 
 // ==========================================
@@ -27,7 +27,6 @@ export const documentos = pgTable("documentos", {
   casoId: integer("caso_id").references(() => casos.id, { onDelete: "set null" }),
 
   // Workspace
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
 
   // Detalhes do documento
   titulo: text("titulo").notNull(),
@@ -73,7 +72,6 @@ export const documentos = pgTable("documentos", {
   index("documentos_caso_id_idx").on(table.casoId),
   index("documentos_categoria_idx").on(table.categoria),
   index("documentos_is_template_idx").on(table.isTemplate),
-  index("documentos_workspace_id_idx").on(table.workspaceId),
   index("documentos_enrichment_status_idx").on(table.enrichmentStatus),
 ]);
 
@@ -305,7 +303,6 @@ export const documentoModelos = pgTable("documento_modelos", {
   totalUsos: integer("total_usos").default(0),
 
   // Workspace e usuario
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   createdById: integer("created_by_id").references(() => users.id),
 
   // Timestamps
@@ -317,7 +314,6 @@ export const documentoModelos = pgTable("documento_modelos", {
   index("documento_modelos_tipo_peca_idx").on(table.tipoPeca),
   index("documento_modelos_area_idx").on(table.area),
   index("documento_modelos_is_ativo_idx").on(table.isAtivo),
-  index("documento_modelos_workspace_id_idx").on(table.workspaceId),
   index("documento_modelos_deleted_at_idx").on(table.deletedAt),
 ]);
 
@@ -371,7 +367,6 @@ export const documentosGerados = pgTable("documentos_gerados", {
   }>(),
 
   // Workspace e usuario
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   createdById: integer("created_by_id").references(() => users.id),
 
   // Timestamps
@@ -382,7 +377,6 @@ export const documentosGerados = pgTable("documentos_gerados", {
   index("documentos_gerados_processo_id_idx").on(table.processoId),
   index("documentos_gerados_assistido_id_idx").on(table.assistidoId),
   index("documentos_gerados_caso_id_idx").on(table.casoId),
-  index("documentos_gerados_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type DocumentoGerado = typeof documentosGerados.$inferSelect;
@@ -420,7 +414,6 @@ export const oficioAnalises = pgTable("oficio_analises", {
   erro: text("erro"),
 
   // Workspace
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
 
   // Timestamps
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -429,7 +422,6 @@ export const oficioAnalises = pgTable("oficio_analises", {
   index("oficio_analises_drive_file_id_idx").on(table.driveFileId),
   index("oficio_analises_tipo_oficio_idx").on(table.tipoOficio),
   index("oficio_analises_status_idx").on(table.status),
-  index("oficio_analises_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type OficioAnalise = typeof oficioAnalises.$inferSelect;
@@ -440,7 +432,6 @@ export type InsertOficioAnalise = typeof oficioAnalises.$inferInsert;
 // ==========================================
 
 export const documentosRelations = relations(documentos, ({ one }) => ({
-  workspace: one(workspaces, { fields: [documentos.workspaceId], references: [workspaces.id] }),
   processo: one(processos, { fields: [documentos.processoId], references: [processos.id] }),
   assistido: one(assistidos, { fields: [documentos.assistidoId], references: [assistidos.id] }),
   demanda: one(demandas, { fields: [documentos.demandaId], references: [demandas.id] }),
@@ -464,7 +455,6 @@ export const pecasProcessuaisRelations = relations(pecasProcessuais, ({ one }) =
 }));
 
 export const documentoModelosRelations = relations(documentoModelos, ({ one, many }) => ({
-  workspace: one(workspaces, { fields: [documentoModelos.workspaceId], references: [workspaces.id] }),
   createdBy: one(users, { fields: [documentoModelos.createdById], references: [users.id] }),
   documentosGerados: many(documentosGerados),
 }));
@@ -475,11 +465,9 @@ export const documentosGeradosRelations = relations(documentosGerados, ({ one })
   assistido: one(assistidos, { fields: [documentosGerados.assistidoId], references: [assistidos.id] }),
   demanda: one(demandas, { fields: [documentosGerados.demandaId], references: [demandas.id] }),
   caso: one(casos, { fields: [documentosGerados.casoId], references: [casos.id] }),
-  workspace: one(workspaces, { fields: [documentosGerados.workspaceId], references: [workspaces.id] }),
   createdBy: one(users, { fields: [documentosGerados.createdById], references: [users.id] }),
 }));
 
 export const oficioAnalisesRelations = relations(oficioAnalises, ({ one }) => ({
   modeloGerado: one(documentoModelos, { fields: [oficioAnalises.modeloGeradoId], references: [documentoModelos.id] }),
-  workspace: one(workspaces, { fields: [oficioAnalises.workspaceId], references: [workspaces.id] }),
 }));

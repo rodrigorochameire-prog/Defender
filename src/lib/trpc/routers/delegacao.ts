@@ -222,7 +222,6 @@ export const delegacaoRouter = router({
           status: "pendente",
           assistidoId: input.assistidoId || null,
           processoId: input.processoId || null,
-          workspaceId: ctx.user.workspaceId || null,
         })
         .returning();
 
@@ -466,7 +465,6 @@ export const delegacaoRouter = router({
             prazoSugerido: prazo,
             prioridade: input.prioridade,
             status: "pendente",
-            workspaceId: ctx.user.workspaceId || null,
           })))
           .returning();
 

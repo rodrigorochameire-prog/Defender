@@ -72,7 +72,6 @@ export const coberturaRouter = router({
           ativo: true,
           acessoDemandas: true,
           acessoEquipe: false,
-          workspaceId: ctx.user.workspaceId || null,
         })
         .returning();
 

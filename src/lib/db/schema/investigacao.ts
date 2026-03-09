@@ -13,7 +13,7 @@ import {
 import { sql } from "drizzle-orm";
 import { relations } from "drizzle-orm";
 import { diligenciaStatusEnum, diligenciaTipoEnum, prioridadeEnum } from "./enums";
-import { workspaces, users, processos, assistidos, demandas } from "./core";
+import { users, processos, assistidos, demandas } from "./core";
 import { casos, casePersonas } from "./casos";
 
 // ==========================================
@@ -84,7 +84,6 @@ export const diligencias = pgTable("diligencias", {
   sugestaoOrigem: varchar("sugestao_origem", { length: 100 }),
 
   // Workspace e controle
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   defensorId: integer("defensor_id").references(() => users.id),
   criadoPorId: integer("criado_por_id").references(() => users.id).notNull(),
 
@@ -98,7 +97,6 @@ export const diligencias = pgTable("diligencias", {
   index("diligencias_caso_id_idx").on(table.casoId),
   index("diligencias_status_idx").on(table.status),
   index("diligencias_tipo_idx").on(table.tipo),
-  index("diligencias_workspace_id_idx").on(table.workspaceId),
   index("diligencias_defensor_id_idx").on(table.defensorId),
   index("diligencias_deleted_at_idx").on(table.deletedAt),
   index("diligencias_prioridade_idx").on(table.prioridade),
@@ -143,13 +141,11 @@ export const diligenciaTemplates = pgTable("diligencia_templates", {
   ativo: boolean("ativo").default(true),
 
   // Metadata
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
   index("diligencia_templates_tipo_idx").on(table.tipo),
   index("diligencia_templates_ativo_idx").on(table.ativo),
-  index("diligencia_templates_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type DiligenciaTemplate = typeof diligenciaTemplates.$inferSelect;
@@ -240,7 +236,6 @@ export const diligenciasRelations = relations(diligencias, ({ one }) => ({
   assistido: one(assistidos, { fields: [diligencias.assistidoId], references: [assistidos.id] }),
   caso: one(casos, { fields: [diligencias.casoId], references: [casos.id] }),
   persona: one(casePersonas, { fields: [diligencias.personaId], references: [casePersonas.id] }),
-  workspace: one(workspaces, { fields: [diligencias.workspaceId], references: [workspaces.id] }),
   defensor: one(users, { fields: [diligencias.defensorId], references: [users.id] }),
   criadoPor: one(users, { fields: [diligencias.criadoPorId], references: [users.id] }),
 }));

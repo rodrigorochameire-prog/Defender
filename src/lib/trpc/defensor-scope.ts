@@ -1,35 +1,23 @@
-import { TRPCError } from "@trpc/server";
 import type { User } from "@/lib/db/schema";
 
 /**
  * Sistema de Isolamento de Dados por Defensor
- * 
+ *
  * Arquitetura:
  * - Demandas: PRIVADAS por defensor (cada defensor tem seu "banco")
  *   - Defensor vê suas demandas
  *   - Estagiário vê demandas do seu supervisor (defensor vinculado)
  *   - Servidor vê demandas de todos os defensores (administrativa)
  *   - Admin vê tudo
- * - Assistidos, Processos, Casos: COMPARTILHADOS (todos têm acesso com filtro opcional)
+ * - Assistidos, Processos, Casos: COMPARTILHADOS (todos têm acesso)
  * - Audiências/Júris: filtrados pela atribuição do defensor
- * 
+ *
  * Defensores:
  * - Dr. Rodrigo (id=1): compartilha com Emilly (supervisorId=1)
  * - Dra. Juliane (id=2): compartilha com Taíssa (supervisorId=2)
  * - Dr. Danilo (id=X): pode ter estagiário vinculado
  * - Dra. Cristiane (id=Y): pode ter estagiário vinculado
  */
-
-export function getWorkspaceScope(user: User) {
-  const isAdmin = user.role === "admin";
-
-  // Workspace agora é opcional - não bloqueia mais se não tiver
-  return {
-    isAdmin,
-    workspaceId: user.workspaceId ?? null,
-    userId: user.id,
-  };
-}
 
 /**
  * Retorna o ID do defensor responsável pelas demandas
@@ -90,39 +78,4 @@ export function getDefensoresVisiveis(user: User): number[] | "all" {
   }
 
   return [user.id];
-}
-
-export function resolveWorkspaceId(user: User, workspaceId?: number | null) {
-  // Admin pode acessar qualquer workspace
-  if (user.role === "admin") {
-    return workspaceId ?? user.workspaceId ?? null;
-  }
-
-  // Se informou um workspace específico, verifica se tem acesso
-  if (workspaceId && user.workspaceId && workspaceId !== user.workspaceId) {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Você não tem acesso ao workspace informado.",
-    });
-  }
-
-  // Retorna o workspace do usuário ou o informado (pode ser null)
-  return workspaceId ?? user.workspaceId ?? null;
-}
-
-/**
- * Verifica se os dados são compartilhados (Assistidos, Processos, Casos)
- * Esses dados são sempre acessíveis por todos os defensores
- */
-export function isSharedData(entityType: "assistido" | "processo" | "caso" | "demanda" | "juri" | "audiencia") {
-  const sharedEntities = ["assistido", "processo", "caso"];
-  return sharedEntities.includes(entityType);
-}
-
-/**
- * Verifica se os dados são individuais (Demandas)
- * Esses dados são filtrados por quem criou/é responsável
- */
-export function isIndividualData(entityType: "assistido" | "processo" | "caso" | "demanda" | "juri" | "audiencia") {
-  return entityType === "demanda";
 }

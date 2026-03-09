@@ -105,20 +105,12 @@ export async function getSession(): Promise<User | null> {
       }
     } catch (dbError) {
       console.log("[getSession] Erro ao buscar usuário no banco:", dbError);
-      // Continua para retornar usuário mínimo baseado no token
+      // Erro de banco — tratar como sessão inválida
+      return null;
     }
 
-    // Se o token é válido mas não encontrou no banco, retornar usuário mínimo
-    // Isso evita loops de redirecionamento quando há problemas de banco
-    return {
-      id: payload.userId,
-      email: "user@defender.app",
-      name: "Usuário",
-      role: payload.role,
-      passwordHash: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } as User;
+    // JWT válido mas usuário não encontrado no banco — sessão inválida
+    return null;
   } catch (error) {
     console.log("[getSession] JWT auth failed:", error);
     return null;

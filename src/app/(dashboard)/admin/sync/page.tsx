@@ -44,7 +44,6 @@ const SKIP_FIELDS = new Set([
   "id",
   "createdAt",
   "updatedAt",
-  "workspaceId",
   "defensorId",
   "deletedAt",
 ]);

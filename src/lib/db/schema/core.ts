@@ -22,25 +22,6 @@ import {
 } from "./enums";
 
 // ==========================================
-// WORKSPACES (Universos de dados)
-// ==========================================
-
-export const workspaces = pgTable("workspaces", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  description: text("description"),
-  isActive: boolean("is_active").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-}, (table) => [
-  index("workspaces_name_idx").on(table.name),
-  index("workspaces_active_idx").on(table.isActive),
-]);
-
-export type Workspace = typeof workspaces.$inferSelect;
-export type InsertWorkspace = typeof workspaces.$inferInsert;
-
-// ==========================================
 // USUÁRIOS (DEFENSORES)
 // ==========================================
 
@@ -53,7 +34,6 @@ export const users = pgTable("users", {
   phone: text("phone"),
   oab: varchar("oab", { length: 50 }),
   comarca: varchar("comarca", { length: 100 }),
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   emailVerified: boolean("email_verified").default(false).notNull(),
   approvalStatus: varchar("approval_status", { length: 20 }).default("pending").notNull(),
   supervisorId: integer("supervisor_id"),
@@ -70,7 +50,6 @@ export const users = pgTable("users", {
   index("users_approval_status_idx").on(table.approvalStatus),
   index("users_deleted_at_idx").on(table.deletedAt),
   index("users_comarca_idx").on(table.comarca),
-  index("users_workspace_id_idx").on(table.workspaceId),
   index("users_supervisor_id_idx").on(table.supervisorId),
   index("users_nucleo_idx").on(table.nucleo),
 ]);
@@ -92,7 +71,6 @@ export const assistidos = pgTable("assistidos", {
   dataNascimento: date("data_nascimento"),
   naturalidade: varchar("naturalidade", { length: 100 }),
   nacionalidade: varchar("nacionalidade", { length: 50 }).default("Brasileira"),
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   statusPrisional: statusPrisionalEnum("status_prisional").default("SOLTO"),
   localPrisao: text("local_prisao"),
   unidadePrisional: text("unidade_prisional"),
@@ -148,7 +126,6 @@ export const assistidos = pgTable("assistidos", {
   index("assistidos_defensor_id_idx").on(table.defensorId),
   index("assistidos_deleted_at_idx").on(table.deletedAt),
   index("assistidos_caso_id_idx").on(table.casoId),
-  index("assistidos_workspace_id_idx").on(table.workspaceId),
   index("assistidos_atribuicao_primaria_idx").on(table.atribuicaoPrimaria),
   index("assistidos_analysis_status_idx").on(table.analysisStatus),
 ]);
@@ -166,7 +143,6 @@ export const processos = pgTable("processos", {
     .notNull()
     .references(() => assistidos.id, { onDelete: "cascade" }),
   atribuicao: atribuicaoEnum("atribuicao").notNull().default("SUBSTITUICAO"),
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   numeroAutos: text("numero_autos").notNull(),
   numeroAntigo: text("numero_antigo"),
   comarca: varchar("comarca", { length: 100 }),
@@ -228,7 +204,6 @@ export const processos = pgTable("processos", {
   index("processos_situacao_idx").on(table.situacao),
   index("processos_deleted_at_idx").on(table.deletedAt),
   index("processos_caso_id_idx").on(table.casoId),
-  index("processos_workspace_id_idx").on(table.workspaceId),
   index("processos_analysis_status_idx").on(table.analysisStatus),
 ]);
 
@@ -247,7 +222,6 @@ export const demandas = pgTable("demandas", {
   assistidoId: integer("assistido_id")
     .notNull()
     .references(() => assistidos.id, { onDelete: "cascade" }),
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   ato: text("ato").notNull(),
   tipoAto: varchar("tipo_ato", { length: 50 }),
   prazo: date("prazo"),
@@ -303,7 +277,6 @@ export const demandas = pgTable("demandas", {
   index("demandas_reu_preso_idx").on(table.reuPreso),
   index("demandas_deleted_at_idx").on(table.deletedAt),
   index("demandas_caso_id_idx").on(table.casoId),
-  index("demandas_workspace_id_idx").on(table.workspaceId),
   index("demandas_import_batch_id_idx").on(table.importBatchId),
 ]);
 
@@ -336,7 +309,6 @@ export const delegacoesHistorico = pgTable("delegacoes_historico", {
   assistidoId: integer("assistido_id").references(() => assistidos.id),
   processoId: integer("processo_id").references(() => processos.id),
   prioridade: varchar("prioridade", { length: 10 }).default("NORMAL"),
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   index("delegacoes_historico_demanda_id_idx").on(table.demandaId),
@@ -346,7 +318,6 @@ export const delegacoesHistorico = pgTable("delegacoes_historico", {
   index("delegacoes_historico_tipo_idx").on(table.tipo),
   index("delegacoes_historico_assistido_id_idx").on(table.assistidoId),
   index("delegacoes_historico_processo_id_idx").on(table.processoId),
-  index("delegacoes_historico_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type DelegacaoHistorico = typeof delegacoesHistorico.$inferSelect;
@@ -371,7 +342,6 @@ export const afastamentos = pgTable("afastamentos", {
   ativo: boolean("ativo").default(true).notNull(),
   acessoDemandas: boolean("acesso_demandas").default(true),
   acessoEquipe: boolean("acesso_equipe").default(false),
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
@@ -379,7 +349,6 @@ export const afastamentos = pgTable("afastamentos", {
   index("afastamentos_substituto_id_idx").on(table.substitutoId),
   index("afastamentos_ativo_idx").on(table.ativo),
   index("afastamentos_data_inicio_idx").on(table.dataInicio),
-  index("afastamentos_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type Afastamento = typeof afastamentos.$inferSelect;

@@ -10,7 +10,6 @@ import { relations } from "drizzle-orm";
 
 // Core tables
 import {
-  workspaces,
   users,
   assistidos,
   processos,
@@ -56,20 +55,7 @@ import { notifications } from "./comunicacao";
 // RELATIONS - Core tables
 // ==========================================
 
-export const workspacesRelations = relations(workspaces, ({ many }) => ({
-  users: many(users),
-  assistidos: many(assistidos),
-  processos: many(processos),
-  demandas: many(demandas),
-  sessoesJuri: many(sessoesJuri),
-  audiencias: many(audiencias),
-  documentos: many(documentos),
-  calendarEvents: many(calendarEvents),
-  casos: many(casos),
-}));
-
 export const usersRelations = relations(users, ({ many, one }) => ({
-  workspace: one(workspaces, { fields: [users.workspaceId], references: [workspaces.id] }),
   assistidos: many(assistidos),
   processos: many(processos),
   demandas: many(demandas),
@@ -91,11 +77,9 @@ export const usersRelations = relations(users, ({ many, one }) => ({
 export const afastamentosRelations = relations(afastamentos, ({ one }) => ({
   defensor: one(users, { fields: [afastamentos.defensorId], references: [users.id], relationName: "defensorAfastado" }),
   substituto: one(users, { fields: [afastamentos.substitutoId], references: [users.id], relationName: "defensorSubstituto" }),
-  workspace: one(workspaces, { fields: [afastamentos.workspaceId], references: [workspaces.id] }),
 }));
 
 export const assistidosRelations = relations(assistidos, ({ one, many }) => ({
-  workspace: one(workspaces, { fields: [assistidos.workspaceId], references: [workspaces.id] }),
   defensor: one(users, { fields: [assistidos.defensorId], references: [users.id] }),
   processos: many(processos),
   demandas: many(demandas),
@@ -107,7 +91,6 @@ export const assistidosRelations = relations(assistidos, ({ one, many }) => ({
 }));
 
 export const processosRelations = relations(processos, ({ one, many }) => ({
-  workspace: one(workspaces, { fields: [processos.workspaceId], references: [workspaces.id] }),
   assistido: one(assistidos, { fields: [processos.assistidoId], references: [assistidos.id] }),
   defensor: one(users, { fields: [processos.defensorId], references: [users.id] }),
   demandas: many(demandas),
@@ -120,7 +103,6 @@ export const processosRelations = relations(processos, ({ one, many }) => ({
 }));
 
 export const demandasRelations = relations(demandas, ({ one, many }) => ({
-  workspace: one(workspaces, { fields: [demandas.workspaceId], references: [workspaces.id] }),
   processo: one(processos, { fields: [demandas.processoId], references: [processos.id] }),
   assistido: one(assistidos, { fields: [demandas.assistidoId], references: [assistidos.id] }),
   defensor: one(users, { fields: [demandas.defensorId], references: [users.id] }),
@@ -137,7 +119,6 @@ export const delegacoesHistoricoRelations = relations(delegacoesHistorico, ({ on
   processo: one(processos, { fields: [delegacoesHistorico.processoId], references: [processos.id] }),
   delegadoDe: one(users, { fields: [delegacoesHistorico.delegadoDeId], references: [users.id], relationName: "delegadoDe" }),
   delegadoPara: one(users, { fields: [delegacoesHistorico.delegadoParaId], references: [users.id], relationName: "delegadoPara" }),
-  workspace: one(workspaces, { fields: [delegacoesHistorico.workspaceId], references: [workspaces.id] }),
 }));
 
 export const assistidosProcessosRelations = relations(assistidosProcessos, ({ one }) => ({
@@ -159,7 +140,6 @@ export const userInvitationsRelations = relations(userInvitations, ({ one }) => 
 // ==========================================
 
 export const casosRelations = relations(casos, ({ one, many }) => ({
-  workspace: one(workspaces, { fields: [casos.workspaceId], references: [workspaces.id] }),
   defensor: one(users, { fields: [casos.defensorId], references: [users.id] }),
   casoConexo: one(casos, { fields: [casos.casoConexoId], references: [casos.id] }),
   assistidos: many(assistidos),

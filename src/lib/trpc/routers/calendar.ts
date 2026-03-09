@@ -5,7 +5,7 @@ import { eq, and, gte, lte, inArray } from "drizzle-orm";
 import { Errors, safeAsync } from "@/lib/errors";
 import { idSchema, calendarEventSchema } from "@/lib/validations";
 import { startOfMonth, endOfMonth, startOfDay, endOfDay, addDays, addWeeks, addMonths, addYears } from "date-fns";
-import { getWorkspaceScope, resolveWorkspaceId, getDefensoresVisiveis } from "../workspace";
+import { getDefensoresVisiveis } from "../defensor-scope";
 
 /**
  * Gera condições de filtro para o calendário baseado no defensor.
@@ -98,7 +98,7 @@ export const calendarRouter = router({
     )
     .query(async ({ ctx, input }) => {
       return safeAsync(async () => {
-        const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+        const isAdmin = ctx.user.role === "admin";
         const startDate = new Date(input.start);
         const endDate = new Date(input.end);
         const defensorFilter = getCalendarDefensorFilter(ctx.user);
@@ -123,7 +123,7 @@ export const calendarRouter = router({
             and(
               gte(calendarEvents.eventDate, startDate),
               lte(calendarEvents.eventDate, endDate),
-              ...(isAdmin || !workspaceId ? [] : [eq(calendarEvents.workspaceId, workspaceId as number)]),
+
               ...defensorFilter
             )
           )
@@ -162,7 +162,7 @@ export const calendarRouter = router({
     )
     .query(async ({ ctx, input }) => {
       return safeAsync(async () => {
-        const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+        const isAdmin = ctx.user.role === "admin";
         const defensorFilter = getCalendarDefensorFilter(ctx.user);
         const now = new Date();
         const month = input?.month ?? now.getMonth();
@@ -190,7 +190,7 @@ export const calendarRouter = router({
             and(
               gte(calendarEvents.eventDate, start),
               lte(calendarEvents.eventDate, end),
-              ...(isAdmin || !workspaceId ? [] : [eq(calendarEvents.workspaceId, workspaceId as number)]),
+
               ...defensorFilter
             )
           )
@@ -212,11 +212,9 @@ export const calendarRouter = router({
     .input(z.object({ id: idSchema }))
     .query(async ({ ctx, input }) => {
       return safeAsync(async () => {
-        const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+        const isAdmin = ctx.user.role === "admin";
         const event = await db.query.calendarEvents.findFirst({
-          where: isAdmin
-            ? eq(calendarEvents.id, input.id)
-            : and(eq(calendarEvents.id, input.id), workspaceId ? eq(calendarEvents.workspaceId, workspaceId as number) : undefined),
+          where: eq(calendarEvents.id, input.id),
         });
 
         if (!event) {
@@ -255,62 +253,6 @@ export const calendarRouter = router({
     .input(calendarEventSchema)
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
-        const { isAdmin, workspaceId: userWorkspaceId } = getWorkspaceScope(ctx.user);
-        let targetWorkspaceId = resolveWorkspaceId(ctx.user);
-        const relatedWorkspaces = new Set<number>();
-
-        if (input.processoId) {
-          const processo = await db.query.processos.findFirst({
-            where: eq(processos.id, input.processoId),
-          });
-
-          if (!processo?.workspaceId) {
-            throw Errors.badRequest("Processo sem workspace atribuído.");
-          }
-
-          relatedWorkspaces.add(processo.workspaceId);
-        }
-
-        if (input.assistidoId) {
-          const assistido = await db.query.assistidos.findFirst({
-            where: eq(assistidos.id, input.assistidoId),
-          });
-
-          if (!assistido?.workspaceId) {
-            throw Errors.badRequest("Assistido sem workspace atribuído.");
-          }
-
-          relatedWorkspaces.add(assistido.workspaceId);
-        }
-
-        if (input.demandaId) {
-          const demanda = await db.query.demandas.findFirst({
-            where: eq(demandas.id, input.demandaId),
-          });
-
-          if (!demanda?.workspaceId) {
-            throw Errors.badRequest("Demanda sem workspace atribuído.");
-          }
-
-          relatedWorkspaces.add(demanda.workspaceId);
-        }
-
-        if (relatedWorkspaces.size > 1) {
-          throw Errors.badRequest("Processo, assistido e demanda precisam do mesmo workspace.");
-        }
-
-        if (relatedWorkspaces.size === 1) {
-          targetWorkspaceId = Array.from(relatedWorkspaces)[0];
-        }
-
-        if (!targetWorkspaceId) {
-          throw Errors.badRequest("Defina um workspace para criar o evento.");
-        }
-
-        if (!isAdmin && targetWorkspaceId !== userWorkspaceId) {
-          throw Errors.forbidden("Você não tem acesso a esse workspace.");
-        }
-
         const eventColor = input.color || EVENT_TYPES[input.eventType as keyof typeof EVENT_TYPES]?.color || EVENT_TYPES.custom.color;
 
         // Criar evento principal
@@ -339,7 +281,6 @@ export const calendarRouter = router({
             recurrenceCount: input.recurrenceCount || null,
             recurrenceDays: input.recurrenceDays || null,
             createdById: ctx.user.id,
-            workspaceId: targetWorkspaceId,
           })
           .returning();
 
@@ -376,7 +317,6 @@ export const calendarRouter = router({
               recurrenceType: input.recurrenceType || null,
               parentEventId: event.id,
               createdById: ctx.user.id,
-              workspaceId: targetWorkspaceId,
             });
           }
         }
@@ -398,7 +338,7 @@ export const calendarRouter = router({
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
         const { id, updateSeries, ...data } = input;
-        const { isAdmin, workspaceId: userWorkspaceId } = getWorkspaceScope(ctx.user);
+        const isAdmin = ctx.user.role === "admin";
 
         // Verificar se evento existe
         const existing = await db.query.calendarEvents.findFirst({
@@ -412,10 +352,6 @@ export const calendarRouter = router({
         // Verificar permissão
         if (ctx.user.role !== "admin" && existing.createdById !== ctx.user.id) {
           throw Errors.forbidden();
-        }
-
-        if (!isAdmin && existing.workspaceId !== userWorkspaceId) {
-          throw Errors.forbidden("Você não tem acesso a esse workspace.");
         }
 
         // Preparar dados
@@ -436,49 +372,6 @@ export const calendarRouter = router({
         if (data.priority !== undefined) updateData.priority = data.priority;
         if (data.status !== undefined) updateData.status = data.status;
 
-        const relatedWorkspaces = new Set<number>();
-        if (data.processoId !== undefined && data.processoId !== null) {
-          const processo = await db.query.processos.findFirst({
-            where: eq(processos.id, data.processoId),
-          });
-          if (!processo?.workspaceId) {
-            throw Errors.badRequest("Processo sem workspace atribuído.");
-          }
-          relatedWorkspaces.add(processo.workspaceId);
-        }
-
-        if (data.assistidoId !== undefined && data.assistidoId !== null) {
-          const assistido = await db.query.assistidos.findFirst({
-            where: eq(assistidos.id, data.assistidoId),
-          });
-          if (!assistido?.workspaceId) {
-            throw Errors.badRequest("Assistido sem workspace atribuído.");
-          }
-          relatedWorkspaces.add(assistido.workspaceId);
-        }
-
-        if (data.demandaId !== undefined && data.demandaId !== null) {
-          const demanda = await db.query.demandas.findFirst({
-            where: eq(demandas.id, data.demandaId),
-          });
-          if (!demanda?.workspaceId) {
-            throw Errors.badRequest("Demanda sem workspace atribuído.");
-          }
-          relatedWorkspaces.add(demanda.workspaceId);
-        }
-
-        if (relatedWorkspaces.size > 1) {
-          throw Errors.badRequest("Processo, assistido e demanda precisam do mesmo workspace.");
-        }
-
-        if (relatedWorkspaces.size === 1) {
-          const newWorkspaceId = Array.from(relatedWorkspaces)[0];
-          if (!isAdmin && newWorkspaceId !== userWorkspaceId) {
-            throw Errors.forbidden("Você não tem acesso a esse workspace.");
-          }
-          updateData.workspaceId = newWorkspaceId;
-        }
-
         // Atualizar evento
         const [updated] = await db
           .update(calendarEvents)
@@ -496,9 +389,6 @@ export const calendarRouter = router({
           if (data.location !== undefined) seriesUpdateData.location = data.location;
           if (data.notes !== undefined) seriesUpdateData.notes = data.notes;
           if (data.priority !== undefined) seriesUpdateData.priority = data.priority;
-          if (updateData.workspaceId !== undefined) {
-            seriesUpdateData.workspaceId = updateData.workspaceId;
-          }
 
           await db
             .update(calendarEvents)
@@ -517,7 +407,7 @@ export const calendarRouter = router({
     .input(z.object({ id: idSchema }))
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
-        const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+        const isAdmin = ctx.user.role === "admin";
         const existing = await db.query.calendarEvents.findFirst({
           where: eq(calendarEvents.id, input.id),
         });
@@ -531,9 +421,6 @@ export const calendarRouter = router({
           throw Errors.forbidden();
         }
 
-        if (!isAdmin && existing.workspaceId !== workspaceId) {
-          throw Errors.forbidden("Você não tem acesso a esse workspace.");
-        }
 
         await db.delete(calendarEvents).where(eq(calendarEvents.id, input.id));
 
@@ -546,7 +433,7 @@ export const calendarRouter = router({
    */
   today: protectedProcedure.query(async ({ ctx }) => {
     return safeAsync(async () => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
       const defensorFilter = getCalendarDefensorFilter(ctx.user);
       const now = new Date();
       const start = startOfDay(now);
@@ -571,7 +458,7 @@ export const calendarRouter = router({
           and(
             gte(calendarEvents.eventDate, start),
             lte(calendarEvents.eventDate, end),
-            ...(isAdmin || !workspaceId ? [] : [eq(calendarEvents.workspaceId, workspaceId as number)]),
+
             ...defensorFilter
           )
         )

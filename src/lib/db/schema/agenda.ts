@@ -12,7 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { tipoTestemunhaEnum, statusTestemunhaEnum } from "./enums";
-import { workspaces, users, processos, assistidos, demandas } from "./core";
+import { users, processos, assistidos, demandas } from "./core";
 import { casos } from "./casos";
 
 // ==========================================
@@ -24,7 +24,6 @@ export const audiencias = pgTable("audiencias", {
   processoId: integer("processo_id")
     .notNull()
     .references(() => processos.id, { onDelete: "cascade" }),
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   casoId: integer("caso_id"),
   assistidoId: integer("assistido_id"),
   dataAudiencia: timestamp("data_audiencia").notNull(),
@@ -58,7 +57,6 @@ export const audiencias = pgTable("audiencias", {
   index("audiencias_caso_id_idx").on(table.casoId),
   index("audiencias_assistido_id_idx").on(table.assistidoId),
   index("audiencias_google_event_idx").on(table.googleCalendarEventId),
-  index("audiencias_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type Audiencia = typeof audiencias.$inferSelect;
@@ -97,7 +95,6 @@ export const calendarEvents = pgTable("calendar_events", {
   processoId: integer("processo_id").references(() => processos.id, { onDelete: "cascade" }),
   assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "cascade" }),
   demandaId: integer("demanda_id").references(() => demandas.id, { onDelete: "set null" }),
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   isAllDay: boolean("is_all_day").default(true).notNull(),
   color: varchar("color", { length: 20 }),
   location: varchar("location", { length: 200 }),
@@ -126,7 +123,6 @@ export const calendarEvents = pgTable("calendar_events", {
   index("calendar_events_status_idx").on(table.status),
   index("calendar_events_deleted_at_idx").on(table.deletedAt),
   index("calendar_events_date_range_idx").on(table.eventDate, table.endDate),
-  index("calendar_events_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type CalendarEvent = typeof calendarEvents.$inferSelect;
@@ -143,7 +139,6 @@ export const atendimentos = pgTable("atendimentos", {
     .references(() => assistidos.id, { onDelete: "cascade" }),
   processoId: integer("processo_id").references(() => processos.id, { onDelete: "set null" }),
   casoId: integer("caso_id"),
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   dataAtendimento: timestamp("data_atendimento").notNull(),
   duracao: integer("duracao"),
   tipo: varchar("tipo", { length: 30 }).notNull(),
@@ -198,7 +193,6 @@ export const atendimentos = pgTable("atendimentos", {
   index("atendimentos_tipo_idx").on(table.tipo),
   index("atendimentos_status_idx").on(table.status),
   index("atendimentos_atendido_por_idx").on(table.atendidoPorId),
-  index("atendimentos_workspace_id_idx").on(table.workspaceId),
   index("atendimentos_enrichment_status_idx").on(table.enrichmentStatus),
   index("atendimentos_plaud_recording_id_idx").on(table.plaudRecordingId),
   index("atendimentos_transcricao_status_idx").on(table.transcricaoStatus),
@@ -249,7 +243,6 @@ export type InsertTestemunha = typeof testemunhas.$inferInsert;
 // ==========================================
 
 export const audienciasRelations = relations(audiencias, ({ one }) => ({
-  workspace: one(workspaces, { fields: [audiencias.workspaceId], references: [workspaces.id] }),
   processo: one(processos, { fields: [audiencias.processoId], references: [processos.id] }),
   defensor: one(users, { fields: [audiencias.defensorId], references: [users.id] }),
 }));
@@ -260,7 +253,6 @@ export const audienciasHistoricoRelations = relations(audienciasHistorico, ({ on
 }));
 
 export const calendarEventsRelations = relations(calendarEvents, ({ one }) => ({
-  workspace: one(workspaces, { fields: [calendarEvents.workspaceId], references: [workspaces.id] }),
   processo: one(processos, { fields: [calendarEvents.processoId], references: [processos.id] }),
   assistido: one(assistidos, { fields: [calendarEvents.assistidoId], references: [assistidos.id] }),
   demanda: one(demandas, { fields: [calendarEvents.demandaId], references: [demandas.id] }),
@@ -270,7 +262,6 @@ export const calendarEventsRelations = relations(calendarEvents, ({ one }) => ({
 export const atendimentosRelations = relations(atendimentos, ({ one, many }) => ({
   assistido: one(assistidos, { fields: [atendimentos.assistidoId], references: [assistidos.id] }),
   processo: one(processos, { fields: [atendimentos.processoId], references: [processos.id] }),
-  workspace: one(workspaces, { fields: [atendimentos.workspaceId], references: [workspaces.id] }),
   atendidoPor: one(users, { fields: [atendimentos.atendidoPorId], references: [users.id] }),
 }));
 

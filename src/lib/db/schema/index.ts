@@ -8,7 +8,7 @@
 // Enums (must come first - no dependencies)
 export * from "./enums";
 
-// Core tables (workspaces, users, assistidos, processos, demandas, etc.)
+// Core tables (users, assistidos, processos, demandas, etc.)
 export * from "./core";
 
 // Domain modules

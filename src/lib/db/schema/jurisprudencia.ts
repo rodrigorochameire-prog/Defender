@@ -12,7 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { tribunalEnum, tipoDecisaoEnum } from "./enums";
-import { workspaces, users } from "./core";
+import { users } from "./core";
 
 // ==========================================
 // JURISPRUDENCIA - Banco de Julgados
@@ -33,7 +33,6 @@ export const jurisprudenciaTemas = pgTable("jurisprudencia_temas", {
   totalJulgados: integer("total_julgados").default(0),
 
   // Workspace
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   createdById: integer("created_by_id").references(() => users.id),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -41,7 +40,6 @@ export const jurisprudenciaTemas = pgTable("jurisprudencia_temas", {
 }, (table) => [
   index("jurisprudencia_temas_nome_idx").on(table.nome),
   index("jurisprudencia_temas_parent_id_idx").on(table.parentId),
-  index("jurisprudencia_temas_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type JurisprudenciaTema = typeof jurisprudenciaTemas.$inferSelect;
@@ -71,7 +69,6 @@ export const jurisprudenciaTeses = pgTable("jurisprudencia_teses", {
   totalJulgados: integer("total_julgados").default(0),
 
   // Workspace
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   createdById: integer("created_by_id").references(() => users.id),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -80,7 +77,6 @@ export const jurisprudenciaTeses = pgTable("jurisprudencia_teses", {
   index("jurisprudencia_teses_tema_id_idx").on(table.temaId),
   index("jurisprudencia_teses_titulo_idx").on(table.titulo),
   index("jurisprudencia_teses_posicao_idx").on(table.posicao),
-  index("jurisprudencia_teses_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type JurisprudenciaTese = typeof jurisprudenciaTeses.$inferSelect;
@@ -152,7 +148,6 @@ export const jurisprudenciaJulgados = pgTable("jurisprudencia_julgados", {
   observacoes: text("observacoes"),
 
   // Workspace e usuario
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   createdById: integer("created_by_id").references(() => users.id),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -166,7 +161,6 @@ export const jurisprudenciaJulgados = pgTable("jurisprudencia_julgados", {
   index("jurisprudencia_julgados_tese_id_idx").on(table.teseId),
   index("jurisprudencia_julgados_status_idx").on(table.status),
   index("jurisprudencia_julgados_is_favorito_idx").on(table.isFavorito),
-  index("jurisprudencia_julgados_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type JurisprudenciaJulgado = typeof jurisprudenciaJulgados.$inferSelect;
@@ -194,13 +188,11 @@ export const jurisprudenciaBuscas = pgTable("jurisprudencia_buscas", {
   feedback: varchar("feedback", { length: 20 }), // util | parcial | inutil
 
   // Workspace e usuario
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   userId: integer("user_id").references(() => users.id),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   index("jurisprudencia_buscas_user_id_idx").on(table.userId),
-  index("jurisprudencia_buscas_workspace_id_idx").on(table.workspaceId),
   index("jurisprudencia_buscas_created_at_idx").on(table.createdAt),
 ]);
 
@@ -227,7 +219,6 @@ export const jurisprudenciaDriveFolders = pgTable("jurisprudencia_drive_folders"
   arquivosSincronizados: integer("arquivos_sincronizados").default(0),
 
   // Workspace
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   createdById: integer("created_by_id").references(() => users.id),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -235,7 +226,6 @@ export const jurisprudenciaDriveFolders = pgTable("jurisprudencia_drive_folders"
 }, (table) => [
   index("jurisprudencia_drive_folders_folder_id_idx").on(table.folderId),
   index("jurisprudencia_drive_folders_tribunal_idx").on(table.tribunal),
-  index("jurisprudencia_drive_folders_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type JurisprudenciaDriveFolder = typeof jurisprudenciaDriveFolders.$inferSelect;
@@ -254,31 +244,26 @@ export const jurisprudenciaTemasRelations = relations(jurisprudenciaTemas, ({ on
   children: many(jurisprudenciaTemas, { relationName: "tema_parent" }),
   teses: many(jurisprudenciaTeses),
   julgados: many(jurisprudenciaJulgados),
-  workspace: one(workspaces, { fields: [jurisprudenciaTemas.workspaceId], references: [workspaces.id] }),
   createdBy: one(users, { fields: [jurisprudenciaTemas.createdById], references: [users.id] }),
 }));
 
 export const jurisprudenciaTesesRelations = relations(jurisprudenciaTeses, ({ one, many }) => ({
   tema: one(jurisprudenciaTemas, { fields: [jurisprudenciaTeses.temaId], references: [jurisprudenciaTemas.id] }),
   julgados: many(jurisprudenciaJulgados),
-  workspace: one(workspaces, { fields: [jurisprudenciaTeses.workspaceId], references: [workspaces.id] }),
   createdBy: one(users, { fields: [jurisprudenciaTeses.createdById], references: [users.id] }),
 }));
 
 export const jurisprudenciaJulgadosRelations = relations(jurisprudenciaJulgados, ({ one }) => ({
   tema: one(jurisprudenciaTemas, { fields: [jurisprudenciaJulgados.temaId], references: [jurisprudenciaTemas.id] }),
   tese: one(jurisprudenciaTeses, { fields: [jurisprudenciaJulgados.teseId], references: [jurisprudenciaTeses.id] }),
-  workspace: one(workspaces, { fields: [jurisprudenciaJulgados.workspaceId], references: [workspaces.id] }),
   createdBy: one(users, { fields: [jurisprudenciaJulgados.createdById], references: [users.id] }),
 }));
 
 export const jurisprudenciaBuscasRelations = relations(jurisprudenciaBuscas, ({ one }) => ({
-  workspace: one(workspaces, { fields: [jurisprudenciaBuscas.workspaceId], references: [workspaces.id] }),
   user: one(users, { fields: [jurisprudenciaBuscas.userId], references: [users.id] }),
 }));
 
 export const jurisprudenciaDriveFoldersRelations = relations(jurisprudenciaDriveFolders, ({ one }) => ({
   tema: one(jurisprudenciaTemas, { fields: [jurisprudenciaDriveFolders.temaId], references: [jurisprudenciaTemas.id] }),
-  workspace: one(workspaces, { fields: [jurisprudenciaDriveFolders.workspaceId], references: [workspaces.id] }),
   createdBy: one(users, { fields: [jurisprudenciaDriveFolders.createdById], references: [users.id] }),
 }));

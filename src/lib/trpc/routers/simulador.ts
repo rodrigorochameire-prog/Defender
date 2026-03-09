@@ -14,7 +14,6 @@ import {
 } from "@/lib/db/schema";
 import { eq, and, isNull, desc, asc, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { resolveWorkspaceId } from "../workspace";
 
 // ==========================================
 // SCHEMAS DE VALIDAÇÃO
@@ -156,13 +155,11 @@ export const simuladorRouter = router({
       includeDeleted: z.boolean().optional().default(false),
     }))
     .query(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
 
       // Verificar se o caso existe
       const caso = await db.query.casos.findFirst({
         where: and(
           eq(casos.id, input.casoId),
-          eq(casos.workspaceId, workspaceId),
           isNull(casos.deletedAt),
         ),
       });
@@ -203,12 +200,10 @@ export const simuladorRouter = router({
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
 
       const simulacao = await db.query.simulacoes3d.findFirst({
         where: and(
           eq(simulacoes3d.id, input.id),
-          eq(simulacoes3d.workspaceId, workspaceId),
           isNull(simulacoes3d.deletedAt),
         ),
         with: {
@@ -258,14 +253,12 @@ export const simuladorRouter = router({
   create: protectedProcedure
     .input(createSimulacaoSchema)
     .mutation(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
       const userId = ctx.user.id;
 
       // Verificar se o caso existe
       const caso = await db.query.casos.findFirst({
         where: and(
           eq(casos.id, input.casoId),
-          eq(casos.workspaceId, workspaceId),
           isNull(casos.deletedAt),
         ),
       });
@@ -316,7 +309,6 @@ export const simuladorRouter = router({
         status: "RASCUNHO",
         criadoPorId: parseInt(userId),
         atualizadoPorId: parseInt(userId),
-        workspaceId,
       }).returning();
 
       // Criar versões padrão (acusação e defesa)
@@ -344,7 +336,6 @@ export const simuladorRouter = router({
   update: protectedProcedure
     .input(updateSimulacaoSchema)
     .mutation(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
       const userId = ctx.user.id;
 
       const { id, ...data } = input;
@@ -352,7 +343,6 @@ export const simuladorRouter = router({
       const existing = await db.query.simulacoes3d.findFirst({
         where: and(
           eq(simulacoes3d.id, id),
-          eq(simulacoes3d.workspaceId, workspaceId),
           isNull(simulacoes3d.deletedAt),
         ),
       });
@@ -384,13 +374,11 @@ export const simuladorRouter = router({
       thumbnail: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
       const userId = ctx.user.id;
 
       const existing = await db.query.simulacoes3d.findFirst({
         where: and(
           eq(simulacoes3d.id, input.simulacaoId),
-          eq(simulacoes3d.workspaceId, workspaceId),
           isNull(simulacoes3d.deletedAt),
         ),
       });
@@ -419,7 +407,6 @@ export const simuladorRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
 
       const [deleted] = await db.update(simulacoes3d)
         .set({
@@ -428,7 +415,6 @@ export const simuladorRouter = router({
         })
         .where(and(
           eq(simulacoes3d.id, input.id),
-          eq(simulacoes3d.workspaceId, workspaceId),
         ))
         .returning();
 
@@ -823,7 +809,6 @@ export const simuladorRouter = router({
       includePublicos: z.boolean().optional().default(true),
     }))
     .query(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
 
       const conditions = [];
 
@@ -833,15 +818,6 @@ export const simuladorRouter = router({
 
       if (input.subcategoria) {
         conditions.push(eq(simulacaoAssets.subcategoria, input.subcategoria));
-      }
-
-      // Assets públicos ou do workspace
-      if (input.includePublicos) {
-        conditions.push(
-          sql`(${simulacaoAssets.publico} = true OR ${simulacaoAssets.workspaceId} = ${workspaceId})`
-        );
-      } else {
-        conditions.push(eq(simulacaoAssets.workspaceId, workspaceId));
       }
 
       const assets = await db.query.simulacaoAssets.findMany({
@@ -870,12 +846,10 @@ export const simuladorRouter = router({
       publico: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
       const userId = ctx.user.id;
 
       const [asset] = await db.insert(simulacaoAssets).values({
         ...input,
-        workspaceId,
         criadoPorId: parseInt(userId),
       }).returning();
 

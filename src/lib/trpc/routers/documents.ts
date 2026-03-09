@@ -4,7 +4,6 @@ import { db, documentos, processos, assistidos, demandas } from "@/lib/db";
 import { eq, and, desc, sql, or } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
 import { getSupabaseAdmin } from "@/lib/supabase/client";
-import { getWorkspaceScope, resolveWorkspaceId } from "../workspace";
 
 export const documentsRouter = router({
   /**
@@ -19,7 +18,7 @@ export const documentsRouter = router({
     )
     .query(async ({ ctx, input }) => {
       return safeAsync(async () => {
-        const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+        const isAdmin = ctx.user.role === "admin";
         const processo = await db.query.processos.findFirst({
           where: eq(processos.id, input.processoId),
         });
@@ -28,18 +27,10 @@ export const documentsRouter = router({
           throw Errors.notFound("Processo");
         }
 
-        if (!isAdmin && processo.workspaceId !== workspaceId) {
-          throw Errors.forbidden("Você não tem acesso a este processo.");
-        }
-
         let conditions = [eq(documentos.processoId, input.processoId)];
 
         if (input.categoria) {
           conditions.push(eq(documentos.categoria, input.categoria));
-        }
-
-        if (!isAdmin) {
-          conditions.push(eq(documentos.workspaceId, workspaceId));
         }
 
         const result = await db
@@ -64,7 +55,7 @@ export const documentsRouter = router({
     )
     .query(async ({ ctx, input }) => {
       return safeAsync(async () => {
-        const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+        const isAdmin = ctx.user.role === "admin";
         const assistido = await db.query.assistidos.findFirst({
           where: eq(assistidos.id, input.assistidoId),
         });
@@ -73,18 +64,10 @@ export const documentsRouter = router({
           throw Errors.notFound("Assistido");
         }
 
-        if (!isAdmin && assistido.workspaceId !== workspaceId) {
-          throw Errors.forbidden("Você não tem acesso a este assistido.");
-        }
-
         let conditions = [eq(documentos.assistidoId, input.assistidoId)];
 
         if (input.categoria) {
           conditions.push(eq(documentos.categoria, input.categoria));
-        }
-
-        if (!isAdmin) {
-          conditions.push(eq(documentos.workspaceId, workspaceId));
         }
 
         const result = await db
@@ -178,62 +161,6 @@ export const documentsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
-        const { isAdmin, workspaceId: userWorkspaceId } = getWorkspaceScope(ctx.user);
-        let targetWorkspaceId = resolveWorkspaceId(ctx.user);
-        const relatedWorkspaces = new Set<number>();
-
-        if (input.processoId) {
-          const processo = await db.query.processos.findFirst({
-            where: eq(processos.id, input.processoId),
-          });
-
-          if (!processo?.workspaceId) {
-            throw Errors.badRequest("Processo sem workspace atribuído.");
-          }
-
-          relatedWorkspaces.add(processo.workspaceId);
-        }
-
-        if (input.assistidoId) {
-          const assistido = await db.query.assistidos.findFirst({
-            where: eq(assistidos.id, input.assistidoId),
-          });
-
-          if (!assistido?.workspaceId) {
-            throw Errors.badRequest("Assistido sem workspace atribuído.");
-          }
-
-          relatedWorkspaces.add(assistido.workspaceId);
-        }
-
-        if (input.demandaId) {
-          const demanda = await db.query.demandas.findFirst({
-            where: eq(demandas.id, input.demandaId),
-          });
-
-          if (!demanda?.workspaceId) {
-            throw Errors.badRequest("Demanda sem workspace atribuído.");
-          }
-
-          relatedWorkspaces.add(demanda.workspaceId);
-        }
-
-        if (relatedWorkspaces.size > 1) {
-          throw Errors.badRequest("Processo, assistido e demanda precisam do mesmo workspace.");
-        }
-
-        if (relatedWorkspaces.size === 1) {
-          targetWorkspaceId = Array.from(relatedWorkspaces)[0];
-        }
-
-        if (!targetWorkspaceId) {
-          throw Errors.badRequest("Defina um workspace para fazer upload do documento.");
-        }
-
-        if (!isAdmin && targetWorkspaceId !== userWorkspaceId) {
-          throw Errors.forbidden("Você não tem acesso a esse workspace.");
-        }
-
         const [documento] = await db
           .insert(documentos)
           .values({
@@ -242,7 +169,6 @@ export const documentsRouter = router({
             demandaId: input.demandaId || null,
             casoId: input.casoId || null,
             uploadedById: ctx.user.id,
-            workspaceId: targetWorkspaceId,
             titulo: input.titulo,
             descricao: input.descricao || null,
             categoria: input.categoria,
@@ -284,7 +210,7 @@ export const documentsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
-        const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+        const isAdmin = ctx.user.role === "admin";
         const { id, ...data } = input;
         const existing = await db.query.documentos.findFirst({
           where: eq(documentos.id, id),
@@ -292,10 +218,6 @@ export const documentsRouter = router({
 
         if (!existing) {
           throw Errors.notFound("Documento");
-        }
-
-        if (!isAdmin && existing.workspaceId !== workspaceId) {
-          throw Errors.forbidden("Você não tem acesso a este documento.");
         }
 
         const updateData: Record<string, unknown> = { updatedAt: new Date() };
@@ -323,17 +245,13 @@ export const documentsRouter = router({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
-        const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+        const isAdmin = ctx.user.role === "admin";
         const existing = await db.query.documentos.findFirst({
           where: eq(documentos.id, input.id),
         });
 
         if (!existing) {
           throw Errors.notFound("Documento");
-        }
-
-        if (!isAdmin && existing.workspaceId !== workspaceId) {
-          throw Errors.forbidden("Você não tem acesso a este documento.");
         }
 
         // TODO: Remover arquivo do storage

@@ -11,7 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { areaDireitoEnum } from "./enums";
-import { workspaces, users, demandas } from "./core";
+import { users, demandas } from "./core";
 
 // ==========================================
 // SISTEMA DE PRAZOS - CALCULO AUTOMATICO
@@ -46,7 +46,6 @@ export const tipoPrazos = pgTable("tipo_prazos", {
   isActive: boolean("is_active").default(true),
 
   // Workspace (opcional - pode ser global)
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -54,7 +53,6 @@ export const tipoPrazos = pgTable("tipo_prazos", {
   index("tipo_prazos_codigo_idx").on(table.codigo),
   index("tipo_prazos_area_direito_idx").on(table.areaDireito),
   index("tipo_prazos_categoria_idx").on(table.categoria),
-  index("tipo_prazos_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type TipoPrazo = typeof tipoPrazos.$inferSelect;
@@ -85,7 +83,6 @@ export const feriadosForenses = pgTable("feriados_forenses", {
   dataFim: date("data_fim"), // Se for periodo (ex: recesso 20/12 a 06/01)
 
   // Workspace (opcional - pode ser global)
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -95,7 +92,6 @@ export const feriadosForenses = pgTable("feriados_forenses", {
   index("feriados_forenses_abrangencia_idx").on(table.abrangencia),
   index("feriados_forenses_estado_idx").on(table.estado),
   index("feriados_forenses_tribunal_idx").on(table.tribunal),
-  index("feriados_forenses_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type FeriadoForense = typeof feriadosForenses.$inferSelect;
@@ -132,7 +128,6 @@ export const calculosPrazos = pgTable("calculos_prazos", {
   calculoManual: boolean("calculo_manual").default(false), // Se foi ajustado manualmente
 
   // Workspace
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   calculadoPorId: integer("calculado_por_id").references(() => users.id),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -141,7 +136,6 @@ export const calculosPrazos = pgTable("calculos_prazos", {
   index("calculos_prazos_demanda_id_idx").on(table.demandaId),
   index("calculos_prazos_tipo_prazo_id_idx").on(table.tipoPrazoId),
   index("calculos_prazos_data_termo_final_idx").on(table.dataTermoFinal),
-  index("calculos_prazos_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type CalculoPrazo = typeof calculosPrazos.$inferSelect;
@@ -152,17 +146,14 @@ export type InsertCalculoPrazo = typeof calculosPrazos.$inferInsert;
 // ==========================================
 
 export const tipoPrazosRelations = relations(tipoPrazos, ({ one, many }) => ({
-  workspace: one(workspaces, { fields: [tipoPrazos.workspaceId], references: [workspaces.id] }),
   calculos: many(calculosPrazos),
 }));
 
 export const feriadosForensesRelations = relations(feriadosForenses, ({ one }) => ({
-  workspace: one(workspaces, { fields: [feriadosForenses.workspaceId], references: [workspaces.id] }),
 }));
 
 export const calculosPrazosRelations = relations(calculosPrazos, ({ one }) => ({
   demanda: one(demandas, { fields: [calculosPrazos.demandaId], references: [demandas.id] }),
   tipoPrazo: one(tipoPrazos, { fields: [calculosPrazos.tipoPrazoId], references: [tipoPrazos.id] }),
-  workspace: one(workspaces, { fields: [calculosPrazos.workspaceId], references: [workspaces.id] }),
   calculadoPor: one(users, { fields: [calculosPrazos.calculadoPorId], references: [users.id] }),
 }));

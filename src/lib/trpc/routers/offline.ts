@@ -8,7 +8,7 @@ import {
   atendimentos,
   casos,
 } from "@/lib/db/schema";
-import { and, eq, gt, isNull, or, sql } from "drizzle-orm";
+import { and, eq, gt, isNull, sql } from "drizzle-orm";
 
 // ==========================================
 // OFFLINE SYNC ROUTER
@@ -37,7 +37,6 @@ const assistidoColumns = {
   deletedAt: assistidos.deletedAt,
   createdAt: assistidos.createdAt,
   updatedAt: assistidos.updatedAt,
-  workspaceId: assistidos.workspaceId,
 } as const;
 
 const processoColumns = {
@@ -61,7 +60,6 @@ const processoColumns = {
   deletedAt: processos.deletedAt,
   createdAt: processos.createdAt,
   updatedAt: processos.updatedAt,
-  workspaceId: processos.workspaceId,
 } as const;
 
 const demandaColumns = {
@@ -86,7 +84,6 @@ const demandaColumns = {
   deletedAt: demandas.deletedAt,
   createdAt: demandas.createdAt,
   updatedAt: demandas.updatedAt,
-  workspaceId: demandas.workspaceId,
 } as const;
 
 const atendimentoColumns = {
@@ -106,7 +103,6 @@ const atendimentoColumns = {
   atendidoPorId: atendimentos.atendidoPorId,
   createdAt: atendimentos.createdAt,
   updatedAt: atendimentos.updatedAt,
-  workspaceId: atendimentos.workspaceId,
 } as const;
 
 const casoColumns = {
@@ -122,17 +118,14 @@ const casoColumns = {
   deletedAt: casos.deletedAt,
   createdAt: casos.createdAt,
   updatedAt: casos.updatedAt,
-  workspaceId: casos.workspaceId,
 } as const;
 
 export const offlineRouter = router({
   /**
-   * Full sync — downloads all data for the user's workspace.
+   * Full sync — downloads all data.
    * Called after login or on first app load.
    */
   fullSync: protectedProcedure.query(async ({ ctx }) => {
-    const workspaceId = ctx.user.workspaceId;
-
     const [
       allAssistidos,
       allProcessos,
@@ -140,31 +133,11 @@ export const offlineRouter = router({
       allAtendimentos,
       allCasos,
     ] = await Promise.all([
-      db.select(assistidoColumns).from(assistidos).where(
-        workspaceId
-          ? eq(assistidos.workspaceId, workspaceId)
-          : isNull(assistidos.deletedAt)
-      ),
-      db.select(processoColumns).from(processos).where(
-        workspaceId
-          ? eq(processos.workspaceId, workspaceId)
-          : isNull(processos.deletedAt)
-      ),
-      db.select(demandaColumns).from(demandas).where(
-        workspaceId
-          ? eq(demandas.workspaceId, workspaceId)
-          : isNull(demandas.deletedAt)
-      ),
-      db.select(atendimentoColumns).from(atendimentos).where(
-        workspaceId
-          ? eq(atendimentos.workspaceId, workspaceId)
-          : undefined as any
-      ),
-      db.select(casoColumns).from(casos).where(
-        workspaceId
-          ? eq(casos.workspaceId, workspaceId)
-          : isNull(casos.deletedAt)
-      ),
+      db.select(assistidoColumns).from(assistidos).where(isNull(assistidos.deletedAt)),
+      db.select(processoColumns).from(processos).where(isNull(processos.deletedAt)),
+      db.select(demandaColumns).from(demandas).where(isNull(demandas.deletedAt)),
+      db.select(atendimentoColumns).from(atendimentos),
+      db.select(casoColumns).from(casos).where(isNull(casos.deletedAt)),
     ]);
 
     return {
@@ -184,13 +157,7 @@ export const offlineRouter = router({
   incrementalSync: protectedProcedure
     .input(z.object({ since: z.string() }))
     .query(async ({ ctx, input }) => {
-      const workspaceId = ctx.user.workspaceId;
       const sinceDate = new Date(input.since);
-
-      const wsFilter = (table: typeof assistidos | typeof processos | typeof demandas | typeof casos) =>
-        workspaceId
-          ? and(eq((table as any).workspaceId, workspaceId), gt((table as any).updatedAt, sinceDate))
-          : gt((table as any).updatedAt, sinceDate);
 
       const [
         updatedAssistidos,
@@ -199,15 +166,11 @@ export const offlineRouter = router({
         updatedAtendimentos,
         updatedCasos,
       ] = await Promise.all([
-        db.select(assistidoColumns).from(assistidos).where(wsFilter(assistidos)),
-        db.select(processoColumns).from(processos).where(wsFilter(processos)),
-        db.select(demandaColumns).from(demandas).where(wsFilter(demandas)),
-        db.select(atendimentoColumns).from(atendimentos).where(
-          workspaceId
-            ? and(eq(atendimentos.workspaceId, workspaceId), gt(atendimentos.updatedAt, sinceDate))
-            : gt(atendimentos.updatedAt, sinceDate)
-        ),
-        db.select(casoColumns).from(casos).where(wsFilter(casos)),
+        db.select(assistidoColumns).from(assistidos).where(gt(assistidos.updatedAt, sinceDate)),
+        db.select(processoColumns).from(processos).where(gt(processos.updatedAt, sinceDate)),
+        db.select(demandaColumns).from(demandas).where(gt(demandas.updatedAt, sinceDate)),
+        db.select(atendimentoColumns).from(atendimentos).where(gt(atendimentos.updatedAt, sinceDate)),
+        db.select(casoColumns).from(casos).where(gt(casos.updatedAt, sinceDate)),
       ]);
 
       return {
@@ -235,7 +198,6 @@ export const offlineRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const { table, operation, data, expectedUpdatedAt } = input;
-      const workspaceId = ctx.user.workspaceId;
 
       const tableMap = { assistidos, processos, demandas, atendimentos, casos };
       const targetTable = tableMap[table];
@@ -245,7 +207,7 @@ export const offlineRouter = router({
         const { id: _tempId, createdAt: _ca, updatedAt: _ua, ...insertData } = data as any;
         const [result] = await db
           .insert(targetTable)
-          .values({ ...insertData, workspaceId, defensorId: ctx.user.id } as any)
+          .values({ ...insertData, defensorId: ctx.user.id } as any)
           .returning({ id: (targetTable as any).id });
         return { success: true, id: result.id, conflict: false };
       }
@@ -340,7 +302,7 @@ export const offlineRouter = router({
       const tableMap = { assistidos, processos, demandas, atendimentos, casos };
       const targetTable = tableMap[table];
 
-      const { id: _id, createdAt: _ca, workspaceId: _ws, ...updateData } = data as any;
+      const { id: _id, createdAt: _ca, ...updateData } = data as any;
 
       await db
         .update(targetTable)

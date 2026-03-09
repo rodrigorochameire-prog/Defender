@@ -91,8 +91,6 @@ interface TeamMember {
   role: string;
   oab: string | null;
   comarca: string | null;
-  workspaceId: number | null;
-  workspaceName: string | null;
   createdAt: Date;
   emailVerified: boolean;
 }

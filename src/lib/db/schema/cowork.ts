@@ -27,13 +27,11 @@ export const pareceres = pgTable("pareceres", {
   urgencia: varchar("urgencia", { length: 20 }).notNull().default("normal"), // 'normal' | 'urgente'
   dataSolicitacao: timestamp("data_solicitacao").defaultNow().notNull(),
   dataResposta: timestamp("data_resposta"),
-  workspaceId: integer("workspace_id").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   index("pareceres_solicitante_id_idx").on(table.solicitanteId),
   index("pareceres_respondedor_id_idx").on(table.respondedorId),
   index("pareceres_status_idx").on(table.status),
-  index("pareceres_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type Parecer = typeof pareceres.$inferSelect;
@@ -50,11 +48,9 @@ export const muralNotas = pgTable("mural_notas", {
   assistidoId: integer("assistido_id").references(() => assistidos.id),
   processoId: integer("processo_id").references(() => processos.id),
   fixado: boolean("fixado").default(false).notNull(),
-  workspaceId: integer("workspace_id").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   index("mural_notas_autor_id_idx").on(table.autorId),
-  index("mural_notas_workspace_id_idx").on(table.workspaceId),
   index("mural_notas_fixado_idx").on(table.fixado),
 ]);
 

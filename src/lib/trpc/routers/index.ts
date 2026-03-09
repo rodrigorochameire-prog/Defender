@@ -3,8 +3,6 @@ import { router } from "../init";
 // Routers de autenticação e usuários
 import { authRouter } from "./auth";
 import { usersRouter } from "./users";
-import { workspacesRouter } from "./workspaces";
-
 // Routers do DefesaHub (jurídico)
 import { casosRouter } from "./casos";
 import { assistidosRouter } from "./assistidos";
@@ -68,8 +66,6 @@ export const appRouter = router({
   // ==========================================
   auth: authRouter,
   users: usersRouter,
-  workspaces: workspacesRouter,
-  
   // ==========================================
   // DEFESAHUB - MÓDULOS JURÍDICOS
   // ==========================================

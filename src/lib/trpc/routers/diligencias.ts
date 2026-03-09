@@ -11,7 +11,6 @@ import {
 } from "@/lib/db/schema";
 import { eq, and, isNull, sql, desc, ilike, or, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { getWorkspaceScope, resolveWorkspaceId } from "../workspace";
 
 // ==========================================
 // SCHEMAS DE VALIDAÇÃO
@@ -163,7 +162,7 @@ export const diligenciasRouter = router({
       }).optional()
     )
     .query(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
       const params = input || {};
 
       const conditions = [];
@@ -212,7 +211,6 @@ export const diligenciasRouter = router({
 
       // Filtro de workspace (se não admin)
       if (!isAdmin) {
-        conditions.push(eq(diligencias.workspaceId, workspaceId));
       }
 
       const result = await db
@@ -267,7 +265,7 @@ export const diligenciasRouter = router({
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
 
       const conditions = [
         eq(diligencias.id, input.id),
@@ -275,7 +273,6 @@ export const diligenciasRouter = router({
       ];
 
       if (!isAdmin) {
-        conditions.push(eq(diligencias.workspaceId, workspaceId));
       }
 
       const [diligencia] = await db
@@ -316,7 +313,6 @@ export const diligenciasRouter = router({
   create: protectedProcedure
     .input(createDiligenciaSchema)
     .mutation(async ({ ctx, input }) => {
-      const workspaceId = resolveWorkspaceId(ctx.user);
 
       // Validar que pelo menos uma vinculação existe
       if (!input.processoId && !input.assistidoId && !input.casoId) {
@@ -349,7 +345,6 @@ export const diligenciasRouter = router({
         tags: input.tags,
         isSugestaoAutomatica: input.isSugestaoAutomatica,
         sugestaoOrigem: input.sugestaoOrigem,
-        workspaceId,
         defensorId: ctx.user?.id,
         criadoPorId: ctx.user?.id,
         // Histórico inicial
@@ -376,7 +371,7 @@ export const diligenciasRouter = router({
     .input(updateDiligenciaSchema)
     .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
 
       // Buscar diligência atual para histórico
       const [current] = await db
@@ -436,7 +431,6 @@ export const diligenciasRouter = router({
             ? and(eq(diligencias.id, id), isNull(diligencias.deletedAt))
             : and(
                 eq(diligencias.id, id),
-                eq(diligencias.workspaceId, workspaceId),
                 isNull(diligencias.deletedAt)
               )
         )
@@ -458,7 +452,7 @@ export const diligenciasRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
 
       const [deleted] = await db
         .update(diligencias)
@@ -468,7 +462,6 @@ export const diligenciasRouter = router({
             ? and(eq(diligencias.id, input.id), isNull(diligencias.deletedAt))
             : and(
                 eq(diligencias.id, input.id),
-                eq(diligencias.workspaceId, workspaceId),
                 isNull(diligencias.deletedAt)
               )
         )
@@ -494,7 +487,7 @@ export const diligenciasRouter = router({
       descricao: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
 
       // Buscar histórico atual
       const [current] = await db
@@ -503,7 +496,7 @@ export const diligenciasRouter = router({
         .where(
           isAdmin
             ? eq(diligencias.id, input.diligenciaId)
-            : and(eq(diligencias.id, input.diligenciaId), eq(diligencias.workspaceId, workspaceId))
+            : eq(diligencias.id, input.diligenciaId)
         )
         .limit(1);
 
@@ -544,7 +537,7 @@ export const diligenciasRouter = router({
       url: z.string().url(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
 
       const [current] = await db
         .select({ linksOsint: diligencias.linksOsint })
@@ -552,7 +545,7 @@ export const diligenciasRouter = router({
         .where(
           isAdmin
             ? eq(diligencias.id, input.diligenciaId)
-            : and(eq(diligencias.id, input.diligenciaId), eq(diligencias.workspaceId, workspaceId))
+            : eq(diligencias.id, input.diligenciaId)
         )
         .limit(1);
 
@@ -593,7 +586,7 @@ export const diligenciasRouter = router({
       casoId: z.number().optional(),
     }).optional())
     .query(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
       const filters = input || {};
 
       const conditions = [isNull(diligencias.deletedAt)];
@@ -608,7 +601,6 @@ export const diligenciasRouter = router({
         conditions.push(eq(diligencias.casoId, filters.casoId));
       }
       if (!isAdmin) {
-        conditions.push(eq(diligencias.workspaceId, workspaceId));
       }
 
       const baseWhere = and(...conditions);
@@ -648,7 +640,7 @@ export const diligenciasRouter = router({
       apenasAtivos: z.boolean().default(true),
     }).optional())
     .query(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
       const params = input || {};
 
       const conditions = [];
@@ -665,9 +657,7 @@ export const diligenciasRouter = router({
       if (!isAdmin) {
         conditions.push(
           or(
-            isNull(diligenciaTemplates.workspaceId),
-            eq(diligenciaTemplates.workspaceId, workspaceId)
-          )
+                      )
         );
       }
 
@@ -683,13 +673,11 @@ export const diligenciasRouter = router({
   createTemplate: protectedProcedure
     .input(createTemplateSchema)
     .mutation(async ({ ctx, input }) => {
-      const workspaceId = resolveWorkspaceId(ctx.user);
 
       const [novoTemplate] = await db
         .insert(diligenciaTemplates)
         .values({
           ...input,
-          workspaceId,
         })
         .returning();
 
@@ -700,7 +688,7 @@ export const diligenciasRouter = router({
     .input(updateTemplateSchema)
     .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
 
       const [updated] = await db
         .update(diligenciaTemplates)
@@ -711,7 +699,7 @@ export const diligenciasRouter = router({
         .where(
           isAdmin
             ? eq(diligenciaTemplates.id, id)
-            : and(eq(diligenciaTemplates.id, id), eq(diligenciaTemplates.workspaceId, workspaceId))
+            : eq(diligenciaTemplates.id, id)
         )
         .returning();
 
@@ -728,14 +716,14 @@ export const diligenciasRouter = router({
   deleteTemplate: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
 
       const [deleted] = await db
         .delete(diligenciaTemplates)
         .where(
           isAdmin
             ? eq(diligenciaTemplates.id, input.id)
-            : and(eq(diligenciaTemplates.id, input.id), eq(diligenciaTemplates.workspaceId, workspaceId))
+            : eq(diligenciaTemplates.id, input.id)
         )
         .returning();
 
@@ -762,7 +750,7 @@ export const diligenciasRouter = router({
       tags: z.array(z.string()).optional(),
     }))
     .query(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
 
       // Buscar templates ativos
       const templates = await db
@@ -774,9 +762,7 @@ export const diligenciasRouter = router({
             isAdmin
               ? undefined
               : or(
-                  isNull(diligenciaTemplates.workspaceId),
-                  eq(diligenciaTemplates.workspaceId, workspaceId)
-                )
+                                  )
           )
         )
         .orderBy(diligenciaTemplates.ordem);
@@ -847,7 +833,6 @@ export const diligenciasRouter = router({
       nomePessoaAlvo: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const workspaceId = resolveWorkspaceId(ctx.user);
 
       // Buscar template
       const [template] = await db
@@ -894,7 +879,6 @@ export const diligenciasRouter = router({
           nomePessoaAlvo: input.nomePessoaAlvo,
           isSugestaoAutomatica: true,
           sugestaoOrigem: "template",
-          workspaceId,
           defensorId: ctx.user?.id,
           criadoPorId: ctx.user?.id,
           historico: [{
@@ -920,7 +904,6 @@ export const diligenciasRouter = router({
       casoId: z.number().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const workspaceId = resolveWorkspaceId(ctx.user);
 
       if (!input.processoId && !input.assistidoId && !input.casoId) {
         throw new TRPCError({
@@ -962,7 +945,6 @@ export const diligenciasRouter = router({
           casoId: input.casoId,
           isSugestaoAutomatica: true,
           sugestaoOrigem: "template_bulk",
-          workspaceId,
           defensorId: ctx.user?.id,
           criadoPorId: ctx.user?.id!,
           historico: [{

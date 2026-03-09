@@ -610,7 +610,7 @@ function ContextPopoverContent({
                 Visao Integrada
               </p>
               <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
-                Incluir workspaces especiais
+                Incluir todos os registros
               </p>
             </div>
           </div>

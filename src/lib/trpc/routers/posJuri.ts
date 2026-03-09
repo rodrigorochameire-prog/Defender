@@ -10,7 +10,6 @@ import {
 } from "@/lib/db/schema";
 import { eq, desc, sql, and, count } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { getWorkspaceScope } from "../workspace";
 
 export const posJuriRouter = router({
   // ==========================================
@@ -31,7 +30,6 @@ export const posJuriRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const { status, ano, limit = 50, offset = 0 } = input || {};
-      getWorkspaceScope(ctx.user);
 
       const conditions = [];
 
@@ -80,7 +78,6 @@ export const posJuriRouter = router({
 
   // Estatísticas de recursos
   statsRecursos: protectedProcedure.query(async ({ ctx }) => {
-    getWorkspaceScope(ctx.user);
 
     const [stats] = await db
       .select({
@@ -117,7 +114,6 @@ export const posJuriRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       // Buscar dados da sessão para preencher automaticamente
       const [sessao] = await db
@@ -192,7 +188,6 @@ export const posJuriRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const { id, ...data } = input;
 
@@ -219,7 +214,6 @@ export const posJuriRouter = router({
   deleteRecurso: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const [deleted] = await db
         .delete(recursosJuri)
@@ -244,7 +238,6 @@ export const posJuriRouter = router({
   getProjecaoExecucao: protectedProcedure
     .input(z.object({ sessaoJuriId: z.number() }))
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       // Buscar sessão + dosimetria
       const [sessao] = await db
@@ -292,7 +285,6 @@ export const posJuriRouter = router({
         .optional()
     )
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
       const limit = input?.limit || 50;
 
       const result = await db
@@ -322,7 +314,6 @@ export const posJuriRouter = router({
   getHandoffConfig: protectedProcedure
     .input(z.object({ comarca: z.string() }))
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const [config] = await db
         .select()
@@ -346,7 +337,6 @@ export const posJuriRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const { comarca, ...data } = input;
 
@@ -403,7 +393,6 @@ export const posJuriRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       // Buscar dados da sessão
       const [sessao] = await db

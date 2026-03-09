@@ -11,7 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { diagramaTipoEnum } from "./enums";
-import { workspaces, users } from "./core";
+import { users } from "./core";
 import { casos, casePersonas, caseFacts, tesesDefensivas } from "./casos";
 import { documentos } from "./documentos";
 import { testemunhas } from "./agenda";
@@ -64,7 +64,6 @@ export const palacioDiagramas = pgTable("palacio_diagramas", {
   atualizadoPorId: integer("atualizado_por_id").references(() => users.id),
 
   // Workspace (multi-tenant)
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
 
   // Soft delete
   deletedAt: timestamp("deleted_at"),
@@ -77,7 +76,6 @@ export const palacioDiagramas = pgTable("palacio_diagramas", {
   index("palacio_diagramas_tipo_idx").on(table.tipo),
   index("palacio_diagramas_status_idx").on(table.status),
   index("palacio_diagramas_criado_por_idx").on(table.criadoPorId),
-  index("palacio_diagramas_workspace_id_idx").on(table.workspaceId),
   index("palacio_diagramas_deleted_at_idx").on(table.deletedAt),
 ]);
 
@@ -163,7 +161,6 @@ export const palacioDiagramasRelations = relations(palacioDiagramas, ({ one, man
   caso: one(casos, { fields: [palacioDiagramas.casoId], references: [casos.id] }),
   criadoPor: one(users, { fields: [palacioDiagramas.criadoPorId], references: [users.id] }),
   atualizadoPor: one(users, { fields: [palacioDiagramas.atualizadoPorId], references: [users.id] }),
-  workspace: one(workspaces, { fields: [palacioDiagramas.workspaceId], references: [workspaces.id] }),
   elementos: many(palacioElementos),
   conexoes: many(palacioConexoes),
 }));

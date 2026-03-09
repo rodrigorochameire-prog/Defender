@@ -13,7 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { extractionStatusEnum } from "./enums";
-import { workspaces, users, processos, assistidos } from "./core";
+import { users, processos, assistidos } from "./core";
 import { documentos } from "./documentos";
 
 // ==========================================

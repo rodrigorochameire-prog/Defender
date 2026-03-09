@@ -16,7 +16,6 @@ import {
 } from "@/lib/db/schema";
 import { eq, desc, sql, and, isNotNull, asc, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { getWorkspaceScope } from "../workspace";
 
 // ==========================================
 // PREPARAÇÃO DO JÚRI — ROUTER AGREGADO
@@ -30,7 +29,6 @@ export const preparacaoRouter = router({
   caseDataSummary: protectedProcedure
     .input(z.object({ sessaoId: z.number() }))
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       // Buscar sessão e processo para obter casoId
       const [sessao] = await db
@@ -163,7 +161,6 @@ export const preparacaoRouter = router({
   personagensBySessao: protectedProcedure
     .input(z.object({ sessaoId: z.number() }))
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       // Buscar comarca do processo vinculado à sessão
       const [sessao] = await db
@@ -228,7 +225,6 @@ export const preparacaoRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const [novo] = await db
         .insert(personagensJuri)
@@ -271,7 +267,6 @@ export const preparacaoRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
       const { id, ...data } = input;
 
       const [atualizado] = await db
@@ -300,7 +295,6 @@ export const preparacaoRouter = router({
   warRoomData: protectedProcedure
     .input(z.object({ casoId: z.number() }))
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const [personas, facts, evidence, contradicoes] = await Promise.all([
         // Personas do caso
@@ -366,7 +360,6 @@ export const preparacaoRouter = router({
   listQuesitos: protectedProcedure
     .input(z.object({ casoId: z.number() }))
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const result = await db
         .select()
@@ -399,7 +392,6 @@ export const preparacaoRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const [novo] = await db
         .insert(quesitos)
@@ -430,7 +422,6 @@ export const preparacaoRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
       const { id, ...data } = input;
 
       const [atualizado] = await db
@@ -459,7 +450,6 @@ export const preparacaoRouter = router({
   deleteQuesito: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const [excluido] = await db
         .delete(quesitos)
@@ -492,7 +482,6 @@ export const preparacaoRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       // Batch update dentro de uma transação
       await db.transaction(async (tx) => {
@@ -523,7 +512,6 @@ export const preparacaoRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       try {
         const { gerarQuesitosIA } = await import("@/lib/services/gemini");
@@ -549,7 +537,6 @@ export const preparacaoRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       try {
         // Carregar todos os dados do caso em paralelo
@@ -666,7 +653,6 @@ export const preparacaoRouter = router({
   getSimulacao: protectedProcedure
     .input(z.object({ sessaoId: z.number() }))
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const [sessao] = await db
         .select({

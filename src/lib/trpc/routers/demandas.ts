@@ -4,7 +4,7 @@ import { db, withTransaction } from "@/lib/db";
 import { demandas, processos, assistidos, users } from "@/lib/db/schema";
 import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { getWorkspaceScope, getDefensorResponsavel, getDefensoresVisiveis } from "../workspace";
+import { getDefensorResponsavel, getDefensoresVisiveis } from "../defensor-scope";
 import { normalizarNome, calcularSimilaridade } from "@/lib/pje-parser";
 
 // Helper: inferir fase processual com base no tipo de documento PJe
@@ -287,7 +287,6 @@ export const demandasRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const defensorId = getDefensorResponsavel(ctx.user);
-      const { workspaceId } = getWorkspaceScope(ctx.user);
       
       const processo = await db.query.processos.findFirst({
         where: eq(processos.id, input.processoId),
@@ -313,7 +312,6 @@ export const demandasRouter = router({
           prazo: input.prazo || null,
           dataEntrada: input.dataEntrada || null,
           defensorId: defensorId || ctx.user.id, // Defensor responsável pela demanda
-          workspaceId: workspaceId, // Workspace opcional para compatibilidade
         })
         .returning();
       
@@ -578,7 +576,6 @@ export const demandasRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const defensorId = getDefensorResponsavel(ctx.user);
-      const { workspaceId } = getWorkspaceScope(ctx.user);
 
       // Mapeamento de status do frontend para enum do banco
       const STATUS_TO_DB: Record<string, string> = {
@@ -699,7 +696,6 @@ export const demandasRouter = router({
               statusPrisional: statusPrisional as any,
               atribuicaoPrimaria: targetAtribuicaoPrimaria,
               defensorId: defensorId || ctx.user.id,
-              workspaceId: workspaceId,
             }).returning();
             assistido = newAssistido;
 
@@ -744,7 +740,6 @@ export const demandasRouter = router({
               numeroAutos: processoNumero || `SN-${Date.now()}-${results.imported}`,
               area: targetArea,
               atribuicao: targetAtribuicao,
-              workspaceId: assistido.workspaceId,
             }).returning();
             processo = newProcesso;
           }
@@ -875,7 +870,6 @@ export const demandasRouter = router({
             reuPreso,
             providencias: row.providencias || null,
             defensorId: defensorId || ctx.user.id,
-            workspaceId: workspaceId,
             importBatchId: row.importBatchId || null,
             ordemOriginal: row.ordemOriginal ?? null,
             // PJe pass-through: enrichmentData com dados extraídos do parser
@@ -919,7 +913,6 @@ export const demandasRouter = router({
   searchAssistidos: protectedProcedure
     .input(z.object({ search: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
-      const { workspaceId } = getWorkspaceScope(ctx.user);
 
       const conditions = [
         isNull(assistidos.deletedAt),
@@ -928,11 +921,6 @@ export const demandasRouter = router({
           sql`${assistidos.cpf} ILIKE ${'%' + input.search + '%'}`
         ),
       ];
-
-      // Filtrar por workspace se disponível
-      if (workspaceId) {
-        conditions.push(eq(assistidos.workspaceId, workspaceId));
-      }
 
       const results = await db
         .select({
@@ -976,13 +964,9 @@ export const demandasRouter = router({
       nomes: z.array(z.string()).max(200),
     }))
     .query(async ({ ctx, input }) => {
-      const { workspaceId } = getWorkspaceScope(ctx.user);
 
-      // 1. Buscar todos assistidos do workspace (1 query)
+      // 1. Buscar todos assistidos (1 query)
       const conditions: any[] = [isNull(assistidos.deletedAt)];
-      if (workspaceId) {
-        conditions.push(eq(assistidos.workspaceId, workspaceId));
-      }
 
       const todosAssistidos = await db
         .select({
@@ -1048,7 +1032,6 @@ export const demandasRouter = router({
   searchProcessos: protectedProcedure
     .input(z.object({ search: z.string().min(1), assistidoId: z.number().optional() }))
     .query(async ({ ctx, input }) => {
-      const { workspaceId } = getWorkspaceScope(ctx.user);
 
       const conditions: any[] = [
         isNull(processos.deletedAt),
@@ -1058,11 +1041,6 @@ export const demandasRouter = router({
       // Filtrar por assistido se fornecido
       if (input.assistidoId) {
         conditions.push(eq(processos.assistidoId, input.assistidoId));
-      }
-
-      // Filtrar por workspace se disponível
-      if (workspaceId) {
-        conditions.push(eq(processos.workspaceId, workspaceId));
       }
 
       const results = await db

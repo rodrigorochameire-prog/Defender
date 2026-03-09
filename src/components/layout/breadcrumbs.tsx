@@ -29,7 +29,6 @@ const ROUTE_LABELS: Record<string, string> = {
   settings: "Configurações",
   usuarios: "Usuários",
   relatorios: "Relatórios",
-  workspaces: "Workspaces",
   novo: "Novo",
   editar: "Editar",
   chat: "Chat",

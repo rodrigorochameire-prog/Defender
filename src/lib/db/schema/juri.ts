@@ -20,7 +20,7 @@ import {
   tendenciaVotoEnum,
   nivelConfiancaEnum,
 } from "./enums";
-import { workspaces, users, processos } from "./core";
+import { users, processos } from "./core";
 import { casos, casePersonas, caseFacts, juriScriptItems, tesesDefensivas, quesitos } from "./casos";
 import { testemunhas } from "./agenda";
 
@@ -33,7 +33,6 @@ export const sessoesJuri = pgTable("sessoes_juri", {
   processoId: integer("processo_id")
     .notNull()
     .references(() => processos.id, { onDelete: "cascade" }),
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
   dataSessao: timestamp("data_sessao").notNull(),
   horario: varchar("horario", { length: 10 }),
   sala: varchar("sala", { length: 50 }),
@@ -65,7 +64,6 @@ export const sessoesJuri = pgTable("sessoes_juri", {
   index("sessoes_juri_data_sessao_idx").on(table.dataSessao),
   index("sessoes_juri_defensor_id_idx").on(table.defensorId),
   index("sessoes_juri_status_idx").on(table.status),
-  index("sessoes_juri_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type SessaoJuri = typeof sessoesJuri.$inferSelect;
@@ -432,7 +430,6 @@ export type InsertRecursoJuri = typeof recursosJuri.$inferInsert;
 // ==========================================
 
 export const sessoesJuriRelations = relations(sessoesJuri, ({ one, many }) => ({
-  workspace: one(workspaces, { fields: [sessoesJuri.workspaceId], references: [workspaces.id] }),
   processo: one(processos, { fields: [sessoesJuri.processoId], references: [processos.id] }),
   defensor: one(users, { fields: [sessoesJuri.defensorId], references: [users.id] }),
   jurados: many(jurados),

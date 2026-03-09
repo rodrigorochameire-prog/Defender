@@ -41,8 +41,6 @@ export const PAGE_ACCESS: Record<string, UserRole[]> = {
   // Configurações - apenas admin e defensores
   "/admin/settings": ["admin", "defensor"],
   "/admin/usuarios": ["admin"],
-  "/admin/workspaces": ["admin"],
-  
   // Casos
   "/admin/casos": ["admin", "defensor", "servidor", "estagiario"],
   

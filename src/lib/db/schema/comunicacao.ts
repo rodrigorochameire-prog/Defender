@@ -12,7 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { chatMessageTypeEnum } from "./enums";
-import { workspaces, users, processos, assistidos, demandas } from "./core";
+import { users, processos, assistidos, demandas } from "./core";
 
 // ==========================================
 // NOTIFICAÇÕES
@@ -136,7 +136,6 @@ export type InsertWhatsAppMessage = typeof whatsappMessages.$inferInsert;
 
 export const evolutionConfig = pgTable("evolution_config", {
   id: serial("id").primaryKey(),
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
 
   // Configuração da instância
   instanceName: varchar("instance_name", { length: 100 }).notNull().unique(),
@@ -164,7 +163,6 @@ export const evolutionConfig = pgTable("evolution_config", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
   index("evolution_config_instance_name_idx").on(table.instanceName),
-  index("evolution_config_workspace_id_idx").on(table.workspaceId),
   index("evolution_config_status_idx").on(table.status),
 ]);
 
@@ -261,7 +259,6 @@ export type InsertWhatsAppChatMessage = typeof whatsappChatMessages.$inferInsert
 
 export const plaudConfig = pgTable("plaud_config", {
   id: serial("id").primaryKey(),
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
 
   // Configuração da API
   apiKey: text("api_key"),
@@ -291,7 +288,6 @@ export const plaudConfig = pgTable("plaud_config", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
-  index("plaud_config_workspace_id_idx").on(table.workspaceId),
   index("plaud_config_device_id_idx").on(table.deviceId),
   index("plaud_config_is_active_idx").on(table.isActive),
 ]);
@@ -375,7 +371,6 @@ export const whatsappMessagesRelations = relations(whatsappMessages, ({ one }) =
 }));
 
 export const evolutionConfigRelations = relations(evolutionConfig, ({ one, many }) => ({
-  workspace: one(workspaces, { fields: [evolutionConfig.workspaceId], references: [workspaces.id] }),
   createdBy: one(users, { fields: [evolutionConfig.createdById], references: [users.id] }),
   contacts: many(whatsappContacts),
 }));
@@ -391,7 +386,6 @@ export const whatsappChatMessagesRelations = relations(whatsappChatMessages, ({ 
 }));
 
 export const plaudConfigRelations = relations(plaudConfig, ({ one, many }) => ({
-  workspace: one(workspaces, { fields: [plaudConfig.workspaceId], references: [workspaces.id] }),
   createdBy: one(users, { fields: [plaudConfig.createdById], references: [users.id] }),
   recordings: many(plaudRecordings),
 }));

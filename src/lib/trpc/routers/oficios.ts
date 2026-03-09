@@ -328,7 +328,6 @@ export const oficiosRouter = router({
             status: "rascunho" as const,
             versao: 1,
           },
-          workspaceId: ctx.session?.user?.workspaceId ?? undefined,
           createdById: ctx.session?.user?.id ? Number(ctx.session.user.id) : undefined,
         })
         .returning();
@@ -554,7 +553,6 @@ export const oficiosRouter = router({
             status: "rascunho" as const,
             versao: 1,
           },
-          workspaceId: ctx.session?.user?.workspaceId ?? undefined,
           createdById: ctx.session?.user?.id ? Number(ctx.session.user.id) : undefined,
         })
         .returning();

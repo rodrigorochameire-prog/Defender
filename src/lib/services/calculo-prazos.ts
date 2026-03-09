@@ -44,7 +44,6 @@ export interface ParametrosCalculo {
   estado?: string; // BA, SP, etc (para feriados estaduais)
   comarca?: string; // Para feriados municipais
   tribunal?: string; // STF, STJ, TJBA
-  workspaceId?: number;
 }
 
 export interface ResultadoCalculo {
@@ -204,7 +203,6 @@ async function getFeriados(
     estado?: string;
     comarca?: string;
     tribunal?: string;
-    workspaceId?: number;
   }
 ): Promise<Map<string, { data: Date; nome: string }>> {
   const feriadosMap = new Map<string, { data: Date; nome: string }>();
@@ -456,7 +454,6 @@ export async function calcularPrazo(
     estado: params.estado,
     comarca: params.comarca,
     tribunal: params.tribunal,
-    workspaceId: params.workspaceId,
   });
 
   // 8. Calcular termo final
@@ -515,7 +512,7 @@ export async function salvarCalculoPrazo(
   demandaId: number,
   resultado: ResultadoCalculo,
   tipoPrazoCodigo?: string,
-  workspaceId?: number,
+  _deprecated?: number,
   userId?: number
 ): Promise<void> {
   const calculoData: InsertCalculoPrazo = {
@@ -534,7 +531,6 @@ export async function salvarCalculoPrazo(
     tempoLeituraAplicado: resultado.tempoLeituraAplicado,
     observacoes: resultado.alertas.join("\n"),
     calculoManual: false,
-    workspaceId,
     calculadoPorId: userId,
   };
 
@@ -563,7 +559,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "MANIFESTACAO",
     fase: "INSTRUCAO",
     isActive: true,
-    workspaceId: null,
   },
   {
     codigo: "ALEGACOES_FINAIS_MEMORIAIS",
@@ -578,7 +573,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "MANIFESTACAO",
     fase: "INSTRUCAO",
     isActive: true,
-    workspaceId: null,
   },
   {
     codigo: "ALEGACOES_FINAIS_JURI",
@@ -593,7 +587,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "MANIFESTACAO",
     fase: "INSTRUCAO",
     isActive: true,
-    workspaceId: null,
   },
 
   // CRIMINAL - RECURSOS
@@ -610,7 +603,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "RECURSO",
     fase: "RECURSO",
     isActive: true,
-    workspaceId: null,
   },
   {
     codigo: "RAZOES_APELACAO",
@@ -625,7 +617,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "RECURSO",
     fase: "RECURSO",
     isActive: true,
-    workspaceId: null,
   },
   {
     codigo: "CONTRARRAZOES_APELACAO",
@@ -640,7 +631,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "RECURSO",
     fase: "RECURSO",
     isActive: true,
-    workspaceId: null,
   },
   {
     codigo: "RESE",
@@ -655,7 +645,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "RECURSO",
     fase: "RECURSO",
     isActive: true,
-    workspaceId: null,
   },
   {
     codigo: "RAZOES_RESE",
@@ -670,7 +659,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "RECURSO",
     fase: "RECURSO",
     isActive: true,
-    workspaceId: null,
   },
   {
     codigo: "AGRAVO_EXECUCAO",
@@ -685,7 +673,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "RECURSO",
     fase: "EXECUCAO",
     isActive: true,
-    workspaceId: null,
   },
   {
     codigo: "EMBARGOS_DECLARACAO",
@@ -700,7 +687,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "RECURSO",
     fase: "RECURSO",
     isActive: true,
-    workspaceId: null,
   },
   {
     codigo: "RESP",
@@ -715,7 +701,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "RECURSO",
     fase: "RECURSO",
     isActive: true,
-    workspaceId: null,
   },
   {
     codigo: "RE",
@@ -730,7 +715,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "RECURSO",
     fase: "RECURSO",
     isActive: true,
-    workspaceId: null,
   },
   {
     codigo: "AGRAVO_RESP_RE",
@@ -745,7 +729,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "RECURSO",
     fase: "RECURSO",
     isActive: true,
-    workspaceId: null,
   },
 
   // HABEAS CORPUS
@@ -762,7 +745,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "PETICAO",
     fase: "INSTRUCAO",
     isActive: true,
-    workspaceId: null,
   },
 
   // EXECUÇÃO PENAL
@@ -779,7 +761,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "PETICAO",
     fase: "EXECUCAO",
     isActive: true,
-    workspaceId: null,
   },
   {
     codigo: "PEDIDO_LIVRAMENTO",
@@ -794,7 +775,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "PETICAO",
     fase: "EXECUCAO",
     isActive: true,
-    workspaceId: null,
   },
 
   // JÚRI
@@ -811,7 +791,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "RECURSO",
     fase: "INSTRUCAO",
     isActive: true,
-    workspaceId: null,
   },
   {
     codigo: "APELACAO_JURI",
@@ -826,7 +805,6 @@ export const TIPOS_PRAZO_PADRAO: Array<Omit<TipoPrazo, "id" | "createdAt" | "upd
     categoria: "RECURSO",
     fase: "RECURSO",
     isActive: true,
-    workspaceId: null,
   },
 ];
 

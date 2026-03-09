@@ -2,7 +2,6 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { sql, SQL } from "drizzle-orm";
-import { getWorkspaceScope } from "../workspace";
 
 // ==========================================
 // FILTROS COMPARTILHADOS
@@ -97,7 +96,6 @@ export const juriAnalyticsRouter = router({
   panorama: protectedProcedure
     .input(filtrosInput)
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const where = buildWhereClause(input);
       const periodoAnterior = calcPeriodoAnterior(input?.periodoInicio, input?.periodoFim);
@@ -146,7 +144,6 @@ export const juriAnalyticsRouter = router({
   timeline: protectedProcedure
     .input(filtrosInput)
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const where = buildWhereClause(input);
 
@@ -180,7 +177,6 @@ export const juriAnalyticsRouter = router({
   porTipoPenal: protectedProcedure
     .input(filtrosInput)
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const where = buildWhereClause(input);
 
@@ -217,7 +213,6 @@ export const juriAnalyticsRouter = router({
   porTese: protectedProcedure
     .input(filtrosInput)
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const where = buildWhereClause(input);
 
@@ -252,7 +247,6 @@ export const juriAnalyticsRouter = router({
   porDuracao: protectedProcedure
     .input(filtrosInput)
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const where = buildWhereClause(input);
 
@@ -302,7 +296,6 @@ export const juriAnalyticsRouter = router({
   porPerfil: protectedProcedure
     .input(filtrosInput)
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const where = buildWhereClause(input);
 
@@ -369,7 +362,6 @@ export const juriAnalyticsRouter = router({
   atores: protectedProcedure
     .input(filtrosInput)
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const where = buildWhereClause(input);
 
@@ -456,7 +448,6 @@ export const juriAnalyticsRouter = router({
   insightsCruzados: protectedProcedure
     .input(filtrosInput)
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const where = buildWhereClause(input);
       const insights: Array<{ insight: string; confianca: number; n: number }> = [];

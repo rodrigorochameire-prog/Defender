@@ -29,11 +29,6 @@ import {
   type ParametrosCalculo,
 } from "@/lib/services/calculo-prazos";
 
-// Helper para obter workspace scope
-function getWorkspaceScope(user: { workspaceId?: number | null }) {
-  return user.workspaceId ? { workspaceId: user.workspaceId } : {};
-}
-
 export const prazosRouter = router({
   // ==========================================
   // TIPOS DE PRAZO
@@ -55,14 +50,6 @@ export const prazosRouter = router({
     .query(async ({ ctx, input }) => {
       const filters = input || {};
       const conditions: any[] = [];
-
-      // Workspace: tipos globais (null) ou do workspace
-      conditions.push(
-        or(
-          isNull(tipoPrazos.workspaceId),
-          eq(tipoPrazos.workspaceId, ctx.user.workspaceId || 0)
-        )
-      );
 
       if (filters.apenasAtivos) {
         conditions.push(eq(tipoPrazos.isActive, true));
@@ -165,7 +152,6 @@ export const prazosRouter = router({
         .insert(tipoPrazos)
         .values({
           ...input,
-          workspaceId: ctx.user.workspaceId,
         })
         .returning();
 
@@ -249,14 +235,6 @@ export const prazosRouter = router({
       const filters = input || {};
       const conditions: any[] = [];
 
-      // Workspace: feriados globais (null) ou do workspace
-      conditions.push(
-        or(
-          isNull(feriadosForenses.workspaceId),
-          eq(feriadosForenses.workspaceId, ctx.user.workspaceId || 0)
-        )
-      );
-
       if (filters.ano) {
         conditions.push(
           sql`EXTRACT(YEAR FROM ${feriadosForenses.data}) = ${filters.ano}`
@@ -313,7 +291,6 @@ export const prazosRouter = router({
         .insert(feriadosForenses)
         .values({
           ...input,
-          workspaceId: ctx.user.workspaceId,
         })
         .returning();
 
@@ -408,7 +385,6 @@ export const prazosRouter = router({
         estado: input.estado || "BA",
         comarca: input.comarca,
         tribunal: input.tribunal,
-        workspaceId: ctx.user.workspaceId || undefined,
       };
 
       const resultado = await calcularPrazo(params);
@@ -419,7 +395,7 @@ export const prazosRouter = router({
           input.demandaId,
           resultado,
           input.tipoPrazoCodigo,
-          ctx.user.workspaceId || undefined,
+          undefined,
           ctx.user.id
         );
       }
@@ -476,12 +452,6 @@ export const prazosRouter = router({
       dataLimite.setDate(dataLimite.getDate() + (filters.diasAFrente || 7));
 
       const conditions: any[] = [];
-
-      // Workspace
-      const workspaceScope = getWorkspaceScope(ctx.user);
-      if (workspaceScope.workspaceId) {
-        conditions.push(eq(demandas.workspaceId, workspaceScope.workspaceId));
-      }
 
       // Prazo não nulo
       conditions.push(sql`${demandas.prazo} IS NOT NULL`);
@@ -587,11 +557,6 @@ export const prazosRouter = router({
         isNull(demandas.deletedAt),
         sql`${demandas.status} NOT IN ('CONCLUIDO', 'ARQUIVADO')`,
       ];
-
-      const workspaceScope = getWorkspaceScope(ctx.user);
-      if (workspaceScope.workspaceId) {
-        conditions.push(eq(demandas.workspaceId, workspaceScope.workspaceId));
-      }
 
       if (input?.defensorId) {
         conditions.push(

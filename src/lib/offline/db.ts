@@ -24,7 +24,6 @@ export interface OfflineAssistido {
   deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  workspaceId: number | null;
 }
 
 export interface OfflineProcesso {
@@ -48,7 +47,6 @@ export interface OfflineProcesso {
   deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  workspaceId: number | null;
 }
 
 export interface OfflineDemanda {
@@ -73,7 +71,6 @@ export interface OfflineDemanda {
   deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  workspaceId: number | null;
 }
 
 export interface OfflineAtendimento {
@@ -93,7 +90,6 @@ export interface OfflineAtendimento {
   atendidoPorId: number | null;
   createdAt: string;
   updatedAt: string;
-  workspaceId: number | null;
 }
 
 export interface OfflineCaso {
@@ -109,7 +105,6 @@ export interface OfflineCaso {
   deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  workspaceId: number | null;
 }
 
 export interface SyncQueueItem {
@@ -157,11 +152,11 @@ class OfflineDatabase extends Dexie {
     super("ombuds-offline");
 
     this.version(1).stores({
-      assistidos: "id, nome, cpf, updatedAt, workspaceId, defensorId, deletedAt",
-      processos: "id, assistidoId, numeroAutos, updatedAt, workspaceId, deletedAt",
-      demandas: "id, assistidoId, processoId, prazo, status, updatedAt, workspaceId, deletedAt",
-      atendimentos: "id, assistidoId, processoId, dataAtendimento, updatedAt, workspaceId",
-      casos: "id, titulo, updatedAt, workspaceId, deletedAt",
+      assistidos: "id, nome, cpf, updatedAt, defensorId, deletedAt",
+      processos: "id, assistidoId, numeroAutos, updatedAt, deletedAt",
+      demandas: "id, assistidoId, processoId, prazo, status, updatedAt, deletedAt",
+      atendimentos: "id, assistidoId, processoId, dataAtendimento, updatedAt",
+      casos: "id, titulo, updatedAt, deletedAt",
       syncQueue: "++id, table, operation, recordId, status, createdAt",
       conflictQueue: "++id, table, recordId, resolvedAt",
       syncMeta: "key",

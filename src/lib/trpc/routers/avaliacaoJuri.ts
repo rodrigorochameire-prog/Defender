@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { router, protectedProcedure, publicProcedure } from "../init";
+import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import {
   avaliacoesJuri,
@@ -938,7 +938,7 @@ export const avaliacaoJuriRouter = router({
   // ==========================================
 
   // Listar sessões pendentes de registro completo
-  registroPendentes: publicProcedure.query(async () => {
+  registroPendentes: protectedProcedure.query(async () => {
     const pendentes = await db.query.sessoesJuri.findMany({
       where: and(
         eq(sessoesJuri.status, "realizada"),
@@ -955,7 +955,7 @@ export const avaliacaoJuriRouter = router({
   }),
 
   // Buscar registro completo de uma sessão (sessão + dosimetria + documentos + quesitos)
-  getRegistro: publicProcedure
+  getRegistro: protectedProcedure
     .input(z.object({ sessaoJuriId: z.number() }))
     .query(async ({ input }) => {
       const sessao = await db.query.sessoesJuri.findFirst({
@@ -984,7 +984,7 @@ export const avaliacaoJuriRouter = router({
     }),
 
   // Upload de documento do júri (quesitos, sentença, ata)
-  uploadDocumento: publicProcedure
+  uploadDocumento: protectedProcedure
     .input(
       z.object({
         sessaoJuriId: z.number(),
@@ -1009,7 +1009,7 @@ export const avaliacaoJuriRouter = router({
     }),
 
   // Processar documento via enrichment engine (extração de dados por IA)
-  processarDocumento: publicProcedure
+  processarDocumento: protectedProcedure
     .input(z.object({ documentoId: z.number() }))
     .mutation(async ({ input }) => {
       const doc = await db.query.documentosJuri.findFirst({
@@ -1071,7 +1071,7 @@ export const avaliacaoJuriRouter = router({
     }),
 
   // Salvar registro completo pós-júri (contexto + dosimetria + quesitos)
-  salvarRegistro: publicProcedure
+  salvarRegistro: protectedProcedure
     .input(
       z.object({
         sessaoJuriId: z.number(),

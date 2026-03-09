@@ -3,7 +3,6 @@ import { router, protectedProcedure } from "../init";
 import { db, withTransaction, audiencias, processos, assistidos, sessoesJuri } from "@/lib/db";
 import { eq, and, gte, desc, asc, isNull, or, sql, ilike, inArray } from "drizzle-orm";
 import { addDays } from "date-fns";
-import { getWorkspaceScope } from "../workspace";
 
 export const audienciasRouter = router({
   // Listar audiências
@@ -326,10 +325,6 @@ export const audienciasRouter = router({
     .mutation(async ({ ctx, input }) => {
       const { eventos } = input;
 
-      // Obter workspaceId do usuário (ou usar 1 como padrão)
-      const { workspaceId } = getWorkspaceScope(ctx.user);
-      const targetWorkspaceId = workspaceId || 1;
-
       // Mapear atribuição para o enum do banco de dados
       // Valores válidos: JURI_CAMACARI, VVD_CAMACARI, EXECUCAO_PENAL, SUBSTITUICAO, SUBSTITUICAO_CIVEL, GRUPO_JURI
       const mapAtribuicao = (atrib: string | undefined): "VVD_CAMACARI" | "JURI_CAMACARI" | "EXECUCAO_PENAL" | "SUBSTITUICAO" | "SUBSTITUICAO_CIVEL" | "GRUPO_JURI" => {
@@ -598,7 +593,6 @@ export const audienciasRouter = router({
                   cpf: primeiroAssistido.cpf || null,
                   statusPrisional: "SOLTO",
                   atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as any,
-                  workspaceId: targetWorkspaceId,
                 })
                 .returning({ id: assistidos.id });
 
@@ -644,7 +638,6 @@ export const audienciasRouter = router({
                   nome: nomeFormatado,
                   statusPrisional: "SOLTO",
                   atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as any,
-                  workspaceId: targetWorkspaceId,
                 })
                 .returning({ id: assistidos.id });
 
@@ -708,7 +701,6 @@ export const audienciasRouter = router({
                 area: areaEnum as any,
                 classeProcessual: evento.classeJudicial || "Não informado",
                 vara: evento.orgaoJulgador || "Não informado",
-                workspaceId: targetWorkspaceId as number,
               })
               .returning({ id: processos.id });
 
@@ -746,7 +738,6 @@ export const audienciasRouter = router({
                 status: evento.status === "cancelado" ? "CANCELADA" :
                        evento.status === "remarcado" ? "ADIADA" : "AGENDADA",
                 observacoes: evento.descricao,
-                workspaceId: targetWorkspaceId,
               })
               .returning({ id: sessoesJuri.id });
 
@@ -772,7 +763,6 @@ export const audienciasRouter = router({
                 status: evento.status === "confirmado" ? "agendada" :
                        evento.status === "cancelado" ? "cancelada" :
                        evento.status === "remarcado" ? "reagendada" : "agendada",
-                workspaceId: targetWorkspaceId,
               })
               .returning({ id: audiencias.id });
 

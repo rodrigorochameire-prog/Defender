@@ -349,7 +349,6 @@ export const UTILITIES_MENU: MenuSection[] = [
       { label: "Preview Perfis", path: "/admin/preview-perfis", icon: "UserCheck", description: "Visualizar dashboards por perfil", requiredRoles: ["admin"] },
       { label: "Configurações", path: "/admin/settings", icon: "Settings", requiredRoles: ["admin", "defensor"] },
       { label: "Banco de Dados", path: "/admin/settings/dados", icon: "FolderOpen", description: "Monitor e gestão de dados", requiredRoles: ["admin", "defensor"] },
-      { label: "Workspaces", path: "/admin/workspaces", icon: "Building2", description: "Acessos e universos de dados", requiredRoles: ["admin"] },
       { label: "Relatórios", path: "/admin/relatorios", icon: "BarChart3", requiredRoles: ["admin", "defensor"] },
     ],
     collapsible: true,

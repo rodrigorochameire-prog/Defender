@@ -4,7 +4,6 @@ import { db } from "@/lib/db";
 import { assistidos, processos, demandas, audiencias, documentos, movimentacoes, anotacoes, driveFiles, assistidosProcessos, users } from "@/lib/db/schema";
 import { eq, ilike, or, desc, sql, and, isNull, inArray, asc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { getWorkspaceScope, resolveWorkspaceId } from "../workspace";
 import { uploadImageBuffer } from "@/lib/supabase/storage";
 
 // Drive lifecycle: cria ou move pasta em background (fire-and-forget)
@@ -72,7 +71,7 @@ export const assistidosRouter = router({
     .query(async ({ ctx, input }) => {
       const { search, statusPrisional, atribuicaoPrimaria, limit = 50, offset = 0 } = input || {};
       // Assistidos são compartilhados - não filtrar por workspace
-      getWorkspaceScope(ctx.user); // Apenas para validar autenticação
+
       
       // Construir condições (assistidos não tem soft delete)
       const conditions: ReturnType<typeof eq>[] = [];
@@ -265,7 +264,6 @@ export const assistidosRouter = router({
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
-      const workspaceId = ctx.user.workspaceId;
 
       const [baseRows, processosRows, audienciasRows, demandasRows, driveFilesRows] =
         await Promise.all([
@@ -273,11 +271,7 @@ export const assistidosRouter = router({
           db
             .select()
             .from(assistidos)
-            .where(
-              workspaceId
-                ? and(eq(assistidos.id, input.id), eq(assistidos.workspaceId, workspaceId))
-                : eq(assistidos.id, input.id),
-            )
+            .where(eq(assistidos.id, input.id))
             .limit(1),
 
           // Processos vinculados via assistidos_processos
@@ -397,7 +391,6 @@ export const assistidosRouter = router({
         endereco: z.string().optional(),
         observacoes: z.string().optional(),
         defensorId: z.number().optional(),
-        workspaceId: z.number().optional(),
         atribuicaoPrimaria: z.enum([
           "JURI_CAMACARI", "VVD_CAMACARI", "EXECUCAO_PENAL",
           "SUBSTITUICAO", "SUBSTITUICAO_CIVEL", "GRUPO_JURI"
@@ -406,14 +399,6 @@ export const assistidosRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const workspaceId = resolveWorkspaceId(ctx.user, input.workspaceId);
-
-      if (!workspaceId) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Defina um workspace para criar o assistido.",
-        });
-      }
 
       // Verificar se já existe assistido com mesmo CPF
       if (input.cpf) {
@@ -482,7 +467,6 @@ export const assistidosRouter = router({
           endereco: input.endereco || null,
           observacoes: input.observacoes || null,
           defensorId: input.defensorId || ctx.user.id,
-          workspaceId,
           atribuicaoPrimaria: input.atribuicaoPrimaria || "SUBSTITUICAO",
           driveFolderId: input.driveFolderId || null,
         })
@@ -507,7 +491,7 @@ export const assistidosRouter = router({
       cpf: z.string().optional(),
     }))
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user); // Validar autenticação
+
       
       const normalizarNome = (nome: string): string => {
         return nome
@@ -634,7 +618,7 @@ export const assistidosRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
 
       // Buscar estado anterior para detectar mudança de atribuição
       let oldAssistido: { atribuicaoPrimaria: string | null; driveFolderId: string | null; nome: string } | null = null;
@@ -666,7 +650,7 @@ export const assistidosRouter = router({
         .where(
           isAdmin
             ? eq(assistidos.id, id)
-            : and(eq(assistidos.id, id), workspaceId ? eq(assistidos.workspaceId, workspaceId as number) : undefined)
+            : eq(assistidos.id, id)
         )
         .returning();
 
@@ -827,7 +811,7 @@ export const assistidosRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
 
       const [excluido] = await db
         .update(assistidos)
@@ -835,7 +819,7 @@ export const assistidosRouter = router({
         .where(
           isAdmin
             ? eq(assistidos.id, input.id)
-            : and(eq(assistidos.id, input.id), workspaceId ? eq(assistidos.workspaceId, workspaceId as number) : undefined)
+            : eq(assistidos.id, input.id)
         )
         .returning();
       
@@ -846,7 +830,7 @@ export const assistidosRouter = router({
   getProcessos: protectedProcedure
     .input(z.object({ assistidoId: z.number() }))
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user); // Validar autenticação
+
       
       const result = await db
         .select({
@@ -874,7 +858,6 @@ export const assistidosRouter = router({
   getAudiencias: protectedProcedure
     .input(z.object({ assistidoId: z.number() }))
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
       
       const result = await db
         .select({
@@ -902,7 +885,6 @@ export const assistidosRouter = router({
   getDemandas: protectedProcedure
     .input(z.object({ assistidoId: z.number() }))
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
       
       const result = await db
         .select({
@@ -930,12 +912,9 @@ export const assistidosRouter = router({
 
   // Estatísticas
   stats: protectedProcedure.query(async ({ ctx }) => {
-    const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+    const isAdmin = ctx.user.role === "admin";
     const baseConditions = [isNull(assistidos.deletedAt)];
 
-    if (!isAdmin && workspaceId) {
-      baseConditions.push(eq(assistidos.workspaceId, workspaceId as number));
-    }
 
     const total = await db
       .select({ count: sql<number>`count(*)::int` })
@@ -986,14 +965,14 @@ export const assistidosRouter = router({
   listTimeline: protectedProcedure
     .input(z.object({ assistidoId: z.number() }))
     .query(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
       const assistidoScope = await db
         .select({ id: assistidos.id })
         .from(assistidos)
         .where(
           isAdmin
             ? eq(assistidos.id, input.assistidoId)
-            : and(eq(assistidos.id, input.assistidoId), eq(assistidos.workspaceId, workspaceId as number))
+            : eq(assistidos.id, input.assistidoId)
         );
 
       if (assistidoScope.length === 0) {

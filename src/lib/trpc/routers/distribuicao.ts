@@ -9,7 +9,6 @@ import {
 } from "@/lib/db/schema";
 import { eq, and, desc, ilike, or, sql, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { getWorkspaceScope } from "../workspace";
 import {
   listDistributionPendingFiles,
   distributeFileComplete,
@@ -36,7 +35,6 @@ import {
 export const distribuicaoRouter = router({
   // Listar arquivos pendentes na pasta de distribuição
   listPending: protectedProcedure.query(async ({ ctx }) => {
-    getWorkspaceScope(ctx.user);
 
     const files = await listDistributionPendingFiles();
 
@@ -56,7 +54,6 @@ export const distribuicaoRouter = router({
   extractData: protectedProcedure
     .input(z.object({ fileId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       // Verificar se Gemini está configurado
       if (!isGeminiConfigured()) {
@@ -193,7 +190,6 @@ export const distribuicaoRouter = router({
       })
     )
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const nomeNormalizado = normalizeName(input.nome);
       const partes = nomeNormalizado.split(" ").filter((p) => p.length > 0);
@@ -278,7 +274,6 @@ export const distribuicaoRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { workspaceId } = getWorkspaceScope(ctx.user);
 
       let assistidoId = input.assistidoId;
       let assistidoNome = input.assistidoNome;
@@ -299,7 +294,6 @@ export const distribuicaoRouter = router({
                     ? "EXECUCAO_PENAL"
                     : "SUBSTITUICAO",
             defensorId: ctx.user.id,
-            workspaceId: workspaceId || 1,
           })
           .returning();
 
@@ -359,7 +353,6 @@ export const distribuicaoRouter = router({
         destinationFolderId: result.processoFolder?.id || null,
         status: "completed",
         processedAt: new Date(),
-        workspaceId: workspaceId || 1,
       });
 
       // SISTEMA DE APRENDIZADO: Salvar padrão se houve correção
@@ -393,7 +386,6 @@ export const distribuicaoRouter = router({
               patternType: "orgao",
               originalValue: input.orgaoOriginal,
               correctAtribuicao: input.atribuicao as any,
-              workspaceId: workspaceId || 1,
               createdBy: ctx.user.id,
             });
           }
@@ -431,13 +423,9 @@ export const distribuicaoRouter = router({
       })
     )
     .query(async ({ ctx, input }) => {
-      const { workspaceId, isAdmin } = getWorkspaceScope(ctx.user);
+      const isAdmin = ctx.user.role === "admin";
 
       const conditions = [];
-
-      if (!isAdmin && workspaceId) {
-        conditions.push(eq(distributionHistory.workspaceId, workspaceId));
-      }
 
       if (input.status) {
         conditions.push(eq(distributionHistory.status, input.status));
@@ -465,7 +453,6 @@ export const distribuicaoRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { workspaceId } = getWorkspaceScope(ctx.user);
 
       // Verificar se já existe
       const [existing] = await db
@@ -501,7 +488,6 @@ export const distribuicaoRouter = router({
           originalValue: input.originalValue,
           correctedValue: input.correctedValue,
           correctAtribuicao: input.correctAtribuicao as any,
-          workspaceId: workspaceId || 1,
           createdBy: ctx.user.id,
         })
         .returning();
@@ -517,7 +503,6 @@ export const distribuicaoRouter = router({
       })
     )
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const conditions = [];
 
@@ -540,7 +525,6 @@ export const distribuicaoRouter = router({
       })
     )
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       // Normalizar número do processo (remover caracteres especiais para busca)
       const numeroNormalizado = input.numeroProcesso.replace(/[^0-9]/g, "");
@@ -593,7 +577,6 @@ export const distribuicaoRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { workspaceId } = getWorkspaceScope(ctx.user);
 
       // Buscar processo e assistido
       const [processo] = await db
@@ -653,7 +636,6 @@ export const distribuicaoRouter = router({
         destinationFolderId: result.processoFolder?.id || null,
         status: "completed",
         processedAt: new Date(),
-        workspaceId: workspaceId || 1,
       });
 
       return {
@@ -672,7 +654,6 @@ export const distribuicaoRouter = router({
       })
     )
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const avulsos = await listProcessosAvulsos(input.assistidoFolderId);
       return avulsos.map((p) => ({
@@ -693,7 +674,6 @@ export const distribuicaoRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       const result = await moveProcessoToAp(
         input.processoFolderId,
@@ -725,7 +705,6 @@ export const distribuicaoRouter = router({
       })
     )
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user);
 
       // Importar função de listar subpastas
       const { listSubfolders } = await import("@/lib/services/google-drive");

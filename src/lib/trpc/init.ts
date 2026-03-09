@@ -11,7 +11,7 @@ import type { User } from "@/lib/db/schema";
 /**
  * Roles disponíveis no sistema
  */
-export type UserRole = "admin" | "defensor" | "estagiario" | "servidor";
+export type UserRole = "admin" | "defensor" | "estagiario" | "servidor" | "triagem";
 
 /**
  * Status de aprovação

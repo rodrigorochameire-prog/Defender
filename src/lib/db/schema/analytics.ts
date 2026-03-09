@@ -13,7 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { atribuicaoEnum, analysisTypeEnum, tipoAnaliseIAEnum } from "./enums";
-import { workspaces, users, processos, assistidos } from "./core";
+import { users, processos, assistidos } from "./core";
 import { casos } from "./casos";
 import { pecasProcessuais } from "./documentos";
 

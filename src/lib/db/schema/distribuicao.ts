@@ -11,7 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { atribuicaoEnum, patternTypeEnum } from "./enums";
-import { workspaces, users, processos, assistidos } from "./core";
+import { users, processos, assistidos } from "./core";
 
 // ==========================================
 // SISTEMA DE DISTRIBUICAO AUTOMATICA
@@ -44,7 +44,6 @@ export const extractionPatterns = pgTable("extraction_patterns", {
   timesUsed: integer("times_used").default(1).notNull(),
 
   // Workspace
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
 
   // Quem criou
   createdBy: integer("created_by").references(() => users.id),
@@ -55,7 +54,6 @@ export const extractionPatterns = pgTable("extraction_patterns", {
 }, (table) => [
   index("extraction_patterns_type_idx").on(table.patternType),
   index("extraction_patterns_original_value_idx").on(table.originalValue),
-  index("extraction_patterns_workspace_id_idx").on(table.workspaceId),
   uniqueIndex("extraction_patterns_unique_idx").on(table.patternType, table.originalValue),
 ]);
 
@@ -98,7 +96,6 @@ export const distributionHistory = pgTable("distribution_history", {
   correctedBy: integer("corrected_by").references(() => users.id),
 
   // Workspace
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
 
   // Metadados
   processedAt: timestamp("processed_at"),
@@ -109,7 +106,6 @@ export const distributionHistory = pgTable("distribution_history", {
   index("distribution_history_assistido_id_idx").on(table.assistidoId),
   index("distribution_history_processo_id_idx").on(table.processoId),
   index("distribution_history_status_idx").on(table.status),
-  index("distribution_history_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type DistributionHistory = typeof distributionHistory.$inferSelect;
@@ -120,7 +116,6 @@ export type InsertDistributionHistory = typeof distributionHistory.$inferInsert;
 // ==========================================
 
 export const extractionPatternsRelations = relations(extractionPatterns, ({ one }) => ({
-  workspace: one(workspaces, { fields: [extractionPatterns.workspaceId], references: [workspaces.id] }),
   createdByUser: one(users, { fields: [extractionPatterns.createdBy], references: [users.id] }),
 }));
 
@@ -128,5 +123,4 @@ export const distributionHistoryRelations = relations(distributionHistory, ({ on
   assistido: one(assistidos, { fields: [distributionHistory.assistidoId], references: [assistidos.id] }),
   processo: one(processos, { fields: [distributionHistory.processoId], references: [processos.id] }),
   correctedByUser: one(users, { fields: [distributionHistory.correctedBy], references: [users.id] }),
-  workspace: one(workspaces, { fields: [distributionHistory.workspaceId], references: [workspaces.id] }),
 }));

@@ -17,8 +17,6 @@ export const coberturasRouter = router({
   // ==========================================
   listar: protectedProcedure
     .query(async ({ ctx }) => {
-      const workspaceId = ctx.user.workspaceId ?? 0;
-
       const result = await db
         .select({
           id: afastamentos.id,
@@ -31,14 +29,12 @@ export const coberturasRouter = router({
           ativo: afastamentos.ativo,
           acessoDemandas: afastamentos.acessoDemandas,
           acessoEquipe: afastamentos.acessoEquipe,
-          workspaceId: afastamentos.workspaceId,
           createdAt: afastamentos.createdAt,
           updatedAt: afastamentos.updatedAt,
           defensorNome: sql<string>`(SELECT name FROM users WHERE id = ${afastamentos.defensorId})`.as('defensor_nome'),
           substitutoNome: sql<string>`(SELECT name FROM users WHERE id = ${afastamentos.substitutoId})`.as('substituto_nome'),
         })
         .from(afastamentos)
-        .where(eq(afastamentos.workspaceId, workspaceId))
         .orderBy(desc(afastamentos.dataInicio))
         .limit(50);
 
@@ -69,7 +65,6 @@ export const coberturasRouter = router({
           ativo: true,
           acessoDemandas: true,
           acessoEquipe: false,
-          workspaceId: ctx.user.workspaceId || null,
         })
         .returning();
 

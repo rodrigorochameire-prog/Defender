@@ -14,7 +14,6 @@ import {
 } from "@/lib/db/schema";
 import { eq, and, isNull, desc, sql, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { getWorkspaceScope, resolveWorkspaceId } from "../workspace";
 
 // ==========================================
 // SCHEMAS DE VALIDAÇÃO
@@ -104,13 +103,11 @@ export const palacioRouter = router({
       includeDeleted: z.boolean().optional().default(false),
     }))
     .query(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
 
       // Verificar se o caso existe e pertence ao workspace
       const caso = await db.query.casos.findFirst({
         where: and(
           eq(casos.id, input.casoId),
-          eq(casos.workspaceId, workspaceId),
           isNull(casos.deletedAt),
         ),
       });
@@ -151,12 +148,10 @@ export const palacioRouter = router({
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
 
       const diagrama = await db.query.palacioDiagramas.findFirst({
         where: and(
           eq(palacioDiagramas.id, input.id),
-          eq(palacioDiagramas.workspaceId, workspaceId),
           isNull(palacioDiagramas.deletedAt),
         ),
         with: {
@@ -193,14 +188,12 @@ export const palacioRouter = router({
   create: protectedProcedure
     .input(createDiagramaSchema)
     .mutation(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
       const userId = ctx.user.id;
 
       // Verificar se o caso existe
       const caso = await db.query.casos.findFirst({
         where: and(
           eq(casos.id, input.casoId),
-          eq(casos.workspaceId, workspaceId),
           isNull(casos.deletedAt),
         ),
       });
@@ -224,7 +217,6 @@ export const palacioRouter = router({
         ordem: input.ordem ?? 0,
         criadoPorId: parseInt(userId),
         atualizadoPorId: parseInt(userId),
-        workspaceId,
       }).returning();
 
       return diagrama;
@@ -234,7 +226,6 @@ export const palacioRouter = router({
   update: protectedProcedure
     .input(updateDiagramaSchema)
     .mutation(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
       const userId = ctx.user.id;
 
       const { id, ...data } = input;
@@ -243,7 +234,6 @@ export const palacioRouter = router({
       const existing = await db.query.palacioDiagramas.findFirst({
         where: and(
           eq(palacioDiagramas.id, id),
-          eq(palacioDiagramas.workspaceId, workspaceId),
           isNull(palacioDiagramas.deletedAt),
         ),
       });
@@ -271,14 +261,12 @@ export const palacioRouter = router({
   saveExcalidrawData: protectedProcedure
     .input(saveExcalidrawDataSchema)
     .mutation(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
       const userId = ctx.user.id;
 
       // Verificar se o diagrama existe
       const existing = await db.query.palacioDiagramas.findFirst({
         where: and(
           eq(palacioDiagramas.id, input.diagramaId),
-          eq(palacioDiagramas.workspaceId, workspaceId),
           isNull(palacioDiagramas.deletedAt),
         ),
       });
@@ -308,7 +296,6 @@ export const palacioRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
 
       const [deleted] = await db.update(palacioDiagramas)
         .set({
@@ -317,7 +304,6 @@ export const palacioRouter = router({
         })
         .where(and(
           eq(palacioDiagramas.id, input.id),
-          eq(palacioDiagramas.workspaceId, workspaceId),
         ))
         .returning();
 
@@ -335,7 +321,6 @@ export const palacioRouter = router({
   restore: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
 
       const [restored] = await db.update(palacioDiagramas)
         .set({
@@ -344,7 +329,6 @@ export const palacioRouter = router({
         })
         .where(and(
           eq(palacioDiagramas.id, input.id),
-          eq(palacioDiagramas.workspaceId, workspaceId),
         ))
         .returning();
 
@@ -366,13 +350,11 @@ export const palacioRouter = router({
   createElement: protectedProcedure
     .input(createElementoSchema)
     .mutation(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
 
       // Verificar se o diagrama existe
       const diagrama = await db.query.palacioDiagramas.findFirst({
         where: and(
           eq(palacioDiagramas.id, input.diagramaId),
-          eq(palacioDiagramas.workspaceId, workspaceId),
           isNull(palacioDiagramas.deletedAt),
         ),
       });
@@ -508,13 +490,11 @@ export const palacioRouter = router({
   getCaseEntities: protectedProcedure
     .input(z.object({ casoId: z.number() }))
     .query(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
 
       // Verificar se o caso existe
       const caso = await db.query.casos.findFirst({
         where: and(
           eq(casos.id, input.casoId),
-          eq(casos.workspaceId, workspaceId),
           isNull(casos.deletedAt),
         ),
       });
@@ -565,13 +545,11 @@ export const palacioRouter = router({
       formato: z.enum(["obsidian", "standard", "animated"]),
     }))
     .mutation(async ({ ctx, input }) => {
-      const workspaceId = await resolveWorkspaceId(ctx);
       const userId = ctx.user.id;
 
       const diagrama = await db.query.palacioDiagramas.findFirst({
         where: and(
           eq(palacioDiagramas.id, input.diagramaId),
-          eq(palacioDiagramas.workspaceId, workspaceId),
           isNull(palacioDiagramas.deletedAt),
         ),
       });

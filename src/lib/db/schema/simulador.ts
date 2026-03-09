@@ -12,7 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { simulacaoStatusEnum } from "./enums";
-import { workspaces, users } from "./core";
+import { users } from "./core";
 import { casos, casePersonas } from "./casos";
 
 // ==========================================
@@ -76,7 +76,6 @@ export const simulacoes3d = pgTable("simulacoes_3d", {
   // Metadados
   criadoPorId: integer("criado_por_id").references(() => users.id),
   atualizadoPorId: integer("atualizado_por_id").references(() => users.id),
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
 
   // Soft delete
   deletedAt: timestamp("deleted_at"),
@@ -87,7 +86,6 @@ export const simulacoes3d = pgTable("simulacoes_3d", {
   index("simulacoes_3d_caso_id_idx").on(table.casoId),
   index("simulacoes_3d_status_idx").on(table.status),
   index("simulacoes_3d_criado_por_idx").on(table.criadoPorId),
-  index("simulacoes_3d_workspace_id_idx").on(table.workspaceId),
   index("simulacoes_3d_deleted_at_idx").on(table.deletedAt),
 ]);
 
@@ -329,8 +327,7 @@ export const simulacaoAssets = pgTable("simulacao_assets", {
   }>(),
 
   // Disponibilidade
-  publico: boolean("publico").default(false), // Disponivel para todos os workspaces
-  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  publico: boolean("publico").default(false), // Disponivel para todos
 
   // Metadados
   criadoPorId: integer("criado_por_id").references(() => users.id),
@@ -340,7 +337,6 @@ export const simulacaoAssets = pgTable("simulacao_assets", {
   index("simulacao_assets_categoria_idx").on(table.categoria),
   index("simulacao_assets_subcategoria_idx").on(table.subcategoria),
   index("simulacao_assets_publico_idx").on(table.publico),
-  index("simulacao_assets_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type SimulacaoAsset = typeof simulacaoAssets.$inferSelect;
@@ -354,7 +350,6 @@ export const simulacoes3dRelations = relations(simulacoes3d, ({ one, many }) => 
   caso: one(casos, { fields: [simulacoes3d.casoId], references: [casos.id] }),
   criadoPor: one(users, { fields: [simulacoes3d.criadoPorId], references: [users.id] }),
   atualizadoPor: one(users, { fields: [simulacoes3d.atualizadoPorId], references: [users.id] }),
-  workspace: one(workspaces, { fields: [simulacoes3d.workspaceId], references: [workspaces.id] }),
   personagens: many(simulacaoPersonagens),
   objetos: many(simulacaoObjetos),
   versoes: many(simulacaoVersoes),
@@ -389,6 +384,5 @@ export const simulacaoExportacoesRelations = relations(simulacaoExportacoes, ({ 
 }));
 
 export const simulacaoAssetsRelations = relations(simulacaoAssets, ({ one }) => ({
-  workspace: one(workspaces, { fields: [simulacaoAssets.workspaceId], references: [workspaces.id] }),
   criadoPor: one(users, { fields: [simulacaoAssets.criadoPorId], references: [users.id] }),
 }));

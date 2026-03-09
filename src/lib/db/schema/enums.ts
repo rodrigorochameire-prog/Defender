@@ -209,6 +209,25 @@ export const tipoIntimacaoEnum = pgEnum("tipo_intimacao", [
   "CUMPRIMENTO",
 ]);
 
+// VVD - Canal de Entrada
+export const canalEntradaVVDEnum = pgEnum("canal_entrada_vvd", [
+  "audiencia_custodia",
+  "plantao",
+  "vara_vvd",
+  "delegacia",
+  "espontanea",
+  "outro",
+]);
+
+// VVD - Tipo de Relato
+export const tipoRelatoVVDEnum = pgEnum("tipo_relato_vvd", [
+  "versao_do_fato",
+  "negativa_total",
+  "negativa_parcial",
+  "confissao",
+  "sem_contato",
+]);
+
 // Comunicação
 export const chatMessageTypeEnum = pgEnum("chat_message_type", [
   "text",
