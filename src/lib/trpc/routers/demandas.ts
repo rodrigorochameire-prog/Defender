@@ -601,6 +601,12 @@ export const demandasRouter = router({
         "urgente": "URGENTE",
         "resolvido": "CONCLUIDO",
         "arquivado": "ARQUIVADO",
+        // Delegação (tratados como em andamento/preparação)
+        "amanda": "2_ATENDER",
+        "emilly": "2_ATENDER",
+        "taissa": "2_ATENDER",
+        "estágio_-_taissa": "2_ATENDER",
+        "estagio_-_taissa": "2_ATENDER",
       };
 
       // Mapeamento de atribuição para área do processo
@@ -833,12 +839,13 @@ export const demandasRouter = router({
             });
           }
 
-          // 5. Mapear status
-          const dbStatus = STATUS_TO_DB[row.status || "fila"] || "5_FILA";
+          // 5. Mapear status (normalizar para lowercase antes do lookup)
+          const statusKey = (row.status || "fila").toLowerCase().replace(/\s+/g, "_").trim();
+          const dbStatus = STATUS_TO_DB[statusKey] || "5_FILA";
           const reuPreso = row.estadoPrisional === "preso";
 
           // Salvar substatus granular (elaborar, revisar, buscar, etc.) para display
-          const substatus = row.status?.toLowerCase().trim() || null;
+          const substatus = statusKey || null;
 
           if (existingDemanda) {
             // Se atualizarExistentes está ativo, atualizar a demanda existente

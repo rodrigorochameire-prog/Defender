@@ -404,6 +404,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
     const demandas: ParsedDemanda[] = [];
     let linhasIgnoradas = 0;
     let contadorOrdem = 0; // Contador para preservar ordem original da planilha
+    let lastKnownStatus = ""; // Carry-forward de status para linhas de grupo
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -420,12 +421,34 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
       //   Status | Prisão | Data | Assistido | Tipo | Autos | Ato | Prazo | Providências
       //   [0]      [1]      [2]     [3]        [4]    [5]     [6]   [7]      [8]
 
+      // Detectar linhas de cabeçalho de grupo (ex: "7 - Protocolado" sozinho)
+      // Se a linha tem só 1-2 colunas e parece ser um status, salvar como carry-forward
+      const nonEmptyCols = columns.filter(c => c.trim().length > 0);
+      if (nonEmptyCols.length <= 2 && columns[0]?.trim()) {
+        const possibleStatus = columns[0].trim();
+        // Parece status se começa com número + traço ou bate com algum status conhecido
+        if (/^\d+\s*-\s*.+/.test(possibleStatus) || Object.keys(STATUS_MAP).some(k => possibleStatus.toLowerCase().includes(k))) {
+          lastKnownStatus = possibleStatus;
+          linhasIgnoradas++;
+          continue; // É uma linha de grupo/cabeçalho de status
+        }
+      }
+
       const temColunaTipo = columns.length >= 9;
 
-      const statusRaw = columns[0]?.trim() || "";
+      let statusRaw = columns[0]?.trim() || "";
       const estadoPrisionalRaw = columns[1]?.trim() || "";
       const dataRaw = columns[2]?.trim() || "";
       const assistido = columns[3]?.trim() || "";
+
+      // Se o status está vazio mas temos um carry-forward de grupo, usar ele
+      if (!statusRaw && lastKnownStatus) {
+        statusRaw = lastKnownStatus;
+      }
+      // Se a linha tem status, atualizar o carry-forward
+      if (statusRaw) {
+        lastKnownStatus = statusRaw;
+      }
 
       let tipoProcessoRaw: string;
       let processoRaw: string;
