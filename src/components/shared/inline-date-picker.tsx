@@ -38,10 +38,6 @@ function toISODate(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-function formatBRDate(date: Date): string {
-  return date.toLocaleDateString("pt-BR");
-}
-
 export function InlineDatePicker({
   value,
   onChange,
@@ -61,7 +57,7 @@ export function InlineDatePicker({
           data-edit-trigger
           onClick={activateOnDoubleClick && !showEditIcon ? undefined : handleOpen}
           onDoubleClick={activateOnDoubleClick && !showEditIcon ? handleOpen : undefined}
-          className="text-[11px] text-zinc-600 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 transition-colors flex items-center gap-1 whitespace-nowrap group/date"
+          className="text-[11px] text-zinc-600 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 transition-colors flex items-center gap-1 whitespace-nowrap group/date cursor-pointer"
         >
           {value ? (
             <span>{value}</span>
@@ -73,7 +69,12 @@ export function InlineDatePicker({
           }`} />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start" sideOffset={4}>
+      <PopoverContent
+        className="w-auto p-0 rounded-xl shadow-xl border-zinc-200/80 dark:border-zinc-700"
+        align="start"
+        sideOffset={4}
+        collisionPadding={16}
+      >
         <Calendar
           mode="single"
           selected={currentDate}

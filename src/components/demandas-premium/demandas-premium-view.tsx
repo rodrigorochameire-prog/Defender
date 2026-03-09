@@ -1811,7 +1811,14 @@ export default function Demandas() {
               return (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => {
+                    setActiveTab(tab.key);
+                    // Planilha tab always opens in compact mode
+                    if (tab.key === "planilha" && viewMode === "cards") {
+                      setViewMode("compact");
+                      localStorage.setItem("defender_demandas_view_mode", "compact");
+                    }
+                  }}
                   title={tab.label}
                   className={`relative flex items-center gap-1.5 py-1.5 text-xs font-medium transition-all duration-200 cursor-pointer rounded-md ${
                     isActive
