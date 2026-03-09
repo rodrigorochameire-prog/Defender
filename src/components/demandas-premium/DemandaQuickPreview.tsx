@@ -179,12 +179,11 @@ function PipelineStepper({
       <div className="relative flex items-center">
         {/* Background track */}
         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] bg-zinc-200 dark:bg-zinc-700/60 rounded-full" />
-        {/* Filled track */}
+        {/* Filled track (neutral gray — only active node has color) */}
         <div
-          className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] rounded-full transition-all duration-500"
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] rounded-full transition-all duration-500 bg-zinc-300 dark:bg-zinc-600"
           style={{
             width: currentStageIdx >= 0 ? `${(currentStageIdx / (PIPELINE_STAGES.length - 1)) * 100}%` : "0%",
-            backgroundColor: "#84CC9B",
           }}
         />
         {/* Stage nodes */}
@@ -216,11 +215,11 @@ function PipelineStepper({
                         : "w-4 h-4 group-hover/stage:w-5 group-hover/stage:h-5"
                 }`}
                 style={{
-                  backgroundColor: isCompleted ? "#84CC9B" : isActive ? stageColor : isExpanded ? `${stageColor}80` : "#e4e4e7",
+                  backgroundColor: isActive ? stageColor : isCompleted ? "#a1a1aa" : isExpanded ? `${stageColor}80` : "#e4e4e7",
                   ['--tw-ring-color' as any]: (isActive || isExpanded) ? `${stageColor}40` : undefined,
                 }}
               >
-                {isCompleted && <Check className="w-3 h-3 text-white" />}
+                {isCompleted && <Check className="w-3 h-3 text-white/80" />}
                 {isActive && (
                   <div className="w-2 h-2 rounded-full bg-white" />
                 )}
@@ -228,10 +227,10 @@ function PipelineStepper({
               {/* Label */}
               <span
                 className={`mt-1.5 text-[10px] font-medium whitespace-nowrap transition-colors ${
-                  isActive || isExpanded ? "font-bold" : isCompleted ? "" : "text-zinc-400 dark:text-zinc-500"
+                  isActive || isExpanded ? "font-bold" : "text-zinc-400 dark:text-zinc-500"
                 }`}
                 style={{
-                  color: isActive || isExpanded ? stageColor : isCompleted ? "#84CC9B" : undefined,
+                  color: isActive || isExpanded ? stageColor : undefined,
                 }}
               >
                 <span className="hidden sm:inline">{stage.label}</span>
