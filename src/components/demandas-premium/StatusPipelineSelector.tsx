@@ -15,7 +15,7 @@ interface StatusPipelineSelectorProps {
   currentStatus: string;
   onSelect: (status: string) => void;
   onClose: () => void;
-  variant: "dropdown" | "sheet";
+  variant: "dropdown" | "sheet" | "inline";
   /** For dropdown: anchor element to position relative to */
   anchorRef?: React.RefObject<HTMLElement | null>;
 }
@@ -36,8 +36,9 @@ export function StatusPipelineSelector({
   const ref = useRef<HTMLDivElement>(null);
   const pillsRef = useRef<HTMLDivElement>(null);
 
-  // Click-outside
+  // Click-outside (not needed for inline)
   useEffect(() => {
+    if (variant === "inline") return;
     const handler = (e: MouseEvent | TouchEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         onClose();
@@ -52,16 +53,17 @@ export function StatusPipelineSelector({
       document.removeEventListener("mousedown", handler);
       document.removeEventListener("touchstart", handler);
     };
-  }, [onClose]);
+  }, [onClose, variant]);
 
-  // Escape key
+  // Escape key (not needed for inline)
   useEffect(() => {
+    if (variant === "inline") return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [onClose]);
+  }, [onClose, variant]);
 
   const stage = PIPELINE_STAGES[activeStage];
   const stageColor = STATUS_GROUPS[stage.key]?.color || "#A1A1AA";
@@ -73,7 +75,7 @@ export function StatusPipelineSelector({
 
   const handleSelect = (status: string) => {
     onSelect(status);
-    onClose();
+    if (variant !== "inline") onClose();
   };
 
   const pillsContent = (
@@ -147,6 +149,17 @@ export function StatusPipelineSelector({
       })}
     </div>
   );
+
+  // ====== INLINE variant (embedded, no portal) ======
+  if (variant === "inline") {
+    return (
+      <div className="rounded-xl bg-zinc-50/80 dark:bg-zinc-800/30 border border-zinc-200/60 dark:border-zinc-700/40 overflow-hidden">
+        {pillsContent}
+        <div className="mx-3 h-px" style={{ backgroundColor: `${stageColor}30` }} />
+        {optionsContent}
+      </div>
+    );
+  }
 
   // ====== SHEET variant (mobile bottom sheet) ======
   if (variant === "sheet") {

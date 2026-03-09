@@ -11,21 +11,18 @@ import {
   Flame,
   Archive,
   Activity,
-  CheckCircle2,
 } from "lucide-react";
 import {
   KANBAN_COLUMNS,
   SUB_GROUPS,
   STATUS_GROUPS,
   GROUP_TO_COLUMN,
-  DEMANDA_STATUS,
-  STATUS_OPTIONS_BY_COLUMN,
   getStatusConfig,
   type KanbanColumn,
   type EmAndamentoSubGroup,
   type StatusGroup,
 } from "@/config/demanda-status";
-import { createPortal } from "react-dom";
+import { StatusPipelineSelector } from "./StatusPipelineSelector";
 
 // ==========================================
 // TYPES
@@ -56,137 +53,7 @@ interface KanbanPremiumProps {
   showArchived?: boolean;
 }
 
-// ==========================================
-// STATUS CHANGE POPOVER
-// ==========================================
-
-function StatusChangePopover({
-  currentStatus,
-  currentGroup,
-  anchorRect,
-  onSelect,
-  onClose,
-}: {
-  currentStatus: string;
-  currentGroup: StatusGroup;
-  anchorRect: DOMRect;
-  onSelect: (newStatus: string) => void;
-  onClose: () => void;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  // Close on click-outside
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [onClose]);
-
-  // Close on escape
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [onClose]);
-
-  // Position: appear below the badge, aligned right
-  const top = anchorRect.bottom + 4;
-  const right = window.innerWidth - anchorRect.right;
-
-  // Group options by StatusGroup
-  const grouped = useMemo(() => {
-    const groups: { group: StatusGroup; label: string; color: string; options: { value: string; label: string }[] }[] = [];
-    const groupOrder: StatusGroup[] = ["triagem", "preparacao", "diligencias", "saida", "concluida"];
-
-    for (const g of groupOrder) {
-      const cfg = STATUS_GROUPS[g];
-      const opts = Object.entries(DEMANDA_STATUS)
-        .filter(([, v]) => v.group === g)
-        .map(([key, v]) => ({ value: key, label: v.label }));
-      if (opts.length > 0) {
-        groups.push({ group: g, label: cfg.label, color: cfg.color, options: opts });
-      }
-    }
-    return groups;
-  }, []);
-
-  return createPortal(
-    <div
-      ref={ref}
-      className="fixed z-[9999] w-52 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-xl shadow-black/10 dark:shadow-black/40 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
-      style={{ top, right }}
-    >
-      {/* Header */}
-      <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800">
-        <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
-          Alterar status
-        </p>
-      </div>
-
-      {/* Options */}
-      <div className="max-h-[320px] overflow-y-auto py-1 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-700">
-        {grouped.map((g, gi) => (
-          <div key={g.group}>
-            {gi > 0 && (
-              <div className="mx-3 my-1 border-t border-zinc-100 dark:border-zinc-800" />
-            )}
-            {/* Group label */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5">
-              <div
-                className="w-1.5 h-1.5 rounded-full shrink-0"
-                style={{ backgroundColor: g.color }}
-              />
-              <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
-                {g.label}
-              </span>
-            </div>
-            {/* Status items */}
-            {g.options.map((opt) => {
-              const isActive = opt.value === currentStatus;
-              const Icon = DEMANDA_STATUS[opt.value]?.icon;
-              return (
-                <button
-                  key={opt.value}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelect(opt.value);
-                  }}
-                  className={`
-                    w-full px-3 py-1.5 flex items-center gap-2 text-left
-                    transition-colors duration-100
-                    ${isActive
-                      ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400"
-                      : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
-                    }
-                  `}
-                >
-                  {Icon && (
-                    <span style={{ color: isActive ? undefined : g.color }}>
-                      <Icon className="w-3 h-3 shrink-0" />
-                    </span>
-                  )}
-                  <span className="text-[11px] font-medium flex-1 truncate">
-                    {opt.label}
-                  </span>
-                  {isActive && (
-                    <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </div>
-    </div>,
-    document.body
-  );
-}
+// StatusChangePopover replaced by StatusPipelineSelector
 
 // ==========================================
 // CARD COMPONENT
@@ -214,16 +81,11 @@ function KanbanCard({
   // Status popover state
   const [showStatusPopover, setShowStatusPopover] = useState(false);
   const badgeRef = useRef<HTMLButtonElement>(null);
-  const [badgeRect, setBadgeRect] = useState<DOMRect | null>(null);
 
   const handleBadgeClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (!onStatusChange) return;
-    const rect = badgeRef.current?.getBoundingClientRect();
-    if (rect) {
-      setBadgeRect(rect);
-      setShowStatusPopover(true);
-    }
+    setShowStatusPopover(true);
   }, [onStatusChange]);
 
   const handleStatusSelect = useCallback((newStatus: string) => {
@@ -366,14 +228,14 @@ function KanbanCard({
             )}
           </button>
 
-          {/* Popover */}
-          {showStatusPopover && badgeRect && (
-            <StatusChangePopover
+          {/* Pipeline Selector */}
+          {showStatusPopover && (
+            <StatusPipelineSelector
               currentStatus={currentStatusKey}
-              currentGroup={group}
-              anchorRect={badgeRect}
               onSelect={handleStatusSelect}
               onClose={() => setShowStatusPopover(false)}
+              variant="dropdown"
+              anchorRef={badgeRef}
             />
           )}
         </div>
