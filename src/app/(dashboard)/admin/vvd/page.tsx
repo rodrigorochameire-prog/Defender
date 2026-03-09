@@ -37,6 +37,7 @@ import {
 import { format, differenceInDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 import { PJeImportModal } from "@/components/demandas-premium/pje-import-modal";
 import { toast } from "sonner";
 import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
@@ -122,15 +123,15 @@ export default function VVDPage() {
       return <Badge variant="outline">Sem prazo</Badge>;
     }
     if (diasRestantes < 0) {
-      return <Badge variant="destructive">Vencida ({Math.abs(diasRestantes)} dias)</Badge>;
+      return <Badge variant="danger">Vencida ({Math.abs(diasRestantes)} dias)</Badge>;
     }
     if (diasRestantes <= 7) {
-      return <Badge className="bg-red-500">Vence em {diasRestantes} dias</Badge>;
+      return <Badge variant="outline" className="border-rose-300 text-rose-600 dark:border-rose-700 dark:text-rose-400">Vence em {diasRestantes} dias</Badge>;
     }
     if (diasRestantes <= 30) {
-      return <Badge className="bg-amber-500">Vence em {diasRestantes} dias</Badge>;
+      return <Badge variant="outline" className="border-amber-300 text-amber-600 dark:border-amber-700 dark:text-amber-400">Vence em {diasRestantes} dias</Badge>;
     }
-    return <Badge className="bg-green-500">{diasRestantes} dias</Badge>;
+    return <Badge variant="outline" className="border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400">{diasRestantes} dias</Badge>;
   };
 
   return (
@@ -139,8 +140,8 @@ export default function VVDPage() {
       <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shrink-0">
-              <Shield className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
+              <Shield className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Violência Doméstica</h1>
@@ -256,7 +257,7 @@ export default function VVDPage() {
                           >
                             <div className="flex items-start justify-between">
                               <div>
-                                <p className="font-medium text-sm">{processo.autor?.nome || "Sem autor"}</p>
+                                <p className="font-medium text-sm">{processo.requerido?.nome || "Sem requerido"}</p>
                                 <p className="text-xs text-muted-foreground font-mono">{processo.numeroAutos}</p>
                                 {processo.crime && (
                                   <Badge variant="outline" className="mt-1 text-xs">
@@ -289,7 +290,7 @@ export default function VVDPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Bell className="h-4 w-4 text-blue-500" />
+                  <Bell className="h-4 w-4 text-rose-500" />
                   Intimações Pendentes
                 </CardTitle>
               </CardHeader>
@@ -303,7 +304,7 @@ export default function VVDPage() {
                       >
                         <div className="flex items-start justify-between">
                           <div>
-                            <p className="font-medium text-sm">{intimacao.autor?.nome || "Sem nome"}</p>
+                            <p className="font-medium text-sm">{intimacao.requerido?.nome || "Sem nome"}</p>
                             <p className="text-xs text-muted-foreground">{intimacao.ato}</p>
                             {intimacao.dataExpedicao && (
                               <p className="text-xs text-muted-foreground mt-1">
@@ -321,7 +322,7 @@ export default function VVDPage() {
                     ))}
                     {intimacoes.length === 0 && (
                       <div className="text-center py-8 text-muted-foreground">
-                        <CheckCircle2 className="h-12 w-12 mx-auto mb-2 opacity-30 text-green-500" />
+                        <CheckCircle2 className="h-12 w-12 mx-auto mb-2 opacity-30 text-emerald-500" />
                         <p>Nenhuma intimação pendente</p>
                       </div>
                     )}
@@ -366,7 +367,7 @@ export default function VVDPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Autor (Assistido)</TableHead>
+                      <TableHead>Requerido (Assistido)</TableHead>
                       <TableHead>Processo</TableHead>
                       <TableHead>Crime</TableHead>
                       <TableHead>MPU</TableHead>
@@ -395,7 +396,7 @@ export default function VVDPage() {
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <User className="h-4 w-4 text-muted-foreground" />
-                                <span className="font-medium">{processo.autor?.nome || "Sem autor"}</span>
+                                <span className="font-medium">{processo.requerido?.nome || "Sem requerido"}</span>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -412,7 +413,7 @@ export default function VVDPage() {
                             </TableCell>
                             <TableCell>
                               {processo.mpuAtiva ? (
-                                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                                <Badge variant="outline" className="border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400">
                                   <ShieldCheck className="h-3 w-3 mr-1" />
                                   Ativa
                                 </Badge>
@@ -460,7 +461,7 @@ export default function VVDPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Autor</TableHead>
+                      <TableHead>Requerido</TableHead>
                       <TableHead>Processo</TableHead>
                       <TableHead>Ato</TableHead>
                       <TableHead>Expedição</TableHead>
@@ -484,7 +485,7 @@ export default function VVDPage() {
                     ) : (
                       intimacoes.map((intimacao) => (
                         <TableRow key={intimacao.id}>
-                          <TableCell className="font-medium">{intimacao.autor?.nome || "-"}</TableCell>
+                          <TableCell className="font-medium">{intimacao.requerido?.nome || "-"}</TableCell>
                           <TableCell>
                             <code className="text-xs bg-muted px-2 py-1 rounded">
                               {intimacao.processo?.numeroAutos || "-"}
@@ -518,24 +519,16 @@ export default function VVDPage() {
 
         {/* Partes Tab */}
         <TabsContent value="partes" className="mt-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Partes (Autores e Vítimas)</CardTitle>
-                <Button size="sm">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Nova Parte
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <Users className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                <p>Funcionalidade em desenvolvimento</p>
-                <p className="text-xs mt-1">As partes são criadas automaticamente na importação de intimações</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="text-center py-8">
+            <Users className="h-12 w-12 mx-auto mb-3 opacity-30 text-muted-foreground" />
+            <p className="text-muted-foreground mb-4">Gerencie requeridos e requerentes na página dedicada</p>
+            <Link href="/admin/vvd/partes">
+              <Button className="bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white">
+                <Users className="h-4 w-4 mr-2" />
+                Abrir Partes VVD
+              </Button>
+            </Link>
+          </div>
         </TabsContent>
       </Tabs>
       </div>

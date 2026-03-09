@@ -38,6 +38,15 @@ import {
 } from "lucide-react";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -66,6 +75,56 @@ export default function IntimacoesVVDPage() {
     },
   });
 
+  const criarPeticaoMutation = trpc.vvd.criarPeticao.useMutation({
+    onSuccess: (data) => {
+      toast.success("Demanda criada com sucesso!");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao criar petição: ${error.message}`);
+    },
+  });
+
+  // Audiência modal state
+  const [audienciaModalOpen, setAudienciaModalOpen] = useState(false);
+  const [audienciaIntimacaoId, setAudienciaIntimacaoId] = useState<number | null>(null);
+  const [audienciaData, setAudienciaData] = useState("");
+  const [audienciaTipo, setAudienciaTipo] = useState<"instrucao" | "conciliacao" | "justificacao" | "custodia" | "admonicao">("instrucao");
+  const [audienciaLocal, setAudienciaLocal] = useState("");
+
+  const criarAudienciaMutation = trpc.vvd.criarAudiencia.useMutation({
+    onSuccess: (data) => {
+      toast.success("Audiência criada com sucesso!");
+      setAudienciaModalOpen(false);
+      setAudienciaIntimacaoId(null);
+      setAudienciaData("");
+      setAudienciaTipo("instrucao");
+      setAudienciaLocal("");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao criar audiência: ${error.message}`);
+    },
+  });
+
+  const handleAbrirModalAudiencia = (intimacaoId: number) => {
+    setAudienciaIntimacaoId(intimacaoId);
+    setAudienciaModalOpen(true);
+  };
+
+  const handleCriarAudiencia = () => {
+    if (!audienciaIntimacaoId || !audienciaData) {
+      toast.error("Informe a data/hora da audiência");
+      return;
+    }
+    criarAudienciaMutation.mutate({
+      intimacaoId: audienciaIntimacaoId,
+      dataAudiencia: audienciaData,
+      tipo: audienciaTipo,
+      local: audienciaLocal || undefined,
+    });
+  };
+
   const intimacoes = intimacoesData || [];
 
   // Helpers
@@ -81,43 +140,43 @@ export default function IntimacoesVVDPage() {
       return <Badge variant="outline">Sem prazo</Badge>;
     }
     if (diasRestantes < 0) {
-      return <Badge variant="destructive">Vencido ({Math.abs(diasRestantes)} dias)</Badge>;
+      return <Badge variant="danger">Vencido ({Math.abs(diasRestantes)} dias)</Badge>;
     }
     if (diasRestantes <= 2) {
-      return <Badge className="bg-red-500 text-white">Urgente ({diasRestantes}d)</Badge>;
+      return <Badge variant="outline" className="border-rose-300 text-rose-600 dark:border-rose-700 dark:text-rose-400">Urgente ({diasRestantes}d)</Badge>;
     }
     if (diasRestantes <= 5) {
-      return <Badge className="bg-amber-500 text-white">{diasRestantes} dias</Badge>;
+      return <Badge variant="outline" className="border-amber-300 text-amber-600 dark:border-amber-700 dark:text-amber-400">{diasRestantes} dias</Badge>;
     }
-    return <Badge className="bg-green-500 text-white">{diasRestantes} dias</Badge>;
+    return <Badge variant="outline" className="border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400">{diasRestantes} dias</Badge>;
   };
 
   const getTipoBadge = (tipo: string) => {
     const tipos: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
       CIENCIA: {
-        label: "Ciencia",
-        className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+        label: "Ciência",
+        className: "border-sky-300 text-sky-600 dark:border-sky-700 dark:text-sky-400",
         icon: <Eye className="h-3 w-3" />
       },
       PETICIONAR: {
         label: "Peticionar",
-        className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+        className: "border-rose-300 text-rose-600 dark:border-rose-700 dark:text-rose-400",
         icon: <FileText className="h-3 w-3" />
       },
       AUDIENCIA: {
-        label: "Audiencia",
-        className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+        label: "Audiência",
+        className: "border-amber-300 text-amber-600 dark:border-amber-700 dark:text-amber-400",
         icon: <Gavel className="h-3 w-3" />
       },
       CUMPRIMENTO: {
         label: "Cumprimento",
-        className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+        className: "border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400",
         icon: <Check className="h-3 w-3" />
       },
     };
     const badge = tipos[tipo] || { label: tipo, className: "", icon: null };
     return (
-      <Badge className={cn("flex items-center gap-1", badge.className)}>
+      <Badge variant="outline" className={cn("flex items-center gap-1", badge.className)}>
         {badge.icon}
         {badge.label}
       </Badge>
@@ -125,7 +184,7 @@ export default function IntimacoesVVDPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
+    const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "danger" }> = {
       pendente: { label: "Pendente", variant: "default" },
       ciencia_dada: { label: "Ciencia Dada", variant: "secondary" },
       respondida: { label: "Respondida", variant: "secondary" },
@@ -163,8 +222,8 @@ export default function IntimacoesVVDPage() {
                 <span className="hidden sm:inline">Voltar</span>
               </Button>
             </Link>
-            <div className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shrink-0">
-              <Bell className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
+              <Bell className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Intimações VVD</h1>
@@ -275,7 +334,7 @@ export default function IntimacoesVVDPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Autor</TableHead>
+                  <TableHead>Requerido</TableHead>
                   <TableHead>Processo</TableHead>
                   <TableHead>Ato</TableHead>
                   <TableHead>Expedicao</TableHead>
@@ -295,7 +354,7 @@ export default function IntimacoesVVDPage() {
                 ) : intimacoes.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                      <CheckCircle2 className="h-12 w-12 mx-auto mb-2 opacity-30 text-green-500" />
+                      <CheckCircle2 className="h-12 w-12 mx-auto mb-2 opacity-30 text-emerald-500" />
                       <p>Nenhuma intimacao encontrada</p>
                       <p className="text-xs mt-1">
                         {statusFiltro === "pendente"
@@ -317,7 +376,7 @@ export default function IntimacoesVVDPage() {
                         )}
                       >
                         <TableCell className="font-medium">
-                          {intimacao.autor?.nome || "-"}
+                          {intimacao.requerido?.nome || "-"}
                         </TableCell>
                         <TableCell>
                           <code className="text-xs bg-muted px-2 py-1 rounded">
@@ -355,7 +414,7 @@ export default function IntimacoesVVDPage() {
                           {getTipoBadge(intimacao.tipoIntimacao)}
                         </TableCell>
                         <TableCell>
-                          {getStatusBadge(intimacao.status)}
+                          {getStatusBadge(intimacao.status || "pendente")}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
@@ -365,7 +424,7 @@ export default function IntimacoesVVDPage() {
                                 size="sm"
                                 onClick={() => handleDarCiencia(intimacao.id)}
                                 disabled={darCienciaMutation.isPending}
-                                className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
                               >
                                 <Check className="h-4 w-4 mr-1" />
                                 Ciencia
@@ -375,11 +434,35 @@ export default function IntimacoesVVDPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                onClick={() => criarPeticaoMutation.mutate({ intimacaoId: intimacao.id })}
+                                disabled={criarPeticaoMutation.isPending}
+                                className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/20"
                               >
                                 <FileText className="h-4 w-4 mr-1" />
-                                Peticao
+                                Petição
                               </Button>
+                            )}
+                            {intimacao.tipoIntimacao === "AUDIENCIA" && intimacao.status === "pendente" && !intimacao.audienciaId && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleAbrirModalAudiencia(intimacao.id)}
+                                className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/20"
+                              >
+                                <Gavel className="h-4 w-4 mr-1" />
+                                Agendar
+                              </Button>
+                            )}
+                            {intimacao.demandaId && (
+                              <Badge variant="outline" className="text-emerald-600 border-emerald-300">
+                                Demanda #{intimacao.demandaId}
+                              </Badge>
+                            )}
+                            {intimacao.audienciaId && (
+                              <Badge variant="outline" className="text-amber-600 border-amber-300">
+                                <Calendar className="h-3 w-3 mr-1" />
+                                Audiência #{intimacao.audienciaId}
+                              </Badge>
                             )}
                           </div>
                         </TableCell>
@@ -393,6 +476,78 @@ export default function IntimacoesVVDPage() {
         </CardContent>
       </Card>
       </div>
+
+      {/* Modal Agendar Audiência */}
+      <Dialog open={audienciaModalOpen} onOpenChange={setAudienciaModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Gavel className="h-5 w-5 text-rose-600" />
+              Agendar Audiência
+            </DialogTitle>
+            <DialogDescription>
+              Preencha os dados da audiência para criar o evento no calendário.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="dataAudiencia">Data e Hora *</Label>
+              <Input
+                id="dataAudiencia"
+                type="datetime-local"
+                value={audienciaData}
+                onChange={(e) => setAudienciaData(e.target.value)}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="tipoAudiencia">Tipo de Audiência</Label>
+              <Select
+                value={audienciaTipo}
+                onValueChange={(v) => setAudienciaTipo(v as typeof audienciaTipo)}
+              >
+                <SelectTrigger id="tipoAudiencia">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="instrucao">Instrução e Julgamento</SelectItem>
+                  <SelectItem value="conciliacao">Conciliação</SelectItem>
+                  <SelectItem value="justificacao">Justificação</SelectItem>
+                  <SelectItem value="custodia">Custódia</SelectItem>
+                  <SelectItem value="admonicao">Admonição</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="localAudiencia">Local</Label>
+              <Input
+                id="localAudiencia"
+                placeholder="Vara de Violência Doméstica - Camaçari"
+                value={audienciaLocal}
+                onChange={(e) => setAudienciaLocal(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setAudienciaModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCriarAudiencia}
+              disabled={!audienciaData || criarAudienciaMutation.isPending}
+              className="bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white"
+            >
+              {criarAudienciaMutation.isPending ? "Criando..." : "Agendar Audiência"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

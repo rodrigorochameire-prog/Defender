@@ -90,28 +90,28 @@ export default function ProcessosVVDPage() {
       return <Badge variant="outline">Sem prazo</Badge>;
     }
     if (diasRestantes < 0) {
-      return <Badge variant="destructive">Vencida ({Math.abs(diasRestantes)} dias)</Badge>;
+      return <Badge variant="danger">Vencida ({Math.abs(diasRestantes)} dias)</Badge>;
     }
     if (diasRestantes <= 7) {
-      return <Badge className="bg-red-500 text-white">Vence em {diasRestantes} dias</Badge>;
+      return <Badge variant="outline" className="border-rose-300 text-rose-600 dark:border-rose-700 dark:text-rose-400">Vence em {diasRestantes} dias</Badge>;
     }
     if (diasRestantes <= 30) {
-      return <Badge className="bg-amber-500 text-white">Vence em {diasRestantes} dias</Badge>;
+      return <Badge variant="outline" className="border-amber-300 text-amber-600 dark:border-amber-700 dark:text-amber-400">Vence em {diasRestantes} dias</Badge>;
     }
-    return <Badge className="bg-green-500 text-white">{diasRestantes} dias</Badge>;
+    return <Badge variant="outline" className="border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400">{diasRestantes} dias</Badge>;
   };
 
   const getTipoEventoBadge = (tipo: string) => {
     const badges: Record<string, { label: string; className: string }> = {
-      deferimento: { label: "Deferimento", className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" },
-      indeferimento: { label: "Indeferimento", className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300" },
-      modulacao: { label: "Modulacao", className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
-      revogacao: { label: "Revogacao", className: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300" },
-      renovacao: { label: "Renovacao", className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" },
-      descumprimento: { label: "Descumprimento", className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300" },
+      deferimento: { label: "Deferimento", className: "border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400" },
+      indeferimento: { label: "Indeferimento", className: "border-rose-300 text-rose-600 dark:border-rose-700 dark:text-rose-400" },
+      modulacao: { label: "Modulação", className: "border-sky-300 text-sky-600 dark:border-sky-700 dark:text-sky-400" },
+      revogacao: { label: "Revogação", className: "border-rose-300 text-rose-600 dark:border-rose-700 dark:text-rose-400" },
+      renovacao: { label: "Renovação", className: "border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400" },
+      descumprimento: { label: "Descumprimento", className: "border-amber-300 text-amber-600 dark:border-amber-700 dark:text-amber-400" },
     };
     const badge = badges[tipo] || { label: tipo, className: "" };
-    return <Badge className={badge.className}>{badge.label}</Badge>;
+    return <Badge variant="outline" className={badge.className}>{badge.label}</Badge>;
   };
 
   return (
@@ -126,8 +126,8 @@ export default function ProcessosVVDPage() {
                 Voltar
               </Button>
             </Link>
-            <div className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+              <FileText className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Processos VVD</h1>
@@ -175,7 +175,7 @@ export default function ProcessosVVDPage() {
                 variant={filterMPUAtiva === true ? "default" : "outline"}
                 size="sm"
                 onClick={() => setFilterMPUAtiva(true)}
-                className={filterMPUAtiva === true ? "bg-green-600 hover:bg-green-700" : ""}
+                className={filterMPUAtiva === true ? "bg-zinc-900 hover:bg-emerald-600 text-white dark:bg-zinc-700 dark:hover:bg-emerald-600" : ""}
               >
                 <ShieldCheck className="h-4 w-4 mr-1" />
                 MPU Ativa
@@ -184,7 +184,7 @@ export default function ProcessosVVDPage() {
                 variant={filterMPUAtiva === false ? "default" : "outline"}
                 size="sm"
                 onClick={() => setFilterMPUAtiva(false)}
-                className={filterMPUAtiva === false ? "bg-zinc-600 hover:bg-zinc-700" : ""}
+                className={filterMPUAtiva === false ? "bg-zinc-900 hover:bg-zinc-700 text-white dark:bg-zinc-700 dark:hover:bg-zinc-600" : ""}
               >
                 <ShieldOff className="h-4 w-4 mr-1" />
                 MPU Inativa
@@ -209,7 +209,7 @@ export default function ProcessosVVDPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Autor (Assistido)</TableHead>
+                  <TableHead>Requerido (Assistido)</TableHead>
                   <TableHead>Processo</TableHead>
                   <TableHead>Crime</TableHead>
                   <TableHead>MPU</TableHead>
@@ -248,7 +248,7 @@ export default function ProcessosVVDPage() {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">{processo.autor?.nome || "Sem autor"}</span>
+                            <span className="font-medium">{processo.requerido?.nome || "Sem requerido"}</span>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -265,7 +265,7 @@ export default function ProcessosVVDPage() {
                         </TableCell>
                         <TableCell>
                           {processo.mpuAtiva ? (
-                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                            <Badge variant="outline" className="border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400">
                               <ShieldCheck className="h-3 w-3 mr-1" />
                               Ativa
                             </Badge>
@@ -313,7 +313,7 @@ export default function ProcessosVVDPage() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-purple-600" />
+              <Shield className="h-5 w-5 text-rose-600" />
               Detalhes do Processo
             </DialogTitle>
             <DialogDescription>
@@ -323,7 +323,7 @@ export default function ProcessosVVDPage() {
 
           {isLoadingDetalhes ? (
             <div className="flex items-center justify-center py-12">
-              <RefreshCw className="h-8 w-8 animate-spin text-purple-600" />
+              <RefreshCw className="h-8 w-8 animate-spin text-zinc-400" />
             </div>
           ) : processoDetalhes ? (
             <ScrollArea className="flex-1 -mx-6 px-6">
@@ -400,32 +400,32 @@ export default function ProcessosVVDPage() {
                     <Card>
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
-                          <User className="h-4 w-4 text-purple-600" />
-                          Autor (Assistido)
+                          <User className="h-4 w-4 text-rose-600" />
+                          Requerido (Assistido)
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-2 text-sm">
-                        {processoDetalhes.autor ? (
+                        {processoDetalhes.requerido ? (
                           <>
-                            <p className="font-medium text-lg">{processoDetalhes.autor.nome}</p>
-                            {processoDetalhes.autor.cpf && (
-                              <p className="text-muted-foreground">CPF: {processoDetalhes.autor.cpf}</p>
+                            <p className="font-medium text-lg">{processoDetalhes.requerido.nome}</p>
+                            {processoDetalhes.requerido.cpf && (
+                              <p className="text-muted-foreground">CPF: {processoDetalhes.requerido.cpf}</p>
                             )}
-                            {processoDetalhes.autor.telefone && (
+                            {processoDetalhes.requerido.telefone && (
                               <div className="flex items-center gap-1 text-muted-foreground">
                                 <Phone className="h-3 w-3" />
-                                {processoDetalhes.autor.telefone}
+                                {processoDetalhes.requerido.telefone}
                               </div>
                             )}
-                            {processoDetalhes.autor.endereco && (
+                            {processoDetalhes.requerido.endereco && (
                               <div className="flex items-center gap-1 text-muted-foreground">
                                 <MapPin className="h-3 w-3" />
-                                {processoDetalhes.autor.endereco}
+                                {processoDetalhes.requerido.endereco}
                               </div>
                             )}
                           </>
                         ) : (
-                          <p className="text-muted-foreground">Nao cadastrado</p>
+                          <p className="text-muted-foreground">Não cadastrado</p>
                         )}
                       </CardContent>
                     </Card>
@@ -435,25 +435,25 @@ export default function ProcessosVVDPage() {
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                           <Users className="h-4 w-4 text-red-600" />
-                          Vitima
+                          Requerente
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-2 text-sm">
-                        {processoDetalhes.vitima ? (
+                        {processoDetalhes.requerente ? (
                           <>
-                            <p className="font-medium text-lg">{processoDetalhes.vitima.nome}</p>
-                            {processoDetalhes.vitima.parentesco && (
-                              <Badge variant="outline">{processoDetalhes.vitima.parentesco}</Badge>
+                            <p className="font-medium text-lg">{processoDetalhes.requerente.nome}</p>
+                            {processoDetalhes.requerente.parentesco && (
+                              <Badge variant="outline">{processoDetalhes.requerente.parentesco}</Badge>
                             )}
-                            {processoDetalhes.vitima.telefone && (
+                            {processoDetalhes.requerente.telefone && (
                               <div className="flex items-center gap-1 text-muted-foreground">
                                 <Phone className="h-3 w-3" />
-                                {processoDetalhes.vitima.telefone}
+                                {processoDetalhes.requerente.telefone}
                               </div>
                             )}
                           </>
                         ) : (
-                          <p className="text-muted-foreground">Nao cadastrada</p>
+                          <p className="text-muted-foreground">Não cadastrada</p>
                         )}
                       </CardContent>
                     </Card>
@@ -544,7 +544,7 @@ export default function ProcessosVVDPage() {
                             <div className="flex items-start justify-between">
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
-                                  <Bell className="h-4 w-4 text-purple-600" />
+                                  <Bell className="h-4 w-4 text-rose-600" />
                                   <span className="font-medium">{intimacao.ato}</span>
                                 </div>
                                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -594,7 +594,7 @@ export default function ProcessosVVDPage() {
                       <div className="space-y-4">
                         {processoDetalhes.historico.map((evento: any) => (
                           <div key={evento.id} className="relative pl-10">
-                            <div className="absolute left-2 top-2 w-4 h-4 rounded-full bg-purple-600 border-2 border-background" />
+                            <div className="absolute left-2 top-2 w-4 h-4 rounded-full bg-rose-600 border-2 border-background" />
                             <Card>
                               <CardContent className="py-3">
                                 <div className="flex items-start justify-between">

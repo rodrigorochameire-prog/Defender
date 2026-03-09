@@ -235,7 +235,7 @@ export default function MonitoramentoMPUPage() {
     }
     if (diasRestantes < 0) {
       return (
-        <Badge className="bg-rose-500 hover:bg-rose-600">
+        <Badge variant="outline" className="border-rose-300 text-rose-600 dark:border-rose-700 dark:text-rose-400">
           <ShieldAlert className="w-3 h-3 mr-1" />
           Reanálise ({Math.abs(diasRestantes)}d atrás)
         </Badge>
@@ -243,7 +243,7 @@ export default function MonitoramentoMPUPage() {
     }
     if (diasRestantes <= 7) {
       return (
-        <Badge className="bg-rose-500 hover:bg-rose-600 animate-pulse">
+        <Badge variant="outline" className="border-rose-300 text-rose-600 dark:border-rose-700 dark:text-rose-400 animate-pulse">
           <AlertTriangle className="w-3 h-3 mr-1" />
           {diasRestantes}d restantes
         </Badge>
@@ -251,14 +251,14 @@ export default function MonitoramentoMPUPage() {
     }
     if (diasRestantes <= 30) {
       return (
-        <Badge className="bg-amber-500 hover:bg-amber-600">
+        <Badge variant="outline" className="border-amber-300 text-amber-600 dark:border-amber-700 dark:text-amber-400">
           <Clock className="w-3 h-3 mr-1" />
           {diasRestantes}d restantes
         </Badge>
       );
     }
     return (
-      <Badge className="bg-emerald-500 hover:bg-emerald-600">
+      <Badge variant="outline" className="border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400">
         <ShieldCheck className="w-3 h-3 mr-1" />
         {diasRestantes}d
       </Badge>
@@ -293,8 +293,8 @@ export default function MonitoramentoMPUPage() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-rose-500 flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-5 h-5 text-white" />
+            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
+              <ShieldCheck className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
@@ -420,8 +420,8 @@ export default function MonitoramentoMPUPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Autor (Assistido)</TableHead>
-                    <TableHead>Vítima</TableHead>
+                    <TableHead>Requerido (Assistido)</TableHead>
+                    <TableHead>Requerente</TableHead>
                     <TableHead>Processo</TableHead>
                     <TableHead>Crime</TableHead>
                     <TableHead>Status MPU</TableHead>
@@ -464,7 +464,7 @@ export default function MonitoramentoMPUPage() {
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <User className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-medium">{processo.autor?.nome || "Sem autor"}</span>
+                              <span className="font-medium">{processo.requerido?.nome || "Sem requerido"}</span>
                             </div>
                           </TableCell>
                           <TableCell>
@@ -569,7 +569,7 @@ export default function MonitoramentoMPUPage() {
               Histórico da MPU
             </DialogTitle>
             <DialogDescription>
-              {selectedProcesso?.autor?.nome} - {selectedProcesso?.numeroAutos}
+              {selectedProcesso?.requerido?.nome} - {selectedProcesso?.numeroAutos}
             </DialogDescription>
           </DialogHeader>
 
@@ -592,7 +592,7 @@ export default function MonitoramentoMPUPage() {
                       <p className="text-sm font-medium">Status Atual</p>
                       <div className="flex items-center gap-2 mt-1">
                         {processoDetalhes.mpuAtiva ? (
-                          <Badge className="bg-emerald-500">
+                          <Badge variant="outline" className="border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400">
                             <ShieldCheck className="w-3 h-3 mr-1" />
                             Ativa
                           </Badge>
@@ -707,7 +707,7 @@ export default function MonitoramentoMPUPage() {
           <DialogHeader>
             <DialogTitle>Registrar Evento na MPU</DialogTitle>
             <DialogDescription>
-              {selectedProcesso?.autor?.nome} - {selectedProcesso?.numeroAutos}
+              {selectedProcesso?.requerido?.nome} - {selectedProcesso?.numeroAutos}
             </DialogDescription>
           </DialogHeader>
 

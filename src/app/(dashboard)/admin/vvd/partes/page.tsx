@@ -58,7 +58,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { toast } from "sonner";
 
-type TipoParte = "autor" | "vitima" | "todos";
+type TipoParte = "requerido" | "requerente" | "todos";
 
 export default function PartesVVDPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -70,7 +70,7 @@ export default function PartesVVDPage() {
     cpf: "",
     rg: "",
     dataNascimento: "",
-    tipoParte: "autor" as "autor" | "vitima",
+    tipoParte: "requerido" as "requerido" | "requerente",
     telefone: "",
     telefoneSecundario: "",
     email: "",
@@ -102,7 +102,7 @@ export default function PartesVVDPage() {
         cpf: "",
         rg: "",
         dataNascimento: "",
-        tipoParte: "autor",
+        tipoParte: "requerido",
         telefone: "",
         telefoneSecundario: "",
         email: "",
@@ -123,8 +123,8 @@ export default function PartesVVDPage() {
 
   // Encontrar processos associados a uma parte
   const getProcessosDaParte = (parteId: number, tipoParte: string) => {
-    if (tipoParte === "autor") {
-      return processos.filter((p) => p.autor?.id === parteId);
+    if (tipoParte === "requerido") {
+      return processos.filter((p) => p.requerido?.id === parteId);
     }
     return [];
   };
@@ -132,8 +132,8 @@ export default function PartesVVDPage() {
   // Contadores
   const contadores = {
     total: partes.length,
-    autores: partes.filter((p) => p.tipoParte === "autor").length,
-    vitimas: partes.filter((p) => p.tipoParte === "vitima").length,
+    requeridos: partes.filter((p) => p.tipoParte === "requerido").length,
+    requerentes: partes.filter((p) => p.tipoParte === "requerente").length,
   };
 
   const handleSubmitNovaParte = () => {
@@ -159,12 +159,12 @@ export default function PartesVVDPage() {
                 <span className="hidden sm:inline">Voltar</span>
               </Button>
             </Link>
-            <div className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shrink-0">
-              <Users className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
+              <Users className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Partes VVD</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 hidden sm:block">Autores e vítimas de processos de violência doméstica</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 hidden sm:block">Requeridos e requerentes de processos de violência doméstica</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -192,8 +192,8 @@ export default function PartesVVDPage() {
       <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
         {[
           { icon: Users, value: contadores.total, label: "partes", onClick: () => setTipoFiltro("todos"), active: tipoFiltro === "todos" },
-          { icon: User, value: contadores.autores, label: "autores", onClick: () => setTipoFiltro("autor"), active: tipoFiltro === "autor" },
-          { icon: Heart, value: contadores.vitimas, label: "vítimas", onClick: () => setTipoFiltro("vitima"), active: tipoFiltro === "vitima" },
+          { icon: User, value: contadores.requeridos, label: "requeridos", onClick: () => setTipoFiltro("requerido"), active: tipoFiltro === "requerido" },
+          { icon: Heart, value: contadores.requerentes, label: "requerentes", onClick: () => setTipoFiltro("requerente"), active: tipoFiltro === "requerente" },
         ].map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -234,8 +234,8 @@ export default function PartesVVDPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="autor">Autores</SelectItem>
-                <SelectItem value="vitima">Vitimas</SelectItem>
+                <SelectItem value="requerido">Requeridos</SelectItem>
+                <SelectItem value="requerente">Requerentes</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -247,7 +247,7 @@ export default function PartesVVDPage() {
         <CardHeader>
           <CardTitle className="text-base flex items-center justify-between">
             <span>
-              {tipoFiltro === "todos" ? "Todas as Partes" : tipoFiltro === "autor" ? "Autores" : "Vitimas"}
+              {tipoFiltro === "todos" ? "Todas as Partes" : tipoFiltro === "requerido" ? "Requeridos" : "Requerentes"}
               <Badge variant="outline" className="ml-2">{partes.length}</Badge>
             </span>
           </CardTitle>
@@ -300,14 +300,14 @@ export default function PartesVVDPage() {
                         </TableCell>
                         <TableCell>
                           <Badge
-                            variant={parte.tipoParte === "autor" ? "default" : "secondary"}
+                            variant="outline"
                             className={cn(
-                              parte.tipoParte === "autor"
-                                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                              parte.tipoParte === "requerido"
+                                ? "border-sky-300 text-sky-600 dark:border-sky-700 dark:text-sky-400"
+                                : "border-rose-300 text-rose-600 dark:border-rose-700 dark:text-rose-400"
                             )}
                           >
-                            {parte.tipoParte === "autor" ? "Autor" : "Vitima"}
+                            {parte.tipoParte === "requerido" ? "Requerido" : "Requerente"}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -324,7 +324,7 @@ export default function PartesVVDPage() {
                           {parte.cidade || <span className="text-muted-foreground text-xs">-</span>}
                         </TableCell>
                         <TableCell>
-                          {parte.tipoParte === "autor" && processosAssociados.length > 0 ? (
+                          {parte.tipoParte === "requerido" && processosAssociados.length > 0 ? (
                             <div className="flex items-center gap-1">
                               <FileText className="h-4 w-4 text-muted-foreground" />
                               <Badge variant="outline">{processosAssociados.length}</Badge>
@@ -360,11 +360,11 @@ export default function PartesVVDPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <UserCircle className="h-5 w-5 text-purple-600" />
+              <UserCircle className="h-5 w-5 text-rose-600" />
               Detalhes da Parte
             </DialogTitle>
             <DialogDescription>
-              {selectedParte?.tipoParte === "autor" ? "Autor (Assistido)" : "Vitima"}
+              {selectedParte?.tipoParte === "requerido" ? "Requerido (Assistido)" : "Requerente"}
             </DialogDescription>
           </DialogHeader>
 
@@ -384,13 +384,14 @@ export default function PartesVVDPage() {
                   <div className="space-y-1">
                     <label className="text-xs text-muted-foreground">Tipo</label>
                     <Badge
+                      variant="outline"
                       className={cn(
-                        selectedParte.tipoParte === "autor"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-red-100 text-red-700"
+                        selectedParte.tipoParte === "requerido"
+                          ? "border-sky-300 text-sky-600 dark:border-sky-700 dark:text-sky-400"
+                          : "border-rose-300 text-rose-600 dark:border-rose-700 dark:text-rose-400"
                       )}
                     >
-                      {selectedParte.tipoParte === "autor" ? "Autor" : "Vitima"}
+                      {selectedParte.tipoParte === "requerido" ? "Requerido" : "Requerente"}
                     </Badge>
                   </div>
                   {selectedParte.cpf && (
@@ -474,7 +475,7 @@ export default function PartesVVDPage() {
               )}
 
               {/* Processos Associados */}
-              {selectedParte.tipoParte === "autor" && (
+              {selectedParte.tipoParte === "requerido" && (
                 <div className="space-y-4">
                   <h3 className="font-semibold flex items-center gap-2">
                     <FileText className="h-4 w-4" />
@@ -505,7 +506,7 @@ export default function PartesVVDPage() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                   {processo.mpuAtiva ? (
-                                    <Badge className="bg-green-100 text-green-700">
+                                    <Badge variant="outline" className="border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400">
                                       <ShieldCheck className="h-3 w-3 mr-1" />
                                       MPU Ativa
                                     </Badge>
@@ -545,11 +546,11 @@ export default function PartesVVDPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5 text-purple-600" />
+              <Plus className="h-5 w-5 text-rose-600" />
               Nova Parte
             </DialogTitle>
             <DialogDescription>
-              Cadastrar nova parte (autor ou vitima) para processos VVD
+              Cadastrar nova parte (requerido ou requerente) para processos VVD
             </DialogDescription>
           </DialogHeader>
 
@@ -560,14 +561,14 @@ export default function PartesVVDPage() {
                 <Label>Tipo de Parte *</Label>
                 <Select
                   value={novaParte.tipoParte}
-                  onValueChange={(v) => setNovaParte({ ...novaParte, tipoParte: v as "autor" | "vitima" })}
+                  onValueChange={(v) => setNovaParte({ ...novaParte, tipoParte: v as "requerido" | "requerente" })}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="autor">Autor (Assistido)</SelectItem>
-                    <SelectItem value="vitima">Vitima</SelectItem>
+                    <SelectItem value="requerido">Requerido (Assistido)</SelectItem>
+                    <SelectItem value="requerente">Requerente</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -606,9 +607,9 @@ export default function PartesVVDPage() {
                     onChange={(e) => setNovaParte({ ...novaParte, dataNascimento: e.target.value })}
                   />
                 </div>
-                {novaParte.tipoParte === "vitima" && (
+                {novaParte.tipoParte === "requerente" && (
                   <div className="space-y-2">
-                    <Label>Parentesco com o Autor</Label>
+                    <Label>Parentesco com o Requerido</Label>
                     <Input
                       placeholder="Ex: ex-companheira, mae, filha"
                       value={novaParte.parentesco}
@@ -695,7 +696,7 @@ export default function PartesVVDPage() {
             <Button
               onClick={handleSubmitNovaParte}
               disabled={createParteMutation.isPending}
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white"
             >
               {createParteMutation.isPending ? (
                 <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
