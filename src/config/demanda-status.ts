@@ -369,3 +369,50 @@ export const STATUS_OPTIONS_BY_COLUMN: Record<KanbanColumn, Array<{ value: strin
 
 /** Flat list of all status options for dropdowns */
 export const ALL_STATUS_OPTIONS = Object.values(STATUS_OPTIONS_BY_COLUMN).flat();
+
+// ==========================================
+// PIPELINE STAGES (para progress bar / selector)
+// ==========================================
+
+export const PIPELINE_STAGES: { key: StatusGroup; label: string; short: string }[] = [
+  { key: "triagem", label: "Triagem", short: "Triagem" },
+  { key: "preparacao", label: "Preparação", short: "Prep." },
+  { key: "diligencias", label: "Diligências", short: "Dilig." },
+  { key: "saida", label: "Saída", short: "Saída" },
+  { key: "concluida", label: "Concluída", short: "Concl." },
+];
+
+/** Retorna o índice do estágio para um grupo */
+export function getStageIndex(group: StatusGroup): number {
+  if (group === "arquivado") return PIPELINE_STAGES.length - 1;
+  return PIPELINE_STAGES.findIndex(s => s.key === group);
+}
+
+// ==========================================
+// UI_STATUS_TO_DB (mapeamento granular → DB enum)
+// ==========================================
+
+export const UI_STATUS_TO_DB: Record<string, string> = {
+  "fila": "5_FILA",
+  "atender": "2_ATENDER",
+  "analisar": "2_ATENDER",
+  "elaborar": "2_ATENDER",
+  "elaborando": "2_ATENDER",
+  "buscar": "2_ATENDER",
+  "revisar": "2_ATENDER",
+  "revisando": "2_ATENDER",
+  "relatorio": "2_ATENDER",
+  "documentos": "2_ATENDER",
+  "testemunhas": "2_ATENDER",
+  "investigar": "2_ATENDER",
+  "oficiar": "2_ATENDER",
+  "monitorar": "4_MONITORAR",
+  "protocolar": "5_FILA",
+  "protocolado": "7_PROTOCOLADO",
+  "ciencia": "7_CIENCIA",
+  "sem_atuacao": "7_SEM_ATUACAO",
+  "constituiu_advogado": "CONCLUIDO",
+  "urgente": "URGENTE",
+  "resolvido": "CONCLUIDO",
+  "arquivado": "ARQUIVADO",
+};

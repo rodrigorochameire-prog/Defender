@@ -29,7 +29,7 @@ import {
   X,
   AlertCircle,
 } from "lucide-react";
-import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from "@/config/demanda-status";
+import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, PIPELINE_STAGES, getStageIndex, type StatusGroup } from "@/config/demanda-status";
 import { createPortal } from "react-dom";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
@@ -114,19 +114,7 @@ const ATRIBUICAO_OPTIONS = [
   { value: "Curadoria Especial", label: "Curadoria Especial" },
 ];
 
-// Pipeline stages for progress bar (mapped from status groups)
-const PIPELINE_STAGES: { key: StatusGroup; label: string; short: string }[] = [
-  { key: "triagem", label: "Triagem", short: "Triagem" },
-  { key: "preparacao", label: "Preparação", short: "Prep." },
-  { key: "diligencias", label: "Diligências", short: "Dilig." },
-  { key: "saida", label: "Saída", short: "Saída" },
-  { key: "concluida", label: "Concluída", short: "Concl." },
-];
-
-function getStageIndex(group: StatusGroup): number {
-  if (group === "arquivado") return PIPELINE_STAGES.length - 1; // maps to last stage
-  return PIPELINE_STAGES.findIndex(s => s.key === group);
-}
+// PIPELINE_STAGES and getStageIndex imported from @/config/demanda-status
 
 // ============================================
 // AVATAR (uses shared AssistidoAvatar)

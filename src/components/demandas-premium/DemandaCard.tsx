@@ -40,6 +40,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
 import { AssistidoAvatar } from "@/components/demandas-premium/assistido-avatar";
 import { CopyProcessButton } from "@/components/demandas-premium/CopyProcessButton";
+import { StatusPipelineSelector } from "@/components/demandas-premium/StatusPipelineSelector";
 
 interface Processo {
   tipo: string;
@@ -131,6 +132,7 @@ export function DemandaCard({
   const [isEditingProvidencias, setIsEditingProvidencias] = useState(false);
   const [providenciasTemp, setProvidenciasTemp] = useState(demanda.providencias || "");
   const menuRef = useRef<HTMLDivElement>(null);
+  const statusBtnRef = useRef<HTMLButtonElement>(null);
 
   const calcularPrazo = (prazoStr: string) => {
     if (!prazoStr) return { texto: "", cor: "gray" };
@@ -159,13 +161,8 @@ export function DemandaCard({
   const prazoInfo = calcularPrazo(demanda.prazo);
   const AtribuicaoIcon = atribuicaoIcons[demanda.atribuicao];
 
-  // Todos os status disponíveis organizados por grupo
-  const allStatuses = Object.entries(DEMANDA_STATUS).map(([key, config]) => ({
-    value: key,
-    label: config.label,
-    color: STATUS_GROUPS[config.group].color,
-    group: config.group
-  }));
+  // Status config for current status
+  const statusConf = getStatusConfig(demanda.status);
 
   // Converter borderColor hex para rgba para efeitos suaves
   const hexToRgba = (hex: string, alpha: number) => {
@@ -418,13 +415,13 @@ export function DemandaCard({
             <button
               onClick={handleStatusClick}
               className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all hover:scale-105"
-              style={{ 
-                backgroundColor: hexToRgba(borderColor, 0.12),
-                color: borderColor,
-                border: `1px solid ${hexToRgba(borderColor, 0.3)}`,
+              style={{
+                backgroundColor: hexToRgba(statusConf.color, 0.12),
+                color: statusConf.color,
+                border: `1px solid ${hexToRgba(statusConf.color, 0.3)}`,
               }}
             >
-              {demanda.status}
+              {statusConf.label}
               <ChevronDown className="w-3 h-3 opacity-60" />
             </button>
           </div>
@@ -626,64 +623,14 @@ export function DemandaCard({
             </Button>
           </div>
 
-          {/* Dropdown de status Mobile (compartilhado) */}
+          {/* Status Pipeline (Mobile) */}
           {showStatusDropdown && (
-            <div 
-              className="fixed inset-x-4 bottom-4 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl shadow-xl z-[999] overflow-hidden"
-              style={{
-                animation: 'fadeInUp 0.15s ease-out',
-                maxHeight: '60vh'
-              }}
-            >
-              <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-                    Alterar Status
-                  </h4>
-                  <button
-                    onClick={() => setShowStatusDropdown(false)}
-                    className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 p-1"
-                  >
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              <div className="max-h-[50vh] overflow-y-auto py-1">
-                {allStatuses.map((status, index) => {
-                  const isCurrentStatus = status.value === demanda.status;
-                  const prevStatus = index > 0 ? allStatuses[index - 1] : null;
-                  const showDivider = prevStatus && prevStatus.group !== status.group;
-                  
-                  return (
-                    <div key={status.value}>
-                      {showDivider && (
-                        <div className="my-1 border-t border-zinc-100 dark:border-zinc-800" />
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStatusSelect(status.value);
-                        }}
-                        className={`w-full px-4 py-2.5 text-left text-[11px] flex items-center gap-3 transition-colors ${
-                          isCurrentStatus
-                            ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100'
-                            : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400'
-                        }`}
-                      >
-                        <div 
-                          className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: status.color }}
-                        />
-                        <span className="flex-1 font-medium">{status.label}</span>
-                        {isCurrentStatus && (
-                          <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                        )}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            <StatusPipelineSelector
+              currentStatus={demanda.status}
+              onSelect={(s) => handleStatusSelect(s)}
+              onClose={() => setShowStatusDropdown(false)}
+              variant="sheet"
+            />
           )}
         </div>
 
@@ -777,48 +724,27 @@ export function DemandaCard({
               {/* Status badge */}
               <div className="relative">
                 <button
+                  ref={statusBtnRef}
                   onClick={handleStatusClick}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all hover:scale-105 cursor-pointer"
                   style={{
-                    backgroundColor: hexToRgba(borderColor, 0.1),
-                    color: borderColor,
-                    border: `1px solid ${hexToRgba(borderColor, 0.25)}`,
+                    backgroundColor: hexToRgba(statusConf.color, 0.1),
+                    color: statusConf.color,
+                    border: `1px solid ${hexToRgba(statusConf.color, 0.25)}`,
                   }}
                   title="Clique para mudar o status"
                 >
-                  {demanda.status}
+                  {statusConf.label}
                   <ChevronDown className="w-3 h-3 opacity-60" />
                 </button>
                 {showStatusDropdown && (
-                  <div
-                    className="absolute top-full right-0 mt-2 w-44 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden"
-                    style={{ animation: 'fadeInDown 0.15s ease-out' }}
-                  >
-                    <div className="py-1 max-h-72 overflow-y-auto">
-                      {allStatuses.map((status, idx) => {
-                        const isCurrentStatus = status.value === demanda.status;
-                        const prevS = idx > 0 ? allStatuses[idx - 1] : null;
-                        const showDiv = prevS && prevS.group !== status.group;
-                        return (
-                          <div key={status.value}>
-                            {showDiv && <div className="my-1 border-t border-zinc-100 dark:border-zinc-800" />}
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleStatusSelect(status.value); }}
-                              className={`w-full px-3 py-2 text-left text-[11px] flex items-center gap-2.5 transition-colors ${
-                                isCurrentStatus
-                                  ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-bold'
-                                  : 'hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
-                              }`}
-                            >
-                              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: status.color }} />
-                              <span className="flex-1">{status.label}</span>
-                              {isCurrentStatus && <CheckCircle className="w-3 h-3 text-emerald-600" />}
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+                  <StatusPipelineSelector
+                    currentStatus={demanda.status}
+                    onSelect={(s) => handleStatusSelect(s)}
+                    onClose={() => setShowStatusDropdown(false)}
+                    variant="dropdown"
+                    anchorRef={statusBtnRef}
+                  />
                 )}
               </div>
               {/* Actions */}

@@ -802,11 +802,17 @@ export default function Demandas() {
     "buscar": "2_ATENDER",
     "revisar": "2_ATENDER",
     "revisando": "2_ATENDER",
+    "relatorio": "2_ATENDER",
+    "documentos": "2_ATENDER",
+    "testemunhas": "2_ATENDER",
+    "investigar": "2_ATENDER",
+    "oficiar": "2_ATENDER",
     "monitorar": "4_MONITORAR",
     "protocolar": "5_FILA",
     "protocolado": "7_PROTOCOLADO",
     "ciencia": "7_CIENCIA",
     "sem_atuacao": "7_SEM_ATUACAO",
+    "constituiu_advogado": "CONCLUIDO",
     "urgente": "URGENTE",
     "resolvido": "CONCLUIDO",
     "arquivado": "ARQUIVADO",
@@ -818,7 +824,7 @@ export default function Demandas() {
   const handleStatusChange = (demandaId: string, newStatus: string) => {
     // Atualizar localmente para feedback imediato
     setDemandas((prev) =>
-      prev.map((d) => (d.id === demandaId ? { ...d, status: newStatus } : d))
+      prev.map((d) => (d.id === demandaId ? { ...d, status: newStatus, substatus: newStatus } : d))
     );
 
     // Atualizar no banco (id precisa ser número)
