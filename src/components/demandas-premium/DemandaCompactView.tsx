@@ -158,13 +158,13 @@ interface SortCriterion {
 
 const COLUMN_ORDER: ColumnDef[] = [
   { id: "index",        header: "#",            width: "w-8",              editable: false, colIndex: 0 },
-  { id: "status",       header: "Status",       width: "w-[10%]",         editable: true,  colIndex: 6 },
-  { id: "assistido",    header: "Assistido",    width: "w-[24%]",         editable: true,  colIndex: 1 },
-  { id: "processo",     header: "Processo",     width: "w-[22%]",         editable: true,  colIndex: 2 },
+  { id: "status",       header: "Status",       width: "w-[11%]",         editable: true,  colIndex: 6 },
+  { id: "assistido",    header: "Assistido",    width: "w-[23%]",         editable: true,  colIndex: 1 },
+  { id: "processo",     header: "Processo",     width: "w-[20%]",         editable: true,  colIndex: 2 },
   { id: "ato",          header: "Ato",          width: "w-[14%]",         editable: true,  colIndex: 4 },
-  { id: "prazo",        header: "Prazo",        width: "w-[8%]",          editable: true,  colIndex: 5 },
-  { id: "providencias", header: "Prov.",        width: "w-[12%]",         editable: true,  colIndex: 8 },
-  { id: "acoes",        header: "",             width: "w-10",             align: "right",  editable: false, colIndex: 9 },
+  { id: "prazo",        header: "Prazo",        width: "w-[9%]",          editable: true,  colIndex: 5 },
+  { id: "providencias", header: "Providências", width: "w-[13%]",         editable: true,  colIndex: 8 },
+  { id: "acoes",        header: "",             width: "w-[72px]",         align: "right",  editable: false, colIndex: 9 },
 ];
 
 // Derivar colunas editáveis automaticamente da ordem do array
@@ -385,7 +385,7 @@ const CompactRow = React.memo(function CompactRow({
 
     // Assistido - autocomplete de vinculacao + editavel inline + Copy + Link
     assistido: () => (
-      <div className="flex items-center gap-1 min-w-0">
+      <div className="flex items-center gap-1.5 min-w-0">
         {isUrgente && <Flame className="w-3 h-3 text-orange-500 flex-shrink-0" />}
         {isPreso && <Lock className="w-3 h-3 text-rose-500 flex-shrink-0" />}
         <div className="truncate group-hover/row:whitespace-normal group-hover/row:break-words flex-1 min-w-0 transition-all">
@@ -400,13 +400,13 @@ const CompactRow = React.memo(function CompactRow({
               onQueryChange={onAssistidoQueryChange}
               isLoading={isLoadingAssistidoSearch}
               icon="user"
-              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit"
+              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit font-medium text-zinc-800 dark:text-zinc-200"
             />
           ) : (
             <EditableTextInline
               value={demanda.assistido}
               onSave={(v) => onAssistidoChange(demanda.id, v)}
-              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit"
+              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit font-medium text-zinc-800 dark:text-zinc-200"
             />
           )}
         </div>
@@ -480,24 +480,25 @@ const CompactRow = React.memo(function CompactRow({
       />
     ),
 
-    // Prazo — badge style, empty = show nothing
+    // Prazo — badge style with urgency indicator
     prazo: () => {
       const hasPrazo = demanda.prazo && prazoInfo.cor !== "none";
       const badgeColors: Record<string, string> = {
-        red: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400",
-        amber: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
-        yellow: "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400",
+        red: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 font-bold",
+        amber: "bg-amber-100/80 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 font-semibold",
+        yellow: "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400 font-medium",
         gray: "text-zinc-400 dark:text-zinc-500",
       };
       return (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <InlineDatePicker
             value={demanda.prazo}
             onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
             placeholder=""
+            showEditIcon
           />
           {hasPrazo && prazoInfo.cor !== "gray" && (
-            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap ${badgeColors[prazoInfo.cor] || ""} ${prazoInfo.cor === "red" ? "animate-pulse" : ""}`}>
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full whitespace-nowrap ${badgeColors[prazoInfo.cor] || ""}`}>
               {prazoInfo.texto}
             </span>
           )}
@@ -505,24 +506,27 @@ const CompactRow = React.memo(function CompactRow({
       );
     },
 
-    // Status — simplified: ● dot + text, no pill background
-    status: () => (
-      <InlineDropdown
-        value={demanda.status}
-        compact
-        displayValue={
-          <div
-            className="inline-flex items-center gap-1.5 text-[10px] font-medium"
-            style={{ color: statusColor }}
-          >
-            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
-            <span className="truncate max-w-[80px]">{statusConfig.label}</span>
-          </div>
-        }
-        options={statusOptions}
-        onChange={(v) => onStatusChange(demanda.id, v)}
-      />
-    ),
+    // Status — small colored pill with icon
+    status: () => {
+      const StatusIcon = statusConfig.icon;
+      return (
+        <InlineDropdown
+          value={demanda.status}
+          compact
+          displayValue={
+            <div
+              className="inline-flex items-center gap-1.5 text-[10px] font-semibold rounded-full px-2 py-0.5"
+              style={{ color: statusColor, backgroundColor: `${statusColor}12` }}
+            >
+              <StatusIcon className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate max-w-[90px]">{statusConfig.label}</span>
+            </div>
+          }
+          options={statusOptions}
+          onChange={(v) => onStatusChange(demanda.id, v)}
+        />
+      );
+    },
 
     // Atribuição
     atribuicao: () => (
@@ -543,7 +547,7 @@ const CompactRow = React.memo(function CompactRow({
       />
     ),
 
-    // Providências — hide placeholder text, show clean state
+    // Providências — truncated with tooltip, editable inline
     providencias: () => {
       const text = demanda.providencias || "";
       const isPlaceholder = /^\(ajustar|^\(peticionar/i.test(text.trim());
@@ -553,83 +557,73 @@ const CompactRow = React.memo(function CompactRow({
           {hasText ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <button
-                  className="flex items-center gap-1 min-w-0 text-left hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const td = e.currentTarget.closest('td');
-                    if (td) td.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
-                  }}
-                >
-                  <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">{text.length > 20 ? text.substring(0, 20) + "…" : text}</span>
-                </button>
+                <div className="min-w-0 flex-1">
+                  <EditableTextInline
+                    value={text}
+                    onSave={(v) => onProvidenciasChange(demanda.id, v)}
+                    placeholder=""
+                    className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit text-[10px] text-zinc-500 dark:text-zinc-400 truncate"
+                  />
+                </div>
               </TooltipTrigger>
               <TooltipContent side="left" className="max-w-[300px]">
                 <p className="text-xs whitespace-pre-wrap">{text}</p>
-                <p className="text-[10px] text-zinc-400 mt-1">Duplo-clique para editar</p>
               </TooltipContent>
             </Tooltip>
           ) : (
             <EditableTextInline
-              value={isPlaceholder ? "" : ""}
+              value=""
               onSave={(v) => onProvidenciasChange(demanda.id, v)}
-              placeholder=""
-              className="text-[10px] text-zinc-400"
+              placeholder="—"
+              className="text-[10px] text-zinc-300 dark:text-zinc-600 hover:text-zinc-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors"
             />
           )}
         </div>
       );
     },
 
-    // Ações — hover quick actions: ✓ Resolver + Copy + ⋮ Menu
+    // Ações — Eye always visible, others on hover
     acoes: () => (
-      <div className="flex items-center gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity">
-        {/* Quick Resolve */}
-        {demanda.status !== "resolvido" && demanda.status !== "protocolado" && demanda.status !== "ciencia" && demanda.status !== "sem_atuacao" && (
-          <button
-            onClick={() => onStatusChange(demanda.id, "resolvido")}
-            className="p-1 rounded hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors"
-            title="Resolver"
-          >
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-          </button>
-        )}
-
-        {/* Copy row */}
-        <button
-          onClick={() => { copyToClipboard(getRowTSV(demanda), "Linha copiada!"); setCopiedCell("row"); setTimeout(() => setCopiedCell(null), 1500); }}
-          className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-          title="Copiar linha"
-        >
-          {copiedCell === "row" ? (
-            <Check className="w-3 h-3 text-emerald-500" />
-          ) : (
-            <Copy className="w-3 h-3 text-zinc-400" />
-          )}
-        </button>
-
-        {/* Eye - Ver detalhes */}
+      <div className="flex items-center gap-0.5">
+        {/* Eye - always visible */}
         {onPreview && (
           <button
             onClick={(e) => { e.stopPropagation(); onPreview(demanda.id); }}
-            className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+            className="p-1 rounded text-zinc-300 dark:text-zinc-600 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors cursor-pointer"
             title="Ver detalhes"
           >
             <Eye className="w-3.5 h-3.5" />
           </button>
         )}
 
-        {/* Menu */}
-        <div ref={menuRef} className="relative">
+        {/* Quick Resolve — hover only */}
+        {demanda.status !== "resolvido" && demanda.status !== "protocolado" && demanda.status !== "ciencia" && demanda.status !== "sem_atuacao" && (
+          <button
+            onClick={() => onStatusChange(demanda.id, "resolvido")}
+            className="p-1 rounded hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors opacity-0 group-hover/row:opacity-100"
+            title="Resolver"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+          </button>
+        )}
+
+        {/* Menu — hover only */}
+        <div ref={menuRef} className="relative opacity-0 group-hover/row:opacity-100 transition-opacity">
           <button
             onClick={() => setShowMenu(!showMenu)}
             className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
           >
-            <MoreHorizontal className="w-3 h-3 text-zinc-400" />
+            <MoreHorizontal className="w-3.5 h-3.5 text-zinc-400" />
           </button>
 
           {showMenu && (
-            <div className="absolute right-0 top-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl z-50 py-1 w-36">
+            <div className="absolute right-0 top-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-xl z-50 py-1 w-40 opacity-100">
+              <button
+                onClick={() => { copyToClipboard(getRowTSV(demanda), "Linha copiada!"); setShowMenu(false); }}
+                className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+              >
+                <Copy className="w-3.5 h-3.5" /> Copiar linha
+              </button>
               <button
                 onClick={() => { onEdit(demanda); setShowMenu(false); }}
                 className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
@@ -702,7 +696,7 @@ const CompactRow = React.memo(function CompactRow({
           onPreview(demanda.id);
         }
       }}
-      className={`group/row border-b border-zinc-100/50 dark:border-zinc-800/50 transition-colors duration-100 cursor-pointer ${rowBg} ${isPreviewActive ? "ring-1 ring-emerald-200/50 dark:ring-emerald-800/40" : ""} ${index % 2 === 1 && !isPreviewActive ? "bg-zinc-50/40 dark:bg-zinc-800/20" : !isPreviewActive ? "bg-white dark:bg-zinc-900" : ""} ${isDragging ? "shadow-lg bg-white dark:bg-zinc-900 ring-1 ring-emerald-400/30" : ""} ${!isSelected && !isPreviewActive ? "hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30" : ""}`}
+      className={`group/row border-b border-zinc-100/60 dark:border-zinc-800/50 transition-all duration-100 cursor-pointer ${rowBg} ${isPreviewActive ? "ring-1 ring-inset ring-emerald-300/40 dark:ring-emerald-700/30 bg-emerald-50/30 dark:bg-emerald-950/10" : ""} ${index % 2 === 1 && !isPreviewActive ? "bg-zinc-50/50 dark:bg-zinc-800/20" : !isPreviewActive ? "bg-white dark:bg-zinc-900" : ""} ${isDragging ? "shadow-lg bg-white dark:bg-zinc-900 ring-1 ring-emerald-400/30" : ""} ${!isSelected && !isPreviewActive ? "hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40" : ""}`}
     >
       {/* Drag handle */}
       {onReorder && (
@@ -762,7 +756,7 @@ const CompactRow = React.memo(function CompactRow({
 
         if (isAcoesCol) {
           return (
-            <td key={col.id} className="px-2 py-3 w-[70px]">
+            <td key={col.id} className="px-1 py-3 w-[72px]">
               {renderer()}
             </td>
           );
@@ -1092,17 +1086,20 @@ export function DemandaCompactView({
   return (
     <TooltipProvider delayDuration={300}>
       <div className="bg-white dark:bg-zinc-900 border-t border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
-        {/* Header: keyboard hint (atribuição tabs moved to parent toolbar) */}
-        <div className="px-4 py-1.5 bg-zinc-50/50 dark:bg-zinc-800/40 border-b border-zinc-100 dark:border-zinc-800/80 flex items-center justify-end">
-          <span className="text-[9px] text-zinc-400 dark:text-zinc-600 whitespace-nowrap flex-shrink-0 hidden lg:inline tracking-wide">
-            Click = detalhes &middot; Dbl-click = edita &middot; &uarr;&darr;&larr;&rarr; navega &middot; Ctrl+C/V = copia/cola &middot; Ctrl+Click = seleciona
+        {/* Header: keyboard hint */}
+        <div className="px-4 py-1 bg-zinc-50/30 dark:bg-zinc-800/20 border-b border-zinc-100/50 dark:border-zinc-800/50 flex items-center justify-end">
+          <span className="text-[8px] text-zinc-300 dark:text-zinc-700 whitespace-nowrap flex-shrink-0 hidden lg:inline tracking-wider font-medium">
+            CLICK = detalhes &middot; DBL-CLICK = edita &middot; &uarr;&darr;&larr;&rarr; navega &middot; ⌘C/V = copia/cola &middot; ⌘CLICK = seleciona
           </span>
         </div>
 
         {/* Desktop: Table */}
         <div ref={scrollContainerRef} className="hidden md:block overflow-x-auto overflow-y-auto max-h-[calc(100vh-220px)]">
           {demandas.length === 0 ? (
-            <div className="text-center py-16">
+            <div className="text-center py-20">
+              <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-3">
+                <Scale className="w-5 h-5 text-zinc-400" />
+              </div>
               <p className="text-sm text-zinc-500 font-medium">Nenhuma demanda encontrada</p>
               <p className="text-xs text-zinc-400 mt-1">Ajuste os filtros ou crie uma nova demanda</p>
             </div>
@@ -1114,8 +1111,8 @@ export function DemandaCompactView({
               className="w-full text-[11px] border-collapse table-fixed"
               onKeyDown={handleTableKeyDown}
             >
-              <thead className={`sticky top-0 z-10 transition-shadow duration-200 ${isScrolled ? "shadow-[0_2px_8px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)]" : ""}`}>
-                <tr className="bg-zinc-50 dark:bg-zinc-800/80 border-b border-zinc-200/80 dark:border-zinc-800/80">
+              <thead className={`sticky top-0 z-10 transition-shadow duration-200 ${isScrolled ? "shadow-[0_1px_6px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_6px_rgba(0,0,0,0.25)]" : ""}`}>
+                <tr className="bg-zinc-50/90 dark:bg-zinc-800/90 backdrop-blur-sm border-b border-zinc-200/60 dark:border-zinc-700/60">
                   {onReorder && <th className="w-6 px-1" />}
                   {isSelectMode && <th className="w-8 px-1" />}
                   {COLUMN_ORDER.map((col) => {
@@ -1279,17 +1276,21 @@ export function DemandaCompactView({
           )}
         </div>
 
-        {/* Mobile: Ultra-compact rows (2 lines per demanda) */}
+        {/* Mobile: Compact card rows (2 lines per demanda) */}
         <div className="md:hidden">
           {demandas.length === 0 ? (
-            <div className="text-center py-16">
+            <div className="text-center py-20 px-6">
+              <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-3">
+                <Scale className="w-5 h-5 text-zinc-400" />
+              </div>
               <p className="text-sm text-zinc-500 font-medium">Nenhuma demanda encontrada</p>
               <p className="text-xs text-zinc-400 mt-1">Ajuste os filtros ou crie uma nova demanda</p>
             </div>
           ) : (
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <div className="divide-y divide-zinc-100/80 dark:divide-zinc-800/60">
               {demandas.map((demanda, idx) => {
                 const statusConfig = getStatusConfig(demanda.status);
+                const StatusIcon = statusConfig.icon;
                 const statusColor = STATUS_GROUPS[statusConfig.group]?.color || "#A1A1AA";
                 const atribuicaoColor = ATRIBUICAO_BORDER_COLORS[demanda.atribuicao] || "#71717a";
                 const prazoInfo = calcularPrazo(demanda.prazo);
@@ -1327,19 +1328,19 @@ export function DemandaCompactView({
                   {/* Mobile group header */}
                   {mobileGroupHeader && (
                     <div
-                      className="flex items-center gap-2 px-3 py-2 bg-zinc-50/80 dark:bg-zinc-800/40 border-b border-zinc-200/50 dark:border-zinc-700/50 cursor-pointer"
+                      className="flex items-center gap-2 px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200/60 dark:border-zinc-700/50 cursor-pointer active:bg-zinc-100 dark:active:bg-zinc-700/50"
                       onClick={() => onToggleGroupCollapse?.(mobileGroupHeader.key)}
                     >
                       {mobileIsCollapsed
-                        ? <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
-                        : <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                        ? <ChevronRight className="w-4 h-4 text-zinc-400" />
+                        : <ChevronDown className="w-4 h-4 text-zinc-400" />
                       }
-                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: mobileGroupHeader.color }} />
-                      <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: mobileGroupHeader.color }} />
+                      <span className="text-[12px] font-bold text-zinc-700 dark:text-zinc-300">
                         {mobileGroupHeader.label}
                       </span>
-                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
-                        ({mobileGroupHeader.count})
+                      <span className="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium">
+                        {mobileGroupHeader.count}
                       </span>
                       <div className="flex-1 h-px bg-zinc-200/50 dark:bg-zinc-700/50" />
                     </div>
@@ -1347,14 +1348,14 @@ export function DemandaCompactView({
                   {mobileIsCollapsed ? null : (
                   <>
                   {showBatchSeparator && (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-zinc-100/80 dark:bg-zinc-800/40 border-b border-zinc-200/50 dark:border-zinc-700/50">
-                      <span className="text-[9px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100/60 dark:bg-zinc-800/30">
+                      <span className="text-[9px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
                         Importado {importDateStr}
                       </span>
-                      <span className="text-[9px] text-zinc-400 dark:text-zinc-500">
+                      <span className="text-[9px] text-zinc-300 dark:text-zinc-600">
                         ({batchCount} {batchCount === 1 ? "item" : "itens"})
                       </span>
-                      <div className="flex-1 h-px bg-zinc-200/50 dark:bg-zinc-700/50" />
+                      <div className="flex-1 h-px bg-zinc-200/40 dark:bg-zinc-700/40" />
                     </div>
                   )}
                   <div
@@ -1364,8 +1365,8 @@ export function DemandaCompactView({
                       ...(selectedIds?.has(demanda.id) ? { backgroundColor: `${atribuicaoColor}12` } : {}),
                       ...(previewDemandaId === demanda.id ? { backgroundColor: "rgba(16, 185, 129, 0.06)" } : {}),
                     }}
-                    className={`relative transition-colors cursor-pointer ${
-                      previewDemandaId === demanda.id ? "ring-1 ring-emerald-200/50 dark:ring-emerald-800/40" : ""
+                    className={`relative transition-colors cursor-pointer active:bg-zinc-50 dark:active:bg-zinc-800/40 ${
+                      previewDemandaId === demanda.id ? "ring-1 ring-inset ring-emerald-200/50 dark:ring-emerald-800/40" : ""
                     } ${
                       !selectedIds?.has(demanda.id) && previewDemandaId !== demanda.id
                         ? isUrgente || isPreso
@@ -1388,47 +1389,29 @@ export function DemandaCompactView({
                       }
                     }}
                   >
-                    <div className="pl-2 pr-2 py-1.5">
-                      {/* Line 1: #, status, assistido, prazo, menu */}
-                      <div className="flex items-center gap-1 min-w-0">
+                    <div className="pl-2.5 pr-1.5 py-2">
+                      {/* Line 1: checkbox?, index, icons, assistido, menu */}
+                      <div className="flex items-center gap-1.5 min-w-0">
                         {/* Select checkbox */}
                         {isSelectMode && (
                           <button
                             onClick={() => onToggleSelect?.(demanda.id)}
-                            className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                            className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                               !selectedIds?.has(demanda.id) ? "border-zinc-300 dark:border-zinc-600" : ""
                             }`}
                             style={selectedIds?.has(demanda.id) ? { borderColor: atribuicaoColor, backgroundColor: atribuicaoColor } : undefined}
                           >
-                            {selectedIds?.has(demanda.id) && <Check className="w-2.5 h-2.5 text-white" />}
+                            {selectedIds?.has(demanda.id) && <Check className="w-3 h-3 text-white" />}
                           </button>
                         )}
                         {/* Index */}
-                        <span className="text-[10px] text-zinc-400 font-mono w-4 flex-shrink-0 text-right" title={demanda.ordemOriginal != null ? `Ordem PJe: ${demanda.ordemOriginal + 1}` : undefined}>
+                        <span className="text-[10px] text-zinc-400 font-mono w-5 flex-shrink-0 text-right" title={demanda.ordemOriginal != null ? `Ordem PJe: ${demanda.ordemOriginal + 1}` : undefined}>
                           {idx + 1}
                         </span>
                         {/* Preso / Urgente icons */}
-                        {isPreso && <Lock className="w-3 h-3 text-rose-500 flex-shrink-0" />}
-                        {isUrgente && !isPreso && <Flame className="w-3 h-3 text-orange-500 flex-shrink-0" />}
-                        {/* Status pill (right after atribuição bar + index) */}
-                        <div className="flex-shrink-0">
-                          <InlineDropdown
-                            value={demanda.status}
-                            compact
-                            displayValue={
-                              <div
-                                className="inline-flex items-center gap-1 text-[9px] font-medium leading-none"
-                                style={{ color: statusColor }}
-                              >
-                                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
-                                <span className="truncate max-w-[60px]">{statusConfig.label}</span>
-                              </div>
-                            }
-                            options={statusOptions}
-                            onChange={(v) => onStatusChange(demanda.id, v)}
-                          />
-                        </div>
-                        {/* Assistido name */}
+                        {isPreso && <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />}
+                        {isUrgente && !isPreso && <Flame className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />}
+                        {/* Assistido name — primary content */}
                         <div className="flex-1 min-w-0 truncate">
                           {searchAssistidosFn && onAssistidoLink ? (
                             <InlineAutocomplete
@@ -1441,108 +1424,129 @@ export function DemandaCompactView({
                               onQueryChange={onAssistidoQueryChange}
                               isLoading={isLoadingAssistidoSearch}
                               icon="user"
-                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 text-[12px] font-semibold text-zinc-800 dark:text-zinc-200"
+                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 text-[13px] font-semibold text-zinc-800 dark:text-zinc-200"
                             />
                           ) : (
                             <EditableTextInline
                               value={demanda.assistido}
                               onSave={(v) => onAssistidoChange(demanda.id, v)}
-                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 text-[12px] font-semibold text-zinc-800 dark:text-zinc-200"
+                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 text-[13px] font-semibold text-zinc-800 dark:text-zinc-200"
                             />
                           )}
                         </div>
-                        {/* Prazo — badge style, empty = show nothing */}
-                        <div className="flex-shrink-0 flex items-center gap-1">
-                          <InlineDatePicker
-                            value={demanda.prazo}
-                            onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
-                            placeholder=""
-                          />
-                          {demanda.prazo && prazoInfo.cor !== "none" && prazoInfo.cor !== "gray" && (
-                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap ${
-                              prazoInfo.cor === "red" ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 animate-pulse" :
-                              prazoInfo.cor === "amber" ? "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
-                              "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
-                            }`}>
-                              {prazoInfo.texto}
-                            </span>
-                          )}
-                        </div>
-                        {/* Actions menu (three dots) */}
+                        {/* Prazo badge — only when urgent */}
+                        {demanda.prazo && prazoInfo.cor !== "none" && prazoInfo.cor !== "gray" && (
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${
+                            prazoInfo.cor === "red" ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400" :
+                            prazoInfo.cor === "amber" ? "bg-amber-100/80 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
+                            "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
+                          }`}>
+                            {prazoInfo.texto}
+                          </span>
+                        )}
+                        {/* Actions menu */}
                         <div className="relative flex-shrink-0">
                           <button
                             onClick={() => setMobileMenuOpenId(mobileMenuOpenId === demanda.id ? null : demanda.id)}
-                            className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400"
+                            className="p-1.5 -mr-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 active:bg-zinc-200 dark:active:bg-zinc-700"
                           >
-                            <MoreHorizontal className="w-3.5 h-3.5" />
+                            <MoreHorizontal className="w-4 h-4" />
                           </button>
                           {mobileMenuOpenId === demanda.id && (
                             <div
                               ref={mobileMenuRef}
-                              className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 min-w-[140px]"
+                              className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 min-w-[160px]"
                             >
                               {onPreview && (
                                 <button
                                   onClick={() => { onPreview(demanda.id); setMobileMenuOpenId(null); }}
-                                  className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 font-medium"
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-emerald-600 dark:text-emerald-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 font-medium"
                                 >
-                                  <Eye className="w-3 h-3" /> Ver detalhes
+                                  <Eye className="w-3.5 h-3.5" /> Ver detalhes
                                 </button>
                               )}
+                              {demanda.status !== "resolvido" && demanda.status !== "protocolado" && demanda.status !== "ciencia" && demanda.status !== "sem_atuacao" && (
+                                <button
+                                  onClick={() => { onStatusChange(demanda.id, "resolvido"); setMobileMenuOpenId(null); }}
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-emerald-600 dark:text-emerald-400 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5" /> Resolver
+                                </button>
+                              )}
+                              <div className="my-0.5 border-t border-zinc-100 dark:border-zinc-800" />
                               <button
                                 onClick={() => { copyToClipboard(getRowTSV(demanda), "Linha copiada!"); setMobileMenuOpenId(null); }}
-                                className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
                               >
-                                <Copy className="w-3 h-3" /> Copiar linha
+                                <Copy className="w-3.5 h-3.5" /> Copiar linha
                               </button>
                               {demanda.assistidoId && (
                                 <Link
                                   href={`/admin/assistidos/${demanda.assistidoId}`}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-[11px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
                                   onClick={() => setMobileMenuOpenId(null)}
                                 >
-                                  <ExternalLink className="w-3 h-3" />
+                                  <ExternalLink className="w-3.5 h-3.5" />
                                   <span>Abrir ficha</span>
                                 </Link>
                               )}
                               {demanda.processoId && (
                                 <Link
                                   href={`/admin/processos/${demanda.processoId}`}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-[11px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
                                   onClick={() => setMobileMenuOpenId(null)}
                                 >
-                                  <ExternalLink className="w-3 h-3" />
+                                  <ExternalLink className="w-3.5 h-3.5" />
                                   <span>Abrir processo</span>
                                 </Link>
                               )}
                               <button
                                 onClick={() => { onEdit(demanda); setMobileMenuOpenId(null); }}
-                                className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
                               >
-                                <Edit className="w-3 h-3" /> Editar completo
+                                <Edit className="w-3.5 h-3.5" /> Editar
                               </button>
                               <button
                                 onClick={() => { demanda.arquivado ? onUnarchive(demanda.id) : onArchive(demanda.id); setMobileMenuOpenId(null); }}
-                                className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
                               >
-                                {demanda.arquivado ? <ArchiveRestore className="w-3 h-3" /> : <Archive className="w-3 h-3" />}
+                                {demanda.arquivado ? <ArchiveRestore className="w-3.5 h-3.5" /> : <Archive className="w-3.5 h-3.5" />}
                                 {demanda.arquivado ? "Restaurar" : "Arquivar"}
                               </button>
+                              <div className="my-0.5 border-t border-zinc-100 dark:border-zinc-800" />
                               <button
                                 onClick={() => { onDelete(demanda.id); setMobileMenuOpenId(null); }}
-                                className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20"
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20"
                               >
-                                <Trash2 className="w-3 h-3" /> Excluir
+                                <Trash2 className="w-3.5 h-3.5" /> Excluir
                               </button>
                             </div>
                           )}
                         </div>
                       </div>
 
-                      {/* Line 2: processo, ato, providencias */}
-                      <div className="flex items-center gap-1 min-w-0 pl-5 mt-0.5">
+                      {/* Line 2: status pill, processo, ato, prazo date */}
+                      <div className="flex items-center gap-1.5 min-w-0 pl-6 mt-1">
+                        {/* Status pill (compact) */}
+                        <div className="flex-shrink-0">
+                          <InlineDropdown
+                            value={demanda.status}
+                            compact
+                            displayValue={
+                              <div
+                                className="inline-flex items-center gap-1 text-[9px] font-semibold leading-none rounded-full px-1.5 py-0.5"
+                                style={{ color: statusColor, backgroundColor: `${statusColor}10` }}
+                              >
+                                <StatusIcon className="w-2.5 h-2.5 flex-shrink-0" />
+                                <span className="truncate max-w-[65px]">{statusConfig.label}</span>
+                              </div>
+                            }
+                            options={statusOptions}
+                            onChange={(v) => onStatusChange(demanda.id, v)}
+                          />
+                        </div>
                         {/* Processo (mono) */}
-                        <div className="min-w-0 max-w-[45%]">
+                        <div className="min-w-0 max-w-[40%]">
                           {searchProcessosFn && onProcessoLink ? (
                             <InlineAutocomplete
                               value={demanda.processos?.[0]?.numero || ""}
@@ -1566,15 +1570,13 @@ export function DemandaCompactView({
                             />
                           )}
                         </div>
-                        {/* Separator */}
-                        <span className="text-[10px] text-zinc-300 dark:text-zinc-600 flex-shrink-0">&middot;</span>
                         {/* Ato (dropdown) */}
                         <div className="min-w-0 flex-shrink truncate">
                           <InlineDropdown
                             value={demanda.ato}
                             compact
                             displayValue={
-                              <span className="text-[10px] text-zinc-600 dark:text-zinc-400 truncate block">
+                              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate block">
                                 {demanda.ato || "Ato..."}
                               </span>
                             }
@@ -1582,23 +1584,27 @@ export function DemandaCompactView({
                             onChange={(v) => onAtoChange(demanda.id, v)}
                           />
                         </div>
+                        {/* Prazo date (subtle, for non-urgent) */}
+                        {demanda.prazo && (prazoInfo.cor === "gray" || prazoInfo.cor === "none") && (
+                          <div className="flex-shrink-0">
+                            <InlineDatePicker
+                              value={demanda.prazo}
+                              onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
+                              placeholder=""
+                            />
+                          </div>
+                        )}
                         {/* Providencias (hide placeholders) */}
                         {(() => {
                           const provText = demanda.providencias || "";
                           const isPlaceholder = /^\(ajustar|^\(peticionar/i.test(provText.trim());
                           const showProv = provText.trim().length > 0 && !isPlaceholder;
                           return showProv ? (
-                            <>
-                              <span className="text-[10px] text-zinc-300 dark:text-zinc-600 flex-shrink-0">&middot;</span>
-                              <div className="min-w-0 flex-1 truncate">
-                                <EditableTextInline
-                                  value={provText}
-                                  onSave={(v) => onProvidenciasChange(demanda.id, v)}
-                                  placeholder=""
-                                  className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 text-[10px] italic text-zinc-400 dark:text-zinc-500"
-                                />
-                              </div>
-                            </>
+                            <div className="min-w-0 flex-1 truncate">
+                              <span className="text-[10px] italic text-zinc-400 dark:text-zinc-500 truncate block">
+                                {provText.length > 25 ? provText.substring(0, 25) + "…" : provText}
+                              </span>
+                            </div>
                           ) : null;
                         })()}
                       </div>
@@ -1665,11 +1671,11 @@ export function DemandaCompactView({
 
         {/* Footer */}
         {demandas.length > 0 && (
-          <div className="px-4 py-2 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-800/50 flex items-center justify-between">
-            <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+          <div className="px-4 py-2 border-t border-zinc-200/60 dark:border-zinc-700/60 bg-zinc-50/60 dark:bg-zinc-800/40 flex items-center justify-between">
+            <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">
               {demandas.length} demanda{demandas.length !== 1 && "s"}
               {selectedIds && selectedIds.size > 0 && (
-                <span className="ml-2 text-emerald-600 dark:text-emerald-400 font-medium">
+                <span className="ml-2 text-emerald-600 dark:text-emerald-400 font-semibold">
                   &middot; {selectedIds.size} selecionada{selectedIds.size !== 1 && "s"}
                 </span>
               )}
@@ -1677,10 +1683,10 @@ export function DemandaCompactView({
             {selectedIds && selectedIds.size > 0 && (
               <button
                 onClick={handleCopySelected}
-                className="text-[10px] text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 flex items-center gap-1 transition-colors font-medium"
+                className="text-[10px] text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 flex items-center gap-1.5 transition-colors font-semibold px-2 py-1 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
               >
                 <Copy className="w-3 h-3" />
-                Copiar {selectedIds.size} selecionada{selectedIds.size !== 1 && "s"}
+                Copiar {selectedIds.size}
               </button>
             )}
           </div>

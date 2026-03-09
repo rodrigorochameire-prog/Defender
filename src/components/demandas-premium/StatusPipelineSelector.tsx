@@ -35,6 +35,19 @@ export function StatusPipelineSelector({
   const [activeStage, setActiveStage] = useState(currentStageIdx >= 0 ? currentStageIdx : 0);
   const ref = useRef<HTMLDivElement>(null);
 
+  // Dropdown position (must be before early returns)
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+
+  useEffect(() => {
+    if (variant === "dropdown" && anchorRef?.current) {
+      const rect = anchorRef.current.getBoundingClientRect();
+      setPos({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, [variant, anchorRef]);
+
   // Click-outside (not needed for inline)
   useEffect(() => {
     if (variant === "inline") return;
@@ -232,18 +245,6 @@ export function StatusPipelineSelector({
   }
 
   // ====== DROPDOWN variant (desktop) ======
-  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
-
-  useEffect(() => {
-    if (variant === "dropdown" && anchorRef?.current) {
-      const rect = anchorRef.current.getBoundingClientRect();
-      setPos({
-        top: rect.bottom + 8,
-        right: window.innerWidth - rect.right,
-      });
-    }
-  }, [variant, anchorRef]);
-
   if (variant === "dropdown" && !pos) {
     return (
       <div
