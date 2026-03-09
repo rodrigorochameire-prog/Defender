@@ -240,11 +240,11 @@ export function TabGeral({
                     className={cn(
                       "px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer",
                       isActive
-                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400"
+                        ? "border-zinc-500 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
                         : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700"
                     )}
                   >
-                    <Icon className={cn("w-3.5 h-3.5 shrink-0", isActive ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400")} />
+                    <Icon className={cn("w-3.5 h-3.5 shrink-0", isActive ? "text-zinc-600 dark:text-zinc-400" : "text-zinc-400")} />
                     {opt.label}
                   </button>
                 );
@@ -278,7 +278,7 @@ export function TabGeral({
                             className={cn(
                               "px-2.5 py-2 rounded-lg border text-xs font-semibold cursor-pointer flex items-center gap-2.5 transition-all",
                               isSelected
-                                ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30"
+                                ? "border-zinc-500 bg-zinc-100 dark:bg-zinc-800"
                                 : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-300"
                             )}
                           >
@@ -405,7 +405,7 @@ export function TabGeral({
                   type="time"
                   value={registro.horarioRedesignacao || ""}
                   onChange={(e) => updateRegistro({ horarioRedesignacao: e.target.value })}
-                  className="w-full px-3 py-1.5 text-sm h-8 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  className="w-full px-3 py-1.5 text-sm h-8 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:border-zinc-500"
                 />
                 <div className="flex gap-1 mt-1.5 flex-wrap">
                   {["08:00", "09:00", "10:00", "13:00", "14:00", "15:00"].map((h) => (
@@ -416,7 +416,7 @@ export function TabGeral({
                       className={cn(
                         "px-2 py-0.5 text-[10px] font-semibold rounded-md border transition-all cursor-pointer",
                         registro.horarioRedesignacao === h
-                          ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400"
+                          ? "border-zinc-500 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
                           : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300"
                       )}
                     >
@@ -455,11 +455,11 @@ export function TabGeral({
                     className={cn(
                       "px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer",
                       isActive
-                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400"
+                        ? "border-zinc-500 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
                         : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700"
                     )}
                   >
-                    <Icon className={cn("w-3.5 h-3.5 shrink-0", isActive ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400")} />
+                    <Icon className={cn("w-3.5 h-3.5 shrink-0", isActive ? "text-zinc-600 dark:text-zinc-400" : "text-zinc-400")} />
                     {opt.label}
                   </button>
                 );

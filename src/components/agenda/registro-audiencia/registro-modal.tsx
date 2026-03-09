@@ -4,10 +4,10 @@ import Link from "next/link";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { motion, AnimatePresence } from "motion/react";
+// motion/AnimatePresence removed — exit animations were stalling tab switches
 import {
   FileText, Users, Notebook, MessageSquare, Eye, BookOpen,
-  Sparkles, Gavel, X, Save, CheckCircle2,
+  Sparkles, Gavel, X, Save, CheckCircle2, HardDrive,
 } from "lucide-react";
 import { BriefingSection } from "@/components/briefing";
 import { useRegistroForm } from "./hooks/use-registro-form";
@@ -17,6 +17,7 @@ import { TabAnotacoes } from "./tabs/tab-anotacoes";
 import { TabManifestacoes } from "./tabs/tab-manifestacoes";
 import { TabRegistro } from "./tabs/tab-registro";
 import { TabHistorico } from "./tabs/tab-historico";
+import { TabMidia } from "./tabs/tab-midia";
 import type { RegistroAudienciaData } from "./types";
 import type { TabKey } from "./hooks/use-registro-form";
 
@@ -34,6 +35,7 @@ const tabConfig: { key: TabKey; label: string; icon: any; countKey?: "depoentes"
   { key: "depoentes", label: "Depoentes", icon: Users, countKey: "depoentes" },
   { key: "anotacoes", label: "Anotações", icon: Notebook },
   { key: "manifestacoes", label: "Manifestações", icon: MessageSquare },
+  { key: "midia", label: "Mídia", icon: HardDrive },
   { key: "registro", label: "Registro", icon: Eye },
   { key: "historico", label: "Histórico", icon: BookOpen, countKey: "historico" },
 ];
@@ -86,7 +88,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                         href={`/admin/assistidos/${assistidoId}`}
                         target="_blank"
                         rel="noopener"
-                        className="text-zinc-700 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline transition-colors truncate"
+                        className="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-200 hover:underline transition-colors truncate"
                       >
                         {assistidoName}
                       </Link>
@@ -109,7 +111,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                             href={`/admin/processos/${processoId}`}
                             target="_blank"
                             rel="noopener"
-                            className="font-mono text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline transition-colors"
+                            className="font-mono text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:underline transition-colors"
                           >
                             {processoDisplay}
                           </Link>
@@ -153,7 +155,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
           </div>
         </div>
 
-        {/* Tabs - Emerald active */}
+        {/* Tabs */}
         <div className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex-shrink-0 overflow-x-auto">
           <div className="flex gap-0 px-2 md:px-4">
             {visibleTabs.map((tab) => {
@@ -165,13 +167,13 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                 <button
                   key={tab.key}
                   onClick={() => form.setActiveTab(tab.key)}
-                  className={`px-2 md:px-3 py-2 md:py-3 text-xs md:text-sm font-semibold transition-all border-b-2 flex items-center gap-1.5 md:gap-2 whitespace-nowrap cursor-pointer ${
+                  className={`px-3 sm:px-2 md:px-3 py-2.5 sm:py-2 md:py-3 text-xs md:text-sm font-semibold transition-all border-b-2 flex items-center gap-1.5 md:gap-2 whitespace-nowrap cursor-pointer ${
                     isActive
-                      ? "border-emerald-600 text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-950"
+                      ? "border-zinc-900 dark:border-zinc-100 text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-950"
                       : "border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                  <Icon className="w-5 h-5 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" />
                   <span className="hidden sm:inline">{tab.label}</span>
                   {count !== undefined && count > 0 && (
                     <Badge className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-[10px] px-1.5 py-0">
@@ -187,9 +189,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
         {/* Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="p-4">
-            <AnimatePresence mode="wait">
               {form.activeTab === "geral" && (
-                <motion.div key="geral" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
                   <TabGeral
                     registro={form.registro}
                     updateRegistro={form.updateRegistro}
@@ -209,17 +209,15 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                     setNovoHorarioPopoverOpen={form.setNovoHorarioPopoverOpen}
                     evento={evento}
                   />
-                </motion.div>
               )}
 
               {form.activeTab === "briefing" && (
-                <motion.div key="briefing" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="max-w-5xl mx-auto">
+                <div className="max-w-5xl mx-auto">
                   <BriefingSection evento={evento} />
-                </motion.div>
+                </div>
               )}
 
               {form.activeTab === "depoentes" && (
-                <motion.div key="depoentes" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
                   <TabDepoentes
                     depoentes={form.registro.depoentes}
                     editandoDepoente={form.editandoDepoente}
@@ -237,23 +235,31 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                     toggleDepoenteDetails={form.toggleDepoenteDetails}
                     evento={evento}
                   />
-                </motion.div>
               )}
 
               {form.activeTab === "anotacoes" && (
-                <motion.div key="anotacoes" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
                   <TabAnotacoes registro={form.registro} updateRegistro={form.updateRegistro} />
-                </motion.div>
               )}
 
               {form.activeTab === "manifestacoes" && (
-                <motion.div key="manifestacoes" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
                   <TabManifestacoes registro={form.registro} updateRegistro={form.updateRegistro} />
-                </motion.div>
+              )}
+
+              {form.activeTab === "midia" && (
+                  <TabMidia
+                    assistidoId={(() => {
+                      const aid = evento.assistido?.id ?? evento.assistidoId;
+                      return typeof aid === "number" ? aid : undefined;
+                    })()}
+                    processoId={(() => {
+                      const pid = evento.processo?.id ?? evento.processoId;
+                      return typeof pid === "number" ? pid : undefined;
+                    })()}
+                    assistidoNome={typeof evento.assistido === "string" ? evento.assistido : evento.assistido?.nome}
+                  />
               )}
 
               {form.activeTab === "registro" && (
-                <motion.div key="registro" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
                   <TabRegistro
                     registro={form.registro}
                     statusAudiencia={form.statusAudiencia}
@@ -262,15 +268,11 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                     setActiveTab={form.setActiveTab}
                     evento={evento}
                   />
-                </motion.div>
               )}
 
               {form.activeTab === "historico" && (
-                <motion.div key="historico" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
                   <TabHistorico registrosAnteriores={form.registrosAnteriores} />
-                </motion.div>
               )}
-            </AnimatePresence>
           </div>
         </div>
 
@@ -291,7 +293,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
             <Button
               type="button"
               onClick={form.handleSubmit}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1 sm:flex-none text-xs md:text-sm h-8 md:h-9 cursor-pointer"
+              className="bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-900 flex-1 sm:flex-none text-xs md:text-sm h-8 md:h-9 cursor-pointer"
             >
               <Save className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1.5 md:mr-2" />
               {form.registroSalvo ? "Atualizar Registro" : "Salvar Registro"}

@@ -11,7 +11,7 @@ import {
 import type { Depoente, RegistroAudienciaData } from "../types";
 
 export type StatusAudiencia = "concluida" | "redesignada" | "suspensa";
-export type TabKey = "geral" | "briefing" | "depoentes" | "manifestacoes" | "anotacoes" | "historico" | "registro";
+export type TabKey = "geral" | "briefing" | "depoentes" | "manifestacoes" | "anotacoes" | "historico" | "registro" | "midia";
 
 interface UseRegistroFormProps {
   evento: any;
@@ -80,9 +80,7 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
   const [novoDepoenteNome, setNovoDepoenteNome] = useState("");
   const [novoDepoenteTipo, setNovoDepoenteTipo] = useState<Depoente["tipo"]>("testemunha");
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    estrategia: true,
-    perguntas: false,
-    depoimento: false,
+    estrategia: false,
     analise: false,
   });
   const [expandedDepoenteDetails, setExpandedDepoenteDetails] = useState<Record<string, boolean>>({});

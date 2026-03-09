@@ -30,7 +30,7 @@ export function TabRegistro({
 }: TabRegistroProps) {
   const completudeBadgeClass =
     completude >= 80
-      ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+      ? "bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800"
       : completude >= 50
       ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
       : "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800";
@@ -60,7 +60,7 @@ export function TabRegistro({
             </div>
             <div className="w-32 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
               <div
-                className="h-full bg-emerald-600 dark:bg-emerald-500 transition-all duration-500"
+                className="h-full bg-zinc-700 dark:bg-zinc-300 transition-all duration-500"
                 style={{ width: `${completude}%` }}
               />
             </div>

@@ -8,10 +8,11 @@ import {
   AlertTriangle,
   ChevronDown,
   Target,
-  Shield,
   Quote,
   Eye,
 } from "lucide-react";
+import { AudioRecorderButton } from "@/components/shared/audio-recorder";
+import { VoiceMemosButton } from "@/components/shared/voice-memos-button";
 import { getDepoenteStyle } from "../constants";
 import type { Depoente } from "../types";
 
@@ -239,22 +240,38 @@ function DefendantTypeFields({ depoente, onUpdate, style }: { depoente: Depoente
   );
 }
 
-// Collapsible textarea section
-function CollapsibleSection({ title, icon: Icon, field, depoente, onUpdate, expanded, onToggle, placeholder, style }: {
+// Collapsible textarea section with optional transcription buttons
+function CollapsibleSection({ title, icon: Icon, field, depoente, onUpdate, expanded, onToggle, placeholder, style, showTranscription, rows = 8 }: {
   title: string; icon: any; field: keyof Depoente; depoente: Depoente; onUpdate: (d: Depoente) => void;
   expanded: boolean; onToggle: () => void; placeholder: string; style: ReturnType<typeof getDepoenteStyle>;
+  showTranscription?: boolean; rows?: number;
 }) {
   const hasContent = !!depoente[field];
+
+  const appendToField = (text: string) => {
+    const current = (depoente[field] as string) || "";
+    const newValue = current + (current ? "\n\n" : "") + text;
+    onUpdate({ ...depoente, [field]: newValue });
+  };
+
   return (
     <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">
-      <button type="button" onClick={onToggle} className="w-full px-3 py-2 flex items-center justify-between bg-white dark:bg-zinc-950 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer">
+      <div role="button" tabIndex={0} onClick={onToggle} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onToggle(); } }} className="w-full px-3 py-2 flex items-center justify-between bg-white dark:bg-zinc-950 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer">
         <div className="flex items-center gap-2">
           <Icon className={cn("w-3.5 h-3.5", style.icon)} />
           <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">{title}</span>
           {hasContent && <div className={cn("w-1.5 h-1.5 rounded-full", style.dotColor)} />}
         </div>
-        <ChevronDown className={cn("w-4 h-4 text-zinc-400 transition-transform", expanded && "rotate-180")} />
-      </button>
+        <div className="flex items-center gap-1">
+          {showTranscription && (
+            <span className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+              <AudioRecorderButton compact onTranscriptReady={appendToField} />
+              <VoiceMemosButton compact onTranscriptReady={appendToField} />
+            </span>
+          )}
+          <ChevronDown className={cn("w-4 h-4 text-zinc-400 transition-transform", expanded && "rotate-180")} />
+        </div>
+      </div>
       <AnimatePresence>
         {expanded && (
           <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden">
@@ -265,23 +282,11 @@ function CollapsibleSection({ title, icon: Icon, field, depoente, onUpdate, expa
                   Planejamento para próxima audiência
                 </div>
               )}
-              {field === "depoimentoLiteral" && depoente.tipo === "vitima" && (
-                <div className="mb-2">
-                  <Label className="text-xs mb-1 block text-zinc-700 dark:text-zinc-300">Contradições / Relatos que desmintam</Label>
-                  <Textarea
-                    value={depoente.vitimaContradicoes || ""}
-                    onChange={(e) => onUpdate({ ...depoente, vitimaContradicoes: e.target.value })}
-                    placeholder="Contradições identificadas..."
-                    rows={3}
-                    className="text-sm font-mono border-zinc-200 dark:border-zinc-800 mb-2"
-                  />
-                </div>
-              )}
               <Textarea
                 value={(depoente[field] as string) || ""}
                 onChange={(e) => onUpdate({ ...depoente, [field]: e.target.value })}
                 placeholder={placeholder}
-                rows={8}
+                rows={rows}
                 className="text-sm font-mono border-zinc-200 dark:border-zinc-800"
               />
             </div>
@@ -295,35 +300,29 @@ function CollapsibleSection({ title, icon: Icon, field, depoente, onUpdate, expa
 export function TabDepoenteForm({ depoente, onUpdate, expandedSections, toggleSection, expandedDepoenteDetails, toggleDepoenteDetails, evento }: TabDepoenteFormProps) {
   const style = getDepoenteStyle(depoente.tipo);
 
+  const appendToDepoimento = (text: string) => {
+    const current = depoente.depoimentoLiteral || "";
+    onUpdate({ ...depoente, depoimentoLiteral: current + (current ? "\n\n" : "") + text });
+  };
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Header */}
-      <div className={cn("shrink-0 bg-zinc-50/50 dark:bg-zinc-900/30 rounded-lg border-l-4", style.borderCard, "border border-zinc-200/80 dark:border-zinc-800/80 px-3 md:px-4 py-2.5 mb-2 space-y-2")}>
+      {/* Header - compact */}
+      <div className={cn("shrink-0 bg-zinc-50/50 dark:bg-zinc-900/30 rounded-lg border-l-4", style.borderCard, "border border-zinc-200/80 dark:border-zinc-800/80 px-3 md:px-4 py-2 mb-2 space-y-1.5")}>
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <div className={cn("w-2 h-2 rounded-full", style.dotColor)} />
-            <span className="font-semibold text-sm md:text-sm text-zinc-900 dark:text-zinc-50">{depoente.nome}</span>
-            <span className="text-xs text-zinc-500">· {style.label}</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={cn("w-2 h-2 rounded-full shrink-0", style.dotColor)} />
+            <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-50 truncate">{depoente.nome}</span>
+            <span className="text-xs text-zinc-500 shrink-0">· {style.label}</span>
           </div>
 
-          <div className="flex flex-wrap md:flex-nowrap items-center gap-2">
-            <div className="flex gap-1">
-              <button type="button" onClick={() => onUpdate({ ...depoente, intimado: true })} className={cn("px-2.5 py-1 rounded text-[10px] md:text-xs font-semibold transition-all cursor-pointer", depoente.intimado ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900" : "bg-zinc-200 dark:bg-zinc-800 text-zinc-600 hover:bg-zinc-300")}>
-                Intimado
-              </button>
-              <button type="button" onClick={() => onUpdate({ ...depoente, intimado: false })} className={cn("px-2.5 py-1 rounded text-[10px] md:text-xs font-semibold transition-all cursor-pointer", !depoente.intimado ? "bg-zinc-600 text-white" : "bg-zinc-200 dark:bg-zinc-800 text-zinc-600 hover:bg-zinc-300")}>
-                Não intimado
-              </button>
-            </div>
-            <div className="hidden md:block w-px h-5 bg-zinc-300 dark:bg-zinc-700" />
-            <div className="flex gap-1">
-              <button type="button" onClick={() => onUpdate({ ...depoente, presente: true })} className={cn("px-2.5 py-1 rounded text-[10px] md:text-xs font-semibold transition-all cursor-pointer", depoente.presente ? "bg-emerald-500 text-white" : "bg-zinc-200 dark:bg-zinc-800 text-zinc-600 hover:bg-emerald-200")}>
-                Presente
-              </button>
-              <button type="button" onClick={() => onUpdate({ ...depoente, presente: false })} className={cn("px-2.5 py-1 rounded text-[10px] md:text-xs font-semibold transition-all cursor-pointer", !depoente.presente ? "bg-rose-500 text-white" : "bg-zinc-200 dark:bg-zinc-800 text-zinc-600 hover:bg-rose-200")}>
-                Ausente
-              </button>
-            </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <button type="button" onClick={() => onUpdate({ ...depoente, intimado: !depoente.intimado })} className={cn("px-2 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer", depoente.intimado ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900" : "bg-zinc-200 dark:bg-zinc-800 text-zinc-500 hover:bg-zinc-300")}>
+              {depoente.intimado ? "Intimado" : "Não intim."}
+            </button>
+            <button type="button" onClick={() => onUpdate({ ...depoente, presente: !depoente.presente })} className={cn("px-2 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer", depoente.presente ? "bg-emerald-500 text-white" : "bg-rose-500 text-white")}>
+              {depoente.presente ? "Presente" : "Ausente"}
+            </button>
           </div>
         </div>
 
@@ -359,8 +358,47 @@ export function TabDepoenteForm({ depoente, onUpdate, expandedSections, toggleSe
         )}
       </div>
 
-      {/* Collapsible sections */}
+      {/* Main content area */}
       <div className="flex-1 overflow-y-auto space-y-2">
+        {/* PRIMARY: Depoimento e Trechos Literais - always visible */}
+        {depoente.presente && (
+          <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">
+            <div className="px-3 py-2 flex items-center justify-between bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800">
+              <div className="flex items-center gap-2">
+                <Quote className={cn("w-3.5 h-3.5", style.icon)} />
+                <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">Depoimento e Trechos Literais</span>
+                {!!depoente.depoimentoLiteral && <div className={cn("w-1.5 h-1.5 rounded-full", style.dotColor)} />}
+              </div>
+              <div className="flex items-center gap-0.5">
+                <AudioRecorderButton compact onTranscriptReady={appendToDepoimento} />
+                <VoiceMemosButton compact onTranscriptReady={appendToDepoimento} />
+              </div>
+            </div>
+            <div className="p-3 bg-white dark:bg-zinc-950">
+              {depoente.tipo === "vitima" && (
+                <div className="mb-2">
+                  <Label className="text-xs mb-1 block text-zinc-700 dark:text-zinc-300">Contradições / Relatos que desmintam</Label>
+                  <Textarea
+                    value={depoente.vitimaContradicoes || ""}
+                    onChange={(e) => onUpdate({ ...depoente, vitimaContradicoes: e.target.value })}
+                    placeholder="Contradições identificadas..."
+                    rows={3}
+                    className="text-sm font-mono border-zinc-200 dark:border-zinc-800 mb-2"
+                  />
+                </div>
+              )}
+              <Textarea
+                value={depoente.depoimentoLiteral || ""}
+                onChange={(e) => onUpdate({ ...depoente, depoimentoLiteral: e.target.value })}
+                placeholder="Trechos importantes do depoimento..."
+                rows={12}
+                className="text-sm font-mono border-zinc-200 dark:border-zinc-800"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* SECONDARY: Estratégia - collapsible */}
         <CollapsibleSection
           title="Estratégia de Inquirição"
           icon={Target}
@@ -369,46 +407,25 @@ export function TabDepoenteForm({ depoente, onUpdate, expandedSections, toggleSe
           onUpdate={onUpdate}
           expanded={expandedSections.estrategia}
           onToggle={() => toggleSection("estrategia")}
-          placeholder="Estratégia e linha de questionamento..."
+          placeholder="Estratégia, linha de questionamento e perguntas..."
           style={style}
+          showTranscription
         />
 
+        {/* SECONDARY: Análise - collapsible */}
         {depoente.presente && (
-          <>
-            <CollapsibleSection
-              title="Perguntas da Defesa"
-              icon={Shield}
-              field="perguntasDefesa"
-              depoente={depoente}
-              onUpdate={onUpdate}
-              expanded={expandedSections.perguntas}
-              onToggle={() => toggleSection("perguntas")}
-              placeholder="Perguntas realizadas..."
-              style={style}
-            />
-            <CollapsibleSection
-              title="Depoimento e Trechos Literais"
-              icon={Quote}
-              field="depoimentoLiteral"
-              depoente={depoente}
-              onUpdate={onUpdate}
-              expanded={expandedSections.depoimento}
-              onToggle={() => toggleSection("depoimento")}
-              placeholder="Trechos importantes..."
-              style={style}
-            />
-            <CollapsibleSection
-              title="Análise e Percepções"
-              icon={Eye}
-              field="analisePercepcoes"
-              depoente={depoente}
-              onUpdate={onUpdate}
-              expanded={expandedSections.analise}
-              onToggle={() => toggleSection("analise")}
-              placeholder="Credibilidade e pontos relevantes..."
-              style={style}
-            />
-          </>
+          <CollapsibleSection
+            title="Análise e Percepções"
+            icon={Eye}
+            field="analisePercepcoes"
+            depoente={depoente}
+            onUpdate={onUpdate}
+            expanded={expandedSections.analise}
+            onToggle={() => toggleSection("analise")}
+            placeholder="Credibilidade e pontos relevantes..."
+            style={style}
+            showTranscription
+          />
         )}
       </div>
     </div>
