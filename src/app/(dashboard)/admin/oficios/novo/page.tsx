@@ -261,19 +261,19 @@ export default function NovoOficioPage() {
     <>
       {/* Assistido */}
       <div>
-        <label className="text-xs text-zinc-500 mb-1.5 block">Assistido (opcional)</label>
+        <label className="text-xs text-muted-foreground mb-1.5 block">Assistido (opcional)</label>
         <Popover open={showAssistido} onOpenChange={setShowAssistido}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               role="combobox"
-              className="w-full justify-start bg-zinc-800/50 border-zinc-700 text-zinc-300 font-normal"
+              className="w-full justify-start bg-muted/50 border-border text-foreground font-normal"
             >
-              <User className="w-4 h-4 mr-2 text-zinc-500" />
+              <User className="w-4 h-4 mr-2 text-muted-foreground" />
               {assistidoNome || "Selecionar assistido..."}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[400px] p-0 bg-zinc-900 border-zinc-700">
+          <PopoverContent className="w-[400px] p-0 bg-popover border-border">
             <Command>
               <CommandInput
                 placeholder="Buscar por nome ou CPF..."
@@ -298,10 +298,10 @@ export default function NovoOficioPage() {
                           setProcessoNumero("");
                         }}
                       >
-                        <User className="w-3.5 h-3.5 mr-2 text-zinc-500" />
-                        <span className="text-zinc-200">{a.nome}</span>
+                        <User className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                        <span className="text-foreground">{a.nome}</span>
                         {a.cpf && (
-                          <span className="ml-2 text-xs text-zinc-500 font-mono">{a.cpf}</span>
+                          <span className="ml-2 text-xs text-muted-foreground font-mono">{a.cpf}</span>
                         )}
                       </CommandItem>
                     ))}
@@ -315,7 +315,7 @@ export default function NovoOficioPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="text-xs text-zinc-500 mt-1"
+            className="text-xs text-muted-foreground mt-1"
             onClick={() => {
               setAssistidoId(undefined);
               setAssistidoNome("");
@@ -333,7 +333,7 @@ export default function NovoOficioPage() {
       {/* Processo */}
       {assistidoId && (
         <div>
-          <label className="text-xs text-zinc-500 mb-1.5 block">Processo (opcional)</label>
+          <label className="text-xs text-muted-foreground mb-1.5 block">Processo (opcional)</label>
           {processosData && processosData.length > 0 ? (
             <Select
               value={processoId ? String(processoId) : ""}
@@ -344,20 +344,20 @@ export default function NovoOficioPage() {
                 setProcessoNumero(proc?.numeroAutos || "");
               }}
             >
-              <SelectTrigger className="bg-zinc-800/50 border-zinc-700 text-zinc-300">
+              <SelectTrigger className="bg-muted/50 border-border text-foreground">
                 <SelectValue placeholder="Selecionar processo..." />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-zinc-700">
+              <SelectContent className="bg-popover border-border">
                 {processosData.map((p) => (
                   <SelectItem key={p.id} value={String(p.id)}>
                     <span className="font-mono text-xs">{p.numeroAutos}</span>
-                    {p.vara && <span className="text-zinc-500 ml-2">{p.vara}</span>}
+                    {p.vara && <span className="text-muted-foreground ml-2">{p.vara}</span>}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           ) : (
-            <p className="text-xs text-zinc-600">
+            <p className="text-xs text-muted-foreground/60">
               Nenhum processo vinculado a este assistido
             </p>
           )}
@@ -392,14 +392,14 @@ export default function NovoOficioPage() {
         <Button
           variant="ghost"
           size="icon"
-          className="text-zinc-400 hover:text-zinc-100"
+          className="text-muted-foreground hover:text-foreground"
           onClick={handleBack}
         >
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-lg font-semibold text-zinc-100">Novo Oficio</h1>
-          <p className="text-xs text-zinc-500">
+          <h1 className="text-lg font-semibold text-foreground">Novo Oficio</h1>
+          <p className="text-xs text-muted-foreground">
             {activeTab === "ia"
               ? `Passo ${iaStep} de 3 — Gerar com IA`
               : step === "template"
@@ -410,13 +410,13 @@ export default function NovoOficioPage() {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-1 p-1 bg-zinc-800/40 rounded-xl border border-zinc-700/30">
+      <div className="flex gap-1 p-1 bg-muted/40 rounded-xl border border-border/40">
         <button
           onClick={() => setActiveTab("template")}
           className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-xs font-medium transition-all
             ${activeTab === "template"
-              ? "bg-zinc-700/60 text-zinc-100 shadow-sm"
-              : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700/20"
+              ? "bg-muted text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             }`}
         >
           <FileText className="w-3.5 h-3.5" />
@@ -426,8 +426,8 @@ export default function NovoOficioPage() {
           onClick={() => setActiveTab("ia")}
           className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-xs font-medium transition-all
             ${activeTab === "ia"
-              ? "bg-violet-500/20 text-violet-300 shadow-sm border border-violet-500/20"
-              : "text-zinc-500 hover:text-violet-300 hover:bg-violet-500/5"
+              ? "bg-violet-500/15 text-violet-600 dark:text-violet-300 shadow-sm border border-violet-500/20"
+              : "text-muted-foreground hover:text-violet-600 dark:hover:text-violet-300 hover:bg-violet-500/5"
             }`}
         >
           <Sparkles className="w-3.5 h-3.5" />
@@ -444,29 +444,29 @@ export default function NovoOficioPage() {
           {step === "template" && (
             <div className="space-y-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar template..."
                   value={searchTemplate}
                   onChange={(e) => setSearchTemplate(e.target.value)}
-                  className="pl-9 bg-zinc-800/50 border-zinc-700 text-zinc-100"
+                  className="pl-9 bg-muted/50 border-border text-foreground"
                 />
               </div>
 
               <button
                 onClick={() => handleSelectTemplate({ id: 0, titulo: "", conteudo: "", formatacao: null })}
-                className="w-full text-left p-4 rounded-xl border border-dashed border-zinc-600
-                  hover:border-emerald-500/40 bg-zinc-800/20 hover:bg-zinc-800/50 transition-colors group"
+                className="w-full text-left p-4 rounded-xl border border-dashed border-border/60
+                  hover:border-emerald-500/40 bg-muted/20 hover:bg-muted/50 transition-colors group"
               >
                 <div className="flex items-center gap-3">
                   <Sparkles className="w-5 h-5 text-violet-400" />
                   <div className="flex-1">
-                    <span className="font-medium text-zinc-200">Criar em branco</span>
-                    <p className="text-xs text-zinc-500 mt-0.5">
+                    <span className="font-medium text-foreground">Criar em branco</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       Comece do zero ou use IA para gerar o corpo
                     </p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-emerald-400 transition-colors" />
+                  <ChevronRight className="w-4 h-4 text-muted-foreground/60 group-hover:text-emerald-400 transition-colors" />
                 </div>
               </button>
 
@@ -483,35 +483,35 @@ export default function NovoOficioPage() {
                       <button
                         key={tmpl.id}
                         onClick={() => handleSelectTemplate(tmpl)}
-                        className="w-full text-left p-3 rounded-xl border border-zinc-700/30 bg-zinc-800/30
-                          hover:bg-zinc-800/70 hover:border-emerald-500/30 transition-colors group"
+                        className="w-full text-left p-3 rounded-xl border border-border/40 bg-muted/20
+                          hover:bg-muted/60 hover:border-emerald-500/30 transition-colors group"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <FileText className="w-4 h-4 text-zinc-400 shrink-0" />
-                              <span className="font-medium text-zinc-100 truncate">{tmpl.titulo}</span>
+                              <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                              <span className="font-medium text-foreground truncate">{tmpl.titulo}</span>
                             </div>
                             {tmpl.descricao && (
-                              <p className="text-xs text-zinc-500 line-clamp-2 ml-6">{tmpl.descricao}</p>
+                              <p className="text-xs text-muted-foreground line-clamp-2 ml-6">{tmpl.descricao}</p>
                             )}
                             <div className="flex items-center gap-2 mt-1.5 ml-6">
                               {tipo && (
-                                <Badge variant="outline" className="text-[10px] text-zinc-400 border-zinc-600">
+                                <Badge variant="outline" className="text-[10px] text-muted-foreground border-border">
                                   {tipo}
                                 </Badge>
                               )}
                               {tmpl.area && (
-                                <Badge variant="outline" className="text-[10px] text-zinc-400 border-zinc-600">
+                                <Badge variant="outline" className="text-[10px] text-muted-foreground border-border">
                                   {tmpl.area}
                                 </Badge>
                               )}
                               {tmpl.totalUsos && tmpl.totalUsos > 0 && (
-                                <span className="text-[10px] text-zinc-600">{tmpl.totalUsos}x usado</span>
+                                <span className="text-[10px] text-muted-foreground/60">{tmpl.totalUsos}x usado</span>
                               )}
                             </div>
                           </div>
-                          <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-emerald-400 shrink-0 mt-1 transition-colors" />
+                          <ChevronRight className="w-4 h-4 text-muted-foreground/60 group-hover:text-emerald-400 shrink-0 mt-1 transition-colors" />
                         </div>
                       </button>
                     );
@@ -519,8 +519,8 @@ export default function NovoOficioPage() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <FileText className="w-8 h-8 mx-auto text-zinc-600 mb-2" />
-                  <p className="text-zinc-500 text-sm">
+                  <FileText className="w-8 h-8 mx-auto text-muted-foreground/60 mb-2" />
+                  <p className="text-muted-foreground text-sm">
                     {searchTemplate ? "Nenhum template encontrado" : "Nenhum template cadastrado"}
                   </p>
                 </div>
@@ -534,7 +534,7 @@ export default function NovoOficioPage() {
               {preDemandaId && (
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                   <Mail className="w-4 h-4 text-emerald-400" />
-                  <span className="text-xs text-emerald-300">
+                  <span className="text-xs text-emerald-600 dark:text-emerald-300">
                     Vinculado a demanda #{preDemandaId}
                     {preTipo && (
                       <span className="ml-1.5 text-emerald-400/70">
@@ -547,30 +547,30 @@ export default function NovoOficioPage() {
               {selectedModeloId && (
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-500/10 border border-violet-500/20">
                   <FileText className="w-4 h-4 text-violet-400" />
-                  <span className="text-xs text-violet-300">
+                  <span className="text-xs text-violet-600 dark:text-violet-300">
                     Usando template: {titulo}
                   </span>
                 </div>
               )}
 
               <div>
-                <label className="text-xs text-zinc-500 mb-1.5 block">Titulo do oficio *</label>
+                <label className="text-xs text-muted-foreground mb-1.5 block">Titulo do oficio *</label>
                 <Input
                   value={titulo}
                   onChange={(e) => setTitulo(e.target.value)}
-                  className="bg-zinc-800/50 border-zinc-700 text-zinc-100"
+                  className="bg-muted/50 border-border text-foreground"
                   placeholder="Ex: Oficio de Requisicao de Prontuario"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-zinc-500 mb-1.5 block">Tipo</label>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">Tipo</label>
                   <Select value={tipoOficio} onValueChange={setTipoOficio}>
-                    <SelectTrigger className="bg-zinc-800/50 border-zinc-700 text-zinc-300">
+                    <SelectTrigger className="bg-muted/50 border-border text-foreground">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-zinc-700">
+                    <SelectContent className="bg-popover border-border">
                       {TIPOS_OFICIO.map((t) => (
                         <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                       ))}
@@ -578,12 +578,12 @@ export default function NovoOficioPage() {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-xs text-zinc-500 mb-1.5 block">Urgencia</label>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">Urgencia</label>
                   <Select value={urgencia} onValueChange={(v) => setUrgencia(v as typeof urgencia)}>
-                    <SelectTrigger className="bg-zinc-800/50 border-zinc-700 text-zinc-300">
+                    <SelectTrigger className="bg-muted/50 border-border text-foreground">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-zinc-700">
+                    <SelectContent className="bg-popover border-border">
                       <SelectItem value="normal">Normal</SelectItem>
                       <SelectItem value="urgente">Urgente</SelectItem>
                       <SelectItem value="urgentissimo">Urgentissimo</SelectItem>
@@ -593,18 +593,18 @@ export default function NovoOficioPage() {
               </div>
 
               <div>
-                <label className="text-xs text-zinc-500 mb-1.5 block">Destinatario</label>
+                <label className="text-xs text-muted-foreground mb-1.5 block">Destinatario</label>
                 <Input
                   value={destinatario}
                   onChange={(e) => setDestinatario(e.target.value)}
-                  className="bg-zinc-800/50 border-zinc-700 text-zinc-100"
+                  className="bg-muted/50 border-border text-foreground"
                   placeholder="Ex: MM. Juiz da 1a Vara Criminal de Camacari"
                 />
               </div>
 
               <AssistidoProcessoPicker />
 
-              <div className="pt-4 border-t border-zinc-800">
+              <div className="pt-4 border-t border-border">
                 <Button
                   className="w-full bg-emerald-600 hover:bg-emerald-500 text-white"
                   disabled={!titulo.trim() || creating}
@@ -633,18 +633,18 @@ export default function NovoOficioPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-500/10 border border-violet-500/20">
                 <Wand2 className="w-4 h-4 text-violet-400" />
-                <span className="text-xs text-violet-300">
+                <span className="text-xs text-violet-600 dark:text-violet-300">
                   Claude Sonnet vai gerar o oficio completo a partir da sua ideia
                 </span>
               </div>
 
               <div>
-                <label className="text-xs text-zinc-500 mb-1.5 block">Tipo de oficio *</label>
+                <label className="text-xs text-muted-foreground mb-1.5 block">Tipo de oficio *</label>
                 <Select value={iaTipo} onValueChange={setIaTipo}>
-                  <SelectTrigger className="bg-zinc-800/50 border-zinc-700 text-zinc-300">
+                  <SelectTrigger className="bg-muted/50 border-border text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-zinc-700">
+                  <SelectContent className="bg-popover border-border">
                     {TIPOS_OFICIO.map((t) => (
                       <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                     ))}
@@ -653,22 +653,22 @@ export default function NovoOficioPage() {
               </div>
 
               <div>
-                <label className="text-xs text-zinc-500 mb-1.5 block">Destinatario (opcional)</label>
+                <label className="text-xs text-muted-foreground mb-1.5 block">Destinatario (opcional)</label>
                 <Input
                   value={iaDestinatario}
                   onChange={(e) => setIaDestinatario(e.target.value)}
-                  className="bg-zinc-800/50 border-zinc-700 text-zinc-100"
+                  className="bg-muted/50 border-border text-foreground"
                   placeholder="Ex: MM. Juiz da 1a Vara Criminal de Camacari"
                 />
               </div>
 
               <div>
-                <label className="text-xs text-zinc-500 mb-1.5 block">Urgencia</label>
+                <label className="text-xs text-muted-foreground mb-1.5 block">Urgencia</label>
                 <Select value={iaUrgencia} onValueChange={(v) => setIaUrgencia(v as typeof iaUrgencia)}>
-                  <SelectTrigger className="bg-zinc-800/50 border-zinc-700 text-zinc-300">
+                  <SelectTrigger className="bg-muted/50 border-border text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-zinc-700">
+                  <SelectContent className="bg-popover border-border">
                     <SelectItem value="normal">Normal</SelectItem>
                     <SelectItem value="urgente">Urgente</SelectItem>
                     <SelectItem value="urgentissimo">Urgentissimo</SelectItem>
@@ -677,19 +677,19 @@ export default function NovoOficioPage() {
               </div>
 
               <div>
-                <label className="text-xs text-zinc-500 mb-1.5 block">Descreva sua ideia *</label>
+                <label className="text-xs text-muted-foreground mb-1.5 block">Descreva sua ideia *</label>
                 <Textarea
                   value={iaIdeia}
                   onChange={(e) => setIaIdeia(e.target.value)}
-                  className="bg-zinc-800/50 border-zinc-700 text-zinc-100 min-h-[120px] resize-none"
+                  className="bg-muted/50 border-border text-foreground min-h-[120px] resize-none"
                   placeholder="Ex: Preciso requisitar prontuario medico do Hospital Geral de Camacari para instruir os autos do processo. O assistido foi atendido no dia 15/01/2026 e o prontuario e essencial para a defesa..."
                 />
-                <span className="text-[10px] text-zinc-600 mt-1 block">
+                <span className="text-[10px] text-muted-foreground/60 mt-1 block">
                   {iaIdeia.length} caracteres {iaIdeia.length < 10 && iaIdeia.length > 0 && "(minimo 10)"}
                 </span>
               </div>
 
-              <div className="pt-4 border-t border-zinc-800">
+              <div className="pt-4 border-t border-border">
                 <Button
                   className="w-full bg-violet-600 hover:bg-violet-500 text-white"
                   disabled={iaIdeia.trim().length < 10}
@@ -708,7 +708,7 @@ export default function NovoOficioPage() {
               <AssistidoProcessoPicker />
 
               <div>
-                <label className="text-xs text-zinc-500 mb-1.5 block">
+                <label className="text-xs text-muted-foreground mb-1.5 block">
                   Documentos como contexto
                 </label>
                 <DocumentContextPicker
@@ -721,10 +721,10 @@ export default function NovoOficioPage() {
                 />
               </div>
 
-              <div className="pt-4 border-t border-zinc-800 flex gap-3">
+              <div className="pt-4 border-t border-border flex gap-3">
                 <Button
                   variant="outline"
-                  className="flex-1 border-zinc-700 text-zinc-300"
+                  className="flex-1 border-border text-foreground"
                   onClick={() => setIaStep(1)}
                 >
                   <ChevronLeft className="w-4 h-4 mr-1" />
@@ -744,48 +744,48 @@ export default function NovoOficioPage() {
           {/* IA Step 3: Confirmar + Gerar */}
           {iaStep === 3 && !iaGenerating && (
             <div className="space-y-4">
-              <div className="rounded-xl border border-zinc-700/30 bg-zinc-800/20 p-4 space-y-3">
-                <h3 className="text-sm font-medium text-zinc-200">Resumo da geracao</h3>
+              <div className="rounded-xl border border-border/40 bg-muted/20 p-4 space-y-3">
+                <h3 className="text-sm font-medium text-foreground">Resumo da geracao</h3>
 
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                   <div>
-                    <span className="text-zinc-500">Tipo:</span>
-                    <span className="ml-1.5 text-zinc-200">{iaTipoLabel}</span>
+                    <span className="text-muted-foreground">Tipo:</span>
+                    <span className="ml-1.5 text-foreground">{iaTipoLabel}</span>
                   </div>
                   <div>
-                    <span className="text-zinc-500">Urgencia:</span>
-                    <span className="ml-1.5 text-zinc-200 capitalize">{iaUrgencia}</span>
+                    <span className="text-muted-foreground">Urgencia:</span>
+                    <span className="ml-1.5 text-foreground capitalize">{iaUrgencia}</span>
                   </div>
                   {iaDestinatario && (
                     <div className="col-span-2">
-                      <span className="text-zinc-500">Destinatario:</span>
-                      <span className="ml-1.5 text-zinc-200">{iaDestinatario}</span>
+                      <span className="text-muted-foreground">Destinatario:</span>
+                      <span className="ml-1.5 text-foreground">{iaDestinatario}</span>
                     </div>
                   )}
                 </div>
 
-                <div className="pt-2 border-t border-zinc-700/30">
-                  <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Ideia</span>
-                  <p className="text-xs text-zinc-300 mt-1 leading-relaxed">&ldquo;{iaIdeia}&rdquo;</p>
+                <div className="pt-2 border-t border-border/40">
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Ideia</span>
+                  <p className="text-xs text-foreground/80 mt-1 leading-relaxed">&ldquo;{iaIdeia}&rdquo;</p>
                 </div>
 
                 {assistidoNome && (
-                  <div className="pt-2 border-t border-zinc-700/30 text-xs">
-                    <span className="text-zinc-500">Assistido:</span>
-                    <span className="ml-1.5 text-zinc-200">{assistidoNome}</span>
+                  <div className="pt-2 border-t border-border/40 text-xs">
+                    <span className="text-muted-foreground">Assistido:</span>
+                    <span className="ml-1.5 text-foreground">{assistidoNome}</span>
                     {processoNumero && (
                       <>
-                        <span className="text-zinc-600 mx-1.5">&middot;</span>
-                        <span className="text-zinc-400 font-mono">{processoNumero}</span>
+                        <span className="text-muted-foreground/60 mx-1.5">&middot;</span>
+                        <span className="text-muted-foreground font-mono">{processoNumero}</span>
                       </>
                     )}
                   </div>
                 )}
 
                 {(selectedDocumentoIds.length > 0 || selectedDriveFileIds.length > 0) && (
-                  <div className="pt-2 border-t border-zinc-700/30 text-xs">
-                    <span className="text-zinc-500">Contexto:</span>
-                    <span className="ml-1.5 text-zinc-200">
+                  <div className="pt-2 border-t border-border/40 text-xs">
+                    <span className="text-muted-foreground">Contexto:</span>
+                    <span className="ml-1.5 text-foreground">
                       {selectedDocumentoIds.length + selectedDriveFileIds.length} documento
                       {selectedDocumentoIds.length + selectedDriveFileIds.length > 1 ? "s" : ""}
                     </span>
@@ -796,7 +796,7 @@ export default function NovoOficioPage() {
               <div className="pt-2 flex gap-3">
                 <Button
                   variant="outline"
-                  className="flex-1 border-zinc-700 text-zinc-300"
+                  className="flex-1 border-border text-foreground"
                   onClick={() => setIaStep(2)}
                 >
                   <ChevronLeft className="w-4 h-4 mr-1" />
@@ -811,7 +811,7 @@ export default function NovoOficioPage() {
                 </Button>
               </div>
 
-              <p className="text-center text-[10px] text-zinc-600">
+              <p className="text-center text-[10px] text-muted-foreground/60">
                 Claude Sonnet &middot; Tempo estimado: 15-30 segundos
               </p>
             </div>
@@ -824,14 +824,14 @@ export default function NovoOficioPage() {
                 <Sparkles className="w-10 h-10 mx-auto text-violet-400 animate-pulse" />
               </div>
               <div>
-                <p className="text-sm font-medium text-violet-300">
+                <p className="text-sm font-medium text-violet-600 dark:text-violet-300">
                   Gerando oficio com Claude Sonnet...
                 </p>
-                <p className="text-xs text-zinc-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Extraindo documentos, preparando contexto e gerando o corpo completo
                 </p>
               </div>
-              <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+              <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
                 <div className="bg-violet-500 h-full rounded-full animate-pulse" style={{ width: "60%" }} />
               </div>
             </div>

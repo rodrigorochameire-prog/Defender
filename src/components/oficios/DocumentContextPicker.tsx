@@ -99,9 +99,9 @@ export default function DocumentContextPicker({
 
   if (!hasFilters) {
     return (
-      <div className="rounded-xl border border-zinc-700/30 bg-zinc-800/20 p-6 text-center">
-        <FolderOpen className="w-8 h-8 mx-auto text-zinc-600 mb-2" />
-        <p className="text-sm text-zinc-500">
+      <div className="rounded-xl border border-border/40 bg-muted/20 p-6 text-center">
+        <FolderOpen className="w-8 h-8 mx-auto text-muted-foreground/60 mb-2" />
+        <p className="text-sm text-muted-foreground">
           Selecione um assistido ou processo para ver documentos disponiveis
         </p>
       </div>
@@ -110,9 +110,9 @@ export default function DocumentContextPicker({
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-zinc-700/30 bg-zinc-800/20 p-8 flex items-center justify-center">
+      <div className="rounded-xl border border-border/40 bg-muted/20 p-8 flex items-center justify-center">
         <Loader2 className="w-5 h-5 animate-spin text-emerald-500 mr-2" />
-        <span className="text-sm text-zinc-400">Carregando documentos...</span>
+        <span className="text-sm text-muted-foreground">Carregando documentos...</span>
       </div>
     );
   }
@@ -122,24 +122,24 @@ export default function DocumentContextPicker({
       {/* Search */}
       {hasItems && (
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Buscar documento..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-zinc-800/50 border-zinc-700 text-zinc-100 h-8 text-xs"
+            className="pl-9 bg-muted/50 border-border text-foreground h-8 text-xs"
           />
         </div>
       )}
 
-      <div className="rounded-xl border border-zinc-700/30 bg-zinc-800/20 max-h-[300px] overflow-y-auto">
+      <div className="rounded-xl border border-border/40 bg-muted/20 max-h-[300px] overflow-y-auto">
         {/* Documentos vinculados */}
         {filteredDocs.length > 0 && (
           <div>
-            <div className="sticky top-0 bg-zinc-800/90 backdrop-blur-sm px-3 py-1.5 border-b border-zinc-700/30">
+            <div className="sticky top-0 bg-card/90 backdrop-blur-sm px-3 py-1.5 border-b border-border/40">
               <div className="flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-violet-400" />
-                <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                <FileText className="w-3.5 h-3.5 text-violet-500 dark:text-violet-400" />
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Documentos Vinculados ({filteredDocs.length})
                 </span>
               </div>
@@ -151,20 +151,20 @@ export default function DocumentContextPicker({
                 <label
                   key={`doc-${doc.id}`}
                   className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-colors
-                    hover:bg-zinc-700/20 ${isSelected ? "bg-emerald-500/5" : ""}`}
+                    hover:bg-muted/30 ${isSelected ? "bg-emerald-500/5" : ""}`}
                 >
                   <Checkbox
                     checked={isSelected}
                     onCheckedChange={() => toggleDocumento(doc.id)}
-                    className="border-zinc-600 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                    className="border-border data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                   />
-                  <Icon className="w-4 h-4 text-zinc-500 shrink-0" />
+                  <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <span className="text-xs text-zinc-200 truncate block">
+                    <span className="text-xs text-foreground truncate block">
                       {doc.titulo || doc.fileName || `Documento #${doc.id}`}
                     </span>
                     {doc.fileSize && (
-                      <span className="text-[10px] text-zinc-600">{formatFileSize(doc.fileSize)}</span>
+                      <span className="text-[10px] text-muted-foreground/60">{formatFileSize(doc.fileSize)}</span>
                     )}
                   </div>
                   {doc.hasContent ? (
@@ -181,10 +181,10 @@ export default function DocumentContextPicker({
         {/* Drive files */}
         {filteredDrive.length > 0 && (
           <div>
-            <div className="sticky top-0 bg-zinc-800/90 backdrop-blur-sm px-3 py-1.5 border-b border-zinc-700/30">
+            <div className="sticky top-0 bg-card/90 backdrop-blur-sm px-3 py-1.5 border-b border-border/40">
               <div className="flex items-center gap-1.5">
-                <HardDrive className="w-3.5 h-3.5 text-blue-400" />
-                <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                <HardDrive className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Arquivos do Drive ({filteredDrive.length})
                 </span>
               </div>
@@ -196,21 +196,21 @@ export default function DocumentContextPicker({
                 <label
                   key={`drive-${file.id}`}
                   className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-colors
-                    hover:bg-zinc-700/20 ${isSelected ? "bg-emerald-500/5" : ""}`}
+                    hover:bg-muted/30 ${isSelected ? "bg-emerald-500/5" : ""}`}
                 >
                   <Checkbox
                     checked={isSelected}
                     onCheckedChange={() => toggleDriveFile(file.id)}
-                    className="border-zinc-600 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                    className="border-border data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                   />
-                  <Icon className="w-4 h-4 text-zinc-500 shrink-0" />
+                  <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <span className="text-xs text-zinc-200 truncate block">{file.name}</span>
+                    <span className="text-xs text-foreground truncate block">{file.name}</span>
                     {file.size && (
-                      <span className="text-[10px] text-zinc-600">{formatFileSize(file.size)}</span>
+                      <span className="text-[10px] text-muted-foreground/60">{formatFileSize(file.size)}</span>
                     )}
                   </div>
-                  <Badge variant="outline" className="text-[9px] border-zinc-600/50 text-zinc-500 shrink-0">
+                  <Badge variant="outline" className="text-[9px] border-border/50 text-muted-foreground shrink-0">
                     Drive
                   </Badge>
                 </label>
@@ -222,8 +222,8 @@ export default function DocumentContextPicker({
         {/* Empty state */}
         {!hasItems && (
           <div className="p-6 text-center">
-            <FolderOpen className="w-8 h-8 mx-auto text-zinc-600 mb-2" />
-            <p className="text-sm text-zinc-500">
+            <FolderOpen className="w-8 h-8 mx-auto text-muted-foreground/60 mb-2" />
+            <p className="text-sm text-muted-foreground">
               {search ? "Nenhum documento encontrado" : "Nenhum documento vinculado ao assistido/processo"}
             </p>
           </div>
@@ -232,7 +232,7 @@ export default function DocumentContextPicker({
 
       {/* Selected count */}
       {totalSelected > 0 && (
-        <div className="flex items-center gap-1.5 text-xs text-emerald-400">
+        <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
           <CheckCircle2 className="w-3.5 h-3.5" />
           <span>{totalSelected} documento{totalSelected > 1 ? "s" : ""} selecionado{totalSelected > 1 ? "s" : ""}</span>
         </div>
