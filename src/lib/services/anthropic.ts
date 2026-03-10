@@ -101,6 +101,41 @@ export interface InsightEstruturadoResult extends ClaudeResult {
   recomendacoes: string[];
 }
 
+export interface GenerateOficioInput {
+  tipoOficio: string;
+  tipoLabel: string;
+  ideia: string;
+  contextoDocumentos: Array<{
+    titulo: string;
+    conteudo: string;
+    fonte: string;
+  }>;
+  dadosAssistido?: {
+    nome: string;
+    cpf?: string | null;
+    rg?: string | null;
+    endereco?: string | null;
+    telefone?: string | null;
+    nomeMae?: string | null;
+    unidadePrisional?: string | null;
+    statusPrisional?: string | null;
+  };
+  dadosProcesso?: {
+    numero: string;
+    vara?: string | null;
+    comarca?: string | null;
+    classeProcessual?: string | null;
+    assunto?: string | null;
+  };
+  destinatario?: string;
+  nomeDefensor: string;
+}
+
+export interface GenerateOficioResult extends ClaudeResult {
+  titulo: string;
+  conteudoGerado: string;
+}
+
 // ==========================================
 // FUNÇÕES — CLAUDE SONNET (Revisão)
 // ==========================================
@@ -260,6 +295,145 @@ ${conteudo}
       message.usage.output_tokens
     ),
   };
+}
+
+/**
+ * Gera o corpo completo de um ofício jurídico formal a partir de uma ideia e contexto
+ *
+ * Usa Claude Sonnet 4.6 — max_tokens 8192 (ofícios podem ser longos)
+ */
+export async function generateOficio(
+  input: GenerateOficioInput
+): Promise<GenerateOficioResult> {
+  const client = getClient();
+
+  const systemPrompt = `${CONTEXTO_JURIDICO_SISTEMA}
+
+Sua tarefa e GERAR o corpo completo de um oficio juridico formal.
+
+Regras de formatacao:
+- Use linguagem tecnica juridica formal e direta
+- Inclua cabecalho institucional: DEFENSORIA PUBLICA DO ESTADO DA BAHIA — NUCLEO DE CAMACARI
+- Inclua referencia de oficio: Oficio n. ___/2026 — DPEBA/Camacari
+- Saudacao formal adequada ao tipo de destinatario
+- Corpo com paragrafos bem estruturados, citando artigos de lei e jurisprudencia quando pertinente
+- Fechamento formal com "Atenciosamente" ou "Respeitosamente" conforme hierarquia do destinatario
+- Assinatura: nome do defensor + "Defensor(a) Publico(a)"
+- Substitua dados conhecidos do assistido/processo DIRETAMENTE no texto (nao use placeholders para dados que voce ja tem)
+- Para dados que voce NAO tem, use os placeholders entre chaves duplas: {{NOME_ASSISTIDO}}, {{CPF_ASSISTIDO}}, {{NUMERO_PROCESSO}}, {{COMARCA}}, {{VARA}}, {{DATA_HOJE}}, {{NOME_DEFENSOR}}
+- PRIORIZE SEMPRE a defesa e os interesses do assistido
+- Considere a vulnerabilidade social do assistido
+- Se documentos de contexto foram fornecidos, USE as informacoes deles para fundamentar e enriquecer o oficio
+- NAO inclua explicacoes, comentarios ou observacoes — retorne APENAS o corpo do oficio
+
+Formato OBRIGATORIO de resposta:
+TITULO: [titulo sugerido para o oficio]
+
+[corpo completo do oficio em formato texto, pronto para uso]`;
+
+  // Build user message
+  const parts: string[] = [];
+
+  parts.push(`## TIPO DE OFICIO\n${input.tipoLabel} (${input.tipoOficio})`);
+  parts.push(`## INTENCAO / IDEIA DO DEFENSOR\n${input.ideia}`);
+
+  if (input.destinatario) {
+    parts.push(`## DESTINATARIO\n${input.destinatario}`);
+  }
+
+  if (input.dadosAssistido) {
+    const a = input.dadosAssistido;
+    const linhas: string[] = [`- Nome: ${a.nome}`];
+    if (a.cpf) linhas.push(`- CPF: ${a.cpf}`);
+    if (a.rg) linhas.push(`- RG: ${a.rg}`);
+    if (a.endereco) linhas.push(`- Endereco: ${a.endereco}`);
+    if (a.telefone) linhas.push(`- Telefone: ${a.telefone}`);
+    if (a.nomeMae) linhas.push(`- Nome da Mae: ${a.nomeMae}`);
+    if (a.unidadePrisional) linhas.push(`- Unidade Prisional: ${a.unidadePrisional}`);
+    if (a.statusPrisional) linhas.push(`- Status Prisional: ${a.statusPrisional}`);
+    parts.push(`## DADOS DO ASSISTIDO\n${linhas.join("\n")}`);
+  }
+
+  if (input.dadosProcesso) {
+    const p = input.dadosProcesso;
+    const linhas: string[] = [`- Numero: ${p.numero}`];
+    if (p.vara) linhas.push(`- Vara: ${p.vara}`);
+    if (p.comarca) linhas.push(`- Comarca: ${p.comarca}`);
+    if (p.classeProcessual) linhas.push(`- Classe Processual: ${p.classeProcessual}`);
+    if (p.assunto) linhas.push(`- Assunto: ${p.assunto}`);
+    parts.push(`## DADOS DO PROCESSO\n${linhas.join("\n")}`);
+  }
+
+  if (input.contextoDocumentos.length > 0) {
+    const docParts = input.contextoDocumentos.map(
+      (doc, i) =>
+        `### Documento ${i + 1}: ${doc.titulo}\nFonte: ${doc.fonte}\n---\n${doc.conteudo}\n---`
+    );
+    parts.push(
+      `## DOCUMENTOS DE CONTEXTO\nOs seguintes documentos devem ser usados como base e contexto para fundamentar o oficio:\n\n${docParts.join("\n\n")}`
+    );
+  }
+
+  parts.push("Gere o oficio completo agora.");
+
+  const userMessage = parts.join("\n\n");
+
+  try {
+    const message = await client.messages.create({
+      model: CLAUDE_MODELS.SONNET,
+      max_tokens: 8192,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userMessage }],
+    });
+
+    const responseText =
+      message.content[0].type === "text" ? message.content[0].text : "";
+
+    // Parse title and body from response
+    let titulo: string;
+    let conteudoGerado: string;
+
+    const tituloMatch = responseText.match(/^TITULO:\s*(.+)/m);
+    if (tituloMatch) {
+      titulo = tituloMatch[1].trim();
+      // Body = everything after the first blank line following the TITULO line
+      const tituloLineEnd = responseText.indexOf(tituloMatch[0]) + tituloMatch[0].length;
+      const afterTitulo = responseText.slice(tituloLineEnd);
+      // Find first blank line, then take everything after it
+      const blankLineMatch = afterTitulo.match(/\n\s*\n/);
+      if (blankLineMatch) {
+        conteudoGerado = afterTitulo
+          .slice((blankLineMatch.index ?? 0) + blankLineMatch[0].length)
+          .trim();
+      } else {
+        conteudoGerado = afterTitulo.trim();
+      }
+    } else {
+      // Fallback: first 80 chars as title, rest as body
+      titulo = responseText.slice(0, 80).trim();
+      conteudoGerado = responseText.slice(80).trim();
+    }
+
+    const tokensEntrada = message.usage.input_tokens;
+    const tokensSaida = message.usage.output_tokens;
+
+    return {
+      titulo,
+      conteudoGerado,
+      conteudo: responseText,
+      modeloUsado: CLAUDE_MODELS.SONNET,
+      tokensEntrada,
+      tokensSaida,
+      custoEstimado: estimarCusto(
+        CLAUDE_MODELS.SONNET,
+        tokensEntrada,
+        tokensSaida
+      ),
+    };
+  } catch (error) {
+    console.error("Erro ao gerar oficio via Claude:", error);
+    throw error;
+  }
 }
 
 // ==========================================

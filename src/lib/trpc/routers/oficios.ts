@@ -16,6 +16,8 @@ import {
   demandas,
   casos,
   users,
+  documentos,
+  driveFiles,
 } from "@/lib/db/schema";
 import { eq, ilike, or, desc, sql, and, isNull, asc, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -1416,6 +1418,303 @@ export const oficiosRouter = router({
           ? { id: templateSugerido.id, titulo: templateSugerido.titulo }
           : undefined,
         mensagem,
+      };
+    }),
+
+  // ==========================================
+  // DOCUMENTOS PARA CONTEXTO DE GERAÇÃO IA
+  // ==========================================
+
+  /** Lista documentos e arquivos do Drive vinculados a entidades, para selecionar contexto na geração IA */
+  getDocumentosParaContexto: protectedProcedure
+    .input(
+      z.object({
+        assistidoId: z.number().optional(),
+        processoId: z.number().optional(),
+        casoId: z.number().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      // Return empty if no filters provided
+      if (!input.assistidoId && !input.processoId && !input.casoId) {
+        return { documentos: [], driveFiles: [] };
+      }
+
+      // Build OR conditions for entity matching — documentos table
+      const docConditions = [];
+      if (input.assistidoId) {
+        docConditions.push(eq(documentos.assistidoId, input.assistidoId));
+      }
+      if (input.processoId) {
+        docConditions.push(eq(documentos.processoId, input.processoId));
+      }
+      if (input.casoId) {
+        docConditions.push(eq(documentos.casoId, input.casoId));
+      }
+
+      const docsResult = await db
+        .select({
+          id: documentos.id,
+          titulo: documentos.titulo,
+          fileName: documentos.fileName,
+          fileSize: documentos.fileSize,
+          mimeType: documentos.mimeType,
+          hasContent: sql<boolean>`(${documentos.conteudoCompleto} IS NOT NULL AND ${documentos.conteudoCompleto} != '')`.as("has_content"),
+        })
+        .from(documentos)
+        .where(or(...docConditions))
+        .orderBy(desc(documentos.createdAt))
+        .limit(50);
+
+      // Build OR conditions for entity matching — driveFiles table
+      // Note: driveFiles has processoId and assistidoId but NOT casoId
+      const driveConditions = [];
+      if (input.assistidoId) {
+        driveConditions.push(eq(driveFiles.assistidoId, input.assistidoId));
+      }
+      if (input.processoId) {
+        driveConditions.push(eq(driveFiles.processoId, input.processoId));
+      }
+
+      let driveResult: Array<{
+        id: number;
+        name: string;
+        driveFileId: string;
+        mimeType: string | null;
+        size: number | null;
+      }> = [];
+
+      if (driveConditions.length > 0) {
+        driveResult = await db
+          .select({
+            id: driveFiles.id,
+            name: driveFiles.name,
+            driveFileId: driveFiles.driveFileId,
+            mimeType: driveFiles.mimeType,
+            size: driveFiles.fileSize,
+          })
+          .from(driveFiles)
+          .where(
+            and(
+              or(...driveConditions),
+              sql`${driveFiles.mimeType} != 'application/vnd.google-apps.folder'`
+            )
+          )
+          .orderBy(asc(driveFiles.name))
+          .limit(50);
+      }
+
+      return {
+        documentos: docsResult,
+        driveFiles: driveResult,
+      };
+    }),
+
+  // ==========================================
+  // GERAÇÃO DE OFÍCIO COM CLAUDE SONNET
+  // ==========================================
+
+  /** Gera ofício do zero a partir de uma ideia + contexto documental, usando Claude Sonnet */
+  gerarComSonnet: protectedProcedure
+    .input(
+      z.object({
+        tipoOficio: z.string(),
+        ideia: z.string().min(10, "Descreva a ideia com pelo menos 10 caracteres"),
+        destinatario: z.string().optional(),
+        urgencia: z.enum(["normal", "urgente", "urgentissimo"]).default("normal"),
+        assistidoId: z.number().optional(),
+        processoId: z.number().optional(),
+        demandaId: z.number().optional(),
+        contextDriveFileIds: z.array(z.number()).default([]),
+        contextDocumentoIds: z.array(z.number()).default([]),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      // Import generateOficio dynamically to keep the module lazy
+      const { generateOficio } = await import("@/lib/services/anthropic");
+
+      // 1. Fetch assistido data if provided
+      let dadosAssistido: {
+        nome: string;
+        cpf: string | null;
+        rg: string | null;
+        endereco: string | null;
+        telefone: string | null;
+        nomeMae: string | null;
+        unidadePrisional: string | null;
+        statusPrisional: string | null;
+      } | undefined;
+
+      if (input.assistidoId) {
+        const [a] = await db
+          .select({
+            nome: assistidos.nome,
+            cpf: assistidos.cpf,
+            rg: assistidos.rg,
+            endereco: assistidos.endereco,
+            telefone: assistidos.telefone,
+            nomeMae: assistidos.nomeMae,
+            unidadePrisional: assistidos.unidadePrisional,
+            statusPrisional: assistidos.statusPrisional,
+          })
+          .from(assistidos)
+          .where(eq(assistidos.id, input.assistidoId))
+          .limit(1);
+        if (a) dadosAssistido = a;
+      }
+
+      // 2. Fetch processo data if provided
+      let dadosProcesso: {
+        numero: string;
+        vara: string | null;
+        comarca: string | null;
+        classeProcessual: string | null;
+        assunto: string | null;
+      } | undefined;
+
+      if (input.processoId) {
+        const [p] = await db
+          .select({
+            numero: processos.numeroAutos,
+            vara: processos.vara,
+            comarca: processos.comarca,
+            classeProcessual: processos.classeProcessual,
+            assunto: processos.assunto,
+          })
+          .from(processos)
+          .where(eq(processos.id, input.processoId))
+          .limit(1);
+        if (p) dadosProcesso = p;
+      }
+
+      // 3. Get defensor name from session
+      const nomeDefensor = ctx.session?.user?.name || "Defensor(a) Publico(a)";
+
+      // 4. Collect document contexts
+      const contextoDocumentos: Array<{ titulo: string; conteudo: string; fonte: string }> = [];
+
+      // 4a. From documentos table (already have conteudoCompleto)
+      if (input.contextDocumentoIds.length > 0) {
+        const docs = await db
+          .select({
+            id: documentos.id,
+            titulo: documentos.titulo,
+            fileName: documentos.fileName,
+            conteudoCompleto: documentos.conteudoCompleto,
+          })
+          .from(documentos)
+          .where(inArray(documentos.id, input.contextDocumentoIds));
+
+        for (const doc of docs) {
+          if (doc.conteudoCompleto) {
+            contextoDocumentos.push({
+              titulo: doc.titulo || doc.fileName || `Documento #${doc.id}`,
+              conteudo: doc.conteudoCompleto.slice(0, 30000), // truncate per doc
+              fonte: "Documento vinculado",
+            });
+          }
+        }
+      }
+
+      // 4b. From driveFiles table — need to extract content
+      if (input.contextDriveFileIds.length > 0) {
+        const files = await db
+          .select({
+            id: driveFiles.id,
+            name: driveFiles.name,
+            driveFileId: driveFiles.driveFileId,
+            documentoId: driveFiles.documentoId,
+          })
+          .from(driveFiles)
+          .where(inArray(driveFiles.id, input.contextDriveFileIds));
+
+        for (const file of files) {
+          try {
+            // Try to find existing extracted content via linked documento
+            if (file.documentoId) {
+              const [linkedDoc] = await db
+                .select({
+                  conteudoCompleto: documentos.conteudoCompleto,
+                })
+                .from(documentos)
+                .where(eq(documentos.id, file.documentoId))
+                .limit(1);
+
+              if (linkedDoc?.conteudoCompleto) {
+                contextoDocumentos.push({
+                  titulo: file.name,
+                  conteudo: linkedDoc.conteudoCompleto.slice(0, 30000),
+                  fonte: "Google Drive",
+                });
+                continue;
+              }
+            }
+
+            // Extract on-demand via Python backend
+            try {
+              const extractResult = await pythonBackend.extractFromDrive(file.driveFileId, file.name);
+              if (extractResult.success && extractResult.content_markdown) {
+                contextoDocumentos.push({
+                  titulo: file.name,
+                  conteudo: extractResult.content_markdown.slice(0, 30000),
+                  fonte: "Google Drive (extraido)",
+                });
+              }
+            } catch (extractErr) {
+              console.warn(`[Oficios] Nao foi possivel extrair ${file.name}:`, extractErr);
+              // Skip this file, don't fail the whole operation
+            }
+          } catch {
+            console.warn(`[Oficios] Erro ao processar arquivo Drive ${file.name}`);
+          }
+        }
+      }
+
+      // 5. Find tipo label
+      const tipoLabel = TIPOS_OFICIO.find((t) => t.value === input.tipoOficio)?.label || input.tipoOficio;
+
+      // 6. Call Anthropic service
+      const result = await generateOficio({
+        tipoOficio: input.tipoOficio,
+        tipoLabel,
+        ideia: input.ideia,
+        contextoDocumentos,
+        dadosAssistido,
+        dadosProcesso,
+        destinatario: input.destinatario,
+        nomeDefensor,
+      });
+
+      // 7. Create documentosGerados record
+      const [oficio] = await db
+        .insert(documentosGerados)
+        .values({
+          titulo: result.titulo || `Oficio - ${tipoLabel}`,
+          conteudoFinal: result.conteudoGerado,
+          geradoPorIA: true,
+          promptIA: input.ideia,
+          assistidoId: input.assistidoId || null,
+          processoId: input.processoId || null,
+          demandaId: input.demandaId || null,
+          createdById: ctx.session?.user?.id ? Number(ctx.session.user.id) : undefined,
+          metadata: {
+            tipoOficio: input.tipoOficio,
+            destinatario: input.destinatario || "",
+            urgencia: input.urgencia,
+            status: "rascunho" as const,
+            iaModelo: result.modeloUsado,
+            versao: 1,
+          },
+        })
+        .returning({ id: documentosGerados.id });
+
+      return {
+        id: oficio.id,
+        titulo: result.titulo,
+        modelo: result.modeloUsado,
+        tokensEntrada: result.tokensEntrada,
+        tokensSaida: result.tokensSaida,
+        custoEstimado: result.custoEstimado,
       };
     }),
 
