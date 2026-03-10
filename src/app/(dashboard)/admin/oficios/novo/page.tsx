@@ -11,6 +11,7 @@ import {
   User,
   Scale,
   ChevronRight,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,10 +65,14 @@ export default function NovoOficioPage() {
   const preProcessoId = searchParams.get("processoId")
     ? Number(searchParams.get("processoId"))
     : undefined;
+  const preDemandaId = searchParams.get("demandaId")
+    ? Number(searchParams.get("demandaId"))
+    : undefined;
+  const preTipo = searchParams.get("tipo") || undefined;
 
   const [step, setStep] = useState<"template" | "config">("template");
   const [searchTemplate, setSearchTemplate] = useState("");
-  const [tipoOficio, setTipoOficio] = useState("comunicacao");
+  const [tipoOficio, setTipoOficio] = useState(preTipo || "comunicacao");
   const [titulo, setTitulo] = useState("");
   const [destinatario, setDestinatario] = useState("");
   const [urgencia, setUrgencia] = useState<"normal" | "urgente" | "urgentissimo">("normal");
@@ -163,6 +168,7 @@ export default function NovoOficioPage() {
         modeloId: selectedModeloId,
         assistidoId,
         processoId,
+        demandaId: preDemandaId,
         titulo,
       });
     } else {
@@ -175,6 +181,7 @@ export default function NovoOficioPage() {
         urgencia,
         assistidoId,
         processoId,
+        demandaId: preDemandaId,
       });
     }
   };
@@ -293,6 +300,19 @@ export default function NovoOficioPage() {
       {/* Step 2: Configuration */}
       {step === "config" && (
         <div className="space-y-4">
+          {preDemandaId && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+              <Mail className="w-4 h-4 text-emerald-400" />
+              <span className="text-xs text-emerald-300">
+                Vinculado a demanda #{preDemandaId}
+                {preTipo && (
+                  <span className="ml-1.5 text-emerald-400/70">
+                    &middot; Tipo sugerido: {TIPOS_OFICIO.find(t => t.value === preTipo)?.label || preTipo}
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
           {selectedModeloId && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-500/10 border border-violet-500/20">
               <FileText className="w-4 h-4 text-violet-400" />

@@ -20,7 +20,9 @@ import {
 import { eq, ilike, or, desc, sql, and, isNull, asc, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { VARIAVEIS_PADRAO } from "./modelos";
-import { pythonBackend } from "@/lib/services/python-backend";
+import { pythonBackend, isPythonBackendAvailable } from "@/lib/services/python-backend";
+import { listAllItemsInFolder } from "@/lib/services/google-drive";
+import type { DriveFileInfo } from "@/lib/services/google-drive";
 
 // ==========================================
 // TIPOS DE OFÍCIOS
@@ -47,6 +49,36 @@ export const STATUS_OFICIO = [
   "enviado",
   "arquivado",
 ] as const;
+
+// ==========================================
+// CONSTANTES
+// ==========================================
+
+/** ID da pasta no Drive com ofícios existentes */
+const OFICIOS_DRIVE_FOLDER_ID = "1LidSgAPdzrRPl0ohPJ7kKlDWY_quMr-7";
+
+/** Classifica o tipo de ofício pelo nome do arquivo */
+function classificarPorNome(fileName: string): string {
+  const nome = fileName.toLowerCase();
+  if (nome.includes("requisit")) return "requisitorio";
+  if (nome.includes("comunic") || nome.includes("informa")) return "comunicacao";
+  if (nome.includes("encaminh")) return "encaminhamento";
+  if (nome.includes("solicita") || nome.includes("providen")) return "solicitacao_providencias";
+  if (nome.includes("intima") || nome.includes("notifica")) return "intimacao";
+  if (nome.includes("pedido") && nome.includes("informa")) return "pedido_informacao";
+  if (nome.includes("manifesta")) return "manifestacao";
+  if (nome.includes("represent")) return "representacao";
+  if (nome.includes("parecer")) return "parecer_tecnico";
+  if (nome.includes("convite") || nome.includes("convoca")) return "convite";
+  if (nome.includes("resposta")) return "resposta_oficio";
+  if (nome.includes("certid")) return "certidao";
+  return "comunicacao"; // fallback
+}
+
+/** Verifica se um arquivo do Drive é um documento (não pasta) */
+function isDocumentFile(file: DriveFileInfo): boolean {
+  return file.mimeType !== "application/vnd.google-apps.folder";
+}
 
 // ==========================================
 // FUNÇÕES AUXILIARES
@@ -825,6 +857,158 @@ export const oficiosRouter = router({
   // ANÁLISE DRIVE
   // ==========================================
 
+  /** Analisa ofícios do Drive — lista arquivos, cria registros e classifica */
+  analisarDrive: protectedProcedure.mutation(async () => {
+    // 1. Listar arquivos da pasta de ofícios no Drive
+    let driveFiles: DriveFileInfo[];
+    try {
+      driveFiles = await listAllItemsInFolder(OFICIOS_DRIVE_FOLDER_ID);
+    } catch (err) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Erro ao listar pasta do Drive: ${err instanceof Error ? err.message : String(err)}`,
+      });
+    }
+
+    // 2. Filtrar apenas documentos (não pastas)
+    const documentFiles = driveFiles.filter(isDocumentFile);
+
+    if (documentFiles.length === 0) {
+      return { total: 0, novos: 0, jaAnalisados: 0 };
+    }
+
+    // 3. Verificar quais já foram analisados (evitar duplicatas)
+    const existingAnalises = await db
+      .select({ driveFileId: oficioAnalises.driveFileId })
+      .from(oficioAnalises)
+      .where(
+        inArray(
+          oficioAnalises.driveFileId,
+          documentFiles.map((f) => f.id)
+        )
+      );
+
+    const jaAnalisadosSet = new Set(existingAnalises.map((a) => a.driveFileId));
+    const novosArquivos = documentFiles.filter((f) => !jaAnalisadosSet.has(f.id));
+
+    if (novosArquivos.length === 0) {
+      return {
+        total: documentFiles.length,
+        novos: 0,
+        jaAnalisados: existingAnalises.length,
+      };
+    }
+
+    // 4. Criar registros de análise com status "pendente"
+    const registros = novosArquivos.map((f) => ({
+      driveFileId: f.id,
+      driveFileName: f.name,
+      driveFolderId: OFICIOS_DRIVE_FOLDER_ID,
+      status: "pendente" as const,
+    }));
+
+    await db.insert(oficioAnalises).values(registros);
+
+    // 5. Tentar classificação — Python backend ou fallback por nome
+    const backendAvailable = await isPythonBackendAvailable();
+
+    // Processar em background (não bloquear a resposta)
+    // Usa Promise sem await para fire-and-forget
+    void (async () => {
+      for (const file of novosArquivos) {
+        try {
+          // Marcar como "processando"
+          await db
+            .update(oficioAnalises)
+            .set({ status: "processando", updatedAt: new Date() })
+            .where(eq(oficioAnalises.driveFileId, file.id));
+
+          if (backendAvailable) {
+            // Tentar extração + classificação via Python backend
+            try {
+              const extractResult = await pythonBackend.extractFromDrive(file.id, file.name);
+
+              if (extractResult.success && extractResult.content_markdown) {
+                // Classificar o conteúdo extraído
+                const classResult = await pythonBackend.classificarOficio(
+                  extractResult.content_markdown
+                );
+
+                if (classResult.success) {
+                  await db
+                    .update(oficioAnalises)
+                    .set({
+                      tipoOficio: classResult.tipo_oficio,
+                      destinatarioTipo: classResult.destinatario_tipo,
+                      assunto: classResult.assunto,
+                      qualidadeScore: classResult.qualidade_score,
+                      variaveisIdentificadas: classResult.variaveis_detectadas,
+                      estrutura: classResult.estrutura as Record<string, string>,
+                      conteudoExtraido: extractResult.content_markdown.slice(0, 10000),
+                      status: "concluido",
+                      updatedAt: new Date(),
+                    })
+                    .where(eq(oficioAnalises.driveFileId, file.id));
+                  continue;
+                }
+              }
+
+              // Extraction succeeded but classification failed — fallback
+              await db
+                .update(oficioAnalises)
+                .set({
+                  tipoOficio: classificarPorNome(file.name),
+                  qualidadeScore: 0,
+                  conteudoExtraido: extractResult.content_markdown?.slice(0, 10000) || null,
+                  status: "concluido",
+                  updatedAt: new Date(),
+                })
+                .where(eq(oficioAnalises.driveFileId, file.id));
+            } catch {
+              // Python backend call failed — use filename fallback
+              await db
+                .update(oficioAnalises)
+                .set({
+                  tipoOficio: classificarPorNome(file.name),
+                  qualidadeScore: 0,
+                  status: "concluido",
+                  updatedAt: new Date(),
+                })
+                .where(eq(oficioAnalises.driveFileId, file.id));
+            }
+          } else {
+            // No Python backend — simple filename classification
+            await db
+              .update(oficioAnalises)
+              .set({
+                tipoOficio: classificarPorNome(file.name),
+                qualidadeScore: 0,
+                status: "concluido",
+                updatedAt: new Date(),
+              })
+              .where(eq(oficioAnalises.driveFileId, file.id));
+          }
+        } catch (err) {
+          // Mark as error
+          await db
+            .update(oficioAnalises)
+            .set({
+              status: "erro",
+              erro: err instanceof Error ? err.message : String(err),
+              updatedAt: new Date(),
+            })
+            .where(eq(oficioAnalises.driveFileId, file.id));
+        }
+      }
+    })();
+
+    return {
+      total: documentFiles.length,
+      novos: novosArquivos.length,
+      jaAnalisados: existingAnalises.length,
+    };
+  }),
+
   /** Retorna status da última análise de ofícios do Drive */
   statusAnalise: protectedProcedure.query(async () => {
     const [stats] = await db
@@ -919,6 +1103,321 @@ export const oficiosRouter = router({
       analises: analiseStats || { total: 0, concluidas: 0 },
     };
   }),
+
+  // ==========================================
+  // EXPORTAÇÃO — Google Docs + PDF
+  // ==========================================
+
+  /** Exporta ofício para Google Docs */
+  exportarGoogleDocs: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const { createGoogleDoc, updateGoogleDoc } = await import("@/lib/services/google-drive");
+
+      // Buscar ofício com dados do assistido
+      const [oficio] = await db
+        .select({
+          id: documentosGerados.id,
+          titulo: documentosGerados.titulo,
+          conteudoFinal: documentosGerados.conteudoFinal,
+          googleDocId: documentosGerados.googleDocId,
+          googleDocUrl: documentosGerados.googleDocUrl,
+          assistidoId: documentosGerados.assistidoId,
+          metadata: documentosGerados.metadata,
+        })
+        .from(documentosGerados)
+        .where(eq(documentosGerados.id, input.id))
+        .limit(1);
+
+      if (!oficio) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Oficio nao encontrado" });
+      }
+
+      if (!oficio.conteudoFinal || oficio.conteudoFinal.trim().length < 10) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "O oficio precisa ter conteudo para ser exportado",
+        });
+      }
+
+      // Se ja tem Google Doc, atualizar o conteudo existente
+      if (oficio.googleDocId) {
+        const updated = await updateGoogleDoc(oficio.googleDocId, oficio.conteudoFinal);
+        if (!updated) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Erro ao atualizar Google Doc existente",
+          });
+        }
+        return {
+          googleDocId: oficio.googleDocId,
+          googleDocUrl: oficio.googleDocUrl!,
+          updated: true,
+        };
+      }
+
+      // Criar novo Google Doc
+      const result = await createGoogleDoc(oficio.titulo, oficio.conteudoFinal);
+
+      if (!result) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erro ao criar Google Doc. Verifique a configuracao do Google Drive.",
+        });
+      }
+
+      // Salvar referencia no banco
+      const currentMeta = (oficio.metadata as Record<string, unknown>) || {};
+      await db
+        .update(documentosGerados)
+        .set({
+          googleDocId: result.docId,
+          googleDocUrl: result.docUrl,
+          driveFileId: result.docId,
+          metadata: {
+            ...currentMeta,
+            exportadoGoogleDocsEm: new Date().toISOString(),
+          },
+          updatedAt: new Date(),
+        })
+        .where(eq(documentosGerados.id, input.id));
+
+      return {
+        googleDocId: result.docId,
+        googleDocUrl: result.docUrl,
+        updated: false,
+      };
+    }),
+
+  /** Exporta oficio como PDF (gera via Google Docs API e retorna URL base64 para download) */
+  exportarPDF: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const { createGoogleDoc, exportGoogleDocAsPdf } = await import("@/lib/services/google-drive");
+
+      // Buscar oficio
+      const [oficio] = await db
+        .select({
+          id: documentosGerados.id,
+          titulo: documentosGerados.titulo,
+          conteudoFinal: documentosGerados.conteudoFinal,
+          googleDocId: documentosGerados.googleDocId,
+          assistidoId: documentosGerados.assistidoId,
+          metadata: documentosGerados.metadata,
+        })
+        .from(documentosGerados)
+        .where(eq(documentosGerados.id, input.id))
+        .limit(1);
+
+      if (!oficio) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Oficio nao encontrado" });
+      }
+
+      if (!oficio.conteudoFinal || oficio.conteudoFinal.trim().length < 10) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "O oficio precisa ter conteudo para ser exportado como PDF",
+        });
+      }
+
+      let docId = oficio.googleDocId;
+
+      // Se nao tem Google Doc, criar um temporario para gerar o PDF
+      if (!docId) {
+        const result = await createGoogleDoc(oficio.titulo, oficio.conteudoFinal);
+        if (!result) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Erro ao criar Google Doc para conversao em PDF",
+          });
+        }
+        docId = result.docId;
+
+        // Salvar referencia do Google Doc no banco (bonus: usuario ganha o Doc tambem)
+        const currentMeta = (oficio.metadata as Record<string, unknown>) || {};
+        await db
+          .update(documentosGerados)
+          .set({
+            googleDocId: result.docId,
+            googleDocUrl: result.docUrl,
+            driveFileId: result.docId,
+            metadata: {
+              ...currentMeta,
+              exportadoGoogleDocsEm: new Date().toISOString(),
+            },
+            updatedAt: new Date(),
+          })
+          .where(eq(documentosGerados.id, input.id));
+      }
+
+      // Exportar o Google Doc como PDF
+      const pdfBuffer = await exportGoogleDocAsPdf(docId);
+      if (!pdfBuffer) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erro ao exportar PDF do Google Docs",
+        });
+      }
+
+      // Retornar o PDF como base64 para download no cliente
+      const pdfBase64 = pdfBuffer.toString("base64");
+      const fileName = `${oficio.titulo.replace(/[^a-zA-Z0-9\s-]/g, "").trim()}.pdf`;
+
+      return {
+        pdfBase64,
+        fileName,
+        size: pdfBuffer.length,
+      };
+    }),
+
+  // ==========================================
+  // SUGESTÃO DE OFÍCIO PARA DEMANDA
+  // ==========================================
+
+  /** Sugere tipo de ofício baseado no ato e providências da demanda */
+  sugerirParaDemanda: protectedProcedure
+    .input(z.object({ demandaId: z.number() }))
+    .query(async ({ input }) => {
+      // Buscar demanda com ato e providências
+      const [demanda] = await db
+        .select({
+          id: demandas.id,
+          ato: demandas.ato,
+          providencias: demandas.providencias,
+          assistidoId: demandas.assistidoId,
+          processoId: demandas.processoId,
+        })
+        .from(demandas)
+        .where(eq(demandas.id, input.demandaId))
+        .limit(1);
+
+      if (!demanda) {
+        return { sugerido: false, tipoOficio: null, mensagem: "Demanda não encontrada" };
+      }
+
+      const ato = (demanda.ato || "").toLowerCase().trim();
+      const providencias = (demanda.providencias || "").toLowerCase().trim();
+
+      // Mapping: ato => tipo de ofício sugerido
+      let tipoOficio: string | null = null;
+      let mensagem = "";
+
+      // Manifestações processuais
+      if (
+        ato.includes("resposta à acusação") ||
+        ato.includes("alegações finais") ||
+        ato.includes("memoriais") ||
+        ato.includes("contestação") ||
+        ato.includes("embargos de declaração") ||
+        ato.includes("manifestação contra")
+      ) {
+        tipoOficio = "manifestacao";
+        mensagem = "Sugerido com base no ato processual que pode exigir manifestação formal";
+      }
+      // Ofícios explícitos e requisições
+      else if (
+        ato.includes("ofício") ||
+        ato.includes("oficiar") ||
+        providencias.includes("oficiar") ||
+        providencias.includes("requisitar") ||
+        providencias.includes("solicitar documento") ||
+        providencias.includes("solicitar prontuário")
+      ) {
+        tipoOficio = "requisitorio";
+        mensagem = "Sugerido por necessidade de requisição documental identificada";
+      }
+      // Diligências e solicitações de providências
+      else if (
+        ato.includes("diligência") ||
+        ato.includes("designação") ||
+        ato.includes("transferência") ||
+        ato.includes("requerimento") ||
+        providencias.includes("diligência") ||
+        providencias.includes("providência")
+      ) {
+        tipoOficio = "solicitacao_providencias";
+        mensagem = "Sugerido para formalizar solicitação de providências";
+      }
+      // Pedidos de informação
+      else if (
+        ato.includes("pedido de informação") ||
+        providencias.includes("informação") ||
+        providencias.includes("certidão") ||
+        ato.includes("quesitos")
+      ) {
+        tipoOficio = "pedido_informacao";
+        mensagem = "Sugerido para formalizar pedido de informação";
+      }
+      // Encaminhamento
+      else if (
+        ato.includes("encaminhar") ||
+        providencias.includes("encaminhar") ||
+        ato.includes("prosseguimento do feito")
+      ) {
+        tipoOficio = "encaminhamento";
+        mensagem = "Sugerido para formalizar encaminhamento";
+      }
+      // Ciências geralmente não precisam de ofício, mas verificar providências
+      else if (ato.includes("ciência")) {
+        if (providencias.includes("oficiar") || providencias.includes("solicitar") || providencias.includes("requisitar")) {
+          tipoOficio = "requisitorio";
+          mensagem = "Sugerido com base nas providências indicadas";
+        } else {
+          return { sugerido: false, tipoOficio: null, mensagem: "Ato de ciência sem necessidade de ofício identificada" };
+        }
+      }
+      // Comunicações genéricas
+      else if (
+        ato.includes("atualização de endereço") ||
+        ato.includes("juntada de documentos") ||
+        ato.includes("petição intermediária") ||
+        ato.includes("testemunhas") ||
+        ato.includes("rol de testemunhas")
+      ) {
+        tipoOficio = "comunicacao";
+        mensagem = "Sugerido como comunicação genérica para o ato";
+      }
+      // Default: verificar providências para decidir
+      else if (providencias) {
+        tipoOficio = "comunicacao";
+        mensagem = "Sugerido como comunicação com base nas providências";
+      }
+
+      if (!tipoOficio) {
+        return { sugerido: false, tipoOficio: null, mensagem: "Nenhuma sugestão de ofício para este ato" };
+      }
+
+      // Buscar template mais usado para esse tipo
+      const [templateSugerido] = await db
+        .select({
+          id: documentoModelos.id,
+          titulo: documentoModelos.titulo,
+        })
+        .from(documentoModelos)
+        .where(
+          and(
+            eq(documentoModelos.tipoPeca, "oficio"),
+            eq(documentoModelos.isAtivo, true),
+            isNull(documentoModelos.deletedAt),
+            sql`${documentoModelos.formatacao}->>'tipoOficio' = ${tipoOficio}`
+          )
+        )
+        .orderBy(desc(documentoModelos.totalUsos))
+        .limit(1);
+
+      // Buscar label do tipo
+      const tipoLabel = TIPOS_OFICIO.find((t) => t.value === tipoOficio)?.label || tipoOficio;
+
+      return {
+        sugerido: true,
+        tipoOficio,
+        tipoLabel,
+        templateSugerido: templateSugerido
+          ? { id: templateSugerido.id, titulo: templateSugerido.titulo }
+          : undefined,
+        mensagem,
+      };
+    }),
 
   // ==========================================
   // TIPOS DE OFÍCIO (REFERÊNCIA)

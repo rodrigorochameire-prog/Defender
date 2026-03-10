@@ -111,6 +111,11 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
     { enabled: !isNaN(demandaId) }
   );
 
+  const { data: oficioSugestao } = trpc.oficios.sugerirParaDemanda.useQuery(
+    { demandaId },
+    { enabled: !isNaN(demandaId) && !!demanda }
+  );
+
   // ─── Mutations ────────────────────────
   const updateMutation = trpc.demandas.update.useMutation({
     onSuccess: () => {
@@ -576,29 +581,51 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {/* ─── Create Ofício section ─── */}
-      <div className="bg-white dark:bg-zinc-900 border border-violet-200/40 dark:border-violet-800/20 rounded-xl p-5">
+      {/* ─── Ofício Sugerido / Criar Ofício ─── */}
+      <div className={`rounded-xl border p-5 ${
+        oficioSugestao?.sugerido
+          ? "bg-emerald-50/50 dark:bg-emerald-950/10 border-emerald-200/40 dark:border-emerald-800/20"
+          : "bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/80"
+      }`}>
         <div className="flex items-center gap-2 mb-1">
-          <Mail className="h-4 w-4 text-violet-500" />
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Criar Ofício</h3>
+          <Mail className={`h-4 w-4 ${oficioSugestao?.sugerido ? "text-emerald-600 dark:text-emerald-400" : "text-violet-500"}`} />
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            {oficioSugestao?.sugerido ? "Ofício Sugerido" : "Criar Ofício"}
+          </h3>
+          {oficioSugestao?.sugerido && oficioSugestao.tipoLabel && (
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400">
+              {oficioSugestao.tipoLabel}
+            </span>
+          )}
         </div>
         <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">
-          Gere um ofício relacionado a esta demanda com IA
+          {oficioSugestao?.sugerido
+            ? oficioSugestao.mensagem
+            : "Gere um ofício relacionado a esta demanda"}
         </p>
+        {oficioSugestao?.sugerido && oficioSugestao.templateSugerido && (
+          <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mb-3 flex items-center gap-1.5">
+            <FileText className="h-3 w-3" />
+            Template: {oficioSugestao.templateSugerido.titulo}
+          </p>
+        )}
         <div className="flex flex-wrap gap-2">
           <Link
-            href={`/admin/oficios/novo?assistidoId=${demanda.assistidoId}&processoId=${demanda.processoId}`}
+            href={`/admin/oficios/novo?demandaId=${demandaId}&assistidoId=${demanda.assistidoId}&processoId=${demanda.processoId}${oficioSugestao?.tipoOficio ? `&tipo=${oficioSugestao.tipoOficio}` : ""}`}
           >
             <Button
               variant="outline"
               size="sm"
-              className="border-violet-200/50 dark:border-violet-800/30 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30"
+              className={oficioSugestao?.sugerido
+                ? "border-emerald-200/50 dark:border-emerald-800/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                : "border-violet-200/50 dark:border-violet-800/30 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30"
+              }
             >
               <Sparkles className="h-4 w-4 mr-1.5" />
-              Novo Ofício com IA
+              {oficioSugestao?.sugerido ? "Gerar Ofício Sugerido" : "Novo Ofício com IA"}
             </Button>
           </Link>
-          <Link href={`/admin/oficios/novo?assistidoId=${demanda.assistidoId}&processoId=${demanda.processoId}`}>
+          <Link href={`/admin/oficios/novo?demandaId=${demandaId}&assistidoId=${demanda.assistidoId}&processoId=${demanda.processoId}`}>
             <Button variant="outline" size="sm" className="border-zinc-200 dark:border-zinc-700 text-xs">
               <FileText className="h-4 w-4 mr-1.5" />
               Ofício em Branco

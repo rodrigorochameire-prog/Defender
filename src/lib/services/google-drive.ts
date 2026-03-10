@@ -3117,6 +3117,39 @@ export async function updateGoogleDoc(
 }
 
 /**
+ * Exporta um Google Doc como PDF e retorna o buffer
+ * Usa a API de export do Google Drive
+ */
+export async function exportGoogleDocAsPdf(
+  docId: string
+): Promise<Buffer | null> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
+
+  try {
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${docId}/export?mimeType=application/pdf`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error("[Google Drive] Erro ao exportar Doc como PDF:", await response.text());
+      return null;
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  } catch (error) {
+    console.error("[Google Drive] Erro ao exportar Google Doc como PDF:", error);
+    return null;
+  }
+}
+
+/**
  * Verifica integridade da sincronização entre banco local e Drive
  * Retorna arquivos que existem no banco mas não no Drive e vice-versa
  */

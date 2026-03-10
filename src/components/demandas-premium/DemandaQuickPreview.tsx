@@ -28,8 +28,12 @@ import {
   Clock,
   X,
   AlertCircle,
+  Mail,
+  ArrowRight,
+  Sparkles,
 } from "lucide-react";
-import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, PIPELINE_STAGES, getStageIndex, type StatusGroup } from "@/config/demanda-status";
+import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from "@/config/demanda-status";
+import { createPortal } from "react-dom";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
@@ -113,6 +117,19 @@ const ATRIBUICAO_OPTIONS = [
   { value: "Curadoria Especial", label: "Curadoria Especial" },
 ];
 
+// Pipeline stages for progress bar (mapped from status groups)
+const PIPELINE_STAGES: { key: StatusGroup; label: string; short: string }[] = [
+  { key: "triagem", label: "Triagem", short: "Triagem" },
+  { key: "preparacao", label: "Preparação", short: "Prep." },
+  { key: "diligencias", label: "Diligências", short: "Dilig." },
+  { key: "saida", label: "Saída", short: "Saída" },
+  { key: "concluida", label: "Concluída", short: "Concl." },
+];
+
+function getStageIndex(group: StatusGroup): number {
+  if (group === "arquivado") return PIPELINE_STAGES.length - 1; // maps to last stage
+  return PIPELINE_STAGES.findIndex(s => s.key === group);
+}
 
 // ============================================
 // AVATAR (uses shared AssistidoAvatar)
@@ -145,162 +162,208 @@ function calcularPrazoBadge(prazoStr: string): { texto: string; cor: "red" | "am
 }
 
 // ============================================
-// PIPELINE STEPPER (interactive, inline)
+// OFÍCIO SUGERIDO — CLIENT-SIDE MAPPING
 // ============================================
 
-function PipelineStepper({
-  currentStatus,
-  statusGroup,
-  onSelect,
-}: {
-  currentStatus: string;
-  statusGroup: StatusGroup;
-  onSelect: (status: string) => void;
-}) {
-  const currentStageIdx = getStageIndex(statusGroup);
-  const [expandedStage, setExpandedStage] = useState<number | null>(null);
+const TIPO_OFICIO_LABELS: Record<string, string> = {
+  requisitorio: "Requisitório",
+  comunicacao: "Comunicação",
+  encaminhamento: "Encaminhamento",
+  solicitacao_providencias: "Solic. Providências",
+  pedido_informacao: "Pedido de Informação",
+  manifestacao: "Manifestação",
+};
 
+function sugerirOficio(ato: string, providencias: string): { tipoOficio: string; tipoLabel: string } | null {
+  const a = (ato || "").toLowerCase().trim();
+  const p = (providencias || "").toLowerCase().trim();
+
+  // Manifestações processuais
+  if (
+    a.includes("resposta à acusação") ||
+    a.includes("alegações finais") ||
+    a.includes("memoriais") ||
+    a.includes("contestação") ||
+    a.includes("embargos de declaração") ||
+    a.includes("manifestação contra")
+  ) {
+    return { tipoOficio: "manifestacao", tipoLabel: "Manifestação" };
+  }
+  // Ofícios explícitos e requisições
+  if (
+    a.includes("ofício") ||
+    a.includes("oficiar") ||
+    p.includes("oficiar") ||
+    p.includes("requisitar") ||
+    p.includes("solicitar documento") ||
+    p.includes("solicitar prontuário")
+  ) {
+    return { tipoOficio: "requisitorio", tipoLabel: "Requisitório" };
+  }
+  // Diligências
+  if (
+    a.includes("diligência") ||
+    a.includes("designação") ||
+    a.includes("transferência") ||
+    a.includes("requerimento") ||
+    p.includes("diligência") ||
+    p.includes("providência")
+  ) {
+    return { tipoOficio: "solicitacao_providencias", tipoLabel: "Solic. Providências" };
+  }
+  // Pedidos de informação
+  if (
+    a.includes("pedido de informação") ||
+    p.includes("informação") ||
+    p.includes("certidão") ||
+    a.includes("quesitos")
+  ) {
+    return { tipoOficio: "pedido_informacao", tipoLabel: "Pedido de Informação" };
+  }
+  // Encaminhamento
+  if (a.includes("encaminhar") || p.includes("encaminhar") || a.includes("prosseguimento do feito")) {
+    return { tipoOficio: "encaminhamento", tipoLabel: "Encaminhamento" };
+  }
+  // Ciência — only if providências demand action
+  if (a.includes("ciência")) {
+    if (p.includes("oficiar") || p.includes("solicitar") || p.includes("requisitar")) {
+      return { tipoOficio: "requisitorio", tipoLabel: "Requisitório" };
+    }
+    return null;
+  }
+  // Comunicação genérica
+  if (
+    a.includes("atualização de endereço") ||
+    a.includes("juntada de documentos") ||
+    a.includes("petição intermediária") ||
+    a.includes("testemunhas") ||
+    a.includes("rol de testemunhas")
+  ) {
+    return { tipoOficio: "comunicacao", tipoLabel: "Comunicação" };
+  }
+  // Fallback: se tem providências substanciais
+  if (p && p.length > 10) {
+    return { tipoOficio: "comunicacao", tipoLabel: "Comunicação" };
+  }
+
+  return null;
+}
+
+// ============================================
+// STAGE SUBSTATUS POPOVER
+// ============================================
+
+function StageSubstatusPopover({
+  stage,
+  anchorRect,
+  currentStatus,
+  onSelect,
+  onClose,
+}: {
+  stage: (typeof PIPELINE_STAGES)[number];
+  anchorRect: DOMRect;
+  currentStatus: string;
+  onSelect: (status: string) => void;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const stageColor = STATUS_GROUPS[stage.key]?.color || "#A1A1AA";
+
+  // Get substatus options for this group
+  const options = Object.entries(DEMANDA_STATUS)
+    .filter(([, v]) => v.group === stage.key)
+    .map(([key, v]) => ({ key, ...v }));
+
+  // Close on click-outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    // Delay to avoid immediate close from the same click
+    const timer = setTimeout(() => document.addEventListener("mousedown", handler), 10);
+    return () => { clearTimeout(timer); document.removeEventListener("mousedown", handler); };
+  }, [onClose]);
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  // Position: centered below the node
+  const popoverWidth = 160;
+  const left = Math.max(8, Math.min(
+    anchorRect.left + anchorRect.width / 2 - popoverWidth / 2,
+    window.innerWidth - popoverWidth - 8
+  ));
+  const top = anchorRect.bottom + 8;
+
+  // Normalize current status for comparison
   const normalizedCurrent = currentStatus.toLowerCase().replace(/\s+/g, "_");
 
-  // Get substatus options for the expanded stage
-  const expandedOptions = expandedStage !== null
-    ? Object.entries(DEMANDA_STATUS)
-        .filter(([, v]) => v.group === PIPELINE_STAGES[expandedStage].key)
-        .map(([key, v]) => ({ key, ...v }))
-    : [];
+  return createPortal(
+    <div
+      ref={ref}
+      className="fixed z-[9999] rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-700/80 shadow-xl shadow-black/10 dark:shadow-black/40 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
+      style={{ top, left, width: popoverWidth }}
+    >
+      {/* Header with stage color accent */}
+      <div
+        className="px-3 py-2 flex items-center gap-2"
+        style={{ borderBottom: `2px solid ${stageColor}30` }}
+      >
+        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: stageColor }} />
+        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: stageColor }}>
+          {stage.label}
+        </span>
+      </div>
 
-  const expandedColor = expandedStage !== null
-    ? STATUS_GROUPS[PIPELINE_STAGES[expandedStage].key]?.color || "#A1A1AA"
-    : "#A1A1AA";
-
-  return (
-    <div className="px-5 py-5 border-t border-zinc-100 dark:border-zinc-800/50">
-      {/* Track + nodes */}
-      <div className="relative flex items-center">
-        {/* Background track */}
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] bg-zinc-200 dark:bg-zinc-700/60 rounded-full" />
-        {/* Filled track (neutral gray — only active node has color) */}
-        <div
-          className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] rounded-full transition-all duration-500 bg-zinc-300 dark:bg-zinc-600"
-          style={{
-            width: currentStageIdx >= 0 ? `${(currentStageIdx / (PIPELINE_STAGES.length - 1)) * 100}%` : "0%",
-          }}
-        />
-        {/* Stage nodes */}
-        {PIPELINE_STAGES.map((stage, i) => {
-          const isActive = i === currentStageIdx;
-          const isCompleted = i < currentStageIdx;
-          const isExpanded = expandedStage === i;
-          const stageColor = STATUS_GROUPS[stage.key]?.color || "#A1A1AA";
-
+      {/* Options */}
+      <div className="py-1">
+        {options.map((opt) => {
+          const isActive = opt.key === normalizedCurrent;
+          const Icon = opt.icon;
           return (
             <button
-              key={stage.key}
-              onClick={() => setExpandedStage(expandedStage === i ? null : i)}
-              className={`relative z-10 flex flex-col items-center cursor-pointer group/stage transition-all ${
-                i === 0 ? "" : "flex-1"
-              }`}
-              title={`${stage.label} — clique para escolher substatus`}
-              style={{ minWidth: i === 0 ? "auto" : undefined }}
+              key={opt.key}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(opt.key);
+              }}
+              className={`
+                w-full px-3 py-1.5 flex items-center gap-2 text-left
+                transition-colors duration-100 cursor-pointer
+                ${isActive
+                  ? "bg-emerald-50/80 dark:bg-emerald-950/20"
+                  : "hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                }
+              `}
             >
-              {/* Node */}
-              <div
-                className={`flex items-center justify-center rounded-full transition-all duration-300 ${
-                  isActive
-                    ? "w-6 h-6 ring-2 ring-offset-2 dark:ring-offset-zinc-900"
-                    : isCompleted
-                      ? "w-5 h-5"
-                      : isExpanded
-                        ? "w-5 h-5 ring-2 ring-offset-1 dark:ring-offset-zinc-900"
-                        : "w-4 h-4 group-hover/stage:w-5 group-hover/stage:h-5"
-                }`}
-                style={{
-                  backgroundColor: isActive ? stageColor : isCompleted ? "#a1a1aa" : isExpanded ? `${stageColor}80` : "#e4e4e7",
-                  ['--tw-ring-color' as any]: (isActive || isExpanded) ? `${stageColor}40` : undefined,
-                }}
-              >
-                {isCompleted && <Check className="w-3 h-3 text-white/80" />}
-                {isActive && (
-                  <div className="w-2 h-2 rounded-full bg-white" />
-                )}
-              </div>
-              {/* Label */}
+              <Icon
+                className="w-3 h-3 shrink-0"
+                style={{ color: isActive ? stageColor : `${stageColor}80` }}
+              />
               <span
-                className={`mt-1.5 text-[10px] font-medium whitespace-nowrap transition-colors ${
-                  isActive || isExpanded ? "font-bold" : "text-zinc-400 dark:text-zinc-500"
+                className={`text-xs flex-1 truncate ${
+                  isActive
+                    ? "font-semibold text-zinc-900 dark:text-zinc-100"
+                    : "font-medium text-zinc-600 dark:text-zinc-400"
                 }`}
-                style={{
-                  color: isActive || isExpanded ? stageColor : undefined,
-                }}
               >
-                <span className="hidden sm:inline">{stage.label}</span>
-                <span className="sm:hidden">{stage.short}</span>
+                {opt.label}
               </span>
+              {isActive && (
+                <Check className="w-3 h-3 shrink-0" style={{ color: stageColor }} />
+              )}
             </button>
           );
         })}
       </div>
-
-      {/* Inline substatus options (shown when a stage is clicked) */}
-      {expandedStage !== null && (
-        <div
-          className="mt-4 rounded-xl bg-zinc-50/80 dark:bg-zinc-800/30 border border-zinc-200/60 dark:border-zinc-700/40 overflow-hidden"
-          style={{ animation: "fadeInDown 0.15s ease-out" }}
-        >
-          {/* Stage header */}
-          <div
-            className="px-3 py-2 flex items-center gap-2"
-            style={{ borderBottom: `2px solid ${expandedColor}30` }}
-          >
-            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: expandedColor }} />
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: expandedColor }}>
-              {PIPELINE_STAGES[expandedStage].label}
-            </span>
-          </div>
-          {/* Options */}
-          <div className="py-1">
-            {expandedOptions.map((opt) => {
-              const isCurrentOpt = opt.key === normalizedCurrent;
-              const Icon = opt.icon;
-              return (
-                <button
-                  key={opt.key}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelect(opt.key);
-                    setExpandedStage(null);
-                  }}
-                  className={`
-                    w-full px-3 py-2 flex items-center gap-2.5 text-left
-                    transition-colors duration-100 cursor-pointer
-                    ${isCurrentOpt
-                      ? "bg-emerald-50/80 dark:bg-emerald-950/20"
-                      : "hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
-                    }
-                  `}
-                >
-                  <span className="shrink-0" style={{ color: isCurrentOpt ? expandedColor : `${expandedColor}80` }}>
-                    <Icon className="w-3.5 h-3.5" />
-                  </span>
-                  <span
-                    className={`text-xs flex-1 ${
-                      isCurrentOpt
-                        ? "font-bold text-zinc-900 dark:text-zinc-100"
-                        : "font-medium text-zinc-600 dark:text-zinc-400"
-                    }`}
-                  >
-                    {opt.label}
-                  </span>
-                  {isCurrentOpt && (
-                    <Check className="w-3.5 h-3.5 shrink-0" style={{ color: expandedColor }} />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -326,7 +389,15 @@ export function DemandaQuickPreview({
   totalCount,
 }: DemandaQuickPreviewProps) {
   const [metadataOpen, setMetadataOpen] = useState(true);
+  const [activeStagePopover, setActiveStagePopover] = useState<number | null>(null);
+  const stageRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [stageRect, setStageRect] = useState<DOMRect | null>(null);
   const uploadFile = trpc.drive.uploadFile.useMutation();
+
+  // Close popover when demanda changes or sheet closes
+  useEffect(() => {
+    setActiveStagePopover(null);
+  }, [demanda?.id, open]);
 
   // Upload audio to assistido's Drive folder
   const handleAudioUpload = useCallback(
@@ -409,6 +480,9 @@ export function DemandaQuickPreview({
 
   const processo = demanda.processos?.[0];
   const prazoBadge = calcularPrazoBadge(demanda.prazo);
+  const currentStageIdx = getStageIndex(statusConfig.group);
+  const oficioSugerido = sugerirOficio(demanda.ato, demanda.providencias);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[calc(100vw-3rem)] sm:w-[420px] md:w-[460px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl" style={{ borderLeft: `3px solid ${atribuicaoColor}` }}>
@@ -529,12 +603,100 @@ export function DemandaQuickPreview({
             </div>
           </div>
 
-          {/* ===== PIPELINE STEPPER (interactive) ===== */}
-          <PipelineStepper
-            currentStatus={demanda.substatus || demanda.status}
-            statusGroup={statusConfig.group}
-            onSelect={(status) => onStatusChange(demanda.id, status)}
-          />
+          {/* ===== PIPELINE STEPPER ===== */}
+          <div className="px-5 py-5 border-t border-zinc-100 dark:border-zinc-800/50">
+            {/* Track + nodes */}
+            <div className="relative flex items-center">
+              {/* Background track */}
+              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] bg-zinc-200 dark:bg-zinc-700/60 rounded-full" />
+              {/* Filled track */}
+              <div
+                className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] rounded-full transition-all duration-500"
+                style={{
+                  width: currentStageIdx >= 0 ? `${(currentStageIdx / (PIPELINE_STAGES.length - 1)) * 100}%` : "0%",
+                  backgroundColor: "#84CC9B",
+                }}
+              />
+              {/* Stage nodes */}
+              {PIPELINE_STAGES.map((stage, i) => {
+                const isActive = i === currentStageIdx;
+                const isCompleted = i < currentStageIdx;
+                const isPopoverOpen = activeStagePopover === i;
+                const stageColor = STATUS_GROUPS[stage.key]?.color || "#A1A1AA";
+
+                return (
+                  <button
+                    key={stage.key}
+                    ref={(el) => { stageRefs.current[i] = el; }}
+                    onClick={() => {
+                      if (activeStagePopover === i) {
+                        setActiveStagePopover(null);
+                        return;
+                      }
+                      const rect = stageRefs.current[i]?.getBoundingClientRect();
+                      if (rect) {
+                        setStageRect(rect);
+                        setActiveStagePopover(i);
+                      }
+                    }}
+                    className={`relative z-10 flex flex-col items-center cursor-pointer group/stage transition-all ${
+                      i === 0 ? "" : "flex-1"
+                    }`}
+                    title={`${stage.label} — clique para escolher substatus`}
+                    style={{ minWidth: i === 0 ? "auto" : undefined }}
+                  >
+                    {/* Node */}
+                    <div
+                      className={`flex items-center justify-center rounded-full transition-all duration-300 ${
+                        isActive
+                          ? "w-6 h-6 ring-2 ring-offset-2 dark:ring-offset-zinc-900"
+                          : isCompleted
+                            ? "w-5 h-5"
+                            : isPopoverOpen
+                              ? "w-5 h-5 ring-2 ring-offset-1 dark:ring-offset-zinc-900"
+                              : "w-4 h-4 group-hover/stage:w-5 group-hover/stage:h-5"
+                      }`}
+                      style={{
+                        backgroundColor: isCompleted ? "#84CC9B" : isActive ? stageColor : isPopoverOpen ? `${stageColor}80` : "#e4e4e7",
+                        ['--tw-ring-color' as any]: (isActive || isPopoverOpen) ? `${stageColor}40` : undefined,
+                      }}
+                    >
+                      {isCompleted && <Check className="w-3 h-3 text-white" />}
+                      {isActive && (
+                        <div className="w-2 h-2 rounded-full bg-white" />
+                      )}
+                    </div>
+                    {/* Label */}
+                    <span
+                      className={`mt-1.5 text-[10px] font-medium whitespace-nowrap transition-colors ${
+                        isActive || isPopoverOpen ? "font-bold" : isCompleted ? "" : "text-zinc-400 dark:text-zinc-500"
+                      }`}
+                      style={{
+                        color: isActive || isPopoverOpen ? stageColor : isCompleted ? "#84CC9B" : undefined,
+                      }}
+                    >
+                      <span className="hidden sm:inline">{stage.label}</span>
+                      <span className="sm:hidden">{stage.short}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Stage substatus popover */}
+            {activeStagePopover !== null && stageRect && (
+              <StageSubstatusPopover
+                stage={PIPELINE_STAGES[activeStagePopover]}
+                anchorRect={stageRect}
+                currentStatus={demanda.substatus || demanda.status}
+                onSelect={(status) => {
+                  onStatusChange(demanda.id, status);
+                  setActiveStagePopover(null);
+                }}
+                onClose={() => setActiveStagePopover(null)}
+              />
+            )}
+          </div>
 
           {/* ===== CARD SECTIONS ===== */}
           <div className="px-4 sm:px-5 pb-4 space-y-4">
@@ -735,6 +897,43 @@ export function DemandaQuickPreview({
                 </>
               )}
             </div>
+
+            {/* ===== OFÍCIO SUGERIDO ===== */}
+            {oficioSugerido && (
+              <>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-bold">Ofício</span>
+                  <div className="flex-1 h-px bg-zinc-200/50 dark:bg-zinc-700/30" />
+                </div>
+
+                <div className="rounded-xl bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-200/40 dark:border-emerald-800/20 overflow-hidden">
+                  <div className="px-3.5 sm:px-4 py-3">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+                        <Mail className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">
+                        Ofício sugerido
+                      </span>
+                      <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400">
+                        {oficioSugerido.tipoLabel}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 ml-7 mb-2.5">
+                      Com base no ato &ldquo;{demanda.ato}&rdquo;
+                    </p>
+                    <Link
+                      href={`/admin/oficios/novo?demandaId=${demanda.id}${demanda.assistidoId ? `&assistidoId=${demanda.assistidoId}` : ""}${demanda.processoId ? `&processoId=${demanda.processoId}` : ""}&tipo=${oficioSugerido.tipoOficio}`}
+                      className="ml-7 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors group/oficio cursor-pointer"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      Gerar Ofício
+                      <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover/oficio:opacity-100 group-hover/oficio:translate-x-0 transition-all" />
+                    </Link>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

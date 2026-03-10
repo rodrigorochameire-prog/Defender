@@ -84,6 +84,10 @@ export default function OficioEditorPage() {
   const [instrucaoMelhorar, setInstrucaoMelhorar] = useState("");
   const [showMelhorarInput, setShowMelhorarInput] = useState(false);
 
+  // Export states
+  const [exportingGDocs, setExportingGDocs] = useState(false);
+  const [exportingPDF, setExportingPDF] = useState(false);
+
   // Fetch oficio data
   const { data: oficio, isLoading, refetch } = trpc.oficios.getById.useQuery(
     { id },
@@ -144,6 +148,53 @@ export default function OficioEditorPage() {
     onError: (err) => {
       setImproving(false);
       toast.error("Erro ao melhorar: " + err.message);
+    },
+  });
+
+  const exportGDocsMutation = trpc.oficios.exportarGoogleDocs.useMutation({
+    onSuccess: (data) => {
+      setExportingGDocs(false);
+      refetch();
+      if (data.updated) {
+        toast.success("Google Doc atualizado com sucesso");
+      } else {
+        toast.success("Google Doc criado com sucesso");
+      }
+      window.open(data.googleDocUrl, "_blank");
+    },
+    onError: (err) => {
+      setExportingGDocs(false);
+      toast.error("Erro ao exportar: " + err.message);
+    },
+  });
+
+  const exportPDFMutation = trpc.oficios.exportarPDF.useMutation({
+    onSuccess: (data) => {
+      setExportingPDF(false);
+      // Decodificar base64 e criar blob para download
+      const byteCharacters = atob(data.pdfBase64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+
+      // Trigger download
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = data.fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success(`PDF baixado (${(data.size / 1024).toFixed(0)} KB)`);
+    },
+    onError: (err) => {
+      setExportingPDF(false);
+      toast.error("Erro ao gerar PDF: " + err.message);
     },
   });
 
@@ -227,6 +278,26 @@ export default function OficioEditorPage() {
       setDirty(true);
       toast.success("Versao revisada aplicada");
     }
+  };
+
+  const handleExportGDocs = () => {
+    if (!id) return;
+    // Salvar antes de exportar se dirty
+    if (dirty) {
+      handleSave();
+    }
+    setExportingGDocs(true);
+    exportGDocsMutation.mutate({ id });
+  };
+
+  const handleExportPDF = () => {
+    if (!id) return;
+    // Salvar antes de exportar se dirty
+    if (dirty) {
+      handleSave();
+    }
+    setExportingPDF(true);
+    exportPDFMutation.mutate({ id });
   };
 
   if (isLoading) {
@@ -693,26 +764,30 @@ Defensor(a) Publico(a)`}
           <Button
             variant="outline"
             size="sm"
-            className="border-zinc-700 text-zinc-400 text-xs"
-            disabled
+            className="border-zinc-700 text-zinc-400 text-xs hover:text-zinc-200 hover:border-zinc-500 cursor-pointer"
+            disabled={exportingPDF || !conteudo.trim()}
+            onClick={handleExportPDF}
           >
-            <Download className="w-3 h-3 mr-1.5" />
+            {exportingPDF ? (
+              <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+            ) : (
+              <Download className="w-3 h-3 mr-1.5" />
+            )}
             PDF
-            <Badge variant="outline" className="ml-1 text-[8px] border-zinc-600">
-              Em breve
-            </Badge>
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="border-zinc-700 text-zinc-400 text-xs"
-            disabled
+            className="border-zinc-700 text-zinc-400 text-xs hover:text-zinc-200 hover:border-zinc-500 cursor-pointer"
+            disabled={exportingGDocs || !conteudo.trim()}
+            onClick={handleExportGDocs}
           >
-            <ExternalLink className="w-3 h-3 mr-1.5" />
+            {exportingGDocs ? (
+              <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+            ) : (
+              <ExternalLink className="w-3 h-3 mr-1.5" />
+            )}
             Google Docs
-            <Badge variant="outline" className="ml-1 text-[8px] border-zinc-600">
-              Em breve
-            </Badge>
           </Button>
         </div>
       </div>

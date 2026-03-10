@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Mail,
@@ -12,6 +12,8 @@ import {
   FolderSearch,
   Pencil,
   CheckCircle2,
+  Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,11 +52,59 @@ export default function OficiosPage() {
     tipoOficio: tipoFilter !== "all" ? tipoFilter : undefined,
     limit: 50,
   });
-  const { data: analiseStatus } = trpc.oficios.statusAnalise.useQuery();
-  const { data: analises } = trpc.oficios.analises.useQuery(
-    { limit: 50 },
-    { enabled: tab === "analise" }
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const { data: analiseStatus, refetch: refetchStatus } = trpc.oficios.statusAnalise.useQuery(
+    undefined,
+    { refetchInterval: isAnalyzing ? 3000 : false }
   );
+  const { data: analises, refetch: refetchAnalises } = trpc.oficios.analises.useQuery(
+    { limit: 50 },
+    {
+      enabled: tab === "analise",
+      refetchInterval: isAnalyzing ? 3000 : false,
+    }
+  );
+
+  const analisarDriveMutation = trpc.oficios.analisarDrive.useMutation({
+    onSuccess: (data) => {
+      if (data.novos > 0) {
+        toast.success(`${data.novos} oficios enviados para analise`);
+        setIsAnalyzing(true);
+      } else if (data.jaAnalisados > 0) {
+        toast.info(`Todos os ${data.total} oficios ja foram analisados`);
+      } else {
+        toast.info("Nenhum oficio encontrado na pasta do Drive");
+      }
+      refetchStatus();
+      refetchAnalises();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao analisar Drive: ${error.message}`);
+    },
+  });
+
+  // Stop polling when all files are done processing
+  useEffect(() => {
+    if (isAnalyzing && analiseStatus) {
+      const { pendentes, processando } = analiseStatus;
+      if (pendentes === 0 && processando === 0) {
+        setIsAnalyzing(false);
+        refetchAnalises();
+        toast.success("Analise concluida!");
+      }
+    }
+  }, [isAnalyzing, analiseStatus, refetchAnalises]);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+      }
+    };
+  }, []);
   const { data: templates } = trpc.oficios.templates.useQuery(
     undefined,
     { enabled: tab === "templates" }
@@ -297,6 +347,28 @@ export default function OficiosPage() {
               <MiniStat label="Erros" value={analiseStatus?.erros ?? 0} />
             </div>
 
+            {/* Progress bar during analysis */}
+            {isAnalyzing && analiseStatus && analiseStatus.total > 0 && (
+              <div className="mb-4">
+                <div className="flex items-center justify-between text-xs text-zinc-500 mb-1">
+                  <span>Analisando oficios...</span>
+                  <span>
+                    {analiseStatus.concluidos + analiseStatus.erros}/{analiseStatus.total}
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.round(
+                        ((analiseStatus.concluidos + analiseStatus.erros) / analiseStatus.total) * 100
+                      )}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
             <p className="text-sm text-zinc-500 mb-4">
               {analiseStatus?.ultimaAnalise
                 ? `Ultima analise: ${new Date(analiseStatus.ultimaAnalise).toLocaleDateString("pt-BR")}`
@@ -306,14 +378,34 @@ export default function OficiosPage() {
             <div className="flex gap-2">
               <Button
                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                disabled
+                disabled={analisarDriveMutation.isPending || isAnalyzing}
+                onClick={() => analisarDriveMutation.mutate()}
               >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Analisar meus oficios
-                <Badge variant="outline" className="ml-2 text-[10px] border-emerald-400/30 text-emerald-300">
-                  Em breve
-                </Badge>
+                {analisarDriveMutation.isPending || isAnalyzing ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 mr-2" />
+                )}
+                {isAnalyzing
+                  ? "Analisando..."
+                  : analisarDriveMutation.isPending
+                    ? "Iniciando..."
+                    : "Analisar meus oficios"}
               </Button>
+              {(analiseStatus?.total ?? 0) > 0 && !isAnalyzing && (
+                <Button
+                  variant="outline"
+                  className="border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+                  onClick={() => {
+                    refetchStatus();
+                    refetchAnalises();
+                    toast.info("Dados atualizados");
+                  }}
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Atualizar
+                </Button>
+              )}
             </div>
 
             <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-3">
@@ -325,23 +417,41 @@ export default function OficiosPage() {
           {/* Analysis results */}
           {analises && analises.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Oficios Analisados</h4>
+              <h4 className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                Oficios Analisados ({analises.length})
+              </h4>
               {analises.map((a) => (
                 <div
                   key={a.id}
                   className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-700/30 bg-zinc-50 dark:bg-zinc-800/30"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-zinc-800 dark:text-zinc-200 truncate">
-                      {a.driveFileName}
-                    </span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {a.status === "processando" && (
+                        <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin flex-shrink-0" />
+                      )}
+                      {a.status === "pendente" && (
+                        <div className="w-3.5 h-3.5 rounded-full border-2 border-zinc-300 dark:border-zinc-600 flex-shrink-0" />
+                      )}
+                      {a.status === "concluido" && (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                      )}
+                      {a.status === "erro" && (
+                        <div className="w-3.5 h-3.5 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                          <span className="text-[8px] text-red-500 font-bold">!</span>
+                        </div>
+                      )}
+                      <span className="text-sm text-zinc-800 dark:text-zinc-200 truncate">
+                        {a.driveFileName}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       {a.tipoOficio && (
                         <Badge variant="outline" className="text-[10px] text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-600">
                           {a.tipoOficio}
                         </Badge>
                       )}
-                      {a.qualidadeScore !== null && (
+                      {a.qualidadeScore !== null && a.qualidadeScore > 0 && (
                         <Badge
                           variant="outline"
                           className={`text-[10px] ${
@@ -359,6 +469,9 @@ export default function OficiosPage() {
                   </div>
                   {a.assunto && (
                     <p className="text-xs text-zinc-500 mt-1 truncate">{a.assunto}</p>
+                  )}
+                  {a.erro && (
+                    <p className="text-xs text-red-500 dark:text-red-400 mt-1 truncate">{a.erro}</p>
                   )}
                 </div>
               ))}
