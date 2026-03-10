@@ -28,6 +28,7 @@ export * from "./palacio";
 export * from "./simulador";
 export * from "./distribuicao";
 export * from "./cowork";
+export * from "./radar";
 
 // Cross-domain relations (core + casos relations that reference other domains)
 export * from "./relations";

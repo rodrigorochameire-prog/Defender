@@ -31,7 +31,7 @@ interface DriveFile {
   driveFileId: string;
   name: string;
   mimeType: string | null;
-  size: number | null;
+  fileSize: number | null;
   isFolder: boolean;
   webViewLink: string | null;
   webContentLink?: string | null;
@@ -40,7 +40,7 @@ interface DriveFile {
   assistidoId: number | null;
   processoId: number | null;
   createdAt: Date;
-  modifiedAt: Date | null;
+  lastModifiedTime: Date | null;
   driveFolderId: string;
 }
 
@@ -108,11 +108,11 @@ function FileGridCard({ file }: { file: DriveFile }) {
   };
 
   const dateStr = useMemo(() => {
-    const d = file.modifiedAt || file.createdAt;
+    const d = file.lastModifiedTime || file.createdAt;
     if (!d) return "";
     try { return formatDistanceToNow(new Date(d), { addSuffix: false, locale: ptBR }); }
     catch { return ""; }
-  }, [file.modifiedAt, file.createdAt]);
+  }, [file.lastModifiedTime, file.createdAt]);
 
   return (
     <div
@@ -215,7 +215,7 @@ function FileGridCard({ file }: { file: DriveFile }) {
         </p>
         <div className="flex items-center justify-between mt-0.5">
           <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
-            {file.isFolder ? "Pasta" : [formatFileSize(file.size), dateStr].filter(Boolean).join(" · ")}
+            {file.isFolder ? "Pasta" : [formatFileSize(file.fileSize), dateStr].filter(Boolean).join(" · ")}
           </span>
           {!file.isFolder && enrichment.label && (
             <span className={cn("text-[8px] px-1 py-0.5 rounded-full border shrink-0", enrichment.class)}>

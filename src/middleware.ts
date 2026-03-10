@@ -9,6 +9,8 @@ const publicRoutes = [
   "/forgot-password",
   "/reset-password",
   "/auth-redirect",
+  "/privacidade",
+  "/termos",
   "/api/webhooks",
   "/api/auth",
 ];

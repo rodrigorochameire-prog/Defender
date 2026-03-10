@@ -466,3 +466,48 @@ export const patternTypeEnum = pgEnum("pattern_type", [
   "parte",
   "numero",
 ]);
+
+// Radar Criminal
+export const tipoCrimeRadarEnum = pgEnum("tipo_crime_radar", [
+  "homicidio",
+  "tentativa_homicidio",
+  "trafico",
+  "roubo",
+  "furto",
+  "violencia_domestica",
+  "sexual",
+  "lesao_corporal",
+  "porte_arma",
+  "estelionato",
+  "outros",
+]);
+
+export const circunstanciaRadarEnum = pgEnum("circunstancia_radar", [
+  "flagrante",
+  "mandado",
+  "denuncia",
+  "operacao",
+  "investigacao",
+  "julgamento",
+]);
+
+export const radarMatchStatusEnum = pgEnum("radar_match_status", [
+  "auto_confirmado",
+  "possivel",
+  "descartado",
+  "confirmado_manual",
+]);
+
+export const radarEnrichmentStatusEnum = pgEnum("radar_enrichment_status", [
+  "pending",
+  "extracted",
+  "matched",
+  "analyzed",
+]);
+
+export const radarFonteTipoEnum = pgEnum("radar_fonte_tipo", [
+  "portal",
+  "instagram",
+  "twitter",
+  "facebook",
+]);

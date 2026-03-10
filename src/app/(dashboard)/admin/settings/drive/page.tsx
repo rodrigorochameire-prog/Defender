@@ -497,6 +497,10 @@ export default function DriveConfigPage() {
   const { data: accountInfo } = trpc.drive.getAccountInfo.useQuery(undefined, {
     enabled: configStatus?.configured === true,
   });
+  const { data: tokenHealth, refetch: refetchTokenHealth } = trpc.drive.tokenHealth.useQuery(undefined, {
+    enabled: configStatus?.configured === true,
+    refetchInterval: 60000, // Check every minute
+  });
 
   // Mutations
   const registerMutation = trpc.drive.registerFolder.useMutation({
@@ -667,6 +671,59 @@ export default function DriveConfigPage() {
         accountEmail={accountInfo?.email}
         accountName={accountInfo?.name}
       />
+
+      {/* Token Health */}
+      {isConfigured && tokenHealth && (
+        <Card className={cn(
+          "p-4 border",
+          tokenHealth.status === "ok"
+            ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-900/10"
+            : "border-rose-200 dark:border-rose-800 bg-rose-50/30 dark:bg-rose-900/10"
+        )}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {tokenHealth.status === "ok" ? (
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              ) : (
+                <XCircle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+              )}
+              <div>
+                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  {tokenHealth.status === "ok" ? "Token OAuth ativo" : "Token OAuth expirado"}
+                </p>
+                <p className="text-xs text-zinc-500">
+                  {tokenHealth.status === "ok"
+                    ? `Autenticado como ${tokenHealth.email || "—"} · Fonte: ${tokenHealth.authMethod === "oauth_db" ? "Banco de dados" : "Variável de ambiente"}`
+                    : "Re-autorize para restaurar a integração com o Google Drive"
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => refetchTokenHealth()}
+                className="h-8 w-8 p-0"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+              {tokenHealth.needsReauth && (
+                <Button
+                  size="sm"
+                  asChild
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  <a href="/api/google/auth">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Re-autorizar Google
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Auto-Vinculação Card */}
       {isConfigured && (

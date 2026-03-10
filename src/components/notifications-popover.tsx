@@ -22,6 +22,7 @@ import {
   Users,
   Scale,
   Loader2,
+  Radio,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
@@ -48,6 +49,8 @@ const typeIcons: Record<string, React.ElementType> = {
   warning: AlertTriangle,
   success: CheckCircle,
   error: AlertCircle,
+  radar_match: Radio,
+  radar_confirmado: Radio,
 };
 
 const typeColors: Record<string, string> = {
@@ -68,6 +71,8 @@ const typeColors: Record<string, string> = {
   warning: "text-amber-500 bg-amber-500/10",
   success: "text-emerald-500 bg-emerald-500/10",
   error: "text-red-500 bg-red-500/10",
+  radar_match: "text-cyan-500 bg-cyan-500/10",
+  radar_confirmado: "text-emerald-500 bg-emerald-500/10",
 };
 
 export function NotificationsPopover() {

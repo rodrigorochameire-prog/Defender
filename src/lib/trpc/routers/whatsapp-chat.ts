@@ -14,9 +14,8 @@ import {
   whatsappChatMessages,
   assistidos,
 } from "@/lib/db/schema";
-import { eq, and, desc, asc, like, sql, or, isNull, lt, gt } from "drizzle-orm";
+import { eq, and, desc, like, sql, or, lt } from "drizzle-orm";
 import {
-  evolutionApi,
   EvolutionApiClient,
   sendText,
   sendImage,
@@ -28,12 +27,8 @@ import {
   markAsRead,
   getProfilePic,
   checkNumberExists,
-  getConnectionStatus,
-  getQRCode,
   createInstance,
   setWebhook,
-  logoutInstance,
-  restartInstance,
   deleteInstance,
   formatPhoneNumber,
 } from "@/lib/services/evolution-api";
@@ -104,7 +99,6 @@ export const whatsappChatRouter = router({
     const configs = await db
       .select()
       .from(evolutionConfig)
-      .where(undefined)
       .orderBy(desc(evolutionConfig.createdAt));
 
     return configs;

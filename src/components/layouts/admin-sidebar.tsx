@@ -97,6 +97,7 @@ const TOOLS_NAV: AssignmentMenuItem[] = [
   { label: "Investigação", path: "/admin/diligencias", icon: "FileSearch" },
   { label: "Palácio da Mente", path: "/admin/palacio-mente", icon: "Network" },
   { label: "Simulador 3D", path: "/admin/simulador-3d", icon: "Box" },
+  { label: "Radar Criminal", path: "/admin/radar", icon: "Radio" },
 ];
 
 // 6. Módulos específicos por especialidade

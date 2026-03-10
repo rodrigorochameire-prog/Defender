@@ -19,7 +19,7 @@ interface DriveFile {
   driveFileId: string;
   name: string;
   mimeType: string | null;
-  size: number | null;
+  fileSize: number | null;
   isFolder: boolean;
   webViewLink: string | null;
   webContentLink?: string | null;
@@ -28,7 +28,7 @@ interface DriveFile {
   assistidoId: number | null;
   processoId: number | null;
   createdAt: Date;
-  modifiedAt: Date | null;
+  lastModifiedTime: Date | null;
   driveFolderId: string;
 }
 
@@ -59,8 +59,8 @@ function CompactRow({ file }: { file: DriveFile }) {
   const meta = useMemo(() => {
     if (file.isFolder) return "";
     const parts: string[] = [];
-    if (file.size) parts.push(formatFileSize(file.size));
-    const d = file.modifiedAt || file.createdAt;
+    if (file.fileSize) parts.push(formatFileSize(file.fileSize));
+    const d = file.lastModifiedTime || file.createdAt;
     if (d) {
       try { parts.push(formatDistanceToNow(new Date(d), { addSuffix: false, locale: ptBR })); }
       catch { /* skip */ }

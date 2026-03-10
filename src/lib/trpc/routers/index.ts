@@ -58,6 +58,7 @@ import { offlineRouter } from "./offline";
 import { speakerLabelsRouter } from "./speakerLabels";
 import { juriAnalyticsRouter } from "./juriAnalytics";
 import { posJuriRouter } from "./posJuri";
+import { radarRouter } from "./radar";
 
 
 export const appRouter = router({
@@ -257,6 +258,11 @@ export const appRouter = router({
   // PÓS-JÚRI (RECURSOS + EXECUÇÃO)
   // ==========================================
   posJuri: posJuriRouter,
+
+  // ==========================================
+  // RADAR CRIMINAL (INTELIGÊNCIA CRIMINAL)
+  // ==========================================
+  radar: radarRouter,
 });
 
 export type AppRouter = typeof appRouter;

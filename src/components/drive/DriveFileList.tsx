@@ -31,7 +31,7 @@ interface DriveFile {
   driveFileId: string;
   name: string;
   mimeType: string | null;
-  size: number | null;
+  fileSize: number | null;
   isFolder: boolean;
   webViewLink: string | null;
   webContentLink?: string | null;
@@ -40,7 +40,7 @@ interface DriveFile {
   assistidoId: number | null;
   processoId: number | null;
   createdAt: Date;
-  modifiedAt: Date | null;
+  lastModifiedTime: Date | null;
   driveFolderId: string;
 }
 
@@ -158,14 +158,14 @@ function FileRow({ file }: { file: DriveFile }) {
   };
 
   const dateStr = useMemo(() => {
-    const d = file.modifiedAt || file.createdAt;
+    const d = file.lastModifiedTime || file.createdAt;
     if (!d) return "";
     try {
       return formatDistanceToNow(new Date(d), { addSuffix: false, locale: ptBR });
     } catch {
       return "";
     }
-  }, [file.modifiedAt, file.createdAt]);
+  }, [file.lastModifiedTime, file.createdAt]);
 
   const typeLabel = getFileTypeLabel(file.mimeType, file.isFolder);
 
@@ -219,7 +219,7 @@ function FileRow({ file }: { file: DriveFile }) {
 
       {/* Size */}
       <span className={cn(COL.size, "text-[11px] text-zinc-400 dark:text-zinc-500 truncate tabular-nums")}>
-        {!file.isFolder && file.size ? formatFileSize(file.size) : "—"}
+        {!file.isFolder && file.fileSize ? formatFileSize(file.fileSize) : "—"}
       </span>
 
       {/* Date */}

@@ -32,6 +32,7 @@ export function DriveContentArea() {
   const { data, isLoading } = trpc.drive.files.useQuery(
     {
       folderId: rootFolderId!,
+      limit: 500,
       // At root: parentFileId = null; in subfolder: use parentDriveFileId
       ...(isInSubfolder
         ? { parentDriveFileId: activeFolderId! }

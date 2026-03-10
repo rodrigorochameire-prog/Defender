@@ -72,6 +72,24 @@ export function DriveStatusBar({ assistidoId, processoId }: DriveStatusBarProps)
     onError: (err) => toast.error(err.message),
   });
 
+  const fullSync = trpc.drive.fullSyncAssistido.useMutation({
+    onSuccess: (data) => {
+      statusQuery.refetch();
+      if (data.errors.length > 0) {
+        toast.warning(`Sync parcial: ${data.steps.join(", ")}`, { description: data.errors[0] });
+      } else {
+        const parts = [];
+        if (data.folderLinked) parts.push("pasta vinculada");
+        if (data.folderCreated) parts.push("pasta criada");
+        if (data.syncResult) parts.push(`${data.syncResult.filesAdded} arquivos`);
+        if (data.filesLinkedToAssistido > 0) parts.push(`${data.filesLinkedToAssistido} vinculados`);
+        if (data.processosLinked > 0) parts.push(`${data.processosLinked} processos`);
+        toast.success(parts.length > 0 ? `Sync: ${parts.join(", ")}` : "Sync concluído");
+      }
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   if (statusQuery.isLoading) {
     return (
       <div className="px-6 py-2 border-b border-zinc-100 dark:border-zinc-800">
@@ -94,18 +112,28 @@ export function DriveStatusBar({ assistidoId, processoId }: DriveStatusBarProps)
           <HardDrive className="h-4 w-4 text-zinc-300 shrink-0" />
           <span className="text-[11px] text-zinc-400">Drive: sem pasta vinculada</span>
           {isAssistido && (
-            <button
-              onClick={() => createFolder.mutate({ assistidoId: assistidoId! })}
-              disabled={createFolder.isPending}
-              className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors disabled:opacity-50"
-            >
-              {createFolder.isPending ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
+            <>
+              <button
+                onClick={() => fullSync.mutate({ assistidoId: assistidoId!, createMissing: false })}
+                disabled={fullSync.isPending}
+                className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors disabled:opacity-50"
+              >
+                {fullSync.isPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3 w-3" />
+                )}
+                Buscar no Drive
+              </button>
+              <button
+                onClick={() => fullSync.mutate({ assistidoId: assistidoId!, createMissing: true })}
+                disabled={fullSync.isPending}
+                className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+              >
                 <FolderPlus className="h-3 w-3" />
-              )}
-              Criar pasta
-            </button>
+                Criar pasta
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -167,7 +195,7 @@ export function DriveStatusBar({ assistidoId, processoId }: DriveStatusBarProps)
             )}
 
             {data.lastSyncAt !== undefined && (() => {
-              const health = getSyncHealth(data.lastSyncAt);
+              const health = getSyncHealth(data.lastSyncAt ? String(data.lastSyncAt) : null);
               return (
                 <span className="inline-flex items-center gap-1 ml-2" title={health.label}>
                   <span
@@ -197,6 +225,25 @@ export function DriveStatusBar({ assistidoId, processoId }: DriveStatusBarProps)
             {activeCount > 0 && <span className="font-medium">{activeCount}</span>}
           </button>
         </ProcessingQueuePanel>
+
+        {/* Sync button (assistido only) */}
+        {isAssistido && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              fullSync.mutate({ assistidoId: assistidoId!, createMissing: false });
+            }}
+            disabled={fullSync.isPending}
+            className="text-[10px] text-zinc-400 hover:text-emerald-500 transition-colors flex items-center gap-0.5 disabled:opacity-50"
+            title="Sincronizar Drive"
+          >
+            {fullSync.isPending ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3 w-3" />
+            )}
+          </button>
+        )}
 
         {/* Open in Drive link */}
         {data.folderUrl && (

@@ -95,6 +95,7 @@ import { AudioRecorderButton } from "@/components/shared/audio-recorder";
 import { VoiceMemosButton } from "@/components/shared/voice-memos-button";
 import { TranscriptViewer } from "@/components/shared/transcript-viewer";
 import { EquipeCoworkCard } from "@/components/dashboard/equipe-cowork-card";
+import { RadarWidget } from "@/components/dashboard/radar-widget";
 
 // ============================================
 // HELPERS
@@ -1320,7 +1321,8 @@ export default function DashboardJuriPage() {
           onMural={() => setMuralSheetOpen(true)}
         />
 
-        {/* fim seção Registro + Equipe (agora stacked, sem grid) */}
+        {/* ===== 3. RADAR CRIMINAL ===== */}
+        <RadarWidget />
 
         {/* ===== PENDÊNCIAS SOLAR (condicional) ===== */}
         {solarSync && (solarSync.stats.pending > 0 || solarSync.stats.errors > 0) && (

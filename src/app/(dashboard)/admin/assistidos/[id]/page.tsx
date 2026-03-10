@@ -21,10 +21,11 @@ import { MarkdownViewerModal } from "@/components/drive/MarkdownViewerModal";
 import { useRealtimeFileStatus } from "@/hooks/use-realtime-file-status";
 import { MidiasHub } from "@/components/midias/MidiasHub";
 import { TimelineVivaAssistido } from "@/components/processos/TimelineViva";
+import { RadarAssistidoCard } from "@/components/radar/radar-assistido-card";
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
-type Tab = "processos" | "demandas" | "drive" | "audiencias" | "midias" | "timeline" | "oficios" | "inteligencia";
+type Tab = "processos" | "demandas" | "drive" | "audiencias" | "midias" | "timeline" | "oficios" | "inteligencia" | "radar";
 
 interface TranscriptionData {
   transcript: string;
@@ -288,6 +289,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     { key: "timeline", label: "Timeline" },
     { key: "oficios", label: "Ofícios", count: oficiosData?.total ?? 0 },
     { key: "inteligencia", label: "Inteligência" },
+    { key: "radar", label: "Radar" },
   ];
 
   // Get current transcript viewer data
@@ -862,6 +864,11 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               assistidoId={Number(id)}
               casoId={data.casoId}
             />
+          </div>
+        )}
+        {tab === "radar" && (
+          <div className="space-y-4">
+            <RadarAssistidoCard assistidoId={Number(id)} />
           </div>
         )}
       </div>

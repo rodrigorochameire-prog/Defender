@@ -1,0 +1,202 @@
+"use client";
+
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ExternalLink, MapPin, Clock, Users, Link2 } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { getCrimeBadgeColor, getCrimeLabel } from "./radar-filtros";
+import { cn } from "@/lib/utils";
+
+interface Envolvido {
+  nome: string | null;
+  papel: string;
+  idade?: number;
+  vulgo?: string;
+}
+
+interface NoticiaCardProps {
+  noticia: {
+    id: number;
+    url: string;
+    fonte: string;
+    titulo: string;
+    dataPublicacao: string | Date | null;
+    dataFato: string | Date | null;
+    imagemUrl?: string | null;
+    tipoCrime: string | null;
+    bairro: string | null;
+    resumoIA: string | null;
+    envolvidos: Envolvido[] | string | null;
+    enrichmentStatus: string;
+    matchCount?: number;
+  };
+}
+
+/** Normaliza envolvidos que pode vir como string JSON ou array */
+function parseEnvolvidos(raw: Envolvido[] | string | null): Envolvido[] {
+  if (!raw) return [];
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return Array.isArray(raw) ? raw : [];
+}
+
+/** Nomes genéricos que não são nomes próprios reais */
+const NOMES_GENERICOS = new Set([
+  "homem", "mulher", "criminoso", "suspeito", "vítima", "vitima",
+  "filho", "filha", "pai", "mãe", "mae", "menor", "adolescente",
+  "indivíduos", "individuos", "indivíduos encapuzados", "desconhecido",
+  "pessoa", "policial", "pm", "delegado",
+]);
+
+/** Verifica se é um nome próprio real */
+function isNomeProprio(nome: string | null): boolean {
+  if (!nome || !nome.trim()) return false;
+  return !NOMES_GENERICOS.has(nome.toLowerCase().trim());
+}
+
+const papelColors: Record<string, string> = {
+  suspeito: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  preso: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  acusado: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+  denunciado: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+  vitima: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  testemunha: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  policial: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
+};
+
+const papelLabels: Record<string, string> = {
+  suspeito: "Suspeito",
+  preso: "Preso",
+  acusado: "Acusado",
+  denunciado: "Denunciado",
+  vitima: "Vítima",
+  testemunha: "Testemunha",
+  policial: "Policial",
+  outro: "Outro",
+};
+
+export function RadarNoticiaCard({ noticia }: NoticiaCardProps) {
+  const dataDisplay = noticia.dataFato || noticia.dataPublicacao;
+  const hasMatch = (noticia.matchCount ?? 0) > 0;
+  const envolvidos = parseEnvolvidos(noticia.envolvidos);
+  const envolvidosComNome = envolvidos.filter((e) => isNomeProprio(e.nome));
+
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          {/* Thumbnail */}
+          {noticia.imagemUrl && (
+            <div className="hidden sm:block w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-zinc-100 dark:bg-zinc-800">
+              <img
+                src={noticia.imagemUrl}
+                alt=""
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          )}
+
+          <div className="flex-1 min-w-0 space-y-2">
+            {/* Badges */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge
+                variant="secondary"
+                className={getCrimeBadgeColor(noticia.tipoCrime)}
+              >
+                {getCrimeLabel(noticia.tipoCrime)}
+              </Badge>
+              {hasMatch && (
+                <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                  <Link2 className="h-3 w-3 mr-1" />
+                  Caso DPE
+                </Badge>
+              )}
+              <span className="text-xs text-zinc-400">{noticia.fonte}</span>
+            </div>
+
+            {/* Título */}
+            <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2">
+              {noticia.titulo}
+            </h3>
+
+            {/* Resumo */}
+            {noticia.resumoIA && (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2">
+                {noticia.resumoIA}
+              </p>
+            )}
+
+            {/* Envolvidos */}
+            {envolvidosComNome.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {envolvidosComNome.slice(0, 5).map((e, i) => (
+                  <span
+                    key={`${e.nome}-${i}`}
+                    className={cn(
+                      "inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md font-medium",
+                      papelColors[e.papel] || "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+                    )}
+                  >
+                    <Users className="h-2.5 w-2.5 shrink-0" />
+                    <span className="truncate max-w-[140px]">
+                      {e.nome}
+                      {e.idade ? `, ${e.idade}` : ""}
+                      {e.vulgo ? ` (${e.vulgo})` : ""}
+                    </span>
+                    <span className="opacity-70">
+                      {papelLabels[e.papel] || e.papel}
+                    </span>
+                  </span>
+                ))}
+                {envolvidosComNome.length > 5 && (
+                  <span className="text-[10px] text-zinc-400 self-center">
+                    +{envolvidosComNome.length - 5}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Metadata */}
+            <div className="flex items-center gap-3 text-xs text-zinc-400">
+              {dataDisplay && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {format(new Date(dataDisplay), "dd/MM/yyyy", { locale: ptBR })}
+                </span>
+              )}
+              {noticia.bairro && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {noticia.bairro}
+                </span>
+              )}
+              {envolvidos.length > 0 && (
+                <span className="flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  {envolvidos.length} envolvido{envolvidos.length > 1 ? "s" : ""}
+                </span>
+              )}
+              <a
+                href={noticia.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 cursor-pointer"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Fonte
+              </a>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

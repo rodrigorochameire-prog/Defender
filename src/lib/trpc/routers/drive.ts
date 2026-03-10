@@ -122,6 +122,65 @@ export const driveRouter = router({
   }),
 
   /**
+   * Verifica saúde do token OAuth (se funciona, tipo de auth, email, etc.)
+   */
+  tokenHealth: adminProcedure.query(async () => {
+    return safeAsync(async () => {
+      const token = await getAccessToken();
+      if (!token) {
+        return {
+          status: "error" as const,
+          message: "Nenhum método de autenticação funcionou",
+          email: null,
+          authMethod: null,
+          needsReauth: true,
+        };
+      }
+
+      // Test token by calling userinfo
+      try {
+        const resp = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!resp.ok) {
+          return {
+            status: "error" as const,
+            message: "Token inválido ou expirado",
+            email: null,
+            authMethod: null,
+            needsReauth: true,
+          };
+        }
+        const data = await resp.json();
+
+        // Check if we have a DB token
+        const dbTokenResult = await db.execute(
+          sql`SELECT email, updated_at FROM google_tokens ORDER BY updated_at DESC LIMIT 1`
+        );
+        const dbRows = dbTokenResult as unknown as Array<{ email: string; updated_at: Date }>;
+        const hasDbToken = dbRows && dbRows.length > 0;
+
+        return {
+          status: "ok" as const,
+          message: "Token OAuth funcionando",
+          email: data.email || null,
+          authMethod: hasDbToken ? "oauth_db" : "oauth_env",
+          needsReauth: false,
+          dbTokenDate: hasDbToken ? dbRows[0].updated_at : null,
+        };
+      } catch {
+        return {
+          status: "error" as const,
+          message: "Erro ao verificar token",
+          email: null,
+          authMethod: null,
+          needsReauth: true,
+        };
+      }
+    }, "Erro ao verificar saúde do token");
+  }),
+
+  /**
    * Lista pastas configuradas para sincronização
    */
   syncFolders: protectedProcedure.query(async () => {
@@ -1093,12 +1152,20 @@ export const driveRouter = router({
     }),
 
   /**
-   * Força sincronização de uma pasta (usa smartSync para incremental quando possível)
+   * Sincroniza uma pasta (usa smartSync: incremental quando possível, full na 1ª vez)
    */
   syncFolder: protectedProcedure
-    .input(z.object({ folderId: z.string() }))
+    .input(z.object({ folderId: z.string(), forceFullSync: z.boolean().optional() }))
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
+        // Force full sync: clear syncToken so smartSync does a complete re-scan
+        if (input.forceFullSync) {
+          await db
+            .update(driveSyncFolders)
+            .set({ syncToken: null, updatedAt: new Date() })
+            .where(eq(driveSyncFolders.driveFolderId, input.folderId));
+          console.log(`[Drive] Forced full re-sync for folder ${input.folderId}`);
+        }
         const result = await smartSync(input.folderId, ctx.user.id);
         return result;
       }, "Erro ao sincronizar pasta");
@@ -1166,7 +1233,7 @@ export const driveRouter = router({
         parentDriveFileId: z.string().optional(), // ID do Drive do parent (alternativa a parentFileId)
         search: z.string().optional(),
         mimeType: z.string().optional(),
-        limit: z.number().default(100),
+        limit: z.number().max(2000).default(500),
         offset: z.number().default(0),
         cursor: z.number().optional(), // Cursor-based pagination: files with id > cursor (ascending by id)
       })
@@ -3871,6 +3938,422 @@ export const driveRouter = router({
           transcribed,
           analyzed,
         },
+      };
+    }),
+
+  // ============================================
+  // PIPELINE COMPLETO: DRIVE ↔ ASSISTIDO
+  // ============================================
+
+  /**
+   * Pipeline completo de sincronização Drive↔Assistido.
+   *
+   * 1. Garante que assistido tem driveFolderId (match por nome ou cria pasta)
+   * 2. Registra pasta em drive_sync_folders (upsert)
+   * 3. Sincroniza conteúdo (smartSync: incremental ou full)
+   * 4. Vincula arquivos ao assistido (bulk SET assistidoId)
+   * 5. Auto-link processos por subpastas com número de autos
+   */
+  fullSyncAssistido: protectedProcedure
+    .input(z.object({
+      assistidoId: z.number(),
+      createMissing: z.boolean().default(false),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { normalizeName } = await import("@/lib/utils/text-extraction");
+
+      const result = {
+        steps: [] as string[],
+        folderLinked: false,
+        folderCreated: false,
+        folderId: null as string | null,
+        syncResult: null as { filesAdded: number; filesUpdated: number; filesRemoved: number } | null,
+        filesLinkedToAssistido: 0,
+        processosLinked: 0,
+        errors: [] as string[],
+      };
+
+      // ──── 1. Garantir driveFolderId ────
+      const [assistido] = await db
+        .select({
+          id: assistidos.id,
+          nome: assistidos.nome,
+          driveFolderId: assistidos.driveFolderId,
+          atribuicaoPrimaria: assistidos.atribuicaoPrimaria,
+        })
+        .from(assistidos)
+        .where(eq(assistidos.id, input.assistidoId))
+        .limit(1);
+
+      if (!assistido) {
+        throw Errors.notFound("Assistido não encontrado");
+      }
+
+      let folderId = assistido.driveFolderId;
+
+      if (!folderId) {
+        // Tentar match por nome nas pastas-raiz do Drive
+        const folderKey = mapAtribuicaoToFolderKey(assistido.atribuicaoPrimaria || "SUBSTITUICAO");
+
+        if (folderKey) {
+          const { ATRIBUICAO_FOLDER_IDS } = await import("@/lib/utils/text-extraction");
+          const rootFolderId = ATRIBUICAO_FOLDER_IDS[folderKey as keyof typeof ATRIBUICAO_FOLDER_IDS];
+
+          if (rootFolderId) {
+            // Listar subpastas da atribuição e tentar match
+            try {
+              const items = await listAllItemsInFolder(rootFolderId);
+              const folders = items.filter(item => item.mimeType === "application/vnd.google-apps.folder");
+
+              const nomeNorm = normalizeName(assistido.nome).toLowerCase().replace(/\s+/g, " ").trim();
+
+              let bestMatch: { id: string; name: string; confidence: number } | null = null;
+
+              for (const folder of folders) {
+                const folderNorm = normalizeName(folder.name).toLowerCase().replace(/\s+/g, " ").trim();
+
+                if (folderNorm === nomeNorm) {
+                  bestMatch = { id: folder.id, name: folder.name, confidence: 1.0 };
+                  break;
+                }
+
+                const sim = calculateSimilarity(folderNorm, nomeNorm);
+                if (sim >= 0.85 && (!bestMatch || sim > bestMatch.confidence)) {
+                  bestMatch = { id: folder.id, name: folder.name, confidence: sim };
+                }
+              }
+
+              if (bestMatch) {
+                folderId = bestMatch.id;
+                await db
+                  .update(assistidos)
+                  .set({ driveFolderId: folderId, updatedAt: new Date() })
+                  .where(eq(assistidos.id, input.assistidoId));
+                result.folderLinked = true;
+                result.steps.push(`Pasta encontrada: "${bestMatch.name}" (${Math.round(bestMatch.confidence * 100)}%)`);
+              }
+            } catch (err) {
+              result.errors.push(`Erro ao buscar pastas: ${err instanceof Error ? err.message : String(err)}`);
+            }
+          }
+        }
+
+        // Se ainda não tem folder e createMissing=true, criar
+        if (!folderId && input.createMissing) {
+          const folderKey2 = mapAtribuicaoToFolderKey(assistido.atribuicaoPrimaria || "SUBSTITUICAO");
+          if (folderKey2) {
+            try {
+              const folder = await createOrFindAssistidoFolder(
+                folderKey2 as "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI",
+                assistido.nome
+              );
+              if (folder) {
+                folderId = folder.id;
+                await db
+                  .update(assistidos)
+                  .set({ driveFolderId: folderId, updatedAt: new Date() })
+                  .where(eq(assistidos.id, input.assistidoId));
+                result.folderCreated = true;
+                result.steps.push(`Pasta criada: "${folder.name}"`);
+              }
+            } catch (err) {
+              result.errors.push(`Erro ao criar pasta: ${err instanceof Error ? err.message : String(err)}`);
+            }
+          }
+        }
+
+        if (!folderId) {
+          result.steps.push("Nenhuma pasta encontrada no Drive");
+          return result;
+        }
+      } else {
+        result.steps.push("Pasta já vinculada");
+      }
+
+      result.folderId = folderId;
+
+      // ──── 2. Registrar em drive_sync_folders (upsert) ────
+      try {
+        await db
+          .insert(driveSyncFolders)
+          .values({
+            name: assistido.nome,
+            driveFolderId: folderId,
+            driveFolderUrl: `https://drive.google.com/drive/folders/${folderId}`,
+            description: `Pasta do assistido ${assistido.nome}`,
+            syncDirection: "drive_to_app",
+            isActive: true,
+            createdById: ctx.user.id,
+          })
+          .onConflictDoUpdate({
+            target: driveSyncFolders.driveFolderId,
+            set: {
+              name: assistido.nome,
+              isActive: true,
+              updatedAt: new Date(),
+            },
+          });
+        result.steps.push("Pasta registrada para sync");
+      } catch (err) {
+        result.errors.push(`Erro ao registrar sync folder: ${err instanceof Error ? err.message : String(err)}`);
+        return result;
+      }
+
+      // ──── 3. Sincronizar conteúdo do Drive ────
+      try {
+        const syncRes = await smartSync(folderId, ctx.user.id);
+        result.syncResult = {
+          filesAdded: syncRes.filesAdded,
+          filesUpdated: syncRes.filesUpdated,
+          filesRemoved: syncRes.filesRemoved,
+        };
+        result.steps.push(`Sync: +${syncRes.filesAdded} novos, ${syncRes.filesUpdated} atualizados`);
+      } catch (err) {
+        result.errors.push(`Erro no sync: ${err instanceof Error ? err.message : String(err)}`);
+        // Continue — arquivos já existentes podem ser vinculados
+      }
+
+      // ──── 4. Vincular arquivos ao assistido (bulk) ────
+      try {
+        const updateResult = await db
+          .update(driveFiles)
+          .set({ assistidoId: input.assistidoId, updatedAt: new Date() })
+          .where(
+            and(
+              eq(driveFiles.driveFolderId, folderId),
+              isNull(driveFiles.assistidoId)
+            )
+          )
+          .returning({ id: driveFiles.id });
+
+        result.filesLinkedToAssistido = updateResult.length;
+        if (updateResult.length > 0) {
+          result.steps.push(`${updateResult.length} arquivos vinculados ao assistido`);
+        }
+      } catch (err) {
+        result.errors.push(`Erro ao vincular arquivos: ${err instanceof Error ? err.message : String(err)}`);
+      }
+
+      // ──── 5. Auto-link processos por subpastas ────
+      try {
+        // Buscar processos do assistido
+        const assistidoProcessos = await db
+          .select({ id: processos.id, numeroAutos: processos.numeroAutos, driveFolderId: processos.driveFolderId })
+          .from(processos)
+          .where(eq(processos.assistidoId, input.assistidoId));
+
+        if (assistidoProcessos.length > 0) {
+          // Buscar subpastas do assistido que são pastas
+          const subfolders = await db
+            .select({ id: driveFiles.id, name: driveFiles.name, driveFileId: driveFiles.driveFileId })
+            .from(driveFiles)
+            .where(
+              and(
+                eq(driveFiles.driveFolderId, folderId),
+                eq(driveFiles.isFolder, true)
+              )
+            );
+
+          const PROCESSO_REGEX = /(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})/;
+
+          for (const subfolder of subfolders) {
+            const match = subfolder.name?.match(PROCESSO_REGEX);
+            if (!match) continue;
+
+            const numAutos = match[1];
+            const processo = assistidoProcessos.find(p => p.numeroAutos === numAutos);
+            if (!processo) continue;
+
+            // Vincular processo à subpasta se ainda não tem
+            if (!processo.driveFolderId && subfolder.driveFileId) {
+              await db
+                .update(processos)
+                .set({
+                  driveFolderId: subfolder.driveFileId,
+                  linkDrive: `https://drive.google.com/drive/folders/${subfolder.driveFileId}`,
+                  updatedAt: new Date()
+                })
+                .where(eq(processos.id, processo.id));
+            }
+
+            // Vincular arquivos dentro da subpasta ao processo
+            const linked = await db
+              .update(driveFiles)
+              .set({ processoId: processo.id, assistidoId: input.assistidoId, updatedAt: new Date() })
+              .where(
+                and(
+                  eq(driveFiles.parentFileId, subfolder.id),
+                  isNull(driveFiles.processoId)
+                )
+              )
+              .returning({ id: driveFiles.id });
+
+            if (linked.length > 0) {
+              result.processosLinked++;
+              result.steps.push(`Processo ${numAutos}: ${linked.length} arquivos vinculados`);
+            }
+          }
+        }
+      } catch (err) {
+        result.errors.push(`Erro ao vincular processos: ${err instanceof Error ? err.message : String(err)}`);
+      }
+
+      // Log
+      await db.insert(driveSyncLogs).values({
+        driveFileId: null,
+        action: "full_sync_assistido",
+        status: result.errors.length === 0 ? "success" : "failed",
+        details: JSON.stringify({
+          assistidoId: input.assistidoId,
+          steps: result.steps,
+          errors: result.errors,
+          filesLinked: result.filesLinkedToAssistido,
+          processosLinked: result.processosLinked,
+        }),
+        userId: ctx.user.id,
+      });
+
+      return result;
+    }),
+
+  /**
+   * Batch sync: sincroniza todos os assistidos com driveFolderId
+   * que ainda não têm arquivos em drive_files.
+   * Usado pelo scheduled task periódico.
+   */
+  batchSyncPending: adminProcedure
+    .input(z.object({
+      limit: z.number().max(50).default(10),
+      dryRun: z.boolean().default(false),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Buscar assistidos com driveFolderId que não têm nenhum arquivo no drive_files
+      const assistidosWithFolder = await db
+        .select({
+          id: assistidos.id,
+          nome: assistidos.nome,
+          driveFolderId: assistidos.driveFolderId,
+        })
+        .from(assistidos)
+        .where(
+          and(
+            sql`${assistidos.driveFolderId} IS NOT NULL`,
+            isNull(assistidos.deletedAt)
+          )
+        );
+
+      // Filtrar os que NÃO têm arquivos em drive_files
+      const pending: typeof assistidosWithFolder = [];
+
+      if (assistidosWithFolder.length > 0) {
+        const withFiles = await db
+          .select({
+            assistidoId: driveFiles.assistidoId,
+            count: sql<number>`count(*)::int`,
+          })
+          .from(driveFiles)
+          .where(
+            and(
+              inArray(driveFiles.assistidoId, assistidosWithFolder.map(a => a.id)),
+              eq(driveFiles.isFolder, false)
+            )
+          )
+          .groupBy(driveFiles.assistidoId);
+
+        const hasFilesSet = new Set(withFiles.map(w => w.assistidoId));
+
+        for (const a of assistidosWithFolder) {
+          if (!hasFilesSet.has(a.id)) {
+            pending.push(a);
+          }
+        }
+      }
+
+      const batch = pending.slice(0, input.limit);
+
+      if (input.dryRun) {
+        return {
+          totalWithFolder: assistidosWithFolder.length,
+          totalPending: pending.length,
+          batch: batch.map(a => ({ id: a.id, nome: a.nome })),
+          dryRun: true,
+          results: [],
+        };
+      }
+
+      // Executar fullSync para cada assistido do batch
+      const results: Array<{ assistidoId: number; nome: string; success: boolean; filesLinked: number; error?: string }> = [];
+
+      for (const assistido of batch) {
+        try {
+          // Registrar sync folder (upsert)
+          await db
+            .insert(driveSyncFolders)
+            .values({
+              name: assistido.nome,
+              driveFolderId: assistido.driveFolderId!,
+              driveFolderUrl: `https://drive.google.com/drive/folders/${assistido.driveFolderId}`,
+              description: `Batch sync - ${assistido.nome}`,
+              syncDirection: "drive_to_app",
+              isActive: true,
+              createdById: ctx.user.id,
+            })
+            .onConflictDoUpdate({
+              target: driveSyncFolders.driveFolderId,
+              set: { isActive: true, updatedAt: new Date() },
+            });
+
+          // Sync conteúdo
+          const syncRes = await smartSync(assistido.driveFolderId!, ctx.user.id);
+
+          // Vincular arquivos ao assistido
+          const linked = await db
+            .update(driveFiles)
+            .set({ assistidoId: assistido.id, updatedAt: new Date() })
+            .where(
+              and(
+                eq(driveFiles.driveFolderId, assistido.driveFolderId!),
+                isNull(driveFiles.assistidoId)
+              )
+            )
+            .returning({ id: driveFiles.id });
+
+          results.push({
+            assistidoId: assistido.id,
+            nome: assistido.nome,
+            success: syncRes.success,
+            filesLinked: linked.length,
+          });
+        } catch (err) {
+          results.push({
+            assistidoId: assistido.id,
+            nome: assistido.nome,
+            success: false,
+            filesLinked: 0,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+
+      // Log batch
+      await db.insert(driveSyncLogs).values({
+        driveFileId: null,
+        action: "batch_sync_pending",
+        status: "success",
+        details: JSON.stringify({
+          totalProcessed: results.length,
+          successful: results.filter(r => r.success).length,
+          totalFilesLinked: results.reduce((sum, r) => sum + r.filesLinked, 0),
+        }),
+        userId: ctx.user.id,
+      });
+
+      return {
+        totalWithFolder: assistidosWithFolder.length,
+        totalPending: pending.length,
+        batch: batch.map(a => ({ id: a.id, nome: a.nome })),
+        dryRun: false,
+        results,
       };
     }),
 });
