@@ -56,6 +56,7 @@ import { cn } from "@/lib/utils";
 import { TemplatePickerPopover } from "./TemplatePickerPopover";
 import { SlashCommandMenu } from "./SlashCommandMenu";
 import { SelectionActionModals } from "./SelectionActionModals";
+import { DriveFilePicker } from "./DriveFilePicker";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1257,6 +1258,20 @@ export function ChatWindow({
         onSuccess={() => {
           exitSelectionMode();
           refetchMessages();
+        }}
+      />
+
+      {/* Drive File Picker */}
+      <DriveFilePicker
+        open={showDrivePicker}
+        onOpenChange={setShowDrivePicker}
+        contactId={contactId}
+        configId={configId}
+        assistidoDriveFolderId={contact?.assistido?.driveFolderId}
+        assistidoName={contact?.assistido?.nome}
+        onSuccess={() => {
+          refetchMessages();
+          onContactUpdate?.();
         }}
       />
     </div>

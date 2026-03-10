@@ -13,14 +13,18 @@ import {
   sendAudio,
   formatPhoneNumber,
 } from "@/lib/services/evolution-api";
+import { downloadFileContent } from "@/lib/services/google-drive";
 
 export const maxDuration = 60;
 
 /**
  * POST /api/whatsapp/send-media
  *
- * Upload and send media file via WhatsApp (Evolution API).
- * Accepts FormData with: file, contactId, configId, type (image|document|audio)
+ * Send media file via WhatsApp (Evolution API).
+ *
+ * Accepts two modes:
+ * 1. FormData: file (File), contactId, configId, type
+ * 2. JSON: driveFileId, fileName, mimeType, contactId, configId, type
  */
 export async function POST(request: NextRequest) {
   try {
@@ -31,28 +35,83 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const formData = await request.formData();
-    const file = formData.get("file") as File | null;
-    const contactIdStr = formData.get("contactId") as string | null;
-    const configIdStr = formData.get("configId") as string | null;
-    const fileType = (formData.get("type") as string) || "document";
+    const contentType = request.headers.get("content-type") || "";
+    let contactId: number;
+    let configId: number;
+    let fileType: string;
+    let fileName: string;
+    let fileMimeType: string;
+    let dataUrl: string;
 
-    if (!file || !contactIdStr || !configIdStr) {
-      return NextResponse.json(
-        { error: "Campos obrigatórios: file, contactId, configId" },
-        { status: 400 }
-      );
-    }
+    if (contentType.includes("application/json")) {
+      // Mode 2: Drive file
+      const body = await request.json();
+      const { driveFileId, fileName: fn, mimeType, type } = body;
+      contactId = body.contactId;
+      configId = body.configId;
+      fileType = type || "document";
+      fileName = fn || "file";
+      fileMimeType = mimeType || "application/octet-stream";
 
-    const contactId = parseInt(contactIdStr, 10);
-    const configId = parseInt(configIdStr, 10);
+      if (!driveFileId || !contactId || !configId) {
+        return NextResponse.json(
+          { error: "Campos obrigatórios: driveFileId, contactId, configId" },
+          { status: 400 }
+        );
+      }
 
-    // Check size (16MB)
-    if (file.size > 16 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "Arquivo muito grande (limite: 16MB)" },
-        { status: 400 }
-      );
+      // Download file from Drive
+      const arrayBuffer = await downloadFileContent(driveFileId);
+      if (!arrayBuffer) {
+        return NextResponse.json(
+          { error: "Não foi possível baixar o arquivo do Drive" },
+          { status: 500 }
+        );
+      }
+
+      // Check size (16MB)
+      if (arrayBuffer.byteLength > 16 * 1024 * 1024) {
+        return NextResponse.json(
+          { error: "Arquivo muito grande (limite: 16MB)" },
+          { status: 400 }
+        );
+      }
+
+      const buffer = Buffer.from(arrayBuffer);
+      const base64 = buffer.toString("base64");
+      dataUrl = `data:${fileMimeType};base64,${base64}`;
+    } else {
+      // Mode 1: FormData upload
+      const formData = await request.formData();
+      const file = formData.get("file") as File | null;
+      const contactIdStr = formData.get("contactId") as string | null;
+      const configIdStr = formData.get("configId") as string | null;
+      fileType = (formData.get("type") as string) || "document";
+
+      if (!file || !contactIdStr || !configIdStr) {
+        return NextResponse.json(
+          { error: "Campos obrigatórios: file, contactId, configId" },
+          { status: 400 }
+        );
+      }
+
+      contactId = parseInt(contactIdStr, 10);
+      configId = parseInt(configIdStr, 10);
+      fileName = file.name;
+      fileMimeType = file.type;
+
+      // Check size (16MB)
+      if (file.size > 16 * 1024 * 1024) {
+        return NextResponse.json(
+          { error: "Arquivo muito grande (limite: 16MB)" },
+          { status: 400 }
+        );
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const base64 = buffer.toString("base64");
+      dataUrl = `data:${fileMimeType};base64,${base64}`;
     }
 
     // Get config
@@ -71,12 +130,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Contato não encontrado" }, { status: 404 });
     }
 
-    // Convert file to base64 data URL
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const base64 = buffer.toString("base64");
-    const dataUrl = `data:${file.type};base64,${base64}`;
-
     const to = formatPhoneNumber(contact.phone);
     const apiOptions = {
       instanceName: config.instanceName,
@@ -84,24 +137,21 @@ export async function POST(request: NextRequest) {
     };
 
     let result;
-    const mediaType = fileType === "image" || file.type.startsWith("image/")
+    const mediaType = fileType === "image" || fileMimeType.startsWith("image/")
       ? "image"
-      : file.type.startsWith("audio/")
+      : fileMimeType.startsWith("audio/")
         ? "audio"
         : "document";
 
     if (mediaType === "image") {
       result = await sendImage(to, dataUrl, {
         ...apiOptions,
-        caption: file.name,
+        caption: fileName,
       });
     } else if (mediaType === "audio") {
       result = await sendAudio(to, dataUrl, apiOptions);
     } else {
-      result = await sendDocument(to, dataUrl, {
-        ...apiOptions,
-        filename: file.name,
-      });
+      result = await sendDocument(to, dataUrl, fileName, apiOptions);
     }
 
     // Save message to database
@@ -114,8 +164,8 @@ export async function POST(request: NextRequest) {
         type: mediaType,
         content: null,
         mediaUrl: dataUrl.substring(0, 200), // Store truncated reference
-        mediaMimeType: file.type,
-        mediaFilename: file.name,
+        mediaMimeType: fileMimeType,
+        mediaFilename: fileName,
         status: "sent",
       })
       .returning();
