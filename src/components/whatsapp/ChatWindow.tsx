@@ -43,12 +43,19 @@ import {
   Search,
   PanelRight,
   MessageSquare,
+  CheckSquare,
+  BookmarkPlus,
+  FolderUp,
+  Sparkles,
+  FileSearch,
+  FolderOpen,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { TemplatePickerPopover } from "./TemplatePickerPopover";
 import { SlashCommandMenu } from "./SlashCommandMenu";
+import { SelectionActionModals } from "./SelectionActionModals";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -108,6 +115,14 @@ export function ChatWindow({
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Selection mode
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedMessageIds, setSelectedMessageIds] = useState<Set<number>>(new Set());
+  const [showSaveCaseModal, setShowSaveCaseModal] = useState(false);
+  const [showSaveDriveModal, setShowSaveDriveModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [showDrivePicker, setShowDrivePicker] = useState(false);
 
   // -- Refs -----------------------------------------------------------------
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -198,12 +213,13 @@ export function ChatWindow({
     }
   }, [searchOpen]);
 
-  // Clear reply when switching contacts
+  // Clear state when switching contacts
   useEffect(() => {
     setReplyingTo(null);
     setSearchOpen(false);
     setSearchQuery("");
-  }, [contactId]);
+    exitSelectionMode();
+  }, [contactId, exitSelectionMode]);
 
   // -- Handlers -------------------------------------------------------------
 
@@ -244,6 +260,11 @@ export function ChatWindow({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape" && isSelectionMode) {
+      e.preventDefault();
+      exitSelectionMode();
+      return;
+    }
     if (showSlashMenu && e.key === "Escape") {
       e.preventDefault();
       setShowSlashMenu(false);
@@ -264,15 +285,49 @@ export function ChatWindow({
   };
 
   const handleFileUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>, type: "image" | "document") => {
+    async (e: React.ChangeEvent<HTMLInputElement>, type: "image" | "document") => {
       const file = e.target.files?.[0];
       if (!file) return;
-      toast.info("Envio de midia em breve", {
-        description: `Suporte a upload de ${type === "image" ? "imagens" : "documentos"} sera adicionado em breve.`,
-      });
       e.target.value = "";
+
+      // Check file size (16MB limit for Evolution API)
+      if (file.size > 16 * 1024 * 1024) {
+        toast.error("Arquivo muito grande", {
+          description: "O limite é 16MB para envio via WhatsApp.",
+        });
+        return;
+      }
+
+      const toastId = toast.loading(`Enviando ${type === "image" ? "imagem" : "documento"}...`);
+
+      try {
+        // Upload to our API which handles Drive + Evolution API
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("contactId", String(contactId));
+        formData.append("configId", String(configId));
+        formData.append("type", type);
+
+        const response = await fetch("/api/whatsapp/send-media", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ error: "Erro desconhecido" }));
+          throw new Error(error.error || `HTTP ${response.status}`);
+        }
+
+        toast.success(`${type === "image" ? "Imagem" : "Documento"} enviado!`, { id: toastId });
+        refetchMessages();
+        onContactUpdate?.();
+      } catch (error) {
+        toast.error(`Erro ao enviar: ${error instanceof Error ? error.message : "Erro desconhecido"}`, {
+          id: toastId,
+        });
+      }
     },
-    []
+    [contactId, configId, refetchMessages, onContactUpdate]
   );
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -288,6 +343,53 @@ export function ChatWindow({
       setIsAtBottom(true);
     }
   };
+
+  // -- Selection mode handlers ------------------------------------------------
+  const toggleMessageSelection = useCallback((msgId: number) => {
+    setSelectedMessageIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(msgId)) next.delete(msgId);
+      else next.add(msgId);
+      return next;
+    });
+  }, []);
+
+  const exitSelectionMode = useCallback(() => {
+    setIsSelectionMode(false);
+    setSelectedMessageIds(new Set());
+  }, []);
+
+  const selectedMessages = useMemo(
+    () => allMessages.filter((m) => selectedMessageIds.has(m.id)),
+    [allMessages, selectedMessageIds]
+  );
+
+  const hasMediaInSelection = useMemo(
+    () => selectedMessages.some((m) => m.type !== "text" && m.mediaUrl),
+    [selectedMessages]
+  );
+
+  const handleSelectionAction = useCallback(
+    (action: "case" | "drive" | "summary") => {
+      if (selectedMessageIds.size === 0) {
+        toast.error("Selecione pelo menos uma mensagem");
+        return;
+      }
+      if (!contact?.assistido) {
+        toast.error("Vincule este contato a um assistido primeiro");
+        return;
+      }
+      if (action === "case") setShowSaveCaseModal(true);
+      else if (action === "drive") {
+        if (!hasMediaInSelection) {
+          toast.error("Nenhuma mídia nas mensagens selecionadas");
+          return;
+        }
+        setShowSaveDriveModal(true);
+      } else if (action === "summary") setShowSummaryModal(true);
+    },
+    [selectedMessageIds, contact, hasMediaInSelection]
+  );
 
   const copyToClipboard = useCallback((text: string | null) => {
     if (!text) return;
@@ -428,134 +530,235 @@ export function ChatWindow({
   return (
     <div className="flex flex-col h-full">
       {/* ================================================================== */}
-      {/* HEADER                                                             */}
+      {/* HEADER (normal or selection mode)                                 */}
       {/* ================================================================== */}
-      <div className="flex items-center justify-between px-2 sm:px-4 py-2 h-14 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          {/* Back button — mobile only */}
-          {onBack && (
+      {isSelectionMode ? (
+        /* ---- Selection mode bar ---- */
+        <div className="flex items-center justify-between px-2 sm:px-4 py-2 h-14 border-b border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40">
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 md:hidden shrink-0"
-              onClick={onBack}
+              className="h-8 w-8 text-zinc-600 dark:text-zinc-300"
+              onClick={exitSelectionMode}
             >
-              <ArrowLeft className="h-4 w-4" />
+              <X className="h-4 w-4" />
             </Button>
-          )}
-          <Avatar className="h-9 w-9 shrink-0">
-            <AvatarImage src={contact.profilePicUrl || undefined} />
-            <AvatarFallback className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 text-xs font-medium">
-              {getContactInitials(contact)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 truncate">
-              {contactName}
-              {contact.isFavorite && (
-                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 shrink-0" />
-              )}
-            </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
-              {contact.assistido ? (
-                <span className="flex items-center gap-1">
-                  <UserPlus className="h-3 w-3 shrink-0" />
-                  {contact.assistido.nome}
-                </span>
-              ) : (
-                formatPhone(contact.phone)
-              )}
-            </p>
+            <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              {selectedMessageIds.size} selecionada{selectedMessageIds.size !== 1 ? "s" : ""}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-1.5 text-xs"
+                    disabled={selectedMessageIds.size === 0}
+                    onClick={() => handleSelectionAction("case")}
+                  >
+                    <BookmarkPlus className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Caso</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Salvar no caso do assistido</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-1.5 text-xs"
+                    disabled={selectedMessageIds.size === 0 || !hasMediaInSelection}
+                    onClick={() => handleSelectionAction("drive")}
+                  >
+                    <FolderUp className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Drive</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Salvar mídias no Google Drive</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-1.5 text-xs"
+                    disabled={selectedMessageIds.size === 0}
+                    onClick={() => handleSelectionAction("summary")}
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Resumo IA</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Gerar resumo com IA</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-1.5 text-xs opacity-50 cursor-not-allowed"
+                    disabled
+                  >
+                    <FileSearch className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Extrair</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Extrair dados (em breve)</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
+      ) : (
+        /* ---- Normal header ---- */
+        <div className="flex items-center justify-between px-2 sm:px-4 py-2 h-14 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            {/* Back button — mobile only */}
+            {onBack && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 md:hidden shrink-0"
+                onClick={onBack}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
+            <Avatar className="h-9 w-9 shrink-0">
+              <AvatarImage src={contact.profilePicUrl || undefined} />
+              <AvatarFallback className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 text-xs font-medium">
+                {getContactInitials(contact)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 truncate">
+                {contactName}
+                {contact.isFavorite && (
+                  <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 shrink-0" />
+                )}
+              </h3>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                {contact.assistido ? (
+                  <span className="flex items-center gap-1">
+                    <UserPlus className="h-3 w-3 shrink-0" />
+                    {contact.assistido.nome}
+                  </span>
+                ) : (
+                  formatPhone(contact.phone)
+                )}
+              </p>
+            </div>
+          </div>
 
-        <div className="flex items-center gap-0.5">
-          {/* Search toggle */}
-          <TooltipProvider delayDuration={300}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "h-8 w-8",
-                    searchOpen && "bg-zinc-100 dark:bg-zinc-800"
-                  )}
-                  onClick={() => {
-                    setSearchOpen(!searchOpen);
-                    if (searchOpen) setSearchQuery("");
-                  }}
-                >
-                  <Search className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Buscar mensagens</TooltipContent>
-            </Tooltip>
+          <div className="flex items-center gap-0.5">
+            <TooltipProvider delayDuration={300}>
+              {/* Search toggle */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "h-8 w-8",
+                      searchOpen && "bg-zinc-100 dark:bg-zinc-800"
+                    )}
+                    onClick={() => {
+                      setSearchOpen(!searchOpen);
+                      if (searchOpen) setSearchQuery("");
+                    }}
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Buscar mensagens</TooltipContent>
+              </Tooltip>
 
-            {/* Details panel toggle */}
-            {onToggleDetails && (
+              {/* Selection mode toggle */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={onToggleDetails}
+                    onClick={() => setIsSelectionMode(true)}
                   >
-                    <PanelRight className="h-4 w-4" />
+                    <CheckSquare className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Detalhes do contato</TooltipContent>
+                <TooltipContent>Selecionar mensagens</TooltipContent>
               </Tooltip>
-            )}
 
-            {/* More actions */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() =>
-                    updateContactMutation.mutate({
-                      id: contact.id,
-                      isFavorite: !contact.isFavorite,
-                    })
-                  }
-                >
-                  <Star
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      contact.isFavorite && "fill-yellow-400 text-yellow-400"
-                    )}
-                  />
-                  {contact.isFavorite
-                    ? "Remover dos favoritos"
-                    : "Adicionar aos favoritos"}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    updateContactMutation.mutate({
-                      id: contact.id,
-                      isArchived: !contact.isArchived,
-                    })
-                  }
-                >
-                  <Archive className="mr-2 h-4 w-4" />
-                  {contact.isArchived ? "Desarquivar" : "Arquivar"}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Vincular assistido
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </TooltipProvider>
+              {/* Details panel toggle */}
+              {onToggleDetails && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={onToggleDetails}
+                    >
+                      <PanelRight className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Detalhes do contato</TooltipContent>
+                </Tooltip>
+              )}
+
+              {/* More actions */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() =>
+                      updateContactMutation.mutate({
+                        id: contact.id,
+                        isFavorite: !contact.isFavorite,
+                      })
+                    }
+                  >
+                    <Star
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        contact.isFavorite && "fill-yellow-400 text-yellow-400"
+                      )}
+                    />
+                    {contact.isFavorite
+                      ? "Remover dos favoritos"
+                      : "Adicionar aos favoritos"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() =>
+                      updateContactMutation.mutate({
+                        id: contact.id,
+                        isArchived: !contact.isArchived,
+                      })
+                    }
+                  >
+                    <Archive className="mr-2 h-4 w-4" />
+                    {contact.isArchived ? "Desarquivar" : "Arquivar"}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Vincular assistido
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TooltipProvider>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ================================================================== */}
       {/* SEARCH BAR (toggleable)                                            */}
@@ -644,20 +847,41 @@ export function ChatWindow({
                     {group.messages.map((msg) => {
                       const isOutbound = msg.direction === "outbound";
                       const time = format(new Date(msg.createdAt), "HH:mm");
+                      const isSelected = selectedMessageIds.has(msg.id);
 
                       return (
                         <div
                           key={msg.id}
                           className={cn(
-                            "flex mb-1",
-                            isOutbound ? "justify-end" : "justify-start"
+                            "flex mb-1 items-start",
+                            isOutbound ? "justify-end" : "justify-start",
+                            isSelectionMode && "cursor-pointer"
                           )}
+                          onClick={isSelectionMode ? () => toggleMessageSelection(msg.id) : undefined}
                         >
+                          {/* Selection checkbox */}
+                          {isSelectionMode && (
+                            <div className={cn(
+                              "flex items-center justify-center w-7 shrink-0 mt-1",
+                              isOutbound ? "order-last ml-1" : "order-first mr-1"
+                            )}>
+                              <div className={cn(
+                                "h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                                isSelected
+                                  ? "bg-emerald-500 border-emerald-500"
+                                  : "border-zinc-300 dark:border-zinc-600"
+                              )}>
+                                {isSelected && <Check className="h-3 w-3 text-white" />}
+                              </div>
+                            </div>
+                          )}
+
                           {/* Wrapper for hover actions */}
                           <div
                             className={cn(
                               "group/msg relative max-w-[70%] flex",
-                              isOutbound ? "flex-row" : "flex-row-reverse"
+                              isOutbound ? "flex-row" : "flex-row-reverse",
+                              isSelected && "ring-1 ring-emerald-300 dark:ring-emerald-700 rounded-2xl"
                             )}
                           >
                             {/* Hover action buttons */}
@@ -919,36 +1143,33 @@ export function ChatWindow({
       {/* ================================================================== */}
       <div className="px-3 py-2 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800">
         <div className="flex items-end gap-1.5">
-          {/* Attachment buttons (inline) */}
-          <TooltipProvider delayDuration={300}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 shrink-0 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                  onClick={() => imageInputRef.current?.click()}
-                >
-                  <Image className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Enviar imagem</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 shrink-0 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Paperclip className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Enviar documento</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {/* Attachment dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 shrink-0 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+              >
+                <Paperclip className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" side="top">
+              <DropdownMenuItem onClick={() => setShowDrivePicker(true)}>
+                <FolderOpen className="mr-2 h-4 w-4" />
+                Do Drive
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => imageInputRef.current?.click()}>
+                <Image className="mr-2 h-4 w-4" />
+                Imagem
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                <FileText className="mr-2 h-4 w-4" />
+                Documento
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Hidden file inputs */}
           <input
@@ -1017,6 +1238,27 @@ export function ChatWindow({
           </Button>
         </div>
       </div>
+
+      {/* ================================================================== */}
+      {/* SELECTION ACTION MODALS                                            */}
+      {/* ================================================================== */}
+      <SelectionActionModals
+        contactId={contactId}
+        selectedMessageIds={Array.from(selectedMessageIds)}
+        selectedMessages={selectedMessages}
+        contactName={contactName}
+        assistidoName={contact.assistido?.nome || null}
+        showSaveCase={showSaveCaseModal}
+        showSaveDrive={showSaveDriveModal}
+        showSummary={showSummaryModal}
+        onCloseSaveCase={() => setShowSaveCaseModal(false)}
+        onCloseSaveDrive={() => setShowSaveDriveModal(false)}
+        onCloseSummary={() => setShowSummaryModal(false)}
+        onSuccess={() => {
+          exitSelectionMode();
+          refetchMessages();
+        }}
+      />
     </div>
   );
 }

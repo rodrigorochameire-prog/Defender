@@ -740,6 +740,36 @@ class SpeakerLabelUpdate(BaseModel):
 
 # === Health ===
 
+# === Summarize Chat ===
+
+class SummarizeChatContext(BaseModel):
+    """Contexto da conversa para resumo."""
+    assistido_name: str = Field(..., description="Nome do assistido")
+    interlocutor: str = Field(..., description="Nome do interlocutor")
+    processo_number: Optional[str] = Field(None, description="Número do processo (formato CNJ)")
+
+
+class SummarizeChatInput(BaseModel):
+    """Input para /enrich/summarize-chat — resumo estruturado de conversa WhatsApp."""
+    messages: str = Field(..., min_length=10, description="Texto pré-formatado das mensagens")
+    context: SummarizeChatContext
+
+
+class SummarizeChatStructured(BaseModel):
+    """Dados estruturados extraídos da conversa."""
+    fatos: list[str] = Field(default_factory=list, description="Fatos relatados na conversa")
+    pedidos: list[str] = Field(default_factory=list, description="Pedidos/demandas do assistido")
+    providencias: list[str] = Field(default_factory=list, description="Providências necessárias pelo defensor")
+
+
+class SummarizeChatOutput(BaseModel):
+    """Output de /enrich/summarize-chat."""
+    summary: str = Field("", description="Resumo geral em 2-3 frases")
+    structured: SummarizeChatStructured = Field(default_factory=SummarizeChatStructured)
+
+
+# === Health ===
+
 class HealthResponse(BaseModel):
     """Response de GET /health."""
     status: str = "ok"

@@ -169,6 +169,9 @@ export const anotacoes = pgTable("anotacoes", {
   // Prioridade
   importante: boolean("importante").default(false),
 
+  // Metadata (WhatsApp recortes, resumos IA, etc.)
+  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+
   // Deduplicação
   conteudoHash: varchar("conteudo_hash", { length: 16 }),
 

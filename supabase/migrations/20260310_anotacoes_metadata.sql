@@ -1,0 +1,1 @@
+ALTER TABLE anotacoes ADD COLUMN IF NOT EXISTS metadata JSONB;

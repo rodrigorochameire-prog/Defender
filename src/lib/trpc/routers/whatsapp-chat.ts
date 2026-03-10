@@ -16,8 +16,11 @@ import {
   assistidos,
   processos,
   assistidosProcessos,
+  anotacoes,
+  driveFiles,
 } from "@/lib/db/schema";
-import { eq, and, desc, like, ilike, sql, or, lt, ne } from "drizzle-orm";
+import { eq, and, desc, like, ilike, sql, or, lt, ne, inArray, asc } from "drizzle-orm";
+import { uploadFileBuffer } from "@/lib/services/google-drive";
 import {
   EvolutionApiClient,
   sendText,
@@ -1537,5 +1540,322 @@ export const whatsappChatRouter = router({
         outboundMessages: Number(stats.outboundMessages),
         topUnread: topUnread.map((t) => t.contact),
       };
+    }),
+
+  // =============================================================================
+  // WHATSAPP DEFENDER FASE 2 — Mutations
+  // =============================================================================
+
+  /**
+   * saveToCase — Salva recorte de mensagens como anotação vinculada ao assistido
+   */
+  saveToCase: protectedProcedure
+    .input(z.object({
+      contactId: z.number(),
+      messageIds: z.array(z.number()).min(1).max(100),
+      importante: z.boolean().optional().default(false),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // 1. Get contact with assistido
+      const contact = await db.query.whatsappContacts.findFirst({
+        where: eq(whatsappContacts.id, input.contactId),
+        with: { assistido: true },
+      });
+      if (!contact) throw new TRPCError({ code: "NOT_FOUND", message: "Contato não encontrado" });
+      if (!contact.assistidoId || !contact.assistido) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Contato não vinculado a um assistido" });
+      }
+
+      // 2. Get messages ordered by date
+      const messages = await db
+        .select()
+        .from(whatsappChatMessages)
+        .where(and(
+          eq(whatsappChatMessages.contactId, input.contactId),
+          inArray(whatsappChatMessages.id, input.messageIds)
+        ))
+        .orderBy(asc(whatsappChatMessages.createdAt));
+
+      if (messages.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Nenhuma mensagem encontrada" });
+
+      // 3. Format content
+      const contactDisplayName = contact.name || contact.pushName || contact.phone;
+      const relationLabel = contact.contactRelation
+        ? `${contact.contactRelation}${contact.contactRelationDetail ? ` - ${contact.contactRelationDetail}` : ''}`
+        : null;
+
+      const formattedLines = messages.map((msg) => {
+        const date = new Date(msg.createdAt);
+        const dateStr = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+
+        const sender = msg.direction === 'outbound'
+          ? 'Defensor'
+          : relationLabel ? `${contactDisplayName} (${relationLabel})` : contactDisplayName;
+
+        let content = msg.content || '';
+        if (msg.type === 'image') content = content ? `[Imagem] ${content}` : '[Imagem]';
+        if (msg.type === 'document') content = content ? `[Documento: ${msg.mediaFilename || 'arquivo'}] ${content}` : `[Documento: ${msg.mediaFilename || 'arquivo'}]`;
+        if (msg.type === 'audio') content = '[Áudio]';
+        if (msg.type === 'video') content = '[Vídeo]';
+
+        return `[${dateStr}] ${sender}:\n${content}`;
+      });
+
+      const conteudo = formattedLines.join('\n\n');
+      const hasMedia = messages.some(m => m.type !== 'text' && m.mediaUrl);
+
+      // 4. Insert annotation
+      const [anotacao] = await db.insert(anotacoes).values({
+        assistidoId: contact.assistidoId,
+        conteudo,
+        tipo: 'whatsapp_recorte',
+        importante: input.importante,
+        metadata: {
+          contactId: contact.id,
+          contactName: contactDisplayName,
+          contactPhone: contact.phone,
+          contactRelation: contact.contactRelation,
+          contactRelationDetail: contact.contactRelationDetail,
+          messageCount: messages.length,
+          messageIds: input.messageIds,
+          dateRange: {
+            from: messages[0].createdAt.toISOString(),
+            to: messages[messages.length - 1].createdAt.toISOString(),
+          },
+          hasMedia,
+        },
+        createdById: ctx.session.user.id,
+      }).returning();
+
+      return { id: anotacao.id, conteudo };
+    }),
+
+  /**
+   * saveMediaToDrive — Baixa mídias de mensagens e salva no Google Drive
+   */
+  saveMediaToDrive: protectedProcedure
+    .input(z.object({
+      contactId: z.number(),
+      messageIds: z.array(z.number()).min(1).max(50),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // 1. Get contact with assistido
+      const contact = await db.query.whatsappContacts.findFirst({
+        where: eq(whatsappContacts.id, input.contactId),
+        with: { assistido: true },
+      });
+      if (!contact?.assistidoId || !contact.assistido) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Contato não vinculado a um assistido" });
+      }
+
+      // 2. Get messages with media
+      const messages = await db
+        .select()
+        .from(whatsappChatMessages)
+        .where(and(
+          eq(whatsappChatMessages.contactId, input.contactId),
+          inArray(whatsappChatMessages.id, input.messageIds),
+          ne(whatsappChatMessages.type, 'text')
+        ))
+        .orderBy(asc(whatsappChatMessages.createdAt));
+
+      const mediaMessages = messages.filter(m => m.mediaUrl);
+      if (mediaMessages.length === 0) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Nenhuma mídia encontrada nas mensagens selecionadas" });
+      }
+
+      // 3. Resolve Drive folder
+      let targetFolderId = contact.assistido.driveFolderId;
+      if (!targetFolderId) {
+        const { SPECIAL_FOLDER_IDS } = await import("@/lib/utils/text-extraction");
+        targetFolderId = SPECIAL_FOLDER_IDS.DISTRIBUICAO;
+      }
+
+      // 4. Download and upload each media
+      const savedFiles: { name: string; driveFileId: string }[] = [];
+
+      for (const msg of mediaMessages) {
+        try {
+          // Download from Evolution API
+          const response = await fetch(msg.mediaUrl!);
+          if (!response.ok) continue;
+          const buffer = Buffer.from(await response.arrayBuffer());
+
+          // Generate filename
+          const date = new Date(msg.createdAt);
+          const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+          const timeStr = `${String(date.getHours()).padStart(2, '0')}-${String(date.getMinutes()).padStart(2, '0')}`;
+          const typeLabel = msg.type === 'image' ? 'foto' : msg.type === 'document' ? 'doc' : msg.type === 'audio' ? 'audio' : msg.type;
+
+          // Get extension from mimetype or filename
+          const ext = msg.mediaFilename?.split('.').pop()
+            || (msg.mediaMimeType?.split('/').pop()?.replace('jpeg', 'jpg'))
+            || 'bin';
+          const filename = `WhatsApp_${dateStr}_${timeStr}_${typeLabel}.${ext}`;
+
+          // Upload to Drive
+          const result = await uploadFileBuffer(
+            buffer,
+            filename,
+            msg.mediaMimeType || 'application/octet-stream',
+            targetFolderId!
+          );
+
+          if (result) {
+            // Register in driveFiles
+            await db.insert(driveFiles).values({
+              driveFileId: result.id,
+              driveFolderId: targetFolderId!,
+              name: filename,
+              mimeType: msg.mediaMimeType || 'application/octet-stream',
+              fileSize: buffer.length,
+              assistidoId: contact.assistidoId!,
+              syncStatus: 'synced',
+              lastSyncAt: new Date(),
+            }).onConflictDoNothing();
+
+            savedFiles.push({ name: filename, driveFileId: result.id });
+          }
+        } catch (error) {
+          console.error(`Failed to save media ${msg.id} to Drive:`, error);
+          // Continue with other files
+        }
+      }
+
+      return { savedCount: savedFiles.length, files: savedFiles };
+    }),
+
+  /**
+   * generateSummary — Gera resumo IA de mensagens via enrichment engine
+   */
+  generateSummary: protectedProcedure
+    .input(z.object({
+      contactId: z.number(),
+      messageIds: z.array(z.number()).min(1).max(200),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // 1. Get contact with assistido
+      const contact = await db.query.whatsappContacts.findFirst({
+        where: eq(whatsappContacts.id, input.contactId),
+        with: { assistido: true },
+      });
+      if (!contact?.assistidoId || !contact.assistido) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Contato não vinculado a um assistido" });
+      }
+
+      // 2. Get messages
+      const messages = await db
+        .select()
+        .from(whatsappChatMessages)
+        .where(and(
+          eq(whatsappChatMessages.contactId, input.contactId),
+          inArray(whatsappChatMessages.id, input.messageIds)
+        ))
+        .orderBy(asc(whatsappChatMessages.createdAt));
+
+      if (messages.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Nenhuma mensagem encontrada" });
+
+      // 3. Format messages
+      const contactDisplayName = contact.name || contact.pushName || contact.phone;
+      const relationLabel = contact.contactRelation || 'contato';
+
+      const formattedMessages = messages.map((msg) => {
+        const date = new Date(msg.createdAt);
+        const dateStr = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+        const sender = msg.direction === 'outbound' ? 'Defensor' : contactDisplayName;
+        let content = msg.content || '';
+        if (msg.type !== 'text') content = `[${msg.type}: ${msg.mediaFilename || msg.type}]${content ? ' ' + content : ''}`;
+        return `[${dateStr}] ${sender}: ${content}`;
+      }).join('\n');
+
+      // 4. Get processo info
+      let processoNumber: string | null = null;
+      if (contact.assistidoId) {
+        const processoLink = await db.query.assistidosProcessos?.findFirst?.({
+          where: eq(assistidosProcessos.assistidoId, contact.assistidoId),
+        });
+        if (processoLink) {
+          const processo = await db.query.processos?.findFirst?.({
+            where: eq(processos.id, processoLink.processoId),
+          });
+          processoNumber = processo?.numeroAutos || null;
+        }
+      }
+
+      // 5. Call enrichment engine
+      const enrichmentUrl = process.env.ENRICHMENT_ENGINE_URL || 'https://enrichment-engine-production.up.railway.app';
+      const enrichmentApiKey = process.env.ENRICHMENT_API_KEY || '';
+
+      const enrichResponse = await fetch(`${enrichmentUrl}/enrich/summarize-chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(enrichmentApiKey ? { 'Authorization': `Bearer ${enrichmentApiKey}` } : {}),
+        },
+        body: JSON.stringify({
+          messages: formattedMessages,
+          context: {
+            assistido_name: contact.assistido.nome,
+            interlocutor: `${contactDisplayName} (${relationLabel}${contact.contactRelationDetail ? ' - ' + contact.contactRelationDetail : ''})`,
+            processo_number: processoNumber,
+          },
+        }),
+      });
+
+      if (!enrichResponse.ok) {
+        const errorText = await enrichResponse.text().catch(() => 'Unknown error');
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Erro ao gerar resumo: ${enrichResponse.status} - ${errorText}`
+        });
+      }
+
+      const result = await enrichResponse.json();
+      return {
+        summary: result.summary || '',
+        structured: {
+          fatos: result.structured?.fatos || [],
+          pedidos: result.structured?.pedidos || [],
+          providencias: result.structured?.providencias || [],
+        },
+      };
+    }),
+
+  /**
+   * saveSummary — Salva resumo IA como anotação vinculada ao assistido
+   */
+  saveSummary: protectedProcedure
+    .input(z.object({
+      contactId: z.number(),
+      messageIds: z.array(z.number()),
+      summary: z.string().min(1),
+      editedByUser: z.boolean().default(false),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const contact = await db.query.whatsappContacts.findFirst({
+        where: eq(whatsappContacts.id, input.contactId),
+        with: { assistido: true },
+      });
+      if (!contact?.assistidoId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Contato não vinculado a um assistido" });
+      }
+
+      const [anotacao] = await db.insert(anotacoes).values({
+        assistidoId: contact.assistidoId,
+        conteudo: input.summary,
+        tipo: 'whatsapp_resumo_ia',
+        metadata: {
+          contactId: contact.id,
+          contactName: contact.name || contact.pushName || contact.phone,
+          contactRelation: contact.contactRelation,
+          messageCount: input.messageIds.length,
+          messageIds: input.messageIds,
+          model: 'claude-sonnet-4-6',
+          editedByUser: input.editedByUser,
+        },
+        createdById: ctx.session.user.id,
+      }).returning();
+
+      return { id: anotacao.id };
     }),
 });
