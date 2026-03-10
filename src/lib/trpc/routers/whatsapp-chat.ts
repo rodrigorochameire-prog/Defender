@@ -12,9 +12,12 @@ import {
   evolutionConfig,
   whatsappContacts,
   whatsappChatMessages,
+  whatsappTemplates,
   assistidos,
+  processos,
+  assistidosProcessos,
 } from "@/lib/db/schema";
-import { eq, and, desc, like, sql, or, lt } from "drizzle-orm";
+import { eq, and, desc, like, ilike, sql, or, lt, ne } from "drizzle-orm";
 import {
   EvolutionApiClient,
   sendText,
@@ -613,6 +616,8 @@ export const whatsappChatRouter = router({
         notes: z.string().optional(),
         isArchived: z.boolean().optional(),
         isFavorite: z.boolean().optional(),
+        contactRelation: z.enum(["proprio", "familiar", "testemunha", "correu", "outro"]).optional(),
+        contactRelationDetail: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -1059,6 +1064,431 @@ export const whatsappChatRouter = router({
         inserted: insertedCount,
         updated: updatedCount,
         total: individualContacts.length,
+      };
+    }),
+
+  // ===========================================================================
+  // TEMPLATES
+  // ===========================================================================
+
+  listTemplates: protectedProcedure
+    .input(z.object({
+      category: z.string().optional(),
+      search: z.string().optional(),
+    }).optional())
+    .query(async ({ input }) => {
+      const conditions = [eq(whatsappTemplates.isActive, true)];
+
+      if (input?.category) {
+        conditions.push(eq(whatsappTemplates.category, input.category));
+      }
+
+      if (input?.search) {
+        conditions.push(
+          or(
+            like(whatsappTemplates.name, `%${input.search}%`),
+            like(whatsappTemplates.title, `%${input.search}%`),
+            like(whatsappTemplates.shortcut, `%${input.search}%`)
+          )!
+        );
+      }
+
+      return db
+        .select()
+        .from(whatsappTemplates)
+        .where(and(...conditions))
+        .orderBy(whatsappTemplates.sortOrder);
+    }),
+
+  getTemplate: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const [template] = await db
+        .select()
+        .from(whatsappTemplates)
+        .where(eq(whatsappTemplates.id, input.id))
+        .limit(1);
+
+      if (!template) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Template não encontrado" });
+      }
+
+      return template;
+    }),
+
+  createTemplate: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1).max(100),
+      title: z.string().min(1).max(200),
+      shortcut: z.string().max(50).optional(),
+      category: z.string().max(50).default("geral"),
+      content: z.string().min(1),
+      variables: z.array(z.string()).optional(),
+      sortOrder: z.number().default(0),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [template] = await db
+        .insert(whatsappTemplates)
+        .values({
+          ...input,
+          createdById: ctx.user.id,
+        })
+        .returning();
+
+      return template;
+    }),
+
+  updateTemplate: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      name: z.string().min(1).max(100).optional(),
+      title: z.string().min(1).max(200).optional(),
+      shortcut: z.string().max(50).optional().nullable(),
+      category: z.string().max(50).optional(),
+      content: z.string().min(1).optional(),
+      variables: z.array(z.string()).optional().nullable(),
+      sortOrder: z.number().optional(),
+      isActive: z.boolean().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { id, ...data } = input;
+
+      const [template] = await db
+        .update(whatsappTemplates)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(whatsappTemplates.id, id))
+        .returning();
+
+      if (!template) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Template não encontrado" });
+      }
+
+      return template;
+    }),
+
+  deleteTemplate: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const [deleted] = await db
+        .delete(whatsappTemplates)
+        .where(eq(whatsappTemplates.id, input.id))
+        .returning();
+
+      if (!deleted) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Template não encontrado" });
+      }
+
+      return { success: true };
+    }),
+
+  resolveTemplateVariables: protectedProcedure
+    .input(z.object({
+      templateId: z.number(),
+      contactId: z.number(),
+    }))
+    .query(async ({ ctx, input }) => {
+      // Fetch template
+      const [template] = await db
+        .select()
+        .from(whatsappTemplates)
+        .where(eq(whatsappTemplates.id, input.templateId))
+        .limit(1);
+
+      if (!template) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Template não encontrado" });
+      }
+
+      // Fetch contact with assistido
+      const [contact] = await db
+        .select({
+          contact: whatsappContacts,
+          assistido: assistidos,
+        })
+        .from(whatsappContacts)
+        .leftJoin(assistidos, eq(whatsappContacts.assistidoId, assistidos.id))
+        .where(eq(whatsappContacts.id, input.contactId))
+        .limit(1);
+
+      // Fetch main processo if assistido exists
+      let processo: any = null;
+      if (contact?.assistido?.id) {
+        const [proc] = await db
+          .select()
+          .from(processos)
+          .where(eq(processos.assistidoId, contact.assistido.id))
+          .orderBy(desc(processos.createdAt))
+          .limit(1);
+        processo = proc;
+      }
+
+      // Resolve variables
+      let resolved = template.content;
+      const variables: Record<string, string> = {
+        "{nome_assistido}": contact?.assistido?.nome || "[Nome do Assistido]",
+        "{numero_processo}": processo?.numeroAutos || "[Número do Processo]",
+        "{vara}": processo?.vara || "[Vara]",
+        "{nome_defensor}": ctx.user.name || "[Defensor]",
+      };
+
+      for (const [key, value] of Object.entries(variables)) {
+        resolved = resolved.replaceAll(key, value);
+      }
+
+      return {
+        original: template.content,
+        resolved,
+        variables,
+        templateId: template.id,
+        templateTitle: template.title,
+      };
+    }),
+
+  // ===========================================================================
+  // REPLY, SEARCH & CONTACT DETAILS
+  // ===========================================================================
+
+  /**
+   * Envia uma resposta citando uma mensagem específica (quoted reply)
+   */
+  replyToMessage: protectedProcedure
+    .input(
+      z.object({
+        contactId: z.number(),
+        content: z.string().min(1),
+        quotedMessageId: z.string(), // waMessageId of the message being replied to
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { contactId, content, quotedMessageId } = input;
+
+      // 1. Busca contato e configuração
+      const [result] = await db
+        .select({
+          contact: whatsappContacts,
+          config: evolutionConfig,
+        })
+        .from(whatsappContacts)
+        .innerJoin(evolutionConfig, eq(whatsappContacts.configId, evolutionConfig.id))
+        .where(eq(whatsappContacts.id, contactId))
+        .limit(1);
+
+      if (!result) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Contato não encontrado" });
+      }
+
+      const { contact, config } = result;
+
+      // 2. Busca a mensagem citada para obter a key
+      const [quotedMessage] = await db
+        .select()
+        .from(whatsappChatMessages)
+        .where(
+          and(
+            eq(whatsappChatMessages.contactId, contactId),
+            eq(whatsappChatMessages.waMessageId, quotedMessageId)
+          )
+        )
+        .limit(1);
+
+      if (!quotedMessage) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Mensagem citada não encontrada" });
+      }
+
+      // 3. Envia via Evolution API com quoted
+      const remoteJid = formatPhoneNumber(contact.phone);
+      const number = remoteJid.replace("@s.whatsapp.net", "");
+
+      try {
+        const response = await fetch(
+          `${config.apiUrl}/message/sendText/${config.instanceName}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: config.apiKey,
+            },
+            body: JSON.stringify({
+              number,
+              text: content,
+              quoted: {
+                key: {
+                  remoteJid,
+                  fromMe: quotedMessage.direction === "outbound",
+                  id: quotedMessageId,
+                },
+              },
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`Erro ao enviar resposta: ${error}`);
+        }
+
+        const apiResponse = await response.json();
+
+        // 4. Salva mensagem no banco com replyToId
+        const [message] = await db
+          .insert(whatsappChatMessages)
+          .values({
+            contactId,
+            waMessageId: apiResponse.key?.id,
+            direction: "outbound",
+            type: "text",
+            content,
+            replyToId: quotedMessageId,
+            status: "sent",
+            metadata: { response: apiResponse },
+          })
+          .returning();
+
+        // 5. Atualiza lastMessageAt do contato
+        await db
+          .update(whatsappContacts)
+          .set({
+            lastMessageAt: new Date(),
+            lastMessageContent: content.substring(0, 150),
+            lastMessageDirection: "outbound",
+            lastMessageType: "text",
+            updatedAt: new Date(),
+          })
+          .where(eq(whatsappContacts.id, contactId));
+
+        return message;
+      } catch (error) {
+        console.error("Erro ao enviar reply:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Erro ao enviar resposta",
+        });
+      }
+    }),
+
+  /**
+   * Busca mensagens dentro de uma conversa
+   */
+  searchMessages: protectedProcedure
+    .input(
+      z.object({
+        contactId: z.number(),
+        query: z.string().min(1),
+        limit: z.number().max(50).default(20),
+      })
+    )
+    .query(async ({ input }) => {
+      const { contactId, query, limit } = input;
+
+      const messages = await db
+        .select({
+          id: whatsappChatMessages.id,
+          waMessageId: whatsappChatMessages.waMessageId,
+          content: whatsappChatMessages.content,
+          direction: whatsappChatMessages.direction,
+          type: whatsappChatMessages.type,
+          createdAt: whatsappChatMessages.createdAt,
+        })
+        .from(whatsappChatMessages)
+        .where(
+          and(
+            eq(whatsappChatMessages.contactId, contactId),
+            ilike(whatsappChatMessages.content, `%${query}%`)
+          )
+        )
+        .orderBy(desc(whatsappChatMessages.createdAt))
+        .limit(limit);
+
+      return messages;
+    }),
+
+  /**
+   * Busca detalhes enriquecidos de um contato para o painel lateral
+   */
+  getContactDetails: protectedProcedure
+    .input(z.object({ contactId: z.number() }))
+    .query(async ({ input }) => {
+      // 1. Busca o contato com assistido
+      const [result] = await db
+        .select({
+          contact: whatsappContacts,
+          assistido: assistidos,
+        })
+        .from(whatsappContacts)
+        .leftJoin(assistidos, eq(whatsappContacts.assistidoId, assistidos.id))
+        .where(eq(whatsappContacts.id, input.contactId))
+        .limit(1);
+
+      if (!result) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Contato não encontrado" });
+      }
+
+      // 2. Se assistido existe, busca processos vinculados
+      let contactProcessos: {
+        id: number;
+        numeroAutos: string;
+        vara: string | null;
+        assunto: string | null;
+        situacao: string | null;
+        papel: string | null;
+      }[] = [];
+
+      if (result.assistido?.id) {
+        contactProcessos = await db
+          .select({
+            id: processos.id,
+            numeroAutos: processos.numeroAutos,
+            vara: processos.vara,
+            assunto: processos.assunto,
+            situacao: processos.situacao,
+            papel: assistidosProcessos.papel,
+          })
+          .from(assistidosProcessos)
+          .innerJoin(processos, eq(assistidosProcessos.processoId, processos.id))
+          .where(eq(assistidosProcessos.assistidoId, result.assistido.id))
+          .orderBy(desc(processos.createdAt))
+          .limit(10);
+
+        // Fallback: also check processos.assistidoId direct FK
+        if (contactProcessos.length === 0) {
+          const directProcessos = await db
+            .select({
+              id: processos.id,
+              numeroAutos: processos.numeroAutos,
+              vara: processos.vara,
+              assunto: processos.assunto,
+              situacao: processos.situacao,
+            })
+            .from(processos)
+            .where(eq(processos.assistidoId, result.assistido.id))
+            .orderBy(desc(processos.createdAt))
+            .limit(10);
+
+          contactProcessos = directProcessos.map((p) => ({
+            ...p,
+            papel: "reu" as string | null,
+          }));
+        }
+      }
+
+      // 3. Estatísticas de mensagens
+      const [stats] = await db
+        .select({
+          totalMessages: sql<number>`count(*)`,
+          mediaMessages: sql<number>`count(case when ${whatsappChatMessages.type} != 'text' then 1 end)`,
+          firstMessageAt: sql<string>`min(${whatsappChatMessages.createdAt})`,
+        })
+        .from(whatsappChatMessages)
+        .where(eq(whatsappChatMessages.contactId, input.contactId));
+
+      return {
+        contact: result.contact,
+        assistido: result.assistido,
+        processos: contactProcessos,
+        stats: {
+          totalMessages: Number(stats?.totalMessages ?? 0),
+          mediaMessages: Number(stats?.mediaMessages ?? 0),
+          firstMessageAt: stats?.firstMessageAt ?? null,
+        },
       };
     }),
 

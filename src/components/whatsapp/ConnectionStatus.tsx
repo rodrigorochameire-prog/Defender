@@ -26,6 +26,7 @@ import {
   RefreshCw,
   LogOut,
   AlertCircle,
+  Timer,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -60,7 +61,7 @@ export function ConnectionStatus({ configId }: ConnectionStatusProps) {
     { configId },
     {
       enabled: isQRDialogOpen && connectionStatus?.state !== "open",
-      refetchInterval: isQRDialogOpen ? 20000 : false, // Atualiza QR a cada 20s
+      refetchInterval: isQRDialogOpen ? 10000 : false, // Atualiza QR a cada 10s (QR expira em ~20-40s)
     }
   );
 
@@ -114,7 +115,7 @@ export function ConnectionStatus({ configId }: ConnectionStatusProps) {
       case "refused":
         return {
           label: "Erro de conexão",
-          variant: "destructive" as const,
+          variant: "danger" as const,
           icon: AlertCircle,
           iconClass: "",
         };
@@ -238,13 +239,22 @@ export function ConnectionStatus({ configId }: ConnectionStatusProps) {
                 <p className="text-center text-sm text-muted-foreground">
                   Abra o WhatsApp no seu celular e escaneie este código
                 </p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Timer className="h-3 w-3 animate-pulse" />
+                  Atualiza automaticamente a cada 10s
+                </div>
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={() => refetchQR()}
                   disabled={loadingQR}
                 >
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Atualizar QR Code
+                  {loadingQR ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                  )}
+                  Atualizar QR Agora
                 </Button>
               </div>
             ) : (

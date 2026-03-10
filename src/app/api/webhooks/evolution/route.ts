@@ -25,6 +25,7 @@ import {
   getMessageType,
   extractMediaInfo,
   extractPhoneFromJid,
+  extractQuotedMessageId,
 } from "@/lib/services/evolution-api";
 import { enrichmentClient } from "@/lib/services/enrichment-client";
 
@@ -155,6 +156,12 @@ async function handleMessageUpsert(configId: number, message: EvolutionMessage) 
     // Extrai número do telefone
     const phone = extractPhoneFromJid(remoteJid);
 
+    // Extrai informações da mensagem (antes do contact upsert para popular lastMessage)
+    const text = extractMessageText(message);
+    const type = getMessageType(message);
+    const mediaInfo = extractMediaInfo(message);
+    const replyToId = extractQuotedMessageId(message);
+
     // Busca ou cria contato
     let [contact] = await db
       .select()
@@ -171,6 +178,9 @@ async function handleMessageUpsert(configId: number, message: EvolutionMessage) 
           phone,
           pushName: message.pushName || null,
           lastMessageAt: new Date(),
+          lastMessageContent: (text || "").substring(0, 150) || null,
+          lastMessageDirection: fromMe ? "outbound" : "inbound",
+          lastMessageType: type,
           unreadCount: fromMe ? 0 : 1,
         })
         .returning();
@@ -184,6 +194,9 @@ async function handleMessageUpsert(configId: number, message: EvolutionMessage) 
         .set({
           pushName: message.pushName || contact.pushName,
           lastMessageAt: new Date(),
+          lastMessageContent: (text || "").substring(0, 150) || null,
+          lastMessageDirection: fromMe ? "outbound" : "inbound",
+          lastMessageType: type,
           unreadCount: fromMe ? contact.unreadCount : contact.unreadCount + 1,
           updatedAt: new Date(),
         })
@@ -202,11 +215,6 @@ async function handleMessageUpsert(configId: number, message: EvolutionMessage) 
       return;
     }
 
-    // Extrai informações da mensagem
-    const text = extractMessageText(message);
-    const type = getMessageType(message);
-    const mediaInfo = extractMediaInfo(message);
-
     // Salva mensagem no banco
     await db.insert(whatsappChatMessages).values({
       contactId: contact.id,
@@ -217,6 +225,7 @@ async function handleMessageUpsert(configId: number, message: EvolutionMessage) 
       mediaUrl: mediaInfo.url,
       mediaMimeType: mediaInfo.mimeType,
       mediaFilename: mediaInfo.filename,
+      replyToId: replyToId,
       status: fromMe ? "sent" : "received",
       metadata: {
         pushName: message.pushName,

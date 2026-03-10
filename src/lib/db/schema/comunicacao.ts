@@ -170,6 +170,39 @@ export type EvolutionConfig = typeof evolutionConfig.$inferSelect;
 export type InsertEvolutionConfig = typeof evolutionConfig.$inferInsert;
 
 // ==========================================
+// WHATSAPP TEMPLATES
+// ==========================================
+
+export const whatsappTemplates = pgTable("whatsapp_templates", {
+  id: serial("id").primaryKey(),
+
+  // Identificação
+  name: varchar("name", { length: 100 }).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  shortcut: varchar("shortcut", { length: 50 }),
+  category: varchar("category", { length: 50 }).default("geral").notNull(),
+
+  // Conteúdo
+  content: text("content").notNull(),
+  variables: text("variables").array(),
+
+  // Ordenação e status
+  sortOrder: integer("sort_order").default(0).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+
+  // Metadados
+  createdById: integer("created_by_id").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("whatsapp_templates_shortcut_idx").on(table.shortcut),
+  index("whatsapp_templates_category_idx").on(table.category),
+]);
+
+export type WhatsAppTemplate = typeof whatsappTemplates.$inferSelect;
+export type InsertWhatsAppTemplate = typeof whatsappTemplates.$inferInsert;
+
+// ==========================================
 // CONTATOS WHATSAPP CHAT
 // ==========================================
 
@@ -188,12 +221,19 @@ export const whatsappContacts = pgTable("whatsapp_contacts", {
   // Vínculo com assistido
   assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "set null" }),
 
+  // Identificação do interlocutor
+  contactRelation: varchar("contact_relation", { length: 20 }),
+  contactRelationDetail: text("contact_relation_detail"),
+
   // Organização
   tags: text("tags").array(),
   notes: text("notes"),
 
   // Status da conversa
   lastMessageAt: timestamp("last_message_at"),
+  lastMessageContent: text("last_message_content"),
+  lastMessageDirection: varchar("last_message_direction", { length: 10 }),
+  lastMessageType: varchar("last_message_type", { length: 20 }),
   unreadCount: integer("unread_count").default(0).notNull(),
   isArchived: boolean("is_archived").default(false).notNull(),
   isFavorite: boolean("is_favorite").default(false).notNull(),
@@ -234,6 +274,9 @@ export const whatsappChatMessages = pgTable("whatsapp_chat_messages", {
   mediaUrl: text("media_url"),
   mediaMimeType: varchar("media_mime_type", { length: 100 }),
   mediaFilename: varchar("media_filename", { length: 255 }),
+
+  // Reply (quoted message)
+  replyToId: varchar("reply_to_id", { length: 200 }),
 
   // Status
   status: varchar("status", { length: 20 }).default("sent").notNull(),
@@ -368,6 +411,10 @@ export const whatsappMessagesRelations = relations(whatsappMessages, ({ one }) =
   config: one(whatsappConfig, { fields: [whatsappMessages.configId], references: [whatsappConfig.id] }),
   assistido: one(assistidos, { fields: [whatsappMessages.assistidoId], references: [assistidos.id] }),
   sentBy: one(users, { fields: [whatsappMessages.sentById], references: [users.id] }),
+}));
+
+export const whatsappTemplatesRelations = relations(whatsappTemplates, ({ one }) => ({
+  createdBy: one(users, { fields: [whatsappTemplates.createdById], references: [users.id] }),
 }));
 
 export const evolutionConfigRelations = relations(evolutionConfig, ({ one, many }) => ({

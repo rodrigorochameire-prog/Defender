@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { ConversationList } from "@/components/whatsapp/ConversationList";
 import { ChatWindow } from "@/components/whatsapp/ChatWindow";
+import { ContactDetailsPanel } from "@/components/whatsapp/ContactDetailsPanel";
 import { ConnectionStatus } from "@/components/whatsapp/ConnectionStatus";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,32 +15,36 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   MessageSquare,
   Settings,
-  Users,
   Inbox,
   Star,
   Archive,
   RefreshCw,
-  Plus,
   Download,
   Loader2,
+  ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export default function WhatsAppChatPage() {
   const searchParams = useSearchParams();
   const phoneParam = searchParams.get("phone");
   const contactIdParam = searchParams.get("contactId");
 
-  // Estado da instância selecionada
   const [selectedConfigId, setSelectedConfigId] = useState<number | null>(null);
   const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
   const [filter, setFilter] = useState<"all" | "unread" | "favorites" | "archived">("all");
+  const [showDetails, setShowDetails] = useState(false);
 
   // Queries
   const { data: configs, isLoading: loadingConfigs } = trpc.whatsappChat.listConfigs.useQuery();
@@ -61,11 +66,11 @@ export default function WhatsAppChatPage() {
     { enabled: !!selectedConfigId }
   );
 
-  // Mutation para sincronizar contatos
+  // Mutations
   const syncContactsMutation = trpc.whatsappChat.syncContacts.useMutation({
     onSuccess: (result) => {
       toast.success(
-        `Sincronização concluída! ${result.inserted} novos contatos, ${result.updated} atualizados.`
+        `Sincronizado! ${result.inserted} novos, ${result.updated} atualizados.`
       );
       refetchContacts();
       refetchStats();
@@ -75,18 +80,17 @@ export default function WhatsAppChatPage() {
     },
   });
 
-  // Seleciona primeira configuração disponível
+  // Auto-select first config
   useEffect(() => {
     if (configs && configs.length > 0 && !selectedConfigId) {
       setSelectedConfigId(configs[0].id);
     }
   }, [configs, selectedConfigId]);
 
-  // Seleciona contato por ID ou telefone da URL
+  // Select contact from URL params
   useEffect(() => {
     if (!contactsData?.contacts) return;
 
-    // Se tem contactId na URL, seleciona direto
     if (contactIdParam) {
       const id = parseInt(contactIdParam);
       if (!isNaN(id)) {
@@ -95,10 +99,8 @@ export default function WhatsAppChatPage() {
       }
     }
 
-    // Se tem phone na URL, busca o contato correspondente
     if (phoneParam) {
       const normalizedPhone = phoneParam.replace(/\D/g, "");
-      // Busca contato pelo telefone (pode ter prefixo 55 ou não)
       const contact = contactsData.contacts.find((c: any) => {
         const contactPhone = c.phone.replace(/\D/g, "");
         return contactPhone === normalizedPhone ||
@@ -108,7 +110,7 @@ export default function WhatsAppChatPage() {
       if (contact) {
         setSelectedContactId(contact.id);
       } else {
-        toast.info(`Contato com telefone ${phoneParam} não encontrado. Sincronize os contatos.`);
+        toast.info(`Contato com telefone ${phoneParam} não encontrado.`);
       }
     }
   }, [contactsData, phoneParam, contactIdParam]);
@@ -118,31 +120,35 @@ export default function WhatsAppChatPage() {
     setSelectedContactId(contactId);
   };
 
-  const handleRefresh = () => {
-    refetchContacts();
-    toast.success("Lista atualizada");
+  const handleBackToList = () => {
+    setSelectedContactId(null);
+    setShowDetails(false);
   };
 
-  // Se ainda está carregando
+  // Loading state
   if (loadingConfigs) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-        <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
       </div>
     );
   }
 
-  // Se não há configurações
+  // No configs
   if (!configs || configs.length === 0) {
     return (
       <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center gap-4">
-        <MessageSquare className="h-16 w-16 text-muted-foreground" />
-        <h2 className="text-xl font-semibold">Nenhuma instância configurada</h2>
-        <p className="text-muted-foreground">
-          Configure uma instância do WhatsApp para começar a usar o chat.
+        <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+          <MessageSquare className="h-8 w-8 text-zinc-400" />
+        </div>
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          Nenhuma instância configurada
+        </h2>
+        <p className="text-sm text-zinc-500">
+          Configure uma instância do WhatsApp para começar.
         </p>
         <Link href="/admin/whatsapp">
-          <Button>
+          <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
             <Settings className="mr-2 h-4 w-4" />
             Configurar WhatsApp
           </Button>
@@ -155,17 +161,15 @@ export default function WhatsAppChatPage() {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
-      {/* Header */}
-      <div className="border-b bg-background p-4">
+      {/* Compact Header — hidden on mobile when chat is open */}
+      <div className={cn(
+        "border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 sm:px-4 py-2",
+        selectedContactId && "hidden md:block"
+      )}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <MessageSquare className="h-6 w-6 text-green-500" />
-              Chat WhatsApp
-            </h1>
-
-            {/* Seletor de instância */}
-            {configs.length > 1 && (
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            {/* Instance selector (only if multiple) */}
+            {configs.length > 1 ? (
               <Select
                 value={selectedConfigId?.toString()}
                 onValueChange={(value) => {
@@ -173,8 +177,8 @@ export default function WhatsAppChatPage() {
                   setSelectedContactId(null);
                 }}
               >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Selecione a instância" />
+                <SelectTrigger className="w-[120px] sm:w-[160px] h-8 text-xs">
+                  <SelectValue placeholder="Instância" />
                 </SelectTrigger>
                 <SelectContent>
                   {configs.map((config) => (
@@ -184,104 +188,122 @@ export default function WhatsAppChatPage() {
                   ))}
                 </SelectContent>
               </Select>
-            )}
+            ) : null}
 
-            {/* Status de conexão */}
+            {/* Connection status */}
             {selectedConfig && <ConnectionStatus configId={selectedConfig.id} />}
-          </div>
 
-          <div className="flex items-center gap-2">
-            {/* Stats rápidas */}
+            {/* Stats inline — hidden on small mobile */}
             {stats && (
-              <div className="flex items-center gap-4 mr-4">
-                <Badge variant="outline" className="flex items-center gap-1">
-                  <Users className="h-3 w-3" />
-                  {stats.totalContacts} contatos
-                </Badge>
+              <div className="hidden sm:flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+                <span>{stats.totalContacts.toLocaleString()} contatos</span>
                 {stats.unreadMessages > 0 && (
-                  <Badge variant="destructive" className="flex items-center gap-1">
-                    <Inbox className="h-3 w-3" />
+                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     {stats.unreadMessages} não lidas
-                  </Badge>
+                  </span>
                 )}
               </div>
             )}
+          </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (selectedConfigId) {
-                  syncContactsMutation.mutate({ configId: selectedConfigId });
-                }
-              }}
-              disabled={!selectedConfigId || syncContactsMutation.isPending}
-              title="Sincronizar contatos do WhatsApp"
-            >
-              {syncContactsMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4" />
-              )}
-              <span className="ml-1 hidden sm:inline">Sincronizar</span>
-            </Button>
+          <div className="flex items-center gap-1">
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    onClick={() => {
+                      if (selectedConfigId) {
+                        syncContactsMutation.mutate({ configId: selectedConfigId });
+                      }
+                    }}
+                    disabled={!selectedConfigId || syncContactsMutation.isPending}
+                  >
+                    {syncContactsMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Sincronizar contatos</TooltipContent>
+              </Tooltip>
 
-            <Button variant="outline" size="sm" onClick={handleRefresh}>
-              <RefreshCw className="h-4 w-4" />
-            </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    onClick={() => {
+                      refetchContacts();
+                      refetchStats();
+                    }}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Atualizar lista</TooltipContent>
+              </Tooltip>
 
-            <Link href="/admin/whatsapp">
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </Link>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href="/admin/whatsapp">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    >
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Configurações</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </div>
 
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar - Lista de conversas */}
-        <div className="w-80 border-r flex flex-col">
-          {/* Filtros */}
-          <div className="p-2 border-b flex gap-1">
-            <Button
-              variant={filter === "all" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setFilter("all")}
-              className="flex-1"
-            >
-              <Inbox className="h-4 w-4 mr-1" />
-              Todas
-            </Button>
-            <Button
-              variant={filter === "unread" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setFilter("unread")}
-              className="flex-1"
-            >
-              <MessageSquare className="h-4 w-4 mr-1" />
-              Não lidas
-            </Button>
-            <Button
-              variant={filter === "favorites" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setFilter("favorites")}
-              className="flex-1"
-            >
-              <Star className="h-4 w-4 mr-1" />
-            </Button>
-            <Button
-              variant={filter === "archived" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setFilter("archived")}
-              className="flex-1"
-            >
-              <Archive className="h-4 w-4 mr-1" />
-            </Button>
+        {/* Sidebar - Conversation List */}
+        {/* On mobile: hidden when a contact is selected (show chat instead) */}
+        <div className={cn(
+          "w-full md:w-80 border-r border-zinc-200 dark:border-zinc-800 flex flex-col bg-white dark:bg-zinc-900",
+          selectedContactId ? "hidden md:flex" : "flex"
+        )}>
+          {/* Filters */}
+          <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800/50 flex gap-1">
+            {[
+              { key: "all" as const, icon: Inbox, label: "Todas" },
+              { key: "unread" as const, icon: MessageSquare, label: "Não lidas" },
+              { key: "favorites" as const, icon: Star, label: null },
+              { key: "archived" as const, icon: Archive, label: null },
+            ].map(({ key, icon: Icon, label }) => (
+              <Button
+                key={key}
+                variant="ghost"
+                size="sm"
+                onClick={() => setFilter(key)}
+                className={cn(
+                  "h-7 text-xs gap-1 px-2",
+                  label ? "flex-1" : "w-8 px-0",
+                  filter === key
+                    ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label && <span>{label}</span>}
+              </Button>
+            ))}
           </div>
 
-          {/* Lista de conversas */}
+          {/* Conversation list */}
           <div className="flex-1 overflow-hidden">
             {selectedConfigId && (
               <ConversationList
@@ -295,22 +317,47 @@ export default function WhatsAppChatPage() {
           </div>
         </div>
 
-        {/* Área de chat */}
-        <div className="flex-1 flex flex-col">
-          {selectedContactId && selectedConfigId ? (
-            <ChatWindow
-              contactId={selectedContactId}
-              configId={selectedConfigId}
-              onContactUpdate={() => refetchContacts()}
-            />
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
-              <MessageSquare className="h-16 w-16 mb-4" />
-              <p className="text-lg">Selecione uma conversa para começar</p>
-              <p className="text-sm">
-                Ou inicie uma nova conversa clicando no botão{" "}
-                <Plus className="inline h-4 w-4" /> na lista
-              </p>
+        {/* Chat area */}
+        {/* On mobile: full-width when contact selected, hidden otherwise */}
+        <div className={cn(
+          "flex-1 flex",
+          selectedContactId ? "flex" : "hidden md:flex"
+        )}>
+          <div className="flex-1 flex flex-col">
+            {selectedContactId && selectedConfigId ? (
+              <ChatWindow
+                contactId={selectedContactId}
+                configId={selectedConfigId}
+                onContactUpdate={() => {
+                  refetchContacts();
+                  refetchStats();
+                }}
+                onToggleDetails={() => setShowDetails((prev) => !prev)}
+                onBack={handleBackToList}
+              />
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center px-4">
+                <div className="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
+                  <MessageSquare className="h-10 w-10 text-zinc-300 dark:text-zinc-600" />
+                </div>
+                <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 text-center">
+                  Selecione uma conversa para começar
+                </p>
+                <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 text-center">
+                  Ou inicie uma nova conversa com o botão + na lista
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Contact details panel — hidden on mobile */}
+          {showDetails && selectedContactId && selectedConfigId && (
+            <div className="hidden md:block">
+              <ContactDetailsPanel
+                contactId={selectedContactId}
+                configId={selectedConfigId}
+                onClose={() => setShowDetails(false)}
+              />
             </div>
           )}
         </div>

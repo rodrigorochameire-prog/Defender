@@ -17,12 +17,14 @@ function getBaseUrl() {
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
 
-// Queries leves que devem resolver rápido (auth, notificações)
+// Queries leves que devem resolver rápido (auth, notificações, configs)
 const FAST_QUERIES = new Set([
   "users.me",
   "auth.me",
   "notifications.unreadCount",
   "profissionais.getEscalaAtual",
+  "whatsappChat.listConfigs",
+  "whatsappChat.getStats",
 ]);
 
 // Loading spinner minimalista

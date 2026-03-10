@@ -39,7 +39,8 @@ import { type AssignmentMenuItem } from "@/contexts/assignment-context";
 import { useProfissional } from "@/contexts/profissional-context";
 import { useTheme } from "@/contexts/theme-context";
 import { logoutAction } from "@/app/(dashboard)/actions";
-import { CSSProperties, ReactNode, useEffect, useState } from "react";
+import { CSSProperties, ReactNode, useEffect, useMemo, useState } from "react";
+import { trpc } from "@/lib/trpc/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AdminSidebarProps {
@@ -58,6 +59,7 @@ const MAIN_NAV: AssignmentMenuItem[] = [
   { label: "Demandas", path: "/admin/demandas", icon: "ListTodo" },
   { label: "Agenda", path: "/admin/agenda", icon: "Calendar" },
   { label: "Drive", path: "/admin/drive", icon: "FolderOpen" },
+  { label: "WhatsApp", path: "/admin/whatsapp/chat", icon: "MessageCircle" },
 ];
 
 // 2. Cadastros - Assistidos, Processos, Casos, Solar (azul)
@@ -153,7 +155,6 @@ const EP_SECTIONS: SidebarSection[] = [{ items: EP_MODULES }];
 
 // Itens do menu "Mais" (utilidades)
 const MORE_NAV: AssignmentMenuItem[] = [
-  { label: "WhatsApp", path: "/admin/whatsapp", icon: "MessageCircle" },
   { label: "Integrações", path: "/admin/integracoes", icon: "Zap" },
   { label: "Relatórios", path: "/admin/relatorios", icon: "BarChart3", requiredRoles: ["admin", "defensor"] },
   { label: "Sincronização", path: "/admin/sync", icon: "RefreshCw" },
@@ -632,6 +633,11 @@ function PrincipalMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
+                  {typeof item.badge === "number" && item.badge > 0 && (
+                    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1 text-[10px] font-bold text-white">
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -709,6 +715,11 @@ function PrincipalMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                       isActive ? "text-emerald-400" : "text-zinc-500 dark:text-zinc-400 group-hover/subitem:text-zinc-700 dark:group-hover/subitem:text-zinc-300"
                     )} />
                     <span className="text-[12px] truncate">{item.label}</span>
+                    {typeof item.badge === "number" && item.badge > 0 && (
+                      <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1 text-[10px] font-bold text-white">
+                        {item.badge > 99 ? "99+" : item.badge}
+                      </span>
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -1514,6 +1525,23 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
   const isCollapsed = isMobile ? false : state === "collapsed";
   const isDrivePage = pathname.startsWith("/admin/drive");
 
+  // WhatsApp unread badge
+  const { data: whatsappConfigs } = trpc.whatsappChat.listConfigs.useQuery();
+  const primaryConfigId = whatsappConfigs?.[0]?.id;
+  const { data: whatsappStats } = trpc.whatsappChat.getStats.useQuery(
+    { configId: primaryConfigId! },
+    { enabled: !!primaryConfigId, refetchInterval: 30000 }
+  );
+
+  const mainNavWithBadge = useMemo(() => {
+    return MAIN_NAV.map(item => {
+      if (item.label === "WhatsApp" && whatsappStats?.unreadMessages) {
+        return { ...item, badge: whatsappStats.unreadMessages };
+      }
+      return item;
+    });
+  }, [whatsappStats?.unreadMessages]);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -1564,7 +1592,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
             {/* 1. Principal (Dashboard, Demandas, Agenda) - Colapsável com ícone Home */}
             <SidebarMenu className="space-y-0.5">
               <PrincipalMenu
-                items={MAIN_NAV}
+                items={mainNavWithBadge}
                 pathname={pathname}
                 onNavigate={handleNavigate}
                 userRole={userRole}

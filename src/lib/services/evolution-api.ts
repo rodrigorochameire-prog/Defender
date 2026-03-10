@@ -26,7 +26,7 @@ export interface EvolutionMessage {
   pushName?: string;
   message?: {
     conversation?: string;
-    extendedTextMessage?: { text: string };
+    extendedTextMessage?: { text: string; contextInfo?: { stanzaId?: string; participant?: string } };
     imageMessage?: {
       url?: string;
       mimetype?: string;
@@ -63,6 +63,10 @@ export interface EvolutionMessage {
     contactMessage?: {
       displayName?: string;
       vcard?: string;
+    };
+    contextInfo?: {
+      stanzaId?: string;
+      participant?: string;
     };
   };
   messageType?:
@@ -774,6 +778,25 @@ export function extractMessageText(message: EvolutionMessage): string | null {
 }
 
 /**
+ * Extrai o stanzaId (ID da mensagem citada) do contextInfo
+ */
+export function extractQuotedMessageId(message: EvolutionMessage): string | null {
+  if (!message.message) return null;
+
+  // Check extendedTextMessage contextInfo first (most common for quoted replies)
+  if (message.message.extendedTextMessage?.contextInfo?.stanzaId) {
+    return message.message.extendedTextMessage.contextInfo.stanzaId;
+  }
+
+  // Check top-level contextInfo on message object
+  if (message.message.contextInfo?.stanzaId) {
+    return message.message.contextInfo.stanzaId;
+  }
+
+  return null;
+}
+
+/**
  * Determina o tipo da mensagem
  */
 export function getMessageType(
@@ -947,17 +970,28 @@ export class EvolutionApiClient {
   }
 
   async restart(): Promise<{ status: string }> {
-    const response = await fetch(`${this.apiUrl}/instance/restart/${this.instanceName}`, {
-      method: "PUT",
+    // Evolution API v2.3.7 removed PUT /instance/restart.
+    // Workaround: logout (disconnect) then request a new connection/QR code.
+    try {
+      await fetch(`${this.apiUrl}/instance/logout/${this.instanceName}`, {
+        method: "DELETE",
+        headers: this.headers,
+      });
+    } catch {
+      // Logout may fail if already disconnected — ignore and proceed
+    }
+
+    const connectResponse = await fetch(`${this.apiUrl}/instance/connect/${this.instanceName}`, {
+      method: "GET",
       headers: this.headers,
     });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Erro ao reiniciar: ${error}`);
+    if (!connectResponse.ok) {
+      const error = await connectResponse.text();
+      throw new Error(`Erro ao reiniciar (connect): ${error}`);
     }
 
-    return response.json();
+    return connectResponse.json();
   }
 
   async setWebhook(webhookUrl: string, events?: string[]): Promise<{ webhook: { url: string; events: string[] } }> {
