@@ -219,8 +219,9 @@ export function ChatWindow({
     setReplyingTo(null);
     setSearchOpen(false);
     setSearchQuery("");
-    exitSelectionMode();
-  }, [contactId, exitSelectionMode]);
+    setIsSelectionMode(false);
+    setSelectedMessageIds(new Set());
+  }, [contactId]);
 
   // -- Handlers -------------------------------------------------------------
 
@@ -344,6 +345,12 @@ export function ChatWindow({
       setIsAtBottom(true);
     }
   };
+
+  // All messages (used by selection + search)
+  const allMessages = useMemo(
+    () => messagesData?.messages || [],
+    [messagesData]
+  );
 
   // -- Selection mode handlers ------------------------------------------------
   const toggleMessageSelection = useCallback((msgId: number) => {
@@ -493,11 +500,6 @@ export function ChatWindow({
   };
 
   // Filter messages by search query
-  const allMessages = useMemo(
-    () => messagesData?.messages || [],
-    [messagesData]
-  );
-
   const filteredMessages = useMemo(() => {
     if (!searchQuery.trim()) return allMessages;
     const q = searchQuery.toLowerCase();
