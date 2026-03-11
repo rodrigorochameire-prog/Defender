@@ -82,6 +82,61 @@ export const PRAZOS_POR_ATO: Record<string, number> = {
   "Endereço do réu": 2,
   "Restituição de coisa": 5,
   "Requerimento audiência": 5,
+  "Juntada de documentos": 5,
+  "Mandado de Segurança": 0, // Urgente
+  "Ofício": 5,
+  "Rol de Testemunhas": 3,
+
+  // === MEDIDAS PROTETIVAS / VVD ===
+  "Revogação do monitoramento": 2,
+  "Revogação de monitoramento": 2,
+  "Relaxamento e revogação de prisão": 2,
+  "Substituição da prisão por cautelar": 2,
+  "Revogação e relaxamento de prisão": 2,
+
+  // === CIÊNCIAS (sem prazo processual — apenas tomar conhecimento) ===
+  "Ciência": 0,
+  "Ciência habilitação DPE": 0,
+  "Ciência de decisão": 0,
+  "Ciência de sentença": 0,
+  "Ciência da pronúncia": 0,
+  "Ciência da impronúncia": 0,
+  "Ciência da absolvição": 0,
+  "Ciência absolvição": 0,
+  "Ciência condenação": 0,
+  "Ciência de condenação": 0,
+  "Ciência da condenação": 0,
+  "Ciência desclassificação": 0,
+  "Ciência da prescrição": 0,
+  "Ciência de prescrição": 0,
+  "Ciência prescrição": 0,
+  "Ciência de extinção processual": 0,
+  "Ciência da extinção do processo": 0,
+  "Ciência laudo de exame": 0,
+  "Ciência revogação prisão": 0,
+  "Ciência da revogação": 0,
+  "Ciência acórdão": 0,
+  "Ciência do acórdão": 0,
+  "Ciência regressão de regime": 0,
+  "Ciência de reconversão": 0,
+  "Ciência indulto": 0,
+  "Ciência cumprimento": 0,
+  "Ciência morte": 0,
+  "Ciência audiência": 0,
+  "Ciência Júri": 0,
+  "Ciência da redesignação": 0,
+  "Ciência constituição": 0,
+  "Ciência LP": 0,
+
+  // === EXECUÇÃO PENAL (adicionais) ===
+  "Designação de justificação": 3,
+  "Manifestação contra reconversão": 5,
+  "Manifestação contra regressão": 5,
+
+  // === GENÉRICOS ===
+  "Outro": 5,
+  "Outros": 5,
+  "Atendimento Inicial": 0,
 };
 
 // Feriados nacionais fixos (mês é 0-indexed)

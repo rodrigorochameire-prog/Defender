@@ -49,7 +49,7 @@ export function PJeImportModal({
   const [texto, setTexto] = useState("");
   const [intimacoes, setIntimacoes] = useState<IntimacaoPJeSimples[]>([]);
   const [resultadoVerificacao, setResultadoVerificacao] = useState<ResultadoVerificacaoDuplicatas | null>(null);
-  const [etapa, setEtapa] = useState<"configurar" | "colar" | "revisar">("configurar");
+  const [etapa, setEtapa] = useState<"configurar" | "colar" | "revisar" | "resultado">("configurar");
   const [isImporting, setIsImporting] = useState(false);
 
   // Configurações globais - APENAS ATRIBUIÇÃO
@@ -74,6 +74,14 @@ export function PJeImportModal({
 
   // Opção para atualizar duplicatas existentes
   const [atualizarDuplicatas, setAtualizarDuplicatas] = useState(false);
+
+  // Resultado da importação
+  const [importResult, setImportResult] = useState<{
+    enviadas: number;
+    excluidas: number;
+    duplicatas: number;
+    atribuicao: string;
+  } | null>(null);
 
   // PJe Import v2 — review table rows
   const [reviewRows, setReviewRows] = useState<PjeReviewRow[]>([]);
@@ -263,6 +271,7 @@ export function PJeImportModal({
     setIsImporting(false);
     setAtualizarDuplicatas(false);
     setReviewRows([]);
+    setImportResult(null);
   };
 
   const handleImportar = async () => {
@@ -364,8 +373,16 @@ export function PJeImportModal({
 
       // Passar flag indicando que deve atualizar existentes
       onImport(todasDemandas, atualizarDuplicatas);
-      onClose();
-      resetModal();
+
+      // Mostrar tela de resultado com resumo da importação
+      const excluidas = reviewRows.filter((r) => r.excluded).length;
+      setImportResult({
+        enviadas: todasDemandas.length,
+        excluidas,
+        duplicatas: resultadoVerificacao?.duplicadas.length || 0,
+        atribuicao,
+      });
+      setEtapa("resultado");
     }
   };
 
@@ -401,6 +418,7 @@ export function PJeImportModal({
                 {etapa === "configurar" && "Configure a atribuição"}
                 {etapa === "colar" && "Cole o texto das intimações"}
                 {etapa === "revisar" && "Revise antes de importar"}
+                {etapa === "resultado" && "Importação enviada"}
               </DialogDescription>
             </div>
           </div>
@@ -939,6 +957,89 @@ export function PJeImportModal({
                     })()}
                   </>
                 )}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ETAPA 4: RESULTADO */}
+        {etapa === "resultado" && importResult && (
+          <div className="py-8 space-y-6">
+            <div className="text-center space-y-3">
+              <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200">
+                Importação enviada com sucesso
+              </h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
+                As intimações foram enviadas para processamento. Verifique a lista de demandas para confirmar.
+              </p>
+            </div>
+
+            {/* Resumo numérico */}
+            <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
+              <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 text-center">
+                <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
+                  {importResult.enviadas}
+                </span>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-500 font-medium mt-0.5">
+                  Enviadas
+                </p>
+              </div>
+              {importResult.excluidas > 0 && (
+                <div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-3 text-center">
+                  <span className="text-2xl font-bold text-zinc-500 dark:text-zinc-400">
+                    {importResult.excluidas}
+                  </span>
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-medium mt-0.5">
+                    Excluídas
+                  </p>
+                </div>
+              )}
+              {importResult.duplicatas > 0 && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 text-center">
+                  <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                    {importResult.duplicatas}
+                  </span>
+                  <p className="text-[10px] text-amber-600 dark:text-amber-500 font-medium mt-0.5">
+                    Duplicatas
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Detalhes */}
+            <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4 text-xs text-zinc-600 dark:text-zinc-400 max-w-md mx-auto space-y-1">
+              <div className="flex justify-between">
+                <span>Atribuição:</span>
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">{importResult.atribuicao}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Total no texto:</span>
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">{reviewRows.length + (resultadoVerificacao?.duplicadas.length || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Novas (revisadas):</span>
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">{reviewRows.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Enviadas para importar:</span>
+                <span className="font-semibold text-emerald-700 dark:text-emerald-400">{importResult.enviadas}</span>
+              </div>
+            </div>
+
+            {/* Botão fechar */}
+            <div className="flex justify-center">
+              <Button
+                onClick={() => {
+                  onClose();
+                  setTimeout(resetModal, 300);
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-8"
+              >
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                Confirmar e Fechar
               </Button>
             </div>
           </div>

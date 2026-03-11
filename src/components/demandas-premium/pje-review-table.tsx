@@ -412,6 +412,9 @@ export function PjeReviewTable({
                       Tipo
                     </th>
                   )}
+                  <th className="px-2 py-2 text-left text-zinc-500 dark:text-zinc-400 font-medium min-w-[75px]">
+                    Expedição
+                  </th>
                   <th className="px-2 py-2 text-left text-zinc-500 dark:text-zinc-400 font-medium min-w-[150px]">
                     Ato
                   </th>
@@ -599,6 +602,13 @@ function PjeReviewRowComponent({
           </span>
         </td>
       )}
+
+      {/* Data Expedição */}
+      <td className="px-2 py-1.5">
+        <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono whitespace-nowrap">
+          {row.dataExpedicao ? row.dataExpedicao.split(" ")[0] : "—"}
+        </span>
+      </td>
 
       {/* Ato (dropdown) */}
       <td className="px-2 py-1.5">
