@@ -172,37 +172,48 @@ function toTitleCase(nome: string): string {
 export function detectarAtribuicao(texto: string): { atribuicao: string | null; vara: string | null } {
   const textoLower = texto.toLowerCase();
 
-  // Violência Doméstica
-  if (textoLower.includes('violência doméstica') || textoLower.includes('violencia domestica')) {
-    return { atribuicao: 'Violência Doméstica', vara: 'Vara de Violência Doméstica' };
+  // Detecção baseada em padrões de VARA (mais específico, evita falsos positivos)
+  // A ordem importa: padrões mais específicos primeiro
+
+  // Júri (checar ANTES de Execução e VVD, pois "Júri e Execuções" contém "execuções")
+  if (textoLower.includes('vara do júri') || textoLower.includes('vara do juri') ||
+      textoLower.includes('júri e execuções') || textoLower.includes('juri e execucoes') ||
+      textoLower.includes('tribunal do júri') || textoLower.includes('tribunal do juri')) {
+    return { atribuicao: 'Tribunal do Júri', vara: 'Vara do Júri' };
   }
 
-  // Júri
-  if (textoLower.includes('vara do júri') || textoLower.includes('vara do juri') ||
-      textoLower.includes('júri e execuções') || textoLower.includes('juri e execucoes')) {
-    return { atribuicao: 'Tribunal do Júri', vara: 'Vara do Júri' };
+  // Violência Doméstica — buscar por padrão de VARA, não texto genérico
+  // "vara de violência" ou "vara da violência" ou "vara vvd" ou "juizado de violência"
+  if (textoLower.includes('vara de violência') || textoLower.includes('vara de violencia') ||
+      textoLower.includes('vara da violência') || textoLower.includes('vara da violencia') ||
+      textoLower.includes('juizado de violência') || textoLower.includes('juizado de violencia') ||
+      /\/vara\s+.*viol[eê]ncia/i.test(texto) ||
+      /\/\d+ª?\s*v[.]?\s*.*viol[eê]ncia/i.test(texto)) {
+    return { atribuicao: 'Violência Doméstica', vara: 'Vara de Violência Doméstica' };
   }
 
   // Execução Penal
   if (textoLower.includes('execuções penais') || textoLower.includes('execucoes penais') ||
-      textoLower.includes('vara de execução') || textoLower.includes('vep')) {
+      textoLower.includes('vara de execução') || textoLower.includes('vara de execucao') ||
+      textoLower.includes('vep')) {
     return { atribuicao: 'Execução Penal', vara: 'Vara de Execuções Penais' };
   }
 
-  // Criminal
-  if (textoLower.includes('vara criminal') || textoLower.includes('1ª vara criminal') ||
-      textoLower.includes('2ª vara criminal') || textoLower.includes('3ª vara criminal')) {
+  // Criminal (varas criminais genéricas)
+  if (textoLower.includes('vara criminal') || /\d+ª?\s*vara\s+criminal/i.test(texto)) {
     return { atribuicao: 'Substituição Criminal', vara: 'Vara Criminal' };
   }
 
   // Infância e Juventude
-  if (textoLower.includes('infância') || textoLower.includes('infancia') ||
-      textoLower.includes('juventude') || textoLower.includes('infracional')) {
+  if (textoLower.includes('vara da infância') || textoLower.includes('vara da infancia') ||
+      textoLower.includes('vara de infância') || textoLower.includes('vara de infancia') ||
+      textoLower.includes('infracional')) {
     return { atribuicao: 'Infância', vara: 'Vara da Infância e Juventude' };
   }
 
   // Família
-  if (textoLower.includes('vara de família') || textoLower.includes('vara de familia')) {
+  if (textoLower.includes('vara de família') || textoLower.includes('vara de familia') ||
+      textoLower.includes('vara da família') || textoLower.includes('vara da familia')) {
     return { atribuicao: 'Família', vara: 'Vara de Família' };
   }
 

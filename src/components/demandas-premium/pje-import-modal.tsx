@@ -34,6 +34,7 @@ interface PJeImportModalProps {
   statusOptions: Array<{ value: string; label: string; icon?: any }>;
   demandasExistentes?: any[]; // Lista de demandas já cadastradas
   onVVDImportComplete?: () => void; // Callback para atualizar página VVD após importação
+  defaultAtribuicao?: string; // Atribuição pré-selecionada na view (filtro ativo)
 }
 
 export function PJeImportModal({
@@ -43,6 +44,7 @@ export function PJeImportModal({
   atribuicaoOptions,
   demandasExistentes = [],
   onVVDImportComplete,
+  defaultAtribuicao,
 }: PJeImportModalProps) {
   const [texto, setTexto] = useState("");
   const [intimacoes, setIntimacoes] = useState<IntimacaoPJeSimples[]>([]);
@@ -51,11 +53,19 @@ export function PJeImportModal({
   const [isImporting, setIsImporting] = useState(false);
 
   // Configurações globais - APENAS ATRIBUIÇÃO
-  // Inicializa com a primeira opção NÃO-"Todas", ou "Júri" como fallback
+  // Prioridade: defaultAtribuicao (filtro da view) > primeira opção válida > fallback
   const [atribuicao, setAtribuicao] = useState(() => {
+    if (defaultAtribuicao && defaultAtribuicao !== "Todas") return defaultAtribuicao;
     const first = atribuicaoOptions.find(o => o.value !== "Todas");
     return first?.value || "Tribunal do Júri";
   });
+
+  // Quando o modal é aberto, atualizar atribuição se defaultAtribuicao mudou
+  useEffect(() => {
+    if (isOpen && defaultAtribuicao && defaultAtribuicao !== "Todas" && etapa === "configurar") {
+      setAtribuicao(defaultAtribuicao);
+    }
+  }, [isOpen, defaultAtribuicao]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Para VVD - separação de MPU e demandas gerais
   const [intimacoesMPU, setIntimacoesMPU] = useState<IntimacaoPJeSimples[]>([]);
@@ -153,9 +163,13 @@ export function PJeImportModal({
         return;
       }
 
-      // Se a atribuição foi detectada automaticamente, atualizar
+      // Se a atribuição foi detectada automaticamente e difere da selecionada,
+      // INFORMAR o usuário em vez de sobrescrever silenciosamente
       if (resultadoParser.atribuicaoDetectada && resultadoParser.atribuicaoDetectada !== atribuicao) {
-        setAtribuicao(resultadoParser.atribuicaoDetectada);
+        toast.info(
+          `Vara detectada: ${resultadoParser.atribuicaoDetectada}. Sua seleção (${atribuicao}) será mantida. Altere na etapa anterior se necessário.`,
+          { duration: 6000 }
+        );
       }
 
       // Verificar duplicatas com as demandas existentes
@@ -240,7 +254,10 @@ export function PJeImportModal({
     setIntimacoesMPU([]);
     setIntimacoesGerais([]);
     setEtapa("configurar");
-    setAtribuicao(atribuicaoOptions.find(o => o.value !== "Todas")?.value || "Tribunal do Júri");
+    setAtribuicao(
+      (defaultAtribuicao && defaultAtribuicao !== "Todas") ? defaultAtribuicao
+        : atribuicaoOptions.find(o => o.value !== "Todas")?.value || "Tribunal do Júri"
+    );
     setTipoIntimacaoVVD("CIENCIA");
     setResultadoVerificacao(null);
     setIsImporting(false);

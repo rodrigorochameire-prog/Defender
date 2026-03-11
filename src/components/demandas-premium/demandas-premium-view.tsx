@@ -98,6 +98,8 @@ import {
   Inbox,
   Bell,
   BellOff,
+  User,
+  Mail,
   UserCheck,
   ArrowUpDown,
   ChevronDown,
@@ -299,16 +301,34 @@ const atribuicaoOptions = [
 ];
 
 const statusOptions = [
+  // Triagem
+  { value: "fila", label: "Fila", icon: ListTodo },
+  { value: "atender", label: "Atender", icon: User },
   { value: "urgente", label: "Urgente", icon: AlertTriangle },
-  { value: "analisar", label: "Analisar", icon: Search },
+  // Preparação
   { value: "elaborar", label: "Elaborar", icon: FileEdit },
   { value: "elaborando", label: "Elaborando", icon: FileEdit },
+  { value: "analisar", label: "Analisar", icon: Search },
+  { value: "relatorio", label: "Relatório", icon: FileEdit },
   { value: "revisar", label: "Revisar", icon: FileCheck },
+  { value: "revisando", label: "Revisando", icon: FileCheck },
+  // Diligências
+  { value: "documentos", label: "Documentos", icon: FileText },
+  { value: "testemunhas", label: "Testemunhas", icon: Users },
+  { value: "investigar", label: "Investigar", icon: Eye },
+  { value: "buscar", label: "Buscar", icon: Search },
+  { value: "oficiar", label: "Oficiar", icon: Mail },
+  // Saída
   { value: "protocolar", label: "Protocolar", icon: Upload },
-  { value: "fila", label: "Fila", icon: ListTodo },
+  { value: "monitorar", label: "Monitorar", icon: Eye },
+  // Concluída
   { value: "protocolado", label: "Protocolado", icon: CheckCircle2 },
-  { value: "monitorar", label: "Monitorar", icon: CheckCircle2 },
+  { value: "ciencia", label: "Ciência", icon: Eye },
   { value: "resolvido", label: "Resolvido", icon: CheckCircle2 },
+  { value: "constituiu_advogado", label: "Constituiu advogado", icon: Scale },
+  { value: "sem_atuacao", label: "Sem atuação", icon: XCircle },
+  // Arquivado
+  { value: "arquivado", label: "Arquivado", icon: Archive },
 ];
 
 const atoGroups = {
@@ -2599,6 +2619,7 @@ export default function Demandas() {
         atoOptions={atoOptionsFiltered}
         statusOptions={statusOptions}
         demandasExistentes={allDemandas}
+        defaultAtribuicao={selectedAtribuicoes.length === 1 ? selectedAtribuicoes[0] : undefined}
       />
       <SheetsImportModal
         isOpen={isSheetsImportModalOpen}

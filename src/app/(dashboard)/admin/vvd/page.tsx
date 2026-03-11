@@ -543,6 +543,7 @@ export default function VVDPage() {
         statusOptions={[]}
         demandasExistentes={[]}
         onVVDImportComplete={handleImportComplete}
+        defaultAtribuicao="Violência Doméstica"
       />
     </div>
   );
