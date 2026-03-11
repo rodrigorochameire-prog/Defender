@@ -51,10 +51,11 @@ export function PJeImportModal({
   const [isImporting, setIsImporting] = useState(false);
 
   // Configurações globais - APENAS ATRIBUIÇÃO
-  // Inicializa com a primeira opção disponível, ou "Júri" como fallback
-  const [atribuicao, setAtribuicao] = useState(
-    atribuicaoOptions.length > 0 ? atribuicaoOptions[0].value : "Tribunal do Júri"
-  );
+  // Inicializa com a primeira opção NÃO-"Todas", ou "Júri" como fallback
+  const [atribuicao, setAtribuicao] = useState(() => {
+    const first = atribuicaoOptions.find(o => o.value !== "Todas");
+    return first?.value || "Tribunal do Júri";
+  });
 
   // Para VVD - separação de MPU e demandas gerais
   const [intimacoesMPU, setIntimacoesMPU] = useState<IntimacaoPJeSimples[]>([]);
@@ -239,7 +240,7 @@ export function PJeImportModal({
     setIntimacoesMPU([]);
     setIntimacoesGerais([]);
     setEtapa("configurar");
-    setAtribuicao(atribuicaoOptions.length > 0 ? atribuicaoOptions[0].value : "Tribunal do Júri");
+    setAtribuicao(atribuicaoOptions.find(o => o.value !== "Todas")?.value || "Tribunal do Júri");
     setTipoIntimacaoVVD("CIENCIA");
     setResultadoVerificacao(null);
     setIsImporting(false);

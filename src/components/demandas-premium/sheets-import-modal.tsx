@@ -24,7 +24,9 @@ import {
   Shield,
   Target,
   RefreshCw,
+  ChevronDown,
 } from "lucide-react";
+import { DEMANDA_STATUS, STATUS_GROUPS } from "@/config/demanda-status";
 
 // Componente de célula editável inline — clique para editar
 function EditableCell({
@@ -79,6 +81,87 @@ function EditableCell({
     >
       {value || placeholder}
     </span>
+  );
+}
+
+// Mapa rápido de status key → config para lookup na tabela
+const DEMANDA_STATUS_MAP: Record<string, { label: string; color: string }> = {};
+for (const [key, config] of Object.entries(DEMANDA_STATUS)) {
+  const groupColor = STATUS_GROUPS[config.group]?.color || "#A1A1AA";
+  DEMANDA_STATUS_MAP[key] = { label: config.label, color: groupColor };
+  // Também mapear pelo label normalizado para match com parseStatus
+  DEMANDA_STATUS_MAP[config.label.toLowerCase().replace(/\s+/g, "_")] = { label: config.label, color: groupColor };
+}
+
+// Opções flat para o dropdown de status
+const STATUS_DROPDOWN_OPTIONS = Object.entries(DEMANDA_STATUS).map(([key, config]) => ({
+  value: config.label,
+  label: config.label,
+  group: STATUS_GROUPS[config.group]?.label || "Outro",
+  color: STATUS_GROUPS[config.group]?.color || "#A1A1AA",
+}));
+
+// Dropdown inline para status com cor
+function StatusDropdown({
+  value,
+  onChange,
+  color,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  color: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold hover:opacity-80 transition-opacity cursor-pointer max-w-[90px]"
+        style={{ backgroundColor: `${color}20`, color }}
+      >
+        <span
+          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+          style={{ backgroundColor: color }}
+        />
+        <span className="truncate">{value}</span>
+        <ChevronDown className="w-2.5 h-2.5 flex-shrink-0 opacity-60" />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl z-50 min-w-[160px] max-h-48 overflow-y-auto py-1">
+          {STATUS_DROPDOWN_OPTIONS.map((opt, i) => {
+            const isFirst = i === 0 || STATUS_DROPDOWN_OPTIONS[i - 1]?.group !== opt.group;
+            return (
+              <div key={opt.value}>
+                {isFirst && i > 0 && <div className="my-1 border-t border-zinc-100 dark:border-zinc-800" />}
+                {isFirst && (
+                  <div className="px-3 py-0.5 text-[9px] text-zinc-400 font-semibold uppercase tracking-wider">
+                    {opt.group}
+                  </div>
+                )}
+                <button
+                  onClick={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                  }}
+                  className={`w-full px-3 py-1 text-left text-[11px] transition-colors ${
+                    opt.value === value
+                      ? "bg-zinc-50 dark:bg-zinc-800/50 font-semibold"
+                      : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                  }`}
+                  style={{ color: opt.color }}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: opt.color }} />
+                    {opt.label}
+                  </span>
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -803,19 +886,22 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
                 <table className="w-full text-xs">
                   <thead className="bg-zinc-100 dark:bg-zinc-800 sticky top-0 z-10">
                     <tr>
-                      <th className="px-2 py-1.5 text-left font-medium w-[60px]">Status</th>
+                      <th className="px-2 py-1.5 text-left font-medium w-[40px]"></th>
+                      <th className="px-2 py-1.5 text-left font-medium w-[100px]">Status</th>
                       <th className="px-2 py-1.5 text-left font-medium">Assistido</th>
                       <th className="px-2 py-1.5 text-left font-medium">Processo</th>
                       <th className="px-2 py-1.5 text-left font-medium">Ato</th>
                       <th className="px-2 py-1.5 text-left font-medium w-[80px]">Data</th>
                       <th className="px-2 py-1.5 text-left font-medium w-[80px]">Prazo</th>
-                      <th className="px-2 py-1.5 text-left font-medium w-[60px]"></th>
+                      <th className="px-2 py-1.5 text-left font-medium w-[40px]"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                     {parsedDemandas.map((demanda) => {
                       const isDup = duplicatas.some(d => d.nova.id === demanda.id);
                       const isNew = demandasNovas.some(d => d.id === demanda.id);
+                      const statusConfig = DEMANDA_STATUS_MAP[demanda.status.toLowerCase().replace(/\s+/g, "_")];
+                      const statusColor = statusConfig?.color || "#A1A1AA";
 
                       return (
                         <tr
@@ -828,22 +914,31 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
                                 : ""
                           }
                         >
-                          {/* Status */}
+                          {/* Tipo (Nova/Atualizar) + Preso */}
                           <td className="px-2 py-1.5">
                             <div className="flex items-center gap-1">
                               {isDup ? (
                                 <Badge variant="outline" className="text-[9px] py-0 px-1 border-purple-300 text-purple-700 dark:text-purple-300 whitespace-nowrap">
-                                  Atualizar
+                                  Atu
                                 </Badge>
                               ) : isNew ? (
                                 <Badge variant="outline" className="text-[9px] py-0 px-1 border-blue-300 text-blue-700 dark:text-blue-300 whitespace-nowrap">
-                                  Nova
+                                  N
                                 </Badge>
                               ) : null}
                               {demanda.estadoPrisional === "preso" && (
                                 <Lock className="w-3 h-3 text-red-500 shrink-0" />
                               )}
                             </div>
+                          </td>
+
+                          {/* Status — editável com dropdown inline */}
+                          <td className="px-2 py-1.5">
+                            <StatusDropdown
+                              value={demanda.status}
+                              onChange={(v) => handleUpdateField(demanda.id, 'status', v)}
+                              color={statusColor}
+                            />
                           </td>
 
                           {/* Assistido — editável */}

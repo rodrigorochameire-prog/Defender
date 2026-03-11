@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Check, X, HelpCircle, User, AlertTriangle } from "lucide-react";
+import { Check, AlertTriangle, Filter, Wand2, Eye, EyeOff, FileText } from "lucide-react";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
 import { getAtosPorAtribuicao, getTodosAtosUnicos } from "@/config/atos-por-atribuicao";
@@ -113,6 +113,10 @@ function calcularPrazoParaAto(dataExpedicao: string, ato: string): string {
   }
 }
 
+// Tipos de filtro
+type ConfidenceFilter = "all" | "low" | "medium" | "high";
+type MatchFilter = "all" | "exact" | "similar" | "new";
+
 // ============================================================================
 // COMPONENTE PRINCIPAL
 // ============================================================================
@@ -123,11 +127,24 @@ export function PjeReviewTable({
   atribuicao,
   showTipoProcesso = false,
 }: PjeReviewTableProps) {
+  // Filtros
+  const [confidenceFilter, setConfidenceFilter] = useState<ConfidenceFilter>("all");
+  const [matchFilter, setMatchFilter] = useState<MatchFilter>("all");
+  const [showExcluded, setShowExcluded] = useState(true);
+  const [bulkAto, setBulkAto] = useState("");
+  const [bulkStatus, setBulkStatus] = useState("");
+
   // Opções de ato baseadas na atribuição
+  // Se a atribuição não tem atos configurados, fallback para todos os atos únicos
   const atoOptions = useMemo(() => {
-    const atos = atribuicao
-      ? getAtosPorAtribuicao(atribuicao).filter((a) => a.value !== "Todos")
-      : getTodosAtosUnicos();
+    let atos: Array<{ value: string; label: string }>;
+    if (atribuicao) {
+      const atosAtrib = getAtosPorAtribuicao(atribuicao).filter((a) => a.value !== "Todos");
+      // Fallback: se a atribuição não tem atos configurados, usa todos
+      atos = atosAtrib.length > 0 ? atosAtrib : getTodosAtosUnicos().filter((a) => a.value !== "Todos");
+    } else {
+      atos = getTodosAtosUnicos().filter((a) => a.value !== "Todos");
+    }
     return atos.map((a) => ({
       value: a.value,
       label: a.label,
@@ -150,6 +167,16 @@ export function PjeReviewTable({
     { value: "preso", label: "Preso" },
     { value: "monitorado", label: "Monitorado" },
   ];
+
+  // Filtrar rows para exibição
+  const filteredRows = useMemo(() => {
+    return rows.map((row, originalIndex) => ({ row, originalIndex })).filter(({ row }) => {
+      if (!showExcluded && row.excluded) return false;
+      if (confidenceFilter !== "all" && row.atoConfidence !== confidenceFilter) return false;
+      if (matchFilter !== "all" && row.assistidoMatch.type !== matchFilter) return false;
+      return true;
+    });
+  }, [rows, confidenceFilter, matchFilter, showExcluded]);
 
   // Handlers
   const updateRow = (index: number, updates: Partial<PjeReviewRow>) => {
@@ -186,19 +213,55 @@ export function PjeReviewTable({
     onRowsChange(rows.map((r) => ({ ...r, excluded: allIncluded })));
   };
 
+  // Bulk actions — aplicar a todas as rows incluídas (não excluídas)
+  const handleBulkAto = (ato: string) => {
+    setBulkAto(ato);
+    const newRows = rows.map((row) => {
+      if (row.excluded) return row;
+      const updates: Partial<PjeReviewRow> = { ato };
+      if (!row.prazoManual) {
+        updates.prazo = calcularPrazoParaAto(row.dataExpedicao, ato);
+      }
+      return { ...row, ...updates };
+    });
+    onRowsChange(newRows);
+  };
+
+  const handleBulkStatus = (status: string) => {
+    setBulkStatus(status);
+    const newRows = rows.map((row) => {
+      if (row.excluded) return row;
+      return { ...row, status };
+    });
+    onRowsChange(newRows);
+  };
+
+  // Marcar todas "Ciência" como excluídas (ação rápida)
+  const handleExcludeCiencias = () => {
+    const newRows = rows.map((row) => {
+      if (row.ato.startsWith("Ciência")) {
+        return { ...row, excluded: true };
+      }
+      return row;
+    });
+    onRowsChange(newRows);
+  };
+
   // Resumo
   const includedCount = rows.filter((r) => !r.excluded).length;
   const matchExact = rows.filter((r) => r.assistidoMatch.type === "exact").length;
   const matchSimilar = rows.filter((r) => r.assistidoMatch.type === "similar").length;
   const matchNew = rows.filter((r) => r.assistidoMatch.type === "new").length;
+  const lowConfCount = rows.filter((r) => r.atoConfidence === "low" && !r.excluded).length;
+  const cienciaCount = rows.filter((r) => r.ato.startsWith("Ciência") && !r.excluded).length;
 
   return (
     <TooltipProvider>
       <div className="space-y-3">
         {/* Barra de resumo */}
-        <div className="flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400 px-1">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400 px-1">
           <span className="font-medium text-zinc-700 dark:text-zinc-300">
-            {includedCount} para importar
+            {includedCount}/{rows.length} para importar
           </span>
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -212,6 +275,112 @@ export function PjeReviewTable({
             <span className="w-2 h-2 rounded-full bg-red-500" />
             {matchNew} novos
           </span>
+          {lowConfCount > 0 && (
+            <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+              <AlertTriangle className="w-3 h-3" />
+              {lowConfCount} a conferir
+            </span>
+          )}
+        </div>
+
+        {/* Barra de filtros + ações em massa */}
+        <div className="flex flex-wrap items-center gap-2 px-1">
+          {/* Filtros rápidos */}
+          <div className="flex items-center gap-1">
+            <Filter className="w-3 h-3 text-zinc-400" />
+            <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium mr-0.5">Filtros:</span>
+            {/* Confiança */}
+            <button
+              onClick={() => setConfidenceFilter(confidenceFilter === "low" ? "all" : "low")}
+              className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                confidenceFilter === "low"
+                  ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                  : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              }`}
+            >
+              Baixa confiança
+            </button>
+            {/* Match novos */}
+            <button
+              onClick={() => setMatchFilter(matchFilter === "new" ? "all" : "new")}
+              className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                matchFilter === "new"
+                  ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                  : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              }`}
+            >
+              Novos
+            </button>
+            {/* Toggle excluídos */}
+            <button
+              onClick={() => setShowExcluded(!showExcluded)}
+              className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors flex items-center gap-0.5 ${
+                !showExcluded
+                  ? "bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300"
+                  : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              }`}
+            >
+              {showExcluded ? <Eye className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
+              Excluídos
+            </button>
+            {/* Reset */}
+            {(confidenceFilter !== "all" || matchFilter !== "all" || !showExcluded) && (
+              <button
+                onClick={() => { setConfidenceFilter("all"); setMatchFilter("all"); setShowExcluded(true); }}
+                className="px-1.5 py-0.5 rounded text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+              >
+                Limpar
+              </button>
+            )}
+          </div>
+
+          <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700 mx-1" />
+
+          {/* Ações em massa */}
+          <div className="flex items-center gap-1">
+            <Wand2 className="w-3 h-3 text-zinc-400" />
+            <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium mr-0.5">Lote:</span>
+            {/* Bulk Ato — via InlineDropdown */}
+            <InlineDropdown
+              value={bulkAto}
+              compact
+              displayValue={
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 font-medium">
+                  Ato p/ todos
+                </span>
+              }
+              options={atoOptions}
+              onChange={handleBulkAto}
+            />
+            {/* Bulk Status */}
+            <InlineDropdown
+              value={bulkStatus}
+              compact
+              displayValue={
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 font-medium">
+                  Status p/ todos
+                </span>
+              }
+              options={statusOptions}
+              onChange={handleBulkStatus}
+            />
+            {/* Quick: excluir ciências */}
+            {cienciaCount > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleExcludeCiencias}
+                    className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
+                  >
+                    Excluir {cienciaCount} ciências
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  Desmarca todas as intimações de ciência (normalmente não geram trabalho)
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </div>
 
         {/* Tabela */}
@@ -258,11 +427,11 @@ export function PjeReviewTable({
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row, index) => (
-                  <PjeReviewRow
+                {filteredRows.map(({ row, originalIndex }) => (
+                  <PjeReviewRowComponent
                     key={row.ordemOriginal}
                     row={row}
-                    index={index}
+                    index={originalIndex}
                     atoOptions={atoOptions}
                     statusOptions={statusOptions}
                     estadoPrisionalOptions={estadoPrisionalOptions}
@@ -277,6 +446,11 @@ export function PjeReviewTable({
               </tbody>
             </table>
           </div>
+          {filteredRows.length === 0 && (
+            <div className="py-6 text-center text-xs text-zinc-400 dark:text-zinc-500">
+              Nenhuma intimação corresponde aos filtros selecionados
+            </div>
+          )}
         </div>
       </div>
     </TooltipProvider>
@@ -301,7 +475,7 @@ interface PjeReviewRowProps {
   showTipoProcesso?: boolean;
 }
 
-function PjeReviewRow({
+function PjeReviewRowComponent({
   row,
   index,
   atoOptions,
@@ -321,11 +495,16 @@ function PjeReviewRow({
   const statusGroup = statusConfig?.group || "triagem";
   const statusColor = STATUS_GROUPS[statusGroup]?.color || "#A1A1AA";
 
+  // Info extra (crime + tipoDocumento) para tooltip do processo
+  const extraInfo = [row.tipoDocumento, row.crime].filter(Boolean).join(" · ");
+
   return (
     <tr
       className={`border-b border-zinc-100 dark:border-zinc-800 transition-colors ${
         row.excluded
           ? "opacity-40 bg-zinc-50 dark:bg-zinc-900"
+          : row.atoConfidence === "low"
+          ? "bg-amber-50/40 dark:bg-amber-950/10"
           : "hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
       }`}
     >
@@ -382,11 +561,28 @@ function PjeReviewRow({
         </div>
       </td>
 
-      {/* Processo */}
+      {/* Processo + crime/tipoDoc como subtexto */}
       <td className="px-2 py-1.5">
-        <span className="text-zinc-600 dark:text-zinc-400 font-mono text-[10px] truncate max-w-[130px] block" title={row.numeroProcesso}>
-          {row.numeroProcesso || "—"}
-        </span>
+        <div className="flex flex-col gap-0">
+          <span className="text-zinc-600 dark:text-zinc-400 font-mono text-[10px] truncate max-w-[130px] block" title={row.numeroProcesso}>
+            {row.numeroProcesso || "—"}
+          </span>
+          {extraInfo && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-[9px] text-zinc-400 dark:text-zinc-500 truncate max-w-[130px] block cursor-help flex items-center gap-0.5">
+                  <FileText className="w-2.5 h-2.5 inline flex-shrink-0" />
+                  {extraInfo}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs max-w-[300px]">
+                {row.tipoDocumento && <div><strong>Tipo:</strong> {row.tipoDocumento}</div>}
+                {row.crime && <div><strong>Crime:</strong> {row.crime}</div>}
+                {row.dataExpedicao && <div><strong>Expedição:</strong> {row.dataExpedicao}</div>}
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
       </td>
 
       {/* Tipo Processo (VVD) */}
@@ -407,7 +603,15 @@ function PjeReviewRow({
       {/* Ato (dropdown) */}
       <td className="px-2 py-1.5">
         <div className="flex items-center gap-1">
-          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${confidenceClass}`} title={`Confiança: ${row.atoConfidence}`} />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${confidenceClass}`} />
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              Confiança: {row.atoConfidence === "high" ? "Alta" : row.atoConfidence === "medium" ? "Média" : "Baixa"}
+              {row.atoConfidence === "low" && <><br /><span className="text-amber-400">Confira manualmente</span></>}
+            </TooltipContent>
+          </Tooltip>
           <InlineDropdown
             value={row.ato}
             compact

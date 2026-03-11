@@ -149,6 +149,61 @@ export const ATOS_POR_ATRIBUICAO: Record<string, string[]> = {
     "Atualização de endereço"
   ],
 
+  // Alias: "Grupo Especial do Júri" usa os mesmos atos do Tribunal do Júri
+  "Grupo Especial do Júri": [
+    "Resposta à Acusação",
+    "Alegações finais",
+    "Apelação",
+    "Contrarrazões de apelação",
+    "Razões de apelação",
+    "RESE",
+    "Razões de RESE",
+    "Contrarrazões de RESE",
+    "Diligências do 422",
+    "Incidente de insanidade",
+    "Revogação da prisão",
+    "Relaxamento da prisão",
+    "Relaxamento e revogação de prisão",
+    "Revogação do monitoramento",
+    "Habeas Corpus",
+    "Restituição de coisa",
+    "Ofício",
+    "Ciência habilitação DPE",
+    "Ciência de decisão",
+    "Ciência da pronúncia",
+    "Ciência da impronúncia",
+    "Ciência da absolvição",
+    "Ciência desclassificação",
+    "Ciência da prescrição",
+    "Ciência laudo de exame",
+    "Ciência revogação prisão",
+    "Ciência",
+    "Outro",
+    "Desaforamento",
+    "Petição intermediária",
+    "Prosseguimento do feito",
+    "Atualização de endereço"
+  ],
+
+  // Alias: "Curadoria Especial" usa os mesmos atos da Curadoria
+  "Curadoria Especial": [
+    "Contestação",
+    "Alegações finais",
+    "Apelação",
+    "Razões de apelação",
+    "Contrarrazões de apelação",
+    "Embargos de Declaração",
+    "Contrarrazões de ED",
+    "Ciência de sentença",
+    "Ciência habilitação DPE",
+    "Ciência de decisão",
+    "Ciência acórdão",
+    "Outro",
+    "Petição intermediária",
+    "Prosseguimento do feito",
+    "Atualização de endereço"
+  ],
+
   "Criminal Geral": [
     "Atendimento Inicial",
     "Resposta à Acusação",
