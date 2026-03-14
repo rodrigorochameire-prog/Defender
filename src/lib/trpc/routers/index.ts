@@ -59,6 +59,7 @@ import { speakerLabelsRouter } from "./speakerLabels";
 import { juriAnalyticsRouter } from "./juriAnalytics";
 import { posJuriRouter } from "./posJuri";
 import { radarRouter } from "./radar";
+import { legislacaoRouter } from "./legislacao";
 
 
 export const appRouter = router({
@@ -263,6 +264,11 @@ export const appRouter = router({
   // RADAR CRIMINAL (INTELIGÊNCIA CRIMINAL)
   // ==========================================
   radar: radarRouter,
+
+  // ==========================================
+  // LEGISLACAO - CONSULTA DE LEIS
+  // ==========================================
+  legislacao: legislacaoRouter,
 });
 
 export type AppRouter = typeof appRouter;
