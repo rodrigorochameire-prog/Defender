@@ -27,6 +27,7 @@ import {
 import { format, parseISO, differenceInDays, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { UI_STATUS_TO_DB, ALL_STATUS_OPTIONS, getStatusConfig } from "@/config/demanda-status";
 
 // ─── Status color map (DB enum → badge style) ────────────────────────
 const STATUS_BADGE_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -65,18 +66,12 @@ const ATRIBUICAO_LABELS: Record<string, string> = {
   "SUBSTITUICAO_CIVEL": "Curadoria Especial",
 };
 
-// ─── Status change options ────────────────────────
-const STATUS_OPTIONS = [
-  { value: "2_ATENDER", label: "Atender" },
-  { value: "4_MONITORAR", label: "Monitorar" },
-  { value: "5_FILA", label: "Fila" },
-  { value: "7_PROTOCOLADO", label: "Protocolado" },
-  { value: "7_CIENCIA", label: "Ciência" },
-  { value: "7_SEM_ATUACAO", label: "Sem Atuação" },
-  { value: "URGENTE", label: "Urgente" },
-  { value: "CONCLUIDO", label: "Concluído" },
-  { value: "ARQUIVADO", label: "Arquivado" },
-] as const;
+// ─── Status change options (derivado do DEMANDA_STATUS centralizado) ────
+const STATUS_OPTIONS = ALL_STATUS_OPTIONS.map(opt => ({
+  value: UI_STATUS_TO_DB[opt.value] || opt.value.toUpperCase(),
+  label: opt.label,
+  substatus: opt.value,
+}));
 
 // ─── Helper: format date safely ────────────────────────
 function formatDate(dateStr: string | Date | null | undefined, fmt = "dd/MM/yyyy") {
@@ -179,10 +174,11 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
     } catch { /* ignore */ }
   }
 
-  const handleStatusChange = (newStatus: string) => {
+  const handleStatusChange = (newStatus: string, substatus?: string) => {
     updateMutation.mutate({
       id: demandaId,
       status: newStatus as any,
+      ...(substatus ? { substatus } : {}),
     });
   };
 
@@ -294,22 +290,27 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
               Alterar status para:
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {STATUS_OPTIONS.map((opt) => (
-                <Button
-                  key={opt.value}
-                  variant={demanda.status === opt.value ? "default" : "outline"}
-                  size="sm"
-                  className={
-                    demanda.status === opt.value
-                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-zinc-200 dark:border-zinc-700 text-xs"
-                  }
-                  disabled={updateMutation.isPending}
-                  onClick={() => handleStatusChange(opt.value)}
-                >
-                  {opt.label}
-                </Button>
-              ))}
+              {STATUS_OPTIONS.map((opt) => {
+                const isActive = demanda.substatus
+                  ? demanda.substatus === opt.substatus
+                  : demanda.status === opt.value;
+                return (
+                  <Button
+                    key={opt.substatus}
+                    variant={isActive ? "default" : "outline"}
+                    size="sm"
+                    className={
+                      isActive
+                        ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                        : "border-zinc-200 dark:border-zinc-700 text-xs"
+                    }
+                    disabled={updateMutation.isPending}
+                    onClick={() => handleStatusChange(opt.value, opt.substatus)}
+                  >
+                    {opt.label}
+                  </Button>
+                );
+              })}
             </div>
           </div>
         )}

@@ -10,15 +10,22 @@ import { getDefensoresVisiveis } from "../defensor-scope";
 /**
  * Gera condições de filtro para o calendário baseado no defensor.
  * - Admin/Servidor: vê todos os eventos (agenda integrada)
- * - Defensor: vê apenas eventos que criou (agenda separada)
+ * - Rodrigo (1) e Juliane (4): agenda compartilhada (veem eventos de ambos)
+ * - Outros defensores: vê apenas eventos que criou
  * - Estagiário: vê eventos do supervisor
  */
+const AGENDA_COMPARTILHADA = [1, 4]; // Rodrigo=1, Juliane=4
+
 function getCalendarDefensorFilter(user: any) {
   const defensoresVisiveis = getDefensoresVisiveis(user);
   if (defensoresVisiveis === "all") return []; // Admin/servidor: sem filtro
 
   // Defensor/estagiário: filtrar por createdById
   if (defensoresVisiveis.length === 1) {
+    // Rodrigo e Juliane compartilham agenda
+    if (AGENDA_COMPARTILHADA.includes(defensoresVisiveis[0])) {
+      return [inArray(calendarEvents.createdById, AGENDA_COMPARTILHADA)];
+    }
     return [eq(calendarEvents.createdById, defensoresVisiveis[0])];
   }
   if (defensoresVisiveis.length > 1) {
@@ -110,6 +117,8 @@ export const calendarRouter = router({
             processo: {
               id: processos.id,
               numeroAutos: processos.numeroAutos,
+              atribuicao: processos.atribuicao,
+              area: processos.area,
             },
             assistido: {
               id: assistidos.id,
@@ -177,6 +186,8 @@ export const calendarRouter = router({
             processo: {
               id: processos.id,
               numeroAutos: processos.numeroAutos,
+              atribuicao: processos.atribuicao,
+              area: processos.area,
             },
             assistido: {
               id: assistidos.id,

@@ -26,6 +26,8 @@ import {
   Edit3,
   Archive,
   MoreHorizontal,
+  Copy,
+  Check,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -238,6 +240,34 @@ const prioridadeConfig: Record<string, { color: string; label: string }> = {
   media: { color: "text-blue-600 dark:text-blue-400", label: "Média" },
   baixa: { color: "text-zinc-500 dark:text-zinc-400", label: "Baixa" },
 };
+
+function CopyProcessoInline({ processo, cancelado }: { processo: string; cancelado: boolean }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className={`flex items-center gap-2 text-sm group/proc ${
+      cancelado ? "text-zinc-400" : "text-zinc-600 dark:text-zinc-400"
+    }`}>
+      <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+      <span className="truncate font-mono text-xs">{processo}</span>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          navigator.clipboard.writeText(processo);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        }}
+        className={`shrink-0 p-0.5 rounded transition-all cursor-pointer ${
+          copied
+            ? "text-emerald-500 opacity-100"
+            : "text-zinc-300 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-300 opacity-0 group-hover/proc:opacity-100"
+        }`}
+        title="Copiar"
+      >
+        {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+      </button>
+    </div>
+  );
+}
 
 export function DayEventsPopup({
   isOpen,
@@ -524,12 +554,7 @@ export function DayEventsPopup({
                                 </div>
                               )}
                               {evento.processo && (
-                                <div className={`flex items-center gap-2 text-sm ${
-                                  eventoCancelado ? "text-zinc-400" : "text-zinc-600 dark:text-zinc-400"
-                                }`}>
-                                  <FileText className="w-3.5 h-3.5 flex-shrink-0" />
-                                  <span className="truncate font-mono text-xs">{evento.processo}</span>
-                                </div>
+                                <CopyProcessoInline processo={evento.processo} cancelado={eventoCancelado} />
                               )}
                             </div>
                           )}

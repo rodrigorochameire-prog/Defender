@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect, useMemo } from "react";
-import { FileText, AlertCircle, CheckCircle2, Upload, Download, Settings, User, Scale, ArrowRight, Sparkles, Info, Edit3, AlertTriangle, ChevronDown, Shield, MessageCircle, RefreshCw } from "lucide-react";
+import { FileText, AlertCircle, CheckCircle2, Upload, Download, Settings, User, Scale, ArrowRight, Sparkles, Info, Edit3, AlertTriangle, ChevronDown, Shield, MessageCircle, RefreshCw, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
@@ -22,13 +22,13 @@ import {
   type ResultadoParserVVD,
 } from "@/lib/pje-parser";
 import { suggestAto } from "@/lib/ato-suggestion";
-import { calcularPrazoPorAto, converterISOParaBR } from "@/lib/prazo-calculator";
+import { calcularPrazoPorAto } from "@/lib/prazo-calculator";
 import { PjeReviewTable, type PjeReviewRow } from "./pje-review-table";
 
 interface PJeImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (demandas: any[], atualizarExistentes?: boolean) => void;
+  onImport: (demandas: any[], atualizarExistentes?: boolean) => Promise<{ imported: number; updated: number; skipped: number; errors: string[]; assistidosSemSolar: number }> | void;
   atribuicaoOptions: Array<{ value: string; label: string; icon?: any }>;
   atoOptions: Array<{ value: string; label: string; icon?: any }>;
   statusOptions: Array<{ value: string; label: string; icon?: any }>;
@@ -81,6 +81,12 @@ export function PJeImportModal({
     excluidas: number;
     duplicatas: number;
     atribuicao: string;
+    // Server-confirmed results
+    serverConfirmed: boolean;
+    importadas?: number;
+    atualizadas?: number;
+    ignoradas?: number;
+    erros?: string[];
   } | null>(null);
 
   // PJe Import v2 — review table rows
@@ -219,9 +225,9 @@ export function PJeImportModal({
             const fullYear = ano < 100 ? 2000 + ano : ano;
             const dataExp = new Date(fullYear, mes, dia);
             if (!isNaN(dataExp.getTime())) {
-              const isoResult = calcularPrazoPorAto(dataExp, suggestion.ato);
-              if (isoResult) {
-                prazoCalculado = converterISOParaBR(isoResult);
+              const resultado = calcularPrazoPorAto(dataExp, suggestion.ato);
+              if (resultado) {
+                prazoCalculado = resultado;
               }
             }
           } catch {
@@ -371,18 +377,54 @@ export function PJeImportModal({
 
       const todasDemandas = [...demandasFromRows, ...demandasDuplicadas];
 
-      // Passar flag indicando que deve atualizar existentes
-      onImport(todasDemandas, atualizarDuplicatas);
-
-      // Mostrar tela de resultado com resumo da importação
+      // Mostrar tela de resultado com loading
       const excluidas = reviewRows.filter((r) => r.excluded).length;
       setImportResult({
         enviadas: todasDemandas.length,
         excluidas,
         duplicatas: resultadoVerificacao?.duplicadas.length || 0,
         atribuicao,
+        serverConfirmed: false,
       });
       setEtapa("resultado");
+      setIsImporting(true);
+
+      try {
+        // Esperar resultado do servidor
+        const serverResult = await onImport(todasDemandas, atualizarDuplicatas);
+
+        if (serverResult) {
+          setImportResult((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  serverConfirmed: true,
+                  importadas: serverResult.imported,
+                  atualizadas: serverResult.updated,
+                  ignoradas: serverResult.skipped,
+                  erros: serverResult.errors,
+                }
+              : prev
+          );
+        } else {
+          // onImport não retornou Promise (fallback)
+          setImportResult((prev) =>
+            prev ? { ...prev, serverConfirmed: true } : prev
+          );
+        }
+      } catch (error) {
+        setImportResult((prev) =>
+          prev
+            ? {
+                ...prev,
+                serverConfirmed: true,
+                erros: [(error as Error).message || "Erro desconhecido"],
+              }
+            : prev
+        );
+      } finally {
+        setIsImporting(false);
+      }
     }
   };
 
@@ -966,48 +1008,122 @@ export function PJeImportModal({
         {etapa === "resultado" && importResult && (
           <div className="py-8 space-y-6">
             <div className="text-center space-y-3">
-              <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto">
-                <CheckCircle2 className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200">
-                Importação enviada com sucesso
-              </h3>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
-                As intimações foram enviadas para processamento. Verifique a lista de demandas para confirmar.
-              </p>
+              {isImporting ? (
+                <>
+                  <div className="w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto">
+                    <Loader2 className="w-7 h-7 text-blue-600 dark:text-blue-400 animate-spin" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200">
+                    Importando...
+                  </h3>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
+                    Processando {importResult.enviadas} intimações no servidor. Aguarde.
+                  </p>
+                </>
+              ) : importResult.erros && importResult.erros.length > 0 && (!importResult.importadas || importResult.importadas === 0) ? (
+                <>
+                  <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto">
+                    <AlertCircle className="w-7 h-7 text-red-600 dark:text-red-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200">
+                    Erro na importação
+                  </h3>
+                </>
+              ) : (
+                <>
+                  <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto">
+                    <CheckCircle2 className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200">
+                    {importResult.serverConfirmed ? "Importação confirmada" : "Importação enviada"}
+                  </h3>
+                  {importResult.serverConfirmed && importResult.importadas !== undefined && (
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
+                      {importResult.importadas === importResult.enviadas
+                        ? `Todas as ${importResult.importadas} intimações foram importadas com sucesso.`
+                        : `${importResult.importadas} de ${importResult.enviadas} intimações importadas.`
+                      }
+                    </p>
+                  )}
+                </>
+              )}
             </div>
 
-            {/* Resumo numérico */}
-            <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
-              <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 text-center">
-                <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
-                  {importResult.enviadas}
-                </span>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-500 font-medium mt-0.5">
-                  Enviadas
-                </p>
+            {/* Resumo numérico — servidor confirmado */}
+            {importResult.serverConfirmed && !isImporting && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-lg mx-auto">
+                {importResult.importadas !== undefined && importResult.importadas > 0 && (
+                  <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 text-center">
+                    <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
+                      {importResult.importadas}
+                    </span>
+                    <p className="text-[10px] text-emerald-600 dark:text-emerald-500 font-medium mt-0.5">
+                      Importadas
+                    </p>
+                  </div>
+                )}
+                {importResult.atualizadas !== undefined && importResult.atualizadas > 0 && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
+                    <span className="text-2xl font-bold text-blue-700 dark:text-blue-400">
+                      {importResult.atualizadas}
+                    </span>
+                    <p className="text-[10px] text-blue-600 dark:text-blue-500 font-medium mt-0.5">
+                      Atualizadas
+                    </p>
+                  </div>
+                )}
+                {importResult.ignoradas !== undefined && importResult.ignoradas > 0 && (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 text-center">
+                    <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                      {importResult.ignoradas}
+                    </span>
+                    <p className="text-[10px] text-amber-600 dark:text-amber-500 font-medium mt-0.5">
+                      Ignoradas
+                    </p>
+                  </div>
+                )}
+                {importResult.excluidas > 0 && (
+                  <div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-3 text-center">
+                    <span className="text-2xl font-bold text-zinc-500 dark:text-zinc-400">
+                      {importResult.excluidas}
+                    </span>
+                    <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-medium mt-0.5">
+                      Excluídas
+                    </p>
+                  </div>
+                )}
               </div>
-              {importResult.excluidas > 0 && (
-                <div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-3 text-center">
-                  <span className="text-2xl font-bold text-zinc-500 dark:text-zinc-400">
-                    {importResult.excluidas}
+            )}
+
+            {/* Resumo numérico — antes da confirmação do servidor */}
+            {!importResult.serverConfirmed && !isImporting && (
+              <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
+                <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 text-center">
+                  <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
+                    {importResult.enviadas}
                   </span>
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-medium mt-0.5">
-                    Excluídas
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-500 font-medium mt-0.5">
+                    Enviadas
                   </p>
                 </div>
-              )}
-              {importResult.duplicatas > 0 && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 text-center">
-                  <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                    {importResult.duplicatas}
-                  </span>
-                  <p className="text-[10px] text-amber-600 dark:text-amber-500 font-medium mt-0.5">
-                    Duplicatas
-                  </p>
+              </div>
+            )}
+
+            {/* Erros do servidor */}
+            {importResult.erros && importResult.erros.length > 0 && (
+              <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 max-w-md mx-auto">
+                <p className="text-xs font-medium text-red-700 dark:text-red-400 mb-2">
+                  {importResult.erros.length} erro{importResult.erros.length > 1 ? "s" : ""}:
+                </p>
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {importResult.erros.map((err, i) => (
+                    <p key={i} className="text-[11px] text-red-600 dark:text-red-400">
+                      • {err}
+                    </p>
+                  ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Detalhes */}
             <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4 text-xs text-zinc-600 dark:text-zinc-400 max-w-md mx-auto space-y-1">
@@ -1020,13 +1136,17 @@ export function PJeImportModal({
                 <span className="font-medium text-zinc-700 dark:text-zinc-300">{reviewRows.length + (resultadoVerificacao?.duplicadas.length || 0)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Novas (revisadas):</span>
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">{reviewRows.length}</span>
+                <span>Enviadas ao servidor:</span>
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">{importResult.enviadas}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Enviadas para importar:</span>
-                <span className="font-semibold text-emerald-700 dark:text-emerald-400">{importResult.enviadas}</span>
-              </div>
+              {importResult.serverConfirmed && importResult.importadas !== undefined && (
+                <div className="flex justify-between border-t border-zinc-200 dark:border-zinc-700 pt-1 mt-1">
+                  <span className="font-medium">Confirmadas pelo servidor:</span>
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                    {importResult.importadas + (importResult.atualizadas || 0)}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Botão fechar */}
@@ -1036,10 +1156,20 @@ export function PJeImportModal({
                   onClose();
                   setTimeout(resetModal, 300);
                 }}
+                disabled={isImporting}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white px-8"
               >
-                <CheckCircle2 className="w-4 h-4 mr-2" />
-                Confirmar e Fechar
+                {isImporting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Confirmar e Fechar
+                  </>
+                )}
               </Button>
             </div>
           </div>

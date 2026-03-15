@@ -599,6 +599,35 @@ export default function AgendaPage() {
     lastSync: null,
   });
 
+  // Carregar escalas do banco
+  const hoje2 = new Date();
+  const { data: escalasDB } = trpc.profissionais.getEscalaPorPeriodo.useQuery({
+    mesInicio: hoje2.getMonth() + 1,
+    anoInicio: hoje2.getFullYear(),
+    mesFim: ((hoje2.getMonth() + 12) % 12) + 1,
+    anoFim: hoje2.getFullYear() + 1,
+  });
+
+  // Mapeamento profissionalId → defId do frontend
+  const PROF_TO_DEF: Record<number, string> = { 1: "def-1", 2: "def-2" };
+
+  // Converter escalas do banco para formato do frontend
+  const escalasFromDB = useMemo(() => {
+    if (!escalasDB || escalasDB.length === 0) return null;
+
+    // Agrupar por mes-ano
+    const grouped: Record<string, Record<string, string>> = {};
+    for (const e of escalasDB) {
+      const mesKey = `${e.ano}-${String(e.mes).padStart(2, "0")}`;
+      if (!grouped[mesKey]) grouped[mesKey] = {};
+      grouped[mesKey][e.atribuicao] = PROF_TO_DEF[e.profissionalId!] || "def-1";
+    }
+
+    return Object.entries(grouped)
+      .map(([mes, atribuicoes]) => ({ mes, atribuicoes }))
+      .sort((a, b) => a.mes.localeCompare(b.mes));
+  }, [escalasDB]);
+
   const [escalaConfig, setEscalaConfig] = useState<any>({
     defensores: [
       {
@@ -616,6 +645,16 @@ export default function AgendaPage() {
     ],
     escalas: generateDefaultEscalas(),
   });
+
+  // Atualizar escalaConfig quando dados do banco chegarem
+  useEffect(() => {
+    if (escalasFromDB && escalasFromDB.length > 0) {
+      setEscalaConfig((prev: any) => ({
+        ...prev,
+        escalas: escalasFromDB,
+      }));
+    }
+  }, [escalasFromDB]);
 
   // Mapear atribuição do banco para key do filtro (usa função centralizada)
   const mapAtribuicaoToKey = (atribuicao: string | null | undefined, area: string | null | undefined): string => {
@@ -637,6 +676,26 @@ export default function AgendaPage() {
     return "SUBSTITUICAO";
   };
 
+  // Helper: resolve o responsável pela escala de revezamento (atribuição + mês do evento)
+  // Fallback: defensorId/createdById se não houver escala configurada
+  const resolverResponsavelPorEscala = (atribuicaoKey: string, dataEvento: string, fallbackDefensorId?: number | null) => {
+    const mesEvento = dataEvento.substring(0, 7); // "yyyy-MM"
+    const escala = escalaConfig.escalas.find((e: any) => e.mes === mesEvento);
+    if (escala) {
+      const escalaKey = atribuicaoKey
+        .toLowerCase()
+        .replace(/_/g, "-")
+        .replace(/juri/i, "tribunal-do-juri")
+        .replace(/^vvd$/i, "violencia-domestica")
+        .replace(/^execucao$/i, "execucao-penal")
+        .replace(/^substituicao.*$/i, "criminal-geral");
+      const responsavel = escala.atribuicoes[escalaKey];
+      if (responsavel) return responsavel;
+    }
+    // Fallback: usar defensorId do banco
+    return fallbackDefensorId === 4 ? "def-2" : "def-1";
+  };
+
   // Transformar dados do banco para o formato de AgendaItem (mesclando audiencias + calendarEvents)
   const eventos: AgendaItem[] = useMemo(() => {
     const items: AgendaItem[] = [];
@@ -646,12 +705,13 @@ export default function AgendaPage() {
       audienciasData.forEach((a) => {
         const atribuicaoKey = mapAtribuicaoToKey(a.processo?.atribuicao, a.processo?.area);
         const atribuicaoConfig = getAtribuicaoColors(atribuicaoKey);
+        const dataFormatada = format(new Date(a.dataHora), "yyyy-MM-dd");
 
         items.push({
           id: `audiencia-${a.id}`,
           titulo: a.titulo || `Audiência - ${a.tipo}`,
           tipo: "audiencia",
-          data: format(new Date(a.dataHora), "yyyy-MM-dd"),
+          data: dataFormatada,
           horarioInicio: a.horario || format(new Date(a.dataHora), "HH:mm"),
           horarioFim: "",
           local: a.local || "",
@@ -671,7 +731,7 @@ export default function AgendaPage() {
           observacoes: "",
           documentos: [],
           dataInclusao: new Date().toISOString(),
-          responsavel: "def-1",
+          responsavel: resolverResponsavelPorEscala(atribuicaoKey, dataFormatada, a.defensorId),
           fonte: "audiencias" as const,
         });
       });
@@ -680,19 +740,21 @@ export default function AgendaPage() {
     // 2. Processar eventos do calendário (tabela calendarEvents)
     if (calendarData) {
       calendarData.forEach((e) => {
-        // Mapear tipo de evento para atribuição
         const tipoEvento = e.eventType || "custom";
-        const atribuicaoKey = tipoEvento === "audiencia" ? "JURI" :
-                             tipoEvento === "juri" ? "JURI" :
-                             tipoEvento === "prazo" ? "SUBSTITUICAO" :
-                             "SUBSTITUICAO";
+        // Usar atribuição do processo vinculado quando disponível
+        const atribuicaoKey = e.processo?.atribuicao
+          ? mapAtribuicaoToKey(e.processo.atribuicao, e.processo.area)
+          : tipoEvento === "audiencia" ? "JURI" :
+            tipoEvento === "juri" ? "JURI" :
+            "SUBSTITUICAO";
         const atribuicaoConfig = getAtribuicaoColors(atribuicaoKey);
+        const dataFormatada = format(new Date(e.eventDate), "yyyy-MM-dd");
 
         items.push({
           id: `calendar-${e.id}`,
           titulo: e.title || `Evento - ${tipoEvento}`,
           tipo: tipoEvento,
-          data: format(new Date(e.eventDate), "yyyy-MM-dd"),
+          data: dataFormatada,
           horarioInicio: e.isAllDay ? "" : format(new Date(e.eventDate), "HH:mm"),
           horarioFim: e.endDate ? format(new Date(e.endDate), "HH:mm") : "",
           local: e.location || "",
@@ -712,7 +774,7 @@ export default function AgendaPage() {
           observacoes: e.notes || "",
           documentos: [],
           dataInclusao: new Date().toISOString(),
-          responsavel: "def-1",
+          responsavel: resolverResponsavelPorEscala(atribuicaoKey, dataFormatada, e.createdById),
           fonte: "calendar" as const,
         });
       });
@@ -720,7 +782,7 @@ export default function AgendaPage() {
 
     // 3. Ordenar por data
     return items.sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
-  }, [audienciasData, calendarData]);
+  }, [audienciasData, calendarData, escalaConfig]);
 
   // Navegar automaticamente para o mês do primeiro evento se não houver eventos no mês atual
   useEffect(() => {

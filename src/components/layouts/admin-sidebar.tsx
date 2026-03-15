@@ -35,6 +35,7 @@ import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { StatusBar } from "@/components/layout/status-bar";
 import { OfflineSyncProvider } from "@/components/layout/offline-sync-provider";
 import { MobileBottomNav } from "@/components/shared/mobile-bottom-nav";
+import { FloatingAgendaButton } from "@/components/shared/floating-agenda";
 import { type AssignmentMenuItem } from "@/contexts/assignment-context";
 import { useProfissional } from "@/contexts/profissional-context";
 import { useTheme } from "@/contexts/theme-context";
@@ -1788,6 +1789,9 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
 
         {/* Mobile bottom navigation */}
         <MobileBottomNav />
+
+        {/* Floating agenda quick-access button */}
+        <FloatingAgendaButton />
       </SidebarInset>
 
       {/* Notificação real-time de gravações Plaud pendentes */}

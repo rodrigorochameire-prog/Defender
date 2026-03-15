@@ -41,16 +41,34 @@ export function AdminConfigModal({ isOpen, onClose }: AdminConfigModalProps) {
 
   // Estados para Status
   const [statusList, setStatusList] = useState<StatusConfig[]>([
-    { value: "urgente", label: "Urgente", group: "triagem", color: "#DC2626" },
-    { value: "fila", label: "Fila", group: "triagem", color: "#64748B" },
-    { value: "analisar", label: "Analisar", group: "preparacao", color: "#F59E0B" },
-    { value: "elaborar", label: "Elaborar", group: "preparacao", color: "#3B82F6" },
-    { value: "elaborando", label: "Elaborando", group: "preparacao", color: "#6366F1" },
-    { value: "revisar", label: "Revisar", group: "preparacao", color: "#8B5CF6" },
-    { value: "protocolar", label: "Protocolar", group: "saida", color: "#EC4899" },
-    { value: "monitorar", label: "Monitorar", group: "saida", color: "#14B8A6" },
-    { value: "protocolado", label: "Protocolado", group: "concluida", color: "#10B981" },
-    { value: "resolvido", label: "Resolvido", group: "concluida", color: "#22C55E" },
+    // Triagem
+    { value: "fila", label: "Fila", group: "triagem", color: "#A1A1AA" },
+    { value: "atender", label: "Atender", group: "triagem", color: "#A1A1AA" },
+    { value: "urgente", label: "Urgente", group: "triagem", color: "#D4A4A4" },
+    // Preparação
+    { value: "elaborar", label: "Elaborar", group: "preparacao", color: "#E8C87A" },
+    { value: "elaborando", label: "Elaborando", group: "preparacao", color: "#E8C87A" },
+    { value: "analisar", label: "Analisar", group: "preparacao", color: "#E8C87A" },
+    { value: "relatorio", label: "Relatório", group: "preparacao", color: "#E8C87A" },
+    { value: "revisar", label: "Revisar", group: "preparacao", color: "#E8C87A" },
+    { value: "revisando", label: "Revisando", group: "preparacao", color: "#E8C87A" },
+    // Diligências
+    { value: "documentos", label: "Documentos", group: "diligencias", color: "#8DB4D2" },
+    { value: "testemunhas", label: "Testemunhas", group: "diligencias", color: "#8DB4D2" },
+    { value: "investigar", label: "Investigar", group: "diligencias", color: "#8DB4D2" },
+    { value: "buscar", label: "Buscar", group: "diligencias", color: "#8DB4D2" },
+    { value: "oficiar", label: "Oficiar", group: "diligencias", color: "#8DB4D2" },
+    // Saída
+    { value: "protocolar", label: "Protocolar", group: "saida", color: "#D4A574" },
+    { value: "monitorar", label: "Monitorar", group: "saida", color: "#D4A574" },
+    // Concluída
+    { value: "protocolado", label: "Protocolado", group: "concluida", color: "#84CC9B" },
+    { value: "ciencia", label: "Ciência", group: "concluida", color: "#84CC9B" },
+    { value: "resolvido", label: "Resolvido", group: "concluida", color: "#84CC9B" },
+    { value: "constituiu_advogado", label: "Constituiu advogado", group: "concluida", color: "#84CC9B" },
+    { value: "sem_atuacao", label: "Sem atuação", group: "concluida", color: "#84CC9B" },
+    // Arquivado
+    { value: "arquivado", label: "Arquivado", group: "arquivado", color: "#71717A" },
   ]);
 
   // Estados para Atos

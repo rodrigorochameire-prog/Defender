@@ -22,7 +22,8 @@ import {
   ChevronRight,
   ChevronDown,
 } from "lucide-react";
-import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
+import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, getStageIndex, PIPELINE_STAGES } from "@/config/demanda-status";
+import { StatusPipelineSelector } from "@/components/demandas-premium/StatusPipelineSelector";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { EditableTextInline } from "@/components/shared/editable-text-inline";
@@ -159,9 +160,9 @@ interface SortCriterion {
 const COLUMN_ORDER: ColumnDef[] = [
   { id: "index",        header: "#",            width: "w-8",              editable: false, colIndex: 0 },
   { id: "status",       header: "Status",       width: "w-[11%]",         editable: true,  colIndex: 6 },
-  { id: "assistido",    header: "Assistido",    width: "w-[23%]",         editable: true,  colIndex: 1 },
+  { id: "assistido",    header: "Assistido",    width: "w-[22%]",         editable: true,  colIndex: 1 },
+  { id: "ato",          header: "Ato",          width: "w-[13%]",         editable: true,  colIndex: 4 },
   { id: "processo",     header: "Processo",     width: "w-[20%]",         editable: true,  colIndex: 2 },
-  { id: "ato",          header: "Ato",          width: "w-[14%]",         editable: true,  colIndex: 4 },
   { id: "prazo",        header: "Prazo",        width: "w-[9%]",          editable: true,  colIndex: 5 },
   { id: "providencias", header: "Providências", width: "w-[13%]",         editable: true,  colIndex: 8 },
   { id: "acoes",        header: "",             width: "w-[72px]",         align: "right",  editable: false, colIndex: 9 },
@@ -307,7 +308,9 @@ const CompactRow = React.memo(function CompactRow({
 }) {
   const [showMenu, setShowMenu] = useState(false);
   const [copiedCell, setCopiedCell] = useState<string | null>(null);
+  const [showStatusPipeline, setShowStatusPipeline] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const statusCellRef = useRef<HTMLDivElement>(null);
 
   const {
     attributes,
@@ -506,25 +509,32 @@ const CompactRow = React.memo(function CompactRow({
       );
     },
 
-    // Status — small colored pill with icon
+    // Status — pill with pipeline dropdown
     status: () => {
       const StatusIcon = statusConfig.icon;
       return (
-        <InlineDropdown
-          value={demanda.status}
-          compact
-          displayValue={
-            <div
-              className="inline-flex items-center gap-1.5 text-[10px] font-semibold rounded-full px-2 py-0.5"
-              style={{ color: statusColor, backgroundColor: `${statusColor}12` }}
-            >
-              <StatusIcon className="w-3 h-3 flex-shrink-0" />
-              <span className="truncate max-w-[90px]">{statusConfig.label}</span>
-            </div>
-          }
-          options={statusOptions}
-          onChange={(v) => onStatusChange(demanda.id, v)}
-        />
+        <div className="relative" ref={statusCellRef}>
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowStatusPipeline(!showStatusPipeline); }}
+            className="inline-flex items-center gap-1.5 text-[10px] font-semibold rounded-full px-2 py-0.5 cursor-pointer hover:ring-1 hover:ring-zinc-300 dark:hover:ring-zinc-600 transition-all"
+            style={{ color: statusColor, backgroundColor: `${statusColor}12` }}
+          >
+            <StatusIcon className="w-3 h-3 flex-shrink-0" />
+            <span className="truncate max-w-[90px]">{statusConfig.label}</span>
+          </button>
+          {showStatusPipeline && (
+            <StatusPipelineSelector
+              currentStatus={demanda.status}
+              onSelect={(s) => {
+                onStatusChange(demanda.id, s);
+                setShowStatusPipeline(false);
+              }}
+              onClose={() => setShowStatusPipeline(false)}
+              variant="dropdown"
+              anchorRef={statusCellRef}
+            />
+          )}
+        </div>
       );
     },
 

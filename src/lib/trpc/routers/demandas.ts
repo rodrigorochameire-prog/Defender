@@ -904,7 +904,6 @@ export const demandasRouter = router({
           results.imported++;
         } catch (error) {
           results.errors.push(`${row.assistido}: ${(error as Error).message}`);
-          results.skipped++;
         }
       }
 
@@ -1145,7 +1144,7 @@ export const demandasRouter = router({
     return result;
   }),
 
-  // Atualizar demandas em batch (status e/ou ato)
+  // Atualizar demandas em batch (status, substatus, ato, atribuição)
   batchUpdate: protectedProcedure
     .input(z.object({
       ids: z.array(z.number()).min(1),
@@ -1153,16 +1152,21 @@ export const demandasRouter = router({
         "2_ATENDER", "4_MONITORAR", "5_FILA", "7_PROTOCOLADO",
         "7_CIENCIA", "7_SEM_ATUACAO", "URGENTE", "CONCLUIDO", "ARQUIVADO"
       ]).optional(),
+      substatus: z.string().optional(),
       ato: z.string().min(1).optional(),
+      atribuicao: z.enum([
+        "JURI_CAMACARI", "VVD_CAMACARI", "EXECUCAO_PENAL",
+        "SUBSTITUICAO", "SUBSTITUICAO_CIVEL", "GRUPO_JURI"
+      ]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const { ids, ...data } = input;
       const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
 
-      if (!data.status && !data.ato) {
+      if (!data.status && !data.ato && !data.atribuicao && !data.substatus) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Informe ao menos status ou ato para atualizar",
+          message: "Informe ao menos um campo para atualizar",
         });
       }
 
@@ -1174,8 +1178,14 @@ export const demandasRouter = router({
           updateData.concluidoEm = new Date();
         }
       }
+      if (data.substatus) {
+        updateData.substatus = data.substatus;
+      }
       if (data.ato) {
         updateData.ato = data.ato;
+      }
+      if (data.atribuicao) {
+        updateData.atribuicao = data.atribuicao;
       }
 
       // Build access condition

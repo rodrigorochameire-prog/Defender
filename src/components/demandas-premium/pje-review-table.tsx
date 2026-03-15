@@ -104,10 +104,10 @@ function calcularPrazoParaAto(dataExpedicao: string, ato: string): string {
 
     if (isNaN(date.getTime())) return "";
 
-    const isoResult = calcularPrazoPorAto(date, ato);
-    if (!isoResult) return "";
+    const resultado = calcularPrazoPorAto(date, ato);
+    if (!resultado) return "";
 
-    return converterISOParaBR(isoResult);
+    return resultado;
   } catch {
     return "";
   }

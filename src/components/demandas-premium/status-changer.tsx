@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,6 +10,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -21,77 +22,20 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  ChevronRight,
-  CheckCircle2,
-  Clock,
-  FileText,
-  Send,
-  Archive,
-  AlertCircle,
-  Zap,
-} from "lucide-react";
+import { ChevronRight, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+  DEMANDA_STATUS,
+  STATUS_GROUPS,
+  STATUS_OPTIONS_BY_COLUMN,
+  ALL_STATUS_OPTIONS,
+  getStatusConfig,
+  type StatusGroup,
+} from "@/config/demanda-status";
 
-export type DemandaStatus =
-  | "analisar"
-  | "elaborando"
-  | "protocolar"
-  | "protocolado"
-  | "arquivado";
-
-interface StatusInfo {
-  value: DemandaStatus;
-  label: string;
-  color: string;
-  bgColor: string;
-  icon: any;
-  next?: DemandaStatus[];
-}
-
-const statusConfig: Record<DemandaStatus, StatusInfo> = {
-  analisar: {
-    value: "analisar",
-    label: "Analisar",
-    color: "text-blue-600 dark:text-blue-400",
-    bgColor: "bg-blue-100 dark:bg-blue-950",
-    icon: AlertCircle,
-    next: ["elaborando", "arquivado"],
-  },
-  elaborando: {
-    value: "elaborando",
-    label: "Elaborando",
-    color: "text-yellow-600 dark:text-yellow-400",
-    bgColor: "bg-yellow-100 dark:bg-yellow-950",
-    icon: FileText,
-    next: ["protocolar", "analisar", "arquivado"],
-  },
-  protocolar: {
-    value: "protocolar",
-    label: "Protocolar",
-    color: "text-purple-600 dark:text-purple-400",
-    bgColor: "bg-purple-100 dark:bg-purple-950",
-    icon: Send,
-    next: ["protocolado", "elaborando"],
-  },
-  protocolado: {
-    value: "protocolado",
-    label: "Protocolado",
-    color: "text-emerald-600 dark:text-emerald-400",
-    bgColor: "bg-emerald-100 dark:bg-emerald-950",
-    icon: CheckCircle2,
-    next: ["arquivado"],
-  },
-  arquivado: {
-    value: "arquivado",
-    label: "Arquivado",
-    color: "text-zinc-600 dark:text-zinc-400",
-    bgColor: "bg-zinc-100 dark:bg-zinc-800",
-    icon: Archive,
-    next: [],
-  },
-};
+// Re-export type para compatibilidade
+export type DemandaStatus = string;
 
 interface StatusChangerProps {
   currentStatus: DemandaStatus;
@@ -104,6 +48,16 @@ interface StatusChangerProps {
   compact?: boolean;
 }
 
+// Transições sugeridas por grupo (ações rápidas contextuais)
+const QUICK_TRANSITIONS: Record<StatusGroup, string[]> = {
+  triagem: ["analisar", "elaborar", "urgente"],
+  preparacao: ["protocolar", "revisar", "documentos"],
+  diligencias: ["elaborar", "protocolar", "analisar"],
+  saida: ["protocolado", "monitorar"],
+  concluida: ["arquivado"],
+  arquivado: [],
+};
+
 export function StatusChanger({
   currentStatus,
   demandaId,
@@ -112,16 +66,17 @@ export function StatusChanger({
   compact = false,
 }: StatusChangerProps) {
   const [showDialog, setShowDialog] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<DemandaStatus | null>(
-    null
-  );
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [observation, setObservation] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const currentInfo = statusConfig[currentStatus];
-  const nextStatuses = currentInfo.next || [];
+  const currentInfo = getStatusConfig(currentStatus);
+  const CurrentIcon = currentInfo.icon;
 
-  const handleQuickChange = async (newStatus: DemandaStatus) => {
+  // Quick transitions baseadas no grupo atual
+  const quickStatuses = QUICK_TRANSITIONS[currentInfo.group] || [];
+
+  const handleQuickChange = async (newStatus: string) => {
     setSelectedStatus(newStatus);
     setShowDialog(true);
   };
@@ -132,8 +87,9 @@ export function StatusChanger({
     setLoading(true);
     try {
       await onStatusChange(selectedStatus, observation);
+      const newInfo = getStatusConfig(selectedStatus);
       toast.success("Status atualizado com sucesso!", {
-        description: `${demandaTitulo} agora está em "${statusConfig[selectedStatus].label}"`,
+        description: `${demandaTitulo} agora está em "${newInfo.label}"`,
       });
       setShowDialog(false);
       setObservation("");
@@ -147,6 +103,14 @@ export function StatusChanger({
     }
   };
 
+  // Grouped menu items for the dropdown
+  const groupOrder: Array<{ key: string; label: string; statuses: typeof ALL_STATUS_OPTIONS }> = [
+    { key: "triagem", label: "Triagem", statuses: STATUS_OPTIONS_BY_COLUMN.triagem },
+    { key: "em_andamento", label: "Em Andamento", statuses: STATUS_OPTIONS_BY_COLUMN.em_andamento },
+    { key: "concluida", label: "Concluída", statuses: STATUS_OPTIONS_BY_COLUMN.concluida },
+    { key: "arquivado", label: "Arquivado", statuses: STATUS_OPTIONS_BY_COLUMN.arquivado },
+  ];
+
   if (compact) {
     return (
       <>
@@ -157,31 +121,39 @@ export function StatusChanger({
               size="sm"
               className={cn(
                 "h-7 gap-1.5 border-dashed",
-                currentInfo.color,
                 "hover:scale-105 transition-transform"
               )}
+              style={{ color: currentInfo.color }}
             >
-              <currentInfo.icon className="w-3 h-3" />
+              <CurrentIcon className="w-3 h-3" />
               <span className="text-xs font-medium">{currentInfo.label}</span>
               <ChevronRight className="w-3 h-3 opacity-50" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Mudar status</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {nextStatuses.map((status) => {
-              const info = statusConfig[status];
-              return (
-                <DropdownMenuItem
-                  key={status}
-                  onClick={() => handleQuickChange(status)}
-                  className="gap-2 cursor-pointer"
-                >
-                  <info.icon className={cn("w-4 h-4", info.color)} />
-                  <span>{info.label}</span>
-                </DropdownMenuItem>
-              );
-            })}
+          <DropdownMenuContent align="end" className="w-48 max-h-80 overflow-y-auto">
+            {groupOrder.map((group, gi) => (
+              <DropdownMenuGroup key={group.key}>
+                {gi > 0 && <DropdownMenuSeparator />}
+                <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-zinc-400">
+                  {group.label}
+                </DropdownMenuLabel>
+                {group.statuses.map((opt) => {
+                  const config = DEMANDA_STATUS[opt.value];
+                  if (!config || opt.value === currentStatus) return null;
+                  const Icon = config.icon;
+                  return (
+                    <DropdownMenuItem
+                      key={opt.value}
+                      onClick={() => handleQuickChange(opt.value)}
+                      className="gap-2 cursor-pointer"
+                    >
+                      <span style={{ color: STATUS_GROUPS[config.group].color }}><Icon className="w-4 h-4" /></span>
+                      <span>{opt.label}</span>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuGroup>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -194,7 +166,7 @@ export function StatusChanger({
                 Você está mudando o status de &ldquo;{demandaTitulo}&rdquo; de{" "}
                 <span className="font-medium">{currentInfo.label}</span> para{" "}
                 <span className="font-medium">
-                  {selectedStatus && statusConfig[selectedStatus].label}
+                  {selectedStatus && getStatusConfig(selectedStatus).label}
                 </span>
                 .
               </DialogDescription>
@@ -242,55 +214,95 @@ export function StatusChanger({
     <div className="space-y-3">
       {/* Current Status */}
       <div className="flex items-center gap-3">
-        <div className={cn("p-2 rounded-lg", currentInfo.bgColor)}>
-          <currentInfo.icon className={cn("w-5 h-5", currentInfo.color)} />
+        <div
+          className="p-2 rounded-lg"
+          style={{ backgroundColor: `${currentInfo.color}20` }}
+        >
+          <span style={{ color: currentInfo.color }}><CurrentIcon className="w-5 h-5" /></span>
         </div>
         <div>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
             Status atual
           </p>
-          <p className={cn("text-sm font-semibold", currentInfo.color)}>
+          <p className="text-sm font-semibold" style={{ color: currentInfo.color }}>
             {currentInfo.label}
           </p>
         </div>
       </div>
 
       {/* Quick Actions */}
-      {nextStatuses.length > 0 && (
+      {quickStatuses.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400 flex items-center gap-1">
             <Zap className="w-3 h-3" />
             Ações rápidas
           </p>
           <div className="grid grid-cols-2 gap-2">
-            {nextStatuses.map((status) => {
-              const info = statusConfig[status];
+            {quickStatuses.map((statusKey) => {
+              const config = DEMANDA_STATUS[statusKey];
+              if (!config || statusKey === currentStatus) return null;
+              const Icon = config.icon;
+              const groupColor = STATUS_GROUPS[config.group].color;
               return (
                 <motion.button
-                  key={status}
-                  onClick={() => handleQuickChange(status)}
+                  key={statusKey}
+                  onClick={() => handleQuickChange(statusKey)}
                   className={cn(
                     "flex items-center gap-2 p-3 rounded-lg border-2 border-dashed transition-all",
                     "hover:scale-105 hover:shadow-md",
-                    info.bgColor,
                     "border-zinc-200 dark:border-zinc-700 hover:border-current"
                   )}
+                  style={{ backgroundColor: `${groupColor}10` }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <info.icon className={cn("w-4 h-4", info.color)} />
+                  <span style={{ color: groupColor }}><Icon className="w-4 h-4" /></span>
                   <div className="text-left">
-                    <p className={cn("text-sm font-medium", info.color)}>
-                      {info.label}
+                    <p className="text-sm font-medium" style={{ color: groupColor }}>
+                      {config.label}
                     </p>
                   </div>
-                  <ChevronRight className={cn("w-4 h-4 ml-auto", info.color)} />
+                  <ChevronRight className="w-4 h-4 ml-auto" style={{ color: groupColor }} />
                 </motion.button>
               );
             })}
           </div>
         </div>
       )}
+
+      {/* All statuses dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="w-full text-xs">
+            Ver todos os status...
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56 max-h-80 overflow-y-auto">
+          {groupOrder.map((group, gi) => (
+            <DropdownMenuGroup key={group.key}>
+              {gi > 0 && <DropdownMenuSeparator />}
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-zinc-400">
+                {group.label}
+              </DropdownMenuLabel>
+              {group.statuses.map((opt) => {
+                const config = DEMANDA_STATUS[opt.value];
+                if (!config || opt.value === currentStatus) return null;
+                const Icon = config.icon;
+                return (
+                  <DropdownMenuItem
+                    key={opt.value}
+                    onClick={() => handleQuickChange(opt.value)}
+                    className="gap-2 cursor-pointer"
+                  >
+                    <span style={{ color: STATUS_GROUPS[config.group].color }}><Icon className="w-4 h-4" /></span>
+                    <span>{opt.label}</span>
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuGroup>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* Confirmation Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -301,7 +313,7 @@ export function StatusChanger({
               Você está mudando o status de &ldquo;{demandaTitulo}&rdquo; de{" "}
               <span className="font-medium">{currentInfo.label}</span> para{" "}
               <span className="font-medium">
-                {selectedStatus && statusConfig[selectedStatus].label}
+                {selectedStatus && getStatusConfig(selectedStatus).label}
               </span>
               .
             </DialogDescription>
@@ -345,25 +357,27 @@ export function StatusChanger({
 }
 
 // Status flow visualization
-export function StatusFlow({ currentStatus }: { currentStatus: DemandaStatus }) {
-  const allStatuses: DemandaStatus[] = [
-    "analisar",
-    "elaborando",
-    "protocolar",
-    "protocolado",
+export function StatusFlow({ currentStatus }: { currentStatus: string }) {
+  const stages: Array<{ key: StatusGroup; label: string }> = [
+    { key: "triagem", label: "Triagem" },
+    { key: "preparacao", label: "Preparação" },
+    { key: "saida", label: "Saída" },
+    { key: "concluida", label: "Concluída" },
   ];
 
-  const currentIndex = allStatuses.indexOf(currentStatus);
+  const currentConfig = getStatusConfig(currentStatus);
+  const currentGroupIndex = stages.findIndex(s => s.key === currentConfig.group);
 
   return (
     <div className="flex items-center gap-2">
-      {allStatuses.map((status, index) => {
-        const info = statusConfig[status];
-        const isActive = index <= currentIndex;
-        const isCurrent = status === currentStatus;
+      {stages.map((stage, index) => {
+        const groupConfig = STATUS_GROUPS[stage.key];
+        const isActive = index <= currentGroupIndex;
+        const isCurrent = stage.key === currentConfig.group;
+        const Icon = groupConfig.icon;
 
         return (
-          <div key={status} className="flex items-center gap-2">
+          <div key={stage.key} className="flex items-center gap-2">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -371,14 +385,19 @@ export function StatusFlow({ currentStatus }: { currentStatus: DemandaStatus }) 
               className={cn(
                 "relative flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all",
                 isActive
-                  ? cn(info.bgColor, info.color, "border-current")
+                  ? "border-current"
                   : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400",
                 isCurrent && "ring-4 ring-emerald-500/20"
               )}
+              style={isActive ? {
+                backgroundColor: `${groupConfig.color}20`,
+                color: groupConfig.color,
+                borderColor: groupConfig.color,
+              } : undefined}
             >
-              <info.icon className="w-4 h-4" />
+              <Icon className="w-4 h-4" />
             </motion.div>
-            {index < allStatuses.length - 1 && (
+            {index < stages.length - 1 && (
               <div
                 className={cn(
                   "w-8 h-0.5 transition-all",

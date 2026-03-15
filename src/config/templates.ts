@@ -13,30 +13,39 @@ export enum TipoTemplate {
 
 // Status disponíveis no sistema (conforme especificação)
 export const SYSTEM_STATUS_OPTIONS = [
-  "Urgente",
-  "Relatório",
-  "Analisar",
+  // Triagem
+  "Fila",
   "Atender",
-  "Buscar",
-  "Investigar",
+  "Urgente",
+  // Preparação
   "Elaborar",
   "Elaborando",
+  "Analisar",
+  "Relatório",
   "Revisar",
   "Revisando",
-  "Protocolar",
-  "Amanda",
-  "Taíssa",
-  "Emilly",
-  "Monitorar",
-  "Fila",
+  // Diligências
   "Documentos",
   "Testemunhas",
+  "Investigar",
+  "Buscar",
+  "Oficiar",
+  // Saída
+  "Protocolar",
+  "Monitorar",
+  // Concluída
   "Protocolado",
-  "Solar",
   "Ciência",
   "Resolvido",
   "Constituiu advogado",
   "Sem atuação",
+  // Arquivado
+  "Arquivado",
+  // Nomes de estagiários/servidores (usados como filtro no sheets)
+  "Amanda",
+  "Taíssa",
+  "Emilly",
+  "Solar",
 ];
 
 // Situações prisionais completas (conforme especificação)

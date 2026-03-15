@@ -12,6 +12,8 @@ import {
   Trash2,
   ChevronDown,
   ChevronRight,
+  Copy,
+  Check,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
@@ -93,6 +95,40 @@ function extrairTipo(titulo: string): string {
   // Se o primeiro segmento é muito curto (tipo "AIJ"), retornar como está
   if (firstSegment.length <= 20) return firstSegment;
   return firstSegment.substring(0, 20) + "…";
+}
+
+function ProcessoCopyRow({ processo, cancelado }: { processo: string; cancelado: boolean }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="flex items-center gap-1.5 mt-0.5 group/processo">
+      <FileText className="w-3 h-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
+      <span className={cn(
+        "text-[11px] font-mono truncate",
+        cancelado ? "text-zinc-400" : "text-zinc-400 dark:text-zinc-500"
+      )}>
+        {processo}
+      </span>
+      <span
+        role="button"
+        tabIndex={0}
+        onClick={(e) => {
+          e.stopPropagation();
+          navigator.clipboard.writeText(processo);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        }}
+        className={cn(
+          "shrink-0 p-0.5 rounded transition-all cursor-pointer",
+          copied
+            ? "text-emerald-500 opacity-100"
+            : "text-zinc-300 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-300 opacity-0 group-hover/processo:opacity-100"
+        )}
+        title="Copiar número do processo"
+      >
+        {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+      </span>
+    </div>
+  );
 }
 
 export function DayEventsSheet({
@@ -253,17 +289,9 @@ export function DayEventsSheet({
                           </p>
                         )}
 
-                        {/* Linha 3: Processo */}
+                        {/* Linha 3: Processo (com botão copiar) */}
                         {processo && (
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <FileText className="w-3 h-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
-                            <span className={cn(
-                              "text-[11px] font-mono truncate",
-                              cancelado ? "text-zinc-400" : "text-zinc-400 dark:text-zinc-500"
-                            )}>
-                              {processo}
-                            </span>
-                          </div>
+                          <ProcessoCopyRow processo={processo} cancelado={cancelado} />
                         )}
                       </div>
 

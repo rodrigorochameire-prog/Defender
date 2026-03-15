@@ -24,7 +24,7 @@ const DelegacaoBatchModal = dynamic(() => import("@/components/demandas/delegaca
 import { DemandaQuickPreview } from "@/components/demandas-premium/DemandaQuickPreview";
 import { KanbanPremium } from "@/components/demandas-premium/kanban-premium";
 import { PrazosTab } from "@/components/demandas-premium/prazos-tab";
-import { getStatusConfig, STATUS_GROUPS, type StatusGroup } from "@/config/demanda-status";
+import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, UI_STATUS_TO_DB, STATUS_OPTIONS_BY_COLUMN, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO, ATO_PRIORITY } from "@/config/atos-por-atribuicao";
 import { copyToClipboard } from "@/lib/clipboard";
 import React, { useState, useMemo, useEffect, useCallback, useRef, Fragment } from "react";
@@ -1230,16 +1230,20 @@ export default function Demandas() {
     setIsSelectMode(false);
   };
 
-  const handleBatchStatusChange = (newStatus: string) => {
+  const handleBatchStatusChange = (substatus: string) => {
     if (selectedIds.size === 0) return;
     const numericIds = Array.from(selectedIds).map(id => parseInt(id, 10)).filter(id => !isNaN(id));
     if (numericIds.length === 0) return;
 
+    // Mapear substatus granular → status DB
+    const dbStatus = UI_STATUS_TO_DB[substatus] || "2_ATENDER";
+
     batchUpdateMutation.mutate(
-      { ids: numericIds, status: newStatus as any },
+      { ids: numericIds, status: dbStatus as any, substatus },
       {
         onSuccess: (result) => {
-          toast.success(`Status de ${result.updated} demanda(s) atualizado para "${DEMANDA_STATUS[newStatus as keyof typeof DEMANDA_STATUS]?.label || newStatus}"`);
+          const label = DEMANDA_STATUS[substatus as keyof typeof DEMANDA_STATUS]?.label || substatus;
+          toast.success(`Status de ${result.updated} demanda(s) atualizado para "${label}"`);
           setSelectedIds(new Set());
           setIsSelectMode(false);
         },
@@ -1257,6 +1261,36 @@ export default function Demandas() {
       {
         onSuccess: (result) => {
           toast.success(`Ato de ${result.updated} demanda(s) alterado para "${newAto}"`);
+          setSelectedIds(new Set());
+          setIsSelectMode(false);
+        },
+      }
+    );
+  };
+
+  // Mapeamento de nome amigável → DB enum para atribuição
+  const ATRIBUICAO_LABEL_TO_DB: Record<string, string> = {
+    "Tribunal do Júri": "JURI_CAMACARI",
+    "Violência Doméstica": "VVD_CAMACARI",
+    "Execução Penal": "EXECUCAO_PENAL",
+    "Substituição Criminal": "SUBSTITUICAO",
+    "Grupo Especial do Júri": "GRUPO_JURI",
+    "Curadoria Especial": "SUBSTITUICAO_CIVEL",
+  };
+
+  const handleBatchAtribuicaoChange = (newAtribuicao: string) => {
+    if (selectedIds.size === 0) return;
+    const numericIds = Array.from(selectedIds).map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+    if (numericIds.length === 0) return;
+
+    const dbAtribuicao = ATRIBUICAO_LABEL_TO_DB[newAtribuicao];
+    if (!dbAtribuicao) return;
+
+    batchUpdateMutation.mutate(
+      { ids: numericIds, atribuicao: dbAtribuicao as any },
+      {
+        onSuccess: (result) => {
+          toast.success(`Atribuição de ${result.updated} demanda(s) alterada para "${newAtribuicao}"`);
           setSelectedIds(new Set());
           setIsSelectMode(false);
         },
@@ -1350,9 +1384,8 @@ export default function Demandas() {
       atribuicaoDetectada: data.pjeData?.atribuicaoDetectada || undefined,
     }));
 
-    // Por padrão, sempre atualizar existentes para evitar duplicatas
-    // A verificação de duplicata é feita apenas por processoId (sem validar ato)
-    importFromSheetsMutation.mutate({ rows, atualizarExistentes: atualizarExistentes ?? true });
+    // Usar mutateAsync para retornar resultado ao modal (exibe confirmação do servidor)
+    return importFromSheetsMutation.mutateAsync({ rows, atualizarExistentes: atualizarExistentes ?? true });
   };
 
   // Função para atualizar demandas existentes (usado pelo SheetsImportModal)
@@ -2352,6 +2385,7 @@ export default function Demandas() {
                   <div className="ml-auto flex items-center gap-2">
                     {selectedIds.size > 0 && (
                       <>
+                        {/* Status — todos os 22 substatus agrupados */}
                         <select
                           defaultValue=""
                           onChange={(e) => {
@@ -2362,28 +2396,50 @@ export default function Demandas() {
                           }}
                           className="h-7 text-[11px] rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 cursor-pointer focus:ring-1 focus:ring-emerald-400/50 focus:outline-none"
                         >
-                          <option value="" disabled>Alterar status...</option>
-                          <optgroup label="Preparação">
-                            <option value="atender">Atender</option>
-                            <option value="analisar">Analisar</option>
-                            <option value="elaborar">Elaborar</option>
-                            <option value="revisar">Revisar</option>
-                          </optgroup>
+                          <option value="" disabled>Status...</option>
                           <optgroup label="Triagem">
-                            <option value="fila">Fila</option>
-                            <option value="atender">Atender</option>
+                            {STATUS_OPTIONS_BY_COLUMN.triagem.map(o => (
+                              <option key={o.value} value={o.value}>{o.label}</option>
+                            ))}
                           </optgroup>
-                          <optgroup label="Saída">
-                            <option value="protocolar">Protocolar</option>
-                            <option value="monitorar">Monitorar</option>
+                          <optgroup label="Em andamento">
+                            {STATUS_OPTIONS_BY_COLUMN.em_andamento.map(o => (
+                              <option key={o.value} value={o.value}>{o.label}</option>
+                            ))}
                           </optgroup>
                           <optgroup label="Concluída">
-                            <option value="protocolado">Protocolado</option>
-                            <option value="ciencia">Ciência</option>
-                            <option value="resolvido">Resolvido</option>
-                            <option value="sem_atuacao">Sem atuação</option>
+                            {STATUS_OPTIONS_BY_COLUMN.concluida.map(o => (
+                              <option key={o.value} value={o.value}>{o.label}</option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="Arquivo">
+                            {STATUS_OPTIONS_BY_COLUMN.arquivado.map(o => (
+                              <option key={o.value} value={o.value}>{o.label}</option>
+                            ))}
                           </optgroup>
                         </select>
+
+                        {/* Atribuição */}
+                        <select
+                          defaultValue=""
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              handleBatchAtribuicaoChange(e.target.value);
+                              e.target.value = "";
+                            }
+                          }}
+                          className="h-7 text-[11px] rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 cursor-pointer focus:ring-1 focus:ring-emerald-400/50 focus:outline-none"
+                        >
+                          <option value="" disabled>Atribuição...</option>
+                          {atribuicaoOptions
+                            .filter(o => o.value !== "Todas")
+                            .map(o => (
+                              <option key={o.value} value={o.value}>{o.label}</option>
+                            ))
+                          }
+                        </select>
+
+                        {/* Ato — dinâmico baseado na atribuição atual */}
                         <select
                           defaultValue=""
                           onChange={(e) => {
@@ -2394,14 +2450,12 @@ export default function Demandas() {
                           }}
                           className="h-7 text-[11px] rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 cursor-pointer focus:ring-1 focus:ring-emerald-400/50 focus:outline-none"
                         >
-                          <option value="" disabled>Alterar ato...</option>
-                          <option value="Resposta à Acusação">Resposta à Acusação</option>
-                          <option value="Alegações Finais">Alegações Finais</option>
-                          <option value="Contrarrazões de apel...">Contrarrazões</option>
-                          <option value="Apelação">Apelação</option>
-                          <option value="Habeas Corpus">Habeas Corpus</option>
-                          <option value="Outro">Outro</option>
+                          <option value="" disabled>Ato...</option>
+                          {atoOptionsFiltered.map(o => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                          ))}
                         </select>
+
                         <Button
                           variant="outline"
                           size="sm"

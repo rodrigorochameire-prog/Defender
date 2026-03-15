@@ -1,28 +1,38 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { getStatusConfig, DEMANDA_STATUS } from "@/config/demanda-status";
+import { DEMANDA_STATUS, STATUS_GROUPS, ALL_STATUS_OPTIONS } from "@/config/demanda-status";
 
 interface StatusQuickChangeProps {
   currentStatus: string;
   onStatusChange: (newStatus: string) => void;
+  /** Show all statuses or just common ones */
+  showAll?: boolean;
 }
 
-export function StatusQuickChange({ currentStatus, onStatusChange }: StatusQuickChangeProps) {
-  const statusConfig = getStatusConfig(currentStatus);
-  const StatusIcon = statusConfig.icon;
+// Statuses mais usados no dia-a-dia (order intencional)
+const COMMON_STATUSES = [
+  "urgente", "atender", "fila",
+  "analisar", "elaborar", "elaborando", "revisar",
+  "documentos", "oficiar",
+  "protocolar", "monitorar",
+  "protocolado", "ciencia", "sem_atuacao",
+];
 
-  const quickStatuses = ["urgente", "analisar", "elaborar", "protocolar", "protocolado"];
+export function StatusQuickChange({ currentStatus, onStatusChange, showAll = false }: StatusQuickChangeProps) {
+  const statuses = showAll
+    ? ALL_STATUS_OPTIONS.map(o => o.value)
+    : COMMON_STATUSES;
 
   return (
     <div className="flex flex-wrap gap-1">
-      {quickStatuses.map((statusKey) => {
+      {statuses.map((statusKey) => {
         const config = DEMANDA_STATUS[statusKey as keyof typeof DEMANDA_STATUS];
         if (!config) return null;
-        
+
         const Icon = config.icon;
         const isActive = statusKey === currentStatus.toLowerCase();
-        
+        const groupColor = STATUS_GROUPS[config.group].color;
+
         return (
           <button
             key={statusKey}
