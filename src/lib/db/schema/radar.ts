@@ -87,6 +87,7 @@ export const radarMatches = pgTable("radar_matches", {
   scoreConfianca: integer("score_confianca").notNull().default(0),
   status: radarMatchStatusEnum("status").notNull().default("possivel"),
   dadosExtraidos: jsonb("dados_extraidos"),
+  notes: text("notes"),
   confirmedBy: integer("confirmed_by")
     .references(() => users.id, { onDelete: "set null" }),
   confirmedAt: timestamp("confirmed_at"),

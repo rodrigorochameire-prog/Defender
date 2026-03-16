@@ -394,6 +394,9 @@ export const radarRouter = router({
           scoreConfianca: radarMatches.scoreConfianca,
           status: radarMatches.status,
           dadosExtraidos: radarMatches.dadosExtraidos,
+          notes: radarMatches.notes,
+          casoId: radarMatches.casoId,
+          processoId: radarMatches.processoId,
           createdAt: radarMatches.createdAt,
           // Join notícia
           noticiaTitulo: radarNoticias.titulo,
@@ -425,7 +428,10 @@ export const radarRouter = router({
     }),
 
   confirmMatch: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({
+      id: z.number(),
+      notes: z.string().optional(),
+    }))
     .mutation(async ({ ctx, input }) => {
       const [updated] = await db
         .update(radarMatches)
@@ -434,6 +440,7 @@ export const radarRouter = router({
           confirmedBy: ctx.user.id,
           confirmedAt: new Date(),
           updatedAt: new Date(),
+          ...(input.notes !== undefined && { notes: input.notes }),
         })
         .where(eq(radarMatches.id, input.id))
         .returning();
@@ -449,15 +456,94 @@ export const radarRouter = router({
     }),
 
   dismissMatch: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({
+      id: z.number(),
+      notes: z.string().optional(),
+    }))
     .mutation(async ({ input }) => {
       const [updated] = await db
         .update(radarMatches)
         .set({
           status: "descartado",
           updatedAt: new Date(),
+          ...(input.notes !== undefined && { notes: input.notes }),
         })
         .where(eq(radarMatches.id, input.id))
+        .returning();
+
+      return updated;
+    }),
+
+  bulkConfirmMatches: protectedProcedure
+    .input(z.object({
+      ids: z.array(z.number()).min(1).max(100),
+      notes: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const updated = await db
+        .update(radarMatches)
+        .set({
+          status: "confirmado_manual",
+          confirmedBy: ctx.user.id,
+          confirmedAt: new Date(),
+          updatedAt: new Date(),
+          ...(input.notes !== undefined && { notes: input.notes }),
+        })
+        .where(
+          and(
+            sql`${radarMatches.id} IN (${sql.join(input.ids.map(id => sql`${id}`), sql`, `)})`,
+            eq(radarMatches.status, "possivel"),
+          )!
+        )
+        .returning({ id: radarMatches.id });
+
+      // Fire-and-forget WhatsApp for each confirmed match
+      for (const match of updated) {
+        notifyMatchViaWhatsApp(match.id).catch(() => {});
+      }
+
+      return { confirmed: updated.length };
+    }),
+
+  bulkDismissMatches: protectedProcedure
+    .input(z.object({
+      ids: z.array(z.number()).min(1).max(100),
+      notes: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const updated = await db
+        .update(radarMatches)
+        .set({
+          status: "descartado",
+          updatedAt: new Date(),
+          ...(input.notes !== undefined && { notes: input.notes }),
+        })
+        .where(
+          and(
+            sql`${radarMatches.id} IN (${sql.join(input.ids.map(id => sql`${id}`), sql`, `)})`,
+            eq(radarMatches.status, "possivel"),
+          )!
+        )
+        .returning({ id: radarMatches.id });
+
+      return { dismissed: updated.length };
+    }),
+
+  linkMatchToCaso: protectedProcedure
+    .input(z.object({
+      matchId: z.number(),
+      casoId: z.number().nullable(),
+      processoId: z.number().nullable(),
+    }))
+    .mutation(async ({ input }) => {
+      const [updated] = await db
+        .update(radarMatches)
+        .set({
+          casoId: input.casoId,
+          processoId: input.processoId,
+          updatedAt: new Date(),
+        })
+        .where(eq(radarMatches.id, input.matchId))
         .returning();
 
       return updated;
