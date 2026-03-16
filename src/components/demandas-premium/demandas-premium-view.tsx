@@ -110,6 +110,7 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -709,6 +710,8 @@ export default function Demandas() {
 
   // Mutation para deletar demanda (soft delete, com suporte offline)
   const reordenarMutation = trpc.demandas.reordenar.useMutation();
+
+  const exportToSheetsMutation = trpc.demandas.exportToSheets.useMutation();
 
   const batchUpdateMutation = trpc.demandas.batchUpdate.useMutation({
     onSuccess: (result) => {
@@ -1314,6 +1317,33 @@ export default function Demandas() {
     setIsSelectMode(false);
     setSelectedIds(new Set());
     lastSelectedIndex.current = null;
+  };
+
+  const handleExportSheets = async () => {
+    setIsSettingsDropdownOpen(false);
+    const toastId = toast.loading("Exportando para Google Sheets...");
+    try {
+      const result = await exportToSheetsMutation.mutateAsync({
+        titulo: "OMBUDS - Demandas",
+        filtros: {
+          atribuicao: selectedAtribuicoes[0] ?? undefined,
+          status: selectedStatusGroup ?? undefined,
+          search: searchTerm || undefined,
+        },
+      });
+      toast.dismiss(toastId);
+      toast.success(`Planilha criada com ${result.totalRows} demandas`, {
+        duration: 8000,
+        action: {
+          label: "Abrir",
+          onClick: () => window.open(result.spreadsheetUrl, "_blank"),
+        },
+      });
+      window.open(result.spreadsheetUrl, "_blank");
+    } catch (err: any) {
+      toast.dismiss(toastId);
+      toast.error(err?.message ?? "Erro ao exportar para Google Sheets");
+    }
   };
 
   const importFromSheetsMutation = trpc.demandas.importFromSheets.useMutation({
@@ -2182,6 +2212,13 @@ export default function Demandas() {
                     </button>
                     <button onClick={() => { setIsExportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
                       <Upload className="w-3.5 h-3.5 text-zinc-400" /> Exportar
+                    </button>
+                    <button onClick={handleExportSheets} disabled={exportToSheetsMutation.isPending} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                      {exportToSheetsMutation.isPending ? (
+                        <><Loader2 className="w-3.5 h-3.5 text-emerald-500 animate-spin" /> Exportando...</>
+                      ) : (
+                        <><Table2 className="w-3.5 h-3.5 text-emerald-600" /> Exportar para Google Sheets</>
+                      )}
                     </button>
                     <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
                     <button onClick={() => { setIsDuplicatesModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">

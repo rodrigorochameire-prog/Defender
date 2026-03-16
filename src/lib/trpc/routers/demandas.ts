@@ -1222,6 +1222,280 @@ export const demandasRouter = router({
       return { updated: atualizados.length };
     }),
 
+  // Exportar demandas para Google Sheets
+  exportToSheets: protectedProcedure
+    .input(
+      z.object({
+        titulo: z.string().default("OMBUDS - Demandas"),
+        filtros: z
+          .object({
+            atribuicao: z.string().optional(),
+            status: z.string().optional(),
+            search: z.string().optional(),
+          })
+          .optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { titulo, filtros } = input;
+      const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
+
+      // Verificar se Google está configurado
+      const { getAccessToken, isGoogleDriveConfigured } = await import(
+        "@/lib/services/google-drive"
+      );
+      if (!isGoogleDriveConfigured()) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Google não está conectado. Configure a integração em Configurações.",
+        });
+      }
+
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Não foi possível obter autorização do Google. Reconecte a conta.",
+        });
+      }
+
+      // Montar condições de filtro
+      const conditions = [isNull(demandas.deletedAt)];
+
+      if (filtros?.search) {
+        conditions.push(ilike(demandas.ato, `%${filtros.search}%`));
+      }
+
+      if (filtros?.status && filtros.status !== "all") {
+        conditions.push(eq(demandas.status, filtros.status as any));
+      }
+
+      // Filtro por defensor (isolamento)
+      if (defensoresVisiveis !== "all") {
+        if (defensoresVisiveis.length === 1) {
+          conditions.push(eq(demandas.defensorId, defensoresVisiveis[0]));
+        } else if (defensoresVisiveis.length > 1) {
+          conditions.push(inArray(demandas.defensorId, defensoresVisiveis));
+        }
+      }
+
+      // Buscar demandas com dados relacionados (sem limit — exportação completa)
+      let rows = await db
+        .select({
+          id: demandas.id,
+          ato: demandas.ato,
+          prazo: demandas.prazo,
+          dataEntrada: demandas.dataEntrada,
+          status: demandas.status,
+          substatus: demandas.substatus,
+          providencias: demandas.providencias,
+          processo: {
+            numeroAutos: processos.numeroAutos,
+            atribuicao: processos.atribuicao,
+          },
+          assistido: {
+            nome: assistidos.nome,
+          },
+        })
+        .from(demandas)
+        .leftJoin(processos, eq(demandas.processoId, processos.id))
+        .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
+        .where(and(...conditions))
+        .orderBy(sql`${demandas.createdAt} DESC`);
+
+      // Filtro por atribuição (campo no processo)
+      if (filtros?.atribuicao && filtros.atribuicao !== "all") {
+        rows = rows.filter((r) => r.processo?.atribuicao === filtros.atribuicao);
+      }
+
+      // Helpers de formatação
+      function formatDate(d: Date | string | null | undefined): string {
+        if (!d) return "";
+        const date = d instanceof Date ? d : new Date(d);
+        if (isNaN(date.getTime())) return String(d);
+        return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
+      }
+
+      const STATUS_LABELS: Record<string, string> = {
+        "5_fila": "Fila",
+        "2_atender": "Atender",
+        "4_monitorar": "Monitorar",
+        "7_protocolado": "Protocolado",
+        "7_ciencia": "Ciência",
+        "7_sem_atuacao": "Sem atuação",
+        concluido: "Concluído",
+        arquivado: "Arquivado",
+      };
+
+      const ATRIBUICAO_LABELS: Record<string, string> = {
+        JURI_CAMACARI: "Tribunal do Júri",
+        GRUPO_JURI: "Grupo Especial de Júri",
+        VVD_CAMACARI: "Violência Doméstica",
+        EXECUCAO_PENAL: "Execução Penal",
+        SUBSTITUICAO: "Substituição Criminal",
+        SUBSTITUICAO_CIVEL: "Substituição Cível",
+      };
+
+      // Montar matriz de dados para o spreadsheet
+      const headers = [
+        "Status",
+        "Assistido",
+        "Processo",
+        "Ato",
+        "Prazo",
+        "Data Entrada",
+        "Providências",
+        "Atribuição",
+      ];
+
+      const dataRows = rows.map((r) => [
+        STATUS_LABELS[r.status?.toLowerCase() ?? ""] || r.substatus || r.status || "",
+        r.assistido?.nome || "",
+        r.processo?.numeroAutos || "",
+        r.ato || "",
+        formatDate(r.prazo),
+        formatDate(r.dataEntrada),
+        r.providencias || "",
+        ATRIBUICAO_LABELS[r.processo?.atribuicao ?? ""] || r.processo?.atribuicao || "",
+      ]);
+
+      // --- Google Sheets API v4 via REST ---
+      const sheetsBase = "https://sheets.googleapis.com/v4/spreadsheets";
+      const authHeader = `Bearer ${accessToken}`;
+
+      // 1. Criar spreadsheet
+      const createRes = await fetch(sheetsBase, {
+        method: "POST",
+        headers: {
+          Authorization: authHeader,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          properties: { title: titulo },
+          sheets: [
+            {
+              properties: {
+                title: "Demandas",
+                gridProperties: { frozenRowCount: 1 },
+              },
+            },
+          ],
+        }),
+      });
+
+      if (!createRes.ok) {
+        const err = await createRes.text();
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Falha ao criar planilha: ${err}`,
+        });
+      }
+
+      const sheet = await createRes.json();
+      const spreadsheetId: string = sheet.spreadsheetId;
+      const sheetId: number = sheet.sheets[0].properties.sheetId;
+      const spreadsheetUrl: string = sheet.spreadsheetUrl;
+
+      // 2. Escrever dados (headers + rows)
+      const allValues = [headers, ...dataRows];
+      const range = `Demandas!A1:H${allValues.length}`;
+
+      const updateRes = await fetch(
+        `${sheetsBase}/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: authHeader,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ range, majorDimension: "ROWS", values: allValues }),
+        }
+      );
+
+      if (!updateRes.ok) {
+        const err = await updateRes.text();
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Falha ao escrever dados: ${err}`,
+        });
+      }
+
+      // 3. Formatar: negrito no header + fundo zinc-800 + texto branco + linhas alternadas
+      const batchUpdateRes = await fetch(
+        `${sheetsBase}/${spreadsheetId}:batchUpdate`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: authHeader,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            requests: [
+              // Header: fundo escuro + texto branco + negrito
+              {
+                repeatCell: {
+                  range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 8 },
+                  cell: {
+                    userEnteredFormat: {
+                      backgroundColor: { red: 0.098, green: 0.098, blue: 0.11 },
+                      textFormat: {
+                        bold: true,
+                        foregroundColor: { red: 1, green: 1, blue: 1 },
+                        fontSize: 10,
+                      },
+                    },
+                  },
+                  fields: "userEnteredFormat(backgroundColor,textFormat)",
+                },
+              },
+              // Linhas de dados pares: fundo zinc-50
+              ...(dataRows.length > 0
+                ? Array.from({ length: Math.ceil(dataRows.length / 2) }, (_, i) => ({
+                    repeatCell: {
+                      range: {
+                        sheetId,
+                        startRowIndex: 1 + i * 2,
+                        endRowIndex: 2 + i * 2,
+                        startColumnIndex: 0,
+                        endColumnIndex: 8,
+                      },
+                      cell: {
+                        userEnteredFormat: {
+                          backgroundColor: { red: 0.98, green: 0.98, blue: 0.98 },
+                        },
+                      },
+                      fields: "userEnteredFormat(backgroundColor)",
+                    },
+                  }))
+                : []),
+              // Auto-resize todas as colunas
+              {
+                autoResizeDimensions: {
+                  dimensions: {
+                    sheetId,
+                    dimension: "COLUMNS",
+                    startIndex: 0,
+                    endIndex: 8,
+                  },
+                },
+              },
+            ],
+          }),
+        }
+      );
+
+      if (!batchUpdateRes.ok) {
+        // Formatação falhou mas planilha foi criada — não é erro crítico
+        console.warn("[exportToSheets] batchUpdate de formatação falhou:", await batchUpdateRes.text());
+      }
+
+      return {
+        spreadsheetId,
+        spreadsheetUrl,
+        totalRows: dataRows.length,
+      };
+    }),
+
   // Excluir duplicatas em batch (soft delete)
   deleteBatch: protectedProcedure
     .input(z.object({ ids: z.array(z.number()).min(1) }))
