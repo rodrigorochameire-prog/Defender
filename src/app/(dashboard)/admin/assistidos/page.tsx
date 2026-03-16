@@ -2285,6 +2285,12 @@ export default function AssistidosPage() {
   const [atribuicaoFilter, setAtribuicaoFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
+  // Busca server-side por número de processo (complementa filtro client-side)
+  const isProcessoSearch = searchTerm.length > 3 && /\d{4,}/.test(searchTerm) && (searchTerm.includes('-') || searchTerm.includes('.'));
+  const processoSearchQuery = trpc.assistidos.list.useQuery(
+    { limit: 200, search: searchTerm },
+    { enabled: isProcessoSearch }
+  );
   const [statusFilter, setStatusFilter] = useState("all");
   const [areaFilter, setAreaFilter] = useState("all");
   const [comarcaFilter, setComarcaFilter] = useState("all");
@@ -2383,6 +2389,12 @@ export default function AssistidosPage() {
     });
   }, []);
 
+  // IDs de assistidos encontrados via busca server-side por número de processo
+  const processoSearchIds = useMemo(() => {
+    if (!isProcessoSearch || !processoSearchQuery.data) return new Set<number>();
+    return new Set(processoSearchQuery.data.map(a => a.id));
+  }, [isProcessoSearch, processoSearchQuery.data]);
+
   const filteredAssistidos = useMemo(() => {
     let result = realAssistidos.filter((a) => {
       // Verificar se é "Não Identificado"
@@ -2400,7 +2412,7 @@ export default function AssistidosPage() {
       // Caso contrário, excluir os não identificados da lista normal
       if (isNaoIdentificado) return false;
       
-      const matchesSearch = a.nome.toLowerCase().includes(searchTerm.toLowerCase()) || a.cpf.includes(searchTerm) || (a.vulgo?.toLowerCase().includes(searchTerm.toLowerCase())) || (a.crimePrincipal?.toLowerCase().includes(searchTerm.toLowerCase())) || (a.numeroProcesso?.includes(searchTerm));
+      const matchesSearch = a.nome.toLowerCase().includes(searchTerm.toLowerCase()) || a.cpf.includes(searchTerm) || (a.vulgo?.toLowerCase().includes(searchTerm.toLowerCase())) || (a.crimePrincipal?.toLowerCase().includes(searchTerm.toLowerCase())) || (a.numeroProcesso?.includes(searchTerm)) || processoSearchIds.has(a.id);
       const matchesStatus = statusFilter === "all" || a.statusPrisional === statusFilter;
       const matchesArea = areaFilter === "all" || a.area === areaFilter;
       const matchesPinned = !showPinnedOnly || pinnedIds.has(a.id);
@@ -2691,9 +2703,14 @@ export default function AssistidosPage() {
               <Input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar por nome, CPF, vulgo..."
+                placeholder="Buscar por nome, CPF ou número de processo..."
                 className="pl-8 w-[140px] sm:w-[200px] md:w-[280px] h-8 text-xs border-zinc-200/80 dark:border-zinc-700/80 bg-zinc-100 dark:bg-zinc-800 rounded-lg transition-colors"
               />
+              {searchTerm.length > 3 && /\d{4,}/.test(searchTerm) && (
+                <p className="text-[10px] text-zinc-400 mt-0.5 absolute left-0 -bottom-4 whitespace-nowrap">
+                  Buscando por número de processo...
+                </p>
+              )}
             </div>
             <Link href="/admin/inteligencia">
               <Button 
@@ -2799,8 +2816,8 @@ export default function AssistidosPage() {
               <Input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar..."
-                className="pl-8 w-[180px] h-7 text-xs border-zinc-200/80 dark:border-zinc-700/80 bg-zinc-100 dark:bg-zinc-800 rounded-lg"
+                placeholder="Buscar por nome, CPF ou processo..."
+                className="pl-8 w-[220px] h-7 text-xs border-zinc-200/80 dark:border-zinc-700/80 bg-zinc-100 dark:bg-zinc-800 rounded-lg"
               />
             </div>
             <div className="flex items-center gap-2">

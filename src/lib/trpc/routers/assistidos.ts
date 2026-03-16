@@ -77,12 +77,48 @@ export const assistidosRouter = router({
       const conditions: ReturnType<typeof eq>[] = [];
       
       if (search) {
-        conditions.push(
-          or(
-            ilike(assistidos.nome, `%${search}%`),
-            ilike(assistidos.cpf || "", `%${search}%`)
-          )!
-        );
+        // Detectar se o termo parece um número de processo (dígitos + traços/pontos)
+        const isProcessoSearch = /\d{4,}/.test(search) && (search.includes('-') || search.includes('.'));
+
+        if (isProcessoSearch) {
+          // Buscar IDs de assistidos que possuem um processo com numeroAutos correspondente
+          const matchingProcessos = await db
+            .select({ assistidoId: processos.assistidoId })
+            .from(processos)
+            .where(
+              and(
+                ilike(processos.numeroAutos, `%${search}%`),
+                isNull(processos.deletedAt)
+              )
+            );
+
+          const assistidoIdsFromProcessos = [...new Set(matchingProcessos.map(p => p.assistidoId))];
+
+          if (assistidoIdsFromProcessos.length > 0) {
+            conditions.push(
+              or(
+                ilike(assistidos.nome, `%${search}%`),
+                ilike(assistidos.cpf || "", `%${search}%`),
+                inArray(assistidos.id, assistidoIdsFromProcessos)
+              )!
+            );
+          } else {
+            // Nenhum processo encontrado, manter busca normal por nome/CPF
+            conditions.push(
+              or(
+                ilike(assistidos.nome, `%${search}%`),
+                ilike(assistidos.cpf || "", `%${search}%`)
+              )!
+            );
+          }
+        } else {
+          conditions.push(
+            or(
+              ilike(assistidos.nome, `%${search}%`),
+              ilike(assistidos.cpf || "", `%${search}%`)
+            )!
+          );
+        }
       }
       
       if (statusPrisional && statusPrisional !== "all") {
