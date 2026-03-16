@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useCallback, Fragment } from "react";
+import { CountdownBadge, UrgencyDot } from "@/components/agenda/countdown-badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -515,8 +516,18 @@ export default function DashboardJuriPage() {
       const dataAud = a.dataHora ? new Date(a.dataHora) : null;
       return dataAud && dataAud >= hoje && dataAud <= fimDaSemana;
     });
-    if (audienciasSemana.length < 5) return audiencias.slice(0, 10);
-    return audienciasSemana.slice(0, 10);
+    const base = audienciasSemana.length < 5 ? audiencias.slice(0, 10) : audienciasSemana.slice(0, 10);
+    // Sort: today's events first, then by ascending time
+    return [...base].sort((a: any, b: any) => {
+      const da = a.dataHora ? new Date(a.dataHora) : null;
+      const db = b.dataHora ? new Date(b.dataHora) : null;
+      if (!da || !db) return 0;
+      const aIsToday = da.toDateString() === hoje.toDateString();
+      const bIsToday = db.toDateString() === hoje.toDateString();
+      if (aIsToday && !bIsToday) return -1;
+      if (!aIsToday && bIsToday) return 1;
+      return da.getTime() - db.getTime();
+    });
   }, [audiencias]);
 
   const mostrandoAlemDaSemana = useMemo(() => {
@@ -1738,15 +1749,13 @@ export default function DashboardJuriPage() {
                 audienciasExibir.map((aud: any) => {
                   const dataAud = aud.dataHora ? new Date(aud.dataHora) : null;
                   const isHoje = dataAud && isToday(dataAud);
-                  const isAmanha = dataAud && isTomorrow(dataAud);
-                  const diasRestantes = dataAud ? differenceInDays(dataAud, new Date()) : null;
 
                   return (
                     <Link href={`/admin/audiencias/${aud.id}`} key={aud.id} className="flex items-stretch gap-0 transition-colors group hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
                       {/* Barra de atribuição */}
                       <div className={cn("w-1 group-hover:w-1.5 flex-shrink-0 rounded-r my-2 ml-0.5 transition-all duration-200", getAtribuicaoColors(aud.processo?.atribuicao).indicator)} />
-                      <div className="flex items-center gap-3 px-3 py-3 flex-1 min-w-0">
-                        <div className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${
+                      <div className="flex items-center gap-3 px-3 py-2.5 flex-1 min-w-0">
+                        <div className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${
                           isHoje ? "bg-emerald-50 dark:bg-emerald-900/20" :
                           "bg-zinc-100 dark:bg-zinc-800"
                         }`}>
@@ -1761,15 +1770,25 @@ export default function DashboardJuriPage() {
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
-                            {aud.assistidoNome || aud.titulo || "Audiência"}
-                          </p>
-                          <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                              {aud.assistido?.nome || aud.assistidoNome || aud.titulo || "Audiência"}
+                            </p>
+                            {dataAud && <UrgencyDot eventDate={dataAud} />}
+                          </div>
+                          <div className="flex items-center gap-2 text-[11px] text-zinc-400 flex-wrap">
                             <span className="font-mono tabular-nums">{dataAud ? format(dataAud, "HH:mm") : "—"}</span>
                             <span>•</span>
                             <span className="truncate">{aud.tipo || aud.tipoAudiencia || "Audiência"}</span>
+                            {aud.local && (
+                              <>
+                                <span>•</span>
+                                <span className="truncate max-w-[100px]">{aud.local}</span>
+                              </>
+                            )}
                           </div>
                         </div>
+                        {dataAud && <CountdownBadge eventDate={dataAud} />}
                         {aud.reuPreso && <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />}
                         {aud.status && (aud.status === "cancelada" || aud.status === "CANCELADA") && (
                           <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
@@ -1779,15 +1798,6 @@ export default function DashboardJuriPage() {
                         )}
                         {aud.status && (aud.status === "realizada" || aud.status === "REALIZADA") && (
                           <CircleCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                        )}
-                        {diasRestantes !== null && (
-                          <span className={`text-[10px] font-medium tabular-nums ${
-                            diasRestantes <= 0 ? "text-emerald-600 dark:text-emerald-400 font-semibold" :
-                            diasRestantes <= 3 ? "text-amber-600 dark:text-amber-400" :
-                            "text-zinc-400 dark:text-zinc-500"
-                          }`}>
-                            {diasRestantes <= 0 ? "HOJE" : diasRestantes === 1 ? "Amanhã" : `${diasRestantes} dias`}
-                          </span>
                         )}
                       </div>
                     </Link>
@@ -1845,7 +1855,7 @@ export default function DashboardJuriPage() {
                     return (
                       <div key={aud.id}>
                         {mostrarSeparadorData && dataAud && (
-                          <div className="px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800/50">
+                          <div className="px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800/50 flex items-center justify-between">
                             <span className={`text-[10px] font-medium uppercase tracking-wide ${
                               isHoje ? "text-emerald-600 dark:text-emerald-400" :
                               isAmanha ? "text-amber-600 dark:text-amber-400" :
@@ -1856,21 +1866,34 @@ export default function DashboardJuriPage() {
                                estaSemana ? format(dataAud, "EEEE", { locale: ptBR }) :
                                format(dataAud, "EEEE, dd 'de' MMMM", { locale: ptBR })}
                             </span>
+                            {isHoje && (
+                              <span className="text-[9px] text-emerald-500 font-medium">ao vivo</span>
+                            )}
                           </div>
                         )}
                         <Link href={`/admin/audiencias/${aud.id}`} className="flex items-stretch gap-0 transition-colors group hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
                           <div className={cn("w-1 group-hover:w-1.5 flex-shrink-0 rounded-r my-2 ml-0.5 transition-all duration-200", getAtribuicaoColors(aud.processo?.atribuicao).indicator)} />
-                          <div className="flex items-center gap-3 px-3 py-2.5 flex-1 min-w-0">
+                          <div className="flex items-center gap-3 px-3 py-2 flex-1 min-w-0">
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
-                                {aud.assistidoNome || aud.titulo || "Audiência"}
-                              </p>
-                              <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                                  {aud.assistido?.nome || aud.assistidoNome || aud.titulo || "Audiência"}
+                                </p>
+                                {dataAud && <UrgencyDot eventDate={dataAud} />}
+                              </div>
+                              <div className="flex items-center gap-2 text-[11px] text-zinc-400 flex-wrap">
                                 <span className="font-mono tabular-nums">{dataAud ? format(dataAud, "HH:mm") : "—"}</span>
                                 <span>•</span>
                                 <span className="truncate">{aud.tipo || aud.tipoAudiencia || "Audiência"}</span>
+                                {aud.local && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="truncate max-w-[100px]">{aud.local}</span>
+                                  </>
+                                )}
                               </div>
                             </div>
+                            {dataAud && <CountdownBadge eventDate={dataAud} />}
                             {aud.reuPreso && <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />}
                             {aud.status && (aud.status === "cancelada" || aud.status === "CANCELADA") && (
                               <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
