@@ -201,6 +201,7 @@ export const searchRouter = router({
           cpf: assistidos.cpf,
           driveFolderId: assistidos.driveFolderId,
           atribuicao: assistidos.atribuicaoPrimaria,
+          statusPrisional: assistidos.statusPrisional,
         })
         .from(assistidos)
         .where(
@@ -238,6 +239,8 @@ export const searchRouter = router({
           status: demandas.status,
           prioridade: demandas.prioridade,
           tipoAto: demandas.tipoAto,
+          prazo: demandas.prazo,
+          assistidoId: demandas.assistidoId,
           createdAt: demandas.createdAt,
         })
         .from(demandas)

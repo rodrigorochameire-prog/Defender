@@ -23,6 +23,9 @@ import {
   CalendarPlus,
   ArrowRight,
   Loader2,
+  Radio,
+  Calendar,
+  Download,
 } from "lucide-react";
 import { useAssignment, CONTEXT_MENU_ITEMS, UTILITIES_MENU } from "@/contexts/assignment-context";
 import { trpc } from "@/lib/trpc/client";
@@ -158,6 +161,21 @@ export function CommandPalette() {
     { label: "Nova Sessão do Júri", path: "/admin/juri/nova", shortcut: "J", icon: <CalendarPlus className="h-4 w-4 text-rose-500" /> },
   ];
 
+  const quickNav: CommandItemData[] = [
+    { label: "Ver Radar", path: "/admin/radar", icon: <Radio className="h-4 w-4 text-cyan-500" /> },
+    { label: "Abrir Agenda", path: "/admin/agenda", icon: <Calendar className="h-4 w-4 text-indigo-500" /> },
+  ];
+
+  const handleImportSEEU = () => {
+    setOpen(false);
+    // Navega para demandas e dispara evento para abrir o modal SEEU
+    router.push("/admin/demandas");
+    // Aguarda a navegação antes de disparar o evento
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("open-seeu-import"));
+    }, 400);
+  };
+
   const handleSelect = (path: string, label: string, type: string) => {
     setOpen(false);
     addRecente({ label, path, type });
@@ -195,31 +213,55 @@ export function CommandPalette() {
             )}
           </CommandEmpty>
 
-          {/* Resultados de busca — assistidos */}
-          {hasResults && searchQuery.data!.assistidos.length > 0 && (
-            <CommandGroup heading="Assistidos">
-              {searchQuery.data!.assistidos.map((a) => (
-                <CommandItem
-                  key={`assistido-${a.id}`}
-                  value={`assistido ${a.nome} ${a.cpf || ""}`}
-                  onSelect={() => handleSelect(`/admin/assistidos/${a.id}`, a.nome, "assistido")}
-                  className="flex items-center gap-3"
-                >
-                  <User className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium">{a.nome}</span>
-                    {a.cpf && (
-                      <span className="ml-2 text-xs text-zinc-400 font-mono">{a.cpf}</span>
-                    )}
+          {/* Skeleton enquanto busca */}
+          {isSearching && (
+            <CommandGroup heading="Buscando...">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3 px-2 py-1.5">
+                  <div className="h-4 w-4 rounded bg-zinc-200 dark:bg-zinc-700 animate-pulse flex-shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <div className="h-3 w-40 rounded bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
+                    <div className="h-2.5 w-24 rounded bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
                   </div>
-                  <ArrowRight className="h-3 w-3 text-zinc-400" />
-                </CommandItem>
+                </div>
               ))}
             </CommandGroup>
           )}
 
+          {/* Resultados de busca — assistidos */}
+          {!isSearching && hasResults && searchQuery.data!.assistidos.length > 0 && (
+            <CommandGroup heading="Assistidos">
+              {searchQuery.data!.assistidos.map((a) => {
+                const isPreso = a.statusPrisional !== null && a.statusPrisional !== "SOLTO" && a.statusPrisional !== "DOMICILIAR" && a.statusPrisional !== "MONITORADO";
+                return (
+                  <CommandItem
+                    key={`assistido-${a.id}`}
+                    value={`assistido ${a.nome} ${a.cpf || ""}`}
+                    onSelect={() => handleSelect(`/admin/assistidos/${a.id}`, a.nome, "assistido")}
+                    className="flex items-center gap-3"
+                  >
+                    <div className="relative flex-shrink-0">
+                      <User className="h-4 w-4 text-emerald-500" />
+                      <span
+                        className={`absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border border-white dark:border-zinc-900 ${isPreso ? "bg-red-500" : "bg-emerald-500"}`}
+                        title={isPreso ? "Preso" : "Solto"}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium">{a.nome}</span>
+                      {a.cpf && (
+                        <span className="ml-2 text-xs text-zinc-400 font-mono">{a.cpf}</span>
+                      )}
+                    </div>
+                    <ArrowRight className="h-3 w-3 text-zinc-400" />
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          )}
+
           {/* Resultados de busca — processos */}
-          {hasResults && searchQuery.data!.processos.length > 0 && (
+          {!isSearching && hasResults && searchQuery.data!.processos.length > 0 && (
             <CommandGroup heading="Processos">
               {searchQuery.data!.processos.map((p) => (
                 <CommandItem
@@ -242,32 +284,51 @@ export function CommandPalette() {
           )}
 
           {/* Resultados de busca — demandas */}
-          {hasResults && searchQuery.data!.demandas.length > 0 && (
+          {!isSearching && hasResults && searchQuery.data!.demandas.length > 0 && (
             <CommandGroup heading="Demandas">
-              {searchQuery.data!.demandas.map((d) => (
-                <CommandItem
-                  key={`demanda-${d.id}`}
-                  value={`demanda ${d.ato} ${d.tipoAto || ""}`}
-                  onSelect={() => handleSelect(`/admin/demandas/${d.id}`, d.ato, "demanda")}
-                  className="flex items-center gap-3"
-                >
-                  <FileText className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium truncate">
-                      {d.ato.length > 60 ? d.ato.slice(0, 60) + "..." : d.ato}
-                    </span>
-                    {d.status && (
-                      <span className="ml-2 text-xs text-zinc-400">{d.status}</span>
-                    )}
-                  </div>
-                  <ArrowRight className="h-3 w-3 text-zinc-400" />
-                </CommandItem>
-              ))}
+              {searchQuery.data!.demandas.map((d) => {
+                const prazoDate = d.prazo ? new Date(d.prazo) : null;
+                const hoje = new Date();
+                hoje.setHours(0, 0, 0, 0);
+                const prazoVencido = prazoDate ? prazoDate < hoje : false;
+                const prazoStr = prazoDate
+                  ? prazoDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+                  : null;
+                const destPath = d.assistidoId
+                  ? `/admin/assistidos/${d.assistidoId}`
+                  : "/admin/demandas";
+                return (
+                  <CommandItem
+                    key={`demanda-${d.id}`}
+                    value={`demanda ${d.ato} ${d.tipoAto || ""}`}
+                    onSelect={() => handleSelect(destPath, d.ato, "demanda")}
+                    className="flex items-center gap-3"
+                  >
+                    <FileText className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium truncate">
+                        {d.ato.length > 60 ? d.ato.slice(0, 60) + "..." : d.ato}
+                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        {d.status && (
+                          <span className="text-xs text-zinc-400">{d.status.replace(/_/g, " ")}</span>
+                        )}
+                        {prazoStr && (
+                          <span className={`text-xs font-mono ${prazoVencido ? "text-red-500" : "text-zinc-400"}`}>
+                            · {prazoStr}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <ArrowRight className="h-3 w-3 text-zinc-400" />
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           )}
 
           {/* Separador entre busca e ações */}
-          {hasResults && <CommandSeparator />}
+          {!isSearching && hasResults && <CommandSeparator />}
 
           {/* Recentes — quando não está buscando */}
           {!debouncedSearch && recentes.length > 0 && (
@@ -320,6 +381,32 @@ export function CommandPalette() {
 
           <CommandSeparator />
 
+          {/* Ações rápidas — Radar, Agenda, SEEU */}
+          <CommandGroup heading="Ações">
+            {quickNav.map((item) => (
+              <CommandItem
+                key={item.label}
+                onSelect={() => {
+                  setOpen(false);
+                  if (item.path) router.push(item.path);
+                }}
+                className="flex items-center gap-3"
+              >
+                {item.icon || <ArrowRight className="h-4 w-4" />}
+                <span>{item.label}</span>
+              </CommandItem>
+            ))}
+            <CommandItem
+              onSelect={handleImportSEEU}
+              className="flex items-center gap-3"
+            >
+              <Download className="h-4 w-4 text-teal-500" />
+              <span>Importar do SEEU</span>
+            </CommandItem>
+          </CommandGroup>
+
+          <CommandSeparator />
+
           {/* Navegação */}
           <CommandGroup heading="Navegação">
             {navigationItems.map((item) => (
@@ -335,6 +422,21 @@ export function CommandPalette() {
             ))}
           </CommandGroup>
         </CommandList>
+
+        {/* Keyboard hint */}
+        <div className="flex items-center justify-center gap-3 border-t border-zinc-200 dark:border-zinc-700 px-4 py-2">
+          <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+            <kbd className="font-mono">↑↓</kbd> navegar
+          </span>
+          <span className="text-[10px] text-zinc-300 dark:text-zinc-600">·</span>
+          <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+            <kbd className="font-mono">Enter</kbd> confirmar
+          </span>
+          <span className="text-[10px] text-zinc-300 dark:text-zinc-600">·</span>
+          <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+            <kbd className="font-mono">Esc</kbd> fechar
+          </span>
+        </div>
       </CommandDialog>
     </>
   );

@@ -795,6 +795,13 @@ export default function Demandas() {
     return () => document.removeEventListener('click', handler);
   }, []);
 
+  // Abrir modal SEEU via evento global (ex: command palette)
+  useEffect(() => {
+    const handler = () => setIsSEEUImportModalOpen(true);
+    window.addEventListener("open-seeu-import", handler);
+    return () => window.removeEventListener("open-seeu-import", handler);
+  }, []);
+
   // Gerar lista de atos dinamicamente baseado na atribuição selecionada
   const atoOptionsFiltered = useMemo(() => {
     // Se não houver atribuição selecionada, retorna todos os atos
