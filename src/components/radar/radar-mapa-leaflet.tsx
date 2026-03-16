@@ -86,6 +86,7 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia }:
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
   const heatRef = useRef<L.Layer | null>(null);
+  const legendRef = useRef<any>(null);
   const onSelectNoticiaRef = useRef(onSelectNoticia);
 
   // Keep callback ref in sync
@@ -107,6 +108,34 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia }:
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
 
+    // Legenda de tipos de crime (visível apenas no modo de marcadores)
+    const legend = (L.control as any)({ position: "bottomleft" });
+    legend.onAdd = () => {
+      const div = L.DomUtil.create("div");
+      div.innerHTML = `
+        <div style="
+          background: white;
+          border-radius: 8px;
+          padding: 10px 12px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+          font-family: system-ui, sans-serif;
+          font-size: 11px;
+          max-width: 160px;
+        ">
+          <div style="font-weight: 600; color: #374151; margin-bottom: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;">Tipo de Crime</div>
+          ${Object.entries(CRIME_COLORS).map(([key, color]) => `
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
+              <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${color}; flex-shrink: 0;"></span>
+              <span style="color: #6b7280;">${CRIME_LABELS[key] || key}</span>
+            </div>
+          `).join("")}
+        </div>
+      `;
+      return div;
+    };
+    legend.addTo(map);
+    legendRef.current = legend;
+
     mapRef.current = map;
 
     return () => {
@@ -114,6 +143,7 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia }:
       mapRef.current = null;
       markersRef.current = null;
       heatRef.current = null;
+      legendRef.current = null;
     };
   }, []);
 
@@ -240,6 +270,9 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia }:
       // Hide markers
       if (markersRef.current) mapRef.current.removeLayer(markersRef.current);
 
+      // Hide legend — not meaningful in heatmap mode
+      if (legendRef.current) legendRef.current.remove();
+
       // Create heat layer
       const heatPoints: [number, number, number][] = data
         .filter((p) => p.latitude && p.longitude)
@@ -261,6 +294,9 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia }:
       }
       // Show markers
       if (markersRef.current) markersRef.current.addTo(mapRef.current);
+
+      // Restore legend
+      if (legendRef.current) legendRef.current.addTo(mapRef.current);
     }
   }, [showHeatmap, data]);
 

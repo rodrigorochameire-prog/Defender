@@ -10,6 +10,34 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Map } from "lucide-react";
 
+const CRIME_COLORS: Record<string, string> = {
+  homicidio: "#ef4444",
+  tentativa_homicidio: "#f97316",
+  trafico: "#a855f7",
+  roubo: "#3b82f6",
+  furto: "#eab308",
+  violencia_domestica: "#ec4899",
+  sexual: "#d946ef",
+  lesao_corporal: "#f59e0b",
+  porte_arma: "#64748b",
+  estelionato: "#14b8a6",
+  outros: "#71717a",
+};
+
+const CRIME_LABELS: Record<string, string> = {
+  homicidio: "Homicídio",
+  tentativa_homicidio: "Tent. Homicídio",
+  trafico: "Tráfico",
+  roubo: "Roubo",
+  furto: "Furto",
+  violencia_domestica: "V. Doméstica",
+  sexual: "Sexual",
+  lesao_corporal: "Lesão Corporal",
+  porte_arma: "Porte de Arma",
+  estelionato: "Estelionato",
+  outros: "Outros",
+};
+
 // Leaflet must be loaded client-side only
 const LeafletMap = dynamic(() => import("./radar-mapa-leaflet"), {
   ssr: false,
@@ -52,6 +80,19 @@ export function RadarMapa({ filtros, onSelectNoticia }: RadarMapaProps) {
     );
   }, [data, visibleLayers]);
 
+  const crimeCounts = useMemo(() => {
+    if (!filteredData.length) return [];
+    const counts: Record<string, number> = {};
+    filteredData.forEach((p) => {
+      const key = p.tipoCrime || "outros";
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([tipo, count]) => ({ tipo, count }));
+  }, [filteredData]);
+
   const toggleLayer = (layer: string) => {
     setVisibleLayers((prev) =>
       prev.includes(layer)
@@ -82,6 +123,30 @@ export function RadarMapa({ filtros, onSelectNoticia }: RadarMapaProps) {
 
   return (
     <div className="space-y-3">
+      {/* Mini-stats por tipo de crime */}
+      {crimeCounts.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {crimeCounts.map(({ tipo, count }) => (
+            <div
+              key={tipo}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-sm"
+            >
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: CRIME_COLORS[tipo] ?? "#71717a" }}
+              />
+              <span className="text-zinc-700 dark:text-zinc-300">
+                {CRIME_LABELS[tipo] ?? tipo}
+              </span>
+              <span className="text-zinc-400 font-normal">{count}</span>
+            </div>
+          ))}
+          <div className="inline-flex items-center px-2.5 py-1 rounded-full text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
+            {filteredData.length} total
+          </div>
+        </div>
+      )}
+
       {/* Controles */}
       <Card>
         <CardContent className="p-3 flex items-center gap-4 flex-wrap">

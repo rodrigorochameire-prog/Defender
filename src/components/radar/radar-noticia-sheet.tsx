@@ -36,6 +36,7 @@ import {
   Pencil,
   Save,
   X,
+  Newspaper,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -62,6 +63,7 @@ interface RadarNoticiaSheetProps {
   noticiaId: number | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSelectNoticia?: (id: number) => void;
 }
 
 interface Envolvido {
@@ -142,12 +144,17 @@ const circunstanciaLabels: Record<string, string> = {
   outros: "Outros",
 };
 
-export function RadarNoticiaSheet({ noticiaId, open, onOpenChange }: RadarNoticiaSheetProps) {
+export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNoticia }: RadarNoticiaSheetProps) {
   const utils = trpc.useUtils();
 
   const { data, isLoading } = trpc.radar.getById.useQuery(
     { id: noticiaId! },
     { enabled: !!noticiaId && open }
+  );
+
+  const { data: relacionadas } = trpc.radar.noticiasRelacionadas.useQuery(
+    { id: noticiaId! },
+    { enabled: !!noticiaId && open && !!data }
   );
 
   const noticia = data;
@@ -572,6 +579,61 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange }: RadarNotici
                     <Save className="h-3.5 w-3.5 mr-1.5" />
                     {updateMutation.isPending ? "Salvando..." : "Salvar"}
                   </Button>
+                </div>
+              </>
+            )}
+
+            {/* Ver também */}
+            {!isEditing && relacionadas && relacionadas.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide flex items-center gap-1.5">
+                    <Newspaper className="h-3.5 w-3.5" />
+                    Ver também ({relacionadas.length})
+                  </h4>
+                  <div className="space-y-2">
+                    {relacionadas.map((rel) => (
+                      <button
+                        key={rel.id}
+                        className="w-full text-left flex items-start gap-2.5 p-2 rounded-lg border border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer group"
+                        onClick={() => onSelectNoticia?.(rel.id)}
+                      >
+                        {rel.imagemUrl && (
+                          <div className="w-12 h-12 rounded-md overflow-hidden shrink-0 bg-zinc-100 dark:bg-zinc-800">
+                            <img src={rel.imagemUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <Badge
+                              variant="secondary"
+                              className={cn("text-[10px] px-1 py-0", getCrimeBadgeColor(rel.tipoCrime))}
+                            >
+                              {getCrimeLabel(rel.tipoCrime)}
+                            </Badge>
+                          </div>
+                          <p className="text-xs font-medium text-zinc-800 dark:text-zinc-200 line-clamp-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                            {rel.titulo}
+                          </p>
+                          <div className="flex items-center gap-2 text-[10px] text-zinc-400 mt-0.5">
+                            {rel.bairro && (
+                              <span className="flex items-center gap-0.5">
+                                <MapPin className="h-2.5 w-2.5" />
+                                {rel.bairro}
+                              </span>
+                            )}
+                            {rel.dataFato && (
+                              <span className="flex items-center gap-0.5">
+                                <Clock className="h-2.5 w-2.5" />
+                                {format(new Date(rel.dataFato), "dd/MM/yyyy", { locale: ptBR })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </>
             )}

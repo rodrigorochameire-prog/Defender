@@ -9,12 +9,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import {
   CheckCircle2,
   XCircle,
   User,
   Link2,
   MessageSquare,
+  Search,
+  X,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -25,6 +28,7 @@ import { cn } from "@/lib/utils";
 
 export function RadarMatches() {
   const [statusFilter, setStatusFilter] = useState("todos");
+  const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [actionDialog, setActionDialog] = useState<{
     type: "confirm" | "dismiss";
@@ -36,6 +40,7 @@ export function RadarMatches() {
 
   const { data, isLoading } = trpc.radar.matchesList.useQuery({
     status: statusFilter !== "todos" ? statusFilter : undefined,
+    search: search.trim() || undefined,
     limit: 50,
   });
 
@@ -113,31 +118,64 @@ export function RadarMatches() {
 
   return (
     <div className="space-y-4">
-      {/* Filtros de status */}
-      <div className="flex items-center gap-2">
-        {[
-          { value: "todos", label: "Todos" },
-          { value: "possivel", label: "Possíveis" },
-          { value: "auto_confirmado", label: "Auto-confirmados" },
-          { value: "confirmado_manual", label: "Confirmados" },
-          { value: "descartado", label: "Descartados" },
-        ].map((opt) => (
-          <Button
-            key={opt.value}
-            variant={statusFilter === opt.value ? "default" : "outline"}
-            size="sm"
-            onClick={() => {
-              setStatusFilter(opt.value);
-              setSelectedIds(new Set());
-            }}
-            className="cursor-pointer text-xs h-7"
-          >
-            {opt.label}
-          </Button>
-        ))}
-        <span className="ml-auto text-xs text-zinc-400">
-          {data?.total || 0} match{(data?.total || 0) !== 1 ? "es" : ""}
+      {/* Controles: busca + filtros de status */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        {/* Busca */}
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-400" />
+          <Input
+            placeholder="Buscar por nome do assistido ou encontrado..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 h-9"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-2.5 top-2.5 text-zinc-400 hover:text-zinc-600 cursor-pointer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Filtros de status */}
+        <div className="flex gap-1.5 flex-wrap">
+          {[
+            { value: "todos", label: "Todos" },
+            { value: "possivel", label: "Possíveis" },
+            { value: "auto_confirmado", label: "Auto" },
+            { value: "confirmado_manual", label: "Confirmados" },
+            { value: "descartado", label: "Descartados" },
+          ].map((opt) => (
+            <Button
+              key={opt.value}
+              variant={statusFilter === opt.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setStatusFilter(opt.value);
+                setSelectedIds(new Set());
+              }}
+              className="cursor-pointer text-xs h-9"
+            >
+              {opt.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Contagem */}
+      <div className="flex items-center justify-between text-xs text-zinc-500">
+        <span>
+          {data?.total ?? 0} match{(data?.total ?? 0) !== 1 ? "es" : ""}
+          {statusFilter === "possivel" ? " possíveis" : ""}
+          {search ? ` para "${search}"` : ""}
         </span>
+        {selectedIds.size > 0 && (
+          <span className="text-emerald-600 font-medium">
+            {selectedIds.size} selecionado{selectedIds.size > 1 ? "s" : ""}
+          </span>
+        )}
       </div>
 
       {/* Select All */}

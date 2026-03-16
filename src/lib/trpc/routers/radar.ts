@@ -374,6 +374,7 @@ export const radarRouter = router({
     .input(
       z.object({
         status: z.string().optional(),
+        search: z.string().optional(),
         limit: z.number().min(1).max(100).optional().default(50),
         offset: z.number().min(0).optional().default(0),
       })
@@ -383,6 +384,15 @@ export const radarRouter = router({
 
       if (input.status && input.status !== "todos") {
         conditions.push(eq(radarMatches.status, input.status as any));
+      }
+
+      if (input.search && input.search.trim()) {
+        conditions.push(
+          or(
+            ilike(radarMatches.nomeEncontrado, `%${input.search.trim()}%`),
+            ilike(assistidos.nome, `%${input.search.trim()}%`)
+          )!
+        );
       }
 
       const matches = await db
@@ -419,6 +429,7 @@ export const radarRouter = router({
       const [totalResult] = await db
         .select({ total: count() })
         .from(radarMatches)
+        .leftJoin(assistidos, eq(radarMatches.assistidoId, assistidos.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined);
 
       return {
@@ -924,6 +935,55 @@ export const radarRouter = router({
         label: DIAS[d],
         total: byDia[d] ?? 0,
       }));
+    }),
+
+  noticiasRelacionadas: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      limit: z.number().min(1).max(6).optional().default(4),
+    }))
+    .query(async ({ input }) => {
+      // Busca a notícia atual para pegar bairro e tipoCrime
+      const [current] = await db
+        .select({
+          tipoCrime: radarNoticias.tipoCrime,
+          bairro: radarNoticias.bairro,
+        })
+        .from(radarNoticias)
+        .where(eq(radarNoticias.id, input.id))
+        .limit(1);
+
+      if (!current) return [];
+
+      const conditions = [
+        sql`${radarNoticias.id} != ${input.id}`,
+        sql`${radarNoticias.enrichmentStatus} = 'done'`,
+      ];
+
+      // Busca por mesmo bairro OU mesmo tipo de crime
+      if (current.bairro || current.tipoCrime) {
+        const orConditions = [];
+        if (current.bairro) orConditions.push(eq(radarNoticias.bairro, current.bairro));
+        if (current.tipoCrime) orConditions.push(eq(radarNoticias.tipoCrime, current.tipoCrime));
+        conditions.push(or(...orConditions)!);
+      }
+
+      const related = await db
+        .select({
+          id: radarNoticias.id,
+          titulo: radarNoticias.titulo,
+          tipoCrime: radarNoticias.tipoCrime,
+          bairro: radarNoticias.bairro,
+          dataFato: radarNoticias.dataFato,
+          fonte: radarNoticias.fonte,
+          imagemUrl: radarNoticias.imagemUrl,
+        })
+        .from(radarNoticias)
+        .where(and(...conditions))
+        .orderBy(desc(radarNoticias.dataFato))
+        .limit(input.limit);
+
+      return related;
     }),
 
   reincidentes: protectedProcedure

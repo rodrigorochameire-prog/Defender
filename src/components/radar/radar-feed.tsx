@@ -164,6 +164,7 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
         noticiaId={selectedNoticiaId}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
+        onSelectNoticia={setSelectedNoticiaId}
       />
     </div>
   );
