@@ -48,13 +48,13 @@ class RadarExtractionService:
         Extrai dados estruturados de uma notícia usando Gemini Flash.
         Retorna dict com campos para atualizar radar_noticias.
         """
-        from services.gemini_service import get_gemini_service, GeminiService
+        from services.claude_service import get_claude_service, ClaudeService
         from prompts.radar_extraction import RADAR_NEWS_EXTRACTION_PROMPT
 
-        if not GeminiService.is_configured():
-            raise RuntimeError("GEMINI_API_KEY not configured — cannot extract")
+        if not ClaudeService.is_configured():
+            raise RuntimeError("ANTHROPIC_API_KEY not configured — cannot extract")
 
-        gemini = get_gemini_service()
+        claude = get_claude_service()
 
         # Montar texto para extração
         text = f"TÍTULO: {noticia.get('titulo', '')}\n\n"
@@ -64,7 +64,7 @@ class RadarExtractionService:
             text += f"TEXTO DA NOTÍCIA:\n{corpo[:15000]}"
 
         try:
-            result = await gemini.extract(RADAR_NEWS_EXTRACTION_PROMPT, text)
+            result = await claude.extract(RADAR_NEWS_EXTRACTION_PROMPT, text)
 
             if not isinstance(result, dict):
                 logger.warning("Gemini retornou tipo inesperado: %s", type(result))

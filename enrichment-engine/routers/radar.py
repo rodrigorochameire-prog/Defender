@@ -105,7 +105,7 @@ async def radar_scrape(input_data: RadarScrapeInput | None = None) -> RadarScrap
 
 @router.post("/radar/extract", response_model=RadarExtractOutput)
 async def radar_extract(input_data: RadarExtractInput | None = None) -> RadarExtractOutput:
-    """Extrai dados estruturados de notícias pendentes via Gemini Flash."""
+    """Extrai dados estruturados de notícias pendentes via Claude Sonnet."""
     limit = input_data.limit if input_data else 20
     logger.info("Iniciando extração | limit=%d", limit)
 
@@ -209,7 +209,7 @@ async def radar_pipeline() -> RadarPipelineOutput:
         result.etapa_scraping = {"status": "erro", "error": str(e)}
         logger.error("Pipeline scraping falhou: %s", str(e))
 
-    # 2. Extração via Gemini Flash (batch de 10 para caber no timeout)
+    # 2. Extração via Claude Sonnet (batch de 10 para caber no timeout)
     try:
         from services.radar_extraction_service import get_radar_extraction_service
 
