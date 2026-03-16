@@ -43,6 +43,23 @@ KEYWORDS_POLICIAL = [
     "ocorrência", "BO", "boletim de ocorrência",
 ]
 
+# Palavras-chave FORTES para detectar notícias policiais no título
+KEYWORDS_POLICIAL_TITULO = [
+    "homicídio", "homicidio", "assassinato", "assassinado", "morto a tiros",
+    "tentativa de homicídio", "tentativa de homicidio", "baleado", "esfaqueado",
+    "tráfico", "trafico", "drogas", "entorpecentes",
+    "roubo", "roubado", "assalto", "latrocínio", "latrocinio",
+    "furto", "furtado",
+    "violência doméstica", "violencia domestica", "maria da penha",
+    "estupro", "abuso sexual",
+    "lesão corporal", "lesao corporal",
+    "arma de fogo", "porte ilegal",
+    "preso em flagrante", "preso com", "operação policial", "operacao policial",
+    "mandado de prisão", "mandado de prisao",
+    "estelionato", "fraude",
+    "traficante", "suspeito preso", "acusado preso",
+]
+
 # Palavras-chave para verificar se a notícia é da região de Camaçari/RMS
 KEYWORDS_CAMACARI_REGIAO = [
     "camaçari", "camacari", "camaçarí", "camacarí",
@@ -429,19 +446,30 @@ class RadarScraperService:
         return None
 
     def _is_police_news(self, title: str) -> bool:
-        """Verifica se um título indica notícia policial."""
+        """Verifica se um título indica notícia policial (usando keywords fortes)."""
         if not title:
             return False
         title_lower = title.lower()
-        return any(kw in title_lower for kw in KEYWORDS_POLICIAL)
+        return any(kw in title_lower for kw in KEYWORDS_POLICIAL_TITULO)
 
     def _is_camacari_region(self, titulo: str, corpo: str | None) -> bool:
         """
         Verifica se a notícia é da região de Camaçari/RMS.
-        Checa título e corpo do artigo para referências geográficas.
+        Prioriza o título (peso maior) e apenas os primeiros 2000 chars do corpo.
         """
-        texto = f"{titulo} {corpo or ''}".lower()
-        return any(kw in texto for kw in KEYWORDS_CAMACARI_REGIAO)
+        titulo_lower = titulo.lower()
+
+        # 1. Se o título contém keyword regional → aceitar imediatamente
+        if any(kw in titulo_lower for kw in KEYWORDS_CAMACARI_REGIAO):
+            return True
+
+        # 2. Verificar apenas primeiros 2000 chars do corpo (evita falsas menções)
+        if corpo:
+            trecho_inicial = corpo[:2000].lower()
+            if any(kw in trecho_inicial for kw in KEYWORDS_CAMACARI_REGIAO):
+                return True
+
+        return False
 
     # === Salvar no banco ===
 

@@ -10,6 +10,8 @@ import re
 from datetime import datetime, timezone
 from typing import Any
 
+import httpx
+
 from config import get_settings
 
 logger = logging.getLogger("enrichment-engine.radar-extraction")
@@ -128,6 +130,13 @@ class RadarExtractionService:
             if envolvidos and isinstance(envolvidos, list):
                 update_data["envolvidos"] = envolvidos
 
+            # Campo de relevância (usado apenas localmente — não salvo no banco)
+            relevante = result.get("relevante", True)  # default True = não deletar por padrão
+            confianca_local = result.get("confianca_local", 50)
+            update_data["relevante"] = relevante
+            if confianca_local is not None:
+                update_data["confianca_local"] = int(confianca_local)
+
             return update_data
 
         except Exception as e:
@@ -141,6 +150,35 @@ class RadarExtractionService:
         """Extrai e salva uma notícia. Retorna True se processou com sucesso."""
         try:
             update_data = await self.extract_from_noticia(noticia)
+
+            # Se Gemini diz que notícia não é da região → deletar do banco
+            if update_data.get("relevante") is False:
+                logger.info(
+                    "Gemini marcou como irrelevante id=%d: '%s'",
+                    noticia["id"],
+                    noticia.get("titulo", "")[:60],
+                )
+                client_db.table("radar_noticias").delete().eq("id", noticia["id"]).execute()
+                return True
+
+            # Se a extração não produziu nenhum dado útil → notícia provavelmente irrelevante
+            tipo_crime = update_data.get("tipo_crime")
+            envolvidos = update_data.get("envolvidos")
+            bairro = update_data.get("bairro")
+
+            if not tipo_crime and not envolvidos and not bairro:
+                # Sem crime classificado, sem pessoas, sem localidade → deletar
+                logger.info(
+                    "Descartando notícia irrelevante id=%d titulo='%s'",
+                    noticia["id"],
+                    noticia.get("titulo", "")[:60],
+                )
+                client_db.table("radar_noticias").delete().eq("id", noticia["id"]).execute()
+                return True  # Processado com sucesso (descartado)
+
+            # Remover campos de relevância antes de salvar — não existem na tabela
+            update_data.pop("relevante", None)
+            update_data.pop("confianca_local", None)
 
             # Atualizar no banco
             client_db.table("radar_noticias").update(
@@ -182,11 +220,11 @@ class RadarExtractionService:
             logger.info("Nenhuma notícia pendente para extração")
             return 0
 
-        logger.info("Extraindo dados de %d notícias (concorrência=5)", len(noticias))
+        logger.info("Extraindo dados de %d notícias (concorrência=10)", len(noticias))
 
-        # Processar com concorrência limitada (5 simultâneas) para
+        # Processar com concorrência limitada (10 simultâneas) para
         # respeitar rate limits do Gemini e evitar timeout
-        semaphore = asyncio.Semaphore(5)
+        semaphore = asyncio.Semaphore(10)
 
         async def _with_semaphore(noticia):
             async with semaphore:
@@ -205,13 +243,13 @@ class RadarExtractionService:
         return processed
 
     async def geocode_batch(self, limit: int = 20) -> int:
-        """Geocodifica notícias que têm bairro mas não têm lat/lng."""
+        """Geocodifica notícias que têm bairro mas não têm lat/lng — versão paralela."""
+        import asyncio
         from services.supabase_service import get_supabase_service
 
         supa = get_supabase_service()
         client_db = supa._get_client()
 
-        # Buscar notícias com bairro mas sem coordenadas
         result = (
             client_db.table("radar_noticias")
             .select("id, bairro, logradouro")
@@ -226,46 +264,43 @@ class RadarExtractionService:
         if not noticias:
             return 0
 
-        import httpx
-
+        # Semáforo: Nominatim pede no máximo 1 req/s, mas vamos usar 3 paralelos
+        # com pequeno delay para ser um bom cidadão
+        sem = asyncio.Semaphore(3)
         geocoded = 0
-        async with httpx.AsyncClient(timeout=10.0) as http:
-            for noticia in noticias:
+
+        async def _geocode_one(noticia: dict) -> bool:
+            nonlocal geocoded
+            async with sem:
+                await asyncio.sleep(0.4)  # rate limiting leve: ~7 req/s máximo
                 try:
                     bairro = noticia.get("bairro", "")
                     logradouro = noticia.get("logradouro", "")
-
                     query = f"{logradouro}, {bairro}" if logradouro else bairro
                     query += ", Camaçari, Bahia, Brasil"
 
-                    resp = await http.get(
-                        "https://nominatim.openstreetmap.org/search",
-                        params={
-                            "q": query,
-                            "format": "json",
-                            "limit": 1,
-                            "countrycodes": "br",
-                        },
-                        headers={"User-Agent": "OMBUDS-Radar/1.0"},
-                    )
+                    async with httpx.AsyncClient(timeout=10.0) as http:
+                        resp = await http.get(
+                            "https://nominatim.openstreetmap.org/search",
+                            params={"q": query, "format": "json", "limit": 1, "countrycodes": "br"},
+                            headers={"User-Agent": "OMBUDS-Radar/1.0"},
+                        )
 
                     if resp.status_code == 200:
                         data = resp.json()
                         if data:
                             lat = float(data[0]["lat"])
                             lon = float(data[0]["lon"])
-
                             client_db.table("radar_noticias").update({
-                                "latitude": lat,
-                                "longitude": lon,
+                                "latitude": lat, "longitude": lon,
                             }).eq("id", noticia["id"]).execute()
-
                             geocoded += 1
-
+                            return True
                 except Exception as e:
                     logger.debug("Geocoding falhou para id=%d: %s", noticia["id"], str(e))
-                    continue
+                return False
 
+        await asyncio.gather(*[_geocode_one(n) for n in noticias], return_exceptions=True)
         logger.info("Geocodificadas %d/%d notícias", geocoded, len(noticias))
         return geocoded
 

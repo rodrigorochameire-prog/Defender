@@ -1,5 +1,92 @@
 export type CategoriaNoticia = "legislativa" | "jurisprudencial" | "artigo";
 
+// ==========================================
+// CAMADA 1: KEYWORDS NEGATIVAS (descarte imediato)
+// ==========================================
+
+export const KEYWORDS_NEGATIVAS = [
+  // Eventos e cursos
+  "inscrições abertas", "inscreva-se", "processo seletivo", "edital de seleção",
+  "congresso", "seminário", "workshop", "webinar", "curso de",
+  "evento", "programação do evento", "participe",
+  // Institucional/RH
+  "lista de aprovados", "resultado do concurso", "nomeação", "posse",
+  "laboratório", "bolsa de estudos", "bolsista", "estágio",
+  "aniversário", "homenagem", "nota de falecimento", "nota de pesar",
+  // Comercial
+  "assinatura", "desconto", "promoção", "black friday",
+  "patrocinado", "publi",
+  // Boletins genéricos
+  "boletim informativo", "newsletter", "clipping",
+  "expediente", "recesso", "feriado",
+];
+
+/** Retorna true se a notícia deve ser descartada */
+export function isIrrelevante(titulo: string, resumo: string): boolean {
+  const combined = `${titulo} ${resumo}`.toLowerCase();
+  return KEYWORDS_NEGATIVAS.some(kw => combined.includes(kw.toLowerCase()));
+}
+
+// ==========================================
+// CAMADA 2: KEYWORDS POSITIVAS (relevância mínima)
+// ==========================================
+
+export const KEYWORDS_RELEVANCIA = [
+  // Direito Penal / Material
+  "penal", "crime", "homicídio", "furto", "roubo", "estelionato", "lesão corporal",
+  "código penal", "CP", "tipicidade", "antijuridicidade", "culpabilidade",
+  "tentativa", "concurso de crimes", "reincidência", "prescrição",
+  "feminicídio", "latrocínio", "extorsão", "corrupção", "peculato",
+  // Processo Penal
+  "processo penal", "CPP", "prisão preventiva", "prisão cautelar", "prisão temporária",
+  "audiência de custódia", "interceptação", "busca e apreensão", "flagrante",
+  "inquérito", "denúncia", "queixa-crime", "ação penal",
+  "nulidade", "prova ilícita", "cadeia de custódia",
+  "acordo de não persecução", "ANPP", "colaboração premiada",
+  // Execução Penal
+  "execução penal", "LEP", "preso", "progressão", "regime",
+  "livramento condicional", "saída temporária", "indulto", "remição",
+  "monitoramento eletrônico", "tornozeleira", "sistema prisional",
+  // Júri
+  "júri", "plenário do júri", "quesitos", "pronúncia", "impronúncia",
+  "desclassificação", "absolvição sumária",
+  // VVD
+  "maria da penha", "violência doméstica", "medida protetiva", "lei 11.340",
+  "violência contra a mulher", "feminicídio",
+  // Drogas
+  "drogas", "lei 11.343", "tráfico", "uso de drogas",
+  "tráfico privilegiado", "entorpecente",
+  // ECA
+  "ECA", "adolescente infrator", "ato infracional", "medida socioeducativa",
+  "internação de menor", "sinase",
+  // Defensoria
+  "defensoria", "defensor público", "DPE", "DPU", "LC 80",
+  "assistência jurídica", "acesso à justiça", "hipossuficiente",
+  // Constitucional Penal
+  "habeas corpus", "HC", "RHC", "STF", "STJ",
+  "súmula", "informativo", "tese fixada", "repercussão geral",
+  "recurso especial", "REsp", "recurso extraordinário",
+  // Legislação
+  "lei nº", "projeto de lei", "PL ", "PEC ", "sancionou", "promulgada",
+  "nova redação", "alteração legislativa", "entrou em vigor",
+  // Segurança Pública
+  "segurança pública", "polícia", "abuso de autoridade",
+  "uso da força", "letalidade policial",
+  // Direitos Humanos
+  "direitos humanos", "tortura", "CIDH", "corte interamericana",
+  "encarceramento em massa", "seletividade penal",
+];
+
+/** Retorna true se a notícia é potencialmente relevante */
+export function isRelevante(titulo: string, resumo: string): boolean {
+  const combined = `${titulo} ${resumo}`.toLowerCase();
+  return KEYWORDS_RELEVANCIA.some(kw => combined.includes(kw.toLowerCase()));
+}
+
+// ==========================================
+// CLASSIFICAÇÃO POR CATEGORIA
+// ==========================================
+
 export const KEYWORDS_LEGISLATIVA = [
   "lei nº", "lei n.", "sancionou", "sancionada", "promulgada", "promulgou",
   "PL ", "PLC ", "PLS ", "PEC ", "MP nº", "medida provisória",

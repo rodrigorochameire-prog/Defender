@@ -8,6 +8,8 @@ RADAR_NEWS_EXTRACTION_PROMPT = """Você é um extrator de dados especializado em
 Analise o texto da notícia abaixo e extraia as seguintes informações em JSON:
 
 {
+  "relevante": true,
+  "confianca_local": 95,
   "tipo_crime": "homicidio|tentativa_homicidio|trafico|roubo|furto|violencia_domestica|sexual|lesao_corporal|porte_arma|estelionato|outros",
   "bairro": "nome do bairro (null se não mencionado)",
   "logradouro": "rua/avenida/local específico (null se não mencionado)",
@@ -41,6 +43,8 @@ REGRAS:
 10. Se não conseguir extrair um campo, use null
 11. IMPORTANTE sobre envolvidos: use nome=null se a pessoa não é identificada por nome próprio. NÃO use palavras genéricas como "HOMEM", "MULHER", "CRIMINOSO", "FILHO", "INDIVÍDUOS" como nome — esses devem ser nome=null
 12. Inclua envolvidos sem nome identificado com papel e idade quando disponíveis (ex: {"nome": null, "papel": "suspeito", "idade": 32})
+13. CAMPO "relevante": defina como true se o fato criminal ocorreu EM Camaçari ou na RMS (Camaçari, Dias D'Ávila, Simões Filho). Defina como false se o fato ocorreu em outro lugar mesmo que o artigo mencione Camaçari tangencialmente (ex: estatística nacional, comparação com outra cidade, evento em Salvador, reportagem sobre outra região)
+14. CAMPO "confianca_local": integer de 0 a 100 indicando a confiança de que o fato ocorreu especificamente em Camaçari ou bairros/distritos de Camaçari (não apenas na RMS em geral). Use 100 quando o bairro de Camaçari é explicitamente mencionado, valores menores quando apenas "Camaçari" é citado de forma vaga, e próximo de 0 quando o fato é claramente de outra cidade
 
 Responda APENAS com o JSON, sem markdown ou texto adicional."""
 

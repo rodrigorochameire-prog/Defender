@@ -2,7 +2,12 @@ import { db } from "@/lib/db";
 import { noticiasFontes, noticiasJuridicas } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { cleanHtml, gerarResumo, extractPlainText } from "./html-cleaner";
-import { classificarNoticia, extrairTags } from "@/config/noticias";
+import {
+  classificarNoticia,
+  extrairTags,
+  isIrrelevante,
+  isRelevante,
+} from "@/config/noticias";
 
 type ScrapedItem = {
   titulo: string;
@@ -11,6 +16,9 @@ type ScrapedItem = {
   publicadoEm?: Date;
   conteudoHtml?: string;
 };
+
+// Máximo de dias para aceitar notícias (descarta antigas)
+const MAX_DIAS_ATRAS = 7;
 
 // ==========================================
 // RSS PARSER (sem dependência externa)
@@ -102,6 +110,61 @@ async function fetchFullContent(url: string): Promise<string> {
 }
 
 // ==========================================
+// CAMADA 3: CLASSIFICAÇÃO POR IA (opcional)
+// ==========================================
+
+async function classificarComIA(titulo: string, resumo: string): Promise<{
+  relevante: boolean;
+  categoria: "legislativa" | "jurisprudencial" | "artigo";
+  motivo: string;
+} | null> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 150,
+        messages: [{
+          role: "user",
+          content: `Você é um filtro de notícias para a Defensoria Pública Criminal da Bahia.
+Analise esta notícia e responda em JSON:
+
+Título: ${titulo}
+Resumo: ${resumo}
+
+Responda APENAS com JSON válido:
+{"relevante": true/false, "categoria": "legislativa"|"jurisprudencial"|"artigo", "motivo": "explicação em 1 frase"}
+
+Considere RELEVANTE se trata de: direito penal, processo penal, execução penal, tribunal do júri, drogas, violência doméstica, ECA, defensoria pública, direitos humanos, segurança pública, sistema prisional, decisões STF/STJ em matéria criminal.
+
+Considere IRRELEVANTE se é: evento/congresso/curso, processo seletivo, notícia administrativa, assunto cível/trabalhista/tributário sem relação com criminal.`,
+        }],
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text || "";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+
+    return JSON.parse(jsonMatch[0]);
+  } catch {
+    return null;
+  }
+}
+
+// ==========================================
 // PIPELINE PRINCIPAL
 // ==========================================
 
@@ -109,6 +172,7 @@ export type ScrapeResult = {
   fonte: string;
   total: number;
   novos: number;
+  filtrados: number;
   erros: number;
   erro?: string;
 };
@@ -116,9 +180,11 @@ export type ScrapeResult = {
 export async function scrapeAllFontes(): Promise<ScrapeResult[]> {
   const fontes = await db.select().from(noticiasFontes).where(eq(noticiasFontes.ativo, true));
   const results: ScrapeResult[] = [];
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - MAX_DIAS_ATRAS);
 
   for (const fonte of fontes) {
-    const result: ScrapeResult = { fonte: fonte.nome, total: 0, novos: 0, erros: 0 };
+    const result: ScrapeResult = { fonte: fonte.nome, total: 0, novos: 0, filtrados: 0, erros: 0 };
 
     try {
       let items: ScrapedItem[];
@@ -138,6 +204,13 @@ export async function scrapeAllFontes(): Promise<ScrapeResult[]> {
 
       for (const item of items) {
         try {
+          // FILTRO DE DATA: descartar notícias antigas
+          if (item.publicadoEm && item.publicadoEm < cutoffDate) {
+            result.filtrados++;
+            continue;
+          }
+
+          // Checar duplicata por URL
           const existing = await db.select({ id: noticiasJuridicas.id })
             .from(noticiasJuridicas)
             .where(eq(noticiasJuridicas.urlOriginal, item.url))
@@ -145,6 +218,7 @@ export async function scrapeAllFontes(): Promise<ScrapeResult[]> {
 
           if (existing.length > 0) continue;
 
+          // Fetch conteúdo completo se não veio no RSS
           let conteudo = item.conteudoHtml || "";
           if (!conteudo || conteudo.length < 200) {
             try {
@@ -155,9 +229,40 @@ export async function scrapeAllFontes(): Promise<ScrapeResult[]> {
           }
 
           const plainText = extractPlainText(conteudo);
+          const resumo = gerarResumo(conteudo);
+
+          // ======================================
+          // FILTRAGEM EM 3 CAMADAS
+          // ======================================
+
+          // CAMADA 1: Keywords negativas → descarte imediato
+          if (isIrrelevante(item.titulo, resumo)) {
+            result.filtrados++;
+            continue;
+          }
+
+          // CAMADA 2: Keywords positivas → precisa ter ao menos 1 match
+          const temRelevancia = isRelevante(item.titulo, plainText);
+
+          if (!temRelevancia) {
+            // CAMADA 3: IA como tiebreaker para itens ambíguos
+            const iaResult = await classificarComIA(item.titulo, resumo);
+
+            if (iaResult && !iaResult.relevante) {
+              result.filtrados++;
+              continue;
+            }
+
+            // Se IA não disponível e sem keywords positivas → descartar
+            if (!iaResult) {
+              result.filtrados++;
+              continue;
+            }
+          }
+
+          // Classificar e salvar
           const categoria = classificarNoticia(item.titulo, plainText);
           const tags = extrairTags(item.titulo, plainText);
-          const resumo = gerarResumo(conteudo);
 
           await db.insert(noticiasJuridicas).values({
             titulo: item.titulo,

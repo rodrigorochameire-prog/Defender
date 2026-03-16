@@ -68,8 +68,8 @@ export async function GET(request: NextRequest) {
   // Run steps sequentially with individual timeouts
   // Total budget: ~55s (Vercel max 60s)
   await callStep("scrape", "/api/radar/scrape", 20_000);
-  await callStep("extract", "/api/radar/extract", 25_000, { limit: 10 });
-  await callStep("geocode", "/api/radar/geocode", 5_000, { limit: 50 });
+  await callStep("extract", "/api/radar/extract", 45_000, { limit: 30 });
+  await callStep("geocode", "/api/radar/geocode", 8_000, { limit: 30 });
   await callStep("match", "/api/radar/match", 5_000, { limit: 50 });
 
   return NextResponse.json({
