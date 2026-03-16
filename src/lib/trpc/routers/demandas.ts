@@ -813,12 +813,17 @@ export const demandasRouter = router({
             });
           }
 
-          // Fallback: verificar por processo + ato (mesmo ato no mesmo processo = provável duplicata)
+          // Fallback: verificar por processo + ato + mesma data de expedição
+          // Sem a data, intimações diferentes do mesmo tipo (ex: Ciência em fev e Ciência em mar)
+          // seriam tratadas como duplicata incorretamente
           if (!existingDemanda && row.ato && row.ato !== "Demanda importada") {
             existingDemanda = await db.query.demandas.findFirst({
               where: and(
                 eq(demandas.processoId, processo.id),
                 eq(demandas.ato, row.ato),
+                dataExpedicaoParaBusca
+                  ? eq(demandas.dataEntrada, dataExpedicaoParaBusca)
+                  : isNull(demandas.dataEntrada),
                 isNull(demandas.deletedAt),
               ),
             });
