@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RadarNoticiaCard } from "./radar-noticia-card";
 import { RadarNoticiaSheet } from "./radar-noticia-sheet";
 import { Radio, Newspaper } from "lucide-react";
+import { toast } from "sonner";
 
 interface FiltrosState {
   tipoCrime?: string;
@@ -65,6 +66,44 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
 
   const allNoticias = data?.pages.flatMap((page) => page.items) ?? [];
 
+  // IDs das notícias que têm matches (para buscar detalhes dos pendentes)
+  const noticiaIdsComMatch = allNoticias
+    .filter((n) => ((n as any).matchCount ?? 0) > 0)
+    .map((n) => n.id);
+
+  const utils = trpc.useUtils();
+
+  const { data: matchesPendentes } = trpc.radar.matchesPendentesByNoticias.useQuery(
+    { noticiaIds: noticiaIdsComMatch },
+    { enabled: noticiaIdsComMatch.length > 0 }
+  );
+
+  const confirmMutation = trpc.radar.confirmMatch.useMutation({
+    onSuccess: () => {
+      utils.radar.list.invalidate();
+      utils.radar.matchesPendentesByNoticias.invalidate();
+      toast.success("Match confirmado");
+    },
+    onError: (err) => toast.error("Erro: " + err.message),
+  });
+
+  const dismissMutation = trpc.radar.dismissMatch.useMutation({
+    onSuccess: () => {
+      utils.radar.list.invalidate();
+      utils.radar.matchesPendentesByNoticias.invalidate();
+      toast.success("Match descartado");
+    },
+    onError: (err) => toast.error("Erro: " + err.message),
+  });
+
+  function handleQuickAction(matchId: number, action: "confirmar" | "descartar") {
+    if (action === "confirmar") {
+      confirmMutation.mutate({ id: matchId });
+    } else {
+      dismissMutation.mutate({ id: matchId });
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -102,11 +141,12 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
       {allNoticias.map((noticia) => (
         <RadarNoticiaCard
           key={noticia.id}
-          noticia={noticia as any}
+          noticia={{ ...noticia, matches: matchesPendentes?.[noticia.id] ?? [] } as any}
           onClick={() => {
             setSelectedNoticiaId(noticia.id);
             setSheetOpen(true);
           }}
+          onQuickAction={handleQuickAction}
         />
       ))}
 

@@ -20,7 +20,7 @@ import {
   LineChart,
   Line,
 } from "recharts";
-import { Radio, AlertTriangle, MapPin, Link2, Newspaper, CheckCircle2, Clock, TrendingUp, User } from "lucide-react";
+import { Radio, AlertTriangle, MapPin, Link2, Newspaper, CheckCircle2, Clock, TrendingUp, User, Calendar } from "lucide-react";
 import { getCrimeLabel } from "./radar-filtros";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +57,8 @@ export function RadarEstatisticas() {
     periodo: periodo as any,
     limit: 10,
   });
+  const { data: byHora } = trpc.radar.statsByHora.useQuery({ periodo: periodo as any });
+  const { data: byDiaSemana } = trpc.radar.statsByDiaSemana.useQuery({ periodo: periodo as any });
 
   // Prepare donut chart data
   const donutData = useMemo(() => {
@@ -398,6 +400,72 @@ export function RadarEstatisticas() {
           </Card>
         )}
       </div>
+
+      {/* Análise Temporal */}
+      {(byHora || byDiaSemana) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Hora do dia */}
+          {byHora && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Ocorrências por Hora
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={byHora} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 9, fill: "#a1a1aa" }}
+                      interval={3}
+                      tickLine={false}
+                    />
+                    <YAxis tick={{ fontSize: 10, fill: "#a1a1aa" }} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e4e4e7" }}
+                      formatter={(value) => [value, "ocorrências"]}
+                    />
+                    <Bar dataKey="total" fill="#10b981" radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Dia da semana */}
+          {byDiaSemana && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Ocorrências por Dia da Semana
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={byDiaSemana} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 11, fill: "#a1a1aa" }}
+                      tickLine={false}
+                    />
+                    <YAxis tick={{ fontSize: 10, fill: "#a1a1aa" }} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e4e4e7" }}
+                      formatter={(value) => [value, "ocorrências"]}
+                    />
+                    <Bar dataKey="total" fill="#6366f1" radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
 
       {/* Estado vazio */}
       {(!stats || stats.total === 0) && (

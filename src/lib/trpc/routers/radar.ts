@@ -10,7 +10,7 @@ import {
   users,
   processos,
 } from "@/lib/db/schema";
-import { eq, and, desc, sql, gte, lte, ilike, or, count, isNull, ne } from "drizzle-orm";
+import { eq, and, desc, sql, gte, lte, ilike, or, count, isNull, ne, inArray } from "drizzle-orm";
 import { sendText } from "@/lib/services/evolution-api";
 
 // ==========================================
@@ -549,6 +549,40 @@ export const radarRouter = router({
       return updated;
     }),
 
+  // Matches pendentes agrupados por notícia (para quick actions no feed)
+  matchesPendentesByNoticias: protectedProcedure
+    .input(z.object({ noticiaIds: z.array(z.number()) }))
+    .query(async ({ input }) => {
+      if (input.noticiaIds.length === 0) return {};
+
+      const matches = await db
+        .select({
+          id: radarMatches.id,
+          noticiaId: radarMatches.noticiaId,
+          assistidoId: radarMatches.assistidoId,
+          assistidoNome: assistidos.nome,
+          nomeEncontrado: radarMatches.nomeEncontrado,
+          scoreConfianca: radarMatches.scoreConfianca,
+          status: radarMatches.status,
+        })
+        .from(radarMatches)
+        .leftJoin(assistidos, eq(radarMatches.assistidoId, assistidos.id))
+        .where(
+          and(
+            inArray(radarMatches.noticiaId, input.noticiaIds),
+            eq(radarMatches.status, "possivel")
+          )
+        );
+
+      // Group by noticiaId
+      const grouped: Record<number, typeof matches> = {};
+      matches.forEach((m) => {
+        if (!grouped[m.noticiaId]) grouped[m.noticiaId] = [];
+        grouped[m.noticiaId].push(m);
+      });
+      return grouped;
+    }),
+
   // ==========================================
   // FONTES
   // ==========================================
@@ -560,6 +594,22 @@ export const radarRouter = router({
       .orderBy(radarFontes.nome);
 
     return fontes;
+  }),
+
+  fontesStats: protectedProcedure.query(async () => {
+    const result = await db
+      .select({
+        fonteNome: radarNoticias.fonte,
+        totalNoticias: count(radarNoticias.id),
+        totalMatches: sql<number>`count(distinct ${radarMatches.id})`,
+        ultimaNoticia: sql<string>`max(${radarNoticias.createdAt})`,
+      })
+      .from(radarNoticias)
+      .leftJoin(radarMatches, eq(radarNoticias.id, radarMatches.noticiaId))
+      .groupBy(radarNoticias.fonte)
+      .orderBy(desc(sql`count(${radarNoticias.id})`));
+
+    return result;
   }),
 
   updateFonte: protectedProcedure
@@ -805,6 +855,75 @@ export const radarRouter = router({
         totalMatches,
         confirmados,
       };
+    }),
+
+  statsByHora: protectedProcedure
+    .input(z.object({
+      periodo: z.enum(["7d", "30d", "90d", "1a", "total"]).optional().default("30d"),
+    }))
+    .query(async ({ input }) => {
+      const daysMap: Record<string, number> = {
+        "7d": 7, "30d": 30, "90d": 90, "1a": 365, "total": 36500,
+      };
+      const days = daysMap[input.periodo] ?? 30;
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - days);
+
+      const result = await db.execute(sql`
+        SELECT
+          EXTRACT(HOUR FROM data_fato)::int AS hora,
+          COUNT(*) AS total
+        FROM radar_noticias
+        WHERE data_fato IS NOT NULL AND data_fato >= ${cutoff}
+        GROUP BY hora
+        ORDER BY hora
+      `);
+
+      const byHora: Record<number, number> = {};
+      (result as unknown as Array<{ hora: number; total: string }>).forEach((r) => {
+        byHora[Number(r.hora)] = Number(r.total);
+      });
+
+      return Array.from({ length: 24 }, (_, h) => ({
+        hora: h,
+        label: `${String(h).padStart(2, "0")}h`,
+        total: byHora[h] ?? 0,
+      }));
+    }),
+
+  statsByDiaSemana: protectedProcedure
+    .input(z.object({
+      periodo: z.enum(["7d", "30d", "90d", "1a", "total"]).optional().default("30d"),
+    }))
+    .query(async ({ input }) => {
+      const daysMap: Record<string, number> = {
+        "7d": 7, "30d": 30, "90d": 90, "1a": 365, "total": 36500,
+      };
+      const days = daysMap[input.periodo] ?? 30;
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - days);
+
+      const result = await db.execute(sql`
+        SELECT
+          EXTRACT(DOW FROM data_fato)::int AS dia,
+          COUNT(*) AS total
+        FROM radar_noticias
+        WHERE data_fato IS NOT NULL AND data_fato >= ${cutoff}
+        GROUP BY dia
+        ORDER BY dia
+      `);
+
+      const DIAS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+      const byDia: Record<number, number> = {};
+      (result as unknown as Array<{ dia: number; total: string }>).forEach((r) => {
+        byDia[Number(r.dia)] = Number(r.total);
+      });
+
+      return Array.from({ length: 7 }, (_, d) => ({
+        dia: d,
+        label: DIAS[d],
+        total: byDia[d] ?? 0,
+      }));
     }),
 
   reincidentes: protectedProcedure

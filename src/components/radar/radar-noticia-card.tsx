@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, MapPin, Clock, Users, Link2, RefreshCw } from "lucide-react";
+import { ExternalLink, MapPin, Clock, Users, Link2, RefreshCw, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getCrimeBadgeColor, getCrimeLabel } from "./radar-filtros";
@@ -30,8 +30,16 @@ interface NoticiaCardProps {
     envolvidos: Envolvido[] | string | null;
     enrichmentStatus: string;
     matchCount?: number;
+    matches?: Array<{
+      id: number;
+      assistidoNome: string | null;
+      nomeEncontrado: string;
+      scoreConfianca: number;
+      status: string;
+    }>;
   };
   onClick?: () => void;
+  onQuickAction?: (matchId: number, action: "confirmar" | "descartar") => void;
 }
 
 /** Normaliza envolvidos que pode vir como string JSON ou array */
@@ -83,7 +91,7 @@ const papelLabels: Record<string, string> = {
   outro: "Outro",
 };
 
-export function RadarNoticiaCard({ noticia, onClick }: NoticiaCardProps) {
+export function RadarNoticiaCard({ noticia, onClick, onQuickAction }: NoticiaCardProps) {
   const dataDisplay = noticia.dataFato || noticia.dataPublicacao;
   const hasMatch = (noticia.matchCount ?? 0) > 0;
   const envolvidos = parseEnvolvidos(noticia.envolvidos);
@@ -172,6 +180,40 @@ export function RadarNoticiaCard({ noticia, onClick }: NoticiaCardProps) {
                 {envolvidosComNome.length > 5 && (
                   <span className="text-[10px] text-zinc-400 self-center">
                     +{envolvidosComNome.length - 5}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Quick actions para matches pendentes */}
+            {(noticia.matches ?? []).filter(m => m.status === "possivel").length > 0 && onQuickAction && (
+              <div className="flex flex-col gap-1 pt-1 border-t border-zinc-100 dark:border-zinc-800 mt-1">
+                {(noticia.matches ?? []).filter(m => m.status === "possivel").slice(0, 2).map(match => (
+                  <div key={match.id} className="flex items-center gap-2 text-[11px]">
+                    <span className="flex-1 truncate text-zinc-600 dark:text-zinc-400">
+                      <Users className="h-2.5 w-2.5 inline mr-0.5" />
+                      {match.assistidoNome || match.nomeEncontrado}
+                      <span className="text-zinc-400 ml-1">({match.scoreConfianca}%)</span>
+                    </span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onQuickAction(match.id, "confirmar"); }}
+                      className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-colors cursor-pointer"
+                    >
+                      <CheckCircle2 className="h-2.5 w-2.5" />
+                      OK
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onQuickAction(match.id, "descartar"); }}
+                      className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-zinc-500 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                    >
+                      <XCircle className="h-2.5 w-2.5" />
+                      Não
+                    </button>
+                  </div>
+                ))}
+                {(noticia.matches ?? []).filter(m => m.status === "possivel").length > 2 && (
+                  <span className="text-[10px] text-zinc-400">
+                    +{(noticia.matches ?? []).filter(m => m.status === "possivel").length - 2} outros matches pendentes
                   </span>
                 )}
               </div>
