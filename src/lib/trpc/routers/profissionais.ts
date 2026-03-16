@@ -2,7 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { profissionais, escalasAtribuicao, compartilhamentos } from "@/lib/db/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, gte, lte, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 export const profissionaisRouter = router({
@@ -59,35 +59,73 @@ export const profissionaisRouter = router({
     return escalas;
   }),
 
-  // Definir escala de atribuição
+  // Buscar escalas por período (múltiplos meses)
+  getEscalaPorPeriodo: protectedProcedure
+    .input(z.object({
+      mesInicio: z.number().min(1).max(12),
+      anoInicio: z.number(),
+      mesFim: z.number().min(1).max(12),
+      anoFim: z.number(),
+    }))
+    .query(async ({ input }) => {
+      // Converter para comparação numérica: ano*100+mes (ex: 202603)
+      const inicio = input.anoInicio * 100 + input.mesInicio;
+      const fim = input.anoFim * 100 + input.mesFim;
+
+      const escalas = await db
+        .select({
+          id: escalasAtribuicao.id,
+          profissionalId: escalasAtribuicao.profissionalId,
+          atribuicao: escalasAtribuicao.atribuicao,
+          mes: escalasAtribuicao.mes,
+          ano: escalasAtribuicao.ano,
+          profissional: {
+            id: profissionais.id,
+            nome: profissionais.nome,
+            nomeCurto: profissionais.nomeCurto,
+            cor: profissionais.cor,
+          },
+        })
+        .from(escalasAtribuicao)
+        .leftJoin(profissionais, eq(escalasAtribuicao.profissionalId, profissionais.id))
+        .where(
+          and(
+            eq(escalasAtribuicao.ativo, true),
+            gte(sql`${escalasAtribuicao.ano} * 100 + ${escalasAtribuicao.mes}`, inicio),
+            lte(sql`${escalasAtribuicao.ano} * 100 + ${escalasAtribuicao.mes}`, fim)
+          )
+        );
+
+      return escalas;
+    }),
+
+  // Definir escala de atribuição (individual)
   setEscala: protectedProcedure
     .input(z.object({
       profissionalId: z.number(),
-      atribuicao: z.enum(["JURI_EP", "VVD"]),
+      atribuicao: z.string().min(1),
       mes: z.number().min(1).max(12),
       ano: z.number().min(2024).max(2030),
     }))
     .mutation(async ({ input }) => {
-      // Verificar se já existe escala para este profissional neste mês
       const [existente] = await db
         .select()
         .from(escalasAtribuicao)
         .where(
           and(
             eq(escalasAtribuicao.profissionalId, input.profissionalId),
+            eq(escalasAtribuicao.atribuicao, input.atribuicao),
             eq(escalasAtribuicao.mes, input.mes),
             eq(escalasAtribuicao.ano, input.ano)
           )
         );
 
       if (existente) {
-        // Atualizar
         await db
           .update(escalasAtribuicao)
           .set({ atribuicao: input.atribuicao })
           .where(eq(escalasAtribuicao.id, existente.id));
       } else {
-        // Criar nova
         await db.insert(escalasAtribuicao).values({
           profissionalId: input.profissionalId,
           atribuicao: input.atribuicao,
@@ -97,6 +135,47 @@ export const profissionaisRouter = router({
       }
 
       return { success: true };
+    }),
+
+  // Definir escalas em batch (múltiplos meses/atribuições de uma vez)
+  setEscalaBatch: protectedProcedure
+    .input(z.object({
+      escalas: z.array(z.object({
+        profissionalId: z.number(),
+        atribuicao: z.string().min(1),
+        mes: z.number().min(1).max(12),
+        ano: z.number().min(2024).max(2030),
+      })),
+    }))
+    .mutation(async ({ input }) => {
+      // Deletar escalas existentes para os meses no range e reinserir
+      const mesesAnos = [...new Set(input.escalas.map(e => `${e.ano}-${e.mes}`))];
+
+      for (const ma of mesesAnos) {
+        const [ano, mes] = ma.split("-").map(Number);
+        await db
+          .delete(escalasAtribuicao)
+          .where(
+            and(
+              eq(escalasAtribuicao.mes, mes),
+              eq(escalasAtribuicao.ano, ano)
+            )
+          );
+      }
+
+      // Inserir todas de uma vez
+      if (input.escalas.length > 0) {
+        await db.insert(escalasAtribuicao).values(
+          input.escalas.map(e => ({
+            profissionalId: e.profissionalId,
+            atribuicao: e.atribuicao,
+            mes: e.mes,
+            ano: e.ano,
+          }))
+        );
+      }
+
+      return { success: true, count: input.escalas.length };
     }),
 
   // Criar compartilhamento

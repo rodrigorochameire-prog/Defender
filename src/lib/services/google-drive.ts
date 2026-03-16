@@ -116,7 +116,6 @@ async function getServiceAccountToken(): Promise<string | null> {
       credentials,
       scopes: [
         "https://www.googleapis.com/auth/drive",
-        "https://www.googleapis.com/auth/calendar",
       ],
     });
 
@@ -184,10 +183,10 @@ async function getDbRefreshToken(): Promise<string | null> {
 
 /**
  * Obtém um token de acesso válido
- * Prioridade: 1) OAuth (permite uploads - tem storage)  2) OAuth do banco  3) Service Account (somente leitura)
+ * Prioridade: 1) Service Account (nunca expira, acesso completo)  2) OAuth env  3) OAuth do banco
  *
- * Service Accounts NÃO têm storage quota no Google Drive, então não conseguem
- * fazer upload de arquivos. Por isso, OAuth é preferido quando disponível.
+ * SA tem acesso total (leitura + upload) na pasta compartilhada com ela.
+ * OAuth é fallback para quando SA não está configurada.
  */
 export async function getAccessToken(): Promise<string | null> {
   // Verifica cache (com margem de 5 minutos)
@@ -195,8 +194,14 @@ export async function getAccessToken(): Promise<string | null> {
     return cachedAccessToken.token;
   }
 
-  // 1. Tenta OAuth refresh token (preferido — permite uploads)
-  // Busca credenciais OAuth diretamente das env vars (getConfig retorna vazio quando SA está configurada)
+  // 1. Service Account (preferido — nunca expira, acesso completo na pasta compartilhada)
+  if (hasServiceAccount()) {
+    const saToken = await getServiceAccountToken();
+    if (saToken) return saToken;
+    console.error("[Google Drive] Service Account configurada mas falhou! Tentando OAuth...");
+  }
+
+  // 2. Fallback: OAuth refresh token (expira a cada 7 dias em modo teste)
   const oauthClientId = process.env.GOOGLE_CLIENT_ID;
   const oauthClientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const oauthRefreshToken = runtimeRefreshToken || process.env.GOOGLE_REFRESH_TOKEN;
@@ -206,7 +211,7 @@ export async function getAccessToken(): Promise<string | null> {
     if (token) return token;
   }
 
-  // 2. Tenta token OAuth do banco
+  // 3. Fallback: token OAuth do banco
   const dbToken = await getDbRefreshToken();
   if (dbToken && oauthClientId && oauthClientSecret) {
     const tokenFromDb = await tryRefreshToken(oauthClientId, oauthClientSecret, dbToken);
@@ -216,14 +221,7 @@ export async function getAccessToken(): Promise<string | null> {
     }
   }
 
-  // 3. Fallback: Service Account (funciona para leitura, mas não para uploads)
-  if (hasServiceAccount()) {
-    const saToken = await getServiceAccountToken();
-    if (saToken) return saToken;
-    console.error("[Google Drive] Service Account configurada mas falhou!");
-  }
-
-  console.error("[Google Drive] TODOS os métodos de auth falharam. Configure OAuth ou GOOGLE_SERVICE_ACCOUNT_KEY");
+  console.error("[Google Drive] TODOS os métodos de auth falharam. Configure GOOGLE_SERVICE_ACCOUNT_KEY ou OAuth.");
   return null;
 }
 

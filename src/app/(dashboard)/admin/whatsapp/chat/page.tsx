@@ -31,7 +31,13 @@ import {
   Download,
   Loader2,
   ArrowLeft,
+  Clock,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -44,7 +50,9 @@ export default function WhatsAppChatPage() {
   const [selectedConfigId, setSelectedConfigId] = useState<number | null>(null);
   const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
   const [filter, setFilter] = useState<"all" | "unread" | "favorites" | "archived">("all");
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [pendingExpanded, setPendingExpanded] = useState(true);
 
   // Queries
   const { data: configs, isLoading: loadingConfigs } = trpc.whatsappChat.listConfigs.useQuery();
@@ -56,6 +64,7 @@ export default function WhatsAppChatPage() {
         isArchived: filter === "archived" ? true : filter === "all" ? undefined : false,
         isFavorite: filter === "favorites" ? true : undefined,
         hasUnread: filter === "unread" ? true : undefined,
+        tag: selectedTag || undefined,
         limit: 100,
       },
       { enabled: !!selectedConfigId }
@@ -64,6 +73,11 @@ export default function WhatsAppChatPage() {
   const { data: stats, refetch: refetchStats } = trpc.whatsappChat.getStats.useQuery(
     { configId: selectedConfigId! },
     { enabled: !!selectedConfigId }
+  );
+
+  const { data: pendingContacts } = trpc.whatsappChat.listPendingContacts.useQuery(
+    { configId: selectedConfigId! },
+    { enabled: !!selectedConfigId, refetchInterval: 30_000 }
   );
 
   // Mutations
@@ -303,6 +317,96 @@ export default function WhatsAppChatPage() {
             ))}
           </div>
 
+          {/* Aguardando Resposta — pending contacts panel */}
+          {pendingContacts && pendingContacts.length > 0 && filter !== "archived" && (
+            <div className="border-b border-amber-200 dark:border-amber-900/40">
+              <button
+                onClick={() => setPendingExpanded((v) => !v)}
+                className="w-full flex items-center justify-between px-3 py-1.5 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                  <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                    Aguardando Resposta
+                  </span>
+                  <span className="h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full bg-amber-500 text-white text-[10px] font-semibold">
+                    {pendingContacts.length}
+                  </span>
+                </div>
+                {pendingExpanded ? (
+                  <ChevronUp className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" />
+                ) : (
+                  <ChevronDown className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" />
+                )}
+              </button>
+              {pendingExpanded && (
+                <div className="max-h-[200px] overflow-y-auto">
+                  {pendingContacts.map((contact) => {
+                    const waitingSince = contact.lastMessageAt
+                      ? new Date(contact.lastMessageAt)
+                      : null;
+                    const hoursWaiting = waitingSince
+                      ? (Date.now() - waitingSince.getTime()) / (1000 * 60 * 60)
+                      : 0;
+                    const timeColor =
+                      hoursWaiting > 24
+                        ? "text-red-600 dark:text-red-400"
+                        : hoursWaiting > 4
+                          ? "text-amber-600 dark:text-amber-400"
+                          : "text-zinc-500 dark:text-zinc-400";
+
+                    const displayName =
+                      contact.name ||
+                      contact.pushName ||
+                      contact.phone.replace(/\D/g, "").replace(/^55(\d{2})(\d{4,5})(\d{4})$/, "($1) $2-$3");
+
+                    const initials = (contact.name || contact.pushName)
+                      ? (contact.name || contact.pushName)!
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .substring(0, 2)
+                          .toUpperCase()
+                      : contact.phone.slice(-2);
+
+                    return (
+                      <div
+                        key={contact.id}
+                        onClick={() => handleSelectContact(contact.id)}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-1.5 cursor-pointer transition-colors",
+                          "hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
+                          "border-b border-zinc-100 dark:border-zinc-800/30 last:border-b-0",
+                          selectedContactId === contact.id && "bg-zinc-100 dark:bg-zinc-800"
+                        )}
+                      >
+                        <Avatar className="h-7 w-7 shrink-0">
+                          <AvatarImage src={contact.profilePicUrl || undefined} />
+                          <AvatarFallback className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-[10px] font-medium">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate block">
+                            {displayName}
+                          </span>
+                        </div>
+                        {waitingSince && (
+                          <span className={cn("text-[10px] font-medium shrink-0 whitespace-nowrap", timeColor)}>
+                            {formatDistanceToNow(waitingSince, {
+                              locale: ptBR,
+                              addSuffix: false,
+                            })}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Conversation list */}
           <div className="flex-1 overflow-hidden">
             {selectedConfigId && (
@@ -312,6 +416,8 @@ export default function WhatsAppChatPage() {
                 selectedContactId={selectedContactId}
                 onSelectContact={handleSelectContact}
                 isLoading={loadingContacts}
+                selectedTag={selectedTag}
+                onTagFilterChange={setSelectedTag}
               />
             )}
           </div>

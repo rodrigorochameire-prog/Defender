@@ -45,7 +45,7 @@ export interface AssignmentMenuItem {
   label: string;
   path: string;
   icon: string;
-  badge?: string;
+  badge?: string | number;
   description?: string;
   isPremium?: boolean; // Para recursos avançados
   requiredRoles?: UserRole[]; // Roles que podem acessar este item

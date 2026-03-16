@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { CustomSelect } from "@/components/CustomSelect";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc/client";
 import {
   Users,
   Calendar,
@@ -16,6 +17,7 @@ import {
   RefreshCw,
   AlertTriangle,
   UserPlus,
+  Loader2,
 } from "lucide-react";
 import { format, addMonths, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -196,10 +198,43 @@ export function EscalaConfigModal({ isOpen, onClose, onSave, currentConfig }: Es
     toast.success("Escala replicada para o próximo mês!");
   };
 
-  const handleSave = () => {
-    onSave({ defensores, escalas });
-    toast.success("Configuração de escalas salva!");
-    onClose();
+  // Mapeamento defId → profissionalId do banco
+  const DEF_TO_PROF: Record<string, number> = { "def-1": 1, "def-2": 2 };
+
+  const utils = trpc.useUtils();
+  const setEscalaBatch = trpc.profissionais.setEscalaBatch.useMutation({
+    onSuccess: () => {
+      utils.profissionais.getEscalaPorPeriodo.invalidate();
+      utils.profissionais.getEscalaAtual.invalidate();
+    },
+  });
+
+  const handleSave = async () => {
+    // Converter formato frontend para formato do banco
+    const escalasBanco: { profissionalId: number; atribuicao: string; mes: number; ano: number }[] = [];
+
+    for (const escala of escalas) {
+      const [anoStr, mesStr] = escala.mes.split("-");
+      const mes = parseInt(mesStr);
+      const ano = parseInt(anoStr);
+
+      for (const [atribuicao, defId] of Object.entries(escala.atribuicoes)) {
+        const profId = DEF_TO_PROF[defId as string];
+        if (profId) {
+          escalasBanco.push({ profissionalId: profId, atribuicao, mes, ano });
+        }
+      }
+    }
+
+    try {
+      await setEscalaBatch.mutateAsync({ escalas: escalasBanco });
+      onSave({ defensores, escalas });
+      toast.success("Configuração de escalas salva no banco!");
+      onClose();
+    } catch (err) {
+      toast.error("Erro ao salvar escalas");
+      console.error(err);
+    }
   };
 
   const currentEscala = escalas[selectedMonth];
@@ -405,9 +440,9 @@ export function EscalaConfigModal({ isOpen, onClose, onSave, currentConfig }: Es
             <Button variant="outline" onClick={onClose} className="px-5 h-9 text-sm">
               Cancelar
             </Button>
-            <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 h-9 text-sm">
-              <CheckCircle2 className="w-4 h-4 mr-1.5" />
-              Salvar Configuração
+            <Button onClick={handleSave} disabled={setEscalaBatch.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 h-9 text-sm">
+              {setEscalaBatch.isPending ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1.5" />}
+              {setEscalaBatch.isPending ? "Salvando..." : "Salvar Configuração"}
             </Button>
           </div>
         </div>

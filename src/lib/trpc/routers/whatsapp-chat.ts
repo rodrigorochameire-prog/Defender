@@ -85,6 +85,7 @@ const contactFilterSchema = z.object({
   isFavorite: z.boolean().optional(),
   hasUnread: z.boolean().optional(),
   assistidoId: z.number().optional(),
+  tag: z.string().optional(),
   limit: z.number().min(1).max(100).optional(),
   offset: z.number().min(0).optional(),
 });
@@ -426,6 +427,7 @@ export const whatsappChatRouter = router({
       isFavorite,
       hasUnread,
       assistidoId,
+      tag,
       limit = 50,
       offset = 0,
     } = input;
@@ -447,6 +449,10 @@ export const whatsappChatRouter = router({
 
     if (assistidoId) {
       conditions.push(eq(whatsappContacts.assistidoId, assistidoId));
+    }
+
+    if (tag) {
+      conditions.push(sql`${whatsappContacts.tags} @> ARRAY[${tag}]::text[]`);
     }
 
     if (search) {
@@ -489,6 +495,39 @@ export const whatsappChatRouter = router({
       total: Number(count),
     };
   }),
+
+  /**
+   * Lista contatos aguardando resposta (ultima mensagem inbound, nao arquivados)
+   * Ordenados do mais antigo para o mais recente (mais urgente primeiro)
+   */
+  listPendingContacts: protectedProcedure
+    .input(z.object({ configId: z.number() }))
+    .query(async ({ input }) => {
+      const contacts = await db
+        .select({
+          contact: whatsappContacts,
+          assistido: {
+            id: assistidos.id,
+            nome: assistidos.nome,
+          },
+        })
+        .from(whatsappContacts)
+        .leftJoin(assistidos, eq(whatsappContacts.assistidoId, assistidos.id))
+        .where(
+          and(
+            eq(whatsappContacts.configId, input.configId),
+            eq(whatsappContacts.lastMessageDirection, "inbound"),
+            eq(whatsappContacts.isArchived, false)
+          )
+        )
+        .orderBy(asc(whatsappContacts.lastMessageAt))
+        .limit(10);
+
+      return contacts.map((c) => ({
+        ...c.contact,
+        assistido: c.assistido,
+      }));
+    }),
 
   /**
    * Busca contato por ID
@@ -1857,5 +1896,215 @@ export const whatsappChatRouter = router({
       }).returning();
 
       return { id: anotacao.id };
+    }),
+
+  // ===========================================================================
+  // TAGS
+  // ===========================================================================
+
+  /**
+   * Lista todas as tags distintas usadas nos contatos com contagem
+   */
+  listTags: protectedProcedure
+    .input(z.object({ configId: z.number() }))
+    .query(async ({ input }) => {
+      const result = await db.execute<{ tag: string; count: number }>(
+        sql`SELECT unnest(${whatsappContacts.tags}) as tag, count(*)::int as count
+            FROM ${whatsappContacts}
+            WHERE ${whatsappContacts.configId} = ${input.configId}
+              AND ${whatsappContacts.tags} IS NOT NULL
+            GROUP BY tag
+            ORDER BY count DESC`
+      );
+
+      return Array.from(result) as { tag: string; count: number }[];
+    }),
+
+  // ===========================================================================
+  // EXTRAÇÃO DE DADOS (IA)
+  // ===========================================================================
+
+  /**
+   * extractData — Extrai dados cadastrais de mensagens via IA
+   */
+  extractData: protectedProcedure
+    .input(z.object({
+      contactId: z.number(),
+      messageIds: z.array(z.number()).min(1).max(200),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // 1. Get contact with assistido
+      const contact = await db.query.whatsappContacts.findFirst({
+        where: eq(whatsappContacts.id, input.contactId),
+        with: { assistido: true },
+      });
+      if (!contact?.assistidoId || !contact.assistido) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Contato não vinculado a um assistido" });
+      }
+
+      // 2. Get messages
+      const messages = await db
+        .select()
+        .from(whatsappChatMessages)
+        .where(and(
+          eq(whatsappChatMessages.contactId, input.contactId),
+          inArray(whatsappChatMessages.id, input.messageIds)
+        ))
+        .orderBy(asc(whatsappChatMessages.createdAt));
+
+      if (messages.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Nenhuma mensagem encontrada" });
+
+      // 3. Format messages
+      const contactDisplayName = contact.name || contact.pushName || contact.phone;
+
+      const formattedMessages = messages.map((msg) => {
+        const date = new Date(msg.createdAt);
+        const dateStr = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+        const sender = msg.direction === 'outbound' ? 'Defensor' : contactDisplayName;
+        let content = msg.content || '';
+        if (msg.type !== 'text') content = `[${msg.type}: ${msg.mediaFilename || msg.type}]${content ? ' ' + content : ''}`;
+        return `[${dateStr}] ${sender}: ${content}`;
+      }).join('\n');
+
+      // 4. Get processo info
+      let processoNumber: string | null = null;
+      if (contact.assistidoId) {
+        const processoLink = await db.query.assistidosProcessos?.findFirst?.({
+          where: eq(assistidosProcessos.assistidoId, contact.assistidoId),
+        });
+        if (processoLink) {
+          const processo = await db.query.processos?.findFirst?.({
+            where: eq(processos.id, processoLink.processoId),
+          });
+          processoNumber = processo?.numeroAutos || null;
+        }
+      }
+
+      // 5. Call enrichment engine
+      const enrichmentUrl = process.env.ENRICHMENT_ENGINE_URL || 'https://enrichment-engine-production.up.railway.app';
+      const enrichmentApiKey = process.env.ENRICHMENT_API_KEY || '';
+
+      const enrichResponse = await fetch(`${enrichmentUrl}/enrich/extract-data`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(enrichmentApiKey ? { 'Authorization': `Bearer ${enrichmentApiKey}` } : {}),
+        },
+        body: JSON.stringify({
+          messages: formattedMessages,
+          context: {
+            assistido_name: contact.assistido.nome,
+            processo_number: processoNumber,
+          },
+        }),
+      });
+
+      if (!enrichResponse.ok) {
+        const errorText = await enrichResponse.text().catch(() => 'Unknown error');
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Erro ao extrair dados: ${enrichResponse.status} - ${errorText}`
+        });
+      }
+
+      const result = await enrichResponse.json();
+      return {
+        extracted: result.extracted || {},
+        confidence: result.confidence || 0,
+      };
+    }),
+
+  /**
+   * applyExtractedData — Aplica dados extraídos pela IA ao cadastro do assistido
+   */
+  applyExtractedData: protectedProcedure
+    .input(z.object({
+      assistidoId: z.number(),
+      data: z.object({
+        endereco: z.string().optional(),
+        telefone: z.string().optional(),
+        relato_fatos: z.string().optional(),
+        nomes_testemunhas: z.array(z.string()).optional(),
+        datas_relevantes: z.array(z.object({
+          data: z.string(),
+          descricao: z.string(),
+        })).optional(),
+        locais: z.array(z.string()).optional(),
+        documentos_mencionados: z.array(z.string()).optional(),
+      }),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // 1. Verify assistido exists
+      const assistido = await db.query.assistidos.findFirst({
+        where: eq(assistidos.id, input.assistidoId),
+      });
+      if (!assistido) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
+      }
+
+      // 2. Build update object — only non-null fields
+      const updateData: Record<string, unknown> = {
+        updatedAt: new Date(),
+      };
+
+      if (input.data.endereco) {
+        updateData.endereco = input.data.endereco;
+      }
+      if (input.data.telefone) {
+        updateData.telefone = input.data.telefone;
+      }
+
+      // 3. Update assistido if there are cadastral fields
+      if (Object.keys(updateData).length > 1) {
+        await db.update(assistidos)
+          .set(updateData)
+          .where(eq(assistidos.id, input.assistidoId));
+      }
+
+      // 4. Build anotacao content with all extracted data
+      const parts: string[] = [];
+      parts.push("## Dados Extraidos por IA (WhatsApp)\n");
+
+      if (input.data.endereco) {
+        parts.push(`**Endereco:** ${input.data.endereco}`);
+      }
+      if (input.data.telefone) {
+        parts.push(`**Telefone:** ${input.data.telefone}`);
+      }
+      if (input.data.relato_fatos) {
+        parts.push(`\n**Relato dos Fatos:**\n${input.data.relato_fatos}`);
+      }
+      if (input.data.nomes_testemunhas && input.data.nomes_testemunhas.length > 0) {
+        parts.push(`\n**Testemunhas:** ${input.data.nomes_testemunhas.join(", ")}`);
+      }
+      if (input.data.datas_relevantes && input.data.datas_relevantes.length > 0) {
+        parts.push(`\n**Datas Relevantes:**`);
+        for (const d of input.data.datas_relevantes) {
+          parts.push(`- ${d.data}: ${d.descricao}`);
+        }
+      }
+      if (input.data.locais && input.data.locais.length > 0) {
+        parts.push(`\n**Locais:** ${input.data.locais.join(", ")}`);
+      }
+      if (input.data.documentos_mencionados && input.data.documentos_mencionados.length > 0) {
+        parts.push(`\n**Documentos Mencionados:** ${input.data.documentos_mencionados.join(", ")}`);
+      }
+
+      // 5. Create anotacao
+      await db.insert(anotacoes).values({
+        assistidoId: input.assistidoId,
+        conteudo: parts.join("\n"),
+        tipo: 'whatsapp_extracao_ia',
+        metadata: {
+          fieldsApplied: Object.keys(input.data).filter(k => {
+            const val = input.data[k as keyof typeof input.data];
+            return val !== undefined && val !== null && (typeof val !== 'string' || val.length > 0) && (!Array.isArray(val) || val.length > 0);
+          }),
+          model: 'claude-sonnet-4-6',
+        },
+        createdById: ctx.user.id,
+      });
+
+      return { success: true };
     }),
 });

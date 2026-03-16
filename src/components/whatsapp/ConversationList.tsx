@@ -24,6 +24,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Search,
   MoreVertical,
@@ -43,6 +49,8 @@ import {
   User,
   Sticker,
   MapPin,
+  Tag,
+  X,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
@@ -68,6 +76,36 @@ interface Contact {
   lastMessageType?: string | null;
   contactRelation?: string | null;
   contactRelationDetail?: string | null;
+  tags?: string[] | null;
+}
+
+// Tag color mapping
+const TAG_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
+  urgente: { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-700 dark:text-red-400", dot: "bg-red-500" },
+  juri: { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-700 dark:text-purple-400", dot: "bg-purple-500" },
+  execucao: { bg: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-700 dark:text-orange-400", dot: "bg-orange-500" },
+  aguardando_documento: { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-400", dot: "bg-amber-500" },
+  informativo: { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-700 dark:text-blue-400", dot: "bg-blue-500" },
+  diligencia: { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-500" },
+};
+
+const TAG_LABELS: Record<string, string> = {
+  urgente: "Urgente",
+  aguardando_documento: "Aguardando Doc",
+  informativo: "Informativo",
+  juri: "Juri",
+  execucao: "Execucao",
+  diligencia: "Diligencia",
+};
+
+const PREDEFINED_TAGS = ["urgente", "aguardando_documento", "informativo", "juri", "execucao", "diligencia"];
+
+function getTagColor(tag: string) {
+  return TAG_COLORS[tag] || { bg: "bg-zinc-100 dark:bg-zinc-800", text: "text-zinc-600 dark:text-zinc-400", dot: "bg-zinc-400" };
+}
+
+function getTagLabel(tag: string) {
+  return TAG_LABELS[tag] || tag.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 interface ConversationListProps {
@@ -76,6 +114,8 @@ interface ConversationListProps {
   selectedContactId: number | null;
   onSelectContact: (contactId: number) => void;
   isLoading?: boolean;
+  selectedTag?: string | null;
+  onTagFilterChange?: (tag: string | null) => void;
 }
 
 export function ConversationList({
@@ -84,13 +124,22 @@ export function ConversationList({
   selectedContactId,
   onSelectContact,
   isLoading,
+  selectedTag,
+  onTagFilterChange,
 }: ConversationListProps) {
   const [search, setSearch] = useState("");
   const [isNewContactOpen, setIsNewContactOpen] = useState(false);
   const [newContactPhone, setNewContactPhone] = useState("");
   const [newContactName, setNewContactName] = useState("");
+  const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
 
   const utils = trpc.useUtils();
+
+  // Query for dynamic tags
+  const { data: tagsData } = trpc.whatsappChat.listTags.useQuery(
+    { configId },
+    { enabled: !!configId }
+  );
 
   // Mutations
   const updateContactMutation = trpc.whatsappChat.updateContact.useMutation({
@@ -255,6 +304,109 @@ export function ConversationList({
           />
         </div>
 
+        {/* Tag filter */}
+        <Popover open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              size="icon"
+              variant="ghost"
+              className={cn(
+                "h-8 w-8 shrink-0 relative",
+                selectedTag
+                  ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
+                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              )}
+            >
+              <Tag className="h-4 w-4" />
+              {selectedTag && (
+                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500" />
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-56 p-2">
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 px-2 py-1">
+                Filtrar por tag
+              </p>
+              {/* Predefined tags */}
+              {PREDEFINED_TAGS.map((tag) => {
+                const color = getTagColor(tag);
+                const dynamicTag = tagsData?.find((t) => t.tag === tag);
+                return (
+                  <button
+                    key={tag}
+                    onClick={() => {
+                      onTagFilterChange?.(selectedTag === tag ? null : tag);
+                      setTagPopoverOpen(false);
+                    }}
+                    className={cn(
+                      "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors",
+                      selectedTag === tag
+                        ? "bg-zinc-100 dark:bg-zinc-800"
+                        : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                    )}
+                  >
+                    <span className={cn("h-2 w-2 rounded-full shrink-0", color.dot)} />
+                    <span className="flex-1 text-left text-zinc-700 dark:text-zinc-300">
+                      {getTagLabel(tag)}
+                    </span>
+                    {dynamicTag && (
+                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                        {dynamicTag.count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+              {/* Dynamic tags not in predefined */}
+              {tagsData
+                ?.filter((t) => !PREDEFINED_TAGS.includes(t.tag))
+                .map(({ tag, count }) => {
+                  const color = getTagColor(tag);
+                  return (
+                    <button
+                      key={tag}
+                      onClick={() => {
+                        onTagFilterChange?.(selectedTag === tag ? null : tag);
+                        setTagPopoverOpen(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors",
+                        selectedTag === tag
+                          ? "bg-zinc-100 dark:bg-zinc-800"
+                          : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                      )}
+                    >
+                      <span className={cn("h-2 w-2 rounded-full shrink-0", color.dot)} />
+                      <span className="flex-1 text-left text-zinc-700 dark:text-zinc-300">
+                        {getTagLabel(tag)}
+                      </span>
+                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              {/* Clear filter */}
+              {selectedTag && (
+                <>
+                  <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
+                  <button
+                    onClick={() => {
+                      onTagFilterChange?.(null);
+                      setTagPopoverOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                    Limpar filtro
+                  </button>
+                </>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <Dialog open={isNewContactOpen} onOpenChange={setIsNewContactOpen}>
           <DialogTrigger asChild>
             <Button
@@ -334,6 +486,25 @@ export function ConversationList({
         </Dialog>
       </div>
 
+      {/* Active tag filter indicator */}
+      {selectedTag && (
+        <div className="mx-3 mb-2 flex items-center gap-1.5">
+          <Badge
+            variant="secondary"
+            className={cn(
+              "text-[10px] px-2 py-0.5 gap-1 cursor-pointer",
+              getTagColor(selectedTag).bg,
+              getTagColor(selectedTag).text
+            )}
+            onClick={() => onTagFilterChange?.(null)}
+          >
+            <span className={cn("h-1.5 w-1.5 rounded-full", getTagColor(selectedTag).dot)} />
+            {getTagLabel(selectedTag)}
+            <X className="h-2.5 w-2.5 ml-0.5" />
+          </Badge>
+        </div>
+      )}
+
       {/* Conversation List */}
       <ScrollArea className="flex-1">
         {isLoading ? (
@@ -386,6 +557,31 @@ export function ConversationList({
                         <Star className="h-3 w-3 fill-amber-400 text-amber-400 shrink-0" />
                       )}
                       {renderRelationIcon(contact.contactRelation)}
+                      {/* Tag badges */}
+                      {contact.tags && contact.tags.length > 0 && (
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          {contact.tags.slice(0, 2).map((tag) => {
+                            const color = getTagColor(tag);
+                            return (
+                              <span
+                                key={tag}
+                                className={cn(
+                                  "inline-flex items-center px-1 py-0 rounded text-[9px] leading-tight font-medium",
+                                  color.bg,
+                                  color.text
+                                )}
+                              >
+                                {getTagLabel(tag).slice(0, 8)}
+                              </span>
+                            );
+                          })}
+                          {contact.tags.length > 2 && (
+                            <span className="text-[9px] text-zinc-400 dark:text-zinc-500 font-medium">
+                              +{contact.tags.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     {contact.lastMessageAt && (
                       <span

@@ -212,7 +212,7 @@ export const driveRouter = router({
   /**
    * Registra uma nova pasta para sincronização
    */
-  registerFolder: adminProcedure
+  registerFolder: protectedProcedure
     .input(
       z.object({
         folderId: z.string().min(1),
@@ -267,7 +267,7 @@ export const driveRouter = router({
    * Registra todas as pastas de atribuição de uma vez
    * Útil para configurar rapidamente o sistema
    */
-  registerAllAtribuicoes: adminProcedure.mutation(async ({ ctx }) => {
+  registerAllAtribuicoes: protectedProcedure.mutation(async ({ ctx }) => {
     const { ATRIBUICAO_FOLDER_IDS, SPECIAL_FOLDER_IDS } = await import("@/lib/utils/text-extraction");
 
     const folders = [
@@ -1138,7 +1138,7 @@ export const driveRouter = router({
   /**
    * Remove uma pasta da sincronização
    */
-  removeFolder: adminProcedure
+  removeFolder: protectedProcedure
     .input(z.object({ folderId: z.string() }))
     .mutation(async ({ input }) => {
       return safeAsync(async () => {

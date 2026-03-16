@@ -14,7 +14,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   BookmarkPlus,
   FolderUp,
@@ -25,6 +28,14 @@ import {
   Mic,
   Video,
   Check,
+  FileSearch,
+  MapPin,
+  Phone,
+  Users,
+  Calendar,
+  Map,
+  FileCheck,
+  Pencil,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
@@ -46,18 +57,31 @@ interface Message {
   createdAt: Date;
 }
 
+interface ExtractedData {
+  endereco?: string | null;
+  telefones?: string[];
+  relato_fatos?: string | null;
+  nomes_testemunhas?: string[];
+  datas_relevantes?: { data: string; descricao: string }[];
+  locais?: string[];
+  documentos_mencionados?: string[];
+}
+
 interface SelectionActionModalsProps {
   contactId: number;
   selectedMessageIds: number[];
   selectedMessages: Message[];
   contactName: string;
   assistidoName: string | null;
+  assistidoId: number | null;
   showSaveCase: boolean;
   showSaveDrive: boolean;
   showSummary: boolean;
+  showExtractData: boolean;
   onCloseSaveCase: () => void;
   onCloseSaveDrive: () => void;
   onCloseSummary: () => void;
+  onCloseExtractData: () => void;
   onSuccess: () => void;
 }
 
@@ -105,12 +129,15 @@ export function SelectionActionModals({
   selectedMessages,
   contactName,
   assistidoName,
+  assistidoId,
   showSaveCase,
   showSaveDrive,
   showSummary,
+  showExtractData,
   onCloseSaveCase,
   onCloseSaveDrive,
   onCloseSummary,
+  onCloseExtractData,
   onSuccess,
 }: SelectionActionModalsProps) {
   // -- Save to Case state
@@ -125,6 +152,13 @@ export function SelectionActionModals({
   } | null>(null);
   const [summaryGenerated, setSummaryGenerated] = useState(false);
   const [summaryEdited, setSummaryEdited] = useState(false);
+
+  // -- Extract Data state
+  const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
+  const [extractionDone, setExtractionDone] = useState(false);
+  const [selectedFields, setSelectedFields] = useState<Record<string, boolean>>({});
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<ExtractedData>({});
 
   // -- Mutations
   const saveToCaseMutation = trpc.whatsappChat.saveToCase.useMutation({
@@ -177,11 +211,102 @@ export function SelectionActionModals({
     },
   });
 
+  const extractDataMutation = trpc.whatsappChat.extractData.useMutation({
+    onSuccess: (data) => {
+      const extracted = data.extracted as ExtractedData;
+      setExtractedData(extracted);
+      setEditValues(extracted);
+      setExtractionDone(true);
+      // Auto-select fields that have data
+      const fields: Record<string, boolean> = {};
+      if (extracted.endereco) fields.endereco = true;
+      if (extracted.telefones && extracted.telefones.length > 0) fields.telefone = true;
+      if (extracted.relato_fatos) fields.relato_fatos = true;
+      if (extracted.nomes_testemunhas && extracted.nomes_testemunhas.length > 0) fields.nomes_testemunhas = true;
+      if (extracted.datas_relevantes && extracted.datas_relevantes.length > 0) fields.datas_relevantes = true;
+      if (extracted.locais && extracted.locais.length > 0) fields.locais = true;
+      if (extracted.documentos_mencionados && extracted.documentos_mencionados.length > 0) fields.documentos_mencionados = true;
+      setSelectedFields(fields);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao extrair dados: ${error.message}`);
+    },
+  });
+
+  const applyExtractedDataMutation = trpc.whatsappChat.applyExtractedData.useMutation({
+    onSuccess: () => {
+      toast.success(`Dados extraidos aplicados ao cadastro de ${assistidoName}`);
+      resetExtractState();
+      onCloseExtractData();
+      onSuccess();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao aplicar dados: ${error.message}`);
+    },
+  });
+
   const resetSummaryState = () => {
     setSummaryText("");
     setSummaryStructured(null);
     setSummaryGenerated(false);
     setSummaryEdited(false);
+  };
+
+  const resetExtractState = () => {
+    setExtractedData(null);
+    setExtractionDone(false);
+    setSelectedFields({});
+    setEditingField(null);
+    setEditValues({});
+  };
+
+  const toggleField = (field: string) => {
+    setSelectedFields((prev) => ({ ...prev, [field]: !prev[field] }));
+  };
+
+  const handleApplyExtractedData = () => {
+    if (!assistidoId) return;
+
+    const dataToApply: Record<string, unknown> = {};
+    if (selectedFields.endereco && editValues.endereco) {
+      dataToApply.endereco = editValues.endereco;
+    }
+    if (selectedFields.telefone && editValues.telefones && editValues.telefones.length > 0) {
+      dataToApply.telefone = editValues.telefones[0];
+    }
+    if (selectedFields.relato_fatos && editValues.relato_fatos) {
+      dataToApply.relato_fatos = editValues.relato_fatos;
+    }
+    if (selectedFields.nomes_testemunhas && editValues.nomes_testemunhas && editValues.nomes_testemunhas.length > 0) {
+      dataToApply.nomes_testemunhas = editValues.nomes_testemunhas;
+    }
+    if (selectedFields.datas_relevantes && editValues.datas_relevantes && editValues.datas_relevantes.length > 0) {
+      dataToApply.datas_relevantes = editValues.datas_relevantes;
+    }
+    if (selectedFields.locais && editValues.locais && editValues.locais.length > 0) {
+      dataToApply.locais = editValues.locais;
+    }
+    if (selectedFields.documentos_mencionados && editValues.documentos_mencionados && editValues.documentos_mencionados.length > 0) {
+      dataToApply.documentos_mencionados = editValues.documentos_mencionados;
+    }
+
+    if (Object.keys(dataToApply).length === 0) {
+      toast.error("Selecione pelo menos um campo para aplicar");
+      return;
+    }
+
+    applyExtractedDataMutation.mutate({
+      assistidoId,
+      data: dataToApply as {
+        endereco?: string;
+        telefone?: string;
+        relato_fatos?: string;
+        nomes_testemunhas?: string[];
+        datas_relevantes?: { data: string; descricao: string }[];
+        locais?: string[];
+        documentos_mencionados?: string[];
+      },
+    });
   };
 
   // Preview content for save case modal
@@ -194,6 +319,9 @@ export function SelectionActionModals({
   const mediaMessages = selectedMessages.filter(
     (m) => m.type !== "text" && m.mediaUrl
   );
+
+  // Count selected fields
+  const selectedFieldCount = Object.values(selectedFields).filter(Boolean).length;
 
   return (
     <>
@@ -479,6 +607,347 @@ export function SelectionActionModals({
           )}
         </DialogContent>
       </Dialog>
+
+      {/* ================================================================ */}
+      {/* MODAL: Extrair Dados                                            */}
+      {/* ================================================================ */}
+      <Dialog
+        open={showExtractData}
+        onOpenChange={(open) => {
+          if (!open) {
+            resetExtractState();
+            onCloseExtractData();
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSearch className="h-5 w-5 text-amber-600" />
+              Extrair Dados com IA
+            </DialogTitle>
+            <DialogDescription>
+              {extractionDone
+                ? "Revise os dados extraidos e selecione quais aplicar ao cadastro."
+                : `Extraindo dados de ${selectedMessages.length} mensagens...`}
+            </DialogDescription>
+          </DialogHeader>
+
+          {!extractionDone ? (
+            // Loading / trigger state
+            <div className="flex-1 flex flex-col items-center justify-center gap-4 py-12">
+              {extractDataMutation.isPending ? (
+                <>
+                  <Loader2 className="h-10 w-10 animate-spin text-amber-500" />
+                  <p className="text-sm text-zinc-500">Extraindo dados das mensagens...</p>
+                  <p className="text-xs text-zinc-400">Endereco, telefones, relato, testemunhas...</p>
+                </>
+              ) : (
+                <Button
+                  onClick={() =>
+                    extractDataMutation.mutate({
+                      contactId,
+                      messageIds: selectedMessageIds,
+                    })
+                  }
+                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                >
+                  <FileSearch className="h-4 w-4 mr-2" />
+                  Extrair Dados
+                </Button>
+              )}
+            </div>
+          ) : (
+            // Extracted data display
+            <ScrollArea className="flex-1 pr-4">
+              <div className="space-y-3">
+                {/* Endereco */}
+                {editValues.endereco && (
+                  <ExtractedField
+                    icon={<MapPin className="h-4 w-4 text-red-500" />}
+                    label="Endereco"
+                    fieldKey="endereco"
+                    selected={selectedFields.endereco || false}
+                    onToggle={() => toggleField("endereco")}
+                    editing={editingField === "endereco"}
+                    onEdit={() => setEditingField(editingField === "endereco" ? null : "endereco")}
+                  >
+                    {editingField === "endereco" ? (
+                      <Input
+                        value={editValues.endereco || ""}
+                        onChange={(e) => setEditValues((prev) => ({ ...prev, endereco: e.target.value }))}
+                        className="text-sm"
+                      />
+                    ) : (
+                      <p className="text-sm text-zinc-700 dark:text-zinc-300">{editValues.endereco}</p>
+                    )}
+                  </ExtractedField>
+                )}
+
+                {/* Telefones */}
+                {editValues.telefones && editValues.telefones.length > 0 && (
+                  <ExtractedField
+                    icon={<Phone className="h-4 w-4 text-green-500" />}
+                    label="Telefones"
+                    fieldKey="telefone"
+                    selected={selectedFields.telefone || false}
+                    onToggle={() => toggleField("telefone")}
+                    editing={editingField === "telefone"}
+                    onEdit={() => setEditingField(editingField === "telefone" ? null : "telefone")}
+                  >
+                    {editingField === "telefone" ? (
+                      <Input
+                        value={editValues.telefones?.join(", ") || ""}
+                        onChange={(e) =>
+                          setEditValues((prev) => ({
+                            ...prev,
+                            telefones: e.target.value.split(",").map((t) => t.trim()).filter(Boolean),
+                          }))
+                        }
+                        className="text-sm"
+                        placeholder="Separados por virgula"
+                      />
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5">
+                        {editValues.telefones.map((tel, i) => (
+                          <Badge key={i} variant="secondary" className="text-xs font-mono">
+                            {tel}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </ExtractedField>
+                )}
+
+                {/* Relato dos Fatos */}
+                {editValues.relato_fatos && (
+                  <ExtractedField
+                    icon={<FileText className="h-4 w-4 text-blue-500" />}
+                    label="Relato dos Fatos"
+                    fieldKey="relato_fatos"
+                    selected={selectedFields.relato_fatos || false}
+                    onToggle={() => toggleField("relato_fatos")}
+                    editing={editingField === "relato_fatos"}
+                    onEdit={() => setEditingField(editingField === "relato_fatos" ? null : "relato_fatos")}
+                  >
+                    {editingField === "relato_fatos" ? (
+                      <Textarea
+                        value={editValues.relato_fatos || ""}
+                        onChange={(e) => setEditValues((prev) => ({ ...prev, relato_fatos: e.target.value }))}
+                        className="text-sm min-h-[100px]"
+                      />
+                    ) : (
+                      <p className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed">
+                        {editValues.relato_fatos}
+                      </p>
+                    )}
+                  </ExtractedField>
+                )}
+
+                {/* Testemunhas */}
+                {editValues.nomes_testemunhas && editValues.nomes_testemunhas.length > 0 && (
+                  <ExtractedField
+                    icon={<Users className="h-4 w-4 text-indigo-500" />}
+                    label="Testemunhas"
+                    fieldKey="nomes_testemunhas"
+                    selected={selectedFields.nomes_testemunhas || false}
+                    onToggle={() => toggleField("nomes_testemunhas")}
+                    editing={editingField === "nomes_testemunhas"}
+                    onEdit={() => setEditingField(editingField === "nomes_testemunhas" ? null : "nomes_testemunhas")}
+                  >
+                    {editingField === "nomes_testemunhas" ? (
+                      <Input
+                        value={editValues.nomes_testemunhas?.join(", ") || ""}
+                        onChange={(e) =>
+                          setEditValues((prev) => ({
+                            ...prev,
+                            nomes_testemunhas: e.target.value.split(",").map((t) => t.trim()).filter(Boolean),
+                          }))
+                        }
+                        className="text-sm"
+                        placeholder="Separados por virgula"
+                      />
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5">
+                        {editValues.nomes_testemunhas.map((nome, i) => (
+                          <Badge key={i} variant="outline" className="text-xs">
+                            {nome}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </ExtractedField>
+                )}
+
+                {/* Datas Relevantes */}
+                {editValues.datas_relevantes && editValues.datas_relevantes.length > 0 && (
+                  <ExtractedField
+                    icon={<Calendar className="h-4 w-4 text-orange-500" />}
+                    label="Datas Relevantes"
+                    fieldKey="datas_relevantes"
+                    selected={selectedFields.datas_relevantes || false}
+                    onToggle={() => toggleField("datas_relevantes")}
+                    editing={false}
+                    onEdit={() => {}}
+                    hideEditButton
+                  >
+                    <div className="space-y-1.5">
+                      {editValues.datas_relevantes.map((d, i) => (
+                        <div key={i} className="flex items-start gap-2 text-sm">
+                          <Badge variant="secondary" className="text-[10px] font-mono shrink-0 mt-0.5">
+                            {d.data}
+                          </Badge>
+                          <span className="text-zinc-700 dark:text-zinc-300">{d.descricao}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </ExtractedField>
+                )}
+
+                {/* Locais */}
+                {editValues.locais && editValues.locais.length > 0 && (
+                  <ExtractedField
+                    icon={<Map className="h-4 w-4 text-teal-500" />}
+                    label="Locais"
+                    fieldKey="locais"
+                    selected={selectedFields.locais || false}
+                    onToggle={() => toggleField("locais")}
+                    editing={false}
+                    onEdit={() => {}}
+                    hideEditButton
+                  >
+                    <div className="flex flex-wrap gap-1.5">
+                      {editValues.locais.map((local, i) => (
+                        <Badge key={i} variant="secondary" className="text-xs">
+                          {local}
+                        </Badge>
+                      ))}
+                    </div>
+                  </ExtractedField>
+                )}
+
+                {/* Documentos Mencionados */}
+                {editValues.documentos_mencionados && editValues.documentos_mencionados.length > 0 && (
+                  <ExtractedField
+                    icon={<FileCheck className="h-4 w-4 text-cyan-500" />}
+                    label="Documentos Mencionados"
+                    fieldKey="documentos_mencionados"
+                    selected={selectedFields.documentos_mencionados || false}
+                    onToggle={() => toggleField("documentos_mencionados")}
+                    editing={false}
+                    onEdit={() => {}}
+                    hideEditButton
+                  >
+                    <div className="flex flex-wrap gap-1.5">
+                      {editValues.documentos_mencionados.map((doc, i) => (
+                        <Badge key={i} variant="outline" className="text-xs">
+                          {doc}
+                        </Badge>
+                      ))}
+                    </div>
+                  </ExtractedField>
+                )}
+
+                {/* No data extracted */}
+                {!editValues.endereco &&
+                  (!editValues.telefones || editValues.telefones.length === 0) &&
+                  !editValues.relato_fatos &&
+                  (!editValues.nomes_testemunhas || editValues.nomes_testemunhas.length === 0) &&
+                  (!editValues.datas_relevantes || editValues.datas_relevantes.length === 0) &&
+                  (!editValues.locais || editValues.locais.length === 0) &&
+                  (!editValues.documentos_mencionados || editValues.documentos_mencionados.length === 0) && (
+                    <div className="text-center py-8">
+                      <p className="text-sm text-zinc-500">Nenhum dado foi extraido das mensagens selecionadas.</p>
+                      <p className="text-xs text-zinc-400 mt-1">Tente selecionar mais mensagens com informações cadastrais.</p>
+                    </div>
+                  )}
+              </div>
+            </ScrollArea>
+          )}
+
+          {extractionDone && selectedFieldCount > 0 && (
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { resetExtractState(); onCloseExtractData(); }}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleApplyExtractedData}
+                disabled={applyExtractedDataMutation.isPending || selectedFieldCount === 0}
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                {applyExtractedDataMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Check className="h-4 w-4 mr-2" />
+                )}
+                Aplicar {selectedFieldCount} campo{selectedFieldCount !== 1 ? "s" : ""} ao Cadastro
+              </Button>
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sub-component: Extracted field row
+// ---------------------------------------------------------------------------
+
+function ExtractedField({
+  icon,
+  label,
+  fieldKey,
+  selected,
+  onToggle,
+  editing,
+  onEdit,
+  hideEditButton,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  fieldKey: string;
+  selected: boolean;
+  onToggle: () => void;
+  editing: boolean;
+  onEdit: () => void;
+  hideEditButton?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={`rounded-lg border p-3 transition-colors ${
+        selected
+          ? "border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20"
+          : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/50"
+      }`}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <Checkbox
+          id={`field-${fieldKey}`}
+          checked={selected}
+          onCheckedChange={() => onToggle()}
+        />
+        {icon}
+        <Label
+          htmlFor={`field-${fieldKey}`}
+          className="text-xs font-semibold text-zinc-500 uppercase tracking-wider cursor-pointer flex-1"
+        >
+          {label}
+        </Label>
+        {!hideEditButton && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0"
+            onClick={onEdit}
+          >
+            <Pencil className="h-3 w-3 text-zinc-400" />
+          </Button>
+        )}
+      </div>
+      <div className="ml-8">{children}</div>
+    </div>
   );
 }

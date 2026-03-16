@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useRef, useCallback, Fragment } from "react";
+import React, { useState, useMemo, useRef, useCallback, useEffect, Fragment } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
 import {
@@ -154,6 +154,7 @@ import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { ProcessingQueuePanel } from "@/components/drive/ProcessingQueuePanel";
 import { useProcessingQueue } from "@/contexts/processing-queue";
 import { toast } from "sonner";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 // Interface para o tipo Assistido usado na UI
 interface AssistidoUI {
@@ -323,6 +324,393 @@ function PhotoUploadDialog({ isOpen, onClose, assistidoNome, currentPhoto, onUpl
 }
 
 // ========================================
+// ASSISTIDO QUICK PREVIEW SHEET
+// ========================================
+
+function AssistidoQuickPreview({
+  assistido,
+  onClose,
+  onNext,
+  onPrev,
+  currentIndex,
+  totalCount,
+}: {
+  assistido: AssistidoUI | null;
+  onClose: () => void;
+  onNext?: () => void;
+  onPrev?: () => void;
+  currentIndex?: number;
+  totalCount?: number;
+}) {
+  if (!assistido) return null;
+
+  const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
+  const isMonitorado = ["MONITORADO", "DOMICILIAR"].includes(assistido.statusPrisional);
+  const idade = calcularIdade(assistido.dataNascimento);
+  const tempoPreso = calcularTempoPreso(assistido.dataPrisao ?? null);
+  const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
+  const prazoVencido = prazoInfo && prazoInfo.text === "Vencido";
+  const telefoneDisplay = assistido.telefone || assistido.telefoneContato;
+  const whatsappUrl = telefoneDisplay
+    ? `https://wa.me/55${telefoneDisplay.replace(/\D/g, '')}`
+    : null;
+
+  const diasAteAudiencia = assistido.proximaAudiencia
+    ? differenceInDays(parseISO(assistido.proximaAudiencia), new Date())
+    : null;
+  const audienciaHoje = diasAteAudiencia === 0;
+
+  const atribuicoesUnicas = assistido.atribuicoes || assistido.areas || [];
+  const primaryAttrValue = atribuicoesUnicas.length > 0
+    ? (() => {
+        const normalizedAttr = atribuicoesUnicas[0].toUpperCase().replace(/_/g, ' ');
+        const option = ATRIBUICAO_OPTIONS.find(o =>
+          o.value.toUpperCase() === normalizedAttr ||
+          o.label.toUpperCase().includes(normalizedAttr) ||
+          normalizedAttr.includes(o.value.toUpperCase())
+        );
+        return option?.value || null;
+      })()
+    : null;
+  const primaryColor = primaryAttrValue ? SOLID_COLOR_MAP[primaryAttrValue] || '#6b7280' : '#6b7280';
+
+  const maskedCpf = assistido.cpf
+    ? assistido.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.***.***-$4')
+    : null;
+
+  return (
+    <Sheet open={!!assistido} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent
+        side="right"
+        className="w-[calc(100vw-2rem)] sm:w-[440px] md:w-[480px] p-0 flex flex-col gap-0 border-l border-zinc-200 dark:border-zinc-800"
+        style={{ borderLeft: `3px solid ${primaryColor}` }}
+      >
+        {/* Sticky Header */}
+        <SheetHeader className="px-5 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm sticky top-0 z-10">
+          <div className="flex items-center justify-between">
+            <SheetTitle className="text-xs font-medium text-zinc-400 dark:text-zinc-500 tracking-wider uppercase">
+              Assistido {currentIndex !== undefined && totalCount ? `${currentIndex + 1} / ${totalCount}` : ''}
+            </SheetTitle>
+            <div className="flex items-center gap-1">
+              {onPrev && (
+                <button
+                  onClick={onPrev}
+                  className="h-7 w-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  title="Anterior"
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </button>
+              )}
+              {onNext && (
+                <button
+                  onClick={onNext}
+                  className="h-7 w-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  title="Próximo"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        </SheetHeader>
+
+        {/* Scrollable Body */}
+        <div className="flex-1 overflow-y-auto">
+          {/* 1. Hero Section */}
+          <div className="px-5 py-5 border-b border-zinc-100 dark:border-zinc-800">
+            <div className="flex items-start gap-4">
+              <AssistidoAvatar
+                nome={assistido.nome}
+                photoUrl={assistido.photoUrl}
+                size="xl"
+                atribuicao={primaryAttrValue}
+                statusPrisional={assistido.statusPrisional}
+                showStatusDot
+              />
+              <div className="flex-1 min-w-0">
+                <h2 className="font-serif text-xl font-semibold text-zinc-900 dark:text-zinc-50 leading-tight">
+                  {assistido.nome}
+                </h2>
+                {assistido.vulgo && (
+                  <p className="text-xs text-zinc-400 italic mt-0.5">&ldquo;{assistido.vulgo}&rdquo;</p>
+                )}
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  <span className={cn(
+                    "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
+                    isPreso && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
+                    isMonitorado && "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400",
+                    !isPreso && !isMonitorado && "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400",
+                  )}>
+                    <div className={cn(
+                      "w-1.5 h-1.5 rounded-full",
+                      isPreso && "bg-rose-500",
+                      isMonitorado && "bg-amber-500",
+                      !isPreso && !isMonitorado && "bg-emerald-500",
+                    )} />
+                    {statusConfig[assistido.statusPrisional]?.label || "Solto"}
+                  </span>
+                  {atribuicoesUnicas.slice(0, 3).map((attr, idx) => {
+                    const normalizedAttr = attr.toUpperCase().replace(/_/g, ' ');
+                    const option = ATRIBUICAO_OPTIONS.find(o =>
+                      o.value.toUpperCase() === normalizedAttr ||
+                      o.label.toUpperCase().includes(normalizedAttr) ||
+                      normalizedAttr.includes(o.value.toUpperCase())
+                    );
+                    const color = option ? SOLID_COLOR_MAP[option.value] || '#6b7280' : '#6b7280';
+                    return (
+                      <span key={idx} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+                        {option?.shortLabel || attr.substring(0, 4)}
+                      </span>
+                    );
+                  })}
+                  {idade && (
+                    <span className="text-xs text-zinc-400">{idade} anos</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Quick Stats Row */}
+          <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { icon: Scale, label: "Processos", value: assistido.processosAtivos || 0 },
+                { icon: FileText, label: "Demandas", value: assistido.demandasAbertas || 0 },
+                { icon: HardDrive, label: "Arquivos", value: assistido.driveFilesCount || 0 },
+              ].map((stat) => {
+                const Icon = stat.icon;
+                return (
+                  <div key={stat.label} className="flex flex-col items-center gap-1 p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
+                    <Icon className="w-4 h-4 text-zinc-400" />
+                    <span className="text-lg font-bold text-zinc-800 dark:text-zinc-100 tabular-nums">{stat.value}</span>
+                    <span className="text-[10px] text-zinc-400">{stat.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 3. Urgency Section (conditional) */}
+          {isPreso && (
+            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/30">
+                <div className="flex items-center gap-2 mb-1">
+                  <Lock className="w-4 h-4 text-rose-500" />
+                  <span className="text-xs font-semibold text-rose-700 dark:text-rose-400">Preso</span>
+                </div>
+                {assistido.unidadePrisional && (
+                  <p className="text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                    <MapPin className="w-3 h-3" />
+                    {assistido.unidadePrisional}
+                  </p>
+                )}
+                {tempoPreso && (
+                  <p className="text-xs text-rose-500 font-mono tabular-nums mt-1">Tempo preso: {tempoPreso}</p>
+                )}
+              </div>
+            </div>
+          )}
+          {audienciaHoje && (
+            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+              <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/30">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-amber-500 animate-pulse" />
+                  <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">Audiencia HOJE</span>
+                  {assistido.proximaAudiencia && (
+                    <span className="text-xs text-amber-500 font-mono">
+                      {format(parseISO(assistido.proximaAudiencia), "HH:mm")}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          {prazoVencido && (
+            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/30">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-500 animate-pulse" />
+                  <span className="text-xs font-semibold text-rose-700 dark:text-rose-400">Prazo VENCIDO</span>
+                  {assistido.atoProximoPrazo && (
+                    <span className="text-xs text-rose-500">{assistido.atoProximoPrazo}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Audiência info (if not today - today is already shown above) */}
+          {assistido.proximaAudiencia && !audienciaHoje && (
+            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-zinc-400" />
+                  <div>
+                    <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                      Próxima Audiência
+                    </p>
+                    <p className="text-[10px] text-zinc-400 mt-0.5">
+                      {format(parseISO(assistido.proximaAudiencia), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                    </p>
+                  </div>
+                </div>
+                {diasAteAudiencia !== null && (
+                  <span className={cn(
+                    "text-xs font-medium px-2 py-0.5 rounded-full tabular-nums",
+                    diasAteAudiencia <= 3 ? "bg-amber-50 dark:bg-amber-950/20 text-amber-600" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                  )}>
+                    {diasAteAudiencia}d
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 4. Dados Pessoais */}
+          <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+            <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium">Dados Pessoais</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+              {[
+                { label: "CPF", value: maskedCpf },
+                { label: "RG", value: assistido.rg },
+                { label: "Nascimento", value: assistido.dataNascimento ? format(parseISO(assistido.dataNascimento), "dd/MM/yyyy") : null },
+                { label: "Naturalidade", value: assistido.naturalidade },
+              ].filter(item => item.value).map((item) => (
+                <div key={item.label}>
+                  <p className="text-[10px] text-zinc-400">{item.label}</p>
+                  <p className={cn("text-xs font-medium text-zinc-700 dark:text-zinc-300", item.label === "CPF" && "font-mono tabular-nums")}>{item.value}</p>
+                </div>
+              ))}
+              {assistido.endereco && (
+                <div className="col-span-2">
+                  <p className="text-[10px] text-zinc-400">Endereço</p>
+                  <p className="text-xs text-zinc-700 dark:text-zinc-300">{assistido.endereco}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 5. Contato */}
+          {(telefoneDisplay || assistido.nomeContato) && (
+            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+              <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium">Contato</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  {telefoneDisplay && (
+                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{telefoneDisplay}</p>
+                  )}
+                  {assistido.nomeContato && (
+                    <p className="text-[10px] text-zinc-400 mt-0.5">Responsável: {assistido.nomeContato}</p>
+                  )}
+                </div>
+                {whatsappUrl && (
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition-colors"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    WhatsApp
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 6. Crime / Processo */}
+          {(assistido.crimePrincipal || assistido.numeroProcesso) && (
+            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+              <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium">Crime / Processo</p>
+              {assistido.crimePrincipal && (
+                <p className="text-xs text-zinc-700 dark:text-zinc-300 mb-2">{assistido.crimePrincipal}</p>
+              )}
+              {assistido.numeroProcesso && (
+                <div className="flex items-center gap-2">
+                  <Scale className="w-3 h-3 text-zinc-400" />
+                  <span className="font-mono tabular-nums text-xs text-zinc-500 dark:text-zinc-400">{assistido.numeroProcesso}</span>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(assistido.numeroProcesso!); toast.success("Copiado!"); }}
+                    className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <Copy className="w-3 h-3 text-zinc-400" />
+                  </button>
+                </div>
+              )}
+              {assistido.faseProcessual && (
+                <p className="text-[10px] text-zinc-400 mt-1.5">
+                  Fase: <span className="text-zinc-600 dark:text-zinc-300">{faseConfig[assistido.faseProcessual]?.label || assistido.faseProcessual}</span>
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* 6.5 Observações */}
+          {assistido.observacoes && (
+            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+              <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-2 font-medium">Observações</p>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap">
+                {assistido.observacoes}
+              </p>
+            </div>
+          )}
+
+          {/* 7. Drive */}
+          <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+            <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium">Google Drive</p>
+            {assistido.driveFolderId ? (
+              <div className="flex items-center gap-2">
+                <a
+                  href={`https://drive.google.com/drive/folders/${assistido.driveFolderId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 transition-colors"
+                >
+                  <HardDrive className="w-3.5 h-3.5" />
+                  Abrir pasta
+                  <ExternalLink className="w-3 h-3 opacity-60" />
+                </a>
+                {(assistido.driveFilesCount ?? 0) > 0 && (
+                  <span className="text-[10px] text-zinc-400">
+                    {assistido.driveFilesCount} arquivo{(assistido.driveFilesCount ?? 0) > 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-zinc-400 dark:text-zinc-500">Sem pasta vinculada</p>
+            )}
+          </div>
+        </div>
+
+        {/* Sticky Footer */}
+        <div className="px-5 py-4 border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-wrap gap-2">
+          <Link href={`/admin/assistidos/${assistido.id}`} className="flex-1">
+            <Button className="w-full h-9 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-all">
+              Abrir Perfil Completo
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </Link>
+          <Link href={`/admin/processos?assistido=${assistido.id}`}>
+            <Button variant="outline" size="sm" className="h-9 rounded-xl text-xs focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1">
+              <Scale className="w-3.5 h-3.5 mr-1" />
+              Processos
+            </Button>
+          </Link>
+          <Link href={`/admin/demandas/nova?assistido=${assistido.id}`}>
+            <Button variant="outline" size="sm" className="h-9 rounded-xl text-xs focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1">
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              Nova Demanda
+            </Button>
+          </Link>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+// ========================================
 // CARD DO ASSISTIDO - DESIGN PREMIUM EXTRAORDINÁRIO
 // Quick Actions + Mini Dashboard + Indicadores + Timeline + Score
 // ========================================
@@ -334,9 +722,10 @@ interface AssistidoCardProps {
   onTogglePin: () => void;
   hasDuplicates?: boolean;
   duplicateCount?: number;
+  onPreview?: () => void;
 }
 
-function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDuplicates, duplicateCount }: AssistidoCardProps) {
+function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDuplicates, duplicateCount, onPreview }: AssistidoCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(false);
@@ -540,7 +929,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
           <div className="flex-1 min-w-0">
             {/* Nome */}
             <Link href={`/admin/assistidos/${assistido.id}`}>
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm leading-tight hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors line-clamp-1">
+              <h3 className="font-serif font-semibold text-zinc-900 dark:text-zinc-100 text-sm leading-tight hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors line-clamp-1">
                 {assistido.nome}
               </h3>
             </Link>
@@ -570,6 +959,25 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
               {/* Idade */}
               {idade && (
                 <span className="text-[10px] text-zinc-400">{idade}a</span>
+              )}
+
+              {/* Prazo countdown badge */}
+              {prazoVencido && prazoInfo && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 animate-pulse">
+                  <AlertCircle className="w-3 h-3" />
+                  VENCIDO
+                  {assistido.proximoPrazo && (
+                    <span className="font-mono tabular-nums">
+                      {Math.abs(differenceInDays(parseISO(assistido.proximoPrazo), new Date()))}d
+                    </span>
+                  )}
+                </span>
+              )}
+              {!prazoVencido && prazoUrgente && prazoInfo && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
+                  <Clock className="w-3 h-3" />
+                  {prazoInfo.text}
+                </span>
               )}
             </div>
           </div>
@@ -811,6 +1219,20 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
             <TooltipContent side="top" className="text-[10px]">Ações Rápidas</TooltipContent>
           </Tooltip>
 
+          {onPreview && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPreview(); }}
+                  className="h-7 w-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all cursor-pointer"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-[10px]">Visualização rápida</TooltipContent>
+            </Tooltip>
+          )}
+
           <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-1" />
 
           {whatsappUrl && (
@@ -972,6 +1394,17 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
                   </Button>
                 </Link>
               </div>
+              {onPreview && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-[10px] px-2 gap-1 focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1"
+                  onClick={onPreview}
+                >
+                  <Eye className="w-3 h-3" />
+                  Preview
+                </Button>
+              )}
               <Link href={`/admin/assistidos/${assistido.id}`} className="flex-shrink-0">
                 <Button size="sm" className="h-6 text-[10px] px-2 gap-1 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600">
                   Ver Perfil
@@ -987,252 +1420,449 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
 }
 
 // ========================================
-// CARD-ROW DO ASSISTIDO — 2 LINHAS STACKED
+// TABLE VIEW DO ASSISTIDO — SwissTable
 // ========================================
 
-function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: AssistidoCardProps) {
-  const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
-  const isMonitorado = ["MONITORADO", "DOMICILIAR"].includes(assistido.statusPrisional);
-  const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
-  const prazoVencido = prazoInfo && prazoInfo.text === "Vencido";
-  const tempoPreso = calcularTempoPreso(assistido.dataPrisao ?? null);
-  const idade = calcularIdade(assistido.dataNascimento);
-  const statusCfg = statusConfig[assistido.statusPrisional];
+function AssistidoTableView({
+  assistidos,
+  pinnedIds,
+  onPhotoClick,
+  onTogglePin,
+  sortBy,
+  onSortChange,
+  onPreview,
+}: {
+  assistidos: AssistidoUI[];
+  pinnedIds: Set<number>;
+  onPhotoClick: (a: AssistidoUI) => void;
+  onTogglePin: (id: number) => void;
+  sortBy: string;
+  onSortChange: (col: string) => void;
+  onPreview?: (a: AssistidoUI) => void;
+}) {
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
-  const diasAteAudiencia = assistido.proximaAudiencia
-    ? differenceInDays(parseISO(assistido.proximaAudiencia), new Date())
-    : null;
-  const audienciaHoje = diasAteAudiencia === 0;
-  const audienciaAmanha = diasAteAudiencia === 1;
+  const handleCopyProcesso = (id: number, processo: string) => {
+    navigator.clipboard.writeText(processo);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
-  const atribuicoesUnicas = assistido.atribuicoes || assistido.areas || [];
-  const primaryAttrOption = atribuicoesUnicas.length > 0
-    ? (() => {
-        const normalizedAttr = atribuicoesUnicas[0].toUpperCase().replace(/_/g, ' ');
-        return ATRIBUICAO_OPTIONS.find(o =>
-          o.value.toUpperCase() === normalizedAttr ||
-          o.label.toUpperCase().includes(normalizedAttr) ||
-          normalizedAttr.includes(o.value.toUpperCase())
-        );
-      })()
-    : null;
-  const primaryColor = primaryAttrOption ? SOLID_COLOR_MAP[primaryAttrOption.value] || '#6b7280' : '#6b7280';
-
-  const telefone = assistido.telefone || assistido.telefoneContato;
-  const whatsappUrl = telefone ? `https://wa.me/55${telefone.replace(/\D/g, '')}` : null;
-  const isUrgent = isPreso || prazoVencido || audienciaHoje;
-  const procCount = assistido.processosAtivos || 0;
-  const demCount = assistido.demandasAbertas || 0;
+  const sortableHeaders: { id: string; label: string; className?: string }[] = [
+    { id: "nome", label: "Nome" },
+    { id: "prioridade", label: "Status" },
+    { id: "", label: "Atribuicao" },
+    { id: "", label: "Crime" },
+    { id: "", label: "Processo" },
+    { id: "prazo", label: "Audiencia / Prazo" },
+    { id: "", label: "Drive" },
+    { id: "", label: "Acoes" },
+  ];
 
   return (
-    <div
-      className={cn(
-        "group relative rounded-xl border bg-white dark:bg-zinc-900 px-4 py-3 transition-all duration-200 cursor-pointer",
-        "border-zinc-200/80 dark:border-zinc-800/80",
-        "hover:shadow-md hover:border-emerald-200/50 dark:hover:border-emerald-800/30",
-        isPinned && "ring-1 ring-amber-400/40 dark:ring-amber-500/20 bg-amber-50/20 dark:bg-amber-950/5",
-        isUrgent && !isPinned && "bg-rose-50/15 dark:bg-rose-950/5",
-      )}
-      style={{
-        borderLeftWidth: '3px',
-        borderLeftColor: isPreso ? '#f43f5e' : isMonitorado ? '#f59e0b' : prazoVencido ? '#ef4444' : 'transparent',
-      }}
-    >
-      {/* ═══ LINHA 1: Avatar + Nome + Status + Atribuição + Idade ═══ Ações ═══ */}
-      <div className="flex items-center justify-between gap-3">
-        {/* Esquerda: Avatar + Info */}
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          {/* Avatar */}
-          <AssistidoAvatar
-            nome={assistido.nome}
-            photoUrl={assistido.photoUrl}
-            size="md"
-            atribuicao={primaryAttrOption?.value}
-            statusPrisional={assistido.statusPrisional}
-            showStatusDot
-            onClick={onPhotoClick}
-          />
+    <SwissTableContainer maxHeight="calc(100vh - 320px)">
+      <SwissTable>
+        <SwissTableHeader>
+          <SwissTableRow>
+            {sortableHeaders.map((col) => (
+              <SwissTableHead
+                key={col.label}
+                className={cn(
+                  col.id && "cursor-pointer select-none hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                  !col.id && "text-zinc-400 dark:text-zinc-500",
+                  col.className,
+                )}
+                onClick={() => col.id && onSortChange(col.id)}
+              >
+                <div className="flex items-center gap-1.5">
+                  {col.label}
+                  {col.id && sortBy === col.id && (
+                    <ArrowUpDown className="w-3 h-3 text-emerald-500" />
+                  )}
+                  {col.id && sortBy !== col.id && (
+                    <ArrowUpDown className="w-3 h-3 text-zinc-300 dark:text-zinc-600" />
+                  )}
+                </div>
+              </SwissTableHead>
+            ))}
+          </SwissTableRow>
+        </SwissTableHeader>
+        <SwissTableBody>
+          {assistidos.map((assistido, index) => {
+            const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
+            const isMonitorado = ["MONITORADO", "DOMICILIAR"].includes(assistido.statusPrisional);
+            const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
+            const prazoVencido = prazoInfo && prazoInfo.text === "Vencido";
+            const tempoPreso = calcularTempoPreso(assistido.dataPrisao ?? null);
+            const statusCfg = statusConfig[assistido.statusPrisional];
+            const isPinned = pinnedIds.has(assistido.id);
 
-          {/* Nome + Badges inline */}
-          <div className="flex items-center gap-2 min-w-0 flex-1 flex-wrap">
-            <Link
-              href={`/admin/assistidos/${assistido.id}`}
-              className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-            >
-              {assistido.nome}
-            </Link>
+            const diasAteAudiencia = assistido.proximaAudiencia
+              ? differenceInDays(parseISO(assistido.proximaAudiencia), new Date())
+              : null;
+            const audienciaHoje = diasAteAudiencia === 0;
+            const audienciaAmanha = diasAteAudiencia === 1;
 
-            {isPinned && <BookmarkCheck className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />}
+            const atribuicoesUnicas = assistido.atribuicoes || assistido.areas || [];
+            const primaryAttrOption = atribuicoesUnicas.length > 0
+              ? (() => {
+                  const normalizedAttr = atribuicoesUnicas[0].toUpperCase().replace(/_/g, ' ');
+                  return ATRIBUICAO_OPTIONS.find(o =>
+                    o.value.toUpperCase() === normalizedAttr ||
+                    o.label.toUpperCase().includes(normalizedAttr) ||
+                    normalizedAttr.includes(o.value.toUpperCase())
+                  );
+                })()
+              : null;
+            const primaryColor = primaryAttrOption ? SOLID_COLOR_MAP[primaryAttrOption.value] || '#6b7280' : '#6b7280';
 
-            {/* Status badge */}
-            <div className={cn(
-              "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0",
-              isPreso && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
-              isMonitorado && "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400",
-              !isPreso && !isMonitorado && "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400",
-            )}>
-              <div className={cn(
-                "w-1.5 h-1.5 rounded-full",
-                isPreso && "bg-rose-500",
-                isMonitorado && "bg-amber-500",
-                !isPreso && !isMonitorado && "bg-emerald-500",
-              )} />
-              {statusCfg?.label || assistido.statusPrisional}
-              {isPreso && tempoPreso && (
-                <span className="font-mono tabular-nums text-rose-400 dark:text-rose-500 ml-0.5">{tempoPreso}</span>
+            const telefone = assistido.telefone || assistido.telefoneContato;
+            const whatsappUrl = telefone ? `https://wa.me/55${telefone.replace(/\D/g, '')}` : null;
+
+            return (
+              <Fragment key={assistido.id}>
+              <SwissTableRow
+                className={cn(
+                  "transition-colors cursor-pointer animate-in fade-in duration-200 fill-mode-both",
+                  isPinned && "ring-1 ring-inset ring-amber-400/40 dark:ring-amber-500/20",
+                  isPreso && "border-l-[3px] border-l-rose-500 bg-rose-50/30 dark:bg-rose-950/10",
+                  !isPreso && prazoVencido && "border-l-[3px] border-l-rose-400 bg-rose-50/20 dark:bg-rose-950/5",
+                  !isPreso && !prazoVencido && audienciaHoje && "border-l-[3px] border-l-amber-500 bg-amber-50/20 dark:bg-amber-950/10",
+                  !isPreso && !prazoVencido && !audienciaHoje && isMonitorado && "border-l-[3px] border-l-amber-400",
+                  expandedId === assistido.id && "bg-zinc-50/50 dark:bg-zinc-800/20",
+                )}
+                style={{ animationDelay: `${Math.min(index * 20, 400)}ms` }}
+                onClick={() => setExpandedId(expandedId === assistido.id ? null : assistido.id)}
+                onDoubleClick={() => onPreview?.(assistido)}
+              >
+                {/* Nome */}
+                <SwissTableCell className="py-2.5 px-4 first:pl-6">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <AssistidoAvatar
+                      nome={assistido.nome}
+                      photoUrl={assistido.photoUrl}
+                      size="sm"
+                      atribuicao={primaryAttrOption?.value}
+                      statusPrisional={assistido.statusPrisional}
+                      showStatusDot
+                      onClick={() => onPhotoClick(assistido)}
+                    />
+                    <div className="min-w-0">
+                      <Link
+                        href={`/admin/assistidos/${assistido.id}`}
+                        className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate block hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors max-w-[180px]"
+                      >
+                        {assistido.nome}
+                      </Link>
+                      {assistido.vulgo && (
+                        <span className="text-[10px] text-zinc-400 dark:text-zinc-500 italic truncate block max-w-[140px]">
+                          &ldquo;{assistido.vulgo}&rdquo;
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </SwissTableCell>
+
+                {/* Status */}
+                <SwissTableCell className="py-2.5 px-4">
+                  <div className={cn(
+                    "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap",
+                    isPreso && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
+                    isMonitorado && "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400",
+                    !isPreso && !isMonitorado && "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400",
+                  )}>
+                    <div className={cn(
+                      "w-1.5 h-1.5 rounded-full",
+                      isPreso && "bg-rose-500",
+                      isMonitorado && "bg-amber-500",
+                      !isPreso && !isMonitorado && "bg-emerald-500",
+                    )} />
+                    {statusCfg?.label || assistido.statusPrisional}
+                  </div>
+                  {isPreso && tempoPreso && (
+                    <span className="block text-[10px] font-mono tabular-nums text-rose-400 dark:text-rose-500 mt-0.5 pl-0.5">
+                      {tempoPreso}
+                    </span>
+                  )}
+                </SwissTableCell>
+
+                {/* Atribuicao */}
+                <SwissTableCell className="py-2.5 px-4">
+                  {primaryAttrOption ? (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: primaryColor }} />
+                      {primaryAttrOption.shortLabel}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-zinc-300 dark:text-zinc-600">-</span>
+                  )}
+                </SwissTableCell>
+
+                {/* Crime */}
+                <SwissTableCell className="py-2.5 px-4">
+                  {assistido.crimePrincipal ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-xs text-zinc-600 dark:text-zinc-400 truncate block max-w-[160px] cursor-help">
+                          {assistido.crimePrincipal}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs max-w-[300px]">
+                        {assistido.crimePrincipal}
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <span className="text-[10px] text-zinc-300 dark:text-zinc-600 italic">Sem tipo</span>
+                  )}
+                </SwissTableCell>
+
+                {/* Processo */}
+                <SwissTableCell className="py-2.5 px-4">
+                  {assistido.numeroProcesso ? (
+                    <div
+                      className="flex items-center gap-1 cursor-pointer group/copy"
+                      onClick={() => handleCopyProcesso(assistido.id, assistido.numeroProcesso!)}
+                    >
+                      <span className="font-mono tabular-nums text-[10px] text-zinc-500 dark:text-zinc-400 truncate max-w-[150px]">
+                        {assistido.numeroProcesso}
+                      </span>
+                      {copiedId === assistido.id ? (
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0" />
+                      ) : (
+                        <Copy className="w-3 h-3 text-zinc-300 dark:text-zinc-600 group-hover/copy:text-zinc-400 transition-colors flex-shrink-0" />
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-[10px] text-zinc-300 dark:text-zinc-600">-</span>
+                  )}
+                </SwissTableCell>
+
+                {/* Audiencia / Prazo */}
+                <SwissTableCell className="py-2.5 px-4">
+                  {assistido.proximaAudiencia ? (
+                    <div className={cn(
+                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-medium whitespace-nowrap",
+                      audienciaHoje && "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 animate-pulse",
+                      audienciaAmanha && "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
+                      !audienciaHoje && !audienciaAmanha && diasAteAudiencia !== null && diasAteAudiencia <= 7 && "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400",
+                      !audienciaHoje && !audienciaAmanha && diasAteAudiencia !== null && diasAteAudiencia > 7 && "text-zinc-400 dark:text-zinc-500",
+                    )}>
+                      <Calendar className="w-3 h-3 flex-shrink-0" />
+                      {audienciaHoje ? "HOJE" : audienciaAmanha ? "Amanha" : `${diasAteAudiencia}d`}
+                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 ml-0.5">
+                        {format(parseISO(assistido.proximaAudiencia), "dd/MM")}
+                      </span>
+                    </div>
+                  ) : prazoInfo ? (
+                    <div className={cn(
+                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-medium whitespace-nowrap",
+                      prazoVencido && "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 animate-pulse",
+                      !prazoVencido && prazoInfo.urgent && "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
+                      !prazoVencido && !prazoInfo.urgent && "text-zinc-400 dark:text-zinc-500",
+                    )}>
+                      {prazoVencido && <AlertCircle className="w-3 h-3 flex-shrink-0" />}
+                      {prazoInfo.text}
+                    </div>
+                  ) : (
+                    <span className="text-[10px] text-zinc-300 dark:text-zinc-600">-</span>
+                  )}
+                </SwissTableCell>
+
+                {/* Drive */}
+                <SwissTableCell className="py-2.5 px-4">
+                  {assistido.driveFolderId ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a
+                          href={`https://drive.google.com/drive/folders/${assistido.driveFolderId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <HardDrive className="w-3.5 h-3.5" />
+                          {(assistido.driveFilesCount ?? 0) > 0 && (
+                            <span className="text-[10px] font-medium tabular-nums">{assistido.driveFilesCount}</span>
+                          )}
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-[10px]">
+                        Abrir Drive{(assistido.driveFilesCount ?? 0) > 0 ? ` (${assistido.driveFilesCount} arq.)` : ''}
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <Link2Off className="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600" />
+                  )}
+                </SwissTableCell>
+
+                {/* Acoes */}
+                <SwissTableCell className="py-2.5 px-4 last:pr-6">
+                  <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+                    {whatsappUrl && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1">
+                              <MessageCircle className="h-3.5 w-3.5" />
+                            </Button>
+                          </a>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-[10px]">WhatsApp</TooltipContent>
+                      </Tooltip>
+                    )}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link href={`/admin/drive?assistido=${assistido.id}`}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1">
+                            <FolderOpen className="h-3.5 w-3.5" />
+                          </Button>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-[10px]">Drive</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link href={`/admin/demandas/nova?assistido=${assistido.id}`}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1">
+                            <Plus className="h-3.5 w-3.5" />
+                          </Button>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-[10px]">Nova Demanda</TooltipContent>
+                    </Tooltip>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        "h-7 w-7 transition-all focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1",
+                        isPinned
+                          ? "text-amber-500 bg-amber-50 dark:bg-amber-950/30"
+                          : "text-zinc-300 dark:text-zinc-600 hover:text-amber-500",
+                      )}
+                      onClick={() => onTogglePin(assistido.id)}
+                    >
+                      {isPinned ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
+                    </Button>
+                    <Link href={`/admin/assistidos/${assistido.id}`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2.5 text-xs text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-medium focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1"
+                      >
+                        <Eye className="h-3.5 w-3.5 mr-1" />
+                        Ver
+                      </Button>
+                    </Link>
+                  </div>
+                </SwissTableCell>
+              </SwissTableRow>
+
+              {/* Row Expansion Panel */}
+              {expandedId === assistido.id && (
+                <SwissTableRow>
+                  <SwissTableCell colSpan={8} className="p-0">
+                    <div className="px-6 py-4 bg-zinc-50/50 dark:bg-zinc-800/30 border-t border-zinc-100 dark:border-zinc-800 animate-in slide-in-from-top-1 duration-200">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Col 1: Dados Pessoais */}
+                        <div className="space-y-2">
+                          <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium mb-2">Dados Pessoais</p>
+                          {assistido.cpf && (
+                            <div>
+                              <span className="text-[10px] text-zinc-400">CPF: </span>
+                              <span className="text-xs font-mono tabular-nums text-zinc-600 dark:text-zinc-300">
+                                {assistido.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.***.***-$4')}
+                              </span>
+                            </div>
+                          )}
+                          {assistido.rg && (
+                            <div>
+                              <span className="text-[10px] text-zinc-400">RG: </span>
+                              <span className="text-xs text-zinc-600 dark:text-zinc-300">{assistido.rg}</span>
+                            </div>
+                          )}
+                          {assistido.dataNascimento && (
+                            <div>
+                              <span className="text-[10px] text-zinc-400">Nascimento: </span>
+                              <span className="text-xs text-zinc-600 dark:text-zinc-300">{format(parseISO(assistido.dataNascimento), "dd/MM/yyyy")}</span>
+                            </div>
+                          )}
+                          {assistido.naturalidade && (
+                            <div>
+                              <span className="text-[10px] text-zinc-400">Naturalidade: </span>
+                              <span className="text-xs text-zinc-600 dark:text-zinc-300">{assistido.naturalidade}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Col 2: Contato + Crime */}
+                        <div className="space-y-2">
+                          <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium mb-2">Contato / Crime</p>
+                          {telefone && (
+                            <div className="flex items-center gap-2">
+                              <Phone className="w-3 h-3 text-zinc-400" />
+                              <span className="text-xs text-zinc-600 dark:text-zinc-300">{telefone}</span>
+                              {whatsappUrl && (
+                                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-emerald-600" onClick={(e) => e.stopPropagation()}>
+                                  <MessageCircle className="w-3 h-3" />
+                                </a>
+                              )}
+                            </div>
+                          )}
+                          {assistido.crimePrincipal && (
+                            <div>
+                              <span className="text-[10px] text-zinc-400">Crime: </span>
+                              <span className="text-xs text-zinc-600 dark:text-zinc-300">{assistido.crimePrincipal}</span>
+                            </div>
+                          )}
+                          {assistido.numeroProcesso && (
+                            <div>
+                              <span className="text-[10px] text-zinc-400">Processo: </span>
+                              <span className="font-mono tabular-nums text-[10px] text-zinc-500 dark:text-zinc-400">{assistido.numeroProcesso}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Col 3: Mini Timeline */}
+                        <div className="space-y-2">
+                          <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium mb-2">Timeline</p>
+                          {assistido.proximaAudiencia && (
+                            <div className="flex items-center gap-2">
+                              <div className={cn(
+                                "w-2 h-2 rounded-full",
+                                audienciaHoje ? "bg-amber-500 animate-pulse" : audienciaAmanha ? "bg-blue-500" : "bg-violet-500"
+                              )} />
+                              <span className="text-xs text-zinc-600 dark:text-zinc-300">
+                                Audiencia: {audienciaHoje ? "HOJE" : audienciaAmanha ? "Amanha" : format(parseISO(assistido.proximaAudiencia), "dd/MM/yyyy")}
+                              </span>
+                            </div>
+                          )}
+                          {assistido.ultimoEvento && (
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-zinc-400" />
+                              <span className="text-xs text-zinc-500">
+                                {assistido.ultimoEvento.titulo} ({assistido.ultimoEvento.data ? format(parseISO(assistido.ultimoEvento.data), "dd/MM") : ""})
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+                            <span className="text-xs text-zinc-400">
+                              Cadastro: {format(new Date(assistido.createdAt), "dd/MM/yyyy")}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </SwissTableCell>
+                </SwissTableRow>
               )}
-            </div>
-
-            {/* Atribuição chip */}
-            {primaryAttrOption && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 flex-shrink-0">
-                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: primaryColor }} />
-                {primaryAttrOption.shortLabel}
-              </span>
-            )}
-
-            {/* Idade */}
-            {idade !== null && (
-              <span className="text-[10px] text-zinc-400 dark:text-zinc-500 flex-shrink-0">{idade}a</span>
-            )}
-
-            {/* Vulgo */}
-            {assistido.vulgo && (
-              <span className="text-[10px] text-zinc-400 dark:text-zinc-500 italic truncate max-w-[80px] flex-shrink-0">&ldquo;{assistido.vulgo}&rdquo;</span>
-            )}
-          </div>
-        </div>
-
-        {/* Direita: Ações — sempre visíveis */}
-        <div className="flex items-center gap-0.5 flex-shrink-0">
-          {whatsappUrl && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
-                    <MessageCircle className="h-3.5 w-3.5" />
-                  </Button>
-                </a>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="text-[10px]">WhatsApp</TooltipContent>
-            </Tooltip>
-          )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link href={`/admin/drive?assistido=${assistido.id}`}>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
-                  <FolderOpen className="h-3.5 w-3.5" />
-                </Button>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="text-[10px]">Drive</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link href={`/admin/demandas/nova?assistido=${assistido.id}`}>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
-                  <Plus className="h-3.5 w-3.5" />
-                </Button>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="text-[10px]">Nova Demanda</TooltipContent>
-          </Tooltip>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "h-7 w-7 transition-all",
-              isPinned
-                ? "text-amber-500 bg-amber-50 dark:bg-amber-950/30"
-                : "text-zinc-300 dark:text-zinc-600 hover:text-amber-500",
-            )}
-            onClick={onTogglePin}
-          >
-            {isPinned ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
-          </Button>
-          <Link href={`/admin/assistidos/${assistido.id}`}>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2.5 text-xs text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-medium"
-            >
-              <Eye className="h-3.5 w-3.5 mr-1" />
-              Ver
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      {/* ═══ LINHA 2: Crime + Processo + Audiência + Vínculos ═══ */}
-      <div className="flex items-center gap-3 mt-1.5 ml-[52px] text-xs flex-wrap">
-        {/* Crime */}
-        {assistido.crimePrincipal ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="text-zinc-600 dark:text-zinc-400 truncate max-w-[200px] cursor-help">{assistido.crimePrincipal}</span>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs max-w-[300px]">{assistido.crimePrincipal}</TooltipContent>
-          </Tooltip>
-        ) : (
-          <span className="text-zinc-300 dark:text-zinc-600 italic text-[10px]">Sem tipificação</span>
-        )}
-
-        {/* Separador */}
-        {assistido.numeroProcesso && <span className="text-zinc-300 dark:text-zinc-700">&middot;</span>}
-
-        {/* Processo */}
-        {assistido.numeroProcesso && (
-          <span className="font-mono tabular-nums text-[10px] text-zinc-400 dark:text-zinc-500 truncate max-w-[180px]">
-            {assistido.numeroProcesso.length > 25 ? `${assistido.numeroProcesso.slice(0, 25)}...` : assistido.numeroProcesso}
-          </span>
-        )}
-
-        {/* Separador */}
-        {(assistido.proximaAudiencia || prazoInfo) && <span className="text-zinc-300 dark:text-zinc-700">&middot;</span>}
-
-        {/* Próxima audiência / prazo */}
-        {assistido.proximaAudiencia ? (
-          <div className={cn(
-            "inline-flex items-center gap-1",
-            audienciaHoje && "text-amber-600 dark:text-amber-400 font-semibold",
-            audienciaAmanha && "text-sky-600 dark:text-sky-400 font-medium",
-            !audienciaHoje && !audienciaAmanha && "text-zinc-500 dark:text-zinc-400",
-          )}>
-            <Calendar className="w-3 h-3 flex-shrink-0" />
-            <span>{audienciaHoje ? "HOJE" : audienciaAmanha ? "Amanhã" : format(parseISO(assistido.proximaAudiencia), "dd/MM")}</span>
-            <span className="text-[10px] text-zinc-400">{format(parseISO(assistido.proximaAudiencia), "HH:mm")}</span>
-            {audienciaHoje && <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />}
-          </div>
-        ) : prazoInfo ? (
-          <div className={cn(
-            "inline-flex items-center gap-1 text-[10px] font-medium",
-            prazoVencido ? "text-rose-600 dark:text-rose-400" : prazoInfo.urgent ? "text-amber-600 dark:text-amber-400" : "text-zinc-400",
-          )}>
-            {prazoVencido && <AlertCircle className="w-3 h-3" />}
-            <span>{prazoInfo.text}</span>
-          </div>
-        ) : null}
-
-        {/* Separador */}
-        {(procCount > 0 || demCount > 0) && <span className="text-zinc-300 dark:text-zinc-700">&middot;</span>}
-
-        {/* Vínculos */}
-        {procCount > 0 && (
-          <Link href={`/admin/processos?assistido=${assistido.id}`} className="inline-flex items-center gap-1 hover:text-emerald-600 transition-colors text-zinc-500 dark:text-zinc-400">
-            <Scale className="w-3 h-3" />
-            <span className="font-semibold tabular-nums text-zinc-700 dark:text-zinc-300">{procCount}</span>
-            <span className="text-[10px]">proc</span>
-          </Link>
-        )}
-        {demCount > 0 && (
-          <Link href={`/admin/demandas?assistido=${assistido.id}`} className="inline-flex items-center gap-1 hover:text-emerald-600 transition-colors text-zinc-500 dark:text-zinc-400">
-            <FileText className="w-3 h-3" />
-            <span className="font-semibold tabular-nums text-zinc-700 dark:text-zinc-300">{demCount}</span>
-            <span className="text-[10px]">dem</span>
-          </Link>
-        )}
-      </div>
-    </div>
+              </Fragment>
+            );
+          })}
+        </SwissTableBody>
+      </SwissTable>
+    </SwissTableContainer>
   );
 }
 
@@ -1662,6 +2292,7 @@ export default function AssistidosPage() {
   const [groupBy, setGroupBy] = useState<"none" | "comarca" | "area" | "status">("none");
   const [showNaoIdentificados, setShowNaoIdentificados] = useState(false);
   const [showArquivados, setShowArquivados] = useState(false);
+  const [smartPreset, setSmartPreset] = useState<string | null>(null);
 
   // Contagem de não identificados
   const naoIdentificadosCount = useMemo(() => {
@@ -1676,6 +2307,20 @@ export default function AssistidosPage() {
   const [pinnedIds, setPinnedIds] = useState<Set<number>>(new Set());
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
   const [selectedAssistido, setSelectedAssistido] = useState<typeof realAssistidos[0] | null>(null);
+  const [previewAssistido, setPreviewAssistido] = useState<AssistidoUI | null>(null);
+
+  // Sticky summary bar
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const statsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    if (statsRef.current) observer.observe(statsRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   // Batch Solar export state
   const [batchSelectMode, setBatchSelectMode] = useState(false);
@@ -1761,7 +2406,30 @@ export default function AssistidosPage() {
       const matchesPinned = !showPinnedOnly || pinnedIds.has(a.id);
       const matchesAtribuicao = atribuicaoFilter === "all" || a.area === atribuicaoFilter;
       const matchesComarca = comarcaFilter === "all" || (a.comarcas || []).includes(comarcaFilter);
-      return matchesSearch && matchesStatus && matchesArea && matchesPinned && matchesAtribuicao && matchesComarca;
+
+      // Smart preset filters
+      let matchesPreset = true;
+      if (smartPreset === "audiencias_semana") {
+        if (!a.proximaAudiencia) { matchesPreset = false; }
+        else {
+          const dias = differenceInDays(parseISO(a.proximaAudiencia), new Date());
+          matchesPreset = dias >= 0 && dias <= 7;
+        }
+      } else if (smartPreset === "prazos_vencidos") {
+        if (!a.proximoPrazo) { matchesPreset = false; }
+        else {
+          matchesPreset = differenceInDays(parseISO(a.proximoPrazo), new Date()) < 0;
+        }
+      } else if (smartPreset === "sem_drive") {
+        matchesPreset = !a.driveFolderId;
+      } else if (smartPreset === "novos_30d") {
+        if (!a.createdAt) { matchesPreset = false; }
+        else {
+          matchesPreset = differenceInDays(new Date(), parseISO(a.createdAt)) <= 30;
+        }
+      }
+
+      return matchesSearch && matchesStatus && matchesArea && matchesPinned && matchesAtribuicao && matchesComarca && matchesPreset;
     });
 
     result.sort((a, b) => {
@@ -1789,7 +2457,7 @@ export default function AssistidosPage() {
     });
 
     return result;
-  }, [realAssistidos, searchTerm, statusFilter, areaFilter, comarcaFilter, sortBy, pinnedIds, showPinnedOnly, atribuicaoFilter, showNaoIdentificados]);
+  }, [realAssistidos, searchTerm, statusFilter, areaFilter, comarcaFilter, sortBy, pinnedIds, showPinnedOnly, atribuicaoFilter, showNaoIdentificados, smartPreset]);
 
   // Progressive rendering — show first 24 instantly (6 cols × 4 rows), render rest incrementally
   const { visibleItems: visibleAssistidos } = useProgressiveList(filteredAssistidos, 24, 24);
@@ -1892,6 +2560,15 @@ export default function AssistidosPage() {
     // Com demandas abertas
     const comDemandas = realAssistidos.filter(a => a.demandasAbertas > 0).length;
 
+    // Sem Drive
+    const semDrive = realAssistidos.filter(a => !a.driveFolderId).length;
+
+    // Novos (30 dias)
+    const novos30d = realAssistidos.filter(a => {
+      if (!a.createdAt) return false;
+      return differenceInDays(new Date(), parseISO(a.createdAt)) <= 30;
+    }).length;
+
     return {
       total,
       presos,
@@ -1903,6 +2580,8 @@ export default function AssistidosPage() {
       prazosVencidos,
       prazosUrgentes,
       comDemandas,
+      semDrive,
+      novos30d,
     };
   }, [realAssistidos, pinnedIds]);
   
@@ -1924,7 +2603,7 @@ export default function AssistidosPage() {
           {/* Stats skeleton - 2 colunas em mobile */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
             {[1, 2, 3, 4, 5].map(i => (
-              <Skeleton key={i} className="h-16 rounded-lg" />
+              <Skeleton key={i} className="h-16 rounded-lg animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
             ))}
           </div>
           
@@ -1942,7 +2621,7 @@ export default function AssistidosPage() {
             </div>
             <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 space-y-3">
+                <div key={i} className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 space-y-3 animate-pulse" style={{ animationDelay: `${i * 80}ms` }}>
                   <div className="flex items-center gap-3">
                     <Skeleton className="h-10 w-10 rounded-full" />
                     <div className="space-y-2 flex-1">
@@ -2096,6 +2775,64 @@ export default function AssistidosPage() {
         </div>
       </div>
 
+      {/* Sticky Summary Bar */}
+      {showStickyBar && (
+        <div className="sticky top-0 z-30 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border-b border-zinc-200/80 dark:border-zinc-800/80 shadow-sm animate-in slide-in-from-top duration-200">
+          <div className="flex items-center justify-between px-6 py-2 max-w-screen-2xl mx-auto">
+            <div className="flex items-center gap-3">
+              <Users className="w-4 h-4 text-zinc-400" />
+              <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                {filteredAssistidos.length} assistidos
+              </span>
+              {smartPreset && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60">
+                  {smartPreset === "meus_presos" ? "Meus presos" :
+                   smartPreset === "audiencias_semana" ? "Audiencias semana" :
+                   smartPreset === "prazos_vencidos" ? "Prazos vencidos" :
+                   smartPreset === "sem_drive" ? "Sem Drive" :
+                   smartPreset === "novos_30d" ? "Novos 30d" : smartPreset}
+                </span>
+              )}
+            </div>
+            <div className="relative hidden sm:block">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar..."
+                className="pl-8 w-[180px] h-7 text-xs border-zinc-200/80 dark:border-zinc-700/80 bg-zinc-100 dark:bg-zinc-800 rounded-lg"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={cn(
+                    "flex items-center gap-1 px-2 h-6 text-xs font-medium rounded-md transition-all",
+                    viewMode === "grid"
+                      ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-700"
+                  )}
+                >
+                  <LayoutGrid className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={cn(
+                    "flex items-center gap-1 px-2 h-6 text-xs font-medium rounded-md transition-all",
+                    viewMode === "list"
+                      ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-700"
+                  )}
+                >
+                  <List className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Conteúdo Principal */}
       <div className="p-5 md:p-8 space-y-5 md:space-y-7">
 
@@ -2145,7 +2882,7 @@ export default function AssistidosPage() {
       {!showNaoIdentificados && (
       <>
         {/* Stats Ribbon — compact inline KPIs */}
-        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+        <div ref={statsRef} className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
           {[
             { icon: Users, value: stats.total - naoIdentificadosCount, label: "assistidos", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); }, active: statusFilter === "all" && !showPinnedOnly },
             { icon: Lock, value: stats.presos, label: "presos", onClick: () => { setStatusFilter(statusFilter === "CADEIA_PUBLICA" ? "all" : "CADEIA_PUBLICA"); setShowPinnedOnly(false); }, active: statusFilter === "CADEIA_PUBLICA", alert: stats.presos > 0 },
@@ -2214,6 +2951,83 @@ export default function AssistidosPage() {
 
       {/* Card de Filtros */}
       <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl p-5 shadow-apple dark:shadow-apple-dark">
+        {/* Smart Filter Presets */}
+        <div className="flex items-center gap-2 flex-wrap mb-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
+          <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium mr-1">Filtros rapidos</span>
+          {[
+            { id: "meus_presos", label: "Meus presos", icon: Lock, count: stats.presos },
+            { id: "audiencias_semana", label: "Audiencias esta semana", icon: Calendar, count: stats.audienciasSemana },
+            { id: "prazos_vencidos", label: "Prazos vencidos", icon: AlertCircle, count: stats.prazosVencidos },
+            { id: "sem_drive", label: "Sem Drive", icon: Link2Off, count: stats.semDrive },
+            { id: "novos_30d", label: "Novos (30d)", icon: Plus, count: stats.novos30d },
+          ].map((preset) => {
+            const active = smartPreset === preset.id;
+            const PresetIcon = preset.icon;
+            return (
+              <button
+                key={preset.id}
+                onClick={() => {
+                  if (active) {
+                    setSmartPreset(null);
+                    setStatusFilter("all");
+                    setSortBy("nome");
+                  } else {
+                    setSmartPreset(preset.id);
+                    if (preset.id === "meus_presos") {
+                      setStatusFilter("CADEIA_PUBLICA");
+                      setSortBy("prioridade");
+                    } else if (preset.id === "audiencias_semana") {
+                      setStatusFilter("all");
+                      setSortBy("prazo");
+                    } else if (preset.id === "prazos_vencidos") {
+                      setStatusFilter("all");
+                      setSortBy("prazo");
+                    } else if (preset.id === "sem_drive") {
+                      setStatusFilter("all");
+                      setSortBy("nome");
+                    } else if (preset.id === "novos_30d") {
+                      setStatusFilter("all");
+                      setSortBy("nome");
+                    }
+                  }
+                }}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
+                  active
+                    ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-transparent"
+                )}
+              >
+                <PresetIcon className="w-3.5 h-3.5" />
+                {preset.label}
+                {preset.count > 0 && (
+                  <span className={cn(
+                    "text-[10px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full",
+                    active
+                      ? "bg-emerald-200/60 dark:bg-emerald-800/40 text-emerald-700 dark:text-emerald-300"
+                      : "bg-zinc-200 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400"
+                  )}>
+                    {preset.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+          {smartPreset && (
+            <button
+              onClick={() => {
+                setSmartPreset(null);
+                setStatusFilter("all");
+                setSortBy("nome");
+              }}
+              className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+            >
+              <XCircle className="w-3.5 h-3.5" />
+              Limpar
+            </button>
+          )}
+        </div>
+
         <FilterSectionAssistidos
           selectedAtribuicao={atribuicaoFilter}
           setSelectedAtribuicao={setAtribuicaoFilter}
@@ -2250,6 +3064,7 @@ export default function AssistidosPage() {
         {/* Content */}
         <div className="p-4">
       {filteredAssistidos.length === 0 ? (
+        <div className="animate-in fade-in duration-500">
         <EmptyState
           icon={Users}
           title="Nenhum assistido encontrado"
@@ -2261,6 +3076,7 @@ export default function AssistidosPage() {
           }}
           variant={searchTerm ? "search" : "default"}
         />
+        </div>
       ) : viewMode === "grid" ? (
         groupedAssistidos ? (
           // Exibição agrupada
@@ -2309,6 +3125,7 @@ export default function AssistidosPage() {
                         onTogglePin={() => togglePin(a.id)}
                         hasDuplicates={(potentialDuplicates[a.id]?.length || 0) > 0}
                         duplicateCount={potentialDuplicates[a.id]?.length || 0}
+                        onPreview={() => setPreviewAssistido(a)}
                       />
                     </div>
                   ))}
@@ -2318,9 +3135,13 @@ export default function AssistidosPage() {
           </div>
         ) : (
           // Exibição normal (sem agrupamento)
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
-            {visibleAssistidos.map((a) => (
-              <div key={a.id} className="relative">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start animate-in fade-in duration-200">
+            {visibleAssistidos.map((a, index) => (
+              <div
+                key={a.id}
+                className="relative animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both"
+                style={{ animationDelay: `${Math.min(index * 40, 600)}ms` }}
+              >
                 {batchSelectMode && (
                   <button
                     onClick={() => toggleBatchSelect(a.id, !!a.cpf)}
@@ -2346,23 +3167,22 @@ export default function AssistidosPage() {
                   onTogglePin={() => togglePin(a.id)}
                   hasDuplicates={(potentialDuplicates[a.id]?.length || 0) > 0}
                   duplicateCount={potentialDuplicates[a.id]?.length || 0}
+                  onPreview={() => setPreviewAssistido(a)}
                 />
               </div>
             ))}
           </div>
         )
       ) : (
-        <div className="space-y-1.5 max-h-[calc(100vh-320px)] overflow-y-auto custom-scrollbar pr-1">
-          {visibleAssistidos.map((a) => (
-            <AssistidoRow
-              key={a.id}
-              assistido={a}
-              onPhotoClick={() => handlePhotoClick(a)}
-              isPinned={pinnedIds.has(a.id)}
-              onTogglePin={() => togglePin(a.id)}
-            />
-          ))}
-        </div>
+        <AssistidoTableView
+          assistidos={visibleAssistidos}
+          pinnedIds={pinnedIds}
+          onPhotoClick={(a) => handlePhotoClick(a as typeof realAssistidos[0])}
+          onTogglePin={togglePin}
+          sortBy={sortBy}
+          onSortChange={(col) => setSortBy(col as "nome" | "prioridade" | "prazo" | "complexidade")}
+          onPreview={(a) => setPreviewAssistido(a)}
+        />
       )}
         </div>
       </Card>
@@ -2403,6 +3223,22 @@ export default function AssistidosPage() {
           }}
         />
       )}
+
+      {/* AssistidoQuickPreview Sheet */}
+      <AssistidoQuickPreview
+        assistido={previewAssistido}
+        onClose={() => setPreviewAssistido(null)}
+        currentIndex={previewAssistido ? filteredAssistidos.findIndex(a => a.id === previewAssistido.id) : undefined}
+        totalCount={filteredAssistidos.length}
+        onNext={previewAssistido ? (() => {
+          const idx = filteredAssistidos.findIndex(a => a.id === previewAssistido.id);
+          if (idx < filteredAssistidos.length - 1) setPreviewAssistido(filteredAssistidos[idx + 1]);
+        }) : undefined}
+        onPrev={previewAssistido ? (() => {
+          const idx = filteredAssistidos.findIndex(a => a.id === previewAssistido.id);
+          if (idx > 0) setPreviewAssistido(filteredAssistidos[idx - 1]);
+        }) : undefined}
+      />
 
       {/* Batch Solar Export Results Dialog */}
       <Dialog open={batchResultOpen} onOpenChange={setBatchResultOpen}>

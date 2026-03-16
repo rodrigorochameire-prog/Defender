@@ -441,9 +441,9 @@ export function LandingPage() {
               </span>
             </div>
             <div className="flex items-center gap-6 text-xs text-zinc-400 dark:text-zinc-500">
-              <Link href="#" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors duration-200">Termos</Link>
-              <Link href="#" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors duration-200">Privacidade</Link>
-              <Link href="#" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors duration-200">Suporte</Link>
+              <Link href="/termos" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors duration-200">Termos</Link>
+              <Link href="/privacidade" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors duration-200">Privacidade</Link>
+              <Link href="mailto:rodrigorochameire@gmail.com" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors duration-200">Suporte</Link>
             </div>
           </div>
         </div>

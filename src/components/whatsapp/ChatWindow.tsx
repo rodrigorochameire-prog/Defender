@@ -123,6 +123,7 @@ export function ChatWindow({
   const [showSaveCaseModal, setShowSaveCaseModal] = useState(false);
   const [showSaveDriveModal, setShowSaveDriveModal] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [showExtractDataModal, setShowExtractDataModal] = useState(false);
   const [showDrivePicker, setShowDrivePicker] = useState(false);
 
   // -- Refs -----------------------------------------------------------------
@@ -378,7 +379,7 @@ export function ChatWindow({
   );
 
   const handleSelectionAction = useCallback(
-    (action: "case" | "drive" | "summary") => {
+    (action: "case" | "drive" | "summary" | "extract") => {
       if (selectedMessageIds.size === 0) {
         toast.error("Selecione pelo menos uma mensagem");
         return;
@@ -395,6 +396,7 @@ export function ChatWindow({
         }
         setShowSaveDriveModal(true);
       } else if (action === "summary") setShowSummaryModal(true);
+      else if (action === "extract") setShowExtractDataModal(true);
     },
     [selectedMessageIds, contact, hasMediaInSelection]
   );
@@ -606,14 +608,15 @@ export function ChatWindow({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 gap-1.5 text-xs opacity-50 cursor-not-allowed"
-                    disabled
+                    className="h-8 gap-1.5 text-xs"
+                    disabled={selectedMessageIds.size === 0 || !contact?.assistido}
+                    onClick={() => handleSelectionAction("extract")}
                   >
                     <FileSearch className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">Extrair</span>
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Extrair dados (em breve)</TooltipContent>
+                <TooltipContent>Extrair dados com IA</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
@@ -1251,12 +1254,15 @@ export function ChatWindow({
         selectedMessages={selectedMessages}
         contactName={contactName}
         assistidoName={contact.assistido?.nome || null}
+        assistidoId={contact.assistido?.id || null}
         showSaveCase={showSaveCaseModal}
         showSaveDrive={showSaveDriveModal}
         showSummary={showSummaryModal}
+        showExtractData={showExtractDataModal}
         onCloseSaveCase={() => setShowSaveCaseModal(false)}
         onCloseSaveDrive={() => setShowSaveDriveModal(false)}
         onCloseSummary={() => setShowSummaryModal(false)}
+        onCloseExtractData={() => setShowExtractDataModal(false)}
         onSuccess={() => {
           exitSelectionMode();
           refetchMessages();
