@@ -307,6 +307,7 @@ function StageSubstatusPopover({
   return createPortal(
     <div
       ref={ref}
+      data-stage-popover
       className="fixed z-[9999] rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-700/80 shadow-xl shadow-black/10 dark:shadow-black/40 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
       style={{ top, left, width: popoverWidth }}
     >
@@ -485,7 +486,18 @@ export function DemandaQuickPreview({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[calc(100vw-3rem)] sm:w-[420px] md:w-[460px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl" style={{ borderLeft: `3px solid ${atribuicaoColor}` }}>
+      <SheetContent
+        className="w-[calc(100vw-3rem)] sm:w-[420px] md:w-[460px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl"
+        style={{ borderLeft: `3px solid ${atribuicaoColor}` }}
+        onInteractOutside={(e) => {
+          // Prevent Sheet from closing when clicking on the pipeline stage popover
+          // (which is portaled to document.body, outside the Sheet DOM tree)
+          const target = e.target as HTMLElement;
+          if (target.closest?.("[data-stage-popover]")) {
+            e.preventDefault();
+          }
+        }}
+      >
         {/* ===== STICKY NAV HEADER ===== */}
         <div className="sticky top-0 z-10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-zinc-200/50 dark:border-zinc-800/50 px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 space-y-0">

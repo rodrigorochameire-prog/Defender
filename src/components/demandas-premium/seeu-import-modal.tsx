@@ -20,6 +20,9 @@ import {
   Clock,
   Calendar,
   Hash,
+  Eye,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -145,6 +148,10 @@ export function SEEUImportModal({
   const [intimacoesNovas, setIntimacoesNovas] = useState<IntimacaoSEEU[]>([]);
   const [duplicatas, setDuplicatas] = useState<DuplicataInfoSEEU[]>([]);
 
+  // Editable review state: track which items are selected and per-item tipo
+  const [selectedNovas, setSelectedNovas] = useState<Set<number>>(new Set());
+  const [selectedDups, setSelectedDups] = useState<Set<number>>(new Set());
+
   const handleParsear = () => {
     if (!texto.trim()) {
       toast.error("Cole o texto das intimações do SEEU");
@@ -153,6 +160,13 @@ export function SEEUImportModal({
 
     try {
       const resultadoParser = parseSEEUIntimacoes(texto);
+
+      // Override parser's auto-detection with user's explicit selection
+      resultadoParser.tipoManifestacao = tipoManifestacao;
+      resultadoParser.intimacoes.forEach(i => {
+        i.tipoManifestacao = tipoManifestacao;
+        i.tipoDocumento = tipoManifestacao === 'ciencia' ? 'Ciência' : 'Manifestação';
+      });
 
       if (resultadoParser.intimacoes.length === 0) {
         toast.error("Nenhuma intimação encontrada. Verifique se o texto foi copiado corretamente do SEEU.");
@@ -176,6 +190,8 @@ export function SEEUImportModal({
 
       setIntimacoesNovas(novas);
       setDuplicatas(dups);
+      setSelectedNovas(new Set(novas.map((_, i) => i)));
+      setSelectedDups(new Set(dups.map((_, i) => i)));
 
       setResultado({
         ...resultadoParser,
@@ -196,29 +212,32 @@ export function SEEUImportModal({
   };
 
   const handleImportar = () => {
-    if (intimacoesNovas.length === 0 && duplicatas.length === 0) {
-      toast.error("Nenhuma intimação para importar ou atualizar");
+    const novasSelecionadas = intimacoesNovas.filter((_, i) => selectedNovas.has(i));
+    const dupsSelecionadas = duplicatas.filter((_, i) => selectedDups.has(i));
+
+    if (novasSelecionadas.length === 0 && dupsSelecionadas.length === 0) {
+      toast.error("Nenhuma intimação selecionada para importar ou atualizar");
       return;
     }
 
     setIsImporting(true);
 
     try {
-      // 1. Importar novas demandas
-      if (intimacoesNovas.length > 0) {
-        const demandas = intimacoesNovas.map((intimacao) => {
+      // 1. Importar novas demandas (only selected)
+      if (novasSelecionadas.length > 0) {
+        const demandas = novasSelecionadas.map((intimacao) => {
           const demanda = intimacaoSEEUToDemanda(intimacao);
           return demanda;
         });
         onImport(demandas);
       }
 
-      // 2. Atualizar demandas existentes (duplicatas)
-      if (duplicatas.length > 0 && onUpdate) {
-        const demandasParaAtualizar = duplicatas.map(dup => ({
+      // 2. Atualizar demandas existentes (only selected duplicatas)
+      if (dupsSelecionadas.length > 0 && onUpdate) {
+        const demandasParaAtualizar = dupsSelecionadas.map(dup => ({
           id: dup.existente.id,
           status: 'analisar',
-          ato: 'Manifestação',
+          ato: dup.nova.tipoManifestacao === 'ciencia' ? 'Ciência' : 'Manifestação',
           prazo: convertDateToISO(dup.nova.ultimoDia),
           providencias: dup.nova.assuntoPrincipal
             ? `${dup.nova.classeProcessual || 'Execução Penal'} - ${dup.nova.assuntoPrincipal}`
@@ -229,8 +248,8 @@ export function SEEUImportModal({
 
       // Mensagem de sucesso
       const msgs = [];
-      if (intimacoesNovas.length > 0) msgs.push(`${intimacoesNovas.length} importada(s)`);
-      if (duplicatas.length > 0) msgs.push(`${duplicatas.length} atualizada(s)`);
+      if (novasSelecionadas.length > 0) msgs.push(`${novasSelecionadas.length} importada(s)`);
+      if (dupsSelecionadas.length > 0) msgs.push(`${dupsSelecionadas.length} atualizada(s)`);
       toast.success(msgs.join(', '));
 
       resetModal();
@@ -251,6 +270,8 @@ export function SEEUImportModal({
     setTipoManifestacao("manifestacao");
     setIntimacoesNovas([]);
     setDuplicatas([]);
+    setSelectedNovas(new Set());
+    setSelectedDups(new Set());
   };
 
   const handleVoltar = () => {
@@ -530,50 +551,119 @@ Executado: NEMIAS DOS SANTOS JESUS
             {/* Lista de intimações novas */}
             {intimacoesNovas.length > 0 && (
               <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500/10 to-green-500/10 flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
-                    <FileText className="w-4 h-4 text-emerald-600" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500/10 to-green-500/10 flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
+                      <FileText className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
+                      Novas Intimações ({intimacoesNovas.length})
+                    </h3>
                   </div>
-                  <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
-                    Novas Intimações ({intimacoesNovas.length})
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setSelectedNovas(new Set(intimacoesNovas.map((_, i) => i)))}
+                      className="text-[10px] text-emerald-600 hover:text-emerald-700 font-medium cursor-pointer"
+                    >
+                      Todas
+                    </button>
+                    <span className="text-zinc-300 text-[10px]">|</span>
+                    <button
+                      onClick={() => setSelectedNovas(new Set())}
+                      className="text-[10px] text-zinc-500 hover:text-zinc-700 font-medium cursor-pointer"
+                    >
+                      Nenhuma
+                    </button>
+                    <Badge variant="outline" className="text-[10px] ml-1">
+                      {selectedNovas.size}/{intimacoesNovas.length}
+                    </Badge>
+                  </div>
                 </div>
 
                 <ScrollArea className="h-[200px]">
                   <div className="space-y-2 pr-4">
-                    {intimacoesNovas.map((intimacao, index) => (
-                      <Card key={index} className="hover:bg-muted/50 transition-colors border-emerald-100 dark:border-emerald-900/30">
-                        <CardContent className="py-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <User className="w-4 h-4 text-emerald-600" />
-                                <span className="font-semibold text-sm">{intimacao.assistido}</span>
-                                {intimacao.seq && (
-                                  <Badge variant="outline" className="text-[10px]">
-                                    #{intimacao.seq}
-                                  </Badge>
+                    {intimacoesNovas.map((intimacao, index) => {
+                      const isSelected = selectedNovas.has(index);
+                      return (
+                        <Card
+                          key={index}
+                          className={cn(
+                            "transition-all cursor-pointer",
+                            isSelected
+                              ? "border-emerald-200 dark:border-emerald-900/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20"
+                              : "border-zinc-200 dark:border-zinc-800 opacity-50 hover:opacity-75"
+                          )}
+                          onClick={() => {
+                            const next = new Set(selectedNovas);
+                            if (isSelected) next.delete(index); else next.add(index);
+                            setSelectedNovas(next);
+                          }}
+                        >
+                          <CardContent className="py-3">
+                            <div className="flex items-start gap-3">
+                              {/* Checkbox */}
+                              <div className={cn(
+                                "mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors",
+                                isSelected
+                                  ? "bg-emerald-600 border-emerald-600"
+                                  : "border-zinc-300 dark:border-zinc-600"
+                              )}>
+                                {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <User className="w-4 h-4 text-emerald-600" />
+                                  <span className="font-semibold text-sm">{intimacao.assistido}</span>
+                                  {intimacao.seq && (
+                                    <Badge variant="outline" className="text-[10px]">
+                                      #{intimacao.seq}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <code className="bg-muted px-1.5 py-0.5 rounded font-mono">
+                                    {intimacao.numeroProcesso}
+                                  </code>
+                                  {getAssuntoBadge(intimacao.assuntoPrincipal)}
+                                </div>
+                                <div className="flex items-center gap-2 mt-1.5">
+                                  {/* Per-item tipo toggle */}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const updated = [...intimacoesNovas];
+                                      const newTipo = intimacao.tipoManifestacao === 'ciencia' ? 'manifestacao' : 'ciencia';
+                                      updated[index] = {
+                                        ...intimacao,
+                                        tipoManifestacao: newTipo as any,
+                                        tipoDocumento: newTipo === 'ciencia' ? 'Ciência' : 'Manifestação',
+                                      };
+                                      setIntimacoesNovas(updated);
+                                    }}
+                                    className={cn(
+                                      "text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors cursor-pointer",
+                                      intimacao.tipoManifestacao === 'ciencia'
+                                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 hover:bg-blue-200"
+                                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 hover:bg-amber-200"
+                                    )}
+                                  >
+                                    {intimacao.tipoManifestacao === 'ciencia' ? 'Ciência' : 'Manifestação'}
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                {intimacao.ultimoDia && (
+                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <Calendar className="w-3 h-3" />
+                                    <span>Prazo: {intimacao.ultimoDia}</span>
+                                  </div>
                                 )}
                               </div>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <code className="bg-muted px-1.5 py-0.5 rounded font-mono">
-                                  {intimacao.numeroProcesso}
-                                </code>
-                                {getAssuntoBadge(intimacao.assuntoPrincipal)}
-                              </div>
                             </div>
-                            <div className="text-right flex-shrink-0">
-                              {intimacao.ultimoDia && (
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  <Calendar className="w-3 h-3" />
-                                  <span>Prazo: {intimacao.ultimoDia}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 </ScrollArea>
               </div>
@@ -582,47 +672,91 @@ Executado: NEMIAS DOS SANTOS JESUS
             {/* Lista de duplicatas para atualizar */}
             {duplicatas.length > 0 && (
               <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/10 to-violet-500/10 flex items-center justify-center border border-purple-200 dark:border-purple-800">
-                    <RefreshCw className="w-4 h-4 text-purple-600" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/10 to-violet-500/10 flex items-center justify-center border border-purple-200 dark:border-purple-800">
+                      <RefreshCw className="w-4 h-4 text-purple-600" />
+                    </div>
+                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
+                      Para Atualizar ({duplicatas.length})
+                    </h3>
                   </div>
-                  <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
-                    Para Atualizar ({duplicatas.length})
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setSelectedDups(new Set(duplicatas.map((_, i) => i)))}
+                      className="text-[10px] text-purple-600 hover:text-purple-700 font-medium cursor-pointer"
+                    >
+                      Todas
+                    </button>
+                    <span className="text-zinc-300 text-[10px]">|</span>
+                    <button
+                      onClick={() => setSelectedDups(new Set())}
+                      className="text-[10px] text-zinc-500 hover:text-zinc-700 font-medium cursor-pointer"
+                    >
+                      Nenhuma
+                    </button>
+                    <Badge variant="outline" className="text-[10px] ml-1">
+                      {selectedDups.size}/{duplicatas.length}
+                    </Badge>
+                  </div>
                 </div>
 
                 <ScrollArea className="h-[150px]">
                   <div className="space-y-2 pr-4">
-                    {duplicatas.map((dup, index) => (
-                      <Card key={index} className="hover:bg-muted/50 transition-colors border-purple-100 dark:border-purple-900/30">
-                        <CardContent className="py-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <User className="w-4 h-4 text-purple-600" />
-                                <span className="font-semibold text-sm">{dup.nova.assistido}</span>
+                    {duplicatas.map((dup, index) => {
+                      const isSelected = selectedDups.has(index);
+                      return (
+                        <Card
+                          key={index}
+                          className={cn(
+                            "transition-all cursor-pointer",
+                            isSelected
+                              ? "border-purple-200 dark:border-purple-900/50 hover:bg-purple-50/50 dark:hover:bg-purple-950/20"
+                              : "border-zinc-200 dark:border-zinc-800 opacity-50 hover:opacity-75"
+                          )}
+                          onClick={() => {
+                            const next = new Set(selectedDups);
+                            if (isSelected) next.delete(index); else next.add(index);
+                            setSelectedDups(next);
+                          }}
+                        >
+                          <CardContent className="py-3">
+                            <div className="flex items-start gap-3">
+                              <div className={cn(
+                                "mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors",
+                                isSelected
+                                  ? "bg-purple-600 border-purple-600"
+                                  : "border-zinc-300 dark:border-zinc-600"
+                              )}>
+                                {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
                               </div>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <code className="bg-muted px-1.5 py-0.5 rounded font-mono">
-                                  {dup.nova.numeroProcesso}
-                                </code>
-                              </div>
-                              <p className="text-[10px] text-purple-600 dark:text-purple-400 mt-1">
-                                {dup.diferencas.join(" • ")}
-                              </p>
-                            </div>
-                            <div className="text-right flex-shrink-0">
-                              {dup.nova.ultimoDia && (
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  <Calendar className="w-3 h-3" />
-                                  <span>{dup.nova.ultimoDia}</span>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <User className="w-4 h-4 text-purple-600" />
+                                  <span className="font-semibold text-sm">{dup.nova.assistido}</span>
                                 </div>
-                              )}
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <code className="bg-muted px-1.5 py-0.5 rounded font-mono">
+                                    {dup.nova.numeroProcesso}
+                                  </code>
+                                </div>
+                                <p className="text-[10px] text-purple-600 dark:text-purple-400 mt-1">
+                                  {dup.diferencas.join(" • ")}
+                                </p>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                {dup.nova.ultimoDia && (
+                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <Calendar className="w-3 h-3" />
+                                    <span>{dup.nova.ultimoDia}</span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 </ScrollArea>
               </div>
@@ -635,7 +769,7 @@ Executado: NEMIAS DOS SANTOS JESUS
               </Button>
               <Button
                 onClick={handleImportar}
-                disabled={isImporting || (intimacoesNovas.length === 0 && duplicatas.length === 0)}
+                disabled={isImporting || (selectedNovas.size === 0 && selectedDups.size === 0)}
                 className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white"
               >
                 {isImporting ? (
@@ -649,11 +783,11 @@ Executado: NEMIAS DOS SANTOS JESUS
                 ) : (
                   <>
                     <Download className="w-4 h-4 mr-2" />
-                    {intimacoesNovas.length > 0 && duplicatas.length > 0
-                      ? `Importar ${intimacoesNovas.length} + Atualizar ${duplicatas.length}`
-                      : intimacoesNovas.length > 0
-                        ? `Importar ${intimacoesNovas.length} Demandas`
-                        : `Atualizar ${duplicatas.length} Demandas`
+                    {selectedNovas.size > 0 && selectedDups.size > 0
+                      ? `Importar ${selectedNovas.size} + Atualizar ${selectedDups.size}`
+                      : selectedNovas.size > 0
+                        ? `Importar ${selectedNovas.size} Demandas`
+                        : `Atualizar ${selectedDups.size} Demandas`
                     }
                   </>
                 )}
