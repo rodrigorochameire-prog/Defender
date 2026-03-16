@@ -11,6 +11,7 @@ import {
   processos,
 } from "@/lib/db/schema";
 import { eq, and, desc, sql, gte, lte, ilike, or, count, isNull, ne } from "drizzle-orm";
+import { sendText } from "@/lib/services/evolution-api";
 
 // ==========================================
 // ROUTER RADAR CRIMINAL
@@ -33,7 +34,7 @@ export const radarRouter = router({
         dataFim: z.string().optional(),
         soMatches: z.boolean().optional().default(false),
         limit: z.number().min(1).max(100).optional().default(20),
-        cursor: z.number().optional(), // id da última notícia para cursor pagination
+        cursor: z.number().optional(), // id of the last item
       })
     )
     .query(async ({ input }) => {
@@ -98,7 +99,7 @@ export const radarRouter = router({
           .from(radarNoticias)
           .innerJoin(radarMatches, eq(radarNoticias.id, radarMatches.noticiaId))
           .where(conditions.length > 0 ? and(...conditions) : undefined)
-          .orderBy(desc(radarNoticias.id))
+          .orderBy(sql`${radarNoticias.dataPublicacao} DESC NULLS LAST`, desc(radarNoticias.createdAt), desc(radarNoticias.id))
           .limit(input.limit + 1);
       } else {
         query = db
@@ -119,7 +120,7 @@ export const radarRouter = router({
           })
           .from(radarNoticias)
           .where(conditions.length > 0 ? and(...conditions) : undefined)
-          .orderBy(desc(radarNoticias.id))
+          .orderBy(sql`${radarNoticias.dataPublicacao} DESC NULLS LAST`, desc(radarNoticias.createdAt), desc(radarNoticias.id))
           .limit(input.limit + 1);
       }
 
@@ -161,6 +162,41 @@ export const radarRouter = router({
         .where(eq(radarMatches.noticiaId, input.id));
 
       return { ...noticia, matches };
+    }),
+
+  // ==========================================
+  // EDIÇÃO MANUAL DE NOTÍCIA
+  // ==========================================
+
+  updateNoticia: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        tipoCrime: z.string().optional(),
+        bairro: z.string().optional(),
+        logradouro: z.string().optional(),
+        delegacia: z.string().optional(),
+        resumoIA: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { id, ...data } = input;
+
+      // Remove undefined keys so we only update provided fields
+      const updateData: Record<string, unknown> = { updatedAt: new Date() };
+      if (data.tipoCrime !== undefined) updateData.tipoCrime = data.tipoCrime;
+      if (data.bairro !== undefined) updateData.bairro = data.bairro;
+      if (data.logradouro !== undefined) updateData.logradouro = data.logradouro;
+      if (data.delegacia !== undefined) updateData.delegacia = data.delegacia;
+      if (data.resumoIA !== undefined) updateData.resumoIA = data.resumoIA;
+
+      const [updated] = await db
+        .update(radarNoticias)
+        .set(updateData)
+        .where(eq(radarNoticias.id, id))
+        .returning();
+
+      return updated;
     }),
 
   // ==========================================
@@ -402,6 +438,13 @@ export const radarRouter = router({
         .where(eq(radarMatches.id, input.id))
         .returning();
 
+      // Send WhatsApp notification to the responsible defensor (fire-and-forget)
+      if (updated) {
+        notifyMatchViaWhatsApp(updated.id).catch((err) => {
+          console.error("[Radar] Falha ao enviar WhatsApp para match confirmado:", err);
+        });
+      }
+
       return updated;
     }),
 
@@ -505,7 +548,7 @@ export const radarRouter = router({
       return matches;
     }),
 
-  // Trigger pipeline completo no enrichment engine
+  // Trigger pipeline completo no enrichment engine (step-by-step)
   triggerPipeline: protectedProcedure.mutation(async () => {
     const engineUrl = process.env.ENRICHMENT_ENGINE_URL;
     const apiKey = process.env.ENRICHMENT_API_KEY;
@@ -514,32 +557,46 @@ export const radarRouter = router({
       return { success: false, message: "Enrichment Engine não configurado" };
     }
 
-    try {
-      const response = await fetch(`${engineUrl}/api/radar/pipeline`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": apiKey,
-        },
-      });
+    const headers = {
+      "Content-Type": "application/json",
+      "X-API-Key": apiKey,
+    };
 
-      if (!response.ok) {
-        return { success: false, message: `Engine retornou ${response.status}` };
-      }
+    const results: Record<string, unknown> = {};
 
-      const data = await response.json();
-
-      // Gerar notificações para novos matches após pipeline
+    // Helper: call a step with individual timeout
+    async function callStep(step: string, path: string, timeoutMs: number, body?: object) {
       try {
-        await notifyAdminsOfNewMatches();
-      } catch {
-        // Não falhar o pipeline por causa de notificação
+        const response = await fetch(`${engineUrl}${path}`, {
+          method: "POST",
+          headers,
+          body: body ? JSON.stringify(body) : undefined,
+          signal: AbortSignal.timeout(timeoutMs),
+        });
+        if (!response.ok) {
+          results[step] = { status: "error", code: response.status };
+          return;
+        }
+        results[step] = await response.json();
+      } catch (error) {
+        results[step] = { status: "error", detail: String(error) };
       }
-
-      return { success: true, ...data };
-    } catch (error) {
-      return { success: false, message: String(error) };
     }
+
+    // Run steps sequentially with individual timeouts
+    await callStep("scrape", "/api/radar/scrape", 20_000);
+    await callStep("extract", "/api/radar/extract", 25_000, { limit: 10 });
+    await callStep("geocode", "/api/radar/geocode", 5_000, { limit: 50 });
+    await callStep("match", "/api/radar/match", 5_000, { limit: 50 });
+
+    // Gerar notificações para novos matches após pipeline
+    try {
+      await notifyAdminsOfNewMatches();
+    } catch {
+      // Não falhar o pipeline por causa de notificação
+    }
+
+    return { success: true, ...results };
   }),
 
   // ==========================================
@@ -571,7 +628,9 @@ async function notifyAdminsOfNewMatches(): Promise<number> {
       assistidoId: radarMatches.assistidoId,
       noticiaTitulo: radarNoticias.titulo,
       noticiaTipoCrime: radarNoticias.tipoCrime,
+      noticiaBairro: radarNoticias.bairro,
       assistidoNome: assistidos.nome,
+      assistidoDefensorId: assistidos.defensorId,
     })
     .from(radarMatches)
     .innerJoin(radarNoticias, eq(radarMatches.noticiaId, radarNoticias.id))
@@ -588,7 +647,7 @@ async function notifyAdminsOfNewMatches(): Promise<number> {
 
   // Buscar admins e defensores para notificar
   const adminUsers = await db
-    .select({ id: users.id })
+    .select({ id: users.id, phone: users.phone, role: users.role })
     .from(users)
     .where(
       and(
@@ -648,5 +707,160 @@ async function notifyAdminsOfNewMatches(): Promise<number> {
     }
   }
 
+  // Send WhatsApp notifications grouped by defensor (fire-and-forget)
+  sendWhatsAppForNewMatches(recentMatches, adminUsers).catch((err) => {
+    console.error("[Radar] Falha ao enviar WhatsApp para novos matches:", err);
+  });
+
   return notified;
+}
+
+// ==========================================
+// WHATSAPP NOTIFICATION HELPERS
+// ==========================================
+
+/**
+ * Send WhatsApp notification for a single confirmed match.
+ * Looks up the defensor responsible for the assistido and sends a message.
+ */
+async function notifyMatchViaWhatsApp(matchId: number): Promise<void> {
+  // Fetch match details with assistido + noticia + defensor info
+  const [match] = await db
+    .select({
+      nomeEncontrado: radarMatches.nomeEncontrado,
+      scoreConfianca: radarMatches.scoreConfianca,
+      assistidoNome: assistidos.nome,
+      assistidoDefensorId: assistidos.defensorId,
+      noticiaTitulo: radarNoticias.titulo,
+      noticiaBairro: radarNoticias.bairro,
+    })
+    .from(radarMatches)
+    .innerJoin(radarNoticias, eq(radarMatches.noticiaId, radarNoticias.id))
+    .leftJoin(assistidos, eq(radarMatches.assistidoId, assistidos.id))
+    .where(eq(radarMatches.id, matchId));
+
+  if (!match || !match.assistidoDefensorId) return;
+
+  // Find defensor's phone
+  const [defensor] = await db
+    .select({ phone: users.phone })
+    .from(users)
+    .where(eq(users.id, match.assistidoDefensorId));
+
+  if (!defensor?.phone) return;
+
+  const whatsappMessage = formatRadarWhatsAppMessage({
+    assistidoNome: match.assistidoNome || match.nomeEncontrado,
+    titulo: match.noticiaTitulo,
+    score: match.scoreConfianca,
+    bairro: match.noticiaBairro,
+  });
+
+  try {
+    await sendText(defensor.phone, whatsappMessage);
+    console.log(`[Radar] WhatsApp enviado para defensor (match ${matchId})`);
+  } catch (err) {
+    console.error(`[Radar] Erro ao enviar WhatsApp para defensor (match ${matchId}):`, err);
+  }
+}
+
+/**
+ * Send WhatsApp notifications for new matches, grouped by defensor.
+ * Each defensor receives one summary message with all their matches.
+ * Admins without specific matches also receive a summary.
+ */
+async function sendWhatsAppForNewMatches(
+  matches: Array<{
+    nomeEncontrado: string;
+    scoreConfianca: number;
+    assistidoNome: string | null;
+    assistidoDefensorId: number | null;
+    noticiaTitulo: string;
+    noticiaBairro: string | null;
+  }>,
+  adminUsers: Array<{ id: number; phone: string | null; role: string | null }>
+): Promise<void> {
+  // Group matches by defensorId
+  const matchesByDefensor = new Map<number, typeof matches>();
+  for (const match of matches) {
+    if (match.assistidoDefensorId) {
+      const existing = matchesByDefensor.get(match.assistidoDefensorId) || [];
+      existing.push(match);
+      matchesByDefensor.set(match.assistidoDefensorId, existing);
+    }
+  }
+
+  // Build a set of defensor IDs that have matches
+  const defensorIdsWithMatches = new Set(matchesByDefensor.keys());
+
+  // Send personalized message to each defensor with matches
+  for (const [defensorId, defensorMatches] of matchesByDefensor) {
+    const defensor = adminUsers.find((u) => u.id === defensorId);
+    if (!defensor?.phone) continue;
+
+    let whatsappMessage: string;
+    if (defensorMatches.length === 1) {
+      const m = defensorMatches[0];
+      whatsappMessage = formatRadarWhatsAppMessage({
+        assistidoNome: m.assistidoNome || m.nomeEncontrado,
+        titulo: m.noticiaTitulo,
+        score: m.scoreConfianca,
+        bairro: m.noticiaBairro,
+      });
+    } else {
+      // Summary for multiple matches
+      const lines = defensorMatches.slice(0, 5).map(
+        (m) => `- ${m.assistidoNome || m.nomeEncontrado} (${m.scoreConfianca}%)`
+      );
+      const extra = defensorMatches.length > 5 ? `\n... e mais ${defensorMatches.length - 5}` : "";
+      whatsappMessage =
+        `\u{1F534} *Radar Criminal - ${defensorMatches.length} Matches Encontrados*\n\n` +
+        lines.join("\n") +
+        extra +
+        `\n\nAcesse: https://ombuds.vercel.app/admin/radar`;
+    }
+
+    try {
+      await sendText(defensor.phone, whatsappMessage);
+    } catch (err) {
+      console.error(`[Radar] Erro WhatsApp para defensor ${defensorId}:`, err);
+    }
+  }
+
+  // Send generic summary to admins who are NOT already notified as defensores
+  const adminSummary =
+    `\u{1F534} *Radar Criminal - ${matches.length} Novo(s) Match(es)*\n\n` +
+    `O Radar encontrou ${matches.length} possíveis correspondências com assistidos DPE.\n\n` +
+    `Acesse: https://ombuds.vercel.app/admin/radar`;
+
+  for (const admin of adminUsers) {
+    if (!admin.phone) continue;
+    if (defensorIdsWithMatches.has(admin.id)) continue; // Already got personalized message
+    if (admin.role !== "admin") continue; // Only send generic summary to admins
+
+    try {
+      await sendText(admin.phone, adminSummary);
+    } catch (err) {
+      console.error(`[Radar] Erro WhatsApp para admin ${admin.id}:`, err);
+    }
+  }
+}
+
+/**
+ * Format a single radar match WhatsApp message.
+ */
+function formatRadarWhatsAppMessage(data: {
+  assistidoNome: string;
+  titulo: string;
+  score: number;
+  bairro: string | null;
+}): string {
+  return (
+    `\u{1F534} *Radar Criminal - Match Encontrado*\n\n` +
+    `Assistido: ${data.assistidoNome}\n` +
+    `Not\u00edcia: ${data.titulo}\n` +
+    `Score: ${data.score}%\n` +
+    (data.bairro ? `Bairro: ${data.bairro}\n` : "") +
+    `\nAcesse: https://ombuds.vercel.app/admin/radar`
+  );
 }

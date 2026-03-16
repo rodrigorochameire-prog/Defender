@@ -32,6 +32,7 @@ from routers.semantic_search import router as semantic_search_router
 from routers.juri import router as juri_router
 from routers.radar import router as radar_router
 from routers.summarize_chat import router as summarize_chat_router
+from routers.extract_data import router as extract_data_router
 
 # Logging estruturado (sem PII)
 logging.basicConfig(
@@ -113,6 +114,7 @@ def create_app() -> FastAPI:
     app.include_router(juri_router, prefix="/api", tags=["Juri"])
     app.include_router(radar_router, prefix="/api", tags=["Radar Criminal"])
     app.include_router(summarize_chat_router, prefix="/enrich", tags=["Enrich"])
+    app.include_router(extract_data_router, prefix="/enrich", tags=["Enrich"])
 
     return app
 

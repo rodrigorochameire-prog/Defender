@@ -46,8 +46,11 @@ class RadarExtractionService:
         Extrai dados estruturados de uma notícia usando Gemini Flash.
         Retorna dict com campos para atualizar radar_noticias.
         """
-        from services.gemini_service import get_gemini_service
+        from services.gemini_service import get_gemini_service, GeminiService
         from prompts.radar_extraction import RADAR_NEWS_EXTRACTION_PROMPT
+
+        if not GeminiService.is_configured():
+            raise RuntimeError("GEMINI_API_KEY not configured — cannot extract")
 
         gemini = get_gemini_service()
 
@@ -129,10 +132,36 @@ class RadarExtractionService:
 
         except Exception as e:
             logger.error("Falha na extração Gemini: %s", str(e))
+            # If it's a config error, don't retry (would loop forever)
+            if "not configured" in str(e) or "API_KEY" in str(e):
+                raise
             return {"enrichment_status": "pending"}  # Retry later
 
+    async def _extract_and_save_one(self, noticia: dict[str, Any], client_db) -> bool:
+        """Extrai e salva uma notícia. Retorna True se processou com sucesso."""
+        try:
+            update_data = await self.extract_from_noticia(noticia)
+
+            # Atualizar no banco
+            client_db.table("radar_noticias").update(
+                update_data
+            ).eq("id", noticia["id"]).execute()
+
+            logger.info(
+                "Extraído | id=%d tipo=%s bairro=%s envolvidos=%s",
+                noticia["id"],
+                update_data.get("tipo_crime", "?"),
+                update_data.get("bairro", "?"),
+                "sim" if update_data.get("envolvidos") else "não",
+            )
+            return True
+        except Exception as e:
+            logger.error("Erro extraindo notícia id=%d: %s", noticia["id"], str(e))
+            return False
+
     async def extract_batch(self, limit: int = 20) -> int:
-        """Processa um batch de notícias pendentes."""
+        """Processa um batch de notícias pendentes com concorrência controlada."""
+        import asyncio
         from services.supabase_service import get_supabase_service
 
         supa = get_supabase_service()
@@ -153,29 +182,25 @@ class RadarExtractionService:
             logger.info("Nenhuma notícia pendente para extração")
             return 0
 
-        logger.info("Extraindo dados de %d notícias", len(noticias))
+        logger.info("Extraindo dados de %d notícias (concorrência=5)", len(noticias))
 
-        processed = 0
-        for noticia in noticias:
-            try:
-                update_data = await self.extract_from_noticia(noticia)
+        # Processar com concorrência limitada (5 simultâneas) para
+        # respeitar rate limits do Gemini e evitar timeout
+        semaphore = asyncio.Semaphore(5)
 
-                # Atualizar no banco
-                client_db.table("radar_noticias").update(
-                    update_data
-                ).eq("id", noticia["id"]).execute()
+        async def _with_semaphore(noticia):
+            async with semaphore:
+                return await self._extract_and_save_one(noticia, client_db)
 
-                processed += 1
-                logger.info(
-                    "Extraído | id=%d tipo=%s bairro=%s envolvidos=%s",
-                    noticia["id"],
-                    update_data.get("tipo_crime", "?"),
-                    update_data.get("bairro", "?"),
-                    "sim" if update_data.get("envolvidos") else "não",
-                )
-            except Exception as e:
-                logger.error("Erro extraindo notícia id=%d: %s", noticia["id"], str(e))
-                continue
+        results = await asyncio.gather(
+            *[_with_semaphore(n) for n in noticias],
+            return_exceptions=True,
+        )
+
+        processed = sum(1 for r in results if r is True)
+        failed = len(noticias) - processed
+        if failed > 0:
+            logger.warning("Extração: %d OK, %d falharam", processed, failed)
 
         return processed
 

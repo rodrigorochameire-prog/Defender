@@ -6,6 +6,7 @@ Usa o pacote `google-genai` (novo SDK unificado do Google).
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import time
@@ -22,24 +23,39 @@ class GeminiService:
     def __init__(self):
         self.settings = get_settings()
         self._client = None
+        self._async_client = None
         self._request_times: list[float] = []
 
     def _get_client(self):
-        """Lazy init do Gemini client."""
+        """Lazy init do Gemini client (sync — fallback)."""
         if self._client is None:
             try:
                 from google import genai
 
                 self._client = genai.Client(api_key=self.settings.gemini_api_key)
-                logger.info("Gemini client initialized: model=%s", self.settings.gemini_model)
+                logger.info("Gemini sync client initialized: model=%s", self.settings.gemini_model)
             except ImportError as e:
                 logger.error("google-genai not installed: %s", e)
                 raise RuntimeError("Google GenAI library not available") from e
 
         return self._client
 
-    def _check_rate_limit(self):
-        """Rate limiting simples — sliding window."""
+    def _get_async_client(self):
+        """Lazy init do Gemini async client."""
+        if self._async_client is None:
+            try:
+                from google import genai
+
+                self._async_client = genai.Client(api_key=self.settings.gemini_api_key)
+                logger.info("Gemini async client initialized: model=%s", self.settings.gemini_model)
+            except ImportError as e:
+                logger.error("google-genai not installed: %s", e)
+                raise RuntimeError("Google GenAI library not available") from e
+
+        return self._async_client
+
+    async def _check_rate_limit(self):
+        """Rate limiting simples — sliding window (async-safe)."""
         now = time.time()
         window = 60  # 1 minuto
         self._request_times = [t for t in self._request_times if now - t < window]
@@ -47,7 +63,7 @@ class GeminiService:
         if len(self._request_times) >= self.settings.gemini_rate_limit:
             wait_time = window - (now - self._request_times[0])
             logger.warning("Rate limit hit, waiting %.1fs", wait_time)
-            time.sleep(wait_time)
+            await asyncio.sleep(wait_time)
 
         self._request_times.append(now)
 
@@ -62,8 +78,8 @@ class GeminiService:
         Returns:
             dict com dados extraídos conforme prompt
         """
-        client = self._get_client()
-        self._check_rate_limit()
+        client = self._get_async_client()
+        await self._check_rate_limit()
 
         full_prompt = f"{prompt}\n\n---\n\nTEXTO PARA ANÁLISE:\n\n{context}"
 
@@ -83,7 +99,7 @@ class GeminiService:
                 from google.genai import types
 
                 start = time.time()
-                response = client.models.generate_content(
+                response = await client.aio.models.generate_content(
                     model=self.settings.gemini_model,
                     contents=full_prompt,
                     config=types.GenerateContentConfig(
@@ -122,11 +138,11 @@ class GeminiService:
                 )
                 last_error = e
 
-                # Backoff exponencial
+                # Backoff exponencial (async)
                 if attempt < self.settings.gemini_max_retries:
                     wait = 2 ** attempt
                     logger.info("Retrying in %ds...", wait)
-                    time.sleep(wait)
+                    await asyncio.sleep(wait)
 
         raise RuntimeError(
             f"Gemini failed after {self.settings.gemini_max_retries} attempts: {last_error}"

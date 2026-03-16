@@ -3,12 +3,17 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageLayout } from "@/components/shared/page-layout";
-import { Radio, Newspaper, Map, BarChart3, Link2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Radio, Newspaper, Map, BarChart3, Link2, RefreshCw, Clock } from "lucide-react";
 import { RadarFeed } from "@/components/radar/radar-feed";
 import { RadarFiltros, type FiltrosState } from "@/components/radar/radar-filtros";
 import { RadarMapa } from "@/components/radar/radar-mapa";
 import { RadarEstatisticas } from "@/components/radar/radar-estatisticas";
 import { RadarMatches } from "@/components/radar/radar-matches";
+import { trpc } from "@/lib/trpc/client";
+import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function RadarCriminalPage() {
   const [activeTab, setActiveTab] = useState("feed");
@@ -18,10 +23,72 @@ export default function RadarCriminalPage() {
     soMatches: false,
   });
 
+  // Última coleta (fonte mais recente)
+  const { data: fontes } = trpc.radar.fontesList.useQuery();
+  const ultimaColeta = fontes
+    ?.map((f) => f.ultimaColeta)
+    .filter(Boolean)
+    .sort((a, b) => new Date(b!).getTime() - new Date(a!).getTime())[0];
+
+  // Pipeline trigger
+  const utils = trpc.useUtils();
+  const triggerPipeline = trpc.radar.triggerPipeline.useMutation({
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success("Pipeline concluído", {
+          description: data.message || "Notícias atualizadas com sucesso",
+        });
+        utils.radar.list.invalidate();
+        utils.radar.stats.invalidate();
+        utils.radar.fontesList.invalidate();
+        utils.radar.mapData.invalidate();
+      } else {
+        toast.error("Falha no pipeline", {
+          description: data.message,
+        });
+      }
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar", {
+        description: error.message,
+      });
+    },
+  });
+
   return (
     <PageLayout
       actions={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* Última coleta */}
+          {ultimaColeta && (
+            <div className="hidden sm:flex items-center gap-1.5 text-xs text-zinc-400">
+              <Clock className="h-3 w-3" />
+              <span>
+                Atualizado{" "}
+                {formatDistanceToNow(new Date(ultimaColeta), {
+                  addSuffix: true,
+                  locale: ptBR,
+                })}
+              </span>
+            </div>
+          )}
+
+          {/* Botão atualizar */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 cursor-pointer"
+            onClick={() => triggerPipeline.mutate()}
+            disabled={triggerPipeline.isPending}
+          >
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${triggerPipeline.isPending ? "animate-spin" : ""}`}
+            />
+            <span className="hidden sm:inline">
+              {triggerPipeline.isPending ? "Atualizando..." : "Atualizar"}
+            </span>
+          </Button>
+
           <div className="flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
             <Radio className="h-4 w-4 text-emerald-500 animate-pulse" />
             <span>Radar Criminal</span>

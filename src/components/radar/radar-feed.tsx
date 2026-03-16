@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RadarNoticiaCard } from "./radar-noticia-card";
+import { RadarNoticiaSheet } from "./radar-noticia-sheet";
 import { Radio, Newspaper } from "lucide-react";
 
 interface FiltrosState {
@@ -21,6 +22,9 @@ interface RadarFeedProps {
 }
 
 export function RadarFeed({ filtros }: RadarFeedProps) {
+  const [selectedNoticiaId, setSelectedNoticiaId] = useState<number | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
   const {
     data,
     isLoading,
@@ -96,7 +100,14 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
       </div>
 
       {allNoticias.map((noticia) => (
-        <RadarNoticiaCard key={noticia.id} noticia={noticia as any} />
+        <RadarNoticiaCard
+          key={noticia.id}
+          noticia={noticia as any}
+          onClick={() => {
+            setSelectedNoticiaId(noticia.id);
+            setSheetOpen(true);
+          }}
+        />
       ))}
 
       {/* Sentinel para infinite scroll */}
@@ -108,6 +119,12 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
           <Skeleton className="h-28 w-full rounded-xl" />
         </div>
       )}
+
+      <RadarNoticiaSheet
+        noticiaId={selectedNoticiaId}
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+      />
     </div>
   );
 }

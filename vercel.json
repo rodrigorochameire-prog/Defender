@@ -8,7 +8,12 @@
       "maxDuration": 60
     }
   },
-  "crons": [],
+  "crons": [
+    {
+      "path": "/api/cron/radar",
+      "schedule": "0 9,21 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",

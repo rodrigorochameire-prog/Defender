@@ -768,6 +768,43 @@ class SummarizeChatOutput(BaseModel):
     structured: SummarizeChatStructured = Field(default_factory=SummarizeChatStructured)
 
 
+# === Extract Data (WhatsApp → Cadastro) ===
+
+class ExtractDataContext(BaseModel):
+    """Contexto para extração de dados de conversa WhatsApp."""
+    assistido_name: str = Field(..., description="Nome do assistido")
+    processo_number: Optional[str] = Field(None, description="Número do processo (formato CNJ)")
+
+
+class ExtractDataInput(BaseModel):
+    """Input para /enrich/extract-data — extração de dados cadastrais de conversa WhatsApp."""
+    messages: str = Field(..., min_length=10, description="Texto pré-formatado das mensagens")
+    context: ExtractDataContext
+
+
+class ExtractedDate(BaseModel):
+    """Uma data relevante extraída da conversa."""
+    data: str = Field("", description="Data no formato DD/MM/YYYY ou descrição temporal")
+    descricao: str = Field("", description="O que aconteceu nessa data")
+
+
+class ExtractedData(BaseModel):
+    """Dados estruturados extraídos da conversa WhatsApp."""
+    endereco: Optional[str] = Field(None, description="Endereço completo mencionado")
+    telefones: list[str] = Field(default_factory=list, description="Telefones mencionados")
+    relato_fatos: Optional[str] = Field(None, description="Narrativa dos fatos em terceira pessoa")
+    nomes_testemunhas: list[str] = Field(default_factory=list, description="Nomes de testemunhas")
+    datas_relevantes: list[ExtractedDate] = Field(default_factory=list, description="Datas com descrição")
+    locais: list[str] = Field(default_factory=list, description="Locais mencionados")
+    documentos_mencionados: list[str] = Field(default_factory=list, description="Documentos mencionados")
+
+
+class ExtractDataOutput(BaseModel):
+    """Output de /enrich/extract-data."""
+    extracted: ExtractedData = Field(default_factory=ExtractedData)
+    confidence: float = Field(0.0, ge=0, le=1, description="Score de confiança da extração")
+
+
 # === Health ===
 
 class HealthResponse(BaseModel):

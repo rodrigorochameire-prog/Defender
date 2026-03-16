@@ -31,6 +31,7 @@ interface NoticiaCardProps {
     enrichmentStatus: string;
     matchCount?: number;
   };
+  onClick?: () => void;
 }
 
 /** Normaliza envolvidos que pode vir como string JSON ou array */
@@ -82,14 +83,17 @@ const papelLabels: Record<string, string> = {
   outro: "Outro",
 };
 
-export function RadarNoticiaCard({ noticia }: NoticiaCardProps) {
+export function RadarNoticiaCard({ noticia, onClick }: NoticiaCardProps) {
   const dataDisplay = noticia.dataFato || noticia.dataPublicacao;
   const hasMatch = (noticia.matchCount ?? 0) > 0;
   const envolvidos = parseEnvolvidos(noticia.envolvidos);
   const envolvidosComNome = envolvidos.filter((e) => isNomeProprio(e.nome));
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card
+      className="hover:shadow-md transition-shadow cursor-pointer"
+      onClick={onClick}
+    >
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           {/* Thumbnail */}
@@ -189,6 +193,7 @@ export function RadarNoticiaCard({ noticia }: NoticiaCardProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
               >
                 <ExternalLink className="h-3 w-3" />
                 Fonte

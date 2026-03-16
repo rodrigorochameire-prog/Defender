@@ -183,6 +183,9 @@ async def radar_pipeline() -> RadarPipelineOutput:
     """
     Pipeline completo: Scrape → Extração → Geocoding → Matching.
     Ideal para cron job diário.
+
+    Extração processa em batches de 10 para caber no timeout de 55s do Vercel cron.
+    Usa concorrência (5 simultâneas) para maximizar throughput.
     """
     logger.info("Iniciando pipeline completo do Radar Criminal")
 
@@ -206,12 +209,12 @@ async def radar_pipeline() -> RadarPipelineOutput:
         result.etapa_scraping = {"status": "erro", "error": str(e)}
         logger.error("Pipeline scraping falhou: %s", str(e))
 
-    # 2. Extração via Gemini Flash
+    # 2. Extração via Gemini Flash (batch de 10 para caber no timeout)
     try:
         from services.radar_extraction_service import get_radar_extraction_service
 
         extractor = get_radar_extraction_service()
-        processed = await extractor.extract_batch(limit=50)
+        processed = await extractor.extract_batch(limit=10)
 
         result.etapa_extracao = {
             "processadas": processed,
@@ -224,7 +227,10 @@ async def radar_pipeline() -> RadarPipelineOutput:
 
     # 3. Geocoding
     try:
-        geocoded = await extractor.geocode_batch(limit=50)
+        from services.radar_extraction_service import get_radar_extraction_service
+
+        geo_extractor = get_radar_extraction_service()
+        geocoded = await geo_extractor.geocode_batch(limit=50)
 
         result.etapa_geocoding = {
             "geocodificadas": geocoded,
