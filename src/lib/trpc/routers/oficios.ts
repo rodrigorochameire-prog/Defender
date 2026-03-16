@@ -1,7 +1,7 @@
 /**
  * OMBUDS - Router de Ofícios
  *
- * CRUD de ofícios + integração IA (Gemini + Claude) + análise Drive
+ * CRUD de ofícios + integração IA (Claude Sonnet) + análise Drive
  */
 
 import { z } from "zod";
@@ -634,81 +634,107 @@ export const oficiosRouter = router({
       }
 
       // Buscar dados do assistido
-      const dadosAssistido: Record<string, string> = {};
+      const dadosAssistido: { nome?: string; cpf?: string | null; telefone?: string | null; nomeMae?: string | null; unidadePrisional?: string | null } = {};
       if (oficio.assistidoId) {
         const [assistido] = await db
-          .select()
+          .select({
+            nome: assistidos.nome,
+            cpf: assistidos.cpf,
+            telefone: assistidos.telefone,
+            nomeMae: assistidos.nomeMae,
+            unidadePrisional: assistidos.unidadePrisional,
+          })
           .from(assistidos)
           .where(eq(assistidos.id, oficio.assistidoId))
           .limit(1);
         if (assistido) {
-          dadosAssistido["nome"] = assistido.nome || "";
-          dadosAssistido["cpf"] = assistido.cpf || "";
-          dadosAssistido["telefone"] = assistido.telefone || "";
-          dadosAssistido["nomeMae"] = assistido.nomeMae || "";
-          dadosAssistido["unidadePrisional"] = assistido.unidadePrisional || "";
+          Object.assign(dadosAssistido, {
+            nome: assistido.nome || "",
+            cpf: assistido.cpf,
+            telefone: assistido.telefone,
+            nomeMae: assistido.nomeMae,
+            unidadePrisional: assistido.unidadePrisional,
+          });
         }
       }
 
       // Buscar dados do processo
-      const dadosProcesso: Record<string, string> = {};
+      let dadosProcessoTyped: { numero: string; vara?: string | null; comarca?: string | null; classeProcessual?: string | null; assunto?: string | null } | undefined;
       if (oficio.processoId) {
         const [processo] = await db
-          .select()
+          .select({
+            numero: processos.numeroAutos,
+            vara: processos.vara,
+            comarca: processos.comarca,
+            classeProcessual: processos.classeProcessual,
+            assunto: processos.assunto,
+          })
           .from(processos)
           .where(eq(processos.id, oficio.processoId))
           .limit(1);
-        if (processo) {
-          dadosProcesso["numero"] = processo.numeroAutos || "";
-          dadosProcesso["vara"] = processo.vara || "";
-          dadosProcesso["comarca"] = processo.comarca || "";
-          dadosProcesso["classe"] = processo.classeProcessual || "";
-        }
+        if (processo) dadosProcessoTyped = processo;
       }
 
-      // Chamar Python backend
-      const result = await pythonBackend.gerarMinuta(
-        input.tipoOficio,
-        input.templateBase || oficio.conteudoFinal || "",
-        dadosAssistido,
-        dadosProcesso,
-        input.contextoAdicional,
-        input.instrucoes
-      );
+      // Montar ideia combinando instruções + template base
+      const ideaLines: string[] = [];
+      if (input.instrucoes) ideaLines.push(input.instrucoes);
+      if (input.templateBase) ideaLines.push(`\nUse como base o seguinte conteúdo:\n${input.templateBase.slice(0, 5000)}`);
+      const ideia = ideaLines.join("\n") || "Gere um ofício completo e formal.";
 
-      if (!result.success) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: result.error || "Erro ao gerar conteúdo com IA",
+      // Contexto adicional como documento
+      const contextoDocumentos: Array<{ titulo: string; conteudo: string; fonte: string }> = [];
+      if (input.contextoAdicional?.trim()) {
+        contextoDocumentos.push({
+          titulo: "Contexto adicional",
+          conteudo: input.contextoAdicional.slice(0, 20000),
+          fonte: "Informação do defensor",
         });
       }
 
+      // Chamar Claude Sonnet diretamente
+      const { generateOficio } = await import("@/lib/services/anthropic");
+      const tipoLabel = TIPOS_OFICIO.find((t) => t.value === input.tipoOficio)?.label || input.tipoOficio;
+      const result = await generateOficio({
+        tipoOficio: input.tipoOficio,
+        tipoLabel,
+        ideia,
+        contextoDocumentos,
+        dadosAssistido: dadosAssistido.nome ? {
+          nome: dadosAssistido.nome,
+          cpf: dadosAssistido.cpf,
+          telefone: dadosAssistido.telefone,
+          nomeMae: dadosAssistido.nomeMae,
+          unidadePrisional: dadosAssistido.unidadePrisional,
+        } : undefined,
+        dadosProcesso: dadosProcessoTyped,
+        nomeDefensor: "Defensor(a) Público(a)",
+      });
+
       // Atualizar ofício com conteúdo gerado
       const currentMeta = (oficio.metadata as Record<string, unknown>) || {};
-      const [updated] = await db
+      await db
         .update(documentosGerados)
         .set({
-          conteudoFinal: result.conteudo,
+          conteudoFinal: result.conteudoGerado,
           geradoPorIA: true,
           metadata: {
             ...currentMeta,
-            iaModelo: result.modelo,
+            iaModelo: result.modeloUsado,
             versao: ((currentMeta.versao as number) || 1) + 1,
           },
           updatedAt: new Date(),
         })
-        .where(eq(documentosGerados.id, input.oficioId))
-        .returning();
+        .where(eq(documentosGerados.id, input.oficioId));
 
       return {
-        conteudo: result.conteudo,
-        modelo: result.modelo,
-        tokensEntrada: result.tokens_entrada,
-        tokensSaida: result.tokens_saida,
+        conteudo: result.conteudoGerado,
+        modelo: result.modeloUsado,
+        tokensEntrada: result.tokensEntrada,
+        tokensSaida: result.tokensSaida,
       };
     }),
 
-  /** Revisa ofício com Claude Sonnet 4.6 via Python backend */
+  /** Revisa ofício com Claude Sonnet 4.6 (direto via Anthropic SDK) */
   revisarComIA: protectedProcedure
     .input(
       z.object({
@@ -741,52 +767,45 @@ export const oficiosRouter = router({
 
       const meta = (oficio.metadata as Record<string, unknown>) || {};
 
-      // Chamar Python backend
-      const result = await pythonBackend.revisarOficio(
+      // Chamar Claude Sonnet diretamente
+      const { revisarOficio: revisarOficioFn } = await import("@/lib/services/anthropic");
+      const result = await revisarOficioFn(
         oficio.conteudoFinal,
         (meta.tipoOficio as string) || "comunicacao",
         (meta.destinatario as string) || "",
-        input.contextoAdicional
+        input.contextoAdicional || undefined
       );
 
-      if (!result.success) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: result.error || "Erro ao revisar com IA",
-        });
-      }
-
       // Salvar resultado da revisão na metadata
-      const [updated] = await db
+      await db
         .update(documentosGerados)
         .set({
           metadata: {
             ...meta,
             iaRevisao: {
-              modelo: result.modelo,
+              modelo: result.modeloUsado,
               score: result.score,
-              sugestoes: result.sugestoes.map((s) => s.descricao),
-              tomAdequado: result.tom_adequado,
-              formalidadeOk: result.formalidade_ok,
-              dadosCorretos: result.dados_corretos,
+              sugestoes: result.sugestoes.map((s) => s.sugestao),
+              tomAdequado: result.tomAdequado,
+              formalidadeOk: result.formalidadeOk,
+              dadosCorretos: result.dadosCorretos,
               revisadoEm: new Date().toISOString(),
-            },
+            } as any,
           },
           updatedAt: new Date(),
         })
-        .where(eq(documentosGerados.id, input.oficioId))
-        .returning();
+        .where(eq(documentosGerados.id, input.oficioId));
 
       return {
         score: result.score,
         sugestoes: result.sugestoes,
-        tomAdequado: result.tom_adequado,
-        formalidadeOk: result.formalidade_ok,
-        dadosCorretos: result.dados_corretos,
-        conteudoRevisado: result.conteudo_revisado,
-        modelo: result.modelo,
-        tokensEntrada: result.tokens_entrada,
-        tokensSaida: result.tokens_saida,
+        tomAdequado: result.tomAdequado,
+        formalidadeOk: result.formalidadeOk,
+        dadosCorretos: result.dadosCorretos,
+        conteudoRevisado: result.conteudoRevisado ?? null,
+        modelo: result.modeloUsado,
+        tokensEntrada: result.tokensEntrada,
+        tokensSaida: result.tokensSaida,
       };
     }),
 
@@ -821,17 +840,9 @@ export const oficiosRouter = router({
         });
       }
 
-      const result = await pythonBackend.melhorarTexto(
-        oficio.conteudoFinal,
-        input.instrucao
-      );
-
-      if (!result.success) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: result.error || "Erro ao melhorar texto com IA",
-        });
-      }
+      // Chamar Claude Sonnet diretamente
+      const { melhorarTexto } = await import("@/lib/services/anthropic");
+      const result = await melhorarTexto(oficio.conteudoFinal, input.instrucao);
 
       // Atualizar conteúdo
       const currentMeta = (oficio.metadata as Record<string, unknown>) || {};
@@ -842,7 +853,7 @@ export const oficiosRouter = router({
           geradoPorIA: true,
           metadata: {
             ...currentMeta,
-            iaModelo: result.modelo,
+            iaModelo: result.modeloUsado,
             versao: ((currentMeta.versao as number) || 1) + 1,
           },
           updatedAt: new Date(),
@@ -851,7 +862,7 @@ export const oficiosRouter = router({
 
       return {
         conteudo: result.conteudo,
-        modelo: result.modelo,
+        modelo: result.modeloUsado,
       };
     }),
 
