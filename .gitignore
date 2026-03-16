@@ -58,3 +58,12 @@ CREDENCIAIS.md
 public/sw.js
 public/sw.js.map
 public/swe-worker-*.js
+
+# Claude worktrees
+.claude/worktrees/
+
+# Supabase temp
+supabase/.temp/
+
+# Schema backup
+src/lib/db/schema.old.ts
