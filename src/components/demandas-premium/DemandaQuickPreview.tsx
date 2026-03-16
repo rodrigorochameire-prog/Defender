@@ -39,7 +39,6 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from "@/config/demanda-status";
-import { createPortal } from "react-dom";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
@@ -310,10 +309,9 @@ function StageSubstatusPopover({
   // Normalize current status for comparison
   const normalizedCurrent = currentStatus.toLowerCase().replace(/\s+/g, "_");
 
-  return createPortal(
+  return (
     <div
       ref={ref}
-      data-stage-popover
       className="fixed z-[9999] rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-700/80 shadow-xl shadow-black/10 dark:shadow-black/40 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
       style={{ top, left, width: popoverWidth }}
     >
@@ -369,8 +367,7 @@ function StageSubstatusPopover({
           );
         })}
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }
 
@@ -569,27 +566,25 @@ export function DemandaQuickPreview({
         className="w-[calc(100vw-3rem)] sm:w-[420px] md:w-[460px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl"
         style={{ borderLeft: `3px solid ${atribuicaoColor}` }}
         onPointerDownOutside={(e) => {
-          const target = e.target as HTMLElement;
+          const target = (e as any).detail?.originalEvent?.target as HTMLElement ?? e.target as HTMLElement;
           if (
-            target.closest('[data-radix-popper-content-wrapper]') ||
-            target.closest('[data-radix-select-content]') ||
-            target.closest('[data-stage-popover]') ||
-            target.closest('[role="listbox"]') ||
-            target.closest('[role="option"]') ||
-            target.closest('[cmdk-root]')
+            target?.closest?.('[data-radix-popper-content-wrapper]') ||
+            target?.closest?.('[data-radix-select-content]') ||
+            target?.closest?.('[role="listbox"]') ||
+            target?.closest?.('[role="option"]') ||
+            target?.closest?.('[cmdk-root]')
           ) {
             e.preventDefault();
           }
         }}
         onInteractOutside={(e) => {
-          const target = e.target as HTMLElement;
+          const target = (e as any).detail?.originalEvent?.target as HTMLElement ?? e.target as HTMLElement;
           if (
-            target.closest?.('[data-radix-popper-content-wrapper]') ||
-            target.closest?.('[data-radix-select-content]') ||
-            target.closest?.('[data-stage-popover]') ||
-            target.closest?.('[role="listbox"]') ||
-            target.closest?.('[role="option"]') ||
-            target.closest?.('[cmdk-root]')
+            target?.closest?.('[data-radix-popper-content-wrapper]') ||
+            target?.closest?.('[data-radix-select-content]') ||
+            target?.closest?.('[role="listbox"]') ||
+            target?.closest?.('[role="option"]') ||
+            target?.closest?.('[cmdk-root]')
           ) {
             e.preventDefault();
           }
