@@ -5,8 +5,10 @@ import { trpc } from "@/lib/trpc/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RadarNoticiaCard } from "./radar-noticia-card";
 import { RadarNoticiaSheet } from "./radar-noticia-sheet";
-import { Radio, Newspaper } from "lucide-react";
+import { Radio, Newspaper, Download } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { exportNoticiasToCsv } from "@/lib/radar-export";
 
 interface FiltrosState {
   tipoCrime?: string;
@@ -133,9 +135,23 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 text-xs text-zinc-500">
-        <Radio className="h-3.5 w-3.5 text-emerald-500" />
-        {allNoticias.length} notícia{allNoticias.length > 1 ? "s" : ""}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-xs text-zinc-500">
+          <Radio className="h-3.5 w-3.5 text-emerald-500" />
+          {allNoticias.length} notícia{allNoticias.length > 1 ? "s" : ""}
+        </div>
+
+        {allNoticias.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs text-zinc-500 hover:text-zinc-700 cursor-pointer"
+            onClick={() => exportNoticiasToCsv(allNoticias)}
+          >
+            <Download className="h-3.5 w-3.5 mr-1.5" />
+            Exportar CSV
+          </Button>
+        )}
       </div>
 
       {allNoticias.map((noticia) => (

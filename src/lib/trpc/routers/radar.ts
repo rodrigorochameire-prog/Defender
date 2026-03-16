@@ -686,6 +686,7 @@ export const radarRouter = router({
           noticiaDataFato: radarNoticias.dataFato,
           noticiaResumo: radarNoticias.resumoIA,
           noticiaUrl: radarNoticias.url,
+          noticiaImagemUrl: radarNoticias.imagemUrl,
         })
         .from(radarMatches)
         .innerJoin(radarNoticias, eq(radarMatches.noticiaId, radarNoticias.id))
@@ -984,6 +985,36 @@ export const radarRouter = router({
         .limit(input.limit);
 
       return related;
+    }),
+
+  reprocessNoticia: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      // Reset status para pending
+      await db
+        .update(radarNoticias)
+        .set({
+          enrichmentStatus: "pending",
+          updatedAt: new Date(),
+        })
+        .where(eq(radarNoticias.id, input.id));
+
+      // Chamar API de enriquecimento em background
+      // (fire-and-forget, sem aguardar)
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL ||
+          (process.env.VERCEL_URL
+            ? `https://${process.env.VERCEL_URL}`
+            : "http://localhost:3000");
+
+        fetch(`${baseUrl}/api/radar/enrich`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ limit: 1, forceId: input.id }),
+        }).catch(() => {}); // fire-and-forget
+      } catch {}
+
+      return { success: true };
     }),
 
   reincidentes: protectedProcedure

@@ -34,6 +34,7 @@ import {
   XCircle,
   Crosshair,
   Pencil,
+  RefreshCw,
   Save,
   X,
   Newspaper,
@@ -191,6 +192,16 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
   function cancelEdit() {
     setIsEditing(false);
   }
+
+  const reprocessMutation = trpc.radar.reprocessNoticia.useMutation({
+    onSuccess: () => {
+      toast.success("Reprocessamento iniciado", {
+        description: "A notícia será re-analisada em breve",
+      });
+      utils.radar.getById.invalidate({ id: noticiaId! });
+    },
+    onError: (err) => toast.error("Erro: " + err.message),
+  });
 
   const updateMutation = trpc.radar.updateNoticia.useMutation({
     onSuccess: () => {
@@ -653,6 +664,20 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                       <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                       Abrir fonte original
                     </a>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 cursor-pointer text-zinc-500 hover:text-zinc-700"
+                    onClick={() => reprocessMutation.mutate({ id: noticiaId! })}
+                    disabled={reprocessMutation.isPending || noticia.enrichmentStatus === "pending"}
+                    title="Re-analisar esta notícia com IA"
+                  >
+                    <RefreshCw className={cn(
+                      "h-3.5 w-3.5",
+                      (reprocessMutation.isPending || noticia.enrichmentStatus === "pending") && "animate-spin"
+                    )} />
+                    {noticia.enrichmentStatus === "pending" ? "Analisando..." : "Re-analisar"}
                   </Button>
                 </div>
               </>

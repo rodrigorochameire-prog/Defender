@@ -82,7 +82,10 @@ export function RadarAssistidoCard({ assistidoId }: RadarAssistidoCardProps) {
               {matches.length} {matches.length === 1 ? "menção" : "menções"}
             </Badge>
           </CardTitle>
-          <Link href="/admin/radar?tab=matches" className="text-xs text-emerald-600 hover:underline">
+          <Link
+            href={`/admin/radar?tab=matches&assistidoId=${assistidoId}`}
+            className="text-xs text-emerald-600 hover:underline"
+          >
             Ver tudo →
           </Link>
         </div>
@@ -109,113 +112,138 @@ export function RadarAssistidoCard({ assistidoId }: RadarAssistidoCardProps) {
         {matches
           .filter((m) => m.status !== "descartado")
           .map((match) => (
-          <div
-            key={match.id}
-            className="border border-zinc-100 dark:border-zinc-800 rounded-lg p-3 space-y-2"
-          >
-            {/* Header: score + badges */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge
-                  className={cn(
-                    "text-xs font-mono",
-                    match.scoreConfianca >= 80
-                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                      : match.scoreConfianca >= 50
-                      ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                      : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-                  )}
-                >
-                  {match.scoreConfianca}%
-                </Badge>
-                <Badge
-                  className={cn(
-                    "text-xs",
-                    match.status === "confirmado_manual" || match.status === "auto_confirmado"
-                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                      : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                  )}
-                >
-                  {match.status === "confirmado_manual"
-                    ? "Confirmado"
-                    : match.status === "auto_confirmado"
-                    ? "Auto-confirmado"
-                    : "Possível"}
-                </Badge>
-                {match.noticiaTipoCrime && (
-                  <Badge className={cn("text-xs", getCrimeBadgeColor(match.noticiaTipoCrime))}>
-                    {getCrimeLabel(match.noticiaTipoCrime)}
-                  </Badge>
+            <div key={match.id} className="border border-zinc-100 dark:border-zinc-800 rounded-lg overflow-hidden">
+              {/* Thumbnail + info */}
+              <div className="flex gap-0">
+                {/* Thumbnail se disponível */}
+                {match.noticiaImagemUrl && (
+                  <div className="w-20 h-20 shrink-0 overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                    <img
+                      src={match.noticiaImagemUrl}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
                 )}
-              </div>
-            </div>
+                <div className="flex-1 p-3 space-y-1.5">
+                  {/* Badges */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge
+                      className={cn(
+                        "text-xs font-mono",
+                        match.scoreConfianca >= 80
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                          : match.scoreConfianca >= 50
+                          ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                          : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                      )}
+                    >
+                      {match.scoreConfianca}%
+                    </Badge>
+                    {match.noticiaTipoCrime && (
+                      <Badge className={cn("text-xs", getCrimeBadgeColor(match.noticiaTipoCrime))}>
+                        {getCrimeLabel(match.noticiaTipoCrime)}
+                      </Badge>
+                    )}
+                    <Badge
+                      className={cn(
+                        "text-xs",
+                        match.status === "confirmado_manual" || match.status === "auto_confirmado"
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                          : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                      )}
+                    >
+                      {match.status === "confirmado_manual"
+                        ? "Confirmado"
+                        : match.status === "auto_confirmado"
+                        ? "Auto"
+                        : "Possível"}
+                    </Badge>
+                  </div>
 
-            {/* Notícia */}
-            <div>
-              <p className="text-sm font-medium leading-tight">{match.noticiaTitulo}</p>
-              {match.noticiaResumo && (
-                <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{match.noticiaResumo}</p>
+                  {/* Título */}
+                  <p className="text-sm font-medium leading-tight line-clamp-2">{match.noticiaTitulo}</p>
+
+                  {/* Resumo */}
+                  {match.noticiaResumo && (
+                    <p className="text-xs text-zinc-500 line-clamp-2 mt-0.5">{match.noticiaResumo}</p>
+                  )}
+
+                  {/* Meta */}
+                  <div className="flex items-center gap-2 text-[10px] text-zinc-400 flex-wrap">
+                    {match.noticiaFonte && <span>{match.noticiaFonte}</span>}
+                    {match.noticiaBairro && (
+                      <>
+                        <span>•</span>
+                        <span>{match.noticiaBairro}</span>
+                      </>
+                    )}
+                    {match.noticiaDataFato && (
+                      <>
+                        <span>•</span>
+                        <span>{format(new Date(match.noticiaDataFato), "dd/MM/yyyy", { locale: ptBR })}</span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Nome na notícia */}
+                  <div className="text-[10px] text-zinc-400">
+                    Mencionado como:{" "}
+                    <span className="font-medium text-zinc-600 dark:text-zinc-300">{match.nomeEncontrado}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions — só se possível */}
+              {match.status === "possivel" && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-100 dark:border-zinc-800">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50 cursor-pointer"
+                    onClick={() => confirmMutation.mutate({ id: match.id })}
+                    disabled={confirmMutation.isPending}
+                  >
+                    <CheckCircle2 className="h-3 w-3 mr-1" /> Confirmar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-xs text-zinc-400 hover:text-red-500 cursor-pointer"
+                    onClick={() => dismissMutation.mutate({ id: match.id })}
+                    disabled={dismissMutation.isPending}
+                  >
+                    <XCircle className="h-3 w-3 mr-1" /> Descartar
+                  </Button>
+                  {match.noticiaUrl && (
+                    <a
+                      href={match.noticiaUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-auto text-xs text-zinc-400 hover:text-zinc-600 flex items-center gap-1"
+                    >
+                      <ExternalLink className="h-3 w-3" /> Fonte
+                    </a>
+                  )}
+                </div>
               )}
-              <div className="flex items-center gap-2 mt-1.5 text-[10px] text-zinc-400">
-                {match.noticiaFonte && <span>{match.noticiaFonte}</span>}
-                {match.noticiaBairro && (
-                  <>
-                    <span>•</span>
-                    <span>{match.noticiaBairro}</span>
-                  </>
-                )}
-                {match.noticiaDataFato && (
-                  <>
-                    <span>•</span>
-                    <span>{format(new Date(match.noticiaDataFato), "dd/MM/yyyy", { locale: ptBR })}</span>
-                  </>
-                )}
-              </div>
-            </div>
 
-            {/* Nome encontrado na notícia */}
-            <div className="text-xs text-zinc-500">
-              Nome na notícia: <span className="font-medium text-zinc-700 dark:text-zinc-300">{match.nomeEncontrado}</span>
-            </div>
-
-            {/* Actions */}
-            {match.status === "possivel" && (
-              <div className="flex items-center gap-2 pt-1">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50 cursor-pointer"
-                  onClick={() => confirmMutation.mutate({ id: match.id })}
-                  disabled={confirmMutation.isPending}
-                >
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                  Confirmar
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 text-xs text-zinc-400 hover:text-red-500 cursor-pointer"
-                  onClick={() => dismissMutation.mutate({ id: match.id })}
-                  disabled={dismissMutation.isPending}
-                >
-                  <XCircle className="h-3 w-3 mr-1" />
-                  Descartar
-                </Button>
-                {match.noticiaUrl && (
+              {/* Link para notícia confirmada */}
+              {(match.status === "confirmado_manual" || match.status === "auto_confirmado") && match.noticiaUrl && (
+                <div className="flex items-center px-3 py-2 bg-emerald-50/50 dark:bg-emerald-900/10 border-t border-zinc-100 dark:border-zinc-800">
                   <a
                     href={match.noticiaUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="ml-auto text-xs text-zinc-400 hover:text-zinc-600 flex items-center gap-1"
+                    className="text-xs text-emerald-600 hover:text-emerald-700 flex items-center gap-1 ml-auto"
                   >
-                    <ExternalLink className="h-3 w-3" />
-                    Fonte
+                    <ExternalLink className="h-3 w-3" /> Ler notícia
                   </a>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
+                </div>
+              )}
+            </div>
+          ))}
       </CardContent>
     </Card>
   );

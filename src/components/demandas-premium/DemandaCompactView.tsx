@@ -383,7 +383,7 @@ const CompactRow = React.memo(function CompactRow({
     }
   }, [index, cellRefs]);
 
-  const isFocused = (col: number) => focusedCell?.row === index && focusedCell?.col === col;
+  const isCellFocused = (col: number) => focusedCell?.row === index && focusedCell?.col === col;
 
   // ---- Cell Renderers (keyed by column id) ----
 
@@ -692,7 +692,10 @@ const CompactRow = React.memo(function CompactRow({
 
   return (
     <tr
-      ref={setNodeRef}
+      ref={(el) => {
+        setNodeRef(el);
+        if (typeof onRowRef === "function") (onRowRef as (el: HTMLTableRowElement | null) => void)(el);
+      }}
       style={{
         ...style,
         ...(hideAtribuicaoColor ? {} : { borderLeft: `3px solid ${atribuicaoColor}` }),
@@ -714,7 +717,6 @@ const CompactRow = React.memo(function CompactRow({
           onPreview(demanda.id);
         }
       }}
-      ref={onRowRef}
       className={`group/row border-b border-zinc-100/60 dark:border-zinc-800/50 transition-all duration-100 cursor-pointer ${rowBg} ${isFocused ? "ring-2 ring-inset ring-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/15" : ""} ${isPreviewActive && !isFocused ? "ring-1 ring-inset ring-emerald-300/40 dark:ring-emerald-700/30 bg-emerald-50/30 dark:bg-emerald-950/10" : ""} ${index % 2 === 1 && !isPreviewActive && !isFocused ? "bg-zinc-50/50 dark:bg-zinc-800/20" : !isPreviewActive && !isFocused ? "bg-white dark:bg-zinc-900" : ""} ${isDragging ? "shadow-lg bg-white dark:bg-zinc-900 ring-1 ring-emerald-400/30" : ""} ${!isSelected && !isPreviewActive && !isFocused ? "hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40" : ""}`}
     >
       {/* Drag handle */}
@@ -790,12 +792,12 @@ const CompactRow = React.memo(function CompactRow({
               tabIndex={0}
               style={{
                 ...(columnWidths?.[col.id] ? { width: columnWidths[col.id] } : {}),
-                ...(isFocused(col.colIndex)
+                ...(isCellFocused(col.colIndex)
                   ? { boxShadow: `inset 0 0 0 2px ${atribuicaoColor}99`, backgroundColor: `${atribuicaoColor}08` }
                   : {}),
               }}
               className={`px-2 py-3 group/cell transition-all duration-100 ${columnWidths?.[col.id] ? "" : col.width || ""} ${
-                !isFocused(col.colIndex) ? "hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30" : ""
+                !isCellFocused(col.colIndex) ? "hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30" : ""
               } ${col.id === "providencias" ? "hidden md:table-cell" : ""}`}
               onClick={() => onCellFocus(index, col.colIndex)}
               onFocus={() => onCellFocus(index, col.colIndex)}
