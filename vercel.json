@@ -12,6 +12,10 @@
     {
       "path": "/api/cron/radar",
       "schedule": "0 9,21 * * *"
+    },
+    {
+      "path": "/api/cron/noticias",
+      "schedule": "0 10 * * *"
     }
   ],
   "headers": [

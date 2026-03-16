@@ -11,7 +11,7 @@ import {
   Columns3, History, PieChart, Handshake, CalendarDays, Sparkles, MessageCircle,
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
   MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput, Sun,
-  MessageSquare, FileCheck, ArrowLeftRight, Timer
+  MessageSquare, FileCheck, ArrowLeftRight, Timer, Newspaper
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -104,6 +104,7 @@ const TOOLS_NAV: AssignmentMenuItem[] = [
   { label: "Simulador 3D", path: "/admin/simulador-3d", icon: "Box" },
   { label: "Radar Criminal", path: "/admin/radar", icon: "Radio" },
   { label: "Legislação", path: "/admin/legislacao", icon: "Scale" },
+  { label: "Notícias", path: "/admin/noticias", icon: "Newspaper" },
 ];
 
 // 6. Módulos específicos por especialidade
@@ -174,7 +175,7 @@ const iconMap: Record<string, React.ElementType> = {
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
   ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
   BookUser, Users2, Home, FolderInput, Sun, MessageSquare, FileCheck,
-  ArrowLeftRight, Timer
+  ArrowLeftRight, Timer, Newspaper
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
