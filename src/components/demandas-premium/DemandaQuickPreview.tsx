@@ -490,10 +490,30 @@ export function DemandaQuickPreview({
         className="w-[calc(100vw-3rem)] sm:w-[420px] md:w-[460px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl"
         style={{ borderLeft: `3px solid ${atribuicaoColor}` }}
         onPointerDownOutside={(e) => {
-          e.preventDefault();
+          const target = e.target as HTMLElement;
+          if (
+            target.closest('[data-radix-popper-content-wrapper]') ||
+            target.closest('[data-radix-select-content]') ||
+            target.closest('[data-stage-popover]') ||
+            target.closest('[role="listbox"]') ||
+            target.closest('[role="option"]') ||
+            target.closest('[cmdk-root]')
+          ) {
+            e.preventDefault();
+          }
         }}
         onInteractOutside={(e) => {
-          e.preventDefault();
+          const target = e.target as HTMLElement;
+          if (
+            target.closest?.('[data-radix-popper-content-wrapper]') ||
+            target.closest?.('[data-radix-select-content]') ||
+            target.closest?.('[data-stage-popover]') ||
+            target.closest?.('[role="listbox"]') ||
+            target.closest?.('[role="option"]') ||
+            target.closest?.('[cmdk-root]')
+          ) {
+            e.preventDefault();
+          }
         }}
       >
         {/* ===== STICKY NAV HEADER ===== */}
