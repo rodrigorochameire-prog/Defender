@@ -414,9 +414,8 @@ export default function DashboardJuriPage() {
 
   const atoOptions = getAtosPorAtribuicao(atribuicaoAtual === "JURI_EP" ? "Tribunal do Júri" : "Violência Doméstica");
 
-  const handleSaveNewDemanda = (_data: DemandaFormData) => {
-    // TODO: wire to demandas.create mutation
-  };
+  // eslint-disable-next-line no-unused-vars
+  const handleSaveNewDemanda = (_data: DemandaFormData) => { /* unused — Nova Demanda navigates to /demandas/nova */ };
 
   // ==========================================
   // LÓGICA DE DADOS - APENAS MINHAS DEMANDAS
@@ -760,14 +759,15 @@ export default function DashboardJuriPage() {
             </div>
           </div>
 
-          <Button
-            size="sm"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="h-9 px-4 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-emerald-500 dark:hover:text-white text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer w-full sm:w-auto"
-          >
-            <Plus className="w-4 h-4 mr-1.5" />
-            Nova Demanda
-          </Button>
+          <Link href="/admin/demandas/nova">
+            <Button
+              size="sm"
+              className="h-9 px-4 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-emerald-500 dark:hover:text-white text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer w-full sm:w-auto"
+            >
+              <Plus className="w-4 h-4 mr-1.5" />
+              Nova Demanda
+            </Button>
+          </Link>
         </div>
       </div>
 
