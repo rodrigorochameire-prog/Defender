@@ -1647,6 +1647,7 @@ export default function AgendaPage() {
               }}
               onEditEvento={handleEditEvento}
               onDeleteEvento={handleDeleteEvento}
+              onStatusChange={handleStatusChange}
               headerRight={calendarHeaderRight}
             />
           ) : viewMode === "week" ? (

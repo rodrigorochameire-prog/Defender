@@ -59,6 +59,7 @@ interface CalendarMonthViewProps {
   onDateClick: (date: Date) => void;
   onEditEvento?: (evento: any) => void;
   onDeleteEvento?: (id: string) => void;
+  onStatusChange?: (id: string, status: string) => void;
   onArchiveEvento?: (id: string) => void;
   /** Extra content rendered inline in the header (defensor avatars, stats, etc.) */
   headerRight?: React.ReactNode;
@@ -496,6 +497,7 @@ export function CalendarMonthView({
   onDateClick,
   onEditEvento,
   onDeleteEvento,
+  onStatusChange,
   onArchiveEvento,
   headerRight,
 }: CalendarMonthViewProps) {
@@ -705,6 +707,7 @@ export function CalendarMonthView({
         onEventClick={onEventClick}
         onEditEvento={onEditEvento}
         onDeleteEvento={onDeleteEvento}
+        onStatusChange={onStatusChange}
       />
     </div>
   );

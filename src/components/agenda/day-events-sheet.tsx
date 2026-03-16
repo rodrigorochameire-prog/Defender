@@ -14,8 +14,17 @@ import {
   ChevronRight,
   Copy,
   Check,
+  CheckCircle2,
+  XCircle,
+  RefreshCw,
+  ExternalLink,
+  User,
+  Scale,
+  StickyNote,
 } from "lucide-react";
 import { useState, useMemo } from "react";
+import Link from "next/link";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
@@ -39,6 +48,7 @@ interface DayEventsSheetProps {
   onEventClick: (evento: any) => void;
   onEditEvento?: (evento: any) => void;
   onDeleteEvento?: (id: string) => void;
+  onStatusChange?: (id: string, status: string) => void;
 }
 
 // Verifica se o evento não ocorrerá (cancelado ou redesignado)
@@ -139,6 +149,7 @@ export function DayEventsSheet({
   onEventClick,
   onEditEvento,
   onDeleteEvento,
+  onStatusChange,
 }: DayEventsSheetProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [activeAtribFilter, setActiveAtribFilter] = useState<string | null>(null);
@@ -307,7 +318,8 @@ export function DayEventsSheet({
 
                     {/* Expanded details */}
                     {isExpanded && (
-                      <div className="bg-zinc-50/50 dark:bg-zinc-800/20 px-5 py-3 ml-1.5 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-2">
+                      <div className="bg-zinc-50/50 dark:bg-zinc-800/20 px-5 py-3 ml-1.5 border-l-2 space-y-2.5" style={{ borderColor: solidColor + "40" }}>
+                        {/* Info rows */}
                         {evento.local && (
                           <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                             <MapPin className="w-3.5 h-3.5 shrink-0" />
@@ -329,19 +341,129 @@ export function DayEventsSheet({
                             <span>{evento.horarioInicio} — {evento.horarioFim}</span>
                           </div>
                         )}
-                        {/* Actions */}
-                        <div className="flex items-center gap-1.5 pt-1">
+
+                        {/* Observações */}
+                        {evento.observacoes && (
+                          <div className="flex items-start gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                            <StickyNote className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                            <span className="line-clamp-2">{evento.observacoes}</span>
+                          </div>
+                        )}
+
+                        {/* Status quick-change */}
+                        {onStatusChange && (
+                          <div className="flex items-center gap-1 pt-0.5">
+                            {!cancelado && evento.status !== "concluido" && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer gap-1"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onStatusChange(evento.id, "concluido");
+                                    toast.success("Marcado como realizado!");
+                                  }}
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  Realizado
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-xs text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer gap-1"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onStatusChange(evento.id, "cancelado");
+                                    toast.success("Evento cancelado.");
+                                  }}
+                                >
+                                  <XCircle className="w-3.5 h-3.5" />
+                                  Cancelar
+                                </Button>
+                              </>
+                            )}
+                            {cancelado && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer gap-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onStatusChange(evento.id, "confirmado");
+                                  toast.success("Evento restaurado!");
+                                }}
+                              >
+                                <RefreshCw className="w-3.5 h-3.5" />
+                                Restaurar
+                              </Button>
+                            )}
+                            {evento.status === "concluido" && (
+                              <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" />
+                                Realizado
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Separator */}
+                        <div className="border-t border-zinc-100 dark:border-zinc-800 pt-2" />
+
+                        {/* Navigation + Actions */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {/* Abrir detalhes */}
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 cursor-pointer"
+                            className="h-7 text-xs text-zinc-600 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 cursor-pointer gap-1"
                             onClick={(e) => {
                               e.stopPropagation();
                               onEventClick(evento);
                             }}
                           >
-                            Abrir
+                            <ExternalLink className="w-3 h-3" />
+                            Detalhes
                           </Button>
+
+                          {/* Ver assistido */}
+                          {evento.assistidoId && (
+                            <Link
+                              href={`/admin/assistidos/${evento.assistidoId}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs text-zinc-600 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 cursor-pointer gap-1"
+                              >
+                                <User className="w-3 h-3" />
+                                Assistido
+                              </Button>
+                            </Link>
+                          )}
+
+                          {/* Ver demanda/processo */}
+                          {evento.vinculoDemanda && (
+                            <Link
+                              href={`/admin/demandas/${evento.vinculoDemanda}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs text-zinc-600 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 cursor-pointer gap-1"
+                              >
+                                <Scale className="w-3 h-3" />
+                                Demanda
+                              </Button>
+                            </Link>
+                          )}
+
+                          {/* Spacer */}
+                          <span className="flex-1" />
+
+                          {/* Edit */}
                           {onEditEvento && (
                             <Button
                               variant="ghost"
@@ -351,10 +473,12 @@ export function DayEventsSheet({
                                 e.stopPropagation();
                                 onEditEvento(evento);
                               }}
+                              title="Editar"
                             >
                               <Edit3 className="w-3.5 h-3.5" />
                             </Button>
                           )}
+                          {/* Delete */}
                           {onDeleteEvento && (
                             <Button
                               variant="ghost"
@@ -364,6 +488,7 @@ export function DayEventsSheet({
                                 e.stopPropagation();
                                 onDeleteEvento(evento.id);
                               }}
+                              title="Excluir"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </Button>
