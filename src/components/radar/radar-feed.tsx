@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
+import { isToday, isYesterday, isThisWeek } from "date-fns";
 import { trpc } from "@/lib/trpc/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RadarNoticiaCard } from "./radar-noticia-card";
@@ -22,6 +23,34 @@ interface FiltrosState {
 
 interface RadarFeedProps {
   filtros: FiltrosState;
+}
+
+function groupByDate<T extends { dataFato?: Date | string | null; dataPublicacao?: Date | string | null; createdAt?: Date | string | null }>(
+  noticias: T[]
+): { label: string; items: T[] }[] {
+  const groups: Record<string, T[]> = {
+    "Hoje": [],
+    "Ontem": [],
+    "Esta semana": [],
+    "Mais antigas": [],
+  };
+
+  noticias.forEach((n) => {
+    const raw = n.dataFato || n.dataPublicacao || n.createdAt;
+    if (!raw) {
+      groups["Mais antigas"].push(n);
+      return;
+    }
+    const d = new Date(raw as string | Date);
+    if (isToday(d)) groups["Hoje"].push(n);
+    else if (isYesterday(d)) groups["Ontem"].push(n);
+    else if (isThisWeek(d, { weekStartsOn: 0 })) groups["Esta semana"].push(n);
+    else groups["Mais antigas"].push(n);
+  });
+
+  return Object.entries(groups)
+    .filter(([, items]) => items.length > 0)
+    .map(([label, items]) => ({ label, items }));
 }
 
 export function RadarFeed({ filtros }: RadarFeedProps) {
@@ -154,16 +183,25 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
         )}
       </div>
 
-      {allNoticias.map((noticia) => (
-        <RadarNoticiaCard
-          key={noticia.id}
-          noticia={{ ...noticia, matches: matchesPendentes?.[noticia.id] ?? [] } as any}
-          onClick={() => {
-            setSelectedNoticiaId(noticia.id);
-            setSheetOpen(true);
-          }}
-          onQuickAction={handleQuickAction}
-        />
+      {groupByDate(allNoticias).map(({ label, items: group }) => (
+        <div key={label}>
+          <div className="flex items-center gap-2 py-1">
+            <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500">{label}</span>
+            <div className="flex-1 h-px bg-zinc-100 dark:bg-zinc-800" />
+            <span className="text-[10px] text-zinc-300 dark:text-zinc-600">{group.length}</span>
+          </div>
+          {group.map((noticia) => (
+            <RadarNoticiaCard
+              key={noticia.id}
+              noticia={{ ...noticia, matches: matchesPendentes?.[noticia.id] ?? [] } as any}
+              onClick={() => {
+                setSelectedNoticiaId(noticia.id);
+                setSheetOpen(true);
+              }}
+              onQuickAction={handleQuickAction}
+            />
+          ))}
+        </div>
       ))}
 
       {/* Sentinel para infinite scroll */}

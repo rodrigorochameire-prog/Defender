@@ -38,8 +38,9 @@ import {
   Save,
   X,
   Newspaper,
+  MessageSquare,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc/client";
 import { getCrimeBadgeColor, getCrimeLabel } from "./radar-filtros";
@@ -545,6 +546,19 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                                 </span>
                               )}
                             </div>
+                            {(match.status === "confirmado_manual" || match.status === "descartado") && match.updatedAt && (
+                              <div className="text-[10px] text-zinc-400 flex items-center gap-1 mt-1">
+                                <Clock className="h-2.5 w-2.5" />
+                                {match.status === "confirmado_manual" ? "Confirmado" : "Descartado"}{" "}
+                                {formatDistanceToNow(new Date(match.updatedAt), { addSuffix: true, locale: ptBR })}
+                              </div>
+                            )}
+                            {match.notes && (
+                              <div className="text-[10px] text-zinc-500 italic flex items-center gap-1 mt-0.5">
+                                <MessageSquare className="h-2.5 w-2.5 shrink-0" />
+                                {match.notes}
+                              </div>
+                            )}
                           </div>
                           {match.assistidoId && (
                             <Button

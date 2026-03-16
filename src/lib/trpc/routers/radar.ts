@@ -155,6 +155,9 @@ export const radarRouter = router({
           scoreConfianca: radarMatches.scoreConfianca,
           status: radarMatches.status,
           dadosExtraidos: radarMatches.dadosExtraidos,
+          notes: radarMatches.notes,
+          confirmedAt: radarMatches.confirmedAt,
+          updatedAt: radarMatches.updatedAt,
           assistidoNome: assistidos.nome,
         })
         .from(radarMatches)
@@ -1076,6 +1079,20 @@ export const radarRouter = router({
         noticias: Array.isArray(row.noticias) ? row.noticias.slice(0, 10) : [],
       }));
     }),
+
+  // ==========================================
+  // CONTAGEM RÁPIDA DE MATCHES PENDENTES
+  // Usado pelo badge na sidebar
+  // ==========================================
+
+  matchesPendentesCount: protectedProcedure.query(async () => {
+    const [result] = await db
+      .select({ count: count() })
+      .from(radarMatches)
+      .where(eq(radarMatches.status, "possivel"));
+
+    return { count: result?.count ?? 0 };
+  }),
 });
 
 // ==========================================

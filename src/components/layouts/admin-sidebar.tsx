@@ -478,6 +478,11 @@ function ToolsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
+                  {typeof item.badge === "number" && item.badge > 0 && (
+                    <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-amber-500 text-white">
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -555,6 +560,11 @@ function ToolsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                       isActive ? "text-emerald-400" : "text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-600 dark:group-hover/subitem:text-zinc-300"
                     )} />
                     <span className="text-[12px] truncate">{item.label}</span>
+                    {typeof item.badge === "number" && item.badge > 0 && (
+                      <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-amber-500 text-white">
+                        {item.badge > 99 ? "99+" : item.badge}
+                      </span>
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -1544,6 +1554,21 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
     });
   }, [whatsappStats?.unreadMessages]);
 
+  // Radar Criminal pending matches badge
+  const { data: radarPendentesData } = trpc.radar.matchesPendentesCount.useQuery(undefined, {
+    refetchInterval: 60_000,
+  });
+  const matchesPendentes = radarPendentesData?.count ?? 0;
+
+  const toolsNavWithBadge = useMemo(() => {
+    return TOOLS_NAV.map(item => {
+      if (item.label === "Radar Criminal" && matchesPendentes > 0) {
+        return { ...item, badge: matchesPendentes };
+      }
+      return item;
+    });
+  }, [matchesPendentes]);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -1642,7 +1667,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
             <NavDivider collapsed={isCollapsed} />
             <SidebarMenu className="space-y-0.5">
               <ToolsMenu
-                items={TOOLS_NAV}
+                items={toolsNavWithBadge}
                 pathname={pathname}
                 onNavigate={handleNavigate}
                 userRole={userRole}
