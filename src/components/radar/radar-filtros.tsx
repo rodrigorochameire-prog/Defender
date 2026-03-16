@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Search, X, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { trpc } from "@/lib/trpc/client";
 
 const CRIME_TYPES = [
   { value: "homicidio", label: "Homicídio", color: "bg-red-500" },
@@ -65,6 +66,9 @@ interface RadarFiltrosProps {
 }
 
 export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
+  const { data: bairros } = trpc.radar.bairros.useQuery();
+  const { data: fontesDistintas } = trpc.radar.fontesDistintas.useQuery();
+
   const hasFilters = filtros.tipoCrime || filtros.bairro || filtros.fonte || filtros.search || filtros.dataInicio || filtros.dataFim || filtros.soMatches;
 
   return (
@@ -135,6 +139,36 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Bairro */}
+        <div className="space-y-2">
+          <Label className="text-xs text-zinc-500">Bairro</Label>
+          <select
+            value={filtros.bairro || ""}
+            onChange={(e) => onChange({ ...filtros, bairro: e.target.value || undefined })}
+            className="w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 cursor-pointer"
+          >
+            <option value="">Todos</option>
+            {bairros?.map((b) => (
+              <option key={b} value={b}>{b}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Fonte */}
+        <div className="space-y-2">
+          <Label className="text-xs text-zinc-500">Fonte</Label>
+          <select
+            value={filtros.fonte || ""}
+            onChange={(e) => onChange({ ...filtros, fonte: e.target.value || undefined })}
+            className="w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 cursor-pointer"
+          >
+            <option value="">Todas</option>
+            {fontesDistintas?.map((f) => (
+              <option key={f} value={f}>{f}</option>
+            ))}
+          </select>
         </div>
 
         {/* Período */}

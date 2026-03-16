@@ -10,6 +10,7 @@ import { RadarFiltros, type FiltrosState } from "@/components/radar/radar-filtro
 import { RadarMapa } from "@/components/radar/radar-mapa";
 import { RadarEstatisticas } from "@/components/radar/radar-estatisticas";
 import { RadarMatches } from "@/components/radar/radar-matches";
+import { RadarNoticiaSheet } from "@/components/radar/radar-noticia-sheet";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -17,6 +18,7 @@ import { ptBR } from "date-fns/locale";
 
 export default function RadarCriminalPage() {
   const [activeTab, setActiveTab] = useState("feed");
+  const [selectedNoticiaId, setSelectedNoticiaId] = useState<number | null>(null);
 
   // Filtros compartilhados entre tabs
   const [filtros, setFiltros] = useState<FiltrosState>({
@@ -130,7 +132,7 @@ export default function RadarCriminalPage() {
         </TabsContent>
 
         <TabsContent value="mapa">
-          <RadarMapa filtros={filtros} />
+          <RadarMapa filtros={filtros} onSelectNoticia={setSelectedNoticiaId} />
         </TabsContent>
 
         <TabsContent value="estatisticas">
@@ -141,6 +143,15 @@ export default function RadarCriminalPage() {
           <RadarMatches />
         </TabsContent>
       </Tabs>
+
+      {/* Sheet de detalhes (aberto pelo mapa) */}
+      <RadarNoticiaSheet
+        noticiaId={selectedNoticiaId}
+        open={!!selectedNoticiaId}
+        onOpenChange={(open) => {
+          if (!open) setSelectedNoticiaId(null);
+        }}
+      />
     </PageLayout>
   );
 }

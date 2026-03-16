@@ -28,9 +28,10 @@ interface FiltrosState {
 
 interface RadarMapaProps {
   filtros: FiltrosState;
+  onSelectNoticia?: (id: number) => void;
 }
 
-export function RadarMapa({ filtros }: RadarMapaProps) {
+export function RadarMapa({ filtros, onSelectNoticia }: RadarMapaProps) {
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [visibleLayers, setVisibleLayers] = useState<string[]>([
     "homicidio", "tentativa_homicidio", "trafico", "roubo", "furto",
@@ -124,6 +125,7 @@ export function RadarMapa({ filtros }: RadarMapaProps) {
       <LeafletMap
         data={filteredData}
         showHeatmap={showHeatmap}
+        onSelectNoticia={onSelectNoticia}
       />
     </div>
   );

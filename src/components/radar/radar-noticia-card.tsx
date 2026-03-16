@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, MapPin, Clock, Users, Link2 } from "lucide-react";
+import { ExternalLink, MapPin, Clock, Users, Link2, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getCrimeBadgeColor, getCrimeLabel } from "./radar-filtros";
@@ -91,7 +91,10 @@ export function RadarNoticiaCard({ noticia, onClick }: NoticiaCardProps) {
 
   return (
     <Card
-      className="hover:shadow-md transition-shadow cursor-pointer"
+      className={cn(
+        "hover:shadow-md transition-shadow cursor-pointer",
+        hasMatch && "border-l-4 border-l-emerald-500"
+      )}
       onClick={onClick}
     >
       <CardContent className="p-4">
@@ -121,6 +124,12 @@ export function RadarNoticiaCard({ noticia, onClick }: NoticiaCardProps) {
                 <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                   <Link2 className="h-3 w-3 mr-1" />
                   Caso DPE
+                </Badge>
+              )}
+              {noticia.enrichmentStatus === "pending" && (
+                <Badge variant="outline" className="text-zinc-400 border-zinc-300 dark:border-zinc-600">
+                  <RefreshCw className="h-2.5 w-2.5 mr-1 animate-spin" />
+                  Analisando...
                 </Badge>
               )}
               <span className="text-xs text-zinc-400">{noticia.fonte}</span>
