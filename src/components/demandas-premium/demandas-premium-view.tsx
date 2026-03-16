@@ -1322,8 +1322,10 @@ export default function Demandas() {
       utils.demandas.stats.invalidate();
       const messages: string[] = [];
       if (result.imported > 0) messages.push(`${result.imported} importadas`);
-      if (result.skipped > 0) messages.push(`${result.skipped} ignoradas (duplicatas)`);
+      if ((result as any).updated > 0) messages.push(`${(result as any).updated} atualizadas`);
+      if (result.skipped > 0) messages.push(`${result.skipped} ignoradas`);
       if (result.errors.length > 0) messages.push(`${result.errors.length} erros`);
+      if (messages.length === 0) messages.push("nenhuma alteração detectada");
       toast.success(`Importação concluída: ${messages.join(", ")}`);
       if (result.errors.length > 0) {
         result.errors.forEach((err) => toast.error(err));

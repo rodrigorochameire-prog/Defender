@@ -168,8 +168,8 @@ function StatusDropdown({
 interface SheetsImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (demandas: any[]) => void;
-  onUpdate?: (demandas: any[]) => void; // Para atualizar demandas existentes
+  onImport: (demandas: any[]) => Promise<any> | void;
+  onUpdate?: (demandas: any[]) => Promise<any> | void; // Para atualizar demandas existentes
   demandasExistentes?: any[]; // Lista de demandas já cadastradas
 }
 
@@ -670,79 +670,77 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
     })));
   }, []);
 
-  const handleImport = () => {
+  const [isImporting, setIsImporting] = useState(false);
+
+  const handleImport = async () => {
     if (demandasNovas.length === 0 && duplicatas.length === 0) {
       toast.error("Nenhuma demanda para importar ou atualizar");
       return;
     }
 
-    // 1. Importar demandas novas
-    if (demandasNovas.length > 0) {
-      const demandasParaImportar = demandasNovas.map(d => {
-        // Calcular dataInclusao com precisão de milissegundos para ordenação
-        // Usa 999 - ordemOriginal para que a primeira da lista (ordem 0) tenha valor maior (999)
-        // e apareça primeiro na ordenação descendente por "recentes"
-        let dataInclusao: string | undefined;
-        if (d.ordemOriginal !== undefined) {
-          const hoje = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-          dataInclusao = `${hoje}T00:00:00.${String(999 - d.ordemOriginal).padStart(3, '0')}`;
-        }
+    setIsImporting(true);
+    try {
+      // 1. Importar demandas novas
+      if (demandasNovas.length > 0) {
+        const demandasParaImportar = demandasNovas.map(d => {
+          // Calcular dataInclusao com precisão de milissegundos para ordenação
+          // Usa 999 - ordemOriginal para que a primeira da lista (ordem 0) tenha valor maior (999)
+          // e apareça primeiro na ordenação descendente por "recentes"
+          let dataInclusao: string | undefined;
+          if (d.ordemOriginal !== undefined) {
+            const hoje = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            dataInclusao = `${hoje}T00:00:00.${String(999 - d.ordemOriginal).padStart(3, '0')}`;
+          }
 
-        return {
-          id: d.id,
-          status: d.status,
-          estadoPrisional: d.estadoPrisional,
-          data: d.data,
-          dataInclusao, // Para ordenação precisa preservando ordem original da planilha
-          prazo: d.prazo,
-          assistido: d.assistido,
-          processos: d.processos,
-          ato: d.ato,
-          providencias: d.providencias,
-          atribuicao: d.atribuicao,
+          return {
+            id: d.id,
+            status: d.status,
+            estadoPrisional: d.estadoPrisional,
+            data: d.data,
+            dataInclusao, // Para ordenação precisa preservando ordem original da planilha
+            prazo: d.prazo,
+            assistido: d.assistido,
+            processos: d.processos,
+            ato: d.ato,
+            providencias: d.providencias,
+            atribuicao: d.atribuicao,
+            arquivado: false,
+          };
+        });
+
+        await onImport(demandasParaImportar);
+      }
+
+      // 2. Atualizar demandas existentes (duplicatas com diferenças)
+      if (duplicatas.length > 0 && onUpdate) {
+        const demandasParaAtualizar = duplicatas.map(dup => ({
+          id: dup.existente.id, // Manter o ID original
+          status: dup.nova.status,
+          estadoPrisional: dup.nova.estadoPrisional,
+          data: dup.nova.data,
+          prazo: dup.nova.prazo,
+          assistido: dup.nova.assistido,
+          processos: dup.nova.processos,
+          ato: dup.nova.ato,
+          providencias: dup.nova.providencias,
+          atribuicao: dup.nova.atribuicao,
           arquivado: false,
-        };
-      });
+        }));
 
-      onImport(demandasParaImportar);
+        await onUpdate(demandasParaAtualizar);
+      }
+
+      // Limpar e fechar apenas após confirmação do servidor
+      setRawText("");
+      setParsedDemandas([]);
+      setDemandasNovas([]);
+      setDuplicatas([]);
+      onClose();
+    } catch {
+      // Erro já tratado pelo onError da mutation (toast de erro exibido pelo pai)
+    } finally {
+      setIsImporting(false);
     }
-
-    // 2. Atualizar demandas existentes (duplicatas com diferenças)
-    if (duplicatas.length > 0 && onUpdate) {
-      const demandasParaAtualizar = duplicatas.map(dup => ({
-        id: dup.existente.id, // Manter o ID original
-        status: dup.nova.status,
-        estadoPrisional: dup.nova.estadoPrisional,
-        data: dup.nova.data,
-        prazo: dup.nova.prazo,
-        assistido: dup.nova.assistido,
-        processos: dup.nova.processos,
-        ato: dup.nova.ato,
-        providencias: dup.nova.providencias,
-        atribuicao: dup.nova.atribuicao,
-        arquivado: false,
-      }));
-
-      onUpdate(demandasParaAtualizar);
-    }
-
-    // Mensagem de sucesso
-    let msg = "";
-    if (demandasNovas.length > 0) {
-      msg += `${demandasNovas.length} demandas importadas`;
-    }
-    if (duplicatas.length > 0) {
-      if (msg) msg += ", ";
-      msg += `${duplicatas.length} demandas atualizadas`;
-    }
-    toast.success(msg + "!");
-
-    // Limpar e fechar
-    setRawText("");
-    setParsedDemandas([]);
-    setDemandasNovas([]);
-    setDuplicatas([]);
-    onClose();
   };
 
   const handleClose = () => {
@@ -1020,15 +1018,24 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
           )}
           <Button
             onClick={handleImport}
-            disabled={stats.novas === 0 && stats.atualizacoes === 0}
+            disabled={isImporting || (stats.novas === 0 && stats.atualizacoes === 0)}
             className="bg-emerald-600 hover:bg-emerald-700"
           >
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            {stats.novas > 0 && stats.atualizacoes > 0
-              ? `Importar ${stats.novas} + Atualizar ${stats.atualizacoes}`
-              : stats.novas > 0
-                ? `Importar ${stats.novas} demandas`
-                : `Atualizar ${stats.atualizacoes} demandas`}
+            {isImporting ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Importando...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                {stats.novas > 0 && stats.atualizacoes > 0
+                  ? `Importar ${stats.novas} + Atualizar ${stats.atualizacoes}`
+                  : stats.novas > 0
+                    ? `Importar ${stats.novas} demandas`
+                    : `Atualizar ${stats.atualizacoes} demandas`}
+              </>
+            )}
           </Button>
         </div>
       </DialogContent>
