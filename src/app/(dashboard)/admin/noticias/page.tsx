@@ -60,7 +60,7 @@ export default function NoticiasPage() {
               >
                 <Filter className="h-4 w-4 mr-1" />
                 Triagem
-                <Badge variant="destructive" className="ml-1.5 animate-pulse">
+                <Badge variant="danger" className="ml-1.5 animate-pulse">
                   {pendentesCount}
                 </Badge>
               </Button>
