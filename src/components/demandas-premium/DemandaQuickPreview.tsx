@@ -489,13 +489,11 @@ export function DemandaQuickPreview({
       <SheetContent
         className="w-[calc(100vw-3rem)] sm:w-[420px] md:w-[460px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl"
         style={{ borderLeft: `3px solid ${atribuicaoColor}` }}
+        onPointerDownOutside={(e) => {
+          e.preventDefault();
+        }}
         onInteractOutside={(e) => {
-          // Prevent Sheet from closing when clicking on the pipeline stage popover
-          // (which is portaled to document.body, outside the Sheet DOM tree)
-          const target = e.target as HTMLElement;
-          if (target.closest?.("[data-stage-popover]")) {
-            e.preventDefault();
-          }
+          e.preventDefault();
         }}
       >
         {/* ===== STICKY NAV HEADER ===== */}
