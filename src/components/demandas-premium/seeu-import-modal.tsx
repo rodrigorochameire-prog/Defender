@@ -3,7 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   FileText,
   AlertCircle,
@@ -310,6 +310,28 @@ export function SEEUImportModal({
   const [etapa, setEtapa] = useState<"colar" | "revisar">("colar");
   const [isImporting, setIsImporting] = useState(false);
 
+  // Progress state for import feedback
+  const [importProgress, setImportProgress] = useState<{
+    total: number;
+    currentIndex: number;
+    currentName: string;
+  } | null>(null);
+  const importNamesRef = useRef<string[]>([]);
+
+  // Cycle through item names while importing (batch mode)
+  useEffect(() => {
+    if (!isImporting || importNamesRef.current.length === 0) return;
+    let idx = 0;
+    const names = importNamesRef.current;
+    const total = names.length;
+    setImportProgress({ total, currentIndex: 0, currentName: names[0] });
+    const interval = setInterval(() => {
+      idx = (idx + 1) % names.length;
+      setImportProgress({ total, currentIndex: idx, currentName: names[idx] });
+    }, 300);
+    return () => clearInterval(interval);
+  }, [isImporting]);
+
   // Tipo de manifestação selecionada
   const [tipoManifestacao, setTipoManifestacao] = useState<"manifestacao" | "ciencia">("manifestacao");
 
@@ -382,6 +404,12 @@ export function SEEUImportModal({
       return;
     }
 
+    // Build list of names for the cycling progress display
+    const allNames = [
+      ...novasSelecionadas.map((i) => i.assistido),
+      ...dupsSelecionadas.map((d) => d.nova.assistido),
+    ];
+    importNamesRef.current = allNames;
     setIsImporting(true);
 
     try {
@@ -436,6 +464,8 @@ export function SEEUImportModal({
       toast.error("Erro ao importar demandas");
     } finally {
       setIsImporting(false);
+      setImportProgress(null);
+      importNamesRef.current = [];
     }
   };
 
@@ -444,6 +474,8 @@ export function SEEUImportModal({
     setResultado(null);
     setEtapa("colar");
     setIsImporting(false);
+    setImportProgress(null);
+    importNamesRef.current = [];
     setTipoManifestacao("manifestacao");
     setIntimacoesNovas([]);
     setDuplicatas([]);
@@ -1051,35 +1083,59 @@ Executado: NEMIAS DOS SANTOS JESUS
             )}
 
             {/* Botões */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-              <Button variant="outline" onClick={handleVoltar} disabled={isImporting}>
-                Voltar
-              </Button>
-              <Button
-                onClick={handleImportar}
-                disabled={isImporting || (selectedNovas.size === 0 && selectedDups.size === 0)}
-                className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white"
-              >
-                {isImporting ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Processando...
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4 mr-2" />
-                    {selectedNovas.size > 0 && selectedDups.size > 0
-                      ? `Importar ${selectedNovas.size} + Atualizar ${selectedDups.size}`
-                      : selectedNovas.size > 0
-                        ? `Importar ${selectedNovas.size} Demandas`
-                        : `Atualizar ${selectedDups.size} Demandas`
-                    }
-                  </>
-                )}
-              </Button>
+            <div className="flex flex-col gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+              {/* Progress bar — shown only while importing */}
+              {isImporting && importProgress && (
+                <div className="flex flex-col gap-1 w-full">
+                  <div className="flex justify-between text-xs text-zinc-500">
+                    <span className="truncate max-w-[70%]">
+                      Importando {importProgress.currentName}...
+                    </span>
+                    <span className="flex-shrink-0">
+                      {importProgress.currentIndex + 1}/{importProgress.total}
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 transition-all duration-300"
+                      style={{
+                        width: `${((importProgress.currentIndex + 1) / importProgress.total) * 100}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={handleVoltar} disabled={isImporting}>
+                  Voltar
+                </Button>
+                <Button
+                  onClick={handleImportar}
+                  disabled={isImporting || (selectedNovas.size === 0 && selectedDups.size === 0)}
+                  className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white"
+                >
+                  {isImporting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processando...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 mr-2" />
+                      {selectedNovas.size > 0 && selectedDups.size > 0
+                        ? `Importar ${selectedNovas.size} + Atualizar ${selectedDups.size}`
+                        : selectedNovas.size > 0
+                          ? `Importar ${selectedNovas.size} Demandas`
+                          : `Atualizar ${selectedDups.size} Demandas`
+                      }
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         )}

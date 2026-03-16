@@ -1391,6 +1391,16 @@ function extrairDadosBlocoSEEU(
     }
   }
 
+  // Tentar extrair prazo explícito — sobrescreve ultimoDia se encontrado
+  // Padrões suportados: "Prazo: DD/MM/YYYY", "Data limite: DD/MM/YYYY",
+  // "até DD/MM/YYYY", "vencimento: DD/MM/YYYY"
+  const matchPrazoExplicito = bloco.match(
+    /(?:prazo|data\s+limite|vencimento)\s*:?\s*(\d{2}\/\d{2}\/\d{4})/i
+  ) || bloco.match(/até\s+(\d{2}\/\d{2}\/\d{4})/i);
+  if (matchPrazoExplicito) {
+    ultimoDia = matchPrazoExplicito[1];
+  }
+
   // Extrair prazo
   let prazo: number | undefined;
   const matchPrazo = bloco.match(/(\d+)\s*dias?\s*(corridos|úteis)?/i);
