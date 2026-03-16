@@ -10,7 +10,7 @@ import {
   users,
   processos,
 } from "@/lib/db/schema";
-import { eq, and, desc, sql, gte, lte, ilike, or, count, isNull, ne, inArray } from "drizzle-orm";
+import { eq, and, desc, sql, gte, lte, lt, ilike, or, count, isNull, ne, inArray } from "drizzle-orm";
 import { sendText } from "@/lib/services/evolution-api";
 
 // ==========================================
@@ -1157,6 +1157,83 @@ export const radarRouter = router({
 
       return { success: true, message: `Processando até ${input.limit} notícias pendentes` };
     }),
+
+  // ==========================================
+  // ALERTAS CRÍTICOS — matches ≥80% pendentes
+  // ==========================================
+
+  alertasCriticos: protectedProcedure.query(async () => {
+    const items = await db
+      .select({
+        id: radarMatches.id,
+        scoreConfianca: radarMatches.scoreConfianca,
+        nomeEncontrado: radarMatches.nomeEncontrado,
+        assistidoNome: assistidos.nome,
+        assistidoId: assistidos.id,
+        noticiaTitulo: radarNoticias.titulo,
+        noticiaFonte: radarNoticias.fonte,
+        noticiaTipoCrime: radarNoticias.tipoCrime,
+        noticiaId: radarNoticias.id,
+        createdAt: radarMatches.createdAt,
+      })
+      .from(radarMatches)
+      .innerJoin(assistidos, eq(radarMatches.assistidoId, assistidos.id))
+      .innerJoin(radarNoticias, eq(radarMatches.noticiaId, radarNoticias.id))
+      .where(
+        and(
+          eq(radarMatches.status, "possivel"),
+          gte(radarMatches.scoreConfianca, 80)
+        )
+      )
+      .orderBy(desc(radarMatches.scoreConfianca))
+      .limit(10);
+    return items;
+  }),
+
+  // ==========================================
+  // STATS COMPARATIVO — deltas semanais
+  // ==========================================
+
+  statsComparativo: protectedProcedure.query(async () => {
+    const agora = new Date();
+    const semanaPassadaInicio = new Date(agora.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const semanaAtualInicio = new Date(agora.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const [semanaAtual] = await db
+      .select({ count: count() })
+      .from(radarNoticias)
+      .where(gte(radarNoticias.createdAt, semanaAtualInicio));
+
+    const [semanaAnterior] = await db
+      .select({ count: count() })
+      .from(radarNoticias)
+      .where(
+        and(
+          gte(radarNoticias.createdAt, semanaPassadaInicio),
+          lt(radarNoticias.createdAt, semanaAtualInicio)
+        )
+      );
+
+    const [matchesAtual] = await db
+      .select({ count: count() })
+      .from(radarMatches)
+      .where(gte(radarMatches.createdAt, semanaAtualInicio));
+
+    const [matchesAnterior] = await db
+      .select({ count: count() })
+      .from(radarMatches)
+      .where(
+        and(
+          gte(radarMatches.createdAt, semanaPassadaInicio),
+          lt(radarMatches.createdAt, semanaAtualInicio)
+        )
+      );
+
+    return {
+      noticias: { atual: semanaAtual.count, anterior: semanaAnterior.count },
+      matches: { atual: matchesAtual.count, anterior: matchesAnterior.count },
+    };
+  }),
 });
 
 // ==========================================

@@ -21,7 +21,9 @@ import {
   LineChart,
   Line,
 } from "recharts";
-import { Radio, AlertTriangle, MapPin, Link2, Newspaper, CheckCircle2, Clock, TrendingUp, User, Calendar } from "lucide-react";
+import { Radio, AlertTriangle, MapPin, Link2, Newspaper, CheckCircle2, Clock, TrendingUp, TrendingDown, User, Calendar } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { getCrimeLabel } from "./radar-filtros";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +65,18 @@ function getCrimeBadgeColor(tipo: string): string {
   return map[tipo] ?? "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";
 }
 
+function renderDelta(atual: number, anterior: number) {
+  if (anterior === 0) return null;
+  const pct = Math.round(((atual - anterior) / anterior) * 100);
+  const up = pct >= 0;
+  return (
+    <span className={cn("text-[10px] flex items-center gap-0.5 mt-0.5", up ? "text-emerald-500" : "text-red-400")}>
+      {up ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
+      {Math.abs(pct)}% vs semana anterior
+    </span>
+  );
+}
+
 export function RadarEstatisticas() {
   const [periodo, setPeriodo] = useState<string>("30d");
 
@@ -76,6 +90,8 @@ export function RadarEstatisticas() {
   });
   const { data: byHora } = trpc.radar.statsByHora.useQuery({ periodo: periodo as any });
   const { data: byDiaSemana } = trpc.radar.statsByDiaSemana.useQuery({ periodo: periodo as any });
+  const { data: alertas } = trpc.radar.alertasCriticos.useQuery();
+  const { data: statsComp } = trpc.radar.statsComparativo.useQuery();
 
   // Prepare donut chart data
   const donutData = useMemo(() => {
@@ -150,6 +166,7 @@ export function RadarEstatisticas() {
                   {stats?.total || 0}
                 </p>
                 <p className="text-xs text-zinc-500">Ocorrências</p>
+                {statsComp && renderDelta(statsComp.noticias.atual, statsComp.noticias.anterior)}
               </div>
             </div>
           </CardContent>
@@ -182,6 +199,7 @@ export function RadarEstatisticas() {
                   {stats?.totalMatches || 0}
                 </p>
                 <p className="text-xs text-zinc-500">Matches DPE</p>
+                {statsComp && renderDelta(statsComp.matches.atual, statsComp.matches.anterior)}
               </div>
             </div>
           </CardContent>
@@ -250,6 +268,58 @@ export function RadarEstatisticas() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Alertas Críticos — matches ≥80% pendentes */}
+      {alertas && alertas.length > 0 && (
+        <Card className="border-amber-200 dark:border-amber-900/40">
+          <CardContent className="p-4 space-y-2">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <span className="text-sm font-medium">Alertas críticos</span>
+              <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 text-xs border-0">
+                {alertas.length}
+              </Badge>
+              <span className="text-xs text-zinc-400 ml-1">matches ≥80% pendentes de revisão</span>
+            </div>
+            <div className="space-y-1.5">
+              {alertas.map((alerta) => (
+                <div
+                  key={alerta.id}
+                  className="flex items-center gap-3 p-2.5 rounded-lg border border-amber-100 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-950/20"
+                >
+                  {/* Score badge */}
+                  <span className="text-sm font-mono font-bold text-amber-600 w-12 shrink-0">
+                    {alerta.scoreConfianca}%
+                  </span>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">{alerta.assistidoNome}</p>
+                    <p className="text-[10px] text-zinc-500 truncate">{alerta.noticiaTitulo}</p>
+                  </div>
+                  {/* Crime badge */}
+                  {alerta.noticiaTipoCrime && (
+                    <Badge
+                      className={cn(
+                        "text-[10px] shrink-0 border-0",
+                        getCrimeBadgeColor(alerta.noticiaTipoCrime)
+                      )}
+                    >
+                      {getCrimeLabel(alerta.noticiaTipoCrime)}
+                    </Badge>
+                  )}
+                  {/* Tempo */}
+                  <span className="text-[10px] text-zinc-400 shrink-0">
+                    {formatDistanceToNow(new Date(alerta.createdAt), {
+                      locale: ptBR,
+                      addSuffix: true,
+                    })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Gráfico de barras empilhadas (por mês) */}
       {barData.length > 0 && (

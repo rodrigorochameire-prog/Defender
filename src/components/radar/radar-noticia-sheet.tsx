@@ -39,6 +39,8 @@ import {
   X,
   Newspaper,
   MessageSquare,
+  ChevronRight,
+  Copy,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -81,6 +83,32 @@ interface EditFormState {
   logradouro: string;
   delegacia: string;
   resumoIA: string;
+}
+
+function HighlightedText({ text, highlights }: { text: string; highlights: string[] }) {
+  const validHighlights = highlights.filter(Boolean);
+  if (validHighlights.length === 0) return <>{text}</>;
+
+  const escaped = validHighlights.map((h) => h.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const regex = new RegExp(`(${escaped.join("|")})`, "gi");
+  const parts = text.split(regex);
+
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 0 ? (
+          part
+        ) : (
+          <mark
+            key={i}
+            className="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 rounded px-0.5 font-medium not-italic"
+          >
+            {part}
+          </mark>
+        )
+      )}
+    </>
+  );
 }
 
 function parseEnvolvidos(raw: Envolvido[] | string | null): Envolvido[] {
@@ -559,12 +587,50 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                                 {match.notes}
                               </div>
                             )}
+                            {/* Por que este match? */}
+                            <details className="mt-2">
+                              <summary className="text-xs text-zinc-400 cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-300 select-none flex items-center gap-1 list-none">
+                                <ChevronRight className="h-3 w-3 transition-transform [details[open]_&]:rotate-90" />
+                                Por que este match?
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    const text = `${noticia.titulo}\n\nNome encontrado: ${match.nomeEncontrado}\nFonte: ${noticia.fonte || ""}\nURL: ${noticia.url || ""}`;
+                                    navigator.clipboard.writeText(text);
+                                    toast.success("Trecho copiado");
+                                  }}
+                                  className="ml-auto text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Copy className="h-3 w-3" /> Copiar
+                                </button>
+                              </summary>
+                              <div className="mt-2 text-xs bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3 border border-zinc-100 dark:border-zinc-800">
+                                {noticia.corpo ? (
+                                  <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                                    <HighlightedText
+                                      text={noticia.corpo.slice(0, 600)}
+                                      highlights={[match.nomeEncontrado].filter(Boolean) as string[]}
+                                    />
+                                    {noticia.corpo.length > 600 && (
+                                      <span className="text-zinc-400"> ...</span>
+                                    )}
+                                  </p>
+                                ) : (
+                                  <p className="text-zinc-500">
+                                    Nome encontrado:{" "}
+                                    <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                                      {match.nomeEncontrado}
+                                    </span>
+                                  </p>
+                                )}
+                              </div>
+                            </details>
                           </div>
                           {match.assistidoId && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 px-2 text-xs shrink-0 cursor-pointer"
+                              className="h-7 px-2 text-xs shrink-0 cursor-pointer self-start"
                               asChild
                             >
                               <a href={`/admin/assistidos/${match.assistidoId}`}>
