@@ -1,11 +1,12 @@
 "use client";
 
 import { trpc } from "@/lib/trpc/client";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ExternalLink, Newspaper, Link2, Clock, Activity, Globe } from "lucide-react";
+import { ExternalLink, Newspaper, Link2, Clock, Activity, Globe, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -22,6 +23,12 @@ export function RadarFontes() {
       utils.radar.fontesList.invalidate();
       toast.success("Fonte atualizada");
     },
+    onError: (err) => toast.error("Erro: " + err.message),
+  });
+
+  const { data: health } = trpc.radar.enrichmentHealth.useQuery();
+  const reprocessPending = trpc.radar.reprocessPending.useMutation({
+    onSuccess: (data) => toast.success(data.message),
     onError: (err) => toast.error("Erro: " + err.message),
   });
 
@@ -47,6 +54,88 @@ export function RadarFontes() {
 
   return (
     <div className="space-y-4">
+      {/* Saúde do Enriquecimento */}
+      {health && (
+        <Card className="border-dashed">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Activity className="h-4 w-4 text-emerald-500" />
+                Saúde do Enriquecimento IA
+              </CardTitle>
+              {Number(health.pending) > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs cursor-pointer"
+                  onClick={() => reprocessPending.mutate({ limit: 50 })}
+                  disabled={reprocessPending.isPending}
+                >
+                  <RefreshCw className={cn("h-3 w-3 mr-1.5", reprocessPending.isPending && "animate-spin")} />
+                  Processar {Number(health.pending)} pendentes
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {[
+                {
+                  label: "Processadas",
+                  value: Number(health.done),
+                  total: Number(health.total),
+                  color: "text-emerald-600",
+                  bg: "bg-emerald-50 dark:bg-emerald-900/20",
+                },
+                {
+                  label: "Pendentes",
+                  value: Number(health.pending),
+                  total: Number(health.total),
+                  color: Number(health.pending) > 0 ? "text-amber-600" : "text-zinc-400",
+                  bg: Number(health.pending) > 0 ? "bg-amber-50 dark:bg-amber-900/20" : "bg-zinc-50 dark:bg-zinc-800",
+                },
+                {
+                  label: "Sem resumo",
+                  value: Number(health.semResumo),
+                  total: Number(health.done),
+                  color: Number(health.semResumo) > 0 ? "text-orange-600" : "text-zinc-400",
+                  bg: Number(health.semResumo) > 0 ? "bg-orange-50 dark:bg-orange-900/20" : "bg-zinc-50 dark:bg-zinc-800",
+                },
+                {
+                  label: "Sem bairro",
+                  value: Number(health.semBairro),
+                  total: Number(health.done),
+                  color: Number(health.semBairro) > 0 ? "text-orange-600" : "text-zinc-400",
+                  bg: Number(health.semBairro) > 0 ? "bg-orange-50 dark:bg-orange-900/20" : "bg-zinc-50 dark:bg-zinc-800",
+                },
+                {
+                  label: "Sem coords",
+                  value: Number(health.semCoordenadas),
+                  total: Number(health.done),
+                  color: Number(health.semCoordenadas) > 0 ? "text-blue-600" : "text-zinc-400",
+                  bg: Number(health.semCoordenadas) > 0 ? "bg-blue-50 dark:bg-blue-900/20" : "bg-zinc-50 dark:bg-zinc-800",
+                },
+              ].map((stat) => (
+                <div key={stat.label} className={cn("rounded-lg p-2.5", stat.bg)}>
+                  <div className={cn("text-xl font-semibold", stat.color)}>
+                    {stat.value.toLocaleString("pt-BR")}
+                  </div>
+                  <div className="text-[10px] text-zinc-500 mt-0.5">{stat.label}</div>
+                  {stat.total > 0 && stat.value > 0 && (
+                    <div className="mt-1 h-1 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
+                      <div
+                        className={cn("h-full rounded-full", stat.color === "text-emerald-600" ? "bg-emerald-500" : "bg-amber-500")}
+                        style={{ width: `${Math.min(100, (stat.value / stat.total) * 100)}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* KPIs */}
       <div className="grid grid-cols-3 gap-4">
         <Card>

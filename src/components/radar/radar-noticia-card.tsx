@@ -40,6 +40,7 @@ interface NoticiaCardProps {
   };
   onClick?: () => void;
   onQuickAction?: (matchId: number, action: "confirmar" | "descartar") => void;
+  viewMode?: "cards" | "list";
 }
 
 /** Normaliza envolvidos que pode vir como string JSON ou array */
@@ -91,11 +92,74 @@ const papelLabels: Record<string, string> = {
   outro: "Outro",
 };
 
-export function RadarNoticiaCard({ noticia, onClick, onQuickAction }: NoticiaCardProps) {
+export function RadarNoticiaCard({ noticia, onClick, onQuickAction, viewMode }: NoticiaCardProps) {
   const dataDisplay = noticia.dataFato || noticia.dataPublicacao;
   const hasMatch = (noticia.matchCount ?? 0) > 0;
   const envolvidos = parseEnvolvidos(noticia.envolvidos);
   const envolvidosComNome = envolvidos.filter((e) => isNomeProprio(e.nome));
+
+  if (viewMode === "list") {
+    return (
+      <div
+        className={cn(
+          "flex items-center gap-3 px-3 py-2 rounded-lg border border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer",
+          hasMatch && "border-l-4 border-l-emerald-500"
+        )}
+        onClick={onClick}
+      >
+        {/* Crime badge */}
+        <Badge
+          variant="secondary"
+          className={cn("shrink-0 text-[10px]", getCrimeBadgeColor(noticia.tipoCrime))}
+        >
+          {getCrimeLabel(noticia.tipoCrime)}
+        </Badge>
+
+        {/* Título */}
+        <span className="flex-1 text-sm text-zinc-800 dark:text-zinc-200 truncate">
+          {noticia.titulo}
+        </span>
+
+        {/* Meta (bairro + data) */}
+        <div className="hidden sm:flex items-center gap-2 text-[10px] text-zinc-400 shrink-0">
+          {noticia.bairro && (
+            <span className="flex items-center gap-0.5">
+              <MapPin className="h-2.5 w-2.5" />
+              {noticia.bairro}
+            </span>
+          )}
+          {(noticia.dataFato || noticia.dataPublicacao) && (
+            <span className="flex items-center gap-0.5">
+              <Clock className="h-2.5 w-2.5" />
+              {format(new Date((noticia.dataFato || noticia.dataPublicacao) as string), "dd/MM", { locale: ptBR })}
+            </span>
+          )}
+        </div>
+
+        {/* Badges inline */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {hasMatch && (
+            <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px]">
+              <Link2 className="h-2.5 w-2.5 mr-0.5" />
+              DPE
+            </Badge>
+          )}
+          {noticia.enrichmentStatus === "pending" && (
+            <RefreshCw className="h-3 w-3 text-zinc-400 animate-spin" />
+          )}
+          <a
+            href={noticia.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-zinc-400 hover:text-emerald-600 transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Card

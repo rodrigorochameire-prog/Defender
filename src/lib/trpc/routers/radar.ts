@@ -291,37 +291,38 @@ export const radarRouter = router({
     .input(
       z.object({
         periodo: z.enum(["7d", "30d", "90d", "1a", "total"]).optional().default("30d"),
-        limit: z.number().optional().default(10),
+        limit: z.number().min(1).max(20).optional().default(10),
       })
     )
     .query(async ({ input }) => {
-      const periodoMap: Record<string, number> = {
-        "7d": 7, "30d": 30, "90d": 90, "1a": 365,
+      const daysMap: Record<string, number> = {
+        "7d": 7, "30d": 30, "90d": 90, "1a": 365, "total": 36500,
       };
+      const days = daysMap[input.periodo] ?? 30;
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - days);
 
-      const dias = periodoMap[input.periodo];
-      const conditions = [];
-      if (dias) {
-        const dataInicio = new Date();
-        dataInicio.setDate(dataInicio.getDate() - dias);
-        conditions.push(gte(radarNoticias.createdAt, dataInicio));
-      }
-      conditions.push(sql`${radarNoticias.bairro} IS NOT NULL`);
+      const result = await db.execute(sql`
+        SELECT
+          bairro,
+          COUNT(*) AS total,
+          MODE() WITHIN GROUP (ORDER BY tipo_crime) AS tipo_crime_dominante
+        FROM radar_noticias
+        WHERE bairro IS NOT NULL
+          AND created_at >= ${cutoff}
+        GROUP BY bairro
+        ORDER BY total DESC
+        LIMIT ${input.limit}
+      `);
 
-      const result = await db
-        .select({
-          bairro: radarNoticias.bairro,
-          count: count(),
-        })
-        .from(radarNoticias)
-        .where(and(...conditions))
-        .groupBy(radarNoticias.bairro)
-        .orderBy(desc(count()))
-        .limit(input.limit);
-
-      return result.map((r) => ({
-        bairro: r.bairro || "Desconhecido",
-        count: Number(r.count),
+      return (result as unknown as Array<{
+        bairro: string;
+        total: string;
+        tipo_crime_dominante: string | null;
+      }>).map(r => ({
+        bairro: r.bairro,
+        count: Number(r.total),
+        tipoCrimeDominante: r.tipo_crime_dominante,
       }));
     }),
 
@@ -961,7 +962,7 @@ export const radarRouter = router({
 
       const conditions = [
         sql`${radarNoticias.id} != ${input.id}`,
-        sql`${radarNoticias.enrichmentStatus} = 'done'`,
+        sql`${radarNoticias.enrichmentStatus} = 'analyzed'`,
       ];
 
       // Busca por mesmo bairro OU mesmo tipo de crime
@@ -1093,6 +1094,69 @@ export const radarRouter = router({
 
     return { count: result?.count ?? 0 };
   }),
+
+  // ==========================================
+  // SAÚDE DO ENRIQUECIMENTO
+  // ==========================================
+
+  enrichmentHealth: protectedProcedure.query(async () => {
+    const [total] = await db.select({ count: count() }).from(radarNoticias);
+
+    const [pending] = await db
+      .select({ count: count() })
+      .from(radarNoticias)
+      .where(eq(radarNoticias.enrichmentStatus, "pending"));
+
+    const [done] = await db
+      .select({ count: count() })
+      .from(radarNoticias)
+      .where(eq(radarNoticias.enrichmentStatus, "analyzed"));
+
+    const [semBairro] = await db
+      .select({ count: count() })
+      .from(radarNoticias)
+      .where(sql`${radarNoticias.bairro} IS NULL AND ${radarNoticias.enrichmentStatus} = 'analyzed'`);
+
+    const [semCoordenadas] = await db
+      .select({ count: count() })
+      .from(radarNoticias)
+      .where(sql`${radarNoticias.latitude} IS NULL AND ${radarNoticias.enrichmentStatus} = 'analyzed'`);
+
+    const [semResumo] = await db
+      .select({ count: count() })
+      .from(radarNoticias)
+      .where(sql`${radarNoticias.resumoIA} IS NULL AND ${radarNoticias.enrichmentStatus} = 'analyzed'`);
+
+    return {
+      total: total?.count ?? 0,
+      pending: pending?.count ?? 0,
+      done: done?.count ?? 0,
+      semBairro: semBairro?.count ?? 0,
+      semCoordenadas: semCoordenadas?.count ?? 0,
+      semResumo: semResumo?.count ?? 0,
+    };
+  }),
+
+  reprocessPending: protectedProcedure
+    .input(z.object({
+      limit: z.number().min(1).max(100).optional().default(20),
+    }))
+    .mutation(async ({ input }) => {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL ||
+          (process.env.VERCEL_URL
+            ? `https://${process.env.VERCEL_URL}`
+            : "http://localhost:3000");
+
+        fetch(`${baseUrl}/api/radar/enrich`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ limit: input.limit }),
+        }).catch(() => {}); // fire-and-forget
+      } catch {}
+
+      return { success: true, message: `Processando até ${input.limit} notícias pendentes` };
+    }),
 });
 
 // ==========================================

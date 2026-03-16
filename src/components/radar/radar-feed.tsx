@@ -6,10 +6,11 @@ import { trpc } from "@/lib/trpc/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RadarNoticiaCard } from "./radar-noticia-card";
 import { RadarNoticiaSheet } from "./radar-noticia-sheet";
-import { Radio, Newspaper, Download } from "lucide-react";
+import { Radio, Newspaper, Download, LayoutGrid, List } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { exportNoticiasToCsv } from "@/lib/radar-export";
+import { cn } from "@/lib/utils";
 
 interface FiltrosState {
   tipoCrime?: string;
@@ -56,6 +57,7 @@ function groupByDate<T extends { dataFato?: Date | string | null; dataPublicacao
 export function RadarFeed({ filtros }: RadarFeedProps) {
   const [selectedNoticiaId, setSelectedNoticiaId] = useState<number | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
 
   const {
     data,
@@ -170,17 +172,47 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
           {allNoticias.length} notícia{allNoticias.length > 1 ? "s" : ""}
         </div>
 
-        {allNoticias.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs text-zinc-500 hover:text-zinc-700 cursor-pointer"
-            onClick={() => exportNoticiasToCsv(allNoticias)}
-          >
-            <Download className="h-3.5 w-3.5 mr-1.5" />
-            Exportar CSV
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Toggle de visualização */}
+          <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
+            <button
+              onClick={() => setViewMode("cards")}
+              className={cn(
+                "p-1.5 rounded-md transition-colors cursor-pointer",
+                viewMode === "cards"
+                  ? "bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-zinc-100"
+                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+              )}
+              title="Modo cards"
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "p-1.5 rounded-md transition-colors cursor-pointer",
+                viewMode === "list"
+                  ? "bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-zinc-100"
+                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+              )}
+              title="Modo lista"
+            >
+              <List className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          {allNoticias.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs text-zinc-500 hover:text-zinc-700 cursor-pointer"
+              onClick={() => exportNoticiasToCsv(allNoticias)}
+            >
+              <Download className="h-3.5 w-3.5 mr-1.5" />
+              Exportar CSV
+            </Button>
+          )}
+        </div>
       </div>
 
       {groupByDate(allNoticias).map(({ label, items: group }) => (
@@ -199,6 +231,7 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
                 setSheetOpen(true);
               }}
               onQuickAction={handleQuickAction}
+              viewMode={viewMode}
             />
           ))}
         </div>

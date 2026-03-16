@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import {
   BarChart,
   Bar,
@@ -46,6 +47,22 @@ const CRIME_CHART_COLORS: Record<string, string> = {
   outros: "#71717a",
 };
 
+function getCrimeBadgeColor(tipo: string): string {
+  const map: Record<string, string> = {
+    homicidio: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+    tentativa_homicidio: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
+    trafico: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
+    roubo: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+    furto: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
+    violencia_domestica: "bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300",
+    sexual: "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/40 dark:text-fuchsia-300",
+    lesao_corporal: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+    porte_arma: "bg-slate-100 text-slate-700 dark:bg-slate-900/40 dark:text-slate-300",
+    estelionato: "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300",
+  };
+  return map[tipo] ?? "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";
+}
+
 export function RadarEstatisticas() {
   const [periodo, setPeriodo] = useState<string>("30d");
 
@@ -53,7 +70,7 @@ export function RadarEstatisticas() {
   const { data: deteccao } = trpc.radar.statsDeteccao.useQuery({
     periodo: periodo as any,
   });
-  const { data: bairros, isLoading: bairrosLoading } = trpc.radar.statsByBairro.useQuery({
+  const { data: bairros } = trpc.radar.statsByBairro.useQuery({
     periodo: periodo as any,
     limit: 10,
   });
@@ -300,26 +317,45 @@ export function RadarEstatisticas() {
         {bairros && bairros.length > 0 && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                Top 10 Bairros
+                Top Bairros
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={bairros} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis
-                    type="category"
-                    dataKey="bairro"
-                    tick={{ fontSize: 11 }}
-                    width={120}
-                  />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#10b981" name="Ocorrências" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+            <CardContent className="pt-0 space-y-2.5">
+              {(() => {
+                const maxCount = bairros[0]?.count ?? 1;
+                return bairros.map((b, i) => (
+                  <div key={b.bairro} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-zinc-400 w-4 text-right">{i + 1}</span>
+                        <span className="font-medium text-zinc-800 dark:text-zinc-200 truncate max-w-[140px]">
+                          {b.bairro}
+                        </span>
+                        {b.tipoCrimeDominante && (
+                          <Badge
+                            variant="secondary"
+                            className={cn("text-[9px] px-1 py-0 leading-tight border-0", getCrimeBadgeColor(b.tipoCrimeDominante))}
+                          >
+                            {getCrimeLabel(b.tipoCrimeDominante)}
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-zinc-500 shrink-0 ml-2">{b.count}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${(b.count / maxCount) * 100}%`,
+                          backgroundColor: CRIME_CHART_COLORS[b.tipoCrimeDominante || "outros"] || "#71717a",
+                        }}
+                      />
+                    </div>
+                  </div>
+                ));
+              })()}
             </CardContent>
           </Card>
         )}
