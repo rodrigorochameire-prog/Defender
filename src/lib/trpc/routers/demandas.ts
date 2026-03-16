@@ -2,7 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction } from "@/lib/db";
 import { demandas, processos, assistidos, users } from "@/lib/db/schema";
-import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull } from "drizzle-orm";
+import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull, not, asc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getDefensorResponsavel, getDefensoresVisiveis } from "../defensor-scope";
 import { normalizarNome, calcularSimilaridade } from "@/lib/pje-parser";
@@ -264,6 +264,74 @@ export const demandasRouter = router({
         .orderBy(demandas.prazo);
 
       return result;
+    }),
+
+  // Demandas com prazo se aproximando (para alertas proativos)
+  // Retorna demandas não concluídas com prazo entre hoje e hoje+N dias
+  prazosProximos: protectedProcedure
+    .input(
+      z.object({
+        dias: z.number().default(3),
+      }).optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const { dias = 3 } = input || {};
+      const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
+
+      const hoje = new Date();
+      const limite = new Date();
+      limite.setDate(hoje.getDate() + dias);
+
+      const hojeStr = hoje.toISOString().split('T')[0];
+      const limiteStr = limite.toISOString().split('T')[0];
+
+      const baseConditions = [
+        isNull(demandas.deletedAt),
+        gte(demandas.prazo, hojeStr),
+        lte(demandas.prazo, limiteStr),
+        // Excluir status terminais (concluídos/arquivados/protocolados)
+        not(inArray(demandas.status, [
+          'CONCLUIDO',
+          'ARQUIVADO',
+          '7_PROTOCOLADO',
+          '7_CIENCIA',
+          '7_SEM_ATUACAO',
+        ] as const)),
+      ];
+
+      // Aplicar filtro de defensor
+      if (defensoresVisiveis !== "all") {
+        if (defensoresVisiveis.length === 1) {
+          baseConditions.push(eq(demandas.defensorId, defensoresVisiveis[0]));
+        } else if (defensoresVisiveis.length > 1) {
+          baseConditions.push(inArray(demandas.defensorId, defensoresVisiveis));
+        }
+      }
+
+      const result = await db
+        .select({
+          id: demandas.id,
+          ato: demandas.ato,
+          prazo: demandas.prazo,
+          status: demandas.status,
+          assistido: {
+            id: assistidos.id,
+            nome: assistidos.nome,
+          },
+        })
+        .from(demandas)
+        .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
+        .where(and(...baseConditions))
+        .orderBy(asc(demandas.prazo))
+        .limit(10);
+
+      return result.map(d => ({
+        id: d.id,
+        assistido: d.assistido?.nome ?? 'Sem assistido',
+        prazo: d.prazo!,
+        ato: d.ato,
+        status: d.status,
+      }));
     }),
 
   // Criar nova demanda
@@ -714,8 +782,25 @@ export const demandasRouter = router({
             }).returning();
             assistido = newAssistido;
 
-            // TODO: auto-create Drive folder for new assistido
-            // ensureDriveFolderForAssistido(newAssistido.id, newAssistido.nome, targetAtribuicaoPrimaria)
+            // Auto-create Drive folder for new assistido (fire-and-forget, don't block import)
+            (async () => {
+              try {
+                const { isGoogleDriveConfigured, createOrFindAssistidoFolder, mapAtribuicaoToFolderKey } = await import(
+                  "@/lib/services/google-drive"
+                );
+                if (!isGoogleDriveConfigured()) return;
+                const folderKey = mapAtribuicaoToFolderKey(targetAtribuicaoPrimaria);
+                if (!folderKey) return;
+                const folder = await createOrFindAssistidoFolder(folderKey, newAssistido.nome);
+                if (folder) {
+                  await db.update(assistidos)
+                    .set({ driveFolderId: folder.id, updatedAt: new Date() })
+                    .where(eq(assistidos.id, newAssistido.id));
+                }
+              } catch (err) {
+                console.error(`[import] Auto-create Drive folder failed for assistido ${newAssistido.id}:`, err);
+              }
+            })();
           }
 
           // Rastrear assistido para contagem Solar
