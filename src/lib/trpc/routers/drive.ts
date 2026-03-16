@@ -4356,4 +4356,203 @@ export const driveRouter = router({
         results,
       };
     }),
+
+  /**
+   * Obtém a pasta do Drive para uma demanda específica (somente leitura).
+   *
+   * Hierarquia: Atribuição → Assistido → Processo (se >1 processo no assistido)
+   * Retorna folderId, folderUrl e lista de arquivos na pasta.
+   */
+  getDemandaFolder: protectedProcedure
+    .input(z.object({ demandaId: z.string() }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        // 1. Buscar demanda com assistido + processo
+        const [demanda] = await db
+          .select({
+            id: demandas.id,
+            assistidoId: demandas.assistidoId,
+            processoId: demandas.processoId,
+          })
+          .from(demandas)
+          .where(eq(demandas.id, parseInt(input.demandaId)))
+          .limit(1);
+
+        if (!demanda) {
+          throw new Error("Demanda não encontrada");
+        }
+
+        const [assistido] = await db
+          .select({
+            id: assistidos.id,
+            nome: assistidos.nome,
+            atribuicaoPrimaria: assistidos.atribuicaoPrimaria,
+            driveFolderId: assistidos.driveFolderId,
+          })
+          .from(assistidos)
+          .where(eq(assistidos.id, demanda.assistidoId))
+          .limit(1);
+
+        if (!assistido) {
+          throw new Error("Assistido não encontrado");
+        }
+
+        // 2. Verificar se Drive está configurado
+        if (!isGoogleDriveConfigured()) {
+          return {
+            configured: false as const,
+            folderId: null as string | null,
+            folderUrl: null as string | null,
+            files: [] as Array<{ id: string; name: string; mimeType: string; size: number | null; modifiedTime: string | undefined; webViewLink: string | undefined }>,
+            assistidoNome: assistido.nome,
+            assistidoHasFolder: !!assistido.driveFolderId,
+          };
+        }
+
+        // 3. Determinar a pasta alvo
+        let targetFolderId: string | null = assistido.driveFolderId || null;
+
+        if (demanda.processoId) {
+          const [processo] = await db
+            .select({ id: processos.id, numeroAutos: processos.numeroAutos, driveFolderId: processos.driveFolderId })
+            .from(processos)
+            .where(eq(processos.id, demanda.processoId))
+            .limit(1);
+
+          if (processo?.driveFolderId) {
+            // O processo já tem pasta vinculada — usar ela
+            targetFolderId = processo.driveFolderId;
+          }
+          // Caso contrário, arquivos ficam na pasta do assistido (single-processo)
+        }
+
+        if (!targetFolderId) {
+          return {
+            configured: true as const,
+            folderId: null as string | null,
+            folderUrl: null as string | null,
+            files: [] as Array<{ id: string; name: string; mimeType: string; size: number | null; modifiedTime: string | undefined; webViewLink: string | undefined }>,
+            assistidoNome: assistido.nome,
+            assistidoHasFolder: false,
+          };
+        }
+
+        // 4. Listar arquivos na pasta alvo
+        const { files } = await listFilesInFolder(targetFolderId, undefined, 50);
+
+        const fileList = files
+          .filter(f => f.mimeType !== "application/vnd.google-apps.folder")
+          .map(f => ({
+            id: f.id,
+            name: f.name,
+            mimeType: f.mimeType,
+            size: f.size ? parseInt(f.size) : null,
+            modifiedTime: f.modifiedTime,
+            webViewLink: f.webViewLink,
+          }));
+
+        return {
+          configured: true as const,
+          folderId: targetFolderId,
+          folderUrl: `https://drive.google.com/drive/folders/${targetFolderId}`,
+          files: fileList,
+          assistidoNome: assistido.nome,
+          assistidoHasFolder: !!assistido.driveFolderId,
+        };
+      }, "Erro ao obter pasta da demanda no Drive");
+    }),
+
+  /**
+   * Cria (ou encontra) a pasta do Drive para uma demanda.
+   * Hierarquia: Atribuição → Assistido → Processo (se >1 processo)
+   */
+  createDemandaFolder: protectedProcedure
+    .input(z.object({ demandaId: z.string() }))
+    .mutation(async ({ input }) => {
+      return safeAsync(async () => {
+        const [demanda] = await db
+          .select({
+            id: demandas.id,
+            assistidoId: demandas.assistidoId,
+            processoId: demandas.processoId,
+          })
+          .from(demandas)
+          .where(eq(demandas.id, parseInt(input.demandaId)))
+          .limit(1);
+
+        if (!demanda) throw new Error("Demanda não encontrada");
+
+        const [assistido] = await db
+          .select({
+            id: assistidos.id,
+            nome: assistidos.nome,
+            atribuicaoPrimaria: assistidos.atribuicaoPrimaria,
+            driveFolderId: assistidos.driveFolderId,
+          })
+          .from(assistidos)
+          .where(eq(assistidos.id, demanda.assistidoId))
+          .limit(1);
+
+        if (!assistido) throw new Error("Assistido não encontrado");
+        if (!isGoogleDriveConfigured()) throw new Error("Google Drive não configurado");
+
+        const atribMap: Record<string, "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI"> = {
+          JURI_CAMACARI: "JURI",
+          GRUPO_JURI: "GRUPO_JURI",
+          VVD_CAMACARI: "VVD",
+          EXECUCAO_PENAL: "EP",
+          SUBSTITUICAO: "SUBSTITUICAO",
+          SUBSTITUICAO_CIVEL: "SUBSTITUICAO",
+        };
+
+        // Garantir que o assistido tem uma pasta
+        let assistidoFolderId = assistido.driveFolderId;
+        if (!assistidoFolderId) {
+          const atribKey = atribMap[assistido.atribuicaoPrimaria || ""] || null;
+          if (!atribKey) throw new Error("Atribuição do assistido não mapeável para pasta do Drive");
+
+          const aFolder = await createOrFindAssistidoFolder(atribKey, assistido.nome);
+          if (!aFolder) throw new Error("Falha ao criar pasta do assistido no Drive");
+
+          assistidoFolderId = aFolder.id;
+          await db.update(assistidos).set({ driveFolderId: aFolder.id, updatedAt: new Date() }).where(eq(assistidos.id, assistido.id));
+        }
+
+        let targetFolderId = assistidoFolderId;
+
+        // Verificar se precisa de subpasta de processo
+        if (demanda.processoId) {
+          const [processo] = await db
+            .select({ id: processos.id, numeroAutos: processos.numeroAutos, driveFolderId: processos.driveFolderId })
+            .from(processos)
+            .where(eq(processos.id, demanda.processoId))
+            .limit(1);
+
+          if (processo) {
+            if (processo.driveFolderId) {
+              targetFolderId = processo.driveFolderId;
+            } else {
+              // Contar processos: se >1, criar subpasta
+              const [{ count }] = await db
+                .select({ count: sql<number>`count(*)::int` })
+                .from(processos)
+                .where(and(eq(processos.assistidoId, demanda.assistidoId), isNull(processos.deletedAt)));
+
+              if (count > 1) {
+                const pFolder = await createOrFindProcessoFolder(assistidoFolderId, processo.numeroAutos);
+                if (pFolder) {
+                  targetFolderId = pFolder.id;
+                  await db.update(processos).set({ driveFolderId: pFolder.id }).where(eq(processos.id, processo.id));
+                }
+              }
+            }
+          }
+        }
+
+        return {
+          folderId: targetFolderId,
+          folderUrl: `https://drive.google.com/drive/folders/${targetFolderId}`,
+        };
+      }, "Erro ao criar pasta da demanda no Drive");
+    }),
 });

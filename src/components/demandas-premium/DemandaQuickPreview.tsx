@@ -31,6 +31,12 @@ import {
   Mail,
   ArrowRight,
   Sparkles,
+  FolderOpen,
+  Loader2,
+  Upload,
+  File,
+  Image,
+  FileSpreadsheet,
 } from "lucide-react";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from "@/config/demanda-status";
 import { createPortal } from "react-dom";
@@ -390,15 +396,72 @@ export function DemandaQuickPreview({
   totalCount,
 }: DemandaQuickPreviewProps) {
   const [metadataOpen, setMetadataOpen] = useState(true);
+  const [docsOpen, setDocsOpen] = useState(false);
   const [activeStagePopover, setActiveStagePopover] = useState<number | null>(null);
   const stageRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [stageRect, setStageRect] = useState<DOMRect | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingFiles, setUploadingFiles] = useState<string[]>([]);
   const uploadFile = trpc.drive.uploadFile.useMutation();
+
+  // Drive folder query — only loads when docs panel is open
+  const {
+    data: driveFolder,
+    isLoading: driveFolderLoading,
+    refetch: refetchDriveFolder,
+  } = trpc.drive.getDemandaFolder.useQuery(
+    { demandaId: demanda?.id ?? "" },
+    { enabled: docsOpen && !!demanda?.id, staleTime: 30_000 }
+  );
+
+  const createDriveFolder = trpc.drive.createDemandaFolder.useMutation({
+    onSuccess: () => { void refetchDriveFolder(); },
+  });
 
   // Close popover when demanda changes or sheet closes
   useEffect(() => {
     setActiveStagePopover(null);
   }, [demanda?.id, open]);
+
+  // Handle file uploads to the demanda's Drive folder
+  const handleFileUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files ?? []);
+      if (!files.length || !driveFolder?.folderId) return;
+
+      // Reset input so same file can be re-selected
+      e.target.value = "";
+
+      for (const file of files) {
+        const fileName = file.name;
+        setUploadingFiles((prev) => [...prev, fileName]);
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const base64 = btoa(
+            new Uint8Array(arrayBuffer).reduce(
+              (data, byte) => data + String.fromCharCode(byte),
+              ""
+            )
+          );
+          await uploadFile.mutateAsync({
+            folderId: driveFolder.folderId,
+            fileName,
+            mimeType: file.type || "application/octet-stream",
+            fileBase64: `data:${file.type || "application/octet-stream"};base64,${base64}`,
+            description: `Enviado via OMBUDS — Demanda ${demanda?.id}`,
+          });
+          toast.success(`${fileName} enviado`, { description: "Arquivo salvo na pasta do Drive." });
+          void refetchDriveFolder();
+        } catch (err) {
+          console.error("[DemandaQuickPreview] Upload error:", err);
+          toast.error(`Erro ao enviar ${fileName}`);
+        } finally {
+          setUploadingFiles((prev) => prev.filter((n) => n !== fileName));
+        }
+      }
+    },
+    [driveFolder?.folderId, demanda?.id, uploadFile, refetchDriveFolder]
+  );
 
   // Upload audio to assistido's Drive folder
   const handleAudioUpload = useCallback(
@@ -460,6 +523,22 @@ export function DemandaQuickPreview({
   );
 
   if (!demanda) return null;
+
+  // Helper: icon component based on MIME type
+  function DriveFileIcon({ mimeType, className }: { mimeType: string; className?: string }) {
+    if (mimeType.startsWith("image/")) return <Image className={className} />;
+    if (mimeType.includes("spreadsheet") || mimeType.includes("excel") || mimeType.includes("csv"))
+      return <FileSpreadsheet className={className} />;
+    return <File className={className} />;
+  }
+
+  // Helper: human-readable file size
+  function formatBytes(bytes: number | null): string {
+    if (!bytes) return "";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
 
   const statusConfig = getStatusConfig(demanda.status);
   const statusColor = STATUS_GROUPS[statusConfig.group]?.color || "#A1A1AA";
@@ -963,6 +1042,156 @@ export function DemandaQuickPreview({
                 </div>
               </>
             )}
+
+            {/* ===== DOCUMENTOS (Drive) ===== */}
+            <div className="rounded-xl border border-zinc-200/60 dark:border-zinc-700/40 overflow-hidden">
+              {/* Collapsible header */}
+              <button
+                onClick={() => setDocsOpen((v) => !v)}
+                className="w-full flex items-center gap-2 px-3.5 sm:px-4 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
+              >
+                <FolderOpen className="w-4 h-4 text-zinc-400 shrink-0" />
+                <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Documentos</span>
+                {driveFolder?.files && driveFolder.files.length > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200/60 dark:border-zinc-700/40">
+                    {driveFolder.files.length}
+                  </span>
+                )}
+                {driveFolder?.folderUrl && (
+                  <a
+                    href={driveFolder.folderUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="ml-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                    title="Abrir pasta no Drive"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+                <div className="ml-auto">
+                  {docsOpen ? (
+                    <ChevronDown className="w-3 h-3 text-zinc-400" />
+                  ) : (
+                    <ChevronRight className="w-3 h-3 text-zinc-400" />
+                  )}
+                </div>
+              </button>
+
+              {/* Expanded content */}
+              {docsOpen && (
+                <div className="border-t border-zinc-200/40 dark:border-zinc-700/30">
+                  {/* Loading state */}
+                  {driveFolderLoading && (
+                    <div className="flex items-center justify-center gap-2 py-5 text-zinc-400">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-xs">Carregando...</span>
+                    </div>
+                  )}
+
+                  {/* Drive not configured */}
+                  {!driveFolderLoading && driveFolder && !driveFolder.configured && (
+                    <div className="px-4 py-4 text-center">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">Google Drive não configurado</p>
+                      <a
+                        href="/admin/settings/drive"
+                        className="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
+                      >
+                        Configurar Drive
+                      </a>
+                    </div>
+                  )}
+
+                  {/* No folder exists yet */}
+                  {!driveFolderLoading && driveFolder?.configured && !driveFolder.folderId && (
+                    <div className="px-4 py-4 text-center">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">
+                        Nenhuma pasta vinculada a esta demanda
+                      </p>
+                      <button
+                        onClick={() => createDriveFolder.mutate({ demandaId: demanda.id })}
+                        disabled={createDriveFolder.isPending}
+                        className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {createDriveFolder.isPending ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <FolderOpen className="w-3.5 h-3.5" />
+                        )}
+                        Criar pasta no Drive
+                      </button>
+                    </div>
+                  )}
+
+                  {/* File list */}
+                  {!driveFolderLoading && driveFolder?.configured && driveFolder.folderId && (
+                    <>
+                      {driveFolder.files.length === 0 ? (
+                        <div className="px-4 py-3 text-center text-xs text-zinc-400 dark:text-zinc-500">
+                          Nenhum arquivo na pasta
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
+                          {driveFolder.files.map((f) => (
+                            <div key={f.id} className="flex items-center gap-2 px-3.5 sm:px-4 py-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors group/file">
+                              <DriveFileIcon mimeType={f.mimeType} className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                              <span className="text-xs text-zinc-700 dark:text-zinc-300 flex-1 truncate" title={f.name}>
+                                {f.name}
+                              </span>
+                              {f.size !== null && (
+                                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 shrink-0">
+                                  {formatBytes(f.size)}
+                                </span>
+                              )}
+                              {f.webViewLink && (
+                                <a
+                                  href={f.webViewLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="opacity-0 group-hover/file:opacity-100 transition-opacity text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                                  title="Abrir no Drive"
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Upload area */}
+                      <div className="px-3.5 sm:px-4 py-2.5 border-t border-zinc-100 dark:border-zinc-800/60">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.heic,.webp"
+                          className="hidden"
+                          onChange={handleFileUpload}
+                        />
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingFiles.length > 0}
+                          className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-600 text-xs text-zinc-500 dark:text-zinc-400 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 dark:hover:border-emerald-600 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {uploadingFiles.length > 0 ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              Enviando {uploadingFiles.length} arquivo{uploadingFiles.length > 1 ? "s" : ""}...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-3.5 h-3.5" />
+                              Enviar documento
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
