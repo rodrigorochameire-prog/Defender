@@ -1239,7 +1239,10 @@ export interface ResultadoParserSEEU {
  * Extrai dados da "Mesa do Defensor" do SEEU
  * Suporta múltiplos formatos de copy/paste
  */
-export function parseSEEUIntimacoes(texto: string): ResultadoParserSEEU {
+export function parseSEEUIntimacoes(
+  texto: string,
+  tipoOverride?: "ciencia" | "manifestacao"
+): ResultadoParserSEEU {
   const intimacoes: IntimacaoSEEU[] = [];
   let contadorOrdem = 0;
 
@@ -1256,6 +1259,11 @@ export function parseSEEUIntimacoes(texto: string): ResultadoParserSEEU {
     if (matchManifestacao) {
       tipoManifestacao = "manifestacao";
     }
+  }
+
+  // Use explicit user override when provided
+  if (tipoOverride !== undefined) {
+    tipoManifestacao = tipoOverride;
   }
 
   // MODO PRINCIPAL: Encontrar todos os processos CNJ e extrair blocos

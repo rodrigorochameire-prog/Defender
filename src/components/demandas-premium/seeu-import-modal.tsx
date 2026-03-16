@@ -3,7 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
   FileText,
   AlertCircle,
@@ -35,6 +35,175 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
+
+// ─── Editable cell (click-to-edit, single line) ───────────────────────────────
+function EditableCell({
+  value,
+  onChange,
+  placeholder = "",
+  className = "",
+  mono = false,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  className?: string;
+  mono?: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => {
+          setEditing(false);
+          if (draft !== value) onChange(draft);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { setEditing(false); if (draft !== value) onChange(draft); }
+          if (e.key === "Escape") { setEditing(false); setDraft(value); }
+        }}
+        className={cn(
+          "w-full bg-white dark:bg-zinc-900 border border-emerald-400 rounded px-1.5 py-0.5 text-xs outline-none",
+          mono && "font-mono",
+          className
+        )}
+      />
+    );
+  }
+
+  return (
+    <span
+      onClick={() => { setDraft(value); setEditing(true); }}
+      title="Clique para editar"
+      className={cn(
+        "cursor-text hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded px-1.5 py-0.5 -mx-1.5 flex items-center gap-1 group",
+        !value && "text-zinc-400 italic",
+        className
+      )}
+    >
+      <span className="flex-1 truncate">{value || placeholder}</span>
+      <Pencil className="w-2.5 h-2.5 opacity-0 group-hover:opacity-40 flex-shrink-0 transition-opacity" />
+    </span>
+  );
+}
+
+// ─── Editable date cell ────────────────────────────────────────────────────────
+// Displays as DD/MM/YYYY text; opens a native date input on click
+function EditableDateCell({
+  value,
+  onChange,
+  placeholder = "Sem prazo",
+}: {
+  value: string; // DD/MM/YYYY or empty
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+
+  // Convert DD/MM/YYYY → YYYY-MM-DD for the input
+  const toInputValue = (ddmmyyyy: string) => {
+    const p = ddmmyyyy.split("/");
+    if (p.length === 3) return `${p[2]}-${p[1]}-${p[0]}`;
+    return "";
+  };
+
+  // Convert YYYY-MM-DD → DD/MM/YYYY for display/storage
+  const fromInputValue = (yyyymmdd: string) => {
+    const p = yyyymmdd.split("-");
+    if (p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+    return "";
+  };
+
+  if (editing) {
+    return (
+      <input
+        type="date"
+        autoFocus
+        defaultValue={toInputValue(value)}
+        onBlur={(e) => {
+          setEditing(false);
+          const formatted = fromInputValue(e.target.value);
+          if (formatted && formatted !== value) onChange(formatted);
+        }}
+        onChange={(e) => {
+          // commit immediately on change so blur always has latest
+        }}
+        className="w-[130px] bg-white dark:bg-zinc-900 border border-emerald-400 rounded px-1.5 py-0.5 text-xs outline-none"
+      />
+    );
+  }
+
+  return (
+    <span
+      onClick={() => setEditing(true)}
+      title="Clique para editar prazo"
+      className={cn(
+        "cursor-text hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded px-1.5 py-0.5 -mx-1.5 flex items-center gap-1 group text-xs",
+        !value && "text-zinc-400 italic"
+      )}
+    >
+      <Calendar className="w-3 h-3 flex-shrink-0" />
+      <span>{value || placeholder}</span>
+      <Pencil className="w-2.5 h-2.5 opacity-0 group-hover:opacity-40 flex-shrink-0 transition-opacity" />
+    </span>
+  );
+}
+
+// ─── Expandable textarea cell ──────────────────────────────────────────────────
+function EditableTextarea({
+  value,
+  onChange,
+  placeholder = "Adicionar observação...",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  if (editing) {
+    return (
+      <textarea
+        autoFocus
+        value={draft}
+        rows={2}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => {
+          setEditing(false);
+          if (draft !== value) onChange(draft);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") { setEditing(false); setDraft(value); }
+        }}
+        className="w-full bg-white dark:bg-zinc-900 border border-emerald-400 rounded px-1.5 py-1 text-xs outline-none resize-none"
+        placeholder={placeholder}
+      />
+    );
+  }
+
+  return (
+    <span
+      onClick={() => { setDraft(value); setEditing(true); }}
+      title="Clique para adicionar observação"
+      className={cn(
+        "cursor-text hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded px-1.5 py-0.5 -mx-1.5 flex items-center gap-1 group text-xs",
+        !value && "text-zinc-400 italic"
+      )}
+    >
+      <span className="flex-1 truncate">{value || placeholder}</span>
+      <Pencil className="w-2.5 h-2.5 opacity-0 group-hover:opacity-40 flex-shrink-0 transition-opacity" />
+    </span>
+  );
+}
+
+// Extended type to allow observacao field stored inline
+type IntimacaoSEEUEditable = IntimacaoSEEU & { observacao?: string };
 
 interface SEEUImportModalProps {
   isOpen: boolean;
@@ -145,7 +314,7 @@ export function SEEUImportModal({
   const [tipoManifestacao, setTipoManifestacao] = useState<"manifestacao" | "ciencia">("manifestacao");
 
   // Estados para separar novas vs duplicatas
-  const [intimacoesNovas, setIntimacoesNovas] = useState<IntimacaoSEEU[]>([]);
+  const [intimacoesNovas, setIntimacoesNovas] = useState<IntimacaoSEEUEditable[]>([]);
   const [duplicatas, setDuplicatas] = useState<DuplicataInfoSEEU[]>([]);
 
   // Editable review state: track which items are selected and per-item tipo
@@ -159,14 +328,7 @@ export function SEEUImportModal({
     }
 
     try {
-      const resultadoParser = parseSEEUIntimacoes(texto);
-
-      // Override parser's auto-detection with user's explicit selection
-      resultadoParser.tipoManifestacao = tipoManifestacao;
-      resultadoParser.intimacoes.forEach(i => {
-        i.tipoManifestacao = tipoManifestacao;
-        i.tipoDocumento = tipoManifestacao === 'ciencia' ? 'Ciência' : 'Manifestação';
-      });
+      const resultadoParser = parseSEEUIntimacoes(texto, tipoManifestacao);
 
       if (resultadoParser.intimacoes.length === 0) {
         toast.error("Nenhuma intimação encontrada. Verifique se o texto foi copiado corretamente do SEEU.");
@@ -225,8 +387,18 @@ export function SEEUImportModal({
     try {
       // 1. Importar novas demandas (only selected)
       if (novasSelecionadas.length > 0) {
-        const demandas = novasSelecionadas.map((intimacao) => {
+        const demandas = (novasSelecionadas as IntimacaoSEEUEditable[]).map((intimacao) => {
           const demanda = intimacaoSEEUToDemanda(intimacao);
+          // Merge edited fields over the auto-converted values
+          if (intimacao.ultimoDia) {
+            demanda.prazo = convertDateToISO(intimacao.ultimoDia);
+          }
+          if (intimacao.numeroProcesso) {
+            demanda.processos = [{ ...demanda.processos[0], numero: intimacao.numeroProcesso }];
+          }
+          if (intimacao.observacao) {
+            demanda.observacao = intimacao.observacao;
+          }
           return demanda;
         });
         onImport(demandas);
@@ -234,15 +406,20 @@ export function SEEUImportModal({
 
       // 2. Atualizar demandas existentes (only selected duplicatas)
       if (dupsSelecionadas.length > 0 && onUpdate) {
-        const demandasParaAtualizar = dupsSelecionadas.map(dup => ({
-          id: dup.existente.id,
-          status: 'analisar',
-          ato: dup.nova.tipoManifestacao === 'ciencia' ? 'Ciência' : 'Manifestação',
-          prazo: convertDateToISO(dup.nova.ultimoDia),
-          providencias: dup.nova.assuntoPrincipal
-            ? `${dup.nova.classeProcessual || 'Execução Penal'} - ${dup.nova.assuntoPrincipal}`
-            : dup.existente.providencias,
-        }));
+        const demandasParaAtualizar = dupsSelecionadas.map(dup => {
+          const nova = dup.nova as IntimacaoSEEUEditable;
+          return {
+            id: dup.existente.id,
+            status: 'analisar',
+            ato: nova.tipoManifestacao === 'ciencia' ? 'Ciência' : 'Manifestação',
+            prazo: convertDateToISO(nova.ultimoDia),
+            processos: [{ tipo: dup.existente.processos?.[0]?.tipo || 'PPL', numero: nova.numeroProcesso }],
+            providencias: nova.assuntoPrincipal
+              ? `${nova.classeProcessual || 'Execução Penal'} - ${nova.assuntoPrincipal}`
+              : dup.existente.providencias,
+            ...(nova.observacao ? { observacao: nova.observacao } : {}),
+          };
+        });
         onUpdate(demandasParaAtualizar);
       }
 
@@ -273,6 +450,33 @@ export function SEEUImportModal({
     setSelectedNovas(new Set());
     setSelectedDups(new Set());
   };
+
+  // Update a field on a specific nova intimação by index
+  const handleUpdateNova = useCallback(
+    (index: number, field: keyof IntimacaoSEEUEditable, value: string) => {
+      setIntimacoesNovas((prev) => {
+        const next = [...prev];
+        next[index] = { ...next[index], [field]: value };
+        return next;
+      });
+    },
+    []
+  );
+
+  // Update a field on a specific duplicata's nova by index
+  const handleUpdateDup = useCallback(
+    (index: number, field: keyof IntimacaoSEEUEditable, value: string) => {
+      setDuplicatas((prev) => {
+        const next = [...prev];
+        next[index] = {
+          ...next[index],
+          nova: { ...next[index].nova, [field]: value } as IntimacaoSEEUEditable,
+        };
+        return next;
+      });
+    },
+    []
+  );
 
   const handleVoltar = () => {
     if (etapa === "revisar") {
@@ -580,7 +784,11 @@ Executado: NEMIAS DOS SANTOS JESUS
                   </div>
                 </div>
 
-                <ScrollArea className="h-[200px]">
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 flex items-center gap-1">
+                  <Pencil className="w-2.5 h-2.5" />
+                  Clique em qualquer campo para editar antes de importar
+                </p>
+                <ScrollArea className="h-[260px]">
                   <div className="space-y-2 pr-4">
                     {intimacoesNovas.map((intimacao, index) => {
                       const isSelected = selectedNovas.has(index);
@@ -588,76 +796,101 @@ Executado: NEMIAS DOS SANTOS JESUS
                         <Card
                           key={index}
                           className={cn(
-                            "transition-all cursor-pointer",
+                            "transition-all",
                             isSelected
-                              ? "border-emerald-200 dark:border-emerald-900/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20"
-                              : "border-zinc-200 dark:border-zinc-800 opacity-50 hover:opacity-75"
+                              ? "border-emerald-200 dark:border-emerald-900/50"
+                              : "border-zinc-200 dark:border-zinc-800 opacity-50"
                           )}
-                          onClick={() => {
-                            const next = new Set(selectedNovas);
-                            if (isSelected) next.delete(index); else next.add(index);
-                            setSelectedNovas(next);
-                          }}
                         >
                           <CardContent className="py-3">
                             <div className="flex items-start gap-3">
-                              {/* Checkbox */}
-                              <div className={cn(
-                                "mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors",
-                                isSelected
-                                  ? "bg-emerald-600 border-emerald-600"
-                                  : "border-zinc-300 dark:border-zinc-600"
-                              )}>
+                              {/* Checkbox — clicking only this toggles selection */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const next = new Set(selectedNovas);
+                                  if (isSelected) next.delete(index); else next.add(index);
+                                  setSelectedNovas(next);
+                                }}
+                                className={cn(
+                                  "mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors cursor-pointer",
+                                  isSelected
+                                    ? "bg-emerald-600 border-emerald-600"
+                                    : "border-zinc-300 dark:border-zinc-600"
+                                )}
+                              >
                                 {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <User className="w-4 h-4 text-emerald-600" />
+                              </button>
+
+                              <div className="flex-1 min-w-0 space-y-1.5">
+                                {/* Row 1: name + seq */}
+                                <div className="flex items-center gap-2">
+                                  <User className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                                   <span className="font-semibold text-sm">{intimacao.assistido}</span>
                                   {intimacao.seq && (
                                     <Badge variant="outline" className="text-[10px]">
                                       #{intimacao.seq}
                                     </Badge>
                                   )}
-                                </div>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  <code className="bg-muted px-1.5 py-0.5 rounded font-mono">
-                                    {intimacao.numeroProcesso}
-                                  </code>
                                   {getAssuntoBadge(intimacao.assuntoPrincipal)}
                                 </div>
-                                <div className="flex items-center gap-2 mt-1.5">
+
+                                {/* Row 2: processo (editable) + tipo (toggle) */}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <div className="flex items-center gap-1 text-xs text-muted-foreground min-w-0">
+                                    <Hash className="w-3 h-3 flex-shrink-0" />
+                                    <div className="min-w-[160px] max-w-[220px]" onClick={(e) => e.stopPropagation()}>
+                                      <EditableCell
+                                        value={intimacao.numeroProcesso || ""}
+                                        onChange={(v) => handleUpdateNova(index, 'numeroProcesso', v)}
+                                        placeholder="Número do processo"
+                                        mono
+                                        className="text-[11px]"
+                                      />
+                                    </div>
+                                  </div>
                                   {/* Per-item tipo toggle */}
                                   <button
+                                    type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      const updated = [...intimacoesNovas];
                                       const newTipo = intimacao.tipoManifestacao === 'ciencia' ? 'manifestacao' : 'ciencia';
-                                      updated[index] = {
-                                        ...intimacao,
-                                        tipoManifestacao: newTipo as any,
-                                        tipoDocumento: newTipo === 'ciencia' ? 'Ciência' : 'Manifestação',
-                                      };
-                                      setIntimacoesNovas(updated);
+                                      handleUpdateNova(index, 'tipoManifestacao', newTipo);
+                                      handleUpdateNova(index, 'tipoDocumento', newTipo === 'ciencia' ? 'Ciência' : 'Manifestação');
                                     }}
                                     className={cn(
-                                      "text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors cursor-pointer",
+                                      "text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors cursor-pointer flex-shrink-0",
                                       intimacao.tipoManifestacao === 'ciencia'
                                         ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 hover:bg-blue-200"
                                         : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 hover:bg-amber-200"
                                     )}
+                                    title="Clique para alternar tipo"
                                   >
                                     {intimacao.tipoManifestacao === 'ciencia' ? 'Ciência' : 'Manifestação'}
                                   </button>
                                 </div>
-                              </div>
-                              <div className="text-right flex-shrink-0">
-                                {intimacao.ultimoDia && (
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <Calendar className="w-3 h-3" />
-                                    <span>Prazo: {intimacao.ultimoDia}</span>
+
+                                {/* Row 3: prazo (editable date) */}
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                                  <span className="text-[10px] text-zinc-400 font-medium">Prazo:</span>
+                                  <EditableDateCell
+                                    value={intimacao.ultimoDia || ""}
+                                    onChange={(v) => handleUpdateNova(index, 'ultimoDia', v)}
+                                    placeholder="Sem prazo"
+                                  />
+                                </div>
+
+                                {/* Row 4: observação (editable textarea) */}
+                                <div className="flex items-start gap-1 text-xs text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                                  <span className="text-[10px] text-zinc-400 font-medium mt-0.5">Obs:</span>
+                                  <div className="flex-1 min-w-0">
+                                    <EditableTextarea
+                                      value={(intimacao as IntimacaoSEEUEditable).observacao || ""}
+                                      onChange={(v) => handleUpdateNova(index, 'observacao', v)}
+                                      placeholder="Adicionar observação..."
+                                    />
                                   </div>
-                                )}
+                                </div>
                               </div>
                             </div>
                           </CardContent>
@@ -701,56 +934,111 @@ Executado: NEMIAS DOS SANTOS JESUS
                   </div>
                 </div>
 
-                <ScrollArea className="h-[150px]">
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 flex items-center gap-1">
+                  <Pencil className="w-2.5 h-2.5" />
+                  Clique em qualquer campo para editar antes de atualizar
+                </p>
+                <ScrollArea className="h-[200px]">
                   <div className="space-y-2 pr-4">
                     {duplicatas.map((dup, index) => {
                       const isSelected = selectedDups.has(index);
+                      const nova = dup.nova as IntimacaoSEEUEditable;
                       return (
                         <Card
                           key={index}
                           className={cn(
-                            "transition-all cursor-pointer",
+                            "transition-all",
                             isSelected
-                              ? "border-purple-200 dark:border-purple-900/50 hover:bg-purple-50/50 dark:hover:bg-purple-950/20"
-                              : "border-zinc-200 dark:border-zinc-800 opacity-50 hover:opacity-75"
+                              ? "border-purple-200 dark:border-purple-900/50"
+                              : "border-zinc-200 dark:border-zinc-800 opacity-50"
                           )}
-                          onClick={() => {
-                            const next = new Set(selectedDups);
-                            if (isSelected) next.delete(index); else next.add(index);
-                            setSelectedDups(next);
-                          }}
                         >
                           <CardContent className="py-3">
                             <div className="flex items-start gap-3">
-                              <div className={cn(
-                                "mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors",
-                                isSelected
-                                  ? "bg-purple-600 border-purple-600"
-                                  : "border-zinc-300 dark:border-zinc-600"
-                              )}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const next = new Set(selectedDups);
+                                  if (isSelected) next.delete(index); else next.add(index);
+                                  setSelectedDups(next);
+                                }}
+                                className={cn(
+                                  "mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors cursor-pointer",
+                                  isSelected
+                                    ? "bg-purple-600 border-purple-600"
+                                    : "border-zinc-300 dark:border-zinc-600"
+                                )}
+                              >
                                 {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <User className="w-4 h-4 text-purple-600" />
-                                  <span className="font-semibold text-sm">{dup.nova.assistido}</span>
+                              </button>
+
+                              <div className="flex-1 min-w-0 space-y-1.5">
+                                {/* Row 1: name */}
+                                <div className="flex items-center gap-2">
+                                  <User className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                                  <span className="font-semibold text-sm">{nova.assistido}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  <code className="bg-muted px-1.5 py-0.5 rounded font-mono">
-                                    {dup.nova.numeroProcesso}
-                                  </code>
+
+                                {/* Row 2: processo (editable) + tipo (toggle) */}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <div className="flex items-center gap-1 text-xs text-muted-foreground min-w-0" onClick={(e) => e.stopPropagation()}>
+                                    <Hash className="w-3 h-3 flex-shrink-0" />
+                                    <div className="min-w-[160px] max-w-[220px]">
+                                      <EditableCell
+                                        value={nova.numeroProcesso || ""}
+                                        onChange={(v) => handleUpdateDup(index, 'numeroProcesso', v)}
+                                        placeholder="Número do processo"
+                                        mono
+                                        className="text-[11px]"
+                                      />
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const newTipo = nova.tipoManifestacao === 'ciencia' ? 'manifestacao' : 'ciencia';
+                                      handleUpdateDup(index, 'tipoManifestacao', newTipo);
+                                      handleUpdateDup(index, 'tipoDocumento', newTipo === 'ciencia' ? 'Ciência' : 'Manifestação');
+                                    }}
+                                    className={cn(
+                                      "text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors cursor-pointer flex-shrink-0",
+                                      nova.tipoManifestacao === 'ciencia'
+                                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 hover:bg-blue-200"
+                                        : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 hover:bg-purple-200"
+                                    )}
+                                    title="Clique para alternar tipo"
+                                  >
+                                    {nova.tipoManifestacao === 'ciencia' ? 'Ciência' : 'Manifestação'}
+                                  </button>
                                 </div>
-                                <p className="text-[10px] text-purple-600 dark:text-purple-400 mt-1">
+
+                                {/* Row 3: prazo (editable date) */}
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                                  <span className="text-[10px] text-zinc-400 font-medium">Prazo:</span>
+                                  <EditableDateCell
+                                    value={nova.ultimoDia || ""}
+                                    onChange={(v) => handleUpdateDup(index, 'ultimoDia', v)}
+                                    placeholder="Sem prazo"
+                                  />
+                                </div>
+
+                                {/* Row 4: observação */}
+                                <div className="flex items-start gap-1 text-xs text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                                  <span className="text-[10px] text-zinc-400 font-medium mt-0.5">Obs:</span>
+                                  <div className="flex-1 min-w-0">
+                                    <EditableTextarea
+                                      value={nova.observacao || ""}
+                                      onChange={(v) => handleUpdateDup(index, 'observacao', v)}
+                                      placeholder="Adicionar observação..."
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Differences summary */}
+                                <p className="text-[10px] text-purple-600 dark:text-purple-400">
                                   {dup.diferencas.join(" • ")}
                                 </p>
-                              </div>
-                              <div className="text-right flex-shrink-0">
-                                {dup.nova.ultimoDia && (
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <Calendar className="w-3 h-3" />
-                                    <span>{dup.nova.ultimoDia}</span>
-                                  </div>
-                                )}
                               </div>
                             </div>
                           </CardContent>
