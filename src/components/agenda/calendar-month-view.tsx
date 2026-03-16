@@ -48,6 +48,7 @@ import {
   Copy,
   Scale,
   X,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -57,6 +58,7 @@ interface CalendarMonthViewProps {
   onDateChange: (date: Date) => void;
   onEventClick: (evento: any) => void;
   onDateClick: (date: Date) => void;
+  onCreateClick?: (date: Date) => void;
   onEditEvento?: (evento: any) => void;
   onDeleteEvento?: (id: string) => void;
   onStatusChange?: (id: string, status: string) => void;
@@ -495,6 +497,7 @@ export function CalendarMonthView({
   onDateChange,
   onEventClick,
   onDateClick,
+  onCreateClick,
   onEditEvento,
   onDeleteEvento,
   onStatusChange,
@@ -533,7 +536,12 @@ export function CalendarMonthView({
     if (dayEvents.length > 0) {
       setSheetDate(date);
     } else {
-      onDateClick(date);
+      // Empty day: trigger quick-create if available, else fall back to date click
+      if (onCreateClick) {
+        onCreateClick(date);
+      } else {
+        onDateClick(date);
+      }
     }
   };
 
@@ -627,11 +635,11 @@ export function CalendarMonthView({
                     key={dayIndex}
                     onClick={(e) => handleDayClick(date, e)}
                     className={`
-                      relative min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 border-r border-zinc-100 dark:border-zinc-800 last:border-r-0
+                      group relative min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 border-r border-zinc-100 dark:border-zinc-800 last:border-r-0
                       transition-colors duration-150 cursor-pointer
-                      ${isCurrentMonth 
-                        ? isWeekendDay 
-                          ? "bg-zinc-50/50 dark:bg-zinc-900/50" 
+                      ${isCurrentMonth
+                        ? isWeekendDay
+                          ? "bg-zinc-50/50 dark:bg-zinc-900/50"
                           : "bg-white dark:bg-zinc-900"
                         : "bg-zinc-100/50 dark:bg-zinc-950/50"
                       }
@@ -689,6 +697,16 @@ export function CalendarMonthView({
                       >
                         Ver todos
                       </button>
+                    )}
+
+                    {/* Quick-create ghost placeholder — only on current-month empty days */}
+                    {isCurrentMonth && dayEvents.length === 0 && onCreateClick && (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer rounded bg-emerald-50/40 dark:bg-emerald-950/20 border border-dashed border-emerald-300/50 dark:border-emerald-700/40 pointer-events-none group-hover:pointer-events-auto">
+                        <div className="flex items-center gap-1">
+                          <Plus className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
+                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Nova audiência</span>
+                        </div>
+                      </div>
                     )}
                   </div>
                 );

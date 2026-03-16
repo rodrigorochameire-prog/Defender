@@ -57,6 +57,7 @@ interface CalendarWeekViewProps {
   onDateChange: (date: Date) => void;
   onEventClick: (evento: any) => void;
   onDateClick: (date: Date) => void;
+  onCreateClick?: (date: Date, hour: number) => void;
   onEditEvento?: (evento: any) => void;
   onDeleteEvento?: (id: string) => void;
   /** Extra content rendered in the header (e.g. defensor avatars) */
@@ -383,6 +384,7 @@ export function CalendarWeekView({
   onDateChange,
   onEventClick,
   onDateClick,
+  onCreateClick,
   onEditEvento,
   onDeleteEvento,
   headerRight,
@@ -575,14 +577,21 @@ export function CalendarWeekView({
                   const [h] = evento.horarioInicio.split(":").map(Number);
                   return h === hora;
                 }) || [];
+                const isEmpty = eventosHora.length === 0;
 
                 return (
                   <div
                     key={dayIndex}
-                    className={`relative p-0.5 border-r border-zinc-100 dark:border-zinc-800/50 last:border-r-0 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors ${
+                    className={`group relative p-0.5 border-r border-zinc-100 dark:border-zinc-800/50 last:border-r-0 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors ${
                       isWeekend(day) ? "bg-zinc-50/30 dark:bg-zinc-900/30" : ""
                     } ${isToday(day) ? "bg-emerald-50/30 dark:bg-emerald-950/10" : ""}`}
-                    onClick={() => onDateClick(day)}
+                    onClick={() => {
+                      if (isEmpty && onCreateClick) {
+                        onCreateClick(day, hora);
+                      } else {
+                        onDateClick(day);
+                      }
+                    }}
                   >
                     <div className="space-y-0.5">
                       {eventosHora.map((evento) => (
@@ -595,6 +604,15 @@ export function CalendarWeekView({
                         />
                       ))}
                     </div>
+                    {/* Quick-create ghost placeholder on empty slots */}
+                    {isEmpty && onCreateClick && (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded bg-emerald-50/30 dark:bg-emerald-950/20 border border-dashed border-emerald-300/50 dark:border-emerald-700/40">
+                        <div className="flex items-center gap-0.5">
+                          <Plus className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
+                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 ml-1">Nova audiência</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}

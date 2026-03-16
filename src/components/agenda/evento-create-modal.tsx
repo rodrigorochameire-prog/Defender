@@ -57,6 +57,8 @@ interface EventoCreateModalProps {
   onClose: () => void;
   onSave: (data: EventoFormData) => void;
   editData?: EventoFormData | null;
+  /** Pre-fill date and/or time when opening via quick-create (click on empty slot) */
+  defaultData?: { data?: string; horarioInicio?: string } | null;
 }
 
 const tipoOptions = [
@@ -112,10 +114,10 @@ const lembreteOptions = [
   { value: "1sem", label: "1 semana antes" },
 ];
 
-export function EventoCreateModal({ isOpen, onClose, onSave, editData }: EventoCreateModalProps) {
+export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultData }: EventoCreateModalProps) {
   const isEditMode = !!editData;
 
-  const [formData, setFormData] = useState<EventoFormData>({
+  const emptyForm: EventoFormData = {
     titulo: "",
     tipo: "audiencia",
     data: "",
@@ -134,7 +136,9 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData }: EventoC
     participantes: [],
     observacoes: "",
     documentos: [],
-  });
+  };
+
+  const [formData, setFormData] = useState<EventoFormData>(emptyForm);
 
   const [newTag, setNewTag] = useState("");
   const [newParticipante, setNewParticipante] = useState("");
@@ -144,27 +148,13 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData }: EventoC
       setFormData(editData);
     } else {
       setFormData({
-        titulo: "",
-        tipo: "audiencia",
-        data: "",
-        horarioInicio: "",
-        horarioFim: "",
-        local: "",
-        assistido: "",
-        processo: "",
-        atribuicao: "Geral",
-        status: "confirmado",
-        descricao: "",
-        prioridade: "media",
-        recorrencia: "nenhuma",
-        lembretes: [],
-        tags: [],
-        participantes: [],
-        observacoes: "",
-        documentos: [],
+        ...emptyForm,
+        data: defaultData?.data || "",
+        horarioInicio: defaultData?.horarioInicio || "",
       });
     }
-  }, [editData, isOpen]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editData, defaultData, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

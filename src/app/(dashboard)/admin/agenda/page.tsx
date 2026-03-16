@@ -569,6 +569,8 @@ export default function AgendaPage() {
   const [isBuscaRegistrosModalOpen, setIsBuscaRegistrosModalOpen] = useState(false);
   const [editingEvento, setEditingEvento] = useState<EventoFormData | null>(null);
   const [selectedEvento, setSelectedEvento] = useState<any | null>(null);
+  // Quick-create: pre-filled date/time from clicking an empty slot
+  const [quickCreateData, setQuickCreateData] = useState<{ data?: string; horarioInicio?: string } | null>(null);
 
   // Buscar audiências do banco via tRPC (sem limite para mostrar todos os eventos)
   const { data: audienciasData, isLoading: isLoadingAudiencias, refetch } = trpc.audiencias.list.useQuery();
@@ -985,6 +987,21 @@ export default function AgendaPage() {
   };
 
   const handleCriarNovoEvento = (evento: any) => {};
+
+  // Quick-create: open modal pre-filled with clicked date (month view)
+  const handleMonthQuickCreate = (date: Date) => {
+    setQuickCreateData({ data: format(date, "yyyy-MM-dd") });
+    setIsCreateModalOpen(true);
+  };
+
+  // Quick-create: open modal pre-filled with clicked date + hour (week view)
+  const handleWeekQuickCreate = (date: Date, hour: number) => {
+    setQuickCreateData({
+      data: format(date, "yyyy-MM-dd"),
+      horarioInicio: `${String(hour).padStart(2, "0")}:00`,
+    });
+    setIsCreateModalOpen(true);
+  };
 
   const handleOpenRegistro = (evento: any) => {
     setSelectedEvento(evento);
@@ -1645,6 +1662,7 @@ export default function AgendaPage() {
                 setCurrentDate(date);
                 setViewMode("list");
               }}
+              onCreateClick={handleMonthQuickCreate}
               onEditEvento={handleEditEvento}
               onDeleteEvento={handleDeleteEvento}
               onStatusChange={handleStatusChange}
@@ -1660,6 +1678,7 @@ export default function AgendaPage() {
                 setCurrentDate(date);
                 setViewMode("list");
               }}
+              onCreateClick={handleWeekQuickCreate}
               onEditEvento={handleEditEvento}
               onDeleteEvento={handleDeleteEvento}
               headerRight={calendarHeaderRight}
@@ -1826,8 +1845,12 @@ export default function AgendaPage() {
           ========================================== */}
       <EventoCreateModal
         isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setQuickCreateData(null);
+        }}
         onSave={handleSaveNewEvento}
+        defaultData={quickCreateData}
       />
 
       <EventoCreateModal
