@@ -51,7 +51,7 @@ const TIPOS_OFICIO = [
 
 interface ReviewResult {
   score: number;
-  sugestoes: Array<{ tipo: string; descricao: string; trecho?: string; sugestao?: string }>;
+  sugestoes: Array<{ tipo: string; sugestao?: string; descricao?: string; trecho?: string; prioridade?: string }>;
   tomAdequado: boolean;
   formalidadeOk: boolean;
   dadosCorretos: boolean;
@@ -704,15 +704,10 @@ Defensor(a) Publico(a)`}
                           {s.tipo}
                         </Badge>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs text-zinc-300">{s.descricao}</p>
+                          <p className="text-xs text-zinc-300">{(s as any).sugestao || (s as any).descricao}</p>
                           {s.trecho && (
                             <p className="text-[10px] text-zinc-600 mt-1 font-mono truncate">
-                              {s.trecho}
-                            </p>
-                          )}
-                          {s.sugestao && (
-                            <p className="text-[10px] text-emerald-400/70 mt-0.5">
-                              Sugestao: {s.sugestao}
+                              Trecho: {s.trecho}
                             </p>
                           )}
                         </div>
