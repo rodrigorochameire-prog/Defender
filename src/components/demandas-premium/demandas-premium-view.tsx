@@ -1849,6 +1849,82 @@ export default function Demandas() {
     return () => window.removeEventListener("keydown", handler);
   }, [previewDemandaId, handlePreviewNavigate]);
 
+  // ==========================================
+  // KEYBOARD SHORTCUTS — J/K navigation, Enter to open, S for status, Escape to close
+  // ==========================================
+  const [focusedDemandaIndex, setFocusedDemandaIndex] = useState<number | null>(null);
+  const focusedDemandaCardRefs = useRef<Map<string, HTMLElement>>(new Map());
+
+  const registerFocusedCardRef = useCallback((id: string, el: HTMLElement | null) => {
+    if (el) focusedDemandaCardRefs.current.set(id, el);
+    else focusedDemandaCardRefs.current.delete(id);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Skip when focus is inside any input, textarea, or contenteditable
+      const tag = (document.activeElement as HTMLElement)?.tagName;
+      const isEditing =
+        tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" ||
+        (document.activeElement as HTMLElement)?.isContentEditable;
+      if (isEditing) return;
+
+      // Only activate in planilha/cards/grid view tabs where the list is visible
+      if (activeTab !== "planilha" && activeTab !== "kanban") return;
+      if (activeTab === "kanban") return; // Kanban uses card clicks, not linear nav
+
+      const listLen = demandasOrdenadas.length;
+      if (listLen === 0) return;
+
+      if (e.key === "j" || e.key === "J") {
+        e.preventDefault();
+        setFocusedDemandaIndex(prev => {
+          const next = prev === null ? 0 : Math.min(prev + 1, listLen - 1);
+          const demanda = demandasOrdenadas[next];
+          if (demanda) {
+            const el = focusedDemandaCardRefs.current.get(String(demanda.id));
+            el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          }
+          return next;
+        });
+      } else if (e.key === "k" || e.key === "K") {
+        e.preventDefault();
+        setFocusedDemandaIndex(prev => {
+          const next = prev === null ? 0 : Math.max(prev - 1, 0);
+          const demanda = demandasOrdenadas[next];
+          if (demanda) {
+            const el = focusedDemandaCardRefs.current.get(String(demanda.id));
+            el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          }
+          return next;
+        });
+      } else if (e.key === "Enter") {
+        if (focusedDemandaIndex === null) return;
+        e.preventDefault();
+        const demanda = demandasOrdenadas[focusedDemandaIndex];
+        if (demanda) setPreviewDemandaId(String(demanda.id));
+      } else if (e.key === "s" || e.key === "S") {
+        // S opens status change — delegate to the focused card's status button if present
+        if (focusedDemandaIndex === null) return;
+        e.preventDefault();
+        const demanda = demandasOrdenadas[focusedDemandaIndex];
+        if (demanda) {
+          const el = focusedDemandaCardRefs.current.get(String(demanda.id));
+          const statusBtn = el?.querySelector<HTMLButtonElement>("[data-status-trigger]");
+          statusBtn?.click();
+        }
+      } else if (e.key === "Escape") {
+        if (focusedDemandaIndex !== null) {
+          e.preventDefault();
+          setFocusedDemandaIndex(null);
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [activeTab, demandasOrdenadas, focusedDemandaIndex, setPreviewDemandaId]);
+
   return (
     <div className="w-full min-h-screen bg-zinc-100 dark:bg-[#0f0f11] overflow-x-hidden">
       {/* Compact Header — Single-line with Tabs + Toolbar */}
@@ -2242,35 +2318,41 @@ export default function Demandas() {
                       </p>
                     </div>
                   ) : (
-                    visibleDemandas.map((demanda) => {
+                    visibleDemandas.map((demanda, idx) => {
                       const statusConfig = getStatusConfig(demanda.status);
                       const borderColor = STATUS_GROUPS[statusConfig.group].color;
+                      const isFocused = focusedDemandaIndex === demandasOrdenadas.findIndex(d => d.id === demanda.id);
 
                       // Filtrar atos específicos para a atribuição da demanda
                       const atoOptionsForDemanda = getAtosPorAtribuicao(demanda.atribuicao);
 
                       return (
-                        <DemandaCard
+                        <div
                           key={demanda.id}
-                          demanda={demanda}
-                          borderColor={borderColor}
-                          atribuicaoIcons={atribuicaoIcons}
-                          atribuicaoColors={atribuicaoColors}
-                          onStatusChange={handleStatusChange}
-                          onAtoChange={handleAtoChange}
-                          atoOptions={atoOptionsForDemanda}
-                          onEdit={handleEditDemanda}
-                          onArchive={handleArchiveDemanda}
-                          onUnarchive={handleUnarchiveDemanda}
-                          onDelete={handleDeleteDemanda}
-                          onDelegate={handleDelegateDirectly}
-                          copyToClipboard={copyToClipboard}
-                          onProvidenciasChange={handleProvidenciasChange}
-                          onAtribuicaoChange={handleAtribuicaoChange}
-                          isSelectMode={isSelectMode}
-                          isSelected={selectedIds.has(demanda.id)}
-                          onToggleSelect={handleToggleSelect}
-                        />
+                          ref={(el) => registerFocusedCardRef(String(demanda.id), el)}
+                          className={isFocused ? "ring-2 ring-emerald-500 rounded-xl" : ""}
+                        >
+                          <DemandaCard
+                            demanda={demanda}
+                            borderColor={borderColor}
+                            atribuicaoIcons={atribuicaoIcons}
+                            atribuicaoColors={atribuicaoColors}
+                            onStatusChange={handleStatusChange}
+                            onAtoChange={handleAtoChange}
+                            atoOptions={atoOptionsForDemanda}
+                            onEdit={handleEditDemanda}
+                            onArchive={handleArchiveDemanda}
+                            onUnarchive={handleUnarchiveDemanda}
+                            onDelete={handleDeleteDemanda}
+                            onDelegate={handleDelegateDirectly}
+                            copyToClipboard={copyToClipboard}
+                            onProvidenciasChange={handleProvidenciasChange}
+                            onAtribuicaoChange={handleAtribuicaoChange}
+                            isSelectMode={isSelectMode}
+                            isSelected={selectedIds.has(demanda.id)}
+                            onToggleSelect={handleToggleSelect}
+                          />
+                        </div>
                       );
                     })
                   )}
@@ -2324,6 +2406,8 @@ export default function Demandas() {
                     if (next.has(group)) next.delete(group); else next.add(group);
                     return next;
                   })}
+                  focusedRowIndex={activeTab === "planilha" ? focusedDemandaIndex : null}
+                  onRegisterRowRef={registerFocusedCardRef}
                 />
               ) : (
                 /* ========== MODO GRID PREMIUM ========== */

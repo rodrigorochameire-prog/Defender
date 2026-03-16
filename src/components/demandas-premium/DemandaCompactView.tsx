@@ -136,6 +136,9 @@ interface DemandaCompactViewProps {
   groupBy?: "status" | "atribuicao" | null;
   collapsedGroups?: Set<string>;
   onToggleGroupCollapse?: (group: string) => void;
+  // Keyboard focus ring (J/K navigation)
+  focusedRowIndex?: number | null;
+  onRegisterRowRef?: (id: string, el: HTMLElement | null) => void;
 }
 
 // ============================================
@@ -270,6 +273,8 @@ const CompactRow = React.memo(function CompactRow({
   hideAtribuicaoColor,
   onPreview,
   previewDemandaId,
+  isFocused,
+  onRowRef,
 }: {
   demanda: Demanda;
   index: number;
@@ -305,6 +310,8 @@ const CompactRow = React.memo(function CompactRow({
   hideAtribuicaoColor?: boolean;
   onPreview?: (id: string) => void;
   previewDemandaId?: string | null;
+  isFocused?: boolean;
+  onRowRef?: (el: HTMLTableRowElement | null) => void;
 }) {
   const [showMenu, setShowMenu] = useState(false);
   const [copiedCell, setCopiedCell] = useState<string | null>(null);
@@ -515,6 +522,7 @@ const CompactRow = React.memo(function CompactRow({
       return (
         <div className="relative" ref={statusCellRef}>
           <button
+            data-status-trigger
             onClick={(e) => { e.stopPropagation(); setShowStatusPipeline(!showStatusPipeline); }}
             className="inline-flex items-center gap-1.5 text-[10px] font-semibold rounded-full px-2 py-0.5 cursor-pointer hover:ring-1 hover:ring-zinc-300 dark:hover:ring-zinc-600 transition-all"
             style={{ color: statusColor, backgroundColor: `${statusColor}12` }}
@@ -706,7 +714,8 @@ const CompactRow = React.memo(function CompactRow({
           onPreview(demanda.id);
         }
       }}
-      className={`group/row border-b border-zinc-100/60 dark:border-zinc-800/50 transition-all duration-100 cursor-pointer ${rowBg} ${isPreviewActive ? "ring-1 ring-inset ring-emerald-300/40 dark:ring-emerald-700/30 bg-emerald-50/30 dark:bg-emerald-950/10" : ""} ${index % 2 === 1 && !isPreviewActive ? "bg-zinc-50/50 dark:bg-zinc-800/20" : !isPreviewActive ? "bg-white dark:bg-zinc-900" : ""} ${isDragging ? "shadow-lg bg-white dark:bg-zinc-900 ring-1 ring-emerald-400/30" : ""} ${!isSelected && !isPreviewActive ? "hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40" : ""}`}
+      ref={onRowRef}
+      className={`group/row border-b border-zinc-100/60 dark:border-zinc-800/50 transition-all duration-100 cursor-pointer ${rowBg} ${isFocused ? "ring-2 ring-inset ring-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/15" : ""} ${isPreviewActive && !isFocused ? "ring-1 ring-inset ring-emerald-300/40 dark:ring-emerald-700/30 bg-emerald-50/30 dark:bg-emerald-950/10" : ""} ${index % 2 === 1 && !isPreviewActive && !isFocused ? "bg-zinc-50/50 dark:bg-zinc-800/20" : !isPreviewActive && !isFocused ? "bg-white dark:bg-zinc-900" : ""} ${isDragging ? "shadow-lg bg-white dark:bg-zinc-900 ring-1 ring-emerald-400/30" : ""} ${!isSelected && !isPreviewActive && !isFocused ? "hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40" : ""}`}
     >
       {/* Drag handle */}
       {onReorder && (
@@ -854,6 +863,8 @@ export function DemandaCompactView({
   groupBy,
   collapsedGroups,
   onToggleGroupCollapse,
+  focusedRowIndex,
+  onRegisterRowRef,
 }: DemandaCompactViewProps) {
   const [focusedCell, setFocusedCell] = useState<{ row: number; col: number } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -1273,6 +1284,8 @@ export function DemandaCompactView({
                     hideAtribuicaoColor={hideAtribuicaoColor}
                     onPreview={onPreview}
                     previewDemandaId={previewDemandaId}
+                    isFocused={focusedRowIndex === index}
+                    onRowRef={(el) => onRegisterRowRef?.(demanda.id, el)}
                   />
                   </>
                   )}

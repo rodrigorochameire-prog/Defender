@@ -65,12 +65,18 @@ function KanbanCard({
   onCardClick,
   onStatusChange,
   copyToClipboard,
+  isDragging: isBeingDragged,
+  onDragStart,
+  onDragEnd,
 }: {
   demanda: KanbanDemanda;
   group: StatusGroup;
   onCardClick: (id: string | number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
   copyToClipboard: (text: string) => void;
+  isDragging?: boolean;
+  onDragStart?: (id: string) => void;
+  onDragEnd?: () => void;
 }) {
   const statusCfg = getStatusConfig(demanda.substatus || demanda.status);
   const processo = demanda.processos?.[0]?.numero || "";
@@ -116,9 +122,16 @@ function KanbanCard({
 
   return (
     <div
-      onClick={() => onCardClick(demanda.id)}
-      className="
-        relative group/kcard cursor-pointer
+      draggable
+      onClick={() => !isBeingDragged && onCardClick(demanda.id)}
+      onDragStart={(e) => {
+        e.dataTransfer.setData("demandaId", String(demanda.id));
+        e.dataTransfer.effectAllowed = "move";
+        onDragStart?.(String(demanda.id));
+      }}
+      onDragEnd={() => onDragEnd?.()}
+      className={`
+        relative group/kcard cursor-grab active:cursor-grabbing
         rounded-lg bg-white dark:bg-zinc-900
         border border-zinc-200/80 dark:border-zinc-800/80
         hover:shadow-md hover:shadow-zinc-200/50 dark:hover:shadow-black/20
@@ -126,7 +139,8 @@ function KanbanCard({
         hover:-translate-y-[1px]
         transition-all duration-200
         overflow-hidden
-      "
+        ${isBeingDragged ? "opacity-50 scale-[0.98] shadow-lg" : ""}
+      `}
     >
       {/* Left bar — group color */}
       <div
@@ -361,11 +375,17 @@ function EmAndamentoExpanded({
   onCardClick,
   onStatusChange,
   copyToClipboard,
+  draggedDemandaId,
+  onDragStart,
+  onDragEnd,
 }: {
   subGroupDemandas: Record<EmAndamentoSubGroup, KanbanDemanda[]>;
   onCardClick: (id: string | number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
   copyToClipboard: (text: string) => void;
+  draggedDemandaId?: string | null;
+  onDragStart?: (id: string) => void;
+  onDragEnd?: () => void;
 }) {
   // Only show non-empty sub-groups
   const visibleSubGroups = (["preparacao", "diligencias", "saida"] as EmAndamentoSubGroup[])
@@ -403,6 +423,9 @@ function EmAndamentoExpanded({
                   onCardClick={onCardClick}
                   onStatusChange={onStatusChange}
                   copyToClipboard={copyToClipboard}
+                  isDragging={draggedDemandaId === String(d.id)}
+                  onDragStart={onDragStart}
+                  onDragEnd={onDragEnd}
                 />
               ))}
               {items.length > 30 && (
@@ -560,12 +583,18 @@ function MobileCardList({
   onCardClick,
   onStatusChange,
   copyToClipboard,
+  draggedDemandaId,
+  onDragStart,
+  onDragEnd,
 }: {
   items: KanbanDemanda[];
   group: StatusGroup;
   onCardClick: (id: string | number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
   copyToClipboard: (text: string) => void;
+  draggedDemandaId?: string | null;
+  onDragStart?: (id: string) => void;
+  onDragEnd?: () => void;
 }) {
   if (items.length === 0) {
     return (
@@ -585,6 +614,9 @@ function MobileCardList({
           onCardClick={onCardClick}
           onStatusChange={onStatusChange}
           copyToClipboard={copyToClipboard}
+          isDragging={draggedDemandaId === String(d.id)}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
         />
       ))}
       {items.length > 50 && (
@@ -609,6 +641,10 @@ export function KanbanPremium({
   showArchived = false,
 }: KanbanPremiumProps) {
   const [emAndamentoExpanded, setEmAndamentoExpanded] = useState(false);
+
+  // Drag state for column highlight
+  const [draggedDemandaId, setDraggedDemandaId] = useState<string | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
   // Mobile states
   const [mobileActiveColumn, setMobileActiveColumn] = useState<KanbanColumn>("em_andamento");
@@ -760,6 +796,9 @@ export function KanbanPremium({
           onCardClick={onCardClick}
           onStatusChange={onStatusChange}
           copyToClipboard={copyToClipboard}
+          draggedDemandaId={draggedDemandaId}
+          onDragStart={setDraggedDemandaId}
+          onDragEnd={() => { setDraggedDemandaId(null); setDragOverColumn(null); }}
         />
 
         {/* Archived count (mobile) */}
@@ -786,10 +825,22 @@ export function KanbanPremium({
         >
           {visibleColumns.map((col) => {
             const items = columnDemandas[col];
+            const isDropTarget = dragOverColumn === col && draggedDemandaId !== null;
 
             if (col === "em_andamento") {
               return (
-                <div key={col} className="flex flex-col min-w-0">
+                <div
+                  key={col}
+                  className={`flex flex-col min-w-0 rounded-xl transition-all duration-200 ${isDropTarget ? "bg-emerald-50/50 dark:bg-emerald-950/20 ring-2 ring-dashed ring-emerald-400 ring-offset-1" : ""}`}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverColumn(col); }}
+                  onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverColumn(null); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const id = e.dataTransfer.getData("demandaId");
+                    if (id && onStatusChange) onStatusChange(id, "elaborar");
+                    setDragOverColumn(null);
+                  }}
+                >
                   {/* Em Andamento header */}
                   <div className="mb-2">
                     <div
@@ -852,6 +903,9 @@ export function KanbanPremium({
                       onCardClick={onCardClick}
                       onStatusChange={onStatusChange}
                       copyToClipboard={copyToClipboard}
+                      draggedDemandaId={draggedDemandaId}
+                      onDragStart={setDraggedDemandaId}
+                      onDragEnd={() => { setDraggedDemandaId(null); setDragOverColumn(null); }}
                     />
                   ) : (
                     <div className="space-y-2 flex-1">
@@ -866,6 +920,9 @@ export function KanbanPremium({
                             onCardClick={onCardClick}
                             onStatusChange={onStatusChange}
                             copyToClipboard={copyToClipboard}
+                            isDragging={draggedDemandaId === String(d.id)}
+                            onDragStart={setDraggedDemandaId}
+                            onDragEnd={() => { setDraggedDemandaId(null); setDragOverColumn(null); }}
                           />
                         );
                       })}
@@ -887,8 +944,26 @@ export function KanbanPremium({
 
             // Regular columns
             const groupKey = col as StatusGroup;
+            // Map column to a representative status for onStatusChange drop
+            const colDropStatus: Record<string, string> = {
+              triagem: "fila",
+              concluida: "protocolado",
+              arquivado: "arquivado",
+            };
+            const isRegularDropTarget = dragOverColumn === col && draggedDemandaId !== null;
             return (
-              <div key={col} className="flex flex-col min-w-0">
+              <div
+                key={col}
+                className={`flex flex-col min-w-0 rounded-xl transition-all duration-200 ${isRegularDropTarget ? "bg-emerald-50/50 dark:bg-emerald-950/20 ring-2 ring-dashed ring-emerald-400 ring-offset-1" : ""}`}
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverColumn(col); }}
+                onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverColumn(null); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const id = e.dataTransfer.getData("demandaId");
+                  if (id && onStatusChange) onStatusChange(id, colDropStatus[col] || "fila");
+                  setDragOverColumn(null);
+                }}
+              >
                 <div className="mb-2">
                   <ColumnHeader group={groupKey} count={items.length} />
                 </div>
@@ -901,6 +976,9 @@ export function KanbanPremium({
                       onCardClick={onCardClick}
                       onStatusChange={onStatusChange}
                       copyToClipboard={copyToClipboard}
+                      isDragging={draggedDemandaId === String(d.id)}
+                      onDragStart={setDraggedDemandaId}
+                      onDragEnd={() => { setDraggedDemandaId(null); setDragOverColumn(null); }}
                     />
                   ))}
                   {items.length > 30 && (
