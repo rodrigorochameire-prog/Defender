@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1228,6 +1229,7 @@ function FilterSectionCasos({
 // ==========================================
 
 export default function CasosPage() {
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterFase, setFilterFase] = useState<string>("all");
@@ -1377,7 +1379,7 @@ export default function CasosPage() {
                 description={searchTerm ? "Tente ajustar os filtros de busca." : "Crie seu primeiro caso para começar."}
                 action={{
                   label: "Criar Caso",
-                  onClick: () => {},
+                  onClick: () => router.push('/admin/casos/novo'),
                   icon: Plus,
                 }}
                 variant={searchTerm ? "search" : "default"}

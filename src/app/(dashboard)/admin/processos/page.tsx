@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useMemo, useEffect, Fragment } from "react";
 import { Card } from "@/components/ui/card";
 import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
@@ -1536,6 +1537,7 @@ function FilterSectionProcessos({
 // ==========================================
 
 export default function ProcessosPage() {
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [areaFilter, setAreaFilter] = useState("all");
@@ -2003,7 +2005,7 @@ export default function ProcessosPage() {
               description="Crie um novo processo ou ajuste os filtros de busca."
               action={{
                 label: "Novo Processo",
-                onClick: () => {},
+                onClick: () => router.push('/admin/processos/novo'),
                 icon: Plus,
               }}
               variant={searchTerm ? "search" : "default"}

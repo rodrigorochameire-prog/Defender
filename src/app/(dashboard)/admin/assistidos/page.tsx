@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import React, { useState, useMemo, useRef, useCallback, useEffect, Fragment } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
@@ -2196,6 +2197,7 @@ function FilterSectionAssistidos({
 }
 
 export default function AssistidosPage() {
+  const router = useRouter();
   // Atribuicao do contexto global
   const { currentAssignment } = useAssignment();
   const utils = trpc.useUtils();
@@ -3088,7 +3090,7 @@ export default function AssistidosPage() {
           description="Ajuste os filtros ou cadastre um novo assistido."
           action={{
             label: "Novo Assistido",
-            onClick: () => {},
+            onClick: () => router.push('/admin/assistidos/novo'),
             icon: Plus,
           }}
           variant={searchTerm ? "search" : "default"}

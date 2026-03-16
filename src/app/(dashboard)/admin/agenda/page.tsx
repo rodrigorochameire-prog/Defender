@@ -1943,8 +1943,15 @@ export default function AgendaPage() {
       <BuscaRegistrosModal
         isOpen={isBuscaRegistrosModalOpen}
         onClose={() => setIsBuscaRegistrosModalOpen(false)}
-        onViewRegistro={(_registro) => {
-          // TODO: implement view registro
+        onViewRegistro={(registro) => {
+          setIsBuscaRegistrosModalOpen(false);
+          // Localizar o evento na agenda pelo ID original
+          const evento = eventos.find((e) => e.id === registro.eventoOriginalId);
+          if (evento) {
+            handleOpenRegistro(evento);
+          } else {
+            toast.info("Audiência não encontrada na agenda atual — pode ter sido reagendada.");
+          }
         }}
       />
       </div>
