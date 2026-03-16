@@ -4,12 +4,13 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageLayout } from "@/components/shared/page-layout";
 import { Button } from "@/components/ui/button";
-import { Radio, Newspaper, Map, BarChart3, Link2, RefreshCw, Clock } from "lucide-react";
+import { Radio, Newspaper, Map, BarChart3, Link2, RefreshCw, Clock, Users } from "lucide-react";
 import { RadarFeed } from "@/components/radar/radar-feed";
 import { RadarFiltros, type FiltrosState } from "@/components/radar/radar-filtros";
 import { RadarMapa } from "@/components/radar/radar-mapa";
 import { RadarEstatisticas } from "@/components/radar/radar-estatisticas";
 import { RadarMatches } from "@/components/radar/radar-matches";
+import { RadarReincidentes } from "@/components/radar/radar-reincidentes";
 import { RadarNoticiaSheet } from "@/components/radar/radar-noticia-sheet";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
@@ -100,7 +101,7 @@ export default function RadarCriminalPage() {
     >
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <TabsList className="grid w-full sm:w-auto grid-cols-4">
+          <TabsList className="grid w-full sm:w-auto grid-cols-5">
             <TabsTrigger value="feed" className="cursor-pointer gap-1.5">
               <Newspaper className="h-4 w-4" />
               <span className="hidden sm:inline">Feed</span>
@@ -116,6 +117,10 @@ export default function RadarCriminalPage() {
             <TabsTrigger value="matches" className="cursor-pointer gap-1.5">
               <Link2 className="h-4 w-4" />
               <span className="hidden sm:inline">Matches DPE</span>
+            </TabsTrigger>
+            <TabsTrigger value="reincidentes" className="cursor-pointer gap-1.5">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Reincidentes</span>
             </TabsTrigger>
           </TabsList>
         </div>
@@ -141,6 +146,10 @@ export default function RadarCriminalPage() {
 
         <TabsContent value="matches">
           <RadarMatches />
+        </TabsContent>
+
+        <TabsContent value="reincidentes">
+          <RadarReincidentes />
         </TabsContent>
       </Tabs>
 

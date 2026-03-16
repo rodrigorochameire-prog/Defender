@@ -17,8 +17,10 @@ import {
   Pie,
   Cell,
   Legend,
+  LineChart,
+  Line,
 } from "recharts";
-import { Radio, AlertTriangle, MapPin, Link2, Newspaper } from "lucide-react";
+import { Radio, AlertTriangle, MapPin, Link2, Newspaper, CheckCircle2, Clock, TrendingUp, User } from "lucide-react";
 import { getCrimeLabel } from "./radar-filtros";
 import { cn } from "@/lib/utils";
 
@@ -48,6 +50,9 @@ export function RadarEstatisticas() {
   const [periodo, setPeriodo] = useState<string>("30d");
 
   const { data: stats, isLoading: statsLoading } = trpc.radar.stats.useQuery({ periodo: periodo as any });
+  const { data: deteccao } = trpc.radar.statsDeteccao.useQuery({
+    periodo: periodo as any,
+  });
   const { data: bairros, isLoading: bairrosLoading } = trpc.radar.statsByBairro.useQuery({
     periodo: periodo as any,
     limit: 10,
@@ -164,6 +169,69 @@ export function RadarEstatisticas() {
         </Card>
       </div>
 
+      {/* KPIs Operacionais */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Taxa de confirmação */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                  {deteccao?.taxaConfirmacao ?? 0}%
+                </p>
+                <p className="text-xs text-zinc-500">Taxa de Confirmação</p>
+                <p className="text-[10px] text-zinc-400">
+                  {deteccao?.confirmados ?? 0} de {deteccao?.totalMatches ?? 0} matches
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tempo médio de detecção */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                  {deteccao?.tempoMedioHoras
+                    ? deteccao.tempoMedioHoras < 24
+                      ? `${deteccao.tempoMedioHoras}h`
+                      : `${Math.round(deteccao.tempoMedioHoras / 24)}d`
+                    : "—"}
+                </p>
+                <p className="text-xs text-zinc-500">Tempo Médio de Detecção</p>
+                <p className="text-[10px] text-zinc-400">entre fato e identificação</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Matches pendentes */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100 dark:bg-yellow-900/30">
+                <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                  {deteccao?.matchesPorStatus?.find(m => m.status === "possivel")?.count ?? 0}
+                </p>
+                <p className="text-xs text-zinc-500">Matches Pendentes</p>
+                <p className="text-[10px] text-zinc-400">aguardando revisão</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Gráfico de barras empilhadas (por mês) */}
       {barData.length > 0 && (
         <Card>
@@ -250,6 +318,82 @@ export function RadarEstatisticas() {
                   <Bar dataKey="count" fill="#10b981" name="Ocorrências" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Tendência semanal + Top defensores */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Tendência semanal */}
+        {deteccao?.tendencia && deteccao.tendencia.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Tendência de Matches (8 semanas)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={deteccao.tendencia}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis
+                    dataKey="semana"
+                    tick={{ fontSize: 10 }}
+                    tickFormatter={(v) => v.slice(5)}
+                  />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <Tooltip
+                    labelFormatter={(v) => `Semana de ${v}`}
+                    formatter={(val: any) => [`${val} matches`, ""]}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="count"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    dot={{ fill: "#10b981", r: 3 }}
+                    name="Matches"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Top defensores */}
+        {deteccao?.topDefensores && deteccao.topDefensores.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Top Defensores (matches confirmados)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {deteccao.topDefensores.map((d, i) => {
+                  const max = deteccao.topDefensores[0]?.count || 1;
+                  const pct = Math.round((d.count / max) * 100);
+                  return (
+                    <div key={i} className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate max-w-[70%]">
+                          {d.nome}
+                        </span>
+                        <span className="text-xs text-zinc-500">{d.count}</span>
+                      </div>
+                      <div className="h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-emerald-500 rounded-full transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </CardContent>
           </Card>
         )}

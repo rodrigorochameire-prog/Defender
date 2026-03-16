@@ -694,6 +694,178 @@ export const radarRouter = router({
     const count = await notifyAdminsOfNewMatches();
     return { notified: count };
   }),
+
+  // ==========================================
+  // DASHBOARD EXECUTIVO
+  // ==========================================
+
+  statsDeteccao: protectedProcedure
+    .input(
+      z.object({
+        periodo: z.enum(["7d", "30d", "90d", "1a", "total"]).optional().default("30d"),
+      })
+    )
+    .query(async ({ input }) => {
+      const periodoMap: Record<string, number> = {
+        "7d": 7, "30d": 30, "90d": 90, "1a": 365,
+      };
+      const dias = periodoMap[input.periodo];
+      const dataInicio = dias ? new Date(Date.now() - dias * 86400000) : null;
+
+      // Matches by status (in the period)
+      const matchesPorStatusRaw = await db
+        .select({
+          status: radarMatches.status,
+          total: count(),
+        })
+        .from(radarMatches)
+        .where(dataInicio ? gte(radarMatches.createdAt, dataInicio) : undefined)
+        .groupBy(radarMatches.status);
+
+      const matchesPorStatus = matchesPorStatusRaw.map((r) => ({
+        status: r.status,
+        count: Number(r.total),
+      }));
+
+      // Confirmation rate: (confirmado_manual + auto_confirmado) / (total - descartado)
+      const totalMatches = matchesPorStatus.reduce((s, m) => s + m.count, 0);
+      const confirmados = matchesPorStatus
+        .filter((m) => m.status === "confirmado_manual" || m.status === "auto_confirmado")
+        .reduce((s, m) => s + m.count, 0);
+      const descartados = matchesPorStatus.find((m) => m.status === "descartado")?.count || 0;
+      const taxaConfirmacao = totalMatches - descartados > 0
+        ? Math.round((confirmados / (totalMatches - descartados)) * 100)
+        : 0;
+
+      // Average detection time: avg hours between noticia.dataFato and match.createdAt
+      const [deteccaoResult] = await db
+        .select({
+          avgHoras: sql<number>`
+            AVG(EXTRACT(EPOCH FROM (${radarMatches.createdAt} - ${radarNoticias.dataFato})) / 3600)
+          `,
+        })
+        .from(radarMatches)
+        .innerJoin(radarNoticias, eq(radarMatches.noticiaId, radarNoticias.id))
+        .where(
+          and(
+            sql`${radarNoticias.dataFato} IS NOT NULL`,
+            dataInicio ? gte(radarMatches.createdAt, dataInicio) : undefined,
+          )
+        );
+
+      const tempoMedioHoras = Math.round(Number(deteccaoResult?.avgHoras || 0));
+
+      // Top defensores with most confirmed matches
+      const topDefensoresRaw = await db
+        .select({
+          defensorNome: users.name,
+          total: count(),
+        })
+        .from(radarMatches)
+        .innerJoin(assistidos, eq(radarMatches.assistidoId, assistidos.id))
+        .innerJoin(users, eq(assistidos.defensorId, users.id))
+        .where(
+          and(
+            sql`${radarMatches.status} IN ('confirmado_manual', 'auto_confirmado')`,
+            dataInicio ? gte(radarMatches.createdAt, dataInicio) : undefined,
+          )
+        )
+        .groupBy(users.name)
+        .orderBy(desc(count()))
+        .limit(5);
+
+      const topDefensores = topDefensoresRaw.map((r) => ({
+        nome: r.defensorNome || "Desconhecido",
+        count: Number(r.total),
+      }));
+
+      // Weekly trend: last 8 weeks
+      const oitoSemanasAtras = new Date(Date.now() - 8 * 7 * 86400000);
+      const tendenciaRaw = await db
+        .select({
+          semana: sql<string>`to_char(date_trunc('week', ${radarMatches.createdAt}), 'YYYY-MM-DD')`,
+          total: count(),
+        })
+        .from(radarMatches)
+        .where(gte(radarMatches.createdAt, oitoSemanasAtras))
+        .groupBy(sql`date_trunc('week', ${radarMatches.createdAt})`)
+        .orderBy(sql`date_trunc('week', ${radarMatches.createdAt})`);
+
+      const tendencia = tendenciaRaw.map((r) => ({
+        semana: r.semana,
+        count: Number(r.total),
+      }));
+
+      return {
+        taxaConfirmacao,
+        tempoMedioHoras,
+        matchesPorStatus,
+        topDefensores,
+        tendencia,
+        totalMatches,
+        confirmados,
+      };
+    }),
+
+  reincidentes: protectedProcedure
+    .input(
+      z.object({
+        minOcorrencias: z.number().min(2).max(20).optional().default(2),
+        limit: z.number().min(1).max(50).optional().default(20),
+      })
+    )
+    .query(async ({ input }) => {
+      // Use raw SQL to unnest envolvidos jsonb array and group by name
+      // This finds people who appear in 2+ different news articles
+      const result = await db.execute(sql`
+        SELECT
+          env->>'nome' as nome,
+          env->>'papel' as papel,
+          COUNT(DISTINCT n.id) as total_noticias,
+          jsonb_agg(DISTINCT jsonb_build_object(
+            'id', n.id,
+            'titulo', n.titulo,
+            'dataFato', n.data_fato,
+            'tipoCrime', n.tipo_crime,
+            'bairro', n.bairro
+          ) ORDER BY n.data_fato DESC NULLS LAST) as noticias
+        FROM radar_noticias n,
+             jsonb_array_elements(n.envolvidos) env
+        WHERE
+          n.envolvidos IS NOT NULL
+          AND env->>'nome' IS NOT NULL
+          AND length(env->>'nome') > 3
+          AND lower(env->>'nome') NOT IN (
+            'homem', 'mulher', 'suspeito', 'vitima', 'vítima', 'menor',
+            'adolescente', 'policial', 'pm', 'delegado', 'criminoso',
+            'indivíduo', 'individuo', 'desconhecido', 'pessoa'
+          )
+        GROUP BY env->>'nome', env->>'papel'
+        HAVING COUNT(DISTINCT n.id) >= ${input.minOcorrencias}
+        ORDER BY total_noticias DESC
+        LIMIT ${input.limit}
+      `);
+
+      type ReincidenteRow = {
+        nome: string;
+        papel: string;
+        total_noticias: string | number;
+        noticias: Array<{
+          id: number;
+          titulo: string;
+          dataFato: string | null;
+          tipoCrime: string | null;
+          bairro: string | null;
+        }>;
+      };
+
+      return (result as unknown as ReincidenteRow[]).map((row) => ({
+        nome: row.nome,
+        papel: row.papel,
+        totalNoticias: Number(row.total_noticias),
+        noticias: Array.isArray(row.noticias) ? row.noticias.slice(0, 10) : [],
+      }));
+    }),
 });
 
 // ==========================================
