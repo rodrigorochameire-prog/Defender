@@ -93,7 +93,7 @@ async function scrapeHtmlPage(url: string, _seletorCss?: string | null): Promise
 // FETCH CONTEÚDO COMPLETO
 // ==========================================
 
-async function fetchFullContent(url: string): Promise<string> {
+export async function fetchFullContent(url: string): Promise<string> {
   const res = await fetch(url, {
     headers: { "User-Agent": "OmbudsBot/1.0 (Defensoria Publica BA; legal research)" },
     signal: AbortSignal.timeout(15000),

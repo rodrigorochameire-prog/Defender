@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { noticiasJuridicas, noticiasFontes, noticiasTemas, noticiasFavoritos, noticiasProcessos } from "@/lib/db/schema";
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { enriquecerNoticia, enriquecerPendentes } from "@/lib/noticias/enricher";
+import { fetchFullContent } from "@/lib/noticias/scraper";
+import { cleanHtml } from "@/lib/noticias/html-cleaner";
 
 export const noticiasRouter = router({
   // ==========================================
@@ -73,6 +75,7 @@ export const noticiasRouter = router({
   aprovar: protectedProcedure
     .input(z.object({ ids: z.array(z.number()) }))
     .mutation(async ({ ctx, input }) => {
+      // 1. Marcar como aprovado
       await db.update(noticiasJuridicas)
         .set({
           status: "aprovado",
@@ -81,6 +84,34 @@ export const noticiasRouter = router({
           updatedAt: new Date(),
         })
         .where(inArray(noticiasJuridicas.id, input.ids));
+
+      // 2. Para cada notícia aprovada: buscar conteúdo completo + enriquecer com IA
+      // Executa em background sem bloquear a resposta
+      void (async () => {
+        const noticias = await db
+          .select({ id: noticiasJuridicas.id, urlOriginal: noticiasJuridicas.urlOriginal, conteudo: noticiasJuridicas.conteudo })
+          .from(noticiasJuridicas)
+          .where(inArray(noticiasJuridicas.id, input.ids));
+
+        for (const noticia of noticias) {
+          try {
+            // Buscar conteúdo completo se ainda não tem (ou tem menos de 500 chars)
+            const conteudoAtual = noticia.conteudo ?? "";
+            if (conteudoAtual.length < 500 && noticia.urlOriginal) {
+              const fullHtml = await fetchFullContent(noticia.urlOriginal);
+              await db.update(noticiasJuridicas)
+                .set({ conteudo: cleanHtml(fullHtml), updatedAt: new Date() })
+                .where(eq(noticiasJuridicas.id, noticia.id));
+            }
+
+            // Enriquecer com IA
+            await enriquecerNoticia(noticia.id);
+          } catch {
+            // Silencioso — não quebra o fluxo de aprovação
+          }
+        }
+      })();
+
       return { success: true, count: input.ids.length };
     }),
 
