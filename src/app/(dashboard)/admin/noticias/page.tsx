@@ -42,7 +42,7 @@ const COR_FONTE: Record<string, string> = {
 };
 
 export default function NoticiasPage() {
-  const [tab, setTab] = useState<Tab>("legislativa");
+  const [tab, setTab] = useState<Tab>("jurisprudencial");
   const [triagemOpen, setTriagemOpen] = useState(true);
   const [noticiaReader, setNoticiaReader] = useState<NoticiaJuridica | null>(null);
   const [noticiaCaso, setNoticiaCaso] = useState<NoticiaJuridica | null>(null);

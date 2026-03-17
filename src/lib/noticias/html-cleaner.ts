@@ -1,3 +1,36 @@
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require("pdf-parse") as (buffer: Buffer) => Promise<{ text: string }>;
+
+/**
+ * Extrai o link de um PDF de um HTML/texto, se houver.
+ */
+export function extractPdfLink(html: string): string | null {
+  const match =
+    html.match(/href="([^"]*\.pdf[^"]*)"/i) ||
+    html.match(/(https?:\/\/[^\s"<]+\.pdf(?:[?#][^\s"<]*)?)/i);
+  return match?.[1] ?? null;
+}
+
+/**
+ * Baixa um PDF e retorna o texto extraído (máx. 20.000 chars).
+ */
+export async function fetchPdfContent(pdfUrl: string): Promise<string> {
+  const res = await fetch(pdfUrl, {
+    headers: { "User-Agent": "OmbudsBot/1.0 (Defensoria Publica BA; legal research)" },
+    signal: AbortSignal.timeout(30000),
+  });
+  if (!res.ok) throw new Error(`PDF HTTP ${res.status}`);
+  const buffer = await res.arrayBuffer();
+  const parsed = await pdfParse(Buffer.from(buffer));
+  // Normaliza espaços e limita tamanho
+  const text = parsed.text
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+  return text.substring(0, 20000);
+}
+
 /**
  * Remove tags desnecessárias e preserva conteúdo legível.
  */
