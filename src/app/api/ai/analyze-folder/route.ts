@@ -137,7 +137,7 @@ export async function POST(request: Request) {
       const [processo] = await db
         .select({
           id: processos.id,
-          numero: processos.numero,
+          numero: processos.numeroAutos,
           driveFolderId: processos.driveFolderId,
         })
         .from(processos)

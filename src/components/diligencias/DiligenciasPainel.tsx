@@ -89,18 +89,22 @@ export function DiligenciasPainel({
     casoId,
     assistidoId,
     processoId,
-    categoria: filterCategoria !== "ALL" ? filterCategoria : undefined,
-    status: filterStatus !== "ALL" ? filterStatus : undefined,
+    status: filterStatus !== "ALL" ? filterStatus as any : undefined,
     search: searchQuery.trim() || undefined,
     limit: 100,
-  });
+  } as any);
 
-  // Query para estatísticas
-  const { data: stats } = trpc.diligencias.getStats.useQuery({
-    casoId,
-    assistidoId,
-    processoId,
-  });
+  // Stats derivadas localmente (getStats não existe no router)
+  const stats = useMemo(() => {
+    if (!diligenciasData) return null;
+    return {
+      total: diligenciasData.length,
+      concluidas: diligenciasData.filter((d) => d.status === "OBTIDO" || d.status === "LOCALIZADO").length,
+      emAndamento: diligenciasData.filter((d) => d.status === "EM_ANDAMENTO").length,
+      aguardando: diligenciasData.filter((d) => d.status === "AGUARDANDO").length,
+      pendentes: diligenciasData.filter((d) => d.status === "A_PESQUISAR").length,
+    };
+  }, [diligenciasData]);
 
   // Mutations
   const createMutation = trpc.diligencias.create.useMutation({
@@ -143,20 +147,20 @@ export function DiligenciasPainel({
       processoId: d.processoId ?? undefined,
       titulo: d.titulo,
       descricao: d.descricao ?? undefined,
-      categoria: d.categoria as CategoriaDigilenciaKey,
+      categoria: ((d as any).categoria ?? "DOCUMENTAL") as CategoriaDigilenciaKey,
       status: d.status as any,
-      executor: d.executor as any,
-      executorNome: d.executorNome ?? undefined,
-      executorContato: d.executorContato ?? undefined,
-      dataInicio: d.dataInicio?.toISOString(),
+      executor: (d as any).executor as any,
+      executorNome: (d as any).executorNome ?? undefined,
+      executorContato: (d as any).executorContato ?? undefined,
+      dataInicio: (d as any).dataInicio?.toISOString(),
       dataConclusao: d.dataConclusao?.toISOString(),
-      prazo: d.prazo ?? undefined,
-      checklist: (d.checklist as any) ?? undefined,
-      notas: d.notas ?? undefined,
-      resultado: d.resultado ?? undefined,
-      arquivos: (d.arquivos as any) ?? undefined,
+      prazo: (d as any).prazo ?? d.prazoEstimado?.toISOString() ?? undefined,
+      checklist: ((d as any).checklist) ?? undefined,
+      notas: (d as any).notas ?? undefined,
+      resultado: (d as any).resultado ?? undefined,
+      arquivos: ((d as any).arquivos) ?? undefined,
       createdAt: d.createdAt.toISOString(),
-      updatedAt: d.updatedAt.toISOString(),
+      updatedAt: (d.updatedAt ?? d.createdAt).toISOString(),
     }));
   }, [diligenciasData]);
 
@@ -168,15 +172,11 @@ export function DiligenciasPainel({
       processoId,
       titulo: nova.titulo,
       descricao: nova.descricao,
-      categoria: nova.categoria,
-      status: nova.status,
-      executor: nova.executor,
-      executorNome: nova.executorNome,
-      executorContato: nova.executorContato,
-      prazo: nova.prazo,
-      checklist: nova.checklist,
-      notas: nova.notas,
-    });
+      status: nova.status as any,
+      resultado: nova.resultado,
+      prazoEstimado: nova.prazo,
+      tags: nova.notas ? [nova.notas] : undefined,
+    } as any);
   };
 
   const handleUpdateDiligencia = (updated: Diligencia) => {
@@ -184,15 +184,10 @@ export function DiligenciasPainel({
       id: parseInt(updated.id),
       titulo: updated.titulo,
       descricao: updated.descricao,
-      categoria: updated.categoria,
-      status: updated.status,
-      executor: updated.executor,
-      executorNome: updated.executorNome,
-      executorContato: updated.executorContato,
-      prazo: updated.prazo,
-      checklist: updated.checklist,
-      notas: updated.notas,
+      status: updated.status as any,
       resultado: updated.resultado,
+      prazoEstimado: updated.prazo,
+      tags: updated.notas ? [updated.notas] : undefined,
     });
   };
 

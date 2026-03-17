@@ -1663,7 +1663,7 @@ export const whatsappChatRouter = router({
           },
           hasMedia,
         },
-        createdById: ctx.session.user.id,
+        createdById: ctx.user.id,
       }).returning();
 
       return { id: anotacao.id, conteudo };
@@ -1892,7 +1892,7 @@ export const whatsappChatRouter = router({
           model: 'claude-sonnet-4-6',
           editedByUser: input.editedByUser,
         },
-        createdById: ctx.session.user.id,
+        createdById: ctx.user.id,
       }).returning();
 
       return { id: anotacao.id };

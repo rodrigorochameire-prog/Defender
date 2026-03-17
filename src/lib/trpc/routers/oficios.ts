@@ -362,7 +362,7 @@ export const oficiosRouter = router({
             status: "rascunho" as const,
             versao: 1,
           },
-          createdById: ctx.session?.user?.id ? Number(ctx.session.user.id) : undefined,
+          createdById: ctx.user?.id ? Number(ctx.user.id) : undefined,
         })
         .returning();
 
@@ -441,7 +441,7 @@ export const oficiosRouter = router({
     .query(async ({ ctx, input }) => {
       const valores = await autoPreencherVariaveis({
         ...input,
-        userId: ctx.session?.user?.id ? Number(ctx.session.user.id) : undefined,
+        userId: ctx.user?.id ? Number(ctx.user.id) : undefined,
       });
       return valores;
     }),
@@ -552,7 +552,7 @@ export const oficiosRouter = router({
         assistidoId: input.assistidoId,
         processoId: input.processoId,
         casoId: input.casoId,
-        userId: ctx.session?.user?.id ? Number(ctx.session.user.id) : undefined,
+        userId: ctx.user?.id ? Number(ctx.user.id) : undefined,
       });
 
       // Merge: auto + extras (extras sobrescrevem auto)
@@ -587,7 +587,7 @@ export const oficiosRouter = router({
             status: "rascunho" as const,
             versao: 1,
           },
-          createdById: ctx.session?.user?.id ? Number(ctx.session.user.id) : undefined,
+          createdById: ctx.user?.id ? Number(ctx.user.id) : undefined,
         })
         .returning();
 
@@ -1599,7 +1599,7 @@ export const oficiosRouter = router({
       }
 
       // 3. Get defensor name from session
-      const nomeDefensor = ctx.session?.user?.name || "Defensor(a) Publico(a)";
+      const nomeDefensor = ctx.user?.name || "Defensor(a) Publico(a)";
 
       // 4. Collect document contexts
       const contextoDocumentos: Array<{ titulo: string; conteudo: string; fonte: string }> = [];
@@ -1707,7 +1707,7 @@ export const oficiosRouter = router({
           assistidoId: input.assistidoId || null,
           processoId: input.processoId || null,
           demandaId: input.demandaId || null,
-          createdById: ctx.session?.user?.id ? Number(ctx.session.user.id) : undefined,
+          createdById: ctx.user?.id ? Number(ctx.user.id) : undefined,
           metadata: {
             tipoOficio: input.tipoOficio,
             destinatario: input.destinatario || "",

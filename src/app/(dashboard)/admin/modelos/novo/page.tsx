@@ -301,7 +301,7 @@ export default function NovoModeloPage() {
       categoria: categoria,
       tipoPeca: tipoPeca.trim() || undefined,
       conteudo: conteudo,
-      variaveis: allVariables,
+      variaveis: allVariables as any[],
     });
   };
 

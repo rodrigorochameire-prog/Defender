@@ -125,16 +125,16 @@ export function DriveContentArea() {
       {/* ─── File List / Grid / Compact ─── */}
       <div className="flex-1 overflow-y-auto p-3">
         {ctx.viewMode === "list" ? (
-          <DriveFileList files={filteredFiles} isLoading={isLoading} />
+          <DriveFileList files={filteredFiles as any[]} isLoading={isLoading} />
         ) : ctx.viewMode === "grid" ? (
-          <DriveFileGrid files={filteredFiles} isLoading={isLoading} />
+          <DriveFileGrid files={filteredFiles as any[]} isLoading={isLoading} />
         ) : (
-          <DriveFileCompact files={filteredFiles} isLoading={isLoading} />
+          <DriveFileCompact files={filteredFiles as any[]} isLoading={isLoading} />
         )}
       </div>
 
       {/* ─── Batch Actions (floating) ─── */}
-      <DriveBatchActions files={filteredFiles} />
+      <DriveBatchActions files={filteredFiles as any[]} />
     </div>
   );
 }

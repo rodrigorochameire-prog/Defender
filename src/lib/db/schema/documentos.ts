@@ -364,6 +364,7 @@ export const documentosGerados = pgTable("documentos_gerados", {
     };
     driveSourceId?: string;
     versao?: number;
+    exportadoGoogleDocsEm?: string;
   }>(),
 
   // Workspace e usuario

@@ -378,7 +378,7 @@ export function DashboardPrazos({
                                     {item.demanda.ato}
                                   </span>
                                   {item.demanda.reuPreso && (
-                                    <Badge variant="destructive" className="text-xs">
+                                    <Badge variant="danger" className="text-xs">
                                       RÉU PRESO
                                     </Badge>
                                   )}

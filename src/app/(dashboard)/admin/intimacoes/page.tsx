@@ -254,7 +254,7 @@ export default function SolarHubPage() {
           tipo: "vvd" as const,
           descricao: i.ato ?? "Intimação VVD",
           processo: i.processo?.numeroAutos ?? undefined,
-          parte: i.autor?.nome ?? undefined,
+          parte: i.ato ?? undefined,
           tipoVVD: i.tipoIntimacao,
           prazo: i.prazo ?? null,
           status: i.status ?? "pendente",

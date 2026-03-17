@@ -159,11 +159,11 @@ export const diligenciasRouter = router({
         includeArchived: z.boolean().default(false),
         limit: z.number().min(1).max(100).default(50),
         offset: z.number().default(0),
-      }).optional()
+      })
     )
     .query(async ({ ctx, input }) => {
       const isAdmin = ctx.user.role === "admin";
-      const params = input || {};
+      const params = input;
 
       const conditions = [];
 
@@ -638,10 +638,10 @@ export const diligenciasRouter = router({
     .input(z.object({
       tipo: z.enum(diligenciaTipoValues).optional(),
       apenasAtivos: z.boolean().default(true),
-    }).optional())
+    }))
     .query(async ({ ctx, input }) => {
       const isAdmin = ctx.user.role === "admin";
-      const params = input || {};
+      const params = input;
 
       const conditions = [];
 

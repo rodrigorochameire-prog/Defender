@@ -113,8 +113,8 @@ export function BriefingSection({
   // Buscar briefing existente
   const { data: existingBriefing, isLoading: isLoadingExisting } =
     trpc.briefing.getForAudiencia.useQuery(
-      { audienciaId: audienciaId! },
-      { enabled: !!audienciaId }
+      { audienciaId: audienciaId!, processoId: processoId! },
+      { enabled: !!audienciaId && !!processoId }
     );
 
   // Mutation para gerar briefing
@@ -137,7 +137,7 @@ export function BriefingSection({
         });
         toast.success("Briefing gerado com sucesso!");
       } else {
-        toast.error(data.error || "Erro ao gerar briefing");
+        toast.error((data as any).error || "Erro ao gerar briefing");
       }
     },
     onError: (error) => {
@@ -160,9 +160,10 @@ export function BriefingSection({
 
   // Carregar briefing existente
   useEffect(() => {
-    if (existingBriefing && existingBriefing.length > 0) {
+    const briefingList = existingBriefing?.testemunhas ?? (Array.isArray(existingBriefing) ? existingBriefing : null);
+    if (briefingList && briefingList.length > 0) {
       // Converter do formato do banco para o formato do componente
-      const testemunhas: TestemunhaBriefing[] = existingBriefing.map((t: any) => ({
+      const testemunhas: TestemunhaBriefing[] = briefingList.map((t: any) => ({
         nome: t.nome || t.testemunhaNome || "",
         tipo: t.tipo || "ACUSACAO",
         arquivos_encontrados: [],
@@ -224,12 +225,12 @@ export function BriefingSection({
       casoId,
       testemunhas: briefing.testemunhas.map((t) => ({
         nome: t.nome,
-        versaoDelegacia: t.versao_delegacia,
-        versaoJuizo: t.versao_juizo,
-        contradicoes: t.contradicoes.join("\n"),
-        pontosFortes: t.pontos_fortes.join("\n"),
-        pontosFracos: t.pontos_fracos.join("\n"),
-        estrategiaInquiricao: t.perguntas_sugeridas.join("\n"),
+        versao_delegacia: t.versao_delegacia,
+        versao_juizo: t.versao_juizo,
+        contradicoes: t.contradicoes,
+        pontos_fortes: t.pontos_fortes,
+        pontos_fracos: t.pontos_fracos,
+        perguntas_sugeridas: t.perguntas_sugeridas,
       })),
     });
 
@@ -590,7 +591,7 @@ export function BriefingSection({
                             )}
                             <ShieldAlert className="w-5 h-5 text-rose-600" />
                             Riscos Identificados
-                            <Badge variant="destructive" className="ml-auto">
+                            <Badge variant="danger" className="ml-auto">
                               {briefing.riscos_identificados.length}
                             </Badge>
                           </CardTitle>

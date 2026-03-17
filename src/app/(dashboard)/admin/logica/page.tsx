@@ -238,7 +238,7 @@ export default function LogicaArgumentacaoPage() {
                     <SelectValue placeholder="Selecione um caso para análise..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {casos?.items?.map((caso) => (
+                    {casos?.map((caso) => (
                       <SelectItem key={caso.id} value={caso.id.toString()}>
                         {caso.titulo}
                       </SelectItem>

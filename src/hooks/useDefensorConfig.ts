@@ -6,7 +6,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useSession } from "next-auth/react";
+import { trpc } from "@/lib/trpc/client";
 import {
   DEFENSORES_CONFIG,
   getDefensorConfig,
@@ -58,17 +58,17 @@ export interface UseDefensorConfigReturn {
 // ==========================================
 
 export function useDefensorConfig(): UseDefensorConfigReturn {
-  const { data: session, status } = useSession();
+  const { data: currentUser, isLoading } = trpc.auth.me.useQuery();
 
   // Identifica o defensor baseado no usuário logado
   const defensor = useMemo(() => {
-    if (status !== "authenticated" || !session?.user) {
+    if (isLoading || !currentUser) {
       return null;
     }
 
     // Tenta identificar pelo nome do usuário
-    const userName = session.user.name || "";
-    const email = session.user.email || "";
+    const userName = currentUser.name || "";
+    const email = currentUser.email || "";
 
     // Primeiro tenta pelo email
     let config = getDefensorConfig(email);
@@ -83,7 +83,7 @@ export function useDefensorConfig(): UseDefensorConfigReturn {
     }
 
     return config || null;
-  }, [session, status]);
+  }, [currentUser, isLoading]);
 
   // Atribuições disponíveis para o defensor
   const atribuicoesDisponiveis = useMemo(() => {
@@ -134,7 +134,7 @@ export function useDefensorConfig(): UseDefensorConfigReturn {
 
   return {
     defensor,
-    isDefensorLoaded: status !== "loading",
+    isDefensorLoaded: !isLoading,
 
     atribuicaoPrincipal: defensor?.atribuicaoPrincipal || null,
     atribuicoesDisponiveis,

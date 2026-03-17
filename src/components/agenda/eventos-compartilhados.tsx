@@ -47,8 +47,8 @@ export function EventosCompartilhados({
   // Buscar eventos do calendário
   const { data: eventos = [], isLoading: loadingEventos } = 
     trpc.calendar.list.useQuery({
-      startDate: new Date().toISOString(),
-      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // próximos 30 dias
+      start: new Date().toISOString(),
+      end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // próximos 30 dias
     });
 
   // Filtrar eventos compartilhados

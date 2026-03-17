@@ -464,13 +464,13 @@ export function SolarBatchOperations() {
         nome: nomeBusca.trim(),
       });
       if (result.success) {
-        setNomeBuscaResults(result.processos);
+        setNomeBuscaResults(result.processos as any);
         toast.success(
           `${result.processos_encontrados} processo(s) encontrado(s)`
         );
       } else {
         setNomeBuscaResults([]);
-        toast.error(result.error ?? "Erro ao buscar processos");
+        toast.error(result.errors?.[0] ?? "Erro ao buscar processos");
       }
     } catch {
       toast.error("Erro ao buscar processos por nome");

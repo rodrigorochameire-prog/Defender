@@ -168,9 +168,9 @@ export default function DocumentContextPicker({
                     )}
                   </div>
                   {doc.hasContent ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" title="Conteudo ja extraido" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                   ) : (
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" title="Sera extraido sob demanda" />
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                   )}
                 </label>
               );

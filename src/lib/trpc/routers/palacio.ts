@@ -215,8 +215,8 @@ export const palacioRouter = router({
         formatoExportacao: input.formatoExportacao,
         tags: input.tags,
         ordem: input.ordem ?? 0,
-        criadoPorId: parseInt(userId),
-        atualizadoPorId: parseInt(userId),
+        criadoPorId: userId,
+        atualizadoPorId: userId,
       }).returning();
 
       return diagrama;
@@ -248,7 +248,7 @@ export const palacioRouter = router({
       const [updated] = await db.update(palacioDiagramas)
         .set({
           ...data,
-          atualizadoPorId: parseInt(userId),
+          atualizadoPorId: userId,
           updatedAt: new Date(),
         })
         .where(eq(palacioDiagramas.id, id))
@@ -283,7 +283,7 @@ export const palacioRouter = router({
           excalidrawData: input.excalidrawData,
           thumbnail: input.thumbnail,
           versao: (existing.versao ?? 1) + 1,
-          atualizadoPorId: parseInt(userId),
+          atualizadoPorId: userId,
           updatedAt: new Date(),
         })
         .where(eq(palacioDiagramas.id, input.diagramaId))
@@ -573,7 +573,7 @@ export const palacioRouter = router({
         .set({
           ultimoExportado: new Date(),
           formatoExportacao: input.formato,
-          atualizadoPorId: parseInt(userId),
+          atualizadoPorId: userId,
           updatedAt: new Date(),
         })
         .where(eq(palacioDiagramas.id, input.diagramaId));

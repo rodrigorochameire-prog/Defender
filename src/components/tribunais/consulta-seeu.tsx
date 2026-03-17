@@ -105,10 +105,10 @@ export function ConsultaSEEU({ numeroInicial = "", onDadosCarregados }: Consulta
   };
 
   const getBeneficioStatusBadge = (status: BeneficioExecucao["status"]) => {
-    const configs: Record<string, { variant: "default" | "secondary" | "destructive" | "outline" }> = {
+    const configs: Record<string, { variant: "default" | "secondary" | "danger" | "outline" }> = {
       pendente: { variant: "outline" },
       deferido: { variant: "default" },
-      indeferido: { variant: "destructive" },
+      indeferido: { variant: "danger" },
       "em-analise": { variant: "secondary" },
     };
     const config = configs[status];
@@ -464,7 +464,7 @@ export function ConsultaSEEU({ numeroInicial = "", onDadosCarregados }: Consulta
                                 <Badge
                                   variant={
                                     falta.tipo === "grave"
-                                      ? "destructive"
+                                      ? "danger"
                                       : falta.tipo === "media"
                                       ? "secondary"
                                       : "outline"

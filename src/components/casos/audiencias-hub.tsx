@@ -1137,7 +1137,7 @@ export function AudienciasHub({
                 <SelectItem value="all">Todos os tipos</SelectItem>
                 {Object.entries(TIPOS_AUDIENCIA).map(([key, val]) => (
                   <SelectItem key={key} value={key}>
-                    {val.icon} {val.label}
+                    <val.icon className="inline-block w-3 h-3 mr-1" /> {val.label}
                   </SelectItem>
                 ))}
               </SelectContent>

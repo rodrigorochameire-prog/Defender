@@ -227,7 +227,7 @@ export const notificationsRouter = router({
         where: and(
           or(
             lte(demandas.prazo, em7dias.toISOString().split("T")[0]),
-            lte(demandas.prazoFinal, em7dias)
+            lte(demandas.prazo, em7dias.toISOString().split("T")[0])
           ),
           sql`${demandas.status} NOT IN ('CONCLUIDO', 'ARQUIVADO', '7_PROTOCOLADO', '7_CIENCIA')`
         ),
@@ -244,7 +244,7 @@ export const notificationsRouter = router({
       let reuPresoCritico = 0;
 
       for (const d of demandasCriticas) {
-        const prazo = d.prazoFinal || (d.prazo ? new Date(d.prazo) : null);
+        const prazo = d.prazo ? new Date(d.prazo) : null;
         if (!prazo) continue;
 
         const prazoDate = new Date(prazo);

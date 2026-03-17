@@ -190,7 +190,7 @@ export function ControleGravacoes({ audienciaId, processoId }: ControleGravacoes
   };
 
   const getStatusBadge = (status: Gravacao["status"]) => {
-    const config: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
+    const config: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "danger" }> = {
       pendente: { label: "Pendente", variant: "outline" },
       transcrevendo: { label: "Transcrevendo...", variant: "secondary" },
       transcrito: { label: "Transcrito", variant: "default" },

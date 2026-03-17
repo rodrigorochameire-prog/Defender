@@ -2605,7 +2605,7 @@ export default function Demandas() {
                           Delegar ({selectedIds.size})
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant="danger"
                           size="sm"
                           className="h-7 text-xs gap-1.5"
                           onClick={handleDeleteSelected}

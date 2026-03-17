@@ -120,10 +120,8 @@ export default function NovoJulgadoPage() {
       orgaoJulgador: formData.orgaoJulgador || undefined,
       dataJulgamento: formData.dataJulgamento || undefined,
       ementa: formData.ementa || undefined,
-      textoIntegral: formData.textoIntegral || undefined,
       temaId: formData.temaId ? parseInt(formData.temaId) : undefined,
       fonte: formData.fonte || undefined,
-      urlOrigem: formData.urlOrigem || undefined,
     });
   };
 

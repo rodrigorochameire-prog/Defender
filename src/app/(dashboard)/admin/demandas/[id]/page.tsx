@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft,
   FileText,
@@ -23,6 +24,11 @@ import {
   RefreshCw,
   Send,
   Eye,
+  Edit2,
+  Check,
+  X,
+  Plus,
+  Gavel,
 } from "lucide-react";
 import { format, parseISO, differenceInDays, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -97,6 +103,8 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
   const { id } = use(params);
   const utils = trpc.useUtils();
   const [showStatusSelect, setShowStatusSelect] = useState(false);
+  const [editingProvidencias, setEditingProvidencias] = useState(false);
+  const [providenciasText, setProvidenciasText] = useState("");
 
   const demandaId = Number(id);
 
@@ -108,6 +116,11 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
 
   const { data: oficioSugestao } = trpc.oficios.sugerirParaDemanda.useQuery(
     { demandaId },
+    { enabled: !isNaN(demandaId) && !!demanda }
+  );
+
+  const { data: oficiosVinculados } = trpc.oficios.list.useQuery(
+    { demandaId, limit: 10 },
     { enabled: !isNaN(demandaId) && !!demanda }
   );
 
@@ -180,6 +193,22 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
       status: newStatus as any,
       ...(substatus ? { substatus } : {}),
     });
+  };
+
+  const handleEditProvidencias = () => {
+    setProvidenciasText(demanda.providencias || "");
+    setEditingProvidencias(true);
+  };
+
+  const handleSaveProvidencias = () => {
+    updateMutation.mutate(
+      { id: demandaId, providencias: providenciasText },
+      {
+        onSuccess: () => {
+          setEditingProvidencias(false);
+        },
+      }
+    );
   };
 
   const handleArchive = () => {
@@ -423,11 +452,35 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
               </InfoRow>
             )}
 
+            {demanda.processo?.classeProcessual && (
+              <InfoRow label="Classe Processual">
+                <span className="text-sm text-zinc-900 dark:text-zinc-100">
+                  {demanda.processo.classeProcessual}
+                </span>
+              </InfoRow>
+            )}
+
+            {demanda.processo?.assunto && (
+              <InfoRow label="Assunto">
+                <span className="text-sm text-zinc-900 dark:text-zinc-100 line-clamp-2">
+                  {demanda.processo.assunto}
+                </span>
+              </InfoRow>
+            )}
+
             {demanda.processo?.parteContraria && (
               <InfoRow label="Parte Contrária">
                 <span className="text-sm text-zinc-900 dark:text-zinc-100">
                   {demanda.processo.parteContraria}
                 </span>
+              </InfoRow>
+            )}
+
+            {demanda.processo?.fase && (
+              <InfoRow label="Fase">
+                <Badge variant="outline" className="border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 text-xs">
+                  {demanda.processo.fase}
+                </Badge>
               </InfoRow>
             )}
 
@@ -494,17 +547,154 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      {/* ─── Providências ─── */}
-      {demanda.providencias && (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-5">
-          <h3 className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
-            Providências
-          </h3>
+      {/* ─── Providências (inline editable) ─── */}
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Gavel className="h-4 w-4 text-emerald-600" />
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              Providências
+            </h3>
+          </div>
+          {!editingProvidencias && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleEditProvidencias}
+              className="h-7 px-2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+            >
+              <Edit2 className="h-3.5 w-3.5 mr-1" />
+              Editar
+            </Button>
+          )}
+        </div>
+
+        {editingProvidencias ? (
+          <div className="space-y-3">
+            <Textarea
+              value={providenciasText}
+              onChange={(e) => setProvidenciasText(e.target.value)}
+              placeholder="Descreva as providências a serem tomadas..."
+              rows={5}
+              className="text-sm resize-none"
+              autoFocus
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={handleSaveProvidencias}
+                disabled={updateMutation.isPending}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white h-8"
+              >
+                <Check className="h-3.5 w-3.5 mr-1.5" />
+                Salvar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditingProvidencias(false)}
+                disabled={updateMutation.isPending}
+                className="h-8 border-zinc-200 dark:border-zinc-700"
+              >
+                <X className="h-3.5 w-3.5 mr-1.5" />
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        ) : demanda.providencias ? (
           <p className="text-sm text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap leading-relaxed">
             {demanda.providencias}
           </p>
+        ) : (
+          <button
+            onClick={handleEditProvidencias}
+            className="w-full text-left text-sm text-zinc-400 dark:text-zinc-500 border border-dashed border-zinc-200 dark:border-zinc-700 rounded-lg p-3 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5 inline mr-1.5 -mt-0.5" />
+            Adicionar providências...
+          </button>
+        )}
+      </div>
+
+      {/* ─── Documentos & Ofícios vinculados ─── */}
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-emerald-600" />
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              Ofícios Vinculados
+            </h3>
+            {oficiosVinculados && oficiosVinculados.items.length > 0 && (
+              <Badge className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-0 text-xs h-5 px-1.5">
+                {oficiosVinculados.items.length}
+              </Badge>
+            )}
+          </div>
+          <Link
+            href={`/admin/oficios/novo?demandaId=${demandaId}&assistidoId=${demanda.assistidoId}&processoId=${demanda.processoId}`}
+          >
+            <Button variant="outline" size="sm" className="h-7 px-2 border-zinc-200 dark:border-zinc-700 text-xs">
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Novo Ofício
+            </Button>
+          </Link>
         </div>
-      )}
+
+        {oficiosVinculados && oficiosVinculados.items.length > 0 ? (
+          <div className="space-y-2">
+            {oficiosVinculados.items.map((oficio) => {
+              const ofStatus = (oficio.metadata as any)?.status as string | undefined;
+              const statusBadgeMap: Record<string, { bg: string; text: string; label: string }> = {
+                rascunho: { bg: "bg-zinc-100 dark:bg-zinc-800", text: "text-zinc-500", label: "Rascunho" },
+                revisao: { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-300", label: "Em Revisão" },
+                enviado: { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-300", label: "Enviado" },
+                arquivado: { bg: "bg-zinc-100 dark:bg-zinc-800", text: "text-zinc-400", label: "Arquivado" },
+              };
+              const ofBadge = ofStatus ? statusBadgeMap[ofStatus] : statusBadgeMap["rascunho"];
+              return (
+                <Link
+                  key={oficio.id}
+                  href={`/admin/oficios/${oficio.id}`}
+                  className="flex items-center justify-between gap-3 p-3 rounded-lg border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/10 transition-colors group"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                      <FileText className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                        {oficio.titulo}
+                      </p>
+                      <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                        {oficio.createdAt ? format(new Date(oficio.createdAt), "dd/MM/yyyy", { locale: ptBR }) : ""}
+                        {oficio.geradoPorIA && (
+                          <span className="ml-2 inline-flex items-center gap-0.5 text-violet-500">
+                            <Sparkles className="h-3 w-3" /> IA
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {ofBadge && (
+                      <Badge className={`${ofBadge.bg} ${ofBadge.text} border-0 text-xs`}>
+                        {ofBadge.label}
+                      </Badge>
+                    )}
+                    {oficio.googleDocUrl && (
+                      <ExternalLink className="h-3.5 w-3.5 text-zinc-300 dark:text-zinc-600 group-hover:text-emerald-500 transition-colors" />
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-zinc-400 dark:text-zinc-500 text-center py-4">
+            Nenhum ofício vinculado a esta demanda.
+          </p>
+        )}
+      </div>
 
       {/* ─── Enrichment data (if available) ─── */}
       {demanda.enrichmentData && (
@@ -582,58 +772,33 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {/* ─── Ofício Sugerido / Criar Ofício ─── */}
-      <div className={`rounded-xl border p-5 ${
-        oficioSugestao?.sugerido
-          ? "bg-emerald-50/50 dark:bg-emerald-950/10 border-emerald-200/40 dark:border-emerald-800/20"
-          : "bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/80"
-      }`}>
-        <div className="flex items-center gap-2 mb-1">
-          <Mail className={`h-4 w-4 ${oficioSugestao?.sugerido ? "text-emerald-600 dark:text-emerald-400" : "text-violet-500"}`} />
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            {oficioSugestao?.sugerido ? "Ofício Sugerido" : "Criar Ofício"}
-          </h3>
-          {oficioSugestao?.sugerido && oficioSugestao.tipoLabel && (
-            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400">
-              {oficioSugestao.tipoLabel}
-            </span>
-          )}
-        </div>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">
-          {oficioSugestao?.sugerido
-            ? oficioSugestao.mensagem
-            : "Gere um ofício relacionado a esta demanda"}
-        </p>
-        {oficioSugestao?.sugerido && oficioSugestao.templateSugerido && (
-          <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mb-3 flex items-center gap-1.5">
-            <FileText className="h-3 w-3" />
-            Template: {oficioSugestao.templateSugerido.titulo}
-          </p>
-        )}
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href={`/admin/oficios/novo?demandaId=${demandaId}&assistidoId=${demanda.assistidoId}&processoId=${demanda.processoId}${oficioSugestao?.tipoOficio ? `&tipo=${oficioSugestao.tipoOficio}` : ""}`}
-          >
-            <Button
-              variant="outline"
-              size="sm"
-              className={oficioSugestao?.sugerido
-                ? "border-emerald-200/50 dark:border-emerald-800/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                : "border-violet-200/50 dark:border-violet-800/30 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30"
-              }
+      {/* ─── Ofício Sugerido (hint from IA) ─── */}
+      {oficioSugestao?.sugerido && (
+        <div className="rounded-xl border border-emerald-200/40 dark:border-emerald-800/20 bg-emerald-50/50 dark:bg-emerald-950/10 p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-2.5 min-w-0">
+              <Sparkles className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
+                  Ofício sugerido: {oficioSugestao.tipoLabel}
+                </p>
+                <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">
+                  {oficioSugestao.mensagem}
+                </p>
+              </div>
+            </div>
+            <Link
+              href={`/admin/oficios/novo?demandaId=${demandaId}&assistidoId=${demanda.assistidoId}&processoId=${demanda.processoId}${oficioSugestao.tipoOficio ? `&tipo=${oficioSugestao.tipoOficio}` : ""}`}
+              className="shrink-0"
             >
-              <Sparkles className="h-4 w-4 mr-1.5" />
-              {oficioSugestao?.sugerido ? "Gerar Ofício Sugerido" : "Novo Ofício com IA"}
-            </Button>
-          </Link>
-          <Link href={`/admin/oficios/novo?demandaId=${demandaId}&assistidoId=${demanda.assistidoId}&processoId=${demanda.processoId}`}>
-            <Button variant="outline" size="sm" className="border-zinc-200 dark:border-zinc-700 text-xs">
-              <FileText className="h-4 w-4 mr-1.5" />
-              Ofício em Branco
-            </Button>
-          </Link>
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white h-8 text-xs">
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                Gerar
+              </Button>
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ─── Quick actions ─── */}
       <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-5">

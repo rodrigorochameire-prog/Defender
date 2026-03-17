@@ -1059,13 +1059,13 @@ export default function DistribuicaoPage() {
     },
   });
 
-  const searchProcessoMutation = trpc.distribuicao.searchProcesso.useMutation({
-    onSuccess: (data) => {
+  const searchProcessoMutation = (trpc.distribuicao.searchProcesso as any).useMutation({
+    onSuccess: (data: any) => {
       setProcessoExistente(data);
     },
   });
 
-  const searchSimilarMutation = trpc.distribuicao.searchSimilar.useMutation();
+  const searchSimilarMutation = (trpc.distribuicao.searchSimilar as any).useMutation();
 
   const distributeMutation = trpc.distribuicao.distribute.useMutation({
     onSuccess: (result) => {
@@ -1130,7 +1130,7 @@ export default function DistribuicaoPage() {
     if (similar.length > 0) {
       // Mostrar modal de homonímia
       setHomonymiaSuggestions(
-        similar.map((s) => ({
+        similar.map((s: any) => ({
           id: s.id,
           nome: s.nome,
           cpf: s.cpf,

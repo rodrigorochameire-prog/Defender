@@ -45,10 +45,10 @@ export const prazosRouter = router({
         fase: z.string().optional(),
         search: z.string().optional(),
         apenasAtivos: z.boolean().default(true),
-      }).optional()
+      })
     )
     .query(async ({ ctx, input }) => {
-      const filters = input || {};
+      const filters = input;
       const conditions: any[] = [];
 
       if (filters.apenasAtivos) {
@@ -443,10 +443,10 @@ export const prazosRouter = router({
         status: z.array(z.string()).optional(),
         defensorId: z.number().optional(),
         limit: z.number().default(50),
-      }).optional()
+      })
     )
     .query(async ({ ctx, input }) => {
-      const filters = input || {};
+      const filters = input;
       const hoje = new Date();
       const dataLimite = new Date();
       dataLimite.setDate(dataLimite.getDate() + (filters.diasAFrente || 7));
@@ -481,7 +481,7 @@ export const prazosRouter = router({
 
       // Status específicos
       if (filters.status && filters.status.length > 0) {
-        conditions.push(sql`${demandas.status} IN (${sql.join(filters.status.map(s => sql`${s}`), sql`, `)})`);
+        conditions.push(sql`${demandas.status} IN (${sql.join(filters.status.map((s: string) => sql`${s}`), sql`, `)})`);
       }
 
       // Defensor

@@ -184,7 +184,6 @@ const abreviacoes: Record<string, string> = {
   "Adminitória": "Adminitória",
   
   // Violência Doméstica
-  "Audiência de Retratação": "Retratação",
   "Retratação": "Retratação",
   "Audiência de Medidas Protetivas": "Med. Protetivas",
   "Medidas Protetivas": "Med. Protetivas",

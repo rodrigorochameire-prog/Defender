@@ -353,7 +353,7 @@ export const atendimentosRouter = router({
           status: "realizado",
           transcricaoStatus: "awaiting_plaud",
           atendidoPorId: ctx.user.id,
-        })
+        } as any)
         .returning();
 
       return { atendimentoId: atendimento.id };
@@ -591,7 +591,8 @@ export const atendimentosRouter = router({
         fileSize: plaudRecordings.fileSize,
         status: plaudRecordings.status,
         errorMessage: plaudRecordings.errorMessage,
-        // Inclui resumo para preview, mas exclui transcription e rawPayload (pesados)
+        // Inclui resumo e transcrição para preview, mas exclui rawPayload (pesado)
+        transcription: plaudRecordings.transcription,
         summary: plaudRecordings.summary,
         atendimentoId: plaudRecordings.atendimentoId,
         assistidoId: plaudRecordings.assistidoId,
@@ -680,7 +681,7 @@ export const atendimentosRouter = router({
             status: "realizado",
             transcricaoStatus: "completed",
             atendidoPorId: ctx.user.id,
-          }).returning();
+          } as any).returning();
           atenId = novo.id;
         }
 

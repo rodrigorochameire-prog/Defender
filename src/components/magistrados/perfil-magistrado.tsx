@@ -613,7 +613,7 @@ export function PerfilMagistrado({
                               sessao.resultado === "absolvicao"
                                 ? "default"
                                 : sessao.resultado === "condenacao"
-                                ? "destructive"
+                                ? "danger"
                                 : "outline"
                             }
                             className={cn(

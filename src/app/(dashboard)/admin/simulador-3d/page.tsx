@@ -151,7 +151,7 @@ export default function Simulador3DPage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const casoSelecionado = casos?.items?.find(c => c.id.toString() === selectedCasoId);
+  const casoSelecionado = casos?.find(c => c.id.toString() === selectedCasoId);
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
@@ -179,7 +179,7 @@ export default function Simulador3DPage() {
                 <SelectValue placeholder="Selecione um caso..." />
               </SelectTrigger>
               <SelectContent>
-                {casos?.items?.map((caso) => (
+                {casos?.map((caso) => (
                   <SelectItem key={caso.id} value={caso.id.toString()}>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{caso.titulo}</span>

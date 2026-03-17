@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -134,13 +134,10 @@ const CATEGORIA_CONFIG: Record<ModeloCategoria, {
 // COMPONENTE PRINCIPAL
 // ==========================================
 
-export default function ModeloDetalhesPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function ModeloDetalhesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const params = useParams<{ id: string }>();
   const isEditMode = searchParams.get("edit") === "true";
   const modeloId = parseInt(params.id);
 

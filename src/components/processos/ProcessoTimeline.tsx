@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, type LucideIcon } from "react";
+import { useState, useMemo } from "react";
+import { type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
 import { Badge } from "@/components/ui/badge";

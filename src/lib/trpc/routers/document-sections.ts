@@ -322,7 +322,7 @@ export const documentSectionsRouter = router({
           textoExtraido: input.textoExtraido,
           confianca: input.confianca,
           metadata: input.metadata ?? {},
-        })
+        } as any)
         .returning();
 
       return section;

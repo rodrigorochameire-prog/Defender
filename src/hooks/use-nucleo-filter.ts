@@ -54,11 +54,11 @@ export function useNucleoFilter() {
     const saved = localStorage.getItem(NUCLEO_FILTER_KEY);
     if (saved && saved in NUCLEOS_CONFIG) {
       setNucleoSelecionado(saved as Nucleo);
-    } else if (user?.nucleo) {
+    } else if ((user as any)?.nucleo) {
       // Padrão: núcleo do usuário
-      setNucleoSelecionado(user.nucleo as Nucleo);
+      setNucleoSelecionado((user as any).nucleo as Nucleo);
     }
-  }, [user?.nucleo]);
+  }, [(user as any)?.nucleo]);
 
   // Salvar preferência
   const selecionarNucleo = useCallback((nucleo: Nucleo) => {

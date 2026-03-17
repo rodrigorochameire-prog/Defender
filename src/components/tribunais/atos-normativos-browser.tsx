@@ -176,7 +176,7 @@ export function AtosNormativosBrowser({
                 {ato.tipo}
               </Badge>
               {ato.relevancia === "alta" && (
-                <Badge variant="destructive" className="text-xs">
+                <Badge variant="danger" className="text-xs">
                   Alta Relevância
                 </Badge>
               )}
@@ -303,7 +303,7 @@ export function AtosNormativosBrowser({
                   </td>
                   <td className="p-3 text-center">
                     <Badge
-                      variant={prazo.tipo === "corrido" ? "destructive" : "default"}
+                      variant={prazo.tipo === "corrido" ? "danger" : "default"}
                       className="text-xs"
                     >
                       {prazo.tipo === "corrido" ? "Corridos" : "Úteis"}

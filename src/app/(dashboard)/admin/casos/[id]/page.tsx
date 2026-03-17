@@ -695,7 +695,7 @@ export default function CasoDetailPage() {
                   <span className="text-xs text-zinc-400 ml-1">({caso.assistidos.length})</span>
                 </div>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {caso.assistidos.map((assistido: { id: number; nome: string; photoUrl?: string | null; preso?: boolean; localPrisao?: string | null; statusPrisional?: string; vulgo?: string; dataPrisao?: string | null }) => (
+                  {(caso.assistidos as any[]).map((assistido: { id: number; nome: string; photoUrl?: string | null; preso?: boolean; localPrisao?: string | null; statusPrisional?: string; vulgo?: string; dataPrisao?: string | null }) => (
                     <div 
                       key={assistido.id} 
                       className={cn(
@@ -865,7 +865,7 @@ export default function CasoDetailPage() {
                     </h3>
                     <span className="text-xs text-zinc-400 ml-1">({caso.processos.length})</span>
                   </div>
-                  {caso.processos.map((processo: { id: number; numeroAutos: string; vara: string; comarca: string; fase?: string; demandasAbertas?: number }) => (
+                  {(caso.processos as any[]).map((processo: { id: number; numeroAutos: string; vara: string | null; comarca: string | null; fase?: string; demandasAbertas?: number }) => (
                     <div 
                       key={processo.id} 
                       className="group bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 border-l-[3px] border-l-blue-500 overflow-hidden hover:shadow-md transition-all duration-200"

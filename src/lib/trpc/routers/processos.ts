@@ -584,7 +584,7 @@ export const processosRouter = router({
         .select({
           id: demandas.id,
           data: demandas.dataExpedicao,
-          tipo: demandas.tipo,
+          tipo: demandas.tipoAto,
           status: demandas.status,
           providencias: demandas.providencias,
         })
@@ -644,9 +644,10 @@ export const processosRouter = router({
       
       // Adicionar demandas importantes (apenas as com status relevante)
       demandasResult.forEach(d => {
+        if (!d.data) return;
         timeline.push({
           id: d.id,
-          data: d.data,
+          data: new Date(d.data),
           tipo: d.tipo || "demanda",
           categoria: "demanda",
           titulo: d.providencias || `Demanda - ${d.tipo || "geral"}`,

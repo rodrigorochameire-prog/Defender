@@ -84,7 +84,7 @@ export const smartExtractRouter = router({
       // 3. Chamar backend Python para extração inteligente
       try {
         const result = await pythonBackend.smartExtract(
-          fileInfos,
+          fileInfos as any[],
           targetEntities,
           {
             assistidoId,

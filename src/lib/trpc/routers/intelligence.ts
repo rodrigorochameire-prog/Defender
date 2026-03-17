@@ -98,7 +98,7 @@ async function ensureCaso(
     .values({
       titulo: `Caso — ${assistido?.nome || "Assistido #" + assistidoId}`,
       status: "ativo",
-      defensorId: userId,
+      defensorId: parseInt(userId),
     })
     .returning({ id: casos.id });
 
@@ -428,7 +428,7 @@ export const intelligenceRouter = router({
         const enrichedDocs = await db
           .select({
             id: documentos.id,
-            nome: documentos.nome,
+            nome: documentos.titulo,
             enrichmentData: documentos.enrichmentData,
             conteudoCompleto: documentos.conteudoCompleto,
           })
@@ -504,7 +504,7 @@ export const intelligenceRouter = router({
         });
 
         // 8. Ensure caso exists
-        const casoId = await ensureCaso(assistidoId, ctx.user.id);
+        const casoId = await ensureCaso(assistidoId, ctx.user.id.toString());
 
         // 9. Dedup personas and upsert into case_personas
         const dedupedPersonas = deduplicatePersonas(result.pessoas);
@@ -670,7 +670,7 @@ export const intelligenceRouter = router({
         const enrichedDocs = await db
           .select({
             id: documentos.id,
-            nome: documentos.nome,
+            nome: documentos.titulo,
             enrichmentData: documentos.enrichmentData,
             conteudoCompleto: documentos.conteudoCompleto,
           })
@@ -738,7 +738,7 @@ export const intelligenceRouter = router({
         // Ensure caso exists for the assistido
         let casoId = processo?.casoId;
         if (!casoId && processo?.assistidoId) {
-          casoId = await ensureCaso(processo.assistidoId, ctx.user.id);
+          casoId = await ensureCaso(processo.assistidoId, ctx.user.id.toString());
           // Also update processo with casoId
           await db
             .update(processos)

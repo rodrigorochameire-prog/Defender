@@ -331,7 +331,7 @@ function RecentContacts({ configId }: { configId: number }) {
                     </p>
                   </div>
                   {contact.unreadCount > 0 && (
-                    <Badge variant="destructive" className="text-xs">
+                    <Badge variant="danger" className="text-xs">
                       {contact.unreadCount}
                     </Badge>
                   )}

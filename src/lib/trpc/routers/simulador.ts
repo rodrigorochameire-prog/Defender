@@ -307,8 +307,8 @@ export const simuladorRouter = router({
         descricao: input.descricao,
         cenaData: cenaDataPadrao,
         status: "RASCUNHO",
-        criadoPorId: parseInt(userId),
-        atualizadoPorId: parseInt(userId),
+        criadoPorId: userId,
+        atualizadoPorId: userId,
       }).returning();
 
       // Criar versões padrão (acusação e defesa)
@@ -357,7 +357,7 @@ export const simuladorRouter = router({
       const [updated] = await db.update(simulacoes3d)
         .set({
           ...data,
-          atualizadoPorId: parseInt(userId),
+          atualizadoPorId: userId,
           updatedAt: new Date(),
         })
         .where(eq(simulacoes3d.id, id))
@@ -394,7 +394,7 @@ export const simuladorRouter = router({
         .set({
           cenaData: input.cenaData,
           thumbnail: input.thumbnail,
-          atualizadoPorId: parseInt(userId),
+          atualizadoPorId: userId,
           updatedAt: new Date(),
         })
         .where(eq(simulacoes3d.id, input.simulacaoId))
@@ -650,7 +650,7 @@ export const simuladorRouter = router({
         duracao: versaoOriginal.duracao,
         narrativa: versaoOriginal.narrativa,
         cameraId: versaoOriginal.cameraId,
-        ordem: versaoOriginal.ordem + 1,
+        ordem: (versaoOriginal.ordem ?? 0) + 1,
       }).returning();
 
       // Duplicar keyframes
@@ -760,7 +760,7 @@ export const simuladorRouter = router({
         status: "pendente",
         progresso: 0,
         renderEngine: "remotion",
-        criadoPorId: parseInt(userId),
+        criadoPorId: userId,
       }).returning();
 
       // TODO: Iniciar job de renderização com Remotion
@@ -850,7 +850,7 @@ export const simuladorRouter = router({
 
       const [asset] = await db.insert(simulacaoAssets).values({
         ...input,
-        criadoPorId: parseInt(userId),
+        criadoPorId: userId,
       }).returning();
 
       return asset;

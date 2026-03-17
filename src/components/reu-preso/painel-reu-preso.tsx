@@ -182,14 +182,14 @@ export function PainelReuPreso({ defensorId }: PainelReuPresoProps) {
     const hoje = new Date();
     return demandas
       .filter((d) => {
-        const prazo = d.prazoFinal || (d.prazo ? new Date(d.prazo) : null);
+        const prazo = d.prazo ? new Date(d.prazo) : null;
         if (!prazo) return false;
         const diasAte = differenceInDays(new Date(prazo), hoje);
         return diasAte <= 7;
       })
       .sort((a, b) => {
-        const prazoA = a.prazoFinal || (a.prazo ? new Date(a.prazo) : new Date(9999, 11, 31));
-        const prazoB = b.prazoFinal || (b.prazo ? new Date(b.prazo) : new Date(9999, 11, 31));
+        const prazoA = a.prazo ? new Date(a.prazo) : new Date(9999, 11, 31);
+        const prazoB = b.prazo ? new Date(b.prazo) : new Date(9999, 11, 31);
         return new Date(prazoA).getTime() - new Date(prazoB).getTime();
       })
       .slice(0, 10);
@@ -440,7 +440,7 @@ export function PainelReuPreso({ defensorId }: PainelReuPresoProps) {
                                     <div className="flex items-center gap-2">
                                       <p className="font-semibold">{assistido.nome}</p>
                                       {statusPrisao.status === "excesso" && (
-                                        <Badge variant="destructive" className="text-xs animate-pulse">
+                                        <Badge variant="danger" className="text-xs animate-pulse">
                                           EXCESSO DE PRAZO
                                         </Badge>
                                       )}
@@ -539,7 +539,7 @@ export function PainelReuPreso({ defensorId }: PainelReuPresoProps) {
                 <ScrollArea className="h-[500px]">
                   <div className="space-y-2">
                     {demandasUrgentes.map((demanda) => {
-                      const prazo = demanda.prazoFinal || (demanda.prazo ? new Date(demanda.prazo) : null);
+                      const prazo = demanda.prazo ? new Date(demanda.prazo) : null;
                       const diasAte = prazo ? differenceInDays(new Date(prazo), new Date()) : null;
 
                       return (
@@ -569,7 +569,7 @@ export function PainelReuPreso({ defensorId }: PainelReuPresoProps) {
                                   <Badge
                                     variant={
                                       diasAte !== null && diasAte < 0
-                                        ? "destructive"
+                                        ? "danger"
                                         : diasAte === 0
                                         ? "default"
                                         : "outline"

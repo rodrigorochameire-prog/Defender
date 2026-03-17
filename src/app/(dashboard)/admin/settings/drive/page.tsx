@@ -83,10 +83,15 @@ interface SyncFolder {
   driveFolderId: string;
   name: string;
   description: string | null;
-  syncDirection: string;
+  syncDirection: string | null;
   isActive: boolean;
   lastSyncAt: Date | null;
   createdAt: Date;
+  updatedAt: Date;
+  createdById: number | null;
+  driveFolderUrl: string | null;
+  syncToken: string | null;
+  fileCount?: number;
 }
 
 // ==========================================
@@ -529,7 +534,7 @@ export default function DriveConfigPage() {
 
   const syncMutation = trpc.drive.syncFolder.useMutation({
     onSuccess: (result) => {
-      toast.success(`Sincronizado: ${result.added} novos, ${result.updated} atualizados`);
+      toast.success(`Sincronizado: ${result.filesAdded} novos, ${result.filesUpdated} atualizados`);
       setSyncingFolderId(null);
       refetchFolders();
     },
@@ -541,7 +546,7 @@ export default function DriveConfigPage() {
 
   const syncAllMutation = trpc.drive.syncAll.useMutation({
     onSuccess: (results) => {
-      const total = results.reduce((acc, r) => acc + r.added + r.updated, 0);
+      const total = results.reduce((acc, r) => acc + r.filesAdded + r.filesUpdated, 0);
       toast.success(`Sincronização concluída: ${total} alterações`);
       refetchFolders();
     },

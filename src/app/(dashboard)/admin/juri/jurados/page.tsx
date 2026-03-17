@@ -81,10 +81,11 @@ interface JuradoPerfil {
 interface JuradoImportado {
   numero: number;
   nome: string;
-  empresa: string;
-  profissao: string;
+  empresa?: string;
+  profissao?: string;
   tipo: "titular" | "suplente";
   reuniao: string;
+  selecionado?: boolean;
 }
 
 // Dados mockados removidos - agora usa apenas banco de dados
@@ -771,10 +772,13 @@ export default function JuradosPage() {
       profissao: j.profissao || undefined,
       idade: j.idade || undefined,
       bairro: j.bairro || undefined,
-      genero: (j.genero === "M" || j.genero === "F") ? j.genero : undefined,
+      genero: ((j.genero === "M" || j.genero === "F") ? j.genero : "M") as "M" | "F",
       perfilDominante: j.perfilTendencia || undefined,
       taxaAbsolvicao: j.taxaAbsolvicao || 50,
       totalSessoes: j.participacoes || 0,
+      absolvicoes: j.votosAbsolvicao || 0,
+      condenacoes: j.votosCondenacao || 0,
+      confiabilidadePerfil: (j.confiabilidadePerfil ?? (j.participacoes >= 5 ? "alta" : j.participacoes >= 2 ? "media" : "baixa")) as "alta" | "media" | "baixa",
       votosAbsolvicao: j.votosAbsolvicao || 0,
       votosCondenacao: j.votosCondenacao || 0,
       ultimaParticipacao: j.updatedAt ? new Date(j.updatedAt).toISOString().split("T")[0] : undefined,
@@ -1310,7 +1314,7 @@ export default function JuradosPage() {
             <Button variant="outline" onClick={() => setShowDeleteAllConfirm(false)}>
               Cancelar
             </Button>
-            <Button 
+            <Button
               variant="destructive"
               onClick={() => deleteAllMutation.mutate()}
               disabled={deleteAllMutation.isPending}

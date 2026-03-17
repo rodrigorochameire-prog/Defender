@@ -433,6 +433,7 @@ export const briefingRouter = router({
           arquivos_encontrados: [],
           versao_delegacia: analise?.versaoDelegacia || undefined,
           versao_juizo: analise?.versaoJuizo || undefined,
+          contradicoes_com_laudos: [],
           contradicoes: analise?.contradicoesIdentificadas
             ? analise.contradicoesIdentificadas.split("\n").filter(Boolean)
             : [],

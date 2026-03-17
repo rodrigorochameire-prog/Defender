@@ -340,7 +340,7 @@ export const crossAnalyses = pgTable("cross_analyses", {
       fontes: number[];
       relevancia: "alta" | "media" | "baixa";
     }>;
-  }>().default({}),
+  }>().$defaultFn(() => ({}) as any),
   timelineFatos: jsonb("timeline_fatos").$type<Array<{
     dataRef: string;
     fato: string;

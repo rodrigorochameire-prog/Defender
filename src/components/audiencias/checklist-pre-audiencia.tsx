@@ -324,7 +324,7 @@ export function ChecklistPreAudiencia({
             </p>
           </div>
           <Badge
-            variant={urgencia === "passada" ? "destructive" : urgencia === "hoje" ? "destructive" : urgencia === "amanha" ? "default" : "outline"}
+            variant={urgencia === "passada" ? "danger" : urgencia === "hoje" ? "danger" : urgencia === "amanha" ? "default" : "outline"}
             className={cn(
               urgencia === "hoje" && "animate-pulse",
               urgencia === "passada" && "bg-gray-500"
@@ -460,7 +460,7 @@ export function ChecklistPreAudiencia({
                               <ItemIcon className="h-3.5 w-3.5 opacity-60" />
                               {item.label}
                               {item.critical && !isChecked && (
-                                <Badge variant="destructive" className="text-[9px] px-1 py-0">
+                                <Badge variant="danger" className="text-[9px] px-1 py-0">
                                   Obrigatorio
                                 </Badge>
                               )}

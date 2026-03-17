@@ -49,7 +49,7 @@ export function DailyProgress() {
   // Calcula métricas
   const metrics = useMemo(() => {
     // Demandas
-    const demandas = demandasData?.items || [];
+    const demandas = demandasData || [];
     const hoje = new Date();
     const inicioHoje = startOfDay(hoje);
 

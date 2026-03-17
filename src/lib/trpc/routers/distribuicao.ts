@@ -537,18 +537,18 @@ export const distribuicaoRouter = router({
       const [processo] = await db
         .select({
           id: processos.id,
-          numero: processos.numero,
+          numero: processos.numeroAutos,
           assistidoId: processos.assistidoId,
           assistidoNome: assistidos.nome,
-          tipoProcesso: processos.tipoProcesso,
+          tipoProcesso: processos.classeProcessual,
           driveFolderId: processos.driveFolderId,
         })
         .from(processos)
         .leftJoin(assistidos, eq(processos.assistidoId, assistidos.id))
         .where(
           or(
-            eq(processos.numero, input.numeroProcesso),
-            sql`REPLACE(REPLACE(REPLACE(${processos.numero}, '.', ''), '-', ''), ' ', '') = ${numeroNormalizado}`
+            eq(processos.numeroAutos, input.numeroProcesso),
+            sql`REPLACE(REPLACE(REPLACE(${processos.numeroAutos}, '.', ''), '-', ''), ' ', '') = ${numeroNormalizado}`
           )
         )
         .limit(1);
@@ -582,7 +582,7 @@ export const distribuicaoRouter = router({
       const [processo] = await db
         .select({
           id: processos.id,
-          numero: processos.numero,
+          numero: processos.numeroAutos,
           assistidoId: processos.assistidoId,
           assistidoNome: assistidos.nome,
           driveFolderId: processos.driveFolderId,

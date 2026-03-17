@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties, type ComponentType, type SVGProps } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -181,7 +181,7 @@ export function WorkflowStatus({
                   {grupoConfig.label}
                 </DropdownMenuLabel>
                 {items.map(({ status, config }) => {
-                  const ItemIcon = config.icon;
+                  const ItemIcon = config.icon as ComponentType<SVGProps<SVGSVGElement>>;
                   return (
                     <DropdownMenuItem
                       key={status}
@@ -219,7 +219,7 @@ export function WorkflowStatus({
         </div>
 
         {reuPreso && (
-          <Badge variant="destructive" className="text-xs animate-pulse">
+          <Badge variant="danger" className="text-xs animate-pulse">
             RÉU PRESO
           </Badge>
         )}
@@ -232,7 +232,7 @@ export function WorkflowStatus({
             const stepConfig = STATUS_GROUPS[step.group];
             const isActive = normalizedStatus === step.status;
             const isPast = WORKFLOW_STEPS.findIndex(s => s.status === normalizedStatus) > index;
-            const StepIcon = DEMANDA_STATUS[step.status as keyof typeof DEMANDA_STATUS]?.icon || Inbox;
+            const StepIcon = (DEMANDA_STATUS[step.status as keyof typeof DEMANDA_STATUS]?.icon || Inbox) as ComponentType<SVGProps<SVGSVGElement>>;
 
             return (
               <div key={step.status} className="flex items-center">
@@ -250,8 +250,8 @@ export function WorkflowStatus({
                         )}
                         style={{
                           backgroundColor: isActive ? `${stepConfig.color}30` : undefined,
-                          ringColor: isActive ? stepConfig.color : undefined,
-                        }}
+                          ['--ring-color']: isActive ? stepConfig.color : undefined,
+                        } as CSSProperties}
                       >
                         <StepIcon
                           className={cn("h-4 w-4", isPast && "text-green-500")}
@@ -328,7 +328,7 @@ export function WorkflowStatus({
                       {grupoConfig.label}
                     </DropdownMenuLabel>
                     {items.map(({ status, config }) => {
-                      const ItemIcon = config.icon;
+                      const ItemIcon = config.icon as ComponentType<SVGProps<SVGSVGElement>>;
                       return (
                         <DropdownMenuItem
                           key={status}

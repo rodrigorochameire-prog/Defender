@@ -67,7 +67,7 @@ export function HomonymiaModal({
     switch (similarity) {
       case "exact":
         return (
-          <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+          <Badge variant="danger" className="text-[10px] px-1.5 py-0">
             Nome Idêntico
           </Badge>
         );
@@ -150,7 +150,7 @@ export function HomonymiaModal({
                     <div className="flex items-center gap-2">
                       {getSimilarityBadge(suggestion.similarity)}
                       {suggestion.driveFolderId && (
-                        <FolderOpen className="w-4 h-4 text-emerald-500" title="Pasta no Drive" />
+                        <FolderOpen className="w-4 h-4 text-emerald-500" />
                       )}
                     </div>
                   </Label>

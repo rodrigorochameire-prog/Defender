@@ -242,7 +242,7 @@ export const modelosRouter = router({
           tags: input.tags,
           isPublic: input.isPublic,
           createdById: ctx.user.id,
-        })
+        } as any)
         .returning();
 
       return modelo;
@@ -299,7 +299,7 @@ export const modelosRouter = router({
         .set({
           ...updateData,
           updatedAt: new Date(),
-        })
+        } as any)
         .where(eq(documentoModelos.id, id))
         .returning();
 

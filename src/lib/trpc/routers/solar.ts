@@ -647,7 +647,7 @@ export const solarRouter = router({
    */
   buscarNoSigad: protectedProcedure
     .input(z.object({ assistidoId: z.number() }))
-    .query(async ({ input }): Promise<SigadBuscarOutput> => {
+    .mutation(async ({ input }): Promise<SigadBuscarOutput> => {
       const assistido = await db.query.assistidos.findFirst({
         where: eq(assistidos.id, input.assistidoId),
         columns: { id: true, nome: true, cpf: true },
@@ -1152,7 +1152,7 @@ export const solarRouter = router({
                   demandaMatch = {
                     id: dem.id,
                     ato: dem.ato,
-                    status: dem.status,
+                    status: dem.status ?? '',
                     processoId: dem.processoId,
                     assistidoNome: assistidoData?.nome ?? undefined,
                   };
@@ -1432,10 +1432,8 @@ export const solarRouter = router({
               if (shouldSync(atribuicao, "syncAnotacoes") && input.atendimentoId) {
                 try {
                   await enrichmentClient.solarCriarAnotacao({
-                    atendimento_id: input.atendimentoId,
-                    numero_processo: input.numeroProcesso,
+                    atendimentoId: input.atendimentoId,
                     texto: textoAnotacao,
-                    grau: input.grau,
                   });
                   resultados.push({
                     etapa: "anotacao_solar",

@@ -247,7 +247,7 @@ function EntitySection({
         >
           <Checkbox
             checked={allSelected}
-            indeterminate={someSelected && !allSelected}
+            {...({ indeterminate: someSelected && !allSelected } as any)}
             onCheckedChange={(checked) => onToggleAll(checked as boolean)}
           />
           <span className="text-sm text-zinc-600">

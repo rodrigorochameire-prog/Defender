@@ -310,10 +310,10 @@ export function DriveFileList({ files, isLoading }: DriveFileListProps) {
       switch (sortKey) {
         case "name": cmp = a.name.localeCompare(b.name); break;
         case "type": cmp = (a.mimeType || "").localeCompare(b.mimeType || ""); break;
-        case "size": cmp = (a.size || 0) - (b.size || 0); break;
+        case "size": cmp = (a.fileSize || 0) - (b.fileSize || 0); break;
         case "date": {
-          const da = new Date(a.modifiedAt || a.createdAt).getTime();
-          const db = new Date(b.modifiedAt || b.createdAt).getTime();
+          const da = new Date(a.lastModifiedTime || a.createdAt).getTime();
+          const db = new Date(b.lastModifiedTime || b.createdAt).getTime();
           cmp = da - db;
           break;
         }

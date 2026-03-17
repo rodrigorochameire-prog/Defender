@@ -145,6 +145,9 @@ interface TranscriptViewerProps {
   analysis?: AnalysisData | null;
   assistidoNome?: string;
   title?: string;
+  summary?: string | null;
+  onSummarize?: () => void;
+  isSummarizing?: boolean;
 }
 
 // ── Helper: classification tag colors ──

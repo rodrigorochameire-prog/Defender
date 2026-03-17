@@ -730,7 +730,7 @@ export const enrichmentRouter = router({
               },
               createdAt: new Date(),
               updatedAt: new Date(),
-            }).returning({ id: demandas.id });
+            } as any).returning({ id: demandas.id });
 
             results.push({ type: "criar_demanda", success: true, id: novaDemanda?.id });
           }

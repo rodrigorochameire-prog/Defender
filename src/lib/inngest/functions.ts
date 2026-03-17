@@ -382,18 +382,15 @@ export const checkPrazosCriticosFn = inngest.createFunction(
     const demandasCriticas = await step.run("buscar-demandas-criticas", async () => {
       return await db.query.demandas.findMany({
         where: and(
-          or(
-            // Prazo vencido ou nos próximos 7 dias
-            lte(demandas.prazo, em7dias.toISOString().split("T")[0]),
-            lte(demandas.prazoFinal, em7dias)
-          ),
+          // Prazo vencido ou nos próximos 7 dias
+          lte(demandas.prazo, em7dias.toISOString().split("T")[0]),
           // Não concluídas
           sql`${demandas.status} NOT IN ('CONCLUIDO', 'ARQUIVADO', '7_PROTOCOLADO', '7_CIENCIA')`
         ),
         with: {
           assistido: true,
           processo: true,
-          responsavel: true,
+          defensor: true,
         },
       });
     });
@@ -422,7 +419,7 @@ export const checkPrazosCriticosFn = inngest.createFunction(
     }[] = [];
 
     for (const demanda of demandasCriticas) {
-      const prazoData = demanda.prazoFinal || (demanda.prazo ? new Date(demanda.prazo) : null);
+      const prazoData = demanda.prazo ? new Date(demanda.prazo) : null;
       if (!prazoData) continue;
 
       const prazoDate = new Date(prazoData);
@@ -465,8 +462,8 @@ export const checkPrazosCriticosFn = inngest.createFunction(
       ].filter(Boolean).join("\n");
 
       // Notificar o responsável ou todos os defensores
-      const destinatarios = demanda.responsavelId
-        ? defensores.filter(d => d.id === demanda.responsavelId)
+      const destinatarios = demanda.defensorId
+        ? defensores.filter(d => d.id === demanda.defensorId)
         : defensores;
 
       for (const defensor of destinatarios) {
@@ -544,18 +541,12 @@ export const checkPrazosManualFn = inngest.createFunction(
     const demandasCriticas = await step.run("buscar-demandas", async () => {
       const whereClause = userId
         ? and(
-            or(
-              lte(demandas.prazo, em7dias.toISOString().split("T")[0]),
-              lte(demandas.prazoFinal, em7dias)
-            ),
+            lte(demandas.prazo, em7dias.toISOString().split("T")[0]),
             sql`${demandas.status} NOT IN ('CONCLUIDO', 'ARQUIVADO', '7_PROTOCOLADO', '7_CIENCIA')`,
-            eq(demandas.responsavelId, userId)
+            eq(demandas.defensorId, userId)
           )
         : and(
-            or(
-              lte(demandas.prazo, em7dias.toISOString().split("T")[0]),
-              lte(demandas.prazoFinal, em7dias)
-            ),
+            lte(demandas.prazo, em7dias.toISOString().split("T")[0]),
             sql`${demandas.status} NOT IN ('CONCLUIDO', 'ARQUIVADO', '7_PROTOCOLADO', '7_CIENCIA')`
           );
 
@@ -565,18 +556,18 @@ export const checkPrazosManualFn = inngest.createFunction(
           assistido: true,
           processo: true,
         },
-        orderBy: (d, { asc }) => [asc(d.prazoFinal), asc(d.prazo)],
+        orderBy: (d, { asc }) => [asc(d.prazo)],
       });
     });
 
     // Categorizar
     const vencidos = demandasCriticas.filter(d => {
-      const prazo = d.prazoFinal || (d.prazo ? new Date(d.prazo) : null);
+      const prazo = d.prazo ? new Date(d.prazo) : null;
       return prazo && new Date(prazo) < hoje;
     });
 
     const venceHoje = demandasCriticas.filter(d => {
-      const prazo = d.prazoFinal || (d.prazo ? new Date(d.prazo) : null);
+      const prazo = d.prazo ? new Date(d.prazo) : null;
       if (!prazo) return false;
       const prazoDate = new Date(prazo);
       prazoDate.setHours(0, 0, 0, 0);
@@ -584,7 +575,7 @@ export const checkPrazosManualFn = inngest.createFunction(
     });
 
     const proximosDias = demandasCriticas.filter(d => {
-      const prazo = d.prazoFinal || (d.prazo ? new Date(d.prazo) : null);
+      const prazo = d.prazo ? new Date(d.prazo) : null;
       if (!prazo) return false;
       const prazoDate = new Date(prazo);
       prazoDate.setHours(0, 0, 0, 0);
@@ -606,7 +597,7 @@ export const checkPrazosManualFn = inngest.createFunction(
         id: d.id,
         ato: d.ato,
         assistido: d.assistido?.nome,
-        prazo: d.prazoFinal || d.prazo,
+        prazo: d.prazo,
         reuPreso: d.reuPreso,
       })),
     };
@@ -768,9 +759,9 @@ export const intelligenceEnrichDocumentFn = inngest.createFunction(
       const [doc] = await db
         .select({
           id: documentos.id,
-          nome: documentos.nome,
+          nome: documentos.titulo,
           mimeType: documentos.mimeType,
-          url: documentos.url,
+          url: documentos.fileUrl,
           enrichmentStatus: documentos.enrichmentStatus,
         })
         .from(documentos)
@@ -1545,7 +1536,7 @@ export const pdfInsertBookmarksFn = inngest.createFunction(
     const bookmarkResult = await step.run("add-bookmarks", async () => {
       const { addBookmarksToPdf } = await import("@/lib/services/pdf-bookmarker");
       const buffer = Buffer.from(pdfBase64, "base64");
-      const result = await addBookmarksToPdf(buffer, sections);
+      const result = await addBookmarksToPdf(buffer, sections as any[]);
       if (!result.success) throw new Error(result.error || "Bookmark insertion failed");
       return {
         bookmarksAdded: result.bookmarksAdded,
@@ -1770,7 +1761,7 @@ export const transcribeDriveFileFn = inngest.createFunction(
             speakers: transcriptionResult.speakers,
             duration: transcriptionResult.duration,
             diarization_applied: transcriptionResult.diarization_applied,
-          },
+          } as any,
           updatedAt: new Date(),
         })
         .where(eq(driveFiles.driveFileId, driveFileId));

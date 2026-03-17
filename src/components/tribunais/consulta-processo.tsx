@@ -184,8 +184,8 @@ export function ConsultaProcesso({
   };
 
   const getTipoBadge = (tipo: MovimentacaoProcessual["tipo"]) => {
-    const config: Record<string, { label: string; variant: "default" | "destructive" | "outline" | "secondary" }> = {
-      intimacao: { label: "Intimacao", variant: "destructive" },
+    const config: Record<string, { label: string; variant: "default" | "danger" | "outline" | "secondary" }> = {
+      intimacao: { label: "Intimacao", variant: "danger" },
       sentenca: { label: "Sentenca", variant: "default" },
       decisao: { label: "Decisao", variant: "secondary" },
       despacho: { label: "Despacho", variant: "outline" },
@@ -354,7 +354,7 @@ export function ConsultaProcesso({
                               <div className="flex items-center gap-2 mb-1">
                                 {getTipoBadge(mov.tipo)}
                                 {mov.urgente && (
-                                  <Badge variant="destructive" className="text-xs">
+                                  <Badge variant="danger" className="text-xs">
                                     URGENTE
                                   </Badge>
                                 )}
