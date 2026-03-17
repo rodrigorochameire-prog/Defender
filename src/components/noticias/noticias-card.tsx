@@ -1,6 +1,6 @@
 "use client";
 
-import { Star, Paperclip, ExternalLink } from "lucide-react";
+import { Star, Paperclip, ExternalLink, Sparkles, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,13 @@ interface NoticiaCardProps {
   onToggleFavorito: () => void;
   onSalvarNoCaso: () => void;
   onClick: () => void;
+  compact?: boolean;
+}
+
+function estimarTempoLeitura(texto: string | null | undefined): number | null {
+  if (!texto) return null;
+  const words = texto.trim().split(/\s+/).length;
+  return Math.ceil(words / 200);
 }
 
 export function NoticiaCard({
@@ -31,21 +38,35 @@ export function NoticiaCard({
   onToggleFavorito,
   onSalvarNoCaso,
   onClick,
+  compact = false,
 }: NoticiaCardProps) {
   const analise = noticia.analiseIa as AnaliseIA | null;
   const tags = (noticia.tags as string[]) ?? [];
 
+  const textoParaEstimar = (noticia as { conteudo?: string | null }).conteudo ?? noticia.resumo;
+  const tempoLeitura = estimarTempoLeitura(textoParaEstimar);
+
   return (
     <div
-      className="group relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-500/40 hover:shadow-md transition-all cursor-pointer"
+      className="group relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-500/40 hover:shadow-md hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-all cursor-pointer"
       onClick={onClick}
     >
       {/* Barra colorida da fonte */}
-      <div className="h-1" style={{ backgroundColor: corFonte }} />
+      <div className="h-1.5" style={{ backgroundColor: corFonte }} />
 
-      <div className="p-4">
+      {/* Badge IA — canto superior direito (absoluto) */}
+      {analise?.resumoExecutivo && (
+        <div className="absolute top-3 right-3 z-10">
+          <span className="inline-flex items-center gap-0.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+            <Sparkles className="h-2.5 w-2.5" />
+            IA
+          </span>
+        </div>
+      )}
+
+      <div className={cn("p-5", compact && "py-3")}>
         {/* Meta row */}
-        <div className="flex items-center gap-2 mb-2 flex-wrap">
+        <div className="flex items-center gap-2 mb-2 flex-wrap pr-10">
           <Badge
             variant="outline"
             className="text-xs font-medium capitalize"
@@ -56,21 +77,33 @@ export function NoticiaCard({
           <Badge variant="secondary" className="text-xs capitalize">
             {noticia.categoria}
           </Badge>
-          <span className="text-xs text-zinc-400 ml-auto">
-            {noticia.publicadoEm
-              ? formatDistanceToNow(new Date(noticia.publicadoEm), { addSuffix: true, locale: ptBR })
-              : ""}
-          </span>
+          <div className="flex items-center gap-1.5 ml-auto text-xs text-zinc-400">
+            {tempoLeitura && (
+              <>
+                <Clock className="h-3 w-3" />
+                <span>~{tempoLeitura} min</span>
+                <span className="text-zinc-300 dark:text-zinc-600">·</span>
+              </>
+            )}
+            <span>
+              {noticia.publicadoEm
+                ? formatDistanceToNow(new Date(noticia.publicadoEm), { addSuffix: true, locale: ptBR })
+                : ""}
+            </span>
+          </div>
         </div>
 
         {/* Título */}
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2 mb-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+        <h3 className={cn(
+          "font-semibold text-base text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors mb-2",
+          compact ? "line-clamp-1" : "line-clamp-2"
+        )}>
           {noticia.titulo}
         </h3>
 
         {/* Preview IA ou resumo */}
-        {analise?.resumoExecutivo ? (
-          <div className="bg-zinc-50 dark:bg-zinc-800/60 rounded-lg px-3 py-2 mb-3">
+        {!compact && (analise?.resumoExecutivo ? (
+          <div className="border-l-2 border-emerald-400 bg-emerald-50/60 dark:bg-emerald-900/20 rounded-r-lg px-3 py-2 mb-3">
             <p className="text-xs text-zinc-600 dark:text-zinc-400 italic line-clamp-2">
               {analise.resumoExecutivo}
             </p>
@@ -79,10 +112,10 @@ export function NoticiaCard({
           <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-3">
             {noticia.resumo}
           </p>
-        ) : null}
+        ) : null)}
 
         {/* Tags */}
-        {tags.length > 0 && (
+        {!compact && tags.length > 0 && (
           <div className="flex gap-1 flex-wrap mb-3">
             {tags.slice(0, 3).map(tag => (
               <span
@@ -98,15 +131,18 @@ export function NoticiaCard({
           </div>
         )}
 
-        {/* Ações */}
+        {/* Ações — visíveis apenas no hover */}
         <div
-          className="flex items-center gap-1"
+          className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
           onClick={e => e.stopPropagation()}
         >
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className={cn(
+              "h-7 w-7 transition-colors",
+              isFavorito && "bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-800/40"
+            )}
             onClick={onToggleFavorito}
             title={isFavorito ? "Remover dos salvos" : "Salvar"}
           >
