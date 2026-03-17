@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import type { Artigo, Dispositivo } from "@/config/legislacao/types";
 import type { LegislacaoDestaque } from "@/lib/db/schema/legislacao";
 import { ArtigoTimeline } from "./artigo-timeline";
+import { ArtigoDiff } from "./artigo-diff";
 
 // ==========================================
 // ARTIGO RENDERER - Renderiza artigo de lei
@@ -20,6 +21,7 @@ import { ArtigoTimeline } from "./artigo-timeline";
 interface ArtigoRendererProps {
   artigo: Artigo;
   leiAbreviado: string;
+  leiId?: string;
   destaques?: LegislacaoDestaque[];
   onHighlight?: (artigoId: string, texto: string, cor: string) => void;
   onFavorite?: (artigoId: string) => void;
@@ -205,6 +207,7 @@ function ParagrafoList({
 export function ArtigoRenderer({
   artigo,
   leiAbreviado,
+  leiId,
   destaques = [],
   onFavorite,
   isFavorited = false,
@@ -297,6 +300,9 @@ export function ArtigoRenderer({
           />
         </div>
       )}
+
+      {/* Diff de alterações legislativas */}
+      {leiId && <ArtigoDiff leiId={leiId} artigoId={artigo.id} />}
 
       {/* Footer actions */}
       <div className="mt-3 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">

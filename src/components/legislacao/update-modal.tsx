@@ -26,6 +26,7 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { LEGISLACOES } from "@/config/legislacao";
+import { trpc } from "@/lib/trpc/client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -109,6 +110,8 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
   const [expandedDiffs, setExpandedDiffs] = useState<Set<string>>(new Set());
   const abortRef = useRef(false);
 
+  const registrarAlteracao = trpc.legislacao.registrarAlteracao.useMutation();
+
   // Reset on close
   useEffect(() => {
     if (!open) {
@@ -188,13 +191,6 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
     }
   }, [selectedLaws]);
 
-  // ------ Step 3: apply (placeholder) ------
-
-  const applyChanges = useCallback(() => {
-    // TODO: connect to tRPC procedure
-    onOpenChange(false);
-  }, [onOpenChange]);
-
   // ------ Derived ------
 
   const completedCount = lawProgress.filter(
@@ -207,6 +203,23 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
     lawProgress.length > 0 ? (completedCount / lawProgress.length) * 100 : 0;
 
   const relevantDiffs = MOCK_DIFFS.filter((d) => selectedLaws.has(d.lawId));
+
+  // ------ Step 3: apply — persist diffs to leis_versoes ------
+
+  const applyChanges = useCallback(async () => {
+    const promises = relevantDiffs.flatMap((ld) =>
+      ld.diffs.map((diff) =>
+        registrarAlteracao.mutateAsync({
+          leiId: ld.lawId,
+          artigoId: diff.artigo,
+          textoAnterior: diff.oldText || undefined,
+          textoNovo: diff.newText,
+        })
+      )
+    );
+    await Promise.allSettled(promises);
+    onOpenChange(false);
+  }, [onOpenChange, relevantDiffs, registrarAlteracao]);
 
   // ------ Render helpers ------
 

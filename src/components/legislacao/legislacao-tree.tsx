@@ -423,6 +423,7 @@ export function LegislacaoTree() {
                 <ArtigoRenderer
                   artigo={selectedArtigo}
                   leiAbreviado={leiMeta.nomeAbreviado}
+                  leiId={selectedLeiId}
                 />
               </div>
             </ScrollArea>

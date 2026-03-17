@@ -84,4 +84,44 @@ export const legislacaoRouter = router({
         ));
       return { success: true };
     }),
+
+  // ==========================================
+  // VERSÕES - Histórico de alterações legislativas
+  // ==========================================
+
+  /** Lista versões de um artigo específico */
+  listVersoes: protectedProcedure
+    .input(z.object({ leiId: z.string(), artigoId: z.string() }))
+    .query(async ({ input }) => {
+      const { leisVersoes } = await import("@/lib/db/schema/biblioteca");
+      return db
+        .select()
+        .from(leisVersoes)
+        .where(and(
+          eq(leisVersoes.leiId, input.leiId),
+          eq(leisVersoes.artigoId, input.artigoId),
+        ))
+        .orderBy(desc(leisVersoes.createdAt))
+        .limit(5);
+    }),
+
+  /** Registra uma alteração legislativa em um artigo */
+  registrarAlteracao: protectedProcedure
+    .input(z.object({
+      leiId: z.string(),
+      artigoId: z.string(),
+      textoAnterior: z.string().optional(),
+      textoNovo: z.string(),
+      leisAlteradora: z.string().optional(),
+      dataVigencia: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { leisVersoes } = await import("@/lib/db/schema/biblioteca");
+      if (input.textoAnterior === input.textoNovo) return null;
+      const [versao] = await db
+        .insert(leisVersoes)
+        .values(input)
+        .returning();
+      return versao;
+    }),
 });

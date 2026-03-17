@@ -238,6 +238,7 @@ export function LegislacaoTabs({ selectedLeiId, scrollToArtigoId }: LegislacaoTa
                 <ArtigoRenderer
                   artigo={artigo}
                   leiAbreviado={activeMeta?.nomeAbreviado || ""}
+                  leiId={activeLeiId}
                   searchHighlight={searchTerm.length >= 2 ? searchTerm : undefined}
                 />
               </div>
