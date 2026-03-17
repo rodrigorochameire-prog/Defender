@@ -58,6 +58,7 @@ export interface FiltrosState {
   dataInicio?: string;
   dataFim?: string;
   soMatches: boolean;
+  circunstancia?: string;
 }
 
 interface RadarFiltrosProps {
@@ -69,7 +70,7 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
   const { data: bairros } = trpc.radar.bairros.useQuery();
   const { data: fontesDistintas } = trpc.radar.fontesDistintas.useQuery();
 
-  const hasFilters = filtros.tipoCrime || filtros.bairro || filtros.fonte || filtros.search || filtros.dataInicio || filtros.dataFim || filtros.soMatches;
+  const hasFilters = filtros.tipoCrime || filtros.bairro || filtros.fonte || filtros.search || filtros.dataInicio || filtros.dataFim || filtros.soMatches || filtros.circunstancia;
 
   return (
     <Card className="sticky top-4">
@@ -93,6 +94,7 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
                   dataInicio: undefined,
                   dataFim: undefined,
                   soMatches: false,
+                  circunstancia: undefined,
                 })
               }
             >
@@ -112,6 +114,32 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
             onChange={(e) => onChange({ ...filtros, search: e.target.value || undefined })}
             className="pl-9 h-9"
           />
+        </div>
+
+        {/* Quick date presets */}
+        <div className="flex flex-wrap gap-1">
+          {[
+            { label: "Hoje", days: 0 },
+            { label: "7d", days: 7 },
+            { label: "30d", days: 30 },
+            { label: "90d", days: 90 },
+          ].map(({ label, days }) => (
+            <button
+              key={label}
+              onClick={() => {
+                const hoje = new Date();
+                const inicio = days === 0 ? hoje : new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+                onChange({
+                  ...filtros,
+                  dataInicio: inicio.toISOString().split("T")[0],
+                  dataFim: hoje.toISOString().split("T")[0],
+                });
+              }}
+              className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400 transition-colors cursor-pointer"
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {/* Tipo de crime */}
@@ -168,6 +196,23 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
             {fontesDistintas?.map((f) => (
               <option key={f} value={f}>{f}</option>
             ))}
+          </select>
+        </div>
+
+        {/* Circunstância */}
+        <div className="space-y-2">
+          <Label className="text-xs text-zinc-500">Circunstância</Label>
+          <select
+            value={filtros.circunstancia || ""}
+            onChange={(e) => onChange({ ...filtros, circunstancia: e.target.value || undefined })}
+            className="w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 cursor-pointer"
+          >
+            <option value="">Todas</option>
+            <option value="flagrante">Flagrante</option>
+            <option value="mandado">Mandado</option>
+            <option value="denuncia">Denúncia</option>
+            <option value="operacao">Operação</option>
+            <option value="investigacao">Investigação</option>
           </select>
         </div>
 

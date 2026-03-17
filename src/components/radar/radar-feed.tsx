@@ -20,6 +20,7 @@ interface FiltrosState {
   dataInicio?: string;
   dataFim?: string;
   soMatches: boolean;
+  circunstancia?: string;
 }
 
 interface RadarFeedProps {
@@ -74,6 +75,7 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
       dataInicio: filtros.dataInicio,
       dataFim: filtros.dataFim,
       soMatches: filtros.soMatches,
+      circunstancia: filtros.circunstancia,
       limit: 20,
     },
     {
@@ -218,9 +220,13 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
       {groupByDate(allNoticias).map(({ label, items: group }) => (
         <div key={label}>
           <div className="flex items-center gap-2 py-1">
-            <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500">{label}</span>
+            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              {label}
+              <span className="ml-1 text-zinc-300 dark:text-zinc-600">
+                · {group.length} ocorrência{group.length !== 1 ? "s" : ""}
+              </span>
+            </span>
             <div className="flex-1 h-px bg-zinc-100 dark:bg-zinc-800" />
-            <span className="text-[10px] text-zinc-300 dark:text-zinc-600">{group.length}</span>
           </div>
           {group.map((noticia) => (
             <RadarNoticiaCard

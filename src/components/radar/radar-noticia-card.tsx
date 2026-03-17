@@ -26,6 +26,7 @@ interface NoticiaCardProps {
     imagemUrl?: string | null;
     tipoCrime: string | null;
     bairro: string | null;
+    armaMeio?: string | null;
     resumoIA: string | null;
     envolvidos: Envolvido[] | string | null;
     enrichmentStatus: string;
@@ -204,7 +205,10 @@ export function RadarNoticiaCard({ noticia, onClick, onQuickAction, viewMode }: 
                   Analisando...
                 </Badge>
               )}
-              <span className="text-xs text-zinc-400">{noticia.fonte}</span>
+              <span className="inline-flex items-center gap-1 text-xs text-zinc-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+                {noticia.fonte}
+              </span>
             </div>
 
             {/* Título */}
@@ -295,6 +299,11 @@ export function RadarNoticiaCard({ noticia, onClick, onQuickAction, viewMode }: 
                 <span className="flex items-center gap-1">
                   <MapPin className="h-3 w-3" />
                   {noticia.bairro}
+                </span>
+              )}
+              {noticia.armaMeio && (
+                <span className="flex items-center gap-1">
+                  {noticia.armaMeio}
                 </span>
               )}
               {envolvidos.length > 0 && (

@@ -33,6 +33,7 @@ export const radarRouter = router({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
         soMatches: z.boolean().optional().default(false),
+        circunstancia: z.string().optional(),
         limit: z.number().min(1).max(100).optional().default(20),
         cursor: z.number().optional(), // id of the last item
       })
@@ -70,6 +71,10 @@ export const radarRouter = router({
         conditions.push(lte(radarNoticias.dataFato, new Date(input.dataFim)));
       }
 
+      if (input.circunstancia) {
+        conditions.push(eq(radarNoticias.circunstancia, input.circunstancia as any));
+      }
+
       if (input.cursor) {
         conditions.push(sql`${radarNoticias.id} < ${input.cursor}`);
       }
@@ -90,6 +95,7 @@ export const radarRouter = router({
             imagemUrl: radarNoticias.imagemUrl,
             tipoCrime: radarNoticias.tipoCrime,
             bairro: radarNoticias.bairro,
+            armaMeio: radarNoticias.armaMeio,
             resumoIA: radarNoticias.resumoIA,
             envolvidos: radarNoticias.envolvidos,
             enrichmentStatus: radarNoticias.enrichmentStatus,
@@ -113,6 +119,7 @@ export const radarRouter = router({
             imagemUrl: radarNoticias.imagemUrl,
             tipoCrime: radarNoticias.tipoCrime,
             bairro: radarNoticias.bairro,
+            armaMeio: radarNoticias.armaMeio,
             resumoIA: radarNoticias.resumoIA,
             envolvidos: radarNoticias.envolvidos,
             enrichmentStatus: radarNoticias.enrichmentStatus,
@@ -363,6 +370,7 @@ export const radarRouter = router({
           longitude: radarNoticias.longitude,
           dataFato: radarNoticias.dataFato,
           envolvidos: radarNoticias.envolvidos,
+          armaMeio: radarNoticias.armaMeio,
         })
         .from(radarNoticias)
         .where(and(...conditions));
