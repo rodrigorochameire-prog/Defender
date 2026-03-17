@@ -1,8 +1,11 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { noticiasJuridicas, noticiasFontes, noticiasTemas, noticiasFavoritos, noticiasProcessos, jurisprudenciaJulgados } from "@/lib/db/schema";
+import { noticiasJuridicas, noticiasFontes, noticiasTemas, noticiasFavoritos, noticiasProcessos, jurisprudenciaJulgados, noticiasPastas, noticiasPastaItens } from "@/lib/db/schema";
+import { processos } from "@/lib/db/schema/core";
+import { notifications } from "@/lib/db/schema/comunicacao";
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
+import { safeAsync } from "@/lib/errors";
 import { enriquecerNoticia, enriquecerPendentes } from "@/lib/noticias/enricher";
 import { fetchFullContent } from "@/lib/noticias/scraper";
 import { cleanHtml, extractPdfLink, fetchPdfContent } from "@/lib/noticias/html-cleaner";
@@ -97,6 +100,89 @@ Conteúdo: ${conteudo.substring(0, 4000)}`,
   });
 }
 
+// ==========================================
+// AUTO-VÍNCULO IA — Notícia ↔ Processos
+// ==========================================
+
+async function vincularNoticiasAProcessos(noticiaId: number, userId: number): Promise<void> {
+  const noticia = await db.query.noticiasJuridicas.findFirst({
+    where: eq(noticiasJuridicas.id, noticiaId),
+    columns: { id: true, titulo: true, analiseIa: true, tags: true },
+  });
+  if (!noticia?.titulo) return;
+
+  const processosList = await db
+    .select({
+      id: processos.id,
+      numeroAutos: processos.numeroAutos,
+      assunto: processos.assunto,
+      area: processos.area,
+      classeProcessual: processos.classeProcessual,
+    })
+    .from(processos)
+    .where(eq(processos.defensorId, userId))
+    .limit(80);
+
+  if (processosList.length === 0) return;
+
+  const { Anthropic } = await import("@anthropic-ai/sdk");
+  const client = new Anthropic();
+
+  const resumo = (noticia.analiseIa as Record<string, string> | null)?.resumoExecutivo ?? "";
+  const tags = Array.isArray(noticia.tags) ? noticia.tags.join(", ") : "";
+
+  const prompt = `Analise se esta notícia jurídica é relevante para algum dos processos.
+Retorne APENAS JSON válido, sem texto adicional:
+{ "vinculos": [{ "processoId": 123, "justificativa": "motivo em 1 frase" }] }
+Se nenhum for relevante: { "vinculos": [] }
+
+NOTÍCIA: ${noticia.titulo}
+${resumo ? `Resumo: ${resumo}` : ""}
+Tags: ${tags}
+
+PROCESSOS:
+${processosList.map(p => `ID ${p.id}: ${p.area ?? ""} — ${p.assunto ?? p.classeProcessual ?? "sem assunto"} (${p.numeroAutos})`).join("\n")}`;
+
+  const response = await client.messages.create({
+    model: "claude-haiku-4-5",
+    max_tokens: 400,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const raw = response.content[0]?.type === "text" ? response.content[0].text : "";
+  const jsonMatch = raw.match(/\{[\s\S]+\}/)?.[0];
+  if (!jsonMatch) return;
+
+  let result: { vinculos: { processoId: number; justificativa: string }[] };
+  try { result = JSON.parse(jsonMatch); } catch { return; }
+  if (!result.vinculos?.length) return;
+
+  for (const v of result.vinculos) {
+    if (!processosList.find(p => p.id === v.processoId)) continue;
+    try {
+      await db.insert(noticiasProcessos).values({
+        noticiaId,
+        processoId: v.processoId,
+        userId,
+        observacao: v.justificativa,
+        autoVinculada: true,
+      }).onConflictDoNothing();
+    } catch { /* já vinculado */ }
+  }
+
+  // Notificação in-app
+  try {
+    await db.insert(notifications).values({
+      userId,
+      type: "noticias",
+      title: "Notícia relevante para seus processos",
+      message: `"${noticia.titulo.substring(0, 80)}..." pode afetar ${result.vinculos.length} processo${result.vinculos.length > 1 ? "s" : ""} seu${result.vinculos.length > 1 ? "s" : ""}`,
+      actionUrl: `/admin/noticias`,
+      isRead: false,
+    });
+  } catch { /* notificação opcional */ }
+}
+
 export const noticiasRouter = router({
   // ==========================================
   // FEED - Listagem paginada com filtros
@@ -117,9 +203,10 @@ export const noticiasRouter = router({
 
       if (input.categoria) conditions.push(eq(noticiasJuridicas.categoria, input.categoria));
       if (input.fonte) conditions.push(eq(noticiasJuridicas.fonte, input.fonte));
-      if (input.busca) conditions.push(
-        sql`(${noticiasJuridicas.titulo} ILIKE ${'%' + input.busca + '%'} OR ${noticiasJuridicas.resumo} ILIKE ${'%' + input.busca + '%'})`
-      );
+      if (input.busca?.trim()) {
+        const q = input.busca.trim().split(/\s+/).filter(Boolean).join(' & ');
+        conditions.push(sql`search_vector @@ to_tsquery('portuguese', ${q})`);
+      }
       if (input.tag) conditions.push(
         sql`${noticiasJuridicas.tags}::jsonb ? ${input.tag}`
       );
@@ -177,6 +264,7 @@ export const noticiasRouter = router({
 
       // 2. Para cada notícia aprovada: buscar conteúdo completo + enriquecer com IA
       // Executa em background sem bloquear a resposta
+      const currentUserId = ctx.user.id;
       void (async () => {
         const noticias = await db
           .select({ id: noticiasJuridicas.id, urlOriginal: noticiasJuridicas.urlOriginal, conteudo: noticiasJuridicas.conteudo })
@@ -221,6 +309,11 @@ export const noticiasRouter = router({
           } catch {
             // Silencioso — não quebra o fluxo de aprovação
           }
+
+          // Auto-vincular notícia a processos do defensor via IA
+          try {
+            await vincularNoticiasAProcessos(noticia.id, currentUserId);
+          } catch { /* silencioso */ }
         }
       })();
 
@@ -535,6 +628,142 @@ export const noticiasRouter = router({
     }),
 
   // ==========================================
+  // PASTAS
+  // ==========================================
+
+  listPastas: protectedProcedure
+    .query(async ({ ctx }) => {
+      return db.select()
+        .from(noticiasPastas)
+        .where(eq(noticiasPastas.userId, ctx.user.id))
+        .orderBy(noticiasPastas.tipo, noticiasPastas.nome);
+    }),
+
+  criarPasta: protectedProcedure
+    .input(z.object({
+      nome: z.string().min(1).max(100),
+      cor: z.string().optional(),
+      icone: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [pasta] = await db.insert(noticiasPastas)
+        .values({
+          userId: ctx.user.id,
+          nome: input.nome,
+          cor: input.cor ?? "#6366f1",
+          icone: input.icone ?? "Folder",
+          tipo: "livre",
+        })
+        .returning();
+      return pasta;
+    }),
+
+  deletarPasta: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await db.delete(noticiasPastas)
+        .where(and(
+          eq(noticiasPastas.id, input.id),
+          eq(noticiasPastas.userId, ctx.user.id),
+          eq(noticiasPastas.tipo, "livre"),
+        ));
+      return { success: true };
+    }),
+
+  seedPastasFixas: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const pastasFixas = [
+        { nome: "Penal", cor: "#dc2626", icone: "Gavel", area: "penal" },
+        { nome: "Processo Penal", cor: "#b45309", icone: "Scale", area: "processo_penal" },
+        { nome: "Execução Penal", cor: "#7c3aed", icone: "Building", area: "execucao_penal" },
+        { nome: "Júri", cor: "#1d4ed8", icone: "Shield", area: "juri" },
+        { nome: "Habeas Corpus", cor: "#059669", icone: "Heart", area: "habeas_corpus" },
+      ];
+
+      for (const p of pastasFixas) {
+        await db.insert(noticiasPastas)
+          .values({
+            userId: ctx.user.id,
+            nome: p.nome,
+            cor: p.cor,
+            icone: p.icone,
+            tipo: "fixa",
+            area: p.area,
+          })
+          .onConflictDoNothing();
+      }
+      return { success: true };
+    }),
+
+  adicionarNaPasta: protectedProcedure
+    .input(z.object({
+      pastaId: z.number(),
+      noticiaId: z.number(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [pasta] = await db.select()
+        .from(noticiasPastas)
+        .where(and(
+          eq(noticiasPastas.id, input.pastaId),
+          eq(noticiasPastas.userId, ctx.user.id),
+        ))
+        .limit(1);
+      if (!pasta) throw new Error("Pasta não encontrada");
+
+      await db.insert(noticiasPastaItens)
+        .values({ pastaId: input.pastaId, noticiaId: input.noticiaId })
+        .onConflictDoNothing();
+      return { success: true };
+    }),
+
+  removerDaPasta: protectedProcedure
+    .input(z.object({
+      pastaId: z.number(),
+      noticiaId: z.number(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [pasta] = await db.select()
+        .from(noticiasPastas)
+        .where(and(
+          eq(noticiasPastas.id, input.pastaId),
+          eq(noticiasPastas.userId, ctx.user.id),
+        ))
+        .limit(1);
+      if (!pasta) throw new Error("Pasta não encontrada");
+
+      await db.delete(noticiasPastaItens)
+        .where(and(
+          eq(noticiasPastaItens.pastaId, input.pastaId),
+          eq(noticiasPastaItens.noticiaId, input.noticiaId),
+        ));
+      return { success: true };
+    }),
+
+  listNoticiasDaPasta: protectedProcedure
+    .input(z.object({ pastaId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const [pasta] = await db.select()
+        .from(noticiasPastas)
+        .where(and(
+          eq(noticiasPastas.id, input.pastaId),
+          eq(noticiasPastas.userId, ctx.user.id),
+        ))
+        .limit(1);
+      if (!pasta) return [];
+
+      const items = await db.select({
+        item: noticiasPastaItens,
+        noticia: noticiasJuridicas,
+      })
+        .from(noticiasPastaItens)
+        .innerJoin(noticiasJuridicas, eq(noticiasPastaItens.noticiaId, noticiasJuridicas.id))
+        .where(eq(noticiasPastaItens.pastaId, input.pastaId))
+        .orderBy(desc(noticiasPastaItens.createdAt));
+
+      return items.map(i => i.noticia);
+    }),
+
+  // ==========================================
   // RELATÓRIO POR TEMA (IA)
   // ==========================================
 
@@ -636,5 +865,100 @@ Responda em JSON (sem markdown):
         periodoTexto,
         temasTexto,
       };
+    }),
+
+  // ==========================================
+  // PASTAS TEMÁTICAS
+  // ==========================================
+
+  listPastas: protectedProcedure
+    .query(async ({ ctx }) => {
+      return safeAsync(async () => {
+        return db.select().from(noticiasPastas)
+          .where(eq(noticiasPastas.userId, ctx.user.id))
+          .orderBy(noticiasPastas.tipo, noticiasPastas.nome);
+      }, "Erro ao listar pastas");
+    }),
+
+  criarPasta: protectedProcedure
+    .input(z.object({
+      nome: z.string().min(1).max(100),
+      cor: z.string().optional(),
+      icone: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        const [pasta] = await db.insert(noticiasPastas)
+          .values({ ...input, userId: ctx.user.id, tipo: "livre" })
+          .returning();
+        return pasta;
+      }, "Erro ao criar pasta");
+    }),
+
+  deletarPasta: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        await db.delete(noticiasPastas)
+          .where(and(eq(noticiasPastas.id, input.id), eq(noticiasPastas.userId, ctx.user.id)));
+      }, "Erro ao deletar pasta");
+    }),
+
+  adicionarNaPasta: protectedProcedure
+    .input(z.object({ pastaId: z.number(), noticiaId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        const pasta = await db.query.noticiasPastas.findFirst({
+          where: and(eq(noticiasPastas.id, input.pastaId), eq(noticiasPastas.userId, ctx.user.id)),
+        });
+        if (!pasta) throw new Error("Pasta não encontrada");
+        const [item] = await db.insert(noticiasPastaItens)
+          .values(input).onConflictDoNothing().returning();
+        return item;
+      }, "Erro ao adicionar à pasta");
+    }),
+
+  removerDaPasta: protectedProcedure
+    .input(z.object({ pastaId: z.number(), noticiaId: z.number() }))
+    .mutation(async ({ input }) => {
+      return safeAsync(async () => {
+        await db.delete(noticiasPastaItens)
+          .where(and(
+            eq(noticiasPastaItens.pastaId, input.pastaId),
+            eq(noticiasPastaItens.noticiaId, input.noticiaId),
+          ));
+      }, "Erro ao remover da pasta");
+    }),
+
+  listNoticiasDaPasta: protectedProcedure
+    .input(z.object({ pastaId: z.number(), limit: z.number().default(20), offset: z.number().default(0) }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        return db.select({ noticia: noticiasJuridicas })
+          .from(noticiasPastaItens)
+          .innerJoin(noticiasJuridicas, eq(noticiasPastaItens.noticiaId, noticiasJuridicas.id))
+          .where(eq(noticiasPastaItens.pastaId, input.pastaId))
+          .orderBy(desc(noticiasPastaItens.createdAt))
+          .limit(input.limit).offset(input.offset);
+      }, "Erro ao listar notícias da pasta");
+    }),
+
+  seedPastasFixas: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      return safeAsync(async () => {
+        const pastasFixas = [
+          { nome: "Criminal Comum", cor: "#dc2626", icone: "Shield", area: "CRIMINAL_COMUM" },
+          { nome: "Tribunal do Júri", cor: "#7c3aed", icone: "Gavel", area: "JURI" },
+          { nome: "Execução Penal", cor: "#ea580c", icone: "Building", area: "EXECUCAO_PENAL" },
+          { nome: "Violência Doméstica", cor: "#db2777", icone: "Heart", area: "VVD" },
+          { nome: "Processo Penal", cor: "#2563eb", icone: "Scale", area: "PROCESSO_PENAL" },
+        ];
+        for (const p of pastasFixas) {
+          await db.insert(noticiasPastas)
+            .values({ ...p, userId: ctx.user.id, tipo: "fixa" })
+            .onConflictDoNothing();
+        }
+        return { seeded: pastasFixas.length };
+      }, "Erro ao criar pastas fixas");
     }),
 });
