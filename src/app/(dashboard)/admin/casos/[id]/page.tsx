@@ -1108,7 +1108,7 @@ function ReferenciaCard({ referencia, corBorda, onRemover, linkHref }: Referenci
             )}
             {referencia.observacao && (
               <p className="text-xs text-zinc-400 mt-1.5 italic">
-                "{referencia.observacao}"
+                &ldquo;{referencia.observacao}&rdquo;
               </p>
             )}
             <p className="text-[10px] text-zinc-400 mt-2">

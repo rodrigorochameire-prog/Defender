@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
-import { ArrowLeft, Brain, Calendar, ExternalLink, FileText, FolderOpen, Loader2, Lock, Pencil, Plus, Scale, Sun, User, Users, Sparkles } from "lucide-react";
+import { ArrowLeft, Brain, Calendar, ExternalLink, FileText, FolderOpen, Loader2, Lock, Pencil, Plus, Scale, Sun, User, Users, Sparkles, Library, BookOpen, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
@@ -17,7 +17,7 @@ import { DriveTabEnhanced } from "@/components/drive/DriveTabEnhanced";
 import { ProcessoTimeline } from "@/components/processos/ProcessoTimeline";
 import { InstrucaoStatus } from "@/components/processos/InstrucaoStatus";
 
-type Tab = "partes" | "demandas" | "drive" | "audiencias" | "timeline" | "vinculados" | "inteligencia";
+type Tab = "partes" | "demandas" | "drive" | "audiencias" | "timeline" | "vinculados" | "inteligencia" | "fundamentos";
 
 const PRESOS = [
   "CADEIA_PUBLICA",
@@ -94,6 +94,7 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
       ? [{ key: "vinculados" as Tab, label: "Vinculados", count: data.processosVinculados.length }]
       : []),
     { key: "inteligencia", label: "Inteligência" },
+    { key: "fundamentos", label: "Fundamentos" },
   ];
 
   return (
@@ -511,7 +512,169 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
             />
           </div>
         )}
+
+        {tab === "fundamentos" && (
+          <ProcessoFundamentosTab processoId={Number(id)} />
+        )}
       </div>
+    </div>
+  );
+}
+
+// ==========================================
+// TAB: FUNDAMENTOS — Referências da Biblioteca
+// ==========================================
+
+function ProcessoFundamentosTab({ processoId }: { processoId: number }) {
+  const utils = trpc.useUtils();
+  const [copied, setCopied] = useState<number | null>(null);
+
+  const { data: referencias = [], isLoading } = trpc.biblioteca.listPorProcesso.useQuery(
+    { processoId },
+    { enabled: !isNaN(processoId) }
+  );
+
+  const remover = trpc.biblioteca.removerCitacao.useMutation({
+    onSuccess: () => {
+      toast.success("Referência removida");
+      void utils.biblioteca.listPorProcesso.invalidate({ processoId });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const copiarCitacao = (ref: typeof referencias[0]) => {
+    if (!ref.citacaoFormatada) return;
+    void navigator.clipboard.writeText(ref.citacaoFormatada);
+    setCopied(ref.id);
+    setTimeout(() => setCopied(null), 2000);
+    toast.success("Citação copiada");
+  };
+
+  const teses = referencias.filter((r) => r.tipo === "tese");
+  const artigos = referencias.filter((r) => r.tipo === "artigo" || r.tipo === "lei");
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-16 bg-zinc-100 dark:bg-zinc-800 rounded-lg animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (referencias.length === 0) {
+    return (
+      <div className="text-center py-12 bg-zinc-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">
+        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-3">
+          <Library className="w-5 h-5 text-zinc-400" />
+        </div>
+        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Nenhum fundamento vinculado</p>
+        <p className="text-xs text-zinc-400 mt-1 max-w-xs mx-auto">
+          Use o botão <span className="font-medium text-emerald-600">&ldquo;Citar em processo&rdquo;</span> na{" "}
+          <Link href="/admin/jurisprudencia" className="text-emerald-600 hover:underline">Biblioteca Jurídica</Link>{" "}
+          para construir a base legal deste processo.
+        </p>
+      </div>
+    );
+  }
+
+  const RefCard = ({ ref, corBorda, href }: { ref: typeof referencias[0]; corBorda: string; href: string }) => (
+    <div className={cn(
+      "group bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 border-l-[3px] p-3 hover:shadow-sm transition-all",
+      corBorda
+    )}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          {ref.citacaoFormatada ? (
+            <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed line-clamp-3">
+              {ref.citacaoFormatada}
+            </p>
+          ) : (
+            <p className="text-xs text-zinc-500 font-mono">Ref: {ref.referenciaId}</p>
+          )}
+          {ref.observacao && (
+            <p className="text-[11px] text-zinc-400 mt-1 italic">&ldquo;{ref.observacao}&rdquo;</p>
+          )}
+        </div>
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+          {ref.citacaoFormatada && (
+            <button
+              onClick={() => copiarCitacao(ref)}
+              className="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
+              title="Copiar citação"
+            >
+              <FileText className={cn("w-3.5 h-3.5", copied === ref.id ? "text-emerald-500" : "text-zinc-400")} />
+            </button>
+          )}
+          <Link href={href}>
+            <button className="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors" title="Ver na biblioteca">
+              <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
+            </button>
+          </Link>
+          <button
+            onClick={() => remover.mutate({ id: ref.id })}
+            className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer transition-colors"
+            title="Remover"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-zinc-400 hover:text-red-500 transition-colors" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Teses</p>
+          <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">{teses.length}</p>
+        </div>
+        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Legislação</p>
+          <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">{artigos.length}</p>
+        </div>
+      </div>
+
+      {teses.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-2">
+            <Scale className="w-3.5 h-3.5 text-blue-500" />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+              Jurisprudência ({teses.length})
+            </span>
+          </div>
+          <div className="space-y-2">
+            {teses.map((ref) => (
+              <RefCard key={ref.id} ref={ref} corBorda="border-l-blue-500" href="/admin/jurisprudencia" />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {artigos.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-2">
+            <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+              Legislação ({artigos.length})
+            </span>
+          </div>
+          <div className="space-y-2">
+            {artigos.map((ref) => (
+              <RefCard key={ref.id} ref={ref} corBorda="border-l-emerald-500" href="/admin/legislacao" />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <p className="text-[11px] text-zinc-400 text-center">
+        Adicione via{" "}
+        <Link href="/admin/jurisprudencia" className="text-emerald-600 hover:underline">Jurisprudência</Link>
+        {" "}ou{" "}
+        <Link href="/admin/legislacao" className="text-emerald-600 hover:underline">Legislação</Link>
+      </p>
     </div>
   );
 }
