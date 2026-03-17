@@ -61,6 +61,7 @@ import { posJuriRouter } from "./posJuri";
 import { radarRouter } from "./radar";
 import { legislacaoRouter } from "./legislacao";
 import { noticiasRouter } from "./noticias";
+import { bibliotecaRouter } from "./biblioteca";
 
 
 export const appRouter = router({
@@ -275,6 +276,11 @@ export const appRouter = router({
   // NOTICIAS JURIDICAS - FEED + CURADORIA
   // ==========================================
   noticias: noticiasRouter,
+
+  // ==========================================
+  // BIBLIOTECA JURIDICA - TESES, ARTIGOS, LEIS
+  // ==========================================
+  biblioteca: bibliotecaRouter,
 });
 
 export type AppRouter = typeof appRouter;

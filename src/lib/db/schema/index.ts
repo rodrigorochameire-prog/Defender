@@ -31,6 +31,7 @@ export * from "./cowork";
 export * from "./radar";
 export * from "./legislacao";
 export * from "./noticias";
+export * from "./biblioteca";
 
 // Cross-domain relations (core + casos relations that reference other domains)
 export * from "./relations";
