@@ -57,7 +57,10 @@ import {
   Send,
   Loader2,
   FolderPlus,
+  Briefcase,
+  ClipboardCopy,
 } from "lucide-react";
+import { BadgeUsoCasos, CitarEmCasoModal } from "@/components/biblioteca";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -128,6 +131,7 @@ export default function JurisprudenciaPage() {
   const [tribunalFilter, setTribunalFilter] = useState<string>("all");
   const [showAddFolderDialog, setShowAddFolderDialog] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
+  const [citarModal, setCitarModal] = useState<{ id: number; citacao?: string } | null>(null);
 
   // Queries
   const { data: stats, isLoading: loadingStats } =
@@ -362,6 +366,13 @@ export default function JurisprudenciaPage() {
                       processarIAMutation.mutate({ id: julgado.id })
                     }
                     isProcessing={processarIAMutation.isPending}
+                    onCitarEmCaso={() =>
+                      setCitarModal({ id: julgado.id, citacao: julgado.citacaoFormatada ?? undefined })
+                    }
+                    onInserirEmPeca={() => {
+                      navigator.clipboard.writeText(julgado.citacaoFormatada ?? julgado.ementa ?? "");
+                      toast.success("Copiado para clipboard");
+                    }}
                   />
                 ))}
               </div>
@@ -394,6 +405,17 @@ export default function JurisprudenciaPage() {
           setShowAddFolderDialog(false);
         }}
       />
+
+      {/* Modal: Citar em Caso */}
+      {citarModal && (
+        <CitarEmCasoModal
+          open={!!citarModal}
+          onOpenChange={(v) => { if (!v) setCitarModal(null); }}
+          tipo="tese"
+          referenciaId={String(citarModal.id)}
+          citacaoFormatada={citarModal.citacao}
+        />
+      )}
     </div>
   );
 }
@@ -421,6 +443,8 @@ interface JulgadoCardProps {
   onToggleFavorito: () => void;
   onProcessarIA: () => void;
   isProcessing: boolean;
+  onCitarEmCaso: () => void;
+  onInserirEmPeca: () => void;
 }
 
 function JulgadoCard({
@@ -428,6 +452,8 @@ function JulgadoCard({
   onToggleFavorito,
   onProcessarIA,
   isProcessing,
+  onCitarEmCaso,
+  onInserirEmPeca,
 }: JulgadoCardProps) {
   const config = TRIBUNAL_CONFIG[julgado.tribunal as Tribunal] || TRIBUNAL_CONFIG.OUTRO;
   const Icon = config.icon;
@@ -558,6 +584,11 @@ function JulgadoCard({
             </p>
           </div>
 
+          {/* Badge: uso em casos */}
+          <div className="mt-2">
+            <BadgeUsoCasos tipo="tese" referenciaId={String(julgado.id)} />
+          </div>
+
           {/* Citação para copiar */}
           {julgado.citacaoFormatada && (
             <div className="mt-3 flex items-center gap-2">
@@ -577,6 +608,28 @@ function JulgadoCard({
               </Button>
             </div>
           )}
+
+          {/* Hover actions */}
+          <div className="mt-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1.5 text-xs"
+              onClick={onCitarEmCaso}
+            >
+              <Briefcase className="w-3.5 h-3.5" />
+              Citar em caso
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1.5 text-xs"
+              onClick={onInserirEmPeca}
+            >
+              <ClipboardCopy className="w-3.5 h-3.5" />
+              Inserir em peça
+            </Button>
+          </div>
         </div>
       </div>
     </div>
