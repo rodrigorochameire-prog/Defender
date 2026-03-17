@@ -2,29 +2,52 @@
 
 import { useState, useCallback } from "react";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
-import { Newspaper, Scale, Gavel, BookOpen, RefreshCw, Filter } from "lucide-react";
+import { Newspaper, Scale, Gavel, BookOpen, RefreshCw, Filter, BookmarkCheck, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
 import { NoticiasFeed } from "@/components/noticias/noticias-feed";
 import { NoticiasTriagem } from "@/components/noticias/noticias-triagem";
+import { NoticiaReaderSheet } from "@/components/noticias/noticias-reader-sheet";
+import { NoticiaSalvarCasoSheet } from "@/components/noticias/noticias-salvar-caso-sheet";
+import { NoticiasRelatorio } from "@/components/noticias/noticias-relatorio";
+import type { NoticiaJuridica } from "@/lib/db/schema";
 
-type Tab = "legislativa" | "jurisprudencial" | "artigo";
+type Tab = "legislativa" | "jurisprudencial" | "artigo" | "salvos" | "relatorios";
 
-const TABS: { value: Tab; label: string; icon: typeof Scale }[] = [
+const TABS: { value: Tab; label: string; icon: React.ElementType }[] = [
   { value: "legislativa", label: "Legislativas", icon: Scale },
   { value: "jurisprudencial", label: "Jurisprudenciais", icon: Gavel },
   { value: "artigo", label: "Artigos", icon: BookOpen },
+  { value: "salvos", label: "Salvos", icon: BookmarkCheck },
+  { value: "relatorios", label: "Relatórios", icon: BarChart2 },
 ];
+
+const COR_FONTE: Record<string, string> = {
+  "conjur": "#dc2626",
+  "stj-noticias": "#1d4ed8",
+  "stj-not-cias": "#1d4ed8",
+  "ibccrim": "#7c3aed",
+  "dizer-o-direito": "#059669",
+};
 
 export default function NoticiasPage() {
   const [tab, setTab] = useState<Tab>("legislativa");
   const [triagemOpen, setTriagemOpen] = useState(true);
+  const [noticiaReader, setNoticiaReader] = useState<NoticiaJuridica | null>(null);
+  const [noticiaCaso, setNoticiaCaso] = useState<NoticiaJuridica | null>(null);
 
   const { data: pendentesCount } = trpc.noticias.countPendentes.useQuery();
   const buscarAgora = trpc.noticias.buscarAgora.useMutation();
+  const { data: favoritosIds = [] } = trpc.noticias.getFavoritosIds.useQuery();
   const utils = trpc.useUtils();
+  const toggleFavorito = trpc.noticias.toggleFavorito.useMutation({
+    onSuccess: () => {
+      utils.noticias.getFavoritosIds.invalidate();
+      utils.noticias.listFavoritos.invalidate();
+    },
+  });
 
   const handleBuscarAgora = useCallback(async () => {
     await buscarAgora.mutateAsync();
@@ -78,13 +101,13 @@ export default function NoticiasPage() {
         </div>
 
         {/* Tab switcher */}
-        <div className="flex gap-1 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-1 w-fit">
+        <div className="flex gap-1 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-1 w-fit overflow-x-auto">
           {TABS.map(({ value, label, icon: Icon }) => (
             <button
               key={value}
               onClick={() => setTab(value)}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap",
                 tab === value
                   ? "bg-white dark:bg-zinc-700 shadow-sm text-emerald-700 dark:text-emerald-400"
                   : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -108,10 +131,37 @@ export default function NoticiasPage() {
         />
       )}
 
-      {/* Feed */}
+      {/* Conteúdo */}
       <div className="flex-1 overflow-y-auto">
-        <NoticiasFeed categoria={tab} />
+        {tab === "relatorios" ? (
+          <NoticiasRelatorio />
+        ) : (
+          <NoticiasFeed
+            categoria={tab as "legislativa" | "jurisprudencial" | "artigo" | "salvos"}
+            onOpenReader={setNoticiaReader}
+            onOpenSalvarCaso={setNoticiaCaso}
+          />
+        )}
       </div>
+
+      {/* Reader Sheet */}
+      {noticiaReader && (
+        <NoticiaReaderSheet
+          noticia={noticiaReader}
+          corFonte={COR_FONTE[noticiaReader.fonte.toLowerCase()] ?? "#71717a"}
+          isFavorito={favoritosIds.includes(noticiaReader.id)}
+          onToggleFavorito={() => toggleFavorito.mutate({ noticiaId: noticiaReader.id })}
+          onClose={() => setNoticiaReader(null)}
+        />
+      )}
+
+      {/* Salvar no Caso Sheet */}
+      {noticiaCaso && (
+        <NoticiaSalvarCasoSheet
+          noticia={noticiaCaso}
+          onClose={() => setNoticiaCaso(null)}
+        />
+      )}
     </div>
   );
 }
