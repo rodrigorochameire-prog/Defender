@@ -1,216 +1,205 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { ExternalLink, Copy, Newspaper, Search, ChevronDown, ChevronUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
+import { NoticiaCard } from "./noticias-card";
+import { NoticiaCardFeatured } from "./noticias-card-featured";
+import { useDebounce } from "@/hooks/use-debounce";
+import type { NoticiaJuridica } from "@/lib/db/schema";
 
-// Map fonte colors
-const FONTE_CORES: Record<string, string> = {
+const COR_FONTE: Record<string, string> = {
   "conjur": "#dc2626",
-  "stj-notícias": "#1d4ed8",
+  "stj-noticias": "#1d4ed8",
+  "stj-not-cias": "#1d4ed8",
   "ibccrim": "#7c3aed",
   "dizer-o-direito": "#059669",
 };
 
-type Props = {
-  categoria: "legislativa" | "jurisprudencial" | "artigo";
-};
+function getCorFonte(fonte: string): string {
+  const key = fonte.toLowerCase().replace(/\s+/g, "-");
+  return COR_FONTE[key] ?? "#71717a";
+}
 
-export function NoticiasFeed({ categoria }: Props) {
+export type CategoriaFeed = "legislativa" | "jurisprudencial" | "artigo" | "salvos";
+
+interface NoticiasFeedProps {
+  categoria: CategoriaFeed;
+  onOpenReader?: (noticia: NoticiaJuridica) => void;
+  onOpenSalvarCaso?: (noticia: NoticiaJuridica) => void;
+}
+
+export function NoticiasFeed({ categoria, onOpenReader, onOpenSalvarCaso }: NoticiasFeedProps) {
   const [busca, setBusca] = useState("");
-  const [debouncedBusca, setDebouncedBusca] = useState("");
-  const [expandedId, setExpandedId] = useState<number | null>(null);
   const [cursor, setCursor] = useState<number | undefined>(undefined);
+  const [accumulated, setAccumulated] = useState<NoticiaJuridica[]>([]);
+  const debouncedBusca = useDebounce(busca, 400);
+  const utils = trpc.useUtils();
 
-  // Debounce search
-  // Use a simple timeout-based approach
-  const handleSearchChange = (value: string) => {
-    setBusca(value);
-    // Reset cursor on new search
+  // Reset accumulated list when busca or categoria changes
+  useEffect(() => {
     setCursor(undefined);
-    // Simple debounce using setTimeout
-    const timer = setTimeout(() => setDebouncedBusca(value), 300);
-    return () => clearTimeout(timer);
-  };
+    setAccumulated([]);
+  }, [debouncedBusca, categoria]);
 
-  const { data, isLoading } = trpc.noticias.list.useQuery({
-    categoria,
-    busca: debouncedBusca || undefined,
-    status: "aprovado",
-    limit: 20,
-    cursor,
+  const { data: favoritosIds = [] } = trpc.noticias.getFavoritosIds.useQuery();
+  const toggleFavorito = trpc.noticias.toggleFavorito.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.favoritado ? "Notícia salva" : "Removida dos salvos");
+      utils.noticias.getFavoritosIds.invalidate();
+      utils.noticias.listFavoritos.invalidate();
+    },
+    onError: () => toast.error("Erro ao salvar"),
   });
 
-  const formatDate = (date: string | Date | null) => {
-    if (!date) return "";
-    return new Intl.DateTimeFormat("pt-BR", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(date));
+  const feedQuery = trpc.noticias.list.useQuery(
+    {
+      categoria: categoria === "salvos" ? undefined : categoria,
+      busca: debouncedBusca || undefined,
+      status: "aprovado",
+      limit: 20,
+      cursor,
+    },
+    {
+      enabled: categoria !== "salvos",
+    }
+  );
+
+  // Accumulate pages as user loads more
+  useEffect(() => {
+    if (feedQuery.data?.items) {
+      if (cursor === undefined) {
+        // First page — replace
+        setAccumulated(feedQuery.data.items);
+      } else {
+        // Next page — append
+        setAccumulated(prev => {
+          const existingIds = new Set(prev.map(n => n.id));
+          const newItems = feedQuery.data.items.filter(n => !existingIds.has(n.id));
+          return [...prev, ...newItems];
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedQuery.data]);
+
+  const favoritosQuery = trpc.noticias.listFavoritos.useQuery(undefined, {
+    enabled: categoria === "salvos",
+  });
+
+  const noticias: NoticiaJuridica[] =
+    categoria === "salvos"
+      ? (favoritosQuery.data?.map(f => f.noticia) ?? [])
+      : accumulated;
+
+  const isLoading =
+    categoria === "salvos" ? favoritosQuery.isLoading : (feedQuery.isLoading && cursor === undefined);
+
+  const hasNextPage = feedQuery.data?.nextCursor != null;
+
+  const handleLoadMore = () => {
+    if (feedQuery.data?.nextCursor) {
+      setCursor(feedQuery.data.nextCursor);
+    }
   };
 
   if (isLoading) {
     return (
       <div className="p-6 space-y-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="border rounded-lg p-4 space-y-3">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-2/3" />
-          </div>
-        ))}
+        <Skeleton className="h-64 w-full rounded-xl" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Skeleton className="h-48 rounded-xl" />
+          <Skeleton className="h-48 rounded-xl" />
+          <Skeleton className="h-48 rounded-xl" />
+          <Skeleton className="h-48 rounded-xl" />
+        </div>
       </div>
     );
   }
 
-  const items = data?.items ?? [];
+  const featuredNoticia = noticias[0];
+  const restNoticias = noticias.slice(1);
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Search bar */}
-      <div className="px-6 py-3 border-b">
-        <div className="relative max-w-md">
+    <div className="p-6 space-y-6">
+      {/* Busca */}
+      {categoria !== "salvos" && (
+        <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
           <Input
             placeholder="Buscar notícias..."
+            className="pl-9 pr-8"
             value={busca}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-9"
+            onChange={e => setBusca(e.target.value)}
           />
+          {busca && (
+            <button
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+              onClick={() => setBusca("")}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
-      </div>
+      )}
 
-      {/* Feed */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-3">
-        {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-zinc-400">
-            <Newspaper className="h-12 w-12 mb-4" />
-            <p className="text-lg font-medium">Nenhuma notícia encontrada</p>
-            <p className="text-sm">Notícias {categoria}s aparecerão aqui após aprovação</p>
-          </div>
-        ) : (
-          <>
-            {items.map((item) => {
-              const isExpanded = expandedId === item.id;
-              const fonteColor = FONTE_CORES[item.fonte] || "#71717a";
-              const tags = (item.tags as string[]) || [];
+      {/* Empty state */}
+      {noticias.length === 0 && (
+        <div className="text-center py-20 text-zinc-400">
+          <p className="text-lg font-medium mb-1">Nenhuma notícia encontrada</p>
+          <p className="text-sm">
+            {categoria === "salvos"
+              ? "Use ⭐ nos cards para salvar notícias de referência"
+              : "Tente buscar por outro termo ou aguarde o próximo scraping"}
+          </p>
+        </div>
+      )}
 
-              return (
-                <div
-                  key={item.id}
-                  className={cn(
-                    "border rounded-lg transition-all",
-                    isExpanded
-                      ? "border-emerald-500/30 shadow-md"
-                      : "hover:border-emerald-500/20 hover:shadow-sm cursor-pointer"
-                  )}
-                >
-                  {/* Card header — always visible */}
-                  <div
-                    className="p-4"
-                    onClick={() => setExpandedId(isExpanded ? null : item.id)}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="text-xs font-medium px-2 py-0.5 rounded-full text-white"
-                          style={{ backgroundColor: fonteColor }}
-                        >
-                          {item.fonte}
-                        </span>
-                        <span className="text-xs text-zinc-400">
-                          {formatDate(item.publicadoEm)}
-                        </span>
-                      </div>
-                      {isExpanded ? (
-                        <ChevronUp className="h-4 w-4 text-zinc-400" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 text-zinc-400" />
-                      )}
-                    </div>
+      {/* Featured card */}
+      {featuredNoticia && (
+        <NoticiaCardFeatured
+          noticia={featuredNoticia}
+          corFonte={getCorFonte(featuredNoticia.fonte)}
+          isFavorito={favoritosIds.includes(featuredNoticia.id)}
+          onToggleFavorito={() => toggleFavorito.mutate({ noticiaId: featuredNoticia.id })}
+          onSalvarNoCaso={() => onOpenSalvarCaso?.(featuredNoticia)}
+          onClick={() => onOpenReader?.(featuredNoticia)}
+        />
+      )}
 
-                    <h3 className="font-semibold text-base mb-1 line-clamp-2">
-                      {item.titulo}
-                    </h3>
+      {/* Grid 2 colunas */}
+      {restNoticias.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {restNoticias.map(noticia => (
+            <NoticiaCard
+              key={noticia.id}
+              noticia={noticia}
+              corFonte={getCorFonte(noticia.fonte)}
+              isFavorito={favoritosIds.includes(noticia.id)}
+              onToggleFavorito={() => toggleFavorito.mutate({ noticiaId: noticia.id })}
+              onSalvarNoCaso={() => onOpenSalvarCaso?.(noticia)}
+              onClick={() => onOpenReader?.(noticia)}
+            />
+          ))}
+        </div>
+      )}
 
-                    {!isExpanded && item.resumo && (
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2">
-                        {item.resumo}
-                      </p>
-                    )}
-
-                    {tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Expanded content */}
-                  {isExpanded && item.conteudo && (
-                    <div className="border-t px-4 py-4">
-                      <div
-                        className="prose prose-zinc dark:prose-invert prose-sm max-w-none mb-4"
-                        dangerouslySetInnerHTML={{ __html: item.conteudo }}
-                      />
-                      <div className="flex items-center gap-2 pt-3 border-t">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(item.urlOriginal, "_blank");
-                          }}
-                        >
-                          <ExternalLink className="h-4 w-4 mr-1" />
-                          Abrir Original
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigator.clipboard.writeText(item.urlOriginal);
-                          }}
-                        >
-                          <Copy className="h-4 w-4 mr-1" />
-                          Copiar Link
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* Load more */}
-            {data?.nextCursor && (
-              <div className="flex justify-center py-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setCursor(data.nextCursor)}
-                >
-                  Carregar mais
-                </Button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+      {/* Load more */}
+      {hasNextPage && categoria !== "salvos" && (
+        <div className="flex justify-center pt-4">
+          <Button
+            variant="outline"
+            onClick={handleLoadMore}
+            disabled={feedQuery.isFetching}
+          >
+            {feedQuery.isFetching ? "Carregando..." : "Carregar mais"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
