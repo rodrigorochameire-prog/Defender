@@ -1038,27 +1038,31 @@ export const radarRouter = router({
       z.object({
         minOcorrencias: z.number().min(2).max(20).optional().default(2),
         limit: z.number().min(1).max(50).optional().default(20),
+        dias: z.number().min(7).max(365).optional().default(90),
       })
     )
     .query(async ({ input }) => {
-      // Use raw SQL to unnest envolvidos jsonb array and group by name
-      // This finds people who appear in 2+ different news articles
+      const cutoff = new Date(Date.now() - input.dias * 24 * 60 * 60 * 1000).toISOString();
+      // Unnest envolvidos JSON array and find people appearing in 2+ distinct articles.
+      // Date filter + simplified jsonb_agg (no DISTINCT ORDER BY) to avoid statement timeout.
       const result = await db.execute(sql`
         SELECT
           env->>'nome' as nome,
           env->>'papel' as papel,
           COUNT(DISTINCT n.id) as total_noticias,
-          jsonb_agg(DISTINCT jsonb_build_object(
+          jsonb_agg(jsonb_build_object(
             'id', n.id,
             'titulo', n.titulo,
             'dataFato', n.data_fato,
             'tipoCrime', n.tipo_crime,
             'bairro', n.bairro
-          ) ORDER BY n.data_fato DESC NULLS LAST) as noticias
+          )) as noticias
         FROM radar_noticias n,
              jsonb_array_elements(n.envolvidos) env
         WHERE
           n.envolvidos IS NOT NULL
+          AND jsonb_typeof(n.envolvidos) = 'array'
+          AND n.created_at >= ${cutoff}
           AND env->>'nome' IS NOT NULL
           AND length(env->>'nome') > 3
           AND lower(env->>'nome') NOT IN (
