@@ -5,7 +5,7 @@ import { noticiasJuridicas, noticiasFontes, noticiasTemas, noticiasFavoritos, no
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { enriquecerNoticia, enriquecerPendentes } from "@/lib/noticias/enricher";
 import { fetchFullContent } from "@/lib/noticias/scraper";
-import { cleanHtml } from "@/lib/noticias/html-cleaner";
+import { cleanHtml, extractPdfLink, fetchPdfContent } from "@/lib/noticias/html-cleaner";
 
 export const noticiasRouter = router({
   // ==========================================
@@ -99,8 +99,19 @@ export const noticiasRouter = router({
           if (conteudoAtual.length < 500 && noticia.urlOriginal) {
             try {
               const fullHtml = await fetchFullContent(noticia.urlOriginal);
+              const pdfLink = extractPdfLink(conteudoAtual) || extractPdfLink(fullHtml);
+              let conteudoFinal: string;
+              if (pdfLink) {
+                const pdfText = await fetchPdfContent(pdfLink);
+                conteudoFinal = pdfText
+                  .split("\n\n")
+                  .map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+                  .join("\n");
+              } else {
+                conteudoFinal = cleanHtml(fullHtml);
+              }
               await db.update(noticiasJuridicas)
-                .set({ conteudo: cleanHtml(fullHtml), updatedAt: new Date() })
+                .set({ conteudo: conteudoFinal, updatedAt: new Date() })
                 .where(eq(noticiasJuridicas.id, noticia.id));
             } catch {
               // Site pode bloquear scraping — usa o resumo RSS para enriquecimento
@@ -262,14 +273,34 @@ export const noticiasRouter = router({
       }
 
       if (!noticia.urlOriginal) throw new Error("URL original não disponível");
+
+      // 1. Buscar página original
       const fullHtml = await fetchFullContent(noticia.urlOriginal);
-      const conteudoLimpo = cleanHtml(fullHtml);
+
+      // 2. Se houver link de PDF no conteúdo atual ou na página (ex: Dizer o Direito)
+      const pdfLink = extractPdfLink(conteudoAtual) || extractPdfLink(fullHtml);
+      let conteudoFinal: string;
+      if (pdfLink) {
+        try {
+          const pdfText = await fetchPdfContent(pdfLink);
+          // Formata como HTML simples para o prose renderer
+          conteudoFinal = pdfText
+            .split("\n\n")
+            .map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+            .join("\n");
+        } catch {
+          // Falha no PDF — usa HTML da página
+          conteudoFinal = cleanHtml(fullHtml);
+        }
+      } else {
+        conteudoFinal = cleanHtml(fullHtml);
+      }
 
       await db.update(noticiasJuridicas)
-        .set({ conteudo: conteudoLimpo, updatedAt: new Date() })
+        .set({ conteudo: conteudoFinal, updatedAt: new Date() })
         .where(eq(noticiasJuridicas.id, noticia.id));
 
-      return { conteudo: conteudoLimpo, fromCache: false };
+      return { conteudo: conteudoFinal, fromCache: false };
     }),
 
   enriquecerComIA: protectedProcedure
