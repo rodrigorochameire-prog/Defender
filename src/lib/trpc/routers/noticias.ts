@@ -1,11 +1,101 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { noticiasJuridicas, noticiasFontes, noticiasTemas, noticiasFavoritos, noticiasProcessos } from "@/lib/db/schema";
+import { noticiasJuridicas, noticiasFontes, noticiasTemas, noticiasFavoritos, noticiasProcessos, jurisprudenciaJulgados } from "@/lib/db/schema";
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { enriquecerNoticia, enriquecerPendentes } from "@/lib/noticias/enricher";
 import { fetchFullContent } from "@/lib/noticias/scraper";
 import { cleanHtml, extractPdfLink, fetchPdfContent } from "@/lib/noticias/html-cleaner";
+
+// ==========================================
+// EXTRAÇÃO DE TESES - Dizer o Direito
+// ==========================================
+
+async function extrairTeseParaJurisprudencia(noticiaId: number): Promise<void> {
+  // 1. Buscar a notícia
+  const [noticia] = await db
+    .select({
+      id: noticiasJuridicas.id,
+      titulo: noticiasJuridicas.titulo,
+      fonte: noticiasJuridicas.fonte,
+      conteudo: noticiasJuridicas.conteudo,
+    })
+    .from(noticiasJuridicas)
+    .where(eq(noticiasJuridicas.id, noticiaId))
+    .limit(1);
+
+  if (!noticia) return;
+
+  // 2. Apenas Dizer o Direito
+  if (noticia.fonte !== "dizer_o_direito") return;
+
+  // 3. Ignorar revisões de concurso
+  if (/revis[aã]o|concurso/i.test(noticia.titulo ?? "")) return;
+
+  const titulo = noticia.titulo ?? "";
+  const conteudo = noticia.conteudo ?? "";
+
+  // 4. Chamar Claude para extrair tese
+  const Anthropic = (await import("@anthropic-ai/sdk")).default;
+  const client = new Anthropic();
+
+  const message = await client.messages.create({
+    model: "claude-sonnet-4-5",
+    max_tokens: 1024,
+    messages: [{
+      role: "user",
+      content: `Analise este post do blog "Dizer o Direito" e extraia a tese jurídica principal.
+Retorne APENAS um JSON válido, sem texto adicional:
+{
+  "tribunal": "STF" ou "STJ",
+  "numeroInformativo": "xxx" ou null,
+  "holding": "Texto da tese em 1-2 frases objetivas",
+  "tema": "Penal" ou "Processo Penal" ou "Execução Penal" ou "Júri" ou "Violência Doméstica" ou "Outro",
+  "ratioDecidendi": "Fundamento central em 1 parágrafo",
+  "relator": "Nome do relator" ou null
+}
+
+Título: ${titulo}
+Conteúdo: ${conteudo.substring(0, 4000)}`,
+    }],
+  });
+
+  const content = message.content[0];
+  if (content.type !== "text") return;
+
+  const jsonText = content.text.replace(/```json\n?|```\n?/g, "").trim();
+  const parsed = JSON.parse(jsonText) as {
+    tribunal: string;
+    numeroInformativo: string | null;
+    holding: string;
+    tema: string;
+    ratioDecidendi: string;
+    relator: string | null;
+  };
+
+  // 5. Mapear tribunal para o enum válido
+  const tribunalMap: Record<string, "STF" | "STJ" | "TJBA" | "TRF1" | "TRF3" | "OUTRO"> = {
+    STF: "STF",
+    STJ: "STJ",
+  };
+  const tribunalValue = tribunalMap[parsed.tribunal] ?? "OUTRO";
+
+  // 6. Inserir em jurisprudenciaJulgados
+  await db.insert(jurisprudenciaJulgados).values({
+    tribunal: tribunalValue,
+    tipoDecisao: "INFORMATIVO",
+    ementa: parsed.holding,
+    ementaResumo: parsed.holding,
+    observacoes: parsed.ratioDecidendi,
+    relator: parsed.relator ?? undefined,
+    numeroProcesso: parsed.numeroInformativo ? `Informativo ${parsed.numeroInformativo}` : undefined,
+    tags: [parsed.tema],
+    fonte: "dizer_o_direito",
+    status: "processado",
+    processadoPorIA: true,
+    iaResumo: parsed.ratioDecidendi,
+  });
+}
 
 export const noticiasRouter = router({
   // ==========================================
@@ -121,6 +211,13 @@ export const noticiasRouter = router({
           // Enriquecer com IA — independente do conteúdo completo
           try {
             await enriquecerNoticia(noticia.id);
+          } catch {
+            // Silencioso — não quebra o fluxo de aprovação
+          }
+
+          // Extrair tese para jurisprudência — apenas Dizer o Direito
+          try {
+            await extrairTeseParaJurisprudencia(noticia.id);
           } catch {
             // Silencioso — não quebra o fluxo de aprovação
           }
