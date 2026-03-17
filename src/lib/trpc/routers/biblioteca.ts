@@ -6,6 +6,26 @@ import { eq, and, count } from "drizzle-orm";
 import { safeAsync } from "@/lib/errors";
 
 export const bibliotecaRouter = router({
+  citarNaBiblioteca: protectedProcedure
+    .input(z.object({
+      tipo: z.enum(["tese", "artigo", "lei"]),
+      referenciaId: z.string(),
+      casoId: z.number().optional(),
+      processoId: z.number().optional(),
+      observacao: z.string().optional(),
+      citacaoFormatada: z.string().optional(),
+    }).refine(d => d.casoId || d.processoId, { message: "casoId ou processoId obrigatório" }))
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        const [ref] = await db
+          .insert(referencesBiblioteca)
+          .values({ ...input, createdById: ctx.user.id })
+          .returning();
+        return ref;
+      }, "Erro ao citar referência");
+    }),
+
+  // Mantido por retrocompatibilidade
   citarEmCaso: protectedProcedure
     .input(z.object({
       tipo: z.enum(["tese", "artigo", "lei"]),
@@ -22,6 +42,24 @@ export const bibliotecaRouter = router({
           .returning();
         return ref;
       }, "Erro ao citar referência");
+    }),
+
+  citarEmProcesso: protectedProcedure
+    .input(z.object({
+      tipo: z.enum(["tese", "artigo", "lei"]),
+      referenciaId: z.string(),
+      processoId: z.number(),
+      observacao: z.string().optional(),
+      citacaoFormatada: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        const [ref] = await db
+          .insert(referencesBiblioteca)
+          .values({ ...input, createdById: ctx.user.id })
+          .returning();
+        return ref;
+      }, "Erro ao citar referência no processo");
     }),
 
   removerCitacao: protectedProcedure
@@ -46,6 +84,17 @@ export const bibliotecaRouter = router({
           .from(referencesBiblioteca)
           .where(eq(referencesBiblioteca.casoId, input.casoId));
       }, "Erro ao listar referências");
+    }),
+
+  listPorProcesso: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        return db
+          .select()
+          .from(referencesBiblioteca)
+          .where(eq(referencesBiblioteca.processoId, input.processoId));
+      }, "Erro ao listar referências do processo");
     }),
 
   contarUsos: protectedProcedure

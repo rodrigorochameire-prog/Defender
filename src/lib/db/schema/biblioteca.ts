@@ -1,12 +1,13 @@
 import { pgTable, serial, varchar, text, integer, timestamp, index } from "drizzle-orm/pg-core";
 import { casos } from "./casos";
-import { users } from "./core";
+import { users, processos } from "./core";
 
 export const referencesBiblioteca = pgTable("referencias_biblioteca", {
   id: serial("id").primaryKey(),
   tipo: varchar("tipo", { length: 20 }).notNull(),
   referenciaId: varchar("referencia_id", { length: 100 }).notNull(),
-  casoId: integer("caso_id").references(() => casos.id, { onDelete: "cascade" }).notNull(),
+  casoId: integer("caso_id").references(() => casos.id, { onDelete: "cascade" }),
+  processoId: integer("processo_id").references(() => processos.id, { onDelete: "cascade" }),
   observacao: text("observacao"),
   citacaoFormatada: text("citacao_formatada"),
   createdById: integer("created_by_id").references(() => users.id),
@@ -14,6 +15,7 @@ export const referencesBiblioteca = pgTable("referencias_biblioteca", {
 }, (t) => [
   index("ref_bib_caso_idx").on(t.casoId),
   index("ref_bib_ref_idx").on(t.tipo, t.referenciaId),
+  index("ref_bib_processo_idx").on(t.processoId),
 ]);
 
 export const leisVersoes = pgTable("leis_versoes", {
