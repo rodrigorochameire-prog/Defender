@@ -3,15 +3,38 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { BarChart2, Sparkles, Copy } from "lucide-react";
+import {
+  BarChart2,
+  Sparkles,
+  Copy,
+  Download,
+  FileSearch,
+  FileText,
+  Globe,
+  Tag,
+  AlertTriangle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { TEMAS_PADRAO } from "@/config/noticias/classifier";
 import { cn } from "@/lib/utils";
 
 type Periodo = "7d" | "30d" | "90d";
+
+const PERIODOS: { value: Periodo; label: string }[] = [
+  { value: "7d", label: "Última semana" },
+  { value: "30d", label: "Último mês" },
+  { value: "90d", label: "Último trimestre" },
+];
+
+const TEMAS_PENAIS = [
+  "Direito Penal",
+  "Processo Penal",
+  "Execução Penal",
+  "Tribunal do Júri",
+  "Violência Doméstica",
+  "Criminologia",
+];
 
 export function NoticiasRelatorio() {
   const [periodo, setPeriodo] = useState<Periodo>("30d");
@@ -30,11 +53,15 @@ export function NoticiasRelatorio() {
     );
   };
 
+  const selecionarTemasPenais = () => {
+    setTemasSelecionados(TEMAS_PENAIS);
+  };
+
   const relatorio = gerarRelatorio.data;
 
-  const copiarTudo = () => {
-    if (!relatorio?.sintese) return;
-    const linhas = [
+  const buildLinhas = () => {
+    if (!relatorio?.sintese) return [];
+    return [
       `RELATÓRIO DE JURISPRUDÊNCIA E LEGISLAÇÃO`,
       `Período: ${relatorio.periodoTexto}`,
       `Temas: ${relatorio.temasTexto}`,
@@ -53,9 +80,28 @@ export function NoticiasRelatorio() {
       `NOTÍCIAS REFERENCIADAS (${relatorio.noticias.length})`,
       ...relatorio.noticias.map((n, i) => `${i + 1}. [${n.fonte}] ${n.titulo}`),
     ];
-    navigator.clipboard.writeText(linhas.join("\n"));
+  };
+
+  const copiarTudo = () => {
+    if (!relatorio?.sintese) return;
+    navigator.clipboard.writeText(buildLinhas().join("\n"));
     toast.success("Relatório copiado");
   };
+
+  const baixarTxt = () => {
+    if (!relatorio?.sintese) return;
+    const blob = new Blob([buildLinhas().join("\n")], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `relatorio-juridico-${new Date().toISOString().split("T")[0]}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const fontes = relatorio
+    ? new Set(relatorio.noticias.map(n => n.fonte)).size
+    : 0;
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
@@ -71,44 +117,67 @@ export function NoticiasRelatorio() {
       </div>
 
       {/* Configuração */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 space-y-4">
-        {/* Período */}
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 space-y-5">
+        {/* Período — segmented control */}
         <div>
           <p className="text-sm font-medium mb-2">Período</p>
-          <div className="flex gap-2">
-            {(["7d", "30d", "90d"] as Periodo[]).map(p => (
-              <Button
-                key={p}
-                variant={periodo === p ? "default" : "outline"}
-                size="sm"
-                onClick={() => setPeriodo(p)}
+          <div className="inline-flex rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-1 gap-1">
+            {PERIODOS.map(p => (
+              <button
+                key={p.value}
+                onClick={() => setPeriodo(p.value)}
                 className={cn(
-                  periodo === p && "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600"
+                  "px-3 py-1.5 text-sm rounded-md transition-all duration-150 font-medium",
+                  periodo === p.value
+                    ? "bg-white dark:bg-zinc-900 text-emerald-700 dark:text-emerald-400 shadow-sm border border-zinc-200 dark:border-zinc-700"
+                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                 )}
               >
-                {p === "7d" ? "7 dias" : p === "30d" ? "30 dias" : "90 dias"}
-              </Button>
+                {p.label}
+              </button>
             ))}
           </div>
         </div>
 
-        {/* Temas */}
+        {/* Temas — chips */}
         <div>
-          <p className="text-sm font-medium mb-2">Temas</p>
-          <div className="grid grid-cols-2 gap-2">
-            {TEMAS_PADRAO.map(({ nome }) => (
-              <div key={nome} className="flex items-center gap-2">
-                <Checkbox
-                  id={`tema-${nome}`}
-                  checked={temasSelecionados.includes(nome)}
-                  onCheckedChange={() => toggleTema(nome)}
-                />
-                <Label htmlFor={`tema-${nome}`} className="text-sm cursor-pointer">
-                  {nome}
-                </Label>
-              </div>
-            ))}
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium">Temas</p>
+            <button
+              onClick={selecionarTemasPenais}
+              className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
+            >
+              Selecionar temas penais
+            </button>
           </div>
+          <div className="flex flex-wrap gap-2">
+            {TEMAS_PADRAO.map(({ nome }) => {
+              const selecionado = temasSelecionados.includes(nome);
+              return (
+                <button
+                  key={nome}
+                  onClick={() => toggleTema(nome)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-150",
+                    selecionado
+                      ? "bg-emerald-100 dark:bg-emerald-900/30 border-emerald-500 text-emerald-800 dark:text-emerald-300"
+                      : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "w-1.5 h-1.5 rounded-full shrink-0",
+                      selecionado ? "bg-emerald-500" : "bg-zinc-400 dark:bg-zinc-500"
+                    )}
+                  />
+                  {nome}
+                </button>
+              );
+            })}
+          </div>
+          {temasSelecionados.length === 0 && (
+            <p className="text-xs text-zinc-400 mt-1.5">Selecione ao menos um tema</p>
+          )}
         </div>
 
         <Button
@@ -123,12 +192,39 @@ export function NoticiasRelatorio() {
         </Button>
       </div>
 
-      {/* Loading */}
+      {/* Loading skeleton representativo */}
       {gerarRelatorio.isPending && (
-        <div className="space-y-3">
-          <Skeleton className="h-32 rounded-xl" />
-          <Skeleton className="h-20 rounded-xl" />
-          <Skeleton className="h-16 rounded-xl" />
+        <div className="space-y-4">
+          {/* Stats row skeleton */}
+          <div className="grid grid-cols-3 gap-3">
+            {[0, 1, 2].map(i => (
+              <Skeleton key={i} className="h-16 rounded-xl" />
+            ))}
+          </div>
+          {/* Síntese skeleton */}
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-24 rounded" />
+            <Skeleton className="h-24 rounded-xl" />
+          </div>
+          {/* Destaques skeleton */}
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-20 rounded" />
+            <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-16 rounded-xl" />
+          </div>
+        </div>
+      )}
+
+      {/* Empty state inicial */}
+      {!gerarRelatorio.isPending && !relatorio && (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <FileSearch className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mb-4" />
+          <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+            Gere um relatório para visualizar a síntese IA
+          </p>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
+            Selecione os temas e o período acima
+          </p>
         </div>
       )}
 
@@ -143,13 +239,44 @@ export function NoticiasRelatorio() {
                 {relatorio.periodoTexto} · {relatorio.noticias.length} notícias analisadas
               </p>
             </div>
-            <Button variant="outline" size="sm" onClick={copiarTudo}>
-              <Copy className="h-4 w-4 mr-1.5" />
-              Copiar
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={copiarTudo}>
+                <Copy className="h-4 w-4 mr-1.5" />
+                Copiar
+              </Button>
+              <Button variant="outline" size="sm" onClick={baixarTxt}>
+                <Download className="h-4 w-4 mr-1.5" />
+                Baixar .txt
+              </Button>
+            </div>
           </div>
 
-          <div className="p-5 space-y-5">
+          <div className="p-5 space-y-6">
+            {/* Stats row */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 flex items-center gap-2.5">
+                <FileText className="h-4 w-4 text-zinc-400 shrink-0" />
+                <div>
+                  <p className="text-lg font-bold leading-none">{relatorio.noticias.length}</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">notícias</p>
+                </div>
+              </div>
+              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 flex items-center gap-2.5">
+                <Globe className="h-4 w-4 text-zinc-400 shrink-0" />
+                <div>
+                  <p className="text-lg font-bold leading-none">{fontes}</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">fontes</p>
+                </div>
+              </div>
+              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 flex items-center gap-2.5">
+                <Tag className="h-4 w-4 text-zinc-400 shrink-0" />
+                <div>
+                  <p className="text-lg font-bold leading-none">{temasSelecionados.length}</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">temas</p>
+                </div>
+              </div>
+            </div>
+
             {/* Síntese narrativa */}
             <div>
               <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">
@@ -160,25 +287,30 @@ export function NoticiasRelatorio() {
               </p>
             </div>
 
-            {/* Destaques */}
+            {/* Destaques com numeração e borda amber */}
             {(relatorio.sintese.destaques ?? []).length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3">
                   Destaques
                 </p>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {(relatorio.sintese.destaques as { titulo: string; impacto: string }[]).map(
                     (d, i) => (
                       <div
                         key={i}
-                        className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3"
+                        className="border-l-4 border-amber-400 pl-4 py-1 flex gap-3"
                       >
-                        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                          {d.titulo}
-                        </p>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-0.5">
-                          {d.impacto}
-                        </p>
+                        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 text-xs font-bold shrink-0 mt-0.5">
+                          {i + 1}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                            {d.titulo}
+                          </p>
+                          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1 leading-snug">
+                            {d.impacto}
+                          </p>
+                        </div>
                       </div>
                     )
                   )}
@@ -186,20 +318,23 @@ export function NoticiasRelatorio() {
               </div>
             )}
 
-            {/* Alertas */}
+            {/* Alertas com ícone e fundo amarelado */}
             {(relatorio.sintese.alertas ?? []).length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">
                   Alertas para a Defesa
                 </p>
-                <ul className="space-y-1">
+                <div className="space-y-2">
                   {(relatorio.sintese.alertas as string[]).map((a, i) => (
-                    <li key={i} className="text-sm text-zinc-700 dark:text-zinc-300 flex gap-2">
-                      <span className="text-zinc-400 shrink-0">•</span>
-                      {a}
-                    </li>
+                    <div
+                      key={i}
+                      className="flex gap-2.5 items-start px-3 py-2 bg-amber-50/50 dark:bg-amber-900/10 border-l-2 border-amber-400 rounded-r-md"
+                    >
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                      <p className="text-sm text-zinc-700 dark:text-zinc-300">{a}</p>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
 
