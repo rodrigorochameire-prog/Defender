@@ -507,7 +507,14 @@ export const radarEnrichmentStatusEnum = pgEnum("radar_enrichment_status", [
 
 export const radarFonteTipoEnum = pgEnum("radar_fonte_tipo", [
   "portal",
+  "rss",
   "instagram",
   "twitter",
   "facebook",
+]);
+
+export const radarFonteConfiabilidadeEnum = pgEnum("radar_fonte_confiabilidade", [
+  "local",      // Portal exclusivamente de Camaçari
+  "regional",   // Portal da RMS/Bahia com seção de Camaçari
+  "estadual",   // Portal estadual/nacional com cobertura esporádica
 ]);

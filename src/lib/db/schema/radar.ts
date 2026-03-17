@@ -18,6 +18,7 @@ import {
   radarMatchStatusEnum,
   radarEnrichmentStatusEnum,
   radarFonteTipoEnum,
+  radarFonteConfiabilidadeEnum,
 } from "./enums";
 import { users, assistidos, processos } from "./core";
 import { casos } from "./casos";
@@ -113,6 +114,7 @@ export const radarFontes = pgTable("radar_fontes", {
   id: serial("id").primaryKey(),
   nome: varchar("nome", { length: 100 }).notNull(),
   tipo: radarFonteTipoEnum("tipo").notNull().default("portal"),
+  confiabilidade: radarFonteConfiabilidadeEnum("confiabilidade").default("regional").notNull(),
   url: text("url").notNull(),
   seletorTitulo: text("seletor_titulo"),
   seletorCorpo: text("seletor_corpo"),

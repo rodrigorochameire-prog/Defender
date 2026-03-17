@@ -16,6 +16,23 @@ from config import get_settings
 
 logger = logging.getLogger("enrichment-engine.radar-extraction")
 
+# Bairros de Salvador que NÃO pertencem a Camaçari — blocklist para descartar notícias de Salvador
+BAIRROS_SALVADOR_BLOCKLIST = {
+    "ondina", "piatã", "piata", "são cristóvão", "sao cristovao",
+    "copacabana", "tomba", "chapada do rio vermelho", "andaiá", "andaia",
+    "barra", "pituba", "itaigara", "brotas", "pau da lima", "são marcos",
+    "tancredo neves", "cabula", "cajazeiras", "fazenda grande",
+    "periperi", "plataforma", "paripe", "castelo branco",
+    "liberdade", "pau miúdo", "pau miudo", "nordeste de amaralina",
+    "amaralina", "boca do rio", "pernambués", "pernambues", "narandiba",
+    "pelourinho", "bonfim", "ribeira", "itapuã", "itapua",
+    "stella maris", "itapoã", "itapoa", "patamares", "imbuí", "imbui",
+    "nova esperança", "sussuarana", "mussurunga", "são caetano", "sao caetano",
+    "federação", "federacao", "engenho velho", "graça", "graca",
+    "vitória", "vitoria", "garcia", "piedade", "nazaré", "nazare",
+    "campo grande", "barris", "dois de julho",
+}
+
 # Bairros conhecidos de Camaçari para normalização
 BAIRROS_CAMACARI = [
     "Abrantes", "Alto da Bela Vista", "Alto do Cruzeiro", "Arembepe",
@@ -175,6 +192,17 @@ class RadarExtractionService:
                 )
                 client_db.table("radar_noticias").delete().eq("id", noticia["id"]).execute()
                 return True  # Processado com sucesso (descartado)
+
+            # Blocklist de bairros de Salvador — se Claude extraiu bairro que é de Salvador, deletar
+            if bairro and bairro.lower().strip() in BAIRROS_SALVADOR_BLOCKLIST:
+                logger.info(
+                    "Descartando notícia com bairro de Salvador '%s' id=%d: '%s'",
+                    bairro,
+                    noticia["id"],
+                    noticia.get("titulo", "")[:60],
+                )
+                client_db.table("radar_noticias").delete().eq("id", noticia["id"]).execute()
+                return True
 
             # Remover campos de relevância antes de salvar — não existem na tabela
             update_data.pop("relevante", None)

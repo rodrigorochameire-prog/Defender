@@ -335,6 +335,17 @@ function AssistidoQuickPreview({
   currentIndex?: number;
   totalCount?: number;
 }) {
+  // Keyboard navigation — must be before any early return (React Hooks rules)
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!assistido) return;
+      if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); onPrev?.(); }
+      if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); onNext?.(); }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [assistido, onPrev, onNext]);
+
   if (!assistido) return null;
 
   const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
@@ -370,17 +381,6 @@ function AssistidoQuickPreview({
   const maskedCpf = assistido.cpf
     ? assistido.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.***.***-$4')
     : null;
-
-  // Keyboard navigation
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!assistido) return;
-      if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); onPrev?.(); }
-      if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); onNext?.(); }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [assistido, onPrev, onNext]);
 
   const audienciaAmanha = diasAteAudiencia === 1;
 

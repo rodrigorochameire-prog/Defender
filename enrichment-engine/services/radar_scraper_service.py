@@ -60,6 +60,18 @@ KEYWORDS_POLICIAL_TITULO = [
     "traficante", "suspeito preso", "acusado preso",
 ]
 
+# Palavras-chave ESTRITAS — apenas "camaçari" e localidades inconfundíveis
+KEYWORDS_CAMACARI_STRICT = [
+    "camaçari", "camacari", "camaçarí", "camacarí",
+    "arembepe", "guarajuba", "jauá", "jaua", "monte gordo",
+    "barra do jacuípe", "barra do jacuipe",
+    "catu de abrantes", "vila de abrantes",
+    "parafuso", "phoc", "polo petroquímico", "polo industrial",
+    "18ª delegacia", "18a delegacia", "cicom camaçari",
+    "delegacia de camaçari", "dpc camaçari",
+    "26ª cipm", "31ª cipm", "12º bpm", "12o bpm",
+]
+
 # Palavras-chave para verificar se a notícia é da região de Camaçari/RMS
 KEYWORDS_CAMACARI_REGIAO = [
     "camaçari", "camacari", "camaçarí", "camacarí",
@@ -153,10 +165,12 @@ class RadarScraperService:
         """Scrape uma fonte específica."""
         tipo = fonte.get("tipo", "portal")
 
-        if tipo == "portal":
+        if tipo == "rss":
+            return await self._scrape_rss(fonte, existing_urls)
+        elif tipo == "portal":
             return await self._scrape_portal(fonte, existing_urls)
         else:
-            logger.info("Tipo %s não implementado ainda para %s", tipo, fonte["nome"])
+            logger.info("Tipo %s não implementado para %s", tipo, fonte["nome"])
             return []
 
     async def _scrape_portal(
@@ -166,6 +180,7 @@ class RadarScraperService:
         client = self._get_client()
         base_url = fonte["url"].rstrip("/")
         nome_fonte = fonte["nome"]
+        confiabilidade = fonte.get("confiabilidade", "regional")
 
         # Tentar buscar páginas de notícias policiais
         urls_to_try = self._get_search_urls(base_url)
@@ -194,7 +209,7 @@ class RadarScraperService:
 
                     try:
                         noticia = await self._scrape_article(
-                            link_url, nome_fonte, fonte.get("id")
+                            link_url, nome_fonte, fonte.get("id"), confiabilidade
                         )
                         if noticia:
                             noticias.append(noticia)
@@ -207,6 +222,74 @@ class RadarScraperService:
                 logger.debug("Erro ao acessar %s: %s", page_url, str(e))
                 continue
 
+        return noticias
+
+    async def _scrape_rss(
+        self, fonte: dict, existing_urls: set[str]
+    ) -> list[dict[str, Any]]:
+        """Scrape fonte de tipo RSS (ex: Google News RSS)."""
+        import xml.etree.ElementTree as ET
+
+        client = self._get_client()
+        url = fonte["url"]
+        nome_fonte = fonte["nome"]
+        confiabilidade = fonte.get("confiabilidade", "local")  # RSS já é pré-filtrado
+
+        try:
+            response = await client.get(
+                url,
+                headers={"User-Agent": self._get_user_agent()},
+            )
+            if response.status_code != 200:
+                logger.warning("RSS %s retornou status %d", url, response.status_code)
+                return []
+
+            root = ET.fromstring(response.content)
+        except Exception as e:
+            logger.error("Falha ao buscar RSS %s: %s", url, str(e))
+            return []
+
+        noticias = []
+
+        # Suporte a RSS 2.0 e Atom
+        items = root.findall(".//item")  # RSS 2.0
+        if not items:
+            # Atom
+            ns = {"atom": "http://www.w3.org/2005/Atom"}
+            items = root.findall(".//atom:entry", ns)
+
+        for item in items[:30]:
+            # RSS 2.0
+            titulo = item.findtext("title", "").strip()
+            link = item.findtext("link", "").strip()
+            pub_date = item.findtext("pubDate", "") or item.findtext("published", "")
+            descricao = item.findtext("description", "") or item.findtext("summary", "")
+
+            # Atom: link está em <link href="...">
+            if not link:
+                link_elem = item.find("{http://www.w3.org/2005/Atom}link")
+                if link_elem is not None:
+                    link = link_elem.get("href", "")
+
+            if not link or not titulo:
+                continue
+            if link in existing_urls:
+                continue
+            if not self._is_police_news(titulo):
+                continue
+            if not self._is_camacari_region(titulo, descricao, confiabilidade):
+                continue
+
+            try:
+                noticia = await self._scrape_article(link, nome_fonte, fonte.get("id"), confiabilidade)
+                if noticia:
+                    noticias.append(noticia)
+                    existing_urls.add(link)
+            except Exception as e:
+                logger.debug("Erro ao scraper item RSS %s: %s", link, str(e))
+                continue
+
+        logger.info("RSS %s: %d notícias novas", nome_fonte, len(noticias))
         return noticias
 
     def _get_search_urls(self, base_url: str) -> list[str]:
@@ -245,6 +328,16 @@ class RadarScraperService:
             paths = ["/bahia", "/bahia/policia"]
         elif "bahianoticias" in domain:
             paths = ["/municipios", "/seguranca-publica"]
+        elif "relatabahia" in domain:
+            paths = ["/policia", "/noticias"]
+        elif "maisregiao" in domain:
+            paths = ["/camacari-ba", "/camacari", "/ultimas-noticias"]
+        elif "camacarifatosefotos" in domain:
+            paths = ["/index.php/policial", "/index.php/cidade"]
+        elif "bahiacomenta" in domain:
+            paths = ["/camacari-ba", "/policia"]
+        elif "bahianoar" in domain:
+            paths = ["/cidades/camacari", "/cidades/camacari/"]
 
         return [f"{base_url}{p}" for p in paths]
 
@@ -286,7 +379,7 @@ class RadarScraperService:
         return links[:50]  # Limitar a 50 links por página
 
     async def _scrape_article(
-        self, url: str, fonte_nome: str, fonte_id: int | None
+        self, url: str, fonte_nome: str, fonte_id: int | None, confiabilidade: str = "regional"
     ) -> dict[str, Any] | None:
         """Scrape conteúdo de um artigo individual."""
         client = self._get_client()
@@ -311,14 +404,39 @@ class RadarScraperService:
         if not corpo or len(corpo) < 100:
             return None
 
-        # === FILTRO REGIONAL ===
-        # Verificar se a notícia é da região de Camaçari/RMS
-        if not self._is_camacari_region(titulo, corpo):
-            logger.debug("Ignorando notícia fora de Camaçari: %s", titulo[:80])
-            return None
-
         # Extrair data de publicação
         data_pub = self._extract_date(soup)
+
+        # === FILTRO DE DATA ===
+        # Rejeitar artigos com mais de 60 dias (evita scraping de arquivos antigos)
+        if data_pub:
+            try:
+                from email.utils import parsedate_to_datetime
+
+                # Normalizar formato ISO
+                dp_str = data_pub.replace("Z", "+00:00")
+                # Tentar parsear — aceitar apenas se dentro de 60 dias
+                try:
+                    pub_dt = datetime.fromisoformat(dp_str)
+                except ValueError:
+                    # Formato alternativo (ex: RFC 2822 do RSS)
+                    pub_dt = parsedate_to_datetime(data_pub)
+
+                if pub_dt.tzinfo is None:
+                    pub_dt = pub_dt.replace(tzinfo=timezone.utc)
+
+                idade_dias = (datetime.now(timezone.utc) - pub_dt).days
+                if idade_dias > 60:
+                    logger.debug("Ignorando artigo antigo (%d dias): %s", idade_dias, titulo[:80])
+                    return None
+            except Exception:
+                pass  # Se não conseguir parsear a data, deixa passar
+
+        # === FILTRO REGIONAL ===
+        # Verificar se a notícia é da região de Camaçari/RMS
+        if not self._is_camacari_region(titulo, corpo, confiabilidade):
+            logger.debug("Ignorando notícia fora de Camaçari: %s", titulo[:80])
+            return None
 
         # Extrair imagem principal
         imagem_url = self._extract_image(soup, url)
@@ -452,24 +570,32 @@ class RadarScraperService:
         title_lower = title.lower()
         return any(kw in title_lower for kw in KEYWORDS_POLICIAL_TITULO)
 
-    def _is_camacari_region(self, titulo: str, corpo: str | None) -> bool:
+    def _is_camacari_region(self, titulo: str, corpo: str | None, confiabilidade: str = "regional") -> bool:
         """
         Verifica se a notícia é da região de Camaçari/RMS.
-        Prioriza o título (peso maior) e apenas os primeiros 2000 chars do corpo.
+        Regras variam por confiabilidade da fonte.
         """
         titulo_lower = titulo.lower()
 
-        # 1. Se o título contém keyword regional → aceitar imediatamente
-        if any(kw in titulo_lower for kw in KEYWORDS_CAMACARI_REGIAO):
-            return True
-
-        # 2. Verificar apenas primeiros 2000 chars do corpo (evita falsas menções)
-        if corpo:
-            trecho_inicial = corpo[:2000].lower()
-            if any(kw in trecho_inicial for kw in KEYWORDS_CAMACARI_REGIAO):
+        if confiabilidade == "local":
+            # Fonte local: aceitar se título ou início do corpo tem qualquer keyword regional
+            if any(kw in titulo_lower for kw in KEYWORDS_CAMACARI_REGIAO):
                 return True
+            if corpo:
+                trecho = corpo[:1000].lower()
+                if any(kw in trecho for kw in KEYWORDS_CAMACARI_REGIAO):
+                    return True
+            return False
 
-        return False
+        elif confiabilidade == "estadual":
+            # Fonte estadual: exigir "camaçari" EXPLICITAMENTE no título
+            return any(kw in titulo_lower for kw in ["camaçari", "camacari", "camaçarí"])
+
+        else:  # "regional" (padrão)
+            # Fonte regional: exigir keyword estrita no título
+            if any(kw in titulo_lower for kw in KEYWORDS_CAMACARI_STRICT):
+                return True
+            return False
 
     # === Salvar no banco ===
 
