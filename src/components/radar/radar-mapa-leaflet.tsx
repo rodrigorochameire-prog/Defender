@@ -366,11 +366,13 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
   }, [showHeatmap, data]);
 
   return (
-    <div
-      ref={mapContainerRef}
-      className={`w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 ${
-        fullscreen ? "h-[calc(100vh-8rem)]" : "h-[600px]"
-      }`}
-    />
+    <div className="isolate">
+      <div
+        ref={mapContainerRef}
+        className={`w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 ${
+          fullscreen ? "h-[calc(100vh-8rem)]" : "h-[600px]"
+        }`}
+      />
+    </div>
   );
 }
