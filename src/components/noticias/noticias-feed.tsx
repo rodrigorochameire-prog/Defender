@@ -26,6 +26,7 @@ const COR_FONTE: Record<string, string> = {
   "empório-do-direito": "#4338ca",
   "stf-noticias": "#dc2626",
   "stf-notícias": "#dc2626",
+  "jota": "#0f172a",
 };
 
 const NOME_FONTE: Record<string, string> = {
@@ -33,10 +34,11 @@ const NOME_FONTE: Record<string, string> = {
   "stj-noticias": "STJ Notícias",
   "ibccrim": "IBCCRIM",
   "dizer-o-direito": "Dizer o Direito",
-  "tudo-de-penal": "Tudo de Penal",
-  "canal-ciencias-criminais": "Canal CC",
-  "emporio-do-direito": "Empório",
   "stf-noticias": "STF",
+  "jota": "JOTA",
+  "justificando": "Justificando",
+  "cnj": "CNJ",
+  "senado-federal": "Senado",
 };
 
 const FONTES_DISPONIVEIS = [
@@ -44,10 +46,11 @@ const FONTES_DISPONIVEIS = [
   "stj-noticias",
   "ibccrim",
   "dizer-o-direito",
-  "tudo-de-penal",
-  "canal-ciencias-criminais",
-  "emporio-do-direito",
   "stf-noticias",
+  "jota",
+  "justificando",
+  "cnj",
+  "senado-federal",
 ];
 
 function getCorFonte(fonte: string): string {

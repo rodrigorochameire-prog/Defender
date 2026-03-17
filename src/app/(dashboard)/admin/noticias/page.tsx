@@ -38,6 +38,7 @@ const COR_FONTE: Record<string, string> = {
   "empório-do-direito": "#4338ca",
   "stf-noticias": "#dc2626",
   "stf-notícias": "#dc2626",
+  "jota": "#0f172a",
 };
 
 export default function NoticiasPage() {
