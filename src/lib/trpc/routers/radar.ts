@@ -39,7 +39,10 @@ export const radarRouter = router({
       })
     )
     .query(async ({ input }) => {
-      const conditions = [];
+      const conditions = [
+        // Só mostra artigos já enriquecidos (não pending)
+        ne(radarNoticias.enrichmentStatus, "pending"),
+      ];
 
       if (input.tipoCrime && input.tipoCrime !== "todos") {
         conditions.push(eq(radarNoticias.tipoCrime, input.tipoCrime as any));
@@ -1118,22 +1121,22 @@ export const radarRouter = router({
     const [done] = await db
       .select({ count: count() })
       .from(radarNoticias)
-      .where(eq(radarNoticias.enrichmentStatus, "analyzed"));
+      .where(sql`${radarNoticias.enrichmentStatus} IN ('extracted', 'matched')`);
 
     const [semBairro] = await db
       .select({ count: count() })
       .from(radarNoticias)
-      .where(sql`${radarNoticias.bairro} IS NULL AND ${radarNoticias.enrichmentStatus} = 'analyzed'`);
+      .where(sql`${radarNoticias.bairro} IS NULL AND ${radarNoticias.enrichmentStatus} IN ('extracted', 'matched')`);
 
     const [semCoordenadas] = await db
       .select({ count: count() })
       .from(radarNoticias)
-      .where(sql`${radarNoticias.latitude} IS NULL AND ${radarNoticias.enrichmentStatus} = 'analyzed'`);
+      .where(sql`${radarNoticias.latitude} IS NULL AND ${radarNoticias.enrichmentStatus} IN ('extracted', 'matched')`);
 
     const [semResumo] = await db
       .select({ count: count() })
       .from(radarNoticias)
-      .where(sql`${radarNoticias.resumoIA} IS NULL AND ${radarNoticias.enrichmentStatus} = 'analyzed'`);
+      .where(sql`${radarNoticias.resumoIA} IS NULL AND ${radarNoticias.enrichmentStatus} IN ('extracted', 'matched')`);
 
     return {
       total: total?.count ?? 0,
@@ -1156,10 +1159,10 @@ export const radarRouter = router({
             ? `https://${process.env.VERCEL_URL}`
             : "http://localhost:3000");
 
-        fetch(`${baseUrl}/api/radar/enrich`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ limit: input.limit }),
+        const cronSecret = process.env.CRON_SECRET;
+        fetch(`${baseUrl}/api/cron/radar-extract`, {
+          method: "GET",
+          headers: cronSecret ? { "Authorization": `Bearer ${cronSecret}` } : {},
         }).catch(() => {}); // fire-and-forget
       } catch {}
 

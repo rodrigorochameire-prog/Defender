@@ -2,7 +2,8 @@
 
 import { useState, useCallback } from "react";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
-import { Newspaper, Scale, Gavel, BookOpen, RefreshCw, Filter, BookmarkCheck, BarChart2 } from "lucide-react";
+import { Newspaper, Scale, Gavel, BookOpen, RefreshCw, Filter, BookmarkCheck, BarChart2, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -56,6 +57,14 @@ export default function NoticiasPage() {
     },
   });
 
+  const enriquecerBatch = trpc.noticias.enriquecerBatch.useMutation({
+    onSuccess: (data) => {
+      toast.success(`IA processou ${data.processadas} notícias (${data.erros} erros)`);
+      utils.noticias.list.invalidate();
+    },
+    onError: () => toast.error("Erro ao enriquecer com IA"),
+  });
+
   const handleBuscarAgora = useCallback(async () => {
     await buscarAgora.mutateAsync();
     utils.noticias.listPendentes.invalidate();
@@ -95,6 +104,16 @@ export default function NoticiasPage() {
                 </Badge>
               </Button>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => enriquecerBatch.mutate()}
+              disabled={enriquecerBatch.isPending}
+              title="Enriquecer com IA todas as notícias aprovadas que ainda não têm análise"
+            >
+              <Sparkles className={cn("h-4 w-4 mr-1", enriquecerBatch.isPending && "animate-spin")} />
+              Enriquecer IA
+            </Button>
             <Button
               variant="outline"
               size="sm"

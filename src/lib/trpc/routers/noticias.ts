@@ -94,17 +94,21 @@ export const noticiasRouter = router({
           .where(inArray(noticiasJuridicas.id, input.ids));
 
         for (const noticia of noticias) {
-          try {
-            // Buscar conteúdo completo se ainda não tem (ou tem menos de 500 chars)
-            const conteudoAtual = noticia.conteudo ?? "";
-            if (conteudoAtual.length < 500 && noticia.urlOriginal) {
+          // Buscar conteúdo completo — falha não bloqueia enriquecimento
+          const conteudoAtual = noticia.conteudo ?? "";
+          if (conteudoAtual.length < 500 && noticia.urlOriginal) {
+            try {
               const fullHtml = await fetchFullContent(noticia.urlOriginal);
               await db.update(noticiasJuridicas)
                 .set({ conteudo: cleanHtml(fullHtml), updatedAt: new Date() })
                 .where(eq(noticiasJuridicas.id, noticia.id));
+            } catch {
+              // Site pode bloquear scraping — usa o resumo RSS para enriquecimento
             }
+          }
 
-            // Enriquecer com IA
+          // Enriquecer com IA — independente do conteúdo completo
+          try {
             await enriquecerNoticia(noticia.id);
           } catch {
             // Silencioso — não quebra o fluxo de aprovação
