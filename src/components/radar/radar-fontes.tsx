@@ -189,7 +189,7 @@ export function RadarFontes() {
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <Activity
                         className={cn(
                           "h-3.5 w-3.5 shrink-0",
@@ -201,6 +201,21 @@ export function RadarFontes() {
                       <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
                         {fonte.nome}
                       </span>
+                      {fonte.confiabilidade === "local" && (
+                        <Badge className="text-[10px] px-1.5 py-0 h-4 bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800">
+                          Local
+                        </Badge>
+                      )}
+                      {fonte.confiabilidade === "regional" && (
+                        <Badge className="text-[10px] px-1.5 py-0 h-4 bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
+                          Regional
+                        </Badge>
+                      )}
+                      {fonte.confiabilidade === "estadual" && (
+                        <Badge className="text-[10px] px-1.5 py-0 h-4 bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700">
+                          Estadual
+                        </Badge>
+                      )}
                       {!fonte.ativo && (
                         <Badge
                           variant="outline"
