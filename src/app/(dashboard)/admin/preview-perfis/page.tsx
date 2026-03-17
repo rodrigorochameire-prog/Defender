@@ -39,7 +39,7 @@ export default function PreviewPerfisPage() {
     data: assistidos = [], 
     isLoading: loadingAssistidos,
     refetch: refetchAssistidos 
-  } = trpc.assistidos.list.useQuery({ limit: 100 });
+  } = trpc.assistidos.list.useQuery({});
 
   // Demandas
   const { 

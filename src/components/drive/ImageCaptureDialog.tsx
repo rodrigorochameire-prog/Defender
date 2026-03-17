@@ -43,7 +43,7 @@ export function ImageCaptureDialog({
 
   // Fetch assistidos for selection
   const { data: assistidosData } = trpc.assistidos.list.useQuery(
-    { limit: 200 },
+    {},
     { enabled: isOpen && papel === "reu" }
   );
 

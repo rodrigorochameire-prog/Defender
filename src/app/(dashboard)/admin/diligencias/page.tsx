@@ -73,7 +73,6 @@ export default function DiligenciasPage() {
   // Queries
   const { data: assistidos, isLoading: loadingAssistidos } = trpc.assistidos.list.useQuery({
     search: searchTerm || undefined,
-    limit: 50,
   });
 
   const { data: processos, isLoading: loadingProcessos } = trpc.processos.list.useQuery({
@@ -207,7 +206,7 @@ export default function DiligenciasPage() {
                             <p className="font-medium text-sm truncate">{assistido.nome}</p>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               {assistido.statusPrisional && assistido.statusPrisional !== "SOLTO" && (
-                                <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                                <Badge variant="danger" className="text-[10px] px-1.5 py-0">
                                   Preso
                                 </Badge>
                               )}
@@ -297,9 +296,9 @@ export default function DiligenciasPage() {
                           ? processoDetails?.numeroAutos
                           : assistidoDetails?.nome}
                       </p>
-                      {selectedProcessoId && processoDetails?.assistido && (
+                      {selectedProcessoId && processoDetails?.assistidos && (
                         <p className="text-sm text-muted-foreground">
-                          Assistido: {(processoDetails as any).assistido?.nome || assistidoDetails?.nome}
+                          Assistido: {(processoDetails as any).assistidos?.nome || assistidoDetails?.nome}
                         </p>
                       )}
                     </div>

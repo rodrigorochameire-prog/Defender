@@ -4,15 +4,6 @@ import { useRouter } from "next/navigation";
 import React, { useState, useMemo, useRef, useCallback, useEffect, Fragment } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
-import {
-  SwissTable,
-  SwissTableBody,
-  SwissTableCell,
-  SwissTableHead,
-  SwissTableHeader,
-  SwissTableRow,
-  SwissTableContainer,
-} from "@/components/shared/swiss-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -201,6 +192,7 @@ interface AssistidoUI {
   faseProcessual?: string;
   driveFolderId?: string | null;
   driveFilesCount?: number;
+  nomeMae?: string;
 }
 
 // Configuracoes de status e fases
@@ -379,25 +371,42 @@ function AssistidoQuickPreview({
     ? assistido.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.***.***-$4')
     : null;
 
+  // Keyboard navigation
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!assistido) return;
+      if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); onPrev?.(); }
+      if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); onNext?.(); }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [assistido, onPrev, onNext]);
+
+  const audienciaAmanha = diasAteAudiencia === 1;
+
   return (
     <Sheet open={!!assistido} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        className="w-[calc(100vw-2rem)] sm:w-[440px] md:w-[480px] p-0 flex flex-col gap-0 border-l border-zinc-200 dark:border-zinc-800"
+        className="w-[calc(100vw-2rem)] sm:w-[460px] md:w-[500px] p-0 flex flex-col gap-0 border-l border-zinc-200 dark:border-zinc-800 shadow-2xl"
         style={{ borderLeft: `3px solid ${primaryColor}` }}
       >
-        {/* Sticky Header */}
-        <SheetHeader className="px-5 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm sticky top-0 z-10">
+        {/* Sticky Header — Compact navigation bar */}
+        <SheetHeader className="px-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm sticky top-0 z-10">
           <div className="flex items-center justify-between">
-            <SheetTitle className="text-xs font-medium text-zinc-400 dark:text-zinc-500 tracking-wider uppercase">
-              Assistido {currentIndex !== undefined && totalCount ? `${currentIndex + 1} / ${totalCount}` : ''}
-            </SheetTitle>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
+              <SheetTitle className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 tracking-wider uppercase">
+                {currentIndex !== undefined && totalCount ? `${currentIndex + 1} / ${totalCount}` : 'Assistido'}
+              </SheetTitle>
+              <span className="text-[10px] text-zinc-300 dark:text-zinc-600">|</span>
+              <span className="text-[10px] text-zinc-300 dark:text-zinc-600">↑↓ navegar</span>
+            </div>
+            <div className="flex items-center gap-0.5">
               {onPrev && (
                 <button
                   onClick={onPrev}
-                  className="h-7 w-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                  title="Anterior"
+                  className="h-7 w-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
+                  title="Anterior (↑)"
                 >
                   <ChevronUp className="w-4 h-4" />
                 </button>
@@ -405,8 +414,8 @@ function AssistidoQuickPreview({
               {onNext && (
                 <button
                   onClick={onNext}
-                  className="h-7 w-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                  title="Próximo"
+                  className="h-7 w-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
+                  title="Próximo (↓)"
                 >
                   <ChevronDown className="w-4 h-4" />
                 </button>
@@ -417,9 +426,13 @@ function AssistidoQuickPreview({
 
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto">
-          {/* 1. Hero Section */}
-          <div className="px-5 py-5 border-b border-zinc-100 dark:border-zinc-800">
-            <div className="flex items-start gap-4">
+          {/* 1. Hero Section — Gradient background */}
+          <div className="relative px-5 py-5 border-b border-zinc-100 dark:border-zinc-800 overflow-hidden">
+            <div
+              className="absolute inset-0 opacity-[0.04] pointer-events-none"
+              style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, transparent 60%)` }}
+            />
+            <div className="relative flex items-start gap-4">
               <AssistidoAvatar
                 nome={assistido.nome}
                 photoUrl={assistido.photoUrl}
@@ -435,7 +448,7 @@ function AssistidoQuickPreview({
                 {assistido.vulgo && (
                   <p className="text-xs text-zinc-400 italic mt-0.5">&ldquo;{assistido.vulgo}&rdquo;</p>
                 )}
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                   <span className={cn(
                     "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
                     isPreso && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
@@ -465,123 +478,210 @@ function AssistidoQuickPreview({
                       </span>
                     );
                   })}
-                  {idade && (
-                    <span className="text-xs text-zinc-400">{idade} anos</span>
-                  )}
+                  {idade && <span className="text-[10px] text-zinc-400">{idade}a</span>}
+                  {isPreso && tempoPreso && <span className="text-[10px] text-rose-400 font-mono tabular-nums">{tempoPreso}</span>}
                 </div>
+                {/* Contato rápido inline */}
+                {telefoneDisplay && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <Phone className="w-3 h-3 text-zinc-400" />
+                    <span className="text-xs text-zinc-500">{telefoneDisplay}</span>
+                    {whatsappUrl && (
+                      <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-medium transition-colors">
+                        <MessageCircle className="w-3 h-3" />
+                        Zap
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* 2. Quick Stats Row */}
+          {/* 2. Alertas urgentes (empilhados, compactos) */}
+          {(isPreso || audienciaHoje || prazoVencido) && (
+            <div className="px-5 py-3 border-b border-zinc-100 dark:border-zinc-800 space-y-2">
+              {isPreso && (
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/30">
+                  <Lock className="w-4 h-4 text-rose-500 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-semibold text-rose-700 dark:text-rose-400">Preso</span>
+                    {assistido.unidadePrisional && <span className="text-[10px] text-rose-500 ml-2">{assistido.unidadePrisional}</span>}
+                  </div>
+                  {tempoPreso && <span className="text-[10px] text-rose-500 font-mono tabular-nums shrink-0">{tempoPreso}</span>}
+                </div>
+              )}
+              {audienciaHoje && (
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/30">
+                  <Calendar className="w-4 h-4 text-amber-500 animate-pulse shrink-0" />
+                  <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">Audiencia HOJE</span>
+                  {assistido.proximaAudiencia && <span className="text-xs text-amber-500 font-mono ml-auto">{format(parseISO(assistido.proximaAudiencia), "HH:mm")}</span>}
+                </div>
+              )}
+              {prazoVencido && (
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/30">
+                  <AlertCircle className="w-4 h-4 text-rose-500 animate-pulse shrink-0" />
+                  <span className="text-xs font-semibold text-rose-700 dark:text-rose-400">Prazo VENCIDO</span>
+                  {assistido.atoProximoPrazo && <span className="text-[10px] text-rose-500 ml-auto truncate max-w-[120px]">{assistido.atoProximoPrazo}</span>}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 3. Stats + Quick Actions Row */}
           <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-2">
               {[
-                { icon: Scale, label: "Processos", value: assistido.processosAtivos || 0 },
-                { icon: FileText, label: "Demandas", value: assistido.demandasAbertas || 0 },
-                { icon: HardDrive, label: "Arquivos", value: assistido.driveFilesCount || 0 },
+                { icon: Scale, label: "Processos", value: assistido.processosAtivos || 0, href: `/admin/processos?assistido=${assistido.id}` },
+                { icon: FileText, label: "Demandas", value: assistido.demandasAbertas || 0, href: `/admin/demandas?assistido=${assistido.id}` },
+                { icon: HardDrive, label: "Arquivos", value: assistido.driveFilesCount || 0, href: assistido.driveFolderId ? `https://drive.google.com/drive/folders/${assistido.driveFolderId}` : `/admin/drive?assistido=${assistido.id}` },
+                { icon: Calendar, label: "Agenda", value: assistido.proximaAudiencia ? 1 : 0, href: `/admin/audiencias?assistido=${assistido.id}` },
               ].map((stat) => {
                 const Icon = stat.icon;
+                const isExternal = stat.href.startsWith('http');
+                const Wrapper = isExternal ? 'a' : Link;
+                const wrapperProps = isExternal ? { href: stat.href, target: "_blank", rel: "noopener noreferrer" } : { href: stat.href };
                 return (
-                  <div key={stat.label} className="flex flex-col items-center gap-1 p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
-                    <Icon className="w-4 h-4 text-zinc-400" />
-                    <span className="text-lg font-bold text-zinc-800 dark:text-zinc-100 tabular-nums">{stat.value}</span>
+                  <Wrapper key={stat.label} {...wrapperProps as any} className="flex flex-col items-center gap-0.5 p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 transition-all cursor-pointer group">
+                    <Icon className="w-3.5 h-3.5 text-zinc-400 group-hover:text-emerald-500 transition-colors" />
+                    <span className="text-base font-bold text-zinc-800 dark:text-zinc-100 tabular-nums">{stat.value}</span>
                     <span className="text-[10px] text-zinc-400">{stat.label}</span>
-                  </div>
+                  </Wrapper>
                 );
               })}
             </div>
           </div>
 
-          {/* 3. Urgency Section (conditional) */}
-          {isPreso && (
+          {/* 4. Timeline — Mini timeline with all events */}
+          {(assistido.proximaAudiencia || assistido.proximoPrazo || assistido.ultimoEvento) && (
             <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
-              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/30">
-                <div className="flex items-center gap-2 mb-1">
-                  <Lock className="w-4 h-4 text-rose-500" />
-                  <span className="text-xs font-semibold text-rose-700 dark:text-rose-400">Preso</span>
-                </div>
-                {assistido.unidadePrisional && (
-                  <p className="text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
-                    <MapPin className="w-3 h-3" />
-                    {assistido.unidadePrisional}
-                  </p>
+              <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
+                <Clock className="w-3 h-3" />
+                Timeline
+              </p>
+              <div className="relative pl-4 space-y-3 border-l-2 border-zinc-200 dark:border-zinc-700">
+                {/* Próxima audiência */}
+                {assistido.proximaAudiencia && (
+                  <div className="relative">
+                    <div className={cn(
+                      "absolute -left-[9px] top-0.5 w-4 h-4 rounded-full flex items-center justify-center",
+                      audienciaHoje ? "bg-amber-500" : audienciaAmanha ? "bg-blue-500" : "bg-violet-500"
+                    )}>
+                      <Calendar className="w-2 h-2 text-white" />
+                    </div>
+                    <div className="ml-3">
+                      <p className={cn(
+                        "text-xs font-semibold",
+                        audienciaHoje && "text-amber-600 dark:text-amber-400",
+                        audienciaAmanha && "text-blue-600 dark:text-blue-400",
+                        !audienciaHoje && !audienciaAmanha && "text-violet-600 dark:text-violet-400"
+                      )}>
+                        {audienciaHoje ? "HOJE" : audienciaAmanha ? "Amanha" : format(parseISO(assistido.proximaAudiencia), "dd/MM/yyyy")}
+                        <span className="font-mono ml-1.5">{format(parseISO(assistido.proximaAudiencia), "HH:mm")}</span>
+                      </p>
+                      <p className="text-[10px] text-zinc-500">
+                        {assistido.tipoProximaAudiencia || "Audiencia"} {diasAteAudiencia !== null && diasAteAudiencia > 0 ? `em ${diasAteAudiencia}d` : ''}
+                      </p>
+                    </div>
+                  </div>
                 )}
-                {tempoPreso && (
-                  <p className="text-xs text-rose-500 font-mono tabular-nums mt-1">Tempo preso: {tempoPreso}</p>
+                {/* Próximo prazo */}
+                {assistido.proximoPrazo && (
+                  <div className="relative">
+                    <div className={cn(
+                      "absolute -left-[9px] top-0.5 w-4 h-4 rounded-full flex items-center justify-center",
+                      prazoVencido ? "bg-rose-500" : "bg-sky-500"
+                    )}>
+                      <Timer className="w-2 h-2 text-white" />
+                    </div>
+                    <div className="ml-3">
+                      <p className={cn(
+                        "text-xs font-semibold",
+                        prazoVencido ? "text-rose-600 dark:text-rose-400" : "text-sky-600 dark:text-sky-400"
+                      )}>
+                        {prazoInfo?.text || format(parseISO(assistido.proximoPrazo), "dd/MM/yyyy")}
+                      </p>
+                      <p className="text-[10px] text-zinc-500">
+                        {assistido.atoProximoPrazo || "Prazo"}
+                      </p>
+                    </div>
+                  </div>
                 )}
-              </div>
-            </div>
-          )}
-          {audienciaHoje && (
-            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
-              <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/30">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-amber-500 animate-pulse" />
-                  <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">Audiencia HOJE</span>
-                  {assistido.proximaAudiencia && (
-                    <span className="text-xs text-amber-500 font-mono">
-                      {format(parseISO(assistido.proximaAudiencia), "HH:mm")}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-          {prazoVencido && (
-            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
-              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/30">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-rose-500 animate-pulse" />
-                  <span className="text-xs font-semibold text-rose-700 dark:text-rose-400">Prazo VENCIDO</span>
-                  {assistido.atoProximoPrazo && (
-                    <span className="text-xs text-rose-500">{assistido.atoProximoPrazo}</span>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Audiência info (if not today - today is already shown above) */}
-          {assistido.proximaAudiencia && !audienciaHoje && (
-            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-zinc-400" />
-                  <div>
-                    <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                      Próxima Audiência
-                    </p>
-                    <p className="text-[10px] text-zinc-400 mt-0.5">
-                      {format(parseISO(assistido.proximaAudiencia), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                {/* Último evento */}
+                {assistido.ultimoEvento && (
+                  <div className="relative">
+                    <div className="absolute -left-[9px] top-0.5 w-4 h-4 rounded-full bg-zinc-400 flex items-center justify-center">
+                      <CircleDot className="w-2 h-2 text-white" />
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-xs text-zinc-500">
+                        {assistido.ultimoEvento.data ? format(parseISO(assistido.ultimoEvento.data), "dd/MM/yyyy") : ""}
+                      </p>
+                      <p className="text-[10px] text-zinc-400">{assistido.ultimoEvento.titulo}</p>
+                    </div>
+                  </div>
+                )}
+                {/* Cadastro */}
+                <div className="relative">
+                  <div className="absolute -left-[9px] top-0.5 w-4 h-4 rounded-full bg-zinc-300 dark:bg-zinc-600 flex items-center justify-center">
+                    <User className="w-2 h-2 text-white" />
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-[10px] text-zinc-400">
+                      Cadastro: {format(new Date(assistido.createdAt), "dd/MM/yyyy")}
                     </p>
                   </div>
                 </div>
-                {diasAteAudiencia !== null && (
-                  <span className={cn(
-                    "text-xs font-medium px-2 py-0.5 rounded-full tabular-nums",
-                    diasAteAudiencia <= 3 ? "bg-amber-50 dark:bg-amber-950/20 text-amber-600" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
-                  )}>
-                    {diasAteAudiencia}d
-                  </span>
-                )}
               </div>
             </div>
           )}
 
-          {/* 4. Dados Pessoais */}
+          {/* 5. Crime / Processo */}
+          {(assistido.crimePrincipal || assistido.numeroProcesso) && (
+            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+              <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
+                <Scale className="w-3 h-3" />
+                Crime / Processo
+              </p>
+              {assistido.crimePrincipal && (
+                <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-2">{assistido.crimePrincipal}</p>
+              )}
+              {assistido.numeroProcesso && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
+                  <span className="font-mono tabular-nums text-xs text-zinc-600 dark:text-zinc-400 flex-1">{assistido.numeroProcesso}</span>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(assistido.numeroProcesso!); toast.success("Copiado!"); }}
+                    className="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                  >
+                    <Copy className="w-3 h-3 text-zinc-400" />
+                  </button>
+                </div>
+              )}
+              {assistido.faseProcessual && (
+                <p className="text-[10px] text-zinc-400 mt-2">
+                  Fase: <span className="text-zinc-600 dark:text-zinc-300 font-medium">{faseConfig[assistido.faseProcessual]?.label || assistido.faseProcessual}</span>
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* 6. Dados Pessoais — Compact grid */}
           <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
-            <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium">Dados Pessoais</p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+            <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
+              <User className="w-3 h-3" />
+              Dados Pessoais
+            </p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               {[
-                { label: "CPF", value: maskedCpf },
+                { label: "CPF", value: maskedCpf, mono: true },
                 { label: "RG", value: assistido.rg },
                 { label: "Nascimento", value: assistido.dataNascimento ? format(parseISO(assistido.dataNascimento), "dd/MM/yyyy") : null },
                 { label: "Naturalidade", value: assistido.naturalidade },
+                { label: "Nome da Mãe", value: assistido.nomeMae },
               ].filter(item => item.value).map((item) => (
                 <div key={item.label}>
                   <p className="text-[10px] text-zinc-400">{item.label}</p>
-                  <p className={cn("text-xs font-medium text-zinc-700 dark:text-zinc-300", item.label === "CPF" && "font-mono tabular-nums")}>{item.value}</p>
+                  <p className={cn("text-xs font-medium text-zinc-700 dark:text-zinc-300", item.mono && "font-mono tabular-nums")}>{item.value}</p>
                 </div>
               ))}
               {assistido.endereco && (
@@ -593,118 +693,77 @@ function AssistidoQuickPreview({
             </div>
           </div>
 
-          {/* 5. Contato */}
-          {(telefoneDisplay || assistido.nomeContato) && (
-            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
-              <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium">Contato</p>
-              <div className="flex items-center justify-between">
-                <div>
-                  {telefoneDisplay && (
-                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{telefoneDisplay}</p>
-                  )}
-                  {assistido.nomeContato && (
-                    <p className="text-[10px] text-zinc-400 mt-0.5">Responsável: {assistido.nomeContato}</p>
-                  )}
-                </div>
-                {whatsappUrl && (
-                  <a
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition-colors"
-                  >
-                    <MessageCircle className="w-3.5 h-3.5" />
-                    WhatsApp
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* 6. Crime / Processo */}
-          {(assistido.crimePrincipal || assistido.numeroProcesso) && (
-            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
-              <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium">Crime / Processo</p>
-              {assistido.crimePrincipal && (
-                <p className="text-xs text-zinc-700 dark:text-zinc-300 mb-2">{assistido.crimePrincipal}</p>
-              )}
-              {assistido.numeroProcesso && (
-                <div className="flex items-center gap-2">
-                  <Scale className="w-3 h-3 text-zinc-400" />
-                  <span className="font-mono tabular-nums text-xs text-zinc-500 dark:text-zinc-400">{assistido.numeroProcesso}</span>
-                  <button
-                    onClick={() => { navigator.clipboard.writeText(assistido.numeroProcesso!); toast.success("Copiado!"); }}
-                    className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                  >
-                    <Copy className="w-3 h-3 text-zinc-400" />
-                  </button>
-                </div>
-              )}
-              {assistido.faseProcessual && (
-                <p className="text-[10px] text-zinc-400 mt-1.5">
-                  Fase: <span className="text-zinc-600 dark:text-zinc-300">{faseConfig[assistido.faseProcessual]?.label || assistido.faseProcessual}</span>
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* 6.5 Observações */}
+          {/* 7. Observações */}
           {assistido.observacoes && (
             <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
-              <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-2 font-medium">Observações</p>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap">
+              <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-2 font-medium flex items-center gap-1.5">
+                <Info className="w-3 h-3" />
+                Observações
+              </p>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 border border-zinc-100 dark:border-zinc-800">
                 {assistido.observacoes}
               </p>
             </div>
           )}
 
-          {/* 7. Drive */}
-          <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
-            <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium">Google Drive</p>
+          {/* 8. Drive */}
+          <div className="px-5 py-4">
+            <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
+              <HardDrive className="w-3 h-3" />
+              Google Drive
+            </p>
             {assistido.driveFolderId ? (
-              <div className="flex items-center gap-2">
-                <a
-                  href={`https://drive.google.com/drive/folders/${assistido.driveFolderId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 transition-colors"
-                >
-                  <HardDrive className="w-3.5 h-3.5" />
-                  Abrir pasta
-                  <ExternalLink className="w-3 h-3 opacity-60" />
-                </a>
-                {(assistido.driveFilesCount ?? 0) > 0 && (
-                  <span className="text-[10px] text-zinc-400">
-                    {assistido.driveFilesCount} arquivo{(assistido.driveFilesCount ?? 0) > 1 ? 's' : ''}
-                  </span>
-                )}
-              </div>
+              <a
+                href={`https://drive.google.com/drive/folders/${assistido.driveFolderId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/30 hover:border-emerald-300 dark:hover:border-emerald-700 transition-all group"
+              >
+                <HardDrive className="w-5 h-5 text-emerald-500 group-hover:scale-110 transition-transform" />
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Abrir pasta no Drive</p>
+                  {(assistido.driveFilesCount ?? 0) > 0 && (
+                    <p className="text-[10px] text-emerald-500">{assistido.driveFilesCount} arquivo{(assistido.driveFilesCount ?? 0) > 1 ? 's' : ''}</p>
+                  )}
+                </div>
+                <ExternalLink className="w-4 h-4 text-emerald-400 opacity-60 group-hover:opacity-100 transition-opacity" />
+              </a>
             ) : (
-              <p className="text-xs text-zinc-400 dark:text-zinc-500">Sem pasta vinculada</p>
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
+                <Link2Off className="w-5 h-5 text-zinc-300 dark:text-zinc-600" />
+                <p className="text-xs text-zinc-400 dark:text-zinc-500">Sem pasta vinculada</p>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Sticky Footer */}
-        <div className="px-5 py-4 border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-wrap gap-2">
-          <Link href={`/admin/assistidos/${assistido.id}`} className="flex-1">
-            <Button className="w-full h-9 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-all">
-              Abrir Perfil Completo
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          </Link>
-          <Link href={`/admin/processos?assistido=${assistido.id}`}>
-            <Button variant="outline" size="sm" className="h-9 rounded-xl text-xs focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1">
-              <Scale className="w-3.5 h-3.5 mr-1" />
-              Processos
-            </Button>
-          </Link>
-          <Link href={`/admin/demandas/nova?assistido=${assistido.id}`}>
-            <Button variant="outline" size="sm" className="h-9 rounded-xl text-xs focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1">
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Nova Demanda
-            </Button>
-          </Link>
+        {/* Sticky Footer — Premium action bar */}
+        <div className="px-4 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm">
+          <div className="flex items-center gap-2">
+            <Link href={`/admin/assistidos/${assistido.id}`} className="flex-1">
+              <Button className="w-full h-9 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-all shadow-sm hover:shadow-md">
+                Abrir Perfil
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
+            <Link href={`/admin/processos?assistido=${assistido.id}`}>
+              <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl border-zinc-200 dark:border-zinc-700 hover:border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all" title="Processos">
+                <Scale className="w-4 h-4" />
+              </Button>
+            </Link>
+            <Link href={`/admin/demandas/nova?assistido=${assistido.id}`}>
+              <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl border-zinc-200 dark:border-zinc-700 hover:border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all" title="Nova Demanda">
+                <Plus className="w-4 h-4" />
+              </Button>
+            </Link>
+            {whatsappUrl && (
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl border-emerald-200 dark:border-emerald-800/50 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all" title="WhatsApp">
+                  <MessageCircle className="w-4 h-4" />
+                </Button>
+              </a>
+            )}
+          </div>
         </div>
       </SheetContent>
     </Sheet>
@@ -1421,7 +1480,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
 }
 
 // ========================================
-// TABLE VIEW DO ASSISTIDO — SwissTable
+// TABLE VIEW DO ASSISTIDO — Native HTML Table
 // ========================================
 
 function AssistidoTableView({
@@ -1462,16 +1521,16 @@ function AssistidoTableView({
   ];
 
   return (
-    <SwissTableContainer maxHeight="calc(100vh - 320px)">
-      <SwissTable>
-        <SwissTableHeader>
-          <SwissTableRow>
+    <div className="rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 overflow-auto" style={{ maxHeight: 'calc(100vh - 320px)' }}>
+      <table className="w-full text-sm">
+        <thead className="sticky top-0 z-10 bg-zinc-50/95 dark:bg-zinc-800/95 backdrop-blur-sm border-b border-zinc-200 dark:border-zinc-800">
+          <tr>
             {sortableHeaders.map((col) => (
-              <SwissTableHead
+              <th
                 key={col.label}
                 className={cn(
+                  "px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500",
                   col.id && "cursor-pointer select-none hover:bg-zinc-100 dark:hover:bg-zinc-800",
-                  !col.id && "text-zinc-400 dark:text-zinc-500",
                   col.className,
                 )}
                 onClick={() => col.id && onSortChange(col.id)}
@@ -1485,11 +1544,11 @@ function AssistidoTableView({
                     <ArrowUpDown className="w-3 h-3 text-zinc-300 dark:text-zinc-600" />
                   )}
                 </div>
-              </SwissTableHead>
+              </th>
             ))}
-          </SwissTableRow>
-        </SwissTableHeader>
-        <SwissTableBody>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
           {assistidos.map((assistido, index) => {
             const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
             const isMonitorado = ["MONITORADO", "DOMICILIAR"].includes(assistido.statusPrisional);
@@ -1523,9 +1582,11 @@ function AssistidoTableView({
 
             return (
               <Fragment key={assistido.id}>
-              <SwissTableRow
+              <tr
                 className={cn(
                   "transition-colors cursor-pointer animate-in fade-in duration-200 fill-mode-both",
+                  "hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10",
+                  index % 2 === 0 ? "bg-white dark:bg-zinc-900" : "bg-zinc-50/50 dark:bg-zinc-900/50",
                   isPinned && "ring-1 ring-inset ring-amber-400/40 dark:ring-amber-500/20",
                   isPreso && "border-l-[3px] border-l-rose-500 bg-rose-50/30 dark:bg-rose-950/10",
                   !isPreso && prazoVencido && "border-l-[3px] border-l-rose-400 bg-rose-50/20 dark:bg-rose-950/5",
@@ -1538,7 +1599,7 @@ function AssistidoTableView({
                 onDoubleClick={() => onPreview?.(assistido)}
               >
                 {/* Nome */}
-                <SwissTableCell className="py-2.5 px-4 first:pl-6">
+                <td className="py-2.5 px-4 first:pl-6">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <AssistidoAvatar
                       nome={assistido.nome}
@@ -1552,7 +1613,7 @@ function AssistidoTableView({
                     <div className="min-w-0">
                       <Link
                         href={`/admin/assistidos/${assistido.id}`}
-                        className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate block hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors max-w-[180px]"
+                        className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate block hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors max-w-[220px]"
                       >
                         {assistido.nome}
                       </Link>
@@ -1563,10 +1624,10 @@ function AssistidoTableView({
                       )}
                     </div>
                   </div>
-                </SwissTableCell>
+                </td>
 
                 {/* Status */}
-                <SwissTableCell className="py-2.5 px-4">
+                <td className="py-2.5 px-4">
                   <div className={cn(
                     "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap",
                     isPreso && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
@@ -1586,10 +1647,10 @@ function AssistidoTableView({
                       {tempoPreso}
                     </span>
                   )}
-                </SwissTableCell>
+                </td>
 
                 {/* Atribuicao */}
-                <SwissTableCell className="py-2.5 px-4">
+                <td className="py-2.5 px-4">
                   {primaryAttrOption ? (
                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
                       <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: primaryColor }} />
@@ -1598,10 +1659,10 @@ function AssistidoTableView({
                   ) : (
                     <span className="text-[10px] text-zinc-300 dark:text-zinc-600">-</span>
                   )}
-                </SwissTableCell>
+                </td>
 
                 {/* Crime */}
-                <SwissTableCell className="py-2.5 px-4">
+                <td className="py-2.5 px-4">
                   {assistido.crimePrincipal ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -1614,12 +1675,12 @@ function AssistidoTableView({
                       </TooltipContent>
                     </Tooltip>
                   ) : (
-                    <span className="text-[10px] text-zinc-300 dark:text-zinc-600 italic">Sem tipo</span>
+                    <span className="inline-flex items-center gap-1 text-[10px] text-zinc-300 dark:text-zinc-600"><Circle className="w-2.5 h-2.5" /> Sem tipo</span>
                   )}
-                </SwissTableCell>
+                </td>
 
                 {/* Processo */}
-                <SwissTableCell className="py-2.5 px-4">
+                <td className="py-2.5 px-4">
                   {assistido.numeroProcesso ? (
                     <div
                       className="flex items-center gap-1 cursor-pointer group/copy"
@@ -1635,12 +1696,12 @@ function AssistidoTableView({
                       )}
                     </div>
                   ) : (
-                    <span className="text-[10px] text-zinc-300 dark:text-zinc-600">-</span>
+                    <span className="inline-flex items-center gap-1 text-[10px] text-zinc-300 dark:text-zinc-600"><Circle className="w-2.5 h-2.5" /> &mdash;</span>
                   )}
-                </SwissTableCell>
+                </td>
 
                 {/* Audiencia / Prazo */}
-                <SwissTableCell className="py-2.5 px-4">
+                <td className="py-2.5 px-4">
                   {assistido.proximaAudiencia ? (
                     <div className={cn(
                       "inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-medium whitespace-nowrap",
@@ -1666,12 +1727,12 @@ function AssistidoTableView({
                       {prazoInfo.text}
                     </div>
                   ) : (
-                    <span className="text-[10px] text-zinc-300 dark:text-zinc-600">-</span>
+                    <span className="inline-flex items-center gap-1 text-[10px] text-zinc-300 dark:text-zinc-600"><Circle className="w-2.5 h-2.5" /> &mdash;</span>
                   )}
-                </SwissTableCell>
+                </td>
 
                 {/* Drive */}
-                <SwissTableCell className="py-2.5 px-4">
+                <td className="py-2.5 px-4">
                   {assistido.driveFolderId ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -1693,12 +1754,15 @@ function AssistidoTableView({
                       </TooltipContent>
                     </Tooltip>
                   ) : (
-                    <Link2Off className="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600" />
+                    <span className="inline-flex items-center gap-1 text-zinc-300 dark:text-zinc-600">
+                      <Link2Off className="w-3.5 h-3.5" />
+                      <span className="text-[10px]">&mdash;</span>
+                    </span>
                   )}
-                </SwissTableCell>
+                </td>
 
                 {/* Acoes */}
-                <SwissTableCell className="py-2.5 px-4 last:pr-6">
+                <td className="py-2.5 px-4 last:pr-6">
                   <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
                     {whatsappUrl && (
                       <Tooltip>
@@ -1756,13 +1820,13 @@ function AssistidoTableView({
                       </Button>
                     </Link>
                   </div>
-                </SwissTableCell>
-              </SwissTableRow>
+                </td>
+              </tr>
 
               {/* Row Expansion Panel */}
               {expandedId === assistido.id && (
-                <SwissTableRow>
-                  <SwissTableCell colSpan={8} className="p-0">
+                <tr>
+                  <td colSpan={8} className="p-0">
                     <div className="px-6 py-4 bg-zinc-50/50 dark:bg-zinc-800/30 border-t border-zinc-100 dark:border-zinc-800 animate-in slide-in-from-top-1 duration-200">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Col 1: Dados Pessoais */}
@@ -1855,15 +1919,15 @@ function AssistidoTableView({
                         </div>
                       </div>
                     </div>
-                  </SwissTableCell>
-                </SwissTableRow>
+                  </td>
+                </tr>
               )}
               </Fragment>
             );
           })}
-        </SwissTableBody>
-      </SwissTable>
-    </SwissTableContainer>
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -2203,7 +2267,7 @@ export default function AssistidosPage() {
   const utils = trpc.useUtils();
 
   // Buscar assistidos do banco de dados (com fallback offline)
-  const assistidosQuery = trpc.assistidos.list.useQuery({ limit: 100 });
+  const assistidosQuery = trpc.assistidos.list.useQuery();
   const { data: assistidosData, isLoading } = useOfflineQuery(
     assistidosQuery,
     getOfflineAssistidos,
@@ -2290,7 +2354,7 @@ export default function AssistidosPage() {
   // Busca server-side por número de processo (complementa filtro client-side)
   const isProcessoSearch = searchTerm.length > 3 && /\d{4,}/.test(searchTerm) && (searchTerm.includes('-') || searchTerm.includes('.'));
   const processoSearchQuery = trpc.assistidos.list.useQuery(
-    { limit: 200, search: searchTerm },
+    { search: searchTerm },
     { enabled: isProcessoSearch }
   );
   const [statusFilter, setStatusFilter] = useState("all");

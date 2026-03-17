@@ -64,12 +64,10 @@ export const assistidosRouter = router({
         search: z.string().optional(),
         statusPrisional: z.string().optional(),
         atribuicaoPrimaria: z.string().optional(), // Filtro por atribuição primária
-        limit: z.number().min(1).max(100).default(50),
-        offset: z.number().min(0).default(0),
       }).optional()
     )
     .query(async ({ ctx, input }) => {
-      const { search, statusPrisional, atribuicaoPrimaria, limit = 50, offset = 0 } = input || {};
+      const { search, statusPrisional, atribuicaoPrimaria } = input || {};
       // Assistidos são compartilhados - não filtrar por workspace
 
       
@@ -146,9 +144,7 @@ export const assistidosRouter = router({
         .select()
         .from(assistidos)
         .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(desc(assistidos.createdAt))
-        .limit(limit)
-        .offset(offset);
+        .orderBy(desc(assistidos.createdAt));
 
       if (result.length === 0) {
         return [];

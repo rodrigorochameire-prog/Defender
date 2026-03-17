@@ -157,7 +157,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
   const {
     data: assistidos = [],
     isLoading: loadingAssistidos,
-  } = trpc.assistidos.list.useQuery({ limit: 100 });
+  } = trpc.assistidos.list.useQuery({});
 
   // Processos (para vincular no registro rapido)
   const { data: processos = [] } = trpc.processos.list.useQuery({ limit: 100 });

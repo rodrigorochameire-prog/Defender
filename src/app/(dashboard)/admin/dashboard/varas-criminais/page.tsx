@@ -119,9 +119,7 @@ export default function DashboardVarasCriminaisPage() {
   });
 
   // Assistidos (todos - compartilhados)
-  const { data: assistidos = [], isLoading: loadingAssistidos } = trpc.assistidos.list.useQuery({
-    limit: 100,
-  });
+  const { data: assistidos = [], isLoading: loadingAssistidos } = trpc.assistidos.list.useQuery({});
 
   // Casos (todos - compartilhados)
   const { data: casos = [], isLoading: loadingCasos } = trpc.casos.list.useQuery({

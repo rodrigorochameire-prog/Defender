@@ -71,17 +71,17 @@ function ContactCard({
   const [searchAssistido, setSearchAssistido] = useState("");
 
   const { data: assistidosData, isLoading: loadingAssistidos } = trpc.assistidos.list.useQuery(
-    { search: searchAssistido, limit: 20 },
+    { search: searchAssistido },
     { enabled: showLinkDialog }
   );
 
-  const assistidos = assistidosData?.assistidos || [];
+  const assistidos = assistidosData || [];
 
   // Sugerir assistidos com telefone similar
   const suggestedAssistidos = useMemo(() => {
-    if (!assistidosData?.assistidos) return [];
+    if (!assistidosData) return [];
     const contactPhone = normalizePhone(contact.phone);
-    return assistidosData.assistidos.filter((a: any) => {
+    return assistidosData.filter((a: any) => {
       const phone1 = normalizePhone(a.telefone || "");
       const phone2 = normalizePhone(a.telefoneContato || "");
       return phone1.includes(contactPhone.slice(-8)) || phone2.includes(contactPhone.slice(-8));

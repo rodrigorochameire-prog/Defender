@@ -14,6 +14,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -37,6 +50,7 @@ import {
   Info,
   Check,
   AlertTriangle,
+  ChevronsUpDown,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -72,11 +86,77 @@ export default function NovaDemandaPage() {
   const [tempoLeitura, setTempoLeitura] = useState(10);
   const [aplicarDobro, setAplicarDobro] = useState(true);
 
-  // Queries
+  // Combobox state
+  const [processoOpen, setProcessoOpen] = useState(false);
+  const [assistidoOpen, setAssistidoOpen] = useState(false);
+  const [processoSearch, setProcessoSearch] = useState("");
+  const [assistidoSearch, setAssistidoSearch] = useState("");
+  const [debouncedProcessoSearch, setDebouncedProcessoSearch] = useState("");
+  const [debouncedAssistidoSearch, setDebouncedAssistidoSearch] = useState("");
+
+  // Debounce effects
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedProcessoSearch(processoSearch), 300);
+    return () => clearTimeout(t);
+  }, [processoSearch]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedAssistidoSearch(assistidoSearch), 300);
+    return () => clearTimeout(t);
+  }, [assistidoSearch]);
+
+  // Queries — search-based, only load when combobox is open
   const { data: processos, isLoading: loadingProcessos } =
-    trpc.processos.list.useQuery({ limit: 100 });
+    trpc.processos.list.useQuery(
+      { search: debouncedProcessoSearch || undefined, limit: 20 },
+      { enabled: processoOpen }
+    );
   const { data: assistidos, isLoading: loadingAssistidos } =
-    trpc.assistidos.list.useQuery({ limit: 100 });
+    trpc.assistidos.list.useQuery(
+      { search: debouncedAssistidoSearch || undefined },
+      { enabled: assistidoOpen }
+    );
+
+  // Preload selected items for display (when IDs come from URL params or selection)
+  const [selectedProcessoItem, setSelectedProcessoItem] = useState<{
+    id: number; numeroAutos: string | null; assistidoNome?: string | null;
+    assistidoId: number | null; assistidoStatusPrisional?: string | null;
+  } | null>(null);
+  const [selectedAssistidoItem, setSelectedAssistidoItem] = useState<{
+    id: number; nome: string; statusPrisional: string | null;
+  } | null>(null);
+
+  // Fetch by ID for URL-param preloading
+  const { data: preloadedProcesso } = trpc.processos.getById.useQuery(
+    { id: parseInt(processoIdParam!) },
+    { enabled: !!processoIdParam && !selectedProcessoItem }
+  );
+  const { data: preloadedAssistido } = trpc.assistidos.getById.useQuery(
+    { id: parseInt(assistidoIdParam!) },
+    { enabled: !!assistidoIdParam && !selectedAssistidoItem }
+  );
+
+  useEffect(() => {
+    if (preloadedProcesso && !selectedProcessoItem) {
+      setSelectedProcessoItem({
+        id: preloadedProcesso.id,
+        numeroAutos: preloadedProcesso.numeroAutos,
+        assistidoId: preloadedProcesso.assistidoId ?? null,
+        assistidoNome: (preloadedProcesso as any).assistido?.nome ?? null,
+        assistidoStatusPrisional: (preloadedProcesso as any).assistido?.statusPrisional ?? null,
+      });
+    }
+  }, [preloadedProcesso]);
+
+  useEffect(() => {
+    if (preloadedAssistido && !selectedAssistidoItem) {
+      setSelectedAssistidoItem({
+        id: preloadedAssistido.id,
+        nome: preloadedAssistido.nome,
+        statusPrisional: preloadedAssistido.statusPrisional ?? null,
+      });
+    }
+  }, [preloadedAssistido]);
   const { data: tiposPrazo, isLoading: loadingTipos } =
     trpc.prazos.listTiposPrazo.useQuery({
       areaDireito: formData.area as any,
@@ -106,29 +186,47 @@ export default function NovaDemandaPage() {
     },
   });
 
-  // Obter processo selecionado
-  const processoSelecionado = processos?.find(
-    (p) => p.id.toString() === formData.processoId
-  );
-
-  // Quando selecionar processo, atualizar assistido e verificar réu preso
-  useEffect(() => {
-    if (processoSelecionado) {
-      if (processoSelecionado.assistidoId) {
-        setFormData((prev) => ({
-          ...prev,
-          assistidoId: processoSelecionado.assistidoId.toString(),
-        }));
+  // Handler para selecionar processo (auto-preenche assistido e reuPreso)
+  const handleProcessoSelect = (p: {
+    id: number; numeroAutos: string | null;
+    assistidoId: number | null;
+    assistido?: { id: number | null; nome: string | null; statusPrisional: string | null } | null;
+  }) => {
+    setSelectedProcessoItem({
+      id: p.id,
+      numeroAutos: p.numeroAutos,
+      assistidoId: p.assistidoId,
+      assistidoNome: p.assistido?.nome ?? null,
+      assistidoStatusPrisional: p.assistido?.statusPrisional ?? null,
+    });
+    const newData: Partial<typeof formData> = { processoId: p.id.toString() };
+    if (p.assistidoId) {
+      newData.assistidoId = p.assistidoId.toString();
+      if (p.assistido) {
+        setSelectedAssistidoItem({
+          id: p.assistido.id!,
+          nome: p.assistido.nome ?? "",
+          statusPrisional: p.assistido.statusPrisional ?? null,
+        });
       }
-      // Verificar se é réu preso pelo status do assistido
-      const assistido = assistidos?.find(
-        (a) => a.id === processoSelecionado.assistidoId
-      );
-      if (assistido && assistido.statusPrisional !== "SOLTO") {
-        setFormData((prev) => ({ ...prev, reuPreso: true }));
+      if (p.assistido?.statusPrisional && p.assistido.statusPrisional !== "SOLTO") {
+        newData.reuPreso = true;
       }
     }
-  }, [processoSelecionado, assistidos]);
+    setFormData((prev) => ({ ...prev, ...newData }));
+    setProcessoOpen(false);
+    setProcessoSearch("");
+  };
+
+  // Handler para selecionar assistido
+  const handleAssistidoSelect = (a: {
+    id: number; nome: string; statusPrisional: string | null;
+  }) => {
+    setSelectedAssistidoItem(a);
+    setFormData((prev) => ({ ...prev, assistidoId: a.id.toString() }));
+    setAssistidoOpen(false);
+    setAssistidoSearch("");
+  };
 
   // Quando tipo de prazo mudar, calcular automaticamente
   useEffect(() => {
@@ -198,10 +296,8 @@ export default function NovaDemandaPage() {
       processoId: parseInt(formData.processoId),
       assistidoId: parseInt(formData.assistidoId),
       ato: formData.ato,
-      tipoAto: formData.tipoAto || undefined,
       prazo: formData.prazo || undefined,
       dataEntrada: formData.dataEntrada || undefined,
-      dataIntimacao: formData.dataExpedicao || undefined, // Usar dataExpedicao como dataIntimacao
       status: formData.status as any,
       providencias: formData.providencias || undefined,
       reuPreso: formData.reuPreso,
@@ -244,46 +340,163 @@ export default function NovaDemandaPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
+              {/* Processo — combobox com busca */}
               <div className="space-y-2">
-                <Label htmlFor="processo">Processo *</Label>
-                <Select
-                  value={formData.processoId}
-                  onValueChange={(v) => handleChange("processoId", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o processo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {processos?.map((p) => (
-                      <SelectItem key={p.id} value={p.id.toString()}>
-                        {p.numeroAutos || `Processo #${p.id}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="assistido">Assistido *</Label>
-                <Select
-                  value={formData.assistidoId}
-                  onValueChange={(v) => handleChange("assistidoId", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o assistido" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {assistidos?.map((a) => (
-                      <SelectItem key={a.id} value={a.id.toString()}>
-                        {a.nome}
-                        {a.statusPrisional !== "SOLTO" && (
-                          <Badge variant="destructive" className="ml-2 text-xs">
-                            {a.statusPrisional}
-                          </Badge>
+                <Label>Processo *</Label>
+                <Popover open={processoOpen} onOpenChange={setProcessoOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={processoOpen}
+                      className="w-full justify-between font-normal"
+                    >
+                      <span className="truncate text-left">
+                        {selectedProcessoItem
+                          ? selectedProcessoItem.numeroAutos || `Processo #${selectedProcessoItem.id}`
+                          : <span className="text-muted-foreground">Buscar processo...</span>}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder="Buscar por número ou assunto..."
+                        value={processoSearch}
+                        onValueChange={setProcessoSearch}
+                      />
+                      <CommandList>
+                        {loadingProcessos && (
+                          <div className="py-6 text-center text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin mx-auto mb-1" />
+                            Buscando...
+                          </div>
                         )}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                        {!loadingProcessos && processos?.length === 0 && (
+                          <CommandEmpty>Nenhum processo encontrado.</CommandEmpty>
+                        )}
+                        {!loadingProcessos && !processos && (
+                          <div className="py-4 text-center text-sm text-muted-foreground">
+                            Digite para buscar
+                          </div>
+                        )}
+                        <CommandGroup>
+                          {processos?.map((p) => (
+                            <CommandItem
+                              key={p.id}
+                              value={p.id.toString()}
+                              onSelect={() => handleProcessoSelect(p)}
+                              className="flex flex-col items-start gap-0.5 py-2"
+                            >
+                              <div className="flex items-center gap-2 w-full">
+                                <Check
+                                  className={cn(
+                                    "h-3 w-3 shrink-0",
+                                    formData.processoId === p.id.toString() ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <span className="font-medium text-sm">
+                                  {p.numeroAutos || `Processo #${p.id}`}
+                                </span>
+                              </div>
+                              {(p.assistido?.nome || p.assunto) && (
+                                <div className="pl-5 text-xs text-muted-foreground">
+                                  {p.assistido?.nome && <span>{p.assistido.nome}</span>}
+                                  {p.assistido?.nome && p.assunto && <span> · </span>}
+                                  {p.assunto && <span className="truncate">{p.assunto}</span>}
+                                </div>
+                              )}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Assistido — combobox com busca */}
+              <div className="space-y-2">
+                <Label>Assistido *</Label>
+                <Popover open={assistidoOpen} onOpenChange={setAssistidoOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={assistidoOpen}
+                      className="w-full justify-between font-normal"
+                    >
+                      <span className="flex items-center gap-2 truncate">
+                        {selectedAssistidoItem ? (
+                          <>
+                            <span className="truncate">{selectedAssistidoItem.nome}</span>
+                            {selectedAssistidoItem.statusPrisional &&
+                              selectedAssistidoItem.statusPrisional !== "SOLTO" && (
+                              <Badge variant="danger" className="text-[10px] px-1 py-0 shrink-0">
+                                PRESO
+                              </Badge>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground">Buscar assistido...</span>
+                        )}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder="Buscar por nome ou CPF..."
+                        value={assistidoSearch}
+                        onValueChange={setAssistidoSearch}
+                      />
+                      <CommandList>
+                        {loadingAssistidos && (
+                          <div className="py-6 text-center text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin mx-auto mb-1" />
+                            Buscando...
+                          </div>
+                        )}
+                        {!loadingAssistidos && assistidos?.length === 0 && (
+                          <CommandEmpty>Nenhum assistido encontrado.</CommandEmpty>
+                        )}
+                        {!loadingAssistidos && !assistidos && (
+                          <div className="py-4 text-center text-sm text-muted-foreground">
+                            Digite para buscar
+                          </div>
+                        )}
+                        <CommandGroup>
+                          {assistidos?.map((a) => (
+                            <CommandItem
+                              key={a.id}
+                              value={a.id.toString()}
+                              onSelect={() => handleAssistidoSelect({
+                                id: a.id,
+                                nome: a.nome,
+                                statusPrisional: a.statusPrisional ?? null,
+                              })}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-3 w-3 shrink-0",
+                                  formData.assistidoId === a.id.toString() ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <span className="flex-1 truncate">{a.nome}</span>
+                              {a.statusPrisional && a.statusPrisional !== "SOLTO" && (
+                                <Badge variant="danger" className="ml-2 text-[10px] px-1 py-0">
+                                  PRESO
+                                </Badge>
+                              )}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -319,13 +532,13 @@ export default function NovaDemandaPage() {
                 <Label htmlFor="tipoPrazo">Tipo de Prazo</Label>
                 <Select
                   value={formData.tipoPrazoCodigo}
-                  onValueChange={(v) => handleChange("tipoPrazoCodigo", v)}
+                  onValueChange={(v) => handleChange("tipoPrazoCodigo", v === "_none" ? "" : v)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione para cálculo automático" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Prazo manual</SelectItem>
+                    <SelectItem value="_none">Prazo manual</SelectItem>
                     {tiposPrazo?.map((tipo) => (
                       <SelectItem key={tipo.codigo} value={tipo.codigo}>
                         {tipo.nome} ({tipo.prazoLegalDias}d

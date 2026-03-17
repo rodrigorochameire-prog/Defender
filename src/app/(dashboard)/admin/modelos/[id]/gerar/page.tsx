@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -126,12 +126,9 @@ const CATEGORIA_CONFIG: Record<ModeloCategoria, {
 // COMPONENTE PRINCIPAL
 // ==========================================
 
-export default function GerarDocumentoPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function GerarDocumentoPage() {
   const router = useRouter();
+  const params = useParams<{ id: string }>();
   const modeloId = parseInt(params.id);
 
   const [valores, setValores] = useState<Record<string, string>>({});
@@ -150,9 +147,7 @@ export default function GerarDocumentoPage({
   );
 
   // Query de assistidos para autocomplete
-  const { data: assistidos } = trpc.assistidos.list.useQuery({
-    limit: 100,
-  });
+  const { data: assistidos } = trpc.assistidos.list.useQuery({});
 
   // Query de processos para autocomplete
   const { data: processos } = trpc.processos.list.useQuery({
@@ -186,7 +181,7 @@ export default function GerarDocumentoPage({
   // Extrair variáveis do modelo
   const variaveis = useMemo(() => {
     if (!modelo?.variaveis) return [];
-    return modelo.variaveis as VariavelModelo[];
+    return modelo.variaveis as unknown as VariavelModelo[];
   }, [modelo]);
 
   // Extrair variáveis do conteúdo que não estão na lista
@@ -435,7 +430,7 @@ export default function GerarDocumentoPage({
                         <SelectItem value="">Nenhum</SelectItem>
                         {processos?.map((p) => (
                           <SelectItem key={p.id} value={p.id.toString()}>
-                            {p.numeroAutos} - {p.assistido.nome}
+                            {p.numeroAutos} - {p.assistido?.nome}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -464,7 +459,7 @@ export default function GerarDocumentoPage({
                 <CardTitle className="text-base flex items-center justify-between">
                   <span>Variáveis</span>
                   {variaveisObrigatoriasPendentes.length > 0 && (
-                    <Badge variant="destructive" className="text-xs">
+                    <Badge variant="danger" className="text-xs">
                       {variaveisObrigatoriasPendentes.length} pendente(s)
                     </Badge>
                   )}

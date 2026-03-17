@@ -312,7 +312,7 @@ export default function DashboardJuriPage() {
   );
 
   const { data: assistidos = [], isLoading: loadingAssistidos } = trpc.assistidos.list.useQuery(
-    { limit: 20 },
+    {},
     { enabled: !!user },
   );
 

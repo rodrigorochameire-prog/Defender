@@ -128,7 +128,7 @@ export default function NovoOficioPage() {
   );
 
   const { data: assistidosData } = trpc.assistidos.list.useQuery(
-    { search: assistidoSearch, limit: 10 },
+    { search: assistidoSearch },
     { enabled: assistidoSearch.length >= 2 }
   );
 

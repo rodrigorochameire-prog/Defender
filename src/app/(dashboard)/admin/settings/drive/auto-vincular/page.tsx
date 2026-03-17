@@ -112,7 +112,7 @@ export default function DriveSyncDashboardPage() {
     data: assistidosData,
     isLoading: loadingAssistidos,
     refetch: refetchAssistidos,
-  } = trpc.assistidos.list.useQuery({ limit: 100 });
+  } = trpc.assistidos.list.useQuery({});
 
   // Smart sync mutation
   const smartSyncMutation = trpc.drive.smartSync.useMutation({
