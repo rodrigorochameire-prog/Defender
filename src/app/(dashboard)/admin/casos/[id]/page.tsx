@@ -40,6 +40,9 @@ import {
   BookOpen,
   Save,
   Edit3,
+  Library,
+  ExternalLink,
+  Trash2,
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import Link from "next/link";
@@ -544,6 +547,9 @@ export default function CasoDetailPage() {
             <TabsTrigger value="processos" className="gap-2">
               <Scale className="w-4 h-4" /> Processos
             </TabsTrigger>
+            <TabsTrigger value="fundamentos" className="gap-2">
+              <Library className="w-4 h-4" /> Fundamentos
+            </TabsTrigger>
           </TabsList>
 
           {/* Tab: Resumo */}
@@ -917,8 +923,240 @@ export default function CasoDetailPage() {
               )}
             </div>
           </TabsContent>
+          {/* Tab: Fundamentos */}
+          <TabsContent value="fundamentos" className="mt-6">
+            <FundamentosTab casoId={casoId} />
+          </TabsContent>
         </Tabs>
       </div>
     </TooltipProvider>
+  );
+}
+
+// ==========================================
+// TAB: FUNDAMENTOS — Referências da Biblioteca
+// ==========================================
+
+function FundamentosTab({ casoId }: { casoId: number }) {
+  const utils = trpc.useUtils();
+
+  const { data: referencias = [], isLoading } = trpc.biblioteca.listPorCaso.useQuery(
+    { casoId },
+    { enabled: !isNaN(casoId) }
+  );
+
+  const remover = trpc.biblioteca.removerCitacao.useMutation({
+    onSuccess: () => {
+      toast.success("Referência removida");
+      void utils.biblioteca.listPorCaso.invalidate({ casoId });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const teses = referencias.filter((r) => r.tipo === "tese");
+  const artigos = referencias.filter((r) => r.tipo === "artigo" || r.tipo === "lei");
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-20 bg-zinc-100 dark:bg-zinc-800 rounded-lg animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (referencias.length === 0) {
+    return (
+      <div className="text-center py-16 bg-zinc-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
+          <Library className="w-6 h-6 text-zinc-400" />
+        </div>
+        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
+          Nenhum fundamento vinculado
+        </p>
+        <p className="text-xs text-zinc-400 mt-1 max-w-xs mx-auto">
+          Vincule teses e artigos de lei através da{" "}
+          <Link href="/admin/jurisprudencia" className="text-emerald-600 hover:underline">
+            Biblioteca Jurídica
+          </Link>{" "}
+          para construir a base legal do caso.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Teses</p>
+          <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">{teses.length}</p>
+        </div>
+        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Legislação</p>
+          <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">{artigos.length}</p>
+        </div>
+      </div>
+
+      {/* Teses de Jurisprudência */}
+      {teses.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+              <Scale className="w-4 h-4 text-blue-500" />
+            </div>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+              Teses de Jurisprudência
+            </h3>
+            <span className="text-xs text-zinc-400">({teses.length})</span>
+          </div>
+          <div className="space-y-2">
+            {teses.map((ref) => (
+              <ReferenciaCard
+                key={ref.id}
+                referencia={ref}
+                corBorda="border-l-blue-500"
+                onRemover={() => remover.mutate({ id: ref.id })}
+                linkHref="/admin/jurisprudencia"
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Legislação */}
+      {artigos.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
+              <BookOpen className="w-4 h-4 text-emerald-500" />
+            </div>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+              Legislação
+            </h3>
+            <span className="text-xs text-zinc-400">({artigos.length})</span>
+          </div>
+          <div className="space-y-2">
+            {artigos.map((ref) => (
+              <ReferenciaCard
+                key={ref.id}
+                referencia={ref}
+                corBorda="border-l-emerald-500"
+                onRemover={() => remover.mutate({ id: ref.id })}
+                linkHref="/admin/legislacao"
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <p className="text-xs text-zinc-400 text-center pt-2">
+        Adicione mais referências via{" "}
+        <Link href="/admin/jurisprudencia" className="text-emerald-600 hover:underline">Jurisprudência</Link>
+        {" "}ou{" "}
+        <Link href="/admin/legislacao" className="text-emerald-600 hover:underline">Legislação</Link>
+      </p>
+    </div>
+  );
+}
+
+interface ReferenciaCardProps {
+  referencia: {
+    id: number;
+    tipo: string;
+    referenciaId: string;
+    observacao?: string | null;
+    citacaoFormatada?: string | null;
+    createdAt: Date;
+  };
+  corBorda: string;
+  onRemover: () => void;
+  linkHref: string;
+}
+
+function ReferenciaCard({ referencia, corBorda, onRemover, linkHref }: ReferenciaCardProps) {
+  const [copied, setCopied] = useState(false);
+
+  const copiar = () => {
+    if (!referencia.citacaoFormatada) return;
+    void navigator.clipboard.writeText(referencia.citacaoFormatada);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    toast.success("Citação copiada para clipboard");
+  };
+
+  return (
+    <div
+      className={cn(
+        "group bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 border-l-[3px] overflow-hidden hover:shadow-sm transition-all duration-200",
+        corBorda
+      )}
+    >
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            {referencia.citacaoFormatada ? (
+              <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed line-clamp-3">
+                {referencia.citacaoFormatada}
+              </p>
+            ) : (
+              <p className="text-sm text-zinc-500 font-mono">
+                Ref: {referencia.referenciaId}
+              </p>
+            )}
+            {referencia.observacao && (
+              <p className="text-xs text-zinc-400 mt-1.5 italic">
+                "{referencia.observacao}"
+              </p>
+            )}
+            <p className="text-[10px] text-zinc-400 mt-2">
+              {format(new Date(referencia.createdAt), "dd/MM/yyyy", { locale: ptBR })}
+            </p>
+          </div>
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {referencia.citacaoFormatada && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 cursor-pointer"
+                    onClick={copiar}
+                  >
+                    <FileText className={cn("w-3.5 h-3.5", copied ? "text-emerald-500" : "text-zinc-400")} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{copied ? "Copiado!" : "Copiar citação"}</TooltipContent>
+              </Tooltip>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href={linkHref}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 cursor-pointer">
+                    <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>Ver na biblioteca</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 cursor-pointer"
+                  onClick={onRemover}
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-zinc-400 hover:text-red-500 transition-colors" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Remover referência</TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
