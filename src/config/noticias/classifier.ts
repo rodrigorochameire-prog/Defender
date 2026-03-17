@@ -55,6 +55,7 @@ export const KEYWORDS_RELEVANCIA = [
   "dolo", "culpa", "nexo causal", "imputação objetiva",
   "tentativa", "concurso de crimes", "concurso formal", "crime continuado",
   "reincidência", "maus antecedentes", "pena base",
+  "sentença penal", "pena privativa", "pena de reclusão", "pena de detenção",
   "prescrição penal", "decadência", "perempção",
   "estado de necessidade", "legítima defesa", "estrito cumprimento",
   "excludentes de ilicitude", "excludente de culpabilidade",
@@ -66,7 +67,7 @@ export const KEYWORDS_RELEVANCIA = [
   // ── PROCESSO PENAL ──────────────────────────────────────
   "processo penal", "CPP", "código de processo penal",
   "prisão preventiva", "prisão cautelar", "prisão temporária",
-  "prisão em flagrante", "flagrante delito", "prisão domiciliar",
+  "prisão em flagrante", "flagrante delito", "flagrante", "prisão domiciliar",
   "audiência de custódia", "auto de prisão em flagrante",
   "liberdade provisória", "fiança", "relaxamento de prisão",
   "revogação de prisão", "alvará de soltura",

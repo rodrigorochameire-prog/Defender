@@ -30,6 +30,13 @@ const COR_FONTE: Record<string, string> = {
   "stj-not-cias": "#1d4ed8",
   "ibccrim": "#7c3aed",
   "dizer-o-direito": "#059669",
+  "tudo-de-penal": "#b45309",
+  "canal-ciencias-criminais": "#7c2d12",
+  "canal-ciências-criminais": "#7c2d12",
+  "emporio-do-direito": "#4338ca",
+  "empório-do-direito": "#4338ca",
+  "stf-noticias": "#dc2626",
+  "stf-notícias": "#dc2626",
 };
 
 export default function NoticiasPage() {
