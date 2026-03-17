@@ -92,12 +92,44 @@ export const noticiasProcessos = pgTable("noticias_processos", {
   processoId: integer("processo_id").notNull(),
   userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   observacao: text("observacao"),
+  autoVinculada: boolean("auto_vinculada").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   uniqueIndex("not_proc_unique_idx").on(table.noticiaId, table.processoId),
   index("not_proc_noticia_idx").on(table.noticiaId),
   index("not_proc_processo_idx").on(table.processoId),
 ]);
+
+// ==========================================
+// PASTAS - Organização de notícias salvas
+// ==========================================
+
+export const noticiasPastas = pgTable("noticias_pastas", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  nome: varchar("nome", { length: 100 }).notNull(),
+  cor: varchar("cor", { length: 20 }).default("#6366f1"),
+  icone: varchar("icone", { length: 50 }).default("Folder"),
+  tipo: varchar("tipo", { length: 10 }).default("livre").notNull(),
+  area: varchar("area", { length: 50 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => [
+  index("not_pasta_user_idx").on(t.userId),
+]);
+
+export const noticiasPastaItens = pgTable("noticias_pasta_itens", {
+  id: serial("id").primaryKey(),
+  pastaId: integer("pasta_id").references(() => noticiasPastas.id, { onDelete: "cascade" }).notNull(),
+  noticiaId: integer("noticia_id").references(() => noticiasJuridicas.id, { onDelete: "cascade" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("not_pasta_item_unique_idx").on(t.pastaId, t.noticiaId),
+  index("not_pasta_item_pasta_idx").on(t.pastaId),
+]);
+
+export type NoticiasPasta = typeof noticiasPastas.$inferSelect;
+export type InsertNoticiasPasta = typeof noticiasPastas.$inferInsert;
+export type NoticiasPastaItem = typeof noticiasPastaItens.$inferSelect;
 
 export type NoticiaFonte = typeof noticiasFontes.$inferSelect;
 export type InsertNoticiaFonte = typeof noticiasFontes.$inferInsert;
