@@ -1,6 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require("pdf-parse") as (buffer: Buffer) => Promise<{ text: string }>;
-
 /**
  * Extrai o link de um PDF de um HTML/texto, se houver.
  */
@@ -21,6 +18,7 @@ export async function fetchPdfContent(pdfUrl: string): Promise<string> {
   });
   if (!res.ok) throw new Error(`PDF HTTP ${res.status}`);
   const buffer = await res.arrayBuffer();
+  const pdfParse = require("pdf-parse") as (buffer: Buffer) => Promise<{ text: string }>;
   const parsed = await pdfParse(Buffer.from(buffer));
   // Normaliza espaços e limita tamanho
   const text = parsed.text

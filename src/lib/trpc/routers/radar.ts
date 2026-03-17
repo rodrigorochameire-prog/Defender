@@ -319,7 +319,7 @@ export const radarRouter = router({
           MODE() WITHIN GROUP (ORDER BY tipo_crime) AS tipo_crime_dominante
         FROM radar_noticias
         WHERE bairro IS NOT NULL
-          AND created_at >= ${cutoff}
+          AND created_at >= ${cutoff.toISOString()}
         GROUP BY bairro
         ORDER BY total DESC
         LIMIT ${input.limit}
@@ -902,7 +902,7 @@ export const radarRouter = router({
           EXTRACT(HOUR FROM data_fato)::int AS hora,
           COUNT(*) AS total
         FROM radar_noticias
-        WHERE data_fato IS NOT NULL AND data_fato >= ${cutoff}
+        WHERE data_fato IS NOT NULL AND data_fato >= ${cutoff.toISOString()}
         GROUP BY hora
         ORDER BY hora
       `);
@@ -936,7 +936,7 @@ export const radarRouter = router({
           EXTRACT(DOW FROM data_fato)::int AS dia,
           COUNT(*) AS total
         FROM radar_noticias
-        WHERE data_fato IS NOT NULL AND data_fato >= ${cutoff}
+        WHERE data_fato IS NOT NULL AND data_fato >= ${cutoff.toISOString()}
         GROUP BY dia
         ORDER BY dia
       `);
@@ -974,7 +974,7 @@ export const radarRouter = router({
 
       const conditions = [
         sql`${radarNoticias.id} != ${input.id}`,
-        sql`${radarNoticias.enrichmentStatus} = 'analyzed'`,
+        sql`${radarNoticias.enrichmentStatus} IN ('extracted', 'matched')`,
       ];
 
       // Busca por mesmo bairro OU mesmo tipo de crime
