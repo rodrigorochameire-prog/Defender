@@ -35,6 +35,10 @@ interface MarkerClusterGroupOptions {
 }
 
 const CAMACARI_CENTER: [number, number] = [-12.6976, -38.3244];
+const CAMACARI_BOUNDS: [[number, number], [number, number]] = [
+  [-12.58, -38.42],
+  [-12.83, -38.25],
+];
 const INITIAL_ZOOM = 12;
 
 const CRIME_COLORS: Record<string, string> = {
@@ -52,14 +56,14 @@ const CRIME_COLORS: Record<string, string> = {
 };
 
 const CRIME_LABELS: Record<string, string> = {
-  homicidio: "Homicidio",
-  tentativa_homicidio: "Tentativa de Homicidio",
-  trafico: "Trafico",
+  homicidio: "Homicídio",
+  tentativa_homicidio: "Tentativa de Homicídio",
+  trafico: "Tráfico",
   roubo: "Roubo",
   furto: "Furto",
-  violencia_domestica: "V. Domestica",
+  violencia_domestica: "Violência Doméstica",
   sexual: "Sexual",
-  lesao_corporal: "Lesao Corporal",
+  lesao_corporal: "Lesão Corporal",
   porte_arma: "Porte de Arma",
   estelionato: "Estelionato",
   outros: "Outros",
@@ -73,20 +77,23 @@ interface MapPoint {
   latitude: string | null;
   longitude: string | null;
   dataFato: string | Date | null;
+  armaMeio?: string | null;
 }
 
 interface LeafletMapProps {
   data: MapPoint[];
   showHeatmap: boolean;
   onSelectNoticia?: (id: number) => void;
+  fullscreen?: boolean;
 }
 
-export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia }: LeafletMapProps) {
+export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, fullscreen }: LeafletMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
   const heatRef = useRef<L.Layer | null>(null);
   const legendRef = useRef<any>(null);
+  const heatLegendRef = useRef<any>(null);
   const onSelectNoticiaRef = useRef(onSelectNoticia);
 
   // Keep callback ref in sync
@@ -107,6 +114,9 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia }:
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
+
+    // Fit to Camaçari bounding box
+    map.fitBounds(CAMACARI_BOUNDS);
 
     // Legenda de tipos de crime (visível apenas no modo de marcadores)
     const legend = (L.control as any)({ position: "bottomleft" });
@@ -144,6 +154,7 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia }:
       markersRef.current = null;
       heatRef.current = null;
       legendRef.current = null;
+      heatLegendRef.current = null;
     };
   }, []);
 
@@ -167,9 +178,12 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia }:
       iconCreateFunction: (cluster: { getChildCount: () => number }) => {
         const count = cluster.getChildCount();
         const size = count < 10 ? 35 : count < 50 ? 45 : 55;
+        // Color shades based on count: emerald-600, orange-500, red-500
+        const bgColor =
+          count < 10 ? "#059669" : count < 50 ? "#f97316" : "#ef4444";
         return L.divIcon({
           html: `<div style="
-            background: rgba(16, 185, 129, 0.85);
+            background: ${bgColor};
             color: white;
             width: ${size}px;
             height: ${size}px;
@@ -216,24 +230,27 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia }:
       const popupHtml = `
         <div style="max-width: 280px; font-family: system-ui, sans-serif;">
           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${color};"></span>
-            <span style="font-size: 11px; color: #888; font-weight: 500;">${crimeLabel}</span>
+            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${color}; flex-shrink: 0;"></span>
+            <span style="font-size: 11px; color: ${color}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">${crimeLabel}</span>
           </div>
-          <strong style="font-size: 13px; line-height: 1.3; display: block; margin-bottom: 4px;">${point.titulo}</strong>
-          ${point.bairro ? `<span style="font-size: 11px; color: #666;">📍 ${point.bairro}</span><br/>` : ""}
-          ${dateStr ? `<span style="font-size: 11px; color: #999;">📅 ${dateStr}</span><br/>` : ""}
+          <strong style="font-size: 13px; line-height: 1.4; display: block; margin-bottom: 6px; color: #111;">${point.titulo}</strong>
+          ${point.bairro ? `<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;"><span style="font-size:11px;color:#555;">&#128205; ${point.bairro}</span></div>` : ""}
+          ${dateStr ? `<div style="margin-bottom:2px;"><span style="font-size:11px;color:#888;">&#128197; ${dateStr}</span></div>` : ""}
+          ${point.armaMeio ? `<div style="margin-bottom:4px;"><span style="font-size:11px;color:#888;">&#128481; <em>${point.armaMeio}</em></span></div>` : ""}
           <button id="radar-popup-${point.id}" style="
             margin-top: 8px;
             width: 100%;
-            padding: 6px 12px;
-            background: #10b981;
+            padding: 7px 12px;
+            background: #059669;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 12px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-          ">Ver detalhes →</button>
+            letter-spacing: 0.02em;
+            transition: background 0.15s;
+          " onmouseover="this.style.background='#047857'" onmouseout="this.style.background='#059669'">Ver detalhes →</button>
         </div>
       `;
 
@@ -270,7 +287,7 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia }:
       // Hide markers
       if (markersRef.current) mapRef.current.removeLayer(markersRef.current);
 
-      // Hide legend — not meaningful in heatmap mode
+      // Hide crime legend — not meaningful in heatmap mode
       if (legendRef.current) legendRef.current.remove();
 
       // Create heat layer
@@ -286,16 +303,55 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia }:
         });
         heatRef.current!.addTo(mapRef.current);
       }
+
+      // Add heatmap gradient legend
+      if (!heatLegendRef.current) {
+        const heatLegend = (L.control as any)({ position: "bottomleft" });
+        heatLegend.onAdd = () => {
+          const div = L.DomUtil.create("div");
+          div.innerHTML = `
+            <div style="
+              background: white;
+              border-radius: 8px;
+              padding: 10px 12px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+              font-family: system-ui, sans-serif;
+              font-size: 11px;
+              min-width: 140px;
+            ">
+              <div style="font-weight: 600; color: #374151; margin-bottom: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;">Intensidade</div>
+              <div style="
+                height: 10px;
+                border-radius: 5px;
+                background: linear-gradient(to right, #3b82f6, #22c55e, #eab308, #f97316, #ef4444);
+                margin-bottom: 4px;
+              "></div>
+              <div style="display: flex; justify-content: space-between; color: #9ca3af; font-size: 10px;">
+                <span>Baixa</span>
+                <span>Alta</span>
+              </div>
+            </div>
+          `;
+          return div;
+        };
+        heatLegend.addTo(mapRef.current);
+        heatLegendRef.current = heatLegend;
+      }
     } else {
       // Remove heat layer
       if (heatRef.current) {
         mapRef.current.removeLayer(heatRef.current);
         heatRef.current = null;
       }
+      // Remove heatmap legend
+      if (heatLegendRef.current) {
+        heatLegendRef.current.remove();
+        heatLegendRef.current = null;
+      }
       // Show markers
       if (markersRef.current) markersRef.current.addTo(mapRef.current);
 
-      // Restore legend
+      // Restore crime legend
       if (legendRef.current) legendRef.current.addTo(mapRef.current);
     }
   }, [showHeatmap, data]);
@@ -303,7 +359,9 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia }:
   return (
     <div
       ref={mapContainerRef}
-      className="w-full h-[600px] rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700"
+      className={`w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 ${
+        fullscreen ? "h-[calc(100vh-8rem)]" : "h-[600px]"
+      }`}
     />
   );
 }

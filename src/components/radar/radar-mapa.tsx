@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Map } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Map, Maximize2, Minimize2 } from "lucide-react";
 
 const CRIME_COLORS: Record<string, string> = {
   homicidio: "#ef4444",
@@ -61,6 +62,7 @@ interface RadarMapaProps {
 
 export function RadarMapa({ filtros, onSelectNoticia }: RadarMapaProps) {
   const [showHeatmap, setShowHeatmap] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [visibleLayers, setVisibleLayers] = useState<string[]>([
     "homicidio", "tentativa_homicidio", "trafico", "roubo", "furto",
     "violencia_domestica", "sexual", "lesao_corporal", "porte_arma",
@@ -79,6 +81,12 @@ export function RadarMapa({ filtros, onSelectNoticia }: RadarMapaProps) {
       visibleLayers.includes(item.tipoCrime || "outros")
     );
   }, [data, visibleLayers]);
+
+  // Count items without coordinates from the full dataset
+  const semCoordenadas = useMemo(() => {
+    if (!data) return 0;
+    return data.filter((item) => !item.latitude || !item.longitude).length;
+  }, [data]);
 
   const crimeCounts = useMemo(() => {
     if (!filteredData.length) return [];
@@ -122,7 +130,13 @@ export function RadarMapa({ filtros, onSelectNoticia }: RadarMapaProps) {
   }
 
   return (
-    <div className="space-y-3">
+    <div
+      className={
+        isFullscreen
+          ? "fixed inset-0 z-50 p-4 bg-white dark:bg-zinc-900 flex flex-col gap-3 overflow-auto"
+          : "space-y-3"
+      }
+    >
       {/* Mini-stats por tipo de crime */}
       {crimeCounts.length > 0 && (
         <div className="flex flex-wrap gap-2">
@@ -144,6 +158,11 @@ export function RadarMapa({ filtros, onSelectNoticia }: RadarMapaProps) {
           <div className="inline-flex items-center px-2.5 py-1 rounded-full text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
             {filteredData.length} total
           </div>
+          {semCoordenadas > 0 && (
+            <Badge variant="secondary" className="text-xs font-normal">
+              Sem coordenadas: {semCoordenadas}
+            </Badge>
+          )}
         </div>
       )}
 
@@ -180,18 +199,42 @@ export function RadarMapa({ filtros, onSelectNoticia }: RadarMapaProps) {
               </button>
             ))}
           </div>
-          <div className="ml-auto text-xs text-zinc-400">
-            {filteredData.length} ocorrência{filteredData.length !== 1 ? "s" : ""}
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-zinc-400">
+              {filteredData.length} ocorrência{filteredData.length !== 1 ? "s" : ""}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsFullscreen((prev) => !prev)}
+              className="h-7 gap-1.5 text-xs cursor-pointer"
+              title={isFullscreen ? "Sair da tela cheia" : "Ver mapa maior / Tela cheia"}
+            >
+              {isFullscreen ? (
+                <>
+                  <Minimize2 className="h-3.5 w-3.5" />
+                  Reduzir
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="h-3.5 w-3.5" />
+                  Tela cheia
+                </>
+              )}
+            </Button>
           </div>
         </CardContent>
       </Card>
 
       {/* Mapa */}
-      <LeafletMap
-        data={filteredData}
-        showHeatmap={showHeatmap}
-        onSelectNoticia={onSelectNoticia}
-      />
+      <div className={isFullscreen ? "flex-1 min-h-0" : undefined}>
+        <LeafletMap
+          data={filteredData}
+          showHeatmap={showHeatmap}
+          onSelectNoticia={onSelectNoticia}
+          fullscreen={isFullscreen}
+        />
+      </div>
     </div>
   );
 }
