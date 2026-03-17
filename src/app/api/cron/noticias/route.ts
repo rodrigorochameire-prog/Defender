@@ -19,12 +19,21 @@ export async function GET(request: NextRequest) {
     const totalNovos = results.reduce((s, r) => s + r.novos, 0);
     const totalErros = results.reduce((s, r) => s + r.erros, 0);
 
+    let enriquecimento: { processadas: number; erros: number } | null = null;
+    try {
+      const { enriquecerPendentes } = await import("@/lib/noticias/enricher");
+      enriquecimento = await enriquecerPendentes(5);
+    } catch {
+      // Non-fatal — scraping succeeded even if enrichment fails
+    }
+
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
       totalNovos,
       totalErros,
       fontes: results,
+      enriquecimento,
     });
   } catch (error) {
     return NextResponse.json({
