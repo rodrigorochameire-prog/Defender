@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Star, ExternalLink, Copy, Sparkles, X } from "lucide-react";
+import { Star, ExternalLink, Copy, Sparkles, X, ChevronDown, ChevronUp, Scale, ShieldCheck, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
@@ -32,28 +32,42 @@ interface NoticiaReaderSheetProps {
 }
 
 export function NoticiaReaderSheet({
-  noticia,
+  noticia: noticiaInicial,
   corFonte,
   isFavorito,
   onToggleFavorito,
   onClose,
 }: NoticiaReaderSheetProps) {
-  const [analise, setAnalise] = useState<AnaliseIA | null>(
-    noticia.analiseIa as AnaliseIA | null
+  const [iaExpanded, setIaExpanded] = useState(false);
+  const [conteudoOverride, setConteudoOverride] = useState<string | null>(null);
+  const utils = trpc.useUtils();
+
+  // Fetch fresh data (conteudo is updated after approval enrichment)
+  const { data: noticiaFresh, isLoading } = trpc.noticias.getById.useQuery(
+    { id: noticiaInicial.id },
+    { refetchOnWindowFocus: false }
   );
 
-  const enriquecer = trpc.noticias.enriquecerComIA.useMutation({
-    onSuccess: (data) => setAnalise(data as AnaliseIA),
-    onError: () => toast.error("Erro ao analisar com IA"),
+  const buscarConteudo = trpc.noticias.buscarConteudo.useMutation({
+    onSuccess: (data) => {
+      setConteudoOverride(data.conteudo);
+      utils.noticias.getById.invalidate({ id: noticiaInicial.id });
+    },
+    onError: () => { /* silencioso — ainda mostramos resumo */ },
   });
 
-  // Lazy enrichment: enriquecer ao abrir se não tiver análise
+  const noticia = noticiaFresh ?? noticiaInicial;
+  const analise = noticia.analiseIa as AnaliseIA | null;
+  const conteudoEfetivo = conteudoOverride ?? noticia.conteudo;
+  const hasConteudo = conteudoEfetivo && conteudoEfetivo.length > 200;
+
+  // Se não tem conteúdo após carregar, buscar automaticamente
   useEffect(() => {
-    if (!analise && !enriquecer.isPending) {
-      enriquecer.mutate({ noticiaId: noticia.id });
+    if (!isLoading && !hasConteudo && !buscarConteudo.isPending && !buscarConteudo.isSuccess) {
+      buscarConteudo.mutate({ noticiaId: noticiaInicial.id });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [noticia.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, hasConteudo]);
 
   const copyText = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -62,7 +76,7 @@ export function NoticiaReaderSheet({
 
   return (
     <Sheet open onOpenChange={open => !open && onClose()}>
-      <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto p-0">
+      <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto p-0 flex flex-col">
         {/* Header fixo */}
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b px-6 py-4">
           <div className="flex items-start justify-between gap-4">
@@ -102,7 +116,7 @@ export function NoticiaReaderSheet({
                 />
               </Button>
               <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                <a href={noticia.urlOriginal} target="_blank" rel="noopener noreferrer">
+                <a href={noticia.urlOriginal} target="_blank" rel="noopener noreferrer" title="Abrir original">
                   <ExternalLink className="h-4 w-4 text-zinc-400" />
                 </a>
               </Button>
@@ -116,132 +130,170 @@ export function NoticiaReaderSheet({
           </h2>
         </div>
 
-        <div className="px-6 py-6 space-y-4">
-          {/* Header blocos IA */}
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-emerald-500" />
-            <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-              Análise com IA
-            </span>
-          </div>
+        <div className="px-6 py-5 space-y-5 flex-1">
 
-          {/* Loading IA */}
-          {enriquecer.isPending && !analise && (
-            <div className="space-y-3">
-              <Skeleton className="h-20 rounded-lg" />
-              <Skeleton className="h-16 rounded-lg" />
-              <Skeleton className="h-12 rounded-lg" />
-            </div>
-          )}
-
-          {/* Blocos IA */}
+          {/* AI insights — compact collapsible */}
           {analise && (
-            <div className="space-y-3">
-              {/* Resumo executivo */}
-              <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide">
-                    Resumo Executivo
-                  </p>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => copyText(analise.resumoExecutivo, "Resumo")}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
+            <div className="border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
+              <button
+                onClick={() => setIaExpanded(!iaExpanded)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
+                  <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
+                    Análise IA
+                  </span>
+                  {!iaExpanded && analise.resumoExecutivo && (
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400 font-normal ml-1 line-clamp-1 max-w-xs">
+                      — {analise.resumoExecutivo.substring(0, 80)}…
+                    </span>
+                  )}
                 </div>
-                <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                  {analise.resumoExecutivo}
-                </p>
-              </div>
+                {iaExpanded ? (
+                  <ChevronUp className="h-4 w-4 text-zinc-400 shrink-0" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-zinc-400 shrink-0" />
+                )}
+              </button>
 
-              {/* Impacto prático */}
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">
-                    Impacto Prático
-                  </p>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => copyText(analise.impactoPratico, "Impacto prático")}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                </div>
-                <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                  {analise.impactoPratico}
-                </p>
-              </div>
-
-              {/* Ratio decidendi */}
-              {analise.ratioDecidendi && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide">
-                      Ratio Decidendi
-                    </p>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => copyText(analise.ratioDecidendi!, "Ratio decidendi")}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  <p className="text-sm text-zinc-700 dark:text-zinc-300 italic leading-relaxed">
-                    &ldquo;{analise.ratioDecidendi}&rdquo;
-                  </p>
-                </div>
-              )}
-
-              {/* Casos aplicáveis */}
-              {analise.casosAplicaveis.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">
-                    Casos Aplicáveis
-                  </p>
-                  <div className="flex gap-2 flex-wrap">
-                    {analise.casosAplicaveis.map(caso => (
-                      <span
-                        key={caso}
-                        className="text-sm bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-full px-3 py-1"
+              {iaExpanded && (
+                <div className="px-4 py-4 space-y-4 bg-white dark:bg-zinc-900">
+                  {/* Resumo executivo */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                        Resumo
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5"
+                        onClick={() => copyText(analise.resumoExecutivo, "Resumo")}
                       >
-                        {caso}
-                      </span>
-                    ))}
+                        <Copy className="h-3 w-3 text-zinc-400" />
+                      </Button>
+                    </div>
+                    <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                      {analise.resumoExecutivo}
+                    </p>
                   </div>
+
+                  {/* Impacto + Ratio lado a lado se ambos existem */}
+                  {analise.impactoPratico && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <Zap className="h-3 w-3 text-amber-500" />
+                          <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                            Impacto Prático
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          onClick={() => copyText(analise.impactoPratico, "Impacto")}
+                        >
+                          <Copy className="h-3 w-3 text-zinc-400" />
+                        </Button>
+                      </div>
+                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                        {analise.impactoPratico}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Ratio Decidendi */}
+                  {analise.ratioDecidendi && (
+                    <div className="border-l-2 border-blue-300 dark:border-blue-700 pl-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-1.5">
+                          <Scale className="h-3 w-3 text-blue-500" />
+                          <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                            Ratio Decidendi
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          onClick={() => copyText(analise.ratioDecidendi!, "Ratio decidendi")}
+                        >
+                          <Copy className="h-3 w-3 text-zinc-400" />
+                        </Button>
+                      </div>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400 italic leading-relaxed">
+                        &ldquo;{analise.ratioDecidendi}&rdquo;
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Casos aplicáveis */}
+                  {analise.casosAplicaveis.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2">
+                        Casos Aplicáveis
+                      </p>
+                      <div className="flex gap-1.5 flex-wrap">
+                        {analise.casosAplicaveis.map(caso => (
+                          <span
+                            key={caso}
+                            className="inline-flex items-center gap-1 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-full px-2.5 py-1"
+                          >
+                            <ShieldCheck className="h-3 w-3 text-emerald-500 shrink-0" />
+                            {caso}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           )}
 
-          {/* Conteúdo original */}
-          <div className="border-t pt-4">
-            <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-4">
-              Conteúdo Original
-            </p>
-            {noticia.conteudo ? (
+          {/* Conteúdo principal */}
+          <div>
+            {(isLoading || buscarConteudo.isPending) ? (
+              <div className="space-y-3">
+                <Skeleton className="h-4 w-full rounded" />
+                <Skeleton className="h-4 w-5/6 rounded" />
+                <Skeleton className="h-4 w-full rounded" />
+                <Skeleton className="h-4 w-4/5 rounded" />
+                <Skeleton className="h-4 w-full rounded" />
+                <Skeleton className="h-4 w-3/4 rounded" />
+                <Skeleton className="h-4 w-full rounded" />
+              </div>
+            ) : hasConteudo ? (
               <div
-                className="prose prose-sm dark:prose-invert max-w-none prose-zinc prose-a:text-emerald-600 dark:prose-a:text-emerald-400"
-                dangerouslySetInnerHTML={{ __html: noticia.conteudo }}
+                className="prose prose-sm dark:prose-invert max-w-none prose-zinc prose-a:text-emerald-600 dark:prose-a:text-emerald-400 prose-headings:text-zinc-800 dark:prose-headings:text-zinc-200 prose-p:leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: conteudoEfetivo! }}
               />
             ) : noticia.resumo ? (
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                {noticia.resumo}
-              </p>
+              <div className="space-y-4">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  {noticia.resumo}
+                </p>
+                <a
+                  href={noticia.urlOriginal}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Ler artigo completo no site original
+                </a>
+              </div>
             ) : (
               <a
                 href={noticia.urlOriginal}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-emerald-600 hover:underline"
+                className="inline-flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
               >
-                Ler artigo completo no site original →
+                <ExternalLink className="h-3.5 w-3.5" />
+                Ler artigo completo no site original
               </a>
             )}
           </div>

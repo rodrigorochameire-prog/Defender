@@ -18,7 +18,7 @@ type ScrapedItem = {
 };
 
 // Máximo de dias para aceitar notícias (descarta antigas)
-const MAX_DIAS_ATRAS = 30;
+const MAX_DIAS_ATRAS = 7;
 
 // ==========================================
 // RSS PARSER (sem dependência externa)

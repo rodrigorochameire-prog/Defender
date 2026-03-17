@@ -237,6 +237,37 @@ export const noticiasRouter = router({
   // IA ENRICHMENT
   // ==========================================
 
+  // Busca e salva o conteúdo completo de uma notícia (usado pelo reader)
+  buscarConteudo: protectedProcedure
+    .input(z.object({ noticiaId: z.number() }))
+    .mutation(async ({ input }) => {
+      const [noticia] = await db.select({
+        id: noticiasJuridicas.id,
+        urlOriginal: noticiasJuridicas.urlOriginal,
+        conteudo: noticiasJuridicas.conteudo,
+      })
+        .from(noticiasJuridicas)
+        .where(eq(noticiasJuridicas.id, input.noticiaId))
+        .limit(1);
+
+      if (!noticia) throw new Error("Notícia não encontrada");
+
+      const conteudoAtual = noticia.conteudo ?? "";
+      if (conteudoAtual.length >= 500) {
+        return { conteudo: conteudoAtual, fromCache: true };
+      }
+
+      if (!noticia.urlOriginal) throw new Error("URL original não disponível");
+      const fullHtml = await fetchFullContent(noticia.urlOriginal);
+      const conteudoLimpo = cleanHtml(fullHtml);
+
+      await db.update(noticiasJuridicas)
+        .set({ conteudo: conteudoLimpo, updatedAt: new Date() })
+        .where(eq(noticiasJuridicas.id, noticia.id));
+
+      return { conteudo: conteudoLimpo, fromCache: false };
+    }),
+
   enriquecerComIA: protectedProcedure
     .input(z.object({ noticiaId: z.number() }))
     .mutation(async ({ input }) => {
