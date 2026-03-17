@@ -1,20 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, useMemo, useRef, useCallback, useEffect, Fragment } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -23,69 +14,37 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { 
-  Users, 
+import {
+  Users,
   Plus,
   Search,
   Download,
-  Eye,
-  Edit,
-  MoreHorizontal,
-  AlertOctagon,
-  Phone,
-  Scale,
   LayoutGrid,
   List,
-  MapPin,
   FileText,
-  MessageCircle,
   ChevronRight,
-  ChevronDown,
-  ChevronUp,
   AlertTriangle,
   CheckCircle2,
-  Building2,
   Timer,
   Camera,
-  Upload,
-  User,
   Brain,
-  Bookmark,
   BookmarkCheck,
-  Gavel,
-  UserCheck,
-  UserX,
   Clock,
   Calendar,
-  Info,
-  CircleDot,
-  Circle,
-  Target,
-  Lock,
   AlertCircle,
-  Copy,
-  Filter,
   XCircle,
-  Zap,
-  ArrowUpDown,
-  FolderOpen,
-  HardDrive,
-  Link2Off,
-  ExternalLink,
-  FileStack,
+  Lock,
   Sun,
   Loader2,
   Activity,
+  Link2Off,
+  Scale,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAssignment } from "@/contexts/assignment-context";
@@ -95,2176 +54,339 @@ import { useOfflineQuery } from "@/hooks/use-offline-query";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
 import { getOfflineAssistidos } from "@/lib/offline/queries";
 import { Skeleton } from "@/components/ui/skeleton";
-
-// Componentes estruturais padronizados
-import { Breadcrumbs } from "@/components/shared/breadcrumbs";
-import { PageHeader } from "@/components/shared/section-header";
-import { FilterTab, FilterTabsGroup } from "@/components/shared/filter-tabs";
-import { StatsCard, StatsGrid } from "@/components/shared/stats-card";
-import { SearchToolbar, FilterSelect } from "@/components/shared/search-toolbar";
 import { EmptyState } from "@/components/shared/empty-state";
-import { FilterBar } from "@/components/shared/filter-bar";
-import { 
-  PageContainer, 
-  PageSection, 
-  ContentGrid,
-  Divider,
-  StatBlock,
-  InfoBlock
-} from "@/components/shared/page-structure";
-
-import { 
+import {
   ATRIBUICAO_OPTIONS,
   getAtribuicaoColors,
   SOLID_COLOR_MAP,
 } from "@/lib/config/atribuicoes";
-
-// Icones para cada atribuicao (Lucide icons)
-const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
-  all: <Users className="w-3.5 h-3.5" />,
-  JURI: <Gavel className="w-3.5 h-3.5" />,
-  VVD: <AlertTriangle className="w-3.5 h-3.5" />,
-  EXECUCAO: <Lock className="w-3.5 h-3.5" />,
-  CRIMINAL: <Scale className="w-3.5 h-3.5" />,
-  SUBSTITUICAO: <Scale className="w-3.5 h-3.5" />,
-  SUBSTITUICAO_CIVEL: <FileText className="w-3.5 h-3.5" />,
-  CIVEL: <FileText className="w-3.5 h-3.5" />,
-  CURADORIA: <Users className="w-3.5 h-3.5" />,
-};
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { getInitials } from "@/lib/utils";
-import { format, differenceInDays, parseISO, differenceInYears } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { PrisonerIndicator } from "@/components/shared/prisoner-indicator";
+import { differenceInDays, parseISO, format } from "date-fns";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
-import { ProcessingQueuePanel } from "@/components/drive/ProcessingQueuePanel";
-import { useProcessingQueue } from "@/contexts/processing-queue";
 import { toast } from "sonner";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
-// Interface para o tipo Assistido usado na UI
-interface AssistidoUI {
-  id: number;
-  nome: string;
-  cpf: string;
-  rg: string;
-  dataNascimento: string;
-  naturalidade: string;
-  statusPrisional: string;
-  localPrisao: string;
-  unidadePrisional: string;
-  telefone: string;
-  telefoneContato: string;
-  nomeContato: string;
-  endereco: string;
-  photoUrl: string;
-  observacoes: string;
-  area: string;
-  areas?: string[]; // Lista de áreas para múltiplas cores
-  atribuicoes?: string[]; // Lista de atribuições para múltiplas cores
-  vulgo: string;
-  crimePrincipal: string;
-  defensor: string;
-  processoPrincipal: string;
-  processosAtivos?: number;
-  demandasAbertas: number;
-  proximoPrazo: string | null;
-  prioridadeAI: string;
-  createdAt: string;
-  // Campos adicionais para compatibilidade com o componente
-  testemunhasArroladas: Array<{ nome: string; ouvida: boolean }>;
-  interrogatorioRealizado: boolean;
-  tipoProximaAudiencia: string;
-  proximaAudiencia: string | null;
-  // Novos campos
-  comarcas?: string[];
-  scoreComplexidade?: number;
-  ultimoEvento?: { tipo: string; data: string; titulo: string } | null;
-  atoProximoPrazo?: string;
-  dataPrisao?: string | null;
-  numeroProcesso?: string;
-  faseProcessual?: string;
-  driveFolderId?: string | null;
-  driveFilesCount?: number;
-  nomeMae?: string;
+// Extracted components
+import { AssistidoUI } from "./_components/assistido-types";
+import { statusConfig, faseConfig, areaConfig, ATRIBUICAO_ICONS } from "./_components/assistido-config";
+import { getPrazoInfo, calcularIdade, calcularTempoPreso } from "./_components/assistido-utils";
+import { PhotoUploadDialog } from "./_components/photo-upload-dialog";
+import { AssistidoQuickPreview } from "./_components/assistido-quick-preview";
+import { AssistidoCard } from "./_components/assistido-card";
+import { AssistidoTableView } from "./_components/assistido-table-view";
+import { FilterSectionAssistidos } from "./_components/filter-section-assistidos";
+
+// ========================================
+// HELPERS
+// ========================================
+
+/** Compute completude score (0-100) for a single assistido */
+function computeCompletude(a: AssistidoUI): number {
+  let score = 0;
+  if (a.cpf) score += 20;
+  if (a.telefone || a.telefoneContato) score += 15;
+  if (a.endereco) score += 15;
+  if (a.driveFolderId) score += 20;
+  if (a.numeroProcesso || a.processoPrincipal) score += 15;
+  if (a.observacoes) score += 15;
+  return score;
 }
 
-// Configuracoes de status e fases
-const statusConfig: Record<string, { label: string; color: string; bgColor: string; borderColor: string; iconBg: string; priority: number }> = {
-  CADEIA_PUBLICA: { label: "Cadeia Publica", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-rose-100 dark:bg-rose-900/40", priority: 1 },
-  PENITENCIARIA: { label: "Penitenciaria", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-rose-100 dark:bg-rose-900/40", priority: 2 },
-  COP: { label: "COP", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-rose-100 dark:bg-rose-900/40", priority: 3 },
-  HOSPITAL_CUSTODIA: { label: "Hosp. Custodia", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-rose-100 dark:bg-rose-900/40", priority: 4 },
-  MONITORADO: { label: "Monitorado", color: "text-amber-700 dark:text-amber-300", bgColor: "bg-amber-50/80 dark:bg-amber-950/20", borderColor: "border-amber-200/60 dark:border-amber-800/30", iconBg: "bg-amber-100 dark:bg-amber-900/40", priority: 5 },
-  DOMICILIAR: { label: "Domiciliar", color: "text-orange-700 dark:text-orange-300", bgColor: "bg-orange-50/80 dark:bg-orange-950/20", borderColor: "border-orange-200/60 dark:border-orange-800/30", iconBg: "bg-orange-100 dark:bg-orange-900/40", priority: 6 },
-  SOLTO: { label: "Solto", color: "text-emerald-700 dark:text-emerald-300", bgColor: "bg-emerald-50/80 dark:bg-emerald-950/20", borderColor: "border-emerald-200/60 dark:border-emerald-800/30", iconBg: "bg-emerald-100 dark:bg-emerald-900/40", priority: 7 },
-};
+/** Compute smart alerts for an assistido */
+function computeAlerts(a: AssistidoUI): Array<{ label: string; color: "rose" | "amber" }> {
+  const alerts: Array<{ label: string; color: "rose" | "amber" }> = [];
+  const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(a.statusPrisional);
 
-// Fases NEUTRAS para reduzir poluicao visual
-const faseConfig: Record<string, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
-  INQUERITO: { label: "Inquerito", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: FileText },
-  INSTRUCAO: { label: "Instrucao", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Scale },
-  SUMARIO_CULPA: { label: "Sumario Culpa", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Gavel },
-  ALEGACOES_FINAIS: { label: "Alegacoes Finais", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: FileText },
-  SENTENCA: { label: "Sentenca", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Gavel },
-  RECURSO: { label: "Recurso", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Scale },
-  EXECUCAO: { label: "Execucao", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Clock },
-  ARQUIVADO: { label: "Arquivado", color: "text-zinc-400 dark:text-zinc-500", bgColor: "bg-zinc-50 dark:bg-zinc-900", icon: CheckCircle2 },
-};
-
-// Areas NEUTRAS para reduzir poluicao visual
-const areaConfig: Record<string, { label: string; labelFull: string; color: string; bgColor: string }> = {
-  JURI: { label: "Juri", labelFull: "Tribunal do Juri", color: "text-violet-600", bgColor: "bg-violet-50" },
-  EXECUCAO_PENAL: { label: "EP", labelFull: "Execucao Penal", color: "text-blue-600", bgColor: "bg-blue-50" },
-  VIOLENCIA_DOMESTICA: { label: "V.D.", labelFull: "Violencia Domestica", color: "text-pink-600", bgColor: "bg-pink-50" },
-  SUBSTITUICAO: { label: "Sub", labelFull: "Substituicao", color: "text-orange-600", bgColor: "bg-orange-50" },
-  FAMILIA: { label: "Fam", labelFull: "Familia", color: "text-rose-600", bgColor: "bg-rose-50" },
-};
-
-function getPrazoInfo(prazoStr: string | null) {
-  if (!prazoStr) return null;
-  const dias = differenceInDays(parseISO(prazoStr), new Date());
-  if (dias < 0) return { text: "Vencido", urgent: true, color: "text-rose-600", bgColor: "bg-rose-50" };
-  if (dias === 0) return { text: "Hoje", urgent: true, color: "text-rose-600", bgColor: "bg-rose-50" };
-  if (dias === 1) return { text: "Amanha", urgent: true, color: "text-amber-600", bgColor: "bg-amber-50" };
-  if (dias <= 3) return { text: `${dias}d`, urgent: true, color: "text-amber-500", bgColor: "bg-amber-50/50" };
-  if (dias <= 7) return { text: `${dias}d`, urgent: false, color: "text-sky-600", bgColor: "bg-sky-50/50" };
-  return { text: `${dias}d`, urgent: false, color: "text-muted-foreground", bgColor: "" };
-}
-
-function calcularIdade(dataNascimento: string | null | undefined) {
-  if (!dataNascimento) return null;
-  try {
-    const data = parseISO(dataNascimento);
-    if (isNaN(data.getTime())) return null;
-    return differenceInYears(new Date(), data);
-  } catch {
-    return null;
-  }
-}
-
-function calcularTempoPreso(dataPrisao: string | null) {
-  if (!dataPrisao) return null;
-  const dias = differenceInDays(new Date(), parseISO(dataPrisao));
-  const anos = Math.floor(dias / 365);
-  const meses = Math.floor((dias % 365) / 30);
-  if (anos > 0) return `${anos}a ${meses}m`;
-  if (meses > 0) return `${meses}m`;
-  return `${dias}d`;
-}
-
-// Upload Dialog
-function PhotoUploadDialog({ isOpen, onClose, assistidoNome, currentPhoto, onUpload }: {
-  isOpen: boolean;
-  onClose: () => void;
-  assistidoNome: string;
-  currentPhoto: string | null;
-  onUpload: (file: File) => void;
-}) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string | null>(currentPhoto);
-  const [dragActive, setDragActive] = useState(false);
-
-  const handleFileChange = (file: File) => {
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreview(reader.result as string);
-      reader.readAsDataURL(file);
-      onUpload(file);
+  // Preso 90+ dias sem audiencia
+  if (isPreso && a.dataPrisao) {
+    const diasPreso = differenceInDays(new Date(), parseISO(a.dataPrisao));
+    if (diasPreso >= 90 && !a.proximaAudiencia) {
+      alerts.push({ label: `Sem audiencia ha ${diasPreso}d+`, color: "rose" });
     }
-  };
+  }
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Foto do Assistido</DialogTitle>
-          <DialogDescription>{assistidoNome}</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="flex justify-center">
-            <Avatar className="h-32 w-32">
-              <AvatarImage src={preview || undefined} />
-              <AvatarFallback className="text-3xl bg-muted">{getInitials(assistidoNome)}</AvatarFallback>
-            </Avatar>
-          </div>
-          <div
-            className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${dragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
-            onDragEnter={(e) => { e.preventDefault(); setDragActive(true); }}
-            onDragLeave={(e) => { e.preventDefault(); setDragActive(false); }}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => { e.preventDefault(); setDragActive(false); if (e.dataTransfer.files[0]) handleFileChange(e.dataTransfer.files[0]); }}
-          >
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileChange(e.target.files[0])} />
-            <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
-            <p className="text-sm text-muted-foreground mb-2">Arraste uma imagem ou</p>
-            <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>Selecionar Arquivo</Button>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button onClick={onClose}>Salvar</Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+  // Processo parado 60+ dias
+  if (!a.proximoPrazo && !a.proximaAudiencia && !a.ultimoEvento) {
+    if (a.createdAt) {
+      const diasCadastro = differenceInDays(new Date(), parseISO(a.createdAt));
+      if (diasCadastro >= 60) {
+        alerts.push({ label: "Inativo 60d+", color: "amber" });
+      }
+    }
+  }
+
+  return alerts;
+}
+
+/** Export filtered assistidos to CSV */
+function exportToCSV(assistidos: AssistidoUI[]) {
+  const headers = ["Nome", "CPF", "Status", "Crime", "Processo", "Telefone", "Endereco", "Atribuicao", "Comarca"];
+  const rows = assistidos.map((a) => [
+    a.nome,
+    a.cpf || "",
+    statusConfig[a.statusPrisional]?.label || a.statusPrisional || "Solto",
+    a.crimePrincipal || "",
+    a.numeroProcesso || "",
+    a.telefone || a.telefoneContato || "",
+    a.endereco || "",
+    (a.atribuicoes || a.areas || []).join("; "),
+    (a.comarcas || []).join("; "),
+  ]);
+
+  const csvContent = [
+    headers.join(","),
+    ...rows.map((r) => r.map((cell) => `"${(cell || "").replace(/"/g, '""')}"`).join(",")),
+  ].join("\n");
+
+  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `assistidos-${format(new Date(), "yyyy-MM-dd")}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 // ========================================
-// ASSISTIDO QUICK PREVIEW SHEET
+// SIMPLE CSS DONUT CHART (no external deps)
 // ========================================
 
-function AssistidoQuickPreview({
-  assistido,
-  onClose,
-  onNext,
-  onPrev,
-  currentIndex,
-  totalCount,
-}: {
-  assistido: AssistidoUI | null;
-  onClose: () => void;
-  onNext?: () => void;
-  onPrev?: () => void;
-  currentIndex?: number;
-  totalCount?: number;
-}) {
-  // Keyboard navigation — must be before any early return (React Hooks rules)
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!assistido) return;
-      if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); onPrev?.(); }
-      if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); onNext?.(); }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [assistido, onPrev, onNext]);
+function DonutChart({ data }: { data: Array<{ label: string; value: number; color: string }> }) {
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+  if (total === 0) return <div className="text-xs text-zinc-400">Sem dados</div>;
 
-  if (!assistido) return null;
-
-  const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
-  const isMonitorado = ["MONITORADO", "DOMICILIAR"].includes(assistido.statusPrisional);
-  const idade = calcularIdade(assistido.dataNascimento);
-  const tempoPreso = calcularTempoPreso(assistido.dataPrisao ?? null);
-  const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
-  const prazoVencido = prazoInfo && prazoInfo.text === "Vencido";
-  const telefoneDisplay = assistido.telefone || assistido.telefoneContato;
-  const whatsappUrl = telefoneDisplay
-    ? `https://wa.me/55${telefoneDisplay.replace(/\D/g, '')}`
-    : null;
-
-  const diasAteAudiencia = assistido.proximaAudiencia
-    ? differenceInDays(parseISO(assistido.proximaAudiencia), new Date())
-    : null;
-  const audienciaHoje = diasAteAudiencia === 0;
-
-  const atribuicoesUnicas = assistido.atribuicoes || assistido.areas || [];
-  const primaryAttrValue = atribuicoesUnicas.length > 0
-    ? (() => {
-        const normalizedAttr = atribuicoesUnicas[0].toUpperCase().replace(/_/g, ' ');
-        const option = ATRIBUICAO_OPTIONS.find(o =>
-          o.value.toUpperCase() === normalizedAttr ||
-          o.label.toUpperCase().includes(normalizedAttr) ||
-          normalizedAttr.includes(o.value.toUpperCase())
-        );
-        return option?.value || null;
-      })()
-    : null;
-  const primaryColor = primaryAttrValue ? SOLID_COLOR_MAP[primaryAttrValue] || '#6b7280' : '#6b7280';
-
-  const maskedCpf = assistido.cpf
-    ? assistido.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.***.***-$4')
-    : null;
-
-  const audienciaAmanha = diasAteAudiencia === 1;
+  let cumPercent = 0;
+  const gradientParts = data
+    .filter((d) => d.value > 0)
+    .map((d) => {
+      const start = cumPercent;
+      const pct = (d.value / total) * 100;
+      cumPercent += pct;
+      return `${d.color} ${start}% ${cumPercent}%`;
+    });
 
   return (
-    <Sheet open={!!assistido} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent
-        side="right"
-        className="w-[calc(100vw-2rem)] sm:w-[460px] md:w-[500px] p-0 flex flex-col gap-0 border-l border-zinc-200 dark:border-zinc-800 shadow-2xl"
-        style={{ borderLeft: `3px solid ${primaryColor}` }}
-      >
-        {/* Sticky Header — Compact navigation bar */}
-        <SheetHeader className="px-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm sticky top-0 z-10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <SheetTitle className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 tracking-wider uppercase">
-                {currentIndex !== undefined && totalCount ? `${currentIndex + 1} / ${totalCount}` : 'Assistido'}
-              </SheetTitle>
-              <span className="text-[10px] text-zinc-300 dark:text-zinc-600">|</span>
-              <span className="text-[10px] text-zinc-300 dark:text-zinc-600">↑↓ navegar</span>
+    <div className="flex items-center gap-4">
+      <div
+        className="w-24 h-24 rounded-full shrink-0"
+        style={{
+          background: `conic-gradient(${gradientParts.join(", ")})`,
+          mask: "radial-gradient(circle at center, transparent 40%, black 41%)",
+          WebkitMask: "radial-gradient(circle at center, transparent 40%, black 41%)",
+        }}
+      />
+      <div className="space-y-1">
+        {data
+          .filter((d) => d.value > 0)
+          .map((d) => (
+            <div key={d.label} className="flex items-center gap-2 text-xs">
+              <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+              <span className="text-zinc-600 dark:text-zinc-400">{d.label}</span>
+              <span className="font-semibold text-zinc-800 dark:text-zinc-200 tabular-nums">{d.value}</span>
+              <span className="text-zinc-400 text-[10px]">({Math.round((d.value / total) * 100)}%)</span>
             </div>
-            <div className="flex items-center gap-0.5">
-              {onPrev && (
-                <button
-                  onClick={onPrev}
-                  className="h-7 w-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
-                  title="Anterior (↑)"
-                >
-                  <ChevronUp className="w-4 h-4" />
-                </button>
-              )}
-              {onNext && (
-                <button
-                  onClick={onNext}
-                  className="h-7 w-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
-                  title="Próximo (↓)"
-                >
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          </div>
-        </SheetHeader>
+          ))}
+      </div>
+    </div>
+  );
+}
 
-        {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto">
-          {/* 1. Hero Section — Gradient background */}
-          <div className="relative px-5 py-5 border-b border-zinc-100 dark:border-zinc-800 overflow-hidden">
-            <div
-              className="absolute inset-0 opacity-[0.04] pointer-events-none"
-              style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, transparent 60%)` }}
-            />
-            <div className="relative flex items-start gap-4">
-              <AssistidoAvatar
-                nome={assistido.nome}
-                photoUrl={assistido.photoUrl}
-                size="xl"
-                atribuicao={primaryAttrValue}
-                statusPrisional={assistido.statusPrisional}
-                showStatusDot
+function BarChartSimple({ data }: { data: Array<{ label: string; value: number; color: string }> }) {
+  const max = Math.max(...data.map((d) => d.value), 1);
+  return (
+    <div className="flex items-end gap-1.5 h-24">
+      {data.map((d) => (
+        <Tooltip key={d.label}>
+          <TooltipTrigger asChild>
+            <div className="flex-1 flex flex-col items-center gap-1">
+              <span className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-300 tabular-nums">{d.value}</span>
+              <div
+                className="w-full rounded-t-md transition-all min-h-[2px]"
+                style={{
+                  height: `${Math.max((d.value / max) * 80, 2)}px`,
+                  backgroundColor: d.color,
+                }}
               />
-              <div className="flex-1 min-w-0">
-                <h2 className="font-serif text-xl font-semibold text-zinc-900 dark:text-zinc-50 leading-tight">
-                  {assistido.nome}
-                </h2>
-                {assistido.vulgo && (
-                  <p className="text-xs text-zinc-400 italic mt-0.5">&ldquo;{assistido.vulgo}&rdquo;</p>
-                )}
-                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                  <span className={cn(
-                    "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
-                    isPreso && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
-                    isMonitorado && "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400",
-                    !isPreso && !isMonitorado && "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400",
-                  )}>
-                    <div className={cn(
-                      "w-1.5 h-1.5 rounded-full",
-                      isPreso && "bg-rose-500",
-                      isMonitorado && "bg-amber-500",
-                      !isPreso && !isMonitorado && "bg-emerald-500",
-                    )} />
-                    {statusConfig[assistido.statusPrisional]?.label || "Solto"}
-                  </span>
-                  {atribuicoesUnicas.slice(0, 3).map((attr, idx) => {
-                    const normalizedAttr = attr.toUpperCase().replace(/_/g, ' ');
-                    const option = ATRIBUICAO_OPTIONS.find(o =>
-                      o.value.toUpperCase() === normalizedAttr ||
-                      o.label.toUpperCase().includes(normalizedAttr) ||
-                      normalizedAttr.includes(o.value.toUpperCase())
-                    );
-                    const color = option ? SOLID_COLOR_MAP[option.value] || '#6b7280' : '#6b7280';
-                    return (
-                      <span key={idx} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
-                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
-                        {option?.shortLabel || attr.substring(0, 4)}
-                      </span>
-                    );
-                  })}
-                  {idade && <span className="text-[10px] text-zinc-400">{idade}a</span>}
-                  {isPreso && tempoPreso && <span className="text-[10px] text-rose-400 font-mono tabular-nums">{tempoPreso}</span>}
-                </div>
-                {/* Contato rápido inline */}
-                {telefoneDisplay && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <Phone className="w-3 h-3 text-zinc-400" />
-                    <span className="text-xs text-zinc-500">{telefoneDisplay}</span>
-                    {whatsappUrl && (
-                      <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-medium transition-colors">
-                        <MessageCircle className="w-3 h-3" />
-                        Zap
-                      </a>
-                    )}
-                  </div>
-                )}
-              </div>
+              <span className="text-[9px] text-zinc-400 truncate max-w-[40px]">{d.label}</span>
             </div>
-          </div>
-
-          {/* 2. Alertas urgentes (empilhados, compactos) */}
-          {(isPreso || audienciaHoje || prazoVencido) && (
-            <div className="px-5 py-3 border-b border-zinc-100 dark:border-zinc-800 space-y-2">
-              {isPreso && (
-                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/30">
-                  <Lock className="w-4 h-4 text-rose-500 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-xs font-semibold text-rose-700 dark:text-rose-400">Preso</span>
-                    {assistido.unidadePrisional && <span className="text-[10px] text-rose-500 ml-2">{assistido.unidadePrisional}</span>}
-                  </div>
-                  {tempoPreso && <span className="text-[10px] text-rose-500 font-mono tabular-nums shrink-0">{tempoPreso}</span>}
-                </div>
-              )}
-              {audienciaHoje && (
-                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/30">
-                  <Calendar className="w-4 h-4 text-amber-500 animate-pulse shrink-0" />
-                  <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">Audiencia HOJE</span>
-                  {assistido.proximaAudiencia && <span className="text-xs text-amber-500 font-mono ml-auto">{format(parseISO(assistido.proximaAudiencia), "HH:mm")}</span>}
-                </div>
-              )}
-              {prazoVencido && (
-                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/30">
-                  <AlertCircle className="w-4 h-4 text-rose-500 animate-pulse shrink-0" />
-                  <span className="text-xs font-semibold text-rose-700 dark:text-rose-400">Prazo VENCIDO</span>
-                  {assistido.atoProximoPrazo && <span className="text-[10px] text-rose-500 ml-auto truncate max-w-[120px]">{assistido.atoProximoPrazo}</span>}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 3. Stats + Quick Actions Row */}
-          <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
-            <div className="grid grid-cols-4 gap-2">
-              {[
-                { icon: Scale, label: "Processos", value: assistido.processosAtivos || 0, href: `/admin/processos?assistido=${assistido.id}` },
-                { icon: FileText, label: "Demandas", value: assistido.demandasAbertas || 0, href: `/admin/demandas?assistido=${assistido.id}` },
-                { icon: HardDrive, label: "Arquivos", value: assistido.driveFilesCount || 0, href: assistido.driveFolderId ? `https://drive.google.com/drive/folders/${assistido.driveFolderId}` : `/admin/drive?assistido=${assistido.id}` },
-                { icon: Calendar, label: "Agenda", value: assistido.proximaAudiencia ? 1 : 0, href: `/admin/audiencias?assistido=${assistido.id}` },
-              ].map((stat) => {
-                const Icon = stat.icon;
-                const isExternal = stat.href.startsWith('http');
-                const Wrapper = isExternal ? 'a' : Link;
-                const wrapperProps = isExternal ? { href: stat.href, target: "_blank", rel: "noopener noreferrer" } : { href: stat.href };
-                return (
-                  <Wrapper key={stat.label} {...wrapperProps as any} className="flex flex-col items-center gap-0.5 p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 transition-all cursor-pointer group">
-                    <Icon className="w-3.5 h-3.5 text-zinc-400 group-hover:text-emerald-500 transition-colors" />
-                    <span className="text-base font-bold text-zinc-800 dark:text-zinc-100 tabular-nums">{stat.value}</span>
-                    <span className="text-[10px] text-zinc-400">{stat.label}</span>
-                  </Wrapper>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 4. Timeline — Mini timeline with all events */}
-          {(assistido.proximaAudiencia || assistido.proximoPrazo || assistido.ultimoEvento) && (
-            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
-              <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
-                <Clock className="w-3 h-3" />
-                Timeline
-              </p>
-              <div className="relative pl-4 space-y-3 border-l-2 border-zinc-200 dark:border-zinc-700">
-                {/* Próxima audiência */}
-                {assistido.proximaAudiencia && (
-                  <div className="relative">
-                    <div className={cn(
-                      "absolute -left-[9px] top-0.5 w-4 h-4 rounded-full flex items-center justify-center",
-                      audienciaHoje ? "bg-amber-500" : audienciaAmanha ? "bg-blue-500" : "bg-violet-500"
-                    )}>
-                      <Calendar className="w-2 h-2 text-white" />
-                    </div>
-                    <div className="ml-3">
-                      <p className={cn(
-                        "text-xs font-semibold",
-                        audienciaHoje && "text-amber-600 dark:text-amber-400",
-                        audienciaAmanha && "text-blue-600 dark:text-blue-400",
-                        !audienciaHoje && !audienciaAmanha && "text-violet-600 dark:text-violet-400"
-                      )}>
-                        {audienciaHoje ? "HOJE" : audienciaAmanha ? "Amanha" : format(parseISO(assistido.proximaAudiencia), "dd/MM/yyyy")}
-                        <span className="font-mono ml-1.5">{format(parseISO(assistido.proximaAudiencia), "HH:mm")}</span>
-                      </p>
-                      <p className="text-[10px] text-zinc-500">
-                        {assistido.tipoProximaAudiencia || "Audiencia"} {diasAteAudiencia !== null && diasAteAudiencia > 0 ? `em ${diasAteAudiencia}d` : ''}
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {/* Próximo prazo */}
-                {assistido.proximoPrazo && (
-                  <div className="relative">
-                    <div className={cn(
-                      "absolute -left-[9px] top-0.5 w-4 h-4 rounded-full flex items-center justify-center",
-                      prazoVencido ? "bg-rose-500" : "bg-sky-500"
-                    )}>
-                      <Timer className="w-2 h-2 text-white" />
-                    </div>
-                    <div className="ml-3">
-                      <p className={cn(
-                        "text-xs font-semibold",
-                        prazoVencido ? "text-rose-600 dark:text-rose-400" : "text-sky-600 dark:text-sky-400"
-                      )}>
-                        {prazoInfo?.text || format(parseISO(assistido.proximoPrazo), "dd/MM/yyyy")}
-                      </p>
-                      <p className="text-[10px] text-zinc-500">
-                        {assistido.atoProximoPrazo || "Prazo"}
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {/* Último evento */}
-                {assistido.ultimoEvento && (
-                  <div className="relative">
-                    <div className="absolute -left-[9px] top-0.5 w-4 h-4 rounded-full bg-zinc-400 flex items-center justify-center">
-                      <CircleDot className="w-2 h-2 text-white" />
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-xs text-zinc-500">
-                        {assistido.ultimoEvento.data ? format(parseISO(assistido.ultimoEvento.data), "dd/MM/yyyy") : ""}
-                      </p>
-                      <p className="text-[10px] text-zinc-400">{assistido.ultimoEvento.titulo}</p>
-                    </div>
-                  </div>
-                )}
-                {/* Cadastro */}
-                <div className="relative">
-                  <div className="absolute -left-[9px] top-0.5 w-4 h-4 rounded-full bg-zinc-300 dark:bg-zinc-600 flex items-center justify-center">
-                    <User className="w-2 h-2 text-white" />
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-[10px] text-zinc-400">
-                      Cadastro: {format(new Date(assistido.createdAt), "dd/MM/yyyy")}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 5. Crime / Processo */}
-          {(assistido.crimePrincipal || assistido.numeroProcesso) && (
-            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
-              <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
-                <Scale className="w-3 h-3" />
-                Crime / Processo
-              </p>
-              {assistido.crimePrincipal && (
-                <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-2">{assistido.crimePrincipal}</p>
-              )}
-              {assistido.numeroProcesso && (
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
-                  <span className="font-mono tabular-nums text-xs text-zinc-600 dark:text-zinc-400 flex-1">{assistido.numeroProcesso}</span>
-                  <button
-                    onClick={() => { navigator.clipboard.writeText(assistido.numeroProcesso!); toast.success("Copiado!"); }}
-                    className="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                  >
-                    <Copy className="w-3 h-3 text-zinc-400" />
-                  </button>
-                </div>
-              )}
-              {assistido.faseProcessual && (
-                <p className="text-[10px] text-zinc-400 mt-2">
-                  Fase: <span className="text-zinc-600 dark:text-zinc-300 font-medium">{faseConfig[assistido.faseProcessual]?.label || assistido.faseProcessual}</span>
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* 6. Dados Pessoais — Compact grid */}
-          <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
-            <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
-              <User className="w-3 h-3" />
-              Dados Pessoais
-            </p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-              {[
-                { label: "CPF", value: maskedCpf, mono: true },
-                { label: "RG", value: assistido.rg },
-                { label: "Nascimento", value: assistido.dataNascimento ? format(parseISO(assistido.dataNascimento), "dd/MM/yyyy") : null },
-                { label: "Naturalidade", value: assistido.naturalidade },
-                { label: "Nome da Mãe", value: assistido.nomeMae },
-              ].filter(item => item.value).map((item) => (
-                <div key={item.label}>
-                  <p className="text-[10px] text-zinc-400">{item.label}</p>
-                  <p className={cn("text-xs font-medium text-zinc-700 dark:text-zinc-300", item.mono && "font-mono tabular-nums")}>{item.value}</p>
-                </div>
-              ))}
-              {assistido.endereco && (
-                <div className="col-span-2">
-                  <p className="text-[10px] text-zinc-400">Endereço</p>
-                  <p className="text-xs text-zinc-700 dark:text-zinc-300">{assistido.endereco}</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* 7. Observações */}
-          {assistido.observacoes && (
-            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
-              <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-2 font-medium flex items-center gap-1.5">
-                <Info className="w-3 h-3" />
-                Observações
-              </p>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 border border-zinc-100 dark:border-zinc-800">
-                {assistido.observacoes}
-              </p>
-            </div>
-          )}
-
-          {/* 8. Drive */}
-          <div className="px-5 py-4">
-            <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
-              <HardDrive className="w-3 h-3" />
-              Google Drive
-            </p>
-            {assistido.driveFolderId ? (
-              <a
-                href={`https://drive.google.com/drive/folders/${assistido.driveFolderId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/30 hover:border-emerald-300 dark:hover:border-emerald-700 transition-all group"
-              >
-                <HardDrive className="w-5 h-5 text-emerald-500 group-hover:scale-110 transition-transform" />
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Abrir pasta no Drive</p>
-                  {(assistido.driveFilesCount ?? 0) > 0 && (
-                    <p className="text-[10px] text-emerald-500">{assistido.driveFilesCount} arquivo{(assistido.driveFilesCount ?? 0) > 1 ? 's' : ''}</p>
-                  )}
-                </div>
-                <ExternalLink className="w-4 h-4 text-emerald-400 opacity-60 group-hover:opacity-100 transition-opacity" />
-              </a>
-            ) : (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
-                <Link2Off className="w-5 h-5 text-zinc-300 dark:text-zinc-600" />
-                <p className="text-xs text-zinc-400 dark:text-zinc-500">Sem pasta vinculada</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Sticky Footer — Premium action bar */}
-        <div className="px-4 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm">
-          <div className="flex items-center gap-2">
-            <Link href={`/admin/assistidos/${assistido.id}`} className="flex-1">
-              <Button className="w-full h-9 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-all shadow-sm hover:shadow-md">
-                Abrir Perfil
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </Link>
-            <Link href={`/admin/processos?assistido=${assistido.id}`}>
-              <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl border-zinc-200 dark:border-zinc-700 hover:border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all" title="Processos">
-                <Scale className="w-4 h-4" />
-              </Button>
-            </Link>
-            <Link href={`/admin/demandas/nova?assistido=${assistido.id}`}>
-              <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl border-zinc-200 dark:border-zinc-700 hover:border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all" title="Nova Demanda">
-                <Plus className="w-4 h-4" />
-              </Button>
-            </Link>
-            {whatsappUrl && (
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl border-emerald-200 dark:border-emerald-800/50 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all" title="WhatsApp">
-                  <MessageCircle className="w-4 h-4" />
-                </Button>
-              </a>
-            )}
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-}
-
-// ========================================
-// CARD DO ASSISTIDO - DESIGN PREMIUM EXTRAORDINÁRIO
-// Quick Actions + Mini Dashboard + Indicadores + Timeline + Score
-// ========================================
-
-interface AssistidoCardProps {
-  assistido: AssistidoUI;
-  onPhotoClick: () => void;
-  isPinned: boolean;
-  onTogglePin: () => void;
-  hasDuplicates?: boolean;
-  duplicateCount?: number;
-  onPreview?: () => void;
-}
-
-function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDuplicates, duplicateCount, onPreview }: AssistidoCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [showQuickActions, setShowQuickActions] = useState(false);
-
-  // Referência para fechar o overlay ao clicar fora
-  const cardRef = React.useRef<HTMLDivElement>(null);
-
-  // Lógica Semântica: Determina se réu está preso
-  const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
-  const isMonitorado = ["MONITORADO", "DOMICILIAR"].includes(assistido.statusPrisional);
-
-  // Prazo urgente (<= 3 dias)
-  const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
-  const prazoUrgente = prazoInfo && prazoInfo.urgent;
-  const prazoVencido = prazoInfo && prazoInfo.text === "Vencido";
-
-  // Audiência hoje ou amanhã
-  const diasAteAudiencia = assistido.proximaAudiencia
-    ? differenceInDays(parseISO(assistido.proximaAudiencia), new Date())
-    : null;
-  const audienciaHoje = diasAteAudiencia === 0;
-  const audienciaAmanha = diasAteAudiencia === 1;
-  const audienciaProxima = diasAteAudiencia !== null && diasAteAudiencia >= 0 && diasAteAudiencia <= 7;
-
-  // Score de complexidade (visual)
-  const score = assistido.scoreComplexidade || Math.floor(Math.random() * 100);
-  const scoreLevel = score >= 70 ? "crítico" : score >= 40 ? "atenção" : "normal";
-
-  // Telefone para contato (WhatsApp)
-  const telefoneDisplay = assistido.telefone || assistido.telefoneContato;
-  const whatsappUrl = telefoneDisplay
-    ? `https://wa.me/55${telefoneDisplay.replace(/\D/g, '')}`
-    : null;
-
-  // Tempo de prisão
-  const tempoPreso = calcularTempoPreso(assistido.dataPrisao ?? null);
-
-  // Idade
-  const idade = calcularIdade(assistido.dataNascimento);
-
-  // Copiar número do processo
-  const handleCopyProcesso = () => {
-    if (!assistido.numeroProcesso) return;
-    navigator.clipboard.writeText(assistido.numeroProcesso);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  // Cores das atribuições/áreas
-  const atribuicoesUnicas = assistido.atribuicoes || assistido.areas || [];
-  const primaryAttrValue = atribuicoesUnicas.length > 0
-    ? (() => {
-        const normalizedAttr = atribuicoesUnicas[0].toUpperCase().replace(/_/g, ' ');
-        const option = ATRIBUICAO_OPTIONS.find(o =>
-          o.value.toUpperCase() === normalizedAttr ||
-          o.label.toUpperCase().includes(normalizedAttr) ||
-          normalizedAttr.includes(o.value.toUpperCase())
-        );
-        return option?.value || null;
-      })()
-    : null;
-  const primaryColor = primaryAttrValue ? SOLID_COLOR_MAP[primaryAttrValue] || '#6b7280' : '#6b7280';
-
-  // Determinar o status visual do card
-  const getCardGlow = () => {
-    if (isPreso) return "hover:shadow-rose-500/20";
-    if (prazoVencido) return "hover:shadow-rose-500/10";
-    if (audienciaHoje) return "hover:shadow-amber-500/15";
-    if (prazoUrgente) return "hover:shadow-amber-500/10";
-    return "hover:shadow-emerald-500/5";
-  };
-
-  // Indicador de urgência
-  const getUrgencyLevel = () => {
-    if (isPreso && (prazoVencido || audienciaHoje)) return { level: "crítico", color: "rose", pulse: true };
-    if (isPreso) return { level: "alto", color: "rose", pulse: false };
-    if (prazoVencido) return { level: "vencido", color: "rose", pulse: true };
-    if (audienciaHoje) return { level: "hoje", color: "amber", pulse: true };
-    if (audienciaAmanha || prazoUrgente) return { level: "urgente", color: "amber", pulse: false };
-    return null;
-  };
-
-  const urgency = getUrgencyLevel();
-
-  // Determinar a cor do destaque superior baseado no status
-  const getTopBorderColor = () => {
-    if (isPreso) return { color: "#f43f5e", gradient: "from-rose-500 via-rose-400 to-rose-500" };
-    if (prazoVencido) return { color: "#f43f5e", gradient: "from-rose-500 via-rose-400 to-rose-500" };
-    if (audienciaHoje) return { color: "#f59e0b", gradient: "from-amber-500 via-amber-400 to-amber-500" };
-    if (isMonitorado) return { color: "#f59e0b", gradient: "from-amber-500 via-amber-400 to-amber-500" };
-    return { color: primaryColor, gradient: `from-[${primaryColor}] via-[${primaryColor}]/80 to-[${primaryColor}]` };
-  };
-
-  const topBorder = getTopBorderColor();
-
-  return (
-    <Card className={cn(
-      // Base Premium - Design clean e harmonioso
-      "group relative flex flex-col justify-between overflow-hidden transition-all duration-200",
-      "bg-white dark:bg-zinc-900",
-      "border border-zinc-200/80 dark:border-zinc-800/80",
-      "rounded-2xl",
-      "shadow-apple dark:shadow-apple-dark",
-      "hover:shadow-lg dark:hover:shadow-apple-dark-hover",
-      "hover:-translate-y-1",
-      getCardGlow(),
-      // Fixado
-      isPinned && "ring-2 ring-amber-400/50 dark:ring-amber-500/30"
-    )}
-    >
-      {/* Borda superior premium — sempre visível com cor da atribuição */}
-      <div
-        className={cn(
-          "absolute inset-x-0 top-0 h-1 rounded-t-xl transition-opacity duration-300",
-          urgency?.pulse && "animate-pulse"
-        )}
-        style={{
-          background: `linear-gradient(to right, transparent, ${topBorder.color}, transparent)`
-        }}
-      />
-
-      {/* Gradiente de fundo */}
-      <div
-        className="absolute inset-0 opacity-30 group-hover:opacity-60 pointer-events-none rounded-xl transition-opacity duration-300"
-        style={{
-          background: `linear-gradient(to bottom right, ${topBorder.color}10 0%, ${topBorder.color}05 30%, transparent 60%)`
-        }}
-      />
-
-      {/* Quick Actions Overlay - Aparece ao clicar no botão ⚡ */}
-      {showQuickActions && (
-        <div
-          className="absolute inset-0 bg-zinc-900/95 dark:bg-zinc-950/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center animate-in fade-in duration-200 cursor-pointer"
-          onClick={() => setShowQuickActions(false)}
-        >
-          {/* Botão Fechar */}
-          <button
-            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 hover:text-white transition-all"
-            onClick={() => setShowQuickActions(false)}
-          >
-            <XCircle className="w-5 h-5" />
-          </button>
-
-          {/* Nome do assistido */}
-          <p className="text-white/60 text-xs mb-3">{assistido.nome}</p>
-
-          <div className="grid grid-cols-3 gap-3 p-4" onClick={(e) => e.stopPropagation()}>
-            {[
-              { icon: Eye, label: "Ver Perfil", href: `/admin/assistidos/${assistido.id}`, color: "emerald" },
-              { icon: Scale, label: "Processos", href: `/admin/processos?assistido=${assistido.id}`, color: "violet" },
-              { icon: FileText, label: "Demandas", href: `/admin/demandas?assistido=${assistido.id}`, color: "blue" },
-              { icon: FolderOpen, label: "Drive", href: `/admin/drive?assistido=${assistido.id}`, color: "amber" },
-              { icon: Plus, label: "Nova Demanda", href: `/admin/demandas/nova?assistido=${assistido.id}`, color: "emerald" },
-              ...(whatsappUrl ? [{ icon: MessageCircle, label: "WhatsApp", href: whatsappUrl, external: true, color: "emerald" }] : []),
-            ].map((action, idx) => (
-              action.external ? (
-                <a
-                  key={idx}
-                  href={action.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all hover:scale-105"
-                >
-                  <action.icon className="w-5 h-5" />
-                  <span className="text-[10px] font-medium">{action.label}</span>
-                </a>
-              ) : (
-                <Link
-                  key={idx}
-                  href={action.href}
-                  className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all hover:scale-105"
-                >
-                  <action.icon className="w-5 h-5" />
-                  <span className="text-[10px] font-medium">{action.label}</span>
-                </Link>
-              )
-            ))}
-          </div>
-
-          {/* Dica */}
-          <p className="text-white/40 text-[10px] mt-3">Clique fora para fechar</p>
-        </div>
-      )}
-
-      <div className="p-4 space-y-3 relative z-10">
-
-        {/* 1. HEADER: Avatar + Info + Badges */}
-        <div className="flex gap-3 items-start">
-          {/* Avatar Premium - Cor neutra com indicador de status */}
-          <AssistidoAvatar
-            nome={assistido.nome}
-            photoUrl={assistido.photoUrl}
-            size="lg"
-            atribuicao={primaryAttrValue}
-            statusPrisional={assistido.statusPrisional}
-            showStatusDot
-            onClick={onPhotoClick}
-          />
-
-          {/* Info Principal */}
-          <div className="flex-1 min-w-0">
-            {/* Nome */}
-            <Link href={`/admin/assistidos/${assistido.id}`}>
-              <h3 className="font-serif font-semibold text-zinc-900 dark:text-zinc-100 text-sm leading-tight hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors line-clamp-1">
-                {assistido.nome}
-              </h3>
-            </Link>
-
-            {/* Vulgo */}
-            {assistido.vulgo && (
-              <p className="text-[10px] text-zinc-400 italic truncate">&ldquo;{assistido.vulgo}&rdquo;</p>
-            )}
-
-            {/* Meta Info - Simplificado */}
-            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-              {/* Status Badge - Mais discreto */}
-              <span className={cn(
-                "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium",
-                isPreso && "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400",
-                isMonitorado && "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
-                !isPreso && !isMonitorado && "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
-              )}>
-                {statusConfig[assistido.statusPrisional]?.label || "Solto"}
-              </span>
-
-              {/* Tempo Preso */}
-              {isPreso && tempoPreso && (
-                <span className="text-[10px] text-zinc-400 font-mono tabular-nums">{tempoPreso}</span>
-              )}
-
-              {/* Idade */}
-              {idade && (
-                <span className="text-[10px] text-zinc-400">{idade}a</span>
-              )}
-
-              {/* Prazo countdown badge */}
-              {prazoVencido && prazoInfo && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 animate-pulse">
-                  <AlertCircle className="w-3 h-3" />
-                  VENCIDO
-                  {assistido.proximoPrazo && (
-                    <span className="font-mono tabular-nums">
-                      {Math.abs(differenceInDays(parseISO(assistido.proximoPrazo), new Date()))}d
-                    </span>
-                  )}
-                </span>
-              )}
-              {!prazoVencido && prazoUrgente && prazoInfo && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
-                  <Clock className="w-3 h-3" />
-                  {prazoInfo.text}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Drive + Pin Buttons */}
-          <div className="flex items-center gap-1">
-            {/* Drive Link Indicator with Counter & Quick Action */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  {assistido.driveFolderId ? (
-                    <a
-                      href={`https://drive.google.com/drive/folders/${assistido.driveFolderId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={cn(
-                        "h-7 rounded-md flex items-center gap-1.5 px-2 transition-all cursor-pointer",
-                        "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20",
-                        "hover:bg-emerald-100 dark:hover:bg-emerald-900/30",
-                        "border border-emerald-200/50 dark:border-emerald-800/30"
-                      )}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <HardDrive className="w-3.5 h-3.5" />
-                      {(assistido.driveFilesCount ?? 0) > 0 && (
-                        <span className="text-[10px] font-medium tabular-nums">
-                          {assistido.driveFilesCount}
-                        </span>
-                      )}
-                      <ExternalLink className="w-3 h-3 opacity-60" />
-                    </a>
-                  ) : (
-                    <div
-                      className={cn(
-                        "h-7 w-7 rounded-md flex items-center justify-center transition-all cursor-pointer",
-                        "text-zinc-300 hover:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                      )}
-                    >
-                      <Link2Off className="w-3.5 h-3.5" />
-                    </div>
-                  )}
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">
-                  {assistido.driveFolderId
-                    ? `Abrir pasta no Drive${(assistido.driveFilesCount ?? 0) > 0 ? ` (${assistido.driveFilesCount} arquivo${(assistido.driveFilesCount ?? 0) > 1 ? 's' : ''})` : ''}`
-                    : "Sem pasta no Drive"}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            {/* Pin Button */}
-            <Button
-              size="icon"
-              variant="ghost"
-              className={cn(
-                "h-7 w-7 transition-all",
-                isPinned
-                  ? "text-amber-500 bg-amber-100/50 dark:bg-amber-900/30"
-                  : "text-zinc-300 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-              )}
-              onClick={onTogglePin}
-            >
-              {isPinned ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
-            </Button>
-          </div>
-        </div>
-
-        {/* 2. Badges de Atribuição - Simplificados */}
-        <div className="flex items-center justify-between gap-2">
-          {/* Atribuições - NEUTRAS com apenas bolinha colorida */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {atribuicoesUnicas.slice(0, 3).map((attr, idx) => {
-              const normalizedAttr = attr.toUpperCase().replace(/_/g, ' ');
-              const option = ATRIBUICAO_OPTIONS.find(o =>
-                o.value.toUpperCase() === normalizedAttr ||
-                o.label.toUpperCase().includes(normalizedAttr) ||
-                normalizedAttr.includes(o.value.toUpperCase())
-              );
-              const color = option ? SOLID_COLOR_MAP[option.value] || '#6b7280' : '#6b7280';
-              const shortLabel = option?.shortLabel || attr.substring(0, 4);
-
-              return (
-                <span
-                  key={idx}
-                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
-                >
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
-                  {shortLabel}
-                </span>
-              );
-            })}
-            {atribuicoesUnicas.length > 3 && (
-              <span className="text-[10px] text-zinc-400">+{atribuicoesUnicas.length - 3}</span>
-            )}
-          </div>
-
-          {/* Badge de Urgência - Apenas quando realmente urgente */}
-          {urgency && urgency.level !== "normal" && (
-            <span className={cn(
-              "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium",
-              urgency.color === "rose" && "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400",
-              urgency.color === "amber" && "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
-              urgency.pulse && "animate-pulse"
-            )}>
-              <AlertCircle className="w-3 h-3" />
-              {urgency.level}
-            </span>
-          )}
-        </div>
-
-        {/* 3. Local de Prisão (se preso) */}
-        {isPreso && assistido.unidadePrisional && (
-          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800/30">
-            <MapPin className="w-3.5 h-3.5 text-rose-500" />
-            <span className="text-xs text-rose-700 dark:text-rose-400 truncate">{assistido.unidadePrisional}</span>
-          </div>
-        )}
-
-        {/* 4. Inline Stats */}
-        <div className="flex items-center gap-3 px-1">
-          <Link
-            href={`/admin/processos?assistido=${assistido.id}`}
-            className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-          >
-            <Scale className="w-3.5 h-3.5" />
-            <span className="font-semibold text-zinc-700 dark:text-zinc-300">{assistido.processosAtivos || 0}</span>
-            <span>proc.</span>
-          </Link>
-          <span className="text-zinc-300 dark:text-zinc-600">·</span>
-          <Link
-            href={`/admin/demandas?assistido=${assistido.id}`}
-            className={cn(
-              "flex items-center gap-1.5 text-xs transition-colors",
-              assistido.demandasAbertas > 0
-                ? "text-amber-600 dark:text-amber-400 hover:text-amber-700"
-                : "text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400"
-            )}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span className="font-semibold">{assistido.demandasAbertas || 0}</span>
-            <span>dem.</span>
-          </Link>
-          <span className="text-zinc-300 dark:text-zinc-600">·</span>
-          <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-            <Brain className="w-3.5 h-3.5" />
-            <span className="font-semibold text-zinc-700 dark:text-zinc-300">{score}</span>
-          </div>
-        </div>
-
-        {/* 5. Próxima Audiência Compact */}
-        {assistido.proximaAudiencia && (
-          <div className={cn(
-            "flex items-center gap-2.5 px-2.5 py-2 rounded-lg border transition-all duration-200 hover:shadow-sm",
-            audienciaHoje
-              ? "bg-amber-50/80 dark:bg-amber-900/20 border-amber-200/60 dark:border-amber-800/40"
-              : audienciaAmanha
-                ? "bg-blue-50/80 dark:bg-blue-900/20 border-blue-200/60 dark:border-blue-800/40"
-                : "bg-zinc-50/80 dark:bg-zinc-800/40 border-zinc-200/60 dark:border-zinc-700/40"
-          )}>
-            <div className={cn(
-              "w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
-              audienciaHoje && "bg-amber-500 text-white",
-              audienciaAmanha && "bg-blue-500 text-white",
-              !audienciaHoje && !audienciaAmanha && "bg-zinc-200 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400"
-            )}>
-              <Calendar className="w-3.5 h-3.5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className={cn(
-                  "text-[10px] font-bold uppercase tracking-wide",
-                  audienciaHoje && "text-amber-700 dark:text-amber-400",
-                  audienciaAmanha && "text-blue-700 dark:text-blue-400",
-                  !audienciaHoje && !audienciaAmanha && "text-zinc-600 dark:text-zinc-300"
-                )}>
-                  {audienciaHoje ? "HOJE" : audienciaAmanha ? "AMANHÃ" : format(parseISO(assistido.proximaAudiencia), "dd/MM")}
-                </span>
-                <span className="text-[10px] text-zinc-400 font-medium">
-                  {format(parseISO(assistido.proximaAudiencia), "HH:mm")}
-                </span>
-                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate">
-                  · {assistido.tipoProximaAudiencia || "Audiência"}
-                </span>
-              </div>
-            </div>
-            {(audienciaHoje || audienciaAmanha) && (
-              <div className={cn(
-                "w-2 h-2 rounded-full shrink-0",
-                audienciaHoje && "bg-amber-500 animate-pulse",
-                audienciaAmanha && "bg-blue-500"
-              )} />
-            )}
-          </div>
-        )}
-
-        {/* 6. Crime Principal — inline */}
-        {assistido.crimePrincipal && (
-          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 line-clamp-1 px-1">
-            <span className="text-zinc-400 dark:text-zinc-500 uppercase tracking-wide mr-1">Tipo:</span>
-            {assistido.crimePrincipal}
-          </p>
-        )}
-
-        {/* 7. Número do Processo — inline */}
-        {assistido.numeroProcesso && (
-          <div
-            className="flex items-center gap-1.5 px-1 cursor-pointer group/copy"
-            onClick={handleCopyProcesso}
-          >
-            <Scale className="w-3 h-3 text-zinc-400" />
-            <span className="font-mono tabular-nums text-[10px] text-zinc-400 dark:text-zinc-500 truncate flex-1">
-              {assistido.numeroProcesso}
-            </span>
-            {copied ? (
-              <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-            ) : (
-              <Copy className="w-3 h-3 text-zinc-300 group-hover/copy:text-zinc-400 transition-colors" />
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Footer com ações e expansão */}
-      <div className="px-4 py-2.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/50">
-        {/* Ações Rápidas Inline */}
-        <div className="flex items-center gap-1">
-          {/* Botão Quick Actions */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20"
-                onClick={() => setShowQuickActions(true)}
-              >
-                <Zap className="w-3.5 h-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="text-[10px]">Ações Rápidas</TooltipContent>
-          </Tooltip>
-
-          {onPreview && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPreview(); }}
-                  className="h-7 w-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all cursor-pointer"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="text-[10px]">Visualização rápida</TooltipContent>
-            </Tooltip>
-          )}
-
-          <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-1" />
-
-          {whatsappUrl && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                  <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20">
-                    <MessageCircle className="w-3.5 h-3.5" />
-                  </Button>
-                </a>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="text-[10px]">WhatsApp</TooltipContent>
-            </Tooltip>
-          )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link href={`/admin/drive?assistido=${assistido.id}`}>
-                <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20">
-                  <FolderOpen className="w-3.5 h-3.5" />
-                </Button>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="text-[10px]">Drive</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link href={`/admin/demandas/nova?assistido=${assistido.id}`}>
-                <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20">
-                  <Plus className="w-3.5 h-3.5" />
-                </Button>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="text-[10px]">Nova Demanda</TooltipContent>
-          </Tooltip>
-        </div>
-
-        {/* Botão Expandir */}
-        <button
-          className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          <span>{isExpanded ? "Menos detalhes" : "Mais detalhes"}</span>
-          <ChevronDown className={cn(
-            "w-3.5 h-3.5 transition-transform",
-            isExpanded && "rotate-180"
-          )} />
-        </button>
-      </div>
-
-      {/* Seção Expandida Premium */}
-      <Collapsible open={isExpanded}>
-        <CollapsibleContent>
-          <div className="px-4 py-4 space-y-4 border-t border-zinc-100 dark:border-zinc-800 bg-gradient-to-b from-zinc-50/50 to-white dark:from-zinc-900/50 dark:to-zinc-900">
-
-            {/* Contato Premium */}
-            {(assistido.telefone || assistido.telefoneContato) && (
-              <div className="p-3 rounded-lg bg-white dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
-                <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                  <Phone className="w-3 h-3" />
-                  Contato
-                </p>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                      {assistido.telefone || assistido.telefoneContato}
-                    </p>
-                    {assistido.nomeContato && (
-                      <p className="text-[10px] text-zinc-400">Responsável: {assistido.nomeContato}</p>
-                    )}
-                  </div>
-                  {whatsappUrl && (
-                    <a
-                      href={whatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition-colors"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      WhatsApp
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Timeline Premium */}
-            <div className="p-3 rounded-lg bg-white dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
-              <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                Timeline
-              </p>
-              <div className="relative pl-4 space-y-3 border-l-2 border-zinc-200 dark:border-zinc-700">
-                {/* Próxima audiência */}
-                {assistido.proximaAudiencia && (
-                  <div className="relative">
-                    <div className={cn(
-                      "absolute -left-[9px] top-0.5 w-4 h-4 rounded-full flex items-center justify-center",
-                      audienciaHoje ? "bg-amber-500" : audienciaAmanha ? "bg-blue-500" : "bg-violet-500"
-                    )}>
-                      <Calendar className="w-2 h-2 text-white" />
-                    </div>
-                    <div className="ml-3">
-                      <p className={cn(
-                        "text-xs font-semibold",
-                        audienciaHoje && "text-amber-600 dark:text-amber-400",
-                        audienciaAmanha && "text-blue-600 dark:text-blue-400",
-                        !audienciaHoje && !audienciaAmanha && "text-violet-600 dark:text-violet-400"
-                      )}>
-                        {format(parseISO(assistido.proximaAudiencia), "dd/MM/yyyy 'às' HH:mm")}
-                      </p>
-                      <p className="text-[10px] text-zinc-500">
-                        {assistido.tipoProximaAudiencia || "Audiência"} • Próxima
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {/* Último evento */}
-                {assistido.ultimoEvento && (
-                  <div className="relative">
-                    <div className="absolute -left-[9px] top-0.5 w-4 h-4 rounded-full bg-zinc-400 flex items-center justify-center">
-                      <CircleDot className="w-2 h-2 text-white" />
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                        {assistido.ultimoEvento.data ? format(parseISO(assistido.ultimoEvento.data), "dd/MM/yyyy") : ""}
-                      </p>
-                      <p className="text-[10px] text-zinc-500">{assistido.ultimoEvento.titulo}</p>
-                    </div>
-                  </div>
-                )}
-                {/* Cadastro */}
-                <div className="relative">
-                  <div className="absolute -left-[9px] top-0.5 w-4 h-4 rounded-full bg-zinc-300 dark:bg-zinc-600 flex items-center justify-center">
-                    <User className="w-2 h-2 text-white" />
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-xs text-zinc-400">
-                      {format(new Date(assistido.createdAt), "dd/MM/yyyy")}
-                    </p>
-                    <p className="text-[10px] text-zinc-400">Cadastro no sistema</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Ações Completas */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <Link href={`/admin/processos?assistido=${assistido.id}`}>
-                  <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 gap-1">
-                    <Scale className="w-3 h-3" />
-                    Processos
-                  </Button>
-                </Link>
-                <Link href={`/admin/audiencias?assistido=${assistido.id}`}>
-                  <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 gap-1">
-                    <Calendar className="w-3 h-3" />
-                    Audiências
-                  </Button>
-                </Link>
-              </div>
-              {onPreview && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-6 text-[10px] px-2 gap-1 focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1"
-                  onClick={onPreview}
-                >
-                  <Eye className="w-3 h-3" />
-                  Preview
-                </Button>
-              )}
-              <Link href={`/admin/assistidos/${assistido.id}`} className="flex-shrink-0">
-                <Button size="sm" className="h-6 text-[10px] px-2 gap-1 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600">
-                  Ver Perfil
-                  <ChevronRight className="w-3 h-3" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-    </Card>
-  );
-}
-
-// ========================================
-// TABLE VIEW DO ASSISTIDO — Native HTML Table
-// ========================================
-
-function AssistidoTableView({
-  assistidos,
-  pinnedIds,
-  onPhotoClick,
-  onTogglePin,
-  sortBy,
-  onSortChange,
-  onPreview,
-}: {
-  assistidos: AssistidoUI[];
-  pinnedIds: Set<number>;
-  onPhotoClick: (a: AssistidoUI) => void;
-  onTogglePin: (id: number) => void;
-  sortBy: string;
-  onSortChange: (col: string) => void;
-  onPreview?: (a: AssistidoUI) => void;
-}) {
-  const [copiedId, setCopiedId] = useState<number | null>(null);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
-
-  const handleCopyProcesso = (id: number, processo: string) => {
-    navigator.clipboard.writeText(processo);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const sortableHeaders: { id: string; label: string; className?: string }[] = [
-    { id: "nome", label: "Nome" },
-    { id: "prioridade", label: "Status" },
-    { id: "", label: "Atribuicao" },
-    { id: "", label: "Crime" },
-    { id: "", label: "Processo" },
-    { id: "prazo", label: "Audiencia / Prazo" },
-    { id: "", label: "Drive" },
-    { id: "", label: "Acoes" },
-  ];
-
-  return (
-    <div className="rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 overflow-auto" style={{ maxHeight: 'calc(100vh - 320px)' }}>
-      <table className="w-full text-sm">
-        <thead className="sticky top-0 z-10 bg-zinc-50/95 dark:bg-zinc-800/95 backdrop-blur-sm border-b border-zinc-200 dark:border-zinc-800">
-          <tr>
-            {sortableHeaders.map((col) => (
-              <th
-                key={col.label}
-                className={cn(
-                  "px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500",
-                  col.id && "cursor-pointer select-none hover:bg-zinc-100 dark:hover:bg-zinc-800",
-                  col.className,
-                )}
-                onClick={() => col.id && onSortChange(col.id)}
-              >
-                <div className="flex items-center gap-1.5">
-                  {col.label}
-                  {col.id && sortBy === col.id && (
-                    <ArrowUpDown className="w-3 h-3 text-emerald-500" />
-                  )}
-                  {col.id && sortBy !== col.id && (
-                    <ArrowUpDown className="w-3 h-3 text-zinc-300 dark:text-zinc-600" />
-                  )}
-                </div>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
-          {assistidos.map((assistido, index) => {
-            const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
-            const isMonitorado = ["MONITORADO", "DOMICILIAR"].includes(assistido.statusPrisional);
-            const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
-            const prazoVencido = prazoInfo && prazoInfo.text === "Vencido";
-            const tempoPreso = calcularTempoPreso(assistido.dataPrisao ?? null);
-            const statusCfg = statusConfig[assistido.statusPrisional];
-            const isPinned = pinnedIds.has(assistido.id);
-
-            const diasAteAudiencia = assistido.proximaAudiencia
-              ? differenceInDays(parseISO(assistido.proximaAudiencia), new Date())
-              : null;
-            const audienciaHoje = diasAteAudiencia === 0;
-            const audienciaAmanha = diasAteAudiencia === 1;
-
-            const atribuicoesUnicas = assistido.atribuicoes || assistido.areas || [];
-            const primaryAttrOption = atribuicoesUnicas.length > 0
-              ? (() => {
-                  const normalizedAttr = atribuicoesUnicas[0].toUpperCase().replace(/_/g, ' ');
-                  return ATRIBUICAO_OPTIONS.find(o =>
-                    o.value.toUpperCase() === normalizedAttr ||
-                    o.label.toUpperCase().includes(normalizedAttr) ||
-                    normalizedAttr.includes(o.value.toUpperCase())
-                  );
-                })()
-              : null;
-            const primaryColor = primaryAttrOption ? SOLID_COLOR_MAP[primaryAttrOption.value] || '#6b7280' : '#6b7280';
-
-            const telefone = assistido.telefone || assistido.telefoneContato;
-            const whatsappUrl = telefone ? `https://wa.me/55${telefone.replace(/\D/g, '')}` : null;
-
-            return (
-              <Fragment key={assistido.id}>
-              <tr
-                className={cn(
-                  "transition-colors cursor-pointer animate-in fade-in duration-200 fill-mode-both",
-                  "hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10",
-                  index % 2 === 0 ? "bg-white dark:bg-zinc-900" : "bg-zinc-50/50 dark:bg-zinc-900/50",
-                  isPinned && "ring-1 ring-inset ring-amber-400/40 dark:ring-amber-500/20",
-                  isPreso && "border-l-[3px] border-l-rose-500 bg-rose-50/30 dark:bg-rose-950/10",
-                  !isPreso && prazoVencido && "border-l-[3px] border-l-rose-400 bg-rose-50/20 dark:bg-rose-950/5",
-                  !isPreso && !prazoVencido && audienciaHoje && "border-l-[3px] border-l-amber-500 bg-amber-50/20 dark:bg-amber-950/10",
-                  !isPreso && !prazoVencido && !audienciaHoje && isMonitorado && "border-l-[3px] border-l-amber-400",
-                  expandedId === assistido.id && "bg-zinc-50/50 dark:bg-zinc-800/20",
-                )}
-                style={{ animationDelay: `${Math.min(index * 20, 400)}ms` }}
-                onClick={() => setExpandedId(expandedId === assistido.id ? null : assistido.id)}
-                onDoubleClick={() => onPreview?.(assistido)}
-              >
-                {/* Nome */}
-                <td className="py-2.5 px-4 first:pl-6">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <AssistidoAvatar
-                      nome={assistido.nome}
-                      photoUrl={assistido.photoUrl}
-                      size="sm"
-                      atribuicao={primaryAttrOption?.value}
-                      statusPrisional={assistido.statusPrisional}
-                      showStatusDot
-                      onClick={() => onPhotoClick(assistido)}
-                    />
-                    <div className="min-w-0">
-                      <Link
-                        href={`/admin/assistidos/${assistido.id}`}
-                        className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate block hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors max-w-[220px]"
-                      >
-                        {assistido.nome}
-                      </Link>
-                      {assistido.vulgo && (
-                        <span className="text-[10px] text-zinc-400 dark:text-zinc-500 italic truncate block max-w-[140px]">
-                          &ldquo;{assistido.vulgo}&rdquo;
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </td>
-
-                {/* Status */}
-                <td className="py-2.5 px-4">
-                  <div className={cn(
-                    "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap",
-                    isPreso && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
-                    isMonitorado && "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400",
-                    !isPreso && !isMonitorado && "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400",
-                  )}>
-                    <div className={cn(
-                      "w-1.5 h-1.5 rounded-full",
-                      isPreso && "bg-rose-500",
-                      isMonitorado && "bg-amber-500",
-                      !isPreso && !isMonitorado && "bg-emerald-500",
-                    )} />
-                    {statusCfg?.label || assistido.statusPrisional}
-                  </div>
-                  {isPreso && tempoPreso && (
-                    <span className="block text-[10px] font-mono tabular-nums text-rose-400 dark:text-rose-500 mt-0.5 pl-0.5">
-                      {tempoPreso}
-                    </span>
-                  )}
-                </td>
-
-                {/* Atribuicao */}
-                <td className="py-2.5 px-4">
-                  {primaryAttrOption ? (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
-                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: primaryColor }} />
-                      {primaryAttrOption.shortLabel}
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-zinc-300 dark:text-zinc-600">-</span>
-                  )}
-                </td>
-
-                {/* Crime */}
-                <td className="py-2.5 px-4">
-                  {assistido.crimePrincipal ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="text-xs text-zinc-600 dark:text-zinc-400 truncate block max-w-[160px] cursor-help">
-                          {assistido.crimePrincipal}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="text-xs max-w-[300px]">
-                        {assistido.crimePrincipal}
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-[10px] text-zinc-300 dark:text-zinc-600"><Circle className="w-2.5 h-2.5" /> Sem tipo</span>
-                  )}
-                </td>
-
-                {/* Processo */}
-                <td className="py-2.5 px-4">
-                  {assistido.numeroProcesso ? (
-                    <div
-                      className="flex items-center gap-1 cursor-pointer group/copy"
-                      onClick={() => handleCopyProcesso(assistido.id, assistido.numeroProcesso!)}
-                    >
-                      <span className="font-mono tabular-nums text-[10px] text-zinc-500 dark:text-zinc-400 truncate max-w-[150px]">
-                        {assistido.numeroProcesso}
-                      </span>
-                      {copiedId === assistido.id ? (
-                        <CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0" />
-                      ) : (
-                        <Copy className="w-3 h-3 text-zinc-300 dark:text-zinc-600 group-hover/copy:text-zinc-400 transition-colors flex-shrink-0" />
-                      )}
-                    </div>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-[10px] text-zinc-300 dark:text-zinc-600"><Circle className="w-2.5 h-2.5" /> &mdash;</span>
-                  )}
-                </td>
-
-                {/* Audiencia / Prazo */}
-                <td className="py-2.5 px-4">
-                  {assistido.proximaAudiencia ? (
-                    <div className={cn(
-                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-medium whitespace-nowrap",
-                      audienciaHoje && "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 animate-pulse",
-                      audienciaAmanha && "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
-                      !audienciaHoje && !audienciaAmanha && diasAteAudiencia !== null && diasAteAudiencia <= 7 && "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400",
-                      !audienciaHoje && !audienciaAmanha && diasAteAudiencia !== null && diasAteAudiencia > 7 && "text-zinc-400 dark:text-zinc-500",
-                    )}>
-                      <Calendar className="w-3 h-3 flex-shrink-0" />
-                      {audienciaHoje ? "HOJE" : audienciaAmanha ? "Amanha" : `${diasAteAudiencia}d`}
-                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 ml-0.5">
-                        {format(parseISO(assistido.proximaAudiencia), "dd/MM")}
-                      </span>
-                    </div>
-                  ) : prazoInfo ? (
-                    <div className={cn(
-                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-medium whitespace-nowrap",
-                      prazoVencido && "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 animate-pulse",
-                      !prazoVencido && prazoInfo.urgent && "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
-                      !prazoVencido && !prazoInfo.urgent && "text-zinc-400 dark:text-zinc-500",
-                    )}>
-                      {prazoVencido && <AlertCircle className="w-3 h-3 flex-shrink-0" />}
-                      {prazoInfo.text}
-                    </div>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-[10px] text-zinc-300 dark:text-zinc-600"><Circle className="w-2.5 h-2.5" /> &mdash;</span>
-                  )}
-                </td>
-
-                {/* Drive */}
-                <td className="py-2.5 px-4">
-                  {assistido.driveFolderId ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <a
-                          href={`https://drive.google.com/drive/folders/${assistido.driveFolderId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 transition-colors"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <HardDrive className="w-3.5 h-3.5" />
-                          {(assistido.driveFilesCount ?? 0) > 0 && (
-                            <span className="text-[10px] font-medium tabular-nums">{assistido.driveFilesCount}</span>
-                          )}
-                        </a>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="text-[10px]">
-                        Abrir Drive{(assistido.driveFilesCount ?? 0) > 0 ? ` (${assistido.driveFilesCount} arq.)` : ''}
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-zinc-300 dark:text-zinc-600">
-                      <Link2Off className="w-3.5 h-3.5" />
-                      <span className="text-[10px]">&mdash;</span>
-                    </span>
-                  )}
-                </td>
-
-                {/* Acoes */}
-                <td className="py-2.5 px-4 last:pr-6">
-                  <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
-                    {whatsappUrl && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1">
-                              <MessageCircle className="h-3.5 w-3.5" />
-                            </Button>
-                          </a>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="text-[10px]">WhatsApp</TooltipContent>
-                      </Tooltip>
-                    )}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Link href={`/admin/drive?assistido=${assistido.id}`}>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1">
-                            <FolderOpen className="h-3.5 w-3.5" />
-                          </Button>
-                        </Link>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="text-[10px]">Drive</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Link href={`/admin/demandas/nova?assistido=${assistido.id}`}>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1">
-                            <Plus className="h-3.5 w-3.5" />
-                          </Button>
-                        </Link>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="text-[10px]">Nova Demanda</TooltipContent>
-                    </Tooltip>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn(
-                        "h-7 w-7 transition-all focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1",
-                        isPinned
-                          ? "text-amber-500 bg-amber-50 dark:bg-amber-950/30"
-                          : "text-zinc-300 dark:text-zinc-600 hover:text-amber-500",
-                      )}
-                      onClick={() => onTogglePin(assistido.id)}
-                    >
-                      {isPinned ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
-                    </Button>
-                    <Link href={`/admin/assistidos/${assistido.id}`}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2.5 text-xs text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-medium focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1"
-                      >
-                        <Eye className="h-3.5 w-3.5 mr-1" />
-                        Ver
-                      </Button>
-                    </Link>
-                  </div>
-                </td>
-              </tr>
-
-              {/* Row Expansion Panel */}
-              {expandedId === assistido.id && (
-                <tr>
-                  <td colSpan={8} className="p-0">
-                    <div className="px-6 py-4 bg-zinc-50/50 dark:bg-zinc-800/30 border-t border-zinc-100 dark:border-zinc-800 animate-in slide-in-from-top-1 duration-200">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Col 1: Dados Pessoais */}
-                        <div className="space-y-2">
-                          <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium mb-2">Dados Pessoais</p>
-                          {assistido.cpf && (
-                            <div>
-                              <span className="text-[10px] text-zinc-400">CPF: </span>
-                              <span className="text-xs font-mono tabular-nums text-zinc-600 dark:text-zinc-300">
-                                {assistido.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.***.***-$4')}
-                              </span>
-                            </div>
-                          )}
-                          {assistido.rg && (
-                            <div>
-                              <span className="text-[10px] text-zinc-400">RG: </span>
-                              <span className="text-xs text-zinc-600 dark:text-zinc-300">{assistido.rg}</span>
-                            </div>
-                          )}
-                          {assistido.dataNascimento && (
-                            <div>
-                              <span className="text-[10px] text-zinc-400">Nascimento: </span>
-                              <span className="text-xs text-zinc-600 dark:text-zinc-300">{format(parseISO(assistido.dataNascimento), "dd/MM/yyyy")}</span>
-                            </div>
-                          )}
-                          {assistido.naturalidade && (
-                            <div>
-                              <span className="text-[10px] text-zinc-400">Naturalidade: </span>
-                              <span className="text-xs text-zinc-600 dark:text-zinc-300">{assistido.naturalidade}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Col 2: Contato + Crime */}
-                        <div className="space-y-2">
-                          <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium mb-2">Contato / Crime</p>
-                          {telefone && (
-                            <div className="flex items-center gap-2">
-                              <Phone className="w-3 h-3 text-zinc-400" />
-                              <span className="text-xs text-zinc-600 dark:text-zinc-300">{telefone}</span>
-                              {whatsappUrl && (
-                                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-emerald-600" onClick={(e) => e.stopPropagation()}>
-                                  <MessageCircle className="w-3 h-3" />
-                                </a>
-                              )}
-                            </div>
-                          )}
-                          {assistido.crimePrincipal && (
-                            <div>
-                              <span className="text-[10px] text-zinc-400">Crime: </span>
-                              <span className="text-xs text-zinc-600 dark:text-zinc-300">{assistido.crimePrincipal}</span>
-                            </div>
-                          )}
-                          {assistido.numeroProcesso && (
-                            <div>
-                              <span className="text-[10px] text-zinc-400">Processo: </span>
-                              <span className="font-mono tabular-nums text-[10px] text-zinc-500 dark:text-zinc-400">{assistido.numeroProcesso}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Col 3: Mini Timeline */}
-                        <div className="space-y-2">
-                          <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium mb-2">Timeline</p>
-                          {assistido.proximaAudiencia && (
-                            <div className="flex items-center gap-2">
-                              <div className={cn(
-                                "w-2 h-2 rounded-full",
-                                audienciaHoje ? "bg-amber-500 animate-pulse" : audienciaAmanha ? "bg-blue-500" : "bg-violet-500"
-                              )} />
-                              <span className="text-xs text-zinc-600 dark:text-zinc-300">
-                                Audiencia: {audienciaHoje ? "HOJE" : audienciaAmanha ? "Amanha" : format(parseISO(assistido.proximaAudiencia), "dd/MM/yyyy")}
-                              </span>
-                            </div>
-                          )}
-                          {assistido.ultimoEvento && (
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-zinc-400" />
-                              <span className="text-xs text-zinc-500">
-                                {assistido.ultimoEvento.titulo} ({assistido.ultimoEvento.data ? format(parseISO(assistido.ultimoEvento.data), "dd/MM") : ""})
-                              </span>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-                            <span className="text-xs text-zinc-400">
-                              Cadastro: {format(new Date(assistido.createdAt), "dd/MM/yyyy")}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              )}
-              </Fragment>
-            );
-          })}
-        </tbody>
-      </table>
+          </TooltipTrigger>
+          <TooltipContent className="text-xs">{d.label}: {d.value}</TooltipContent>
+        </Tooltip>
+      ))}
     </div>
   );
 }
 
 // ========================================
-// FILTROS - PADRÃO DEMANDAS
+// ANALYTICS TAB COMPONENT
 // ========================================
 
-const estadosPrisionais = [
-  { value: "CADEIA_PUBLICA", label: "Preso", color: "#ef4444" },
-  { value: "PENITENCIARIA", label: "Penitenciária", color: "#dc2626" },
-  { value: "MONITORADO", label: "Monitorado", color: "#3b82f6" },
-  { value: "DOMICILIAR", label: "Domiciliar", color: "#f59e0b" },
-  { value: "SOLTO", label: "Solto", color: "#22c55e" },
-];
+function AnalyticsTab({ assistidos }: { assistidos: AssistidoUI[] }) {
+  const atribuicaoData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    assistidos.forEach((a) => {
+      const attrs = a.atribuicoes || a.areas || [];
+      if (attrs.length === 0) {
+        counts["Sem atribuicao"] = (counts["Sem atribuicao"] || 0) + 1;
+      } else {
+        attrs.forEach((attr) => {
+          const normalizedAttr = attr.toUpperCase().replace(/_/g, " ");
+          const option = ATRIBUICAO_OPTIONS.find(
+            (o) =>
+              o.value.toUpperCase() === normalizedAttr ||
+              o.label.toUpperCase().includes(normalizedAttr) ||
+              normalizedAttr.includes(o.value.toUpperCase())
+          );
+          const label = option?.shortLabel || attr;
+          counts[label] = (counts[label] || 0) + 1;
+        });
+      }
+    });
+    return Object.entries(counts).map(([label, value]) => {
+      const option = ATRIBUICAO_OPTIONS.find((o) => o.shortLabel === label);
+      const color = option ? SOLID_COLOR_MAP[option.value] || "#71717a" : "#71717a";
+      return { label, value, color };
+    });
+  }, [assistidos]);
 
-interface FilterSectionAssistidosProps {
-  selectedAtribuicao: string;
-  setSelectedAtribuicao: (value: string) => void;
-  selectedStatus: string;
-  setSelectedStatus: (value: string) => void;
-  selectedComarca: string;
-  setSelectedComarca: (value: string) => void;
-  comarcas: string[];
-  sortBy: string;
-  setSortBy: (value: string) => void;
-  groupBy: string;
-  setGroupBy: (value: string) => void;
-  viewMode: "grid" | "list";
-  setViewMode: (value: "grid" | "list") => void;
-}
+  const statusData = useMemo(() => {
+    const presos = assistidos.filter((a) =>
+      ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(a.statusPrisional)
+    ).length;
+    const monitorados = assistidos.filter((a) =>
+      ["MONITORADO", "DOMICILIAR"].includes(a.statusPrisional)
+    ).length;
+    const soltos = assistidos.filter((a) => a.statusPrisional === "SOLTO" || !a.statusPrisional).length;
+    return [
+      { label: "Presos", value: presos, color: "#f43f5e" },
+      { label: "Monitorados", value: monitorados, color: "#f59e0b" },
+      { label: "Soltos", value: soltos, color: "#10b981" },
+    ];
+  }, [assistidos]);
 
-function FilterSectionAssistidos({
-  selectedAtribuicao,
-  setSelectedAtribuicao,
-  selectedStatus,
-  setSelectedStatus,
-  selectedComarca,
-  setSelectedComarca,
-  comarcas,
-  sortBy,
-  setSortBy,
-  groupBy,
-  setGroupBy,
-  viewMode,
-  setViewMode,
-}: FilterSectionAssistidosProps) {
-  const { activeCount } = useProcessingQueue();
-  const [isMainExpanded, setIsMainExpanded] = useState(false);
-  const [expandedSections, setExpandedSections] = useState({
-    atribuicoes: false,
-    status: false,
-    comarca: false,
-  });
+  const generalStats = useMemo(() => {
+    const totalProcessos = assistidos.reduce((sum, a) => sum + (a.processosAtivos || 0), 0);
+    const mediaProcessos = assistidos.length > 0 ? (totalProcessos / assistidos.length).toFixed(1) : "0";
+    const comDrive = assistidos.filter((a) => a.driveFolderId).length;
+    const pctDrive = assistidos.length > 0 ? Math.round((comDrive / assistidos.length) * 100) : 0;
+    const comAudienciaProxima = assistidos.filter((a) => {
+      if (!a.proximaAudiencia) return false;
+      const dias = differenceInDays(parseISO(a.proximaAudiencia), new Date());
+      return dias >= 0 && dias <= 30;
+    }).length;
+    const pctAudiencia = assistidos.length > 0 ? Math.round((comAudienciaProxima / assistidos.length) * 100) : 0;
+    const completudeMedia = assistidos.length > 0
+      ? Math.round(assistidos.reduce((sum, a) => sum + computeCompletude(a), 0) / assistidos.length)
+      : 0;
+    return { mediaProcessos, pctDrive, pctAudiencia, completudeMedia };
+  }, [assistidos]);
 
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
+  const monthlyData = useMemo(() => {
+    const months: Record<string, number> = {};
+    const now = new Date();
+    // Last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = format(d, "yyyy-MM");
+      months[key] = 0;
+    }
+    assistidos.forEach((a) => {
+      if (!a.createdAt) return;
+      const key = a.createdAt.substring(0, 7); // yyyy-MM
+      if (key in months) months[key]++;
+    });
+    return Object.entries(months).map(([key, value]) => ({
+      label: format(parseISO(key + "-01"), "MMM"),
+      value,
+      color: "#10b981",
     }));
-  };
-
-  const totalFilters =
-    (selectedAtribuicao !== "all" ? 1 : 0) +
-    (selectedStatus !== "all" ? 1 : 0) +
-    (selectedComarca !== "all" ? 1 : 0);
-
-  const handleClearAll = () => {
-    setSelectedAtribuicao("all");
-    setSelectedStatus("all");
-    setSelectedComarca("all");
-  };
+  }, [assistidos]);
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div 
-          onClick={() => setIsMainExpanded(!isMainExpanded)}
-          className="flex items-center gap-3 cursor-pointer flex-1 group"
-        >
-          <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-            <Filter className="w-3.5 h-3.5 text-zinc-500" />
+    <div className="space-y-6 p-5">
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Media processos/assistido", value: generalStats.mediaProcessos },
+          { label: "Com Drive vinculado", value: `${generalStats.pctDrive}%` },
+          { label: "Audiencia proxima (30d)", value: `${generalStats.pctAudiencia}%` },
+          { label: "Completude media", value: `${generalStats.completudeMedia}%` },
+        ].map((s) => (
+          <div key={s.label} className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/60 dark:border-zinc-700/60">
+            <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100 tabular-nums">{s.value}</p>
+            <p className="text-[10px] text-zinc-400 mt-1">{s.label}</p>
           </div>
-          <div>
-            <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Filtros</h3>
-            <p className="text-[10px] text-zinc-400">
-              {totalFilters > 0 ? `${totalFilters} ativo${totalFilters > 1 ? 's' : ''}` : 'Nenhum filtro aplicado'}
-            </p>
-          </div>
+        ))}
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Atribuicoes Donut */}
+        <div className="p-4 rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 bg-white dark:bg-zinc-900">
+          <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 mb-4">Distribuicao por Atribuicao</p>
+          <DonutChart data={atribuicaoData} />
         </div>
-        <div className="flex items-center gap-2">
-          {totalFilters > 0 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleClearAll}
-              className="h-7 text-[10px] px-2 text-zinc-400 hover:text-zinc-600"
-            >
-              <XCircle className="w-3 h-3 mr-1" />
-              Limpar
-            </Button>
-          )}
-          <div 
-            onClick={() => setIsMainExpanded(!isMainExpanded)}
-            className="p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
-          >
-            {isMainExpanded ? (
-              <ChevronUp className="w-4 h-4 text-zinc-400" />
-            ) : (
-              <ChevronDown className="w-4 h-4 text-zinc-400" />
-            )}
-          </div>
+
+        {/* Status Bar */}
+        <div className="p-4 rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 bg-white dark:bg-zinc-900">
+          <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 mb-4">Distribuicao por Status</p>
+          <BarChartSimple data={statusData} />
         </div>
       </div>
 
-      {/* Seções de Filtro */}
-      {isMainExpanded && (
-        <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-          {/* Atribuição */}
-          <div>
-            <button
-              onClick={() => toggleSection('atribuicoes')}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Atribuição</span>
-                {selectedAtribuicao !== "all" && (
-                  <span 
-                    className="px-2 py-0.5 rounded text-[10px] font-medium text-white"
-                    style={{ backgroundColor: SOLID_COLOR_MAP[selectedAtribuicao] || '#71717a' }}
-                  >
-                    {ATRIBUICAO_OPTIONS.find(o => o.value === selectedAtribuicao)?.shortLabel}
-                  </span>
-                )}
-              </div>
-              {expandedSections.atribuicoes ? <ChevronUp className="w-3.5 h-3.5 text-zinc-400" /> : <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />}
-            </button>
-            
-            {expandedSections.atribuicoes && (
-              <div className="mt-1.5 px-2 flex flex-wrap gap-1.5">
-                {ATRIBUICAO_OPTIONS.filter(o => o.value !== "all").map((option) => {
-                  const isSelected = selectedAtribuicao === option.value;
-                  return (
-                    <button
-                      key={option.value}
-                      onClick={() => setSelectedAtribuicao(isSelected ? "all" : option.value)}
-                      className={cn(
-                        "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-medium transition-all",
-                        isSelected
-                          ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100"
-                          : "bg-white dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300"
-                      )}
-                    >
-                      <div 
-                        className="w-2 h-2 rounded-full" 
-                        style={{ backgroundColor: SOLID_COLOR_MAP[option.value] || '#71717a' }} 
-                      />
-                      {option.shortLabel}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Estado Prisional */}
-          <div>
-            <button
-              onClick={() => toggleSection('status')}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Estado Prisional</span>
-                {selectedStatus !== "all" && (
-                  <span 
-                    className="px-2 py-0.5 rounded text-[10px] font-medium text-white"
-                    style={{ backgroundColor: estadosPrisionais.find(e => e.value === selectedStatus)?.color }}
-                  >
-                    {estadosPrisionais.find(e => e.value === selectedStatus)?.label}
-                  </span>
-                )}
-              </div>
-              {expandedSections.status ? <ChevronUp className="w-3.5 h-3.5 text-zinc-400" /> : <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />}
-            </button>
-            
-            {expandedSections.status && (
-              <div className="mt-1.5 px-2 flex flex-wrap gap-1.5">
-                {estadosPrisionais.map((estado) => {
-                  const isSelected = selectedStatus === estado.value;
-                  return (
-                    <button
-                      key={estado.value}
-                      onClick={() => setSelectedStatus(isSelected ? "all" : estado.value)}
-                      className={cn(
-                        "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-medium transition-all",
-                        isSelected
-                          ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100"
-                          : "bg-white dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300"
-                      )}
-                    >
-                      <div 
-                        className="w-2 h-2 rounded-full" 
-                        style={{ backgroundColor: estado.color }} 
-                      />
-                      {estado.label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Comarca */}
-          {comarcas.length > 0 && (
-            <div>
-              <button
-                onClick={() => toggleSection('comarca')}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Comarca</span>
-                  {selectedComarca !== "all" && (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300">
-                      {selectedComarca}
-                    </span>
-                  )}
-                </div>
-                {expandedSections.comarca ? <ChevronUp className="w-3.5 h-3.5 text-zinc-400" /> : <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />}
-              </button>
-              
-              {expandedSections.comarca && (
-                <div className="mt-1.5 px-2 flex flex-wrap gap-1.5">
-                  {comarcas.map((comarca) => {
-                    const isSelected = selectedComarca === comarca;
-                    return (
-                      <button
-                        key={comarca}
-                        onClick={() => setSelectedComarca(isSelected ? "all" : comarca)}
-                        className={cn(
-                          "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-medium transition-all",
-                          isSelected
-                            ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100"
-                            : "bg-white dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300"
-                        )}
-                      >
-                        <MapPin className="w-2.5 h-2.5" />
-                        {comarca}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Barra de Ações (Ordenação, View) */}
-      <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-zinc-800">
-        {/* Botões de Ordenação */}
-        <div className="flex items-center gap-1">
-          <span className="text-[10px] text-zinc-400 mr-1">Ordenar:</span>
-          <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
-            {[
-              { id: "nome", label: "Nome" },
-              { id: "prioridade", label: "Prioridade" },
-              { id: "complexidade", label: "Complexidade" },
-              { id: "prazo", label: "Prazo" },
-            ].map((opt) => (
-              <button
-                key={opt.id}
-                onClick={() => setSortBy(opt.id)}
-                className={cn(
-                  "px-2.5 py-1 text-[10px] font-medium rounded-md transition-all",
-                  sortBy === opt.id
-                    ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <ProcessingQueuePanel>
-            <button
-              className={cn(
-                "h-8 w-8 inline-flex items-center justify-center gap-1 rounded-md transition-colors",
-                activeCount > 0
-                  ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400"
-                  : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              )}
-              title="Fila de processamento"
-            >
-              <Activity className={cn("h-3.5 w-3.5", activeCount > 0 && "animate-pulse")} />
-              {activeCount > 0 && (
-                <span className="text-[10px] font-medium">{activeCount}</span>
-              )}
-            </button>
-          </ProcessingQueuePanel>
-          <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={cn(
-                "flex items-center gap-1 px-2.5 h-7 text-xs font-medium rounded-md transition-all",
-                viewMode === "grid"
-                  ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-700"
-              )}
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={cn(
-                "flex items-center gap-1 px-2.5 h-7 text-xs font-medium rounded-md transition-all",
-                viewMode === "list"
-                  ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-700"
-              )}
-            >
-              <List className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
+      {/* Monthly Trend */}
+      <div className="p-4 rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 bg-white dark:bg-zinc-900">
+        <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 mb-4">Novos cadastros (ultimos 6 meses)</p>
+        <BarChartSimple data={monthlyData} />
       </div>
     </div>
   );
 }
+
+// ========================================
+// RECENT ASSISTIDOS SECTION
+// ========================================
+
+const RECENT_STORAGE_KEY = "ombuds:recent-assistidos";
+const MAX_RECENT = 5;
+
+function useRecentAssistidos() {
+  const [recentIds, setRecentIds] = useState<number[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(RECENT_STORAGE_KEY);
+      if (stored) setRecentIds(JSON.parse(stored));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const addRecent = useCallback((id: number) => {
+    setRecentIds((prev) => {
+      const next = [id, ...prev.filter((x) => x !== id)].slice(0, MAX_RECENT);
+      try {
+        localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+
+  return { recentIds, addRecent };
+}
+
+// ========================================
+// MAIN PAGE COMPONENT
+// ========================================
 
 export default function AssistidosPage() {
   const router = useRouter();
-  // Atribuicao do contexto global
+  const searchParams = useSearchParams();
   const { currentAssignment } = useAssignment();
   const utils = trpc.useUtils();
+
+  // Search input ref for keyboard shortcut
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Buscar assistidos do banco de dados (com fallback offline)
   const assistidosQuery = trpc.assistidos.list.useQuery();
@@ -2272,18 +394,17 @@ export default function AssistidosPage() {
     assistidosQuery,
     getOfflineAssistidos,
   );
-  
+
   // Transformar dados do banco para o formato esperado pela UI
   const realAssistidos = useMemo(() => {
     if (!assistidosData) return [];
     return assistidosData.map((a) => {
-      // Extrair atribuições e áreas como arrays (suporte para snake_case e camelCase)
       const atribuicoesStr = ((a as any).atribuicoes || "") as string;
       const areasStr = ((a as any).areas || "") as string;
       const atribuicoes = atribuicoesStr ? atribuicoesStr.split(',').filter(Boolean) : [];
       const areas = areasStr ? areasStr.split(',').filter(Boolean) : [];
       const comarcasStr = ((a as any).comarcas || "") as string;
-      
+
       return {
         id: a.id,
         nome: a.nome,
@@ -2300,22 +421,19 @@ export default function AssistidosPage() {
         endereco: a.endereco || "",
         photoUrl: a.photoUrl || "",
         observacoes: a.observacoes || "",
-        // Campos derivados usando dados reais do banco
         area: areas[0] || "CRIMINAL",
-        areas: areas, // Lista de áreas para múltiplas cores
-        atribuicoes: atribuicoes, // Lista de atribuições para múltiplas cores
+        areas: areas,
+        atribuicoes: atribuicoes,
         vulgo: "",
         crimePrincipal: (a as any).crimePrincipal || "",
-        defensor: "Não atribuído",
+        defensor: "Nao atribuido",
         processoPrincipal: (a as any).processoPrincipal || "",
-        // Usar dados reais da query (Drizzle retorna camelCase)
         demandasAbertas: (a as any).demandasAbertasCount || 0,
         processosAtivos: (a as any).processosCount || 0,
         proximoPrazo: (a as any).proximoPrazo || null,
         proximaAudiencia: (a as any).proximaAudiencia || null,
         prioridadeAI: "NORMAL" as const,
         createdAt: a.createdAt?.toISOString() || new Date().toISOString(),
-        // Campos adicionais para compatibilidade com o componente
         testemunhasArroladas: [] as Array<{ nome: string; ouvida: boolean }>,
         interrogatorioRealizado: false,
         tipoProximaAudiencia: "",
@@ -2332,53 +450,62 @@ export default function AssistidosPage() {
         atoProximoPrazo: "",
         nomeMae: a.nomeMae || "",
         bairro: "",
-        cidade: "Camaçari",
-        // Novos campos
+        cidade: "Camacari",
         comarcas: comarcasStr ? comarcasStr.split(',').filter(Boolean) : [],
-        // Score calculado no cliente para evitar query pesada
         scoreComplexidade: ((a as any).processosCount || 0) * 10 +
           ((a as any).demandasAbertasCount || 0) * 5 +
           (["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(a.statusPrisional || "") ? 20 : 0),
         ultimoEvento: null,
-        // Drive integration
         driveFolderId: a.driveFolderId || null,
         driveFilesCount: (a as any).driveFilesCount || 0,
-      };
+      } as AssistidoUI;
     });
   }, [assistidosData]);
-  
-  // Estados
-  const [atribuicaoFilter, setAtribuicaoFilter] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [searchTerm, setSearchTerm] = useState("");
-  // Busca server-side por número de processo (complementa filtro client-side)
+
+  // ========================================
+  // STATE — Read initial values from URL
+  // ========================================
+
+  const [activeTab, setActiveTab] = useState<"lista" | "analytics">(
+    (searchParams.get("tab") as "lista" | "analytics") || "lista"
+  );
+  const [atribuicaoFilter, setAtribuicaoFilter] = useState<string>(searchParams.get("atribuicao") || "all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">(
+    (searchParams.get("view") as "grid" | "list") || "grid"
+  );
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "all");
+  const [areaFilter, setAreaFilter] = useState("all");
+  const [comarcaFilter, setComarcaFilter] = useState("all");
+  const [sortBy, setSortBy] = useState<"nome" | "prioridade" | "prazo" | "complexidade">(
+    (searchParams.get("sort") as any) || "nome"
+  );
+  const [groupBy, setGroupBy] = useState<"none" | "comarca" | "area" | "status">("none");
+  const [showNaoIdentificados, setShowNaoIdentificados] = useState(false);
+  const [showArquivados, setShowArquivados] = useState(false);
+  const [smartPreset, setSmartPreset] = useState<string | null>(searchParams.get("preset") || null);
+
+  // Busca server-side por numero de processo
   const isProcessoSearch = searchTerm.length > 3 && /\d{4,}/.test(searchTerm) && (searchTerm.includes('-') || searchTerm.includes('.'));
   const processoSearchQuery = trpc.assistidos.list.useQuery(
     { search: searchTerm },
     { enabled: isProcessoSearch }
   );
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [areaFilter, setAreaFilter] = useState("all");
-  const [comarcaFilter, setComarcaFilter] = useState("all");
-  const [sortBy, setSortBy] = useState<"nome" | "prioridade" | "prazo" | "complexidade">("nome");
-  const [groupBy, setGroupBy] = useState<"none" | "comarca" | "area" | "status">("none");
-  const [showNaoIdentificados, setShowNaoIdentificados] = useState(false);
-  const [showArquivados, setShowArquivados] = useState(false);
-  const [smartPreset, setSmartPreset] = useState<string | null>(null);
 
-  // Contagem de não identificados
+  // Contagem de nao identificados
   const naoIdentificadosCount = useMemo(() => {
-    return realAssistidos.filter(a => 
-      a.nome.toLowerCase().includes("não identificado") || 
+    return realAssistidos.filter(a =>
+      a.nome.toLowerCase().includes("nao identificado") ||
       a.nome.toLowerCase().includes("nao identificado") ||
       a.nome === "" ||
       a.nome === "-"
     ).length;
   }, [realAssistidos]);
+
   const [showPinnedOnly, setShowPinnedOnly] = useState(false);
   const [pinnedIds, setPinnedIds] = useState<Set<number>>(new Set());
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
-  const [selectedAssistido, setSelectedAssistido] = useState<typeof realAssistidos[0] | null>(null);
+  const [selectedAssistido, setSelectedAssistido] = useState<AssistidoUI | null>(null);
   const [previewAssistido, setPreviewAssistido] = useState<AssistidoUI | null>(null);
 
   // Sticky summary bar
@@ -2418,7 +545,7 @@ export default function AssistidosPage() {
       setBatchSelectedIds(new Set());
     },
     onError: (err) => {
-      import("sonner").then(({ toast }) => toast.error(err.message));
+      toast.error(err.message);
     },
   });
 
@@ -2432,7 +559,75 @@ export default function AssistidosPage() {
     });
   };
 
-  // Extrair comarcas únicas dos assistidos
+  // Recent assistidos
+  const { recentIds, addRecent } = useRecentAssistidos();
+
+  // ========================================
+  // DEEP LINK — Update URL when filters change
+  // ========================================
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (activeTab !== "lista") params.set("tab", activeTab);
+    if (atribuicaoFilter !== "all") params.set("atribuicao", atribuicaoFilter);
+    if (viewMode !== "grid") params.set("view", viewMode);
+    if (searchTerm) params.set("search", searchTerm);
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    if (sortBy !== "nome") params.set("sort", sortBy);
+    if (smartPreset) params.set("preset", smartPreset);
+
+    const newUrl = params.toString()
+      ? `${window.location.pathname}?${params.toString()}`
+      : window.location.pathname;
+
+    if (newUrl !== window.location.pathname + window.location.search) {
+      window.history.replaceState(null, "", newUrl);
+    }
+  }, [activeTab, atribuicaoFilter, viewMode, searchTerm, statusFilter, sortBy, smartPreset]);
+
+  // ========================================
+  // KEYBOARD SHORTCUTS
+  // ========================================
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (document.activeElement as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") {
+        if (e.key === "Escape") {
+          (document.activeElement as HTMLElement).blur();
+          setSearchTerm("");
+          setPreviewAssistido(null);
+        }
+        return;
+      }
+
+      if (e.key === "/") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      } else if (e.key === "n" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        router.push("/admin/assistidos/novo");
+      } else if (e.key === "g" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setViewMode("grid");
+      } else if (e.key === "t" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setViewMode("list");
+      } else if (e.key === "Escape") {
+        setPreviewAssistido(null);
+        setSearchTerm("");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [router]);
+
+  // ========================================
+  // DERIVED DATA
+  // ========================================
+
+  // Extrair comarcas unicas dos assistidos
   const comarcasUnicas = useMemo(() => {
     const allComarcas = new Set<string>();
     realAssistidos.forEach(a => {
@@ -2441,21 +636,7 @@ export default function AssistidosPage() {
     return Array.from(allComarcas).sort();
   }, [realAssistidos]);
 
-  const handlePhotoClick = (assistido: typeof realAssistidos[0]) => {
-    setSelectedAssistido(assistido);
-    setPhotoDialogOpen(true);
-  };
-
-  const togglePin = useCallback((id: number) => {
-    setPinnedIds(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) newSet.delete(id);
-      else newSet.add(id);
-      return newSet;
-    });
-  }, []);
-
-  // IDs de assistidos encontrados via busca server-side por número de processo
+  // IDs de assistidos encontrados via busca server-side por numero de processo
   const processoSearchIds = useMemo(() => {
     if (!isProcessoSearch || !processoSearchQuery.data) return new Set<number>();
     return new Set(processoSearchQuery.data.map(a => a.id));
@@ -2463,22 +644,29 @@ export default function AssistidosPage() {
 
   const filteredAssistidos = useMemo(() => {
     let result = realAssistidos.filter((a) => {
-      // Verificar se é "Não Identificado"
-      const isNaoIdentificado = 
-        a.nome.toLowerCase().includes("não identificado") || 
+      // Verificar se e "Nao Identificado"
+      const isNaoIdentificado =
+        a.nome.toLowerCase().includes("nao identificado") ||
         a.nome.toLowerCase().includes("nao identificado") ||
         a.nome === "" ||
         a.nome === "-";
-      
-      // Se estiver no modo "Não Identificados", mostrar apenas esses
-      if (showNaoIdentificados) {
-        return isNaoIdentificado;
-      }
-      
-      // Caso contrário, excluir os não identificados da lista normal
+
+      if (showNaoIdentificados) return isNaoIdentificado;
       if (isNaoIdentificado) return false;
-      
-      const matchesSearch = a.nome.toLowerCase().includes(searchTerm.toLowerCase()) || a.cpf.includes(searchTerm) || (a.vulgo?.toLowerCase().includes(searchTerm.toLowerCase())) || (a.crimePrincipal?.toLowerCase().includes(searchTerm.toLowerCase())) || (a.numeroProcesso?.includes(searchTerm)) || processoSearchIds.has(a.id);
+
+      // Expanded search: includes endereco, unidadePrisional, nomeMae
+      const term = searchTerm.toLowerCase();
+      const matchesSearch = !term ||
+        a.nome.toLowerCase().includes(term) ||
+        a.cpf.includes(searchTerm) ||
+        (a.vulgo?.toLowerCase().includes(term)) ||
+        (a.crimePrincipal?.toLowerCase().includes(term)) ||
+        (a.numeroProcesso?.includes(searchTerm)) ||
+        (a.endereco?.toLowerCase().includes(term)) ||
+        (a.unidadePrisional?.toLowerCase().includes(term)) ||
+        (a.nomeMae?.toLowerCase().includes(term)) ||
+        processoSearchIds.has(a.id);
+
       const matchesStatus = statusFilter === "all" || a.statusPrisional === statusFilter;
       const matchesArea = areaFilter === "all" || a.area === areaFilter;
       const matchesPinned = !showPinnedOnly || pinnedIds.has(a.id);
@@ -2535,18 +723,16 @@ export default function AssistidosPage() {
     });
 
     return result;
-  }, [realAssistidos, searchTerm, statusFilter, areaFilter, comarcaFilter, sortBy, pinnedIds, showPinnedOnly, atribuicaoFilter, showNaoIdentificados, smartPreset]);
+  }, [realAssistidos, searchTerm, statusFilter, areaFilter, comarcaFilter, sortBy, pinnedIds, showPinnedOnly, atribuicaoFilter, showNaoIdentificados, smartPreset, processoSearchIds]);
 
-  // Progressive rendering — show first 24 instantly (6 cols × 4 rows), render rest incrementally
+  // Progressive rendering
   const { visibleItems: visibleAssistidos } = useProgressiveList(filteredAssistidos, 24, 24);
 
-  // Detectar potenciais duplicados (nomes muito similares) - Otimizado com hash map
+  // Detectar potenciais duplicados
   const potentialDuplicates = useMemo(() => {
     const duplicateMap: Record<number, number[]> = {};
-    
-    // Agrupar por primeiro+último nome usando hash map (O(n) em vez de O(n²))
     const firstLastNameMap: Record<string, number[]> = {};
-    
+
     const normalizeName = (name: string) => {
       return name.toLowerCase()
         .normalize("NFD")
@@ -2554,21 +740,19 @@ export default function AssistidosPage() {
         .replace(/\s+/g, " ")
         .trim();
     };
-    
+
     const getFirstLastName = (name: string) => {
       const parts = name.split(" ");
       if (parts.length < 2) return name;
       return `${parts[0]} ${parts[parts.length - 1]}`;
     };
-    
-    // Primeira passada: agrupar por primeiro+último nome
+
     realAssistidos.forEach((a) => {
       const key = getFirstLastName(normalizeName(a.nome));
       if (!firstLastNameMap[key]) firstLastNameMap[key] = [];
       firstLastNameMap[key].push(a.id);
     });
-    
-    // Segunda passada: marcar duplicados (apenas grupos com 2+ itens)
+
     Object.values(firstLastNameMap).forEach(ids => {
       if (ids.length > 1) {
         ids.forEach(id => {
@@ -2576,34 +760,34 @@ export default function AssistidosPage() {
         });
       }
     });
-    
+
     return duplicateMap;
   }, [realAssistidos]);
 
   // Agrupamento inteligente
   const groupedAssistidos = useMemo(() => {
     if (groupBy === "none") return null;
-    
+
     const groups: Record<string, typeof filteredAssistidos> = {};
-    
+
     filteredAssistidos.forEach(a => {
       let key = "";
       if (groupBy === "comarca") {
         key = (a.comarcas || [])[0] || "Sem comarca";
       } else if (groupBy === "area") {
-        key = (a.areas || [])[0] || a.area || "Sem área";
+        key = (a.areas || [])[0] || a.area || "Sem area";
       } else if (groupBy === "status") {
         key = statusConfig[a.statusPrisional]?.label || a.statusPrisional;
       }
-      
+
       if (!groups[key]) groups[key] = [];
       groups[key].push(a);
     });
-    
+
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
   }, [filteredAssistidos, groupBy]);
 
-  // Estatísticas Premium
+  // Estatisticas
   const stats = useMemo(() => {
     const total = realAssistidos.length;
     const presos = realAssistidos.filter(a => ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(a.statusPrisional)).length;
@@ -2611,7 +795,6 @@ export default function AssistidosPage() {
     const soltos = realAssistidos.filter(a => a.statusPrisional === "SOLTO").length;
     const pinned = pinnedIds.size;
 
-    // Audiências
     const audienciasHoje = realAssistidos.filter(a => {
       if (!a.proximaAudiencia) return false;
       return differenceInDays(parseISO(a.proximaAudiencia), new Date()) === 0;
@@ -2623,7 +806,6 @@ export default function AssistidosPage() {
       return dias >= 0 && dias <= 7;
     }).length;
 
-    // Prazos
     const prazosVencidos = realAssistidos.filter(a => {
       if (!a.proximoPrazo) return false;
       return differenceInDays(parseISO(a.proximoPrazo), new Date()) < 0;
@@ -2635,17 +817,18 @@ export default function AssistidosPage() {
       return dias >= 0 && dias <= 3;
     }).length;
 
-    // Com demandas abertas
     const comDemandas = realAssistidos.filter(a => a.demandasAbertas > 0).length;
-
-    // Sem Drive
     const semDrive = realAssistidos.filter(a => !a.driveFolderId).length;
 
-    // Novos (30 dias)
     const novos30d = realAssistidos.filter(a => {
       if (!a.createdAt) return false;
       return differenceInDays(new Date(), parseISO(a.createdAt)) <= 30;
     }).length;
+
+    // Completude media
+    const completudeMedia = total > 0
+      ? Math.round(realAssistidos.reduce((sum, a) => sum + computeCompletude(a), 0) / total)
+      : 0;
 
     return {
       total,
@@ -2660,14 +843,48 @@ export default function AssistidosPage() {
       comDemandas,
       semDrive,
       novos30d,
+      completudeMedia,
     };
   }, [realAssistidos, pinnedIds]);
-  
-  // Loading state
+
+  // ========================================
+  // CALLBACKS
+  // ========================================
+
+  const handlePhotoClick = (assistido: AssistidoUI) => {
+    setSelectedAssistido(assistido);
+    setPhotoDialogOpen(true);
+  };
+
+  const togglePin = useCallback((id: number) => {
+    setPinnedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
+      return newSet;
+    });
+  }, []);
+
+  const handlePreview = useCallback((a: AssistidoUI) => {
+    setPreviewAssistido(a);
+    addRecent(a.id);
+  }, [addRecent]);
+
+  // Recent assistidos resolved from IDs
+  const recentAssistidos = useMemo(() => {
+    if (recentIds.length === 0) return [];
+    return recentIds
+      .map((id) => realAssistidos.find((a) => a.id === id))
+      .filter(Boolean) as AssistidoUI[];
+  }, [recentIds, realAssistidos]);
+
+  // ========================================
+  // LOADING STATE
+  // ========================================
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-        {/* Header skeleton */}
         <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center gap-3">
             <Skeleton className="h-7 w-7 rounded-md" />
@@ -2676,16 +893,12 @@ export default function AssistidosPage() {
             <Skeleton className="h-7 w-20 rounded-md" />
           </div>
         </div>
-        
         <div className="p-4 md:p-6 space-y-4">
-          {/* Stats skeleton - 2 colunas em mobile */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
             {[1, 2, 3, 4, 5].map(i => (
               <Skeleton key={i} className="h-16 rounded-lg animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
             ))}
           </div>
-          
-          {/* Cards skeleton */}
           <Card className="border border-zinc-200 dark:border-zinc-800">
             <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -2724,29 +937,54 @@ export default function AssistidosPage() {
     );
   }
 
-  // Visual config da atribuicao selecionada
+  // ========================================
+  // RENDER
+  // ========================================
+
   const atribuicaoColors = getAtribuicaoColors(atribuicaoFilter);
 
-  // Preparar filtros ativos
-  const activeFilters = [
-    statusFilter !== "all" && { 
-      key: "status", 
-      label: "Status", 
-      value: statusConfig[statusFilter]?.label || statusFilter 
-    },
-    areaFilter !== "all" && { 
-      key: "area", 
-      label: "Área", 
-      value: areaConfig[areaFilter]?.labelFull || areaFilter 
-    },
-    sortBy !== "prioridade" && { 
-      key: "sort", 
-      label: "Ordenação", 
-      value: sortBy === "nome" ? "Nome" : "Prazo" 
-    },
-  ].filter(Boolean) as Array<{ key: string; label: string; value: string }>;
+  // Helper to render a card with batch select overlay
+  const renderCardWithBatch = (a: AssistidoUI, index?: number) => (
+    <div
+      key={a.id}
+      className={cn(
+        "relative",
+        index !== undefined && "animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both"
+      )}
+      style={index !== undefined ? { animationDelay: `${Math.min(index * 40, 600)}ms` } : undefined}
+    >
+      {batchSelectMode && (
+        <button
+          onClick={() => toggleBatchSelect(a.id, !!a.cpf)}
+          className={cn(
+            "absolute top-2 left-2 z-10 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+            !a.cpf
+              ? "border-zinc-300 bg-zinc-100 cursor-not-allowed opacity-40"
+              : batchSelectedIds.has(a.id)
+              ? "border-amber-500 bg-amber-500"
+              : "border-zinc-300 bg-white hover:border-amber-400"
+          )}
+          title={!a.cpf ? "Assistido sem CPF -- nao pode ser exportado" : undefined}
+        >
+          {batchSelectedIds.has(a.id) && (
+            <CheckCircle2 className="w-3 h-3 text-white" />
+          )}
+        </button>
+      )}
+      <AssistidoCard
+        assistido={a}
+        onPhotoClick={() => handlePhotoClick(a)}
+        isPinned={pinnedIds.has(a.id)}
+        onTogglePin={() => togglePin(a.id)}
+        hasDuplicates={(potentialDuplicates[a.id]?.length || 0) > 0}
+        duplicateCount={potentialDuplicates[a.id]?.length || 0}
+        onPreview={() => handlePreview(a)}
+      />
+    </div>
+  );
 
   return (
+    <TooltipProvider>
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
       {/* Header Premium */}
       <div className="relative px-4 sm:px-5 md:px-8 py-5 sm:py-6 md:py-8 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
@@ -2758,52 +996,60 @@ export default function AssistidosPage() {
             </div>
             <div>
               <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">Assistidos</h1>
-              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Cadastro e gestão de assistidos</p>
+              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+                Cadastro e gestao de assistidos
+                <span className="hidden sm:inline text-zinc-300 dark:text-zinc-600 ml-2">|</span>
+                <span className="hidden sm:inline text-zinc-400 dark:text-zinc-500 ml-2 text-[10px]">
+                  / buscar  n novo  g grid  t tabela
+                </span>
+              </p>
             </div>
           </div>
-          
-          {/* Busca + Ações */}
+
+          {/* Busca + Acoes */}
           <div className="flex items-center gap-2">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
               <Input
+                ref={searchInputRef}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar por nome, CPF ou número de processo..."
+                placeholder="Nome, CPF, processo, endereco, mae..."
                 className="pl-8 w-[140px] sm:w-[200px] md:w-[280px] h-8 text-xs border-zinc-200/80 dark:border-zinc-700/80 bg-zinc-100 dark:bg-zinc-800 rounded-lg transition-colors"
               />
-              {searchTerm.length > 3 && /\d{4,}/.test(searchTerm) && (
+              {isProcessoSearch && (
                 <p className="text-[10px] text-zinc-400 mt-0.5 absolute left-0 -bottom-4 whitespace-nowrap">
-                  Buscando por número de processo...
+                  Buscando por numero de processo...
                 </p>
               )}
             </div>
             <Link href="/admin/inteligencia">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                title="Inteligência"
+                title="Inteligencia"
               >
                 <Brain className="w-3.5 h-3.5" />
               </Button>
             </Link>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-              title="Exportar"
+              title="Exportar CSV"
+              onClick={() => exportToCSV(filteredAssistidos)}
             >
               <Download className="w-3.5 h-3.5" />
             </Button>
-            {/* Botão batch Solar export */}
+            {/* Botao batch Solar export */}
             {!batchSelectMode ? (
               <Button
                 variant="outline"
                 size="sm"
                 className="h-7 px-2.5 border-amber-200 text-amber-700 hover:bg-amber-50 text-xs font-medium rounded-md"
                 onClick={() => setBatchSelectMode(true)}
-                title="Exportar múltiplos assistidos ao Solar via SIGAD"
+                title="Exportar multiplos assistidos ao Solar via SIGAD"
               >
                 <Sun className="w-3.5 h-3.5 mr-1" />
                 Solar
@@ -2916,10 +1162,51 @@ export default function AssistidosPage() {
         </div>
       )}
 
-      {/* Conteúdo Principal */}
+      {/* Conteudo Principal */}
       <div className="p-5 md:p-8 space-y-5 md:space-y-7">
 
-      {/* Alerta de Não Identificados - Discreto */}
+      {/* Tab System: Lista | Analytics */}
+      <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg w-fit">
+        <button
+          onClick={() => setActiveTab("lista")}
+          className={cn(
+            "flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium rounded-md transition-all",
+            activeTab === "lista"
+              ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
+              : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+          )}
+        >
+          <Users className="w-3.5 h-3.5" />
+          Lista
+        </button>
+        <button
+          onClick={() => setActiveTab("analytics")}
+          className={cn(
+            "flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium rounded-md transition-all",
+            activeTab === "analytics"
+              ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
+              : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+          )}
+        >
+          <BarChart3 className="w-3.5 h-3.5" />
+          Analytics
+        </button>
+      </div>
+
+      {/* Analytics Tab Content */}
+      {activeTab === "analytics" && (
+        <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark">
+          <AnalyticsTab assistidos={realAssistidos.filter(a => {
+            const isNI = a.nome.toLowerCase().includes("nao identificado") || a.nome === "" || a.nome === "-";
+            return !isNI;
+          })} />
+        </Card>
+      )}
+
+      {/* Lista Tab Content */}
+      {activeTab === "lista" && (
+      <>
+      {/* Alerta de Nao Identificados */}
       {naoIdentificadosCount > 0 && !showNaoIdentificados && (
         <button
           onClick={() => setShowNaoIdentificados(true)}
@@ -2927,44 +1214,43 @@ export default function AssistidosPage() {
         >
           <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
           <span className="text-xs text-amber-700 dark:text-amber-400">
-            {naoIdentificadosCount} sem identificação
+            {naoIdentificadosCount} sem identificacao
           </span>
           <span className="text-[10px] text-amber-500 dark:text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity">
-            Regularizar →
+            Regularizar
           </span>
         </button>
       )}
 
-      {/* Banner modo Não Identificados */}
+      {/* Banner modo Nao Identificados */}
       {showNaoIdentificados && (
         <div className="flex items-center justify-between p-3 rounded-xl border border-amber-400 dark:border-amber-700 bg-amber-100 dark:bg-amber-900/30">
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-600" />
             <div>
               <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                Modo Regularização - Assistidos Não Identificados
+                Modo Regularizacao - Assistidos Nao Identificados
               </p>
               <p className="text-xs text-amber-700 dark:text-amber-400">
                 Edite cada registro para adicionar o nome correto do assistido
               </p>
             </div>
           </div>
-          <Button 
-            size="sm" 
-            variant="outline" 
+          <Button
+            size="sm"
+            variant="outline"
             className="border-amber-500 text-amber-700 hover:bg-amber-200"
             onClick={() => setShowNaoIdentificados(false)}
           >
             <XCircle className="w-3.5 h-3.5 mr-2" />
-            Voltar à Lista Normal
+            Voltar
           </Button>
         </div>
       )}
 
-      {/* KPI Cards Premium - Padrão Defender (cores neutras) */}
+      {/* KPI Stats + Completude */}
       {!showNaoIdentificados && (
       <>
-        {/* Stats Ribbon — compact inline KPIs */}
         <div ref={statsRef} className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
           {[
             { icon: Users, value: stats.total - naoIdentificadosCount, label: "assistidos", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); }, active: statusFilter === "all" && !showPinnedOnly },
@@ -2994,11 +1280,15 @@ export default function AssistidosPage() {
               </Fragment>
             );
           })}
+          <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />
+          <span className="text-zinc-400 dark:text-zinc-500 whitespace-nowrap text-[10px]">
+            Completude: <span className="font-bold tabular-nums text-zinc-600 dark:text-zinc-300">{stats.completudeMedia}%</span>
+          </span>
           <div className="flex-1" />
           <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px] tabular-nums whitespace-nowrap">{stats.total - naoIdentificadosCount} total</span>
         </div>
 
-        {/* Alertas de Urgência */}
+        {/* Alertas de Urgencia */}
         {(stats.prazosVencidos > 0 || stats.audienciasHoje > 0) && (
           <div className="flex items-center gap-3 flex-wrap">
             {stats.prazosVencidos > 0 && (
@@ -3015,7 +1305,7 @@ export default function AssistidosPage() {
                 <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                 <Calendar className="w-4 h-4 text-amber-500" />
                 <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                  {stats.audienciasHoje} audiência{stats.audienciasHoje > 1 ? 's' : ''} hoje
+                  {stats.audienciasHoje} audiencia{stats.audienciasHoje > 1 ? 's' : ''} hoje
                 </span>
               </div>
             )}
@@ -3034,6 +1324,39 @@ export default function AssistidosPage() {
 
       {/* Card de Filtros */}
       <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl p-5 shadow-apple dark:shadow-apple-dark">
+        {/* Atribuicao Quick Chips (Feature #1) */}
+        <div className="flex items-center gap-2 flex-wrap mb-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+          <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium mr-1">Atribuicao</span>
+          {ATRIBUICAO_OPTIONS.filter(o => o.value !== "all").map((option) => {
+            const isActive = atribuicaoFilter === option.value;
+            const color = SOLID_COLOR_MAP[option.value] || '#71717a';
+            return (
+              <button
+                key={option.value}
+                onClick={() => setAtribuicaoFilter(isActive ? "all" : option.value)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium transition-all border",
+                  isActive
+                    ? "text-white border-transparent shadow-sm"
+                    : "bg-transparent text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                )}
+                style={isActive ? { backgroundColor: color, borderColor: color } : undefined}
+              >
+                {ATRIBUICAO_ICONS[option.value] || null}
+                {option.shortLabel}
+              </button>
+            );
+          })}
+          {atribuicaoFilter !== "all" && (
+            <button
+              onClick={() => setAtribuicaoFilter("all")}
+              className="text-[10px] text-zinc-400 hover:text-zinc-600 transition-colors ml-1"
+            >
+              <XCircle className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
         {/* Smart Filter Presets */}
         <div className="flex items-center gap-2 flex-wrap mb-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
           <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium mr-1">Filtros rapidos</span>
@@ -3128,6 +1451,43 @@ export default function AssistidosPage() {
         />
       </Card>
 
+      {/* Recent Assistidos (Feature #6) */}
+      {recentAssistidos.length > 0 && !showNaoIdentificados && (
+        <div className="flex items-center gap-3 px-1">
+          <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium shrink-0">Recentes</span>
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+            {recentAssistidos.map((a) => {
+              const attrs = a.atribuicoes || a.areas || [];
+              const primaryAttrValue = attrs.length > 0
+                ? ATRIBUICAO_OPTIONS.find(o =>
+                    o.value.toUpperCase() === attrs[0].toUpperCase().replace(/_/g, ' ') ||
+                    attrs[0].toUpperCase().replace(/_/g, ' ').includes(o.value.toUpperCase())
+                  )?.value || null
+                : null;
+
+              return (
+                <Link
+                  key={a.id}
+                  href={`/admin/assistidos/${a.id}`}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors shrink-0 group"
+                >
+                  <AssistidoAvatar
+                    nome={a.nome}
+                    photoUrl={a.photoUrl}
+                    size="xs"
+                    atribuicao={primaryAttrValue}
+                    statusPrisional={a.statusPrisional}
+                  />
+                  <span className="text-[10px] font-medium text-zinc-600 dark:text-zinc-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors max-w-[80px] truncate">
+                    {a.nome.split(" ")[0]}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Card de Listagem */}
       <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark">
         {/* Header */}
@@ -3143,7 +1503,7 @@ export default function AssistidosPage() {
             </div>
           </div>
         </div>
-        
+
         {/* Content */}
         <div className="p-4">
       {filteredAssistidos.length === 0 ? (
@@ -3162,11 +1522,10 @@ export default function AssistidosPage() {
         </div>
       ) : viewMode === "grid" ? (
         groupedAssistidos ? (
-          // Exibição agrupada
+          // Exibicao agrupada
           <div className="space-y-6">
             {groupedAssistidos.map(([groupName, items]) => (
               <div key={groupName}>
-                {/* Cabeçalho do Grupo */}
                 <div className="flex items-center gap-3 mb-3 px-1">
                   <div className="flex items-center gap-2">
                     <div className="w-1 h-5 rounded-full bg-emerald-500" />
@@ -3179,96 +1538,33 @@ export default function AssistidosPage() {
                   </span>
                   <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-700" />
                 </div>
-                {/* Cards do Grupo */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
-                  {items.map((a) => (
-                    <div key={a.id} className="relative">
-                      {batchSelectMode && (
-                        <button
-                          onClick={() => toggleBatchSelect(a.id, !!a.cpf)}
-                          className={cn(
-                            "absolute top-2 left-2 z-10 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
-                            !a.cpf
-                              ? "border-zinc-300 bg-zinc-100 cursor-not-allowed opacity-40"
-                              : batchSelectedIds.has(a.id)
-                              ? "border-amber-500 bg-amber-500"
-                              : "border-zinc-300 bg-white hover:border-amber-400"
-                          )}
-                          title={!a.cpf ? "Assistido sem CPF — não pode ser exportado" : undefined}
-                        >
-                          {batchSelectedIds.has(a.id) && (
-                            <CheckCircle2 className="w-3 h-3 text-white" />
-                          )}
-                        </button>
-                      )}
-                      <AssistidoCard
-                        assistido={a}
-                        onPhotoClick={() => handlePhotoClick(a)}
-                        isPinned={pinnedIds.has(a.id)}
-                        onTogglePin={() => togglePin(a.id)}
-                        hasDuplicates={(potentialDuplicates[a.id]?.length || 0) > 0}
-                        duplicateCount={potentialDuplicates[a.id]?.length || 0}
-                        onPreview={() => setPreviewAssistido(a)}
-                      />
-                    </div>
-                  ))}
+                  {items.map((a) => renderCardWithBatch(a))}
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          // Exibição normal (sem agrupamento)
+          // Exibicao normal (sem agrupamento)
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start animate-in fade-in duration-200">
-            {visibleAssistidos.map((a, index) => (
-              <div
-                key={a.id}
-                className="relative animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both"
-                style={{ animationDelay: `${Math.min(index * 40, 600)}ms` }}
-              >
-                {batchSelectMode && (
-                  <button
-                    onClick={() => toggleBatchSelect(a.id, !!a.cpf)}
-                    className={cn(
-                      "absolute top-2 left-2 z-10 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
-                      !a.cpf
-                        ? "border-zinc-300 bg-zinc-100 cursor-not-allowed opacity-40"
-                        : batchSelectedIds.has(a.id)
-                        ? "border-amber-500 bg-amber-500"
-                        : "border-zinc-300 bg-white hover:border-amber-400"
-                    )}
-                    title={!a.cpf ? "Assistido sem CPF — não pode ser exportado" : undefined}
-                  >
-                    {batchSelectedIds.has(a.id) && (
-                      <CheckCircle2 className="w-3 h-3 text-white" />
-                    )}
-                  </button>
-                )}
-                <AssistidoCard
-                  assistido={a}
-                  onPhotoClick={() => handlePhotoClick(a)}
-                  isPinned={pinnedIds.has(a.id)}
-                  onTogglePin={() => togglePin(a.id)}
-                  hasDuplicates={(potentialDuplicates[a.id]?.length || 0) > 0}
-                  duplicateCount={potentialDuplicates[a.id]?.length || 0}
-                  onPreview={() => setPreviewAssistido(a)}
-                />
-              </div>
-            ))}
+            {visibleAssistidos.map((a, index) => renderCardWithBatch(a, index))}
           </div>
         )
       ) : (
         <AssistidoTableView
           assistidos={visibleAssistidos}
           pinnedIds={pinnedIds}
-          onPhotoClick={(a) => handlePhotoClick(a as typeof realAssistidos[0])}
+          onPhotoClick={(a) => handlePhotoClick(a as AssistidoUI)}
           onTogglePin={togglePin}
           sortBy={sortBy}
           onSortChange={(col) => setSortBy(col as "nome" | "prioridade" | "prazo" | "complexidade")}
-          onPreview={(a) => setPreviewAssistido(a)}
+          onPreview={(a) => handlePreview(a as AssistidoUI)}
         />
       )}
         </div>
       </Card>
+      </>
+      )}
 
       {/* Photo Dialog */}
       {selectedAssistido && (
@@ -3315,11 +1611,19 @@ export default function AssistidosPage() {
         totalCount={filteredAssistidos.length}
         onNext={previewAssistido ? (() => {
           const idx = filteredAssistidos.findIndex(a => a.id === previewAssistido.id);
-          if (idx < filteredAssistidos.length - 1) setPreviewAssistido(filteredAssistidos[idx + 1]);
+          if (idx < filteredAssistidos.length - 1) {
+            const next = filteredAssistidos[idx + 1];
+            setPreviewAssistido(next);
+            addRecent(next.id);
+          }
         }) : undefined}
         onPrev={previewAssistido ? (() => {
           const idx = filteredAssistidos.findIndex(a => a.id === previewAssistido.id);
-          if (idx > 0) setPreviewAssistido(filteredAssistidos[idx - 1]);
+          if (idx > 0) {
+            const prev = filteredAssistidos[idx - 1];
+            setPreviewAssistido(prev);
+            addRecent(prev.id);
+          }
         }) : undefined}
       />
 
@@ -3329,7 +1633,7 @@ export default function AssistidosPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-sm">
               <Sun className="h-4 w-4 text-amber-600" />
-              Resultado da Exportação ao Solar
+              Resultado da Exportacao ao Solar
             </DialogTitle>
             <DialogDescription className="text-xs">
               {batchResults.filter((r) => r.success).length} exportados com sucesso /{" "}
@@ -3368,16 +1672,16 @@ export default function AssistidosPage() {
                   >
                     {r.success
                       ? r.ja_existia_solar
-                        ? "Já cadastrado no Solar"
+                        ? "Ja cadastrado no Solar"
                         : r.campos_enriquecidos && r.campos_enriquecidos.length > 0
-                        ? `Exportado ✓ · Dados atualizados: ${r.campos_enriquecidos.join(", ")}`
+                        ? `Exportado - Dados atualizados: ${r.campos_enriquecidos.join(", ")}`
                         : "Exportado ao Solar com sucesso"
                       : r.error === "sem_cpf"
                       ? "Sem CPF cadastrado no OMBUDS"
                       : r.error === "nao_encontrado"
-                      ? "Não encontrado no SIGAD"
+                      ? "Nao encontrado no SIGAD"
                       : r.error === "processo_nao_corresponde"
-                      ? `Processo SIGAD não corresponde: ${r.sigad_processo ?? "?"}`
+                      ? `Processo SIGAD nao corresponde: ${r.sigad_processo ?? "?"}`
                       : r.message ?? r.error ?? "Erro desconhecido"}
                   </p>
                 </div>
@@ -3389,5 +1693,6 @@ export default function AssistidosPage() {
 
       </div>
     </div>
+    </TooltipProvider>
   );
 }
