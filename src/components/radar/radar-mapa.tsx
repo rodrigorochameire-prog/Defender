@@ -231,7 +231,10 @@ export function RadarMapa({ filtros, onSelectNoticia }: RadarMapaProps) {
         <LeafletMap
           data={filteredData}
           showHeatmap={showHeatmap}
-          onSelectNoticia={onSelectNoticia}
+          onSelectNoticia={(id) => {
+            setIsFullscreen(false);
+            onSelectNoticia?.(id);
+          }}
           fullscreen={isFullscreen}
         />
       </div>

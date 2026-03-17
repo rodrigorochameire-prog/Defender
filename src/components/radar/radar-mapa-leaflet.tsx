@@ -78,6 +78,8 @@ interface MapPoint {
   longitude: string | null;
   dataFato: string | Date | null;
   armaMeio?: string | null;
+  resumoIA?: string | null;
+  envolvidos?: { nome: string | null; papel: string }[] | null;
 }
 
 interface LeafletMapProps {
@@ -227,16 +229,23 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
         ? new Date(point.dataFato).toLocaleDateString("pt-BR")
         : "";
 
+      const envolvidosCount = Array.isArray(point.envolvidos) ? point.envolvidos.length : 0;
+      const resumoTruncado = point.resumoIA
+        ? (point.resumoIA.length > 120 ? point.resumoIA.slice(0, 120) + "…" : point.resumoIA)
+        : "";
+
       const popupHtml = `
-        <div style="max-width: 280px; font-family: system-ui, sans-serif;">
+        <div style="max-width: 300px; font-family: system-ui, sans-serif;">
           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
             <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${color}; flex-shrink: 0;"></span>
             <span style="font-size: 11px; color: ${color}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">${crimeLabel}</span>
           </div>
           <strong style="font-size: 13px; line-height: 1.4; display: block; margin-bottom: 6px; color: #111;">${point.titulo}</strong>
+          ${resumoTruncado ? `<p style="font-size:11px;color:#555;line-height:1.5;margin-bottom:6px;font-style:italic;">${resumoTruncado}</p>` : ""}
           ${point.bairro ? `<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;"><span style="font-size:11px;color:#555;">&#128205; ${point.bairro}</span></div>` : ""}
           ${dateStr ? `<div style="margin-bottom:2px;"><span style="font-size:11px;color:#888;">&#128197; ${dateStr}</span></div>` : ""}
-          ${point.armaMeio ? `<div style="margin-bottom:4px;"><span style="font-size:11px;color:#888;">&#128481; <em>${point.armaMeio}</em></span></div>` : ""}
+          ${point.armaMeio ? `<div style="margin-bottom:2px;"><span style="font-size:11px;color:#888;">&#128481; <em>${point.armaMeio}</em></span></div>` : ""}
+          ${envolvidosCount > 0 ? `<div style="margin-bottom:4px;"><span style="font-size:11px;color:#888;">&#128101; ${envolvidosCount} envolvido${envolvidosCount > 1 ? "s" : ""}</span></div>` : ""}
           <button id="radar-popup-${point.id}" style="
             margin-top: 8px;
             width: 100%;

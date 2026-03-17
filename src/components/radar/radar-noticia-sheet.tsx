@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Sheet,
   SheetContent,
@@ -40,6 +40,7 @@ import {
   Newspaper,
   MessageSquare,
   ChevronRight,
+  ChevronDown,
   Copy,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
@@ -173,6 +174,84 @@ const circunstanciaLabels: Record<string, string> = {
   denuncia: "Denuncia",
   outros: "Outros",
 };
+
+function CorpoSection({
+  resumoIA,
+  corpo,
+  enrichmentStatus,
+  isEditing,
+  editValue,
+  onEditChange,
+}: {
+  resumoIA: string | null;
+  corpo: string | null;
+  enrichmentStatus: string;
+  isEditing: boolean;
+  editValue: string;
+  onEditChange: (v: string) => void;
+}) {
+  const [corpoExpanded, setCorpoExpanded] = useState(false);
+
+  if (isEditing) {
+    return (
+      <div className="space-y-1.5">
+        <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide flex items-center gap-1.5">
+          <FileText className="h-3.5 w-3.5" />
+          Resumo
+        </h4>
+        <Textarea
+          value={editValue}
+          onChange={(e) => onEditChange(e.target.value)}
+          placeholder="Resumo da noticia..."
+          className="min-h-[120px] text-sm"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {resumoIA && (
+        <div className="space-y-1.5">
+          <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide flex items-center gap-1.5">
+            <FileText className="h-3.5 w-3.5" />
+            Resumo IA
+          </h4>
+          <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{resumoIA}</p>
+        </div>
+      )}
+
+      {corpo && (
+        <div className="space-y-1">
+          <button
+            onClick={() => setCorpoExpanded((v) => !v)}
+            className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+          >
+            {corpoExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+            {resumoIA ? "Texto completo" : "Conteudo"}
+          </button>
+          {corpoExpanded && (
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap bg-zinc-50 dark:bg-zinc-900/50 rounded-lg p-3 border border-zinc-100 dark:border-zinc-800">
+              {corpo}
+            </p>
+          )}
+          {!corpoExpanded && !resumoIA && (
+            <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+              {corpo.length > 600 ? corpo.slice(0, 600) + "…" : corpo}
+            </p>
+          )}
+        </div>
+      )}
+
+      {!resumoIA && !corpo && enrichmentStatus === "pending" && (
+        <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+          <AlertTriangle className="h-3 w-3" />
+          Analise IA pendente — detalhes completos apos enriquecimento
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNoticia }: RadarNoticiaSheetProps) {
   const utils = trpc.useUtils();
@@ -362,34 +441,14 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
 
             {/* Resumo IA ou corpo da noticia */}
             {(noticia.resumoIA || noticia.corpo || isEditing) && (
-              <div className="space-y-1.5">
-                <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide flex items-center gap-1.5">
-                  <FileText className="h-3.5 w-3.5" />
-                  {noticia.resumoIA ? "Resumo" : "Conteudo"}
-                </h4>
-                {isEditing ? (
-                  <Textarea
-                    value={editForm.resumoIA}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, resumoIA: e.target.value }))}
-                    placeholder="Resumo da noticia..."
-                    className="min-h-[120px] text-sm"
-                  />
-                ) : (
-                  <>
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                      {noticia.resumoIA || (noticia.corpo && noticia.corpo.length > 800
-                        ? noticia.corpo.slice(0, 800) + "..."
-                        : noticia.corpo)}
-                    </p>
-                    {!noticia.resumoIA && noticia.enrichmentStatus === "pending" && (
-                      <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        Analise IA pendente -- detalhes completos apos enriquecimento
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
+              <CorpoSection
+                resumoIA={noticia.resumoIA ?? null}
+                corpo={noticia.corpo ?? null}
+                enrichmentStatus={noticia.enrichmentStatus}
+                isEditing={isEditing}
+                editValue={editForm.resumoIA}
+                onEditChange={(v) => setEditForm((prev) => ({ ...prev, resumoIA: v }))}
+              />
             )}
 
             {/* Localizacao */}

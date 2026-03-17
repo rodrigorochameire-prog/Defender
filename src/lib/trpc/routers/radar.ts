@@ -374,6 +374,7 @@ export const radarRouter = router({
           dataFato: radarNoticias.dataFato,
           envolvidos: radarNoticias.envolvidos,
           armaMeio: radarNoticias.armaMeio,
+          resumoIA: radarNoticias.resumoIA,
         })
         .from(radarNoticias)
         .where(and(...conditions));
