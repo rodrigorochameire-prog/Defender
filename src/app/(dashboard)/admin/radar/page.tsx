@@ -13,6 +13,7 @@ import { RadarMatches } from "@/components/radar/radar-matches";
 import { RadarReincidentes } from "@/components/radar/radar-reincidentes";
 import { RadarFontes } from "@/components/radar/radar-fontes";
 import { RadarNoticiaSheet } from "@/components/radar/radar-noticia-sheet";
+import { RadarReincidentesPanel } from "@/components/radar/radar-reincidentes-panel";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -132,8 +133,9 @@ export default function RadarCriminalPage() {
 
         <TabsContent value="feed" className="space-y-4">
           <div className="flex flex-col lg:flex-row gap-4">
-            <div className="w-full lg:w-64 shrink-0">
+            <div className="w-full lg:w-64 shrink-0 space-y-4">
               <RadarFiltros filtros={filtros} onChange={setFiltros} />
+              <RadarReincidentesPanel />
             </div>
             <div className="flex-1 min-w-0">
               <RadarFeed filtros={filtros} />

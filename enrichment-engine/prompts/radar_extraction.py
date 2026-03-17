@@ -33,12 +33,28 @@ Analise o texto da notícia abaixo e extraia as seguintes informações em JSON:
   ]
 }
 
+GUIA DE CLASSIFICAÇÃO DE TIPO_CRIME:
+
+• "violencia_domestica" — USE para qualquer violência no âmbito familiar/afetivo:
+  Padrões comuns: "agrediu a companheira", "espancou a esposa", "ex-namorado agrediu", "violência contra a mulher", "Lei Maria da Penha", "lesão corporal doméstica", "agressão contra cônjuge", "vítima da própria família", "violência doméstica e familiar".
+
+• "porte_arma" — USE quando a posse/porte ilegal de arma for o crime principal:
+  Padrões comuns: "encontrado com arma", "preso com revólver", "apreensão de pistola", "portava ilegalmente arma de fogo", "arma sem registro", "posse ilegal de arma", "art. 14 ou art. 16 do Estatuto do Desarmamento".
+
+• "lesao_corporal" — USE para agressões físicas entre pessoas SEM contexto doméstico/familiar e sem resultado morte:
+  Inclui: briga de bar, briga de vizinhos, briga de rua, paulada, facada sem morte, espancamento, "vias de fato", rixa.
+
+• "trafico" — USE quando envolver comércio ou porte para venda de drogas:
+  Padrões comuns: "drogas apreendidas", "entorpecentes", "pé de maconha", "crack encontrado", "cocaína apreendida", "boca de fumo", "traficante", "art. 33 Lei 11.343/06", "associação para o tráfico".
+
+• "outros" — Use SOMENTE quando o crime realmente não se encaixe em nenhuma das categorias acima (homicidio, tentativa_homicidio, trafico, roubo, furto, violencia_domestica, sexual, lesao_corporal, porte_arma, estelionato). Exemplos legítimos de "outros": crime ambiental, desacato, resistência, corrupção, descaminho. NÃO use "outros" por comodidade — sempre tente encaixar primeiro.
+
 REGRAS:
 1. Extraia TODOS os nomes próprios de pessoas mencionados (suspeitos, vítimas, presos, acusados)
 2. Nomes devem ser em MAIÚSCULAS e completos quando possível
 3. Se a notícia mencionar "fulano, X anos", extraia a idade
 4. Vulgo/apelido: extraia se mencionado entre aspas, parênteses ou após "conhecido como"
-5. Para tipo_crime, use a categoria mais específica possível
+5. Para tipo_crime, use a categoria mais específica possível — consulte o guia acima antes de usar "outros"
 6. Para bairro, use o nome exato como aparece na notícia (consulte a lista de bairros de Camaçari acima)
 7. Se houver múltiplos crimes, escolha o mais grave
 8. data_fato é a data do FATO, não da publicação

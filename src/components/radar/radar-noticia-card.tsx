@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getCrimeBadgeColor, getCrimeLabel } from "./radar-filtros";
 import { cn } from "@/lib/utils";
+import NextLink from "next/link";
 
 interface Envolvido {
   nome: string | null;
@@ -33,6 +34,7 @@ interface NoticiaCardProps {
     matchCount?: number;
     matches?: Array<{
       id: number;
+      assistidoId?: number | null;
       assistidoNome: string | null;
       nomeEncontrado: string;
       scoreConfianca: number;
@@ -253,39 +255,11 @@ export function RadarNoticiaCard({ noticia, onClick, onQuickAction, viewMode }: 
               </div>
             )}
 
-            {/* Quick actions para matches pendentes */}
-            {(noticia.matches ?? []).filter(m => m.status === "possivel").length > 0 && onQuickAction && (
-              <div className="flex flex-col gap-1 pt-1 border-t border-zinc-100 dark:border-zinc-800 mt-1">
-                {(noticia.matches ?? []).filter(m => m.status === "possivel").slice(0, 2).map(match => (
-                  <div key={match.id} className="flex items-center gap-2 text-[11px]">
-                    <span className="flex-1 truncate text-zinc-600 dark:text-zinc-400">
-                      <Users className="h-2.5 w-2.5 inline mr-0.5" />
-                      {match.assistidoNome || match.nomeEncontrado}
-                      <span className="text-zinc-400 ml-1">({match.scoreConfianca}%)</span>
-                    </span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onQuickAction(match.id, "confirmar"); }}
-                      className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-colors cursor-pointer"
-                    >
-                      <CheckCircle2 className="h-2.5 w-2.5" />
-                      OK
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onQuickAction(match.id, "descartar"); }}
-                      className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-zinc-500 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
-                    >
-                      <XCircle className="h-2.5 w-2.5" />
-                      Não
-                    </button>
-                  </div>
-                ))}
-                {(noticia.matches ?? []).filter(m => m.status === "possivel").length > 2 && (
-                  <span className="text-[10px] text-zinc-400">
-                    +{(noticia.matches ?? []).filter(m => m.status === "possivel").length - 2} outros matches pendentes
-                  </span>
-                )}
-              </div>
-            )}
+            {/* Inline match triagem */}
+            <MatchTriagem
+              matches={noticia.matches ?? []}
+              onQuickAction={onQuickAction}
+            />
 
             {/* Metadata */}
             <div className="flex items-center gap-3 text-xs text-zinc-400">
@@ -327,5 +301,116 @@ export function RadarNoticiaCard({ noticia, onClick, onQuickAction, viewMode }: 
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// ==========================================
+// MATCH TRIAGEM — inline no card do feed
+// ==========================================
+
+interface MatchTriagemProps {
+  matches: Array<{
+    id: number;
+    assistidoId?: number | null;
+    assistidoNome: string | null;
+    nomeEncontrado: string;
+    scoreConfianca: number;
+    status: string;
+  }>;
+  onQuickAction?: (matchId: number, action: "confirmar" | "descartar") => void;
+}
+
+function MatchTriagem({ matches, onQuickAction }: MatchTriagemProps) {
+  if (matches.length === 0) return null;
+
+  // Sort by scoreConfianca desc, pick top match
+  const sorted = [...matches].sort((a, b) => b.scoreConfianca - a.scoreConfianca);
+  const top = sorted[0];
+  const rest = sorted.length - 1;
+
+  const isPossivel = top.status === "possivel";
+  const isConfirmed =
+    top.status === "confirmado_manual" || top.status === "auto_confirmado";
+  const isDescartado = top.status === "descartado";
+
+  return (
+    <div
+      className="flex flex-col gap-1 pt-2 border-t border-zinc-100 dark:border-zinc-800 mt-2"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="flex items-center gap-2 text-[11px]">
+        {/* Score pill */}
+        <span
+          className={cn(
+            "inline-flex items-center px-1.5 py-0.5 rounded font-semibold",
+            top.scoreConfianca >= 80
+              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+              : top.scoreConfianca >= 50
+                ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+          )}
+        >
+          {top.scoreConfianca}%
+        </span>
+
+        {/* Name */}
+        <span className="flex-1 truncate text-zinc-700 dark:text-zinc-300 font-medium">
+          {top.assistidoNome || top.nomeEncontrado}
+        </span>
+
+        {/* Status / Actions */}
+        {isPossivel && onQuickAction && (
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={() => onQuickAction(top.id, "confirmar")}
+              title="Confirmar match"
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-colors cursor-pointer"
+            >
+              <CheckCircle2 className="h-3 w-3" />
+              <span>OK</span>
+            </button>
+            <button
+              onClick={() => onQuickAction(top.id, "descartar")}
+              title="Descartar match"
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors cursor-pointer"
+            >
+              <XCircle className="h-3 w-3" />
+              <span>Não</span>
+            </button>
+          </div>
+        )}
+
+        {isConfirmed && (
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium">
+              <CheckCircle2 className="h-3 w-3" />
+              Confirmado
+            </span>
+            {top.assistidoId && (
+              <NextLink
+                href={`/admin/assistidos/${top.assistidoId}`}
+                className="inline-flex items-center p-0.5 rounded text-zinc-400 hover:text-emerald-600 transition-colors cursor-pointer"
+                title="Ver perfil do assistido"
+              >
+                <ExternalLink className="h-3 w-3" />
+              </NextLink>
+            )}
+          </div>
+        )}
+
+        {isDescartado && (
+          <span className="text-[10px] text-zinc-400 italic shrink-0">
+            Descartado
+          </span>
+        )}
+      </div>
+
+      {/* "+N outros" link */}
+      {rest > 0 && (
+        <span className="text-[10px] text-zinc-400 pl-0.5">
+          +{rest} outro{rest > 1 ? "s" : ""} match{rest > 1 ? "es" : ""}
+        </span>
+      )}
+    </div>
   );
 }

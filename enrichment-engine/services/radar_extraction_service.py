@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 from datetime import datetime, timezone
 from typing import Any
@@ -15,6 +16,19 @@ import httpx
 from config import get_settings
 
 logger = logging.getLogger("enrichment-engine.radar-extraction")
+
+# ─── Centroids de bairros de Camaçari ───────────────────────────────────────
+# Carregados uma vez ao inicializar o módulo.
+_CENTROIDS_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "data", "camacari_bairros_centroids.json"
+)
+try:
+    with open(_CENTROIDS_PATH, "r", encoding="utf-8") as _f:
+        BAIRROS_CENTROIDS: dict[str, list[float]] = json.load(_f)
+    logger.info("Centroids carregados: %d bairros", len(BAIRROS_CENTROIDS))
+except FileNotFoundError:
+    BAIRROS_CENTROIDS = {}
+    logger.warning("Arquivo de centroids não encontrado: %s", _CENTROIDS_PATH)
 
 # Bairros de Salvador que NÃO pertencem a Camaçari — blocklist para descartar notícias de Salvador
 BAIRROS_SALVADOR_BLOCKLIST = {
@@ -301,9 +315,12 @@ class RadarExtractionService:
             nonlocal geocoded
             async with sem:
                 await asyncio.sleep(0.4)  # rate limiting leve: ~7 req/s máximo
+                bairro = noticia.get("bairro", "") or ""
+                logradouro = noticia.get("logradouro", "") or ""
+
+                # 1. Tentar Nominatim primeiro
+                nominatim_ok = False
                 try:
-                    bairro = noticia.get("bairro", "")
-                    logradouro = noticia.get("logradouro", "")
                     query = f"{logradouro}, {bairro}" if logradouro else bairro
                     query += ", Camaçari, Bahia, Brasil"
 
@@ -323,14 +340,55 @@ class RadarExtractionService:
                                 "latitude": lat, "longitude": lon,
                             }).eq("id", noticia["id"]).execute()
                             geocoded += 1
+                            nominatim_ok = True
                             return True
                 except Exception as e:
-                    logger.debug("Geocoding falhou para id=%d: %s", noticia["id"], str(e))
+                    logger.debug("Nominatim falhou para id=%d: %s", noticia["id"], str(e))
+
+                # 2. Fallback: centroide do bairro se Nominatim não resolveu
+                if not nominatim_ok and bairro:
+                    centroid = self._get_centroid(bairro)
+                    if centroid:
+                        lat, lon = centroid
+                        client_db.table("radar_noticias").update({
+                            "latitude": lat, "longitude": lon,
+                        }).eq("id", noticia["id"]).execute()
+                        geocoded += 1
+                        logger.debug(
+                            "Centroide aplicado | id=%d bairro='%s' lat=%.4f lon=%.4f",
+                            noticia["id"], bairro, lat, lon,
+                        )
+                        return True
+
                 return False
 
         await asyncio.gather(*[_geocode_one(n) for n in noticias], return_exceptions=True)
         logger.info("Geocodificadas %d/%d notícias", geocoded, len(noticias))
         return geocoded
+
+    def _get_centroid(self, bairro: str) -> tuple[float, float] | None:
+        """
+        Retorna (lat, lon) do centróide do bairro se encontrado no mapa local.
+        Tenta match exato (case-insensitive) depois match parcial.
+        Retorna None se não encontrado.
+        """
+        if not bairro or not BAIRROS_CENTROIDS:
+            return None
+
+        bairro_lower = bairro.lower().strip()
+
+        # 1. Match exato (case-insensitive)
+        for name, coords in BAIRROS_CENTROIDS.items():
+            if name.lower() == bairro_lower:
+                return (coords[0], coords[1])
+
+        # 2. Match parcial: bairro da notícia contém ou é contido pelo nome do centroide
+        for name, coords in BAIRROS_CENTROIDS.items():
+            name_lower = name.lower()
+            if name_lower in bairro_lower or bairro_lower in name_lower:
+                return (coords[0], coords[1])
+
+        return None
 
     def _normalize_bairro(self, bairro: str) -> str:
         """Normaliza nome de bairro para padronização."""
