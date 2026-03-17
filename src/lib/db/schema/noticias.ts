@@ -1,5 +1,5 @@
 import {
-  pgTable, serial, text, varchar, timestamp, integer, boolean, index, jsonb,
+  pgTable, serial, text, varchar, timestamp, integer, boolean, index, jsonb, uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { users } from "./core";
 
@@ -40,6 +40,14 @@ export const noticiasJuridicas = pgTable("noticias_juridicas", {
   scrapeadoEm: timestamp("scrapeado_em").defaultNow().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  analiseIa: jsonb("analise_ia").$type<{
+    resumoExecutivo: string;
+    impactoPratico: string;
+    ratioDecidendi?: string;
+    casosAplicaveis: string[];
+    processadoEm: string;
+    modeloUsado: string;
+  } | null>().default(null),
 }, (table) => [
   index("not_jur_status_idx").on(table.status),
   index("not_jur_categoria_idx").on(table.categoria),
@@ -59,9 +67,45 @@ export const noticiasTemas = pgTable("noticias_temas", {
   index("not_temas_user_idx").on(table.userId),
 ]);
 
+// ==========================================
+// FAVORITOS - Notícias salvas pelo defensor
+// ==========================================
+
+export const noticiasFavoritos = pgTable("noticias_favoritos", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  noticiaId: integer("noticia_id").references(() => noticiasJuridicas.id, { onDelete: "cascade" }).notNull(),
+  nota: text("nota"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("not_fav_unique_idx").on(table.userId, table.noticiaId),
+  index("not_fav_user_idx").on(table.userId),
+]);
+
+// ==========================================
+// VÍNCULOS - Notícias associadas a processos
+// ==========================================
+
+export const noticiasProcessos = pgTable("noticias_processos", {
+  id: serial("id").primaryKey(),
+  noticiaId: integer("noticia_id").references(() => noticiasJuridicas.id, { onDelete: "cascade" }).notNull(),
+  processoId: integer("processo_id").notNull(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  observacao: text("observacao"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("not_proc_unique_idx").on(table.noticiaId, table.processoId),
+  index("not_proc_noticia_idx").on(table.noticiaId),
+  index("not_proc_processo_idx").on(table.processoId),
+]);
+
 export type NoticiaFonte = typeof noticiasFontes.$inferSelect;
 export type InsertNoticiaFonte = typeof noticiasFontes.$inferInsert;
 export type NoticiaJuridica = typeof noticiasJuridicas.$inferSelect;
 export type InsertNoticiaJuridica = typeof noticiasJuridicas.$inferInsert;
 export type NoticiaTema = typeof noticiasTemas.$inferSelect;
 export type InsertNoticiaTema = typeof noticiasTemas.$inferInsert;
+export type NoticiaFavorito = typeof noticiasFavoritos.$inferSelect;
+export type InsertNoticiaFavorito = typeof noticiasFavoritos.$inferInsert;
+export type NoticiaProcesso = typeof noticiasProcessos.$inferSelect;
+export type InsertNoticiaProcesso = typeof noticiasProcessos.$inferInsert;
