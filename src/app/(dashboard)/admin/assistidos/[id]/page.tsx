@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, Lock, User, Loader2, Sun, ExternalLink, CheckCircle2, AlertCircle, Brain, FileText, Plus, Sparkles, Pencil, Clock, Send, Scale, Calendar, FolderOpen, ChevronDown } from "lucide-react";
+import { ArrowLeft, Lock, User, Loader2, FileText, Plus, Sparkles, Pencil, Clock, Send, Scale, Calendar, FolderOpen, PanelRight } from "lucide-react";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,6 +23,7 @@ import { MidiasHub } from "@/components/midias/MidiasHub";
 import { TimelineVivaAssistido } from "@/components/processos/TimelineViva";
 import { RadarAssistidoCard } from "@/components/radar/radar-assistido-card";
 import { AssistidoOverviewPanel } from "./_components/overview-panel";
+import { AssistidoFichaSheet } from "./_components/ficha-sheet";
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
@@ -40,6 +41,9 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   const { id } = use(params);
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("processos");
+
+  // Ficha sheet state
+  const [fichaSheetOpen, setFichaSheetOpen] = useState(false);
 
   // Overview panel navigation states
   const [itemSheetOpen, setItemSheetOpen] = useState(false);
@@ -340,6 +344,14 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
               </Link>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
+                onClick={() => setFichaSheetOpen(true)}
+              >
+                <PanelRight className="h-3.5 w-3.5" />
+              </Button>
               {isPreso && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 animate-pulse">
                   <Lock className="h-3 w-3" />
@@ -421,179 +433,6 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
       </div>
-
-      {/* Solar / SIGAD Actions */}
-      {data.cpf && (
-        <div className="px-6 py-2.5 border-b border-zinc-100 dark:border-zinc-800 flex flex-col gap-2">
-          <div className="flex items-center gap-3 flex-wrap">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 text-[11px] gap-1.5 border-amber-200 text-amber-700 hover:bg-amber-50"
-              disabled={exportarViaSigad.isPending}
-              onClick={() => exportarViaSigad.mutate({ assistidoId: Number(id) })}
-            >
-              {exportarViaSigad.isPending ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <Sun className="h-3 w-3" />
-              )}
-              {exportarViaSigad.isPending ? "Exportando ao Solar..." : "Exportar ao Solar via SIGAD"}
-            </Button>
-
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 text-[11px] gap-1.5 border-blue-200 text-blue-700 hover:bg-blue-50"
-              disabled={sincronizarComSolar.isPending}
-              onClick={() => sincronizarComSolar.mutate({ assistidoId: Number(id) })}
-            >
-              {sincronizarComSolar.isPending ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <Sun className="h-3 w-3" />
-              )}
-              {sincronizarComSolar.isPending ? "Sincronizando..." : "Sync Fases ao Solar"}
-            </Button>
-
-            {data.driveFolderId && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 text-[11px] gap-1.5 border-purple-200 text-purple-600 hover:bg-purple-50"
-                disabled={isAnalyzing}
-                onClick={async () => {
-                  setIsAnalyzing(true);
-                  setAnalysisResult(null);
-                  try {
-                    const res = await fetch("/api/ai/analyze-folder", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ assistidoId: Number(id) }),
-                    });
-                    if (!res.ok) {
-                      const err = (await res.json().catch(() => ({}))) as { error?: string };
-                      throw new Error(err?.error ?? "Falha na análise");
-                    }
-                    const json = (await res.json()) as { summary?: string };
-                    setAnalysisResult(json.summary ?? "Análise concluída sem resumo.");
-                    toast.success("Análise da pasta concluída");
-                  } catch (err) {
-                    const message = err instanceof Error ? err.message : "Erro ao analisar pasta";
-                    toast.error(message);
-                  } finally {
-                    setIsAnalyzing(false);
-                  }
-                }}
-              >
-                {isAnalyzing ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <Brain className="h-3 w-3" />
-                )}
-                {isAnalyzing ? "Analisando..." : "Analisar pasta com IA"}
-              </Button>
-            )}
-
-            {sigadResult && (
-              <div className="flex items-center gap-1.5 text-[11px]">
-                {sigadResult.success ? (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                ) : sigadResult.error === "processo_nao_corresponde" ? (
-                  <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
-                ) : (
-                  <AlertCircle className="h-3.5 w-3.5 text-rose-500" />
-                )}
-                <span
-                  className={
-                    sigadResult.success
-                      ? "text-emerald-700"
-                      : sigadResult.error === "processo_nao_corresponde"
-                      ? "text-amber-700"
-                      : "text-rose-600"
-                  }
-                >
-                  {sigadResult.ja_existia_solar
-                    ? "Já cadastrado no Solar"
-                    : sigadResult.success
-                    ? "Exportado ao Solar"
-                    : sigadResult.error === "cpf_ausente"
-                    ? "Sem CPF no SIGAD"
-                    : sigadResult.error === "nao_encontrado"
-                    ? "Não encontrado no SIGAD"
-                    : sigadResult.error === "processo_nao_corresponde"
-                    ? `Processo SIGAD não corresponde: ${sigadResult.sigad_processo ?? "desconhecido"}`
-                    : "Erro ao exportar"}
-                </span>
-                {sigadResult.solar_url && (
-                  <a
-                    href={sigadResult.solar_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-0.5 text-amber-600 hover:underline ml-1"
-                  >
-                    Ver no Solar <ExternalLink className="h-2.5 w-2.5" />
-                  </a>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Resultado do Sync Solar */}
-          {syncSolarResult && (
-            <div className={cn(
-              "flex items-center gap-1.5 text-[11px] rounded px-2 py-1 w-fit",
-              syncSolarResult.fases_criadas > 0
-                ? "text-blue-700 bg-blue-50 dark:bg-blue-950"
-                : syncSolarResult.fases_falhadas > 0
-                ? "text-amber-700 bg-amber-50 dark:bg-amber-950"
-                : "text-zinc-600 bg-zinc-50 dark:bg-zinc-800",
-            )}>
-              {syncSolarResult.fases_criadas > 0 ? (
-                <CheckCircle2 className="h-3 w-3 text-blue-500 flex-shrink-0" />
-              ) : syncSolarResult.fases_falhadas > 0 ? (
-                <AlertCircle className="h-3 w-3 text-amber-500 flex-shrink-0" />
-              ) : (
-                <CheckCircle2 className="h-3 w-3 text-zinc-400 flex-shrink-0" />
-              )}
-              <span>
-                {syncSolarResult.total === 0
-                  ? "Nenhuma anotação pendente de sync"
-                  : `Solar: ${syncSolarResult.fases_criadas} criadas, ${syncSolarResult.fases_skipped} já existiam, ${syncSolarResult.fases_falhadas} falharam`}
-              </span>
-            </div>
-          )}
-
-          {/* Badge de campos enriquecidos */}
-          {sigadResult?.success && sigadResult.message?.includes("Campos enriquecidos:") && (
-            <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50 dark:bg-emerald-950 rounded px-2 py-1 w-fit">
-              <CheckCircle2 className="h-3 w-3 text-emerald-500 flex-shrink-0" />
-              <span>
-                {sigadResult.message.replace(/^.*?Campos enriquecidos:/, "Dados atualizados do SIGAD:")}
-              </span>
-            </div>
-          )}
-
-          {/* Aviso de processo não correspondente */}
-          {sigadResult?.error === "processo_nao_corresponde" && sigadResult.sigad_processo && (
-            <div className="flex items-start gap-1.5 text-[11px] text-amber-700 bg-amber-50 dark:bg-amber-950 rounded px-2 py-1 w-fit max-w-sm">
-              <AlertCircle className="h-3 w-3 text-amber-500 flex-shrink-0 mt-0.5" />
-              <span>
-                O assistido foi encontrado no SIGAD, mas o processo vinculado ({sigadResult.sigad_processo}) não
-                corresponde a nenhum processo cadastrado no OMBUDS. Verifique se o número de autos está correto.
-              </span>
-            </div>
-          )}
-
-          {/* Resultado da Análise IA */}
-          {analysisResult && (
-            <div className="flex items-start gap-1.5 text-[11px] text-purple-700 bg-purple-50 dark:bg-purple-950 rounded px-2 py-1.5 w-fit max-w-lg">
-              <Brain className="h-3 w-3 text-purple-500 flex-shrink-0 mt-0.5" />
-              <span className="whitespace-pre-wrap">{analysisResult}</span>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Drive Status Bar */}
       <DriveStatusBar assistidoId={Number(id)} />
@@ -926,6 +765,57 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           assistidoId={Number(id)}
         />
       )}
+
+      {/* Ficha Sheet lateral */}
+      <AssistidoFichaSheet
+        open={fichaSheetOpen}
+        onOpenChange={setFichaSheetOpen}
+        assistido={{
+          id: data.id,
+          nome: data.nome,
+          cpf: data.cpf,
+          rg: (data as any).rg,
+          dataNascimento: (data as any).dataNascimento,
+          nomeMae: (data as any).nomeMae,
+          nomePai: (data as any).nomePai,
+          naturalidade: (data as any).naturalidade,
+          endereco: (data as any).endereco,
+          telefone: (data as any).telefone,
+          telefoneContato: (data as any).telefoneContato,
+          nomeContato: (data as any).nomeContato,
+          parentescoContato: (data as any).parentescoContato,
+          driveFolderId: data.driveFolderId,
+          processos: data.processos.map((p) => ({ id: p.id, numeroAutos: p.numeroAutos })),
+        }}
+        onExportarSolar={() => exportarViaSigad.mutate({ assistidoId: Number(id) })}
+        onSyncSolar={() => sincronizarComSolar.mutate({ assistidoId: Number(id) })}
+        onAnalisarIA={async () => {
+          setIsAnalyzing(true);
+          setAnalysisResult(null);
+          try {
+            const res = await fetch("/api/ai/analyze-folder", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ assistidoId: Number(id) }),
+            });
+            if (!res.ok) {
+              const err = (await res.json().catch(() => ({}))) as { error?: string };
+              throw new Error(err?.error ?? "Falha na análise");
+            }
+            const json = (await res.json()) as { summary?: string };
+            setAnalysisResult(json.summary ?? "Análise concluída sem resumo.");
+            toast.success("Análise da pasta concluída");
+          } catch (err) {
+            const message = err instanceof Error ? err.message : "Erro ao analisar pasta";
+            toast.error(message);
+          } finally {
+            setIsAnalyzing(false);
+          }
+        }}
+        isExportandoSolar={exportarViaSigad.isPending}
+        isSyncSolar={sincronizarComSolar.isPending}
+        isAnalisando={isAnalyzing}
+      />
     </div>
   );
 }
