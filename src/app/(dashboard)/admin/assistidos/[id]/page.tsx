@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, Lock, User, Loader2, FileText, Plus, Sparkles, Pencil, Clock, Send, Scale, Calendar, FolderOpen, PanelRight } from "lucide-react";
+import { ArrowLeft, Lock, User, Loader2, FileText, Plus, Sparkles, Pencil, Clock, Send, Scale, Calendar, FolderOpen, PanelRight, ChevronDown } from "lucide-react";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,6 +25,12 @@ import { RadarAssistidoCard } from "@/components/radar/radar-assistido-card";
 import { AssistidoOverviewPanel } from "./_components/overview-panel";
 import { AssistidoFichaSheet } from "./_components/ficha-sheet";
 import { ItemDetailSheet } from "./_components/item-detail-sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
@@ -41,7 +47,15 @@ interface TranscriptionData {
 export default function AssistidoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("processos");
+  const [tab, setTab] = useState<Tab>(() => {
+    if (typeof window === "undefined") return "processos";
+    return (localStorage.getItem(`assistido-tab-${id}`) as Tab) ?? "processos";
+  });
+
+  const handleSetTab = (t: Tab) => {
+    setTab(t);
+    localStorage.setItem(`assistido-tab-${id}`, t);
+  };
 
   // Ficha sheet state
   const [fichaSheetOpen, setFichaSheetOpen] = useState(false);
@@ -292,15 +306,25 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     MONITORADO: "monitorado",
   };
 
-  const tabs: { key: Tab; label: string; count?: number }[] = [
+  const tabs: { key: Tab; label: string; count?: number; urgency?: "red" | "amber" }[] = [
     { key: "processos", label: "Processos", count: data.processos.length },
-    { key: "demandas", label: "Demandas", count: data.demandas.length },
-    { key: "drive", label: "Drive", count: data.driveFiles.length },
+    {
+      key: "demandas",
+      label: "Demandas",
+      count: data.demandas.length,
+      urgency: data.demandas.some(d =>
+        d.status === "URGENTE" || (d.prazo && new Date(d.prazo) < new Date())
+      ) ? "red" : data.demandas.some(d => d.status === "2_ATENDER") ? "amber" : undefined
+    },
     { key: "audiencias", label: "Audiências", count: data.audiencias.length },
+    { key: "drive", label: "Drive", count: data.driveFiles.length },
     { key: "midias", label: "Mídias", count: mediaFiles.length },
-    { key: "timeline", label: "Timeline" },
     { key: "oficios", label: "Ofícios", count: oficiosData?.total ?? 0 },
     { key: "inteligencia", label: "Inteligência" },
+  ];
+
+  const overflowTabs: { key: Tab; label: string }[] = [
+    { key: "timeline", label: "Timeline" },
     { key: "radar", label: "Radar" },
   ];
 
@@ -456,26 +480,57 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
       />
 
       {/* Tabs */}
-      <div className="flex gap-0 border-b border-zinc-100 dark:border-zinc-800 px-6">
+      <div className="flex gap-0 border-b border-zinc-100 dark:border-zinc-800 px-6 overflow-x-auto">
         {tabs.map((t) => (
           <button
             key={t.key}
-            onClick={() => setTab(t.key)}
+            type="button"
+            onClick={() => handleSetTab(t.key)}
             className={cn(
-              "px-3 py-2.5 text-[11px] font-medium border-b-2 transition-colors",
+              "px-3 py-2.5 text-[11px] font-medium border-b-2 transition-colors whitespace-nowrap shrink-0",
               tab === t.key
                 ? "border-emerald-500 text-emerald-700 dark:text-emerald-400"
-                : "border-transparent text-zinc-500 hover:text-zinc-700"
+                : "border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
             )}
           >
             {t.label}
             {t.count !== undefined && t.count > 0 && (
-              <span className="ml-1.5 text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded-full">
+              <span className={cn(
+                "ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full",
+                t.urgency === "red"
+                  ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 animate-pulse"
+                  : t.urgency === "amber"
+                  ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+              )}>
                 {t.count}
               </span>
             )}
           </button>
         ))}
+        {/* Overflow: Timeline e Radar */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className={cn(
+                "px-3 py-2.5 text-[11px] font-medium border-b-2 transition-colors flex items-center gap-1 shrink-0",
+                overflowTabs.some(t => t.key === tab)
+                  ? "border-emerald-500 text-emerald-700 dark:text-emerald-400"
+                  : "border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+              )}
+            >
+              + <ChevronDown className="h-3 w-3" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {overflowTabs.map(t => (
+              <DropdownMenuItem key={t.key} onClick={() => handleSetTab(t.key)}>
+                {t.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Tab Content */}
