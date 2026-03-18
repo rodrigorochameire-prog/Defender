@@ -174,7 +174,7 @@ export function AssistidoOverviewPanel({
     }
     const dias = differenceInDays(now, prisaoDate);
     return `${dias} ${dias === 1 ? "dia" : "dias"} preso`;
-  }, [data.statusPrisional, data.dataPrisao, isPreso, now]);
+  }, [data.dataPrisao, isPreso, now]);
 
   // ── Card 4: Processos ────────────────────────────────────────────────────
   const processosVisiveis = data.processos.slice(0, 3);

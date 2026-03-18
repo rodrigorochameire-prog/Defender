@@ -68,7 +68,6 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
   // AI Analysis state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
 
   // Transcription state
   const [transcriptions, setTranscriptions] = useState<Map<string, TranscriptionData>>(new Map());
@@ -84,25 +83,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   } | null>(null);
 
   // Solar / SIGAD state
-  const [sigadResult, setSigadResult] = useState<{
-    success: boolean;
-    ja_existia_solar?: boolean;
-    verificacao_processo?: boolean | null;
-    sigad_processo?: string | null;
-    dados_para_enriquecer?: {
-      nomeMae?: string | null;
-      dataNascimento?: string | null;
-      naturalidade?: string | null;
-      telefone?: string | null;
-    } | null;
-    solar_url?: string | null;
-    nome_sigad?: string | null;
-    message?: string | null;
-    error?: string | null;
-  } | null>(null);
   const exportarViaSigad = trpc.solar.exportarViaSigad.useMutation({
     onSuccess: (result) => {
-      setSigadResult(result);
       if (result.success) {
         const camposEnriquecidos = result.message?.includes("Campos enriquecidos:")
           ? result.message.split("Campos enriquecidos:")[1]?.trim()
@@ -126,17 +108,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   });
 
   // Sync OMBUDS -> Solar (escreve fases processuais)
-  const [syncSolarResult, setSyncSolarResult] = useState<{
-    success: boolean;
-    fases_criadas: number;
-    fases_skipped: number;
-    fases_falhadas: number;
-    total: number;
-    erros: string[];
-  } | null>(null);
   const sincronizarComSolar = trpc.solar.sincronizarComSolar.useMutation({
     onSuccess: (result) => {
-      setSyncSolarResult(result);
       if (result.fases_criadas > 0) {
         toast.success(
           `${result.fases_criadas} fase(s) processual(is) criada(s) no Solar`,
@@ -647,7 +620,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         {tab === "audiencias" && (
           <div className="space-y-2">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Audiencias</h2>
+              <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Audiências</h2>
               <Link href={`/admin/agenda?assistidoId=${data.id}`}>
                 <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px] text-zinc-500 hover:text-emerald-600">
                   <Plus className="h-3.5 w-3.5" />
@@ -888,13 +861,11 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           nomeContato: data.nomeContato,
           parentescoContato: data.parentescoContato,
           driveFolderId: data.driveFolderId,
-          processos: data.processos.map((p) => ({ id: p.id, numeroAutos: p.numeroAutos })),
         }}
         onExportarSolar={() => exportarViaSigad.mutate({ assistidoId: Number(id) })}
         onSyncSolar={() => sincronizarComSolar.mutate({ assistidoId: Number(id) })}
         onAnalisarIA={async () => {
           setIsAnalyzing(true);
-          setAnalysisResult(null);
           try {
             const res = await fetch("/api/ai/analyze-folder", {
               method: "POST",
@@ -905,8 +876,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               const err = (await res.json().catch(() => ({}))) as { error?: string };
               throw new Error(err?.error ?? "Falha na análise");
             }
-            const json = (await res.json()) as { summary?: string };
-            setAnalysisResult(json.summary ?? "Análise concluída sem resumo.");
+            await res.json();
             toast.success("Análise da pasta concluída");
           } catch (err) {
             const message = err instanceof Error ? err.message : "Erro ao analisar pasta";

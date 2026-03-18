@@ -41,7 +41,6 @@ interface FichaSheetProps {
     nomeContato?: string | null;
     parentescoContato?: string | null;
     driveFolderId?: string | null;
-    processos: Array<{ id: number; numeroAutos?: string | null }>;
   };
   onExportarSolar: () => void;
   onSyncSolar: () => void;
