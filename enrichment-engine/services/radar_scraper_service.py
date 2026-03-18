@@ -432,11 +432,17 @@ class RadarScraperService:
             except Exception:
                 pass  # Se não conseguir parsear a data, deixa passar
 
-        # === FILTRO REGIONAL ===
-        # Verificar se a notícia é da região de Camaçari/RMS
-        if not self._is_camacari_region(titulo, corpo, confiabilidade):
-            logger.debug("Ignorando notícia fora de Camaçari: %s", titulo[:80])
+        # === FILTRO DE RELEVÂNCIA ===
+        relevancia_score = self._calculate_relevancia_score(titulo, corpo)
+        if relevancia_score < 35:
+            logger.debug("Score baixo (%d), rejeitando: %s", relevancia_score, titulo[:80])
             return None
+        if 35 <= relevancia_score < 60:
+            ajuste = await self._pretriagem_ia(titulo, corpo[:200] if corpo else "")
+            relevancia_score = max(0, min(100, relevancia_score + ajuste))
+            if relevancia_score < 35:
+                logger.debug("IA rejeitou notícia (score ajustado: %d): %s", relevancia_score, titulo[:80])
+                return None
 
         # Extrair imagem principal
         imagem_url = self._extract_image(soup, url)
@@ -451,6 +457,7 @@ class RadarScraperService:
             "enrichment_status": "pending",
             "raw_html": html[:200000],
             "content_hash": self._generate_content_hash(titulo, corpo),
+            "relevancia_score": relevancia_score,
         }
 
     def _extract_title(self, soup: BeautifulSoup) -> str | None:
@@ -571,6 +578,70 @@ class RadarScraperService:
         title_lower = title.lower()
         return any(kw in title_lower for kw in KEYWORDS_POLICIAL_TITULO)
 
+    def _calculate_relevancia_score(self, titulo: str, corpo: str | None) -> int:
+        """Calcula score de relevância 0-100 para triagem de notícias de Camaçari."""
+        score = 0
+        titulo_lower = titulo.lower()
+        corpo_trecho = (corpo or "")[:500].lower()
+
+        # Camaçari explícito no título (+35)
+        if any(kw in titulo_lower for kw in ["camaçari", "camacari", "camaçarí", "camacarí"]):
+            score += 35
+        # Bairro/distrito de Camaçari no título (+25) — só se não teve +35
+        elif any(kw in titulo_lower for kw in KEYWORDS_CAMACARI_REGIAO):
+            score += 25
+
+        # Camaçari no início do corpo (+15)
+        if any(kw in corpo_trecho for kw in ["camaçari", "camacari"]):
+            score += 15
+
+        # Delegacia/unidade policial de Camaçari (+15)
+        texto_combinado = titulo_lower + " " + corpo_trecho
+        if any(kw in texto_combinado for kw in [
+            "18ª delegacia", "18a delegacia", "delegacia de camaçari", "dpc camaçari",
+            "26ª cipm", "26a cipm", "31ª cipm", "31a cipm", "cicom camaçari",
+        ]):
+            score += 15
+
+        # Crime forte no título (+10)
+        if any(kw in titulo_lower for kw in [
+            "homicídio", "homicidio", "tráfico", "trafico", "baleado",
+            "preso em flagrante", "assassinado", "assassinato",
+        ]):
+            score += 10
+
+        return min(score, 100)
+
+    async def _pretriagem_ia(self, titulo: str, trecho: str) -> int:
+        """Pré-triagem IA para notícias na zona cinzenta (score 35-59).
+        Retorna ajuste de score: -10 a +10.
+        """
+        try:
+            import anthropic
+            import json as _json
+
+            client = anthropic.Anthropic()
+            msg = client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=64,
+                timeout=5.0,
+                messages=[{
+                    "role": "user",
+                    "content": (
+                        "Você é um classificador de notícias policiais de Camaçari-BA.\n"
+                        f"Título: {titulo}\n"
+                        f"Trecho: {trecho}\n\n"
+                        "O crime ocorreu em Camaçari ou municípios limítrofes (Dias d'Ávila, Simões Filho, Lauro de Freitas, Madre de Deus)?\n"
+                        'Responda APENAS JSON: {"relevante": true/false, "ajuste": número inteiro entre -10 e 10}'
+                    ),
+                }],
+            )
+            result = _json.loads(msg.content[0].text.strip())
+            return int(result.get("ajuste", 0))
+        except Exception as e:
+            logger.debug("Pré-triagem IA falhou: %s", str(e))
+            return 0  # Em caso de erro, não ajusta o score
+
     def _is_camacari_region(self, titulo: str, corpo: str | None, confiabilidade: str = "regional") -> bool:
         """
         Verifica se a notícia é da região de Camaçari/RMS.
@@ -579,12 +650,12 @@ class RadarScraperService:
         titulo_lower = titulo.lower()
 
         if confiabilidade == "local":
-            # Fonte local: aceitar se título ou início do corpo tem qualquer keyword regional
+            # Fonte local: exigir keyword regional no título OU keyword ESTRITA nos primeiros 300 chars do corpo
             if any(kw in titulo_lower for kw in KEYWORDS_CAMACARI_REGIAO):
                 return True
             if corpo:
-                trecho = corpo[:1000].lower()
-                if any(kw in trecho for kw in KEYWORDS_CAMACARI_REGIAO):
+                trecho = corpo[:300].lower()  # reduzido de 1000 para 300
+                if any(kw in trecho for kw in KEYWORDS_CAMACARI_STRICT):  # exigir keyword ESTRITA no corpo (não só regional)
                     return True
             return False
 

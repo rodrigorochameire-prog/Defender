@@ -21,6 +21,7 @@ interface FiltrosState {
   dataFim?: string;
   soMatches: boolean;
   circunstancia?: string;
+  relevanciaMin?: number;
 }
 
 interface RadarFeedProps {
@@ -76,6 +77,7 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
       dataFim: filtros.dataFim,
       soMatches: filtros.soMatches,
       circunstancia: filtros.circunstancia,
+      relevanciaMin: filtros.relevanciaMin,
       limit: 20,
     },
     {
@@ -249,6 +251,7 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
             <RadarNoticiaCard
               key={noticia.id}
               noticia={{ ...noticia, matches: matchesPendentes?.[noticia.id] ?? [] } as any}
+              relevanciaScore={(noticia as any).relevanciaScore}
               onClick={() => {
                 setSelectedNoticiaId(noticia.id);
                 setSheetOpen(true);

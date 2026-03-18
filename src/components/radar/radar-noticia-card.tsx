@@ -17,6 +17,26 @@ interface Envolvido {
   vulgo?: string;
 }
 
+function RelevanciaChip({ score }: { score?: number | null }) {
+  if (score == null || score === 0) return null;
+  if (score >= 85) return (
+    <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] px-1.5 py-0 h-4">
+      Confirmada
+    </Badge>
+  );
+  if (score >= 60) return (
+    <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[10px] px-1.5 py-0 h-4">
+      Provável
+    </Badge>
+  );
+  if (score >= 35) return (
+    <Badge className="bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 text-[10px] px-1.5 py-0 h-4">
+      Possível
+    </Badge>
+  );
+  return null;
+}
+
 interface NoticiaCardProps {
   noticia: {
     id: number;
@@ -42,6 +62,7 @@ interface NoticiaCardProps {
       status: string;
     }>;
   };
+  relevanciaScore?: number | null;
   onClick?: () => void;
   onQuickAction?: (matchId: number, action: "confirmar" | "descartar") => void;
   viewMode?: "cards" | "list";
@@ -96,7 +117,7 @@ const papelLabels: Record<string, string> = {
   outro: "Outro",
 };
 
-export function RadarNoticiaCard({ noticia, onClick, onQuickAction, viewMode }: NoticiaCardProps) {
+export function RadarNoticiaCard({ noticia, relevanciaScore, onClick, onQuickAction, viewMode }: NoticiaCardProps) {
   const dataDisplay = noticia.dataFato || noticia.dataPublicacao;
   const hasMatch = (noticia.matchCount ?? 0) > 0;
   const envolvidos = parseEnvolvidos(noticia.envolvidos);
@@ -121,6 +142,7 @@ export function RadarNoticiaCard({ noticia, onClick, onQuickAction, viewMode }: 
         >
           {getCrimeLabel(noticia.tipoCrime)}
         </Badge>
+        <RelevanciaChip score={relevanciaScore} />
 
         {/* Título */}
         <span className="flex-1 text-sm text-zinc-800 dark:text-zinc-200 truncate">
@@ -209,6 +231,7 @@ export function RadarNoticiaCard({ noticia, onClick, onQuickAction, viewMode }: 
               >
                 {getCrimeLabel(noticia.tipoCrime)}
               </Badge>
+              <RelevanciaChip score={relevanciaScore} />
               {hasMatch && (
                 <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                   <Link2 className="h-3 w-3 mr-1" />

@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +18,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ExternalLink,
@@ -42,6 +47,7 @@ import {
   ChevronRight,
   ChevronDown,
   Copy,
+  Sparkles,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -176,6 +182,28 @@ const circunstanciaLabels: Record<string, string> = {
   outros: "Outros",
 };
 
+function StatusPill({ status }: { status: string }) {
+  if (status === "pending") return (
+    <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+      Analisando
+    </span>
+  );
+  if (status === "completed") return (
+    <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+      <CheckCircle2 className="h-3 w-3" />
+      Analisado
+    </span>
+  );
+  if (status === "failed") return (
+    <span className="flex items-center gap-1 text-xs text-red-500">
+      <XCircle className="h-3 w-3" />
+      Falha
+    </span>
+  );
+  return null;
+}
+
 function CorpoSection({
   resumoIA,
   corpo,
@@ -192,6 +220,8 @@ function CorpoSection({
   onEditChange: (v: string) => void;
 }) {
   const [corpoExpanded, setCorpoExpanded] = useState(false);
+  const [resumoExpanded, setResumoExpanded] = useState(false);
+  const MAX_RESUMO = 300;
 
   if (isEditing) {
     return (
@@ -210,18 +240,52 @@ function CorpoSection({
     );
   }
 
+  // Estado pending — skeleton
+  if (!resumoIA && !corpo && enrichmentStatus === "pending") {
+    return (
+      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-4 space-y-2">
+        <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-xs font-medium">
+          <Sparkles className="h-3.5 w-3.5" />
+          Analisando com IA...
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-4/5" />
+          <Skeleton className="h-3 w-3/5" />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
+      {/* Card Resumo IA */}
       {resumoIA && (
-        <div className="space-y-1.5">
-          <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide flex items-center gap-1.5">
-            <FileText className="h-3.5 w-3.5" />
-            Resumo IA
-          </h4>
-          <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{resumoIA}</p>
+        <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="flex items-center gap-1.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+              <Sparkles className="h-3.5 w-3.5" />
+              Resumo IA
+            </span>
+          </div>
+          <p className={cn(
+            "text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed",
+            !resumoExpanded && resumoIA.length > MAX_RESUMO && "line-clamp-4"
+          )}>
+            {resumoIA}
+          </p>
+          {resumoIA.length > MAX_RESUMO && (
+            <button
+              onClick={() => setResumoExpanded(v => !v)}
+              className="mt-1.5 text-xs text-emerald-600 hover:text-emerald-700 cursor-pointer"
+            >
+              {resumoExpanded ? "Mostrar menos" : "Ler mais"}
+            </button>
+          )}
         </div>
       )}
 
+      {/* Texto completo (corpo) em acordeão */}
       {corpo && (
         <div className="space-y-1">
           <button
@@ -229,7 +293,7 @@ function CorpoSection({
             className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
           >
             {corpoExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-            {resumoIA ? "Texto completo" : "Conteudo"}
+            {resumoIA ? "Texto completo da notícia" : "Conteúdo"}
           </button>
           {corpoExpanded && (
             <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap bg-zinc-50 dark:bg-zinc-900/50 rounded-lg p-3 border border-zinc-100 dark:border-zinc-800">
@@ -243,13 +307,37 @@ function CorpoSection({
           )}
         </div>
       )}
+    </div>
+  );
+}
 
-      {!resumoIA && !corpo && enrichmentStatus === "pending" && (
-        <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-          <AlertTriangle className="h-3 w-3" />
-          Analise IA pendente — detalhes completos apos enriquecimento
-        </p>
+const avatarColors: Record<string, string> = {
+  suspeito: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  preso: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  acusado: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+  denunciado: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+  vitima: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  testemunha: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  policial: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
+};
+
+function EnvolvidoAvatar({ nome, papel }: { nome: string | null; papel: string }) {
+  const initials = (nome || "?")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
+  const colorClass = avatarColors[papel] || "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";
+  return (
+    <div
+      className={cn(
+        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
+        colorClass
       )}
+    >
+      {initials}
     </div>
   );
 }
@@ -338,9 +426,9 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+      <SheetContent className="w-full sm:max-w-lg flex flex-col p-0 gap-0">
         {isLoading ? (
-          <div className="space-y-4 pt-6">
+          <div className="px-6 pt-6 space-y-4">
             <Skeleton className="h-6 w-3/4" />
             <Skeleton className="h-4 w-1/2" />
             <Skeleton className="h-48 w-full rounded-lg" />
@@ -349,13 +437,14 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
             <Skeleton className="h-4 w-2/3" />
           </div>
         ) : !noticia ? (
-          <div className="flex items-center justify-center h-40 text-sm text-zinc-400">
+          <div className="px-6 pt-6 flex items-center justify-center h-40 text-sm text-zinc-400">
             Noticia nao encontrada
           </div>
         ) : (
-          <div className="space-y-5 pt-2">
-            <SheetHeader className="space-y-3">
-              {/* Badges + Edit toggle */}
+          <>
+            {/* STICKY HEADER */}
+            <div className="shrink-0 px-6 pt-5 pb-3 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+              {/* Badges + Edit toggle + Close */}
               <div className="flex items-center gap-2 flex-wrap">
                 {isEditing ? (
                   <Select
@@ -392,6 +481,9 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                     {noticia.matches!.length} match{noticia.matches!.length > 1 ? "es" : ""} DPE
                   </Badge>
                 )}
+                {!isEditing && (
+                  <StatusPill status={noticia.enrichmentStatus} />
+                )}
                 {/* Edit toggle button */}
                 <Button
                   variant={isEditing ? "secondary" : "ghost"}
@@ -411,14 +503,24 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                     </>
                   )}
                 </Button>
+                {/* Close button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 cursor-pointer"
+                  onClick={() => onOpenChange(false)}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
               </div>
 
-              <SheetTitle className="text-base leading-snug text-left">
+              {/* Title */}
+              <SheetTitle className="mt-2 text-sm font-semibold line-clamp-2 text-left">
                 {noticia.titulo}
               </SheetTitle>
 
               {/* Meta row */}
-              <div className="flex items-center gap-3 text-xs text-zinc-400 flex-wrap">
+              <div className="flex items-center gap-3 text-xs text-zinc-400 flex-wrap mt-1.5">
                 <span>{noticia.fonte}</span>
                 {noticia.dataPublicacao && (
                   <span className="flex items-center gap-1">
@@ -427,8 +529,10 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                   </span>
                 )}
               </div>
-            </SheetHeader>
+            </div>
 
+            {/* SCROLLABLE BODY */}
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
             {/* Imagem */}
             {noticia.imagemUrl && (
               <div className="rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800">
@@ -500,32 +604,30 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                       )}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                    /* VIEW MODE — chips inline */
+                    <div className="flex flex-wrap gap-1.5">
                       {noticia.bairro && (
-                        <div>
-                          <span className="text-xs text-zinc-400">Bairro</span>
-                          <p className="font-medium text-zinc-800 dark:text-zinc-200">{noticia.bairro}</p>
-                        </div>
+                        <span className="inline-flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-full px-3 py-1 text-xs font-medium">
+                          <MapPin className="h-2.5 w-2.5 text-zinc-400" />
+                          {noticia.bairro}
+                        </span>
                       )}
                       {noticia.logradouro && (
-                        <div>
-                          <span className="text-xs text-zinc-400">Logradouro</span>
-                          <p className="font-medium text-zinc-800 dark:text-zinc-200">{noticia.logradouro}</p>
-                        </div>
+                        <span className="inline-flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-full px-3 py-1 text-xs font-medium">
+                          {noticia.logradouro}
+                        </span>
                       )}
                       {noticia.delegacia && (
-                        <div>
-                          <span className="text-xs text-zinc-400">Delegacia</span>
-                          <p className="font-medium text-zinc-800 dark:text-zinc-200">{noticia.delegacia}</p>
-                        </div>
+                        <span className="inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-full px-3 py-1 text-xs font-medium">
+                          <Shield className="h-2.5 w-2.5" />
+                          {noticia.delegacia}
+                        </span>
                       )}
                       {noticia.dataFato && (
-                        <div>
-                          <span className="text-xs text-zinc-400">Data do fato</span>
-                          <p className="font-medium text-zinc-800 dark:text-zinc-200">
-                            {format(new Date(noticia.dataFato), "dd/MM/yyyy", { locale: ptBR })}
-                          </p>
-                        </div>
+                        <span className="inline-flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-full px-3 py-1 text-xs font-medium">
+                          <Clock className="h-2.5 w-2.5 text-zinc-400" />
+                          {format(new Date(noticia.dataFato), "dd/MM/yyyy", { locale: ptBR })}
+                        </span>
                       )}
                     </div>
                   )}
@@ -580,19 +682,28 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                     {parseEnvolvidos(noticia.envolvidos as any).map((e, i) => (
                       <div
                         key={i}
-                        className={cn(
-                          "flex items-center justify-between px-2.5 py-1.5 rounded-md text-sm",
-                          papelColors[e.papel] || "bg-zinc-50 dark:bg-zinc-800/50",
-                        )}
+                        className="flex items-center gap-3 px-2.5 py-2 rounded-lg border border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors group"
                       >
-                        <span className="font-medium">
-                          {e.nome || "Desconhecido"}
-                          {e.vulgo ? ` "${e.vulgo}"` : ""}
-                          {e.idade ? `, ${e.idade} anos` : ""}
-                        </span>
-                        <span className="text-xs opacity-70">
-                          {papelLabels[e.papel] || e.papel}
-                        </span>
+                        <EnvolvidoAvatar nome={e.nome} papel={e.papel} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                            {e.nome || "Desconhecido"}
+                            {e.vulgo ? <span className="text-zinc-500 italic"> &quot;{e.vulgo}&quot;</span> : null}
+                            {e.idade ? <span className="text-zinc-500">, {e.idade} anos</span> : null}
+                          </p>
+                          <p className="text-xs text-zinc-500">
+                            {papelLabels[e.papel] || e.papel}
+                          </p>
+                        </div>
+                        <button
+                          className="opacity-0 group-hover:opacity-100 transition-opacity h-6 px-2 text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer flex items-center gap-1"
+                          onClick={() => {
+                            navigator.clipboard.writeText(e.nome || "");
+                            toast.success("Nome copiado");
+                          }}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -629,6 +740,19 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                           className="flex items-center gap-3 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50"
                         >
                           <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="flex-1 h-1 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                                <div
+                                  className={cn(
+                                    "h-full rounded-full",
+                                    match.scoreConfianca >= 80 ? "bg-emerald-500" :
+                                    match.scoreConfianca >= 60 ? "bg-amber-500" : "bg-zinc-400"
+                                  )}
+                                  style={{ width: `${match.scoreConfianca}%` }}
+                                />
+                              </div>
+                              <span className="text-xs text-zinc-500 shrink-0">{match.scoreConfianca}%</span>
+                            </div>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
                                 {match.assistidoNome || match.nomeEncontrado}
@@ -636,7 +760,6 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                               <Icon className={cn("h-3.5 w-3.5 shrink-0", cfg.color)} />
                             </div>
                             <div className="flex items-center gap-2 text-xs text-zinc-400 mt-0.5">
-                              <span>Score: {match.scoreConfianca}%</span>
                               <span>{cfg.label}</span>
                               {match.nomeEncontrado !== match.assistidoNome && (
                                 <span className="truncate">
@@ -658,43 +781,48 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                               </div>
                             )}
                             {/* Por que este match? */}
-                            <details className="mt-2">
-                              <summary className="text-xs text-zinc-400 cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-300 select-none flex items-center gap-1 list-none">
-                                <ChevronRight className="h-3 w-3 transition-transform [details[open]_&]:rotate-90" />
-                                Por que este match?
-                                <button
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    const text = `${noticia.titulo}\n\nNome encontrado: ${match.nomeEncontrado}\nFonte: ${noticia.fonte || ""}\nURL: ${noticia.url || ""}`;
-                                    navigator.clipboard.writeText(text);
-                                    toast.success("Trecho copiado");
-                                  }}
-                                  className="ml-auto text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 flex items-center gap-1 cursor-pointer"
-                                >
-                                  <Copy className="h-3 w-3" /> Copiar
-                                </button>
-                              </summary>
-                              <div className="mt-2 text-xs bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3 border border-zinc-100 dark:border-zinc-800">
-                                {noticia.corpo ? (
-                                  <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                                    <HighlightedText
-                                      text={noticia.corpo.slice(0, 600)}
-                                      highlights={[match.nomeEncontrado].filter(Boolean) as string[]}
-                                    />
-                                    {noticia.corpo.length > 600 && (
-                                      <span className="text-zinc-400"> ...</span>
+                            <Accordion type="single" collapsible className="mt-1">
+                              <AccordionItem value={`match-${match.id}`} className="border-0">
+                                <AccordionTrigger className="py-1 text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:no-underline">
+                                  <span className="flex items-center gap-2">
+                                    Por que este match?
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const text = `${noticia.titulo}\n\nNome encontrado: ${match.nomeEncontrado}\nFonte: ${noticia.fonte || ""}\nURL: ${noticia.url || ""}`;
+                                        navigator.clipboard.writeText(text);
+                                        toast.success("Trecho copiado");
+                                      }}
+                                      className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <Copy className="h-3 w-3" /> Copiar
+                                    </button>
+                                  </span>
+                                </AccordionTrigger>
+                                <AccordionContent className="pb-1">
+                                  <div className="text-xs bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3 border border-zinc-100 dark:border-zinc-800">
+                                    {noticia.corpo ? (
+                                      <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                                        <HighlightedText
+                                          text={noticia.corpo.slice(0, 600)}
+                                          highlights={[match.nomeEncontrado].filter(Boolean) as string[]}
+                                        />
+                                        {noticia.corpo.length > 600 && (
+                                          <span className="text-zinc-400"> ...</span>
+                                        )}
+                                      </p>
+                                    ) : (
+                                      <p className="text-zinc-500">
+                                        Nome encontrado:{" "}
+                                        <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                                          {match.nomeEncontrado}
+                                        </span>
+                                      </p>
                                     )}
-                                  </p>
-                                ) : (
-                                  <p className="text-zinc-500">
-                                    Nome encontrado:{" "}
-                                    <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                                      {match.nomeEncontrado}
-                                    </span>
-                                  </p>
-                                )}
-                              </div>
-                            </details>
+                                  </div>
+                                </AccordionContent>
+                              </AccordionItem>
+                            </Accordion>
                           </div>
                           {match.assistidoId && (
                             <Button
@@ -712,34 +840,6 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                       );
                     })}
                   </div>
-                </div>
-              </>
-            )}
-
-            {/* Edit save/cancel buttons */}
-            {isEditing && (
-              <>
-                <Separator />
-                <div className="flex gap-2 pb-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex-1 cursor-pointer"
-                    onClick={cancelEdit}
-                    disabled={updateMutation.isPending}
-                  >
-                    <X className="h-3.5 w-3.5 mr-1.5" />
-                    Cancelar
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
-                    onClick={handleSave}
-                    disabled={updateMutation.isPending}
-                  >
-                    <Save className="h-3.5 w-3.5 mr-1.5" />
-                    {updateMutation.isPending ? "Salvando..." : "Salvar"}
-                  </Button>
                 </div>
               </>
             )}
@@ -799,20 +899,38 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
               </>
             )}
 
-            {/* Acoes */}
-            {!isEditing && (
-              <>
-                <Separator />
-                <div className="flex gap-2 pb-4">
+            </div>{/* end SCROLLABLE BODY */}
+
+            {/* STICKY FOOTER */}
+            <div className="shrink-0 px-6 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex gap-2">
+              {isEditing ? (
+                <>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     className="flex-1 cursor-pointer"
-                    asChild
+                    onClick={cancelEdit}
+                    disabled={updateMutation.isPending}
                   >
+                    <X className="h-3.5 w-3.5 mr-1.5" />
+                    Cancelar
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                    onClick={handleSave}
+                    disabled={updateMutation.isPending}
+                  >
+                    <Save className="h-3.5 w-3.5 mr-1.5" />
+                    {updateMutation.isPending ? "Salvando..." : "Salvar"}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" size="sm" className="flex-1 cursor-pointer" asChild>
                     <a href={noticia.url} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                      Abrir fonte original
+                      Abrir fonte
                     </a>
                   </Button>
                   <Button
@@ -827,12 +945,25 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                       "h-3.5 w-3.5",
                       (reprocessMutation.isPending || noticia.enrichmentStatus === "pending") && "animate-spin"
                     )} />
-                    {noticia.enrichmentStatus === "pending" ? "Analisando..." : "Re-analisar"}
+                    {noticia.enrichmentStatus === "pending" ? "..." : "Re-analisar"}
                   </Button>
-                </div>
-              </>
-            )}
-          </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 cursor-pointer text-zinc-500 hover:text-zinc-700"
+                    onClick={() => {
+                      const texto = noticia.resumoIA || noticia.corpo?.slice(0, 500) || noticia.titulo;
+                      navigator.clipboard.writeText(texto);
+                      toast.success("Resumo copiado");
+                    }}
+                    title="Copiar resumo"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </>
+              )}
+            </div>
+          </>
         )}
       </SheetContent>
     </Sheet>

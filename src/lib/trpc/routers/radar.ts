@@ -34,6 +34,7 @@ export const radarRouter = router({
         dataFim: z.string().optional(),
         soMatches: z.boolean().optional().default(false),
         circunstancia: z.string().optional(),
+        relevanciaMin: z.number().min(0).max(100).optional(),
         limit: z.number().min(1).max(100).optional().default(20),
         cursor: z.number().optional(), // id of the last item
       })
@@ -82,6 +83,10 @@ export const radarRouter = router({
         conditions.push(sql`${radarNoticias.id} < ${input.cursor}`);
       }
 
+      if (input.relevanciaMin !== undefined) {
+        conditions.push(gte(radarNoticias.relevanciaScore, input.relevanciaMin));
+      }
+
       // Base query
       let query;
 
@@ -102,6 +107,7 @@ export const radarRouter = router({
             resumoIA: radarNoticias.resumoIA,
             envolvidos: radarNoticias.envolvidos,
             enrichmentStatus: radarNoticias.enrichmentStatus,
+            relevanciaScore: radarNoticias.relevanciaScore,
             createdAt: radarNoticias.createdAt,
             matchCount: sql<number>`count(${radarMatches.id}) over (partition by ${radarNoticias.id})`,
           })
@@ -126,6 +132,7 @@ export const radarRouter = router({
             resumoIA: radarNoticias.resumoIA,
             envolvidos: radarNoticias.envolvidos,
             enrichmentStatus: radarNoticias.enrichmentStatus,
+            relevanciaScore: radarNoticias.relevanciaScore,
             createdAt: radarNoticias.createdAt,
           })
           .from(radarNoticias)
@@ -290,6 +297,27 @@ export const radarRouter = router({
         .groupBy(sql`to_char(${radarNoticias.createdAt}, 'YYYY-MM')`, radarNoticias.tipoCrime)
         .orderBy(sql`to_char(${radarNoticias.createdAt}, 'YYYY-MM')`);
 
+      const confirmadas = await db.select({ count: count() })
+        .from(radarNoticias)
+        .where(gte(radarNoticias.relevanciaScore, 85))
+        .then(r => r[0]?.count ?? 0);
+
+      const provaveis = await db.select({ count: count() })
+        .from(radarNoticias)
+        .where(and(
+          gte(radarNoticias.relevanciaScore, 60),
+          lt(radarNoticias.relevanciaScore, 85)
+        ))
+        .then(r => r[0]?.count ?? 0);
+
+      const possiveis = await db.select({ count: count() })
+        .from(radarNoticias)
+        .where(and(
+          gte(radarNoticias.relevanciaScore, 35),
+          lt(radarNoticias.relevanciaScore, 60)
+        ))
+        .then(r => r[0]?.count ?? 0);
+
       return {
         total: Number(totalResult?.total || 0),
         totalMatches: Number(matchResult?.total || 0),
@@ -302,6 +330,11 @@ export const radarRouter = router({
           tipo: r.tipoCrime || "outros",
           count: Number(r.count),
         })),
+        relevancia: {
+          confirmadas: Number(confirmadas),
+          provaveis: Number(provaveis),
+          possiveis: Number(possiveis),
+        },
       };
     }),
 

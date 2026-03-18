@@ -53,6 +53,7 @@ export const radarNoticias = pgTable("radar_noticias", {
     vulgo?: string;
   }[]>(),
   contentHash: text("content_hash"),
+  relevanciaScore: integer("relevancia_score").default(0).notNull(),
   enrichmentStatus: radarEnrichmentStatusEnum("enrichment_status").default("pending").notNull(),
   errorCount: integer("error_count").default(0).notNull(),
   lastError: text("last_error"),

@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageLayout } from "@/components/shared/page-layout";
 import { Button } from "@/components/ui/button";
-import { Radio, Newspaper, Map, BarChart3, Link2, RefreshCw, Clock, Users, Globe } from "lucide-react";
+import { Radio, Newspaper, Map, BarChart3, Link2, RefreshCw, Clock, Users, Globe, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { RadarFeed } from "@/components/radar/radar-feed";
 import { RadarFiltros, type FiltrosState } from "@/components/radar/radar-filtros";
 import { RadarMapa } from "@/components/radar/radar-mapa";
@@ -75,12 +75,18 @@ export default function RadarCriminalPage() {
   const { data: healthData } = trpc.radar.enrichmentHealth.useQuery();
   const healthPending = Number(healthData?.pending ?? 0);
 
+  // Estatísticas gerais
+  const { data: statsData } = trpc.radar.stats.useQuery({ periodo: "total" });
+  const totalNoticias = (statsData as { total?: number } | undefined)?.total ?? 0;
+
   // Última coleta (fonte mais recente)
   const { data: fontes } = trpc.radar.fontesList.useQuery();
   const ultimaColeta = fontes
     ?.map((f) => f.ultimaColeta)
     .filter(Boolean)
     .sort((a, b) => new Date(b!).getTime() - new Date(a!).getTime())[0];
+
+  const fontesAtivas = fontes?.filter((f) => f.ativo).length ?? 0;
 
   // Pipeline trigger
   const utils = trpc.useUtils();
@@ -117,57 +123,76 @@ export default function RadarCriminalPage() {
 
   return (
     <PageLayout
+      header="Radar Criminal"
+      icon={Radio}
+      description="Monitoramento policial automático de Camaçari e região"
       actions={
-        <div className="flex items-center gap-3">
-          {/* Última coleta */}
-          {ultimaColeta && (
-            <div className="hidden sm:flex items-center gap-1.5 text-xs text-zinc-400">
-              <Clock className="h-3 w-3" />
-              <span>
-                Atualizado{" "}
-                {formatDistanceToNow(new Date(ultimaColeta), {
-                  addSuffix: true,
-                  locale: ptBR,
-                })}
-              </span>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1.5 cursor-pointer"
+          onClick={() => triggerPipeline.mutate()}
+          disabled={triggerPipeline.isPending}
+        >
+          <RefreshCw
+            className={`h-3.5 w-3.5 ${triggerPipeline.isPending ? "animate-spin" : ""}`}
+          />
+          <span className="hidden sm:inline">
+            {triggerPipeline.isPending ? "Atualizando..." : "Atualizar"}
+          </span>
+        </Button>
+      }
+      stats={
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Total de notícias */}
+          <div className="flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1 text-xs text-zinc-600 dark:text-zinc-400">
+            <Newspaper className="h-3 w-3 text-zinc-400" />
+            <span className="font-semibold text-zinc-800 dark:text-zinc-200">{totalNoticias}</span>
+            <span>notícias</span>
+          </div>
+
+          {/* Matches pendentes */}
+          {matchesPendentes > 0 ? (
+            <div className="flex items-center gap-1.5 rounded-full border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-3 py-1 text-xs text-amber-700 dark:text-amber-400">
+              <Link2 className="h-3 w-3" />
+              <span className="font-semibold">{matchesPendentes}</span>
+              <span>matches pendentes</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 rounded-full border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-1 text-xs text-emerald-700 dark:text-emerald-400">
+              <CheckCircle2 className="h-3 w-3" />
+              <span>Matches em dia</span>
             </div>
           )}
 
-          {/* Botão atualizar */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 cursor-pointer"
-            onClick={() => triggerPipeline.mutate()}
-            disabled={triggerPipeline.isPending}
-          >
-            <RefreshCw
-              className={`h-3.5 w-3.5 ${triggerPipeline.isPending ? "animate-spin" : ""}`}
-            />
-            <span className="hidden sm:inline">
-              {triggerPipeline.isPending ? "Atualizando..." : "Atualizar"}
-            </span>
-          </Button>
+          {/* Enriquecimento pendente */}
+          {healthPending > 0 && (
+            <div className="flex items-center gap-1.5 rounded-full border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 px-3 py-1 text-xs text-orange-700 dark:text-orange-400">
+              <AlertTriangle className="h-3 w-3" />
+              <span className="font-semibold">{healthPending}</span>
+              <span>aguardando IA</span>
+            </div>
+          )}
 
-          <div className="flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-            <Radio className="h-4 w-4 text-emerald-500 animate-pulse" />
-            <span>Radar Criminal</span>
+          {/* Fontes ativas */}
+          <div className="flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1 text-xs text-zinc-600 dark:text-zinc-400">
+            <Globe className="h-3 w-3 text-zinc-400" />
+            <span className="font-semibold text-zinc-800 dark:text-zinc-200">{fontesAtivas}</span>
+            <span>fontes ativas</span>
           </div>
+
+          {/* Última coleta */}
+          {ultimaColeta && (
+            <div className="flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1 text-xs text-zinc-500 dark:text-zinc-400">
+              <Clock className="h-3 w-3" />
+              <span>
+                {formatDistanceToNow(new Date(ultimaColeta), { addSuffix: true, locale: ptBR })}
+              </span>
+            </div>
+          )}
         </div>
       }
     >
-      {healthPending > 0 && (
-        <div className="mb-3 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
-          <span className="font-semibold">{healthPending}</span> notícias aguardando enriquecimento IA
-          <button
-            className="ml-auto text-xs underline cursor-pointer"
-            onClick={() => setActiveTab("fontes")}
-          >
-            Ver fontes
-          </button>
-        </div>
-      )}
-
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <TabsList className="flex w-full sm:w-auto items-center">
