@@ -503,6 +503,8 @@ export const radarEnrichmentStatusEnum = pgEnum("radar_enrichment_status", [
   "extracted",
   "matched",
   "analyzed",
+  "failed",
+  "duplicate",
 ]);
 
 export const radarFonteTipoEnum = pgEnum("radar_fonte_tipo", [

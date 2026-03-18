@@ -220,6 +220,8 @@ export const radarRouter = router({
     .input(
       z.object({
         periodo: z.enum(["7d", "30d", "90d", "1a", "total"]).optional().default("30d"),
+        tipoCrime: z.string().optional(),
+        bairro: z.string().optional(),
       })
     )
     .query(async ({ input }) => {
@@ -236,6 +238,12 @@ export const radarRouter = router({
         const dataInicio = new Date();
         dataInicio.setDate(dataInicio.getDate() - dias);
         conditions.push(gte(radarNoticias.createdAt, dataInicio));
+      }
+      if (input.tipoCrime && input.tipoCrime !== "todos") {
+        conditions.push(eq(radarNoticias.tipoCrime, input.tipoCrime as any));
+      }
+      if (input.bairro) {
+        conditions.push(ilike(radarNoticias.bairro, `%${input.bairro}%`));
       }
 
       const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -302,6 +310,7 @@ export const radarRouter = router({
       z.object({
         periodo: z.enum(["7d", "30d", "90d", "1a", "total"]).optional().default("30d"),
         limit: z.number().min(1).max(20).optional().default(10),
+        tipoCrime: z.string().optional(),
       })
     )
     .query(async ({ input }) => {
@@ -312,6 +321,11 @@ export const radarRouter = router({
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - days);
 
+      const tipoCrimeFilter =
+        input.tipoCrime && input.tipoCrime !== "todos"
+          ? sql`AND tipo_crime = ${input.tipoCrime}`
+          : sql``;
+
       const result = await db.execute(sql`
         SELECT
           bairro,
@@ -320,6 +334,7 @@ export const radarRouter = router({
         FROM radar_noticias
         WHERE bairro IS NOT NULL
           AND created_at >= ${cutoff.toISOString()}
+          ${tipoCrimeFilter}
         GROUP BY bairro
         ORDER BY total DESC
         LIMIT ${input.limit}
@@ -472,11 +487,22 @@ export const radarRouter = router({
         .where(eq(radarMatches.id, input.id))
         .returning();
 
-      // Send WhatsApp notification to the responsible defensor (fire-and-forget)
+      // Send WhatsApp notification to the responsible defensor (fire-and-forget with 1 retry)
       if (updated) {
-        notifyMatchViaWhatsApp(updated.id).catch((err) => {
-          console.error("[Radar] Falha ao enviar WhatsApp para match confirmado:", err);
-        });
+        const sendWithRetry = async () => {
+          try {
+            await notifyMatchViaWhatsApp(updated.id);
+          } catch (firstErr) {
+            console.warn("[Radar] Primeira tentativa WhatsApp falhou, tentando novamente em 3s...", firstErr);
+            await new Promise((r) => setTimeout(r, 3000));
+            try {
+              await notifyMatchViaWhatsApp(updated.id);
+            } catch (secondErr) {
+              console.error("[Radar] Falha definitiva no WhatsApp após retry (confirmMatch):", secondErr);
+            }
+          }
+        };
+        sendWithRetry(); // fire-and-forget com retry
       }
 
       return updated;
@@ -524,9 +550,23 @@ export const radarRouter = router({
         )
         .returning({ id: radarMatches.id });
 
-      // Fire-and-forget WhatsApp for each confirmed match
+      // Fire-and-forget WhatsApp for each confirmed match (with 1 retry each)
       for (const match of updated) {
-        notifyMatchViaWhatsApp(match.id).catch(() => {});
+        const matchId = match.id;
+        const sendWithRetry = async () => {
+          try {
+            await notifyMatchViaWhatsApp(matchId);
+          } catch (firstErr) {
+            console.warn("[Radar] Primeira tentativa WhatsApp falhou (bulk), tentando novamente em 3s...", firstErr);
+            await new Promise((r) => setTimeout(r, 3000));
+            try {
+              await notifyMatchViaWhatsApp(matchId);
+            } catch (secondErr) {
+              console.error(`[Radar] Falha definitiva no WhatsApp após retry (bulkConfirm matchId=${matchId}):`, secondErr);
+            }
+          }
+        };
+        sendWithRetry(); // fire-and-forget com retry
       }
 
       return { confirmed: updated.length };
@@ -630,13 +670,19 @@ export const radarRouter = router({
         totalNoticias: count(radarNoticias.id),
         totalMatches: sql<number>`count(distinct ${radarMatches.id})`,
         ultimaNoticia: sql<string>`max(${radarNoticias.createdAt})`,
+        semCorpo: sql<number>`count(case when ${radarNoticias.corpo} is null or length(${radarNoticias.corpo}) < 100 then 1 end)`,
       })
       .from(radarNoticias)
       .leftJoin(radarMatches, eq(radarNoticias.id, radarMatches.noticiaId))
       .groupBy(radarNoticias.fonte)
       .orderBy(desc(sql`count(${radarNoticias.id})`));
 
-    return result;
+    return result.map((row) => {
+      const total = Number(row.totalNoticias);
+      const semCorpo = Number(row.semCorpo);
+      const taxaExtracao = total > 0 ? Math.round((1 - semCorpo / total) * 100) : null;
+      return { ...row, semCorpo, taxaExtracao };
+    });
   }),
 
   updateFonte: protectedProcedure
@@ -1047,7 +1093,7 @@ export const radarRouter = router({
       // Date filter + simplified jsonb_agg (no DISTINCT ORDER BY) to avoid statement timeout.
       const result = await db.execute(sql`
         SELECT
-          env->>'nome' as nome,
+          unaccent(lower(env->>'nome')) as nome,
           env->>'papel' as papel,
           COUNT(DISTINCT n.id) as total_noticias,
           jsonb_agg(jsonb_build_object(
@@ -1064,13 +1110,22 @@ export const radarRouter = router({
           AND jsonb_typeof(n.envolvidos) = 'array'
           AND n.created_at >= ${cutoff}
           AND env->>'nome' IS NOT NULL
-          AND length(env->>'nome') > 3
-          AND lower(env->>'nome') NOT IN (
-            'homem', 'mulher', 'suspeito', 'vitima', 'vítima', 'menor',
-            'adolescente', 'policial', 'pm', 'delegado', 'criminoso',
-            'indivíduo', 'individuo', 'desconhecido', 'pessoa'
+          AND length(env->>'nome') > 4
+          AND unaccent(lower(env->>'nome')) NOT IN (
+            'homem', 'mulher', 'suspeito', 'suspeitos', 'vitima', 'vítima', 'vítimas', 'vitimas',
+            'menor', 'menores', 'adolescente', 'adolescentes',
+            'policial', 'policiais', 'pm', 'delegado', 'delegados', 'criminoso', 'criminosos',
+            'individuo', 'individuos', 'desconhecido', 'desconhecidos',
+            'pessoa', 'pessoas', 'agente', 'agentes',
+            'agressor', 'agressora', 'agressores', 'agredido', 'agredida',
+            'envolvido', 'envolvida', 'envolvidos', 'envolvidas',
+            'acusado', 'acusada', 'acusados', 'acusadas',
+            'autor', 'autores', 'autora', 'autoras',
+            'infrator', 'infratores',
+            'reu', 're',
+            'silva', 'santos'
           )
-        GROUP BY env->>'nome', env->>'papel'
+        GROUP BY unaccent(lower(env->>'nome')), env->>'papel'
         HAVING COUNT(DISTINCT n.id) >= ${input.minOcorrencias}
         ORDER BY total_noticias DESC
         LIMIT ${input.limit}
@@ -1143,6 +1198,16 @@ export const radarRouter = router({
       .from(radarNoticias)
       .where(sql`${radarNoticias.resumoIA} IS NULL AND ${radarNoticias.enrichmentStatus} IN ('extracted', 'matched')`);
 
+    const [failed] = await db
+      .select({ count: count() })
+      .from(radarNoticias)
+      .where(eq(radarNoticias.enrichmentStatus, "failed"));
+
+    const [duplicate] = await db
+      .select({ count: count() })
+      .from(radarNoticias)
+      .where(eq(radarNoticias.enrichmentStatus, "duplicate"));
+
     return {
       total: total?.count ?? 0,
       pending: pending?.count ?? 0,
@@ -1150,6 +1215,8 @@ export const radarRouter = router({
       semBairro: semBairro?.count ?? 0,
       semCoordenadas: semCoordenadas?.count ?? 0,
       semResumo: semResumo?.count ?? 0,
+      failed: Number(failed?.count ?? 0),
+      duplicate: Number(duplicate?.count ?? 0),
     };
   }),
 

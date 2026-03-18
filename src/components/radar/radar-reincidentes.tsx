@@ -23,11 +23,13 @@ const papelColors: Record<string, string> = {
 
 export function RadarReincidentes() {
   const [minOcorrencias, setMinOcorrencias] = useState(2);
+  const [dias, setDias] = useState(90);
   const [expandedNames, setExpandedNames] = useState<Set<string>>(new Set());
 
   const { data, isLoading } = trpc.radar.reincidentes.useQuery({
     minOcorrencias,
     limit: 30,
+    dias,
   });
 
   function toggleExpand(nome: string) {
@@ -51,8 +53,13 @@ export function RadarReincidentes() {
 
   return (
     <div className="space-y-4">
-      {/* Filtro de mínimo de ocorrências */}
-      <div className="flex items-center gap-2">
+      {/* Subtítulo da aba completa */}
+      <p className="text-xs text-zinc-400 dark:text-zinc-500">
+        Exploração completa — 2+ ocorrências
+      </p>
+
+      {/* Filtros: mínimo de ocorrências + período */}
+      <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-zinc-500">Mínimo de ocorrências:</span>
         {[2, 3, 4, 5].map((n) => (
           <Button
@@ -65,6 +72,24 @@ export function RadarReincidentes() {
             {n}+
           </Button>
         ))}
+        <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-zinc-500">Período:</span>
+          {[30, 90, 180, 365].map((d) => (
+            <button
+              key={d}
+              onClick={() => setDias(d)}
+              className={cn(
+                "rounded px-2 py-0.5 text-xs transition-colors",
+                dias === d
+                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                  : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              )}
+            >
+              {d === 365 ? "1a" : `${d}d`}
+            </button>
+          ))}
+        </div>
         <span className="ml-auto text-xs text-zinc-400">
           {reincidentes.length} envolvido{reincidentes.length !== 1 ? "s" : ""}
         </span>
@@ -145,6 +170,30 @@ export function RadarReincidentes() {
                   )}
                 </button>
 
+                {/* Action footer */}
+                <div className="flex items-center gap-2 px-4 pb-3 pt-0">
+                  <button
+                    onClick={() => {
+                      window.open(
+                        `/admin/radar?tab=matches&nome=${encodeURIComponent(pessoa.nome)}`,
+                        "_self"
+                      );
+                    }}
+                    className="text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 underline cursor-pointer"
+                  >
+                    Ver matches automáticos
+                  </button>
+                  <span className="text-zinc-300 dark:text-zinc-700">·</span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(pessoa.nome);
+                    }}
+                    className="text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 cursor-pointer"
+                  >
+                    Copiar nome
+                  </button>
+                </div>
+
                 {/* Expanded timeline */}
                 {isExpanded && (
                   <div className="border-t border-zinc-100 dark:border-zinc-800 px-4 pb-4">
@@ -191,9 +240,17 @@ export function RadarReincidentes() {
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-zinc-700 dark:text-zinc-300 line-clamp-1">
-                              {noticia.titulo}
-                            </p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs text-zinc-700 dark:text-zinc-300 line-clamp-1 flex-1">
+                                {noticia.titulo}
+                              </p>
+                              <a
+                                href={`/admin/radar?noticiaId=${noticia.id}`}
+                                className="ml-auto text-[10px] text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 shrink-0"
+                              >
+                                Ver →
+                              </a>
+                            </div>
                           </div>
                         </div>
                       ))}

@@ -87,9 +87,10 @@ interface LeafletMapProps {
   showHeatmap: boolean;
   onSelectNoticia?: (id: number) => void;
   fullscreen?: boolean;
+  resetViewTrigger?: number;
 }
 
-export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, fullscreen }: LeafletMapProps) {
+export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, fullscreen, resetViewTrigger }: LeafletMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
@@ -159,6 +160,12 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
       heatLegendRef.current = null;
     };
   }, []);
+
+  // Reset view to Camaçari bounds when trigger changes
+  useEffect(() => {
+    if (!mapRef.current || resetViewTrigger === undefined || resetViewTrigger === 0) return;
+    mapRef.current.fitBounds(CAMACARI_BOUNDS);
+  }, [resetViewTrigger]);
 
   // Update markers when data changes
   useEffect(() => {

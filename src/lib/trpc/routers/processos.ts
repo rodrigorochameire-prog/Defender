@@ -79,6 +79,27 @@ export const processosRouter = router({
       return result;
     }),
 
+  // Listar processos de um assistido específico
+  listByAssistido: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input }) => {
+      const result = await db
+        .select({
+          id: processos.id,
+          numeroAutos: processos.numeroAutos,
+          assunto: processos.assunto,
+          area: processos.area,
+          situacao: processos.situacao,
+          comarca: processos.comarca,
+          vara: processos.vara,
+        })
+        .from(processos)
+        .where(eq(processos.assistidoId, input.assistidoId))
+        .orderBy(desc(processos.createdAt));
+
+      return result;
+    }),
+
   // Buscar processo por ID (enriquecido)
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))

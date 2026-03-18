@@ -69,6 +69,7 @@ interface RadarNoticiaSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectNoticia?: (id: number) => void;
+  onNavigateToMatches?: (noticiaId: number) => void;
 }
 
 interface Envolvido {
@@ -253,7 +254,7 @@ function CorpoSection({
   );
 }
 
-export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNoticia }: RadarNoticiaSheetProps) {
+export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNoticia, onNavigateToMatches }: RadarNoticiaSheetProps) {
   const utils = trpc.useUtils();
 
   const { data, isLoading } = trpc.radar.getById.useQuery(
@@ -604,10 +605,20 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
               <>
                 <Separator />
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide flex items-center gap-1.5">
-                    <Shield className="h-3.5 w-3.5" />
-                    Matches com Assistidos DPE
-                  </h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide flex items-center gap-1.5">
+                      <Shield className="h-3.5 w-3.5" />
+                      Matches com Assistidos DPE
+                    </h4>
+                    {onNavigateToMatches && noticiaId && (
+                      <button
+                        onClick={() => onNavigateToMatches(noticiaId)}
+                        className="text-xs text-emerald-600 hover:text-emerald-700 underline cursor-pointer"
+                      >
+                        Ver {noticia.matches.length} match{noticia.matches.length > 1 ? "es" : ""} na aba Matches →
+                      </button>
+                    )}
+                  </div>
                   <div className="space-y-2">
                     {noticia.matches.map((match) => {
                       const cfg = matchStatusConfig[match.status] || matchStatusConfig.possivel;

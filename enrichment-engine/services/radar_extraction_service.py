@@ -9,9 +9,10 @@ import logging
 import os
 import re
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 
 import httpx
+from pydantic import BaseModel, Field, field_validator
 
 from config import get_settings
 
@@ -66,6 +67,32 @@ BAIRROS_CAMACARI = [
     "Simões Filho", "Stela Mares", "Sucuiu", "Vila Camaçari",
     "Vila de Abrantes", "Vila Rica",
 ]
+
+
+class EnvolvidoModel(BaseModel):
+    nome: str = Field(min_length=3, max_length=200)
+    papel: str = "outro"
+    idade: Optional[int] = Field(None, ge=0, le=120)
+    vulgo: Optional[str] = None
+
+    @field_validator("papel")
+    @classmethod
+    def normalizar_papel(cls, v: str) -> str:
+        """Normaliza variações de papel para valores canônicos."""
+        mapa = {
+            "suspeito": "suspeito", "suspeita": "suspeito", "suspeitos": "suspeito",
+            "preso": "preso", "presa": "preso", "detido": "preso", "detida": "preso",
+            "acusado": "acusado", "acusada": "acusado",
+            "vitima": "vitima", "vítima": "vitima", "vítimas": "vitima",
+            "testemunha": "testemunha", "testemunhas": "testemunha",
+            "policial": "policial", "pm": "policial", "agente": "policial",
+        }
+        return mapa.get(v.lower().strip(), v.lower().strip() or "outro")
+
+    @field_validator("nome")
+    @classmethod
+    def normalizar_nome(cls, v: str) -> str:
+        return " ".join(v.strip().split())  # remove espaços extras
 
 
 class RadarExtractionService:
@@ -156,9 +183,19 @@ class RadarExtractionService:
             if resumo:
                 update_data["resumo_ia"] = resumo[:1000]
 
-            # Envolvidos — armazenar como jsonb nativo (sem json.dumps)
-            envolvidos = result.get("envolvidos")
-            if envolvidos and isinstance(envolvidos, list):
+            # Envolvidos — validar com Pydantic antes de persistir
+            envolvidos_raw = result.get("envolvidos") or []
+            envolvidos = []
+            for env in envolvidos_raw:
+                if not isinstance(env, dict):
+                    continue
+                try:
+                    validated = EnvolvidoModel.model_validate(env)
+                    envolvidos.append(validated.model_dump(exclude_none=True))
+                except Exception as e:
+                    logger.debug("Envolvido inválido ignorado: %s — %s", env, e)
+                    continue
+            if envolvidos:
                 update_data["envolvidos"] = envolvidos
 
             # Campo de relevância (usado apenas localmente — não salvo no banco)
@@ -175,12 +212,54 @@ class RadarExtractionService:
             # If it's a config error, don't retry (would loop forever)
             if "not configured" in str(e) or "API_KEY" in str(e):
                 raise
-            return {"enrichment_status": "pending"}  # Retry later
+            return {"enrichment_status": "pending", "_extraction_error": str(e)}  # Retry later with error info
+
+    def _increment_error_count(self, noticia_id: int, error_msg: str, client_db) -> None:
+        """Incrementa error_count e seta last_error. Se atingir 3 erros, marca como 'failed'."""
+        try:
+            # Buscar error_count atual
+            result = (
+                client_db.table("radar_noticias")
+                .select("error_count")
+                .eq("id", noticia_id)
+                .single()
+                .execute()
+            )
+            current_count = (result.data or {}).get("error_count", 0) or 0
+            new_count = current_count + 1
+
+            update_payload: dict[str, Any] = {
+                "error_count": new_count,
+                "last_error": error_msg[:500],
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+
+            if new_count >= 3:
+                update_payload["enrichment_status"] = "failed"
+                logger.warning(
+                    "DLQ | id=%d atingiu %d erros — marcando como 'failed'. Último erro: %s",
+                    noticia_id, new_count, error_msg[:100],
+                )
+            else:
+                logger.info(
+                    "DLQ | id=%d erro %d/3: %s",
+                    noticia_id, new_count, error_msg[:100],
+                )
+
+            client_db.table("radar_noticias").update(update_payload).eq("id", noticia_id).execute()
+        except Exception as dlq_err:
+            logger.error("DLQ | Falha ao registrar erro para id=%d: %s", noticia_id, str(dlq_err))
 
     async def _extract_and_save_one(self, noticia: dict[str, Any], client_db) -> bool:
         """Extrai e salva uma notícia. Retorna True se processou com sucesso."""
         try:
             update_data = await self.extract_from_noticia(noticia)
+
+            # Se a extração retornou com erro transitório, registrar no DLQ e retornar False
+            extraction_error = update_data.pop("_extraction_error", None)
+            if extraction_error and update_data.get("enrichment_status") == "pending":
+                self._increment_error_count(noticia["id"], extraction_error, client_db)
+                return False
 
             # Se Gemini diz que notícia não é da região → deletar do banco
             if update_data.get("relevante") is False:
@@ -237,6 +316,7 @@ class RadarExtractionService:
             return True
         except Exception as e:
             logger.error("Erro extraindo notícia id=%d: %s", noticia["id"], str(e))
+            self._increment_error_count(noticia["id"], str(e), client_db)
             return False
 
     async def extract_batch(self, limit: int = 20) -> int:

@@ -77,16 +77,26 @@ function renderDelta(atual: number, anterior: number) {
   );
 }
 
-export function RadarEstatisticas() {
+interface RadarEstatisticasProps {
+  tipoCrime?: string
+  bairro?: string
+}
+
+export function RadarEstatisticas({ tipoCrime, bairro }: RadarEstatisticasProps = {}) {
   const [periodo, setPeriodo] = useState<string>("30d");
 
-  const { data: stats, isLoading: statsLoading } = trpc.radar.stats.useQuery({ periodo: periodo as any });
+  const { data: stats, isLoading: statsLoading } = trpc.radar.stats.useQuery({
+    periodo: periodo as any,
+    tipoCrime: tipoCrime || undefined,
+    bairro: bairro || undefined,
+  });
   const { data: deteccao } = trpc.radar.statsDeteccao.useQuery({
     periodo: periodo as any,
   });
   const { data: bairros } = trpc.radar.statsByBairro.useQuery({
     periodo: periodo as any,
     limit: 10,
+    tipoCrime: tipoCrime || undefined,
   });
   const { data: byHora } = trpc.radar.statsByHora.useQuery({ periodo: periodo as any });
   const { data: byDiaSemana } = trpc.radar.statsByDiaSemana.useQuery({ periodo: periodo as any });
@@ -152,6 +162,20 @@ export function RadarEstatisticas() {
           </Button>
         ))}
       </div>
+
+      {/* Banner de filtros ativos */}
+      {(tipoCrime || bairro) && (
+        <div className="flex items-center gap-2 rounded-md bg-blue-50 dark:bg-blue-950/30 px-3 py-2 text-xs text-blue-700 dark:text-blue-300">
+          <span>Estatísticas filtradas por:</span>
+          {tipoCrime && tipoCrime !== "todos" && (
+            <span className="font-medium">{getCrimeLabel(tipoCrime)}</span>
+          )}
+          {tipoCrime && tipoCrime !== "todos" && bairro && (
+            <span className="text-blue-400">·</span>
+          )}
+          {bairro && <span className="font-medium">{bairro}</span>}
+        </div>
+      )}
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

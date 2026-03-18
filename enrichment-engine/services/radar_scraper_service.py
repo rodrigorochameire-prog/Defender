@@ -450,6 +450,7 @@ class RadarScraperService:
             "imagem_url": imagem_url,
             "enrichment_status": "pending",
             "raw_html": html[:200000],
+            "content_hash": self._generate_content_hash(titulo, corpo),
         }
 
     def _extract_title(self, soup: BeautifulSoup) -> str | None:
@@ -597,6 +598,14 @@ class RadarScraperService:
                 return True
             return False
 
+    # === Helpers ===
+
+    @staticmethod
+    def _generate_content_hash(titulo: str, corpo: str) -> str:
+        """SHA256 de titulo + primeiros 500 chars do corpo para deduplicação."""
+        content = f"{titulo.strip().lower()}{corpo.strip()[:500].lower()}"
+        return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
     # === Salvar no banco ===
 
     async def save_noticias(self, noticias: list[dict[str, Any]]) -> int:
@@ -612,6 +621,22 @@ class RadarScraperService:
         saved = 0
         for noticia in noticias:
             try:
+                content_hash = noticia.get("content_hash")
+
+                # Verificar se hash já existe (deduplicação por conteúdo, URLs diferentes)
+                if content_hash:
+                    existing = client_db.table("radar_noticias") \
+                        .select("id, url") \
+                        .eq("content_hash", content_hash) \
+                        .execute()
+                    if existing.data:
+                        logger.info(
+                            "Artigo duplicado detectado (hash=%s...) url=%s — ignorando",
+                            content_hash[:8],
+                            noticia.get("url"),
+                        )
+                        continue
+
                 # Upsert com URL como chave única
                 client_db.table("radar_noticias").upsert(
                     noticia,

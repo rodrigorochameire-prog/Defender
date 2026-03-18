@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageLayout } from "@/components/shared/page-layout";
 import { Button } from "@/components/ui/button";
@@ -14,19 +14,66 @@ import { RadarReincidentes } from "@/components/radar/radar-reincidentes";
 import { RadarFontes } from "@/components/radar/radar-fontes";
 import { RadarNoticiaSheet } from "@/components/radar/radar-noticia-sheet";
 import { RadarReincidentesPanel } from "@/components/radar/radar-reincidentes-panel";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { getCrimeLabel } from "@/components/radar/radar-filtros";
 
 export default function RadarCriminalPage() {
   const [activeTab, setActiveTab] = useState("feed");
   const [selectedNoticiaId, setSelectedNoticiaId] = useState<number | null>(null);
+  const [matchesNoticiaFilter, setMatchesNoticiaFilter] = useState<number | null>(null);
+  const [reincidentesOpen, setReincidentesOpen] = useState(false);
+
+  const handleNavigateToMatches = (noticiaId: number) => {
+    setSelectedNoticiaId(null);
+    setActiveTab("matches");
+    setMatchesNoticiaFilter(noticiaId);
+  };
 
   // Filtros compartilhados entre tabs
   const [filtros, setFiltros] = useState<FiltrosState>({
     soMatches: false,
   });
+
+  const resetFiltros = () => setFiltros({ soMatches: false });
+
+  const filtrosAtivos = useMemo(() => {
+    return !!(
+      filtros.tipoCrime ||
+      filtros.bairro ||
+      filtros.fonte ||
+      filtros.circunstancia ||
+      filtros.dataInicio ||
+      filtros.dataFim ||
+      filtros.soMatches ||
+      filtros.search
+    );
+  }, [filtros]);
+
+  const filtrosDescricao = useMemo(() => {
+    const partes: string[] = [];
+    if (filtros.tipoCrime) partes.push(getCrimeLabel(filtros.tipoCrime));
+    if (filtros.bairro) partes.push(filtros.bairro);
+    if (filtros.fonte) partes.push(filtros.fonte);
+    if (filtros.circunstancia) partes.push(filtros.circunstancia);
+    if (filtros.search) partes.push(`"${filtros.search}"`);
+    if (filtros.soMatches) partes.push("Só DPE");
+    if (filtros.dataInicio || filtros.dataFim) {
+      partes.push([filtros.dataInicio, filtros.dataFim].filter(Boolean).join(" → "));
+    }
+    return partes.join(" · ");
+  }, [filtros]);
+
+  // Matches pendentes (badge na aba)
+  const { data: matchesPendentesData } = trpc.radar.matchesPendentesCount.useQuery();
+  const matchesPendentes = matchesPendentesData?.count ?? 0;
+
+  // Saúde do enriquecimento (badge na aba + banner)
+  const { data: healthData } = trpc.radar.enrichmentHealth.useQuery();
+  const healthPending = Number(healthData?.pending ?? 0);
 
   // Última coleta (fonte mais recente)
   const { data: fontes } = trpc.radar.fontesList.useQuery();
@@ -40,13 +87,21 @@ export default function RadarCriminalPage() {
   const triggerPipeline = trpc.radar.triggerPipeline.useMutation({
     onSuccess: (data) => {
       if (data.success) {
+        const detalhes = [
+          (data as { noticias_processadas?: number }).noticias_processadas !== undefined &&
+            `${(data as { noticias_processadas?: number }).noticias_processadas} notícias processadas`,
+          (data as { matches_criados?: number }).matches_criados !== undefined &&
+            `${(data as { matches_criados?: number }).matches_criados} matches criados`,
+        ].filter(Boolean).join(" · ");
+
         toast.success("Pipeline concluído", {
-          description: data.message || "Notícias atualizadas com sucesso",
+          description: detalhes || data.message || "Verifique a aba Matches para novos resultados.",
         });
         utils.radar.list.invalidate();
         utils.radar.stats.invalidate();
         utils.radar.fontesList.invalidate();
         utils.radar.mapData.invalidate();
+        utils.radar.matchesPendentesCount.invalidate();
       } else {
         toast.error("Falha no pipeline", {
           description: data.message,
@@ -101,46 +156,113 @@ export default function RadarCriminalPage() {
         </div>
       }
     >
+      {healthPending > 0 && (
+        <div className="mb-3 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
+          <span className="font-semibold">{healthPending}</span> notícias aguardando enriquecimento IA
+          <button
+            className="ml-auto text-xs underline cursor-pointer"
+            onClick={() => setActiveTab("fontes")}
+          >
+            Ver fontes
+          </button>
+        </div>
+      )}
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <TabsList className="grid w-full sm:w-auto grid-cols-6">
+          <TabsList className="flex w-full sm:w-auto items-center">
+            {/* Grupo primário: operacional */}
             <TabsTrigger value="feed" className="cursor-pointer gap-1.5">
               <Newspaper className="h-4 w-4" />
               <span className="hidden sm:inline">Feed</span>
             </TabsTrigger>
+            <TabsTrigger value="matches" className="cursor-pointer gap-1.5">
+              <Link2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Matches DPE {matchesPendentes > 0 && (
+                <span className="ml-1.5 rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                  {matchesPendentes}
+                </span>
+              )}</span>
+            </TabsTrigger>
+
+            {/* Separador: primário → contexto */}
+            <div className="mx-1 h-4 w-px bg-zinc-200 dark:bg-zinc-700 self-center" aria-hidden />
+
+            {/* Grupo secundário: contexto */}
             <TabsTrigger value="mapa" className="cursor-pointer gap-1.5">
               <Map className="h-4 w-4" />
               <span className="hidden sm:inline">Mapa</span>
-            </TabsTrigger>
-            <TabsTrigger value="estatisticas" className="cursor-pointer gap-1.5">
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Estatísticas</span>
-            </TabsTrigger>
-            <TabsTrigger value="matches" className="cursor-pointer gap-1.5">
-              <Link2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Matches DPE</span>
             </TabsTrigger>
             <TabsTrigger value="reincidentes" className="cursor-pointer gap-1.5">
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">Reincidentes</span>
             </TabsTrigger>
+
+            {/* Separador: contexto → admin */}
+            <div className="mx-1 h-4 w-px bg-zinc-200 dark:bg-zinc-700 self-center" aria-hidden />
+
+            {/* Grupo terciário: admin */}
+            <TabsTrigger value="estatisticas" className="cursor-pointer gap-1.5">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">Estatísticas</span>
+            </TabsTrigger>
             <TabsTrigger value="fontes" className="cursor-pointer gap-1.5">
               <Globe className="h-4 w-4" />
-              <span className="hidden sm:inline">Fontes</span>
+              <span className="hidden sm:inline">Fontes {healthPending > 0 && (
+                <span className="ml-1.5 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                  {healthPending}
+                </span>
+              )}</span>
             </TabsTrigger>
           </TabsList>
         </div>
 
+        {/* Banner de filtros ativos */}
+        {filtrosAtivos && (
+          <div className="flex items-center gap-2 rounded-md bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+            <span className="font-medium">Filtros ativos:</span>
+            <span className="truncate">{filtrosDescricao}</span>
+            <button
+              onClick={resetFiltros}
+              className="ml-auto shrink-0 text-xs text-red-500 hover:text-red-600 font-medium cursor-pointer"
+            >
+              Limpar
+            </button>
+          </div>
+        )}
+
         <TabsContent value="feed" className="space-y-4">
+          {/* Botão mobile para abrir painel de reincidentes */}
+          <button
+            className="lg:hidden flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300 w-full justify-center cursor-pointer"
+            onClick={() => setReincidentesOpen(true)}
+          >
+            <Users className="h-4 w-4" />
+            Ver Alertas de Reincidentes
+          </button>
+
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="w-full lg:w-64 shrink-0 space-y-4">
               <RadarFiltros filtros={filtros} onChange={setFiltros} />
-              <RadarReincidentesPanel />
+              {/* Painel de reincidentes — visível apenas em desktop */}
+              <div className="hidden lg:block">
+                <RadarReincidentesPanel />
+              </div>
             </div>
             <div className="flex-1 min-w-0">
               <RadarFeed filtros={filtros} />
             </div>
           </div>
+
+          {/* Sheet de reincidentes — mobile only */}
+          <Sheet open={reincidentesOpen} onOpenChange={setReincidentesOpen}>
+            <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto">
+              <SheetHeader className="mb-4">
+                <SheetTitle>Alertas de Reincidentes</SheetTitle>
+              </SheetHeader>
+              <RadarReincidentesPanel />
+            </SheetContent>
+          </Sheet>
         </TabsContent>
 
         <TabsContent value="mapa">
@@ -148,11 +270,17 @@ export default function RadarCriminalPage() {
         </TabsContent>
 
         <TabsContent value="estatisticas">
-          <RadarEstatisticas />
+          <RadarEstatisticas
+            tipoCrime={filtros.tipoCrime}
+            bairro={filtros.bairro}
+          />
         </TabsContent>
 
         <TabsContent value="matches">
-          <RadarMatches />
+          <RadarMatches
+            noticiaId={matchesNoticiaFilter ?? undefined}
+            onClearFilter={() => setMatchesNoticiaFilter(null)}
+          />
         </TabsContent>
 
         <TabsContent value="reincidentes">
@@ -171,6 +299,7 @@ export default function RadarCriminalPage() {
         onOpenChange={(open) => {
           if (!open) setSelectedNoticiaId(null);
         }}
+        onNavigateToMatches={handleNavigateToMatches}
       />
     </PageLayout>
   );

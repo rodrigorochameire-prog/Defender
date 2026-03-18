@@ -2,7 +2,8 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, MapPin, Clock, Users, Link2, RefreshCw, CheckCircle2, XCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ExternalLink, MapPin, Clock, Users, Link2, RefreshCw, CheckCircle2, XCircle, Zap } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getCrimeBadgeColor, getCrimeLabel } from "./radar-filtros";
@@ -100,6 +101,9 @@ export function RadarNoticiaCard({ noticia, onClick, onQuickAction, viewMode }: 
   const hasMatch = (noticia.matchCount ?? 0) > 0;
   const envolvidos = parseEnvolvidos(noticia.envolvidos);
   const envolvidosComNome = envolvidos.filter((e) => isNomeProprio(e.nome));
+  const matchScore = noticia.matches && noticia.matches.length > 0
+    ? Math.max(...noticia.matches.map((m) => m.scoreConfianca))
+    : null;
 
   if (viewMode === "list") {
     return (
@@ -146,6 +150,16 @@ export function RadarNoticiaCard({ noticia, onClick, onQuickAction, viewMode }: 
               <Link2 className="h-2.5 w-2.5 mr-0.5" />
               DPE
             </Badge>
+          )}
+          {hasMatch && matchScore != null && (
+            <span className={cn(
+              "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+              matchScore >= 80 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" :
+              matchScore >= 60 ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" :
+              "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+            )}>
+              {matchScore}%
+            </span>
           )}
           {noticia.enrichmentStatus === "pending" && (
             <RefreshCw className="h-3 w-3 text-zinc-400 animate-spin" />
@@ -237,11 +251,20 @@ export function RadarNoticiaCard({ noticia, onClick, onQuickAction, viewMode }: 
                     )}
                   >
                     <Users className="h-2.5 w-2.5 shrink-0" />
-                    <span className="truncate max-w-[140px]">
-                      {e.nome}
-                      {e.idade ? `, ${e.idade}` : ""}
-                      {e.vulgo ? ` (${e.vulgo})` : ""}
-                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="truncate max-w-[140px]">
+                          {e.nome}
+                          {e.idade ? `, ${e.idade}` : ""}
+                          {e.vulgo ? ` (${e.vulgo})` : ""}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {e.nome}
+                        {e.idade ? `, ${e.idade} anos` : ""}
+                        {e.vulgo ? ` (${e.vulgo})` : ""}
+                      </TooltipContent>
+                    </Tooltip>
                     <span className="opacity-70">
                       {papelLabels[e.papel] || e.papel}
                     </span>
@@ -277,6 +300,7 @@ export function RadarNoticiaCard({ noticia, onClick, onQuickAction, viewMode }: 
               )}
               {noticia.armaMeio && (
                 <span className="flex items-center gap-1">
+                  <Zap className="h-3 w-3" />
                   {noticia.armaMeio}
                 </span>
               )}
@@ -335,7 +359,7 @@ function MatchTriagem({ matches, onQuickAction }: MatchTriagemProps) {
 
   return (
     <div
-      className="flex flex-col gap-1 pt-2 border-t border-zinc-100 dark:border-zinc-800 mt-2"
+      className="flex flex-col gap-1 pt-2 border-t border-zinc-100 dark:border-zinc-800 mt-2 bg-zinc-50 dark:bg-zinc-900/50 rounded-md px-2 pb-2"
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center gap-2 text-[11px]">
@@ -364,17 +388,17 @@ function MatchTriagem({ matches, onQuickAction }: MatchTriagemProps) {
             <button
               onClick={() => onQuickAction(top.id, "confirmar")}
               title="Confirmar match"
-              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 text-xs p-2 rounded font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-colors cursor-pointer"
             >
-              <CheckCircle2 className="h-3 w-3" />
+              <CheckCircle2 className="h-3.5 w-3.5" />
               <span>OK</span>
             </button>
             <button
               onClick={() => onQuickAction(top.id, "descartar")}
               title="Descartar match"
-              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 text-xs p-2 rounded font-medium text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors cursor-pointer"
             >
-              <XCircle className="h-3 w-3" />
+              <XCircle className="h-3.5 w-3.5" />
               <span>Não</span>
             </button>
           </div>

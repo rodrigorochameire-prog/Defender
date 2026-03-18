@@ -132,10 +132,10 @@ class RadarMatchingService:
                         "envolvido": envolvido,
                         "similarity_trgm": candidato.get("similarity", 0),
                         "score_breakdown": {
-                            "nome": round(candidato.get("similarity", 0) * 40),
-                            "bairro": self._bairro_score(noticia, candidato) * 20,
-                            "crime": self._crime_score(noticia) * 20,
-                            "temporal": self._temporal_score(noticia) * 20,
+                            "nome_score": round(candidato.get("similarity", 0) * 40),
+                            "bairro_score": round(self._bairro_score(noticia, candidato) * 20),
+                            "crime_score": round(self._crime_score(noticia) * 20),
+                            "temporal_score": round(self._temporal_score(noticia) * 20),
                         },
                     }, ensure_ascii=False),
                     "created_at": datetime.now(timezone.utc).isoformat(),
@@ -253,7 +253,7 @@ class RadarMatchingService:
         candidato_endereco = (candidato.get("endereco") or "").lower().strip()
 
         if not noticia_bairro or not candidato_endereco:
-            return 0.5  # Neutro se não tem info
+            return 0.0  # Penalidade: sem bairro não ganha pontos
 
         # Verificar se o bairro da notícia aparece no endereço do assistido
         if noticia_bairro in candidato_endereco:
@@ -280,7 +280,7 @@ class RadarMatchingService:
         """Score baseado na proximidade temporal (0.0-1.0)."""
         data_fato = noticia.get("data_fato")
         if not data_fato:
-            return 0.5  # Neutro
+            return 0.0  # Penalidade: sem data não ganha pontos
 
         try:
             if isinstance(data_fato, str):
@@ -303,7 +303,7 @@ class RadarMatchingService:
             else:
                 return 0.2  # Mais de 1 ano
         except (ValueError, TypeError):
-            return 0.5
+            return 0.0  # Penalidade: data inválida não ganha pontos
 
     async def _find_processo(self, assistido_id: int, client_db: Any) -> dict | None:
         """Busca processo mais recente do assistido."""

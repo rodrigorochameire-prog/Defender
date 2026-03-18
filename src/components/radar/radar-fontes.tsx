@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ExternalLink, Newspaper, Link2, Clock, Activity, Globe, RefreshCw } from "lucide-react";
+import { ExternalLink, Newspaper, Link2, Clock, Activity, Globe, RefreshCw, CheckCircle, AlertTriangle, XCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -183,6 +183,7 @@ export function RadarFontes() {
           const totalNot = s ? Number(s.totalNoticias) : 0;
           const totalMat = s ? Number(s.totalMatches) : 0;
           const ultimaNoticia = s?.ultimaNoticia;
+          const taxaExtracao = s?.taxaExtracao ?? null;
 
           return (
             <Card key={fonte.id} className={cn(!fonte.ativo && "opacity-60")}>
@@ -259,6 +260,32 @@ export function RadarFontes() {
                         <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                           <Link2 className="h-3 w-3" />
                           <span className="font-medium">{totalMat}</span> matches
+                        </span>
+                      )}
+                      {taxaExtracao != null && (
+                        <span
+                          className={cn(
+                            "flex items-center gap-1 font-medium",
+                            taxaExtracao >= 90
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : taxaExtracao >= 70
+                              ? "text-amber-600 dark:text-amber-400"
+                              : "text-red-600 dark:text-red-400"
+                          )}
+                          title={
+                            taxaExtracao < 70
+                              ? "Taxa de extração baixa — CSS selectors podem estar desatualizados"
+                              : undefined
+                          }
+                        >
+                          {taxaExtracao >= 90 ? (
+                            <CheckCircle className="h-3 w-3" />
+                          ) : taxaExtracao >= 70 ? (
+                            <AlertTriangle className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          {taxaExtracao}% extração
                         </span>
                       )}
                     </div>

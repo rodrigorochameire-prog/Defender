@@ -52,7 +52,10 @@ export const radarNoticias = pgTable("radar_noticias", {
     idade?: number;
     vulgo?: string;
   }[]>(),
+  contentHash: text("content_hash"),
   enrichmentStatus: radarEnrichmentStatusEnum("enrichment_status").default("pending").notNull(),
+  errorCount: integer("error_count").default(0).notNull(),
+  lastError: text("last_error"),
   analysisSonnet: jsonb("analysis_sonnet"),
   rawHtml: text("raw_html"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -64,6 +67,7 @@ export const radarNoticias = pgTable("radar_noticias", {
   index("radar_noticias_enrichment_status_idx").on(table.enrichmentStatus),
   index("radar_noticias_fonte_idx").on(table.fonte),
   index("radar_noticias_created_at_idx").on(table.createdAt),
+  index("radar_noticias_content_hash_idx").on(table.contentHash),
 ]);
 
 export type RadarNoticia = typeof radarNoticias.$inferSelect;

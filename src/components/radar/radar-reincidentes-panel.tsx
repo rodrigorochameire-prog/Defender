@@ -17,8 +17,8 @@ import NextLink from "next/link";
  */
 export function RadarReincidentesPanel() {
   const { data, isLoading, isError } = trpc.radar.reincidentes.useQuery({
-    minOcorrencias: 2,
-    limit: 8,
+    minOcorrencias: 4,
+    limit: 5,
   });
 
   return (
@@ -26,10 +26,10 @@ export function RadarReincidentesPanel() {
       <CardHeader className="pb-2 px-4 pt-4">
         <CardTitle className="flex items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-100">
           <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
-          Reincidentes
+          Alertas de Reincidentes
         </CardTitle>
         <p className="text-[11px] text-zinc-500 dark:text-zinc-400 -mt-1">
-          Envolvidos em 2+ notícias
+          Envolvidos em 4+ notícias
         </p>
       </CardHeader>
 

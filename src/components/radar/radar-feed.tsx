@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import { isToday, isYesterday, isThisWeek } from "date-fns";
 import { trpc } from "@/lib/trpc/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -149,6 +149,19 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
     );
   }
 
+  const emptyMessage = useMemo(() => {
+    const partes: string[] = [];
+    if (filtros.tipoCrime) partes.push(filtros.tipoCrime);
+    if (filtros.bairro) partes.push(`em ${filtros.bairro}`);
+    if (filtros.fonte) partes.push(`da fonte ${filtros.fonte}`);
+    if (partes.length > 0) {
+      return `Nenhuma notícia de ${partes.join(" ")} no período selecionado.`;
+    }
+    return "Nenhuma notícia encontrada. O Radar Criminal coletará notícias automaticamente.";
+  }, [filtros.tipoCrime, filtros.bairro, filtros.fonte]);
+
+  const hasActiveFilters = !!(filtros.tipoCrime || filtros.bairro || filtros.fonte || filtros.search || filtros.circunstancia);
+
   if (allNoticias.length === 0) {
     return (
       <div className="text-center py-20">
@@ -159,9 +172,13 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
           Nenhuma notícia encontrada
         </h3>
         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-sm mx-auto">
-          O Radar Criminal coletará automaticamente notícias policiais de Camaçari.
-          As notícias aparecerão aqui após a primeira coleta.
+          {emptyMessage}
         </p>
+        {hasActiveFilters && (
+          <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">
+            Tente remover os filtros para ver mais resultados.
+          </p>
+        )}
       </div>
     );
   }

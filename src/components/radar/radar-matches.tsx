@@ -26,15 +26,34 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-export function RadarMatches() {
+const papelColors: Record<string, string> = {
+  suspeito: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
+  preso: "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
+  acusado: "bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300",
+  vitima: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  vítima: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  testemunha:
+    "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
+};
+
+interface RadarMatchesProps {
+  noticiaId?: number;
+  onClearFilter?: () => void;
+}
+
+export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {}) {
   const [statusFilter, setStatusFilter] = useState("todos");
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [actionDialog, setActionDialog] = useState<{
     type: "confirm" | "dismiss";
     ids: number[];
+    assistidoId?: number | null;
   } | null>(null);
   const [actionNotes, setActionNotes] = useState("");
+  const [dismissReason, setDismissReason] = useState("");
+  const [linkProcessoId, setLinkProcessoId] = useState<number | null>(null);
+  const [linkCasoId, setLinkCasoId] = useState<number | null>(null);
 
   const utils = trpc.useUtils();
 
@@ -72,6 +91,18 @@ export function RadarMatches() {
     },
   });
 
+  const linkMatchToCasoMutation = trpc.radar.linkMatchToCaso.useMutation();
+
+  const singleConfirmAssistidoId =
+    actionDialog?.type === "confirm" && actionDialog.ids.length === 1
+      ? actionDialog.assistidoId
+      : null;
+
+  const { data: processosAssistido } = trpc.processos.listByAssistido.useQuery(
+    { assistidoId: singleConfirmAssistidoId ?? 0 },
+    { enabled: !!singleConfirmAssistidoId }
+  );
+
   const matches = data?.items ?? [];
   const possivelMatches = matches.filter((m) => m.status === "possivel");
 
@@ -83,14 +114,25 @@ export function RadarMatches() {
     setActionDialog({ type: "dismiss", ids: Array.from(selectedIds) });
   }
 
-  function executeAction() {
+  async function executeAction() {
     if (!actionDialog) return;
     const { type, ids } = actionDialog;
-    const notes = actionNotes.trim() || undefined;
+    const rawNotes = actionNotes.trim();
+    const notes =
+      type === "dismiss" && dismissReason
+        ? `[MOTIVO: ${dismissReason}]${rawNotes ? ` ${rawNotes}` : ""}`
+        : rawNotes || undefined;
 
     if (ids.length === 1) {
       if (type === "confirm") {
-        confirmMutation.mutate({ id: ids[0], notes });
+        await confirmMutation.mutateAsync({ id: ids[0], notes });
+        if (linkProcessoId) {
+          await linkMatchToCasoMutation.mutateAsync({
+            matchId: ids[0],
+            processoId: linkProcessoId,
+            casoId: linkCasoId,
+          });
+        }
       } else {
         dismissMutation.mutate({ id: ids[0], notes });
       }
@@ -103,6 +145,9 @@ export function RadarMatches() {
     }
     setActionDialog(null);
     setActionNotes("");
+    setDismissReason("");
+    setLinkProcessoId(null);
+    setLinkCasoId(null);
     setSelectedIds(new Set());
   }
 
@@ -118,6 +163,20 @@ export function RadarMatches() {
 
   return (
     <div className="space-y-4">
+      {/* Filtro por notícia (deep-link do Sheet) */}
+      {noticiaId && (
+        <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300">
+          <span>Mostrando matches da notícia <span className="font-semibold">#{noticiaId}</span></span>
+          <button
+            onClick={onClearFilter}
+            className="ml-auto flex items-center gap-1 text-xs underline cursor-pointer hover:text-emerald-600"
+          >
+            <X className="h-3 w-3" />
+            Limpar filtro
+          </button>
+        </div>
+      )}
+
       {/* Controles: busca + filtros de status */}
       <div className="flex flex-col sm:flex-row gap-3">
         {/* Busca */}
@@ -218,7 +277,17 @@ export function RadarMatches() {
       ) : (
         <div className="space-y-3">
           {matches.map((match) => (
-            <Card key={match.id} className="hover:shadow-md transition-shadow">
+            <Card
+              key={match.id}
+              className={cn(
+                "hover:shadow-md transition-shadow border",
+                match.scoreConfianca >= 80
+                  ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900"
+                  : match.scoreConfianca >= 60
+                    ? "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900"
+                    : ""
+              )}
+            >
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   {/* Checkbox for possivel */}
@@ -249,11 +318,37 @@ export function RadarMatches() {
                     </div>
 
                     {/* Nome encontrado */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <User className="h-4 w-4 text-zinc-400 shrink-0" />
                       <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                         {match.nomeEncontrado}
                       </span>
+                      {(() => {
+                        let papel: string | undefined;
+                        try {
+                          const d =
+                            typeof match.dadosExtraidos === "string"
+                              ? JSON.parse(match.dadosExtraidos)
+                              : (match.dadosExtraidos as Record<string, unknown>);
+                          papel =
+                            (d?.envolvido as Record<string, unknown>)
+                              ?.papel as string | undefined ??
+                            (d?.papel as string | undefined);
+                        } catch {
+                          papel = undefined;
+                        }
+                        return papel ? (
+                          <span
+                            className={cn(
+                              "rounded px-1.5 py-0.5 text-[10px] font-medium uppercase",
+                              papelColors[papel] ??
+                                "bg-zinc-100 text-zinc-600"
+                            )}
+                          >
+                            {papel}
+                          </span>
+                        ) : null;
+                      })()}
                       {match.assistidoNome && match.assistidoId && (
                         <Link
                           href={`/admin/assistidos/${match.assistidoId}`}
@@ -317,6 +412,7 @@ export function RadarMatches() {
                           setActionDialog({
                             type: "confirm",
                             ids: [match.id],
+                            assistidoId: match.assistidoId,
                           })
                         }
                         disabled={confirmMutation.isPending}
@@ -390,6 +486,26 @@ export function RadarMatches() {
                 {actionDialog.ids.length} match
                 {actionDialog.ids.length > 1 ? "es" : ""}
               </h3>
+              {actionDialog.type === "dismiss" && (
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-zinc-600">
+                    Motivo do descarte
+                  </label>
+                  <select
+                    value={dismissReason}
+                    onChange={(e) => setDismissReason(e.target.value)}
+                    className="w-full rounded border border-zinc-200 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                  >
+                    <option value="">Selecionar motivo...</option>
+                    <option value="nome_falso">Nome não coincide</option>
+                    <option value="bairro_falso">Bairro diferente</option>
+                    <option value="crime_falso">Crime não relacionado</option>
+                    <option value="data_falsa">Período incompatível</option>
+                    <option value="pessoa_diferente">Pessoa diferente</option>
+                    <option value="outro">Outro</option>
+                  </select>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label className="text-xs text-zinc-500">
                   Observações (opcional)
@@ -401,6 +517,33 @@ export function RadarMatches() {
                   className="min-h-[80px] text-sm"
                 />
               </div>
+              {actionDialog.type === "confirm" && actionDialog.ids.length === 1 && actionDialog.assistidoId && (
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-zinc-600">
+                    Vincular ao processo (opcional)
+                  </label>
+                  {processosAssistido && processosAssistido.length > 0 ? (
+                    <select
+                      value={linkProcessoId ?? ""}
+                      onChange={(e) =>
+                        setLinkProcessoId(e.target.value ? Number(e.target.value) : null)
+                      }
+                      className="w-full rounded border border-zinc-200 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                    >
+                      <option value="">Não vincular agora</option>
+                      {processosAssistido.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.numeroAutos} — {p.assunto ?? "Sem assunto"}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="text-xs text-zinc-400">
+                      Nenhum processo encontrado para este assistido
+                    </p>
+                  )}
+                </div>
+              )}
               <div className="flex justify-end gap-2">
                 <Button
                   variant="outline"
@@ -408,6 +551,9 @@ export function RadarMatches() {
                   onClick={() => {
                     setActionDialog(null);
                     setActionNotes("");
+                    setDismissReason("");
+                    setLinkProcessoId(null);
+                    setLinkCasoId(null);
                   }}
                   className="cursor-pointer"
                 >
@@ -451,14 +597,30 @@ function ScoreBreakdown({ dadosExtraidos }: { dadosExtraidos: unknown }) {
     return null;
   }
 
+  // Score breakdown can be nested under score_breakdown or at root level
+  const breakdown =
+    dados.score_breakdown !== undefined &&
+    typeof dados.score_breakdown === "object" &&
+    dados.score_breakdown !== null
+      ? (dados.score_breakdown as Record<string, unknown>)
+      : dados;
+
   const bars = [
     { key: "nome_score", label: "Nome", max: 40, color: "bg-blue-500" },
-    { key: "location_score", label: "Local", max: 20, color: "bg-emerald-500" },
+    { key: "bairro_score", label: "Bairro", max: 20, color: "bg-emerald-500" },
     { key: "crime_score", label: "Crime", max: 20, color: "bg-purple-500" },
     { key: "temporal_score", label: "Temporal", max: 20, color: "bg-amber-500" },
   ];
 
-  const hasBreakdown = bars.some((b) => dados[b.key] !== undefined);
+  // Only render if score_breakdown is present as a nested object
+  if (
+    dados.score_breakdown === undefined ||
+    typeof dados.score_breakdown !== "object" ||
+    dados.score_breakdown === null
+  )
+    return null;
+
+  const hasBreakdown = bars.some((b) => breakdown[b.key] !== undefined);
   if (!hasBreakdown) return null;
 
   return (
@@ -467,7 +629,7 @@ function ScoreBreakdown({ dadosExtraidos }: { dadosExtraidos: unknown }) {
         Score Breakdown
       </p>
       {bars.map((bar) => {
-        const value = Number(dados[bar.key] || 0);
+        const value = Number(breakdown[bar.key] || 0);
         const pct = Math.min((value / bar.max) * 100, 100);
         return (
           <div key={bar.key} className="flex items-center gap-2">

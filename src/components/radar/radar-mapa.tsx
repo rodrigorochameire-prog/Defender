@@ -60,14 +60,53 @@ interface RadarMapaProps {
   onSelectNoticia?: (id: number) => void;
 }
 
+const ALL_LAYERS = [
+  "homicidio", "tentativa_homicidio", "trafico", "roubo", "furto",
+  "violencia_domestica", "sexual", "lesao_corporal", "porte_arma",
+  "estelionato", "outros",
+];
+
+function loadMapPrefs() {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem("radar_map_prefs") || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveMapPref(key: string, value: unknown) {
+  if (typeof window === "undefined") return;
+  try {
+    const current = loadMapPrefs();
+    localStorage.setItem("radar_map_prefs", JSON.stringify({ ...current, [key]: value }));
+  } catch {}
+}
+
 export function RadarMapa({ filtros, onSelectNoticia }: RadarMapaProps) {
-  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showHeatmap, setShowHeatmapState] = useState<boolean>(() => {
+    const prefs = loadMapPrefs();
+    return prefs.showHeatmap ?? false;
+  });
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [visibleLayers, setVisibleLayers] = useState<string[]>([
-    "homicidio", "tentativa_homicidio", "trafico", "roubo", "furto",
-    "violencia_domestica", "sexual", "lesao_corporal", "porte_arma",
-    "estelionato", "outros",
-  ]);
+  const [resetViewTrigger, setResetViewTrigger] = useState(0);
+  const [visibleLayers, setVisibleLayersState] = useState<string[]>(() => {
+    const prefs = loadMapPrefs();
+    return Array.isArray(prefs.visibleLayers) ? prefs.visibleLayers : ALL_LAYERS;
+  });
+
+  const setShowHeatmap = (value: boolean) => {
+    setShowHeatmapState(value);
+    saveMapPref("showHeatmap", value);
+  };
+
+  const setVisibleLayers = (updater: string[] | ((prev: string[]) => string[])) => {
+    setVisibleLayersState((prev) => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      saveMapPref("visibleLayers", next);
+      return next;
+    });
+  };
 
   const { data, isLoading } = trpc.radar.mapData.useQuery({
     tipoCrime: filtros.tipoCrime,
@@ -203,6 +242,13 @@ export function RadarMapa({ filtros, onSelectNoticia }: RadarMapaProps) {
             <span className="text-xs text-zinc-400">
               {filteredData.length} ocorrência{filteredData.length !== 1 ? "s" : ""}
             </span>
+            <button
+              onClick={() => setResetViewTrigger((prev) => prev + 1)}
+              className="rounded border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 cursor-pointer transition-colors"
+              title="Centralizar em Camaçari"
+            >
+              ⌖ Reset
+            </button>
             <Button
               variant="ghost"
               size="sm"
@@ -236,6 +282,7 @@ export function RadarMapa({ filtros, onSelectNoticia }: RadarMapaProps) {
             onSelectNoticia?.(id);
           }}
           fullscreen={isFullscreen}
+          resetViewTrigger={resetViewTrigger}
         />
       </div>
     </div>
