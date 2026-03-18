@@ -22,6 +22,7 @@ import { useRealtimeFileStatus } from "@/hooks/use-realtime-file-status";
 import { MidiasHub } from "@/components/midias/MidiasHub";
 import { TimelineVivaAssistido } from "@/components/processos/TimelineViva";
 import { RadarAssistidoCard } from "@/components/radar/radar-assistido-card";
+import { AssistidoOverviewPanel } from "./_components/overview-panel";
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
@@ -39,6 +40,12 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   const { id } = use(params);
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("processos");
+
+  // Overview panel navigation states
+  const [itemSheetOpen, setItemSheetOpen] = useState(false);
+  const [itemSheetType, setItemSheetType] = useState<"processo" | "demanda" | null>(null);
+  const [selectedProcessoId, setSelectedProcessoId] = useState<number | null>(null);
+  const [selectedDemandaId, setSelectedDemandaId] = useState<number | null>(null);
 
   // AI Analysis state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -590,6 +597,25 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
       {/* Drive Status Bar */}
       <DriveStatusBar assistidoId={Number(id)} />
+
+      {/* Overview Panel */}
+      <AssistidoOverviewPanel
+        data={data}
+        onProcessoClick={(processoId) => {
+          setSelectedProcessoId(processoId);
+          setSelectedDemandaId(null);
+          setItemSheetType("processo");
+          setItemSheetOpen(true);
+          router.push(`/admin/processos/${processoId}`);
+        }}
+        onDemandaClick={(demandaId) => {
+          setSelectedDemandaId(demandaId);
+          setSelectedProcessoId(null);
+          setItemSheetType("demanda");
+          setItemSheetOpen(true);
+          router.push(`/admin/demandas/${demandaId}`);
+        }}
+      />
 
       {/* Tabs */}
       <div className="flex gap-0 border-b border-zinc-100 dark:border-zinc-800 px-6">
