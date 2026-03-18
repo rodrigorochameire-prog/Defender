@@ -24,6 +24,7 @@ import { TimelineVivaAssistido } from "@/components/processos/TimelineViva";
 import { RadarAssistidoCard } from "@/components/radar/radar-assistido-card";
 import { AssistidoOverviewPanel } from "./_components/overview-panel";
 import { AssistidoFichaSheet } from "./_components/ficha-sheet";
+import { ItemDetailSheet } from "./_components/item-detail-sheet";
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
@@ -445,14 +446,12 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           setSelectedDemandaId(null);
           setItemSheetType("processo");
           setItemSheetOpen(true);
-          router.push(`/admin/processos/${processoId}`);
         }}
         onDemandaClick={(demandaId) => {
           setSelectedDemandaId(demandaId);
           setSelectedProcessoId(null);
           setItemSheetType("demanda");
           setItemSheetOpen(true);
-          router.push(`/admin/demandas/${demandaId}`);
         }}
       />
 
@@ -765,6 +764,33 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           assistidoId={Number(id)}
         />
       )}
+
+      {/* Item Detail Sheet — processos e demandas */}
+      <ItemDetailSheet
+        open={itemSheetOpen}
+        onOpenChange={setItemSheetOpen}
+        type={itemSheetType}
+        processo={
+          itemSheetType === "processo"
+            ? data.processos.find((p) => p.id === selectedProcessoId) ?? null
+            : null
+        }
+        demanda={
+          itemSheetType === "demanda"
+            ? data.demandas.find((d) => d.id === selectedDemandaId) ?? null
+            : null
+        }
+        processoDemandas={
+          itemSheetType === "processo" && selectedProcessoId != null
+            ? data.demandas.filter((d) => d.processoId === selectedProcessoId)
+            : []
+        }
+        processoAudiencias={
+          itemSheetType === "processo" && selectedProcessoId != null
+            ? data.audiencias.filter((a) => a.processoId === selectedProcessoId)
+            : []
+        }
+      />
 
       {/* Ficha Sheet lateral */}
       <AssistidoFichaSheet
