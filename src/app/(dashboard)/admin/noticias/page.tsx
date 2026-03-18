@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { NoticiasFeed } from "@/components/noticias/noticias-feed";
 import { NoticiasTriagem } from "@/components/noticias/noticias-triagem";
 import { NoticiaReaderPanel } from "@/components/noticias/noticias-reader-panel";
@@ -162,31 +163,30 @@ export default function NoticiasPage() {
         </div>
       </div>
 
-      {/* Conteúdo principal: feed + reader panel side-by-side */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Feed */}
-        <div className={cn(
-          "overflow-y-auto transition-all duration-300 ease-in-out",
-          readerOpen ? "w-[38%] shrink-0" : "flex-1"
-        )}>
-          {categoria === "relatorios" ? (
-            <NoticiasRelatorio />
-          ) : (
-            <NoticiasFeed
-              categoria={categoria as "legislativa" | "jurisprudencial" | "artigo" | "salvos"}
-              selectedNoticiaId={noticiaReader?.id}
-              onOpenReader={(noticia, list) => {
-                setNoticiaReader(noticia);
-                if (list) setNoticiasList(list);
-              }}
-              onOpenSalvarCaso={setNoticiaCaso}
-            />
-          )}
-        </div>
+      {/* Feed — sempre largura total */}
+      <div className="flex-1 overflow-y-auto">
+        {categoria === "relatorios" ? (
+          <NoticiasRelatorio />
+        ) : (
+          <NoticiasFeed
+            categoria={categoria as "legislativa" | "jurisprudencial" | "artigo" | "salvos"}
+            selectedNoticiaId={noticiaReader?.id}
+            onOpenReader={(noticia, list) => {
+              setNoticiaReader(noticia);
+              if (list) setNoticiasList(list);
+            }}
+            onOpenSalvarCaso={setNoticiaCaso}
+          />
+        )}
+      </div>
 
-        {/* Reader Panel */}
-        {readerOpen && noticiaReader && (
-          <div className="flex-1 overflow-hidden transition-all duration-300 ease-in-out">
+      {/* Reader Panel — drawer overlay da direita */}
+      <Sheet open={readerOpen} onOpenChange={(open) => { if (!open) setNoticiaReader(null); }}>
+        <SheetContent
+          side="right"
+          className="w-[75vw] sm:max-w-[75vw] p-0 flex flex-col gap-0 [&>button:first-child]:hidden"
+        >
+          {noticiaReader && (
             <NoticiaReaderPanel
               noticia={noticiaReader}
               corFonte={corFonteReader}
@@ -198,9 +198,9 @@ export default function NoticiasPage() {
               hasPrevious={readerIndex > 0}
               hasNext={readerIndex < noticiasList.length - 1}
             />
-          </div>
-        )}
-      </div>
+          )}
+        </SheetContent>
+      </Sheet>
 
       {/* Triagem overlay */}
       {triagemOpen && (
