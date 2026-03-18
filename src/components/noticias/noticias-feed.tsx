@@ -33,6 +33,9 @@ const COR_FONTE: Record<string, string> = {
   "trf5": "#1e3a8a",
   "trf-5": "#1e3a8a",
   "dpeba": "#065f46",
+  "tjba": "#1e3a8a",
+  "pm-bahia": "#1e40af",
+  "ssp-bahia": "#374151",
 };
 
 const NOME_FONTE: Record<string, string> = {

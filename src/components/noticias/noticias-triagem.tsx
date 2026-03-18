@@ -34,6 +34,7 @@ const FONTE_CORES: Record<string, string> = {
   "trf1": "#1e40af",
   "trf5": "#1e3a8a",
   "dpeba": "#065f46",
+  "tjba": "#1e3a8a",
 };
 
 const LABEL_FONTE: Record<string, string> = {
@@ -51,6 +52,7 @@ const LABEL_FONTE: Record<string, string> = {
   "trf1": "TRF-1",
   "trf5": "TRF-5",
   "dpeba": "DPEBA",
+  "tjba": "TJBA",
 };
 
 type Props = {

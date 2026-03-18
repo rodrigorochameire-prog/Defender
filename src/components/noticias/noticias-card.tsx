@@ -43,6 +43,9 @@ const LABEL_FONTE: Record<string, string> = {
   "trf5": "TRF-5",
   "trf-5": "TRF-5",
   "dpeba": "DPEBA",
+  "tjba": "TJBA",
+  "pm-bahia": "PM-BA",
+  "ssp-bahia": "SSP-BA",
 };
 
 interface NoticiaCardProps {
