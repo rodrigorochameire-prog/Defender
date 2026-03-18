@@ -1,7 +1,6 @@
 "use client";
 
-import { Star, Paperclip, ExternalLink, Sparkles, Clock, FolderPlus } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Star, Paperclip, ExternalLink, Clock, FolderPlus, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -18,14 +17,36 @@ type AnaliseIA = {
   casosAplicaveis: string[];
 };
 
+const LABEL_CATEGORIA: Record<string, string> = {
+  legislativa: "Legislativa",
+  jurisprudencial: "Jurisprudencial",
+  artigo: "Artigo",
+};
+
+const LABEL_FONTE: Record<string, string> = {
+  "conjur": "ConJur",
+  "stj-noticias": "STJ",
+  "stj-not-cias": "STJ",
+  "ibccrim": "IBCCRIM",
+  "dizer-o-direito": "Dizer o Direito",
+  "tudo-de-penal": "Tudo de Penal",
+  "canal-ciencias-criminais": "Canal Ciências",
+  "canal-ciências-criminais": "Canal Ciências",
+  "emporio-do-direito": "Empório do Direito",
+  "empório-do-direito": "Empório do Direito",
+  "stf-noticias": "STF",
+  "stf-notícias": "STF",
+  "jota": "JOTA",
+};
+
 interface NoticiaCardProps {
   noticia: NoticiaJuridica;
   corFonte: string;
   isFavorito: boolean;
+  isSelected?: boolean;
   onToggleFavorito: () => void;
   onSalvarNoCaso: () => void;
   onClick: () => void;
-  compact?: boolean;
 }
 
 function estimarTempoLeitura(texto: string | null | undefined): number | null {
@@ -38,10 +59,10 @@ export function NoticiaCard({
   noticia,
   corFonte,
   isFavorito,
+  isSelected = false,
   onToggleFavorito,
   onSalvarNoCaso,
   onClick,
-  compact = false,
 }: NoticiaCardProps) {
   const analise = noticia.analiseIa as AnaliseIA | null;
   const tags = (noticia.tags as string[]) ?? [];
@@ -53,157 +74,140 @@ export function NoticiaCard({
 
   const textoParaEstimar = (noticia as { conteudo?: string | null }).conteudo ?? noticia.resumo;
   const tempoLeitura = estimarTempoLeitura(textoParaEstimar);
+  const nomeFonte = LABEL_FONTE[noticia.fonte.toLowerCase()] ?? noticia.fonte.replace(/-/g, " ");
+  const nomeCategoria = LABEL_CATEGORIA[noticia.categoria] ?? noticia.categoria;
 
   return (
     <div
-      className="group relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-500/40 hover:shadow-md hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-all cursor-pointer"
+      className={cn(
+        "group relative bg-white dark:bg-zinc-900 border rounded-xl overflow-hidden cursor-pointer",
+        "transition-all duration-150",
+        isSelected
+          ? "border-emerald-400 shadow-md ring-1 ring-emerald-400/30"
+          : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-md hover:-translate-y-px"
+      )}
       onClick={onClick}
     >
-      {/* Barra colorida da fonte */}
-      <div className="h-1.5" style={{ backgroundColor: corFonte }} />
+      {/* Borda lateral esquerda colorida por fonte */}
+      <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl" style={{ backgroundColor: corFonte }} />
 
-      {/* Badge IA — canto superior direito (absoluto) */}
-      {analise?.resumoExecutivo && (
-        <div className="absolute top-3 right-3 z-10">
-          <span className="inline-flex items-center gap-0.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-            <Sparkles className="h-2.5 w-2.5" />
-            IA
-          </span>
-        </div>
-      )}
-
-      <div className={cn("p-5", compact && "py-3")}>
-        {/* Meta row */}
-        <div className="flex items-center gap-2 mb-2 flex-wrap pr-10">
-          <Badge
-            variant="outline"
-            className="text-xs font-medium capitalize"
-            style={{ borderColor: corFonte, color: corFonte }}
+      <div className="pl-5 pr-4 py-4">
+        {/* Zona 1: meta */}
+        <div className="flex items-center gap-2 mb-2.5">
+          <span
+            className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded"
+            style={{ color: corFonte, backgroundColor: `${corFonte}18` }}
           >
-            {noticia.fonte.replace(/-/g, " ")}
-          </Badge>
-          <Badge variant="secondary" className="text-xs capitalize">
-            {noticia.categoria}
-          </Badge>
-          <div className="flex items-center gap-1.5 ml-auto text-xs text-zinc-400">
-            {tempoLeitura && (
-              <>
-                <Clock className="h-3 w-3" />
-                <span>~{tempoLeitura} min</span>
-                <span className="text-zinc-300 dark:text-zinc-600">·</span>
-              </>
-            )}
-            <span>
-              {noticia.publicadoEm
-                ? formatDistanceToNow(new Date(noticia.publicadoEm), { addSuffix: true, locale: ptBR })
-                : ""}
-            </span>
-          </div>
-        </div>
-
-        {/* Título */}
-        <h3 className={cn(
-          "font-semibold text-base text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors mb-2",
-          compact ? "line-clamp-1" : "line-clamp-2"
-        )}>
-          {noticia.titulo}
-        </h3>
-
-        {/* Preview IA ou resumo */}
-        {!compact && (analise?.resumoExecutivo ? (
-          <div className="border-l-2 border-emerald-400 bg-emerald-50/60 dark:bg-emerald-900/20 rounded-r-lg px-3 py-2 mb-3">
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 italic line-clamp-2">
-              {analise.resumoExecutivo}
-            </p>
-          </div>
-        ) : noticia.resumo ? (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-3">
-            {noticia.resumo}
-          </p>
-        ) : null)}
-
-        {/* Tags */}
-        {!compact && tags.length > 0 && (
-          <div className="flex gap-1 flex-wrap mb-3">
-            {tags.slice(0, 3).map(tag => (
-              <span
-                key={tag}
-                className="text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded px-1.5 py-0.5"
-              >
-                {tag}
+            {nomeCategoria}
+          </span>
+          <span className="text-[11px] text-zinc-400 font-medium">{nomeFonte}</span>
+          {noticia.publicadoEm && (
+            <>
+              <span className="text-zinc-200 dark:text-zinc-700">·</span>
+              <span className="text-[11px] text-zinc-400">
+                {formatDistanceToNow(new Date(noticia.publicadoEm), { addSuffix: true, locale: ptBR })}
               </span>
-            ))}
-            {tags.length > 3 && (
-              <span className="text-xs text-zinc-400">+{tags.length - 3}</span>
-            )}
-          </div>
-        )}
-
-        {/* Ações — visíveis apenas no hover */}
-        <div
-          className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={e => e.stopPropagation()}
-        >
-          <Button
-            variant="ghost"
-            size="icon"
+            </>
+          )}
+          <button
             className={cn(
-              "h-7 w-7 transition-colors",
-              isFavorito && "bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-800/40"
+              "ml-auto opacity-0 group-hover:opacity-100 transition-opacity",
+              isFavorito && "opacity-100"
             )}
-            onClick={onToggleFavorito}
+            onClick={e => { e.stopPropagation(); onToggleFavorito(); }}
             title={isFavorito ? "Remover dos salvos" : "Salvar"}
           >
             <Star
               className={cn(
-                "h-3.5 w-3.5",
-                isFavorito ? "fill-amber-500 text-amber-500" : "text-zinc-400"
+                "h-3.5 w-3.5 transition-colors",
+                isFavorito ? "fill-amber-500 text-amber-500" : "text-zinc-300 hover:text-amber-400"
               )}
             />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={onSalvarNoCaso}
-            title="Vincular a caso"
-          >
-            <Paperclip className="h-3.5 w-3.5 text-zinc-400" />
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer transition-colors"
-                title="Salvar em pasta"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <FolderPlus className="h-3.5 w-3.5 text-zinc-400" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              {pastas.length === 0 && <DropdownMenuItem disabled>Nenhuma pasta</DropdownMenuItem>}
-              {pastas.map(p => (
-                <DropdownMenuItem
-                  key={p.id}
-                  onClick={() => adicionarNaPasta.mutate({ pastaId: p.id, noticiaId: noticia.id })}
-                  className="gap-2 cursor-pointer text-sm"
+          </button>
+        </div>
+
+        {/* Zona 2: título + síntese */}
+        <h3 className="font-semibold text-[15px] leading-snug text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors mb-2.5 line-clamp-2">
+          {noticia.titulo}
+        </h3>
+
+        {(analise?.resumoExecutivo || noticia.resumo) && (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed line-clamp-3 mb-3">
+            {analise?.resumoExecutivo ?? noticia.resumo}
+          </p>
+        )}
+
+        {/* Zona 3: impacto prático */}
+        {analise?.impactoPratico && (
+          <div className="flex items-start gap-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-lg px-3 py-2 mb-3">
+            <Zap className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed line-clamp-2">
+              {analise.impactoPratico}
+            </p>
+          </div>
+        )}
+
+        {/* Rodapé: tags + tempo + ações */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {tags.slice(0, 3).map(tag => (
+            <span
+              key={tag}
+              className="text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 rounded-full px-2 py-0.5"
+            >
+              {tag}
+            </span>
+          ))}
+          {tags.length > 3 && (
+            <span className="text-[10px] text-zinc-400">+{tags.length - 3}</span>
+          )}
+
+          <div className="ml-auto flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+            {tempoLeitura && (
+              <span className="flex items-center gap-0.5 text-[11px] text-zinc-400 mr-1">
+                <Clock className="h-3 w-3" />
+                {tempoLeitura} min
+              </span>
+            )}
+            <button
+              className="h-6 w-6 inline-flex items-center justify-center rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              onClick={onSalvarNoCaso}
+              title="Vincular a caso"
+            >
+              <Paperclip className="h-3.5 w-3.5 text-zinc-400" />
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="h-6 w-6 inline-flex items-center justify-center rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  title="Salvar em pasta"
                 >
-                  <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.cor ?? "#6366f1" }} />
-                  {p.nome}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button variant="ghost" size="icon" className="h-7 w-7 ml-auto" asChild>
+                  <FolderPlus className="h-3.5 w-3.5 text-zinc-400" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                {pastas.length === 0 && <DropdownMenuItem disabled>Nenhuma pasta</DropdownMenuItem>}
+                {pastas.map(p => (
+                  <DropdownMenuItem
+                    key={p.id}
+                    onClick={() => adicionarNaPasta.mutate({ pastaId: p.id, noticiaId: noticia.id })}
+                    className="gap-2 cursor-pointer text-sm"
+                  >
+                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.cor ?? "#6366f1" }} />
+                    {p.nome}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <a
               href={noticia.urlOriginal}
               target="_blank"
               rel="noopener noreferrer"
+              className="h-6 w-6 inline-flex items-center justify-center rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               title="Abrir original"
             >
               <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
             </a>
-          </Button>
+          </div>
         </div>
       </div>
     </div>

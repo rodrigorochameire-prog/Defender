@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
-import { Newspaper, Scale, Gavel, BookOpen, RefreshCw, Filter, BookmarkCheck, BarChart2, Sparkles } from "lucide-react";
+import { Newspaper, RefreshCw, Sparkles, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,19 +10,19 @@ import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
 import { NoticiasFeed } from "@/components/noticias/noticias-feed";
 import { NoticiasTriagem } from "@/components/noticias/noticias-triagem";
-import { NoticiaReaderSheet } from "@/components/noticias/noticias-reader-sheet";
+import { NoticiaReaderPanel } from "@/components/noticias/noticias-reader-panel";
 import { NoticiaSalvarCasoSheet } from "@/components/noticias/noticias-salvar-caso-sheet";
 import { NoticiasRelatorio } from "@/components/noticias/noticias-relatorio";
 import type { NoticiaJuridica } from "@/lib/db/schema";
 
-type Tab = "legislativa" | "jurisprudencial" | "artigo" | "salvos" | "relatorios";
+export type CategoriaTab = "legislativa" | "jurisprudencial" | "artigo" | "salvos" | "relatorios";
 
-const TABS: { value: Tab; label: string; icon: React.ElementType }[] = [
-  { value: "legislativa", label: "Legislativas", icon: Scale },
-  { value: "jurisprudencial", label: "Jurisprudenciais", icon: Gavel },
-  { value: "artigo", label: "Artigos", icon: BookOpen },
-  { value: "salvos", label: "Salvos", icon: BookmarkCheck },
-  { value: "relatorios", label: "Relatórios", icon: BarChart2 },
+const CATEGORIA_PILLS: { value: CategoriaTab; label: string }[] = [
+  { value: "jurisprudencial", label: "Jurisprudencial" },
+  { value: "legislativa", label: "Legislativa" },
+  { value: "artigo", label: "Artigo" },
+  { value: "salvos", label: "Salvos" },
+  { value: "relatorios", label: "Relatórios" },
 ];
 
 const COR_FONTE: Record<string, string> = {
@@ -42,15 +42,18 @@ const COR_FONTE: Record<string, string> = {
 };
 
 export default function NoticiasPage() {
-  const [tab, setTab] = useState<Tab>("jurisprudencial");
-  const [triagemOpen, setTriagemOpen] = useState(true);
+  const [categoria, setCategoria] = useState<CategoriaTab>("jurisprudencial");
+  const [triagemOpen, setTriagemOpen] = useState(false);
   const [noticiaReader, setNoticiaReader] = useState<NoticiaJuridica | null>(null);
   const [noticiaCaso, setNoticiaCaso] = useState<NoticiaJuridica | null>(null);
+  // Lista de notícias atual para navegação J/K
+  const [noticiasList, setNoticiasList] = useState<NoticiaJuridica[]>([]);
 
   const { data: pendentesCount } = trpc.noticias.countPendentes.useQuery();
   const buscarAgora = trpc.noticias.buscarAgora.useMutation();
   const { data: favoritosIds = [] } = trpc.noticias.getFavoritosIds.useQuery();
   const utils = trpc.useUtils();
+
   const toggleFavorito = trpc.noticias.toggleFavorito.useMutation({
     onSuccess: () => {
       utils.noticias.getFavoritosIds.invalidate();
@@ -73,112 +76,144 @@ export default function NoticiasPage() {
     utils.noticias.list.invalidate();
   }, [buscarAgora, utils]);
 
+  const readerIndex = noticiaReader ? noticiasList.findIndex(n => n.id === noticiaReader.id) : -1;
+
+  const handlePrevious = useCallback(() => {
+    if (readerIndex > 0) setNoticiaReader(noticiasList[readerIndex - 1]);
+  }, [readerIndex, noticiasList]);
+
+  const handleNext = useCallback(() => {
+    if (readerIndex < noticiasList.length - 1) setNoticiaReader(noticiasList[readerIndex + 1]);
+  }, [readerIndex, noticiasList]);
+
+  const readerOpen = noticiaReader !== null && categoria !== "relatorios";
+  const corFonteReader = noticiaReader ? (COR_FONTE[noticiaReader.fonte.toLowerCase()] ?? "#71717a") : "#71717a";
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-4">
-        <div className="flex items-center justify-between mb-4">
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-3 shrink-0">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-              <Newspaper className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+              <Newspaper className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <Breadcrumbs items={[
-                { label: "Ferramentas" },
-                { label: "Notícias Jurídicas" },
-              ]} />
-              <h1 className="text-lg font-semibold">Notícias Jurídicas</h1>
+              <Breadcrumbs items={[{ label: "Ferramentas" }, { label: "Notícias Jurídicas" }]} />
+              <h1 className="text-base font-semibold leading-none mt-0.5">Notícias Jurídicas</h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Pills de categoria */}
+          <div className="flex items-center gap-1 overflow-x-auto">
+            {CATEGORIA_PILLS.map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => setCategoria(value)}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap",
+                  categoria === value
+                    ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
+                    : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Ações */}
+          <div className="flex items-center gap-2 shrink-0">
             {(pendentesCount ?? 0) > 0 && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setTriagemOpen(!triagemOpen)}
+                onClick={() => setTriagemOpen(true)}
+                className="gap-1.5"
               >
-                <Filter className="h-4 w-4 mr-1" />
+                <Filter className="h-3.5 w-3.5" />
                 Triagem
-                <Badge variant="danger" className="ml-1.5 animate-pulse">
+                <Badge variant="danger" className="animate-pulse">
                   {pendentesCount}
                 </Badge>
               </Button>
             )}
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={() => enriquecerBatch.mutate()}
               disabled={enriquecerBatch.isPending}
-              title="Enriquecer com IA todas as notícias aprovadas que ainda não têm análise"
+              title="Enriquecer com IA todas as notícias aprovadas"
+              className="text-zinc-500"
             >
-              <Sparkles className={cn("h-4 w-4 mr-1", enriquecerBatch.isPending && "animate-spin")} />
-              Enriquecer IA
+              <Sparkles className={cn("h-3.5 w-3.5", enriquecerBatch.isPending && "animate-spin")} />
             </Button>
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={handleBuscarAgora}
               disabled={buscarAgora.isPending}
+              title="Buscar notícias agora"
+              className="text-zinc-500"
             >
-              <RefreshCw className={cn("h-4 w-4 mr-1", buscarAgora.isPending && "animate-spin")} />
-              Buscar Agora
+              <RefreshCw className={cn("h-3.5 w-3.5", buscarAgora.isPending && "animate-spin")} />
             </Button>
           </div>
         </div>
-
-        {/* Tab switcher */}
-        <div className="flex gap-1 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-1 w-fit overflow-x-auto">
-          {TABS.map(({ value, label, icon: Icon }) => (
-            <button
-              key={value}
-              onClick={() => setTab(value)}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap",
-                tab === value
-                  ? "bg-white dark:bg-zinc-700 shadow-sm text-emerald-700 dark:text-emerald-400"
-                  : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {/* Triagem panel */}
-      {triagemOpen && (pendentesCount ?? 0) > 0 && (
+      {/* Conteúdo principal: feed + reader panel side-by-side */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Feed */}
+        <div className={cn(
+          "overflow-y-auto transition-all duration-300 ease-in-out",
+          readerOpen ? "w-[38%] shrink-0" : "flex-1"
+        )}>
+          {categoria === "relatorios" ? (
+            <NoticiasRelatorio />
+          ) : (
+            <NoticiasFeed
+              categoria={categoria as "legislativa" | "jurisprudencial" | "artigo" | "salvos"}
+              selectedNoticiaId={noticiaReader?.id}
+              onOpenReader={(noticia, list) => {
+                setNoticiaReader(noticia);
+                if (list) setNoticiasList(list);
+              }}
+              onOpenSalvarCaso={setNoticiaCaso}
+            />
+          )}
+        </div>
+
+        {/* Reader Panel */}
+        {readerOpen && noticiaReader && (
+          <div className="flex-1 overflow-hidden transition-all duration-300 ease-in-out">
+            <NoticiaReaderPanel
+              noticia={noticiaReader}
+              corFonte={corFonteReader}
+              isFavorito={favoritosIds.includes(noticiaReader.id)}
+              onToggleFavorito={() => toggleFavorito.mutate({ noticiaId: noticiaReader.id })}
+              onClose={() => setNoticiaReader(null)}
+              onPrevious={handlePrevious}
+              onNext={handleNext}
+              hasPrevious={readerIndex > 0}
+              hasNext={readerIndex < noticiasList.length - 1}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Triagem overlay */}
+      {triagemOpen && (
         <NoticiasTriagem
           onClose={() => setTriagemOpen(false)}
           onUpdate={() => {
             utils.noticias.list.invalidate();
             utils.noticias.countPendentes.invalidate();
           }}
-        />
-      )}
-
-      {/* Conteúdo */}
-      <div className="flex-1 overflow-y-auto">
-        {tab === "relatorios" ? (
-          <NoticiasRelatorio />
-        ) : (
-          <NoticiasFeed
-            categoria={tab as "legislativa" | "jurisprudencial" | "artigo" | "salvos"}
-            onOpenReader={setNoticiaReader}
-            onOpenSalvarCaso={setNoticiaCaso}
-          />
-        )}
-      </div>
-
-      {/* Reader Sheet */}
-      {noticiaReader && (
-        <NoticiaReaderSheet
-          noticia={noticiaReader}
-          corFonte={COR_FONTE[noticiaReader.fonte.toLowerCase()] ?? "#71717a"}
-          isFavorito={favoritosIds.includes(noticiaReader.id)}
-          onToggleFavorito={() => toggleFavorito.mutate({ noticiaId: noticiaReader.id })}
-          onClose={() => setNoticiaReader(null)}
+          onOpenReader={(noticia) => {
+            setNoticiaReader(noticia as NoticiaJuridica);
+            setTriagemOpen(false);
+          }}
         />
       )}
 

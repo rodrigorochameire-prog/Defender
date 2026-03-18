@@ -1,35 +1,52 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { X, Check, Trash2, CheckCircle2, XCircle } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { X, Check, CheckCircle2, XCircle, ChevronDown, Zap, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+type AnaliseIA = {
+  resumoExecutivo: string;
+  impactoPratico: string;
+};
 
 const FONTE_CORES: Record<string, string> = {
   "conjur": "#dc2626",
+  "stj-noticias": "#1d4ed8",
+  "stj-not-cias": "#1d4ed8",
   "stj-notícias": "#1d4ed8",
   "ibccrim": "#7c3aed",
   "dizer-o-direito": "#059669",
+  "tudo-de-penal": "#b45309",
+  "canal-ciencias-criminais": "#7c2d12",
+  "stf-noticias": "#dc2626",
+  "stf-notícias": "#dc2626",
+  "jota": "#0f172a",
+};
+
+const LABEL_FONTE: Record<string, string> = {
+  "conjur": "ConJur",
+  "stj-noticias": "STJ",
+  "ibccrim": "IBCCRIM",
+  "dizer-o-direito": "Dizer o Direito",
+  "stf-noticias": "STF",
+  "jota": "JOTA",
 };
 
 type Props = {
   onClose: () => void;
   onUpdate: () => void;
+  onOpenReader?: (noticia: { id: number; titulo: string; fonte: string; categoria: string; urlOriginal: string; analiseIa: unknown; resumo: string | null; publicadoEm: string | null; conteudo?: string | null }) => void;
 };
 
-export function NoticiasTriagem({ onClose, onUpdate }: Props) {
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [removingIds, setRemovingIds] = useState<Set<number>>(new Set());
 
   const { data: pendentes, isLoading } = trpc.noticias.listPendentes.useQuery();
   const utils = trpc.useUtils();
@@ -37,6 +54,7 @@ export function NoticiasTriagem({ onClose, onUpdate }: Props) {
   const aprovar = trpc.noticias.aprovar.useMutation({
     onSuccess: () => {
       utils.noticias.listPendentes.invalidate();
+      utils.noticias.countPendentes.invalidate();
       onUpdate();
     },
   });
@@ -44,72 +62,55 @@ export function NoticiasTriagem({ onClose, onUpdate }: Props) {
   const descartar = trpc.noticias.descartar.useMutation({
     onSuccess: () => {
       utils.noticias.listPendentes.invalidate();
+      utils.noticias.countPendentes.invalidate();
       onUpdate();
     },
   });
 
-  const updateCategoria = trpc.noticias.updateCategoria.useMutation({
-    onSuccess: () => {
-      utils.noticias.listPendentes.invalidate();
-    },
-  });
+  const handleAprovar = useCallback((id: number) => {
+    setRemovingIds(prev => new Set(prev).add(id));
+    setTimeout(() => {
+      aprovar.mutate({ ids: [id] });
+      setExpandedId(prev => prev === id ? null : prev);
+    }, 200);
+  }, [aprovar]);
 
-  const toggleSelected = useCallback((id: number) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
-
-  const toggleAll = useCallback(() => {
-    if (!pendentes) return;
-    if (selected.size === pendentes.length) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(pendentes.map((p) => p.id)));
-    }
-  }, [pendentes, selected.size]);
-
-  const handleAprovarSelected = useCallback(() => {
-    if (selected.size === 0) return;
-    aprovar.mutate({ ids: Array.from(selected) });
-    setSelected(new Set());
-  }, [selected, aprovar]);
-
-  const handleDescartarSelected = useCallback(() => {
-    if (selected.size === 0) return;
-    descartar.mutate({ ids: Array.from(selected) });
-    setSelected(new Set());
-  }, [selected, descartar]);
+  const handleDescartar = useCallback((id: number) => {
+    setRemovingIds(prev => new Set(prev).add(id));
+    setTimeout(() => {
+      descartar.mutate({ ids: [id] });
+      setExpandedId(prev => prev === id ? null : prev);
+    }, 200);
+  }, [descartar]);
 
   const handleAprovarTodos = useCallback(() => {
     if (!pendentes) return;
-    aprovar.mutate({ ids: pendentes.map((p) => p.id) });
-    setSelected(new Set());
+    aprovar.mutate({ ids: pendentes.map(p => p.id) });
   }, [pendentes, aprovar]);
 
-  const handleDescartarTodos = useCallback(() => {
-    if (!pendentes) return;
-    descartar.mutate({ ids: pendentes.map((p) => p.id) });
-    setSelected(new Set());
-  }, [pendentes, descartar]);
-
-  const formatDate = (date: string | Date | null) => {
-    if (!date) return "";
-    return new Intl.DateTimeFormat("pt-BR", {
-      day: "2-digit",
-      month: "short",
-    }).format(new Date(date));
-  };
+  // Atalhos de teclado
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
+      if (!expandedId) return;
+      if (e.key === "a" || e.key === "A") handleAprovar(expandedId);
+      if (e.key === "d" || e.key === "D") handleDescartar(expandedId);
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [expandedId, handleAprovar, handleDescartar]);
 
   if (isLoading) {
     return (
-      <div className="border-b bg-amber-50/50 dark:bg-amber-900/10 p-4 space-y-2">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-12 w-full" />
-        ))}
+      <div className="fixed inset-0 z-50 bg-white dark:bg-zinc-900 flex flex-col">
+        <div className="border-b px-6 py-4 flex items-center justify-between">
+          <div className="h-5 w-32 bg-zinc-100 dark:bg-zinc-800 rounded animate-pulse" />
+        </div>
+        <div className="flex-1 p-6 space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-14 w-full rounded-xl" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -117,132 +118,160 @@ export function NoticiasTriagem({ onClose, onUpdate }: Props) {
   if (!pendentes || pendentes.length === 0) return null;
 
   return (
-    <div className="border-b bg-amber-50/50 dark:bg-amber-900/10">
+    <div className="fixed inset-0 z-50 bg-white dark:bg-zinc-900 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-amber-200/50 dark:border-amber-800/30">
+      <div className="border-b border-zinc-200 dark:border-zinc-800 px-6 py-4 flex items-center justify-between bg-white dark:bg-zinc-900">
         <div className="flex items-center gap-3">
-          <h3 className="font-semibold text-sm">Triagem</h3>
-          <Badge variant="outline" className="text-amber-700 dark:text-amber-400 border-amber-300">
-            {pendentes.length} pendentes
+          <button
+            onClick={onClose}
+            className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+          >
+            <X className="h-4 w-4" />
+            Sair da triagem
+          </button>
+          <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700" />
+          <Badge variant="outline" className="text-zinc-600 dark:text-zinc-400 font-medium">
+            {pendentes.length} {pendentes.length === 1 ? "pendente" : "pendentes"}
           </Badge>
-          {selected.size > 0 && (
-            <span className="text-xs text-zinc-500">
-              {selected.size} selecionados
+          {expandedId && (
+            <span className="text-xs text-zinc-400">
+              A aprovar · D descartar
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          {selected.size > 0 ? (
-            <>
-              <Button size="sm" variant="outline" onClick={handleAprovarSelected} className="text-emerald-600 border-emerald-300 hover:bg-emerald-50">
-                <Check className="h-3.5 w-3.5 mr-1" />
-                Aprovar ({selected.size})
-              </Button>
-              <Button size="sm" variant="outline" onClick={handleDescartarSelected} className="text-red-600 border-red-300 hover:bg-red-50">
-                <Trash2 className="h-3.5 w-3.5 mr-1" />
-                Descartar ({selected.size})
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button size="sm" variant="outline" onClick={handleAprovarTodos} className="text-emerald-600 border-emerald-300 hover:bg-emerald-50">
-                <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                Aprovar Todos
-              </Button>
-              <Button size="sm" variant="ghost" onClick={handleDescartarTodos} className="text-red-500 hover:text-red-700">
-                <XCircle className="h-3.5 w-3.5 mr-1" />
-                Descartar Todos
-              </Button>
-            </>
-          )}
-          <Button size="icon" variant="ghost" onClick={onClose} className="h-7 w-7">
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleAprovarTodos}
+          disabled={aprovar.isPending}
+          className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-950/30"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+          Aprovar todos
+        </Button>
       </div>
 
-      {/* Items */}
-      <div className="max-h-80 overflow-y-auto divide-y divide-amber-100 dark:divide-amber-900/20">
-        {/* Select all */}
-        <div className="px-6 py-2 flex items-center gap-2">
-          <Checkbox
-            checked={selected.size === pendentes.length}
-            onCheckedChange={toggleAll}
-          />
-          <span className="text-xs text-zinc-500">Selecionar todos</span>
-        </div>
+      {/* Lista */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-6 py-4 space-y-2">
+          {pendentes.map((item) => {
+            const corFonte = FONTE_CORES[item.fonte.toLowerCase()] ?? "#71717a";
+            const nomeFonte = LABEL_FONTE[item.fonte.toLowerCase()] ?? item.fonte.replace(/-/g, " ");
+            const analise = item.analiseIa as AnaliseIA | null;
+            const isExpanded = expandedId === item.id;
+            const isRemoving = removingIds.has(item.id);
 
-        {pendentes.map((item) => {
-          const fonteColor = FONTE_CORES[item.fonte] || "#71717a";
-
-          return (
-            <div
-              key={item.id}
-              className={cn(
-                "px-6 py-2.5 flex items-center gap-3 hover:bg-amber-100/30 dark:hover:bg-amber-900/20 transition-colors",
-                selected.has(item.id) && "bg-amber-100/50 dark:bg-amber-900/30"
-              )}
-            >
-              <Checkbox
-                checked={selected.has(item.id)}
-                onCheckedChange={() => toggleSelected(item.id)}
-              />
-
-              <span
-                className="text-[10px] font-medium px-1.5 py-0.5 rounded text-white shrink-0"
-                style={{ backgroundColor: fonteColor }}
+            return (
+              <div
+                key={item.id}
+                className={cn(
+                  "border rounded-xl overflow-hidden transition-all duration-200",
+                  isRemoving ? "opacity-0 scale-95" : "opacity-100 scale-100",
+                  isExpanded
+                    ? "border-zinc-300 dark:border-zinc-600 shadow-sm"
+                    : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
+                )}
               >
-                {item.fonte}
-              </span>
+                {/* Borda lateral colorida */}
+                <div className="flex">
+                  <div className="w-[3px] shrink-0" style={{ backgroundColor: corFonte }} />
 
-              <span className="text-sm font-medium truncate flex-1 min-w-0">
-                {item.titulo}
-              </span>
+                  <div className="flex-1 min-w-0">
+                    {/* Linha colapsada */}
+                    <button
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                      onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                    >
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span
+                          className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                          style={{ color: corFonte, backgroundColor: `${corFonte}18` }}
+                        >
+                          {nomeFonte}
+                        </span>
+                        {item.publicadoEm && (
+                          <span className="text-[11px] text-zinc-400">
+                            {formatDistanceToNow(new Date(item.publicadoEm), { addSuffix: true, locale: ptBR })}
+                          </span>
+                        )}
+                      </div>
 
-              <Select
-                value={item.categoria}
-                onValueChange={(val) =>
-                  updateCategoria.mutate({
-                    id: item.id,
-                    categoria: val as "legislativa" | "jurisprudencial" | "artigo",
-                  })
-                }
-              >
-                <SelectTrigger className="w-32 h-7 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="legislativa">Legislativa</SelectItem>
-                  <SelectItem value="jurisprudencial">Jurisprudencial</SelectItem>
-                  <SelectItem value="artigo">Artigo</SelectItem>
-                </SelectContent>
-              </Select>
+                      <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate flex-1 min-w-0">
+                        {item.titulo}
+                      </span>
 
-              <span className="text-xs text-zinc-400 shrink-0 w-14 text-right">
-                {formatDate(item.scrapeadoEm)}
-              </span>
+                      <ChevronDown className={cn(
+                        "h-4 w-4 text-zinc-400 shrink-0 transition-transform duration-200",
+                        isExpanded && "rotate-180"
+                      )} />
+                    </button>
 
-              <div className="flex items-center gap-1 shrink-0">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100"
-                  onClick={() => aprovar.mutate({ ids: [item.id] })}
-                >
-                  <Check className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-100"
-                  onClick={() => descartar.mutate({ ids: [item.id] })}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
+                    {/* Expansão com síntese IA + ações */}
+                    {isExpanded && (
+                      <div className="px-4 pb-4 space-y-3 border-t border-zinc-100 dark:border-zinc-800 pt-3">
+                        {/* Síntese IA */}
+                        {analise?.resumoExecutivo && (
+                          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                            {analise.resumoExecutivo}
+                          </p>
+                        )}
+
+                        {/* Impacto prático */}
+                        {analise?.impactoPratico && (
+                          <div className="flex items-start gap-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-lg px-3 py-2">
+                            <Zap className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                            <p className="text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
+                              {analise.impactoPratico}
+                            </p>
+                          </div>
+                        )}
+
+                        {!analise?.resumoExecutivo && !analise?.impactoPratico && (
+                          <p className="text-sm text-zinc-400 italic">Sem análise IA disponível</p>
+                        )}
+
+                        {/* Ações */}
+                        <div className="flex items-center gap-2 pt-1">
+                          <Button
+                            size="sm"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+                            onClick={() => handleAprovar(item.id)}
+                            disabled={aprovar.isPending}
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                            Aprovar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-500 border-red-200 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950/30 gap-1.5"
+                            onClick={() => handleDescartar(item.id)}
+                            disabled={descartar.isPending}
+                          >
+                            <XCircle className="h-3.5 w-3.5" />
+                            Descartar
+                          </Button>
+                          {onOpenReader && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-zinc-500 gap-1.5 ml-auto"
+                              onClick={() => { onOpenReader(item as Parameters<typeof onOpenReader>[0]); onClose(); }}
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              Abrir completo
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

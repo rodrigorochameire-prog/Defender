@@ -139,16 +139,6 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <Skeleton key={i} className="h-28 w-full rounded-xl" />
-        ))}
-      </div>
-    );
-  }
-
   const emptyMessage = useMemo(() => {
     const partes: string[] = [];
     if (filtros.tipoCrime) partes.push(filtros.tipoCrime);
@@ -159,6 +149,16 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
     }
     return "Nenhuma notícia encontrada. O Radar Criminal coletará notícias automaticamente.";
   }, [filtros.tipoCrime, filtros.bairro, filtros.fonte]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Skeleton key={i} className="h-28 w-full rounded-xl" />
+        ))}
+      </div>
+    );
+  }
 
   const hasActiveFilters = !!(filtros.tipoCrime || filtros.bairro || filtros.fonte || filtros.search || filtros.circunstancia);
 
