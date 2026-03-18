@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { NoticiaCard } from "./noticias-card";
 import { NoticiaCardFeatured } from "./noticias-card-featured";
+import { NoticiasPastasSidebar } from "./noticias-pastas-sidebar";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
 import type { NoticiaJuridica } from "@/lib/db/schema";
@@ -72,6 +73,7 @@ export function NoticiasFeed({ categoria, onOpenReader, onOpenSalvarCaso }: Noti
   const [accumulated, setAccumulated] = useState<NoticiaJuridica[]>([]);
   const [fonteFilter, setFonteFilter] = useState<string | undefined>(undefined);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [pastaAtiva, setPastaAtiva] = useState<number | null>(null);
   const debouncedBusca = useDebounce(busca, 400);
   const utils = trpc.useUtils();
 
@@ -127,13 +129,24 @@ export function NoticiasFeed({ categoria, onOpenReader, onOpenSalvarCaso }: Noti
     enabled: categoria === "salvos",
   });
 
+  const pastaQuery = trpc.noticias.listNoticiasDaPasta.useQuery(
+    { pastaId: pastaAtiva! },
+    { enabled: pastaAtiva !== null }
+  );
+
   const noticias: NoticiaJuridica[] =
-    categoria === "salvos"
-      ? (favoritosQuery.data?.map(f => f.noticia) ?? [])
-      : accumulated;
+    pastaAtiva !== null
+      ? (pastaQuery.data?.map(item => item.noticia) ?? [])
+      : categoria === "salvos"
+        ? (favoritosQuery.data?.map(f => f.noticia) ?? [])
+        : accumulated;
 
   const isLoading =
-    categoria === "salvos" ? favoritosQuery.isLoading : (feedQuery.isLoading && cursor === undefined);
+    pastaAtiva !== null
+      ? pastaQuery.isLoading
+      : categoria === "salvos"
+        ? favoritosQuery.isLoading
+        : (feedQuery.isLoading && cursor === undefined);
 
   const hasNextPage = feedQuery.data?.nextCursor != null;
 
@@ -145,13 +158,18 @@ export function NoticiasFeed({ categoria, onOpenReader, onOpenSalvarCaso }: Noti
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4">
-        <Skeleton className="h-64 w-full rounded-xl" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Skeleton className="h-48 rounded-xl" />
-          <Skeleton className="h-48 rounded-xl" />
-          <Skeleton className="h-48 rounded-xl" />
-          <Skeleton className="h-48 rounded-xl" />
+      <div className="p-6 flex gap-6">
+        <div className="w-52 shrink-0 space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-8 bg-zinc-100 dark:bg-zinc-800 rounded-lg animate-pulse" />
+          ))}
+        </div>
+        <div className="flex-1 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-52 bg-zinc-100 dark:bg-zinc-800 rounded-xl animate-pulse" />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -161,9 +179,16 @@ export function NoticiasFeed({ categoria, onOpenReader, onOpenSalvarCaso }: Noti
   const restNoticias = viewMode === "grid" ? noticias.slice(1) : noticias;
 
   return (
-    <div className="p-6 space-y-5">
-      {/* Toolbar: busca + view toggle */}
+    <div className="p-6 flex gap-6">
+      {/* Sidebar de Pastas */}
       {categoria !== "salvos" && (
+        <NoticiasPastasSidebar pastaAtiva={pastaAtiva} onSelectPasta={setPastaAtiva} />
+      )}
+
+      {/* Feed principal */}
+      <div className="flex-1 min-w-0 space-y-5">
+      {/* Toolbar: busca + view toggle */}
+      {categoria !== "salvos" && pastaAtiva === null && (
         <div className="flex items-center gap-3">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
@@ -220,7 +245,7 @@ export function NoticiasFeed({ categoria, onOpenReader, onOpenSalvarCaso }: Noti
       )}
 
       {/* Filtro por fonte — pills horizontais */}
-      {categoria !== "salvos" && (
+      {categoria !== "salvos" && pastaAtiva === null && (
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setFonteFilter(undefined)}
@@ -307,7 +332,7 @@ export function NoticiasFeed({ categoria, onOpenReader, onOpenSalvarCaso }: Noti
       )}
 
       {/* Load more */}
-      {hasNextPage && categoria !== "salvos" && (
+      {hasNextPage && categoria !== "salvos" && pastaAtiva === null && (
         <div className="flex justify-center pt-4">
           <Button
             variant="outline"
@@ -318,6 +343,7 @@ export function NoticiasFeed({ categoria, onOpenReader, onOpenSalvarCaso }: Noti
           </Button>
         </div>
       )}
+      </div>
     </div>
   );
 }

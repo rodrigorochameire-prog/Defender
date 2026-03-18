@@ -1,11 +1,14 @@
 "use client";
 
-import { Star, Paperclip, ExternalLink, Sparkles, Clock } from "lucide-react";
+import { Star, Paperclip, ExternalLink, Sparkles, Clock, FolderPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
+import { trpc } from "@/lib/trpc/client";
 import type { NoticiaJuridica } from "@/lib/db/schema";
 
 type AnaliseIA = {
@@ -42,6 +45,11 @@ export function NoticiaCard({
 }: NoticiaCardProps) {
   const analise = noticia.analiseIa as AnaliseIA | null;
   const tags = (noticia.tags as string[]) ?? [];
+
+  const { data: pastas = [] } = trpc.noticias.listPastas.useQuery(undefined, { staleTime: 60_000 });
+  const adicionarNaPasta = trpc.noticias.adicionarNaPasta.useMutation({
+    onSuccess: () => toast.success("Salvo na pasta"),
+  });
 
   const textoParaEstimar = (noticia as { conteudo?: string | null }).conteudo ?? noticia.resumo;
   const tempoLeitura = estimarTempoLeitura(textoParaEstimar);
@@ -162,6 +170,30 @@ export function NoticiaCard({
           >
             <Paperclip className="h-3.5 w-3.5 text-zinc-400" />
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer transition-colors"
+                title="Salvar em pasta"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <FolderPlus className="h-3.5 w-3.5 text-zinc-400" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              {pastas.length === 0 && <DropdownMenuItem disabled>Nenhuma pasta</DropdownMenuItem>}
+              {pastas.map(p => (
+                <DropdownMenuItem
+                  key={p.id}
+                  onClick={() => adicionarNaPasta.mutate({ pastaId: p.id, noticiaId: noticia.id })}
+                  className="gap-2 cursor-pointer text-sm"
+                >
+                  <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.cor ?? "#6366f1" }} />
+                  {p.nome}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="ghost" size="icon" className="h-7 w-7 ml-auto" asChild>
             <a
               href={noticia.urlOriginal}

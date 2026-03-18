@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
-import { ArrowLeft, Brain, Calendar, ExternalLink, FileText, FolderOpen, Loader2, Lock, Pencil, Plus, Scale, Sun, User, Users, Sparkles, Library, BookOpen, Trash2 } from "lucide-react";
+import { ArrowLeft, Brain, Calendar, ExternalLink, FileText, FolderOpen, Loader2, Lock, Newspaper, Pencil, Plus, Scale, Sun, User, Users, Sparkles, Library, BookOpen, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
@@ -17,7 +17,7 @@ import { DriveTabEnhanced } from "@/components/drive/DriveTabEnhanced";
 import { ProcessoTimeline } from "@/components/processos/ProcessoTimeline";
 import { InstrucaoStatus } from "@/components/processos/InstrucaoStatus";
 
-type Tab = "partes" | "demandas" | "drive" | "audiencias" | "timeline" | "vinculados" | "inteligencia" | "fundamentos";
+type Tab = "partes" | "demandas" | "drive" | "audiencias" | "timeline" | "vinculados" | "inteligencia" | "fundamentos" | "noticias";
 
 const PRESOS = [
   "CADEIA_PUBLICA",
@@ -95,6 +95,7 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
       : []),
     { key: "inteligencia", label: "Inteligência" },
     { key: "fundamentos", label: "Fundamentos" },
+    { key: "noticias", label: "Notícias" },
   ];
 
   return (
@@ -516,7 +517,111 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
         {tab === "fundamentos" && (
           <ProcessoFundamentosTab processoId={Number(id)} />
         )}
+
+        {tab === "noticias" && (
+          <ProcessoNoticiasTab processoId={Number(id)} />
+        )}
       </div>
+    </div>
+  );
+}
+
+// ==========================================
+// TAB: NOTÍCIAS — Notícias vinculadas ao processo
+// ==========================================
+
+function ProcessoNoticiasTab({ processoId }: { processoId: number }) {
+  const utils = trpc.useUtils();
+
+  const { data: vinculos = [], isLoading } = trpc.noticias.listNoticiasByProcesso.useQuery(
+    { processoId },
+    { enabled: !isNaN(processoId) }
+  );
+
+  const desvincular = trpc.noticias.desvincularProcesso.useMutation({
+    onSuccess: () => {
+      toast.success("Notícia desvinculada");
+      void utils.noticias.listNoticiasByProcesso.invalidate({ processoId });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-20 bg-zinc-100 dark:bg-zinc-800 rounded-lg animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (vinculos.length === 0) {
+    return (
+      <div className="text-center py-12 bg-zinc-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">
+        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-3">
+          <Newspaper className="w-5 h-5 text-zinc-400" />
+        </div>
+        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Nenhuma notícia vinculada</p>
+        <p className="text-xs text-zinc-400 mt-1 max-w-xs mx-auto">
+          Notícias relevantes são vinculadas automaticamente por IA. Você também pode vincular manualmente pelo{" "}
+          <Link href="/admin/noticias" className="text-emerald-600 hover:underline">feed de Notícias</Link>.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[11px] text-zinc-400">{vinculos.length} {vinculos.length === 1 ? "notícia vinculada" : "notícias vinculadas"}</p>
+      {vinculos.map(({ vinculo, noticia }) => (
+        <div
+          key={vinculo.id}
+          className="group bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-3 hover:border-emerald-300/60 transition-all"
+        >
+          <div className="flex items-start gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400 capitalize">
+                  {noticia.fonte.replace(/-/g, " ")}
+                </span>
+                {vinculo.autoVinculada && (
+                  <span className="inline-flex items-center gap-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[9px] font-semibold px-1.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                    <Sparkles className="h-2.5 w-2.5" />
+                    Vinculada automaticamente
+                  </span>
+                )}
+              </div>
+              <p className="text-xs font-medium text-zinc-800 dark:text-zinc-200 line-clamp-2">
+                {noticia.titulo}
+              </p>
+              {vinculo.observacao && (
+                <p className="text-[11px] text-zinc-400 mt-1 italic">{vinculo.observacao}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+              {noticia.urlOriginal && (
+                <a
+                  href={noticia.urlOriginal}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
+                  title="Abrir original"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
+                </a>
+              )}
+              <button
+                onClick={() => desvincular.mutate({ noticiaId: noticia.id, processoId })}
+                className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer transition-colors"
+                title="Desvincular"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-zinc-400 hover:text-red-500 transition-colors" />
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
