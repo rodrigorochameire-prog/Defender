@@ -53,3 +53,9 @@ export function getInitials(name: string): string {
 export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+export function decodeHtmlEntities(str: string): string {
+  if (typeof window === "undefined") return str;
+  const doc = new DOMParser().parseFromString(str, "text/html");
+  return doc.documentElement.textContent ?? str;
+}

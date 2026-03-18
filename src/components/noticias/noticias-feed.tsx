@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { Search, X, ChevronDown, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
@@ -138,14 +137,31 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, onOpenReader, onOpe
   if (isLoading) {
     return (
       <div className="p-4 flex gap-4">
-        <div className="w-48 shrink-0 space-y-2">
+        <div className="w-52 shrink-0 space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-8 bg-zinc-100 dark:bg-zinc-800 rounded-lg animate-pulse" />
           ))}
         </div>
-        <div className="flex-1 space-y-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-40 bg-zinc-100 dark:bg-zinc-800 rounded-xl animate-pulse" />
+        <div className="flex-1 space-y-3 max-w-3xl">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden animate-pulse"
+            >
+              <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-zinc-200 dark:bg-zinc-700 rounded-l-xl" />
+              <div className="pl-5 pr-4 py-4 space-y-3">
+                <div className="flex gap-2 items-center">
+                  <div className="h-4 w-20 bg-zinc-100 dark:bg-zinc-800 rounded-full" />
+                  <div className="h-4 w-14 bg-zinc-100 dark:bg-zinc-800 rounded" />
+                </div>
+                <div className="h-5 w-full bg-zinc-100 dark:bg-zinc-800 rounded" />
+                <div className="h-5 w-3/4 bg-zinc-100 dark:bg-zinc-800 rounded" />
+                <div className="h-4 w-full bg-zinc-100 dark:bg-zinc-800 rounded" />
+                <div className="h-4 w-full bg-zinc-100 dark:bg-zinc-800 rounded" />
+                <div className="h-4 w-2/3 bg-zinc-100 dark:bg-zinc-800 rounded" />
+                <div className="h-14 w-full bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg" />
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -160,7 +176,7 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, onOpenReader, onOpe
       )}
 
       {/* Feed principal */}
-      <div className="flex-1 min-w-0 space-y-4">
+      <div className="flex-1 min-w-0 space-y-4 max-w-3xl">
 
         {/* Toolbar: busca + fonte */}
         {categoria !== "salvos" && pastaAtiva === null && (

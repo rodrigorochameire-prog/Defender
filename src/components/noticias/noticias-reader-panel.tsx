@@ -9,7 +9,7 @@ import {
   Scale, ShieldCheck, Zap, ChevronLeft, ChevronRight, RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, decodeHtmlEntities } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -194,7 +194,7 @@ export function NoticiaReaderPanel({
 
         {/* Linha 2: título completo */}
         <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
-          {noticia.titulo}
+          {decodeHtmlEntities(noticia.titulo)}
         </h2>
       </div>
 

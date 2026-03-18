@@ -3,7 +3,7 @@
 import { Star, Paperclip, ExternalLink, Clock, FolderPlus, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+import { cn, decodeHtmlEntities } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -83,7 +83,7 @@ export function NoticiaCard({
         "group relative bg-white dark:bg-zinc-900 border rounded-xl overflow-hidden cursor-pointer",
         "transition-all duration-150",
         isSelected
-          ? "border-emerald-400 shadow-md ring-1 ring-emerald-400/30"
+          ? "bg-zinc-50 dark:bg-zinc-800/60 border-zinc-300 dark:border-zinc-600"
           : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-md hover:-translate-y-px"
       )}
       onClick={onClick}
@@ -94,10 +94,7 @@ export function NoticiaCard({
       <div className="pl-5 pr-4 py-4">
         {/* Zona 1: meta */}
         <div className="flex items-center gap-2 mb-2.5">
-          <span
-            className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded"
-            style={{ color: corFonte, backgroundColor: `${corFonte}18` }}
-          >
+          <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded capitalize">
             {nomeCategoria}
           </span>
           <span className="text-[11px] text-zinc-400 font-medium">{nomeFonte}</span>
@@ -128,7 +125,7 @@ export function NoticiaCard({
 
         {/* Zona 2: título + síntese */}
         <h3 className="font-semibold text-[15px] leading-snug text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors mb-2.5 line-clamp-2">
-          {noticia.titulo}
+          {decodeHtmlEntities(noticia.titulo)}
         </h3>
 
         {(analise?.resumoExecutivo || noticia.resumo) && (
