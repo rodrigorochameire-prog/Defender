@@ -1,6 +1,6 @@
 "use client";
 
-import { format, differenceInYears } from "date-fns";
+import { format, differenceInYears, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Copy,
@@ -66,9 +66,11 @@ function CopyButton({ value }: { value: string }) {
 
   return (
     <button
+      type="button"
       onClick={handleCopy}
       className="ml-1 text-zinc-300 hover:text-zinc-600 transition-colors"
       title="Copiar"
+      aria-label={copied ? "Copiado" : "Copiar"}
     >
       {copied ? (
         <Check className="h-3 w-3 text-emerald-500" />
@@ -121,12 +123,12 @@ export function AssistidoFichaSheet({
 }: FichaSheetProps) {
   const idade =
     assistido.dataNascimento
-      ? differenceInYears(new Date(), new Date(assistido.dataNascimento))
+      ? differenceInYears(new Date(), parseISO(assistido.dataNascimento))
       : null;
 
   const dataNascFormatada =
     assistido.dataNascimento
-      ? format(new Date(assistido.dataNascimento), "dd/MM/yyyy", { locale: ptBR })
+      ? format(parseISO(assistido.dataNascimento), "dd/MM/yyyy", { locale: ptBR })
       : null;
 
   // Strip non-digits for WhatsApp link
@@ -213,7 +215,7 @@ export function AssistidoFichaSheet({
                         title="WhatsApp"
                       >
                         WhatsApp
-                        <ExternalLink className="h-2.5 w-2.5" />
+                        <ExternalLink className="h-2.5 w-2.5" aria-hidden="true" />
                       </a>
                     )}
                   </FieldRow>
