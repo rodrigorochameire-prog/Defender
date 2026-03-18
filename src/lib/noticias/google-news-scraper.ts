@@ -1,8 +1,24 @@
 // Queries especializadas em direito penal brasileiro
-const GOOGLE_NEWS_QUERIES = [
-  '"habeas corpus" OR "STJ decidiu" OR "STF fixou" OR "tese fixada" "processo penal"',
-  '"lei penal" OR "código penal" OR "CPP" "execução penal" OR "reforma penal"',
-  '"defensoria pública" OR "presídio" OR "preso provisório" direito penal',
+// Cada query tem limite próprio configurado em QUERY_LIMITS
+const GOOGLE_NEWS_QUERIES: { q: string; limit: number }[] = [
+  // Jurisprudência geral penal
+  { q: '"habeas corpus" OR "STJ decidiu" OR "STF fixou" OR "tese fixada" "processo penal"', limit: 10 },
+  // Legislação penal
+  { q: '"lei penal" OR "código penal" OR "CPP" "execução penal" OR "reforma penal"', limit: 10 },
+  // Defensoria / sistema prisional
+  { q: '"defensoria pública" OR "presídio" OR "preso provisório" direito penal', limit: 10 },
+  // STJ — câmaras criminais (alta prioridade)
+  { q: 'site:stj.jus.br "turma criminal" OR "habeas corpus" OR "tráfico" OR "execução penal" OR "júri"', limit: 15 },
+  // STJ informativos penais
+  { q: 'STJ "Informativo" "criminal" OR "penal" OR "habeas corpus" OR "execução penal"', limit: 15 },
+  // TJBA decisões criminais
+  { q: 'site:tjba.jus.br "criminal" OR "penal" OR "habeas corpus" OR "tráfico" OR "homicídio"', limit: 15 },
+  // TJBA notícias e jurisprudência (sem site: para pegar portais que repercutem TJBA)
+  { q: '"TJBA" OR "Tribunal de Justiça da Bahia" "criminal" OR "penal" OR "decisão"', limit: 12 },
+  // Segurança pública / criminalidade — Bahia e nacional
+  { q: '"segurança pública" OR "policial" OR "homicídio" OR "tráfico de drogas" Bahia direito', limit: 10 },
+  // Operações policiais com repercussão jurídica
+  { q: '"operação policial" OR "flagrante" OR "prisão preventiva" OR "mandado de busca" Bahia OR "STJ" OR "STF"', limit: 10 },
 ];
 
 // Mapa de domínios conhecidos → slug
@@ -12,6 +28,7 @@ const DOMAIN_TO_SLUG: Record<string, string> = {
   "jota.info": "jota",
   "stj.jus.br": "stj-noticias",
   "stf.jus.br": "stf-noticias",
+  "tjba.jus.br": "tjba",
   "canalcienciascriminais.com.br": "canal-ciencias-criminais",
   "emporiododireito.com.br": "emporio-do-direito",
   "trf1.jus.br": "trf1",
@@ -20,6 +37,8 @@ const DOMAIN_TO_SLUG: Record<string, string> = {
   "ibccrim.org.br": "ibccrim",
   "cnj.jus.br": "cnj",
   "senado.leg.br": "senado-federal",
+  "pm.ba.gov.br": "pm-bahia",
+  "ssp.ba.gov.br": "ssp-bahia",
 };
 
 export type GoogleNewsItem = {
@@ -66,7 +85,7 @@ export async function scrapeGoogleNews(): Promise<GoogleNewsItem[]> {
   const allItems: GoogleNewsItem[] = [];
   const seenUrls = new Set<string>();
 
-  for (const query of GOOGLE_NEWS_QUERIES) {
+  for (const { q: query, limit } of GOOGLE_NEWS_QUERIES) {
     try {
       const encodedQuery = encodeURIComponent(query);
       const rssUrl = `https://news.google.com/rss/search?q=${encodedQuery}&hl=pt-BR&gl=BR&ceid=BR:pt`;
@@ -81,7 +100,7 @@ export async function scrapeGoogleNews(): Promise<GoogleNewsItem[]> {
       const xml = await res.text();
       const itemMatches = xml.match(/<item[\s\S]*?<\/item>/gi) || [];
 
-      for (const itemXml of itemMatches.slice(0, 10)) {
+      for (const itemXml of itemMatches.slice(0, limit)) {
         const titulo =
           itemXml.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/)?.[1] ||
           itemXml.match(/<title>(.*?)<\/title>/)?.[1] ||
