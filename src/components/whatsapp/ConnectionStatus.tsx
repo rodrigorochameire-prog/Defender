@@ -225,7 +225,7 @@ export function ConnectionStatus({ configId }: ConnectionStatusProps) {
               </div>
             ) : qrCodeData?.base64 ? (
               <div className="flex flex-col items-center gap-4">
-                <div className="p-4 bg-white rounded-lg">
+                <div className="p-4 bg-white rounded-lg shadow-sm">
                   <img
                     src={
                       qrCodeData.base64.startsWith("data:")
@@ -236,8 +236,22 @@ export function ConnectionStatus({ configId }: ConnectionStatusProps) {
                     className="w-64 h-64"
                   />
                 </div>
+
+                {/* Pairing Code como alternativa */}
+                {qrCodeData.pairingCode && (
+                  <div className="w-full text-center">
+                    <p className="text-xs text-muted-foreground mb-1">Ou use o codigo de vinculacao:</p>
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 font-mono text-xl font-bold tracking-[0.3em] text-zinc-900 dark:text-zinc-100">
+                      {qrCodeData.pairingCode}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      WhatsApp → Dispositivos Conectados → Vincular com numero
+                    </p>
+                  </div>
+                )}
+
                 <p className="text-center text-sm text-muted-foreground">
-                  Abra o WhatsApp no seu celular e escaneie este código
+                  Abra o WhatsApp no seu celular e escaneie este codigo
                 </p>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Timer className="h-3 w-3 animate-pulse" />
