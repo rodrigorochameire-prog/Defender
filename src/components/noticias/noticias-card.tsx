@@ -37,6 +37,12 @@ const LABEL_FONTE: Record<string, string> = {
   "stf-noticias": "STF",
   "stf-notícias": "STF",
   "jota": "JOTA",
+  "migalhas": "Migalhas",
+  "trf1": "TRF-1",
+  "trf-1": "TRF-1",
+  "trf5": "TRF-5",
+  "trf-5": "TRF-5",
+  "dpeba": "DPEBA",
 };
 
 interface NoticiaCardProps {

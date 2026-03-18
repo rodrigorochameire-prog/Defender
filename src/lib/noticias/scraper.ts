@@ -8,6 +8,7 @@ import {
   isIrrelevante,
   isRelevante,
 } from "@/config/noticias";
+import { scrapeGoogleNews } from "./google-news-scraper";
 
 type ScrapedItem = {
   titulo: string;
@@ -296,6 +297,54 @@ export async function scrapeAllFontes(): Promise<ScrapeResult[]> {
     }
 
     results.push(result);
+  }
+
+  // Google News como meta-fonte
+  try {
+    const googleItems = await scrapeGoogleNews();
+    const googleResult: ScrapeResult = { fonte: "Google News", total: googleItems.length, novos: 0, filtrados: 0, erros: 0 };
+
+    for (const item of googleItems) {
+      try {
+        // Checar duplicata por URL
+        const existing = await db.select({ id: noticiasJuridicas.id })
+          .from(noticiasJuridicas)
+          .where(eq(noticiasJuridicas.urlOriginal, item.url))
+          .limit(1);
+
+        if (existing.length > 0) continue;
+
+        // Filtrar por relevância (mesmo pipeline)
+        if (isIrrelevante(item.titulo, "")) { googleResult.filtrados++; continue; }
+        if (!isRelevante(item.titulo, "")) { googleResult.filtrados++; continue; }
+
+        // Classificar
+        const categoria = classificarNoticia(item.titulo, "");
+        const tags = extrairTags(item.titulo, "");
+
+        await db.insert(noticiasJuridicas).values({
+          titulo: item.titulo,
+          conteudo: null,
+          resumo: null,
+          fonte: item.fonte,
+          fonteId: null,
+          urlOriginal: item.url,
+          categoria,
+          tags,
+          status: "pendente",
+          publicadoEm: item.publicadoEm,
+        });
+
+        googleResult.novos++;
+      } catch {
+        googleResult.erros++;
+      }
+    }
+
+    results.push(googleResult);
+  } catch (err) {
+    console.error("[scraper] Erro no Google News:", err);
+    // Não bloqueia o retorno dos outros resultados
   }
 
   return results;

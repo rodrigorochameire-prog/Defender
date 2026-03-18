@@ -11,6 +11,7 @@ export type AnaliseIA = {
   impactoPratico: string;
   ratioDecidendi?: string;
   casosAplicaveis: string[];
+  categoriaIA?: "legislativa" | "jurisprudencial" | "artigo";
   processadoEm: string;
   modeloUsado: string;
 };
@@ -46,10 +47,16 @@ function buildPrompt(noticia: {
   "resumoExecutivo": "3-4 frases diretas sobre o que aconteceu, sem juridiquês desnecessário",
   "impactoPratico": "O que isso muda na prática para defensores públicos criminais? Seja concreto.",
   ${ratioInstrucao},
-  "casosAplicaveis": ["situação concreta 1", "situação concreta 2", "situação concreta 3"]
+  "casosAplicaveis": ["situação concreta 1", "situação concreta 2", "situação concreta 3"],
+  "categoriaIA": "legislativa"
 }
 
-Categoria: ${noticia.categoria}
+REGRAS PARA categoriaIA:
+- "jurisprudencial": decisões de STF, STJ, TRF, TJBA, ou qualquer tribunal
+- "legislativa": leis aprovadas, projetos de lei, decretos, medidas provisórias
+- "artigo": doutrina, comentários, análises, artigos acadêmicos
+Categoria atual (pode estar incorreta): ${noticia.categoria}
+
 Título: ${noticia.titulo}
 Conteúdo: ${texto}`;
 }
@@ -81,11 +88,17 @@ export async function enriquecerNoticia(noticiaId: number): Promise<AnaliseIA> {
   const jsonText = content.text.replace(/```json\n?|```\n?/g, "").trim();
   const parsed = JSON.parse(jsonText);
 
+  const CATEGORIAS_VALIDAS = ["legislativa", "jurisprudencial", "artigo"] as const;
+  const categoriaIA = CATEGORIAS_VALIDAS.includes(parsed.categoriaIA)
+    ? (parsed.categoriaIA as "legislativa" | "jurisprudencial" | "artigo")
+    : undefined;
+
   const analise: AnaliseIA = {
     resumoExecutivo: parsed.resumoExecutivo ?? "",
     impactoPratico: parsed.impactoPratico ?? "",
     ratioDecidendi: parsed.ratioDecidendi ?? undefined,
     casosAplicaveis: parsed.casosAplicaveis ?? [],
+    categoriaIA,
     processadoEm: new Date().toISOString(),
     modeloUsado: "claude-sonnet-4-6",
   };
@@ -94,6 +107,14 @@ export async function enriquecerNoticia(noticiaId: number): Promise<AnaliseIA> {
     .update(noticiasJuridicas)
     .set({ analiseIa: analise, updatedAt: new Date() })
     .where(eq(noticiasJuridicas.id, noticiaId));
+
+  // Corrigir categoria se IA discorda
+  if (categoriaIA && categoriaIA !== noticia.categoria) {
+    await db
+      .update(noticiasJuridicas)
+      .set({ categoria: categoriaIA, updatedAt: new Date() })
+      .where(eq(noticiasJuridicas.id, noticiaId));
+  }
 
   return analise;
 }

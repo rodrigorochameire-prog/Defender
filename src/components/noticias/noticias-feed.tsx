@@ -27,6 +27,12 @@ const COR_FONTE: Record<string, string> = {
   "stf-noticias": "#dc2626",
   "stf-notícias": "#dc2626",
   "jota": "#0f172a",
+  "migalhas": "#e07b00",
+  "trf1": "#1e40af",
+  "trf-1": "#1e40af",
+  "trf5": "#1e3a8a",
+  "trf-5": "#1e3a8a",
+  "dpeba": "#065f46",
 };
 
 const NOME_FONTE: Record<string, string> = {
@@ -39,11 +45,22 @@ const NOME_FONTE: Record<string, string> = {
   "justificando": "Justificando",
   "cnj": "CNJ",
   "senado-federal": "Senado",
+  "migalhas": "Migalhas",
+  "canal-ciencias-criminais": "Canal CC",
+  "canal-ciências-criminais": "Canal CC",
+  "emporio-do-direito": "Empório",
+  "empório-do-direito": "Empório",
+  "trf1": "TRF-1",
+  "trf-1": "TRF-1",
+  "trf5": "TRF-5",
+  "trf-5": "TRF-5",
+  "dpeba": "DPEBA",
 };
 
 const FONTES_DISPONIVEIS = [
   "conjur", "stj-noticias", "ibccrim", "dizer-o-direito",
   "stf-noticias", "jota", "justificando", "cnj", "senado-federal",
+  "migalhas", "canal-ciencias-criminais", "emporio-do-direito", "trf1", "trf5", "dpeba",
 ];
 
 function getCorFonte(fonte: string): string {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { X, Check, CheckCircle2, XCircle, ChevronDown, Zap, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,9 +24,16 @@ const FONTE_CORES: Record<string, string> = {
   "dizer-o-direito": "#059669",
   "tudo-de-penal": "#b45309",
   "canal-ciencias-criminais": "#7c2d12",
+  "canal-ciências-criminais": "#7c2d12",
   "stf-noticias": "#dc2626",
   "stf-notícias": "#dc2626",
   "jota": "#0f172a",
+  "migalhas": "#e07b00",
+  "emporio-do-direito": "#4338ca",
+  "empório-do-direito": "#4338ca",
+  "trf1": "#1e40af",
+  "trf5": "#1e3a8a",
+  "dpeba": "#065f46",
 };
 
 const LABEL_FONTE: Record<string, string> = {
@@ -36,6 +43,14 @@ const LABEL_FONTE: Record<string, string> = {
   "dizer-o-direito": "Dizer o Direito",
   "stf-noticias": "STF",
   "jota": "JOTA",
+  "migalhas": "Migalhas",
+  "canal-ciencias-criminais": "Canal CC",
+  "canal-ciências-criminais": "Canal CC",
+  "emporio-do-direito": "Empório",
+  "empório-do-direito": "Empório",
+  "trf1": "TRF-1",
+  "trf5": "TRF-5",
+  "dpeba": "DPEBA",
 };
 
 type Props = {
@@ -45,11 +60,14 @@ type Props = {
 };
 
 export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [focusedIndex, setFocusedIndex] = useState<number>(0);
   const [removingIds, setRemovingIds] = useState<Set<number>>(new Set());
+  const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   const { data: pendentes, isLoading } = trpc.noticias.listPendentes.useQuery();
   const utils = trpc.useUtils();
+
+  const filteredItems = (pendentes ?? []).filter(item => !removingIds.has(item.id));
 
   const aprovar = trpc.noticias.aprovar.useMutation({
     onSuccess: () => {
@@ -71,34 +89,54 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
     setRemovingIds(prev => new Set(prev).add(id));
     setTimeout(() => {
       aprovar.mutate({ ids: [id] });
-      setExpandedId(prev => prev === id ? null : prev);
+      setFocusedIndex(prev => Math.min(prev, filteredItems.length - 2));
     }, 200);
-  }, [aprovar]);
+  }, [aprovar, filteredItems.length]);
 
   const handleDescartar = useCallback((id: number) => {
     setRemovingIds(prev => new Set(prev).add(id));
     setTimeout(() => {
       descartar.mutate({ ids: [id] });
-      setExpandedId(prev => prev === id ? null : prev);
+      setFocusedIndex(prev => Math.min(prev, filteredItems.length - 2));
     }, 200);
-  }, [descartar]);
+  }, [descartar, filteredItems.length]);
 
   const handleAprovarTodos = useCallback(() => {
     if (!pendentes) return;
     aprovar.mutate({ ids: pendentes.map(p => p.id) });
   }, [pendentes, aprovar]);
 
-  // Atalhos de teclado
+  // Navegação por teclado
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
-      if (!expandedId) return;
-      if (e.key === "a" || e.key === "A") handleAprovar(expandedId);
-      if (e.key === "d" || e.key === "D") handleDescartar(expandedId);
+      const items = filteredItems;
+      if (items.length === 0) return;
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocusedIndex(i => Math.max(0, i - 1));
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocusedIndex(i => Math.min(items.length - 1, i + 1));
+      } else if (e.key === "a" || e.key === "A") {
+        if (items[focusedIndex]) handleAprovar(items[focusedIndex].id);
+      } else if (e.key === "d" || e.key === "D") {
+        if (items[focusedIndex]) handleDescartar(items[focusedIndex].id);
+      }
     };
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
-  }, [expandedId, handleAprovar, handleDescartar]);
+  }, [focusedIndex, filteredItems, handleAprovar, handleDescartar]);
+
+  // Scroll automático ao mudar foco
+  useEffect(() => {
+    const item = filteredItems[focusedIndex];
+    if (item) {
+      const el = itemRefs.current.get(item.id);
+      el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }, [focusedIndex, filteredItems]);
 
   if (isLoading) {
     return (
@@ -133,11 +171,9 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
           <Badge variant="outline" className="text-zinc-600 dark:text-zinc-400 font-medium">
             {pendentes.length} {pendentes.length === 1 ? "pendente" : "pendentes"}
           </Badge>
-          {expandedId && (
-            <span className="text-xs text-zinc-400">
-              A aprovar · D descartar
-            </span>
-          )}
+          <span className="text-xs text-zinc-400">
+            ↑↓ navegar · A aprovar · D descartar
+          </span>
         </div>
 
         <Button
@@ -155,21 +191,25 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
       {/* Lista */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-6 py-4 space-y-2">
-          {pendentes.map((item) => {
+          {filteredItems.map((item, index) => {
             const corFonte = FONTE_CORES[item.fonte.toLowerCase()] ?? "#71717a";
             const nomeFonte = LABEL_FONTE[item.fonte.toLowerCase()] ?? item.fonte.replace(/-/g, " ");
             const analise = item.analiseIa as AnaliseIA | null;
-            const isExpanded = expandedId === item.id;
+            const isFocused = index === focusedIndex;
             const isRemoving = removingIds.has(item.id);
 
             return (
               <div
                 key={item.id}
+                ref={el => {
+                  if (el) itemRefs.current.set(item.id, el);
+                  else itemRefs.current.delete(item.id);
+                }}
                 className={cn(
                   "border rounded-xl overflow-hidden transition-all duration-200",
                   isRemoving ? "opacity-0 scale-95" : "opacity-100 scale-100",
-                  isExpanded
-                    ? "border-zinc-300 dark:border-zinc-600 shadow-sm"
+                  isFocused
+                    ? "border-zinc-400 dark:border-zinc-500 shadow-sm bg-zinc-50 dark:bg-zinc-800/40"
                     : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
                 )}
               >
@@ -180,35 +220,43 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
                   <div className="flex-1 min-w-0">
                     {/* Linha colapsada */}
                     <button
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-                      onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                      className="w-full flex flex-col gap-0.5 px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                      onClick={() => setFocusedIndex(index)}
                     >
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span
-                          className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
-                          style={{ color: corFonte, backgroundColor: `${corFonte}18` }}
-                        >
-                          {nomeFonte}
-                        </span>
-                        {item.publicadoEm && (
-                          <span className="text-[11px] text-zinc-400">
-                            {formatDistanceToNow(new Date(item.publicadoEm), { addSuffix: true, locale: ptBR })}
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span
+                            className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                            style={{ color: corFonte, backgroundColor: `${corFonte}18` }}
+                          >
+                            {nomeFonte}
                           </span>
-                        )}
+                          {item.publicadoEm && (
+                            <span className="text-[11px] text-zinc-400">
+                              {formatDistanceToNow(new Date(item.publicadoEm), { addSuffix: true, locale: ptBR })}
+                            </span>
+                          )}
+                        </div>
+
+                        <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate flex-1 min-w-0">
+                          {item.titulo}
+                        </span>
+
+                        <ChevronDown className={cn(
+                          "h-4 w-4 text-zinc-400 shrink-0 transition-transform duration-200",
+                          isFocused && "rotate-180"
+                        )} />
                       </div>
 
-                      <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate flex-1 min-w-0">
-                        {item.titulo}
-                      </span>
-
-                      <ChevronDown className={cn(
-                        "h-4 w-4 text-zinc-400 shrink-0 transition-transform duration-200",
-                        isExpanded && "rotate-180"
-                      )} />
+                      {((analise?.resumoExecutivo) || item.resumo) && (
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 mt-0.5 text-left w-full">
+                          {analise?.resumoExecutivo ?? item.resumo}
+                        </p>
+                      )}
                     </button>
 
                     {/* Expansão com síntese IA + ações */}
-                    {isExpanded && (
+                    {isFocused && (
                       <div className="px-4 pb-4 space-y-3 border-t border-zinc-100 dark:border-zinc-800 pt-3">
                         {/* Síntese IA */}
                         {analise?.resumoExecutivo && (
