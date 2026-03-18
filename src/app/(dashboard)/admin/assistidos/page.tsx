@@ -72,7 +72,8 @@ import { PhotoUploadDialog } from "./_components/photo-upload-dialog";
 import { AssistidoQuickPreview } from "./_components/assistido-quick-preview";
 import { AssistidoCard } from "./_components/assistido-card";
 import { AssistidoTableView } from "./_components/assistido-table-view";
-import { FilterSectionAssistidos } from "./_components/filter-section-assistidos";
+import { ProcessingQueuePanel } from "@/components/drive/ProcessingQueuePanel";
+import { useProcessingQueue } from "@/contexts/processing-queue";
 
 // ========================================
 // HELPERS
@@ -481,6 +482,7 @@ export default function AssistidosPage() {
     (searchParams.get("sort") as any) || "nome"
   );
   const [groupBy, setGroupBy] = useState<"none" | "comarca" | "area" | "status">("none");
+  const { activeCount } = useProcessingQueue();
   const [showNaoIdentificados, setShowNaoIdentificados] = useState(false);
   const [showArquivados, setShowArquivados] = useState(false);
   const [smartPreset, setSmartPreset] = useState<string | null>(searchParams.get("preset") || null);
@@ -986,28 +988,18 @@ export default function AssistidosPage() {
   return (
     <TooltipProvider>
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-      {/* Header Premium */}
-      <div className="relative px-4 sm:px-5 md:px-8 py-5 sm:py-6 md:py-8 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/30 via-transparent to-transparent dark:from-emerald-950/15 dark:via-transparent pointer-events-none" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg ring-4 ring-zinc-900/5 dark:ring-white/10 shrink-0">
-              <Users className="w-5 h-5 sm:w-5.5 sm:h-5.5 text-white dark:text-zinc-900" />
-            </div>
-            <div>
-              <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">Assistidos</h1>
-              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
-                Cadastro e gestao de assistidos
-                <span className="hidden sm:inline text-zinc-300 dark:text-zinc-600 ml-2">|</span>
-                <span className="hidden sm:inline text-zinc-400 dark:text-zinc-500 ml-2 text-[10px]">
-                  / buscar  n novo  g grid  t tabela
-                </span>
-              </p>
-            </div>
+      {/* Header Compacto */}
+      <div className="flex items-center justify-between px-5 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shrink-0">
+            <Users className="w-3.5 h-3.5 text-white dark:text-zinc-900" />
           </div>
+          <h1 className="font-serif text-base font-semibold text-zinc-900 dark:text-zinc-50">Assistidos</h1>
+          <span className="hidden md:inline text-[10px] text-zinc-400 font-mono ml-1">/ buscar · n novo · g grid · t tabela</span>
+        </div>
 
-          {/* Busca + Acoes */}
-          <div className="flex items-center gap-2">
+        {/* Busca + Acoes */}
+        <div className="flex items-center gap-2">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
               <Input
@@ -1100,7 +1092,6 @@ export default function AssistidosPage() {
                 Novo Assistido
               </Button>
             </Link>
-          </div>
         </div>
       </div>
 
@@ -1248,208 +1239,200 @@ export default function AssistidosPage() {
         </div>
       )}
 
-      {/* KPI Stats + Completude */}
+      {/* Unified Toolbar */}
       {!showNaoIdentificados && (
-      <>
-        <div ref={statsRef} className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
-          {[
-            { icon: Users, value: stats.total - naoIdentificadosCount, label: "assistidos", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); }, active: statusFilter === "all" && !showPinnedOnly },
-            { icon: Lock, value: stats.presos, label: "presos", onClick: () => { setStatusFilter(statusFilter === "CADEIA_PUBLICA" ? "all" : "CADEIA_PUBLICA"); setShowPinnedOnly(false); }, active: statusFilter === "CADEIA_PUBLICA", alert: stats.presos > 0 },
-            { icon: Timer, value: stats.monitorados, label: "monitorados", onClick: () => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }, active: statusFilter === "MONITORADO" },
-            { icon: Calendar, value: stats.audienciasHoje, label: "aud. hoje", sublabel: `${stats.audienciasSemana} semana`, alert: stats.audienciasHoje > 0 },
-            { icon: FileText, value: stats.comDemandas, label: "demandas" },
-            { icon: BookmarkCheck, value: stats.pinned, label: "fixados", onClick: () => { setShowPinnedOnly(!showPinnedOnly); setStatusFilter("all"); }, active: showPinnedOnly },
-          ].map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <Fragment key={index}>
-                {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
-                <button
-                  onClick={stat.onClick}
-                  className={cn(
-                    "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors",
-                    stat.onClick && "cursor-pointer",
-                    stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-zinc-50 dark:hover:bg-zinc-800",
-                    stat.alert && !stat.active ? "bg-rose-50 dark:bg-rose-950/20" : ""
-                  )}
-                >
-                  <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-rose-500 dark:text-rose-400" : stat.active ? "text-emerald-500 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500")} />
-                  <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-600 dark:text-rose-400" : "text-zinc-800 dark:text-zinc-100")}>{stat.value}</span>
-                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.label}</span>
-                </button>
-              </Fragment>
-            );
-          })}
-          <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />
-          <span className="text-zinc-400 dark:text-zinc-500 whitespace-nowrap text-[10px]">
-            Completude: <span className="font-bold tabular-nums text-zinc-600 dark:text-zinc-300">{stats.completudeMedia}%</span>
-          </span>
-          <div className="flex-1" />
-          <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px] tabular-nums whitespace-nowrap">{stats.total - naoIdentificadosCount} total</span>
-        </div>
-
-        {/* Alertas de Urgencia */}
-        {(stats.prazosVencidos > 0 || stats.audienciasHoje > 0) && (
-          <div className="flex items-center gap-3 flex-wrap">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl shadow-sm overflow-hidden">
+          {/* Row 1: Stats + urgency badges + sort + toggle */}
+          <div ref={statsRef} className="flex items-center gap-1 px-3 py-1.5 border-b border-zinc-100 dark:border-zinc-800 overflow-x-auto scrollbar-none">
+            {[
+              { icon: Users, value: stats.total - naoIdentificadosCount, label: "assistidos", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); }, active: statusFilter === "all" && !showPinnedOnly },
+              { icon: Lock, value: stats.presos, label: "presos", onClick: () => { setStatusFilter(statusFilter === "CADEIA_PUBLICA" ? "all" : "CADEIA_PUBLICA"); setShowPinnedOnly(false); }, active: statusFilter === "CADEIA_PUBLICA", alert: stats.presos > 0 },
+              { icon: Timer, value: stats.monitorados, label: "monit.", onClick: () => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }, active: statusFilter === "MONITORADO" },
+              { icon: Calendar, value: stats.audienciasHoje, label: "aud. hoje", alert: stats.audienciasHoje > 0 },
+              { icon: FileText, value: stats.comDemandas, label: "demandas" },
+              { icon: BookmarkCheck, value: stats.pinned, label: "fixados", onClick: () => { setShowPinnedOnly(!showPinnedOnly); setStatusFilter("all"); }, active: showPinnedOnly },
+            ].map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <Fragment key={index}>
+                  {index > 0 && <div className="w-px h-3.5 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
+                  <button
+                    onClick={stat.onClick}
+                    className={cn(
+                      "flex items-center gap-1 whitespace-nowrap px-2 py-1 rounded-lg transition-colors text-xs",
+                      stat.onClick && "cursor-pointer",
+                      stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-zinc-50 dark:hover:bg-zinc-800",
+                      stat.alert && !stat.active ? "bg-rose-50 dark:bg-rose-950/20" : ""
+                    )}
+                  >
+                    <Icon className={cn("w-3 h-3 flex-shrink-0", stat.alert ? "text-rose-500" : stat.active ? "text-emerald-500" : "text-zinc-400")} />
+                    <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-600 dark:text-rose-400" : "text-zinc-800 dark:text-zinc-100")}>{stat.value}</span>
+                    <span className="text-zinc-500 dark:text-zinc-400">{stat.label}</span>
+                    {stat.alert && <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse flex-shrink-0" />}
+                  </button>
+                </Fragment>
+              );
+            })}
+            {/* Inline urgency badges */}
             {stats.prazosVencidos > 0 && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/30">
-                <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                <AlertCircle className="w-4 h-4 text-rose-500" />
-                <span className="text-xs font-medium text-rose-700 dark:text-rose-400">
-                  {stats.prazosVencidos} prazo{stats.prazosVencidos > 1 ? 's' : ''} vencido{stats.prazosVencidos > 1 ? 's' : ''}
+              <>
+                <div className="w-px h-3.5 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 text-[10px] font-medium whitespace-nowrap border border-rose-200/60 dark:border-rose-800/30 flex-shrink-0">
+                  <AlertCircle className="w-3 h-3" />
+                  {stats.prazosVencidos} vencido{stats.prazosVencidos > 1 ? 's' : ''}
                 </span>
-              </div>
-            )}
-            {stats.audienciasHoje > 0 && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30">
-                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                <Calendar className="w-4 h-4 text-amber-500" />
-                <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                  {stats.audienciasHoje} audiencia{stats.audienciasHoje > 1 ? 's' : ''} hoje
-                </span>
-              </div>
+              </>
             )}
             {stats.prazosUrgentes > 0 && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30">
-                <Clock className="w-4 h-4 text-amber-500" />
-                <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                  {stats.prazosUrgentes} prazo{stats.prazosUrgentes > 1 ? 's' : ''} urgente{stats.prazosUrgentes > 1 ? 's' : ''}
+              <>
+                <div className="w-px h-3.5 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 text-[10px] font-medium whitespace-nowrap border border-amber-200/60 dark:border-amber-800/30 flex-shrink-0">
+                  <Clock className="w-3 h-3" />
+                  {stats.prazosUrgentes} urgente{stats.prazosUrgentes > 1 ? 's' : ''}
                 </span>
+              </>
+            )}
+            <div className="flex-1 min-w-2" />
+            {/* Sort */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <span className="text-[10px] text-zinc-400 hidden sm:inline">Ordenar:</span>
+              <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
+                {(["nome", "prioridade", "prazo"] as const).map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => setSortBy(opt)}
+                    className={cn(
+                      "px-2 py-1 text-[10px] font-medium rounded-md transition-all",
+                      sortBy === opt
+                        ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
+                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    )}
+                  >
+                    {opt === "nome" ? "Nome" : opt === "prioridade" ? "Prio." : "Prazo"}
+                  </button>
+                ))}
               </div>
+            </div>
+            {/* Processing queue + view toggle */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <ProcessingQueuePanel>
+                <button
+                  className={cn(
+                    "h-7 w-7 inline-flex items-center justify-center gap-1 rounded-md transition-colors",
+                    activeCount > 0
+                      ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400"
+                      : "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  )}
+                  title="Fila de processamento"
+                >
+                  <Activity className={cn("h-3.5 w-3.5", activeCount > 0 && "animate-pulse")} />
+                  {activeCount > 0 && <span className="text-[10px] font-medium">{activeCount}</span>}
+                </button>
+              </ProcessingQueuePanel>
+              <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={cn("flex items-center justify-center w-7 h-7 rounded-md transition-all", viewMode === "grid" ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300")}
+                  title="Grade"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={cn("flex items-center justify-center w-7 h-7 rounded-md transition-all", viewMode === "list" ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300")}
+                  title="Lista"
+                >
+                  <List className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+          {/* Row 2: Atribuição chips + filtros rápidos */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 overflow-x-auto scrollbar-none">
+            <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium shrink-0">Atrib.</span>
+            {ATRIBUICAO_OPTIONS.filter(o => o.value !== "all").map((option) => {
+              const isActive = atribuicaoFilter === option.value;
+              const color = SOLID_COLOR_MAP[option.value] || '#71717a';
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => setAtribuicaoFilter(isActive ? "all" : option.value)}
+                  className={cn(
+                    "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-all border shrink-0",
+                    isActive
+                      ? "text-white border-transparent shadow-sm"
+                      : "bg-transparent text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                  )}
+                  style={isActive ? { backgroundColor: color, borderColor: color } : undefined}
+                >
+                  {ATRIBUICAO_ICONS[option.value] || null}
+                  {option.shortLabel}
+                </button>
+              );
+            })}
+            {atribuicaoFilter !== "all" && (
+              <button onClick={() => setAtribuicaoFilter("all")} className="text-[10px] text-zinc-400 hover:text-zinc-600 transition-colors shrink-0">
+                <XCircle className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <div className="w-px h-3.5 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0 mx-0.5" />
+            {[
+              { id: "meus_presos", label: "Presos", icon: Lock, count: stats.presos },
+              { id: "audiencias_semana", label: "Aud. semana", icon: Calendar, count: stats.audienciasSemana },
+              { id: "prazos_vencidos", label: "Prazos venc.", icon: AlertCircle, count: stats.prazosVencidos },
+              { id: "sem_drive", label: "Sem Drive", icon: Link2Off, count: stats.semDrive },
+              { id: "novos_30d", label: "Novos 30d", icon: Plus, count: stats.novos30d },
+            ].map((preset) => {
+              const active = smartPreset === preset.id;
+              const PresetIcon = preset.icon;
+              return (
+                <button
+                  key={preset.id}
+                  onClick={() => {
+                    if (active) {
+                      setSmartPreset(null);
+                      setStatusFilter("all");
+                      setSortBy("nome");
+                    } else {
+                      setSmartPreset(preset.id);
+                      if (preset.id === "meus_presos") { setStatusFilter("CADEIA_PUBLICA"); setSortBy("prioridade"); }
+                      else if (preset.id === "audiencias_semana") { setStatusFilter("all"); setSortBy("prazo"); }
+                      else if (preset.id === "prazos_vencidos") { setStatusFilter("all"); setSortBy("prazo"); }
+                      else { setStatusFilter("all"); setSortBy("nome"); }
+                    }
+                  }}
+                  className={cn(
+                    "inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-medium transition-all shrink-0",
+                    active
+                      ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-transparent"
+                  )}
+                >
+                  <PresetIcon className="w-3 h-3" />
+                  {preset.label}
+                  {preset.count > 0 && (
+                    <span className={cn(
+                      "text-[10px] font-semibold tabular-nums px-1 rounded-full",
+                      active ? "bg-emerald-200/60 dark:bg-emerald-800/40 text-emerald-700" : "bg-zinc-200 dark:bg-zinc-700 text-zinc-500"
+                    )}>
+                      {preset.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+            {smartPreset && (
+              <button
+                onClick={() => { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }}
+                className="text-[10px] text-zinc-400 hover:text-zinc-600 transition-colors shrink-0"
+              >
+                <XCircle className="w-3.5 h-3.5" />
+              </button>
             )}
           </div>
-        )}
-      </>
+        </div>
       )}
 
-      {/* Card de Filtros */}
-      <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl p-5 shadow-apple dark:shadow-apple-dark">
-        {/* Atribuicao Quick Chips (Feature #1) */}
-        <div className="flex items-center gap-2 flex-wrap mb-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
-          <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium mr-1">Atribuicao</span>
-          {ATRIBUICAO_OPTIONS.filter(o => o.value !== "all").map((option) => {
-            const isActive = atribuicaoFilter === option.value;
-            const color = SOLID_COLOR_MAP[option.value] || '#71717a';
-            return (
-              <button
-                key={option.value}
-                onClick={() => setAtribuicaoFilter(isActive ? "all" : option.value)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium transition-all border",
-                  isActive
-                    ? "text-white border-transparent shadow-sm"
-                    : "bg-transparent text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
-                )}
-                style={isActive ? { backgroundColor: color, borderColor: color } : undefined}
-              >
-                {ATRIBUICAO_ICONS[option.value] || null}
-                {option.shortLabel}
-              </button>
-            );
-          })}
-          {atribuicaoFilter !== "all" && (
-            <button
-              onClick={() => setAtribuicaoFilter("all")}
-              className="text-[10px] text-zinc-400 hover:text-zinc-600 transition-colors ml-1"
-            >
-              <XCircle className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-
-        {/* Smart Filter Presets */}
-        <div className="flex items-center gap-2 flex-wrap mb-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
-          <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium mr-1">Filtros rapidos</span>
-          {[
-            { id: "meus_presos", label: "Meus presos", icon: Lock, count: stats.presos },
-            { id: "audiencias_semana", label: "Audiencias esta semana", icon: Calendar, count: stats.audienciasSemana },
-            { id: "prazos_vencidos", label: "Prazos vencidos", icon: AlertCircle, count: stats.prazosVencidos },
-            { id: "sem_drive", label: "Sem Drive", icon: Link2Off, count: stats.semDrive },
-            { id: "novos_30d", label: "Novos (30d)", icon: Plus, count: stats.novos30d },
-          ].map((preset) => {
-            const active = smartPreset === preset.id;
-            const PresetIcon = preset.icon;
-            return (
-              <button
-                key={preset.id}
-                onClick={() => {
-                  if (active) {
-                    setSmartPreset(null);
-                    setStatusFilter("all");
-                    setSortBy("nome");
-                  } else {
-                    setSmartPreset(preset.id);
-                    if (preset.id === "meus_presos") {
-                      setStatusFilter("CADEIA_PUBLICA");
-                      setSortBy("prioridade");
-                    } else if (preset.id === "audiencias_semana") {
-                      setStatusFilter("all");
-                      setSortBy("prazo");
-                    } else if (preset.id === "prazos_vencidos") {
-                      setStatusFilter("all");
-                      setSortBy("prazo");
-                    } else if (preset.id === "sem_drive") {
-                      setStatusFilter("all");
-                      setSortBy("nome");
-                    } else if (preset.id === "novos_30d") {
-                      setStatusFilter("all");
-                      setSortBy("nome");
-                    }
-                  }
-                }}
-                className={cn(
-                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
-                  active
-                    ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40"
-                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-transparent"
-                )}
-              >
-                <PresetIcon className="w-3.5 h-3.5" />
-                {preset.label}
-                {preset.count > 0 && (
-                  <span className={cn(
-                    "text-[10px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full",
-                    active
-                      ? "bg-emerald-200/60 dark:bg-emerald-800/40 text-emerald-700 dark:text-emerald-300"
-                      : "bg-zinc-200 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400"
-                  )}>
-                    {preset.count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-          {smartPreset && (
-            <button
-              onClick={() => {
-                setSmartPreset(null);
-                setStatusFilter("all");
-                setSortBy("nome");
-              }}
-              className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
-            >
-              <XCircle className="w-3.5 h-3.5" />
-              Limpar
-            </button>
-          )}
-        </div>
-
-        <FilterSectionAssistidos
-          selectedAtribuicao={atribuicaoFilter}
-          setSelectedAtribuicao={setAtribuicaoFilter}
-          selectedStatus={statusFilter}
-          setSelectedStatus={setStatusFilter}
-          selectedComarca={comarcaFilter}
-          setSelectedComarca={setComarcaFilter}
-          comarcas={comarcasUnicas}
-          sortBy={sortBy}
-          setSortBy={(v) => setSortBy(v as "nome" | "prioridade" | "prazo" | "complexidade")}
-          groupBy={groupBy}
-          setGroupBy={(v) => setGroupBy(v as "none" | "comarca" | "area" | "status")}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-        />
-      </Card>
 
       {/* Recent Assistidos (Feature #6) */}
       {recentAssistidos.length > 0 && !showNaoIdentificados && (
