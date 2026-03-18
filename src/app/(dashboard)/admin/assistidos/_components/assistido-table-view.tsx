@@ -12,21 +12,19 @@ import {
 import {
   Eye,
   Plus,
-  Scale,
-  FileText,
   MessageCircle,
   AlertCircle,
   Calendar,
   Phone,
   Bookmark,
   BookmarkCheck,
-  Circle,
   Copy,
   CheckCircle2,
   ArrowUpDown,
   FolderOpen,
   HardDrive,
   Link2Off,
+  Zap,
 } from "lucide-react";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
@@ -69,7 +67,7 @@ export function AssistidoTableView({
   const sortableHeaders: { id: string; label: string; className?: string }[] = [
     { id: "nome", label: "Nome" },
     { id: "prioridade", label: "Status" },
-    { id: "", label: "Atribuicao" },
+    { id: "", label: "Situacao / Contato" },
     { id: "", label: "Crime" },
     { id: "", label: "Processo" },
     { id: "prazo", label: "Audiencia / Prazo" },
@@ -78,7 +76,7 @@ export function AssistidoTableView({
   ];
 
   return (
-    <div className="rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 overflow-auto" style={{ maxHeight: 'calc(100vh - 320px)' }}>
+    <div className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-auto shadow-sm" style={{ maxHeight: 'calc(100vh - 232px)' }}>
       <table className="w-full text-sm">
         <thead className="sticky top-0 z-10 bg-zinc-50/95 dark:bg-zinc-800/95 backdrop-blur-sm border-b border-zinc-200 dark:border-zinc-800">
           <tr>
@@ -105,7 +103,7 @@ export function AssistidoTableView({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+        <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700/60">
           {assistidos.map((assistido, index) => {
             const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
             const isMonitorado = ["MONITORADO", "DOMICILIAR"].includes(assistido.statusPrisional);
@@ -141,23 +139,22 @@ export function AssistidoTableView({
               <Fragment key={assistido.id}>
               <tr
                 className={cn(
-                  "transition-colors cursor-pointer animate-in fade-in duration-200 fill-mode-both",
-                  "hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10",
-                  index % 2 === 0 ? "bg-white dark:bg-zinc-900" : "bg-zinc-50/50 dark:bg-zinc-900/50",
+                  "group transition-all duration-150 cursor-pointer animate-in fade-in duration-200 fill-mode-both",
+                  "hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 hover:shadow-sm",
+                  index % 2 === 0 ? "bg-white dark:bg-zinc-900" : "bg-zinc-50 dark:bg-zinc-800/30",
                   isPinned && "ring-1 ring-inset ring-amber-400/40 dark:ring-amber-500/20",
-                  isPreso && "border-l-[3px] border-l-rose-500 bg-rose-50/30 dark:bg-rose-950/10",
-                  !isPreso && prazoVencido && "border-l-[3px] border-l-rose-400 bg-rose-50/20 dark:bg-rose-950/5",
-                  !isPreso && !prazoVencido && audienciaHoje && "border-l-[3px] border-l-amber-500 bg-amber-50/20 dark:bg-amber-950/10",
-                  !isPreso && !prazoVencido && !audienciaHoje && isMonitorado && "border-l-[3px] border-l-amber-400",
-                  expandedId === assistido.id && "bg-zinc-50/50 dark:bg-zinc-800/20",
+                  expandedId === assistido.id && "bg-zinc-100 dark:bg-zinc-800/50",
                 )}
-                style={{ animationDelay: `${Math.min(index * 20, 400)}ms` }}
+                style={{
+                  animationDelay: `${Math.min(index * 20, 400)}ms`,
+                  borderLeft: `3px solid ${primaryColor}`,
+                }}
                 onClick={() => setExpandedId(expandedId === assistido.id ? null : assistido.id)}
                 onDoubleClick={() => onPreview?.(assistido)}
               >
                 {/* Nome */}
-                <td className="py-2.5 px-4 first:pl-6">
-                  <div className="flex items-center gap-2.5 min-w-0">
+                <td className="py-4 px-4 first:pl-6">
+                  <div className="flex items-center gap-3 min-w-0">
                     <AssistidoAvatar
                       nome={assistido.nome}
                       photoUrl={assistido.photoUrl}
@@ -174,17 +171,21 @@ export function AssistidoTableView({
                       >
                         {assistido.nome}
                       </Link>
-                      {assistido.vulgo && (
-                        <span className="text-[10px] text-zinc-400 dark:text-zinc-500 italic truncate block max-w-[140px]">
+                      {assistido.vulgo ? (
+                        <span className="text-[10px] text-zinc-400 dark:text-zinc-500 italic truncate block max-w-[180px]">
                           &ldquo;{assistido.vulgo}&rdquo;
                         </span>
-                      )}
+                      ) : assistido.crimePrincipal ? (
+                        <span className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate block max-w-[180px]">
+                          {assistido.crimePrincipal}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                 </td>
 
                 {/* Status */}
-                <td className="py-2.5 px-4">
+                <td className="py-4 px-4">
                   <div className={cn(
                     "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap",
                     isPreso && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
@@ -206,24 +207,44 @@ export function AssistidoTableView({
                   )}
                 </td>
 
-                {/* Atribuicao */}
-                <td className="py-2.5 px-4">
-                  {primaryAttrOption ? (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
-                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: primaryColor }} />
-                      {primaryAttrOption.shortLabel}
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-zinc-300 dark:text-zinc-600">-</span>
-                  )}
+                {/* Situacao / Contato */}
+                <td className="py-4 px-4">
+                  <div className="space-y-0.5">
+                    {/* Situação: tempo preso ou último evento */}
+                    {isPreso && tempoPreso ? (
+                      <span className="flex items-center gap-1 text-[10px] font-mono tabular-nums text-rose-500 dark:text-rose-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block flex-shrink-0" />
+                        {tempoPreso}
+                      </span>
+                    ) : assistido.ultimoEvento?.data ? (
+                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 whitespace-nowrap">
+                        últ. {format(parseISO(assistido.ultimoEvento.data), "dd/MM/yy")}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-zinc-300 dark:text-zinc-600">
+                        {format(new Date(assistido.createdAt), "dd/MM/yy")}
+                      </span>
+                    )}
+                    {/* Contato clicável */}
+                    {telefone && (
+                      <a
+                        href={`tel:${telefone.replace(/\D/g, '')}`}
+                        className="flex items-center gap-1 text-[10px] text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors group/tel"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Phone className="w-2.5 h-2.5 flex-shrink-0 opacity-60 group-hover/tel:opacity-100" />
+                        {telefone}
+                      </a>
+                    )}
+                  </div>
                 </td>
 
                 {/* Crime */}
-                <td className="py-2.5 px-4">
+                <td className="py-4 px-4">
                   {assistido.crimePrincipal ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="text-xs text-zinc-600 dark:text-zinc-400 truncate block max-w-[160px] cursor-help">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-[10px] font-medium truncate max-w-[160px] cursor-help">
                           {assistido.crimePrincipal}
                         </span>
                       </TooltipTrigger>
@@ -232,16 +253,16 @@ export function AssistidoTableView({
                       </TooltipContent>
                     </Tooltip>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[10px] text-zinc-300 dark:text-zinc-600"><Circle className="w-2.5 h-2.5" /> Sem tipo</span>
+                    <span className="text-zinc-300 dark:text-zinc-600 text-sm">&mdash;</span>
                   )}
                 </td>
 
                 {/* Processo */}
-                <td className="py-2.5 px-4">
+                <td className="py-4 px-4">
                   {assistido.numeroProcesso ? (
                     <div
                       className="flex items-center gap-1 cursor-pointer group/copy"
-                      onClick={() => handleCopyProcesso(assistido.id, assistido.numeroProcesso!)}
+                      onClick={(e) => { e.stopPropagation(); handleCopyProcesso(assistido.id, assistido.numeroProcesso!); }}
                     >
                       <span className="font-mono tabular-nums text-[10px] text-zinc-500 dark:text-zinc-400 truncate max-w-[150px]">
                         {assistido.numeroProcesso}
@@ -253,43 +274,51 @@ export function AssistidoTableView({
                       )}
                     </div>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[10px] text-zinc-300 dark:text-zinc-600"><Circle className="w-2.5 h-2.5" /> &mdash;</span>
+                    <span className="text-zinc-300 dark:text-zinc-600 text-sm">&mdash;</span>
                   )}
                 </td>
 
                 {/* Audiencia / Prazo */}
-                <td className="py-2.5 px-4">
+                <td className="py-4 px-4">
                   {assistido.proximaAudiencia ? (
                     <div className={cn(
                       "inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-medium whitespace-nowrap",
-                      audienciaHoje && "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 animate-pulse",
-                      audienciaAmanha && "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
-                      !audienciaHoje && !audienciaAmanha && diasAteAudiencia !== null && diasAteAudiencia <= 7 && "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400",
-                      !audienciaHoje && !audienciaAmanha && diasAteAudiencia !== null && diasAteAudiencia > 7 && "text-zinc-400 dark:text-zinc-500",
+                      audienciaHoje && "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
+                      audienciaAmanha && "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
+                      !audienciaHoje && !audienciaAmanha && diasAteAudiencia !== null && diasAteAudiencia <= 5 && "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400",
+                      !audienciaHoje && !audienciaAmanha && diasAteAudiencia !== null && diasAteAudiencia > 5 && "text-zinc-400 dark:text-zinc-500",
                     )}>
-                      <Calendar className="w-3 h-3 flex-shrink-0" />
-                      {audienciaHoje ? "HOJE" : audienciaAmanha ? "Amanha" : `${diasAteAudiencia}d`}
-                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 ml-0.5">
+                      {(audienciaHoje || audienciaAmanha || (diasAteAudiencia !== null && diasAteAudiencia <= 5)) ? (
+                        <Zap className="w-3 h-3 flex-shrink-0 fill-current" />
+                      ) : (
+                        <Calendar className="w-3 h-3 flex-shrink-0" />
+                      )}
+                      {audienciaHoje ? "HOJE" : audienciaAmanha ? "Amanhã" : `${diasAteAudiencia}d`}
+                      <span className="ml-0.5 opacity-70">
                         {format(parseISO(assistido.proximaAudiencia), "dd/MM")}
                       </span>
                     </div>
                   ) : prazoInfo ? (
                     <div className={cn(
                       "inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-medium whitespace-nowrap",
-                      prazoVencido && "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 animate-pulse",
+                      prazoVencido && "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400",
                       !prazoVencido && prazoInfo.urgent && "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
                       !prazoVencido && !prazoInfo.urgent && "text-zinc-400 dark:text-zinc-500",
                     )}>
-                      {prazoVencido && <AlertCircle className="w-3 h-3 flex-shrink-0" />}
+                      {prazoVencido ? (
+                        <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                      ) : prazoInfo.urgent ? (
+                        <Zap className="w-3 h-3 flex-shrink-0 fill-current" />
+                      ) : null}
                       {prazoInfo.text}
                     </div>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[10px] text-zinc-300 dark:text-zinc-600"><Circle className="w-2.5 h-2.5" /> &mdash;</span>
+                    <span className="text-zinc-300 dark:text-zinc-600 text-sm">&mdash;</span>
                   )}
                 </td>
 
                 {/* Drive */}
-                <td className="py-2.5 px-4">
+                <td className="py-4 px-4">
                   {assistido.driveFolderId ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -319,13 +348,15 @@ export function AssistidoTableView({
                 </td>
 
                 {/* Acoes */}
-                <td className="py-2.5 px-4 last:pr-6">
+                <td className="py-4 px-4 last:pr-6">
                   <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+                    {/* Ações secundárias — visíveis só no hover */}
                     {whatsappUrl && (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1">
+                          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
                               <MessageCircle className="h-3.5 w-3.5" />
                             </Button>
                           </a>
@@ -335,8 +366,9 @@ export function AssistidoTableView({
                     )}
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Link href={`/admin/drive?assistido=${assistido.id}`}>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1">
+                        <Link href={`/admin/drive?assistido=${assistido.id}`}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
                             <FolderOpen className="h-3.5 w-3.5" />
                           </Button>
                         </Link>
@@ -345,32 +377,35 @@ export function AssistidoTableView({
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Link href={`/admin/demandas/nova?assistido=${assistido.id}`}>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1">
+                        <Link href={`/admin/demandas/nova?assistido=${assistido.id}`}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
                             <Plus className="h-3.5 w-3.5" />
                           </Button>
                         </Link>
                       </TooltipTrigger>
                       <TooltipContent side="top" className="text-[10px]">Nova Demanda</TooltipContent>
                     </Tooltip>
+                    {/* Bookmark — sempre visível */}
                     <Button
                       variant="ghost"
                       size="icon"
                       className={cn(
-                        "h-7 w-7 transition-all focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1",
+                        "h-7 w-7 transition-all",
                         isPinned
                           ? "text-amber-500 bg-amber-50 dark:bg-amber-950/30"
-                          : "text-zinc-300 dark:text-zinc-600 hover:text-amber-500",
+                          : "text-zinc-300 dark:text-zinc-600 opacity-0 group-hover:opacity-100 hover:text-amber-500",
                       )}
                       onClick={() => onTogglePin(assistido.id)}
                     >
                       {isPinned ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
                     </Button>
+                    {/* Ver — sempre visível */}
                     <Link href={`/admin/assistidos/${assistido.id}`}>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 px-2.5 text-xs text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-medium focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-1"
+                        className="h-7 px-2.5 text-xs text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-medium"
                       >
                         <Eye className="h-3.5 w-3.5 mr-1" />
                         Ver
