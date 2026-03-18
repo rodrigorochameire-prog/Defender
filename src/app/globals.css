@@ -459,6 +459,41 @@
     animation: bounce-soft 1s ease-in-out infinite;
   }
 
+  /* ===== WHATSAPP PREMIUM ANIMATIONS ===== */
+
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-slide-up {
+    animation: slide-up 0.2s ease-out forwards;
+  }
+
+  @keyframes bounce-subtle {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+  .animate-bounce-subtle {
+    animation: bounce-subtle 0.3s ease-in-out;
+  }
+
+  @keyframes message-in {
+    from { opacity: 0; transform: translateY(4px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .animate-message-in {
+    animation: message-in 0.15s ease-out forwards;
+  }
+
+  /* Reduced motion override for WhatsApp animations */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-slide-up,
+    .animate-bounce-subtle,
+    .animate-message-in {
+      animation: none !important;
+    }
+  }
+
   /* ===== HOVER EFFECTS ===== */
   .hover-lift {
     @apply transition-transform duration-300 ease-out;

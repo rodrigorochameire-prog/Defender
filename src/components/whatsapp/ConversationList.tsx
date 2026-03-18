@@ -300,7 +300,7 @@ export function ConversationList({
             placeholder="Buscar conversas..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 h-8 text-xs rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200/50 dark:border-zinc-800/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus-visible:ring-emerald-500/20"
+            className="pl-8 h-8 text-xs rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200/50 dark:border-zinc-800/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-emerald-500/30"
           />
         </div>
 
@@ -524,16 +524,23 @@ export function ConversationList({
               <div
                 key={contact.id}
                 className={cn(
-                  "group flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all duration-200",
-                  "hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
+                  "group flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all duration-150",
+                  "hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70",
                   "border-b border-zinc-100 dark:border-zinc-800/50",
-                  selectedContactId === contact.id &&
-                    "bg-zinc-100 dark:bg-zinc-800"
+                  selectedContactId === contact.id
+                    ? "bg-emerald-50/50 dark:bg-emerald-950/20 border-l-2 border-l-emerald-500"
+                    : "border-l-2 border-l-transparent"
                 )}
                 onClick={() => onSelectContact(contact.id)}
               >
                 {/* Avatar */}
-                <Avatar className="h-10 w-10 shrink-0">
+                <Avatar className={cn(
+                  "h-10 w-10 shrink-0",
+                  contact.lastMessageDirection === "inbound" &&
+                    contact.lastMessageAt &&
+                    (Date.now() - new Date(contact.lastMessageAt).getTime()) > 4 * 60 * 60 * 1000 &&
+                    "ring-2 ring-amber-400"
+                )}>
                   <AvatarImage src={contact.profilePicUrl || undefined} />
                   <AvatarFallback className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-medium">
                     {getContactInitials(contact)}
@@ -554,7 +561,7 @@ export function ConversationList({
                         {getContactDisplayName(contact)}
                       </span>
                       {contact.isFavorite && (
-                        <Star className="h-3 w-3 fill-amber-400 text-amber-400 shrink-0" />
+                        <Star className="h-3 w-3 fill-amber-400 text-amber-400 shrink-0 transition-transform duration-200 hover:scale-110" />
                       )}
                       {renderRelationIcon(contact.contactRelation)}
                       {/* Tag badges */}
@@ -636,7 +643,7 @@ export function ConversationList({
                     </span>
 
                     {contact.unreadCount > 0 && (
-                      <span className="h-[18px] min-w-[18px] px-1 flex items-center justify-center rounded-full bg-emerald-500 text-white text-[10px] font-medium shrink-0">
+                      <span className="h-[18px] min-w-[18px] px-1 flex items-center justify-center rounded-full bg-emerald-500 text-white text-[10px] font-medium shrink-0 animate-bounce-subtle">
                         {contact.unreadCount}
                       </span>
                     )}

@@ -21,24 +21,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  Send,
+  SendHorizontal,
   Paperclip,
   Image,
   FileText,
-  Mic,
   MoreVertical,
   UserPlus,
   Star,
   Archive,
-  Check,
-  CheckCheck,
-  Clock,
-  AlertCircle,
   Loader2,
-  ArrowDown,
   ArrowLeft,
-  Reply,
-  Copy,
   X,
   Search,
   PanelRight,
@@ -57,6 +49,9 @@ import { TemplatePickerPopover } from "./TemplatePickerPopover";
 import { SlashCommandMenu } from "./SlashCommandMenu";
 import { SelectionActionModals } from "./SelectionActionModals";
 import { DriveFilePicker } from "./DriveFilePicker";
+import { MessageBubble } from "./MessageBubble";
+import { MessageSkeleton } from "./MessageSkeleton";
+import { ScrollToBottom } from "./ScrollToBottom";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -410,23 +405,6 @@ export function ChatWindow({
 
   // -- Helpers --------------------------------------------------------------
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "pending":
-        return <Clock className="h-3 w-3 text-zinc-400" />;
-      case "sent":
-        return <Check className="h-3 w-3 text-zinc-400" />;
-      case "delivered":
-        return <CheckCheck className="h-3 w-3 text-zinc-400" />;
-      case "read":
-        return <CheckCheck className="h-3 w-3 text-blue-500" />;
-      case "error":
-        return <AlertCircle className="h-3 w-3 text-red-500" />;
-      default:
-        return null;
-    }
-  };
-
   const formatPhone = (phone: string) => {
     const cleaned = phone.replace(/\D/g, "");
     if (cleaned.length === 13) {
@@ -537,93 +515,8 @@ export function ChatWindow({
       {/* ================================================================== */}
       {/* HEADER (normal or selection mode)                                 */}
       {/* ================================================================== */}
-      {isSelectionMode ? (
-        /* ---- Selection mode bar ---- */
-        <div className="flex items-center justify-between px-2 sm:px-4 py-2 h-14 border-b border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-zinc-600 dark:text-zinc-300"
-              onClick={exitSelectionMode}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-              {selectedMessageIds.size} selecionada{selectedMessageIds.size !== 1 ? "s" : ""}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <TooltipProvider delayDuration={300}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 gap-1.5 text-xs"
-                    disabled={selectedMessageIds.size === 0}
-                    onClick={() => handleSelectionAction("case")}
-                  >
-                    <BookmarkPlus className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Caso</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Salvar no caso do assistido</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 gap-1.5 text-xs"
-                    disabled={selectedMessageIds.size === 0 || !hasMediaInSelection}
-                    onClick={() => handleSelectionAction("drive")}
-                  >
-                    <FolderUp className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Drive</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Salvar mídias no Google Drive</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 gap-1.5 text-xs"
-                    disabled={selectedMessageIds.size === 0}
-                    onClick={() => handleSelectionAction("summary")}
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Resumo IA</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Gerar resumo com IA</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 gap-1.5 text-xs"
-                    disabled={selectedMessageIds.size === 0 || !contact?.assistido}
-                    onClick={() => handleSelectionAction("extract")}
-                  >
-                    <FileSearch className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Extrair</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Extrair dados com IA</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </div>
-      ) : (
-        /* ---- Normal header ---- */
-        <div className="flex items-center justify-between px-2 sm:px-4 py-2 h-14 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+      {/* ---- Header ---- */}
+      <div className="flex items-center justify-between px-2 sm:px-4 py-2 h-14 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             {/* Back button — mobile only */}
             {onBack && (
@@ -764,7 +657,6 @@ export function ChatWindow({
             </TooltipProvider>
           </div>
         </div>
-      )}
 
       {/* ================================================================== */}
       {/* SEARCH BAR (toggleable)                                            */}
@@ -814,9 +706,7 @@ export function ChatWindow({
           onScroll={handleScroll}
         >
           {loadingMessages ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
-            </div>
+            <MessageSkeleton />
           ) : messageGroups.length === 0 ? (
             /* ---- Empty state ---- */
             <div className="flex flex-col items-center justify-center h-full gap-3 text-zinc-400">
@@ -849,235 +739,20 @@ export function ChatWindow({
                   </div>
 
                   {/* Messages */}
-                  <div className="space-y-1">
-                    {group.messages.map((msg) => {
-                      const isOutbound = msg.direction === "outbound";
-                      const time = format(new Date(msg.createdAt), "HH:mm");
-                      const isSelected = selectedMessageIds.has(msg.id);
-
-                      return (
-                        <div
-                          key={msg.id}
-                          className={cn(
-                            "flex mb-1 items-start",
-                            isOutbound ? "justify-end" : "justify-start",
-                            isSelectionMode && "cursor-pointer"
-                          )}
-                          onClick={isSelectionMode ? () => toggleMessageSelection(msg.id) : undefined}
-                        >
-                          {/* Selection checkbox */}
-                          {isSelectionMode && (
-                            <div className={cn(
-                              "flex items-center justify-center w-7 shrink-0 mt-1",
-                              isOutbound ? "order-last ml-1" : "order-first mr-1"
-                            )}>
-                              <div className={cn(
-                                "h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors",
-                                isSelected
-                                  ? "bg-emerald-500 border-emerald-500"
-                                  : "border-zinc-300 dark:border-zinc-600"
-                              )}>
-                                {isSelected && <Check className="h-3 w-3 text-white" />}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Wrapper for hover actions */}
-                          <div
-                            className={cn(
-                              "group/msg relative max-w-[70%] flex",
-                              isOutbound ? "flex-row" : "flex-row-reverse",
-                              isSelected && "ring-1 ring-emerald-300 dark:ring-emerald-700 rounded-2xl"
-                            )}
-                          >
-                            {/* Hover action buttons */}
-                            <div
-                              className={cn(
-                                "flex items-start pt-1 px-1 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150"
-                              )}
-                            >
-                              <div className="flex bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-zinc-200/80 dark:border-zinc-700/80">
-                                <button
-                                  onClick={() => setReplyingTo(msg)}
-                                  className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-l-lg transition-colors"
-                                  title="Responder"
-                                >
-                                  <Reply className="h-3.5 w-3.5 text-zinc-500" />
-                                </button>
-                                <button
-                                  onClick={() => copyToClipboard(msg.content)}
-                                  className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-r-lg transition-colors"
-                                  title="Copiar"
-                                >
-                                  <Copy className="h-3.5 w-3.5 text-zinc-500" />
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Message bubble */}
-                            <div
-                              className={cn(
-                                "rounded-2xl px-3 py-1.5 shadow-sm",
-                                isOutbound
-                                  ? "rounded-tr-sm bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/80 dark:border-emerald-900/30"
-                                  : "rounded-tl-sm bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80"
-                              )}
-                            >
-                              {/* Reply preview (quoted message) */}
-                              {msg.content &&
-                                msg.content.startsWith("> ") &&
-                                (() => {
-                                  const lines = msg.content.split("\n");
-                                  const quoteLines: string[] = [];
-                                  let restIndex = 0;
-                                  for (let i = 0; i < lines.length; i++) {
-                                    if (lines[i].startsWith("> ")) {
-                                      quoteLines.push(lines[i].slice(2));
-                                    } else if (lines[i].trim() === "" && quoteLines.length > 0) {
-                                      restIndex = i + 1;
-                                      break;
-                                    } else {
-                                      restIndex = i;
-                                      break;
-                                    }
-                                  }
-                                  if (quoteLines.length === 0) return null;
-                                  const quotedText = quoteLines.join("\n");
-                                  const replyText = lines.slice(restIndex).join("\n");
-                                  return (
-                                    <>
-                                      <div
-                                        className={cn(
-                                          "mb-1.5 px-2 py-1 rounded border-l-2 text-xs",
-                                          isOutbound
-                                            ? "bg-emerald-100/50 dark:bg-emerald-900/20 border-emerald-500 text-zinc-600 dark:text-zinc-400"
-                                            : "bg-zinc-100/70 dark:bg-zinc-800/50 border-zinc-400 text-zinc-600 dark:text-zinc-400"
-                                        )}
-                                      >
-                                        <p className="line-clamp-2 whitespace-pre-wrap">
-                                          {searchQuery
-                                            ? highlightMatch(quotedText, searchQuery)
-                                            : quotedText}
-                                        </p>
-                                      </div>
-                                      <p className="text-sm text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap break-words">
-                                        {searchQuery
-                                          ? highlightMatch(replyText, searchQuery)
-                                          : replyText}
-                                      </p>
-                                      <div className="flex items-center justify-end gap-1 mt-0.5">
-                                        <span className="text-[10px] text-zinc-400">
-                                          {time}
-                                        </span>
-                                        {isOutbound && getStatusIcon(msg.status)}
-                                      </div>
-                                    </>
-                                  );
-                                })()}
-
-                              {/* Non-reply content */}
-                              {msg.content &&
-                                !msg.content.startsWith("> ") && (
-                                  <>
-                                    {/* Media content */}
-                                    {msg.type === "image" && msg.mediaUrl && (
-                                      <img
-                                        src={msg.mediaUrl}
-                                        alt="Imagem"
-                                        className="max-w-full rounded-lg mb-1.5"
-                                      />
-                                    )}
-
-                                    {msg.type === "document" && (
-                                      <div className="flex items-center gap-2 p-2 bg-zinc-100/80 dark:bg-zinc-800/50 rounded-lg mb-1.5">
-                                        <FileText className="h-8 w-8 text-zinc-400" />
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-sm font-medium truncate text-zinc-900 dark:text-zinc-100">
-                                            {msg.mediaFilename || "Documento"}
-                                          </p>
-                                          <p className="text-xs text-zinc-400">
-                                            {msg.mediaMimeType}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {msg.type === "audio" && (
-                                      <div className="flex items-center gap-2 p-2 bg-zinc-100/80 dark:bg-zinc-800/50 rounded-lg mb-1.5">
-                                        <Mic className="h-5 w-5 text-zinc-400" />
-                                        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                                        <audio
-                                          controls
-                                          src={msg.mediaUrl || undefined}
-                                          className="h-8"
-                                        />
-                                      </div>
-                                    )}
-
-                                    {/* Text */}
-                                    <p className="text-sm text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap break-words">
-                                      {searchQuery
-                                        ? highlightMatch(msg.content, searchQuery)
-                                        : msg.content}
-                                    </p>
-
-                                    {/* Timestamp + status */}
-                                    <div className="flex items-center justify-end gap-1 mt-0.5">
-                                      <span className="text-[10px] text-zinc-400">
-                                        {time}
-                                      </span>
-                                      {isOutbound && getStatusIcon(msg.status)}
-                                    </div>
-                                  </>
-                                )}
-
-                              {/* Media-only messages (no text content) */}
-                              {!msg.content && (
-                                <>
-                                  {msg.type === "image" && msg.mediaUrl && (
-                                    <img
-                                      src={msg.mediaUrl}
-                                      alt="Imagem"
-                                      className="max-w-full rounded-lg mb-1"
-                                    />
-                                  )}
-                                  {msg.type === "document" && (
-                                    <div className="flex items-center gap-2 p-2 bg-zinc-100/80 dark:bg-zinc-800/50 rounded-lg mb-1">
-                                      <FileText className="h-8 w-8 text-zinc-400" />
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium truncate text-zinc-900 dark:text-zinc-100">
-                                          {msg.mediaFilename || "Documento"}
-                                        </p>
-                                        <p className="text-xs text-zinc-400">
-                                          {msg.mediaMimeType}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  )}
-                                  {msg.type === "audio" && (
-                                    <div className="flex items-center gap-2 p-2 bg-zinc-100/80 dark:bg-zinc-800/50 rounded-lg mb-1">
-                                      <Mic className="h-5 w-5 text-zinc-400" />
-                                      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                                      <audio
-                                        controls
-                                        src={msg.mediaUrl || undefined}
-                                        className="h-8"
-                                      />
-                                    </div>
-                                  )}
-                                  <div className="flex items-center justify-end gap-1 mt-0.5">
-                                    <span className="text-[10px] text-zinc-400">
-                                      {time}
-                                    </span>
-                                    {isOutbound && getStatusIcon(msg.status)}
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div className="space-y-0.5">
+                    {group.messages.map((msg) => (
+                      <MessageBubble
+                        key={msg.id}
+                        message={msg}
+                        isSelectionMode={isSelectionMode}
+                        isSelected={selectedMessageIds.has(msg.id)}
+                        onToggleSelect={toggleMessageSelection}
+                        onReply={(msg) => setReplyingTo(msg as Message)}
+                        onCopy={copyToClipboard}
+                        searchQuery={searchQuery}
+                        highlightMatch={searchQuery ? highlightMatch : undefined}
+                      />
+                    ))}
                   </div>
                 </div>
               ))}
@@ -1086,14 +761,86 @@ export function ChatWindow({
         </div>
 
         {/* Scroll to bottom FAB */}
-        {!isAtBottom && (
-          <Button
-            size="icon"
-            className="absolute bottom-4 right-4 h-9 w-9 rounded-full shadow-lg bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700"
-            onClick={scrollToBottom}
-          >
-            <ArrowDown className="h-4 w-4" />
-          </Button>
+        <ScrollToBottom
+          show={!isAtBottom}
+          onClick={scrollToBottom}
+        />
+
+        {/* Floating selection bar */}
+        {isSelectionMode && selectedMessageIds.size > 0 && (
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 animate-slide-up">
+            <div className="flex items-center gap-1 px-3 py-2 rounded-2xl bg-white/90 dark:bg-zinc-800/90 backdrop-blur-lg shadow-lg border border-zinc-200 dark:border-zinc-700">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={exitSelectionMode}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-medium px-2 tabular-nums">
+                {selectedMessageIds.size}
+              </span>
+              <div className="flex items-center gap-0.5 border-l border-zinc-200 dark:border-zinc-700 pl-2 ml-1">
+                <TooltipProvider delayDuration={300}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleSelectionAction("case")}
+                      >
+                        <BookmarkPlus className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Salvar no caso</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        disabled={!hasMediaInSelection}
+                        onClick={() => handleSelectionAction("drive")}
+                      >
+                        <FolderUp className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Salvar no Drive</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleSelectionAction("summary")}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Resumo IA</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        disabled={!contact?.assistido}
+                        onClick={() => handleSelectionAction("extract")}
+                      >
+                        <FileSearch className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Extrair dados</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
@@ -1147,8 +894,8 @@ export function ChatWindow({
       {/* ================================================================== */}
       {/* INPUT AREA                                                         */}
       {/* ================================================================== */}
-      <div className="px-3 py-2 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-end gap-1.5">
+      <div className="bg-zinc-50/80 dark:bg-zinc-900/80 border-t border-zinc-200 dark:border-zinc-800 p-3">
+        <div className="flex items-end gap-2">
           {/* Attachment dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -1193,53 +940,56 @@ export function ChatWindow({
             onChange={(e) => handleFileUpload(e, "document")}
           />
 
-          {/* Template picker */}
-          <TemplatePickerPopover
-            contactId={contactId}
-            onInsert={(content) => {
-              setMessage(content);
-              inputRef.current?.focus();
-            }}
-            onSendDirect={(content) => {
-              sendMessageMutation.mutate({
-                contactId,
-                type: "text",
-                content,
-              });
-            }}
-          />
+          {/* Textarea wrapper with rounded pill shape */}
+          <div className="flex-1 flex items-end rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus-within:ring-1 focus-within:ring-emerald-500/30 focus-within:border-emerald-300 dark:focus-within:border-emerald-700 transition-shadow">
+            {/* Template picker inside the wrapper */}
+            <TemplatePickerPopover
+              contactId={contactId}
+              onInsert={(content) => {
+                setMessage(content);
+                inputRef.current?.focus();
+              }}
+              onSendDirect={(content) => {
+                sendMessageMutation.mutate({
+                  contactId,
+                  type: "text",
+                  content,
+                });
+              }}
+            />
 
-          {/* Message input */}
-          <Textarea
-            ref={inputRef}
-            placeholder="Digite uma mensagem... (/ para templates)"
-            value={message}
-            onChange={(e) => {
-              const val = e.target.value;
-              setMessage(val);
-              if (val.startsWith("/")) {
-                setShowSlashMenu(true);
-                setSlashFilter(val.slice(1));
-              } else {
-                setShowSlashMenu(false);
-              }
-            }}
-            onKeyDown={handleKeyDown}
-            className="min-h-[36px] max-h-[100px] resize-none flex-1 text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus-visible:ring-emerald-500/30"
-            rows={1}
-          />
+            {/* Message input */}
+            <Textarea
+              ref={inputRef}
+              placeholder="Digite uma mensagem..."
+              value={message}
+              onChange={(e) => {
+                const val = e.target.value;
+                setMessage(val);
+                if (val.startsWith("/")) {
+                  setShowSlashMenu(true);
+                  setSlashFilter(val.slice(1));
+                } else {
+                  setShowSlashMenu(false);
+                }
+              }}
+              onKeyDown={handleKeyDown}
+              className="min-h-[40px] max-h-[120px] resize-none flex-1 text-sm border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none px-1 py-2.5"
+              rows={1}
+            />
+          </div>
 
-          {/* Send button */}
+          {/* Send button — circular emerald */}
           <Button
             size="icon"
-            className="h-9 w-9 shrink-0 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm"
+            className="h-9 w-9 shrink-0 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors"
             onClick={handleSend}
             disabled={!message.trim() || sendMessageMutation.isPending || replyToMessageMutation.isPending}
           >
             {sendMessageMutation.isPending || replyToMessageMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Send className="h-4 w-4" />
+              <SendHorizontal className="h-4 w-4" />
             )}
           </Button>
         </div>

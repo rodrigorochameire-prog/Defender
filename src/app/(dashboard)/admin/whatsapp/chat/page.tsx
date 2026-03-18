@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc/client";
 import { ConversationList } from "@/components/whatsapp/ConversationList";
 import { ChatWindow } from "@/components/whatsapp/ChatWindow";
 import { ContactDetailsPanel } from "@/components/whatsapp/ContactDetailsPanel";
+import { ChatEmptyState } from "@/components/whatsapp/ChatEmptyState";
 import { ConnectionStatus } from "@/components/whatsapp/ConnectionStatus";
 import { Button } from "@/components/ui/button";
 import {
@@ -177,7 +178,7 @@ export default function WhatsAppChatPage() {
     <div className="flex h-[calc(100vh-4rem)] flex-col">
       {/* Compact Header — hidden on mobile when chat is open */}
       <div className={cn(
-        "border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 sm:px-4 py-2",
+        "shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] dark:shadow-[0_1px_3px_0_rgba(0,0,0,0.3)] bg-white dark:bg-zinc-900 px-3 sm:px-4 py-2",
         selectedContactId && "hidden md:block"
       )}>
         <div className="flex items-center justify-between">
@@ -304,10 +305,10 @@ export default function WhatsAppChatPage() {
                 size="sm"
                 onClick={() => setFilter(key)}
                 className={cn(
-                  "h-7 text-xs gap-1 px-2",
+                  "h-7 text-xs gap-1 px-2 rounded-none",
                   label ? "flex-1" : "w-8 px-0",
                   filter === key
-                    ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                    ? "font-medium text-zinc-900 dark:text-zinc-100 border-b-2 border-emerald-500 bg-transparent hover:bg-transparent"
                     : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                 )}
               >
@@ -442,17 +443,7 @@ export default function WhatsAppChatPage() {
                 onBack={handleBackToList}
               />
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center px-4">
-                <div className="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
-                  <MessageSquare className="h-10 w-10 text-zinc-300 dark:text-zinc-600" />
-                </div>
-                <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 text-center">
-                  Selecione uma conversa para começar
-                </p>
-                <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 text-center">
-                  Ou inicie uma nova conversa com o botão + na lista
-                </p>
-              </div>
+              <ChatEmptyState variant="select" />
             )}
           </div>
 

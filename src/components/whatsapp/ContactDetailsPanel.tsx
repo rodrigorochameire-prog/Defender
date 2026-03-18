@@ -37,6 +37,7 @@ import {
   Plus,
   Paperclip,
   StickyNote,
+  Users,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
@@ -247,7 +248,7 @@ export function ContactDetailsPanel({
       )}
     >
       {/* ===== HEADER ===== */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 bg-zinc-50/80 dark:bg-zinc-800/50 backdrop-blur-sm border-b border-zinc-200/50 dark:border-zinc-700/50 shrink-0">
         <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Detalhes do Contato
         </span>
@@ -261,7 +262,7 @@ export function ContactDetailsPanel({
         <div className="px-4 py-5 space-y-6">
           {/* --- 2. Profile Section --- */}
           <div className="flex flex-col items-center gap-2">
-            <Avatar className="h-16 w-16">
+            <Avatar className="h-16 w-16 ring-2 ring-zinc-200 dark:ring-zinc-700 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900">
               <AvatarImage src={contact.profilePicUrl ?? undefined} />
               <AvatarFallback className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-lg">
                 {getInitials(contact.name || contact.pushName)}
@@ -300,9 +301,12 @@ export function ContactDetailsPanel({
 
           {/* --- 3. Interlocutor / Relation --- */}
           <section>
-            <h4 className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
-              Interlocutor
-            </h4>
+            <div className="flex items-center gap-2 mb-3">
+              <Users className="h-3.5 w-3.5 text-emerald-500" />
+              <span className="text-[10px] uppercase tracking-widest font-semibold text-zinc-400 dark:text-zinc-500">
+                Interlocutor
+              </span>
+            </div>
             <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 space-y-3">
               <div>
                 <label className="text-xs text-zinc-500 dark:text-zinc-400 mb-1 block">
@@ -340,9 +344,12 @@ export function ContactDetailsPanel({
 
           {/* --- 4. Linked Assistido --- */}
           <section>
-            <h4 className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
-              Assistido Vinculado
-            </h4>
+            <div className="flex items-center gap-2 mb-3">
+              <LinkIcon className="h-3.5 w-3.5 text-emerald-500" />
+              <span className="text-[10px] uppercase tracking-widest font-semibold text-zinc-400 dark:text-zinc-500">
+                Assistido Vinculado
+              </span>
+            </div>
             {assistido ? (
               <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3">
                 <div className="flex items-center gap-3">
@@ -391,16 +398,19 @@ export function ContactDetailsPanel({
           {/* --- 5. Processos (if assistido linked) --- */}
           {assistido && (
             <section>
-              <h4 className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
-                Processos
-              </h4>
+              <div className="flex items-center gap-2 mb-3">
+                <Scale className="h-3.5 w-3.5 text-emerald-500" />
+                <span className="text-[10px] uppercase tracking-widest font-semibold text-zinc-400 dark:text-zinc-500">
+                  Processos
+                </span>
+              </div>
               {processosList.length > 0 ? (
                 <div className="space-y-2">
                   {processosList.map((proc: any) => (
                     <Link
                       key={proc.id}
                       href={`/admin/processos/${proc.id}`}
-                      className="block bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer group"
+                      className="block rounded-lg border border-zinc-200 dark:border-zinc-800 p-3 hover:border-emerald-300 dark:hover:border-emerald-800 transition-colors cursor-pointer group"
                     >
                       <div className="flex items-start gap-2">
                         <Scale className="h-4 w-4 text-zinc-400 mt-0.5 shrink-0" />
@@ -439,53 +449,50 @@ export function ContactDetailsPanel({
 
           {/* --- 6. Statistics --- */}
           <section>
-            <h4 className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
-              Estatisticas
-            </h4>
-            <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 space-y-2">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-zinc-400" />
-                <span className="text-sm text-zinc-600 dark:text-zinc-300 flex-1">
-                  Total de mensagens
-                </span>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+            <div className="flex items-center gap-2 mb-3">
+              <MessageSquare className="h-3.5 w-3.5 text-emerald-500" />
+              <span className="text-[10px] uppercase tracking-widest font-semibold text-zinc-400 dark:text-zinc-500">
+                Estatisticas
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-center p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
+                <div className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                   {stats?.totalMessages ?? "--"}
-                </span>
+                </div>
+                <div className="text-[10px] text-zinc-400">Mensagens</div>
               </div>
-              <div className="flex items-center gap-2">
-                <Paperclip className="h-4 w-4 text-zinc-400" />
-                <span className="text-sm text-zinc-600 dark:text-zinc-300 flex-1">
-                  Arquivos trocados
-                </span>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              <div className="text-center p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
+                <div className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                   {stats?.mediaMessages ?? "--"}
-                </span>
+                </div>
+                <div className="text-[10px] text-zinc-400">Arquivos</div>
               </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-zinc-400" />
-                <span className="text-sm text-zinc-600 dark:text-zinc-300 flex-1">
-                  Primeira mensagem
-                </span>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              <div className="text-center p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
+                <div className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                   {stats?.firstMessageAt
-                    ? format(new Date(stats.firstMessageAt), "dd MMM yyyy", {
+                    ? format(new Date(stats.firstMessageAt), "dd/MM", {
                         locale: ptBR,
                       })
                     : contact.createdAt
-                      ? format(new Date(contact.createdAt), "dd MMM yyyy", {
+                      ? format(new Date(contact.createdAt), "dd/MM", {
                           locale: ptBR,
                         })
                       : "--"}
-                </span>
+                </div>
+                <div className="text-[10px] text-zinc-400">Desde</div>
               </div>
             </div>
           </section>
 
           {/* --- 7. Notes --- */}
           <section>
-            <h4 className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
-              Notas
-            </h4>
+            <div className="flex items-center gap-2 mb-3">
+              <StickyNote className="h-3.5 w-3.5 text-emerald-500" />
+              <span className="text-[10px] uppercase tracking-widest font-semibold text-zinc-400 dark:text-zinc-500">
+                Notas
+              </span>
+            </div>
             <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3">
               {editingNotes ? (
                 <div className="space-y-2">
@@ -541,9 +548,12 @@ export function ContactDetailsPanel({
 
           {/* --- 8. Tags --- */}
           <section>
-            <h4 className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
-              Tags
-            </h4>
+            <div className="flex items-center gap-2 mb-3">
+              <Tag className="h-3.5 w-3.5 text-emerald-500" />
+              <span className="text-[10px] uppercase tracking-widest font-semibold text-zinc-400 dark:text-zinc-500">
+                Tags
+              </span>
+            </div>
             <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3">
               {/* Existing tags */}
               {(contact.tags ?? []).length > 0 && (
