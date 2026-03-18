@@ -3,6 +3,9 @@
 -- Adiciona colunas de controle de erros e novos status ao enum
 -- ============================================================
 
+-- 0. Extensão unaccent para busca sem acento nos reincidentes
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
 -- 1. Adicionar colunas DLQ à tabela radar_noticias
 ALTER TABLE radar_noticias
   ADD COLUMN IF NOT EXISTS error_count integer NOT NULL DEFAULT 0,
