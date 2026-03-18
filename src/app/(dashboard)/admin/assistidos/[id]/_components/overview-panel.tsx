@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { format, differenceInMonths, differenceInDays } from "date-fns";
+import { useState, useMemo } from "react";
+import { format, differenceInMonths, differenceInDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Calendar,
@@ -60,7 +60,6 @@ interface AssistidoData {
   audiencias: Audiencia[];
   demandas: Demanda[];
   processos: Processo[];
-  [key: string]: unknown;
 }
 
 interface AssistidoOverviewPanelProps {
@@ -88,10 +87,16 @@ function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    void navigator.clipboard.writeText(value).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
+    try {
+      navigator.clipboard.writeText(value).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }).catch(() => {
+        // clipboard não disponível
+      });
+    } catch {
+      // clipboard não disponível
+    }
   };
 
   return (
@@ -118,26 +123,34 @@ export function AssistidoOverviewPanel({
   const [collapsed, setCollapsed] = useState(false);
 
   // ── Card 1: Próxima Audiência ────────────────────────────────────────────
-  const now = new Date();
-  const proximaAudiencia = data.audiencias
-    .filter((a) => {
-      if (!a.dataAudiencia) return false;
-      return new Date(a.dataAudiencia) > now;
-    })
-    .sort((a, b) => {
-      const da = new Date(a.dataAudiencia!).getTime();
-      const db = new Date(b.dataAudiencia!).getTime();
-      return da - db;
-    })[0] ?? null;
+  const now = useMemo(() => new Date(), []);
+  const proximaAudiencia = useMemo(
+    () =>
+      data.audiencias
+        .filter((a) => {
+          if (!a.dataAudiencia) return false;
+          return new Date(a.dataAudiencia) > now;
+        })
+        .sort((a, b) => {
+          const da = new Date(a.dataAudiencia!).getTime();
+          const db = new Date(b.dataAudiencia!).getTime();
+          return da - db;
+        })[0] ?? null,
+    [data.audiencias, now],
+  );
 
   // ── Card 2: Demanda Crítica ──────────────────────────────────────────────
-  const demandaCritica = data.demandas
-    .filter((d) => d.status && !EXCLUDED_STATUSES.has(d.status))
-    .sort((a, b) => {
-      const pa = DEMANDA_PRIORITY[a.status ?? ""] ?? 99;
-      const pb = DEMANDA_PRIORITY[b.status ?? ""] ?? 99;
-      return pa - pb;
-    })[0] ?? null;
+  const demandaCritica = useMemo(
+    () =>
+      data.demandas
+        .filter((d) => d.status && !EXCLUDED_STATUSES.has(d.status))
+        .sort((a, b) => {
+          const pa = DEMANDA_PRIORITY[a.status ?? ""] ?? 99;
+          const pb = DEMANDA_PRIORITY[b.status ?? ""] ?? 99;
+          return pa - pb;
+        })[0] ?? null,
+    [data.demandas],
+  );
 
   const isDemandaUrgente =
     demandaCritica?.status === "1_URGENTE" ||
@@ -149,17 +162,19 @@ export function AssistidoOverviewPanel({
     ? PRESOS.has(data.statusPrisional)
     : false;
 
-  let tempoPreso: string | null = null;
-  if (isPreso && data.dataPrisao) {
-    const prisaoDate = new Date(data.dataPrisao);
+  const tempoPreso = useMemo<string | null>(() => {
+    if (!isPreso || !data.dataPrisao) return null;
+    const prisaoDate =
+      typeof data.dataPrisao === "string"
+        ? parseISO(data.dataPrisao)
+        : data.dataPrisao;
     const meses = differenceInMonths(now, prisaoDate);
     if (meses >= 1) {
-      tempoPreso = `${meses} ${meses === 1 ? "mês" : "meses"} preso`;
-    } else {
-      const dias = differenceInDays(now, prisaoDate);
-      tempoPreso = `${dias} ${dias === 1 ? "dia" : "dias"} preso`;
+      return `${meses} ${meses === 1 ? "mês" : "meses"} preso`;
     }
-  }
+    const dias = differenceInDays(now, prisaoDate);
+    return `${dias} ${dias === 1 ? "dia" : "dias"} preso`;
+  }, [data.statusPrisional, data.dataPrisao, isPreso, now]);
 
   // ── Card 4: Processos ────────────────────────────────────────────────────
   const processosVisiveis = data.processos.slice(0, 3);
@@ -174,6 +189,8 @@ export function AssistidoOverviewPanel({
         </span>
         <button
           onClick={() => setCollapsed((c) => !c)}
+          aria-expanded={!collapsed}
+          aria-controls="assistido-overview-content"
           className="flex items-center gap-1 text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
         >
           {collapsed ? (
@@ -189,7 +206,7 @@ export function AssistidoOverviewPanel({
       </div>
 
       {!collapsed && (
-        <div className="px-6 pb-3">
+        <div id="assistido-overview-content" className="px-6 pb-3">
           {/* Cards 1–3: grid 3 cols */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {/* ── Card 1: Próxima Audiência ── */}
@@ -313,6 +330,7 @@ export function AssistidoOverviewPanel({
                   )}
                   <button
                     onClick={() => onDemandaClick(demandaCritica.id)}
+                    aria-label={`Ver demanda: ${demandaCritica.ato ?? demandaCritica.tipoAto ?? "demanda"}`}
                     className={cn(
                       "text-[10px] hover:underline transition-colors",
                       isDemandaUrgente
@@ -392,13 +410,13 @@ export function AssistidoOverviewPanel({
             </div>
           </div>
 
-          {/* ── Card 4: Processos Ativos (full-width) ── */}
+          {/* ── Card 4: Processos (full-width) ── */}
           {data.processos.length > 0 && (
             <div className="mt-3 rounded-lg border border-zinc-200 dark:border-zinc-700/40 bg-white dark:bg-zinc-800/30 p-3">
               <div className="flex items-center gap-1.5 mb-2">
                 <Scale className="h-3.5 w-3.5 text-zinc-400" />
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Processos Ativos
+                  Processos
                 </span>
                 <span className="ml-auto text-[10px] text-zinc-400">
                   {data.processos.length}{" "}
