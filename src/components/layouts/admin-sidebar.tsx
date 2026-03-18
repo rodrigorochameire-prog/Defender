@@ -73,12 +73,13 @@ const CADASTROS_NAV: AssignmentMenuItem[] = [
   { label: "Solar", path: "/admin/intimacoes", icon: "Sun" },
 ];
 
-// 3. Documentos - Drive, Distribuição, Ofícios, Modelos, Jurisprudência (laranja)
+// 3. Documentos - Drive, Distribuição, Ofícios, Modelos, Jurisprudência, Legislação (laranja)
 const DOCUMENTOS_NAV: AssignmentMenuItem[] = [
   { label: "Distribuição", path: "/admin/distribuicao", icon: "FolderInput" },
   { label: "Ofícios", path: "/admin/oficios", icon: "Mail" },
   { label: "Modelos", path: "/admin/modelos", icon: "FileText" },
   { label: "Jurisprudência", path: "/admin/jurisprudencia", icon: "Scale" },
+  { label: "Legislação", path: "/admin/legislacao", icon: "Scale" },
 ];
 
 // 4. Cowork - Delegações, Equipe, Mural, Agenda, Pareceres, Coberturas (roxo)
@@ -92,8 +93,10 @@ const COWORK_NAV: AssignmentMenuItem[] = [
   { label: "Coberturas", path: "/admin/coberturas", icon: "ArrowLeftRight", requiredRoles: ["admin", "defensor"] },
 ];
 
-// 5. Ferramentas - Lógica, Calculadoras, Calc. Prazos, Inteligência, Investigação (verde)
+// 5. Ferramentas - Notícias, Radar, Lógica, Calculadoras, Inteligência, Investigação (verde)
 const TOOLS_NAV: AssignmentMenuItem[] = [
+  { label: "Notícias", path: "/admin/noticias", icon: "Newspaper" },
+  { label: "Radar Criminal", path: "/admin/radar", icon: "Radio" },
   { label: "Lógica", path: "/admin/logica", icon: "Brain" },
   { label: "Calculadoras", path: "/admin/calculadoras", icon: "Calculator" },
   { label: "Calc. Prazos", path: "/admin/calculadora-prazos", icon: "Clock" },
@@ -102,9 +105,6 @@ const TOOLS_NAV: AssignmentMenuItem[] = [
   { label: "Investigação", path: "/admin/diligencias", icon: "FileSearch" },
   { label: "Palácio da Mente", path: "/admin/palacio-mente", icon: "Network" },
   { label: "Simulador 3D", path: "/admin/simulador-3d", icon: "Box" },
-  { label: "Radar Criminal", path: "/admin/radar", icon: "Radio" },
-  { label: "Legislação", path: "/admin/legislacao", icon: "Scale" },
-  { label: "Notícias", path: "/admin/noticias", icon: "Newspaper" },
 ];
 
 // 6. Módulos específicos por especialidade
