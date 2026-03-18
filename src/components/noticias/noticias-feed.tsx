@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, X } from "lucide-react";
+import { Search, X, ChevronDown, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { NoticiaCard } from "./noticias-card";
@@ -161,14 +162,14 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, onOpenReader, onOpe
       {/* Feed principal */}
       <div className="flex-1 min-w-0 space-y-4">
 
-        {/* Toolbar: busca */}
+        {/* Toolbar: busca + fonte */}
         {categoria !== "salvos" && pastaAtiva === null && (
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 max-w-xs">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
               <Input
                 placeholder="Buscar notícias..."
-                className="pl-9 pr-8 h-8 text-sm"
+                className="pl-8 pr-8 h-7 text-sm"
                 value={busca}
                 onChange={e => setBusca(e.target.value)}
               />
@@ -187,42 +188,55 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, onOpenReader, onOpe
           </div>
         )}
 
-        {/* Pills de fonte */}
+        {/* Dropdown de fonte */}
         {categoria !== "salvos" && pastaAtiva === null && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <button
-              onClick={() => setFonteFilter(undefined)}
-              className={cn(
-                "px-2.5 py-1 rounded-full text-xs font-medium border transition-all",
-                fonteFilter === undefined
-                  ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-transparent"
-                  : "border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:border-zinc-400"
-              )}
-            >
-              Todas
-            </button>
-            {FONTES_DISPONIVEIS.map(fonte => {
-              const cor = COR_FONTE[fonte] ?? "#71717a";
-              const nome = NOME_FONTE[fonte] ?? fonte;
-              const ativa = fonteFilter === fonte;
-              return (
-                <button
-                  key={fonte}
-                  onClick={() => setFonteFilter(ativa ? undefined : fonte)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all",
-                    ativa
-                      ? "text-white border-transparent"
-                      : "border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:border-zinc-400"
-                  )}
-                  style={ativa ? { backgroundColor: cor } : undefined}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: ativa ? "rgba(255,255,255,0.8)" : cor }} />
-                  {nome}
-                </button>
-              );
-            })}
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-xs font-medium border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400"
+              >
+                {fonteFilter ? (
+                  <>
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: COR_FONTE[fonteFilter] ?? "#71717a" }}
+                    />
+                    {NOME_FONTE[fonteFilter] ?? fonteFilter}
+                  </>
+                ) : (
+                  "Fonte"
+                )}
+                <ChevronDown className="h-3 w-3 text-zinc-400" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-44">
+              <DropdownMenuItem
+                onClick={() => setFonteFilter(undefined)}
+                className="gap-2 text-sm cursor-pointer"
+              >
+                <span className="w-2 h-2 rounded-full bg-zinc-300 shrink-0" />
+                Todas as fontes
+                {!fonteFilter && <Check className="h-3.5 w-3.5 ml-auto text-emerald-500" />}
+              </DropdownMenuItem>
+              {FONTES_DISPONIVEIS.map(fonte => {
+                const cor = COR_FONTE[fonte] ?? "#71717a";
+                const nome = NOME_FONTE[fonte] ?? fonte;
+                return (
+                  <DropdownMenuItem
+                    key={fonte}
+                    onClick={() => setFonteFilter(fonteFilter === fonte ? undefined : fonte)}
+                    className="gap-2 text-sm cursor-pointer"
+                  >
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: cor }} />
+                    {nome}
+                    {fonteFilter === fonte && <Check className="h-3.5 w-3.5 ml-auto text-emerald-500" />}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
 
         {/* Empty state */}

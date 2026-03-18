@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { Newspaper, RefreshCw, Sparkles, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -92,27 +91,22 @@ export default function NoticiasPage() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-3 shrink-0">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-              <Newspaper className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <Breadcrumbs items={[{ label: "Ferramentas" }, { label: "Notícias Jurídicas" }]} />
-              <h1 className="text-base font-semibold leading-none mt-0.5">Notícias Jurídicas</h1>
-            </div>
+      {/* Header — uma linha limpa */}
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-2 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          {/* Ícone */}
+          <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg shrink-0">
+            <Newspaper className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
           </div>
 
-          {/* Pills de categoria */}
-          <div className="flex items-center gap-1 overflow-x-auto">
+          {/* Pills de categoria — scroll horizontal em telas pequenas */}
+          <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none flex-1 min-w-0">
             {CATEGORIA_PILLS.map(({ value, label }) => (
               <button
                 key={value}
                 onClick={() => setCategoria(value)}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap",
+                  "px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap shrink-0",
                   categoria === value
                     ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
                     : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
@@ -123,18 +117,18 @@ export default function NoticiasPage() {
             ))}
           </div>
 
-          {/* Ações */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Ações — sempre visíveis à direita */}
+          <div className="flex items-center gap-1 shrink-0">
             {(pendentesCount ?? 0) > 0 && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setTriagemOpen(true)}
-                className="gap-1.5"
+                className="gap-1.5 h-7 text-xs"
               >
-                <Filter className="h-3.5 w-3.5" />
-                Triagem
-                <Badge variant="danger" className="animate-pulse">
+                <Filter className="h-3 w-3" />
+                <span className="hidden sm:inline">Triagem</span>
+                <Badge variant="danger" className="animate-pulse text-[10px] px-1.5 py-0">
                   {pendentesCount}
                 </Badge>
               </Button>
@@ -144,8 +138,8 @@ export default function NoticiasPage() {
               size="sm"
               onClick={() => enriquecerBatch.mutate()}
               disabled={enriquecerBatch.isPending}
-              title="Enriquecer com IA todas as notícias aprovadas"
-              className="text-zinc-500"
+              title="Enriquecer com IA"
+              className="h-7 w-7 p-0 text-zinc-400"
             >
               <Sparkles className={cn("h-3.5 w-3.5", enriquecerBatch.isPending && "animate-spin")} />
             </Button>
@@ -155,7 +149,7 @@ export default function NoticiasPage() {
               onClick={handleBuscarAgora}
               disabled={buscarAgora.isPending}
               title="Buscar notícias agora"
-              className="text-zinc-500"
+              className="h-7 w-7 p-0 text-zinc-400"
             >
               <RefreshCw className={cn("h-3.5 w-3.5", buscarAgora.isPending && "animate-spin")} />
             </Button>
