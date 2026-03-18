@@ -552,7 +552,12 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               data.processos.map((p) => (
                 <div
                   key={p.id}
-                  onClick={() => router.push(`/admin/processos/${p.id}`)}
+                  onClick={() => {
+                    setSelectedProcessoId(p.id);
+                    setSelectedDemandaId(null);
+                    setItemSheetType("processo");
+                    setItemSheetOpen(true);
+                  }}
                   className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 hover:border-emerald-300 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 cursor-pointer transition-all"
                 >
                   <div className="flex items-center justify-between">
@@ -590,7 +595,17 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               <p className="text-sm text-zinc-400 text-center py-8">Nenhuma demanda vinculada</p>
             ) : (
               data.demandas.map((d) => (
-                <Link key={d.id} href={`/admin/demandas/${d.id}`} className="block">
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedDemandaId(d.id);
+                    setSelectedProcessoId(null);
+                    setItemSheetType("demanda");
+                    setItemSheetOpen(true);
+                  }}
+                  className="w-full text-left"
+                >
                   <div className="flex items-center gap-2 border border-zinc-100 dark:border-zinc-700 rounded px-3 py-2 hover:border-emerald-300 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 cursor-pointer transition-all">
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate">{d.ato ?? d.tipoAto ?? "Demanda"}</p>
@@ -616,7 +631,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                       {d.status?.replace(/^\d+_/, "") ?? "—"}
                     </span>
                   </div>
-                </Link>
+                </button>
               ))
             )}
           </div>
