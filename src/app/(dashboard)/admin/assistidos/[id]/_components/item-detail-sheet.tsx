@@ -111,16 +111,17 @@ function ProcessoView({
           <SheetTitle className="text-sm font-mono font-semibold text-zinc-800 dark:text-zinc-100 truncate flex-1">
             {processo.numeroAutos ?? "Sem número"}
           </SheetTitle>
-          <Link href={`/admin/processos/${processo.id}/editar`}>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0 text-zinc-400 hover:text-emerald-600 shrink-0"
-              title="Editar processo"
-            >
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0 text-zinc-400 hover:text-emerald-600 shrink-0"
+            title="Editar processo"
+            asChild
+          >
+            <Link href={`/admin/processos/${processo.id}/editar`} aria-label="Editar processo">
               <Pencil className="h-3 w-3" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </SheetHeader>
 
@@ -186,13 +187,17 @@ function ProcessoView({
                   <span className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate mr-2">
                     {a.tipo ?? "Audiência"}
                   </span>
-                  {a.dataAudiencia && (
-                    <span className="text-[10px] text-zinc-400 shrink-0 tabular-nums">
-                      {format(new Date(a.dataAudiencia), "dd/MMM", {
-                        locale: ptBR,
-                      })}
-                    </span>
-                  )}
+                  {a.dataAudiencia && (() => {
+                    try {
+                      return (
+                        <span className="text-[10px] text-zinc-400 shrink-0 tabular-nums">
+                          {format(new Date(a.dataAudiencia!), "dd/MMM HH'h'mm", { locale: ptBR })}
+                        </span>
+                      );
+                    } catch {
+                      return <span className="text-[10px] text-zinc-400 shrink-0">Data inválida</span>;
+                    }
+                  })()}
                 </div>
               ))}
             </div>

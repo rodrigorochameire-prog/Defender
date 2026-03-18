@@ -768,7 +768,14 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
       {/* Item Detail Sheet — processos e demandas */}
       <ItemDetailSheet
         open={itemSheetOpen}
-        onOpenChange={setItemSheetOpen}
+        onOpenChange={(open) => {
+          setItemSheetOpen(open);
+          if (!open) {
+            setItemSheetType(null);
+            setSelectedProcessoId(null);
+            setSelectedDemandaId(null);
+          }
+        }}
         type={itemSheetType}
         processo={
           itemSheetType === "processo"
