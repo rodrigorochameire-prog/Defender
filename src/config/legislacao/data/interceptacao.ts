@@ -1,0 +1,256 @@
+import type { Legislacao } from "../types";
+
+const data: Legislacao = {
+  id: "interceptacao",
+  nome: "Interceptação de Comunicações Telefônicas",
+  nomeAbreviado: "LIT",
+  referencia: "Lei nº 9.296/1996",
+  fonte: "https://www.planalto.gov.br/ccivil_03/leis/l9296.htm",
+  dataUltimaAtualizacao: "2026-03-19",
+  estrutura: [
+    {
+      tipo: "titulo" as const,
+      nome: "Disposições",
+      filhos: [
+        {
+          tipo: "artigo" as const,
+          id: "lit:art-1",
+          numero: "1",
+          caput: "A interceptação de comunicações telefônicas, de qualquer natureza, para prova em investigação criminal e em instrução processual penal, observará o disposto nesta Lei e dependerá de ordem do juiz competente da ação principal, sob segredo de justiça.",
+          paragrafos: [
+            {
+              id: "lit:art-1-pu",
+              numero: "único",
+              texto: "O disposto nesta Lei aplica-se à interceptação do fluxo de comunicações em sistemas de informática e telemática.",
+              alineas: [],
+            },
+          ],
+          incisos: [],
+          referencias: [],
+          historico: [],
+        },
+        {
+          tipo: "artigo" as const,
+          id: "lit:art-2",
+          numero: "2",
+          caput: "Não será admitida a interceptação de comunicações telefônicas quando ocorrer qualquer das seguintes hipóteses:",
+          paragrafos: [
+            {
+              id: "lit:art-2-pu",
+              numero: "único",
+              texto: "Em qualquer hipótese deve ser descrita com clareza a situação objeto da investigação, inclusive com a indicação e qualificação dos investigados, salvo impossibilidade manifesta, devidamente justificada.",
+              alineas: [],
+            },
+          ],
+          incisos: [
+            {
+              id: "lit:art-2-inc-I",
+              numero: "I",
+              texto: "não houver indícios razoáveis da autoria ou participação em infração penal;",
+              alineas: [],
+            },
+            {
+              id: "lit:art-2-inc-II",
+              numero: "II",
+              texto: "a prova puder ser feita por outros meios disponíveis;",
+              alineas: [],
+            },
+            {
+              id: "lit:art-2-inc-III",
+              numero: "III",
+              texto: "o fato investigado constituir infração penal punida, no máximo, com pena de detenção.",
+              alineas: [],
+            },
+          ],
+          referencias: [],
+          historico: [],
+        },
+        {
+          tipo: "artigo" as const,
+          id: "lit:art-3",
+          numero: "3",
+          caput: "A interceptação das comunicações telefônicas poderá ser determinada pelo juiz, de ofício ou a requerimento:",
+          paragrafos: [],
+          incisos: [
+            {
+              id: "lit:art-3-inc-I",
+              numero: "I",
+              texto: "da autoridade policial, na investigação criminal;",
+              alineas: [],
+            },
+            {
+              id: "lit:art-3-inc-II",
+              numero: "II",
+              texto: "do representante do Ministério Público, na investigação criminal e na instrução processual penal.",
+              alineas: [],
+            },
+          ],
+          referencias: [],
+          historico: [],
+        },
+        {
+          tipo: "artigo" as const,
+          id: "lit:art-4",
+          numero: "4",
+          caput: "O pedido de interceptação de comunicação telefônica conterá a demonstração de que a sua realização é necessária à apuração de infração penal, com indicação dos meios a serem empregados.",
+          paragrafos: [
+            {
+              id: "lit:art-4-p1",
+              numero: "1",
+              texto: "Excepcionalmente, o juiz poderá admitir que o pedido seja formulado verbalmente, desde que estejam presentes os pressupostos que autorizem a interceptação, caso em que a concessão será condicionada à sua redução a termo.",
+              alineas: [],
+            },
+            {
+              id: "lit:art-4-p2",
+              numero: "2",
+              texto: "O juiz, no prazo máximo de vinte e quatro horas, decidirá sobre o pedido.",
+              alineas: [],
+            },
+          ],
+          incisos: [],
+          referencias: [],
+          historico: [],
+        },
+        {
+          tipo: "artigo" as const,
+          id: "lit:art-5",
+          numero: "5",
+          caput: "A decisão será fundamentada, sob pena de nulidade, indicando também a forma de execução da diligência, que não poderá exceder o prazo de quinze dias, renovável por igual tempo uma vez comprovada a indispensabilidade do meio de prova.",
+          paragrafos: [],
+          incisos: [],
+          referencias: [],
+          historico: [],
+        },
+        {
+          tipo: "artigo" as const,
+          id: "lit:art-6",
+          numero: "6",
+          caput: "Deferido o pedido, a autoridade policial conduzirá os procedimentos de interceptação, dando ciência ao Ministério Público, que poderá acompanhar a sua realização.",
+          paragrafos: [
+            {
+              id: "lit:art-6-p1",
+              numero: "1",
+              texto: "No caso de a diligência possibilitar a gravação da comunicação interceptada, será determinada a sua transcrição.",
+              alineas: [],
+            },
+            {
+              id: "lit:art-6-p2",
+              numero: "2",
+              texto: "Cumprida a diligência, a autoridade policial encaminhará o resultado da interceptação ao juiz, acompanhado de auto circunstanciado, que deverá conter o resumo das operações realizadas.",
+              alineas: [],
+            },
+          ],
+          incisos: [],
+          referencias: [],
+          historico: [],
+        },
+        {
+          tipo: "artigo" as const,
+          id: "lit:art-7",
+          numero: "7",
+          caput: "Para os procedimentos de interceptação de que trata esta Lei, a autoridade policial poderá requisitar serviços e técnicos especializados às concessionárias de serviço público.",
+          paragrafos: [],
+          incisos: [],
+          referencias: [],
+          historico: [],
+        },
+        {
+          tipo: "artigo" as const,
+          id: "lit:art-8",
+          numero: "8",
+          caput: "A interceptação de comunicação telefônica, de qualquer natureza, ocorrerá em autos apartados, apensados aos autos do inquérito policial ou do processo criminal, preservando-se o sigilo das diligências, gravações e transcrições respectivas.",
+          paragrafos: [
+            {
+              id: "lit:art-8-pu",
+              numero: "único",
+              texto: "A apensação somente poderá ser realizada imediatamente antes do relatório da autoridade, quando se tratar de inquérito policial (Código de Processo Penal, art. 10, § 1°) ou na conclusão do processo ao juiz para o despacho decorrente do disposto nos arts. 407, 502 ou 538 do Código de Processo Penal.",
+              alineas: [],
+            },
+          ],
+          incisos: [],
+          referencias: [],
+          historico: [],
+        },
+        {
+          tipo: "artigo" as const,
+          id: "lit:art-8-A",
+          numero: "8-A",
+          rubrica: "Captação ambiental",
+          caput: "Para investigação ou instrução criminal, poderá ser autorizada pelo juiz, a requerimento da autoridade policial ou do Ministério Público, a captação ambiental de sinais eletromagnéticos, ópticos ou acústicos, quando:",
+          paragrafos: [
+            {
+              id: "lit:art-8-A-p1",
+              numero: "1",
+              texto: "O requerimento deverá descrever circunstanciadamente o local e a forma de instalação do dispositivo de captação ambiental.",
+              alineas: [],
+            },
+            {
+              id: "lit:art-8-A-p2",
+              numero: "2",
+              texto: "A captação ambiental não poderá exceder o prazo de 15 (quinze) dias, renovável por decisão judicial por iguais períodos, se comprovada a indispensabilidade do meio de prova e quando presente atividade criminal permanente, habitual ou continuada.",
+              alineas: [],
+            },
+            {
+              id: "lit:art-8-A-p3",
+              numero: "3",
+              texto: "A captação ambiental que possibilite acesso a informações privilegiadas, como as mantidas sob sigilo legal, somente poderá ser realizada mediante decisão judicial.",
+              alineas: [],
+            },
+          ],
+          incisos: [
+            {
+              id: "lit:art-8-A-inc-I",
+              numero: "I",
+              texto: "a prova não puder ser feita por outros meios disponíveis e igualmente eficazes;",
+              alineas: [],
+            },
+            {
+              id: "lit:art-8-A-inc-II",
+              numero: "II",
+              texto: "houver elementos probatórios razoáveis de autoria e participação em infrações criminais cujas penas máximas sejam superiores a 4 (quatro) anos ou em infrações penais conexas.",
+              alineas: [],
+            },
+          ],
+          referencias: [],
+          historico: [],
+        },
+        {
+          tipo: "artigo" as const,
+          id: "lit:art-9",
+          numero: "9",
+          caput: "A gravação que não interessar à prova será inutilizada por decisão judicial, durante o inquérito, a instrução processual ou após esta, em virtude de requerimento do Ministério Público ou da parte interessada.",
+          paragrafos: [
+            {
+              id: "lit:art-9-pu",
+              numero: "único",
+              texto: "O incidente de inutilização será assistido pelo Ministério Público, sendo facultada a presença do acusado ou de seu representante legal.",
+              alineas: [],
+            },
+          ],
+          incisos: [],
+          referencias: [],
+          historico: [],
+        },
+        {
+          tipo: "artigo" as const,
+          id: "lit:art-10",
+          numero: "10",
+          caput: "Constitui crime realizar interceptação de comunicações telefônicas, de informática ou telemática, promover escuta ambiental ou quebrar segredo da Justiça, sem autorização judicial ou com objetivos não autorizados em lei: Pena: reclusão, de 2 (dois) a 4 (quatro) anos, e multa.",
+          paragrafos: [
+            {
+              id: "lit:art-10-pu",
+              numero: "único",
+              texto: "Incorre na mesma pena a autoridade judicial que determinar a execução de interceptação de comunicações telefônicas, de informática ou telemática, promover escuta ambiental ou quebrar segredo de Justiça sem que haja indícios razoáveis de autoria ou participação em infração penal; ou determinar a execução de interceptação de comunicações telefônicas, de informática ou telemática, promover escuta ambiental ou quebrar segredo de Justiça com objetivos não autorizados em lei.",
+              alineas: [],
+            },
+          ],
+          incisos: [],
+          referencias: [],
+          historico: [],
+        },
+      ],
+    },
+  ],
+};
+
+export default data;
