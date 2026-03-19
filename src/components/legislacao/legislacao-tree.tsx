@@ -9,16 +9,11 @@ import {
   ArrowRight,
   Loader2,
   BookOpen,
+  Search,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { LEGISLACOES } from "@/config/legislacao";
 import type {
@@ -105,6 +100,13 @@ function buildBreadcrumb(
 function nodePath(parentPath: string, nome: string): string {
   return parentPath ? `${parentPath}/${nome}` : nome;
 }
+
+// ==========================================
+// localStorage keys
+// ==========================================
+
+const STORAGE_KEY_ARTIGO = "legislacao:artigoId";
+const storageKeyExpanded = (leiId: string) => `legislacao:expanded:${leiId}`;
 
 // ==========================================
 // TreeNode component
@@ -218,14 +220,24 @@ function TreeNode({
 // LegislacaoTree — main component
 // ==========================================
 
-export function LegislacaoTree() {
-  const [selectedLeiId, setSelectedLeiId] = useState<string>(
-    LEGISLACOES[0]?.id ?? ""
-  );
+interface LegislacaoTreeProps {
+  selectedLeiId: string;
+  onOpenGlobalSearch: () => void;
+}
+
+export function LegislacaoTree({
+  selectedLeiId,
+  onOpenGlobalSearch,
+}: LegislacaoTreeProps) {
   const [lei, setLei] = useState<Legislacao | null>(null);
   const [loading, setLoading] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [selectedArtigoId, setSelectedArtigoId] = useState<string | null>(null);
+
+  // Inline search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isFiltering, setIsFiltering] = useState(false);
+  const [searchResults, setSearchResults] = useState<Artigo[]>([]);
 
   // Load law data when selection changes
   useEffect(() => {
@@ -233,12 +245,31 @@ export function LegislacaoTree() {
     let cancelled = false;
 
     setLoading(true);
-    setSelectedArtigoId(null);
-    setExpandedNodes(new Set());
+    setSearchQuery("");
+    setIsFiltering(false);
+
+    // Restore expanded nodes for this law
+    const savedExpanded =
+      typeof window !== "undefined"
+        ? localStorage.getItem(storageKeyExpanded(selectedLeiId))
+        : null;
+    const initialExpanded = savedExpanded
+      ? new Set<string>(JSON.parse(savedExpanded) as string[])
+      : new Set<string>();
 
     loadLegislacao(selectedLeiId).then((data) => {
       if (cancelled) return;
       setLei(data);
+      setExpandedNodes(initialExpanded);
+
+      // Restore selected article
+      const savedArtigoId =
+        typeof window !== "undefined"
+          ? localStorage.getItem(STORAGE_KEY_ARTIGO)
+          : null;
+      if (savedArtigoId) setSelectedArtigoId(savedArtigoId);
+      else setSelectedArtigoId(null);
+
       setLoading(false);
     });
 
@@ -247,11 +278,59 @@ export function LegislacaoTree() {
     };
   }, [selectedLeiId]);
 
-  // Flat list of all articles for prev/next navigation
+  // Persist selected article to localStorage
+  useEffect(() => {
+    if (selectedArtigoId && typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEY_ARTIGO, selectedArtigoId);
+    }
+  }, [selectedArtigoId]);
+
+  // Persist expanded nodes to localStorage
+  useEffect(() => {
+    if (selectedLeiId && typeof window !== "undefined") {
+      localStorage.setItem(
+        storageKeyExpanded(selectedLeiId),
+        JSON.stringify(Array.from(expandedNodes))
+      );
+    }
+  }, [expandedNodes, selectedLeiId]);
+
+  // Flat list of all articles for prev/next navigation and inline search
   const allArtigos = useMemo(
     () => (lei ? collectArtigos(lei.estrutura) : []),
     [lei]
   );
+
+  // Inline search effect
+  useEffect(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q || !lei) {
+      setIsFiltering(false);
+      setSearchResults([]);
+      return;
+    }
+    setIsFiltering(true);
+
+    // Numeric search: instant (by article number prefix)
+    const isNumeric = /^\d/.test(q);
+    if (isNumeric) {
+      setSearchResults(allArtigos.filter((a) => a.numero.startsWith(q)));
+      return;
+    }
+
+    // Text search: debounced 300ms
+    const timer = setTimeout(() => {
+      setSearchResults(
+        allArtigos.filter(
+          (a) =>
+            a.caput.toLowerCase().includes(q) ||
+            a.paragrafos.some((p) => p.texto.toLowerCase().includes(q)) ||
+            a.incisos.some((i) => i.texto.toLowerCase().includes(q))
+        )
+      );
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, lei, allArtigos]);
 
   const selectedArtigo = useMemo(
     () => allArtigos.find((a) => a.id === selectedArtigoId) ?? null,
@@ -259,7 +338,10 @@ export function LegislacaoTree() {
   );
 
   const selectedIndex = useMemo(
-    () => (selectedArtigoId ? allArtigos.findIndex((a) => a.id === selectedArtigoId) : -1),
+    () =>
+      selectedArtigoId
+        ? allArtigos.findIndex((a) => a.id === selectedArtigoId)
+        : -1,
     [allArtigos, selectedArtigoId]
   );
 
@@ -328,36 +410,79 @@ export function LegislacaoTree() {
     <div className="flex h-full overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
       {/* ===== Left Sidebar ===== */}
       <div className="flex w-72 shrink-0 flex-col border-r border-zinc-200 dark:border-zinc-800">
-        {/* Law selector */}
-        <div className="border-b border-zinc-200 p-3 dark:border-zinc-800">
-          <Select value={selectedLeiId} onValueChange={setSelectedLeiId}>
-            <SelectTrigger className="h-9 text-xs">
-              <SelectValue placeholder="Selecione uma lei" />
-            </SelectTrigger>
-            <SelectContent>
-              {LEGISLACOES.map((l) => (
-                <SelectItem key={l.id} value={l.id} className="text-xs">
-                  <span className="flex items-center gap-2">
-                    <span
-                      className="inline-block h-2 w-2 rounded-full"
-                      style={{ backgroundColor: l.cor }}
-                    />
-                    {l.nomeAbreviado} - {l.nome}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Search inline */}
+        <div className="border-b border-zinc-200 dark:border-zinc-800 p-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+            <input
+              type="text"
+              placeholder="Artigo ou texto..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 pl-8 pr-7 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:focus:ring-emerald-400"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  setIsFiltering(false);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer"
+              >
+                <X className="h-3 w-3 text-zinc-400 hover:text-zinc-600" />
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={onOpenGlobalSearch}
+            className="mt-1.5 text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer w-full text-right"
+          >
+            Buscar em todas as leis →
+          </button>
         </div>
 
-        {/* Tree */}
+        {/* Tree or filtered results */}
         <ScrollArea className="flex-1">
           <div className="p-2">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
               </div>
+            ) : isFiltering ? (
+              /* Filtered results list */
+              searchResults.length === 0 ? (
+                <p className="text-center text-xs text-zinc-400 py-4">
+                  Nenhum artigo encontrado
+                </p>
+              ) : (
+                <div className="space-y-0.5">
+                  {searchResults.map((artigo) => (
+                    <button
+                      key={artigo.id}
+                      type="button"
+                      onClick={() => handleSelectArtigo(artigo.id)}
+                      className={cn(
+                        "flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-xs transition-colors cursor-pointer",
+                        selectedArtigoId === artigo.id
+                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                          : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                      )}
+                    >
+                      <FileText className="h-3 w-3 shrink-0 text-zinc-400" />
+                      <span className="font-medium">Art. {artigo.numero}</span>
+                      {artigo.rubrica && (
+                        <span className="truncate text-[10px] text-zinc-400">
+                          {artigo.rubrica}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )
             ) : lei && lei.estrutura.length > 0 ? (
+              /* Hierarchical tree */
               <div className="space-y-0.5">
                 {lei.estrutura.map((node, i) => (
                   <TreeNode
@@ -378,7 +503,7 @@ export function LegislacaoTree() {
               </p>
             ) : !loading ? (
               <p className="py-8 text-center text-xs text-zinc-400">
-                Lei nao encontrada
+                Lei não encontrada
               </p>
             ) : null}
           </div>
@@ -450,7 +575,7 @@ export function LegislacaoTree() {
                 disabled={selectedIndex >= allArtigos.length - 1}
                 onClick={goToNext}
               >
-                Proximo
+                Próximo
                 <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             </div>

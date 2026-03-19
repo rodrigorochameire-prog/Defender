@@ -10,6 +10,7 @@ import { LegislacaoTabs } from "@/components/legislacao/legislacao-tabs";
 import { LegislacaoTree } from "@/components/legislacao/legislacao-tree";
 import { DestaquesSheet } from "@/components/legislacao/destaques-sheet";
 import { UpdateModal } from "@/components/legislacao/update-modal";
+import { LEGISLACOES } from "@/config/legislacao";
 
 type NavigationMode = "search" | "tabs" | "tree";
 
@@ -109,7 +110,10 @@ export default function LegislacaoPage() {
         )}
         {mode === "tree" && (
           <div className="h-[calc(100vh-220px)]">
-            <LegislacaoTree />
+            <LegislacaoTree
+              selectedLeiId={selectedLeiId ?? (LEGISLACOES[0]?.id ?? "")}
+              onOpenGlobalSearch={() => setMode("search")}
+            />
           </div>
         )}
       </div>
