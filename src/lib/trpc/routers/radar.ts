@@ -297,26 +297,34 @@ export const radarRouter = router({
         .groupBy(sql`to_char(${radarNoticias.createdAt}, 'YYYY-MM')`, radarNoticias.tipoCrime)
         .orderBy(sql`to_char(${radarNoticias.createdAt}, 'YYYY-MM')`);
 
-      const confirmadas = await db.select({ count: count() })
-        .from(radarNoticias)
-        .where(gte(radarNoticias.relevanciaScore, 85))
-        .then(r => r[0]?.count ?? 0);
+      // Wrap relevanciaScore queries in try/catch — column may not exist in all environments
+      let confirmadas: number | string = 0;
+      let provaveis: number | string = 0;
+      let possiveis: number | string = 0;
+      try {
+        confirmadas = await db.select({ count: count() })
+          .from(radarNoticias)
+          .where(gte(radarNoticias.relevanciaScore, 85))
+          .then(r => r[0]?.count ?? 0);
 
-      const provaveis = await db.select({ count: count() })
-        .from(radarNoticias)
-        .where(and(
-          gte(radarNoticias.relevanciaScore, 60),
-          lt(radarNoticias.relevanciaScore, 85)
-        ))
-        .then(r => r[0]?.count ?? 0);
+        provaveis = await db.select({ count: count() })
+          .from(radarNoticias)
+          .where(and(
+            gte(radarNoticias.relevanciaScore, 60),
+            lt(radarNoticias.relevanciaScore, 85)
+          ))
+          .then(r => r[0]?.count ?? 0);
 
-      const possiveis = await db.select({ count: count() })
-        .from(radarNoticias)
-        .where(and(
-          gte(radarNoticias.relevanciaScore, 35),
-          lt(radarNoticias.relevanciaScore, 60)
-        ))
-        .then(r => r[0]?.count ?? 0);
+        possiveis = await db.select({ count: count() })
+          .from(radarNoticias)
+          .where(and(
+            gte(radarNoticias.relevanciaScore, 35),
+            lt(radarNoticias.relevanciaScore, 60)
+          ))
+          .then(r => r[0]?.count ?? 0);
+      } catch {
+        // relevancia_score column not yet migrated — return zeros for these sub-counts
+      }
 
       return {
         total: Number(totalResult?.total || 0),

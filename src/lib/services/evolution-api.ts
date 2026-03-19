@@ -611,6 +611,10 @@ export async function markAsRead(
   });
 
   if (!response.ok) {
+    // Endpoint removido/renomeado em versões mais recentes da Evolution API (não-crítico)
+    if (response.status === 404) {
+      return { read: false };
+    }
     const error = await response.text();
     throw new Error(`Erro ao marcar como lido: ${error}`);
   }
@@ -1189,6 +1193,10 @@ export class EvolutionApiClient {
     });
 
     if (!response.ok) {
+      // Endpoint removido/renomeado em versões mais recentes da Evolution API (não-crítico)
+      if (response.status === 404) {
+        return { read: false };
+      }
       const error = await response.text();
       throw new Error(`Erro ao marcar como lido: ${error}`);
     }

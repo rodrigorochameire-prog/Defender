@@ -724,8 +724,8 @@ export const whatsappChatRouter = router({
           instanceName: contact.config.instanceName,
           apiKey: contact.config.apiKey,
         });
-      } catch (error) {
-        console.error("Erro ao marcar como lido na Evolution API:", error);
+      } catch {
+        // Falha ao marcar como lido é não-crítica — ignora silenciosamente
       }
 
       return { success: true };

@@ -63,6 +63,13 @@ class RadarPipelineOutput(BaseModel):
     message: str = ""
 
 
+class RadarScoreBackfillOutput(BaseModel):
+    """Output do backfill de relevancia_score."""
+    success: bool
+    total_atualizadas: int = 0
+    message: str = ""
+
+
 class RadarGeocodeInput(BaseModel):
     """Input para geocoding."""
     limit: int = Field(20, ge=1, le=100)
@@ -266,3 +273,101 @@ async def radar_pipeline() -> RadarPipelineOutput:
     )
 
     return result
+
+
+@router.post("/radar/score/backfill", response_model=RadarScoreBackfillOutput)
+async def radar_score_backfill() -> RadarScoreBackfillOutput:
+    """
+    Recalcula relevancia_score para todas as notícias com score = 0
+    e status 'extracted', 'matched' ou 'analyzed'.
+
+    Útil para preencher scores em itens que foram extraídos antes da
+    implementação do campo de score.
+    """
+    logger.info("Iniciando backfill de relevancia_score")
+
+    try:
+        from services.supabase_service import get_supabase_service
+        from services.radar_extraction_service import get_radar_extraction_service
+        from datetime import datetime, timezone
+
+        supa = get_supabase_service()
+        client_db = supa._get_client()
+        extractor = get_radar_extraction_service()
+
+        # Buscar itens com score zerado em status pós-extração
+        result = (
+            client_db.table("radar_noticias")
+            .select("id, tipo_crime, bairro, envolvidos, delegacia, resumo_ia")
+            .in_("enrichment_status", ["extracted", "matched", "analyzed"])
+            .eq("relevancia_score", 0)
+            .execute()
+        )
+
+        noticias = result.data or []
+        if not noticias:
+            logger.info("Nenhum item com relevancia_score=0 encontrado")
+            return RadarScoreBackfillOutput(
+                success=True,
+                total_atualizadas=0,
+                message="Nenhum item precisava de atualização",
+            )
+
+        logger.info("Backfill: %d itens com relevancia_score=0", len(noticias))
+
+        updated = 0
+        errors = 0
+
+        for noticia in noticias:
+            try:
+                # Montar dict compatível com _calculate_relevancia_score
+                # usando os campos já extraídos do banco
+                envolvidos_raw = noticia.get("envolvidos")
+                if isinstance(envolvidos_raw, str):
+                    import json as _json
+                    try:
+                        envolvidos_parsed = _json.loads(envolvidos_raw)
+                    except Exception:
+                        envolvidos_parsed = []
+                else:
+                    envolvidos_parsed = envolvidos_raw or []
+
+                extracted_data = {
+                    "tipo_crime": noticia.get("tipo_crime"),
+                    "bairro": noticia.get("bairro"),
+                    "envolvidos": envolvidos_parsed,
+                    "delegacia": noticia.get("delegacia"),
+                    "resumo_ia": noticia.get("resumo_ia"),
+                }
+
+                score = extractor._calculate_relevancia_score(extracted_data)
+
+                client_db.table("radar_noticias").update({
+                    "relevancia_score": score,
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                }).eq("id", noticia["id"]).execute()
+
+                updated += 1
+
+            except Exception as e:
+                logger.error("Backfill: erro ao atualizar id=%d: %s", noticia.get("id"), str(e))
+                errors += 1
+                continue
+
+        msg = f"Backfill concluído: {updated} itens atualizados"
+        if errors:
+            msg += f", {errors} erros"
+        logger.info(msg)
+
+        return RadarScoreBackfillOutput(
+            success=True,
+            total_atualizadas=updated,
+            message=msg,
+        )
+
+    except Exception as e:
+        logger.error("Backfill score falhou: %s", str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Backfill falhou: {str(e)}",
+        )

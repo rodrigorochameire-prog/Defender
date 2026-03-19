@@ -205,6 +205,9 @@ class RadarExtractionService:
             if confianca_local is not None:
                 update_data["confianca_local"] = int(confianca_local)
 
+            # Calcular relevancia_score após extração completa
+            update_data["relevancia_score"] = self._calculate_relevancia_score(update_data)
+
             return update_data
 
         except Exception as e:
@@ -213,6 +216,70 @@ class RadarExtractionService:
             if "not configured" in str(e) or "API_KEY" in str(e):
                 raise
             return {"enrichment_status": "pending", "_extraction_error": str(e)}  # Retry later with error info
+
+    def _calculate_relevancia_score(self, update_data: dict[str, Any]) -> int:
+        """
+        Calcula relevancia_score (0–100) com base nos dados extraídos.
+
+        Base por tipo de crime:
+          homicidio           → 100
+          tentativa_homicidio → 90
+          trafico             → 85
+          violencia_domestica → 80
+          sexual              → 80
+          roubo               → 70
+          porte_arma          → 65
+          lesao_corporal      → 60
+          furto               → 50
+          estelionato         → 45
+          outros              → 30
+          NULL                → 20
+
+        Bônus:
+          +15 se bairro preenchido (crime localizado em Camaçari)
+          +10 se envolvidos tem >= 1 pessoa
+          +5  se delegacia preenchida
+
+        Penalidades:
+          -10 se resumo_ia é null (extração falhou)
+
+        Resultado clampado entre 0 e 100.
+        """
+        CRIME_BASE_SCORES: dict[str, int] = {
+            "homicidio": 100,
+            "tentativa_homicidio": 90,
+            "trafico": 85,
+            "violencia_domestica": 80,
+            "sexual": 80,
+            "roubo": 70,
+            "porte_arma": 65,
+            "lesao_corporal": 60,
+            "furto": 50,
+            "estelionato": 45,
+            "outros": 30,
+        }
+
+        tipo_crime = update_data.get("tipo_crime")
+        score = CRIME_BASE_SCORES.get(tipo_crime or "", 20)
+
+        # Bônus: bairro identificado (+15)
+        if update_data.get("bairro"):
+            score += 15
+
+        # Bônus: ao menos 1 envolvido (+10)
+        envolvidos = update_data.get("envolvidos")
+        if envolvidos and isinstance(envolvidos, list) and len(envolvidos) >= 1:
+            score += 10
+
+        # Bônus: delegacia identificada (+5)
+        if update_data.get("delegacia"):
+            score += 5
+
+        # Penalidade: sem resumo_ia (-10)
+        if not update_data.get("resumo_ia"):
+            score -= 10
+
+        return max(0, min(100, score))
 
     def _increment_error_count(self, noticia_id: int, error_msg: str, client_db) -> None:
         """Incrementa error_count e seta last_error. Se atingir 3 erros, marca como 'failed'."""
@@ -364,30 +431,64 @@ class RadarExtractionService:
 
         return processed
 
-    async def geocode_batch(self, limit: int = 20) -> int:
-        """Geocodifica notícias que têm bairro mas não têm lat/lng — versão paralela."""
+    async def geocode_batch(self, limit: int = 50) -> int:
+        """
+        Geocodifica notícias sem coordenadas.
+
+        Estratégia em duas passagens:
+          1. Notícias com bairro: Nominatim → fallback centroide
+          2. Notícias sem bairro mas com logradouro: Nominatim only
+
+        Processa TODOS os itens com enrichment_status IN ('extracted', 'matched', 'analyzed')
+        e latitude IS NULL — não apenas os recém-extraídos — para garantir cobertura total.
+        """
         import asyncio
         from services.supabase_service import get_supabase_service
 
         supa = get_supabase_service()
         client_db = supa._get_client()
 
-        result = (
+        # Passagem 1: itens COM bairro preenchido (melhor cobertura via centroide)
+        result_with_bairro = (
             client_db.table("radar_noticias")
             .select("id, bairro, logradouro")
-            .eq("enrichment_status", "extracted")
+            .in_("enrichment_status", ["extracted", "matched", "analyzed"])
             .is_("latitude", "null")
             .not_.is_("bairro", "null")
+            .order("created_at", desc=False)
             .limit(limit)
             .execute()
         )
 
-        noticias = result.data or []
-        if not noticias:
+        # Passagem 2: itens SEM bairro mas COM logradouro (geocoding por logradouro only)
+        result_without_bairro = (
+            client_db.table("radar_noticias")
+            .select("id, bairro, logradouro")
+            .in_("enrichment_status", ["extracted", "matched", "analyzed"])
+            .is_("latitude", "null")
+            .is_("bairro", "null")
+            .not_.is_("logradouro", "null")
+            .order("created_at", desc=False)
+            .limit(limit)
+            .execute()
+        )
+
+        noticias_com_bairro = result_with_bairro.data or []
+        noticias_sem_bairro = result_without_bairro.data or []
+        all_noticias = noticias_com_bairro + noticias_sem_bairro
+
+        if not all_noticias:
+            logger.info("Nenhuma notícia pendente para geocoding")
             return 0
 
-        # Semáforo: Nominatim pede no máximo 1 req/s, mas vamos usar 3 paralelos
-        # com pequeno delay para ser um bom cidadão
+        logger.info(
+            "Geocoding: %d com bairro + %d sem bairro (só logradouro) = %d total",
+            len(noticias_com_bairro),
+            len(noticias_sem_bairro),
+            len(all_noticias),
+        )
+
+        # Semáforo: Nominatim tolera ~1 req/s por IP; 3 paralelas com delay de 0.4s
         sem = asyncio.Semaphore(3)
         geocoded = 0
 
@@ -398,34 +499,43 @@ class RadarExtractionService:
                 bairro = noticia.get("bairro", "") or ""
                 logradouro = noticia.get("logradouro", "") or ""
 
-                # 1. Tentar Nominatim primeiro
+                # 1. Tentar Nominatim (funciona com bairro ou logradouro)
                 nominatim_ok = False
-                try:
-                    query = f"{logradouro}, {bairro}" if logradouro else bairro
-                    query += ", Camaçari, Bahia, Brasil"
+                if bairro or logradouro:
+                    try:
+                        if logradouro and bairro:
+                            query = f"{logradouro}, {bairro}, Camaçari, Bahia, Brasil"
+                        elif bairro:
+                            query = f"{bairro}, Camaçari, Bahia, Brasil"
+                        else:
+                            query = f"{logradouro}, Camaçari, Bahia, Brasil"
 
-                    async with httpx.AsyncClient(timeout=10.0) as http:
-                        resp = await http.get(
-                            "https://nominatim.openstreetmap.org/search",
-                            params={"q": query, "format": "json", "limit": 1, "countrycodes": "br"},
-                            headers={"User-Agent": "OMBUDS-Radar/1.0"},
-                        )
+                        async with httpx.AsyncClient(timeout=10.0) as http:
+                            resp = await http.get(
+                                "https://nominatim.openstreetmap.org/search",
+                                params={"q": query, "format": "json", "limit": 1, "countrycodes": "br"},
+                                headers={"User-Agent": "OMBUDS-Radar/1.0 (ombuds.vercel.app)"},
+                            )
 
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        if data:
-                            lat = float(data[0]["lat"])
-                            lon = float(data[0]["lon"])
-                            client_db.table("radar_noticias").update({
-                                "latitude": lat, "longitude": lon,
-                            }).eq("id", noticia["id"]).execute()
-                            geocoded += 1
-                            nominatim_ok = True
-                            return True
-                except Exception as e:
-                    logger.debug("Nominatim falhou para id=%d: %s", noticia["id"], str(e))
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            if data:
+                                lat = float(data[0]["lat"])
+                                lon = float(data[0]["lon"])
+                                client_db.table("radar_noticias").update({
+                                    "latitude": lat, "longitude": lon,
+                                }).eq("id", noticia["id"]).execute()
+                                geocoded += 1
+                                nominatim_ok = True
+                                logger.debug(
+                                    "Nominatim | id=%d bairro='%s' logradouro='%s' → %.4f,%.4f",
+                                    noticia["id"], bairro, logradouro, lat, lon,
+                                )
+                                return True
+                    except Exception as e:
+                        logger.debug("Nominatim falhou para id=%d: %s", noticia["id"], str(e))
 
-                # 2. Fallback: centroide do bairro se Nominatim não resolveu
+                # 2. Fallback: centroide do bairro (apenas se bairro disponível)
                 if not nominatim_ok and bairro:
                     centroid = self._get_centroid(bairro)
                     if centroid:
@@ -442,8 +552,8 @@ class RadarExtractionService:
 
                 return False
 
-        await asyncio.gather(*[_geocode_one(n) for n in noticias], return_exceptions=True)
-        logger.info("Geocodificadas %d/%d notícias", geocoded, len(noticias))
+        await asyncio.gather(*[_geocode_one(n) for n in all_noticias], return_exceptions=True)
+        logger.info("Geocodificadas %d/%d notícias", geocoded, len(all_noticias))
         return geocoded
 
     def _get_centroid(self, bairro: str) -> tuple[float, float] | None:

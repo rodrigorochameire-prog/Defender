@@ -29,18 +29,24 @@ class RadarMatchingService:
         self.settings = get_settings()
 
     async def match_batch(self, limit: int = 20) -> int:
-        """Processa batch de notícias extraídas para matching."""
+        """
+        Processa batch de notícias extraídas para matching.
+
+        Lógica de status:
+          - Notícias com envolvidos e matches encontrados → "matched"
+          - Notícias com envolvidos mas sem matches       → "analyzed"
+          - Notícias sem envolvidos (nada a matchear)     → "analyzed" diretamente
+        """
         from services.supabase_service import get_supabase_service
 
         supa = get_supabase_service()
         client_db = supa._get_client()
 
-        # Buscar notícias com status 'extracted' (já têm envolvidos)
+        # Buscar TODAS as notícias com status 'extracted' — com ou sem envolvidos
         result = (
             client_db.table("radar_noticias")
             .select("id, titulo, tipo_crime, bairro, data_fato, envolvidos, created_at")
             .eq("enrichment_status", "extracted")
-            .not_.is_("envolvidos", "null")
             .order("created_at", desc=False)
             .limit(limit)
             .execute()
@@ -55,23 +61,42 @@ class RadarMatchingService:
 
         for noticia in noticias:
             try:
-                matches = await self._match_noticia(noticia, client_db)
-                total_matches += len(matches)
+                envolvidos_raw = noticia.get("envolvidos")
+                has_envolvidos = bool(envolvidos_raw)
 
-                # Atualizar status
-                new_status = "matched" if matches else "extracted"
+                if has_envolvidos:
+                    # Tentar matching com assistidos
+                    matches = await self._match_noticia(noticia, client_db)
+                    total_matches += len(matches)
+
+                    if matches:
+                        new_status = "matched"
+                        logger.info(
+                            "Matched | noticia_id=%d matches=%d melhor_score=%d",
+                            noticia["id"],
+                            len(matches),
+                            max(m["score_confianca"] for m in matches),
+                        )
+                    else:
+                        # Envolvidos presentes mas nenhum assistido encontrado → pipeline completo
+                        new_status = "analyzed"
+                        logger.debug(
+                            "Sem matches | noticia_id=%d → analyzed",
+                            noticia["id"],
+                        )
+                else:
+                    # Sem envolvidos — nada a matchear, marcar como analisado
+                    new_status = "analyzed"
+                    logger.debug(
+                        "Sem envolvidos | noticia_id=%d → analyzed",
+                        noticia["id"],
+                    )
+
                 client_db.table("radar_noticias").update({
                     "enrichment_status": new_status,
                     "updated_at": datetime.now(timezone.utc).isoformat(),
                 }).eq("id", noticia["id"]).execute()
 
-                if matches:
-                    logger.info(
-                        "Matched | noticia_id=%d matches=%d melhor_score=%d",
-                        noticia["id"],
-                        len(matches),
-                        max(m["score_confianca"] for m in matches),
-                    )
             except Exception as e:
                 logger.error("Erro no matching notícia id=%d: %s", noticia["id"], str(e))
                 continue

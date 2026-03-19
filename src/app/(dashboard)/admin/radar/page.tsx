@@ -76,11 +76,11 @@ export default function RadarCriminalPage() {
   const healthPending = Number(healthData?.pending ?? 0);
 
   // Estatísticas gerais
-  const { data: statsData } = trpc.radar.stats.useQuery({ periodo: "total" });
+  const { data: statsData, isLoading: statsLoading, isError: statsError } = trpc.radar.stats.useQuery({ periodo: "total" });
   const totalNoticias = (statsData as { total?: number } | undefined)?.total ?? 0;
 
   // Última coleta (fonte mais recente)
-  const { data: fontes } = trpc.radar.fontesList.useQuery();
+  const { data: fontes, isLoading: fontesLoading, isError: fontesError } = trpc.radar.fontesList.useQuery();
   const ultimaColeta = fontes
     ?.map((f) => f.ultimaColeta)
     .filter(Boolean)
@@ -147,7 +147,9 @@ export default function RadarCriminalPage() {
           {/* Total de notícias */}
           <div className="flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1 text-xs text-zinc-600 dark:text-zinc-400">
             <Newspaper className="h-3 w-3 text-zinc-400" />
-            <span className="font-semibold text-zinc-800 dark:text-zinc-200">{totalNoticias}</span>
+            <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+              {statsLoading || statsError ? "—" : totalNoticias}
+            </span>
             <span>notícias</span>
           </div>
 
@@ -177,7 +179,9 @@ export default function RadarCriminalPage() {
           {/* Fontes ativas */}
           <div className="flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1 text-xs text-zinc-600 dark:text-zinc-400">
             <Globe className="h-3 w-3 text-zinc-400" />
-            <span className="font-semibold text-zinc-800 dark:text-zinc-200">{fontesAtivas}</span>
+            <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+              {fontesLoading || fontesError ? "—" : fontesAtivas}
+            </span>
             <span>fontes ativas</span>
           </div>
 
