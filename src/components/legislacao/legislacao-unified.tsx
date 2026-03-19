@@ -10,6 +10,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { LEGISLACOES } from "@/config/legislacao";
 
 const STORAGE_KEY_LEI = "legislacao:leiId";
@@ -33,6 +39,7 @@ export function LegislacaoUnified() {
   const [selectedLeiId, setSelectedLeiId] = useState<string>(getInitialLeiId);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(getInitialCollapsed);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+  const [mobileLawSheetOpen, setMobileLawSheetOpen] = useState(false);
 
   const handleSelectLei = useCallback((id: string) => {
     setSelectedLeiId(id);
@@ -58,18 +65,21 @@ export function LegislacaoUnified() {
 
   return (
     <div className="flex h-full overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-      {/* Coluna 1 — Lei Selector */}
-      <LeiSelectorPanel
-        selectedLeiId={selectedLeiId}
-        onSelect={handleSelectLei}
-        collapsed={sidebarCollapsed}
-        onToggleCollapse={handleToggleCollapse}
-      />
+      {/* Coluna 1 — Lei Selector (large desktop only) */}
+      <div className="hidden lg:flex">
+        <LeiSelectorPanel
+          selectedLeiId={selectedLeiId}
+          onSelect={handleSelectLei}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={handleToggleCollapse}
+        />
+      </div>
 
       {/* Colunas 2 + 3 — Árvore + Artigo */}
       <LegislacaoTree
         selectedLeiId={selectedLeiId}
         onOpenGlobalSearch={() => setGlobalSearchOpen(true)}
+        onOpenLawSelector={() => setMobileLawSheetOpen(true)}
       />
 
       {/* Modal de busca global */}
@@ -83,6 +93,25 @@ export function LegislacaoUnified() {
           <LegislacaoSearch onResultClick={handleSearchResultClick} />
         </DialogContent>
       </Dialog>
+
+      {/* Mobile — Lei Selector Sheet */}
+      <Sheet open={mobileLawSheetOpen} onOpenChange={setMobileLawSheetOpen}>
+        <SheetContent side="left" className="w-64 p-0">
+          <SheetHeader className="border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
+            <SheetTitle className="text-sm">Legislação</SheetTitle>
+          </SheetHeader>
+          <LeiSelectorPanel
+            selectedLeiId={selectedLeiId}
+            onSelect={(id) => {
+              handleSelectLei(id);
+              setMobileLawSheetOpen(false);
+            }}
+            collapsed={false}
+            onToggleCollapse={() => {}}
+            hideToggle
+          />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

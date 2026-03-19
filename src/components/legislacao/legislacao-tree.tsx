@@ -223,11 +223,13 @@ function TreeNode({
 interface LegislacaoTreeProps {
   selectedLeiId: string;
   onOpenGlobalSearch: () => void;
+  onOpenLawSelector?: () => void;
 }
 
 export function LegislacaoTree({
   selectedLeiId,
   onOpenGlobalSearch,
+  onOpenLawSelector,
 }: LegislacaoTreeProps) {
   const [lei, setLei] = useState<Legislacao | null>(null);
   const [loading, setLoading] = useState(false);
@@ -407,11 +409,36 @@ export function LegislacaoTree({
   }, [selectedIndex, allArtigos, handleSelectArtigo]);
 
   return (
-    <div className="flex h-full overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-      {/* ===== Left Sidebar ===== */}
-      <div className="flex w-72 shrink-0 flex-col border-r border-zinc-200 dark:border-zinc-800">
+    <div className="flex h-full flex-1 overflow-hidden">
+      {/* ===== Left Sidebar (Tree) ===== */}
+      <div
+        className={cn(
+          "flex flex-col border-r border-zinc-200 dark:border-zinc-800 shrink-0 transition-[width] duration-300 ease-in-out overflow-hidden",
+          // Mobile: full width when no article, hidden when article selected
+          // Desktop: shrinks slightly when article is open (focus effect)
+          selectedArtigo
+            ? "hidden md:flex md:w-56 lg:w-52"
+            : "flex w-full md:w-64 lg:w-[17rem]"
+        )}
+      >
         {/* Search inline */}
         <div className="border-b border-zinc-200 dark:border-zinc-800 p-2">
+          {/* Mobile header: law selector button + search */}
+          {onOpenLawSelector && (
+            <div className="flex items-center gap-2 mb-2 lg:hidden">
+              <button
+                type="button"
+                onClick={onOpenLawSelector}
+                className="flex items-center gap-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-xs text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                <span className="font-medium text-[11px]">Leis</span>
+                <ChevronRight className="h-3 w-3" />
+              </button>
+              <span className="text-[10px] text-zinc-400">
+                {LEGISLACOES.find((l) => l.id === selectedLeiId)?.nomeAbreviado ?? ""}
+              </span>
+            </div>
+          )}
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
             <input
@@ -518,11 +545,25 @@ export function LegislacaoTree({
       </div>
 
       {/* ===== Right Content Panel ===== */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div
+        className={cn(
+          "flex-1 flex-col overflow-hidden",
+          // Mobile: only show when article is selected; desktop: always visible
+          selectedArtigo ? "flex" : "hidden md:flex"
+        )}
+      >
         {selectedArtigo && leiMeta ? (
           <>
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-1 border-b border-zinc-200 px-4 py-2 dark:border-zinc-800">
+            {/* Breadcrumb + mobile back button */}
+            <div className="flex items-center gap-1 border-b border-zinc-200 px-3 py-2 dark:border-zinc-800 md:px-4">
+              {/* Mobile back button */}
+              <button
+                type="button"
+                onClick={() => setSelectedArtigoId(null)}
+                className="mr-1 flex shrink-0 items-center gap-1 rounded-md p-1 text-xs text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 transition-colors cursor-pointer md:hidden"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+              </button>
               {breadcrumb.map((segment, i) => (
                 <span key={i} className="flex items-center gap-1">
                   {i > 0 && (

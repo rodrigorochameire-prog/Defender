@@ -16,6 +16,7 @@ interface LeiSelectorPanelProps {
   onSelect: (id: string) => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
+  hideToggle?: boolean;
 }
 
 export function LeiSelectorPanel({
@@ -23,6 +24,7 @@ export function LeiSelectorPanel({
   onSelect,
   collapsed,
   onToggleCollapse,
+  hideToggle = false,
 }: LeiSelectorPanelProps) {
   return (
     <div
@@ -32,20 +34,22 @@ export function LeiSelectorPanel({
       )}
     >
       {/* Toggle button */}
-      <div className="flex items-center justify-end border-b border-zinc-200 dark:border-zinc-800 p-1.5">
-        <button
-          type="button"
-          onClick={onToggleCollapse}
-          className="rounded-md p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-          title={collapsed ? "Expandir" : "Recolher"}
-        >
-          {collapsed ? (
-            <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
-          ) : (
-            <ChevronLeft className="h-3.5 w-3.5 text-zinc-400" />
-          )}
-        </button>
-      </div>
+      {!hideToggle && (
+        <div className="flex items-center justify-end border-b border-zinc-200 dark:border-zinc-800 p-1.5">
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            className="rounded-md p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            title={collapsed ? "Expandir" : "Recolher"}
+          >
+            {collapsed ? (
+              <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
+            ) : (
+              <ChevronLeft className="h-3.5 w-3.5 text-zinc-400" />
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Law list */}
       <ScrollArea className="flex-1">
