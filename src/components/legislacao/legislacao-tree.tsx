@@ -11,6 +11,7 @@ import {
   BookOpen,
   Search,
   X,
+  ChevronsDownUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -396,6 +397,10 @@ export function LegislacaoTree({
     [lei]
   );
 
+  const handleCollapseAll = useCallback(() => {
+    setExpandedNodes(new Set());
+  }, []);
+
   const goToPrev = useCallback(() => {
     if (selectedIndex > 0) {
       handleSelectArtigo(allArtigos[selectedIndex - 1].id);
@@ -461,13 +466,26 @@ export function LegislacaoTree({
               </button>
             )}
           </div>
-          <button
-            type="button"
-            onClick={onOpenGlobalSearch}
-            className="mt-1.5 text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer w-full text-right"
-          >
-            Buscar em todas as leis →
-          </button>
+          <div className="mt-1.5 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={onOpenGlobalSearch}
+              className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+            >
+              Buscar em todas as leis →
+            </button>
+            {expandedNodes.size > 0 && (
+              <button
+                type="button"
+                onClick={handleCollapseAll}
+                title="Colapsar tudo"
+                className="flex items-center gap-0.5 text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer transition-colors"
+              >
+                <ChevronsDownUp className="h-3 w-3" />
+                Colapsar
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Tree or filtered results */}

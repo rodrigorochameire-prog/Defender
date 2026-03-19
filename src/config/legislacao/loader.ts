@@ -1,19 +1,10 @@
 import type { Legislacao } from "./types";
-
-const cache = new Map<string, Legislacao>();
+import { LEGISLACAO_REGISTRY } from "./registry";
 
 export async function loadLegislacao(id: string): Promise<Legislacao | null> {
-  if (cache.has(id)) return cache.get(id)!;
-  try {
-    const mod = await import(`./data/${id}`);
-    const data = mod.default as Legislacao;
-    cache.set(id, data);
-    return data;
-  } catch {
-    return null;
-  }
+  return LEGISLACAO_REGISTRY[id] ?? null;
 }
 
 export function clearCache() {
-  cache.clear();
+  // Noop — registro estático não precisa de cache
 }
