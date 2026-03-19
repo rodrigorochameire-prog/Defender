@@ -100,12 +100,11 @@ export function LeiSelectorPanel({
                   )}
                 >
                   <span
-                    className="h-2 w-2 rounded-full shrink-0"
-                    style={{ backgroundColor: lei.cor }}
-                  />
-                  <span
-                    className="font-semibold shrink-0 text-[11px]"
-                    style={{ color: isSelected ? lei.cor : undefined }}
+                    className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold leading-none"
+                    style={{
+                      backgroundColor: `${lei.cor}18`,
+                      color: lei.cor,
+                    }}
                   >
                     {lei.nomeAbreviado}
                   </span>
