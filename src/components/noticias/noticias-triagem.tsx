@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { X, Check, CheckCircle2, XCircle, ChevronDown, Zap, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,45 +15,6 @@ type AnaliseIA = {
   impactoPratico: string;
 };
 
-const FONTE_CORES: Record<string, string> = {
-  "conjur": "#dc2626",
-  "stj-noticias": "#1d4ed8",
-  "stj-not-cias": "#1d4ed8",
-  "stj-notícias": "#1d4ed8",
-  "ibccrim": "#7c3aed",
-  "dizer-o-direito": "#059669",
-  "tudo-de-penal": "#b45309",
-  "canal-ciencias-criminais": "#7c2d12",
-  "canal-ciências-criminais": "#7c2d12",
-  "stf-noticias": "#dc2626",
-  "stf-notícias": "#dc2626",
-  "jota": "#0f172a",
-  "migalhas": "#e07b00",
-  "emporio-do-direito": "#4338ca",
-  "empório-do-direito": "#4338ca",
-  "trf1": "#1e40af",
-  "trf5": "#1e3a8a",
-  "dpeba": "#065f46",
-  "tjba": "#1e3a8a",
-};
-
-const LABEL_FONTE: Record<string, string> = {
-  "conjur": "ConJur",
-  "stj-noticias": "STJ",
-  "ibccrim": "IBCCRIM",
-  "dizer-o-direito": "Dizer o Direito",
-  "stf-noticias": "STF",
-  "jota": "JOTA",
-  "migalhas": "Migalhas",
-  "canal-ciencias-criminais": "Canal CC",
-  "canal-ciências-criminais": "Canal CC",
-  "emporio-do-direito": "Empório",
-  "empório-do-direito": "Empório",
-  "trf1": "TRF-1",
-  "trf5": "TRF-5",
-  "dpeba": "DPEBA",
-  "tjba": "TJBA",
-};
 
 type Props = {
   onClose: () => void;
@@ -67,7 +28,17 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
   const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   const { data: pendentes, isLoading } = trpc.noticias.listPendentes.useQuery();
+  const { data: fontes = [] } = trpc.noticias.listFontes.useQuery();
   const utils = trpc.useUtils();
+
+  const fonteIdToCorMap = useMemo(
+    () => Object.fromEntries(fontes.map(f => [f.id, f.cor ?? "#71717a"])),
+    [fontes]
+  );
+  const fonteIdToNomeMap = useMemo(
+    () => Object.fromEntries(fontes.map(f => [f.id, f.nome])),
+    [fontes]
+  );
 
   const filteredItems = (pendentes ?? []).filter(item => !removingIds.has(item.id));
 
@@ -194,8 +165,8 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-6 py-4 space-y-2">
           {filteredItems.map((item, index) => {
-            const corFonte = FONTE_CORES[item.fonte.toLowerCase()] ?? "#71717a";
-            const nomeFonte = LABEL_FONTE[item.fonte.toLowerCase()] ?? item.fonte.replace(/-/g, " ");
+            const corFonte = item.fonteId ? (fonteIdToCorMap[item.fonteId] ?? "#71717a") : "#71717a";
+            const nomeFonte = item.fonteId ? (fonteIdToNomeMap[item.fonteId] ?? item.fonte.replace(/-/g, " ")) : item.fonte.replace(/-/g, " ");
             const analise = item.analiseIa as AnaliseIA | null;
             const isFocused = index === focusedIndex;
             const isRemoving = removingIds.has(item.id);

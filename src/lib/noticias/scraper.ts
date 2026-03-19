@@ -244,6 +244,7 @@ export async function scrapeAllFontes(): Promise<ScrapeResult[]> {
 
           // CAMADA 2: Keywords positivas → precisa ter ao menos 1 match
           const temRelevancia = isRelevante(item.titulo, plainText);
+          let autoAprovado = false;
 
           if (!temRelevancia) {
             // CAMADA 3: IA como tiebreaker para itens ambíguos
@@ -259,6 +260,9 @@ export async function scrapeAllFontes(): Promise<ScrapeResult[]> {
               result.filtrados++;
               continue;
             }
+
+            // IA confirmou relevância → auto-aprovar sem triagem manual
+            autoAprovado = true;
           }
 
           // Classificar e salvar
@@ -275,7 +279,8 @@ export async function scrapeAllFontes(): Promise<ScrapeResult[]> {
             autor: item.autor,
             categoria,
             tags,
-            status: "pendente",
+            status: autoAprovado ? "aprovado" : "pendente",
+            aprovadoEm: autoAprovado ? new Date() : undefined,
             publicadoEm: item.publicadoEm,
           });
 

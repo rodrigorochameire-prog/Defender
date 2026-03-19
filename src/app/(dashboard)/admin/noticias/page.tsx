@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Newspaper, RefreshCw, Sparkles, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -25,21 +25,6 @@ const CATEGORIA_PILLS: { value: CategoriaTab; label: string }[] = [
   { value: "relatorios", label: "Relatórios" },
 ];
 
-const COR_FONTE: Record<string, string> = {
-  "conjur": "#dc2626",
-  "stj-noticias": "#1d4ed8",
-  "stj-not-cias": "#1d4ed8",
-  "ibccrim": "#7c3aed",
-  "dizer-o-direito": "#059669",
-  "tudo-de-penal": "#b45309",
-  "canal-ciencias-criminais": "#7c2d12",
-  "canal-ciências-criminais": "#7c2d12",
-  "emporio-do-direito": "#4338ca",
-  "empório-do-direito": "#4338ca",
-  "stf-noticias": "#dc2626",
-  "stf-notícias": "#dc2626",
-  "jota": "#0f172a",
-};
 
 export default function NoticiasPage() {
   const [categoria, setCategoria] = useState<CategoriaTab>("jurisprudencial");
@@ -50,6 +35,15 @@ export default function NoticiasPage() {
   const [noticiasList, setNoticiasList] = useState<NoticiaJuridica[]>([]);
 
   const { data: pendentesCount } = trpc.noticias.countPendentes.useQuery();
+  const { data: fontes = [] } = trpc.noticias.listFontes.useQuery();
+  const fonteIdToCorMap = useMemo(
+    () => Object.fromEntries(fontes.map(f => [f.id, f.cor ?? "#71717a"])),
+    [fontes]
+  );
+  const fonteIdToNomeMap = useMemo(
+    () => Object.fromEntries(fontes.map(f => [f.id, f.nome])),
+    [fontes]
+  );
   const buscarAgora = trpc.noticias.buscarAgora.useMutation();
   const { data: favoritosIds = [] } = trpc.noticias.getFavoritosIds.useQuery();
   const utils = trpc.useUtils();
@@ -70,7 +64,13 @@ export default function NoticiasPage() {
   });
 
   const handleBuscarAgora = useCallback(async () => {
-    await buscarAgora.mutateAsync();
+    try {
+      const results = await buscarAgora.mutateAsync();
+      const totalNovos = results.reduce((s, r) => s + r.novos, 0);
+      toast.success(`${totalNovos} nova${totalNovos !== 1 ? "s" : ""} notícia${totalNovos !== 1 ? "s" : ""} encontrada${totalNovos !== 1 ? "s" : ""}`);
+    } catch {
+      toast.error("Erro ao buscar notícias");
+    }
     utils.noticias.listPendentes.invalidate();
     utils.noticias.countPendentes.invalidate();
     utils.noticias.list.invalidate();
@@ -87,7 +87,8 @@ export default function NoticiasPage() {
   }, [readerIndex, noticiasList]);
 
   const readerOpen = noticiaReader !== null && categoria !== "relatorios";
-  const corFonteReader = noticiaReader ? (COR_FONTE[noticiaReader.fonte.toLowerCase()] ?? "#71717a") : "#71717a";
+  const corFonteReader = noticiaReader?.fonteId ? (fonteIdToCorMap[noticiaReader.fonteId] ?? "#71717a") : "#71717a";
+  const nomeFonteReader = noticiaReader?.fonteId ? (fonteIdToNomeMap[noticiaReader.fonteId] ?? noticiaReader.fonte.replace(/-/g, " ")) : (noticiaReader?.fonte.replace(/-/g, " ") ?? "");
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -184,6 +185,7 @@ export default function NoticiasPage() {
             <NoticiaReaderPanel
               noticia={noticiaReader}
               corFonte={corFonteReader}
+              nomeFonte={nomeFonteReader}
               isFavorito={favoritosIds.includes(noticiaReader.id)}
               onToggleFavorito={() => toggleFavorito.mutate({ noticiaId: noticiaReader.id })}
               onClose={() => setNoticiaReader(null)}

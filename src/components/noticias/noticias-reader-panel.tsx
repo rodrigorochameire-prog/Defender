@@ -22,22 +22,6 @@ type AnaliseIA = {
   casosAplicaveis: string[];
 };
 
-const LABEL_FONTE: Record<string, string> = {
-  "conjur": "ConJur",
-  "stj-noticias": "STJ Notícias",
-  "stj-not-cias": "STJ Notícias",
-  "ibccrim": "IBCCRIM",
-  "dizer-o-direito": "Dizer o Direito",
-  "tudo-de-penal": "Tudo de Penal",
-  "canal-ciencias-criminais": "Canal Ciências Criminais",
-  "canal-ciências-criminais": "Canal Ciências Criminais",
-  "emporio-do-direito": "Empório do Direito",
-  "empório-do-direito": "Empório do Direito",
-  "stf-noticias": "STF Notícias",
-  "stf-notícias": "STF Notícias",
-  "jota": "JOTA",
-};
-
 const LABEL_CATEGORIA: Record<string, string> = {
   legislativa: "Legislativa",
   jurisprudencial: "Jurisprudencial",
@@ -47,6 +31,7 @@ const LABEL_CATEGORIA: Record<string, string> = {
 interface NoticiaReaderPanelProps {
   noticia: NoticiaJuridica;
   corFonte: string;
+  nomeFonte: string;
   isFavorito: boolean;
   onToggleFavorito: () => void;
   onClose: () => void;
@@ -59,6 +44,7 @@ interface NoticiaReaderPanelProps {
 export function NoticiaReaderPanel({
   noticia: noticiaInicial,
   corFonte,
+  nomeFonte,
   isFavorito,
   onToggleFavorito,
   onClose,
@@ -95,7 +81,6 @@ export function NoticiaReaderPanel({
   const analise = noticia.analiseIa as AnaliseIA | null;
   const conteudoEfetivo = conteudoOverride ?? noticia.conteudo;
   const hasConteudo = conteudoEfetivo && conteudoEfetivo.length > 200;
-  const nomeFonte = LABEL_FONTE[noticia.fonte.toLowerCase()] ?? noticia.fonte.replace(/-/g, " ");
   const nomeCategoria = LABEL_CATEGORIA[noticia.categoria] ?? noticia.categoria;
 
   useEffect(() => {
@@ -160,14 +145,14 @@ export function NoticiaReaderPanel({
             <Button
               variant="ghost" size="icon" className="h-8 w-8"
               onClick={onPrevious} disabled={!hasPrevious}
-              title="Anterior (K)"
+              title="Anterior (K)" aria-label="Notícia anterior"
             >
               <ChevronLeft className="h-4 w-4 text-zinc-400" />
             </Button>
             <Button
               variant="ghost" size="icon" className="h-8 w-8"
               onClick={onNext} disabled={!hasNext}
-              title="Próxima (J)"
+              title="Próxima (J)" aria-label="Próxima notícia"
             >
               <ChevronRight className="h-4 w-4 text-zinc-400" />
             </Button>
@@ -178,6 +163,7 @@ export function NoticiaReaderPanel({
               variant="ghost" size="icon" className="h-8 w-8"
               onClick={onToggleFavorito}
               title={isFavorito ? "Remover dos salvos (S)" : "Salvar (S)"}
+              aria-label={isFavorito ? "Remover dos salvos" : "Salvar notícia"}
             >
               <Star className={cn("h-4 w-4", isFavorito ? "fill-amber-500 text-amber-500" : "text-zinc-400")} />
             </Button>
@@ -186,7 +172,7 @@ export function NoticiaReaderPanel({
                 <ExternalLink className="h-4 w-4 text-zinc-400" />
               </a>
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose} title="Fechar (Esc)">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose} title="Fechar (Esc)" aria-label="Fechar reader">
               <X className="h-4 w-4 text-zinc-400" />
             </Button>
           </div>
@@ -383,7 +369,7 @@ export function NoticiaReaderPanel({
           <RefreshCw className={cn("h-3.5 w-3.5", enriquecerComIA.isPending && "animate-spin")} />
           Re-analisar IA
         </Button>
-        <span className="text-[10px] text-zinc-300 dark:text-zinc-700 ml-auto">
+        <span className="text-[10px] text-zinc-400 dark:text-zinc-500 ml-auto">
           J próxima · K anterior · S salvar · Esc fechar
         </span>
       </div>

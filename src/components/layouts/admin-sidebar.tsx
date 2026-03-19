@@ -11,7 +11,7 @@ import {
   Columns3, History, PieChart, Handshake, CalendarDays, Sparkles, MessageCircle,
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
   MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput, Sun,
-  MessageSquare, FileCheck, ArrowLeftRight, Timer, Newspaper
+  MessageSquare, FileCheck, ArrowLeftRight, Timer, Newspaper, Rss, Radio
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -93,10 +93,15 @@ const COWORK_NAV: AssignmentMenuItem[] = [
   { label: "Coberturas", path: "/admin/coberturas", icon: "ArrowLeftRight", requiredRoles: ["admin", "defensor"] },
 ];
 
-// 5. Ferramentas - Notícias, Radar, Lógica, Calculadoras, Inteligência, Investigação (verde)
-const TOOLS_NAV: AssignmentMenuItem[] = [
+// 5. News - Notícias jurídicas, monitoramento e informação institucional
+const NEWS_NAV: AssignmentMenuItem[] = [
   { label: "Notícias", path: "/admin/noticias", icon: "Newspaper" },
   { label: "Radar Criminal", path: "/admin/radar", icon: "Radio" },
+  { label: "Institucional", path: "/admin/institucional", icon: "Building2" },
+];
+
+// 6. Ferramentas - Lógica, Calculadoras, Inteligência, Investigação (verde)
+const TOOLS_NAV: AssignmentMenuItem[] = [
   { label: "Lógica", path: "/admin/logica", icon: "Brain" },
   { label: "Calculadoras", path: "/admin/calculadoras", icon: "Calculator" },
   { label: "Calc. Prazos", path: "/admin/calculadora-prazos", icon: "Clock" },
@@ -175,7 +180,7 @@ const iconMap: Record<string, React.ElementType> = {
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
   ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
   BookUser, Users2, Home, FolderInput, Sun, MessageSquare, FileCheck,
-  ArrowLeftRight, Timer, Newspaper
+  ArrowLeftRight, Timer, Newspaper, Rss, Radio
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
@@ -412,6 +417,164 @@ function MoreMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
         </PopoverContent>
       </Popover>
     </SidebarMenuItem>
+  );
+}
+
+// ==========================================
+// ==========================================
+// MENU "NEWS" COLAPSÁVEL - NOTÍCIAS + RADAR + INSTITUCIONAL
+// ==========================================
+
+function NewsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
+  items: AssignmentMenuItem[];
+  pathname: string;
+  onNavigate: () => void;
+  userRole?: UserRole;
+  isCollapsed: boolean;
+}) {
+  const [expanded, setExpanded] = useState(true); // inicia expandido — fluxo diário
+  const hasActiveItem = items.some(item =>
+    item.exactMatch ? pathname === item.path : pathname.startsWith(item.path)
+  );
+
+  useEffect(() => {
+    if (hasActiveItem && !expanded) setExpanded(true);
+  }, [hasActiveItem]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (isCollapsed) {
+    return (
+      <SidebarMenuItem>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className={cn(
+                "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
+                hasActiveItem
+                  ? "bg-emerald-600/20 text-emerald-400 ring-1 ring-emerald-500/30"
+                  : "text-zinc-600 dark:text-zinc-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-zinc-900 dark:hover:text-zinc-200"
+              )}
+            >
+              <Rss className="h-5 w-5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="right"
+            align="start"
+            className="w-56 p-2 glass-dark shadow-xl shadow-black/30"
+          >
+            <p className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
+              <Rss className="h-3 w-3" />
+              News
+            </p>
+            {items.map((item) => {
+              if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) return null;
+              const Icon = iconMap[item.icon] || Briefcase;
+              const isActive = item.exactMatch ? pathname === item.path : pathname.startsWith(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
+                    isActive
+                      ? "bg-emerald-500/20 text-emerald-400 font-medium"
+                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                  {typeof item.badge === "number" && item.badge > 0 && (
+                    <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-amber-500 text-white">
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </PopoverContent>
+        </Popover>
+      </SidebarMenuItem>
+    );
+  }
+
+  return (
+    <div className="space-y-0.5">
+      <SidebarMenuItem>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className={cn(
+            "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
+            hasActiveItem
+              ? "bg-emerald-600/15 text-emerald-400"
+              : "text-zinc-700 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+          )}
+        >
+          <div className="mr-2.5 transition-all duration-200">
+            <Rss className={cn(
+              "h-[18px] w-[18px] transition-all duration-200",
+              hasActiveItem ? "text-emerald-500" : "text-zinc-900 dark:text-zinc-400 group-hover/item:text-zinc-950 dark:group-hover/item:text-zinc-200"
+            )} />
+          </div>
+          <span className="text-[13px] font-medium">News</span>
+          {hasActiveItem && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 ml-1.5" />}
+          <ChevronDown className={cn(
+            "h-4 w-4 ml-auto transition-transform duration-300",
+            expanded && "rotate-180"
+          )} />
+        </button>
+      </SidebarMenuItem>
+
+      <div className={cn(
+        "overflow-hidden transition-all duration-300 ease-in-out",
+        expanded ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"
+      )}>
+        <div className="relative pl-4 space-y-0.5">
+          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-emerald-500/20 via-black/[0.06] dark:via-white/[0.06] to-transparent" />
+          {items.map((item) => {
+            if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) return null;
+            const Icon = iconMap[item.icon] || Briefcase;
+            const isActive = item.exactMatch ? pathname === item.path : pathname.startsWith(item.path);
+            return (
+              <SidebarMenuItem key={item.path}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive}
+                  className={cn(
+                    "h-9 transition-all duration-300 rounded-lg group/subitem relative",
+                    isActive
+                      ? "bg-emerald-500/15 text-emerald-400 font-medium"
+                      : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                  )}
+                >
+                  <Link href={item.path} prefetch={true} onClick={onNavigate}>
+                    <div className={cn(
+                      "absolute left-[-12px] w-2 h-px transition-all duration-200",
+                      isActive ? "bg-emerald-500/50" : "bg-black/[0.06] dark:bg-white/[0.06]"
+                    )} />
+                    <Icon className={cn(
+                      "h-3.5 w-3.5 mr-2 transition-all duration-300",
+                      isActive ? "text-emerald-400" : "text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-600 dark:group-hover/subitem:text-zinc-300"
+                    )} />
+                    <span className="text-[12px] truncate">{item.label}</span>
+                    {typeof item.badge === "number" && item.badge > 0 && (
+                      <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-amber-500 text-white">
+                        {item.badge > 99 ? "99+" : item.badge}
+                      </span>
+                    )}
+                    {item.path === "/admin/institucional" && (
+                      <span className="ml-auto text-[9px] font-semibold text-zinc-400 dark:text-zinc-600 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-full leading-none">
+                        breve
+                      </span>
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1563,14 +1726,16 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
   });
   const matchesPendentes = radarPendentesData?.count ?? 0;
 
-  const toolsNavWithBadge = useMemo(() => {
-    return TOOLS_NAV.map(item => {
+  const newsNavWithBadge = useMemo(() => {
+    return NEWS_NAV.map(item => {
       if (item.label === "Radar Criminal" && matchesPendentes > 0) {
         return { ...item, badge: matchesPendentes };
       }
       return item;
     });
   }, [matchesPendentes]);
+
+  const toolsNavWithBadge = useMemo(() => TOOLS_NAV, []);
 
   useEffect(() => {
     setMounted(true);
@@ -1666,7 +1831,19 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
               />
             </SidebarMenu>
 
-            {/* 5. Ferramentas - Verde */}
+            {/* 5. News - Notícias, Radar, Institucional */}
+            <NavDivider collapsed={isCollapsed} />
+            <SidebarMenu className="space-y-0.5">
+              <NewsMenu
+                items={newsNavWithBadge}
+                pathname={pathname}
+                onNavigate={handleNavigate}
+                userRole={userRole}
+                isCollapsed={isCollapsed}
+              />
+            </SidebarMenu>
+
+            {/* 6. Ferramentas - Verde */}
             <NavDivider collapsed={isCollapsed} />
             <SidebarMenu className="space-y-0.5">
               <ToolsMenu

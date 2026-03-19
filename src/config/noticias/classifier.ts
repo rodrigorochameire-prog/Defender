@@ -7,10 +7,10 @@ export type CategoriaNoticia = "legislativa" | "jurisprudencial" | "artigo";
 export const KEYWORDS_NEGATIVAS = [
   // Eventos e cursos
   "inscrições abertas", "inscreva-se", "processo seletivo", "edital de seleção",
-  "congresso", "seminário", "workshop", "webinar", "curso de",
+  "congresso jurídico", "seminário jurídico", "workshop", "webinar", "curso de",
   "evento", "programação do evento", "participe",
   // Institucional/RH
-  "lista de aprovados", "resultado do concurso", "nomeação", "posse",
+  "lista de aprovados", "resultado do concurso", "nomeação ao cargo", "posse no cargo",
   "laboratório", "bolsa de estudos", "bolsista", "estágio",
   "aniversário", "homenagem", "nota de falecimento", "nota de pesar",
   // Comercial
@@ -216,7 +216,35 @@ export const KEYWORDS_RELEVANCIA = [
   "perícia criminal", "laudo pericial", "exame de corpo de delito",
   "necropsia", "medicina legal",
 
-  // ── LEGISLAÇÃO ──────────────────────────────────────────
+  // ── ORCRIM / CRIME ORGANIZADO ───────────────────────────
+  "organização criminosa", "ORCRIM", "lei 12.850", "associação criminosa",
+  "infiltração policial", "ação controlada", "crime organizado",
+
+  // ── TRÁFICO DE PESSOAS ──────────────────────────────────
+  "tráfico de pessoas", "lei 13.344", "exploração sexual",
+  "trabalho escravo", "trabalho análogo à escravidão", "aliciamento",
+
+  // ── CRIMES CIBERNÉTICOS ─────────────────────────────────
+  "crime cibernético", "invasão de dispositivo", "lei 14.155",
+  "fraude eletrônica", "estelionato digital", "phishing",
+  "pornografia de vingança", "revenge porn", "marco civil da internet",
+
+  // ── JECRIM / MENOR POTENCIAL OFENSIVO ───────────────────
+  "juizado especial criminal", "JECRIM", "lei 9.099",
+  "transação penal", "composição civil", "menor potencial ofensivo",
+
+  // ── RECONHECIMENTO DE PESSOAS ───────────────────────────
+  "reconhecimento fotográfico", "reconhecimento pessoal",
+  "prova de reconhecimento", "Resolução 484", "falso reconhecimento",
+
+  // ── CRIMES COMUNS (DPE-BA COTIDIANO) ────────────────────
+  "ameaça", "calúnia", "injúria", "difamação",
+  "embriaguez ao volante", "art. 306 CTB", "direção alcoolizada",
+  "crime de trânsito", "abuso sexual infantil",
+  "violência contra idoso", "estatuto do idoso",
+  "prisão ilegal", "excesso de prazo", "constrangimento ilegal",
+
+  // ── LEGISLAÇÃO ──────────────────────────────────────────────
   "lei nº", "lei n.", "projeto de lei", "PL ", "PEC ",
   "medida provisória", "MP nº",
   "sancionou", "sancionada", "promulgada", "promulgou",

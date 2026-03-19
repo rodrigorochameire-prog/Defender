@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Search, X, ChevronDown, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,63 +13,6 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
 import type { NoticiaJuridica } from "@/lib/db/schema";
 
-const COR_FONTE: Record<string, string> = {
-  "conjur": "#dc2626",
-  "stj-noticias": "#1d4ed8",
-  "stj-not-cias": "#1d4ed8",
-  "ibccrim": "#7c3aed",
-  "dizer-o-direito": "#059669",
-  "tudo-de-penal": "#b45309",
-  "canal-ciencias-criminais": "#7c2d12",
-  "canal-ciências-criminais": "#7c2d12",
-  "emporio-do-direito": "#4338ca",
-  "empório-do-direito": "#4338ca",
-  "stf-noticias": "#dc2626",
-  "stf-notícias": "#dc2626",
-  "jota": "#0f172a",
-  "migalhas": "#e07b00",
-  "trf1": "#1e40af",
-  "trf-1": "#1e40af",
-  "trf5": "#1e3a8a",
-  "trf-5": "#1e3a8a",
-  "dpeba": "#065f46",
-  "tjba": "#1e3a8a",
-  "pm-bahia": "#1e40af",
-  "ssp-bahia": "#374151",
-};
-
-const NOME_FONTE: Record<string, string> = {
-  "conjur": "ConJur",
-  "stj-noticias": "STJ",
-  "ibccrim": "IBCCRIM",
-  "dizer-o-direito": "Dizer o Direito",
-  "stf-noticias": "STF",
-  "jota": "JOTA",
-  "justificando": "Justificando",
-  "cnj": "CNJ",
-  "senado-federal": "Senado",
-  "migalhas": "Migalhas",
-  "canal-ciencias-criminais": "Canal CC",
-  "canal-ciências-criminais": "Canal CC",
-  "emporio-do-direito": "Empório",
-  "empório-do-direito": "Empório",
-  "trf1": "TRF-1",
-  "trf-1": "TRF-1",
-  "trf5": "TRF-5",
-  "trf-5": "TRF-5",
-  "dpeba": "DPEBA",
-};
-
-const FONTES_DISPONIVEIS = [
-  "conjur", "stj-noticias", "ibccrim", "dizer-o-direito",
-  "stf-noticias", "jota", "justificando", "cnj", "senado-federal",
-  "migalhas", "canal-ciencias-criminais", "emporio-do-direito", "trf1", "trf5", "dpeba",
-];
-
-function getCorFonte(fonte: string): string {
-  const key = fonte.toLowerCase().replace(/\s+/g, "-");
-  return COR_FONTE[key] ?? "#71717a";
-}
 
 export type CategoriaFeed = "legislativa" | "jurisprudencial" | "artigo" | "salvos";
 
@@ -88,6 +31,28 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, onOpenReader, onOpe
   const [pastaAtiva, setPastaAtiva] = useState<number | null>(null);
   const debouncedBusca = useDebounce(busca, 400);
   const utils = trpc.useUtils();
+
+  const { data: fontes = [] } = trpc.noticias.listFontes.useQuery();
+  const fonteIdToCorMap = useMemo(
+    () => Object.fromEntries(fontes.map(f => [f.id, f.cor ?? "#71717a"])),
+    [fontes]
+  );
+  const fonteSlugList = useMemo(
+    () => fontes.filter(f => f.ativo).map(f => ({
+      slug: f.nome.toLowerCase().replace(/\s+/g, "-"),
+      nome: f.nome,
+      cor: f.cor ?? "#71717a",
+    })),
+    [fontes]
+  );
+  const fonteSlugToCorMap = useMemo(
+    () => Object.fromEntries(fonteSlugList.map(f => [f.slug, f.cor])),
+    [fonteSlugList]
+  );
+  const fonteIdToNomeMap = useMemo(
+    () => Object.fromEntries(fontes.map(f => [f.id, f.nome])),
+    [fontes]
+  );
 
   useEffect(() => {
     setCursor(undefined);
@@ -237,9 +202,9 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, onOpenReader, onOpe
                   <>
                     <span
                       className="w-2 h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: COR_FONTE[fonteFilter] ?? "#71717a" }}
+                      style={{ backgroundColor: fonteSlugToCorMap[fonteFilter ?? ""] ?? "#71717a" }}
                     />
-                    {NOME_FONTE[fonteFilter] ?? fonteFilter}
+                    {fonteSlugList.find(f => f.slug === fonteFilter)?.nome ?? fonteFilter}
                   </>
                 ) : (
                   "Fonte"
@@ -256,21 +221,17 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, onOpenReader, onOpe
                 Todas as fontes
                 {!fonteFilter && <Check className="h-3.5 w-3.5 ml-auto text-emerald-500" />}
               </DropdownMenuItem>
-              {FONTES_DISPONIVEIS.map(fonte => {
-                const cor = COR_FONTE[fonte] ?? "#71717a";
-                const nome = NOME_FONTE[fonte] ?? fonte;
-                return (
-                  <DropdownMenuItem
-                    key={fonte}
-                    onClick={() => setFonteFilter(fonteFilter === fonte ? undefined : fonte)}
-                    className="gap-2 text-sm cursor-pointer"
-                  >
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: cor }} />
-                    {nome}
-                    {fonteFilter === fonte && <Check className="h-3.5 w-3.5 ml-auto text-emerald-500" />}
-                  </DropdownMenuItem>
-                );
-              })}
+              {fonteSlugList.map(({ slug, nome, cor }) => (
+                <DropdownMenuItem
+                  key={slug}
+                  onClick={() => setFonteFilter(fonteFilter === slug ? undefined : slug)}
+                  className="gap-2 text-sm cursor-pointer"
+                >
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: cor }} />
+                  {nome}
+                  {fonteFilter === slug && <Check className="h-3.5 w-3.5 ml-auto text-emerald-500" />}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -294,7 +255,8 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, onOpenReader, onOpe
               <NoticiaCard
                 key={noticia.id}
                 noticia={noticia}
-                corFonte={getCorFonte(noticia.fonte)}
+                corFonte={noticia.fonteId ? (fonteIdToCorMap[noticia.fonteId] ?? "#71717a") : "#71717a"}
+                nomeFonte={noticia.fonteId ? (fonteIdToNomeMap[noticia.fonteId] ?? noticia.fonte.replace(/-/g, " ")) : noticia.fonte.replace(/-/g, " ")}
                 isFavorito={favoritosIds.includes(noticia.id)}
                 isSelected={selectedNoticiaId === noticia.id}
                 onToggleFavorito={() => toggleFavorito.mutate({ noticiaId: noticia.id })}

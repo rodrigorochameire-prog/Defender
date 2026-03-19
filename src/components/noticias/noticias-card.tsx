@@ -23,34 +23,10 @@ const LABEL_CATEGORIA: Record<string, string> = {
   artigo: "Artigo",
 };
 
-const LABEL_FONTE: Record<string, string> = {
-  "conjur": "ConJur",
-  "stj-noticias": "STJ",
-  "stj-not-cias": "STJ",
-  "ibccrim": "IBCCRIM",
-  "dizer-o-direito": "Dizer o Direito",
-  "tudo-de-penal": "Tudo de Penal",
-  "canal-ciencias-criminais": "Canal Ciências",
-  "canal-ciências-criminais": "Canal Ciências",
-  "emporio-do-direito": "Empório do Direito",
-  "empório-do-direito": "Empório do Direito",
-  "stf-noticias": "STF",
-  "stf-notícias": "STF",
-  "jota": "JOTA",
-  "migalhas": "Migalhas",
-  "trf1": "TRF-1",
-  "trf-1": "TRF-1",
-  "trf5": "TRF-5",
-  "trf-5": "TRF-5",
-  "dpeba": "DPEBA",
-  "tjba": "TJBA",
-  "pm-bahia": "PM-BA",
-  "ssp-bahia": "SSP-BA",
-};
-
 interface NoticiaCardProps {
   noticia: NoticiaJuridica;
   corFonte: string;
+  nomeFonte: string;
   isFavorito: boolean;
   isSelected?: boolean;
   onToggleFavorito: () => void;
@@ -67,6 +43,7 @@ function estimarTempoLeitura(texto: string | null | undefined): number | null {
 export function NoticiaCard({
   noticia,
   corFonte,
+  nomeFonte,
   isFavorito,
   isSelected = false,
   onToggleFavorito,
@@ -83,7 +60,6 @@ export function NoticiaCard({
 
   const textoParaEstimar = (noticia as { conteudo?: string | null }).conteudo ?? noticia.resumo;
   const tempoLeitura = estimarTempoLeitura(textoParaEstimar);
-  const nomeFonte = LABEL_FONTE[noticia.fonte.toLowerCase()] ?? noticia.fonte.replace(/-/g, " ");
   const nomeCategoria = LABEL_CATEGORIA[noticia.categoria] ?? noticia.categoria;
 
   return (
@@ -118,10 +94,12 @@ export function NoticiaCard({
           <button
             className={cn(
               "ml-auto opacity-0 group-hover:opacity-100 transition-opacity",
-              isFavorito && "opacity-100"
+              isFavorito && "opacity-100",
+              isSelected && "opacity-100"
             )}
             onClick={e => { e.stopPropagation(); onToggleFavorito(); }}
             title={isFavorito ? "Remover dos salvos" : "Salvar"}
+            aria-label={isFavorito ? "Remover dos salvos" : "Salvar notícia"}
           >
             <Star
               className={cn(
@@ -167,7 +145,7 @@ export function NoticiaCard({
             <span className="text-[10px] text-zinc-400">+{tags.length - 3}</span>
           )}
 
-          <div className="ml-auto flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+          <div className={cn("ml-auto flex items-center gap-1.5 transition-opacity", isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100")} onClick={e => e.stopPropagation()}>
             {tempoLeitura && (
               <span className="flex items-center gap-0.5 text-[11px] text-zinc-400 mr-1">
                 <Clock className="h-3 w-3" />
