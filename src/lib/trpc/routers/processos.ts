@@ -5,6 +5,7 @@ import { processos, assistidos, assistidosProcessos, audiencias, movimentacoes, 
 import { eq, ilike, or, desc, asc, sql, and, isNull, ne } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { TRPCError } from "@trpc/server";
+import { getComarcaId } from "@/lib/trpc/comarca-scope";
 
 export const processosRouter = router({
   // Listar todos os processos
@@ -42,8 +43,9 @@ export const processosRouter = router({
       }
 
       if (!isAdmin) {
+        conditions.push(eq(processos.comarcaId, getComarcaId(ctx.user)));
       }
-      
+
       const defensorAlias = alias(users, "defensor");
 
       const result = await db
