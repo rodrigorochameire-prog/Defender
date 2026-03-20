@@ -39,6 +39,8 @@ const DOMAIN_TO_SLUG: Record<string, string> = {
   "senado.leg.br": "senado-federal",
   "pm.ba.gov.br": "pm-bahia",
   "ssp.ba.gov.br": "ssp-bahia",
+  "genjuridico.com.br": "genjurídico",
+  "justificando.com": "justificando",
 };
 
 export type GoogleNewsItem = {
