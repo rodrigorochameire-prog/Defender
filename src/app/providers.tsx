@@ -17,14 +17,21 @@ function getBaseUrl() {
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
 
-// Queries leves que devem resolver rápido (auth, notificações, configs)
+// Queries que devem resolver em batch separado e rápido
+// (auth/notif sem DB + queries críticas de renderização do feed)
 const FAST_QUERIES = new Set([
+  // Auth / layout — sem hit ao banco (cache in-memory)
   "users.me",
   "auth.me",
   "notifications.unreadCount",
   "profissionais.getEscalaAtual",
   "whatsappChat.listConfigs",
   "whatsappChat.getStats",
+  // Radar — críticos para renderizar o feed (disparam separado das queries secundárias)
+  "radar.list",
+  "radar.totalCount",
+  "radar.matchesPendentesCount",
+  "radar.enrichmentHealth",
 ]);
 
 // Loading spinner minimalista
@@ -70,7 +77,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             transformer: superjson,
             maxURLLength: 2083,
             fetch: (input, init) =>
-              fetch(input, { ...init, signal: AbortSignal.timeout(10_000) }),
+              fetch(input, { ...init, signal: AbortSignal.timeout(15_000) }),
           }),
           false: httpBatchLink({
             url,
