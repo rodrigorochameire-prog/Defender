@@ -68,6 +68,20 @@ export async function GET(request: NextRequest) {
   // Run steps sequentially with individual timeouts
   // Total budget: ~55s (Vercel max 60s)
   await callStep("scrape", "/api/radar/scrape", 20_000);
+
+  // 1b. Instagram scrape (perfis oficiais — não bloqueia o pipeline se falhar)
+  try {
+    await fetch(`${engineUrl}/api/radar/scrape-instagram`, {
+      method: "POST",
+      headers,
+      signal: AbortSignal.timeout(30_000),
+    }).then(async (r) => {
+      results["scrape_instagram"] = r.ok ? await r.json() : { status: "error", code: r.status };
+    });
+  } catch {
+    console.warn("[Radar Cron] Instagram scrape falhou — continuando pipeline");
+    results["scrape_instagram"] = { status: "skipped" };
+  }
   await callStep("extract", "/api/radar/extract", 45_000, { limit: 30 });
   await callStep("geocode", "/api/radar/geocode", 8_000, { limit: 30 });
   await callStep("match", "/api/radar/match", 5_000, { limit: 50 });

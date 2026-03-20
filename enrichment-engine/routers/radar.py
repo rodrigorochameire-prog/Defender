@@ -275,6 +275,24 @@ async def radar_pipeline() -> RadarPipelineOutput:
     return result
 
 
+@router.post("/api/radar/scrape-instagram")
+async def scrape_instagram():
+    """Coleta posts recentes de perfis Instagram oficiais de segurança de Camaçari."""
+    from services.radar_instagram_service import RadarInstagramService
+    from services.radar_scraper_service import get_radar_scraper_service
+
+    instagram_service = RadarInstagramService()
+    scraper = get_radar_scraper_service()
+
+    noticias = instagram_service.scrape_all_instagram_fontes()
+    saved = await scraper.save_noticias(noticias)
+
+    return {
+        "noticias_coletadas": len(noticias),
+        "noticias_salvas": saved,
+    }
+
+
 @router.post("/radar/score/backfill", response_model=RadarScoreBackfillOutput)
 async def radar_score_backfill() -> RadarScoreBackfillOutput:
     """
