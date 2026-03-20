@@ -3,6 +3,31 @@ import { cookies } from "next/headers";
 import { db, users, type User } from "@/lib/db";
 import { eq } from "drizzle-orm";
 
+// Cache de usuários para evitar query ao banco em toda requisição tRPC
+const userCache = new Map<number, { user: User; expiresAt: number }>();
+const USER_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutos
+
+async function getCachedUser(userId: number): Promise<User | null> {
+  const cached = userCache.get(userId);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.user;
+  }
+
+  const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
+
+  if (user) {
+    userCache.set(userId, { user, expiresAt: Date.now() + USER_CACHE_TTL_MS });
+    // Limpeza de entradas expiradas quando o cache cresce
+    if (userCache.size > 200) {
+      for (const [key, value] of userCache.entries()) {
+        if (value.expiresAt <= Date.now()) userCache.delete(key);
+      }
+    }
+  }
+
+  return user ?? null;
+}
+
 const SESSION_COOKIE_NAME = "defesahub_session";
 const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 dias
 
@@ -94,18 +119,12 @@ export async function getSession(): Promise<User | null> {
       return null;
     }
 
-    // Tentar buscar usuário no banco
+    // Busca usuário (com cache para evitar round-trip em toda requisição)
     try {
-      const user = await db.query.users.findFirst({
-        where: eq(users.id, payload.userId),
-      });
-
-      if (user) {
-        return user;
-      }
+      const user = await getCachedUser(payload.userId);
+      if (user) return user;
     } catch (dbError) {
       console.log("[getSession] Erro ao buscar usuário no banco:", dbError);
-      // Erro de banco — tratar como sessão inválida
       return null;
     }
 
@@ -115,6 +134,13 @@ export async function getSession(): Promise<User | null> {
     console.log("[getSession] JWT auth failed:", error);
     return null;
   }
+}
+
+/**
+ * Invalida o cache de usuário (chamar após atualizar dados do usuário)
+ */
+export function invalidateUserCache(userId: number) {
+  userCache.delete(userId);
 }
 
 /**
