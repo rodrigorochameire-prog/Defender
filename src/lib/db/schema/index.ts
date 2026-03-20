@@ -11,6 +11,9 @@ export * from "./enums";
 // Core tables (users, assistidos, processos, demandas, etc.)
 export * from "./core";
 
+// Comarcas (multi-comarca expansion)
+export * from "./comarcas";
+
 // Domain modules
 export * from "./casos";
 export * from "./agenda";
