@@ -11,8 +11,9 @@ import {
   assistidos,
   audiencias,
 } from "@/lib/db/schema";
-import { eq, and, desc, asc, sql, isNull, or, ilike, gte, lte, count } from "drizzle-orm";
+import { eq, and, desc, asc, sql, isNull, isNotNull, or, ilike, gte, lte, count, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { getDefensoresVisiveis } from "@/lib/trpc/defensor-scope";
 
 // ==========================================
 // ROUTER VVD - VIOLÊNCIA DOMÉSTICA / MPU
@@ -1125,4 +1126,81 @@ export const vvdRouter = router({
 
       return { audienciaId: audiencia.id, message: "Audiência criada e vinculada à intimação" };
     }),
+
+  // ==========================================
+  // MAPA — Casos VVD georreferenciados
+  // ==========================================
+
+  /**
+   * Retorna casos VVD com todos os pontos geográficos disponíveis:
+   * - Local do fato (vem de `processos` via processoId)
+   * - Residência do agressor
+   * - Trabalho do agressor
+   * - Raio de restrição da MPU
+   *
+   * Filtra por casos onde ao menos um ponto geográfico está preenchido.
+   * Para casos sem processoId (não promovidos), localDoFatoLat/Lng serão null.
+   */
+  mapa: protectedProcedure.query(async ({ ctx }) => {
+    const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
+
+    // Buscar processosVVD que tenham ao menos um ponto geográfico preenchido
+    const conditions = [
+      isNull(processosVVD.deletedAt),
+      or(
+        isNotNull(processosVVD.agressorResidenciaLat),
+        isNotNull(processosVVD.agressorTrabalhoLat),
+        // processos.localDoFatoLat verificado via join (tratado no map abaixo)
+      ),
+    ];
+
+    if (defensoresVisiveis !== "all") {
+      conditions.push(inArray(processosVVD.defensorId, defensoresVisiveis));
+    }
+
+    const rows = await db
+      .select({
+        id: processosVVD.id,
+        processoId: processosVVD.processoId,
+        processoNumero: processos.numeroAutos,
+        assistidoNome: partesVVD.nome,
+        assistidoId: partesVVD.assistidoId,
+        // Local do fato — vem do processo geral (quando promovido)
+        localDoFatoLat: processos.localDoFatoLat,
+        localDoFatoLng: processos.localDoFatoLng,
+        // Geo agressor
+        agressorResidenciaLat: processosVVD.agressorResidenciaLat,
+        agressorResidenciaLng: processosVVD.agressorResidenciaLng,
+        agressorResidenciaEndereco: processosVVD.agressorResidenciaEndereco,
+        agressorTrabalhoLat: processosVVD.agressorTrabalhoLat,
+        agressorTrabalhoLng: processosVVD.agressorTrabalhoLng,
+        agressorTrabalhoEndereco: processosVVD.agressorTrabalhoEndereco,
+        // MPU
+        raioRestricaoMetros: processosVVD.raioRestricaoMetros,
+        mpuAtiva: processosVVD.mpuAtiva,
+      })
+      .from(processosVVD)
+      .leftJoin(partesVVD, eq(processosVVD.requeridoId, partesVVD.id))
+      .leftJoin(processos, eq(processosVVD.processoId, processos.id))
+      .where(and(...conditions))
+      .orderBy(desc(processosVVD.createdAt));
+
+    return rows.map((row) => ({
+      id: row.id,
+      processoId: row.processoId ?? null,
+      processoNumero: row.processoNumero ?? null,
+      assistidoNome: row.assistidoNome ?? "",
+      assistidoId: row.assistidoId ?? null,
+      localDoFatoLat: row.localDoFatoLat ?? null,
+      localDoFatoLng: row.localDoFatoLng ?? null,
+      agressorResidenciaLat: row.agressorResidenciaLat ?? null,
+      agressorResidenciaLng: row.agressorResidenciaLng ?? null,
+      agressorResidenciaEndereco: row.agressorResidenciaEndereco ?? null,
+      agressorTrabalhoLat: row.agressorTrabalhoLat ?? null,
+      agressorTrabalhoLng: row.agressorTrabalhoLng ?? null,
+      agressorTrabalhoEndereco: row.agressorTrabalhoEndereco ?? null,
+      raioRestricaoMetros: row.raioRestricaoMetros ?? null,
+      statusMpu: row.mpuAtiva === true ? "ativa" : row.mpuAtiva === false ? "inativa" : null,
+    }));
+  }),
 });
