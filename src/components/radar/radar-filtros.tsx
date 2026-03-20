@@ -84,7 +84,7 @@ const EMPTY_FILTROS: FiltrosState = {
   dataFim: undefined,
   soMatches: false,
   circunstancia: undefined,
-  relevanciaMin: undefined,
+  relevanciaMin: 60,
 };
 
 const PERIOD_PRESETS = [
@@ -112,7 +112,7 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
     filtros.circunstancia,
     filtros.dataInicio || filtros.dataFim,
     filtros.soMatches || undefined,
-    filtros.relevanciaMin != null ? String(filtros.relevanciaMin) : undefined,
+    filtros.relevanciaMin != null && filtros.relevanciaMin !== 60 ? String(filtros.relevanciaMin) : undefined,
   ].filter(Boolean).length;
 
   const applyPeriod = (days: number) => {
@@ -344,16 +344,16 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
             <div className="space-y-2">
               <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Relevância IA</p>
               <Select
-                value={filtros.relevanciaMin?.toString() ?? ""}
+                value={filtros.relevanciaMin?.toString() ?? "60"}
                 onValueChange={(val) => onChange((prev) => ({ ...prev, relevanciaMin: val ? Number(val) : undefined }))}
               >
                 <SelectTrigger className="h-8 text-xs cursor-pointer">
                   <SelectValue placeholder="Relevância" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="" className="cursor-pointer text-xs">Todas</SelectItem>
+                  <SelectItem value="0" className="cursor-pointer text-xs">Todas (0+)</SelectItem>
+                  <SelectItem value="60" className="cursor-pointer text-xs">Prováveis (60+) — padrão</SelectItem>
                   <SelectItem value="85" className="cursor-pointer text-xs">Confirmadas (85+)</SelectItem>
-                  <SelectItem value="60" className="cursor-pointer text-xs">Prováveis (60+)</SelectItem>
                   <SelectItem value="35" className="cursor-pointer text-xs">Possíveis (35+)</SelectItem>
                 </SelectContent>
               </Select>

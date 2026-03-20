@@ -36,9 +36,10 @@ export default function RadarCriminalPage() {
   // Filtros compartilhados entre tabs
   const [filtros, setFiltros] = useState<FiltrosState>({
     soMatches: false,
+    relevanciaMin: 60,
   });
 
-  const resetFiltros = () => setFiltros({ soMatches: false });
+  const resetFiltros = () => setFiltros({ soMatches: false, relevanciaMin: 60 });
 
   const filtrosAtivos = useMemo(() => {
     return !!(
