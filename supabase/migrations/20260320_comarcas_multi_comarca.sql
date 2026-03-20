@@ -62,4 +62,9 @@ CREATE POLICY "service_role_full_access" ON comarcas FOR ALL TO service_role USI
 DROP POLICY IF EXISTS "postgres_full_access" ON comarcas;
 CREATE POLICY "postgres_full_access" ON comarcas FOR ALL TO postgres USING (true) WITH CHECK (true);
 
+-- Enforce NOT NULL after backfill (comarca_id=1 Camaçari for all existing rows)
+ALTER TABLE users ALTER COLUMN comarca_id SET NOT NULL;
+ALTER TABLE assistidos ALTER COLUMN comarca_id SET NOT NULL;
+ALTER TABLE processos ALTER COLUMN comarca_id SET NOT NULL;
+
 COMMIT;
