@@ -38,7 +38,7 @@ export const users = pgTable("users", {
   emailVerified: boolean("email_verified").default(false).notNull(),
   approvalStatus: varchar("approval_status", { length: 20 }).default("pending").notNull(),
   supervisorId: integer("supervisor_id"),
-  comarcaId: integer("comarca_id").notNull().references(() => comarcas.id).default(1),
+  comarcaId: integer("comarca_id").references(() => comarcas.id).default(1).notNull(), // default 1 = Camaçari (first seed row)
   funcao: varchar("funcao", { length: 30 }),
   nucleo: varchar("nucleo", { length: 30 }),
   isAdmin: boolean("is_admin").default(false),
@@ -119,7 +119,7 @@ export const assistidos = pgTable("assistidos", {
     nome: string;
     confidence: number;
   } | null>(),
-  comarcaId: integer("comarca_id").notNull().references(() => comarcas.id).default(1),
+  comarcaId: integer("comarca_id").references(() => comarcas.id).default(1).notNull(), // default 1 = Camaçari (first seed row)
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -151,7 +151,7 @@ export const processos = pgTable("processos", {
   numeroAutos: text("numero_autos").notNull(),
   numeroAntigo: text("numero_antigo"),
   comarca: varchar("comarca", { length: 100 }),
-  comarcaId: integer("comarca_id").notNull().references(() => comarcas.id).default(1),
+  comarcaId: integer("comarca_id").references(() => comarcas.id).default(1).notNull(), // default 1 = Camaçari (first seed row)
   vara: varchar("vara", { length: 100 }),
   area: areaEnum("area").notNull(),
   classeProcessual: varchar("classe_processual", { length: 100 }),
