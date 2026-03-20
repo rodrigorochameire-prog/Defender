@@ -48,6 +48,29 @@ BAIRROS_SALVADOR_BLOCKLIST = {
     "campo grande", "barris", "dois de julho",
 }
 
+# Bairros/locais de municípios vizinhos que NÃO são Camaçari
+MUNICIPIOS_VIZINHOS_BLOCKLIST = {
+    # Lauro de Freitas
+    "itinga", "vida nova", "portão", "alphaville", "buraquinho",
+    "vilas do atlântico", "villas do atlântico", "jardim ipitanga",
+    # Simões Filho
+    "boca da mata", "distrito industrial de simões filho",
+    # Dias d'Ávila
+    "coutos",
+    # Madre de Deus
+    "madre de deus",
+    # Candeias
+    "candeias",
+    # São Francisco do Conde
+    "são francisco do conde", "sao francisco do conde",
+    # Pojuca
+    "pojuca",
+    # Mata de São João
+    "praia do forte",
+    # Catu (diferente de "catu de abrantes", que É bairro de Camaçari)
+    "catu centro",
+}
+
 # Bairros conhecidos de Camaçari para normalização
 BAIRROS_CAMACARI = [
     "Abrantes", "Alto da Bela Vista", "Alto do Cruzeiro", "Arembepe",
@@ -353,8 +376,8 @@ class RadarExtractionService:
                 client_db.table("radar_noticias").delete().eq("id", noticia["id"]).execute()
                 return True  # Processado com sucesso (descartado)
 
-            # Blocklist de bairros de Salvador — se Claude extraiu bairro que é de Salvador, deletar
-            if bairro and bairro.lower().strip() in BAIRROS_SALVADOR_BLOCKLIST:
+            # Blocklist de bairros de Salvador e municípios vizinhos — se Claude extraiu bairro fora de Camaçari, deletar
+            if bairro and bairro.lower().strip() in BAIRROS_SALVADOR_BLOCKLIST | MUNICIPIOS_VIZINHOS_BLOCKLIST:
                 logger.info(
                     "Descartando notícia com bairro de Salvador '%s' id=%d: '%s'",
                     bairro,
