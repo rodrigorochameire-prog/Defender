@@ -2,16 +2,12 @@ import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { comarcas } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import type { User } from "@/lib/db/schema";
-
-function getComarcaIdFromUser(user: User): number {
-  return user.comarcaId ?? 1;
-}
+import { getComarcaId } from "../comarca-scope";
 
 export const comarcasRouter = router({
   /** Retorna a comarca do usuário logado com suas features */
   getMinhaComarca: protectedProcedure.query(async ({ ctx }) => {
-    const comarcaId = getComarcaIdFromUser(ctx.user);
+    const comarcaId = getComarcaId(ctx.user);
     const result = await db
       .select()
       .from(comarcas)
