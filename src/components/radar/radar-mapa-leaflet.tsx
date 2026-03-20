@@ -28,18 +28,17 @@ declare module "leaflet" {
 interface MarkerClusterGroupOptions {
   chunkedLoading?: boolean;
   maxClusterRadius?: number;
+  disableClusteringAtZoom?: number;
   spiderfyOnMaxZoom?: boolean;
   showCoverageOnHover?: boolean;
   zoomToBoundsOnClick?: boolean;
-  iconCreateFunction?: (cluster: { getChildCount: () => number }) => L.DivIcon;
+  iconCreateFunction?: (cluster: MarkerCluster) => L.DivIcon;
 }
 
-const CAMACARI_CENTER: [number, number] = [-12.6976, -38.3244];
-const CAMACARI_BOUNDS: [[number, number], [number, number]] = [
-  [-12.58, -38.42],
-  [-12.83, -38.25],
-];
-const INITIAL_ZOOM = 12;
+interface MarkerCluster {
+  getChildCount: () => number;
+  getAllChildMarkers: () => L.Marker[];
+}
 
 const CRIME_COLORS: Record<string, string> = {
   homicidio: "#ef4444",
@@ -54,6 +53,76 @@ const CRIME_COLORS: Record<string, string> = {
   estelionato: "#14b8a6",
   outros: "#71717a",
 };
+
+interface MarkerOptionsWithTipo extends L.MarkerOptions {
+  tipoCrime?: string;
+}
+
+function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
+  const rad = ((angleDeg - 90) * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+function arcPath(cx: number, cy: number, r: number, startAngle: number, endAngle: number) {
+  const s = polarToCartesian(cx, cy, r, startAngle);
+  const e = polarToCartesian(cx, cy, r, endAngle);
+  const large = endAngle - startAngle > 180 ? 1 : 0;
+  return `M ${cx} ${cy} L ${s.x} ${s.y} A ${r} ${r} 0 ${large} 1 ${e.x} ${e.y} Z`;
+}
+
+function createDonutIcon(cluster: MarkerCluster): L.DivIcon {
+  const markers = cluster.getAllChildMarkers();
+  const count = markers.length;
+
+  // Count occurrences per tipoCrime
+  const crimeCounts: Record<string, number> = {};
+  for (const marker of markers) {
+    const opts = marker.options as MarkerOptionsWithTipo;
+    const tipo: string = opts.tipoCrime ?? "outros";
+    crimeCounts[tipo] = (crimeCounts[tipo] || 0) + 1;
+  }
+
+  const types = Object.keys(crimeCounts);
+
+  // Single type: solid circle
+  if (types.length === 1) {
+    const color = CRIME_COLORS[types[0]] || CRIME_COLORS.outros;
+    const svg = `<svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="18" cy="18" r="17" fill="${color}" fill-opacity="0.9"/>
+      <circle cx="18" cy="18" r="17" fill="none" stroke="white" stroke-width="1.5"/>
+      <text x="18" y="22" text-anchor="middle" font-size="11" font-weight="bold" fill="white">${count}</text>
+    </svg>`;
+    return L.divIcon({ html: svg, className: "", iconSize: [36, 36], iconAnchor: [18, 18] });
+  }
+
+  // Multiple types: donut/pizza SVG
+  let currentAngle = 0;
+  const paths: string[] = [];
+
+  for (const [tipo, typeCount] of Object.entries(crimeCounts)) {
+    const sliceDeg = (typeCount / count) * 360;
+    const endAngle = currentAngle + sliceDeg;
+    const color = CRIME_COLORS[tipo] || CRIME_COLORS.outros;
+    paths.push(`<path d="${arcPath(18, 18, 17, currentAngle, endAngle)}" fill="${color}"/>`);
+    currentAngle = endAngle;
+  }
+
+  const svg = `<svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+    ${paths.join("\n    ")}
+    <circle cx="18" cy="18" r="10" fill="white"/>
+    <circle cx="18" cy="18" r="17" fill="none" stroke="#d4d4d8" stroke-width="1"/>
+    <text x="18" y="22" text-anchor="middle" font-size="11" font-weight="bold" fill="#18181b">${count}</text>
+  </svg>`;
+
+  return L.divIcon({ html: svg, className: "", iconSize: [36, 36], iconAnchor: [18, 18] });
+}
+
+const CAMACARI_CENTER: [number, number] = [-12.6976, -38.3244];
+const CAMACARI_BOUNDS: [[number, number], [number, number]] = [
+  [-12.58, -38.42],
+  [-12.83, -38.25],
+];
+const INITIAL_ZOOM = 12;
 
 const CRIME_LABELS: Record<string, string> = {
   homicidio: "Homicídio",
@@ -180,36 +249,12 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
     // Create marker cluster group
     const clusterGroup = (L as any).markerClusterGroup({
       chunkedLoading: true,
-      maxClusterRadius: 50,
+      maxClusterRadius: 20,
+      disableClusteringAtZoom: 14,
       spiderfyOnMaxZoom: true,
       showCoverageOnHover: false,
       zoomToBoundsOnClick: true,
-      iconCreateFunction: (cluster: { getChildCount: () => number }) => {
-        const count = cluster.getChildCount();
-        const size = count < 10 ? 35 : count < 50 ? 45 : 55;
-        // Color shades based on count: emerald-600, orange-500, red-500
-        const bgColor =
-          count < 10 ? "#059669" : count < 50 ? "#f97316" : "#ef4444";
-        return L.divIcon({
-          html: `<div style="
-            background: ${bgColor};
-            color: white;
-            width: ${size}px;
-            height: ${size}px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-            font-weight: 600;
-            border: 3px solid white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          ">${count}</div>`,
-          className: "",
-          iconSize: [size, size],
-          iconAnchor: [size / 2, size / 2],
-        });
-      },
+      iconCreateFunction: createDonutIcon,
     } as MarkerClusterGroupOptions);
 
     data.forEach((point) => {
@@ -230,7 +275,7 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
         iconAnchor: [6, 6],
       });
 
-      const marker = L.marker([lat, lng], { icon });
+      const marker = L.marker([lat, lng], { icon, tipoCrime: crimeKey } as MarkerOptionsWithTipo);
 
       const dateStr = point.dataFato
         ? new Date(point.dataFato).toLocaleDateString("pt-BR")
