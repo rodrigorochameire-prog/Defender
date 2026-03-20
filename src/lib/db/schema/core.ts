@@ -10,6 +10,7 @@ import {
   index,
   uniqueIndex,
   jsonb,
+  numeric,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import {
@@ -191,6 +192,12 @@ export const processos = pgTable("processos", {
   }>(),
   analyzedAt: timestamp("analyzed_at"),
   analysisVersion: integer("analysis_version").default(0),
+
+  // Geolocalização do fato
+  localDoFatoEndereco: text("local_do_fato_endereco"),
+  localDoFatoLat: numeric("local_do_fato_lat", { precision: 10, scale: 7 }),
+  localDoFatoLng: numeric("local_do_fato_lng", { precision: 10, scale: 7 }),
+
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
