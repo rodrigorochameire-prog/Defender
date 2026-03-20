@@ -259,24 +259,6 @@ export const radarRouter = router({
 
       const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-      // Total de notícias
-      const [totalResult] = await db
-        .select({ total: count() })
-        .from(radarNoticias)
-        .where(whereClause);
-
-      // Por tipo de crime
-      const porTipo = await db
-        .select({
-          tipoCrime: radarNoticias.tipoCrime,
-          count: count(),
-        })
-        .from(radarNoticias)
-        .where(whereClause)
-        .groupBy(radarNoticias.tipoCrime)
-        .orderBy(desc(count()));
-
-      // Total de matches
       const matchConditions = [];
       if (dias) {
         const dataInicio = new Date();
@@ -284,51 +266,38 @@ export const radarRouter = router({
         matchConditions.push(gte(radarMatches.createdAt, dataInicio));
       }
 
-      const [matchResult] = await db
-        .select({ total: count() })
-        .from(radarMatches)
-        .where(matchConditions.length > 0 ? and(...matchConditions) : undefined);
+      // Todas as queries em paralelo — elimina 5 round-trips sequenciais
+      const [
+        [totalResult],
+        porTipo,
+        [matchResult],
+        porMes,
+        relevanciaRaw,
+      ] = await Promise.all([
+        db.select({ total: count() }).from(radarNoticias).where(whereClause),
+        db.select({ tipoCrime: radarNoticias.tipoCrime, count: count() })
+          .from(radarNoticias).where(whereClause)
+          .groupBy(radarNoticias.tipoCrime).orderBy(desc(count())),
+        db.select({ total: count() }).from(radarMatches)
+          .where(matchConditions.length > 0 ? and(...matchConditions) : undefined),
+        db.select({
+            mes: sql<string>`to_char(${radarNoticias.createdAt}, 'YYYY-MM')`,
+            tipoCrime: radarNoticias.tipoCrime,
+            count: count(),
+          })
+          .from(radarNoticias).where(whereClause)
+          .groupBy(sql`to_char(${radarNoticias.createdAt}, 'YYYY-MM')`, radarNoticias.tipoCrime)
+          .orderBy(sql`to_char(${radarNoticias.createdAt}, 'YYYY-MM')`),
+        db.execute(sql`
+          SELECT
+            COUNT(*) FILTER (WHERE relevancia_score >= 85)::int                    AS confirmadas,
+            COUNT(*) FILTER (WHERE relevancia_score >= 60 AND relevancia_score < 85)::int AS provaveis,
+            COUNT(*) FILTER (WHERE relevancia_score >= 35 AND relevancia_score < 60)::int AS possiveis
+          FROM radar_noticias
+        `).catch(() => [{ confirmadas: 0, provaveis: 0, possiveis: 0 }]),
+      ]);
 
-      // Por mês (para gráfico de barras empilhadas)
-      const porMes = await db
-        .select({
-          mes: sql<string>`to_char(${radarNoticias.createdAt}, 'YYYY-MM')`,
-          tipoCrime: radarNoticias.tipoCrime,
-          count: count(),
-        })
-        .from(radarNoticias)
-        .where(whereClause)
-        .groupBy(sql`to_char(${radarNoticias.createdAt}, 'YYYY-MM')`, radarNoticias.tipoCrime)
-        .orderBy(sql`to_char(${radarNoticias.createdAt}, 'YYYY-MM')`);
-
-      // Wrap relevanciaScore queries in try/catch — column may not exist in all environments
-      let confirmadas: number | string = 0;
-      let provaveis: number | string = 0;
-      let possiveis: number | string = 0;
-      try {
-        confirmadas = await db.select({ count: count() })
-          .from(radarNoticias)
-          .where(gte(radarNoticias.relevanciaScore, 85))
-          .then(r => r[0]?.count ?? 0);
-
-        provaveis = await db.select({ count: count() })
-          .from(radarNoticias)
-          .where(and(
-            gte(radarNoticias.relevanciaScore, 60),
-            lt(radarNoticias.relevanciaScore, 85)
-          ))
-          .then(r => r[0]?.count ?? 0);
-
-        possiveis = await db.select({ count: count() })
-          .from(radarNoticias)
-          .where(and(
-            gte(radarNoticias.relevanciaScore, 35),
-            lt(radarNoticias.relevanciaScore, 60)
-          ))
-          .then(r => r[0]?.count ?? 0);
-      } catch {
-        // relevancia_score column not yet migrated — return zeros for these sub-counts
-      }
+      const rel = (relevanciaRaw as unknown as Array<Record<string, number>>)[0] ?? {};
 
       return {
         total: Number(totalResult?.total || 0),
@@ -343,9 +312,9 @@ export const radarRouter = router({
           count: Number(r.count),
         })),
         relevancia: {
-          confirmadas: Number(confirmadas),
-          provaveis: Number(provaveis),
-          possiveis: Number(possiveis),
+          confirmadas: Number(rel.confirmadas ?? 0),
+          provaveis: Number(rel.provaveis ?? 0),
+          possiveis: Number(rel.possiveis ?? 0),
         },
       };
     }),
@@ -1216,52 +1185,32 @@ export const radarRouter = router({
   // ==========================================
 
   enrichmentHealth: protectedProcedure.query(async () => {
-    const [total] = await db.select({ count: count() }).from(radarNoticias);
-
-    const [pending] = await db
-      .select({ count: count() })
-      .from(radarNoticias)
-      .where(eq(radarNoticias.enrichmentStatus, "pending"));
-
-    const [done] = await db
-      .select({ count: count() })
-      .from(radarNoticias)
-      .where(sql`${radarNoticias.enrichmentStatus} IN ('extracted', 'matched')`);
-
-    const [semBairro] = await db
-      .select({ count: count() })
-      .from(radarNoticias)
-      .where(sql`${radarNoticias.bairro} IS NULL AND ${radarNoticias.enrichmentStatus} IN ('extracted', 'matched')`);
-
-    const [semCoordenadas] = await db
-      .select({ count: count() })
-      .from(radarNoticias)
-      .where(sql`${radarNoticias.latitude} IS NULL AND ${radarNoticias.enrichmentStatus} IN ('extracted', 'matched')`);
-
-    const [semResumo] = await db
-      .select({ count: count() })
-      .from(radarNoticias)
-      .where(sql`${radarNoticias.resumoIA} IS NULL AND ${radarNoticias.enrichmentStatus} IN ('extracted', 'matched')`);
-
-    const [failed] = await db
-      .select({ count: count() })
-      .from(radarNoticias)
-      .where(eq(radarNoticias.enrichmentStatus, "failed"));
-
-    const [duplicate] = await db
-      .select({ count: count() })
-      .from(radarNoticias)
-      .where(eq(radarNoticias.enrichmentStatus, "duplicate"));
+    // Uma única query com agregação condicional (FILTER) em vez de 7 round-trips
+    const [row] = await db.execute(sql`
+      SELECT
+        COUNT(*)::int                                                                 AS total,
+        COUNT(*) FILTER (WHERE enrichment_status = 'pending')::int                  AS pending,
+        COUNT(*) FILTER (WHERE enrichment_status IN ('extracted','matched'))::int    AS done,
+        COUNT(*) FILTER (WHERE bairro IS NULL
+          AND enrichment_status IN ('extracted','matched'))::int                     AS sem_bairro,
+        COUNT(*) FILTER (WHERE latitude IS NULL
+          AND enrichment_status IN ('extracted','matched'))::int                     AS sem_coordenadas,
+        COUNT(*) FILTER (WHERE resumo_ia IS NULL
+          AND enrichment_status IN ('extracted','matched'))::int                     AS sem_resumo,
+        COUNT(*) FILTER (WHERE enrichment_status = 'failed')::int                   AS failed,
+        COUNT(*) FILTER (WHERE enrichment_status = 'duplicate')::int                AS duplicate
+      FROM radar_noticias
+    `) as unknown as [Record<string, number>];
 
     return {
-      total: total?.count ?? 0,
-      pending: pending?.count ?? 0,
-      done: done?.count ?? 0,
-      semBairro: semBairro?.count ?? 0,
-      semCoordenadas: semCoordenadas?.count ?? 0,
-      semResumo: semResumo?.count ?? 0,
-      failed: Number(failed?.count ?? 0),
-      duplicate: Number(duplicate?.count ?? 0),
+      total: row?.total ?? 0,
+      pending: row?.pending ?? 0,
+      done: row?.done ?? 0,
+      semBairro: row?.sem_bairro ?? 0,
+      semCoordenadas: row?.sem_coordenadas ?? 0,
+      semResumo: row?.sem_resumo ?? 0,
+      failed: row?.failed ?? 0,
+      duplicate: row?.duplicate ?? 0,
     };
   }),
 
