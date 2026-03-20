@@ -158,8 +158,6 @@ export const evolutionConfig = pgTable("evolution_config", {
 
   // Metadados
   lastSyncAt: timestamp("last_sync_at"),
-  lastDisconnectReason: text("last_disconnect_reason"),
-  lastSyncContactsCount: integer("last_sync_contacts_count").default(0),
   createdById: integer("created_by_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -170,20 +168,6 @@ export const evolutionConfig = pgTable("evolution_config", {
 
 export type EvolutionConfig = typeof evolutionConfig.$inferSelect;
 export type InsertEvolutionConfig = typeof evolutionConfig.$inferInsert;
-
-// ==========================================
-// WHATSAPP CONNECTION LOG
-// ==========================================
-
-export const whatsappConnectionLog = pgTable("whatsapp_connection_log", {
-  id: serial("id").primaryKey(),
-  configId: integer("config_id").references(() => evolutionConfig.id, { onDelete: "cascade" }),
-  event: text("event").notNull(),
-  details: jsonb("details").$type<Record<string, unknown>>(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-}, (table) => [
-  index("idx_whatsapp_connection_log_config_date").on(table.configId, table.createdAt),
-]);
 
 // ==========================================
 // WHATSAPP TEMPLATES

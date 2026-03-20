@@ -16,7 +16,6 @@ import {
   evolutionConfig,
   whatsappContacts,
   whatsappChatMessages,
-  whatsappConnectionLog,
 } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import {
@@ -326,28 +325,8 @@ async function handleConnectionUpdate(configId: number, payload: ConnectionUpdat
         isActive: state === "open",
         updatedAt: new Date(),
         ...(state === "open" ? { lastSyncAt: new Date(), qrCode: null } : {}),
-        ...(state === "close" ? { lastDisconnectReason: `Disconnected at ${new Date().toISOString()}` } : {}),
       })
       .where(eq(evolutionConfig.id, configId));
-
-    // Log connection event
-    await db.insert(whatsappConnectionLog).values({
-      configId,
-      event: state === "open" ? "connected" : state === "close" ? "disconnected" : state,
-      details: { state, timestamp: new Date().toISOString() },
-    });
-
-    // Fire-and-forget sync on connect
-    if (state === "open") {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null);
-      if (appUrl) {
-        fetch(`${appUrl}/api/whatsapp/sync-on-connect`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-internal-secret": process.env.EVOLUTION_WEBHOOK_SECRET || "" },
-          body: JSON.stringify({ configId }),
-        }).catch((err) => console.error("[Evolution Webhook] Sync trigger error:", err.message));
-      }
-    }
 
     console.log(`[Evolution Webhook] Conexão atualizada: ${state} -> ${status}`);
   } catch (error) {
