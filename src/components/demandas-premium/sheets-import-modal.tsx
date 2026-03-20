@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback } from "react";
+import { resolveImportStatus } from "@/lib/pje-parser";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -696,7 +697,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
 
           return {
             id: d.id,
-            status: d.status,
+            status: resolveImportStatus(d.status),
             estadoPrisional: d.estadoPrisional,
             data: d.data,
             dataInclusao, // Para ordenação precisa preservando ordem original da planilha
@@ -717,7 +718,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
       if (duplicatas.length > 0 && onUpdate) {
         const demandasParaAtualizar = duplicatas.map(dup => ({
           id: dup.existente.id, // Manter o ID original
-          status: dup.nova.status,
+          status: resolveImportStatus(dup.nova.status),
           estadoPrisional: dup.nova.estadoPrisional,
           data: dup.nova.data,
           prazo: dup.nova.prazo,

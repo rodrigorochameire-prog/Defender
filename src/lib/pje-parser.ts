@@ -905,6 +905,25 @@ function gerarProvidencias(intimacao: IntimacaoPJeSimples): string {
   return `(ajustar ${camposUnicos.join(' e ')})`;
 }
 
+/**
+ * Statuses do grupo "concluída" — únicos que sobrevivem à importação sem serem
+ * remapeados para triagem. Todos os outros ficam em "fila" (triagem).
+ */
+const IMPORT_CONCLUIDA_STATUSES = new Set([
+  'protocolado', 'ciencia', 'resolvido', 'constituiu_advogado', 'sem_atuacao',
+]);
+
+/**
+ * Resolve o status para importação:
+ * - Se for do grupo "concluída" → mantém
+ * - Qualquer outro status → força "fila" (triagem)
+ * Garante que demandas recém-importadas sempre entrem na triagem.
+ */
+export function resolveImportStatus(status: string | undefined | null): string {
+  if (status && IMPORT_CONCLUIDA_STATUSES.has(status)) return status;
+  return 'fila';
+}
+
 export function intimacaoToDemanda(
   intimacao: IntimacaoPJeSimples,
   atribuicao: string,
@@ -926,7 +945,7 @@ export function intimacaoToDemanda(
   return {
     id: `pje-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     assistido: intimacao.assistido,
-    status: overrides?.status || 'fila',
+    status: resolveImportStatus(overrides?.status),
     data: dataISO,
     // dataInclusao com precisão de milissegundos para ordenação precisa
     // Usa 999 - ordemOriginal para que a primeira da lista (ordem 0) tenha valor maior (999)
@@ -1503,7 +1522,7 @@ export function intimacaoSEEUToDemanda(intimacao: IntimacaoSEEU): any {
     prazo: prazoFinal,
     ato, // Manifestação ou Ciência
     atribuicao: 'EXECUCAO_PENAL',
-    status: ato === 'Ciência' ? 'ciencia' : 'fila', // Ciência → concluída; demais → triagem
+    status: resolveImportStatus(ato === 'Ciência' ? 'ciencia' : undefined),
     estadoPrisional: 'Preso', // Padrão para execução penal
     providencias: intimacao.assuntoPrincipal
       ? `${intimacao.classeProcessual || 'Execução Penal'} - ${intimacao.assuntoPrincipal}`
