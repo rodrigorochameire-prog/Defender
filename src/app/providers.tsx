@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { httpBatchLink, splitLink } from "@trpc/client";
+import { httpBatchLink, httpLink, splitLink } from "@trpc/client";
 import { useState, Suspense } from "react";
 import superjson from "superjson";
 import { trpc } from "@/lib/trpc/client";
@@ -17,21 +17,19 @@ function getBaseUrl() {
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
 
-// Queries que devem resolver em batch separado e rápido
-// (auth/notif sem DB + queries críticas de renderização do feed)
+// Queries leves que devem resolver rápido (auth, notificações, configs)
 const FAST_QUERIES = new Set([
-  // Auth / layout — sem hit ao banco (cache in-memory)
   "users.me",
   "auth.me",
   "notifications.unreadCount",
   "profissionais.getEscalaAtual",
   "whatsappChat.listConfigs",
   "whatsappChat.getStats",
-  // Radar — críticos para renderizar o feed (disparam separado das queries secundárias)
+]);
+
+// Queries que recebem HTTP request próprio (sem batching) para não disputar pool de DB
+const SOLO_QUERIES = new Set([
   "radar.list",
-  "radar.totalCount",
-  "radar.matchesPendentesCount",
-  "radar.enrichmentHealth",
 ]);
 
 // Loading spinner minimalista
@@ -69,22 +67,33 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     return trpc.createClient({
       links: [
-        // Separar queries leves (auth) das pesadas (listas)
+        // 1. radar.list → request HTTP próprio (sem batching) — nunca disputa pool
         splitLink({
-          condition: (op) => FAST_QUERIES.has(op.path),
-          true: httpBatchLink({
+          condition: (op) => SOLO_QUERIES.has(op.path),
+          true: httpLink({
             url,
             transformer: superjson,
-            maxURLLength: 2083,
             fetch: (input, init) =>
               fetch(input, { ...init, signal: AbortSignal.timeout(15_000) }),
           }),
-          false: httpBatchLink({
-            url,
-            transformer: superjson,
-            maxURLLength: 2083,
-            fetch: (input, init) =>
-              fetch(input, { ...init, signal: AbortSignal.timeout(30_000) }),
+          // 2. Auth/notif → batch rápido (queries sem hit pesado ao banco)
+          false: splitLink({
+            condition: (op) => FAST_QUERIES.has(op.path),
+            true: httpBatchLink({
+              url,
+              transformer: superjson,
+              maxURLLength: 2083,
+              fetch: (input, init) =>
+                fetch(input, { ...init, signal: AbortSignal.timeout(10_000) }),
+            }),
+            // 3. Tudo mais → batch normal (pode ser mais lento)
+            false: httpBatchLink({
+              url,
+              transformer: superjson,
+              maxURLLength: 2083,
+              fetch: (input, init) =>
+                fetch(input, { ...init, signal: AbortSignal.timeout(30_000) }),
+            }),
           }),
         }),
       ],
