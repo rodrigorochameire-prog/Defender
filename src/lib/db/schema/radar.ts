@@ -74,6 +74,7 @@ export const radarNoticias = pgTable("radar_noticias", {
   // Composite indexes for feed query (filter by status + order by date/relevance)
   index("radar_noticias_status_datapub_idx").on(table.enrichmentStatus, table.dataPublicacao),
   index("radar_noticias_status_relevancia_datapub_idx").on(table.enrichmentStatus, table.relevanciaScore, table.dataPublicacao),
+  index("radar_noticias_comarca_id_idx").on(table.comarcaId),
 ]);
 
 export type RadarNoticia = typeof radarNoticias.$inferSelect;

@@ -3,7 +3,7 @@ import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { assistidos, processos, demandas, audiencias, documentos, movimentacoes, anotacoes, driveFiles, assistidosProcessos, users, comarcas } from "@/lib/db/schema";
 import { getAssistidosVisibilityFilter } from "@/lib/trpc/comarca-scope";
-import { eq, ilike, or, desc, sql, and, isNull, inArray, asc, getTableColumns } from "drizzle-orm";
+import { eq, ilike, or, desc, sql, and, isNull, inArray, asc, getTableColumns, type SQL } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { uploadImageBuffer } from "@/lib/supabase/storage";
 
@@ -57,8 +57,7 @@ async function ensureDriveFolderForAssistido(
 }
 
 export const assistidosRouter = router({
-  // Listar todos os assistidos
-  // Assistidos são COMPARTILHADOS - todos os defensores têm acesso
+  // Listar assistidos — visibilidade por comarca em 3 camadas (ver comarca-scope.ts)
   list: protectedProcedure
     .input(
       z.object({
@@ -72,7 +71,7 @@ export const assistidosRouter = router({
       const { search, statusPrisional, atribuicaoPrimaria, verRMS } = input || {};
 
       // Construir condições (assistidos não tem soft delete)
-      const conditions: any[] = [];
+      const conditions: SQL<unknown>[] = [];
 
       // Filtro de visibilidade em 3 camadas (comarca própria + RMS opcional + processo local automático)
       if (ctx.user.role !== "admin") {
@@ -300,7 +299,6 @@ export const assistidosRouter = router({
     }),
 
   // Buscar assistido por ID (enriquecido)
-  // Assistidos são COMPARTILHADOS
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
