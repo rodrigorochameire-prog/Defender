@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { assistidos, processos, demandas, audiencias, documentos, movimentacoes, anotacoes, driveFiles, assistidosProcessos, users } from "@/lib/db/schema";
-import { eq, ilike, or, desc, sql, and, isNull, inArray, asc } from "drizzle-orm";
+import { assistidos, processos, demandas, audiencias, documentos, movimentacoes, anotacoes, driveFiles, assistidosProcessos, users, comarcas } from "@/lib/db/schema";
+import { getAssistidosVisibilityFilter } from "@/lib/trpc/comarca-scope";
+import { eq, ilike, or, desc, sql, and, isNull, inArray, asc, getTableColumns } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { uploadImageBuffer } from "@/lib/supabase/storage";
 
@@ -64,15 +65,20 @@ export const assistidosRouter = router({
         search: z.string().optional(),
         statusPrisional: z.string().optional(),
         atribuicaoPrimaria: z.string().optional(), // Filtro por atribuição primária
+        verRMS: z.boolean().optional(),
       }).optional()
     )
     .query(async ({ ctx, input }) => {
-      const { search, statusPrisional, atribuicaoPrimaria } = input || {};
-      // Assistidos são compartilhados - não filtrar por workspace
+      const { search, statusPrisional, atribuicaoPrimaria, verRMS } = input || {};
 
-      
       // Construir condições (assistidos não tem soft delete)
-      const conditions: ReturnType<typeof eq>[] = [];
+      const conditions: any[] = [];
+
+      // Filtro de visibilidade em 3 camadas (comarca própria + RMS opcional + processo local automático)
+      if (ctx.user.role !== "admin") {
+        const visibilityFilter = await getAssistidosVisibilityFilter(ctx.user, { verRMS });
+        conditions.push(visibilityFilter);
+      }
       
       if (search) {
         // Detectar se o termo parece um número de processo (dígitos + traços/pontos)
@@ -137,12 +143,14 @@ export const assistidosRouter = router({
         conditions.push(inArray(assistidos.atribuicaoPrimaria, valores as any));
       }
 
-      // Dados compartilhados - não filtrar por workspace
-      
       // Query principal - buscar assistidos
       const result = await db
-        .select()
+        .select({
+          ...getTableColumns(assistidos),
+          comarcaNome: comarcas.nome,
+        })
         .from(assistidos)
+        .leftJoin(comarcas, eq(assistidos.comarcaId, comarcas.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(desc(assistidos.createdAt));
 
