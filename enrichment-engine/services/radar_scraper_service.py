@@ -61,6 +61,16 @@ KEYWORDS_POLICIAL_TITULO = [
     "estelionato", "fraude",
     "traficante", "suspeito preso", "acusado preso",
     "crime", "policia", "polícia", "delegacia",
+    # Feminicídio e violência de gênero
+    "feminicídio", "feminicidio", "tentativa de feminicídio", "tentativa de feminicidio",
+    # "preso" isolado — cobre "é preso", "foi preso", "foram presos"
+    "preso", "presos", "presa", "presas",
+    # Condenado / capturado
+    "condenado", "capturado", "capturada", "foragido", "foragida",
+    # Baralho do crime (difusão policial)
+    "baralho do crime",
+    # Outros verbos de prisão
+    "detido", "detida", "flagrante",
 ]
 
 # Palavras-chave ESTRITAS — apenas "camaçari" e localidades inconfundíveis
@@ -270,6 +280,9 @@ class RadarScraperService:
             ns = {"atom": "http://www.w3.org/2005/Atom"}
             items = root.findall(".//atom:entry", ns)
 
+        # Verificar se é uma fonte Google News (já pré-filtrada pela query de busca)
+        is_google_news = "news.google.com" in url
+
         for item in items[:30]:
             # RSS 2.0
             titulo = item.findtext("title", "").strip()
@@ -287,8 +300,13 @@ class RadarScraperService:
                 continue
             if link in existing_urls:
                 continue
-            if not self._is_police_news(titulo):
-                continue
+
+            # Google News já é pré-filtrado pela query — pular verificação de keywords policiais
+            # Para outros RSS, verificar keywords normalmente
+            if not is_google_news:
+                if not self._is_police_news(titulo):
+                    continue
+
             if not self._is_camacari_region(titulo, descricao, confiabilidade):
                 continue
 
