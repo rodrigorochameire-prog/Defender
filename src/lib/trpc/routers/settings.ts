@@ -2,7 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { userSettings } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 const settingsSchema = z.object({
   // Configurações Gerais
@@ -54,6 +54,44 @@ export const settingsRouter = router({
 
     return existing.settings as Record<string, unknown>;
   }),
+
+  /**
+   * Get comarca visibility settings (verRMS toggle)
+   */
+  getComarcaVisibilidade: protectedProcedure.query(async ({ ctx }) => {
+    const result = await db
+      .select({ settings: userSettings.settings })
+      .from(userSettings)
+      .where(eq(userSettings.userId, ctx.user.id))
+      .limit(1);
+
+    const settings = (result[0]?.settings ?? {}) as Record<string, any>;
+    return {
+      verRMS: (settings?.comarcaVisibilidade?.verRMS as boolean) ?? false,
+    };
+  }),
+
+  /**
+   * Set comarca visibility settings (verRMS toggle) — upsert via JSONB merge
+   */
+  setComarcaVisibilidade: protectedProcedure
+    .input(z.object({ verRMS: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      await db
+        .insert(userSettings)
+        .values({
+          userId: ctx.user.id,
+          settings: { comarcaVisibilidade: { verRMS: input.verRMS } },
+        })
+        .onConflictDoUpdate({
+          target: userSettings.userId,
+          set: {
+            settings: sql`user_settings.settings || ${JSON.stringify({ comarcaVisibilidade: { verRMS: input.verRMS } })}::jsonb`,
+            updatedAt: new Date(),
+          },
+        });
+      return { ok: true };
+    }),
 
   /**
    * Save user settings (upsert)
