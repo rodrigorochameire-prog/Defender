@@ -69,6 +69,9 @@ export const radarNoticias = pgTable("radar_noticias", {
   index("radar_noticias_fonte_idx").on(table.fonte),
   index("radar_noticias_created_at_idx").on(table.createdAt),
   index("radar_noticias_content_hash_idx").on(table.contentHash),
+  // Composite indexes for feed query (filter by status + order by date/relevance)
+  index("radar_noticias_status_datapub_idx").on(table.enrichmentStatus, table.dataPublicacao),
+  index("radar_noticias_status_relevancia_datapub_idx").on(table.enrichmentStatus, table.relevanciaScore, table.dataPublicacao),
 ]);
 
 export type RadarNoticia = typeof radarNoticias.$inferSelect;
@@ -106,6 +109,8 @@ export const radarMatches = pgTable("radar_matches", {
   index("radar_matches_caso_id_idx").on(table.casoId),
   index("radar_matches_status_idx").on(table.status),
   index("radar_matches_score_idx").on(table.scoreConfianca),
+  // Composite index for pending matches lookup by noticia
+  index("radar_matches_noticia_status_idx").on(table.noticiaId, table.status),
 ]);
 
 export type RadarMatch = typeof radarMatches.$inferSelect;
