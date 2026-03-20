@@ -22,6 +22,7 @@ import {
 } from "./enums";
 import { users, assistidos, processos } from "./core";
 import { casos } from "./casos";
+import { comarcas } from "./comarcas";
 
 // ==========================================
 // RADAR CRIMINAL — NOTÍCIAS
@@ -52,6 +53,7 @@ export const radarNoticias = pgTable("radar_noticias", {
     idade?: number;
     vulgo?: string;
   }[]>(),
+  comarcaId: integer("comarca_id").references(() => comarcas.id).default(1).notNull(),
   contentHash: text("content_hash"),
   relevanciaScore: integer("relevancia_score").default(0).notNull(),
   enrichmentStatus: radarEnrichmentStatusEnum("enrichment_status").default("pending").notNull(),

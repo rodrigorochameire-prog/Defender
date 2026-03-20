@@ -12,6 +12,7 @@ import {
 } from "@/lib/db/schema";
 import { eq, and, desc, sql, gte, lte, lt, ilike, or, count, isNull, ne, inArray } from "drizzle-orm";
 import { sendText } from "@/lib/services/evolution-api";
+import { getComarcaId } from "@/lib/trpc/comarca-scope";
 
 // ==========================================
 // ROUTER RADAR CRIMINAL
@@ -39,11 +40,16 @@ export const radarRouter = router({
         cursor: z.number().optional(), // id of the last item
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const conditions = [
         // Só mostra artigos já enriquecidos (não pending)
         ne(radarNoticias.enrichmentStatus, "pending"),
       ];
+
+      // Filtro por comarca — não-admins só veem notícias da sua comarca
+      if (ctx.user.role !== "admin") {
+        conditions.push(eq(radarNoticias.comarcaId, getComarcaId(ctx.user)));
+      }
 
       if (input.tipoCrime && input.tipoCrime !== "todos") {
         conditions.push(eq(radarNoticias.tipoCrime, input.tipoCrime as any));
@@ -772,7 +778,9 @@ export const radarRouter = router({
       return matches;
     }),
 
-  // Trigger pipeline completo no enrichment engine (step-by-step)
+  // Trigger pipeline completo no enrichment engine (fire-and-forget)
+  // Retorna imediatamente — o enrichment engine processa em background no Railway.
+  // Isso evita o timeout de 60s do Vercel para pipelines com 15+ feeds RSS.
   triggerPipeline: protectedProcedure.mutation(async () => {
     const engineUrl = process.env.ENRICHMENT_ENGINE_URL;
     const apiKey = process.env.ENRICHMENT_API_KEY;
@@ -786,41 +794,20 @@ export const radarRouter = router({
       "X-API-Key": apiKey,
     };
 
-    const results: Record<string, unknown> = {};
+    // Disparar o pipeline completo sem aguardar resposta (fire-and-forget)
+    // O Railway não tem limite de tempo como o Vercel — processa em background.
+    fetch(`${engineUrl}/api/radar/pipeline`, {
+      method: "POST",
+      headers,
+      signal: AbortSignal.timeout(5_000), // só verifica se o engine está online
+    }).catch(() => {
+      // Ignorar timeout — o engine continuou processando em background
+    });
 
-    // Helper: call a step with individual timeout
-    async function callStep(step: string, path: string, timeoutMs: number, body?: object) {
-      try {
-        const response = await fetch(`${engineUrl}${path}`, {
-          method: "POST",
-          headers,
-          body: body ? JSON.stringify(body) : undefined,
-          signal: AbortSignal.timeout(timeoutMs),
-        });
-        if (!response.ok) {
-          results[step] = { status: "error", code: response.status };
-          return;
-        }
-        results[step] = await response.json();
-      } catch (error) {
-        results[step] = { status: "error", detail: String(error) };
-      }
-    }
-
-    // Run steps sequentially with individual timeouts
-    await callStep("scrape", "/api/radar/scrape", 60_000);
-    await callStep("extract", "/api/radar/extract", 45_000, { limit: 10 });
-    await callStep("geocode", "/api/radar/geocode", 10_000, { limit: 50 });
-    await callStep("match", "/api/radar/match", 10_000, { limit: 50 });
-
-    // Gerar notificações para novos matches após pipeline
-    try {
-      await notifyAdminsOfNewMatches();
-    } catch {
-      // Não falhar o pipeline por causa de notificação
-    }
-
-    return { success: true, ...results };
+    return {
+      success: true,
+      message: "Pipeline iniciado em background. Os dados serão atualizados em instantes.",
+    };
   }),
 
   // ==========================================
