@@ -7,6 +7,7 @@ import {
   extrairTags,
   isIrrelevante,
   isRelevante,
+  temContextoJuridico,
 } from "@/config/noticias";
 import { scrapeGoogleNews } from "./google-news-scraper";
 
@@ -244,9 +245,12 @@ export async function scrapeAllFontes(): Promise<ScrapeResult[]> {
 
           // CAMADA 2: Keywords positivas → precisa ter ao menos 1 match
           const temRelevancia = isRelevante(item.titulo, plainText);
+          // CAMADA 2.5: Contexto jurídico → distingue análise de notícia factual pura
+          // Notícia factual ("preso por furto") tem relevância mas SEM contexto → vai para IA
+          const temContexto = temContextoJuridico(item.titulo, plainText);
           let autoAprovado = false;
 
-          if (!temRelevancia) {
+          if (!temRelevancia || !temContexto) {
             // CAMADA 3: IA como tiebreaker para itens ambíguos
             const iaResult = await classificarComIA(item.titulo, resumo);
 
@@ -319,9 +323,10 @@ export async function scrapeAllFontes(): Promise<ScrapeResult[]> {
 
         if (existing.length > 0) continue;
 
-        // Filtrar por relevância (mesmo pipeline)
+        // Filtrar por relevância + contexto jurídico (mesmo pipeline)
         if (isIrrelevante(item.titulo, "")) { googleResult.filtrados++; continue; }
         if (!isRelevante(item.titulo, "")) { googleResult.filtrados++; continue; }
+        if (!temContextoJuridico(item.titulo, "")) { googleResult.filtrados++; continue; }
 
         // Classificar
         const categoria = classificarNoticia(item.titulo, "");

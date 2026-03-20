@@ -261,6 +261,48 @@ export function isRelevante(titulo: string, resumo: string): boolean {
 }
 
 // ==========================================
+// CAMADA 2.5: CONTEXTO JURÍDICO
+// Distingue análise jurídica de notícia factual.
+// Notícias factuais ("preso por furto") passam a Camada 2
+// mas NÃO têm contexto jurídico → vão para IA, não auto-aprovadas.
+// ==========================================
+
+export const KEYWORDS_CONTEXTO_JURIDICO = [
+  // Tribunais e decisões
+  "STF", "STJ", "TJBA", "TJSP", "TJRJ", "TJPR", "TJRS", "TJMG", "TJSC",
+  "turma decidiu", "turma julgou", "plenário decidiu", "seção decidiu",
+  "câmara decidiu", "câmara criminal",
+  "decidiu", "julgou", "entendeu", "firmou", "fixou tese", "assentou",
+  "reformou", "cassou", "concedeu", "negou provimento", "deu provimento",
+  "acórdão", "julgamento", "votação",
+  // Documentos legais
+  "habeas corpus", "recurso especial", "recurso extraordinário",
+  "súmula", "informativo", "ementa", "dispositivo",
+  // Legislação
+  "lei nº", "lei n.", "projeto de lei", "PL ", "PEC ", "medida provisória",
+  "sancionou", "sancionada", "promulgou", "promulgada",
+  "entrou em vigor", "vacatio legis", "publicada no DOU",
+  "alterou", "revogou", "nova redação", "decreto nº", "resolução nº",
+  "aprovado pelo senado", "aprovado pela câmara",
+  // Doutrina e análise
+  "doutrina", "análise", "artigo jurídico", "comentário",
+  "tese", "teoria", "princípio", "entendimento",
+  "novo entendimento", "mudança de entendimento", "overruling",
+  "repercussão geral", "recurso repetitivo", "tese fixada",
+  "reforma", "mudança legislativa", "alteração legislativa",
+  // Contexto de defesa / processo
+  "inconstitucional", "constitucional", "ilegal", "ilícito",
+  "nulidade", "ilegalidade", "violação", "garantia",
+  "jurisprudência", "precedente", "orientação",
+];
+
+/** Retorna true se a notícia tem marcadores de análise jurídica (vs. notícia factual pura) */
+export function temContextoJuridico(titulo: string, resumo: string): boolean {
+  const combined = `${titulo} ${resumo}`.toLowerCase();
+  return KEYWORDS_CONTEXTO_JURIDICO.some(kw => combined.includes(kw.toLowerCase()));
+}
+
+// ==========================================
 // CLASSIFICAÇÃO POR CATEGORIA
 // ==========================================
 
