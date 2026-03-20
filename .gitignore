@@ -67,3 +67,4 @@ supabase/.temp/
 
 # Schema backup
 src/lib/db/schema.old.ts
+.worktrees/
