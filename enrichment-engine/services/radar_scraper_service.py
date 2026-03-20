@@ -47,17 +47,20 @@ KEYWORDS_POLICIAL = [
 KEYWORDS_POLICIAL_TITULO = [
     "homicídio", "homicidio", "assassinato", "assassinado", "morto a tiros",
     "tentativa de homicídio", "tentativa de homicidio", "baleado", "esfaqueado",
+    "executado", "execução", "execucao", "morto", "morte violenta",
+    "corpo encontrado", "cadáver", "cadaver", "óbito",
     "tráfico", "trafico", "drogas", "entorpecentes",
     "roubo", "roubado", "assalto", "latrocínio", "latrocinio",
-    "furto", "furtado",
+    "furto", "furtado", "arrastão", "arrastaõ",
     "violência doméstica", "violencia domestica", "maria da penha",
     "estupro", "abuso sexual",
     "lesão corporal", "lesao corporal",
-    "arma de fogo", "porte ilegal",
+    "arma de fogo", "porte ilegal", "tiro", "disparo",
     "preso em flagrante", "preso com", "operação policial", "operacao policial",
     "mandado de prisão", "mandado de prisao",
     "estelionato", "fraude",
     "traficante", "suspeito preso", "acusado preso",
+    "crime", "policia", "polícia", "delegacia",
 ]
 
 # Palavras-chave ESTRITAS — apenas "camaçari" e localidades inconfundíveis

@@ -808,10 +808,10 @@ export const radarRouter = router({
     }
 
     // Run steps sequentially with individual timeouts
-    await callStep("scrape", "/api/radar/scrape", 20_000);
-    await callStep("extract", "/api/radar/extract", 25_000, { limit: 10 });
-    await callStep("geocode", "/api/radar/geocode", 5_000, { limit: 50 });
-    await callStep("match", "/api/radar/match", 5_000, { limit: 50 });
+    await callStep("scrape", "/api/radar/scrape", 60_000);
+    await callStep("extract", "/api/radar/extract", 45_000, { limit: 10 });
+    await callStep("geocode", "/api/radar/geocode", 10_000, { limit: 50 });
+    await callStep("match", "/api/radar/match", 10_000, { limit: 50 });
 
     // Gerar notificações para novos matches após pipeline
     try {
