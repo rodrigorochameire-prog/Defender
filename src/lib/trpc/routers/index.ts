@@ -62,6 +62,7 @@ import { radarRouter } from "./radar";
 import { legislacaoRouter } from "./legislacao";
 import { noticiasRouter } from "./noticias";
 import { bibliotecaRouter } from "./biblioteca";
+import { comarcasRouter } from "./comarcas";
 
 
 export const appRouter = router({
@@ -281,6 +282,11 @@ export const appRouter = router({
   // BIBLIOTECA JURIDICA - TESES, ARTIGOS, LEIS
   // ==========================================
   biblioteca: bibliotecaRouter,
+
+  // ==========================================
+  // COMARCAS - CONFIGURAÇÃO E FEATURES POR COMARCA
+  // ==========================================
+  comarcas: comarcasRouter,
 });
 
 export type AppRouter = typeof appRouter;
