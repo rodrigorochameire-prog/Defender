@@ -112,7 +112,10 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
 
   const { data: matchesPendentes } = trpc.radar.matchesPendentesByNoticias.useQuery(
     { noticiaIds: noticiaIdsComMatch },
-    { enabled: noticiaIdsComMatch.length > 0 }
+    {
+      enabled: noticiaIdsComMatch.length > 0,
+      staleTime: 30_000, // não refaz por 30s
+    }
   );
 
   const confirmMutation = trpc.radar.confirmMatch.useMutation({

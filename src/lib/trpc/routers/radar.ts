@@ -133,6 +133,10 @@ export const radarRouter = router({
             envolvidos: radarNoticias.envolvidos,
             enrichmentStatus: radarNoticias.enrichmentStatus,
             relevanciaScore: radarNoticias.relevanciaScore,
+            matchCount: sql<number>`(
+  SELECT COALESCE(COUNT(*)::int, 0) FROM radar_matches rm
+  WHERE rm.noticia_id = ${radarNoticias.id}
+)`,
             createdAt: radarNoticias.createdAt,
           })
           .from(radarNoticias)
