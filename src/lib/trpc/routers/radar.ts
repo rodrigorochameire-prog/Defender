@@ -1171,6 +1171,12 @@ export const radarRouter = router({
   // Usado pelo badge na sidebar
   // ==========================================
 
+  // Contagem total leve — só COUNT(*), sem GROUP BY
+  totalCount: protectedProcedure.query(async () => {
+    const [row] = await db.select({ total: count() }).from(radarNoticias);
+    return { total: row?.total ?? 0 };
+  }),
+
   matchesPendentesCount: protectedProcedure.query(async () => {
     const [result] = await db
       .select({ count: count() })

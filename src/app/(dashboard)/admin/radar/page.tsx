@@ -76,9 +76,9 @@ export default function RadarCriminalPage() {
   const { data: healthData } = trpc.radar.enrichmentHealth.useQuery();
   const healthPending = Number(healthData?.pending ?? 0);
 
-  // Estatísticas gerais
-  const { data: statsData, isLoading: statsLoading, isError: statsError } = trpc.radar.stats.useQuery({ periodo: "total" });
-  const totalNoticias = (statsData as { total?: number } | undefined)?.total ?? 0;
+  // Total de notícias (query leve — sem GROUP BY)
+  const { data: totalData, isLoading: statsLoading, isError: statsError } = trpc.radar.totalCount.useQuery();
+  const totalNoticias = totalData?.total ?? 0;
 
   // Última coleta (fonte mais recente)
   const { data: fontes, isLoading: fontesLoading, isError: fontesError } = trpc.radar.fontesList.useQuery();
