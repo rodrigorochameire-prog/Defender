@@ -30,7 +30,6 @@ import { toast } from "sonner";
 import {
   parseSEEUIntimacoes,
   intimacaoSEEUToDemanda,
-  resolveImportStatus,
   type IntimacaoSEEU,
   type ResultadoParserSEEU,
 } from "@/lib/pje-parser";
@@ -444,7 +443,7 @@ export function SEEUImportModal({
           const nova = dup.nova as IntimacaoSEEUEditable;
           return {
             id: dup.existente.id,
-            status: resolveImportStatus(nova.tipoManifestacao === 'ciencia' ? 'ciencia' : undefined),
+            status: nova.tipoManifestacao === 'ciencia' ? 'ciencia' : 'analisar',
             ato: nova.tipoManifestacao === 'ciencia' ? 'Ciência' : 'Manifestação',
             prazo: convertDateToISO(nova.ultimoDia),
             processos: [{ tipo: dup.existente.processos?.[0]?.tipo || 'PPL', numero: nova.numeroProcesso }],

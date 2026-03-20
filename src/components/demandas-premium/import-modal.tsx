@@ -8,7 +8,6 @@ import { Upload, FileSpreadsheet, AlertCircle, Download, FileText } from "lucide
 import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TipoTemplate, getTemplateHeaders, getTemplateExampleRow, TEMPLATE_CONFIGS } from "@/config/templates";
-import { resolveImportStatus } from "@/lib/pje-parser";
 import * as XLSX from "xlsx";
 
 interface ImportModalProps {
@@ -112,11 +111,7 @@ export function ImportModal({ isOpen, onClose, onImport }: ImportModalProps) {
   };
 
   const handleConfirmImport = () => {
-    const resolvedRows = parsedRows.map((r) => ({
-      ...r,
-      status: resolveImportStatus(r.status),
-    }));
-    onImport(resolvedRows);
+    onImport(parsedRows);
     // Reset
     setEtapa("upload");
     setParsedRows([]);

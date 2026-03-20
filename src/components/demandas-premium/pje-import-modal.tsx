@@ -245,7 +245,7 @@ export function PJeImportModal({
           ordemOriginal: intimacao.ordemOriginal ?? index,
           ato: suggestion.ato,
           atoConfidence: suggestion.confidence,
-          status: suggestion.ato.startsWith("Ciência") ? "ciencia" : "fila",
+          status: suggestion.ato.startsWith("Ciência") ? "ciencia" : "analisar",
           prazo: prazoCalculado,
           estadoPrisional: "Solto",
           excluded: false,

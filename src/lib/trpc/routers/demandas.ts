@@ -6,6 +6,51 @@ import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull, no
 import { TRPCError } from "@trpc/server";
 import { getDefensorResponsavel, getDefensoresVisiveis } from "../defensor-scope";
 import { normalizarNome, calcularSimilaridade } from "@/lib/pje-parser";
+import { pushDemanda as sheetsPush, removeDemanda as sheetsRemove, moveDemanda as sheetsMove, type DemandaParaSync } from "@/lib/services/google-sheets";
+
+/**
+ * Monta o objeto DemandaParaSync buscando dados relacionados.
+ * Usado para sync com Google Sheets (fire-and-forget).
+ */
+async function buildDemandaSync(demandaId: number): Promise<DemandaParaSync | null> {
+  const result = await db
+    .select({
+      id: demandas.id,
+      status: demandas.status,
+      reuPreso: demandas.reuPreso,
+      dataEntrada: demandas.dataEntrada,
+      ato: demandas.ato,
+      prazo: demandas.prazo,
+      providencias: demandas.providencias,
+      assistidoNome: assistidos.nome,
+      numeroAutos: processos.numeroAutos,
+      atribuicao: processos.atribuicao,
+      delegadoNome: users.name,
+    })
+    .from(demandas)
+    .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
+    .leftJoin(processos, eq(demandas.processoId, processos.id))
+    .leftJoin(users, eq(demandas.delegadoParaId, users.id))
+    .where(eq(demandas.id, demandaId))
+    .limit(1);
+
+  const row = result[0];
+  if (!row) return null;
+
+  return {
+    id: row.id,
+    status: row.status,
+    reuPreso: row.reuPreso,
+    dataEntrada: row.dataEntrada,
+    ato: row.ato,
+    prazo: row.prazo,
+    providencias: row.providencias,
+    assistidoNome: row.assistidoNome ?? "",
+    numeroAutos: row.numeroAutos ?? "",
+    atribuicao: row.atribuicao ?? "SUBSTITUICAO",
+    delegadoNome: row.delegadoNome ?? null,
+  };
+}
 
 // Helper: inferir fase processual com base no tipo de documento PJe
 function inferirFaseProcessual(tipoDocumento?: string): string | undefined {
@@ -382,7 +427,12 @@ export const demandasRouter = router({
           defensorId: defensorId || ctx.user.id, // Defensor responsável pela demanda
         })
         .returning();
-      
+
+      // Sync Google Sheets (fire-and-forget — não bloqueia resposta)
+      buildDemandaSync(novaDemanda.id).then((d) => {
+        if (d) sheetsPush(d).catch(console.error);
+      }).catch(console.error);
+
       return novaDemanda;
     }),
 
@@ -501,6 +551,17 @@ export const demandasRouter = router({
           .where(eq(demandas.id, id));
       }
 
+      // Sync Google Sheets (fire-and-forget)
+      buildDemandaSync(id).then((d) => {
+        if (!d) return;
+        if (atribuicao) {
+          // Atribuição mudou — move de aba
+          sheetsMove(d, atribuicao).catch(console.error);
+        } else {
+          sheetsPush(d).catch(console.error);
+        }
+      }).catch(console.error);
+
       return atualizado;
     }),
 
@@ -547,7 +608,21 @@ export const demandasRouter = router({
           message: "Demanda não encontrada ou você não tem permissão para excluí-la",
         });
       }
-      
+
+      // Sync Google Sheets — remove da planilha (fire-and-forget)
+      if (excluido.processoId) {
+        db.select({ atribuicao: processos.atribuicao })
+          .from(processos)
+          .where(eq(processos.id, excluido.processoId))
+          .limit(1)
+          .then(([proc]) => {
+            if (proc?.atribuicao) {
+              sheetsRemove(excluido.id, proc.atribuicao).catch(console.error);
+            }
+          })
+          .catch(console.error);
+      }
+
       return excluido;
     }),
 
@@ -930,8 +1005,19 @@ export const demandasRouter = router({
           }
 
           // 5. Mapear status (normalizar para lowercase antes do lookup)
-          const statusKey = (row.status || "fila").toLowerCase().replace(/\s+/g, "_").trim();
-          const dbStatus = STATUS_TO_DB[statusKey] || "5_FILA";
+          const statusKey = (row.status || "analisar").toLowerCase().replace(/\s+/g, "_").trim();
+
+          // Statuses de conclusão mantêm seu DB status; todos os demais são forçados
+          // para "5_FILA" (coluna Triagem), independente do substatus escolhido.
+          // O substatus (label granular: analisar, elaborar, revisar...) é preservado
+          // para exibição — o usuário que move para Andamento quando quiser.
+          const CONCLUIDA_IMPORT_KEYS = new Set([
+            "protocolado", "ciencia", "sem_atuacao", "constituiu_advogado", "resolvido", "arquivado",
+          ]);
+          const dbStatus = CONCLUIDA_IMPORT_KEYS.has(statusKey)
+            ? (STATUS_TO_DB[statusKey] || "5_FILA")
+            : "5_FILA";
+
           const reuPreso = row.estadoPrisional === "preso";
 
           // Salvar substatus granular (elaborar, revisar, buscar, etc.) para display
