@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -343,6 +344,10 @@ export function SEEUImportModal({
   const [selectedNovas, setSelectedNovas] = useState<Set<number>>(new Set());
   const [selectedDups, setSelectedDups] = useState<Set<number>>(new Set());
 
+  // Expanded observation rows
+  const [expandedObsNovas, setExpandedObsNovas] = useState<Set<number>>(new Set());
+  const [expandedObsDups, setExpandedObsDups] = useState<Set<number>>(new Set());
+
   const handleParsear = () => {
     if (!texto.trim()) {
       toast.error("Cole o texto das intimações do SEEU");
@@ -481,6 +486,8 @@ export function SEEUImportModal({
     setDuplicatas([]);
     setSelectedNovas(new Set());
     setSelectedDups(new Set());
+    setExpandedObsNovas(new Set());
+    setExpandedObsDups(new Set());
   };
 
   // Update a field on a specific nova intimação by index
@@ -912,16 +919,50 @@ Executado: NEMIAS DOS SANTOS JESUS
                                   />
                                 </div>
 
-                                {/* Row 4: observação (editable textarea) */}
-                                <div className="flex items-start gap-1 text-xs text-muted-foreground" onClick={(e) => e.stopPropagation()}>
-                                  <span className="text-[10px] text-zinc-400 font-medium mt-0.5">Obs:</span>
-                                  <div className="flex-1 min-w-0">
-                                    <EditableTextarea
-                                      value={(intimacao as IntimacaoSEEUEditable).observacao || ""}
-                                      onChange={(v) => handleUpdateNova(index, 'observacao', v)}
-                                      placeholder="Adicionar observação..."
-                                    />
-                                  </div>
+                                {/* Row 4: observação (toggle icon + expandable textarea) */}
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    onClick={() => setExpandedObsNovas((prev) => {
+                                      const next = new Set(prev);
+                                      next.has(index) ? next.delete(index) : next.add(index);
+                                      return next;
+                                    })}
+                                    aria-expanded={expandedObsNovas.has(index)}
+                                    title={(intimacao as IntimacaoSEEUEditable).observacao?.trim() ? "Ver/editar observação" : "Adicionar observação"}
+                                    className={`rounded p-0.5 transition-colors ${
+                                      (intimacao as IntimacaoSEEUEditable).observacao?.trim()
+                                        ? "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
+                                        : "text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400"
+                                    }`}
+                                  >
+                                    <FileText className="h-3.5 w-3.5" />
+                                  </button>
+                                  {expandedObsNovas.has(index) && (
+                                    <div className="flex items-start gap-2 mt-1.5">
+                                      <FileText className="h-3 w-3 text-zinc-400 mt-1.5 flex-shrink-0" />
+                                      <textarea
+                                        autoFocus
+                                        rows={2}
+                                        defaultValue={(intimacao as IntimacaoSEEUEditable).observacao ?? ""}
+                                        onBlur={(e) => {
+                                          if (e.target.value !== ((intimacao as IntimacaoSEEUEditable).observacao ?? "")) {
+                                            handleUpdateNova(index, "observacao", e.target.value);
+                                          }
+                                        }}
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Escape") {
+                                            setExpandedObsNovas((prev) => {
+                                              const next = new Set(prev);
+                                              next.delete(index);
+                                              return next;
+                                            });
+                                          }
+                                        }}
+                                        placeholder="Observações / providências para esta demanda..."
+                                        className="flex-1 text-xs bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 outline-none resize-none w-full"
+                                      />
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -1055,16 +1096,50 @@ Executado: NEMIAS DOS SANTOS JESUS
                                   />
                                 </div>
 
-                                {/* Row 4: observação */}
-                                <div className="flex items-start gap-1 text-xs text-muted-foreground" onClick={(e) => e.stopPropagation()}>
-                                  <span className="text-[10px] text-zinc-400 font-medium mt-0.5">Obs:</span>
-                                  <div className="flex-1 min-w-0">
-                                    <EditableTextarea
-                                      value={nova.observacao || ""}
-                                      onChange={(v) => handleUpdateDup(index, 'observacao', v)}
-                                      placeholder="Adicionar observação..."
-                                    />
-                                  </div>
+                                {/* Row 4: observação (toggle icon + expandable textarea) */}
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    onClick={() => setExpandedObsDups((prev) => {
+                                      const next = new Set(prev);
+                                      next.has(index) ? next.delete(index) : next.add(index);
+                                      return next;
+                                    })}
+                                    aria-expanded={expandedObsDups.has(index)}
+                                    title={nova.observacao?.trim() ? "Ver/editar observação" : "Adicionar observação"}
+                                    className={`rounded p-0.5 transition-colors ${
+                                      nova.observacao?.trim()
+                                        ? "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
+                                        : "text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400"
+                                    }`}
+                                  >
+                                    <FileText className="h-3.5 w-3.5" />
+                                  </button>
+                                  {expandedObsDups.has(index) && (
+                                    <div className="flex items-start gap-2 mt-1.5">
+                                      <FileText className="h-3 w-3 text-zinc-400 mt-1.5 flex-shrink-0" />
+                                      <textarea
+                                        autoFocus
+                                        rows={2}
+                                        defaultValue={nova.observacao ?? ""}
+                                        onBlur={(e) => {
+                                          if (e.target.value !== (nova.observacao ?? "")) {
+                                            handleUpdateDup(index, "observacao", e.target.value);
+                                          }
+                                        }}
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Escape") {
+                                            setExpandedObsDups((prev) => {
+                                              const next = new Set(prev);
+                                              next.delete(index);
+                                              return next;
+                                            });
+                                          }
+                                        }}
+                                        placeholder="Observações / providências para esta demanda..."
+                                        className="flex-1 text-xs bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 outline-none resize-none w-full"
+                                      />
+                                    </div>
+                                  )}
                                 </div>
 
                                 {/* Differences summary */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Check, AlertTriangle, Filter, Wand2, Eye, EyeOff, FileText } from "lucide-react";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
@@ -45,6 +45,7 @@ export interface PjeReviewRow {
   estadoPrisional: string;
   excluded: boolean;
   prazoManual: boolean;
+  providencias?: string;
 
   // Match
   assistidoMatch: AssistidoMatch;
@@ -206,6 +207,10 @@ export function PjeReviewTable({
 
   const handleToggleExclude = (index: number) => {
     updateRow(index, { excluded: !rows[index].excluded });
+  };
+
+  const handleProvidenciasChange = (index: number, value: string) => {
+    updateRow(index, { providencias: value });
   };
 
   const handleToggleAll = () => {
@@ -427,6 +432,9 @@ export function PjeReviewTable({
                   <th className="px-2 py-2 text-left text-zinc-500 dark:text-zinc-400 font-medium min-w-[80px]">
                     Preso
                   </th>
+                  <th className="w-8 px-2 py-2 text-center text-zinc-500 dark:text-zinc-400 font-medium">
+                    <FileText className="h-3 w-3 inline" />
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -443,6 +451,7 @@ export function PjeReviewTable({
                     onStatusChange={(i, v) => updateRow(i, { status: v })}
                     onEstadoPrisionalChange={(i, v) => updateRow(i, { estadoPrisional: v })}
                     onToggleExclude={handleToggleExclude}
+                    onProvidenciasChange={handleProvidenciasChange}
                     showTipoProcesso={showTipoProcesso}
                   />
                 ))}
@@ -475,6 +484,7 @@ interface PjeReviewRowProps {
   onStatusChange: (index: number, value: string) => void;
   onEstadoPrisionalChange: (index: number, value: string) => void;
   onToggleExclude: (index: number) => void;
+  onProvidenciasChange: (index: number, value: string) => void;
   showTipoProcesso?: boolean;
 }
 
@@ -489,8 +499,21 @@ function PjeReviewRowComponent({
   onStatusChange,
   onEstadoPrisionalChange,
   onToggleExclude,
+  onProvidenciasChange,
   showTipoProcesso = false,
 }: PjeReviewRowProps) {
+  const [expandedProv, setExpandedProv] = useState(false);
+  const [provDraft, setProvDraft] = useState(row.providencias ?? "");
+  const toggleButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Sync draft when row.providencias changes externally (e.g., bulk actions)
+  // Only when panel is closed, so we don't clobber an in-flight edit
+  useEffect(() => {
+    if (!expandedProv) {
+      setProvDraft(row.providencias ?? "");
+    }
+  }, [row.providencias, expandedProv]);
+
   const matchInfo = getMatchDot(row.assistidoMatch);
   const confidenceClass = getConfidenceDot(row.atoConfidence);
 
@@ -502,6 +525,7 @@ function PjeReviewRowComponent({
   const extraInfo = [row.tipoDocumento, row.crime].filter(Boolean).join(" · ");
 
   return (
+    <>
     <tr
       className={`border-b border-zinc-100 dark:border-zinc-800 transition-colors ${
         row.excluded
@@ -697,6 +721,58 @@ function PjeReviewRowComponent({
           onChange={(v) => onEstadoPrisionalChange(index, v)}
         />
       </td>
+
+      {/* Providências — botão de toggle */}
+      <td className="px-2 py-1.5 text-center">
+        <button
+          ref={toggleButtonRef}
+          onClick={() => setExpandedProv((v) => !v)}
+          aria-expanded={expandedProv}
+          title={row.providencias?.trim() ? "Ver/editar providências" : "Adicionar providências"}
+          className={`transition-colors rounded p-0.5 ${
+            row.providencias?.trim()
+              ? "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
+              : "text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400"
+          }`}
+        >
+          <FileText className="h-3.5 w-3.5" />
+        </button>
+      </td>
     </tr>
+
+    {expandedProv && (
+      <tr className={row.excluded ? "opacity-40" : ""}>
+        <td
+          colSpan={showTipoProcesso ? 11 : 10}
+          className="px-3 pb-2 pt-0 bg-zinc-50/70 dark:bg-zinc-800/30"
+        >
+          <div className="flex items-start gap-2">
+            <FileText className="h-3 w-3 text-zinc-400 mt-1.5 flex-shrink-0" />
+            <textarea
+              autoFocus
+              value={provDraft}
+              rows={2}
+              onChange={(e) => setProvDraft(e.target.value)}
+              onBlur={() => {
+                if (provDraft !== (row.providencias ?? "")) {
+                  onProvidenciasChange(index, provDraft);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setExpandedProv(false);
+                  setProvDraft(row.providencias ?? "");
+                  // Return focus to toggle button
+                  setTimeout(() => toggleButtonRef.current?.focus(), 0);
+                }
+              }}
+              placeholder="Providências para esta demanda..."
+              className="flex-1 text-xs bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 outline-none resize-none w-full"
+            />
+          </div>
+        </td>
+      </tr>
+    )}
+    </>
   );
 }

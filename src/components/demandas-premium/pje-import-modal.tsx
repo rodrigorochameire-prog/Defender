@@ -250,6 +250,7 @@ export function PJeImportModal({
           estadoPrisional: "Solto",
           excluded: false,
           prazoManual: false,
+          providencias: "",
           assistidoMatch: { type: "new" }, // Será atualizado pelo matchQuery
         };
       });
@@ -329,6 +330,7 @@ export function PJeImportModal({
             prazo: row.prazo,
             estadoPrisional: row.estadoPrisional,
             assistidoMatchId: row.assistidoMatch.matchedId,
+            providencias: row.providencias,
           });
         }).filter(Boolean);
 
@@ -364,6 +366,7 @@ export function PJeImportModal({
           prazo: row.prazo,
           estadoPrisional: row.estadoPrisional,
           assistidoMatchId: row.assistidoMatch.matchedId,
+          providencias: row.providencias,
         });
       }).filter(Boolean);
 

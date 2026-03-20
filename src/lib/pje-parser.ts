@@ -914,6 +914,7 @@ export function intimacaoToDemanda(
     prazo?: string;
     estadoPrisional?: string;
     assistidoMatchId?: number;
+    providencias?: string;
   }
 ): any {
   // Usar atribuição detectada se disponível e não foi especificada
@@ -941,7 +942,9 @@ export function intimacaoToDemanda(
       }
     ],
     ato: overrides?.ato || 'Ciência',
-    providencias: gerarProvidencias(intimacao),
+    providencias: (overrides?.providencias !== undefined && overrides.providencias.trim() !== "")
+      ? overrides.providencias
+      : gerarProvidencias(intimacao),
     atribuicao: atribuicaoFinal,
     estadoPrisional: overrides?.estadoPrisional || 'Solto',
     tipoAto: 'Geral',

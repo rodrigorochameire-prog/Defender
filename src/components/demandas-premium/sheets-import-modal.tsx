@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -670,6 +670,8 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
     })));
   }, []);
 
+  const [expandedProv, setExpandedProv] = useState<Set<string>>(new Set());
+
   const [isImporting, setIsImporting] = useState(false);
 
   const handleImport = async () => {
@@ -749,6 +751,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
     setDemandasNovas([]);
     setDuplicatas([]);
     setSelectedAtribuicao("");
+    setExpandedProv(new Set());
     onClose();
   };
 
@@ -891,6 +894,9 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
                       <th className="px-2 py-1.5 text-left font-medium">Ato</th>
                       <th className="px-2 py-1.5 text-left font-medium w-[80px]">Data</th>
                       <th className="px-2 py-1.5 text-left font-medium w-[80px]">Prazo</th>
+                      <th className="px-2 py-1.5 text-center w-8">
+                        <FileText className="h-3 w-3 inline text-zinc-400" />
+                      </th>
                       <th className="px-2 py-1.5 text-left font-medium w-[40px]"></th>
                     </tr>
                   </thead>
@@ -902,8 +908,8 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
                       const statusColor = statusConfig?.color || "#A1A1AA";
 
                       return (
+                        <React.Fragment key={demanda.id}>
                         <tr
-                          key={demanda.id}
                           className={
                             !demanda.valido
                               ? "bg-amber-50/50 dark:bg-amber-900/10"
@@ -984,6 +990,26 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
                             />
                           </td>
 
+                          {/* Providências — ícone expansível */}
+                          <td className="px-2 py-1.5 text-center">
+                            <button
+                              onClick={() => setExpandedProv((prev) => {
+                                const next = new Set(prev);
+                                next.has(demanda.id) ? next.delete(demanda.id) : next.add(demanda.id);
+                                return next;
+                              })}
+                              aria-expanded={expandedProv.has(demanda.id)}
+                              title={demanda.providencias?.trim() ? "Ver/editar providências" : "Adicionar providências"}
+                              className={`rounded p-0.5 transition-colors ${
+                                demanda.providencias?.trim()
+                                  ? "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
+                                  : "text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400"
+                              }`}
+                            >
+                              <FileText className="h-3.5 w-3.5" />
+                            </button>
+                          </td>
+
                           {/* Ações */}
                           <td className="px-2 py-1.5">
                             <Button
@@ -996,6 +1022,37 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
                             </Button>
                           </td>
                         </tr>
+                        {expandedProv.has(demanda.id) && (
+                          <tr>
+                            <td colSpan={9} className="px-3 pb-2 pt-0 bg-zinc-50/70 dark:bg-zinc-800/30">
+                              <div className="flex items-start gap-2">
+                                <FileText className="h-3 w-3 text-zinc-400 mt-1.5 flex-shrink-0" />
+                                <textarea
+                                  autoFocus
+                                  rows={2}
+                                  defaultValue={demanda.providencias ?? ""}
+                                  onBlur={(e) => {
+                                    if (e.target.value !== (demanda.providencias ?? "")) {
+                                      handleUpdateField(demanda.id, "providencias", e.target.value);
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Escape") {
+                                      setExpandedProv((prev) => {
+                                        const next = new Set(prev);
+                                        next.delete(demanda.id);
+                                        return next;
+                                      });
+                                    }
+                                  }}
+                                  placeholder="Providências para esta demanda..."
+                                  className="flex-1 text-xs bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 outline-none resize-none w-full"
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                        </React.Fragment>
                       );
                     })}
                   </tbody>
