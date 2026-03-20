@@ -64,6 +64,8 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
   const {
     data,
     isLoading,
+    isError,
+    error,
     isFetching,
     fetchNextPage,
     hasNextPage,
@@ -166,6 +168,22 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
         {[1, 2, 3, 4, 5].map((i) => (
           <Skeleton key={i} className="h-28 w-full rounded-xl" />
         ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center py-20">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 dark:bg-red-950/30 mb-4">
+          <Newspaper className="h-8 w-8 text-red-400" />
+        </div>
+        <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          Erro ao carregar notícias
+        </h3>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-sm mx-auto">
+          {(error as { message?: string })?.message ?? "Tente atualizar a página."}
+        </p>
       </div>
     );
   }
