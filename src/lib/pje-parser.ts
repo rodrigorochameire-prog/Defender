@@ -926,7 +926,7 @@ export function intimacaoToDemanda(
   return {
     id: `pje-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     assistido: intimacao.assistido,
-    status: overrides?.status || 'Analisar',
+    status: overrides?.status || 'fila',
     data: dataISO,
     // dataInclusao com precisão de milissegundos para ordenação precisa
     // Usa 999 - ordemOriginal para que a primeira da lista (ordem 0) tenha valor maior (999)
@@ -1503,7 +1503,7 @@ export function intimacaoSEEUToDemanda(intimacao: IntimacaoSEEU): any {
     prazo: prazoFinal,
     ato, // Manifestação ou Ciência
     atribuicao: 'EXECUCAO_PENAL',
-    status: 'analisar', // Padrão: Analisar
+    status: ato === 'Ciência' ? 'ciencia' : 'fila', // Ciência → concluída; demais → triagem
     estadoPrisional: 'Preso', // Padrão para execução penal
     providencias: intimacao.assuntoPrincipal
       ? `${intimacao.classeProcessual || 'Execução Penal'} - ${intimacao.assuntoPrincipal}`

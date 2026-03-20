@@ -443,7 +443,7 @@ export function SEEUImportModal({
           const nova = dup.nova as IntimacaoSEEUEditable;
           return {
             id: dup.existente.id,
-            status: 'analisar',
+            status: nova.tipoManifestacao === 'ciencia' ? 'ciencia' : 'fila',
             ato: nova.tipoManifestacao === 'ciencia' ? 'Ciência' : 'Manifestação',
             prazo: convertDateToISO(nova.ultimoDia),
             processos: [{ tipo: dup.existente.processos?.[0]?.tipo || 'PPL', numero: nova.numeroProcesso }],
