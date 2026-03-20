@@ -20,6 +20,7 @@ import {
   areaEnum,
   papelProcessoEnum,
 } from "./enums";
+import { comarcas } from "./comarcas";
 
 // ==========================================
 // USUÁRIOS (DEFENSORES)
@@ -37,6 +38,7 @@ export const users = pgTable("users", {
   emailVerified: boolean("email_verified").default(false).notNull(),
   approvalStatus: varchar("approval_status", { length: 20 }).default("pending").notNull(),
   supervisorId: integer("supervisor_id"),
+  comarcaId: integer("comarca_id").notNull().references(() => comarcas.id).default(1),
   funcao: varchar("funcao", { length: 30 }),
   nucleo: varchar("nucleo", { length: 30 }),
   isAdmin: boolean("is_admin").default(false),
@@ -50,6 +52,7 @@ export const users = pgTable("users", {
   index("users_approval_status_idx").on(table.approvalStatus),
   index("users_deleted_at_idx").on(table.deletedAt),
   index("users_comarca_idx").on(table.comarca),
+  index("users_comarca_id_idx").on(table.comarcaId),
   index("users_supervisor_id_idx").on(table.supervisorId),
   index("users_nucleo_idx").on(table.nucleo),
 ]);
@@ -116,6 +119,7 @@ export const assistidos = pgTable("assistidos", {
     nome: string;
     confidence: number;
   } | null>(),
+  comarcaId: integer("comarca_id").notNull().references(() => comarcas.id).default(1),
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -128,6 +132,7 @@ export const assistidos = pgTable("assistidos", {
   index("assistidos_caso_id_idx").on(table.casoId),
   index("assistidos_atribuicao_primaria_idx").on(table.atribuicaoPrimaria),
   index("assistidos_analysis_status_idx").on(table.analysisStatus),
+  index("assistidos_comarca_id_idx").on(table.comarcaId),
 ]);
 
 export type Assistido = typeof assistidos.$inferSelect;
@@ -146,6 +151,7 @@ export const processos = pgTable("processos", {
   numeroAutos: text("numero_autos").notNull(),
   numeroAntigo: text("numero_antigo"),
   comarca: varchar("comarca", { length: 100 }),
+  comarcaId: integer("comarca_id").notNull().references(() => comarcas.id).default(1),
   vara: varchar("vara", { length: 100 }),
   area: areaEnum("area").notNull(),
   classeProcessual: varchar("classe_processual", { length: 100 }),
@@ -205,6 +211,7 @@ export const processos = pgTable("processos", {
   index("processos_deleted_at_idx").on(table.deletedAt),
   index("processos_caso_id_idx").on(table.casoId),
   index("processos_analysis_status_idx").on(table.analysisStatus),
+  index("processos_comarca_id_idx").on(table.comarcaId),
 ]);
 
 export type Processo = typeof processos.$inferSelect;
