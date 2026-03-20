@@ -1703,6 +1703,15 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
   const isCollapsed = isMobile ? false : state === "collapsed";
   const isDrivePage = pathname.startsWith("/admin/drive");
 
+  // Comarca features — condiciona itens de menu por comarca
+  const { data: minhaComarca } = trpc.comarcas.getMinhaComarca.useQuery();
+  const features = minhaComarca?.features ?? {
+    drive: false,
+    whatsapp: false,
+    enrichment: false,
+    calendar_sync: false,
+  };
+
   // WhatsApp unread badge
   const { data: whatsappConfigs } = trpc.whatsappChat.listConfigs.useQuery();
   const primaryConfigId = whatsappConfigs?.[0]?.id;
@@ -1712,13 +1721,19 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
   );
 
   const mainNavWithBadge = useMemo(() => {
-    return MAIN_NAV.map(item => {
-      if (item.label === "WhatsApp" && whatsappStats?.unreadMessages) {
-        return { ...item, badge: whatsappStats.unreadMessages };
-      }
-      return item;
-    });
-  }, [whatsappStats?.unreadMessages]);
+    return MAIN_NAV
+      .filter(item => {
+        if (item.path === "/admin/drive") return features.drive;
+        if (item.path === "/admin/whatsapp/chat") return features.whatsapp;
+        return true;
+      })
+      .map(item => {
+        if (item.label === "WhatsApp" && whatsappStats?.unreadMessages) {
+          return { ...item, badge: whatsappStats.unreadMessages };
+        }
+        return item;
+      });
+  }, [whatsappStats?.unreadMessages, features.drive, features.whatsapp]);
 
   // Radar Criminal pending matches badge
   const { data: radarPendentesData } = trpc.radar.matchesPendentesCount.useQuery(undefined, {
