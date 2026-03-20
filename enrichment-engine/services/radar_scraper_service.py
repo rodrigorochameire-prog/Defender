@@ -206,6 +206,15 @@ class RadarScraperService:
                         continue
                     if not self._is_police_news(link_title):
                         continue
+                    # Para fontes regionais: exigir "camaçari" no título para evitar ruído de outros municípios
+                    if confiabilidade == "regional":
+                        link_lower = link_title.lower()
+                        has_camacari = any(kw in link_lower for kw in ["camaçari", "camacari"])
+                        if not has_camacari:
+                            # Calcular score parcial — só aceita sem "camaçari" se score for alto o suficiente
+                            score_titulo = self._calculate_relevancia_score(link_title, None)
+                            if score_titulo < 25:
+                                continue
 
                     try:
                         noticia = await self._scrape_article(
@@ -317,17 +326,17 @@ class RadarScraperService:
         domain = base_url.lower()
         if "g1.globo.com" in domain:
             paths = [
-                "/ba/bahia/noticia",
-                "/ba/bahia/",
+                "/ba/bahia/tag/camacari/",
+                "/ba/bahia/noticia",   # fallback
             ]
         elif "bnews" in domain:
-            paths = ["/cidades", "/cidades/policia"]
+            paths = ["/tag/camacari", "/cidades/camacari", "/cidades/policia"]
         elif "correio24horas" in domain or "correio" in domain:
-            paths = ["/noticia/policia", "/policia"]
+            paths = ["/tag/camacari", "/noticia/camacari", "/policia"]
         elif "atarde" in domain:
-            paths = ["/bahia", "/bahia/policia"]
+            paths = ["/tag/camacari", "/municipios/camacari", "/bahia/policia"]
         elif "bahianoticias" in domain:
-            paths = ["/municipios", "/seguranca-publica"]
+            paths = ["/municipios/camacari", "/seguranca-publica", "/municipios"]
         elif "relatabahia" in domain:
             paths = ["/policia", "/noticias"]
         elif "maisregiao" in domain:
