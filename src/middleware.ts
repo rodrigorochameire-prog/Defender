@@ -12,6 +12,7 @@ const publicRoutes = [
   "/privacidade",
   "/termos",
   "/api/webhooks",
+  "/api/whatsapp/sync-on-connect",
   "/api/auth",
 ];
 

@@ -75,8 +75,8 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     // Verifica secret do webhook (opcional, mas recomendado)
-    const webhookSecret = request.headers.get("x-webhook-secret");
-    const expectedSecret = process.env.EVOLUTION_WEBHOOK_SECRET;
+    const webhookSecret = request.headers.get("x-webhook-secret")?.trim();
+    const expectedSecret = process.env.EVOLUTION_WEBHOOK_SECRET?.trim();
 
     if (expectedSecret && webhookSecret !== expectedSecret) {
       console.warn("[Evolution Webhook] Invalid webhook secret");
