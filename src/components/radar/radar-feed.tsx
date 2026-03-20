@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RadarNoticiaCard } from "./radar-noticia-card";
 import { RadarNoticiaSheet } from "./radar-noticia-sheet";
-import { Radio, Newspaper, Download, LayoutGrid, List } from "lucide-react";
+import { Radio, Newspaper, Download, LayoutGrid, List, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { exportNoticiasToCsv } from "@/lib/radar-export";
@@ -64,6 +64,7 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
   const {
     data,
     isLoading,
+    isFetching,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -82,6 +83,7 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
     },
     {
       getNextPageParam: (lastPage) => lastPage.nextCursor,
+      staleTime: 60_000, // dados frescos por 1 min — troca de tab não refaz
     }
   );
 
@@ -102,6 +104,9 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
   );
 
   const allNoticias = data?.pages.flatMap((page) => page.items) ?? [];
+
+  // true quando está refazendo a query por mudança de filtro (não scroll)
+  const isRefetching = isFetching && !isFetchingNextPage;
 
   // IDs das notícias que têm matches (para buscar detalhes dos pendentes)
   const noticiaIdsComMatch = allNoticias
@@ -189,7 +194,15 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className={cn("space-y-3 transition-opacity duration-150", isRefetching && "opacity-60 pointer-events-none")}>
+      {/* Indicador de refetch sutil */}
+      {isRefetching && (
+        <div className="flex items-center gap-1.5 text-xs text-zinc-400 py-0.5">
+          <RefreshCw className="h-3 w-3 animate-spin" />
+          <span>Atualizando...</span>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs text-zinc-500">
           <Radio className="h-3.5 w-3.5 text-emerald-500" />
