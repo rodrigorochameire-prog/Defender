@@ -249,7 +249,13 @@ class RadarScraperService:
     async def _scrape_rss(
         self, fonte: dict, existing_urls: set[str]
     ) -> list[dict[str, Any]]:
-        """Scrape fonte de tipo RSS (ex: Google News RSS)."""
+        """Scrape fonte de tipo RSS (ex: Google News RSS).
+
+        Para fontes Google News:
+        - Bypassa filtros de keywords e região (query já garante relevância)
+        - Tenta scraping do artigo completo; usa dados do RSS como fallback
+          (muitos portais ficam atrás de paywall ou requerem JS)
+        """
         import xml.etree.ElementTree as ET
 
         client = self._get_client()
@@ -280,7 +286,7 @@ class RadarScraperService:
             ns = {"atom": "http://www.w3.org/2005/Atom"}
             items = root.findall(".//atom:entry", ns)
 
-        # Verificar se é uma fonte Google News (já pré-filtrada pela query de busca)
+        # Fonte Google News: já pré-filtrada pela query — tratamento especial
         is_google_news = "news.google.com" in url
 
         for item in items[:30]:
@@ -301,26 +307,93 @@ class RadarScraperService:
             if link in existing_urls:
                 continue
 
-            # Google News já é pré-filtrado pela query — pular verificação de keywords policiais
-            # Para outros RSS, verificar keywords normalmente
-            if not is_google_news:
-                if not self._is_police_news(titulo):
-                    continue
+            if is_google_news:
+                # Google News: query já garante que é notícia policial de Camaçari
+                # Tentar scraping do artigo completo; fallback para dados do RSS
+                noticia = None
+                try:
+                    noticia = await self._scrape_article(
+                        link, nome_fonte, fonte.get("id"), confiabilidade,
+                        rss_titulo=titulo, rss_descricao=descricao, rss_pub_date=pub_date,
+                    )
+                except Exception as e:
+                    logger.debug("Scraping falhou para %s: %s — usando dados RSS", link, str(e))
 
-            if not self._is_camacari_region(titulo, descricao, confiabilidade):
-                continue
+                if not noticia:
+                    # Fallback: criar notícia diretamente dos dados RSS
+                    noticia = self._create_noticia_from_rss(
+                        titulo=titulo, link=link, pub_date=pub_date,
+                        descricao=descricao, fonte_nome=nome_fonte, fonte_id=fonte.get("id"),
+                    )
 
-            try:
-                noticia = await self._scrape_article(link, nome_fonte, fonte.get("id"), confiabilidade)
                 if noticia:
                     noticias.append(noticia)
                     existing_urls.add(link)
-            except Exception as e:
-                logger.debug("Erro ao scraper item RSS %s: %s", link, str(e))
-                continue
+
+            else:
+                # Outros RSS: aplicar filtros normais
+                if not self._is_police_news(titulo):
+                    continue
+                if not self._is_camacari_region(titulo, descricao, confiabilidade):
+                    continue
+                try:
+                    noticia = await self._scrape_article(
+                        link, nome_fonte, fonte.get("id"), confiabilidade
+                    )
+                    if noticia:
+                        noticias.append(noticia)
+                        existing_urls.add(link)
+                except Exception as e:
+                    logger.debug("Erro ao scraper item RSS %s: %s", link, str(e))
+                    continue
 
         logger.info("RSS %s: %d notícias novas", nome_fonte, len(noticias))
         return noticias
+
+    def _create_noticia_from_rss(
+        self,
+        titulo: str,
+        link: str,
+        pub_date: str,
+        descricao: str,
+        fonte_nome: str,
+        fonte_id: int | None,
+    ) -> dict[str, Any] | None:
+        """Cria notícia a partir dos dados brutos do RSS (fallback quando scraping falha).
+
+        Usado principalmente para Google News, onde o artigo real pode estar
+        atrás de paywall ou exigir JavaScript. O título + snippet do RSS já
+        são suficientes para enriquecimento posterior via IA.
+        """
+        from bs4 import BeautifulSoup as _BS
+
+        if not titulo or not link:
+            return None
+
+        # Limpar HTML da descrição RSS (Google News usa HTML na tag <description>)
+        corpo_limpo = ""
+        if descricao:
+            soup = _BS(descricao, "html.parser")
+            corpo_limpo = soup.get_text(separator=" ", strip=True)
+
+        # Score garantido: Google News retorna resultados de Camaçari por definição
+        relevancia_score = self._calculate_relevancia_score(titulo, corpo_limpo or None)
+        # Garantir mínimo de 45 para itens Google News (query já é o filtro)
+        relevancia_score = max(45, relevancia_score)
+
+        return {
+            "url": link,
+            "fonte": fonte_nome,
+            "fonte_id": fonte_id,
+            "titulo": titulo[:500],
+            "corpo": corpo_limpo[:5000] if corpo_limpo else f"[Notícia via Google News] {titulo}",
+            "data_publicacao": pub_date or None,
+            "imagem_url": None,
+            "enrichment_status": "pending",
+            "raw_html": "",
+            "content_hash": self._generate_content_hash(titulo, corpo_limpo or titulo),
+            "relevancia_score": relevancia_score,
+        }
 
     def _get_search_urls(self, base_url: str) -> list[str]:
         """Gera URLs para buscar notícias policiais em um portal."""
@@ -409,9 +482,22 @@ class RadarScraperService:
         return links[:50]  # Limitar a 50 links por página
 
     async def _scrape_article(
-        self, url: str, fonte_nome: str, fonte_id: int | None, confiabilidade: str = "regional"
+        self,
+        url: str,
+        fonte_nome: str,
+        fonte_id: int | None,
+        confiabilidade: str = "regional",
+        *,
+        rss_titulo: str | None = None,
+        rss_descricao: str | None = None,
+        rss_pub_date: str | None = None,
     ) -> dict[str, Any] | None:
-        """Scrape conteúdo de um artigo individual."""
+        """Scrape conteúdo de um artigo individual.
+
+        Para itens Google News, aceita título/descrição RSS como fallback:
+        - Se o scraping falhar ou corpo for muito curto, usa dados do RSS
+        - Garante que o artigo seja registrado mesmo quando o portal bloqueia
+        """
         client = self._get_client()
 
         response = await client.get(
@@ -424,14 +510,19 @@ class RadarScraperService:
         html = response.text
         soup = BeautifulSoup(html, "html.parser")
 
-        # Extrair título
+        # Extrair título — preferir scraped, fallback para RSS
         titulo = self._extract_title(soup)
+        if not titulo:
+            titulo = rss_titulo
         if not titulo:
             return None
 
-        # Extrair corpo do artigo
+        # Extrair corpo do artigo — fallback para snippet RSS se muito curto
         corpo = self._extract_body(soup)
-        if not corpo or len(corpo) < 100:
+        if (not corpo or len(corpo) < 100) and rss_descricao:
+            from bs4 import BeautifulSoup as _BS
+            corpo = _BS(rss_descricao, "html.parser").get_text(separator=" ", strip=True)
+        if not corpo or len(corpo) < 30:
             return None
 
         # Extrair data de publicação
@@ -464,10 +555,15 @@ class RadarScraperService:
 
         # === FILTRO DE RELEVÂNCIA ===
         relevancia_score = self._calculate_relevancia_score(titulo, corpo)
-        if relevancia_score < 35:
+
+        # Itens Google News têm garantia mínima de 45 (query já filtra por Camaçari)
+        if rss_titulo is not None:
+            relevancia_score = max(45, relevancia_score)
+        elif relevancia_score < 35:
             logger.debug("Score baixo (%d), rejeitando: %s", relevancia_score, titulo[:80])
             return None
-        if 35 <= relevancia_score < 60:
+
+        if 35 <= relevancia_score < 60 and rss_titulo is None:
             ajuste = await self._pretriagem_ia(titulo, corpo[:200] if corpo else "")
             relevancia_score = max(0, min(100, relevancia_score + ajuste))
             if relevancia_score < 35:
