@@ -94,11 +94,22 @@ KEYWORDS_CAMACARI_REGIAO = [
     "monte gordo", "parafuso", "gleba", "phoc",
     "polo petroquímico", "polo industrial", "pólo petroquímico",
     "dias d'ávila", "dias d avila", "dias davila",
-    # Delegacias da região
+    # Bairros urbanos de Camaçari
+    "cassange",          # bairro onde o caso Thamires ocorreu
+    "parque verde",      # bairro residencial
+    "parque camaçari", "parque camacari",
+    "capivara",          # bairro de Camaçari
+    "buraquinho",
+    "jardim camaçari", "jardim camacari",
+    # Distritos do município de Camaçari
+    "barra de pojuca",   # distrito de Camaçari (município)
+    "pojuca",
+    # Delegacias e órgãos da região
     "18ª delegacia", "18a delegacia", "cicom camaçari",
     "delegacia de camaçari", "dpc camaçari", "dpc camacari",
     "26ª cipm", "26a cipm", "31ª cipm", "31a cipm",
-    # Referências locais
+    # Sistemas e referências exclusivamente locais
+    "sicom",             # Sistema Integrado de Controle de Ocorrências de Camaçari
     "cia-rms", "cia rms", "rms norte",
 ]
 
@@ -647,7 +658,7 @@ class RadarScraperService:
             "raw_html": html[:200000],
             "content_hash": self._generate_content_hash(titulo, corpo),
             "relevancia_score": relevancia_score,
-            "municipio": self._detect_municipio(titulo),
+            "municipio": self._detect_municipio(titulo, corpo),
         }
 
     def _extract_title(self, soup: BeautifulSoup) -> str | None:
@@ -833,27 +844,37 @@ class RadarScraperService:
             return 0  # Em caso de erro, não ajusta o score
 
     @staticmethod
-    def _detect_municipio(titulo: str) -> str:
+    def _detect_municipio(titulo: str, corpo: str | None = None) -> str:
         """
-        Detecta o município da notícia pelo título usando detecção POSITIVA.
+        Detecta o município da notícia pelo título (e corpo, quando disponível).
 
         Ordem de verificação:
-        1. Salvador (verificar antes de Camaçari — "salvador" é genérico)
-        2. RMS (Simões Filho, Lauro de Freitas, Madre de Deus, Dias d'Ávila)
-        3. Camaçari (cidade + bairros + delegacias)
-        4. Default → "outro" (não mostrar em nenhum escopo)
+        1. Salvador — verificado no título; se match, confirma no corpo (evita falso positivo
+           quando "salvador" aparece como nome próprio em notícia baiana genérica)
+        2. RMS (Simões Filho, Lauro de Freitas, Madre de Deus, Dias d'Ávila) — título
+        3. Camaçari (cidade + bairros + delegacias + sistemas locais) — título OU corpo
+        4. Default → "outro" (não exibido em nenhum escopo)
 
-        Filosofia: se o artigo não menciona explicitamente Camaçari ou
-        uma localidade conhecida, ele não deve aparecer no feed de Camaçari.
-        Isso é mais robusto do que manter uma blocklist de cidades do interior.
+        O corpo é útil para artigos onde a cidade aparece no texto mas não no título,
+        ex: "Suspeito preso" sem mencionar Camaçari no título mas o corpo diz
+        "... foi detido no bairro Cassange, em Camaçari...".
         """
         t = titulo.lower()
+        c = (corpo or "").lower()
+
         if any(kw in t for kw in KEYWORDS_SALVADOR):
             return "salvador"
         if any(kw in t for kw in KEYWORDS_RMS):
             return "rms"
+        # Match positivo no título OU no corpo (primeiras 1000 chars para eficiência)
+        corpo_trecho = c[:1000]
         if any(kw in t for kw in KEYWORDS_CAMACARI_REGIAO):
             return "camacari"
+        if any(kw in corpo_trecho for kw in KEYWORDS_CAMACARI_REGIAO):
+            return "camacari"
+        # Verificar RMS também no corpo (ex: "Lauro de Freitas" no corpo mas não no título)
+        if any(kw in corpo_trecho for kw in KEYWORDS_RMS):
+            return "rms"
         # Sem match positivo → não exibir em nenhum escopo
         return "outro"
 
