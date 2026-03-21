@@ -11,10 +11,16 @@ import {
   Loader2,
   Pencil,
   Check,
+  AlertCircle,
+  Lightbulb,
+  AlertTriangle,
+  Printer,
+  CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
@@ -22,6 +28,26 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+
+interface AnalysisKpis {
+  totalPessoas?: number;
+  totalAcusacoes?: number;
+  totalDocumentosAnalisados?: number;
+  totalEventos?: number;
+  totalNulidades?: number;
+  totalRelacoes?: number;
+}
+
+interface AnalysisDataShape {
+  resumo?: string;
+  achadosChave?: string[];
+  recomendacoes?: string[];
+  inconsistencias?: string[];
+  kpis?: AnalysisKpis;
+  documentosProcessados?: number;
+  documentosTotal?: number;
+  versaoModelo?: string;
+}
 
 interface FichaSheetProps {
   open: boolean;
@@ -41,6 +67,7 @@ interface FichaSheetProps {
     nomeContato?: string | null;
     parentescoContato?: string | null;
     driveFolderId?: string | null;
+    updatedAt?: Date | string | null;
   };
   onExportarSolar: () => void;
   onSyncSolar: () => void;
@@ -48,6 +75,8 @@ interface FichaSheetProps {
   isExportandoSolar: boolean;
   isSyncSolar: boolean;
   isAnalisando: boolean;
+  analysisData?: AnalysisDataShape | null;
+  analysisStatus?: string | null;
 }
 
 function CopyButton({ value }: { value: string }) {
@@ -119,6 +148,8 @@ export function AssistidoFichaSheet({
   isExportandoSolar,
   isSyncSolar,
   isAnalisando,
+  analysisData,
+  analysisStatus,
 }: FichaSheetProps) {
   const idade =
     assistido.dataNascimento
@@ -132,6 +163,22 @@ export function AssistidoFichaSheet({
 
   // Strip non-digits for WhatsApp link
   const telefoneDigits = assistido.telefone?.replace(/\D/g, "") ?? "";
+
+  // Analysis date — derived from assistido.updatedAt when analysisStatus is set
+  const analysisDateFormatted =
+    analysisStatus === "completed" && assistido.updatedAt
+      ? format(
+          typeof assistido.updatedAt === "string"
+            ? parseISO(assistido.updatedAt)
+            : assistido.updatedAt,
+          "dd/MM/yyyy 'às' HH:mm",
+          { locale: ptBR },
+        )
+      : null;
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -255,6 +302,15 @@ export function AssistidoFichaSheet({
               <Button
                 size="sm"
                 variant="outline"
+                className="h-8 text-[11px] gap-1.5 border-zinc-200 text-zinc-600 hover:bg-zinc-50 col-span-2"
+                onClick={handlePrint}
+              >
+                <Printer className="h-3 w-3" />
+                Baixar / Imprimir ficha
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
                 className="h-8 text-[11px] gap-1.5 border-amber-200 text-amber-700 hover:bg-amber-50"
                 disabled={isExportandoSolar}
                 onClick={onExportarSolar}
@@ -318,6 +374,132 @@ export function AssistidoFichaSheet({
               )}
             </div>
           </div>
+
+          {/* ── Análise IA ── */}
+          {(analysisStatus || analysisData) && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <SectionTitle>Análise IA</SectionTitle>
+                {analysisStatus === "processing" && (
+                  <Badge variant="outline" className="text-[9px] h-4 gap-1 border-purple-200 text-purple-600">
+                    <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                    Processando
+                  </Badge>
+                )}
+                {analysisStatus === "completed" && (
+                  <Badge variant="outline" className="text-[9px] h-4 gap-1 border-emerald-200 text-emerald-600">
+                    <CheckCircle2 className="h-2.5 w-2.5" />
+                    Concluído
+                  </Badge>
+                )}
+                {analysisStatus === "error" && (
+                  <Badge variant="outline" className="text-[9px] h-4 gap-1 border-red-200 text-red-600">
+                    <AlertCircle className="h-2.5 w-2.5" />
+                    Erro
+                  </Badge>
+                )}
+              </div>
+
+              {analysisData && (
+                <div className="space-y-3">
+                  {/* Resumo */}
+                  {analysisData.resumo && (
+                    <div>
+                      <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-1">Resumo</p>
+                      <p className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                        {analysisData.resumo}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* KPIs */}
+                  {analysisData.kpis && (
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {analysisData.kpis.totalDocumentosAnalisados !== undefined && (
+                        <div className="bg-zinc-50 dark:bg-zinc-900 rounded p-1.5 text-center">
+                          <p className="text-[13px] font-semibold text-zinc-700 dark:text-zinc-200 tabular-nums">
+                            {analysisData.kpis.totalDocumentosAnalisados}
+                          </p>
+                          <p className="text-[9px] text-zinc-400 leading-tight">Docs</p>
+                        </div>
+                      )}
+                      {analysisData.kpis.totalPessoas !== undefined && (
+                        <div className="bg-zinc-50 dark:bg-zinc-900 rounded p-1.5 text-center">
+                          <p className="text-[13px] font-semibold text-zinc-700 dark:text-zinc-200 tabular-nums">
+                            {analysisData.kpis.totalPessoas}
+                          </p>
+                          <p className="text-[9px] text-zinc-400 leading-tight">Pessoas</p>
+                        </div>
+                      )}
+                      {analysisData.kpis.totalEventos !== undefined && (
+                        <div className="bg-zinc-50 dark:bg-zinc-900 rounded p-1.5 text-center">
+                          <p className="text-[13px] font-semibold text-zinc-700 dark:text-zinc-200 tabular-nums">
+                            {analysisData.kpis.totalEventos}
+                          </p>
+                          <p className="text-[9px] text-zinc-400 leading-tight">Eventos</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Achados-chave */}
+                  {analysisData.achadosChave && analysisData.achadosChave.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-1">Achados-chave</p>
+                      <ul className="space-y-1">
+                        {analysisData.achadosChave.map((achado, i) => (
+                          <li key={i} className="flex items-start gap-1.5 text-[11px] text-zinc-700 dark:text-zinc-300">
+                            <AlertCircle className="h-3 w-3 text-blue-500 mt-0.5 shrink-0" />
+                            <span className="leading-relaxed">{achado}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Recomendações */}
+                  {analysisData.recomendacoes && analysisData.recomendacoes.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-1">Recomendações</p>
+                      <ul className="space-y-1">
+                        {analysisData.recomendacoes.map((rec, i) => (
+                          <li key={i} className="flex items-start gap-1.5 text-[11px] text-zinc-700 dark:text-zinc-300">
+                            <Lightbulb className="h-3 w-3 text-emerald-500 mt-0.5 shrink-0" />
+                            <span className="leading-relaxed">{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Inconsistências */}
+                  {analysisData.inconsistencias && analysisData.inconsistencias.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-1">Inconsistências</p>
+                      <ul className="space-y-1">
+                        {analysisData.inconsistencias.map((inc, i) => (
+                          <li key={i} className="flex items-start gap-1.5 text-[11px] text-zinc-700 dark:text-zinc-300">
+                            <AlertTriangle className="h-3 w-3 text-amber-500 mt-0.5 shrink-0" />
+                            <span className="leading-relaxed">{inc}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Rodapé: versão do modelo e data */}
+                  <div className="pt-1 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                    {analysisData.versaoModelo && (
+                      <span className="text-[9px] text-zinc-400 font-mono">{analysisData.versaoModelo}</span>
+                    )}
+                    {analysisDateFormatted && (
+                      <span className="text-[9px] text-zinc-400">{analysisDateFormatted}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ── Editar ── */}
           <div>

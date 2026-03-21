@@ -861,6 +861,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           nomeContato: data.nomeContato,
           parentescoContato: data.parentescoContato,
           driveFolderId: data.driveFolderId,
+          updatedAt: data.updatedAt,
         }}
         onExportarSolar={() => exportarViaSigad.mutate({ assistidoId: Number(id) })}
         onSyncSolar={() => sincronizarComSolar.mutate({ assistidoId: Number(id) })}
@@ -878,6 +879,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             }
             await res.json();
             toast.success("Análise da pasta concluída");
+            utils.assistidos.getById.invalidate({ id: Number(id) });
           } catch (err) {
             const message = err instanceof Error ? err.message : "Erro ao analisar pasta";
             toast.error(message);
@@ -888,6 +890,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         isExportandoSolar={exportarViaSigad.isPending}
         isSyncSolar={sincronizarComSolar.isPending}
         isAnalisando={isAnalyzing}
+        analysisData={data.analysisData as Parameters<typeof AssistidoFichaSheet>[0]["analysisData"]}
+        analysisStatus={data.analysisStatus}
       />
     </div>
   );
