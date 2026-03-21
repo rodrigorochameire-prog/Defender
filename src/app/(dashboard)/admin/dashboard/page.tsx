@@ -1480,11 +1480,12 @@ export default function DashboardJuriPage() {
 
         {/* PRAZOS COM AÇÃO RÁPIDA */}
         <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
+          <div className="h-1 bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400" />
           <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                  <AlertCircle className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+                <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
+                  <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                 </div>
                 <h3 className="text-base font-bold text-zinc-800 dark:text-zinc-200 tracking-tight">Prazos</h3>
                 {estatisticasPrazos.vencidos > 0 && (
@@ -1600,11 +1601,12 @@ export default function DashboardJuriPage() {
         {/* PRÓXIMOS JÚRIS — só especializado */}
         {!isDefensorCriminalGeral && (
           <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
+            <div className="h-1 bg-gradient-to-r from-violet-400 via-purple-400 to-indigo-400" />
             <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                    <Gavel className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+                  <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center">
+                    <Gavel className="w-4 h-4 text-violet-600 dark:text-violet-400" />
                   </div>
                   <h3 className="text-base font-bold text-zinc-800 dark:text-zinc-200 tracking-tight">Próximos Júris</h3>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
