@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageLayout } from "@/components/shared/page-layout";
 import { Button } from "@/components/ui/button";
@@ -89,38 +89,60 @@ export default function RadarCriminalPage() {
 
   const fontesAtivas = fontes?.filter((f) => f.ativo).length ?? 0;
 
-  // Pipeline trigger
+  // Pipeline trigger — fire-and-forget: dispara e aguarda 12s antes de recarregar
   const utils = trpc.useUtils();
+  const [pipelineRunning, setPipelineRunning] = React.useState(false);
   const triggerPipeline = trpc.radar.triggerPipeline.useMutation({
     onSuccess: (data) => {
       if (data.success) {
-        const detalhes = [
-          (data as { noticias_processadas?: number }).noticias_processadas !== undefined &&
-            `${(data as { noticias_processadas?: number }).noticias_processadas} notícias processadas`,
-          (data as { matches_criados?: number }).matches_criados !== undefined &&
-            `${(data as { matches_criados?: number }).matches_criados} matches criados`,
-        ].filter(Boolean).join(" · ");
-
-        toast.success("Pipeline concluído", {
-          description: detalhes || data.message || "Verifique a aba Matches para novos resultados.",
+        toast.success("Atualização iniciada", {
+          description: "Buscando notícias em segundo plano... Os dados aparecerão em instantes.",
         });
-        utils.radar.list.invalidate();
-        utils.radar.stats.invalidate();
-        utils.radar.fontesList.invalidate();
-        utils.radar.mapData.invalidate();
-        utils.radar.matchesPendentesCount.invalidate();
+        // Recarregar dados progressivamente enquanto o pipeline processa no Railway
+        const delays = [8_000, 20_000, 40_000];
+        delays.forEach((delay) => {
+          setTimeout(() => {
+            utils.radar.list.invalidate();
+            utils.radar.stats.invalidate();
+            utils.radar.fontesList.invalidate();
+            utils.radar.mapData.invalidate();
+            utils.radar.matchesPendentesCount.invalidate();
+          }, delay);
+        });
+        setTimeout(() => setPipelineRunning(false), 45_000);
       } else {
-        toast.error("Falha no pipeline", {
-          description: data.message,
-        });
+        toast.error("Falha ao iniciar pipeline", { description: data.message });
+        setPipelineRunning(false);
       }
     },
     onError: (error) => {
-      toast.error("Erro ao atualizar", {
-        description: error.message,
-      });
+      // Timeout de 5s é esperado (fire-and-forget) — tratar como sucesso
+      if (error.message.includes("timeout") || error.message.includes("signal")) {
+        toast.success("Atualização iniciada", {
+          description: "Buscando notícias em segundo plano...",
+        });
+        const delays = [15_000, 35_000, 60_000];
+        delays.forEach((delay) => {
+          setTimeout(() => {
+            utils.radar.list.invalidate();
+            utils.radar.stats.invalidate();
+            utils.radar.fontesList.invalidate();
+            utils.radar.mapData.invalidate();
+            utils.radar.matchesPendentesCount.invalidate();
+          }, delay);
+        });
+        setTimeout(() => setPipelineRunning(false), 65_000);
+      } else {
+        toast.error("Erro ao atualizar", { description: error.message });
+        setPipelineRunning(false);
+      }
     },
   });
+
+  const handleTriggerPipeline = () => {
+    setPipelineRunning(true);
+    triggerPipeline.mutate();
+  };
 
   return (
     <PageLayout
@@ -132,14 +154,14 @@ export default function RadarCriminalPage() {
           variant="outline"
           size="sm"
           className="h-8 gap-1.5 cursor-pointer"
-          onClick={() => triggerPipeline.mutate()}
-          disabled={triggerPipeline.isPending}
+          onClick={handleTriggerPipeline}
+          disabled={pipelineRunning || triggerPipeline.isPending}
         >
           <RefreshCw
-            className={`h-3.5 w-3.5 ${triggerPipeline.isPending ? "animate-spin" : ""}`}
+            className={`h-3.5 w-3.5 ${pipelineRunning || triggerPipeline.isPending ? "animate-spin" : ""}`}
           />
           <span className="hidden sm:inline">
-            {triggerPipeline.isPending ? "Atualizando..." : "Atualizar"}
+            {pipelineRunning || triggerPipeline.isPending ? "Buscando..." : "Atualizar"}
           </span>
         </Button>
       }

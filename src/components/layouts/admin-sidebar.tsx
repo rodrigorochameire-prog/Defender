@@ -1704,13 +1704,10 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
   const isDrivePage = pathname.startsWith("/admin/drive");
 
   // Comarca features — condiciona itens de menu por comarca
-  const { data: minhaComarca } = trpc.comarcas.getMinhaComarca.useQuery();
-  const features = minhaComarca?.features ?? {
-    drive: false,
-    whatsapp: false,
-    enrichment: false,
-    calendar_sync: false,
-  };
+  // Default true enquanto carrega para evitar flash (items desaparecem e reaparecem)
+  const { data: minhaComarca, isLoading: comarcaLoading } = trpc.comarcas.getMinhaComarca.useQuery();
+  const features = comarcaLoading ? { drive: true, whatsapp: true, enrichment: true, calendar_sync: true }
+    : minhaComarca?.features ?? { drive: false, whatsapp: false, enrichment: false, calendar_sync: false };
 
   // WhatsApp unread badge
   const { data: whatsappConfigs } = trpc.whatsappChat.listConfigs.useQuery();

@@ -308,7 +308,21 @@ class RadarScraperService:
                 continue
 
             if is_google_news:
-                # Google News: query já garante que é notícia policial de Camaçari
+                # Google News: verificar que "camaçari" aparece no TÍTULO do item RSS
+                # (a query pode retornar artigos onde camaçari está só no corpo)
+                titulo_lower = titulo.lower()
+                tem_camacari_titulo = any(
+                    kw in titulo_lower
+                    for kw in ["camaçari", "camacari", "camaçarí", "camacarí",
+                               "arembepe", "guarajuba", "jauá", "jaua", "monte gordo",
+                               "barra do jacuípe", "barra do jacuipe", "vila de abrantes",
+                               "parafuso", "polo petroquímico", "polo industrial",
+                               "dias d'ávila", "dias d avila", "dias davila"]
+                )
+                if not tem_camacari_titulo:
+                    logger.debug("Google News: título sem Camaçari, ignorando: %s", titulo[:80])
+                    continue
+
                 # Tentar scraping do artigo completo; fallback para dados do RSS
                 noticia = None
                 try:
