@@ -63,6 +63,7 @@ import { legislacaoRouter } from "./legislacao";
 import { noticiasRouter } from "./noticias";
 import { bibliotecaRouter } from "./biblioteca";
 import { comarcasRouter } from "./comarcas";
+import { observatoryRouter } from "./observatory";
 
 
 export const appRouter = router({
@@ -287,6 +288,11 @@ export const appRouter = router({
   // COMARCAS - CONFIGURAÇÃO E FEATURES POR COMARCA
   // ==========================================
   comarcas: comarcasRouter,
+
+  // ==========================================
+  // OBSERVATORY - PAINEL ADMINISTRATIVO
+  // ==========================================
+  observatory: observatoryRouter,
 });
 
 export type AppRouter = typeof appRouter;
