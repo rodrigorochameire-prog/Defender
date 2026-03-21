@@ -1,7 +1,7 @@
-import { router, protectedProcedure } from "../init";
+import { router, protectedProcedure, adminProcedure } from "../init";
 import { db } from "@/lib/db";
 import { comarcas } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 import { getComarcaId } from "../comarca-scope";
 
 export const comarcasRouter = router({
@@ -23,5 +23,14 @@ export const comarcasRouter = router({
       .from(comarcas)
       .where(eq(comarcas.regiaoMetro, "RMS"))
       .orderBy(comarcas.nome);
+  }),
+
+  /** Lista todas as comarcas ativas (para admins — formulário de convite) */
+  listAtivas: adminProcedure.query(async () => {
+    return db
+      .select({ id: comarcas.id, nome: comarcas.nome, regional: comarcas.regional })
+      .from(comarcas)
+      .where(eq(comarcas.ativo, true))
+      .orderBy(asc(comarcas.nome));
   }),
 });

@@ -40,12 +40,15 @@ export default function ConviteDefensorPage() {
     nucleo: "" as Nucleo | "",
     oab: "",
     funcao: "defensor_titular",
+    comarcaId: 1,
     podeVerTodosAssistidos: true,
     podeVerTodosProcessos: true,
     mensagemPersonalizada: "",
   });
   const [conviteEnviado, setConviteEnviado] = useState(false);
   const [linkConvite, setLinkConvite] = useState("");
+
+  const { data: comarcasAtivas } = trpc.comarcas.listAtivas.useQuery();
 
   const inviteMutation = trpc.users.invite.useMutation({
     onSuccess: (data) => {
@@ -73,6 +76,7 @@ export default function ConviteDefensorPage() {
       nucleo: formData.nucleo,
       funcao: formData.funcao,
       oab: formData.oab || undefined,
+      comarcaId: formData.comarcaId,
       podeVerTodosAssistidos: formData.podeVerTodosAssistidos,
       podeVerTodosProcessos: formData.podeVerTodosProcessos,
       mensagemPersonalizada: formData.mensagemPersonalizada || undefined,
@@ -154,6 +158,7 @@ Defensoria Pública de Camaçari
                     nucleo: "",
                     oab: "",
                     funcao: "defensor_titular",
+                    comarcaId: 1,
                     podeVerTodosAssistidos: true,
                     podeVerTodosProcessos: true,
                     mensagemPersonalizada: "",
@@ -171,6 +176,7 @@ Defensoria Pública de Camaçari
               <div className="text-sm text-amber-700 dark:text-amber-400">
                 <p className="font-medium">Configurações aplicadas:</p>
                 <ul className="mt-1 text-xs space-y-0.5">
+                  <li>• Comarca: {comarcasAtivas?.find(c => c.id === formData.comarcaId)?.nome ?? "—"}</li>
                   <li>• Núcleo: {NUCLEOS_CONFIG[formData.nucleo as Nucleo]?.label}</li>
                   <li>• Visualização de assistidos: {formData.podeVerTodosAssistidos ? "Todos" : "Apenas do núcleo"}</li>
                   <li>• Visualização de processos: {formData.podeVerTodosProcessos ? "Todos" : "Apenas do núcleo"}</li>
@@ -250,6 +256,26 @@ Defensoria Pública de Camaçari
                 <SelectContent>
                   <SelectItem value="defensor_titular">Defensor Titular</SelectItem>
                   <SelectItem value="defensor_substituto">Defensor Substituto</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2 space-y-2">
+              <Label htmlFor="comarca">
+                Comarca <span className="text-rose-500">*</span>
+              </Label>
+              <Select
+                value={String(formData.comarcaId)}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, comarcaId: Number(value) }))}
+              >
+                <SelectTrigger id="comarca">
+                  <SelectValue placeholder="Selecione a comarca" />
+                </SelectTrigger>
+                <SelectContent>
+                  {comarcasAtivas?.map(c => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {c.nome}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

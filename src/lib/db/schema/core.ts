@@ -425,6 +425,7 @@ export const userInvitations = pgTable("user_invitations", {
   nucleo: varchar("nucleo", { length: 30 }),
   funcao: varchar("funcao", { length: 30 }).default("defensor_titular"),
   oab: varchar("oab", { length: 50 }),
+  comarcaId: integer("comarca_id").references(() => comarcas.id).default(1).notNull(),
   podeVerTodosAssistidos: boolean("pode_ver_todos_assistidos").default(true),
   podeVerTodosProcessos: boolean("pode_ver_todos_processos").default(true),
   mensagem: text("mensagem"),

@@ -97,6 +97,7 @@ export async function registerAction(input: RegisterInput): Promise<RegisterResu
           nucleo: invitation.nucleo,
           funcao: invitation.funcao,
           oab: invitation.oab,
+          comarcaId: invitation.comarcaId,
           podeVerTodosAssistidos: invitation.podeVerTodosAssistidos ?? true,
           podeVerTodosProcessos: invitation.podeVerTodosProcessos ?? true,
         }),
