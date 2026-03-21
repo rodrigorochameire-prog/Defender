@@ -15,13 +15,12 @@ interface NoticiasFeedProps {
   categoria: CategoriaFeed;
   selectedNoticiaId?: number;
   busca: string;
-  setBusca: (v: string) => void;
   fonteFilter: string | undefined;
   onOpenReader?: (noticia: NoticiaJuridica, list: NoticiaJuridica[]) => void;
   onOpenSalvarCaso?: (noticia: NoticiaJuridica) => void;
 }
 
-export function NoticiasFeed({ categoria, selectedNoticiaId, busca, setBusca, fonteFilter, onOpenReader, onOpenSalvarCaso }: NoticiasFeedProps) {
+export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter, onOpenReader, onOpenSalvarCaso }: NoticiasFeedProps) {
   const [cursor, setCursor] = useState<number | undefined>(undefined);
   const [accumulated, setAccumulated] = useState<NoticiaJuridica[]>([]);
   const [pastaAtiva, setPastaAtiva] = useState<number | null>(null);
@@ -131,14 +130,14 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, busca, setBusca, fo
   }
 
   return (
-    <div className="flex gap-4 min-h-full">
+    <div className="flex gap-4 min-h-full min-w-0">
       {/* Sidebar de Pastas */}
       {categoria !== "salvos" && (
         <NoticiasPastasSidebar pastaAtiva={pastaAtiva} onSelectPasta={setPastaAtiva} />
       )}
 
       {/* Feed principal */}
-      <div className="flex-1 min-w-0 space-y-4 max-w-3xl">
+      <div className="flex-1 min-w-0 space-y-4">
 
         {/* Empty state */}
         {noticias.length === 0 && !isLoading && (

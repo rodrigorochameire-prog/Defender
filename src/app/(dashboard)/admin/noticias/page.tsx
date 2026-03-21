@@ -92,6 +92,7 @@ export default function NoticiasPage() {
   const readerOpen = noticiaReader !== null && categoria !== "relatorios";
   const corFonteReader = noticiaReader?.fonteId ? (fonteIdToCorMap[noticiaReader.fonteId] ?? "#71717a") : "#71717a";
   const nomeFonteReader = noticiaReader?.fonteId ? (fonteIdToNomeMap[noticiaReader.fonteId] ?? noticiaReader.fonte.replace(/-/g, " ")) : (noticiaReader?.fonte.replace(/-/g, " ") ?? "");
+  const fonteAtiva = fonteFilter ? fontes.find(f => f.nome.toLowerCase().replace(/\s+/g, "-") === fonteFilter) : null;
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -148,13 +149,13 @@ export default function NoticiasPage() {
                 ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
                 : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
             )}>
-              {fonteFilter ? (
+              {fonteAtiva ? (
                 <>
                   <span
                     className="w-1.5 h-1.5 rounded-full shrink-0"
-                    style={{ backgroundColor: fonteIdToCorMap[fontes.find(f => f.nome.toLowerCase().replace(/\s+/g, "-") === fonteFilter)?.id ?? 0] ?? "#71717a" }}
+                    style={{ backgroundColor: fonteAtiva.cor ?? "#71717a" }}
                   />
-                  {fontes.find(f => f.nome.toLowerCase().replace(/\s+/g, "-") === fonteFilter)?.nome ?? fonteFilter}
+                  {fonteAtiva.nome}
                 </>
               ) : (
                 "Fonte"
@@ -243,7 +244,6 @@ export default function NoticiasPage() {
               categoria={categoria as "legislativa" | "jurisprudencial" | "artigo" | "salvos"}
               selectedNoticiaId={noticiaReader?.id}
               busca={busca}
-              setBusca={setBusca}
               fonteFilter={fonteFilter}
               onOpenReader={(noticia, list) => {
                 setNoticiaReader(noticia);
@@ -256,7 +256,7 @@ export default function NoticiasPage() {
 
         {/* Painel direito: reader (só quando noticiaReader !== null) */}
         {readerOpen && (
-          <div className="flex-1 overflow-y-auto min-w-0">
+          <div className="flex-1 overflow-hidden min-w-0">
             <NoticiaReaderPanel
               noticia={noticiaReader!}
               corFonte={corFonteReader}
