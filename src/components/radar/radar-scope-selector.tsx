@@ -51,11 +51,15 @@ interface RadarScopeSelectorProps {
   value: RadarScope;
   onChange: (scope: RadarScope) => void;
   counts?: Partial<Record<RadarScope, number>>;
+  fullWidth?: boolean;
 }
 
-export function RadarScopeSelector({ value, onChange, counts }: RadarScopeSelectorProps) {
+export function RadarScopeSelector({ value, onChange, counts, fullWidth }: RadarScopeSelectorProps) {
   return (
-    <div className="flex items-center gap-1 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700">
+    <div className={cn(
+      "flex items-center gap-0.5 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700",
+      fullWidth && "w-full"
+    )}>
       {SCOPES.map((scope) => {
         const isActive = value === scope.value;
         const colors = COLOR_MAP[scope.color as keyof typeof COLOR_MAP];
@@ -67,13 +71,14 @@ export function RadarScopeSelector({ value, onChange, counts }: RadarScopeSelect
             key={scope.value}
             onClick={() => onChange(scope.value)}
             className={cn(
-              "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer",
+              "flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer",
+              fullWidth && "flex-1 justify-center",
               isActive
                 ? colors.active
                 : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700"
             )}
           >
-            <Icon className={cn("h-3.5 w-3.5", isActive ? colors.icon : "opacity-60")} />
+            <Icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? colors.icon : "opacity-60")} />
             <span className="hidden sm:inline">{scope.label}</span>
             <span className="sm:hidden">{scope.label.split(" ")[0]}</span>
             {count !== undefined && count > 0 && (

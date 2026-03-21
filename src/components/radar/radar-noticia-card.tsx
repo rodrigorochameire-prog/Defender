@@ -457,11 +457,29 @@ export function RadarNoticiaCard({
       )}
       onClick={onClick}
     >
-      {/* Accent bar topo com cor do crime */}
-      <div
-        className="absolute top-0 left-0 right-0 h-[3px] rounded-t-xl"
-        style={{ background: crimeHex }}
-      />
+      {/* Imagem proporcional (se disponível) */}
+      {noticia.imagemUrl ? (
+        <div className="relative w-full overflow-hidden rounded-t-xl">
+          <img
+            src={noticia.imagemUrl}
+            alt={noticia.titulo}
+            className="w-full object-cover"
+            style={{ maxHeight: 160 }}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
+          {/* Accent bar sobreposta no topo da imagem */}
+          <div
+            className="absolute top-0 left-0 right-0 h-[3px]"
+            style={{ background: crimeHex }}
+          />
+        </div>
+      ) : (
+        /* Accent bar sem imagem */
+        <div
+          className="absolute top-0 left-0 right-0 h-[3px] rounded-t-xl"
+          style={{ background: crimeHex }}
+        />
+      )}
 
       <CardContent className="p-4 pt-5">
         {/* Header: badge crime + DPE dot + data */}

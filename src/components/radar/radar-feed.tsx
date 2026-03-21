@@ -317,7 +317,7 @@ export function RadarFeed({ filtros, municipio = "camacari" }: RadarFeedProps) {
           {/* Grid usa 2 colunas em sm+; compact e list são verticais */}
           <div className={cn(
             viewMode === "cards"
-              ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3"
+              ? "grid grid-cols-1 sm:grid-cols-2 gap-3"
               : "flex flex-col"
           )}>
             {group.map((noticia) => (

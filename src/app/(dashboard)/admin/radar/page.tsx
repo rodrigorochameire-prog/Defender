@@ -317,7 +317,7 @@ export default function RadarCriminalPage() {
                 sidebarCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
               )}>
                 {/* Scope selector no topo da sidebar */}
-                <RadarScopeSelector value={scope} onChange={handleScopeChange} />
+                <RadarScopeSelector value={scope} onChange={handleScopeChange} fullWidth />
 
                 {/* Inteligência primeiro */}
                 <RadarIntelligencePanel scope={scope} />
