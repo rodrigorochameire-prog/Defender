@@ -11,7 +11,7 @@ import {
   Columns3, History, PieChart, Handshake, CalendarDays, Sparkles, MessageCircle,
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
   MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput, Sun,
-  MessageSquare, FileCheck, ArrowLeftRight, Timer, Newspaper, Rss, Radio
+  MessageSquare, FileCheck, ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -65,12 +65,13 @@ const MAIN_NAV: AssignmentMenuItem[] = [
   { label: "WhatsApp", path: "/admin/whatsapp/chat", icon: "MessageCircle" },
 ];
 
-// 2. Cadastros - Assistidos, Processos, Casos, Solar (azul)
+// 2. Cadastros - Assistidos, Processos, Casos, Solar, Mapa (azul)
 const CADASTROS_NAV: AssignmentMenuItem[] = [
   { label: "Assistidos", path: "/admin/assistidos", icon: "Users", requiredRoles: ["admin", "defensor", "servidor", "estagiario", "triagem"] },
   { label: "Processos", path: "/admin/processos", icon: "Scale" },
   { label: "Casos", path: "/admin/casos", icon: "Briefcase" },
   { label: "Solar", path: "/admin/intimacoes", icon: "Sun" },
+  { label: "Mapa", path: "/admin/cadastro/mapa", icon: "Map" },
 ];
 
 // 3. Documentos - Drive, Distribuição, Ofícios, Modelos, Jurisprudência, Legislação (laranja)
@@ -180,7 +181,7 @@ const iconMap: Record<string, React.ElementType> = {
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
   ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
   BookUser, Users2, Home, FolderInput, Sun, MessageSquare, FileCheck,
-  ArrowLeftRight, Timer, Newspaper, Rss, Radio
+  ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
