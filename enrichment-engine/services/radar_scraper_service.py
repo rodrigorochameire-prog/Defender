@@ -596,11 +596,32 @@ class RadarScraperService:
         if not titulo:
             return None
 
-        # Extrair corpo do artigo — fallback para snippet RSS se muito curto
+        # Extrair og:description para usar como fallback de qualidade
+        og_desc = self._extract_og_description(soup)
+
+        # Extrair corpo do artigo
         corpo = self._extract_body(soup)
-        if (not corpo or len(corpo) < 100) and rss_descricao:
-            from bs4 import BeautifulSoup as _BS
-            corpo = _BS(rss_descricao, "html.parser").get_text(separator=" ", strip=True)
+
+        # Validar se o corpo extraído é coerente com o título.
+        # Sites SPA (React/Vue com styled-components) não têm conteúdo no HTML estático —
+        # o scraper capta "artigos relacionados" ou sidebars em vez do texto real.
+        # Sinal de contaminação: corpo muito curto OU nenhuma palavra do título aparece no corpo.
+        if corpo and titulo:
+            titulo_palavras = {w.lower() for w in titulo.split() if len(w) > 4}
+            corpo_lower = corpo.lower()
+            palavras_em_comum = sum(1 for w in titulo_palavras if w in corpo_lower)
+            corpo_contaminado = len(corpo) < 300 or (len(titulo_palavras) > 2 and palavras_em_comum == 0)
+        else:
+            corpo_contaminado = True
+
+        if corpo_contaminado:
+            # Tentar og:description primeiro, depois RSS description
+            if og_desc and len(og_desc) > 30:
+                corpo = og_desc
+            elif rss_descricao:
+                from bs4 import BeautifulSoup as _BS
+                corpo = _BS(rss_descricao, "html.parser").get_text(separator=" ", strip=True)
+
         if not corpo or len(corpo) < 30:
             return None
 
@@ -665,6 +686,21 @@ class RadarScraperService:
             "relevancia_score": relevancia_score,
             "municipio": self._detect_municipio(titulo, corpo),
         }
+
+    def _extract_og_description(self, soup: BeautifulSoup) -> str | None:
+        """Extrai og:description ou meta description da página."""
+        for prop in ["og:description", "twitter:description"]:
+            meta = soup.find("meta", property=prop) or soup.find("meta", attrs={"name": prop})
+            if meta and meta.get("content") and len(meta["content"]) > 30:
+                return meta["content"].strip()
+        # Fallback: meta name="description" (mas evitar textos genéricos de portal)
+        meta = soup.find("meta", attrs={"name": "description"})
+        if meta and meta.get("content") and len(meta["content"]) > 50:
+            content = meta["content"].strip()
+            # Rejeitar textos genéricos de portal (ex: "Portal de notícias de ...")
+            if not any(skip in content.lower() for skip in ["portal de", "notícias de", "seu portal", "o portal"]):
+                return content
+        return None
 
     def _extract_title(self, soup: BeautifulSoup) -> str | None:
         """Extrai título do artigo."""
