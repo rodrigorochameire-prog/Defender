@@ -1,16 +1,11 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Search, X, ChevronDown, Check } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { NoticiaCard } from "./noticias-card";
 import { NoticiasPastasSidebar } from "./noticias-pastas-sidebar";
 import { useDebounce } from "@/hooks/use-debounce";
-import { cn } from "@/lib/utils";
 import type { NoticiaJuridica } from "@/lib/db/schema";
 
 
@@ -19,15 +14,16 @@ export type CategoriaFeed = "legislativa" | "jurisprudencial" | "artigo" | "salv
 interface NoticiasFeedProps {
   categoria: CategoriaFeed;
   selectedNoticiaId?: number;
+  busca: string;
+  setBusca: (v: string) => void;
+  fonteFilter: string | undefined;
   onOpenReader?: (noticia: NoticiaJuridica, list: NoticiaJuridica[]) => void;
   onOpenSalvarCaso?: (noticia: NoticiaJuridica) => void;
 }
 
-export function NoticiasFeed({ categoria, selectedNoticiaId, onOpenReader, onOpenSalvarCaso }: NoticiasFeedProps) {
-  const [busca, setBusca] = useState("");
+export function NoticiasFeed({ categoria, selectedNoticiaId, busca, setBusca, fonteFilter, onOpenReader, onOpenSalvarCaso }: NoticiasFeedProps) {
   const [cursor, setCursor] = useState<number | undefined>(undefined);
   const [accumulated, setAccumulated] = useState<NoticiaJuridica[]>([]);
-  const [fonteFilter, setFonteFilter] = useState<string | undefined>(undefined);
   const [pastaAtiva, setPastaAtiva] = useState<number | null>(null);
   const debouncedBusca = useDebounce(busca, 400);
   const utils = trpc.useUtils();
@@ -36,18 +32,6 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, onOpenReader, onOpe
   const fonteIdToCorMap = useMemo(
     () => Object.fromEntries(fontes.map(f => [f.id, f.cor ?? "#71717a"])),
     [fontes]
-  );
-  const fonteSlugList = useMemo(
-    () => fontes.filter(f => f.ativo).map(f => ({
-      slug: f.nome.toLowerCase().replace(/\s+/g, "-"),
-      nome: f.nome,
-      cor: f.cor ?? "#71717a",
-    })),
-    [fontes]
-  );
-  const fonteSlugToCorMap = useMemo(
-    () => Object.fromEntries(fonteSlugList.map(f => [f.slug, f.cor])),
-    [fonteSlugList]
   );
   const fonteIdToNomeMap = useMemo(
     () => Object.fromEntries(fontes.map(f => [f.id, f.nome])),
@@ -121,31 +105,24 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, onOpenReader, onOpe
 
   if (isLoading) {
     return (
-      <div className="p-4 flex gap-4">
-        <div className="w-52 shrink-0 space-y-2">
+      <div className="flex gap-4">
+        {/* Sidebar placeholder */}
+        <div className="w-44 shrink-0 space-y-1 pt-2 px-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-8 bg-zinc-100 dark:bg-zinc-800 rounded-lg animate-pulse" />
+            <div key={i} className="h-7 bg-zinc-100 dark:bg-zinc-800 rounded-lg animate-pulse" />
           ))}
         </div>
-        <div className="flex-1 space-y-3 max-w-3xl">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className="relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden animate-pulse"
-            >
-              <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-zinc-200 dark:bg-zinc-700 rounded-l-xl" />
-              <div className="pl-5 pr-4 py-4 space-y-3">
-                <div className="flex gap-2 items-center">
-                  <div className="h-4 w-20 bg-zinc-100 dark:bg-zinc-800 rounded-full" />
-                  <div className="h-4 w-14 bg-zinc-100 dark:bg-zinc-800 rounded" />
-                </div>
-                <div className="h-5 w-full bg-zinc-100 dark:bg-zinc-800 rounded" />
-                <div className="h-5 w-3/4 bg-zinc-100 dark:bg-zinc-800 rounded" />
-                <div className="h-4 w-full bg-zinc-100 dark:bg-zinc-800 rounded" />
-                <div className="h-4 w-full bg-zinc-100 dark:bg-zinc-800 rounded" />
-                <div className="h-4 w-2/3 bg-zinc-100 dark:bg-zinc-800 rounded" />
-                <div className="h-14 w-full bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg" />
+        {/* Cards placeholder */}
+        <div className="flex-1">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 animate-pulse">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700 shrink-0" />
+                <div className="h-3 w-16 bg-zinc-100 dark:bg-zinc-800 rounded" />
+                <div className="h-3 w-24 bg-zinc-100 dark:bg-zinc-800 rounded ml-auto" />
               </div>
+              <div className="h-4 w-full bg-zinc-100 dark:bg-zinc-800 rounded mb-1.5" />
+              <div className={`h-4 bg-zinc-100 dark:bg-zinc-800 rounded ${i % 3 === 0 ? 'w-2/3' : 'w-4/5'}`} />
             </div>
           ))}
         </div>
@@ -154,7 +131,7 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, onOpenReader, onOpe
   }
 
   return (
-    <div className="p-4 flex gap-4 min-h-full">
+    <div className="flex gap-4 min-h-full">
       {/* Sidebar de Pastas */}
       {categoria !== "salvos" && (
         <NoticiasPastasSidebar pastaAtiva={pastaAtiva} onSelectPasta={setPastaAtiva} />
@@ -163,82 +140,9 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, onOpenReader, onOpe
       {/* Feed principal */}
       <div className="flex-1 min-w-0 space-y-4 max-w-3xl">
 
-        {/* Toolbar: busca + fonte */}
-        {categoria !== "salvos" && pastaAtiva === null && (
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
-              <Input
-                placeholder="Buscar notícias..."
-                className="pl-8 pr-8 h-7 text-sm"
-                value={busca}
-                onChange={e => setBusca(e.target.value)}
-              />
-              {busca && (
-                <button
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
-                  onClick={() => setBusca("")}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-            <span className="text-xs text-zinc-400 whitespace-nowrap">
-              {noticias.length} {noticias.length === 1 ? "notícia" : "notícias"}
-            </span>
-          </div>
-        )}
-
-        {/* Dropdown de fonte */}
-        {categoria !== "salvos" && pastaAtiva === null && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 gap-1.5 text-xs font-medium border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400"
-              >
-                {fonteFilter ? (
-                  <>
-                    <span
-                      className="w-2 h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: fonteSlugToCorMap[fonteFilter ?? ""] ?? "#71717a" }}
-                    />
-                    {fonteSlugList.find(f => f.slug === fonteFilter)?.nome ?? fonteFilter}
-                  </>
-                ) : (
-                  "Fonte"
-                )}
-                <ChevronDown className="h-3 w-3 text-zinc-400" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-44">
-              <DropdownMenuItem
-                onClick={() => setFonteFilter(undefined)}
-                className="gap-2 text-sm cursor-pointer"
-              >
-                <span className="w-2 h-2 rounded-full bg-zinc-300 shrink-0" />
-                Todas as fontes
-                {!fonteFilter && <Check className="h-3.5 w-3.5 ml-auto text-emerald-500" />}
-              </DropdownMenuItem>
-              {fonteSlugList.map(({ slug, nome, cor }) => (
-                <DropdownMenuItem
-                  key={slug}
-                  onClick={() => setFonteFilter(fonteFilter === slug ? undefined : slug)}
-                  className="gap-2 text-sm cursor-pointer"
-                >
-                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: cor }} />
-                  {nome}
-                  {fonteFilter === slug && <Check className="h-3.5 w-3.5 ml-auto text-emerald-500" />}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-
         {/* Empty state */}
         {noticias.length === 0 && !isLoading && (
-          <div className="text-center py-20 text-zinc-400">
+          <div className="text-center py-24 text-zinc-400">
             <p className="text-base font-medium mb-1">Nenhuma notícia encontrada</p>
             <p className="text-sm">
               {categoria === "salvos"
@@ -250,7 +154,7 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, onOpenReader, onOpe
 
         {/* Cards em coluna única (sem featured) */}
         {noticias.length > 0 && (
-          <div className="space-y-3">
+          <div>
             {noticias.map(noticia => (
               <NoticiaCard
                 key={noticia.id}
@@ -269,17 +173,14 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, onOpenReader, onOpe
 
         {/* Load more */}
         {hasNextPage && categoria !== "salvos" && pastaAtiva === null && (
-          <div className="flex justify-center pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (feedQuery.data?.nextCursor) setCursor(feedQuery.data.nextCursor);
-              }}
+          <div className="flex justify-center py-4">
+            <button
+              onClick={() => { if (feedQuery.data?.nextCursor) setCursor(feedQuery.data.nextCursor); }}
               disabled={feedQuery.isFetching}
+              className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors disabled:opacity-50"
             >
               {feedQuery.isFetching ? "Carregando..." : "Carregar mais"}
-            </Button>
+            </button>
           </div>
         )}
       </div>
