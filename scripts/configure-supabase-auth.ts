@@ -9,11 +9,13 @@
  * - SUPABASE_ACCESS_TOKEN (Token de acesso da dashboard, Settings > Access Tokens)
  */
 
-const SUPABASE_PROJECT_REF = process.env.SUPABASE_PROJECT_REF || "siwapjqndevuwsluncnr";
+const SUPABASE_PROJECT_REF = process.env.SUPABASE_PROJECT_REF || "hxfvlaeqhkmelvyzgfqp";
 const SUPABASE_ACCESS_TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
 
-const SITE_URL = "https://defesahub.vercel.app";
+const SITE_URL = "https://ombuds.vercel.app";
 const REDIRECT_URLS = [
+  "https://ombuds.vercel.app/**",
+  "https://ombuds.vercel.app/reset-password",
   "https://defesahub.vercel.app/**",
   "https://defesahub.vercel.app/reset-password",
   "https://*.vercel.app/**",

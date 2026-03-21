@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +23,7 @@ function getSupabase() {
 
 export function ResetPasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -47,18 +48,36 @@ export function ResetPasswordForm() {
           return;
         }
 
-        // Pegar o hash da URL
-        const hash = window.location.hash;
+        // Fluxo PKCE: Supabase envia ?code=xxx na URL
+        const code = searchParams.get("code");
+        if (code) {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.error("[Reset Password] Erro ao trocar código:", error);
+            setErrorMessage("Link expirado ou inválido. Solicite um novo.");
+            setIsChecking(false);
+            return;
+          }
+          if (data.session) {
+            setHasSession(true);
+            // Limpar o code da URL para não ficar visível
+            const url = new URL(window.location.href);
+            url.searchParams.delete("code");
+            window.history.replaceState(null, "", url.toString());
+          }
+          setIsChecking(false);
+          return;
+        }
 
+        // Fluxo legado: hash #access_token=xxx&type=recovery
+        const hash = window.location.hash;
         if (hash && hash.includes("access_token")) {
-          // Parsear os parâmetros do hash
           const params = new URLSearchParams(hash.substring(1));
           const accessToken = params.get("access_token");
           const refreshToken = params.get("refresh_token");
           const type = params.get("type");
 
           if (accessToken && type === "recovery") {
-            // Definir a sessão manualmente com o token
             const { data, error } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken || "",
@@ -73,14 +92,13 @@ export function ResetPasswordForm() {
 
             if (data.session) {
               setHasSession(true);
-              // Limpar o hash da URL para não ficar visível
               window.history.replaceState(null, "", window.location.pathname);
             }
           } else {
             setErrorMessage("Link de recuperação inválido.");
           }
         } else {
-          // Verificar se já existe uma sessão (usuário voltou para a página)
+          // Verificar se já existe uma sessão ativa de recovery
           const { data } = await supabase.auth.getSession();
           if (data.session) {
             setHasSession(true);
@@ -97,7 +115,7 @@ export function ResetPasswordForm() {
     }
 
     processRecoveryToken();
-  }, []);
+  }, [searchParams]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

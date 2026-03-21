@@ -31,9 +31,9 @@ export async function forgotPasswordAction(email: string): Promise<ForgotPasswor
 
     // URL de redirecionamento para reset de senha
     // Prioriza: NEXT_PUBLIC_APP_URL > VERCEL_URL > fallback
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ||
                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-                   "https://defesahub.vercel.app";
+                   "https://ombuds.vercel.app";
     const redirectTo = `${baseUrl}/reset-password`;
 
     // Enviar email de recuperação via Supabase Auth
