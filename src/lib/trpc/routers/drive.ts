@@ -4555,4 +4555,122 @@ export const driveRouter = router({
         };
       }, "Erro ao criar pasta da demanda no Drive");
     }),
+
+  /**
+   * Transcrever em batch todos os arquivos de áudio/vídeo pendentes de uma pasta.
+   * Para cada arquivo elegível, enfileira a transcrição de forma assíncrona
+   * (igual ao `transcreverDrive` individual) e retorna um resumo.
+   */
+  transcribeAll: protectedProcedure
+    .input(
+      z.object({
+        folderId: z.string(),
+        parentDriveFileId: z.string().optional(),
+        language: z.string().default("pt"),
+        diarize: z.boolean().default(true),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const audioVideoMimes = ["audio/", "video/", "application/ogg"];
+
+      // Resolver parentFileId quando estamos numa subpasta
+      let parentFileId: number | null | undefined = undefined;
+      if (input.parentDriveFileId) {
+        const [parentFolder] = await db
+          .select({ id: driveFiles.id })
+          .from(driveFiles)
+          .where(eq(driveFiles.driveFileId, input.parentDriveFileId))
+          .limit(1);
+        parentFileId = parentFolder ? parentFolder.id : null;
+      }
+
+      // Buscar todos os arquivos de áudio/vídeo da pasta que NÃO estão completos
+      const baseConditions = [
+        eq(driveFiles.driveFolderId, input.folderId),
+        eq(driveFiles.isFolder, false),
+      ];
+
+      if (parentFileId !== undefined) {
+        if (parentFileId === null) {
+          baseConditions.push(isNull(driveFiles.parentFileId));
+        } else {
+          baseConditions.push(eq(driveFiles.parentFileId, parentFileId));
+        }
+      }
+
+      const candidates = await db
+        .select({
+          id: driveFiles.id,
+          name: driveFiles.name,
+          mimeType: driveFiles.mimeType,
+          fileSize: driveFiles.fileSize,
+          driveFileId: driveFiles.driveFileId,
+          enrichmentStatus: driveFiles.enrichmentStatus,
+        })
+        .from(driveFiles)
+        .where(and(...baseConditions));
+
+      // Filtrar apenas áudio/vídeo e excluir já concluídos ou em processamento
+      const eligible = candidates.filter((f) => {
+        const isMedia = audioVideoMimes.some((m) => f.mimeType?.startsWith(m));
+        const isPending =
+          f.enrichmentStatus !== "completed" &&
+          f.enrichmentStatus !== "processing";
+        const notTooBig = (f.fileSize ?? 0) / (1024 * 1024) <= 500;
+        return isMedia && isPending && notTooBig;
+      });
+
+      if (eligible.length === 0) {
+        return { enqueued: 0, skipped: candidates.length, fileIds: [] };
+      }
+
+      // Obter token de acesso uma única vez para todos os arquivos
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Não foi possível obter token de acesso do Google Drive.",
+        });
+      }
+
+      const enqueuedIds: number[] = [];
+      let skipped = candidates.length - eligible.length;
+
+      for (const file of eligible) {
+        try {
+          // Marcar como processing
+          await db
+            .update(driveFiles)
+            .set({ enrichmentStatus: "processing", enrichmentError: null, updatedAt: new Date() })
+            .where(eq(driveFiles.driveFileId, file.driveFileId));
+
+          const downloadUrl = `https://www.googleapis.com/drive/v3/files/${file.driveFileId}?alt=media`;
+
+          await enrichmentClient.transcribeAsync({
+            fileUrl: downloadUrl,
+            fileName: file.name || "audio.mp3",
+            language: input.language,
+            diarize: input.diarize,
+            expectedSpeakers: null,
+            authHeader: `Bearer ${accessToken}`,
+            driveFileId: file.driveFileId,
+            dbRecordId: file.id,
+          });
+
+          enqueuedIds.push(file.id);
+        } catch {
+          // Reverter status se falhou ao enfileirar
+          await db
+            .update(driveFiles)
+            .set({
+              enrichmentStatus: "failed",
+              enrichmentError: "Falha ao enfileirar transcrição em batch",
+            })
+            .where(eq(driveFiles.driveFileId, file.driveFileId));
+          skipped++;
+        }
+      }
+
+      return { enqueued: enqueuedIds.length, skipped, fileIds: enqueuedIds };
+    }),
 });

@@ -1738,4 +1738,179 @@ export const oficiosRouter = router({
 
   /** Lista status possíveis */
   statusPossiveis: protectedProcedure.query(() => STATUS_OFICIO),
+
+  // ==========================================
+  // CRUD DE TEMPLATES DE OFÍCIO
+  // ==========================================
+
+  /** Busca template por ID */
+  getTemplate: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const [modelo] = await db
+        .select()
+        .from(documentoModelos)
+        .where(
+          and(
+            eq(documentoModelos.id, input.id),
+            eq(documentoModelos.tipoPeca, "oficio"),
+            isNull(documentoModelos.deletedAt),
+          )
+        )
+        .limit(1);
+
+      if (!modelo) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Template não encontrado" });
+      }
+
+      return modelo;
+    }),
+
+  /** Cria novo template de ofício */
+  createTemplate: protectedProcedure
+    .input(
+      z.object({
+        titulo: z.string().min(1, "Título obrigatório"),
+        conteudo: z.string().min(1, "Conteúdo obrigatório"),
+        descricao: z.string().optional(),
+        tipoOficio: z.string().optional(),
+        area: z.string().optional(),
+        formatacao: z
+          .object({
+            fonte: z.string().optional(),
+            tamanhoFonte: z.number().optional(),
+            margens: z
+              .object({
+                top: z.number(),
+                bottom: z.number(),
+                left: z.number(),
+                right: z.number(),
+              })
+              .optional(),
+            espacamento: z.number().optional(),
+            cabecalho: z.string().optional(),
+            rodape: z.string().optional(),
+          })
+          .optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [modelo] = await db
+        .insert(documentoModelos)
+        .values({
+          titulo: input.titulo,
+          conteudo: input.conteudo,
+          descricao: input.descricao,
+          tipoPeca: "oficio",
+          area: input.area as never ?? null,
+          categoria: "COMUNICACAO",
+          formatacao: (input.tipoOficio
+            ? { ...input.formatacao, tipoOficio: input.tipoOficio }
+            : input.formatacao ?? null) as never,
+          isPublic: true,
+          isAtivo: true,
+          totalUsos: 0,
+          createdById: ctx.user?.id ? Number(ctx.user.id) : undefined,
+        })
+        .returning();
+
+      return modelo;
+    }),
+
+  /** Atualiza template de ofício existente */
+  updateTemplate: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        titulo: z.string().min(1).optional(),
+        conteudo: z.string().min(1).optional(),
+        descricao: z.string().optional(),
+        tipoOficio: z.string().optional(),
+        area: z.string().optional(),
+        formatacao: z
+          .object({
+            fonte: z.string().optional(),
+            tamanhoFonte: z.number().optional(),
+            margens: z
+              .object({
+                top: z.number(),
+                bottom: z.number(),
+                left: z.number(),
+                right: z.number(),
+              })
+              .optional(),
+            espacamento: z.number().optional(),
+            cabecalho: z.string().optional(),
+            rodape: z.string().optional(),
+          })
+          .optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { id, tipoOficio, area, formatacao, ...rest } = input;
+
+      const [existing] = await db
+        .select({ formatacao: documentoModelos.formatacao })
+        .from(documentoModelos)
+        .where(
+          and(
+            eq(documentoModelos.id, id),
+            eq(documentoModelos.tipoPeca, "oficio"),
+            isNull(documentoModelos.deletedAt),
+          )
+        )
+        .limit(1);
+
+      if (!existing) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Template não encontrado" });
+      }
+
+      const existingFmt = (existing.formatacao as Record<string, unknown>) ?? {};
+      const newFmt = {
+        ...existingFmt,
+        ...(formatacao ?? {}),
+        ...(tipoOficio !== undefined ? { tipoOficio } : {}),
+      };
+
+      const [updated] = await db
+        .update(documentoModelos)
+        .set({
+          ...rest,
+          ...(area !== undefined ? { area: area as never } : {}),
+          formatacao: newFmt,
+          updatedAt: new Date(),
+        })
+        .where(eq(documentoModelos.id, id))
+        .returning();
+
+      return updated;
+    }),
+
+  /** Exclui (soft-delete) template de ofício */
+  deleteTemplate: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const [existing] = await db
+        .select({ id: documentoModelos.id })
+        .from(documentoModelos)
+        .where(
+          and(
+            eq(documentoModelos.id, input.id),
+            eq(documentoModelos.tipoPeca, "oficio"),
+            isNull(documentoModelos.deletedAt),
+          )
+        )
+        .limit(1);
+
+      if (!existing) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Template não encontrado" });
+      }
+
+      await db
+        .update(documentoModelos)
+        .set({ deletedAt: new Date(), isAtivo: false })
+        .where(eq(documentoModelos.id, input.id));
+
+      return { success: true };
+    }),
 });

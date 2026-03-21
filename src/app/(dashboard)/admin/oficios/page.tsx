@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Loader2,
   RefreshCw,
+  LayoutTemplate,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -147,13 +148,23 @@ export default function OficiosPage() {
             </p>
           </div>
         </div>
-        <Button
-          onClick={() => setTemplateSelectorOpen(true)}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Oficio
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+            onClick={() => router.push("/admin/oficios/templates")}
+          >
+            <LayoutTemplate className="w-4 h-4 mr-2" />
+            Templates
+          </Button>
+          <Button
+            onClick={() => setTemplateSelectorOpen(true)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Oficio
+          </Button>
+        </div>
       </div>
 
       {/* KPI Stats */}
