@@ -9,7 +9,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import type { NoticiaJuridica } from "@/lib/db/schema";
 
 
-export type CategoriaFeed = "legislativa" | "jurisprudencial" | "artigo" | "salvos";
+export type CategoriaFeed = "legislativa" | "jurisprudencial" | "artigo" | "salvos" | "recentes";
 
 interface NoticiasFeedProps {
   categoria: CategoriaFeed;
@@ -54,15 +54,19 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter,
 
   const feedQuery = trpc.noticias.list.useQuery(
     {
-      categoria: categoria === "salvos" ? undefined : categoria,
+      categoria: (categoria === "salvos" || categoria === "recentes") ? undefined : categoria,
       busca: debouncedBusca || undefined,
       status: "aprovado",
       limit: 20,
       cursor,
       fonte: fonteFilter,
     },
-    { enabled: categoria !== "salvos" }
+    { enabled: categoria !== "salvos" && categoria !== "recentes" }
   );
+
+  const recentesQuery = trpc.noticias.listRecentes.useQuery(undefined, {
+    enabled: categoria === "recentes",
+  });
 
   useEffect(() => {
     if (feedQuery.data?.items) {
@@ -93,11 +97,14 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter,
       ? (pastaQuery.data?.map(item => item.noticia) ?? [])
       : categoria === "salvos"
         ? (favoritosQuery.data?.map(f => f.noticia) ?? [])
-        : accumulated;
+        : categoria === "recentes"
+          ? (recentesQuery.data ?? [])
+          : accumulated;
 
   const isLoading =
     pastaAtiva !== null ? pastaQuery.isLoading
     : categoria === "salvos" ? favoritosQuery.isLoading
+    : categoria === "recentes" ? recentesQuery.isLoading
     : (feedQuery.isLoading && cursor === undefined);
 
   const hasNextPage = feedQuery.data?.nextCursor != null;
@@ -132,7 +139,7 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter,
   return (
     <div className="flex min-h-full min-w-0">
       {/* Sidebar de Pastas */}
-      {categoria !== "salvos" && (
+      {categoria !== "salvos" && categoria !== "recentes" && (
         <NoticiasPastasSidebar pastaAtiva={pastaAtiva} onSelectPasta={setPastaAtiva} />
       )}
 
@@ -146,7 +153,9 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter,
             <p className="text-sm">
               {categoria === "salvos"
                 ? "Use a estrela nos cards para salvar notícias de referência"
-                : "Tente buscar por outro termo ou aguarde o próximo scraping"}
+                : categoria === "recentes"
+                  ? "Nenhuma notícia aprovada nas últimas 48 horas"
+                  : "Tente buscar por outro termo ou aguarde o próximo scraping"}
             </p>
           </div>
         )}
@@ -171,7 +180,7 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter,
         )}
 
         {/* Load more */}
-        {hasNextPage && categoria !== "salvos" && pastaAtiva === null && (
+        {hasNextPage && categoria !== "salvos" && categoria !== "recentes" && pastaAtiva === null && (
           <div className="flex justify-center py-4">
             <button
               onClick={() => { if (feedQuery.data?.nextCursor) setCursor(feedQuery.data.nextCursor); }}

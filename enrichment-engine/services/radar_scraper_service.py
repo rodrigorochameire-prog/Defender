@@ -95,7 +95,6 @@ KEYWORDS_CAMACARI_REGIAO = [
     "polo petroquímico", "polo industrial", "pólo petroquímico",
     "dias d'ávila", "dias d avila", "dias davila",
     # Bairros urbanos de Camaçari
-    "cassange",          # bairro onde o caso Thamires ocorreu
     "parque verde",      # bairro residencial
     "parque camaçari", "parque camacari",
     "capivara",          # bairro de Camaçari
@@ -117,6 +116,7 @@ KEYWORDS_CAMACARI_REGIAO = [
 KEYWORDS_RMS = [
     "simões filho", "simoes filho", "lauro de freitas",
     "madre de deus", "dias d'ávila", "dias davila", "dias d avila",
+    "cassange",  # bairro de Lauro de Freitas (não de Camaçari)
 ]
 
 KEYWORDS_SALVADOR = [

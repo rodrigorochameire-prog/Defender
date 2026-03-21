@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageLayout } from "@/components/shared/page-layout";
 import { Button } from "@/components/ui/button";
-import { Radio, Newspaper, Map, BarChart3, Link2, RefreshCw, Clock, Users, Globe, AlertTriangle, CheckCircle2, BarChart2, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { Radio, Newspaper, Map, BarChart3, Link2, RefreshCw, Clock, Users, Globe, BarChart2, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { RadarFeed } from "@/components/radar/radar-feed";
 import { RadarFiltros, type FiltrosState } from "@/components/radar/radar-filtros";
 import { RadarMapa } from "@/components/radar/radar-mapa";
@@ -190,83 +190,53 @@ export default function RadarCriminalPage() {
 
   return (
     <PageLayout
-      header="Radar Criminal"
-      icon={Radio}
-      description={`Monitoramento policial — ${SCOPE_LABELS[scope]}`}
-      actions={
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 cursor-pointer"
-            onClick={handleTriggerPipeline}
-            disabled={pipelineRunning || triggerPipeline.isPending}
-          >
-            <RefreshCw
-              className={`h-3.5 w-3.5 ${pipelineRunning || triggerPipeline.isPending ? "animate-spin" : ""}`}
-            />
-            <span className="hidden sm:inline">
-              {pipelineRunning || triggerPipeline.isPending ? "Buscando..." : "Atualizar"}
-            </span>
-          </Button>
-        </div>
-      }
-      stats={
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Total de notícias */}
-          <div className="flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1 text-xs text-zinc-600 dark:text-zinc-400">
-            <Newspaper className="h-3 w-3 text-zinc-400" />
-            <span className="font-semibold text-zinc-800 dark:text-zinc-200">
-              {statsLoading || statsError ? "—" : totalNoticias}
-            </span>
-            <span>notícias</span>
-          </div>
-
-          {/* Matches pendentes */}
-          {matchesPendentes > 0 ? (
-            <div className="flex items-center gap-1.5 rounded-full border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-3 py-1 text-xs text-amber-700 dark:text-amber-400">
-              <Link2 className="h-3 w-3" />
-              <span className="font-semibold">{matchesPendentes}</span>
-              <span>matches pendentes</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5 rounded-full border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-1 text-xs text-emerald-700 dark:text-emerald-400">
-              <CheckCircle2 className="h-3 w-3" />
-              <span>Matches em dia</span>
-            </div>
-          )}
-
-          {/* Enriquecimento pendente */}
-          {healthPending > 0 && (
-            <div className="flex items-center gap-1.5 rounded-full border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 px-3 py-1 text-xs text-orange-700 dark:text-orange-400">
-              <AlertTriangle className="h-3 w-3" />
-              <span className="font-semibold">{healthPending}</span>
-              <span>aguardando IA</span>
-            </div>
-          )}
-
-          {/* Fontes ativas */}
-          <div className="flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1 text-xs text-zinc-600 dark:text-zinc-400">
-            <Globe className="h-3 w-3 text-zinc-400" />
-            <span className="font-semibold text-zinc-800 dark:text-zinc-200">
-              {fontesLoading || fontesError ? "—" : fontesAtivas}
-            </span>
-            <span>fontes ativas</span>
-          </div>
-
-          {/* Última coleta */}
-          {ultimaColeta && (
-            <div className="flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1 text-xs text-zinc-500 dark:text-zinc-400">
-              <Clock className="h-3 w-3" />
-              <span>
-                {formatDistanceToNow(new Date(ultimaColeta), { addSuffix: true, locale: ptBR })}
-              </span>
-            </div>
-          )}
-        </div>
-      }
+      compact
     >
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      {/* Header compacto */}
+      <div className="flex items-center justify-between gap-4 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 shrink-0">
+            <Radio className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 leading-tight">
+                Radar Criminal
+              </h1>
+              <span className="text-xs text-zinc-400 dark:text-zinc-500">·</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                {statsLoading ? "—" : totalNoticias} notícias
+              </span>
+              {matchesPendentes > 0 && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-full px-2 py-0.5">
+                  <Link2 className="h-2.5 w-2.5" />
+                  {matchesPendentes} pendentes
+                </span>
+              )}
+              {ultimaColeta && (
+                <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-zinc-400">
+                  <Clock className="h-2.5 w-2.5" />
+                  {formatDistanceToNow(new Date(ultimaColeta), { addSuffix: true, locale: ptBR })}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2.5 text-xs gap-1.5 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer shrink-0"
+          onClick={handleTriggerPipeline}
+          disabled={pipelineRunning || triggerPipeline.isPending}
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${pipelineRunning || triggerPipeline.isPending ? "animate-spin" : ""}`} />
+          <span className="hidden sm:inline">
+            {pipelineRunning || triggerPipeline.isPending ? "Buscando..." : "Atualizar"}
+          </span>
+        </Button>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <TabsList className="flex w-full sm:w-auto items-center">
             {/* Grupo primário: operacional */}

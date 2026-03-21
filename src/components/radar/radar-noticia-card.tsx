@@ -299,80 +299,81 @@ export function RadarNoticiaCard({
     return (
       <div
         className={cn(
-          "px-3 py-2.5 border-b border-zinc-100 dark:border-zinc-800/60",
-          "hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors cursor-pointer",
+          "px-4 py-3 border-b border-zinc-100 dark:border-zinc-800/60",
+          "hover:bg-zinc-50/70 dark:hover:bg-zinc-800/30 transition-colors cursor-pointer",
           "border-l-[3px]",
           getCrimeBorderColor(noticia.tipoCrime),
         )}
         onClick={onClick}
       >
-        {/* Row 1: badges */}
-        <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-          <Badge className={cn("text-[10px] px-1.5 py-0 h-4", getCrimeBadgeColor(noticia.tipoCrime))}>
+        {/* Row 1: só o badge do crime + fonte */}
+        <div className="flex items-center gap-2 mb-1.5">
+          <Badge className={cn("text-[10px] px-2 py-0 h-[18px] font-medium", getCrimeBadgeColor(noticia.tipoCrime))}>
             {getCrimeLabel(noticia.tipoCrime)}
           </Badge>
-          <RelevanciaChip score={relevanciaScore} />
-          {hasMatch && (
-            <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] px-1.5 py-0 h-4">
-              <Link2 className="h-2.5 w-2.5 mr-0.5" />Caso DPE
-            </Badge>
-          )}
           {noticia.enrichmentStatus === "pending" && (
-            <RefreshCw className="h-3 w-3 text-zinc-400 animate-spin" />
+            <RefreshCw className="h-3 w-3 text-zinc-300 animate-spin" />
           )}
-          <span className="text-[10px] text-zinc-400 ml-auto">{noticia.fonte}</span>
+          <span className="text-[10px] text-zinc-400 ml-auto truncate max-w-[120px]">{noticia.fonte}</span>
         </div>
 
-        {/* Row 2: título */}
-        <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate leading-snug">
+        {/* Row 2: título — 2 linhas */}
+        <h3 className="text-[13px] font-medium text-zinc-900 dark:text-zinc-100 leading-snug line-clamp-2 mb-1.5">
           {noticia.titulo}
         </h3>
 
-        {/* Row 3: meta */}
-        <div className="flex items-center gap-3 text-[11px] text-zinc-400 mt-0.5">
+        {/* Row 3: meta compacta */}
+        <div className="flex items-center gap-3 text-[11px] text-zinc-400">
           {noticia.bairro && (
-            <span className="flex items-center gap-0.5">
-              <MapPin className="h-3 w-3" />{noticia.bairro}
+            <span className="flex items-center gap-0.5 shrink-0">
+              <MapPin className="h-2.5 w-2.5" />{noticia.bairro}
             </span>
           )}
           {dataDisplay && (
-            <span className="flex items-center gap-0.5">
-              <Clock className="h-3 w-3" />
+            <span className="flex items-center gap-0.5 shrink-0">
+              <Clock className="h-2.5 w-2.5" />
               {format(new Date(dataDisplay as string), "dd/MM", { locale: ptBR })}
             </span>
           )}
           {envolvidosComNome.length > 0 && (
-            <span className="flex items-center gap-0.5 truncate max-w-[160px]">
-              <Users className="h-3 w-3 shrink-0" />
+            <span className="hidden sm:flex items-center gap-0.5 truncate max-w-[140px]">
+              <Users className="h-2.5 w-2.5 shrink-0" />
               <span className="truncate">{envolvidosComNome[0].nome}</span>
-              <span className="opacity-70 shrink-0">· {papelLabels[envolvidosComNome[0].papel] || envolvidosComNome[0].papel}</span>
             </span>
           )}
-          <a
-            href={noticia.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-0.5 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 transition-colors ml-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <ExternalLink className="h-3 w-3" />
-            <span>Fonte</span>
-          </a>
-          {hasIntel && onToggleExpand && (
-            <button
-              className={cn(
-                "flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer",
-                expanded
-                  ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
-                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              )}
-              onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
+
+          <div className="flex items-center gap-2 ml-auto shrink-0">
+            {hasMatch && (
+              <span className="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400 font-medium">
+                <Link2 className="h-2.5 w-2.5" />DPE
+              </span>
+            )}
+            <a
+              href={noticia.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-0.5 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+              onClick={(e) => e.stopPropagation()}
             >
-              <Shield className="h-3 w-3" />
-              Intel
-              <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", expanded && "rotate-180")} />
-            </button>
-          )}
+              <ExternalLink className="h-2.5 w-2.5" />
+              <span>Fonte</span>
+            </a>
+            {hasIntel && onToggleExpand && (
+              <button
+                className={cn(
+                  "flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors cursor-pointer",
+                  expanded
+                    ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
+                    : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                )}
+                onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
+              >
+                <Shield className="h-2.5 w-2.5" />
+                Intel
+                <ChevronDown className={cn("h-2.5 w-2.5 transition-transform duration-200", expanded && "rotate-180")} />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Inline match triagem */}

@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { noticiasJuridicas, noticiasFontes, noticiasTemas, noticiasFavoritos, noticiasProcessos, jurisprudenciaJulgados, noticiasPastas, noticiasPastaItens } from "@/lib/db/schema";
 import { processos } from "@/lib/db/schema/core";
 import { notifications } from "@/lib/db/schema/comunicacao";
-import { eq, and, desc, sql, inArray } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, gte } from "drizzle-orm";
 import { safeAsync } from "@/lib/errors";
 import { enriquecerNoticia, enriquecerPendentes } from "@/lib/noticias/enricher";
 import { fetchFullContent } from "@/lib/noticias/scraper";
@@ -247,6 +247,19 @@ export const noticiasRouter = router({
         .from(noticiasJuridicas)
         .where(eq(noticiasJuridicas.status, "pendente"));
       return result?.count ?? 0;
+    }),
+
+  listRecentes: protectedProcedure
+    .query(async () => {
+      const since = new Date(Date.now() - 48 * 60 * 60 * 1000);
+      return db.select()
+        .from(noticiasJuridicas)
+        .where(and(
+          eq(noticiasJuridicas.status, "aprovado"),
+          gte(noticiasJuridicas.aprovadoEm, since),
+        ))
+        .orderBy(desc(noticiasJuridicas.aprovadoEm))
+        .limit(50);
     }),
 
   aprovar: protectedProcedure

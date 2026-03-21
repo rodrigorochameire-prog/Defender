@@ -16,12 +16,13 @@ import { NoticiaSalvarCasoSheet } from "@/components/noticias/noticias-salvar-ca
 import { NoticiasRelatorio } from "@/components/noticias/noticias-relatorio";
 import type { NoticiaJuridica } from "@/lib/db/schema";
 
-export type CategoriaTab = "legislativa" | "jurisprudencial" | "artigo" | "salvos" | "relatorios";
+export type CategoriaTab = "legislativa" | "jurisprudencial" | "artigo" | "salvos" | "recentes" | "relatorios";
 
 const CATEGORIA_PILLS: { value: CategoriaTab; label: string }[] = [
   { value: "jurisprudencial", label: "Jurisprudencial" },
   { value: "legislativa", label: "Legislativa" },
   { value: "artigo", label: "Artigo" },
+  { value: "recentes", label: "Recentes" },
   { value: "salvos", label: "Salvos" },
   { value: "relatorios", label: "Relatórios" },
 ];
@@ -241,7 +242,7 @@ export default function NoticiasPage() {
             <NoticiasRelatorio />
           ) : (
             <NoticiasFeed
-              categoria={categoria as "legislativa" | "jurisprudencial" | "artigo" | "salvos"}
+              categoria={categoria as "legislativa" | "jurisprudencial" | "artigo" | "salvos" | "recentes"}
               selectedNoticiaId={noticiaReader?.id}
               busca={busca}
               fonteFilter={fonteFilter}
