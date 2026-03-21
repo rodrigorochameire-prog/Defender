@@ -10,7 +10,7 @@ import {
   users,
   processos,
 } from "@/lib/db/schema";
-import { eq, and, desc, sql, gte, lte, lt, ilike, or, count, isNull, ne, inArray } from "drizzle-orm";
+import { eq, and, asc, desc, sql, gte, lte, lt, ilike, or, count, isNull, ne, inArray } from "drizzle-orm";
 import { sendText } from "@/lib/services/evolution-api";
 import { getComarcaId } from "@/lib/trpc/comarca-scope";
 
@@ -39,6 +39,7 @@ export const radarRouter = router({
         municipio: z.enum(["camacari", "rms", "salvador"]).optional().default("camacari"),
         limit: z.number().min(1).max(100).optional().default(20),
         cursor: z.number().optional(), // id of the last item
+        sortBy: z.enum(["recent", "oldest", "relevance"]).optional().default("recent"),
       })
     )
     .query(async ({ input, ctx }) => {
@@ -115,7 +116,11 @@ export const radarRouter = router({
       }
 
       if (input.cursor) {
-        conditions.push(sql`${radarNoticias.id} < ${input.cursor}`);
+        if (input.sortBy === "oldest") {
+          conditions.push(sql`${radarNoticias.id} > ${input.cursor}`);
+        } else {
+          conditions.push(sql`${radarNoticias.id} < ${input.cursor}`);
+        }
       }
 
       if (input.relevanciaMin !== undefined) {
@@ -152,7 +157,13 @@ export const radarRouter = router({
           .from(radarNoticias)
           .innerJoin(radarMatches, eq(radarNoticias.id, radarMatches.noticiaId))
           .where(conditions.length > 0 ? and(...conditions) : undefined)
-          .orderBy(sql`${radarNoticias.dataPublicacao} DESC NULLS LAST`, desc(radarNoticias.createdAt), desc(radarNoticias.id))
+          .orderBy(
+            ...(input.sortBy === "oldest"
+              ? [sql`${radarNoticias.dataPublicacao} ASC NULLS LAST`, asc(radarNoticias.createdAt), asc(radarNoticias.id)]
+              : input.sortBy === "relevance"
+              ? [sql`${radarNoticias.relevanciaScore} DESC NULLS LAST`, desc(radarNoticias.createdAt), desc(radarNoticias.id)]
+              : [sql`${radarNoticias.dataPublicacao} DESC NULLS LAST`, desc(radarNoticias.createdAt), desc(radarNoticias.id)])
+          )
           .limit(input.limit + 1);
       } else {
         query = db
@@ -179,7 +190,13 @@ export const radarRouter = router({
           })
           .from(radarNoticias)
           .where(conditions.length > 0 ? and(...conditions) : undefined)
-          .orderBy(sql`${radarNoticias.dataPublicacao} DESC NULLS LAST`, desc(radarNoticias.createdAt), desc(radarNoticias.id))
+          .orderBy(
+            ...(input.sortBy === "oldest"
+              ? [sql`${radarNoticias.dataPublicacao} ASC NULLS LAST`, asc(radarNoticias.createdAt), asc(radarNoticias.id)]
+              : input.sortBy === "relevance"
+              ? [sql`${radarNoticias.relevanciaScore} DESC NULLS LAST`, desc(radarNoticias.createdAt), desc(radarNoticias.id)]
+              : [sql`${radarNoticias.dataPublicacao} DESC NULLS LAST`, desc(radarNoticias.createdAt), desc(radarNoticias.id)])
+          )
           .limit(input.limit + 1);
       }
 

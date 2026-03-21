@@ -531,22 +531,32 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                     setItemSheetType("processo");
                     setItemSheetOpen(true);
                   }}
-                  className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 hover:border-emerald-300 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 cursor-pointer transition-all"
+                  className="group flex gap-3 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 hover:border-emerald-300 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 cursor-pointer transition-all overflow-hidden"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono text-zinc-600">{p.numeroAutos ?? "Sem número"}</span>
-                    <span className={cn(
-                      "text-[10px] px-1.5 py-0.5 rounded-full font-medium",
-                      p.papel === "REU" ? "bg-rose-100 text-rose-700"
-                        : p.papel === "CORREU" ? "bg-amber-100 text-amber-700"
-                        : p.papel === "VITIMA" ? "bg-blue-100 text-blue-700"
-                        : "bg-zinc-100 text-zinc-600"
-                    )}>
-                      {p.papel?.toLowerCase() ?? "réu"}
-                    </span>
+                  {/* Left accent */}
+                  <div className={cn(
+                    "w-0.5 rounded-full shrink-0 self-stretch",
+                    p.papel === "REU" ? "bg-rose-400"
+                      : p.papel === "CORREU" ? "bg-amber-400"
+                      : p.papel === "VITIMA" ? "bg-blue-400"
+                      : "bg-zinc-300 dark:bg-zinc-600"
+                  )} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 truncate">{p.numeroAutos ?? "Sem número"}</span>
+                      <span className={cn(
+                        "text-[9px] px-1.5 py-0.5 rounded-full font-semibold shrink-0",
+                        p.papel === "REU" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400"
+                          : p.papel === "CORREU" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+                          : p.papel === "VITIMA" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                      )}>
+                        {p.papel?.toLowerCase() ?? "réu"}
+                      </span>
+                    </div>
+                    {p.assunto && <p className="text-[11px] font-medium text-zinc-600 dark:text-zinc-300 mt-0.5 truncate">{p.assunto}</p>}
+                    {p.vara && <p className="text-[10px] text-zinc-400 mt-0.5 truncate">{p.vara}</p>}
                   </div>
-                  <p className="text-[11px] text-zinc-500 mt-1">{p.vara ?? ""}</p>
-                  {p.assunto && <p className="text-[11px] text-zinc-400 mt-0.5 truncate">{p.assunto}</p>}
                 </div>
               ))
             )}
@@ -567,45 +577,62 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             {data.demandas.length === 0 ? (
               <p className="text-sm text-zinc-400 text-center py-8">Nenhuma demanda vinculada</p>
             ) : (
-              data.demandas.map((d) => (
-                <button
-                  key={d.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedDemandaId(d.id);
-                    setSelectedProcessoId(null);
-                    setItemSheetType("demanda");
-                    setItemSheetOpen(true);
-                  }}
-                  className="w-full text-left"
-                >
-                  <div className="flex items-center gap-2 border border-zinc-100 dark:border-zinc-700 rounded px-3 py-2 hover:border-emerald-300 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 cursor-pointer transition-all">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate">{d.ato ?? d.tipoAto ?? "Demanda"}</p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        {d.defensorNome && (
-                          <span className="text-[9px] px-1.5 py-0.5 bg-zinc-100 text-zinc-600 rounded-full">
-                            {d.defensorNome}
+              data.demandas.map((d) => {
+                const isUrgente = d.status === "2_ATENDER";
+                const isConcluido = d.status === "CONCLUIDO";
+                const prazoVencido = d.prazo && new Date(d.prazo) < new Date();
+                return (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDemandaId(d.id);
+                      setSelectedProcessoId(null);
+                      setItemSheetType("demanda");
+                      setItemSheetOpen(true);
+                    }}
+                    className="w-full text-left"
+                  >
+                    <div className="flex gap-3 border border-zinc-100 dark:border-zinc-700 rounded-lg px-3 py-2.5 hover:border-emerald-300 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 cursor-pointer transition-all overflow-hidden">
+                      {/* Left accent */}
+                      <div className={cn(
+                        "w-0.5 rounded-full shrink-0 self-stretch",
+                        isUrgente ? "bg-rose-400"
+                          : prazoVencido ? "bg-rose-300"
+                          : isConcluido ? "bg-emerald-400"
+                          : "bg-zinc-200 dark:bg-zinc-600"
+                      )} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[11px] font-medium text-zinc-700 dark:text-zinc-300 truncate">{d.ato ?? d.tipoAto ?? "Demanda"}</p>
+                          <span className={cn(
+                            "text-[9px] px-1.5 py-0.5 rounded-full font-semibold shrink-0",
+                            isUrgente ? "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400"
+                              : isConcluido ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                              : d.status === "5_FILA" ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                              : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+                          )}>
+                            {d.status?.replace(/^\d+_/, "") ?? "—"}
                           </span>
-                        )}
-                        {d.prazo && (
-                          <span className="text-[9px] text-zinc-400">
-                            {format(new Date(d.prazo), "dd/MM/yy", { locale: ptBR })}
-                          </span>
-                        )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {d.prazo && (
+                            <span className={cn(
+                              "text-[9px] font-mono tabular-nums",
+                              prazoVencido ? "text-rose-500 dark:text-rose-400" : "text-zinc-400"
+                            )}>
+                              {format(new Date(d.prazo), "dd/MM/yy", { locale: ptBR })}
+                            </span>
+                          )}
+                          {d.defensorNome && (
+                            <span className="text-[9px] text-zinc-400 truncate">{d.defensorNome}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <span className={cn(
-                      "text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0",
-                      d.status === "5_FILA" ? "bg-zinc-100 text-zinc-500"
-                        : d.status === "CONCLUIDO" ? "bg-emerald-100 text-emerald-700"
-                        : "bg-amber-100 text-amber-700"
-                    )}>
-                      {d.status?.replace(/^\d+_/, "") ?? "—"}
-                    </span>
-                  </div>
-                </button>
-              ))
+                  </button>
+                );
+              })
             )}
           </div>
         )}

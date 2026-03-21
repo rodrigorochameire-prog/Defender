@@ -3,11 +3,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ExternalLink, MapPin, Clock, Users, Link2, RefreshCw, CheckCircle2, XCircle, Zap, ChevronDown, FileText, Shield, Crosshair } from "lucide-react";
+import { ExternalLink, RefreshCw, CheckCircle2, XCircle, ChevronDown, FileText, Shield } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { getCrimeBadgeColor, getCrimeLabel, getCrimeBorderColor } from "./radar-filtros";
+import { getCrimeLabel, getCrimeBorderColor } from "./radar-filtros";
 import { cn } from "@/lib/utils";
 import NextLink from "next/link";
 
@@ -16,6 +16,42 @@ interface Envolvido {
   papel: string;
   idade?: number;
   vulgo?: string;
+}
+
+const CRIME_HEX: Record<string, string> = {
+  homicidio: "#4ade80",
+  tentativa_homicidio: "#4ade80",
+  feminicidio: "#4ade80",
+  violencia_domestica: "#fbbf24",
+  execucao_penal: "#60a5fa",
+  trafico: "#f87171",
+  roubo: "#fb923c",
+  lesao_corporal: "#f472b6",
+  sexual: "#c084fc",
+  furto: "#fdba74",
+  porte_arma: "#e879f9",
+  estelionato: "#a78bfa",
+  outros: "#a1a1aa",
+};
+
+function getCrimeHex(tipoCrime: string | null): string {
+  return CRIME_HEX[tipoCrime ?? "outros"] ?? "#a1a1aa";
+}
+
+function formatDataRelativa(data: string | Date | null): string {
+  if (!data) return "";
+  try {
+    const d = new Date(data as string);
+    if (isNaN(d.getTime())) return "";
+    const diff = Date.now() - d.getTime();
+    const horas = diff / (1000 * 60 * 60);
+    if (horas < 1) return "agora";
+    if (horas < 24) return `há ${Math.floor(horas)}h`;
+    if (horas < 48) return "ontem";
+    const dias = Math.floor(horas / 24);
+    if (dias < 7) return `há ${dias}d`;
+    return format(d, "dd/MM", { locale: ptBR });
+  } catch { return ""; }
 }
 
 function RelevanciaChip({ score }: { score?: number | null }) {
@@ -119,6 +155,22 @@ const papelLabels: Record<string, string> = {
   outro: "Outro",
 };
 
+/** Dot component for crime type */
+function CrimeDot({ tipoCrime }: { tipoCrime: string | null }) {
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        width: "6px",
+        height: "6px",
+        borderRadius: "50%",
+        background: getCrimeHex(tipoCrime),
+        flexShrink: 0,
+      }}
+    />
+  );
+}
+
 /** Painel de inteligência expandível — reutilizado nos modos compact e cards */
 function IntelPanel({
   noticia,
@@ -137,25 +189,24 @@ function IntelPanel({
       onClick={(e) => e.stopPropagation()}
     >
       {(noticia.bairro || noticia.armaMeio || dataDisplay) && (
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-          {noticia.bairro && (
-            <span className="flex items-center gap-1">
-              <MapPin className="h-3 w-3 text-zinc-400 shrink-0" />
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">{noticia.bairro}</span>
-            </span>
-          )}
-          {noticia.armaMeio && (
-            <span className="flex items-center gap-1">
-              <Crosshair className="h-3 w-3 text-zinc-400 shrink-0" />
-              <span>{noticia.armaMeio}</span>
-            </span>
-          )}
-          {dataDisplay && (
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3 text-zinc-400 shrink-0" />
-              <span>{format(new Date(dataDisplay as string), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
-            </span>
-          )}
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+          {[
+            noticia.bairro
+              ? <span key="bairro" className="font-medium text-zinc-700 dark:text-zinc-300">{noticia.bairro}</span>
+              : null,
+            noticia.armaMeio
+              ? <span key="arma">{noticia.armaMeio}</span>
+              : null,
+            dataDisplay
+              ? <span key="data">{format(new Date(dataDisplay as string), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+              : null,
+          ]
+            .filter(Boolean)
+            .reduce<React.ReactNode[]>((acc, el, idx) => {
+              if (idx > 0) acc.push(<span key={`sep-${idx}`} className="text-zinc-300 dark:text-zinc-600">·</span>);
+              acc.push(el);
+              return acc;
+            }, [])}
         </div>
       )}
 
@@ -171,7 +222,6 @@ function IntelPanel({
                   papelColors[e.papel] || "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
                 )}
               >
-                <Users className="h-2.5 w-2.5 shrink-0" />
                 {e.nome}{e.idade ? `, ${e.idade} anos` : ""}{e.vulgo ? ` (${e.vulgo})` : ""}
                 <span className="opacity-60 text-[10px]">· {papelLabels[e.papel] || e.papel}</span>
               </span>
@@ -226,6 +276,12 @@ export function RadarNoticiaCard({
 
   // ─── MODO LIST ─────────────────────────────────────────────────────────────
   if (viewMode === "list") {
+    const dataFormatada = dataDisplay
+      ? (() => { try { return format(new Date(dataDisplay as string), "dd/MM", { locale: ptBR }); } catch { return null; } })()
+      : null;
+
+    const metaParts = [noticia.bairro, dataFormatada].filter(Boolean);
+
     return (
       <div
         className={cn(
@@ -236,35 +292,26 @@ export function RadarNoticiaCard({
         )}
         onClick={onClick}
       >
-        <Badge
-          variant="secondary"
-          className={cn("shrink-0 text-[10px] h-4 px-1.5 py-0", getCrimeBadgeColor(noticia.tipoCrime))}
-        >
-          {getCrimeLabel(noticia.tipoCrime)}
-        </Badge>
+        {/* Dot + crime label */}
+        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+          <CrimeDot tipoCrime={noticia.tipoCrime} />
+          <span className="text-[10px] text-zinc-500">{getCrimeLabel(noticia.tipoCrime)}</span>
+        </span>
 
         <span className="flex-1 text-xs text-zinc-800 dark:text-zinc-200 truncate">
           {noticia.titulo}
         </span>
 
-        <div className="hidden sm:flex items-center gap-2 text-[10px] text-zinc-400 shrink-0">
-          {noticia.bairro && (
-            <span className="flex items-center gap-0.5">
-              <MapPin className="h-2.5 w-2.5" />{noticia.bairro}
-            </span>
-          )}
-          {dataDisplay && (
-            <span className="flex items-center gap-0.5">
-              <Clock className="h-2.5 w-2.5" />
-              {format(new Date(dataDisplay as string), "dd/MM", { locale: ptBR })}
-            </span>
-          )}
-        </div>
+        {metaParts.length > 0 && (
+          <span className="hidden sm:block text-[10px] text-zinc-400 shrink-0">
+            {metaParts.join(" · ")}
+          </span>
+        )}
 
         <div className="flex items-center gap-1.5 shrink-0">
           {hasMatch && (
             <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] h-4 px-1.5 py-0">
-              <Link2 className="h-2.5 w-2.5 mr-0.5" />DPE
+              DPE
             </Badge>
           )}
           {hasMatch && matchScore != null && (
@@ -296,6 +343,13 @@ export function RadarNoticiaCard({
 
   // ─── MODO COMPACT (padrão) ─────────────────────────────────────────────────
   if (viewMode === "compact") {
+    const dataRelativa = formatDataRelativa(dataDisplay);
+
+    const metaParts = [
+      noticia.bairro,
+      envolvidosComNome[0]?.nome ?? null,
+    ].filter(Boolean);
+
     return (
       <div
         className={cn(
@@ -306,47 +360,45 @@ export function RadarNoticiaCard({
         )}
         onClick={onClick}
       >
-        {/* Row 1: só o badge do crime + fonte */}
+        {/* Row 1: dot + crime label + fonte + data relativa */}
         <div className="flex items-center gap-2 mb-1.5">
-          <Badge className={cn("text-[10px] px-2 py-0 h-[18px] font-medium", getCrimeBadgeColor(noticia.tipoCrime))}>
-            {getCrimeLabel(noticia.tipoCrime)}
-          </Badge>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+            <CrimeDot tipoCrime={noticia.tipoCrime} />
+            <span className="text-[10px] text-zinc-500">{getCrimeLabel(noticia.tipoCrime)}</span>
+          </span>
           {noticia.enrichmentStatus === "pending" && (
             <RefreshCw className="h-3 w-3 text-zinc-300 animate-spin" />
           )}
           <span className="text-[10px] text-zinc-400 ml-auto truncate max-w-[120px]">{noticia.fonte}</span>
+          {dataRelativa && (
+            <span className="text-[11px] text-zinc-400 shrink-0">{dataRelativa}</span>
+          )}
         </div>
 
         {/* Row 2: título — 2 linhas */}
-        <h3 className="text-[13px] font-medium text-zinc-900 dark:text-zinc-100 leading-snug line-clamp-2 mb-1.5">
+        <h3 className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 leading-snug line-clamp-2 mb-1.5">
           {noticia.titulo}
         </h3>
 
-        {/* Row 3: meta compacta */}
-        <div className="flex items-center gap-3 text-[11px] text-zinc-400">
-          {noticia.bairro && (
-            <span className="flex items-center gap-0.5 shrink-0">
-              <MapPin className="h-2.5 w-2.5" />{noticia.bairro}
-            </span>
-          )}
-          {dataDisplay && (
-            <span className="flex items-center gap-0.5 shrink-0">
-              <Clock className="h-2.5 w-2.5" />
-              {format(new Date(dataDisplay as string), "dd/MM", { locale: ptBR })}
-            </span>
-          )}
-          {envolvidosComNome.length > 0 && (
-            <span className="hidden sm:flex items-center gap-0.5 truncate max-w-[140px]">
-              <Users className="h-2.5 w-2.5 shrink-0" />
-              <span className="truncate">{envolvidosComNome[0].nome}</span>
-            </span>
+        {/* Row 3: metadata + actions */}
+        <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+          {metaParts.length > 0 && (
+            <span className="truncate">{metaParts.join(" · ")}</span>
           )}
 
           <div className="flex items-center gap-2 ml-auto shrink-0">
             {hasMatch && (
-              <span className="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400 font-medium">
-                <Link2 className="h-2.5 w-2.5" />DPE
-              </span>
+              <span
+                style={{
+                  display: "inline-block",
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  background: "#10b981",
+                  flexShrink: 0,
+                }}
+                title="Match DPE"
+              />
             )}
             <a
               href={noticia.url}
@@ -393,84 +445,48 @@ export function RadarNoticiaCard({
   }
 
   // ─── MODO CARDS / GRID ────────────────────────────────────────────────────
+  const dataRelativa = formatDataRelativa(dataDisplay);
+
+  const metaFooterParts = [
+    dataDisplay
+      ? (() => { try { return format(new Date(dataDisplay as string), "dd MMM", { locale: ptBR }); } catch { return null; } })()
+      : null,
+    noticia.bairro,
+    envolvidosComNome.length > 0 ? `${envolvidosComNome.length} env.` : null,
+  ].filter(Boolean);
+
   return (
     <Card
       className={cn(
-        "hover:shadow-md transition-all duration-150 cursor-pointer overflow-hidden",
+        "border border-zinc-100 dark:border-zinc-800 rounded-xl shadow-none transition-all duration-150 cursor-pointer overflow-hidden",
         hasMatch && "ring-1 ring-emerald-200 dark:ring-emerald-800"
       )}
       onClick={onClick}
     >
-      {/* Thumbnail topo (full width) */}
-      {noticia.imagemUrl && (
-        <div className="relative w-full h-36 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-          <img
-            src={noticia.imagemUrl}
-            alt=""
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-          {/* Crime badge overlay */}
-          <div className="absolute top-2 left-2">
-            <Badge className={cn("text-[10px] shadow-sm", getCrimeBadgeColor(noticia.tipoCrime))}>
-              {getCrimeLabel(noticia.tipoCrime)}
-            </Badge>
-          </div>
-          {hasMatch && (
-            <div className="absolute top-2 right-2">
-              <Badge className="bg-emerald-600 text-white text-[10px] shadow-sm">
-                <Link2 className="h-2.5 w-2.5 mr-0.5" />DPE
-              </Badge>
-            </div>
+      <CardContent className="p-3">
+        {/* Header row: dot + crime label + relevancia chip + date */}
+        <div className="flex items-center gap-1.5 mb-2">
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+            <CrimeDot tipoCrime={noticia.tipoCrime} />
+            <span className="text-[10px] text-zinc-500">{getCrimeLabel(noticia.tipoCrime)}</span>
+          </span>
+          <RelevanciaChip score={relevanciaScore} />
+          {noticia.enrichmentStatus === "pending" && (
+            <RefreshCw className="h-3 w-3 text-zinc-300 animate-spin" />
+          )}
+          {dataRelativa && (
+            <span className="ml-auto text-[11px] text-zinc-400 shrink-0">{dataRelativa}</span>
           )}
         </div>
-      )}
-
-      <CardContent className="p-3">
-        {/* Badges (quando não há imagem) */}
-        {!noticia.imagemUrl && (
-          <div className="flex items-center gap-1.5 flex-wrap mb-2">
-            <Badge variant="secondary" className={getCrimeBadgeColor(noticia.tipoCrime)}>
-              {getCrimeLabel(noticia.tipoCrime)}
-            </Badge>
-            <RelevanciaChip score={relevanciaScore} />
-            {hasMatch && (
-              <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                <Link2 className="h-3 w-3 mr-1" />Caso DPE
-              </Badge>
-            )}
-            {noticia.enrichmentStatus === "pending" && (
-              <Badge variant="outline" className="text-zinc-400 border-zinc-300 dark:border-zinc-600">
-                <RefreshCw className="h-2.5 w-2.5 mr-1 animate-spin" />Analisando...
-              </Badge>
-            )}
-          </div>
-        )}
-
-        {/* Fonte (quando há imagem, badges já estão no overlay) */}
-        {noticia.imagemUrl && (
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <RelevanciaChip score={relevanciaScore} />
-            {noticia.enrichmentStatus === "pending" && (
-              <Badge variant="outline" className="text-zinc-400 border-zinc-300 dark:border-zinc-600">
-                <RefreshCw className="h-2.5 w-2.5 mr-1 animate-spin" />Analisando...
-              </Badge>
-            )}
-            <span className="ml-auto text-[10px] text-zinc-400 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-              {noticia.fonte}
-            </span>
-          </div>
-        )}
 
         {/* Título */}
-        <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2 mb-1.5">
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2 mb-1.5">
           {noticia.titulo}
         </h3>
 
         {/* Resumo IA */}
         {noticia.resumoIA && (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-2">
+          <p className="text-xs text-zinc-400 line-clamp-2 mb-2">
             {noticia.resumoIA}
           </p>
         )}
@@ -486,7 +502,6 @@ export function RadarNoticiaCard({
                   papelColors[e.papel] || "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
                 )}
               >
-                <Users className="h-2.5 w-2.5 shrink-0" />
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span className="truncate max-w-[120px]">
@@ -509,29 +524,29 @@ export function RadarNoticiaCard({
         {/* Match triagem */}
         <MatchTriagem matches={noticia.matches ?? []} onQuickAction={onQuickAction} />
 
-        {/* Metadata row */}
-        <div className="flex items-center gap-2 text-xs text-zinc-400 mt-2">
-          {dataDisplay && (
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {format(new Date(dataDisplay as string), "dd/MM/yyyy", { locale: ptBR })}
-            </span>
+        {/* Metadata footer */}
+        <div className="flex items-center gap-2 text-[11px] text-zinc-400 mt-2">
+          {metaFooterParts.length > 0 && (
+            <span className="truncate flex-1">{metaFooterParts.join(" · ")}</span>
           )}
-          {noticia.bairro && (
-            <span className="flex items-center gap-1">
-              <MapPin className="h-3 w-3" />{noticia.bairro}
-            </span>
-          )}
-          {noticia.armaMeio && (
-            <span className="flex items-center gap-1 hidden sm:flex">
-              <Zap className="h-3 w-3" />{noticia.armaMeio}
-            </span>
+          {hasMatch && (
+            <span
+              style={{
+                display: "inline-block",
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#10b981",
+                flexShrink: 0,
+              }}
+              title="Match DPE"
+            />
           )}
           <a
             href={noticia.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 ml-auto"
+            className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 shrink-0"
             onClick={(e) => e.stopPropagation()}
           >
             <ExternalLink className="h-3 w-3" />Fonte
@@ -596,7 +611,7 @@ function MatchTriagem({ matches, onQuickAction }: MatchTriagemProps) {
 
   return (
     <div
-      className="flex flex-col gap-1 mt-2 pt-1.5 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 rounded-md px-2 pb-1.5"
+      className="flex flex-col gap-1 mt-2 pt-1.5 border-t border-zinc-100 dark:border-zinc-800"
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center gap-2 text-[11px]">

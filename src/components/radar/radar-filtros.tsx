@@ -40,6 +40,28 @@ const CRIME_TYPES = [
   { value: "outros", label: "Outros", color: "bg-zinc-500" },
 ] as const;
 
+/** Hex fill colors for dots — muted/pastel palette */
+export const CRIME_HEX: Record<string, string> = {
+  homicidio: "#4ade80",
+  tentativa_homicidio: "#4ade80",
+  feminicidio: "#4ade80",
+  violencia_domestica: "#fbbf24",
+  execucao_penal: "#60a5fa",
+  trafico: "#f87171",
+  roubo: "#fb923c",
+  lesao_corporal: "#f472b6",
+  sexual: "#c084fc",
+  furto: "#fdba74",
+  porte_arma: "#e879f9",
+  estelionato: "#a78bfa",
+  outros: "#a1a1aa",
+};
+
+/** Export convenience function */
+export function getCrimeHexColor(tipo: string | null | undefined): string {
+  return CRIME_HEX[tipo || ""] || CRIME_HEX.outros;
+}
+
 export function getCrimeColor(tipo: string | null | undefined): string {
   return CRIME_TYPES.find((c) => c.value === tipo)?.color || "bg-zinc-500";
 }
@@ -49,42 +71,26 @@ export function getCrimeLabel(tipo: string | null | undefined): string {
 }
 
 export function getCrimeBorderColor(tipo: string | null | undefined): string {
-  // Cores alinhadas com CRIME_TYPES (fonte canônica)
   const colors: Record<string, string> = {
-    homicidio: "border-l-green-600",
-    tentativa_homicidio: "border-l-green-500",
-    feminicidio: "border-l-green-600",
-    trafico: "border-l-red-600",
-    roubo: "border-l-orange-600",
-    violencia_domestica: "border-l-yellow-500",
-    sexual: "border-l-purple-600",
-    lesao_corporal: "border-l-rose-600",
-    furto: "border-l-orange-400",
-    porte_arma: "border-l-pink-500",
-    estelionato: "border-l-fuchsia-600",
-    execucao_penal: "border-l-blue-600",
+    homicidio: "border-l-green-400",
+    tentativa_homicidio: "border-l-green-400",
+    feminicidio: "border-l-green-400",
+    trafico: "border-l-red-400",
+    roubo: "border-l-orange-400",
+    violencia_domestica: "border-l-amber-400",
+    sexual: "border-l-purple-400",
+    lesao_corporal: "border-l-pink-400",
+    furto: "border-l-orange-300",
+    porte_arma: "border-l-fuchsia-400",
+    estelionato: "border-l-violet-400",
+    execucao_penal: "border-l-blue-400",
     outros: "border-l-zinc-300",
   };
   return colors[tipo || ""] || colors.outros;
 }
 
-export function getCrimeBadgeColor(tipo: string | null | undefined): string {
-  const colors: Record<string, string> = {
-    homicidio: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-    tentativa_homicidio: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-    feminicidio: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-    trafico: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-    roubo: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
-    violencia_domestica: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-    sexual: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-    lesao_corporal: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-    furto: "bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-300",
-    porte_arma: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
-    estelionato: "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-400",
-    execucao_penal: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    outros: "bg-zinc-100 text-zinc-700 dark:bg-zinc-900/30 dark:text-zinc-400",
-  };
-  return colors[tipo || ""] || colors.outros;
+export function getCrimeBadgeColor(_tipo: string | null | undefined): string {
+  return "bg-zinc-50 text-zinc-600 border border-zinc-200 dark:bg-zinc-800/60 dark:text-zinc-400 dark:border-zinc-700";
 }
 
 export interface FiltrosState {
@@ -97,6 +103,7 @@ export interface FiltrosState {
   soMatches: boolean;
   circunstancia?: string;
   relevanciaMin?: number;
+  sortBy?: "recent" | "oldest" | "relevance";
 }
 
 const EMPTY_FILTROS: FiltrosState = {
@@ -109,6 +116,7 @@ const EMPTY_FILTROS: FiltrosState = {
   soMatches: false,
   circunstancia: undefined,
   relevanciaMin: 60,
+  sortBy: "recent",
 };
 
 const PERIOD_PRESETS = [

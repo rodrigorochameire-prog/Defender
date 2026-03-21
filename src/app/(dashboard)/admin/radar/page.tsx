@@ -195,32 +195,19 @@ export default function RadarCriminalPage() {
       {/* Header compacto */}
       <div className="flex items-center justify-between gap-4 pb-3 border-b border-zinc-100 dark:border-zinc-800">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 shrink-0">
-            <Radio className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 leading-tight">
-                Radar Criminal
-              </h1>
-              <span className="text-xs text-zinc-400 dark:text-zinc-500">·</span>
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                {statsLoading ? "—" : totalNoticias} notícias
-              </span>
-              {matchesPendentes > 0 && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-full px-2 py-0.5">
-                  <Link2 className="h-2.5 w-2.5" />
-                  {matchesPendentes} pendentes
-                </span>
-              )}
-              {ultimaColeta && (
-                <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-zinc-400">
-                  <Clock className="h-2.5 w-2.5" />
-                  {formatDistanceToNow(new Date(ultimaColeta), { addSuffix: true, locale: ptBR })}
-                </span>
-              )}
-            </div>
-          </div>
+          <Radio className="w-4 h-4 text-zinc-400 shrink-0" />
+          <h1 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 leading-tight">
+            Radar Criminal
+          </h1>
+          <span className="text-xs text-zinc-400">·</span>
+          <span className="text-xs text-zinc-400">
+            {statsLoading ? "—" : totalNoticias} notícias
+          </span>
+          {ultimaColeta && (
+            <span className="hidden sm:inline text-xs text-zinc-400">
+              · {formatDistanceToNow(new Date(ultimaColeta), { addSuffix: true, locale: ptBR })}
+            </span>
+          )}
         </div>
         <Button
           variant="ghost"
@@ -237,85 +224,82 @@ export default function RadarCriminalPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <TabsList className="flex w-full sm:w-auto items-center">
-            {/* Grupo primário: operacional */}
-            <TabsTrigger value="feed" className="cursor-pointer gap-1.5">
-              <Newspaper className="h-4 w-4" />
+        <div className="flex items-center gap-1">
+          <TabsList className="flex w-full sm:w-auto items-center h-8 gap-0 bg-transparent p-0 border-b border-zinc-100 dark:border-zinc-800 rounded-none">
+            <TabsTrigger value="feed" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 data-[state=active]:shadow-none text-zinc-500 dark:data-[state=active]:border-zinc-100 dark:data-[state=active]:text-zinc-100 px-3 text-[13px]">
+              <Newspaper className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Feed</span>
             </TabsTrigger>
-            <TabsTrigger value="matches" className="cursor-pointer gap-1.5">
-              <Link2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Matches DPE {matchesPendentes > 0 && (
-                <span className="ml-1.5 rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                  {matchesPendentes}
-                </span>
-              )}</span>
-            </TabsTrigger>
-
-            {/* Separador: primário → contexto */}
-            <div className="mx-1 h-4 w-px bg-zinc-200 dark:bg-zinc-700 self-center" aria-hidden />
-
-            {/* Grupo secundário: contexto */}
-            <TabsTrigger value="mapa" className="cursor-pointer gap-1.5">
-              <Map className="h-4 w-4" />
+            <TabsTrigger value="mapa" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 data-[state=active]:shadow-none text-zinc-500 dark:data-[state=active]:border-zinc-100 dark:data-[state=active]:text-zinc-100 px-3 text-[13px]">
+              <Map className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Mapa</span>
             </TabsTrigger>
-            <TabsTrigger value="reincidentes" className="cursor-pointer gap-1.5">
-              <Users className="h-4 w-4" />
+            <TabsTrigger value="matches" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 data-[state=active]:shadow-none text-zinc-500 dark:data-[state=active]:border-zinc-100 dark:data-[state=active]:text-zinc-100 px-3 text-[13px]">
+              <Link2 className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">
+                Matches
+                {matchesPendentes > 0 && (
+                  <span className="ml-1.5 rounded-full bg-zinc-700 dark:bg-zinc-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                    {matchesPendentes}
+                  </span>
+                )}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="reincidentes" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 data-[state=active]:shadow-none text-zinc-500 dark:data-[state=active]:border-zinc-100 dark:data-[state=active]:text-zinc-100 px-3 text-[13px]">
+              <Users className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Reincidentes</span>
             </TabsTrigger>
-
-            {/* Separador: contexto → admin */}
-            <div className="mx-1 h-4 w-px bg-zinc-200 dark:bg-zinc-700 self-center" aria-hidden />
-
-            {/* Grupo terciário: admin */}
-            <TabsTrigger value="estatisticas" className="cursor-pointer gap-1.5">
-              <BarChart3 className="h-4 w-4" />
+            <TabsTrigger value="estatisticas" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 data-[state=active]:shadow-none text-zinc-500 dark:data-[state=active]:border-zinc-100 dark:data-[state=active]:text-zinc-100 px-3 text-[13px]">
+              <BarChart3 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Estatísticas</span>
             </TabsTrigger>
-            <TabsTrigger value="fontes" className="cursor-pointer gap-1.5">
-              <Globe className="h-4 w-4" />
-              <span className="hidden sm:inline">Fontes {healthPending > 0 && (
-                <span className="ml-1.5 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                  {healthPending}
-                </span>
-              )}</span>
+            <TabsTrigger value="fontes" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 data-[state=active]:shadow-none text-zinc-500 dark:data-[state=active]:border-zinc-100 dark:data-[state=active]:text-zinc-100 px-3 text-[13px]">
+              <Globe className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">
+                Fontes
+                {healthPending > 0 && (
+                  <span className="ml-1.5 rounded-full bg-zinc-700 dark:bg-zinc-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                    {healthPending}
+                  </span>
+                )}
+              </span>
             </TabsTrigger>
           </TabsList>
         </div>
 
         {/* Banner de filtros ativos */}
         {filtrosAtivos && (
-          <div className="flex items-center gap-2 rounded-md bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 text-xs text-zinc-600 dark:text-zinc-400">
-            <span className="font-medium">Filtros ativos:</span>
-            <span className="truncate">{filtrosDescricao}</span>
+          <div className="flex items-center gap-2 rounded-md bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-100 dark:border-zinc-700 px-3 py-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+            <span className="text-zinc-400 shrink-0">Filtros:</span>
+            <span className="truncate text-zinc-700 dark:text-zinc-300">{filtrosDescricao}</span>
             <button
               onClick={resetFiltros}
-              className="ml-auto shrink-0 text-xs text-red-500 hover:text-red-600 font-medium cursor-pointer"
+              className="ml-auto shrink-0 text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 font-medium cursor-pointer transition-colors"
             >
-              Limpar
+              × Limpar
             </button>
           </div>
         )}
 
         <TabsContent value="feed">
-          {/* Mobile: botões para sheets */}
-          <div className="flex items-center gap-2 mb-3 lg:hidden">
-            <RadarScopeSelector value={scope} onChange={handleScopeChange} />
-            <div className="flex items-center gap-2 ml-auto">
-              <button
-                className="flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 px-2.5 py-1.5 text-xs text-zinc-600 dark:text-zinc-400 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
-                onClick={() => setIntelOpen(true)}
-              >
-                <BarChart2 className="h-3.5 w-3.5" />Inteligência
-              </button>
-              <button
-                className="flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30 px-2.5 py-1.5 text-xs text-amber-700 dark:text-amber-300 cursor-pointer"
-                onClick={() => setReincidentesOpen(true)}
-              >
-                <Users className="h-3.5 w-3.5" />Reincidentes
-              </button>
+          {/* Mobile: scope selector + botões para sheets */}
+          <div className="flex flex-col gap-2 mb-3 lg:hidden">
+            <div className="flex items-center justify-between gap-2">
+              <RadarScopeSelector value={scope} onChange={handleScopeChange} />
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  className="flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 px-2.5 py-1.5 text-xs text-zinc-600 dark:text-zinc-400 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+                  onClick={() => setIntelOpen(true)}
+                >
+                  <BarChart2 className="h-3.5 w-3.5" />Inteligência
+                </button>
+                <button
+                  className="flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30 px-2.5 py-1.5 text-xs text-amber-700 dark:text-amber-300 cursor-pointer"
+                  onClick={() => setReincidentesOpen(true)}
+                >
+                  <Users className="h-3.5 w-3.5" />Reincidentes
+                </button>
+              </div>
             </div>
           </div>
 

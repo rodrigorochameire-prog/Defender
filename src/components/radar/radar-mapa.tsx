@@ -11,21 +11,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Map, Maximize2, Minimize2 } from "lucide-react";
 
-// Synchronized with radar-mapa-leaflet.tsx CRIME_COLORS
+// Synchronized with radar-mapa-leaflet.tsx CRIME_COLORS (pastel palette)
 const CRIME_COLORS: Record<string, string> = {
-  homicidio: "#15803d",
-  tentativa_homicidio: "#15803d",
-  feminicidio: "#15803d",
-  violencia_domestica: "#ca8a04",
-  execucao_penal: "#1d4ed8",
-  trafico: "#dc2626",
-  roubo: "#c2410c",
-  lesao_corporal: "#be185d",
-  sexual: "#7c3aed",
-  furto: "#ea580c",
-  porte_arma: "#db2777",
-  estelionato: "#a21caf",
-  outros: "#52525b",
+  homicidio: "#4ade80",
+  tentativa_homicidio: "#4ade80",
+  feminicidio: "#4ade80",
+  violencia_domestica: "#fbbf24",
+  execucao_penal: "#60a5fa",
+  trafico: "#f87171",
+  roubo: "#fb923c",
+  lesao_corporal: "#f472b6",
+  sexual: "#c084fc",
+  furto: "#fdba74",
+  porte_arma: "#e879f9",
+  estelionato: "#a78bfa",
+  outros: "#a1a1aa",
 };
 
 const CRIME_LABELS: Record<string, string> = {

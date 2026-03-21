@@ -317,8 +317,7 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
 
         {/* Crime */}
         {assistido.crimePrincipal && (
-          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 line-clamp-1">
-            <span className="text-zinc-400 uppercase tracking-wide mr-1">Tipo:</span>
+          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 line-clamp-1 italic">
             {assistido.crimePrincipal}
           </p>
         )}

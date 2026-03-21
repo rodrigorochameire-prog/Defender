@@ -67,11 +67,23 @@ export function RadarFeed({ filtros, municipio = "camacari" }: RadarFeedProps) {
     }
     return "compact";
   });
+  const [sortBy, setSortBy] = useState<"recent" | "oldest" | "relevance">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("radar-sort-by");
+      if (saved === "recent" || saved === "oldest" || saved === "relevance") return saved;
+    }
+    return "recent";
+  });
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const handleViewMode = (mode: "compact" | "cards" | "list") => {
     setViewMode(mode);
     localStorage.setItem("radar-view-mode", mode);
+  };
+
+  const handleSortBy = (sort: "recent" | "oldest" | "relevance") => {
+    setSortBy(sort);
+    localStorage.setItem("radar-sort-by", sort);
   };
 
   const {
@@ -95,6 +107,7 @@ export function RadarFeed({ filtros, municipio = "camacari" }: RadarFeedProps) {
       circunstancia: filtros.circunstancia,
       relevanciaMin: filtros.relevanciaMin,
       municipio,
+      sortBy,
       limit: 20,
     },
     {
@@ -235,18 +248,29 @@ export function RadarFeed({ filtros, municipio = "camacari" }: RadarFeedProps) {
         </div>
       )}
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 text-xs text-zinc-500">
-          <Radio className="h-3.5 w-3.5 text-emerald-500" />
-          {allNoticias.length} notícia{allNoticias.length > 1 ? "s" : ""}
+          <Radio className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+          <span>{allNoticias.length} notícia{allNoticias.length > 1 ? "s" : ""}</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-auto">
+          {/* Ordenação */}
+          <select
+            value={sortBy}
+            onChange={(e) => handleSortBy(e.target.value as "recent" | "oldest" | "relevance")}
+            className="h-7 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2 text-xs text-zinc-600 dark:text-zinc-400 cursor-pointer focus:outline-none focus:ring-1 focus:ring-zinc-300"
+          >
+            <option value="recent">↓ Mais recentes</option>
+            <option value="oldest">↑ Mais antigos</option>
+            <option value="relevance">★ Relevância</option>
+          </select>
+
           {/* Toggle de visualização — 3 modos */}
           <div className="flex items-center gap-0.5 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
             {([
               { mode: "compact", icon: AlignJustify, title: "Compact (padrão)" },
-              { mode: "cards", icon: LayoutGrid, title: "Grid com imagem" },
+              { mode: "cards", icon: LayoutGrid, title: "Grid" },
               { mode: "list", icon: List, title: "Lista densa" },
             ] as const).map(({ mode, icon: Icon, title }) => (
               <button
@@ -273,7 +297,7 @@ export function RadarFeed({ filtros, municipio = "camacari" }: RadarFeedProps) {
               onClick={() => exportNoticiasToCsv(allNoticias)}
             >
               <Download className="h-3.5 w-3.5 mr-1.5" />
-              Exportar CSV
+              CSV
             </Button>
           )}
         </div>
