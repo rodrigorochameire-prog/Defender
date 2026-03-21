@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, Lock, User, Loader2, FileText, Plus, Sparkles, Pencil, Clock, Send, Scale, Calendar, FolderOpen, PanelRight, ChevronDown } from "lucide-react";
+import { ArrowLeft, Lock, User, Loader2, FileText, Plus, Sparkles, Pencil, Clock, Send, Scale, Calendar, FolderOpen, PanelRight, ChevronDown, Bot } from "lucide-react";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -68,6 +68,19 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
   // AI Analysis state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // Cowork export
+  const exportarParaCowork = trpc.briefing.exportarParaCowork.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Briefing exportado para o Drive`, {
+        description: result.fileName,
+        action: result.fileUrl ? { label: "Abrir", onClick: () => window.open(result.fileUrl, "_blank") } : undefined,
+      });
+    },
+    onError: (err) => {
+      toast.error("Erro ao exportar briefing", { description: err.message });
+    },
+  });
 
   // Transcription state
   const [transcriptions, setTranscriptions] = useState<Map<string, TranscriptionData>>(new Map());
@@ -349,6 +362,18 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                 onClick={() => setFichaSheetOpen(true)}
               >
                 <PanelRight className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-zinc-400 hover:text-violet-600 transition-colors"
+                title="Exportar briefing para pasta do Drive (Cowork)"
+                disabled={exportarParaCowork.isPending}
+                onClick={() => exportarParaCowork.mutate({ assistidoId: Number(id), tipo: "assistido" })}
+              >
+                {exportarParaCowork.isPending
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <Bot className="h-3.5 w-3.5" />}
               </Button>
               {isPreso && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 animate-pulse">

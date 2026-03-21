@@ -118,6 +118,79 @@ export async function listDriveFiles(
   }
 }
 
+/**
+ * Cria ou substitui um arquivo de texto/markdown em uma pasta do Drive.
+ * Se já existir um arquivo com o mesmo nome na pasta, sobrescreve o conteúdo.
+ */
+export async function createOrUpdateDriveFile(
+  accessToken: string,
+  folderId: string,
+  fileName: string,
+  content: string,
+  mimeType: string = "text/markdown"
+): Promise<{ id: string; webViewLink: string } | null> {
+  try {
+    // Verificar se já existe arquivo com esse nome na pasta
+    const query = `'${folderId}' in parents and name = '${fileName}' and trashed = false`;
+    const listRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id)`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    const listData = await listRes.json();
+    const existingId = listData.files?.[0]?.id;
+
+    if (existingId) {
+      // PATCH — atualizar conteúdo
+      const updateRes = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${existingId}?uploadType=media`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": mimeType,
+          },
+          body: content,
+        }
+      );
+      if (!updateRes.ok) throw new Error(`Failed to update file: ${updateRes.statusText}`);
+      return { id: existingId, webViewLink: `https://drive.google.com/file/d/${existingId}/view` };
+    }
+
+    // POST — criar novo arquivo (multipart)
+    const boundary = "briefing_boundary_ombuds";
+    const metadata = JSON.stringify({ name: fileName, parents: [folderId], mimeType });
+    const body = [
+      `--${boundary}`,
+      "Content-Type: application/json; charset=UTF-8",
+      "",
+      metadata,
+      `--${boundary}`,
+      `Content-Type: ${mimeType}`,
+      "",
+      content,
+      `--${boundary}--`,
+    ].join("\r\n");
+
+    const createRes = await fetch(
+      "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": `multipart/related; boundary=${boundary}`,
+        },
+        body,
+      }
+    );
+    if (!createRes.ok) throw new Error(`Failed to create file: ${createRes.statusText}`);
+    const file = await createRes.json();
+    return { id: file.id, webViewLink: `https://drive.google.com/file/d/${file.id}/view` };
+  } catch (error) {
+    console.error("Error creating/updating Drive file:", error);
+    return null;
+  }
+}
+
 // Google Calendar Functions
 export async function createCalendarEvent(
   accessToken: string,

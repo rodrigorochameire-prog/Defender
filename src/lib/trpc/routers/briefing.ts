@@ -15,8 +15,8 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { testemunhas, depoimentosAnalise, driveFiles, audiencias, processos, casos, assistidos, casePersonas } from "@/lib/db/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { testemunhas, depoimentosAnalise, driveFiles, audiencias, processos, casos, assistidos, casePersonas, demandas } from "@/lib/db/schema";
+import { eq, and, isNull } from "drizzle-orm";
 import {
   pythonBackend,
   type TestemunhaInfo,
@@ -24,6 +24,8 @@ import {
   type TestemunhaBriefing,
   type PessoaInfo,
 } from "@/lib/services/python-backend";
+import { getAccessToken } from "@/lib/services/google-drive";
+import { createOrUpdateDriveFile } from "@/lib/integrations/google";
 
 // ==========================================
 // ROUTER
@@ -504,6 +506,270 @@ export const briefingRouter = router({
         ordemInquiricao: t.ordemInquiricao,
         temBriefing: !!(t.resumoDepoimento || t.perguntasSugeridas),
       }));
+    }),
+
+  /**
+   * Exporta briefing consolidado para pasta do Drive (integração Cowork)
+   *
+   * Agrega todos os dados do assistido/audiência em markdown estruturado
+   * e salva como `_briefing_[tipo]_[data].md` na pasta raiz do assistido no Drive.
+   * O Cowork (Claude Code) lê esse arquivo ao analisar a pasta.
+   */
+  exportarParaCowork: protectedProcedure
+    .input(
+      z.object({
+        assistidoId: z.number(),
+        audienciaId: z.number().optional(),
+        processoId: z.number().optional(),
+        tipo: z.enum(["audiencia", "assistido"]).default("assistido"),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // 1. Buscar assistido
+      const assistido = await db.query.assistidos.findFirst({
+        where: eq(assistidos.id, input.assistidoId),
+      });
+
+      if (!assistido) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
+      }
+
+      if (!assistido.driveFolderId) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Assistido não possui pasta no Drive. Crie a pasta primeiro.",
+        });
+      }
+
+      // 2. Buscar processos
+      const processosDb = await db.query.processos.findMany({
+        where: and(eq(processos.assistidoId, input.assistidoId), isNull(processos.deletedAt)),
+      });
+
+      // 3. Buscar demandas (exclui deletadas)
+      const demandasDb = await db.query.demandas.findMany({
+        where: and(
+          eq(demandas.assistidoId, input.assistidoId),
+          isNull(demandas.deletedAt)
+        ),
+      });
+
+      // 4. Audiência específica (se tipo='audiencia')
+      let audienciaDb: typeof audiencias.$inferSelect | undefined;
+      let testemunhasDb: typeof testemunhas.$inferSelect[] = [];
+
+      if (input.tipo === "audiencia" && input.audienciaId) {
+        audienciaDb = await db.query.audiencias.findFirst({
+          where: eq(audiencias.id, input.audienciaId),
+        });
+
+        if (audienciaDb) {
+          const processoIdParaTestemunhas = audienciaDb.processoId;
+          testemunhasDb = await db.query.testemunhas.findMany({
+            where: eq(testemunhas.processoId, processoIdParaTestemunhas),
+          });
+        }
+      }
+
+      // 5. Arquivos do Drive vinculados
+      const processoIds = processosDb.map((p) => p.id);
+      let arquivosDb: { name: string; mimeType: string | null }[] = [];
+      if (processoIds.length > 0) {
+        arquivosDb = await db
+          .select({ name: driveFiles.name, mimeType: driveFiles.mimeType })
+          .from(driveFiles)
+          .where(eq(driveFiles.processoId, processoIds[0]));
+      }
+
+      // 6. Montar markdown estruturado
+      const now = new Date();
+      const dataStr = now.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+      const horaStr = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+      const lines: string[] = [];
+
+      // Cabeçalho
+      lines.push(`# Briefing OMBUDS — ${assistido.nome}`);
+      lines.push(`> Gerado automaticamente em ${dataStr} às ${horaStr}`);
+      lines.push(`> Tipo: ${input.tipo === "audiencia" ? "Briefing de Audiência" : "Visão Geral do Assistido"}`);
+      lines.push("");
+
+      // Dados pessoais
+      lines.push("## Assistido");
+      lines.push(`- **Nome**: ${assistido.nome}`);
+      if (assistido.cpf) lines.push(`- **CPF**: ${assistido.cpf}`);
+      if (assistido.dataNascimento) lines.push(`- **Data de nascimento**: ${assistido.dataNascimento}`);
+      if (assistido.statusPrisional) lines.push(`- **Status prisional**: ${assistido.statusPrisional}`);
+      if (assistido.unidadePrisional) lines.push(`- **Unidade prisional**: ${assistido.unidadePrisional}`);
+      if (assistido.localPrisao) lines.push(`- **Local de prisão**: ${assistido.localPrisao}`);
+      if (assistido.dataPrisao) lines.push(`- **Data da prisão**: ${assistido.dataPrisao}`);
+      if (assistido.observacoes) lines.push(`- **Observações**: ${assistido.observacoes}`);
+      lines.push("");
+
+      // Processos
+      lines.push("## Processos");
+      if (processosDb.length === 0) {
+        lines.push("_Nenhum processo vinculado._");
+      } else {
+        for (const p of processosDb) {
+          lines.push(`### ${p.numeroAutos}`);
+          lines.push(`- **Assunto**: ${p.assunto || "—"}`);
+          lines.push(`- **Vara**: ${p.vara || "—"}`);
+          lines.push(`- **Área**: ${p.area}`);
+          lines.push(`- **Atribuição**: ${p.atribuicao}`);
+          if (p.fase) lines.push(`- **Fase**: ${p.fase}`);
+          if (p.situacao) lines.push(`- **Situação**: ${p.situacao}`);
+          if (p.parteContraria) lines.push(`- **Parte contrária**: ${p.parteContraria}`);
+          if (p.isJuri) lines.push(`- **Júri**: Sim${p.dataSessaoJuri ? ` — sessão em ${new Date(p.dataSessaoJuri).toLocaleDateString("pt-BR")}` : ""}`);
+
+          // Analysis data do processo
+          if (p.analysisData?.resumo) {
+            lines.push(`- **Resumo IA**: ${p.analysisData.resumo}`);
+          }
+          if (p.analysisData?.teses && p.analysisData.teses.length > 0) {
+            lines.push(`- **Teses identificadas**:`);
+            for (const tese of p.analysisData.teses) {
+              lines.push(`  - ${tese}`);
+            }
+          }
+          lines.push("");
+        }
+      }
+
+      // Audiência (se aplicável)
+      if (input.tipo === "audiencia" && audienciaDb) {
+        lines.push("## Audiência");
+        lines.push(`- **Tipo**: ${audienciaDb.tipo}`);
+        lines.push(`- **Data**: ${new Date(audienciaDb.dataAudiencia).toLocaleDateString("pt-BR")} às ${audienciaDb.horario || new Date(audienciaDb.dataAudiencia).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`);
+        if (audienciaDb.local) lines.push(`- **Local**: ${audienciaDb.local}`);
+        if (audienciaDb.sala) lines.push(`- **Sala**: ${audienciaDb.sala}`);
+        if (audienciaDb.juiz) lines.push(`- **Juiz**: ${audienciaDb.juiz}`);
+        if (audienciaDb.promotor) lines.push(`- **Promotor**: ${audienciaDb.promotor}`);
+        if (audienciaDb.status) lines.push(`- **Status**: ${audienciaDb.status}`);
+        if (audienciaDb.observacoes) lines.push(`- **Observações**: ${audienciaDb.observacoes}`);
+        if (audienciaDb.resumoDefesa) {
+          lines.push("");
+          lines.push("### Resumo da Defesa");
+          lines.push(audienciaDb.resumoDefesa);
+        }
+        lines.push("");
+
+        // Testemunhas
+        if (testemunhasDb.length > 0) {
+          lines.push("## Testemunhas");
+          for (const t of testemunhasDb) {
+            lines.push(`### ${t.nome} (${t.tipo})`);
+            if (t.telefone) lines.push(`- **Telefone**: ${t.telefone}`);
+            if (t.status) lines.push(`- **Status**: ${t.status}`);
+            if (t.ordemInquiricao) lines.push(`- **Ordem de inquirição**: ${t.ordemInquiricao}`);
+            if (t.resumoDepoimento) {
+              lines.push(`- **Resumo do depoimento**: ${t.resumoDepoimento}`);
+            }
+            if (t.pontosFavoraveis) {
+              const pontos = JSON.parse(t.pontosFavoraveis) as string[];
+              if (pontos.length > 0) {
+                lines.push("- **Pontos favoráveis**:");
+                pontos.forEach((p) => lines.push(`  - ${p}`));
+              }
+            }
+            if (t.pontosDesfavoraveis) {
+              const pontos = JSON.parse(t.pontosDesfavoraveis) as string[];
+              if (pontos.length > 0) {
+                lines.push("- **Pontos desfavoráveis**:");
+                pontos.forEach((p) => lines.push(`  - ${p}`));
+              }
+            }
+            if (t.perguntasSugeridas) {
+              const perguntas = JSON.parse(t.perguntasSugeridas) as string[];
+              if (perguntas.length > 0) {
+                lines.push("- **Perguntas sugeridas**:");
+                perguntas.forEach((p, i) => lines.push(`  ${i + 1}. ${p}`));
+              }
+            }
+            lines.push("");
+          }
+        }
+      }
+
+      // Demandas abertas (exclui arquivadas e concluídas)
+      const demandasAbertas = demandasDb.filter((d) => d.status !== "ARQUIVADO" && d.status !== "CONCLUIDO");
+      if (demandasAbertas.length > 0) {
+        lines.push("## Demandas Abertas");
+        for (const d of demandasAbertas) {
+          const prazoStr = d.prazo ? new Date(d.prazo).toLocaleDateString("pt-BR") : "sem prazo";
+          const urgente = d.prazo && new Date(d.prazo) < now;
+          lines.push(`- **${d.ato}** — prazo: ${prazoStr}${urgente ? " ⚠️ VENCIDO" : ""} [${d.status}]${d.reuPreso ? " [RÉU PRESO]" : ""}`);
+          if (d.providencias) lines.push(`  → ${d.providencias}`);
+        }
+        lines.push("");
+      }
+
+      // Arquivos no Drive
+      if (arquivosDb.length > 0) {
+        lines.push("## Arquivos na Pasta do Processo");
+        for (const f of arquivosDb) {
+          lines.push(`- ${f.name}${f.mimeType ? ` (${f.mimeType.split("/").pop()})` : ""}`);
+        }
+        lines.push("");
+      }
+
+      // Analysis geral do assistido
+      if (assistido.analysisData?.resumo) {
+        lines.push("## Análise IA do Assistido");
+        lines.push(assistido.analysisData.resumo);
+        if (assistido.analysisData.achadosChave?.length) {
+          lines.push("");
+          lines.push("**Achados-chave:**");
+          assistido.analysisData.achadosChave.forEach((a) => lines.push(`- ${a}`));
+        }
+        if (assistido.analysisData.recomendacoes?.length) {
+          lines.push("");
+          lines.push("**Recomendações:**");
+          assistido.analysisData.recomendacoes.forEach((r) => lines.push(`- ${r}`));
+        }
+        lines.push("");
+      }
+
+      lines.push("---");
+      lines.push(`_Briefing gerado pelo OMBUDS em ${dataStr} às ${horaStr}_`);
+
+      const markdown = lines.join("\n");
+
+      // 7. Escrever no Drive
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Não foi possível obter token de acesso ao Google Drive.",
+        });
+      }
+
+      const dateSlug = now.toISOString().slice(0, 10); // YYYY-MM-DD
+      const fileName = input.tipo === "audiencia"
+        ? `_briefing_audiencia_${dateSlug}.md`
+        : `_briefing_assistido_${dateSlug}.md`;
+
+      const result = await createOrUpdateDriveFile(
+        accessToken,
+        assistido.driveFolderId,
+        fileName,
+        markdown,
+        "text/markdown"
+      );
+
+      if (!result) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Falha ao escrever arquivo no Drive.",
+        });
+      }
+
+      return {
+        success: true,
+        fileName,
+        fileUrl: result.webViewLink,
+        assistidoNome: assistido.nome,
+      };
     }),
 
   /**
