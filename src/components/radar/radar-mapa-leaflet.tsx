@@ -40,24 +40,125 @@ interface MarkerCluster {
   getAllChildMarkers: () => L.Marker[];
 }
 
+// ─── Semantic color system ─────────────────────────────────────────────────
 const CRIME_COLORS: Record<string, string> = {
-  homicidio: "#ef4444",
-  tentativa_homicidio: "#f97316",
-  trafico: "#a855f7",
-  roubo: "#3b82f6",
-  furto: "#eab308",
-  violencia_domestica: "#ec4899",
-  sexual: "#d946ef",
-  lesao_corporal: "#f59e0b",
-  porte_arma: "#64748b",
-  estelionato: "#14b8a6",
-  outros: "#71717a",
+  // Tribunal do Júri — verde
+  homicidio: "#15803d",
+  tentativa_homicidio: "#15803d",
+  feminicidio: "#15803d",
+  // Violência doméstica — âmbar
+  violencia_domestica: "#b45309",
+  // Execução penal — azul
+  execucao_penal: "#1d4ed8",
+  // Demais — vermelho/laranja/rosa/roxo em tons distintos
+  trafico: "#dc2626",
+  roubo: "#c2410c",
+  lesao_corporal: "#be185d",
+  sexual: "#7c3aed",
+  furto: "#ea580c",
+  porte_arma: "#db2777",
+  estelionato: "#a21caf",
+  outros: "#52525b",
 };
+
+const CRIME_LABELS: Record<string, string> = {
+  homicidio: "Homicídio",
+  tentativa_homicidio: "Tentativa de Homicídio",
+  feminicidio: "Feminicídio",
+  trafico: "Tráfico",
+  roubo: "Roubo",
+  furto: "Furto",
+  violencia_domestica: "Violência Doméstica",
+  sexual: "Sexual",
+  lesao_corporal: "Lesão Corporal",
+  porte_arma: "Porte de Arma",
+  estelionato: "Estelionato",
+  execucao_penal: "Execução Penal",
+  outros: "Outros",
+};
+
+// Heatmap weights — gravidade da ocorrência
+const CRIME_WEIGHTS: Record<string, number> = {
+  homicidio: 5,
+  tentativa_homicidio: 5,
+  feminicidio: 5,
+  sexual: 4,
+  trafico: 3,
+  roubo: 3,
+  violencia_domestica: 2,
+  lesao_corporal: 2,
+  execucao_penal: 2,
+  furto: 1,
+  porte_arma: 1,
+  estelionato: 1,
+  outros: 1,
+};
+
+// Crimes julgados pelo Tribunal do Júri — marcador com anel + pulso
+const JURY_CRIMES = new Set(["homicidio", "tentativa_homicidio", "feminicidio"]);
+
+// ─── Marker size by risk tier ──────────────────────────────────────────────
+function getMarkerSize(tipoCrime: string): number {
+  if (JURY_CRIMES.has(tipoCrime)) return 16;
+  if (tipoCrime === "violencia_domestica") return 14;
+  if (tipoCrime === "trafico" || tipoCrime === "roubo") return 12;
+  if (["lesao_corporal", "sexual", "furto"].includes(tipoCrime)) return 10;
+  return 8;
+}
 
 interface MarkerOptionsWithTipo extends L.MarkerOptions {
   tipoCrime?: string;
+  dataFato?: string | Date | null;
 }
 
+// ─── Create individual marker icon ────────────────────────────────────────
+function createMarkerIcon(tipoCrime: string, dataFato?: string | Date | null): L.DivIcon {
+  const color = CRIME_COLORS[tipoCrime] || CRIME_COLORS.outros;
+  const size = getMarkerSize(tipoCrime);
+
+  // Jury crimes: larger circle + outer ring + pulse if recent (< 72h)
+  if (JURY_CRIMES.has(tipoCrime)) {
+    const isRecent = dataFato
+      ? Date.now() - new Date(dataFato).getTime() < 72 * 60 * 60 * 1000
+      : false;
+    const wrapSize = size + 12; // 28px total
+    const half = wrapSize / 2;
+    const ringSize = size + 8;
+    const ringHalf = ringSize / 2;
+    const pulseRing = isRecent
+      ? `<div class="radar-pulse-ring" style="position:absolute;top:50%;left:50%;width:${ringSize}px;height:${ringSize}px;margin:-${ringHalf}px 0 0 -${ringHalf}px;border-radius:50%;border:2px solid ${color};opacity:0.7;"></div>`
+      : `<div style="position:absolute;top:50%;left:50%;width:${ringSize}px;height:${ringSize}px;margin:-${ringHalf}px 0 0 -${ringHalf}px;border-radius:50%;border:1.5px solid ${color};opacity:0.35;"></div>`;
+    const dot = `<div style="position:absolute;top:50%;left:50%;width:${size}px;height:${size}px;margin:-${size / 2}px 0 0 -${size / 2}px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>`;
+    return L.divIcon({
+      html: `<div style="position:relative;width:${wrapSize}px;height:${wrapSize}px;">${pulseRing}${dot}</div>`,
+      className: "",
+      iconSize: [wrapSize, wrapSize],
+      iconAnchor: [half, half],
+    });
+  }
+
+  // Domestic violence: diamond (rotated square)
+  if (tipoCrime === "violencia_domestica") {
+    const wrapSize = size + 4;
+    const half = wrapSize / 2;
+    return L.divIcon({
+      html: `<div style="position:relative;width:${wrapSize}px;height:${wrapSize}px;display:flex;align-items:center;justify-content:center;"><div style="width:${size}px;height:${size}px;background:${color};transform:rotate(45deg);border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35);"></div></div>`,
+      className: "",
+      iconSize: [wrapSize, wrapSize],
+      iconAnchor: [half, half],
+    });
+  }
+
+  // Other crimes: plain circle, size by risk tier
+  return L.divIcon({
+    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:1.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.3);"></div>`,
+    className: "",
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  });
+}
+
+// ─── Donut cluster icon ────────────────────────────────────────────────────
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
@@ -74,70 +175,147 @@ function createDonutIcon(cluster: MarkerCluster): L.DivIcon {
   const markers = cluster.getAllChildMarkers();
   const count = markers.length;
 
-  // Count occurrences per tipoCrime
+  // Scale size with count
+  const size = count <= 10 ? 36 : count <= 50 ? 44 : 54;
+  const fontSize = count <= 10 ? 11 : count <= 50 ? 12 : 14;
+  const cx = size / 2;
+  const r = size / 2 - 2;
+  const innerR = size <= 36 ? 11 : size <= 44 ? 14 : 18;
+
+  // Count per tipoCrime
   const crimeCounts: Record<string, number> = {};
+  let hasJury = false;
   for (const marker of markers) {
     const opts = marker.options as MarkerOptionsWithTipo;
     const tipo: string = opts.tipoCrime ?? "outros";
     crimeCounts[tipo] = (crimeCounts[tipo] || 0) + 1;
+    if (JURY_CRIMES.has(tipo)) hasJury = true;
   }
 
   const types = Object.keys(crimeCounts);
 
+  // Outer border ring for large clusters
+  const outerStroke = size > 44
+    ? `<circle cx="${cx}" cy="${cx}" r="${r + 1}" fill="none" stroke="#d4d4d8" stroke-width="1.5"/>`
+    : "";
+
   // Single type: solid circle
   if (types.length === 1) {
     const color = CRIME_COLORS[types[0]] || CRIME_COLORS.outros;
-    const svg = `<svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="18" cy="18" r="17" fill="${color}" fill-opacity="0.9"/>
-      <circle cx="18" cy="18" r="17" fill="none" stroke="white" stroke-width="1.5"/>
-      <text x="18" y="22" text-anchor="middle" font-size="11" font-weight="bold" fill="white">${count}</text>
+    const isJury = JURY_CRIMES.has(types[0]);
+    const juryRing = isJury
+      ? `<circle cx="${cx}" cy="${cx}" r="${r - 1}" fill="none" stroke="${color}" stroke-width="2" stroke-opacity="0.35"/>`
+      : "";
+    const svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+      <filter id="cs${size}"><feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.22"/></filter>
+      ${outerStroke}
+      <circle cx="${cx}" cy="${cx}" r="${r}" fill="${color}" fill-opacity="0.92" filter="url(#cs${size})"/>
+      ${juryRing}
+      <text x="${cx}" y="${cx + fontSize * 0.4}" text-anchor="middle" font-size="${fontSize}" font-weight="700" fill="white" font-family="system-ui,sans-serif">${count}</text>
     </svg>`;
-    return L.divIcon({ html: svg, className: "", iconSize: [36, 36], iconAnchor: [18, 18] });
+    return L.divIcon({ html: svg, className: "", iconSize: [size, size], iconAnchor: [cx, cx] });
   }
 
-  // Multiple types: donut/pizza SVG
+  // Multiple types: donut/pizza
   let currentAngle = 0;
   const paths: string[] = [];
-
   for (const [tipo, typeCount] of Object.entries(crimeCounts)) {
     const sliceDeg = (typeCount / count) * 360;
     const endAngle = currentAngle + sliceDeg;
     const color = CRIME_COLORS[tipo] || CRIME_COLORS.outros;
-    paths.push(`<path d="${arcPath(18, 18, 17, currentAngle, endAngle)}" fill="${color}"/>`);
+    paths.push(`<path d="${arcPath(cx, cx, r, currentAngle, endAngle)}" fill="${color}" fill-opacity="0.92"/>`);
     currentAngle = endAngle;
   }
 
-  const svg = `<svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-    ${paths.join("\n    ")}
-    <circle cx="18" cy="18" r="10" fill="white"/>
-    <circle cx="18" cy="18" r="17" fill="none" stroke="#d4d4d8" stroke-width="1"/>
-    <text x="18" y="22" text-anchor="middle" font-size="11" font-weight="bold" fill="#18181b">${count}</text>
+  const svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+    <filter id="cd${size}"><feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.18"/></filter>
+    <g filter="url(#cd${size})">${paths.join("")}</g>
+    ${outerStroke}
+    <circle cx="${cx}" cy="${cx}" r="${innerR}" fill="white"/>
+    <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="#e4e4e7" stroke-width="0.75"/>
+    <text x="${cx}" y="${cx + fontSize * 0.4}" text-anchor="middle" font-size="${fontSize}" font-weight="700" fill="#18181b" font-family="system-ui,sans-serif">${count}</text>
   </svg>`;
 
-  return L.divIcon({ html: svg, className: "", iconSize: [36, 36], iconAnchor: [18, 18] });
+  return L.divIcon({
+    html: svg,
+    className: hasJury ? "cluster-has-jury" : "",
+    iconSize: [size, size],
+    iconAnchor: [cx, cx],
+  });
 }
 
+// ─── Constants ─────────────────────────────────────────────────────────────
 const CAMACARI_CENTER: [number, number] = [-12.6976, -38.3244];
 const CAMACARI_BOUNDS: [[number, number], [number, number]] = [
   [-12.58, -38.42],
   [-12.83, -38.25],
 ];
-const INITIAL_ZOOM = 12;
 
-const CRIME_LABELS: Record<string, string> = {
-  homicidio: "Homicídio",
-  tentativa_homicidio: "Tentativa de Homicídio",
-  trafico: "Tráfico",
-  roubo: "Roubo",
-  furto: "Furto",
-  violencia_domestica: "Violência Doméstica",
-  sexual: "Sexual",
-  lesao_corporal: "Lesão Corporal",
-  porte_arma: "Porte de Arma",
-  estelionato: "Estelionato",
-  outros: "Outros",
-};
+// CSS injected once for pulse animations
+const PULSE_CSS = `
+  @keyframes radar-pulse {
+    0% { transform: translate(-50%,-50%) scale(1); opacity: 0.8; }
+    70% { transform: translate(-50%,-50%) scale(2.2); opacity: 0; }
+    100% { transform: translate(-50%,-50%) scale(2.2); opacity: 0; }
+  }
+  .radar-pulse-ring {
+    animation: radar-pulse 2s ease-out infinite;
+  }
+`;
 
+// ─── Grouped legend HTML ───────────────────────────────────────────────────
+function buildLegendHTML(): string {
+  const juryItems = ["homicidio", "tentativa_homicidio", "feminicidio"];
+  const otherItems = [
+    "trafico", "roubo", "lesao_corporal", "sexual",
+    "furto", "porte_arma", "estelionato", "execucao_penal", "outros",
+  ];
+
+  const juryRows = juryItems.map((k) => `
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+      <div style="position:relative;width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+        <div style="width:18px;height:18px;border-radius:50%;border:1.5px solid #15803d;opacity:0.3;position:absolute;"></div>
+        <div style="width:10px;height:10px;border-radius:50%;background:#15803d;border:1.5px solid white;"></div>
+      </div>
+      <span style="color:#374151;font-size:11px;">${CRIME_LABELS[k]}</span>
+    </div>`).join("");
+
+  const vdRow = `
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+      <div style="width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+        <div style="width:11px;height:11px;background:#b45309;transform:rotate(45deg);border:1.5px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+      </div>
+      <span style="color:#374151;font-size:11px;">Violência Doméstica</span>
+    </div>`;
+
+  const otherRows = otherItems.map((k) => {
+    const color = CRIME_COLORS[k] || CRIME_COLORS.outros;
+    return `<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">
+      <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;border:1px solid white;box-shadow:0 1px 2px rgba(0,0,0,0.2);"></div>
+      <span style="color:#6b7280;font-size:10px;">${CRIME_LABELS[k]}</span>
+    </div>`;
+  }).join("");
+
+  return `
+    <div style="font-family:system-ui,sans-serif;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-weight:700;color:#111827;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;">Legenda</span>
+        <button id="radar-legend-toggle" style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:16px;line-height:1;padding:0 2px;display:flex;align-items:center;">−</button>
+      </div>
+      <div id="radar-legend-content">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:#9ca3af;margin-bottom:5px;">Tribunal do Júri</div>
+        ${juryRows}
+        <div style="border-top:1px solid #f3f4f6;margin:7px 0;"></div>
+        ${vdRow}
+        <div style="border-top:1px solid #f3f4f6;margin:7px 0;"></div>
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:#9ca3af;margin-bottom:5px;">Outros Delitos</div>
+        ${otherRows}
+      </div>
+    </div>
+  `;
+}
+
+// ─── Component interfaces ──────────────────────────────────────────────────
 interface MapPoint {
   id: number;
   titulo: string;
@@ -159,6 +337,7 @@ interface LeafletMapProps {
   resetViewTrigger?: number;
 }
 
+// ─── Component ─────────────────────────────────────────────────────────────
 export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, fullscreen, resetViewTrigger }: LeafletMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -168,10 +347,17 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
   const heatLegendRef = useRef<any>(null);
   const onSelectNoticiaRef = useRef(onSelectNoticia);
 
-  // Keep callback ref in sync
+  useEffect(() => { onSelectNoticiaRef.current = onSelectNoticia; }, [onSelectNoticia]);
+
+  // Inject pulse CSS once on mount
   useEffect(() => {
-    onSelectNoticiaRef.current = onSelectNoticia;
-  }, [onSelectNoticia]);
+    if (document.getElementById("radar-pulse-css")) return;
+    const style = document.createElement("style");
+    style.id = "radar-pulse-css";
+    style.textContent = PULSE_CSS;
+    document.head.appendChild(style);
+    return () => { document.getElementById("radar-pulse-css")?.remove(); };
+  }, []);
 
   // Initialize map
   useEffect(() => {
@@ -179,40 +365,48 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
 
     const map = L.map(mapContainerRef.current, {
       center: CAMACARI_CENTER,
-      zoom: INITIAL_ZOOM,
+      zoom: 12,
       zoomControl: true,
     });
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    // CartoDB Positron — minimal, professional base map
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: "abcd",
+      maxZoom: 20,
     }).addTo(map);
 
-    // Fit to Camaçari bounding box
     map.fitBounds(CAMACARI_BOUNDS);
 
-    // Legenda de tipos de crime (visível apenas no modo de marcadores)
-    const legend = (L.control as any)({ position: "bottomleft" });
+    // Legend — grouped, collapsible, bottom-right
+    const legend = (L.control as any)({ position: "bottomright" });
     legend.onAdd = () => {
       const div = L.DomUtil.create("div");
-      div.innerHTML = `
-        <div style="
-          background: white;
-          border-radius: 8px;
-          padding: 10px 12px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-          font-family: system-ui, sans-serif;
-          font-size: 11px;
-          max-width: 160px;
-        ">
-          <div style="font-weight: 600; color: #374151; margin-bottom: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;">Tipo de Crime</div>
-          ${Object.entries(CRIME_COLORS).map(([key, color]) => `
-            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
-              <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${color}; flex-shrink: 0;"></span>
-              <span style="color: #6b7280;">${CRIME_LABELS[key] || key}</span>
-            </div>
-          `).join("")}
-        </div>
-      `;
+      div.style.cssText = [
+        "background:white",
+        "border-radius:10px",
+        "padding:10px 12px",
+        "box-shadow:0 4px 20px rgba(0,0,0,0.12),0 1px 4px rgba(0,0,0,0.06)",
+        "font-family:system-ui,sans-serif",
+        "max-width:180px",
+        "border:1px solid #f3f4f6",
+      ].join(";");
+      div.innerHTML = buildLegendHTML();
+
+      // Wire collapse toggle after render
+      setTimeout(() => {
+        const btn = div.querySelector("#radar-legend-toggle") as HTMLButtonElement | null;
+        const content = div.querySelector("#radar-legend-content") as HTMLElement | null;
+        if (btn && content) {
+          btn.addEventListener("click", () => {
+            const collapsed = content.style.display === "none";
+            content.style.display = collapsed ? "" : "none";
+            btn.textContent = collapsed ? "−" : "+";
+          });
+        }
+      }, 0);
+
+      L.DomEvent.disableClickPropagation(div);
       return div;
     };
     legend.addTo(map);
@@ -230,9 +424,9 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
     };
   }, []);
 
-  // Reset view to Camaçari bounds when trigger changes
+  // Reset view to Camaçari
   useEffect(() => {
-    if (!mapRef.current || resetViewTrigger === undefined || resetViewTrigger === 0) return;
+    if (!mapRef.current || !resetViewTrigger) return;
     mapRef.current.fitBounds(CAMACARI_BOUNDS);
   }, [resetViewTrigger]);
 
@@ -240,13 +434,11 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Clear old markers
     if (markersRef.current) {
       mapRef.current.removeLayer(markersRef.current);
       markersRef.current = null;
     }
 
-    // Create marker cluster group
     const clusterGroup = (L as any).markerClusterGroup({
       chunkedLoading: true,
       maxClusterRadius: 20,
@@ -259,64 +451,57 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
 
     data.forEach((point) => {
       if (!point.latitude || !point.longitude) return;
-
       const lat = parseFloat(point.latitude);
       const lng = parseFloat(point.longitude);
       if (isNaN(lat) || isNaN(lng)) return;
 
       const crimeKey = point.tipoCrime || "outros";
       const color = CRIME_COLORS[crimeKey] || CRIME_COLORS.outros;
-      const crimeLabel = CRIME_LABELS[crimeKey] || CRIME_LABELS.outros;
+      const crimeLabel = CRIME_LABELS[crimeKey] || "Outros";
 
-      const icon = L.divIcon({
-        html: `<div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>`,
-        className: "",
-        iconSize: [12, 12],
-        iconAnchor: [6, 6],
-      });
-
-      const marker = L.marker([lat, lng], { icon, tipoCrime: crimeKey } as MarkerOptionsWithTipo);
+      const icon = createMarkerIcon(crimeKey, point.dataFato);
+      const marker = L.marker([lat, lng], { icon, tipoCrime: crimeKey, dataFato: point.dataFato } as MarkerOptionsWithTipo);
 
       const dateStr = point.dataFato
         ? new Date(point.dataFato).toLocaleDateString("pt-BR")
         : "";
-
-      const envolvidosCount = Array.isArray(point.envolvidos) ? point.envolvidos.length : 0;
       const resumoTruncado = point.resumoIA
         ? (point.resumoIA.length > 120 ? point.resumoIA.slice(0, 120) + "…" : point.resumoIA)
         : "";
+      const envolvidosCount = Array.isArray(point.envolvidos) ? point.envolvidos.length : 0;
+      const isJury = JURY_CRIMES.has(crimeKey);
+      const isVD = crimeKey === "violencia_domestica";
+      const headerBg = isJury ? "#14532d" : isVD ? "#78350f" : "#18181b";
+
+      const markerSymbol = isJury
+        ? `<div style="width:10px;height:10px;border-radius:50%;background:${color};border:1.5px solid rgba(255,255,255,0.5);"></div>`
+        : isVD
+          ? `<div style="width:8px;height:8px;background:${color};transform:rotate(45deg);border:1px solid rgba(255,255,255,0.5);"></div>`
+          : `<div style="width:8px;height:8px;border-radius:50%;background:${color};"></div>`;
 
       const popupHtml = `
-        <div style="max-width: 300px; font-family: system-ui, sans-serif;">
-          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${color}; flex-shrink: 0;"></span>
-            <span style="font-size: 11px; color: ${color}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">${crimeLabel}</span>
+        <div style="max-width:300px;font-family:system-ui,sans-serif;overflow:hidden;">
+          <div style="background:${headerBg};padding:8px 12px;margin:-1px -1px 0;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              ${markerSymbol}
+              <span style="font-size:10px;color:rgba(255,255,255,0.85);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">${crimeLabel}</span>
+            </div>
           </div>
-          <strong style="font-size: 13px; line-height: 1.4; display: block; margin-bottom: 6px; color: #111;">${point.titulo}</strong>
-          ${resumoTruncado ? `<p style="font-size:11px;color:#555;line-height:1.5;margin-bottom:6px;font-style:italic;">${resumoTruncado}</p>` : ""}
-          ${point.bairro ? `<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;"><span style="font-size:11px;color:#555;">&#128205; ${point.bairro}</span></div>` : ""}
-          ${dateStr ? `<div style="margin-bottom:2px;"><span style="font-size:11px;color:#888;">&#128197; ${dateStr}</span></div>` : ""}
-          ${point.armaMeio ? `<div style="margin-bottom:2px;"><span style="font-size:11px;color:#888;">&#128481; <em>${point.armaMeio}</em></span></div>` : ""}
-          ${envolvidosCount > 0 ? `<div style="margin-bottom:4px;"><span style="font-size:11px;color:#888;">&#128101; ${envolvidosCount} envolvido${envolvidosCount > 1 ? "s" : ""}</span></div>` : ""}
-          <button id="radar-popup-${point.id}" style="
-            margin-top: 8px;
-            width: 100%;
-            padding: 7px 12px;
-            background: #059669;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            letter-spacing: 0.02em;
-            transition: background 0.15s;
-          " onmouseover="this.style.background='#047857'" onmouseout="this.style.background='#059669'">Ver detalhes →</button>
+          <div style="padding:10px 12px;">
+            <strong style="font-size:13px;line-height:1.4;display:block;margin-bottom:6px;color:#111;">${point.titulo}</strong>
+            ${resumoTruncado ? `<p style="font-size:11px;color:#6b7280;line-height:1.5;margin-bottom:6px;font-style:italic;">${resumoTruncado}</p>` : ""}
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
+              ${point.bairro ? `<span style="font-size:11px;color:#6b7280;">📍 ${point.bairro}</span>` : ""}
+              ${dateStr ? `<span style="font-size:11px;color:#9ca3af;">📅 ${dateStr}</span>` : ""}
+            </div>
+            ${point.armaMeio ? `<div style="margin-bottom:4px;"><span style="font-size:11px;color:#9ca3af;">🔫 <em>${point.armaMeio}</em></span></div>` : ""}
+            ${envolvidosCount > 0 ? `<div style="margin-bottom:6px;"><span style="font-size:11px;color:#9ca3af;">👥 ${envolvidosCount} envolvido${envolvidosCount > 1 ? "s" : ""}</span></div>` : ""}
+            <button id="radar-popup-${point.id}" style="margin-top:4px;width:100%;padding:7px 12px;background:${color};color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:0.02em;">Ver detalhes →</button>
+          </div>
         </div>
       `;
 
-      marker.bindPopup(popupHtml);
-
+      marker.bindPopup(popupHtml, { maxWidth: 320 });
       marker.on("popupopen", () => {
         setTimeout(() => {
           const btn = document.getElementById(`radar-popup-${point.id}`);
@@ -333,11 +518,7 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
     });
 
     markersRef.current = clusterGroup;
-
-    // Only add markers if heatmap is not active
-    if (!showHeatmap) {
-      clusterGroup.addTo(mapRef.current);
-    }
+    if (!showHeatmap) clusterGroup.addTo(mapRef.current);
   }, [data, showHeatmap]);
 
   // Toggle heatmap layer
@@ -345,74 +526,69 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
     if (!mapRef.current) return;
 
     if (showHeatmap) {
-      // Hide markers
       if (markersRef.current) mapRef.current.removeLayer(markersRef.current);
-
-      // Hide crime legend — not meaningful in heatmap mode
       if (legendRef.current) legendRef.current.remove();
 
-      // Create heat layer
+      // Weighted heat points — higher weight = more intensity on map
       const heatPoints: [number, number, number][] = data
         .filter((p) => p.latitude && p.longitude)
-        .map((p) => [parseFloat(p.latitude!), parseFloat(p.longitude!), 1]);
+        .map((p) => {
+          const weight = CRIME_WEIGHTS[p.tipoCrime || "outros"] || 1;
+          return [parseFloat(p.latitude!), parseFloat(p.longitude!), weight];
+        });
 
       if (heatPoints.length > 0) {
         heatRef.current = (L as any).heatLayer(heatPoints, {
-          radius: 25,
-          blur: 15,
+          radius: 28,
+          blur: 18,
           maxZoom: 17,
+          max: 5,
+          minOpacity: 0.3,
+          gradient: { 0.0: "#3b82f6", 0.25: "#06b6d4", 0.5: "#22c55e", 0.75: "#f59e0b", 1.0: "#dc2626" },
         });
         heatRef.current!.addTo(mapRef.current);
       }
 
-      // Add heatmap gradient legend
       if (!heatLegendRef.current) {
-        const heatLegend = (L.control as any)({ position: "bottomleft" });
+        const heatLegend = (L.control as any)({ position: "bottomright" });
         heatLegend.onAdd = () => {
           const div = L.DomUtil.create("div");
+          div.style.cssText = [
+            "background:white",
+            "border-radius:10px",
+            "padding:10px 12px",
+            "box-shadow:0 4px 20px rgba(0,0,0,0.12),0 1px 4px rgba(0,0,0,0.06)",
+            "font-family:system-ui,sans-serif",
+            "min-width:155px",
+            "border:1px solid #f3f4f6",
+          ].join(";");
           div.innerHTML = `
-            <div style="
-              background: white;
-              border-radius: 8px;
-              padding: 10px 12px;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-              font-family: system-ui, sans-serif;
-              font-size: 11px;
-              min-width: 140px;
-            ">
-              <div style="font-weight: 600; color: #374151; margin-bottom: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;">Intensidade</div>
-              <div style="
-                height: 10px;
-                border-radius: 5px;
-                background: linear-gradient(to right, #3b82f6, #22c55e, #eab308, #f97316, #ef4444);
-                margin-bottom: 4px;
-              "></div>
-              <div style="display: flex; justify-content: space-between; color: #9ca3af; font-size: 10px;">
-                <span>Baixa</span>
-                <span>Alta</span>
-              </div>
+            <div style="font-weight:700;color:#111827;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Intensidade de Risco</div>
+            <div style="height:8px;border-radius:4px;background:linear-gradient(to right,#3b82f6,#06b6d4,#22c55e,#f59e0b,#dc2626);margin-bottom:4px;"></div>
+            <div style="display:flex;justify-content:space-between;color:#9ca3af;font-size:10px;margin-bottom:10px;"><span>Baixo</span><span>Alto</span></div>
+            <div style="border-top:1px solid #f3f4f6;padding-top:7px;">
+              <div style="font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px;">Peso por gravidade</div>
+              ${[
+                ["Homicídio / Feminicídio", "5×"],
+                ["Sexual", "4×"],
+                ["Tráfico / Roubo", "3×"],
+                ["VD / Lesão / EP", "2×"],
+                ["Demais", "1×"],
+              ].map(([label, w]) =>
+                `<div style="display:flex;justify-content:space-between;font-size:10px;color:#6b7280;margin-bottom:2px;"><span>${label}</span><span style="font-weight:600;">${w}</span></div>`
+              ).join("")}
             </div>
           `;
+          L.DomEvent.disableClickPropagation(div);
           return div;
         };
         heatLegend.addTo(mapRef.current);
         heatLegendRef.current = heatLegend;
       }
     } else {
-      // Remove heat layer
-      if (heatRef.current) {
-        mapRef.current.removeLayer(heatRef.current);
-        heatRef.current = null;
-      }
-      // Remove heatmap legend
-      if (heatLegendRef.current) {
-        heatLegendRef.current.remove();
-        heatLegendRef.current = null;
-      }
-      // Show markers
+      if (heatRef.current) { mapRef.current.removeLayer(heatRef.current); heatRef.current = null; }
+      if (heatLegendRef.current) { heatLegendRef.current.remove(); heatLegendRef.current = null; }
       if (markersRef.current) markersRef.current.addTo(mapRef.current);
-
-      // Restore crime legend
       if (legendRef.current) legendRef.current.addTo(mapRef.current);
     }
   }, [showHeatmap, data]);

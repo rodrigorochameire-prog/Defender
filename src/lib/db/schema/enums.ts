@@ -471,6 +471,7 @@ export const patternTypeEnum = pgEnum("pattern_type", [
 export const tipoCrimeRadarEnum = pgEnum("tipo_crime_radar", [
   "homicidio",
   "tentativa_homicidio",
+  "feminicidio",
   "trafico",
   "roubo",
   "furto",
@@ -479,6 +480,7 @@ export const tipoCrimeRadarEnum = pgEnum("tipo_crime_radar", [
   "lesao_corporal",
   "porte_arma",
   "estelionato",
+  "execucao_penal",
   "outros",
 ]);
 

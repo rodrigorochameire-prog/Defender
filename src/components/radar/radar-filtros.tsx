@@ -25,16 +25,18 @@ import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
 
 const CRIME_TYPES = [
-  { value: "homicidio", label: "Homicídio", color: "bg-red-500" },
-  { value: "tentativa_homicidio", label: "Tentativa", color: "bg-orange-500" },
-  { value: "trafico", label: "Tráfico", color: "bg-purple-500" },
-  { value: "roubo", label: "Roubo", color: "bg-blue-500" },
-  { value: "furto", label: "Furto", color: "bg-yellow-500" },
-  { value: "violencia_domestica", label: "V. Doméstica", color: "bg-pink-500" },
-  { value: "sexual", label: "Sexual", color: "bg-fuchsia-500" },
-  { value: "lesao_corporal", label: "Lesão Corp.", color: "bg-amber-500" },
-  { value: "porte_arma", label: "Porte Arma", color: "bg-slate-500" },
-  { value: "estelionato", label: "Estelionato", color: "bg-teal-500" },
+  { value: "homicidio", label: "Homicídio", color: "bg-green-700" },
+  { value: "tentativa_homicidio", label: "Tentativa", color: "bg-green-700" },
+  { value: "feminicidio", label: "Feminicídio", color: "bg-green-700" },
+  { value: "trafico", label: "Tráfico", color: "bg-red-600" },
+  { value: "roubo", label: "Roubo", color: "bg-orange-700" },
+  { value: "violencia_domestica", label: "V. Doméstica", color: "bg-amber-700" },
+  { value: "sexual", label: "Sexual", color: "bg-purple-600" },
+  { value: "lesao_corporal", label: "Lesão Corp.", color: "bg-rose-700" },
+  { value: "furto", label: "Furto", color: "bg-orange-500" },
+  { value: "porte_arma", label: "Porte Arma", color: "bg-pink-600" },
+  { value: "estelionato", label: "Estelionato", color: "bg-fuchsia-700" },
+  { value: "execucao_penal", label: "Exec. Penal", color: "bg-blue-700" },
   { value: "outros", label: "Outros", color: "bg-zinc-500" },
 ] as const;
 
@@ -48,16 +50,18 @@ export function getCrimeLabel(tipo: string | null | undefined): string {
 
 export function getCrimeBadgeColor(tipo: string | null | undefined): string {
   const colors: Record<string, string> = {
-    homicidio: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-    tentativa_homicidio: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-    trafico: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-    roubo: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    furto: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-    violencia_domestica: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
-    sexual: "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-400",
-    lesao_corporal: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    porte_arma: "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400",
-    estelionato: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
+    homicidio: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+    tentativa_homicidio: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+    feminicidio: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+    trafico: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    roubo: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+    violencia_domestica: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+    sexual: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    lesao_corporal: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+    furto: "bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-300",
+    porte_arma: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
+    estelionato: "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-400",
+    execucao_penal: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
     outros: "bg-zinc-100 text-zinc-700 dark:bg-zinc-900/30 dark:text-zinc-400",
   };
   return colors[tipo || ""] || colors.outros;
