@@ -45,6 +45,7 @@ import {
   Link2Off,
   Scale,
   BarChart3,
+  MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAssignment } from "@/contexts/assignment-context";
@@ -74,6 +75,7 @@ import { AssistidoCard } from "./_components/assistido-card";
 import { AssistidoTableView } from "./_components/assistido-table-view";
 import { ProcessingQueuePanel } from "@/components/drive/ProcessingQueuePanel";
 import { useProcessingQueue } from "@/contexts/processing-queue";
+import { useComarcaVisibilidade } from "@/hooks/use-comarca-visibilidade";
 
 // ========================================
 // HELPERS
@@ -389,8 +391,11 @@ export default function AssistidosPage() {
   // Search input ref for keyboard shortcut
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Toggle Ver RMS (Região Metropolitana de Salvador)
+  const { verRMS, toggle: toggleVerRMS } = useComarcaVisibilidade();
+
   // Buscar assistidos do banco de dados (com fallback offline)
-  const assistidosQuery = trpc.assistidos.list.useQuery();
+  const assistidosQuery = trpc.assistidos.list.useQuery({ verRMS });
   const { data: assistidosData, isLoading } = useOfflineQuery(
     assistidosQuery,
     getOfflineAssistidos,
@@ -453,6 +458,7 @@ export default function AssistidosPage() {
         bairro: "",
         cidade: "Camacari",
         comarcas: comarcasStr ? comarcasStr.split(',').filter(Boolean) : [],
+        comarcaNome: (a as any).comarcaNome || null,
         scoreComplexidade: ((a as any).processosCount || 0) * 10 +
           ((a as any).demandasAbertasCount || 0) * 5 +
           (["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(a.statusPrisional || "") ? 20 : 0),
@@ -1349,6 +1355,21 @@ export default function AssistidosPage() {
           </div>
           {/* Row 2: Atribuição chips + filtros rápidos */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 overflow-x-auto scrollbar-none">
+            {/* Toggle Ver RMS */}
+            <button
+              onClick={() => toggleVerRMS(!verRMS)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium border transition-colors shrink-0",
+                verRMS
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-400"
+                  : "border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400"
+              )}
+              title={verRMS ? "Exibindo toda a RMS — clique para mostrar só Camaçari" : "Mostrar toda a Região Metropolitana de Salvador"}
+            >
+              <MapPin className="h-3.5 w-3.5" />
+              {verRMS ? "RMS" : "Comarca"}
+            </button>
+            <div className="w-px h-3.5 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />
             <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium shrink-0">Atrib.</span>
             {ATRIBUICAO_OPTIONS.filter(o => o.value !== "all").map((option) => {
               const isActive = atribuicaoFilter === option.value;

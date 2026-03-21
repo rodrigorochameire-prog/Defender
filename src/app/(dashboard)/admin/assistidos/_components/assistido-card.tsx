@@ -151,6 +151,12 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
                 <span className="text-[10px] text-rose-400 font-mono tabular-nums">{tempoPreso}</span>
               )}
               {idade && <span className="text-[10px] text-zinc-400">{idade}a</span>}
+              {assistido.comarcaNome && assistido.comarcaNome !== "Camaçari" && (
+                <span className="inline-flex items-center gap-0.5 text-[10px] text-zinc-400 dark:text-zinc-500">
+                  <MapPin className="w-2.5 h-2.5" />
+                  {assistido.comarcaNome}
+                </span>
+              )}
               {prazoVencido && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 animate-pulse">
                   <AlertCircle className="w-2.5 h-2.5" />

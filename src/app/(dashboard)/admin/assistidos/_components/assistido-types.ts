@@ -34,6 +34,7 @@ export interface AssistidoUI {
   proximaAudiencia: string | null;
   // Novos campos
   comarcas?: string[];
+  comarcaNome?: string | null;
   scoreComplexidade?: number;
   ultimoEvento?: { tipo: string; data: string; titulo: string } | null;
   atoProximoPrazo?: string;
