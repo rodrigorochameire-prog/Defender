@@ -35,6 +35,7 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
+  Upload,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -263,6 +264,21 @@ export default function WhatsAppChatPage() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">Atualizar lista</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href="/admin/whatsapp/importar">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    >
+                      <Upload className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Importar histórico</TooltipContent>
               </Tooltip>
 
               <Tooltip>
