@@ -1150,7 +1150,7 @@ export const vvdRouter = router({
       or(
         isNotNull(processosVVD.agressorResidenciaLat),
         isNotNull(processosVVD.agressorTrabalhoLat),
-        // processos.localDoFatoLat verificado via join (tratado no map abaixo)
+        isNotNull(processos.localDoFatoLat), // casos com apenas local do fato
       ),
     ];
 

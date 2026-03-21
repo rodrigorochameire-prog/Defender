@@ -219,6 +219,7 @@ export const processosVVD = pgTable("processos_vvd", {
   index("processos_vvd_tipo_relato_idx").on(table.tipoRelato),
   index("processos_vvd_tem_acao_familia_idx").on(table.temAcaoFamilia),
   index("processos_vvd_data_fato_idx").on(table.dataFato),
+  index("processos_vvd_agressor_residencia_geo_idx").on(table.agressorResidenciaLat, table.agressorResidenciaLng),
 ]);
 
 export type ProcessoVVD = typeof processosVVD.$inferSelect;

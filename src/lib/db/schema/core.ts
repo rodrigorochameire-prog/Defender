@@ -212,6 +212,7 @@ export const processos = pgTable("processos", {
   index("processos_deleted_at_idx").on(table.deletedAt),
   index("processos_caso_id_idx").on(table.casoId),
   index("processos_analysis_status_idx").on(table.analysisStatus),
+  index("processos_local_fato_geo_idx").on(table.localDoFatoLat, table.localDoFatoLng),
 ]);
 
 export type Processo = typeof processos.$inferSelect;

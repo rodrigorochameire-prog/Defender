@@ -28,7 +28,7 @@ const ATRIBUICAO_COLORS: Record<string, string> = {
   JURI_CAMACARI: "#16a34a",
   GRUPO_JURI: "#ea580c",
   VVD_CAMACARI: "#d97706",
-  EP: "#2563eb",
+  EXECUCAO_PENAL: "#2563eb",
   SUBSTITUICAO: "#e11d48",
   SUBSTITUICAO_CIVEL: "#7c3aed",
 };
@@ -37,7 +37,7 @@ const ATRIBUICAO_LABELS: Record<string, string> = {
   JURI_CAMACARI: "Tribunal do Júri",
   GRUPO_JURI: "Grupo Especial do Júri",
   VVD_CAMACARI: "Violência Doméstica",
-  EP: "Execução Penal",
+  EXECUCAO_PENAL: "Execução Penal",
   SUBSTITUICAO: "Substituição Criminal",
   SUBSTITUICAO_CIVEL: "Cível/Curadoria",
 };
@@ -106,7 +106,6 @@ interface ProcessoMapPoint {
 
 interface Props {
   processos: ProcessoMapPoint[];
-  atribuicoesVisiveis: string[];
   showProcessos: boolean;
 }
 
