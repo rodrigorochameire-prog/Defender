@@ -91,6 +91,11 @@ const contactFilterSchema = z.object({
   offset: z.number().min(0).optional(),
 });
 
+const importHistorySchema = z.object({
+  configId: z.number(),
+  jsonContent: z.string().min(1),
+});
+
 // =============================================================================
 // ROUTER
 // =============================================================================
@@ -2221,5 +2226,143 @@ export const whatsappChatRouter = router({
       });
 
       return { success: true };
+    }),
+
+  importHistory: protectedProcedure
+    .input(importHistorySchema)
+    .mutation(async ({ input }) => {
+      const { configId, jsonContent } = input;
+
+      const [config] = await db
+        .select()
+        .from(evolutionConfig)
+        .where(eq(evolutionConfig.id, configId))
+        .limit(1);
+
+      if (!config) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Instância não encontrada" });
+      }
+
+      let parsed: {
+        chats: Array<{
+          phone: string;
+          name: string;
+          messages: Array<{
+            id: string;
+            timestamp: string;
+            fromMe: boolean;
+            type: string;
+            content: string | null;
+            hasMedia: boolean;
+          }>;
+        }>;
+      };
+
+      try {
+        parsed = JSON.parse(jsonContent);
+      } catch {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "JSON inválido" });
+      }
+
+      if (!parsed.chats || !Array.isArray(parsed.chats)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Formato inválido: campo 'chats' não encontrado" });
+      }
+
+      let contactsCreated = 0;
+      let contactsUpdated = 0;
+      let messagesImported = 0;
+      let messagesSkipped = 0;
+
+      for (const chat of parsed.chats) {
+        if (!chat.phone || !Array.isArray(chat.messages) || chat.messages.length === 0) {
+          continue;
+        }
+
+        const phone = chat.phone.replace(/\D/g, "");
+        if (phone.length < 8) continue;
+
+        const lastMsg = chat.messages[chat.messages.length - 1];
+        const lastMessageAt = lastMsg?.timestamp ? new Date(lastMsg.timestamp) : null;
+
+        const [existing] = await db
+          .select({ id: whatsappContacts.id })
+          .from(whatsappContacts)
+          .where(and(
+            eq(whatsappContacts.configId, configId),
+            eq(whatsappContacts.phone, phone)
+          ))
+          .limit(1);
+
+        let contactId: number;
+
+        if (existing) {
+          await db
+            .update(whatsappContacts)
+            .set({
+              ...(chat.name ? { pushName: chat.name } : {}),
+              ...(lastMessageAt ? { lastMessageAt } : {}),
+              updatedAt: new Date(),
+            })
+            .where(eq(whatsappContacts.id, existing.id));
+          contactId = existing.id;
+          contactsUpdated++;
+        } else {
+          const [created] = await db
+            .insert(whatsappContacts)
+            .values({
+              configId,
+              phone,
+              pushName: chat.name || null,
+              lastMessageAt,
+              unreadCount: 0,
+            })
+            .returning({ id: whatsappContacts.id });
+          contactId = created.id;
+          contactsCreated++;
+        }
+
+        for (const msg of chat.messages) {
+          const waMessageId = `ios_import_${msg.id}`;
+
+          const [dup] = await db
+            .select({ id: whatsappChatMessages.id })
+            .from(whatsappChatMessages)
+            .where(eq(whatsappChatMessages.waMessageId, waMessageId))
+            .limit(1);
+
+          if (dup) {
+            messagesSkipped++;
+            continue;
+          }
+
+          const validTypes = ["text","image","audio","video","document","contact","location","sticker"] as const;
+          const msgType = validTypes.includes(msg.type as typeof validTypes[number])
+            ? (msg.type as typeof validTypes[number])
+            : "text";
+
+          await db.insert(whatsappChatMessages).values({
+            contactId,
+            waMessageId,
+            direction: msg.fromMe ? "outbound" : "inbound",
+            type: msgType,
+            content: msg.content || (msg.hasMedia ? `[${msgType}]` : null),
+            status: msg.fromMe ? "sent" : "received",
+            imported: true,
+            importedAt: new Date(),
+            metadata: { importedFrom: "ios_backup", originalTimestamp: msg.timestamp },
+            createdAt: new Date(msg.timestamp),
+          });
+
+          messagesImported++;
+        }
+      }
+
+      return {
+        contactsCreated,
+        contactsUpdated,
+        messagesImported,
+        messagesSkipped,
+        total: parsed.chats.length,
+      };
     }),
 });
