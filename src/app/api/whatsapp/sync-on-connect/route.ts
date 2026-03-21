@@ -53,29 +53,46 @@ export async function POST(request: NextRequest) {
       instanceName: config.instanceName,
     });
 
-    // Fetch contacts from Evolution API
-    const contacts = await client.findContacts();
-    console.log(`[Sync] Fetched ${contacts.length} contacts from Evolution API`);
+    // Fetch chats (conversations) and contacts (names/pics) from Evolution API
+    const [chats, contacts] = await Promise.all([
+      client.findChats().catch(() => []),
+      client.findContacts().catch(() => []),
+    ]);
+    console.log(`[Sync] Fetched ${chats.length} chats and ${contacts.length} contacts from Evolution API`);
+
+    // Build a map of phone -> contact info for quick lookup
+    const contactMap = new Map<string, { pushName?: string; profilePictureUrl?: string | null }>();
+    for (const c of contacts) {
+      if (c.id && c.id.endsWith("@s.whatsapp.net")) {
+        const phone = extractPhoneFromJid(c.id);
+        if (phone) contactMap.set(phone, { pushName: c.pushName, profilePictureUrl: c.profilePictureUrl });
+      }
+    }
 
     let created = 0;
     let updated = 0;
     let skipped = 0;
 
-    for (const contact of contacts) {
+    for (const chat of chats) {
       try {
-        // Skip group JIDs and status broadcast
-        if (!contact.id || contact.id.endsWith("@g.us") || contact.id === "status@broadcast") {
+        const jid = chat.remoteJid || chat.id;
+
+        // Skip group JIDs, status broadcast and invalid entries
+        if (!jid || jid.endsWith("@g.us") || jid === "status@broadcast" || jid.includes("-")) {
           skipped++;
           continue;
         }
 
-        const phone = extractPhoneFromJid(contact.id);
+        const phone = extractPhoneFromJid(jid);
 
         // Skip invalid phone numbers
         if (!phone || phone.length < 8) {
           skipped++;
           continue;
         }
+
+        const contactInfo = contactMap.get(phone);
+        const lastMessageAt = chat.lastMsgTimestamp ? new Date(chat.lastMsgTimestamp * 1000) : null;
 
         // Check if contact already exists
         const [existing] = await db
@@ -90,32 +107,30 @@ export async function POST(request: NextRequest) {
           .limit(1);
 
         if (existing) {
-          // Update pushName if changed
-          if (contact.pushName) {
-            await db
-              .update(whatsappContacts)
-              .set({
-                pushName: contact.pushName,
-                profilePicUrl: contact.profilePictureUrl || undefined,
-                updatedAt: new Date(),
-              })
-              .where(eq(whatsappContacts.id, existing.id));
-            updated++;
-          } else {
-            skipped++;
-          }
+          await db
+            .update(whatsappContacts)
+            .set({
+              ...(contactInfo?.pushName ? { pushName: contactInfo.pushName } : {}),
+              ...(contactInfo?.profilePictureUrl ? { profilePicUrl: contactInfo.profilePictureUrl } : {}),
+              ...(lastMessageAt ? { lastMessageAt } : {}),
+              ...(chat.unreadCount !== undefined ? { unreadCount: chat.unreadCount } : {}),
+              updatedAt: new Date(),
+            })
+            .where(eq(whatsappContacts.id, existing.id));
+          updated++;
         } else {
-          // Create new contact
           await db.insert(whatsappContacts).values({
             configId,
             phone,
-            pushName: contact.pushName || null,
-            profilePicUrl: contact.profilePictureUrl || null,
+            pushName: contactInfo?.pushName || chat.name || null,
+            profilePicUrl: contactInfo?.profilePictureUrl || null,
+            lastMessageAt,
+            unreadCount: chat.unreadCount ?? 0,
           });
           created++;
         }
       } catch (contactError) {
-        console.warn(`[Sync] Error processing contact ${contact.id}:`, contactError);
+        console.warn(`[Sync] Error processing chat ${chat.id}:`, contactError);
         skipped++;
       }
     }
@@ -125,14 +140,14 @@ export async function POST(request: NextRequest) {
       .update(evolutionConfig)
       .set({
         lastSyncAt: new Date(),
-        lastSyncContactsCount: contacts.length,
+        lastSyncContactsCount: chats.length,
         updatedAt: new Date(),
       })
       .where(eq(evolutionConfig.id, configId));
 
     const result = {
       status: "ok",
-      total: contacts.length,
+      total: chats.length,
       created,
       updated,
       skipped,

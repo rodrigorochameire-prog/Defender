@@ -1024,85 +1024,96 @@ export const whatsappChatRouter = router({
         instanceName: config.instanceName,
       });
 
-      // Busca contatos da Evolution API
-      const contacts = await client.findContacts().catch(() => []);
+      // Busca chats (conversas reais) e contatos (nomes/fotos) da Evolution API
+      const [chats, contacts] = await Promise.all([
+        client.findChats().catch(() => []),
+        client.findContacts().catch(() => []),
+      ]);
+
+      // Mapa phone -> info do contato (nome/foto)
+      const contactMap = new Map<string, { pushName?: string; profilePictureUrl?: string | null }>();
+      for (const c of contacts) {
+        if (c.id && c.id.endsWith("@s.whatsapp.net")) {
+          const phone = c.id.replace("@s.whatsapp.net", "");
+          contactMap.set(phone, { pushName: c.pushName, profilePictureUrl: c.profilePictureUrl });
+        }
+      }
+
+      // Filtra apenas chats individuais (não grupos)
+      const individualChats = chats.filter(c => {
+        const jid = c.remoteJid || c.id;
+        return jid && jid.endsWith("@s.whatsapp.net") && !jid.includes("-") && jid !== "status@broadcast";
+      });
 
       // Busca contatos existentes no banco
       const existingContacts = await db
-        .select()
+        .select({ id: whatsappContacts.id, phone: whatsappContacts.phone })
         .from(whatsappContacts)
         .where(eq(whatsappContacts.configId, input.configId));
 
-      const existingPhones = new Set(existingContacts.map(c => c.phone));
+      const existingPhones = new Map(existingContacts.map(c => [c.phone, c.id]));
 
-      // Filtra apenas contatos individuais (não grupos)
-      // id para individuais: 5571999999999@s.whatsapp.net
-      // id para grupos: 557199999999-123456789@g.us
-      const individualContacts = contacts.filter(c =>
-        c.id &&
-        c.id.endsWith("@s.whatsapp.net") &&
-        !c.id.includes("-")
-      );
+      // Separa inserções e atualizações
+      const toInsert: typeof whatsappContacts.$inferInsert[] = [];
+      const toUpdate: Array<{ id: number; phone: string; pushName?: string; profilePicUrl?: string | null; lastMessageAt?: Date; unreadCount?: number }> = [];
 
-      // Prepara contatos para inserção
-      const contactsToInsert = [];
-      const contactsToUpdate = [];
+      for (const chat of individualChats) {
+        const jid = chat.remoteJid || chat.id;
+        const phone = jid.replace("@s.whatsapp.net", "");
+        const contactInfo = contactMap.get(phone);
+        const lastMessageAt = chat.lastMsgTimestamp ? new Date(chat.lastMsgTimestamp * 1000) : undefined;
+        const existingId = existingPhones.get(phone);
 
-      for (const contact of individualContacts) {
-        const phone = contact.id.replace("@s.whatsapp.net", "");
-
-        if (existingPhones.has(phone)) {
-          // Atualiza contato existente
-          contactsToUpdate.push({
+        if (existingId) {
+          toUpdate.push({
+            id: existingId,
             phone,
-            pushName: contact.pushName,
-            profilePicUrl: contact.profilePictureUrl,
+            pushName: contactInfo?.pushName,
+            profilePicUrl: contactInfo?.profilePictureUrl,
+            lastMessageAt,
+            unreadCount: chat.unreadCount,
           });
         } else {
-          // Novo contato
-          contactsToInsert.push({
+          toInsert.push({
             configId: input.configId,
             phone,
-            pushName: contact.pushName,
-            profilePicUrl: contact.profilePictureUrl,
+            pushName: contactInfo?.pushName || chat.name || null,
+            profilePicUrl: contactInfo?.profilePictureUrl || null,
+            lastMessageAt: lastMessageAt || null,
+            unreadCount: chat.unreadCount ?? 0,
           });
         }
       }
 
       // Insere novos contatos em lotes
       let insertedCount = 0;
-      if (contactsToInsert.length > 0) {
+      if (toInsert.length > 0) {
         const batchSize = 100;
-        for (let i = 0; i < contactsToInsert.length; i += batchSize) {
-          const batch = contactsToInsert.slice(i, i + batchSize);
+        for (let i = 0; i < toInsert.length; i += batchSize) {
+          const batch = toInsert.slice(i, i + batchSize);
           await db.insert(whatsappContacts).values(batch);
           insertedCount += batch.length;
         }
       }
 
-      // Atualiza contatos existentes — parallel batches instead of sequential
+      // Atualiza contatos existentes em lotes paralelos
       let updatedCount = 0;
-      if (contactsToUpdate.length > 0) {
+      if (toUpdate.length > 0) {
         const updateBatchSize = 50;
-        for (let i = 0; i < contactsToUpdate.length; i += updateBatchSize) {
-          const batch = contactsToUpdate.slice(i, i + updateBatchSize);
+        for (let i = 0; i < toUpdate.length; i += updateBatchSize) {
+          const batch = toUpdate.slice(i, i + updateBatchSize);
           await Promise.all(
             batch.map((update) => {
-              const updateData: Record<string, unknown> = {
-                updatedAt: new Date(),
-              };
+              const updateData: Record<string, unknown> = { updatedAt: new Date() };
               if (update.pushName) updateData.pushName = update.pushName;
               if (update.profilePicUrl) updateData.profilePicUrl = update.profilePicUrl;
+              if (update.lastMessageAt) updateData.lastMessageAt = update.lastMessageAt;
+              if (update.unreadCount !== undefined) updateData.unreadCount = update.unreadCount;
 
               return db
                 .update(whatsappContacts)
                 .set(updateData)
-                .where(
-                  and(
-                    eq(whatsappContacts.configId, input.configId),
-                    eq(whatsappContacts.phone, update.phone)
-                  )
-                );
+                .where(eq(whatsappContacts.id, update.id));
             })
           );
           updatedCount += batch.length;
@@ -1113,7 +1124,7 @@ export const whatsappChatRouter = router({
         success: true,
         inserted: insertedCount,
         updated: updatedCount,
-        total: individualContacts.length,
+        total: individualChats.length,
       };
     }),
 
