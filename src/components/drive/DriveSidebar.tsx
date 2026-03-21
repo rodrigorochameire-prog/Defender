@@ -78,12 +78,12 @@ function getFavorites(): FavoriteItem[] {
 
 function getAttrActiveBgLight(color: string) {
   switch (color) {
-    case "emerald": return "bg-emerald-50/60 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400";
-    case "rose": return "bg-rose-50/60 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400";
-    case "amber": return "bg-amber-50/60 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400";
-    case "sky": return "bg-sky-50/60 dark:bg-sky-500/10 text-sky-700 dark:text-sky-400";
-    case "orange": return "bg-orange-50/60 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400";
-    default: return "bg-emerald-50/60 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400";
+    case "emerald": return "bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300";
+    case "rose": return "bg-rose-100/80 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300";
+    case "amber": return "bg-amber-100/80 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300";
+    case "sky": return "bg-sky-100/80 dark:bg-sky-500/15 text-sky-700 dark:text-sky-300";
+    case "orange": return "bg-orange-100/80 dark:bg-orange-500/15 text-orange-700 dark:text-orange-300";
+    default: return "bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300";
   }
 }
 
@@ -358,7 +358,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700/50 scrollbar-track-transparent">
-      <div className="px-2 pb-4 pt-1.5">
+      <div className="px-2 pb-4 pt-2">
         {/* --- ATRIBUICOES --- */}
         <button
           onClick={() => toggleSection("atribuicoes")}
@@ -372,7 +372,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           )} />
         </button>
         <div className={cn(
-          "space-y-px overflow-hidden transition-all duration-200",
+          "space-y-px overflow-hidden transition-all duration-300 ease-in-out",
           collapsedSections.has("atribuicoes") ? "max-h-0 opacity-0" : "max-h-[2000px] opacity-100"
         )}>
           {DRIVE_ATRIBUICOES.map((attr) => {
@@ -397,7 +397,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                     )}
                   >
                     {isActive && (
-                      <div className={cn("absolute left-0 top-1 bottom-1 w-[2px] rounded-full", getAttrLeftBarColor(attr.color))} />
+                      <div className={cn("absolute left-0 top-0.5 bottom-0.5 w-[3px] rounded-full", getAttrLeftBarColor(attr.color))} />
                     )}
                     <Icon className={cn(
                       "h-3 w-3 mr-1.5 transition-all duration-200 shrink-0",
@@ -430,7 +430,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                 </div>
 
                 <div className={cn(
-                  "overflow-hidden transition-all duration-200",
+                  "overflow-hidden transition-all duration-300 ease-in-out",
                   isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
                 )}>
                   {isExpanded && (
@@ -462,7 +462,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           )} />
         </button>
         <div className={cn(
-          "space-y-px overflow-hidden transition-all duration-200",
+          "space-y-px overflow-hidden transition-all duration-300 ease-in-out",
           collapsedSections.has("especiais") ? "max-h-0 opacity-0" : "max-h-[1000px] opacity-100"
         )}>
           {SPECIAL_FOLDERS.map((sf) => {
@@ -479,12 +479,12 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                 className={cn(
                   "w-full h-7 transition-all duration-200 rounded-md flex items-center px-2 group/item relative",
                   isActive
-                    ? "bg-emerald-50/60 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold"
+                    ? "bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-semibold"
                     : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/40"
                 )}
               >
                 {isActive && (
-                  <div className="absolute left-0 top-1 bottom-1 w-[2px] rounded-full bg-emerald-500" />
+                  <div className="absolute left-0 top-0.5 bottom-0.5 w-[3px] rounded-full bg-emerald-500" />
                 )}
                 <Icon className={cn(
                   "h-3 w-3 mr-1.5 transition-all duration-200 shrink-0",
@@ -520,7 +520,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           )} />
         </button>
         <div className={cn(
-          "space-y-0.5 overflow-hidden transition-all duration-200",
+          "space-y-0.5 overflow-hidden transition-all duration-300 ease-in-out",
           collapsedSections.has("acesso-rapido") ? "max-h-0 opacity-0" : "max-h-[1000px] opacity-100"
         )}>
           {recents.length === 0 ? (

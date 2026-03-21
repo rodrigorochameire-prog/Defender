@@ -1907,6 +1907,18 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
 
       {/* ─── Scrollable Content ─── */}
       <div className="flex-1 overflow-y-auto">
+        {/* Actions Row — above preview for quick access */}
+        <div className="px-4 pt-3 pb-2 flex items-center justify-between border-b border-zinc-200/50 dark:border-zinc-800/50">
+          <ActionRow
+            file={file}
+            isFavorited={isFavorited}
+            onToggleFavorite={handleToggleFavorite}
+            onStartRename={() => setIsRenaming(true)}
+            onTranscribe={isAudioVideo ? handleTranscribe : undefined}
+            isTranscribing={transcribeMutation.isPending}
+          />
+        </div>
+
         {/* Preview */}
         <div className="p-4">
           <FilePreview file={file} />
@@ -1977,18 +1989,6 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
               </Button>
             </div>
           )}
-        </div>
-
-        {/* Actions Row */}
-        <div className="px-4 pb-3 flex items-center justify-center border-b border-zinc-200/50 dark:border-zinc-800/50">
-          <ActionRow
-            file={file}
-            isFavorited={isFavorited}
-            onToggleFavorite={handleToggleFavorite}
-            onStartRename={() => setIsRenaming(true)}
-            onTranscribe={isAudioVideo ? handleTranscribe : undefined}
-            isTranscribing={transcribeMutation.isPending}
-          />
         </div>
 
         {/* Collapsible Sections */}
@@ -2124,10 +2124,25 @@ export function DriveDetailPanel() {
           className="w-full sm:w-[480px] md:w-[560px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 p-0"
         >
           <SheetTitle className="sr-only">Detalhes do arquivo</SheetTitle>
+          {/* Header skeleton */}
+          <div className="flex items-center gap-2 h-12 px-4 border-b border-zinc-200 dark:border-zinc-800">
+            <Skeleton className="h-4 flex-1 bg-zinc-200 dark:bg-zinc-800 rounded" />
+            <Skeleton className="h-7 w-7 bg-zinc-200 dark:bg-zinc-800 rounded" />
+          </div>
+          {/* Actions skeleton */}
+          <div className="px-4 pt-3 pb-2 border-b border-zinc-200/50 dark:border-zinc-800/50 flex gap-2">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-8 w-8 bg-zinc-200 dark:bg-zinc-800 rounded" />
+            ))}
+          </div>
+          {/* Preview skeleton */}
           <div className="p-4 space-y-3">
-            <Skeleton className="aspect-video w-full bg-zinc-200 dark:bg-zinc-800 rounded-lg" />
-            <Skeleton className="h-8 w-full bg-zinc-200 dark:bg-zinc-800" />
-            <Skeleton className="h-20 w-full bg-zinc-200 dark:bg-zinc-800" />
+            <Skeleton className="h-[300px] w-full bg-zinc-200 dark:bg-zinc-800 rounded-lg" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-3/4 bg-zinc-200 dark:bg-zinc-800 rounded" />
+              <Skeleton className="h-4 w-1/2 bg-zinc-200 dark:bg-zinc-800 rounded" />
+            </div>
+            <Skeleton className="h-20 w-full bg-zinc-200 dark:bg-zinc-800 rounded" />
           </div>
         </SheetContent>
       </Sheet>
