@@ -361,12 +361,27 @@ function InlineBreadcrumbs({ fileCount }: { fileCount?: number }) {
       {/* Path segments */}
       {ctx.breadcrumbPath.map((segment, index) => {
         const isLast = index === ctx.breadcrumbPath.length - 1;
+        const isDeep = ctx.breadcrumbPath.length > 3 && index < ctx.breadcrumbPath.length - 2 && index > 0;
+        if (isDeep) return null;
+        // Show ellipsis when path is deep and this is the first hidden segment's position
+        const showEllipsis = ctx.breadcrumbPath.length > 3 && index === 1 && !isLast;
+        if (showEllipsis) {
+          return (
+            <div key={segment.id} className="flex items-center gap-0.5 shrink-0">
+              <span className="text-[12px] text-zinc-400 dark:text-zinc-600 px-0.5">...</span>
+              <ChevronRight className="h-3 w-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
+            </div>
+          );
+        }
         return (
-          <div key={segment.id} className="flex items-center gap-0.5 shrink-0 min-w-0">
+          <div
+            key={segment.id}
+            className="flex items-center gap-0.5 shrink-0 min-w-0 animate-in fade-in duration-200"
+          >
             <button
               onClick={() => { if (!isLast) ctx.navigateToBreadcrumb(index); }}
               className={cn(
-                "text-[12px] transition-colors max-w-[160px] truncate",
+                "text-[12px] transition-colors duration-150 max-w-[160px] truncate",
                 isLast
                   ? "text-zinc-800 dark:text-zinc-200 font-medium cursor-default"
                   : "text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 cursor-pointer"
