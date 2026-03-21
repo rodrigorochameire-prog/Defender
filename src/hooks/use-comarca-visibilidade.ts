@@ -9,6 +9,7 @@ export function useComarcaVisibilidade() {
     onSuccess: () => {
       utils.settings.getComarcaVisibilidade.invalidate();
       utils.assistidos.list.invalidate();
+      utils.processos.list.invalidate();
     },
   });
 
