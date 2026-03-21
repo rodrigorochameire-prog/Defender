@@ -55,9 +55,9 @@ def find_whatsapp_db(backup_dir: Path) -> Path:
         "Certifique-se que o backup foi feito sem criptografia no Finder."
     )
 
-def apple_timestamp_to_iso(ts) -> str:
+def apple_timestamp_to_iso(ts):
     if not ts:
-        return datetime.now(timezone.utc).isoformat()
+        return None
     unix_ts = float(ts) + APPLE_EPOCH_OFFSET
     return datetime.fromtimestamp(unix_ts, tz=timezone.utc).isoformat()
 
@@ -66,6 +66,7 @@ def extract_contacts_and_messages(db_path: Path) -> dict:
         tmp_path = tmp.name
     shutil.copy2(db_path, tmp_path)
 
+    conn = None
     try:
         conn = sqlite3.connect(tmp_path)
         conn.row_factory = sqlite3.Row
@@ -112,7 +113,7 @@ def extract_contacts_and_messages(db_path: Path) -> dict:
 
             chat_messages = []
             for msg in messages:
-                msg_type = MESSAGE_TYPES.get(msg["ZMESSAGETYPE"], "text")
+                msg_type = MESSAGE_TYPES.get(msg["ZMESSAGETYPE"], "unknown")
                 from_me = bool(msg["ZISFROMME"]) or msg["ZFROMJID"] is None
                 chat_messages.append({
                     "id": str(msg["Z_PK"]),
@@ -130,24 +131,30 @@ def extract_contacts_and_messages(db_path: Path) -> dict:
                 "messages": chat_messages,
             })
 
-        conn.close()
         print(f"Total: {total_messages} mensagens em {len(chats)} conversas")
         return {"chats": chats, "exportedAt": datetime.now(timezone.utc).isoformat()}
     finally:
+        if conn:
+            conn.close()
         os.unlink(tmp_path)
 
 def main():
     print("=== Extrator WhatsApp Business iOS -> OMBUDS ===\n")
-    backup_dir = find_backup_dir()
-    db_path = find_whatsapp_db(backup_dir)
-    data = extract_contacts_and_messages(db_path)
-    output_path = Path.home() / "Desktop/whatsapp-ombuds-export.json"
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    print(f"\nArquivo gerado: {output_path}")
-    print(f"   {len(data['chats'])} conversas exportadas")
-    print(f"\nAgora faca upload desse arquivo no OMBUDS em:")
-    print("   /admin/whatsapp/importar")
+    try:
+        backup_dir = find_backup_dir()
+        db_path = find_whatsapp_db(backup_dir)
+        data = extract_contacts_and_messages(db_path)
+        output_path = Path.home() / "Desktop/whatsapp-ombuds-export.json"
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"\nArquivo gerado: {output_path}")
+        print(f"   {len(data['chats'])} conversas exportadas")
+        print(f"\nAgora faca upload desse arquivo no OMBUDS em:")
+        print("   /admin/whatsapp/importar")
+    except FileNotFoundError as e:
+        print(f"\nErro: {e}")
+    except Exception as e:
+        print(f"\nErro inesperado: {e}")
 
 if __name__ == "__main__":
     main()
