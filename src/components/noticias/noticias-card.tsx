@@ -1,7 +1,6 @@
 "use client";
 
-import { Star, Paperclip, ExternalLink, Clock, FolderPlus, Zap } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Star, Paperclip, ExternalLink, Clock, FolderPlus, Sparkles } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn, decodeHtmlEntities } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -51,121 +50,104 @@ export function NoticiaCard({
   onClick,
 }: NoticiaCardProps) {
   const analise = noticia.analiseIa as AnaliseIA | null;
-  const tags = (noticia.tags as string[]) ?? [];
 
   const { data: pastas = [] } = trpc.noticias.listPastas.useQuery(undefined, { staleTime: 60_000 });
   const adicionarNaPasta = trpc.noticias.adicionarNaPasta.useMutation({
     onSuccess: () => toast.success("Salvo na pasta"),
   });
 
-  const textoParaEstimar = (noticia as { conteudo?: string | null }).conteudo ?? noticia.resumo;
+  const textoParaEstimar = noticia.resumo;
   const tempoLeitura = estimarTempoLeitura(textoParaEstimar);
   const nomeCategoria = LABEL_CATEGORIA[noticia.categoria] ?? noticia.categoria;
 
   return (
     <div
       className={cn(
-        "group relative bg-white dark:bg-zinc-900 border rounded-xl overflow-hidden cursor-pointer",
-        "transition-all duration-150",
+        "group relative cursor-pointer",
+        "px-4 py-3 transition-colors",
+        "border-b border-zinc-100 dark:border-zinc-800",
         isSelected
-          ? "bg-zinc-50 dark:bg-zinc-800/60 border-zinc-300 dark:border-zinc-600"
-          : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-md hover:-translate-y-px"
+          ? "bg-zinc-50 dark:bg-zinc-800/50 border-l-2 border-l-emerald-500 pl-[14px]"
+          : "hover:bg-zinc-50 dark:hover:bg-zinc-800/40"
       )}
       onClick={onClick}
     >
-      {/* Borda lateral esquerda colorida por fonte */}
-      <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl" style={{ backgroundColor: corFonte }} />
-
-      <div className="pl-5 pr-4 py-4">
-        {/* Zona 1: meta */}
-        <div className="flex items-center gap-2 mb-2.5">
-          <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded capitalize">
-            {nomeCategoria}
+      {/* Linha 1 — meta: dot, fonte, categoria, tempo, badge IA, ações */}
+      <div className="flex items-center gap-1.5 mb-1.5 min-w-0">
+        {/* Dot colorido por fonte */}
+        <span
+          className="w-1.5 h-1.5 rounded-full shrink-0"
+          style={{ backgroundColor: corFonte }}
+        />
+        {/* Nome da fonte */}
+        <span className="text-[11px] text-zinc-400 font-medium truncate max-w-[80px]">
+          {nomeFonte}
+        </span>
+        <span className="text-zinc-200 dark:text-zinc-700 shrink-0">·</span>
+        {/* Categoria */}
+        <span className="text-[11px] text-zinc-400 capitalize shrink-0">
+          {nomeCategoria}
+        </span>
+        {/* Tempo */}
+        {noticia.publicadoEm && (
+          <>
+            <span className="text-zinc-200 dark:text-zinc-700 shrink-0">·</span>
+            <span className="text-[11px] text-zinc-400 shrink-0">
+              {formatDistanceToNow(new Date(noticia.publicadoEm), { addSuffix: true, locale: ptBR })}
+            </span>
+          </>
+        )}
+        {/* Badge IA — só se tiver análise */}
+        {analise && (
+          <span className="flex items-center gap-0.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium shrink-0 ml-0.5">
+            <Sparkles className="h-2.5 w-2.5" />
+            IA
           </span>
-          <span className="text-[11px] text-zinc-400 font-medium">{nomeFonte}</span>
-          {noticia.publicadoEm && (
-            <>
-              <span className="text-zinc-200 dark:text-zinc-700">·</span>
-              <span className="text-[11px] text-zinc-400">
-                {formatDistanceToNow(new Date(noticia.publicadoEm), { addSuffix: true, locale: ptBR })}
-              </span>
-            </>
-          )}
+        )}
+        {/* Ações à direita */}
+        <div
+          className="ml-auto flex items-center gap-0.5 shrink-0"
+          onClick={e => e.stopPropagation()}
+        >
+          {/* Star — sempre visível se favoritado, ghost no hover */}
           <button
             className={cn(
-              "ml-auto opacity-0 group-hover:opacity-100 transition-opacity",
-              isFavorito && "opacity-100",
-              isSelected && "opacity-100"
+              "h-5 w-5 inline-flex items-center justify-center rounded transition-opacity",
+              isFavorito ? "opacity-100" : "opacity-0 group-hover:opacity-100"
             )}
             onClick={e => { e.stopPropagation(); onToggleFavorito(); }}
-            title={isFavorito ? "Remover dos salvos" : "Salvar"}
+            title={isFavorito ? "Remover dos salvos" : "Salvar notícia"}
             aria-label={isFavorito ? "Remover dos salvos" : "Salvar notícia"}
           >
-            <Star
-              className={cn(
-                "h-3.5 w-3.5 transition-colors",
-                isFavorito ? "fill-amber-500 text-amber-500" : "text-zinc-300 hover:text-amber-400"
-              )}
-            />
+            <Star className={cn(
+              "h-3 w-3 transition-colors",
+              isFavorito ? "fill-amber-400 text-amber-400" : "text-zinc-300 hover:text-amber-400"
+            )} />
           </button>
-        </div>
-
-        {/* Zona 2: título + síntese */}
-        <h3 className="font-semibold text-[15px] leading-snug text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors mb-2.5 line-clamp-2">
-          {decodeHtmlEntities(noticia.titulo)}
-        </h3>
-
-        {(analise?.resumoExecutivo || noticia.resumo) && (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed line-clamp-3 mb-3">
-            {analise?.resumoExecutivo ?? noticia.resumo}
-          </p>
-        )}
-
-        {/* Zona 3: impacto prático */}
-        {analise?.impactoPratico && (
-          <div className="flex items-start gap-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-lg px-3 py-2 mb-3">
-            <Zap className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed line-clamp-2">
-              {analise.impactoPratico}
-            </p>
-          </div>
-        )}
-
-        {/* Rodapé: tags + tempo + ações */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {tags.slice(0, 3).map(tag => (
-            <span
-              key={tag}
-              className="text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 rounded-full px-2 py-0.5"
-            >
-              {tag}
-            </span>
-          ))}
-          {tags.length > 3 && (
-            <span className="text-[10px] text-zinc-400">+{tags.length - 3}</span>
-          )}
-
-          <div className={cn("ml-auto flex items-center gap-1.5 transition-opacity", isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100")} onClick={e => e.stopPropagation()}>
+          {/* Menu hover: tempo de leitura, paperclip, pasta, external */}
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
             {tempoLeitura && (
-              <span className="flex items-center gap-0.5 text-[11px] text-zinc-400 mr-1">
-                <Clock className="h-3 w-3" />
-                {tempoLeitura} min
+              <span className="flex items-center gap-0.5 text-[10px] text-zinc-400 mr-0.5">
+                <Clock className="h-2.5 w-2.5" />
+                {tempoLeitura}m
               </span>
             )}
             <button
-              className="h-6 w-6 inline-flex items-center justify-center rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-              onClick={onSalvarNoCaso}
+              className="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              onClick={e => { e.stopPropagation(); onSalvarNoCaso(); }}
               title="Vincular a caso"
+              aria-label="Vincular a caso"
             >
-              <Paperclip className="h-3.5 w-3.5 text-zinc-400" />
+              <Paperclip className="h-3 w-3 text-zinc-400" />
             </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="h-6 w-6 inline-flex items-center justify-center rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  className="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                   title="Salvar em pasta"
+                  aria-label="Salvar em pasta"
                 >
-                  <FolderPlus className="h-3.5 w-3.5 text-zinc-400" />
+                  <FolderPlus className="h-3 w-3 text-zinc-400" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
@@ -186,14 +168,26 @@ export function NoticiaCard({
               href={noticia.urlOriginal}
               target="_blank"
               rel="noopener noreferrer"
-              className="h-6 w-6 inline-flex items-center justify-center rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-              title="Abrir original"
+              className="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              title="Abrir artigo original"
+              aria-label="Abrir artigo original"
+              onClick={e => e.stopPropagation()}
             >
-              <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
+              <ExternalLink className="h-3 w-3 text-zinc-400" />
             </a>
           </div>
         </div>
       </div>
+
+      {/* Linha 2 — título */}
+      <h3 className={cn(
+        "text-sm font-medium leading-snug line-clamp-2 transition-colors",
+        isSelected
+          ? "text-zinc-900 dark:text-zinc-100"
+          : "text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-100"
+      )}>
+        {decodeHtmlEntities(noticia.titulo)}
+      </h3>
     </div>
   );
 }
