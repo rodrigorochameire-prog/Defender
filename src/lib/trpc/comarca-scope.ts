@@ -1,6 +1,6 @@
 import { eq, or, inArray, exists, and, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { assistidos, processos, assistidosProcessos, comarcas } from "@/lib/db/schema";
+import { assistidos, processos, assistidosProcessos, comarcas, defensorParceiros } from "@/lib/db/schema";
 import type { User } from "@/lib/db/schema";
 
 /** IDs das comarcas da Região Metropolitana de Salvador.
@@ -60,6 +60,18 @@ export async function getAssistidosVisibilityFilter(
   );
 
   return or(...camadas)!;
+}
+
+/**
+ * Retorna IDs dos parceiros de um defensor (ex: Rodrigo ↔ Juliane).
+ * Usado para Layer 2 do filtro de processos e agenda.
+ */
+export async function getParceirosIds(userId: number): Promise<number[]> {
+  const rows = await db
+    .select({ parceiroId: defensorParceiros.parceiroId })
+    .from(defensorParceiros)
+    .where(eq(defensorParceiros.defensorId, userId));
+  return rows.map((r) => r.parceiroId);
 }
 
 /**
