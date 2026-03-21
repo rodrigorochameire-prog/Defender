@@ -2144,12 +2144,12 @@ export default function Demandas() {
                       <span>Filtros por coluna</span>
                       {showColumnFilters && <span className="ml-auto text-emerald-500">✓</span>}
                     </button>
-                    <button onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "PRESO" ? null : "PRESO")}
-                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${selectedEstadoPrisional === "PRESO" ? "text-rose-700 dark:text-rose-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                    <button onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "preso" ? null : "preso")}
+                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${selectedEstadoPrisional === "preso" ? "text-rose-700 dark:text-rose-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
                     >
                       <Lock className="w-3.5 h-3.5" />
                       <span>Apenas presos</span>
-                      {selectedEstadoPrisional === "PRESO" && <span className="ml-auto text-rose-500">✓</span>}
+                      {selectedEstadoPrisional === "preso" && <span className="ml-auto text-rose-500">✓</span>}
                     </button>
                     <button onClick={() => setShowArchived(!showArchived)}
                       className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${showArchived ? "text-amber-700 dark:text-amber-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
@@ -2269,8 +2269,7 @@ export default function Demandas() {
                 className="flex items-center gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1 pb-0.5"
               >
                 {/* Deadline stats — right-aligned */}
-                {deadlineStats.total > 0 && (
-                  <div className="ml-auto flex items-center gap-1 shrink-0">
+                <div className="ml-auto flex items-center gap-1 shrink-0">
                     {deadlineStats.vencidas > 0 && (
                       <button onClick={() => setSelectedPrazoFilter(selectedPrazoFilter === "vencidos" ? null : "vencidos")}
                         className={`font-semibold px-1.5 py-0.5 rounded-md text-[10px] transition-colors cursor-pointer ${selectedPrazoFilter === "vencidos" ? "bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400" : "text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20"}`}
@@ -2292,8 +2291,22 @@ export default function Demandas() {
                         {deadlineStats.semana} sem.
                       </button>
                     )}
+                    {(() => {
+                      const presoCount = demandas.filter(d => !d.arquivado && d.estadoPrisional === "preso").length;
+                      if (presoCount === 0) return null;
+                      const isActive = selectedEstadoPrisional === "preso";
+                      return (
+                        <button
+                          onClick={() => setSelectedEstadoPrisional(isActive ? null : "preso")}
+                          className={`flex items-center gap-1 font-semibold px-1.5 py-0.5 rounded-md text-[10px] transition-colors cursor-pointer ${isActive ? "bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400" : "text-rose-400 dark:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20"}`}
+                          title="Filtrar apenas presos"
+                        >
+                          <Lock className="w-2.5 h-2.5" />
+                          {presoCount}
+                        </button>
+                      );
+                    })()}
                   </div>
-                )}
               </AtribuicaoPills>
 
               {/* Secondary Filters now inside the unified Filtros dropdown in the header */}
