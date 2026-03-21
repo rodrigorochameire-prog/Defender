@@ -415,6 +415,15 @@ export function DemandaQuickPreview({
     onSuccess: () => { void refetchDriveFolder(); },
   });
 
+  // Próxima audiência do processo
+  const { data: audienciasProximas } = trpc.audiencias.list.useQuery(
+    { apenasProximas: true },
+    { enabled: !!demanda?.processoId && open }
+  );
+  const proximaAudiencia = audienciasProximas?.find(
+    (a: any) => a.processoId === demanda?.processoId || a.processo?.id === demanda?.processoId
+  );
+
   // Close popover when demanda changes or sheet closes
   useEffect(() => {
     setActiveStagePopover(null);
@@ -563,7 +572,7 @@ export function DemandaQuickPreview({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        className="w-[calc(100vw-3rem)] sm:w-[420px] md:w-[460px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl"
+        className="w-full sm:w-[480px] md:w-[560px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl"
         style={{ borderLeft: `3px solid ${atribuicaoColor}` }}
         onPointerDownOutside={(e) => {
           const target = (e as any).detail?.originalEvent?.target as HTMLElement ?? e.target as HTMLElement;
@@ -1189,6 +1198,24 @@ export function DemandaQuickPreview({
             </div>
           </div>
         </div>
+
+        {/* ===== PRÓXIMA AUDIÊNCIA ===== */}
+        {proximaAudiencia && (
+          <div className="mx-4 mb-3 rounded-xl border border-zinc-200/60 dark:border-zinc-700/40 px-3.5 py-2.5">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+              <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium">Próxima Audiência</span>
+            </div>
+            <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              {new Date(proximaAudiencia.dataHora).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" })}
+              {proximaAudiencia.horario ? ` · ${proximaAudiencia.horario}` : ""}
+            </p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+              {proximaAudiencia.tipo}
+              {proximaAudiencia.local ? ` · ${proximaAudiencia.local}` : ""}
+            </p>
+          </div>
+        )}
 
         {/* ===== STICKY ACTIONS BOTTOM BAR ===== */}
         <div className="sticky bottom-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-zinc-200/80 dark:border-zinc-800/80 px-5 py-2.5 flex items-center gap-2">

@@ -2118,77 +2118,31 @@ export function DriveDetailPanel() {
   // Loading state when file not yet found
   if (!file) {
     return (
-      <>
-        {/* Desktop panel */}
-        <div className="hidden lg:flex w-80 border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex-col shrink-0">
-          <div className="flex items-center gap-2 h-12 px-4 border-b border-zinc-200 dark:border-zinc-800">
-            <Skeleton className="h-4 w-40 bg-zinc-200 dark:bg-zinc-800" />
-            <div className="flex-1" />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
-              onClick={() => ctx.closeDetailPanel()}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+      <Sheet open={isOpen} onOpenChange={(open) => { if (!open) ctx.closeDetailPanel(); }}>
+        <SheetContent
+          side="right"
+          className="w-full sm:w-[480px] md:w-[560px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 p-0"
+        >
+          <SheetTitle className="sr-only">Detalhes do arquivo</SheetTitle>
           <div className="p-4 space-y-3">
             <Skeleton className="aspect-video w-full bg-zinc-200 dark:bg-zinc-800 rounded-lg" />
             <Skeleton className="h-8 w-full bg-zinc-200 dark:bg-zinc-800" />
             <Skeleton className="h-20 w-full bg-zinc-200 dark:bg-zinc-800" />
           </div>
-        </div>
-
-        {/* Mobile sheet */}
-        <Sheet
-          open={isOpen}
-          onOpenChange={(open) => {
-            if (!open) ctx.closeDetailPanel();
-          }}
-        >
-          <SheetContent
-            side="right"
-            className="w-full sm:max-w-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 p-0"
-          >
-            <SheetTitle className="sr-only">Detalhes do arquivo</SheetTitle>
-            <div className="p-4 space-y-3">
-              <Skeleton className="aspect-video w-full bg-zinc-200 dark:bg-zinc-800 rounded-lg" />
-              <Skeleton className="h-8 w-full bg-zinc-200 dark:bg-zinc-800" />
-              <Skeleton className="h-20 w-full bg-zinc-200 dark:bg-zinc-800" />
-            </div>
-          </SheetContent>
-        </Sheet>
-      </>
+        </SheetContent>
+      </Sheet>
     );
   }
 
   return (
-    <>
-      {/* Desktop: inline panel (hidden on mobile) */}
-      <div className="hidden lg:flex w-80 border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex-col shrink-0 transition-all duration-300">
+    <Sheet open={isOpen} onOpenChange={(open) => { if (!open) ctx.closeDetailPanel(); }}>
+      <SheetContent
+        side="right"
+        className="w-full sm:w-[480px] md:w-[560px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 p-0"
+      >
+        <SheetTitle className="sr-only">{file.name}</SheetTitle>
         <DetailPanelContent file={file as any} />
-      </div>
-
-      {/* Mobile: Sheet overlay (hidden on desktop) */}
-      <div className="lg:hidden">
-        <Sheet
-          open={isOpen}
-          onOpenChange={(open) => {
-            if (!open) ctx.closeDetailPanel();
-          }}
-        >
-          <SheetContent
-            side="right"
-            className="w-full sm:max-w-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 p-0"
-          >
-            <SheetTitle className="sr-only">
-              {file.name}
-            </SheetTitle>
-            <DetailPanelContent file={file as any} />
-          </SheetContent>
-        </Sheet>
-      </div>
-    </>
+      </SheetContent>
+    </Sheet>
   );
 }

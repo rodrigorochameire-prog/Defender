@@ -186,7 +186,7 @@ export function DayEventsSheet({
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        className="w-full sm:w-[420px] p-0 flex flex-col gap-0 border-l border-zinc-200 dark:border-zinc-800"
+        className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l border-zinc-200 dark:border-zinc-800"
       >
         {/* Header */}
         <SheetHeader className="px-5 py-4 border-b border-zinc-200/80 dark:border-zinc-800/80 space-y-0">

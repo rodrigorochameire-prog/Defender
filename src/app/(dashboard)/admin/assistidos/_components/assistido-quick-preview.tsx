@@ -40,6 +40,7 @@ import {
 import type { AssistidoUI } from "./assistido-types";
 import { statusConfig, faseConfig } from "./assistido-config";
 import { getPrazoInfo, calcularIdade, calcularTempoPreso } from "./assistido-utils";
+import { trpc } from "@/lib/trpc/client";
 
 /* ─── Collapsible section ─── */
 function CollapsibleSection({
@@ -168,6 +169,13 @@ export function AssistidoQuickPreview({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [assistido, onPrev, onNext, editingNotes]);
 
+  // Buscar detalhes do assistido (inclui demandas)
+  const { data: assistidoDetalhado } = trpc.assistidos.getById.useQuery(
+    { id: assistido?.id ?? 0 },
+    { enabled: !!assistido?.id, staleTime: 30_000 }
+  );
+  const ultimasDemandas = (assistidoDetalhado?.demandas ?? []).slice(0, 3);
+
   if (!assistido) return null;
 
   const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(
@@ -240,7 +248,7 @@ export function AssistidoQuickPreview({
     <Sheet open={!!assistido} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        className="w-[calc(100vw-2rem)] sm:w-[480px] md:w-[540px] p-0 flex flex-col gap-0 border-l border-zinc-200 dark:border-zinc-800 shadow-2xl"
+        className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l border-zinc-200 dark:border-zinc-800 shadow-2xl"
         style={{ borderLeft: `3px solid ${primaryColor}` }}
       >
         {/* ─── Sticky Header ─── */}
@@ -692,7 +700,59 @@ export function AssistidoQuickPreview({
             <CompletudeBar assistido={assistido} />
           </CollapsibleSection>
 
-          {/* 7. Observacoes — Collapsible + Editable */}
+          {/* 7. Últimas Demandas */}
+          {ultimasDemandas.length > 0 && (
+            <CollapsibleSection title="Últimas Demandas" icon={Scale} defaultOpen={true}>
+              <div className="space-y-1.5">
+                {ultimasDemandas.map((d: any) => {
+                  const prazoD = d.prazo ? getPrazoInfo(d.prazo) : null;
+                  return (
+                    <div key={d.id} className="flex items-center gap-2 py-0.5">
+                      <span className={cn(
+                        "w-1.5 h-1.5 rounded-full flex-shrink-0",
+                        d.status === "CONCLUIDO" || d.status === "ARQUIVADO" ? "bg-emerald-400" : "bg-amber-400"
+                      )} />
+                      <span className="text-xs text-zinc-700 dark:text-zinc-300 truncate flex-1">
+                        {d.ato || d.tipoAto || "Demanda"}
+                      </span>
+                      {prazoD && (
+                        <span className={cn("text-[10px] font-medium flex-shrink-0", prazoD.color)}>
+                          {prazoD.text}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+                <Link
+                  href={`/admin/demandas?assistido=${assistido.id}`}
+                  className="text-[10px] text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 flex items-center gap-1 mt-1"
+                >
+                  Ver todas <ExternalLink className="w-2.5 h-2.5" />
+                </Link>
+              </div>
+            </CollapsibleSection>
+          )}
+
+          {/* 7b. Drive */}
+          <CollapsibleSection title="Drive" icon={HardDrive} defaultOpen={false}>
+            {assistido.driveFolderId ? (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                  {assistido.driveFilesCount ?? 0} arquivo{(assistido.driveFilesCount ?? 0) !== 1 ? "s" : ""}
+                </span>
+                <Link
+                  href={`/admin/drive?assistido=${assistido.id}`}
+                  className="text-[10px] text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 flex items-center gap-1"
+                >
+                  Abrir pasta <ExternalLink className="w-2.5 h-2.5" />
+                </Link>
+              </div>
+            ) : (
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 italic">Pasta não vinculada</p>
+            )}
+          </CollapsibleSection>
+
+          {/* 8. Observacoes — Collapsible + Editable */}
           <CollapsibleSection
             title="Observacoes"
             icon={Info}

@@ -63,6 +63,7 @@ interface CalendarMonthViewProps {
   onDeleteEvento?: (id: string) => void;
   onStatusChange?: (id: string, status: string) => void;
   onArchiveEvento?: (id: string) => void;
+  onEventDoubleClick?: (evento: any) => void;
   /** Extra content rendered inline in the header (defensor avatars, stats, etc.) */
   headerRight?: React.ReactNode;
 }
@@ -200,11 +201,13 @@ function EventoCompacto({
   onEventClick,
   onEditEvento,
   onDeleteEvento,
+  onEventDoubleClick,
 }: {
   evento: any;
   onEventClick: (evento: any) => void;
   onEditEvento?: (evento: any) => void;
   onDeleteEvento?: (id: string) => void;
+  onEventDoubleClick?: (evento: any) => void;
 }) {
   const colors = getAtribuicaoColors(evento.atribuicaoKey || evento.atribuicao);
   const solidColor = (colors as any).color || "#71717a";
@@ -242,6 +245,7 @@ function EventoCompacto({
       <PopoverTrigger asChild>
         <button
           onClick={(e) => e.stopPropagation()}
+          onDoubleClick={(e) => { e.stopPropagation(); setPopoverOpen(false); onEventDoubleClick?.(evento); }}
           className={`group w-full text-left rounded-xl transition-all duration-200 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${
             eventoCancelado ? "opacity-45" : ""
           }`}
@@ -460,8 +464,16 @@ function EventoCompacto({
         </div>
 
         {/* ── Seção 4: Footer ── */}
-        <div className="px-4 py-3 border-t border-zinc-100 dark:border-zinc-800/50">
-          <div className="flex items-center gap-2">
+        <div className="px-4 pt-2 pb-1 border-t border-zinc-100 dark:border-zinc-800/50">
+          {onEventDoubleClick && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setPopoverOpen(false); onEventDoubleClick(evento); }}
+              className="w-full text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 py-1.5 mb-2 transition-colors flex items-center justify-center gap-1"
+            >
+              Ver mais detalhes <ExternalLink className="w-3 h-3" />
+            </button>
+          )}
+          <div className="flex items-center gap-2 pb-1">
             <Button
               size="sm"
               className="flex-1 h-9 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 cursor-pointer"
@@ -502,6 +514,7 @@ export function CalendarMonthView({
   onDeleteEvento,
   onStatusChange,
   onArchiveEvento,
+  onEventDoubleClick,
   headerRight,
 }: CalendarMonthViewProps) {
   const [sheetDate, setSheetDate] = useState<Date | null>(null);
@@ -682,6 +695,7 @@ export function CalendarMonthView({
                           onEventClick={onEventClick}
                           onEditEvento={onEditEvento}
                           onDeleteEvento={onDeleteEvento}
+                          onEventDoubleClick={onEventDoubleClick}
                         />
                       ))}
                     </div>

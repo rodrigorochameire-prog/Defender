@@ -31,6 +31,7 @@ import { ICalImportModal } from "@/components/agenda/ical-import-modal";
 import { RegistroAudienciaModal, RegistroAudienciaData } from "@/components/agenda/registro-audiencia-modal-simples";
 import { EscalaConfigModal } from "@/components/agenda/escala-config-modal";
 import { CalendarMonthView } from "@/components/agenda/calendar-month-view";
+import { EventDetailSheet } from "@/components/agenda/event-detail-sheet";
 import { CalendarWeekView } from "@/components/agenda/calendar-week-view";
 import { EventoCard } from "@/components/agenda/evento-card";
 import { EventoDetailModal } from "@/components/agenda/evento-detail-modal";
@@ -569,6 +570,7 @@ export default function AgendaPage() {
   const [isBuscaRegistrosModalOpen, setIsBuscaRegistrosModalOpen] = useState(false);
   const [editingEvento, setEditingEvento] = useState<EventoFormData | null>(null);
   const [selectedEvento, setSelectedEvento] = useState<any | null>(null);
+  const [eventDetailSheetEvento, setEventDetailSheetEvento] = useState<any | null>(null);
   // Quick-create: pre-filled date/time from clicking an empty slot
   const [quickCreateData, setQuickCreateData] = useState<{ data?: string; horarioInicio?: string } | null>(null);
 
@@ -1666,6 +1668,7 @@ export default function AgendaPage() {
               onEditEvento={handleEditEvento}
               onDeleteEvento={handleDeleteEvento}
               onStatusChange={handleStatusChange}
+              onEventDoubleClick={(evento) => setEventDetailSheetEvento(evento)}
               headerRight={calendarHeaderRight}
             />
           ) : viewMode === "week" ? (
@@ -1904,6 +1907,17 @@ export default function AgendaPage() {
         isOpen={isICalImportModalOpen}
         onClose={() => setIsICalImportModalOpen(false)}
         onImport={handleImportPJe}
+      />
+
+      {/* Event Detail Sheet — duplo clique no calendário */}
+      <EventDetailSheet
+        evento={eventDetailSheetEvento}
+        open={!!eventDetailSheetEvento}
+        onClose={() => setEventDetailSheetEvento(null)}
+        onEdit={(evento) => {
+          setEventDetailSheetEvento(null);
+          handleEditEvento(evento);
+        }}
       />
 
       {selectedEvento && (
