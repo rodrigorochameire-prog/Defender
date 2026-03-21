@@ -1128,6 +1128,96 @@ export const whatsappChatRouter = router({
       };
     }),
 
+  /**
+   * Importa histórico de mensagens de um contato da Evolution API
+   * Útil para carregar conversas anteriores à configuração do webhook
+   */
+  importContactHistory: protectedProcedure
+    .input(z.object({ contactId: z.number(), limit: z.number().min(1).max(200).optional() }))
+    .mutation(async ({ input }) => {
+      const [contact] = await db
+        .select({ contact: whatsappContacts, config: evolutionConfig })
+        .from(whatsappContacts)
+        .innerJoin(evolutionConfig, eq(whatsappContacts.configId, evolutionConfig.id))
+        .where(eq(whatsappContacts.id, input.contactId))
+        .limit(1);
+
+      if (!contact) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Contato não encontrado" });
+      }
+
+      const client = new EvolutionApiClient({
+        apiUrl: contact.config.apiUrl,
+        apiKey: contact.config.apiKey,
+        instanceName: contact.config.instanceName,
+      });
+
+      const remoteJid = `${contact.contact.phone}@s.whatsapp.net`;
+      const messages = await client.fetchMessages(remoteJid, input.limit ?? 50).catch(() => []);
+
+      if (messages.length === 0) return { imported: 0 };
+
+      const { extractMessageText, getMessageType, extractMediaInfo, extractQuotedMessageId, extractPhoneFromJid: _epj } = await import("@/lib/services/evolution-api");
+
+      let imported = 0;
+      for (const msg of messages) {
+        if (!msg.key?.id) continue;
+
+        const [existing] = await db
+          .select({ id: whatsappChatMessages.id })
+          .from(whatsappChatMessages)
+          .where(eq(whatsappChatMessages.waMessageId, msg.key.id))
+          .limit(1);
+
+        if (existing) continue;
+
+        const text = extractMessageText(msg);
+        const type = getMessageType(msg);
+        const mediaInfo = extractMediaInfo(msg);
+        const replyToId = extractQuotedMessageId(msg);
+
+        await db.insert(whatsappChatMessages).values({
+          contactId: input.contactId,
+          waMessageId: msg.key.id,
+          direction: msg.key.fromMe ? "outbound" : "inbound",
+          type,
+          content: text,
+          mediaUrl: mediaInfo.url,
+          mediaMimeType: mediaInfo.mimeType,
+          mediaFilename: mediaInfo.filename,
+          replyToId,
+          status: msg.key.fromMe ? "sent" : "received",
+          createdAt: msg.messageTimestamp ? new Date(msg.messageTimestamp * 1000) : new Date(),
+          metadata: { pushName: msg.pushName, timestamp: msg.messageTimestamp },
+        });
+        imported++;
+      }
+
+      // Atualiza lastMessageContent com a mensagem mais recente importada
+      if (imported > 0) {
+        const [lastMsg] = await db
+          .select()
+          .from(whatsappChatMessages)
+          .where(eq(whatsappChatMessages.contactId, input.contactId))
+          .orderBy(desc(whatsappChatMessages.id))
+          .limit(1);
+
+        if (lastMsg) {
+          await db
+            .update(whatsappContacts)
+            .set({
+              lastMessageContent: (lastMsg.content || "").substring(0, 150) || null,
+              lastMessageDirection: lastMsg.direction,
+              lastMessageType: lastMsg.type,
+              updatedAt: new Date(),
+            })
+            .where(eq(whatsappContacts.id, input.contactId));
+        }
+      }
+
+      return { imported };
+    }),
+
   // ===========================================================================
   // TEMPLATES
   // ===========================================================================

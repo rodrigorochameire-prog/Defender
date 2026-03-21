@@ -41,6 +41,7 @@ import {
   Sparkles,
   FileSearch,
   FolderOpen,
+  Download,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
@@ -157,6 +158,20 @@ export function ChatWindow({
   const markAsReadMutation = trpc.whatsappChat.markContactAsRead.useMutation({
     onSuccess: () => {
       onContactUpdate?.();
+    },
+  });
+
+  const importHistoryMutation = trpc.whatsappChat.importContactHistory.useMutation({
+    onSuccess: (result) => {
+      if (result.imported > 0) {
+        toast.success(`${result.imported} mensagens importadas`);
+        refetchMessages();
+      } else {
+        toast.info("Nenhuma mensagem histórica encontrada");
+      }
+    },
+    onError: () => {
+      toast.error("Erro ao carregar histórico");
     },
   });
 
@@ -725,6 +740,22 @@ export function ChatWindow({
                     : "Envie uma mensagem para iniciar a conversa"}
                 </p>
               </div>
+              {!searchQuery && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-1 text-xs h-7 gap-1.5"
+                  onClick={() => importHistoryMutation.mutate({ contactId, limit: 50 })}
+                  disabled={importHistoryMutation.isPending}
+                >
+                  {importHistoryMutation.isPending ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5" />
+                  )}
+                  Carregar histórico
+                </Button>
+              )}
             </div>
           ) : (
             /* ---- Message groups ---- */
