@@ -7,7 +7,7 @@ import { ExternalLink, MapPin, Clock, Users, Link2, RefreshCw, CheckCircle2, XCi
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { getCrimeBadgeColor, getCrimeLabel } from "./radar-filtros";
+import { getCrimeBadgeColor, getCrimeLabel, getCrimeBorderColor } from "./radar-filtros";
 import { cn } from "@/lib/utils";
 import NextLink from "next/link";
 
@@ -66,7 +66,7 @@ interface NoticiaCardProps {
   relevanciaScore?: number | null;
   onClick?: () => void;
   onQuickAction?: (matchId: number, action: "confirmar" | "descartar") => void;
-  viewMode?: "cards" | "list";
+  viewMode?: "compact" | "cards" | "list";
   expanded?: boolean;
   onToggleExpand?: () => void;
 }
@@ -93,7 +93,6 @@ const NOMES_GENERICOS = new Set([
   "pessoa", "policial", "pm", "delegado",
 ]);
 
-/** Verifica se é um nome próprio real */
 function isNomeProprio(nome: string | null): boolean {
   if (!nome || !nome.trim()) return false;
   return !NOMES_GENERICOS.has(nome.toLowerCase().trim());
@@ -120,7 +119,101 @@ const papelLabels: Record<string, string> = {
   outro: "Outro",
 };
 
-export function RadarNoticiaCard({ noticia, relevanciaScore, onClick, onQuickAction, viewMode, expanded = false, onToggleExpand }: NoticiaCardProps) {
+/** Painel de inteligência expandível — reutilizado nos modos compact e cards */
+function IntelPanel({
+  noticia,
+  envolvidos,
+  dataDisplay,
+  onClick,
+}: {
+  noticia: NoticiaCardProps["noticia"];
+  envolvidos: Envolvido[];
+  dataDisplay: string | Date | null;
+  onClick?: () => void;
+}) {
+  return (
+    <div
+      className="mt-2 pt-2.5 border-t border-zinc-100 dark:border-zinc-800 space-y-2.5"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {(noticia.bairro || noticia.armaMeio || dataDisplay) && (
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+          {noticia.bairro && (
+            <span className="flex items-center gap-1">
+              <MapPin className="h-3 w-3 text-zinc-400 shrink-0" />
+              <span className="font-medium text-zinc-700 dark:text-zinc-300">{noticia.bairro}</span>
+            </span>
+          )}
+          {noticia.armaMeio && (
+            <span className="flex items-center gap-1">
+              <Crosshair className="h-3 w-3 text-zinc-400 shrink-0" />
+              <span>{noticia.armaMeio}</span>
+            </span>
+          )}
+          {dataDisplay && (
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3 text-zinc-400 shrink-0" />
+              <span>{format(new Date(dataDisplay as string), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+            </span>
+          )}
+        </div>
+      )}
+
+      {envolvidos.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">Envolvidos</p>
+          <div className="flex flex-wrap gap-1.5">
+            {envolvidos.map((e, i) => (
+              <span
+                key={`exp-${e.nome}-${i}`}
+                className={cn(
+                  "inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md font-medium",
+                  papelColors[e.papel] || "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+                )}
+              >
+                <Users className="h-2.5 w-2.5 shrink-0" />
+                {e.nome}{e.idade ? `, ${e.idade} anos` : ""}{e.vulgo ? ` (${e.vulgo})` : ""}
+                <span className="opacity-60 text-[10px]">· {papelLabels[e.papel] || e.papel}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {noticia.resumoIA && (
+        <div className="space-y-1">
+          <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide flex items-center gap-1">
+            <FileText className="h-3 w-3" />
+            Resumo IA
+          </p>
+          <p className="text-[12px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            {noticia.resumoIA}
+          </p>
+        </div>
+      )}
+
+      <div className="flex justify-end pt-0.5">
+        <button
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors cursor-pointer"
+          onClick={(e) => { e.stopPropagation(); onClick?.(); }}
+        >
+          <ExternalLink className="h-3 w-3" />
+          Ver completo no sheet
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function RadarNoticiaCard({
+  noticia,
+  relevanciaScore,
+  onClick,
+  onQuickAction,
+  viewMode = "compact",
+  expanded = false,
+  onToggleExpand,
+}: NoticiaCardProps) {
   const dataDisplay = noticia.dataFato || noticia.dataPublicacao;
   const hasMatch = (noticia.matchCount ?? 0) > 0;
   const envolvidos = parseEnvolvidos(noticia.envolvidos);
@@ -129,56 +222,54 @@ export function RadarNoticiaCard({ noticia, relevanciaScore, onClick, onQuickAct
     ? Math.max(...noticia.matches.map((m) => m.scoreConfianca))
     : null;
 
+  const hasIntel = !!(noticia.resumoIA || noticia.bairro || noticia.armaMeio || envolvidosComNome.length > 0);
+
+  // ─── MODO LIST ─────────────────────────────────────────────────────────────
   if (viewMode === "list") {
     return (
       <div
         className={cn(
-          "flex items-center gap-3 px-3 py-2 rounded-lg border border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer",
-          hasMatch && "border-l-4 border-l-emerald-500"
+          "flex items-center gap-3 px-3 h-9 border-b border-zinc-100 dark:border-zinc-800/60",
+          "hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors cursor-pointer",
+          "border-l-[3px]",
+          getCrimeBorderColor(noticia.tipoCrime),
         )}
         onClick={onClick}
       >
-        {/* Crime badge */}
         <Badge
           variant="secondary"
-          className={cn("shrink-0 text-[10px]", getCrimeBadgeColor(noticia.tipoCrime))}
+          className={cn("shrink-0 text-[10px] h-4 px-1.5 py-0", getCrimeBadgeColor(noticia.tipoCrime))}
         >
           {getCrimeLabel(noticia.tipoCrime)}
         </Badge>
-        <RelevanciaChip score={relevanciaScore} />
 
-        {/* Título */}
-        <span className="flex-1 text-sm text-zinc-800 dark:text-zinc-200 truncate">
+        <span className="flex-1 text-xs text-zinc-800 dark:text-zinc-200 truncate">
           {noticia.titulo}
         </span>
 
-        {/* Meta (bairro + data) */}
         <div className="hidden sm:flex items-center gap-2 text-[10px] text-zinc-400 shrink-0">
           {noticia.bairro && (
             <span className="flex items-center gap-0.5">
-              <MapPin className="h-2.5 w-2.5" />
-              {noticia.bairro}
+              <MapPin className="h-2.5 w-2.5" />{noticia.bairro}
             </span>
           )}
-          {(noticia.dataFato || noticia.dataPublicacao) && (
+          {dataDisplay && (
             <span className="flex items-center gap-0.5">
               <Clock className="h-2.5 w-2.5" />
-              {format(new Date((noticia.dataFato || noticia.dataPublicacao) as string), "dd/MM", { locale: ptBR })}
+              {format(new Date(dataDisplay as string), "dd/MM", { locale: ptBR })}
             </span>
           )}
         </div>
 
-        {/* Badges inline */}
         <div className="flex items-center gap-1.5 shrink-0">
           {hasMatch && (
-            <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px]">
-              <Link2 className="h-2.5 w-2.5 mr-0.5" />
-              DPE
+            <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] h-4 px-1.5 py-0">
+              <Link2 className="h-2.5 w-2.5 mr-0.5" />DPE
             </Badge>
           )}
           {hasMatch && matchScore != null && (
             <span className={cn(
-              "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+              "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
               matchScore >= 80 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" :
               matchScore >= 60 ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" :
               "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
@@ -203,248 +294,273 @@ export function RadarNoticiaCard({ noticia, relevanciaScore, onClick, onQuickAct
     );
   }
 
+  // ─── MODO COMPACT (padrão) ─────────────────────────────────────────────────
+  if (viewMode === "compact") {
+    return (
+      <div
+        className={cn(
+          "px-3 py-2.5 border-b border-zinc-100 dark:border-zinc-800/60",
+          "hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors cursor-pointer",
+          "border-l-[3px]",
+          getCrimeBorderColor(noticia.tipoCrime),
+        )}
+        onClick={onClick}
+      >
+        {/* Row 1: badges */}
+        <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+          <Badge className={cn("text-[10px] px-1.5 py-0 h-4", getCrimeBadgeColor(noticia.tipoCrime))}>
+            {getCrimeLabel(noticia.tipoCrime)}
+          </Badge>
+          <RelevanciaChip score={relevanciaScore} />
+          {hasMatch && (
+            <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] px-1.5 py-0 h-4">
+              <Link2 className="h-2.5 w-2.5 mr-0.5" />Caso DPE
+            </Badge>
+          )}
+          {noticia.enrichmentStatus === "pending" && (
+            <RefreshCw className="h-3 w-3 text-zinc-400 animate-spin" />
+          )}
+          <span className="text-[10px] text-zinc-400 ml-auto">{noticia.fonte}</span>
+        </div>
+
+        {/* Row 2: título */}
+        <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate leading-snug">
+          {noticia.titulo}
+        </h3>
+
+        {/* Row 3: meta */}
+        <div className="flex items-center gap-3 text-[11px] text-zinc-400 mt-0.5">
+          {noticia.bairro && (
+            <span className="flex items-center gap-0.5">
+              <MapPin className="h-3 w-3" />{noticia.bairro}
+            </span>
+          )}
+          {dataDisplay && (
+            <span className="flex items-center gap-0.5">
+              <Clock className="h-3 w-3" />
+              {format(new Date(dataDisplay as string), "dd/MM", { locale: ptBR })}
+            </span>
+          )}
+          {envolvidosComNome.length > 0 && (
+            <span className="flex items-center gap-0.5 truncate max-w-[160px]">
+              <Users className="h-3 w-3 shrink-0" />
+              <span className="truncate">{envolvidosComNome[0].nome}</span>
+              <span className="opacity-70 shrink-0">· {papelLabels[envolvidosComNome[0].papel] || envolvidosComNome[0].papel}</span>
+            </span>
+          )}
+          <a
+            href={noticia.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-0.5 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 transition-colors ml-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ExternalLink className="h-3 w-3" />
+            <span>Fonte</span>
+          </a>
+          {hasIntel && onToggleExpand && (
+            <button
+              className={cn(
+                "flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer",
+                expanded
+                  ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
+                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              )}
+              onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
+            >
+              <Shield className="h-3 w-3" />
+              Intel
+              <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", expanded && "rotate-180")} />
+            </button>
+          )}
+        </div>
+
+        {/* Inline match triagem */}
+        <MatchTriagem matches={noticia.matches ?? []} onQuickAction={onQuickAction} />
+
+        {/* Painel expandido */}
+        {expanded && (
+          <IntelPanel
+            noticia={noticia}
+            envolvidos={envolvidosComNome}
+            dataDisplay={dataDisplay}
+            onClick={onClick}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // ─── MODO CARDS / GRID ────────────────────────────────────────────────────
   return (
     <Card
       className={cn(
-        "hover:shadow-md transition-shadow cursor-pointer",
-        hasMatch && "border-l-4 border-l-emerald-500"
+        "hover:shadow-md transition-all duration-150 cursor-pointer overflow-hidden",
+        hasMatch && "ring-1 ring-emerald-200 dark:ring-emerald-800"
       )}
       onClick={onClick}
     >
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          {/* Thumbnail */}
-          {noticia.imagemUrl && (
-            <div className="hidden sm:block w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-zinc-100 dark:bg-zinc-800">
-              <img
-                src={noticia.imagemUrl}
-                alt=""
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
+      {/* Thumbnail topo (full width) */}
+      {noticia.imagemUrl && (
+        <div className="relative w-full h-36 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+          <img
+            src={noticia.imagemUrl}
+            alt=""
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+          {/* Crime badge overlay */}
+          <div className="absolute top-2 left-2">
+            <Badge className={cn("text-[10px] shadow-sm", getCrimeBadgeColor(noticia.tipoCrime))}>
+              {getCrimeLabel(noticia.tipoCrime)}
+            </Badge>
+          </div>
+          {hasMatch && (
+            <div className="absolute top-2 right-2">
+              <Badge className="bg-emerald-600 text-white text-[10px] shadow-sm">
+                <Link2 className="h-2.5 w-2.5 mr-0.5" />DPE
+              </Badge>
             </div>
           )}
+        </div>
+      )}
 
-          <div className="flex-1 min-w-0 space-y-2">
-            {/* Badges */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge
-                variant="secondary"
-                className={getCrimeBadgeColor(noticia.tipoCrime)}
-              >
-                {getCrimeLabel(noticia.tipoCrime)}
+      <CardContent className="p-3">
+        {/* Badges (quando não há imagem) */}
+        {!noticia.imagemUrl && (
+          <div className="flex items-center gap-1.5 flex-wrap mb-2">
+            <Badge variant="secondary" className={getCrimeBadgeColor(noticia.tipoCrime)}>
+              {getCrimeLabel(noticia.tipoCrime)}
+            </Badge>
+            <RelevanciaChip score={relevanciaScore} />
+            {hasMatch && (
+              <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                <Link2 className="h-3 w-3 mr-1" />Caso DPE
               </Badge>
-              <RelevanciaChip score={relevanciaScore} />
-              {hasMatch && (
-                <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                  <Link2 className="h-3 w-3 mr-1" />
-                  Caso DPE
-                </Badge>
-              )}
-              {noticia.enrichmentStatus === "pending" && (
-                <Badge variant="outline" className="text-zinc-400 border-zinc-300 dark:border-zinc-600">
-                  <RefreshCw className="h-2.5 w-2.5 mr-1 animate-spin" />
-                  Analisando...
-                </Badge>
-              )}
-              <span className="inline-flex items-center gap-1 text-xs text-zinc-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-                {noticia.fonte}
-              </span>
-            </div>
-
-            {/* Título */}
-            <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2">
-              {noticia.titulo}
-            </h3>
-
-            {/* Resumo */}
-            {noticia.resumoIA && (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2">
-                {noticia.resumoIA}
-              </p>
             )}
-
-            {/* Envolvidos */}
-            {envolvidosComNome.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {envolvidosComNome.slice(0, 5).map((e, i) => (
-                  <span
-                    key={`${e.nome}-${i}`}
-                    className={cn(
-                      "inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md font-medium",
-                      papelColors[e.papel] || "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
-                    )}
-                  >
-                    <Users className="h-2.5 w-2.5 shrink-0" />
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="truncate max-w-[140px]">
-                          {e.nome}
-                          {e.idade ? `, ${e.idade}` : ""}
-                          {e.vulgo ? ` (${e.vulgo})` : ""}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {e.nome}
-                        {e.idade ? `, ${e.idade} anos` : ""}
-                        {e.vulgo ? ` (${e.vulgo})` : ""}
-                      </TooltipContent>
-                    </Tooltip>
-                    <span className="opacity-70">
-                      {papelLabels[e.papel] || e.papel}
-                    </span>
-                  </span>
-                ))}
-                {envolvidosComNome.length > 5 && (
-                  <span className="text-[10px] text-zinc-400 self-center">
-                    +{envolvidosComNome.length - 5}
-                  </span>
-                )}
-              </div>
-            )}
-
-            {/* Inline match triagem */}
-            <MatchTriagem
-              matches={noticia.matches ?? []}
-              onQuickAction={onQuickAction}
-            />
-
-            {/* Metadata row + expand toggle */}
-            <div className="flex items-center gap-3 text-xs text-zinc-400">
-              {dataDisplay && (
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {format(new Date(dataDisplay), "dd/MM/yyyy", { locale: ptBR })}
-                </span>
-              )}
-              {noticia.bairro && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {noticia.bairro}
-                </span>
-              )}
-              {noticia.armaMeio && (
-                <span className="flex items-center gap-1">
-                  <Zap className="h-3 w-3" />
-                  {noticia.armaMeio}
-                </span>
-              )}
-              {envolvidos.length > 0 && (
-                <span className="flex items-center gap-1">
-                  <Users className="h-3 w-3" />
-                  {envolvidos.length} envolvido{envolvidos.length > 1 ? "s" : ""}
-                </span>
-              )}
-              <a
-                href={noticia.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 cursor-pointer"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <ExternalLink className="h-3 w-3" />
-                Fonte
-              </a>
-
-              {/* Expand toggle — só aparece quando há dados de IA */}
-              {(noticia.resumoIA || noticia.bairro || noticia.armaMeio || envolvidosComNome.length > 0) && onToggleExpand && (
-                <button
-                  className={cn(
-                    "ml-auto flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer",
-                    expanded
-                      ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
-                      : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                  )}
-                  onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
-                  title={expanded ? "Recolher" : "Ver inteligência"}
-                >
-                  <Shield className="h-3 w-3" />
-                  {expanded ? "Recolher" : "Intel"}
-                  <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", expanded && "rotate-180")} />
-                </button>
-              )}
-            </div>
-
-            {/* Painel de inteligência inline — expandível */}
-            {expanded && (
-              <div
-                className="mt-2 border-t border-zinc-100 dark:border-zinc-800 pt-3 space-y-2.5"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Localização + Tempo */}
-                {(noticia.bairro || noticia.armaMeio) && (
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-zinc-600 dark:text-zinc-400">
-                    {noticia.bairro && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3 text-zinc-400 shrink-0" />
-                        <span className="font-medium text-zinc-700 dark:text-zinc-300">{noticia.bairro}</span>
-                      </span>
-                    )}
-                    {noticia.armaMeio && (
-                      <span className="flex items-center gap-1">
-                        <Crosshair className="h-3 w-3 text-zinc-400 shrink-0" />
-                        <span>{noticia.armaMeio}</span>
-                      </span>
-                    )}
-                    {dataDisplay && (
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3 text-zinc-400 shrink-0" />
-                        <span>{format(new Date(dataDisplay), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Envolvidos completos */}
-                {envolvidosComNome.length > 0 && (
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">Envolvidos</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {envolvidosComNome.map((e, i) => (
-                        <span
-                          key={`exp-${e.nome}-${i}`}
-                          className={cn(
-                            "inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md font-medium",
-                            papelColors[e.papel] || "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
-                          )}
-                        >
-                          <Users className="h-2.5 w-2.5 shrink-0" />
-                          {e.nome}{e.idade ? `, ${e.idade} anos` : ""}{e.vulgo ? ` (${e.vulgo})` : ""}
-                          <span className="opacity-60 text-[10px]">· {papelLabels[e.papel] || e.papel}</span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Resumo IA completo */}
-                {noticia.resumoIA && (
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide flex items-center gap-1">
-                      <FileText className="h-3 w-3" />
-                      Resumo IA
-                    </p>
-                    <p className="text-[12px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                      {noticia.resumoIA}
-                    </p>
-                  </div>
-                )}
-
-                {/* CTA — abrir sheet */}
-                <div className="flex justify-end pt-1">
-                  <button
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors cursor-pointer"
-                    onClick={(e) => { e.stopPropagation(); onClick?.(); }}
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    Ver completo no sheet
-                  </button>
-                </div>
-              </div>
+            {noticia.enrichmentStatus === "pending" && (
+              <Badge variant="outline" className="text-zinc-400 border-zinc-300 dark:border-zinc-600">
+                <RefreshCw className="h-2.5 w-2.5 mr-1 animate-spin" />Analisando...
+              </Badge>
             )}
           </div>
+        )}
+
+        {/* Fonte (quando há imagem, badges já estão no overlay) */}
+        {noticia.imagemUrl && (
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <RelevanciaChip score={relevanciaScore} />
+            {noticia.enrichmentStatus === "pending" && (
+              <Badge variant="outline" className="text-zinc-400 border-zinc-300 dark:border-zinc-600">
+                <RefreshCw className="h-2.5 w-2.5 mr-1 animate-spin" />Analisando...
+              </Badge>
+            )}
+            <span className="ml-auto text-[10px] text-zinc-400 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+              {noticia.fonte}
+            </span>
+          </div>
+        )}
+
+        {/* Título */}
+        <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2 mb-1.5">
+          {noticia.titulo}
+        </h3>
+
+        {/* Resumo IA */}
+        {noticia.resumoIA && (
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-2">
+            {noticia.resumoIA}
+          </p>
+        )}
+
+        {/* Envolvidos */}
+        {envolvidosComNome.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {envolvidosComNome.slice(0, 3).map((e, i) => (
+              <span
+                key={`${e.nome}-${i}`}
+                className={cn(
+                  "inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md font-medium",
+                  papelColors[e.papel] || "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+                )}
+              >
+                <Users className="h-2.5 w-2.5 shrink-0" />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="truncate max-w-[120px]">
+                      {e.nome}{e.idade ? `, ${e.idade}` : ""}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {e.nome}{e.idade ? `, ${e.idade} anos` : ""}{e.vulgo ? ` (${e.vulgo})` : ""}
+                  </TooltipContent>
+                </Tooltip>
+                <span className="opacity-70">{papelLabels[e.papel] || e.papel}</span>
+              </span>
+            ))}
+            {envolvidosComNome.length > 3 && (
+              <span className="text-[10px] text-zinc-400 self-center">+{envolvidosComNome.length - 3}</span>
+            )}
+          </div>
+        )}
+
+        {/* Match triagem */}
+        <MatchTriagem matches={noticia.matches ?? []} onQuickAction={onQuickAction} />
+
+        {/* Metadata row */}
+        <div className="flex items-center gap-2 text-xs text-zinc-400 mt-2">
+          {dataDisplay && (
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {format(new Date(dataDisplay as string), "dd/MM/yyyy", { locale: ptBR })}
+            </span>
+          )}
+          {noticia.bairro && (
+            <span className="flex items-center gap-1">
+              <MapPin className="h-3 w-3" />{noticia.bairro}
+            </span>
+          )}
+          {noticia.armaMeio && (
+            <span className="flex items-center gap-1 hidden sm:flex">
+              <Zap className="h-3 w-3" />{noticia.armaMeio}
+            </span>
+          )}
+          <a
+            href={noticia.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 ml-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ExternalLink className="h-3 w-3" />Fonte
+          </a>
+          {hasIntel && onToggleExpand && (
+            <button
+              className={cn(
+                "flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer",
+                expanded
+                  ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
+                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              )}
+              onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
+            >
+              <Shield className="h-3 w-3" />
+              {expanded ? "Recolher" : "Intel"}
+              <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", expanded && "rotate-180")} />
+            </button>
+          )}
         </div>
+
+        {/* Painel expandido */}
+        {expanded && (
+          <IntelPanel
+            noticia={noticia}
+            envolvidos={envolvidosComNome}
+            dataDisplay={dataDisplay}
+            onClick={onClick}
+          />
+        )}
       </CardContent>
     </Card>
   );
@@ -469,89 +585,69 @@ interface MatchTriagemProps {
 function MatchTriagem({ matches, onQuickAction }: MatchTriagemProps) {
   if (matches.length === 0) return null;
 
-  // Sort by scoreConfianca desc, pick top match
   const sorted = [...matches].sort((a, b) => b.scoreConfianca - a.scoreConfianca);
   const top = sorted[0];
   const rest = sorted.length - 1;
 
   const isPossivel = top.status === "possivel";
-  const isConfirmed =
-    top.status === "confirmado_manual" || top.status === "auto_confirmado";
+  const isConfirmed = top.status === "confirmado_manual" || top.status === "auto_confirmado";
   const isDescartado = top.status === "descartado";
 
   return (
     <div
-      className="flex flex-col gap-1 pt-2 border-t border-zinc-100 dark:border-zinc-800 mt-2 bg-zinc-50 dark:bg-zinc-900/50 rounded-md px-2 pb-2"
+      className="flex flex-col gap-1 mt-2 pt-1.5 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 rounded-md px-2 pb-1.5"
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center gap-2 text-[11px]">
-        {/* Score pill */}
-        <span
-          className={cn(
-            "inline-flex items-center px-1.5 py-0.5 rounded font-semibold",
-            top.scoreConfianca >= 80
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-              : top.scoreConfianca >= 50
-                ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-          )}
-        >
+        <span className={cn(
+          "inline-flex items-center px-1.5 py-0.5 rounded font-semibold",
+          top.scoreConfianca >= 80
+            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+            : top.scoreConfianca >= 50
+              ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+              : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+        )}>
           {top.scoreConfianca}%
         </span>
-
-        {/* Name */}
         <span className="flex-1 truncate text-zinc-700 dark:text-zinc-300 font-medium">
           {top.assistidoNome || top.nomeEncontrado}
         </span>
 
-        {/* Status / Actions */}
         {isPossivel && onQuickAction && (
           <div className="flex items-center gap-1 shrink-0">
             <button
               onClick={() => onQuickAction(top.id, "confirmar")}
-              title="Confirmar match"
-              className="inline-flex items-center gap-1 text-xs p-2 rounded font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 text-xs p-1.5 rounded font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 transition-colors cursor-pointer"
             >
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              <span>OK</span>
+              <CheckCircle2 className="h-3.5 w-3.5" /><span>OK</span>
             </button>
             <button
               onClick={() => onQuickAction(top.id, "descartar")}
-              title="Descartar match"
-              className="inline-flex items-center gap-1 text-xs p-2 rounded font-medium text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 text-xs p-1.5 rounded font-medium text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 transition-colors cursor-pointer"
             >
-              <XCircle className="h-3.5 w-3.5" />
-              <span>Não</span>
+              <XCircle className="h-3.5 w-3.5" /><span>Não</span>
             </button>
           </div>
         )}
-
         {isConfirmed && (
           <div className="flex items-center gap-1 shrink-0">
             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium">
-              <CheckCircle2 className="h-3 w-3" />
-              Confirmado
+              <CheckCircle2 className="h-3 w-3" />Confirmado
             </span>
             {top.assistidoId && (
               <NextLink
                 href={`/admin/assistidos/${top.assistidoId}`}
                 className="inline-flex items-center p-0.5 rounded text-zinc-400 hover:text-emerald-600 transition-colors cursor-pointer"
-                title="Ver perfil do assistido"
               >
                 <ExternalLink className="h-3 w-3" />
               </NextLink>
             )}
           </div>
         )}
-
         {isDescartado && (
-          <span className="text-[10px] text-zinc-400 italic shrink-0">
-            Descartado
-          </span>
+          <span className="text-[10px] text-zinc-400 italic shrink-0">Descartado</span>
         )}
       </div>
-
-      {/* "+N outros" link */}
       {rest > 0 && (
         <span className="text-[10px] text-zinc-400 pl-0.5">
           +{rest} outro{rest > 1 ? "s" : ""} match{rest > 1 ? "es" : ""}

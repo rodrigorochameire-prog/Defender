@@ -48,6 +48,25 @@ export function getCrimeLabel(tipo: string | null | undefined): string {
   return CRIME_TYPES.find((c) => c.value === tipo)?.label || "Outros";
 }
 
+export function getCrimeBorderColor(tipo: string | null | undefined): string {
+  const colors: Record<string, string> = {
+    homicidio: "border-l-red-500",
+    tentativa_homicidio: "border-l-red-400",
+    feminicidio: "border-l-rose-500",
+    trafico: "border-l-orange-500",
+    roubo: "border-l-amber-500",
+    violencia_domestica: "border-l-purple-500",
+    sexual: "border-l-purple-600",
+    lesao_corporal: "border-l-rose-400",
+    furto: "border-l-yellow-500",
+    porte_arma: "border-l-pink-500",
+    estelionato: "border-l-fuchsia-500",
+    execucao_penal: "border-l-blue-500",
+    outros: "border-l-zinc-300",
+  };
+  return colors[tipo || ""] || colors.outros;
+}
+
 export function getCrimeBadgeColor(tipo: string | null | undefined): string {
   const colors: Record<string, string> = {
     homicidio: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",

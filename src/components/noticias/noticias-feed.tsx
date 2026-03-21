@@ -130,7 +130,7 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter,
   }
 
   return (
-    <div className="flex gap-4 min-h-full min-w-0">
+    <div className="flex min-h-full min-w-0">
       {/* Sidebar de Pastas */}
       {categoria !== "salvos" && (
         <NoticiasPastasSidebar pastaAtiva={pastaAtiva} onSelectPasta={setPastaAtiva} />

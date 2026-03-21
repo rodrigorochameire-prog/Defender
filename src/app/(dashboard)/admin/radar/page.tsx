@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageLayout } from "@/components/shared/page-layout";
 import { Button } from "@/components/ui/button";
-import { Radio, Newspaper, Map, BarChart3, Link2, RefreshCw, Clock, Users, Globe, AlertTriangle, CheckCircle2, BarChart2 } from "lucide-react";
+import { Radio, Newspaper, Map, BarChart3, Link2, RefreshCw, Clock, Users, Globe, AlertTriangle, CheckCircle2, BarChart2, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { RadarFeed } from "@/components/radar/radar-feed";
 import { RadarFiltros, type FiltrosState } from "@/components/radar/radar-filtros";
 import { RadarMapa } from "@/components/radar/radar-mapa";
@@ -18,6 +18,7 @@ import { RadarScopeSelector, type RadarScope } from "@/components/radar/radar-sc
 import { RadarIntelligencePanel } from "@/components/radar/radar-intelligence-panel";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { trpc } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -39,13 +40,24 @@ export default function RadarCriminalPage() {
 
   // Scope — persiste no localStorage
   const [scope, setScope] = useState<RadarScope>("camacari");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
   useEffect(() => {
     const saved = localStorage.getItem("radar-scope") as RadarScope | null;
     if (saved && ["camacari", "rms", "salvador"].includes(saved)) setScope(saved);
+    const col = localStorage.getItem("radar-sidebar-collapsed");
+    if (col !== null) setSidebarCollapsed(col === "true");
   }, []);
+
   const handleScopeChange = (s: RadarScope) => {
     setScope(s);
     localStorage.setItem("radar-scope", s);
+  };
+
+  const handleSidebarToggle = () => {
+    const next = !sidebarCollapsed;
+    setSidebarCollapsed(next);
+    localStorage.setItem("radar-sidebar-collapsed", String(next));
   };
 
   const handleNavigateToMatches = (noticiaId: number) => {
@@ -317,48 +329,107 @@ export default function RadarCriminalPage() {
           </div>
         )}
 
-        <TabsContent value="feed" className="space-y-4">
-          {/* Scope selector — visível em qualquer tamanho */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <TabsContent value="feed">
+          {/* Mobile: botões para sheets */}
+          <div className="flex items-center gap-2 mb-3 lg:hidden">
             <RadarScopeSelector value={scope} onChange={handleScopeChange} />
-
-            {/* Botões mobile para sidebars */}
-            <div className="flex items-center gap-2 sm:ml-auto">
+            <div className="flex items-center gap-2 ml-auto">
               <button
-                className="lg:hidden flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 px-2.5 py-1.5 text-xs text-zinc-600 dark:text-zinc-400 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+                className="flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 px-2.5 py-1.5 text-xs text-zinc-600 dark:text-zinc-400 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
                 onClick={() => setIntelOpen(true)}
               >
-                <BarChart2 className="h-3.5 w-3.5" />
-                Inteligência
+                <BarChart2 className="h-3.5 w-3.5" />Inteligência
               </button>
               <button
-                className="lg:hidden flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30 px-2.5 py-1.5 text-xs text-amber-700 dark:text-amber-300 cursor-pointer"
+                className="flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30 px-2.5 py-1.5 text-xs text-amber-700 dark:text-amber-300 cursor-pointer"
                 onClick={() => setReincidentesOpen(true)}
               >
-                <Users className="h-3.5 w-3.5" />
-                Reincidentes
+                <Users className="h-3.5 w-3.5" />Reincidentes
               </button>
             </div>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Sidebar */}
-            <div className="w-full lg:w-64 shrink-0 space-y-4">
-              <RadarFiltros filtros={filtros} onChange={setFiltros} />
-              {/* Painel de inteligência — desktop */}
-              <div className="hidden lg:block">
+          {/* Desktop layout: sidebar colapsável + feed */}
+          <div className="hidden lg:flex gap-0 relative">
+
+            {/* Sidebar colapsável */}
+            <div className={cn(
+              "shrink-0 transition-[width] duration-200 ease-in-out overflow-hidden relative",
+              sidebarCollapsed ? "w-10" : "w-72"
+            )}>
+              {/* Conteúdo expandido */}
+              <div className={cn(
+                "pr-4 space-y-4 transition-opacity duration-150",
+                sidebarCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
+              )}>
+                {/* Scope selector no topo da sidebar */}
+                <RadarScopeSelector value={scope} onChange={handleScopeChange} />
+
+                {/* Inteligência primeiro */}
                 <RadarIntelligencePanel scope={scope} />
-              </div>
-              {/* Painel de reincidentes — desktop */}
-              <div className="hidden lg:block">
+
+                {/* Filtros */}
+                <RadarFiltros filtros={filtros} onChange={setFiltros} />
+
+                {/* Reincidentes */}
                 <RadarReincidentesPanel />
               </div>
+
+              {/* Ícones quando colapsada */}
+              {sidebarCollapsed && (
+                <div className="flex flex-col items-center gap-3 pt-1">
+                  <button
+                    onClick={() => { setSidebarCollapsed(false); localStorage.setItem("radar-sidebar-collapsed", "false"); }}
+                    className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                    title="Inteligência"
+                  >
+                    <BarChart2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => { setSidebarCollapsed(false); localStorage.setItem("radar-sidebar-collapsed", "false"); }}
+                    className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                    title="Filtros"
+                  >
+                    <SlidersHorizontal className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => { setSidebarCollapsed(false); localStorage.setItem("radar-sidebar-collapsed", "false"); }}
+                    className="p-1.5 rounded-md text-zinc-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors cursor-pointer"
+                    title="Reincidentes"
+                  >
+                    <Users className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
+              {/* Botão toggle — sempre visível na borda direita */}
+              <button
+                onClick={handleSidebarToggle}
+                className={cn(
+                  "absolute top-0 -right-3 z-10 flex items-center justify-center",
+                  "w-6 h-6 rounded-full border border-zinc-200 dark:border-zinc-700",
+                  "bg-white dark:bg-zinc-900 shadow-sm",
+                  "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200",
+                  "transition-colors cursor-pointer"
+                )}
+                title={sidebarCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
+              >
+                {sidebarCollapsed
+                  ? <ChevronRight className="h-3.5 w-3.5" />
+                  : <ChevronLeft className="h-3.5 w-3.5" />
+                }
+              </button>
             </div>
 
             {/* Feed principal */}
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 border-l border-zinc-100 dark:border-zinc-800 pl-4">
               <RadarFeed filtros={filtros} municipio={scope} />
             </div>
+          </div>
+
+          {/* Mobile: feed sem sidebar */}
+          <div className="lg:hidden">
+            <RadarFeed filtros={filtros} municipio={scope} />
           </div>
 
           {/* Sheet de inteligência — mobile */}

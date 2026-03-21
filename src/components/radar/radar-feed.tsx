@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RadarNoticiaCard } from "./radar-noticia-card";
 import { RadarNoticiaSheet } from "./radar-noticia-sheet";
-import { Radio, Newspaper, Download, LayoutGrid, List, RefreshCw } from "lucide-react";
+import { Radio, Newspaper, Download, LayoutGrid, List, AlignJustify, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { exportNoticiasToCsv } from "@/lib/radar-export";
@@ -60,8 +60,19 @@ function groupByDate<T extends { dataFato?: Date | string | null; dataPublicacao
 export function RadarFeed({ filtros, municipio = "camacari" }: RadarFeedProps) {
   const [selectedNoticiaId, setSelectedNoticiaId] = useState<number | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
+  const [viewMode, setViewMode] = useState<"compact" | "cards" | "list">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("radar-view-mode");
+      if (saved === "compact" || saved === "cards" || saved === "list") return saved;
+    }
+    return "compact";
+  });
   const [expandedId, setExpandedId] = useState<number | null>(null);
+
+  const handleViewMode = (mode: "compact" | "cards" | "list") => {
+    setViewMode(mode);
+    localStorage.setItem("radar-view-mode", mode);
+  };
 
   const {
     data,
@@ -231,32 +242,27 @@ export function RadarFeed({ filtros, municipio = "camacari" }: RadarFeedProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Toggle de visualização */}
-          <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
-            <button
-              onClick={() => setViewMode("cards")}
-              className={cn(
-                "p-1.5 rounded-md transition-colors cursor-pointer",
-                viewMode === "cards"
-                  ? "bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-zinc-100"
-                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
-              )}
-              title="Modo cards"
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={cn(
-                "p-1.5 rounded-md transition-colors cursor-pointer",
-                viewMode === "list"
-                  ? "bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-zinc-100"
-                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
-              )}
-              title="Modo lista"
-            >
-              <List className="h-3.5 w-3.5" />
-            </button>
+          {/* Toggle de visualização — 3 modos */}
+          <div className="flex items-center gap-0.5 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
+            {([
+              { mode: "compact", icon: AlignJustify, title: "Compact (padrão)" },
+              { mode: "cards", icon: LayoutGrid, title: "Grid com imagem" },
+              { mode: "list", icon: List, title: "Lista densa" },
+            ] as const).map(({ mode, icon: Icon, title }) => (
+              <button
+                key={mode}
+                onClick={() => handleViewMode(mode)}
+                className={cn(
+                  "p-1.5 rounded-md transition-colors cursor-pointer",
+                  viewMode === mode
+                    ? "bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-zinc-100"
+                    : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                )}
+                title={title}
+              >
+                <Icon className="h-3.5 w-3.5" />
+              </button>
+            ))}
           </div>
 
           {allNoticias.length > 0 && (
@@ -284,21 +290,28 @@ export function RadarFeed({ filtros, municipio = "camacari" }: RadarFeedProps) {
             </span>
             <div className="flex-1 h-px bg-zinc-100 dark:bg-zinc-800" />
           </div>
-          {group.map((noticia) => (
-            <RadarNoticiaCard
-              key={noticia.id}
-              noticia={{ ...noticia, matches: matchesPendentes?.[noticia.id] ?? [] } as any}
-              relevanciaScore={(noticia as any).relevanciaScore}
-              onClick={() => {
-                setSelectedNoticiaId(noticia.id);
-                setSheetOpen(true);
-              }}
-              onQuickAction={handleQuickAction}
-              viewMode={viewMode}
-              expanded={expandedId === noticia.id}
-              onToggleExpand={() => setExpandedId(expandedId === noticia.id ? null : noticia.id)}
-            />
-          ))}
+          {/* Grid usa 2 colunas em sm+; compact e list são verticais */}
+          <div className={cn(
+            viewMode === "cards"
+              ? "grid grid-cols-1 sm:grid-cols-2 gap-3"
+              : "flex flex-col"
+          )}>
+            {group.map((noticia) => (
+              <RadarNoticiaCard
+                key={noticia.id}
+                noticia={{ ...noticia, matches: matchesPendentes?.[noticia.id] ?? [] } as any}
+                relevanciaScore={(noticia as any).relevanciaScore}
+                onClick={() => {
+                  setSelectedNoticiaId(noticia.id);
+                  setSheetOpen(true);
+                }}
+                onQuickAction={handleQuickAction}
+                viewMode={viewMode}
+                expanded={expandedId === noticia.id}
+                onToggleExpand={() => setExpandedId(expandedId === noticia.id ? null : noticia.id)}
+              />
+            ))}
+          </div>
         </div>
       ))}
 
