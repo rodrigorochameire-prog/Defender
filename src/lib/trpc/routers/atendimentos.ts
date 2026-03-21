@@ -10,7 +10,8 @@ import {
   plaudConfig,
   plaudRecordings,
 } from "@/lib/db/schema";
-import { eq, desc, and, like, or, isNull, sql } from "drizzle-orm";
+import { eq, desc, and, like, or, isNull, sql, inArray } from "drizzle-orm";
+import { getParceirosIds } from "@/lib/trpc/comarca-scope";
 import { TRPCError } from "@trpc/server";
 import {
   getActiveConfig,
@@ -46,8 +47,15 @@ export const atendimentosRouter = router({
         offset: z.number().default(0),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const conditions = [];
+
+      const isAdmin = ctx.user.role === "admin";
+      if (!isAdmin) {
+        const parceirosIds = await getParceirosIds(ctx.user.id);
+        const defensoresVisiveis = [ctx.user.id, ...parceirosIds];
+        conditions.push(inArray(atendimentos.atendidoPorId, defensoresVisiveis));
+      }
 
       if (input.assistidoId) {
         conditions.push(eq(atendimentos.assistidoId, input.assistidoId));
