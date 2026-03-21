@@ -154,6 +154,7 @@ export async function validateInviteAction(token: string): Promise<{
   email?: string;
   nome?: string;
   nucleo?: string | null;
+  comarcaId?: number | null;
   reason?: string;
 }> {
   try {
@@ -181,6 +182,7 @@ export async function validateInviteAction(token: string): Promise<{
       email: invitation.email,
       nome: invitation.nome,
       nucleo: invitation.nucleo,
+      comarcaId: invitation.comarcaId,
     };
   } catch (error) {
     console.error("Erro ao validar convite:", error);

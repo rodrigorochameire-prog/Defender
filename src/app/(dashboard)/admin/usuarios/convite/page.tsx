@@ -40,7 +40,7 @@ export default function ConviteDefensorPage() {
     nucleo: "" as Nucleo | "",
     oab: "",
     funcao: "defensor_titular",
-    comarcaId: 1,
+    comarcaId: 0,
     podeVerTodosAssistidos: true,
     podeVerTodosProcessos: true,
     mensagemPersonalizada: "",
@@ -70,6 +70,11 @@ export default function ConviteDefensorPage() {
       return;
     }
 
+    if (!formData.comarcaId || formData.comarcaId === 0) {
+      toast.error("Selecione uma comarca");
+      return;
+    }
+
     inviteMutation.mutate({
       nome: formData.nome,
       email: formData.email,
@@ -89,18 +94,19 @@ export default function ConviteDefensorPage() {
   };
 
   const handleEnviarEmail = () => {
-    const subject = encodeURIComponent("Convite para o Defender - Defensoria de Camaçari");
+    const comarcaNome = comarcasAtivas?.find(c => c.id === formData.comarcaId)?.nome ?? "Defensoria";
+    const subject = encodeURIComponent(`Convite para o Defender - Defensoria de ${comarcaNome}`);
     const body = encodeURIComponent(`
 Olá ${formData.nome},
 
-Você foi convidado(a) para acessar o Defender, sistema de gestão da Defensoria Pública de Camaçari.
+Você foi convidado(a) para acessar o Defender, sistema de gestão da Defensoria Pública de ${comarcaNome}.
 
 ${formData.mensagemPersonalizada ? `Mensagem: ${formData.mensagemPersonalizada}\n` : ""}
 Clique no link abaixo para criar sua conta:
 ${linkConvite}
 
 Atenciosamente,
-Defensoria Pública de Camaçari
+Defensoria Pública de ${comarcaNome}
     `.trim());
 
     window.open(`mailto:${formData.email}?subject=${subject}&body=${body}`);
@@ -158,7 +164,7 @@ Defensoria Pública de Camaçari
                     nucleo: "",
                     oab: "",
                     funcao: "defensor_titular",
-                    comarcaId: 1,
+                    comarcaId: 0,
                     podeVerTodosAssistidos: true,
                     podeVerTodosProcessos: true,
                     mensagemPersonalizada: "",
@@ -264,11 +270,11 @@ Defensoria Pública de Camaçari
                 Comarca <span className="text-rose-500">*</span>
               </Label>
               <Select
-                value={String(formData.comarcaId)}
+                value={formData.comarcaId === 0 ? "" : String(formData.comarcaId)}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, comarcaId: Number(value) }))}
               >
                 <SelectTrigger id="comarca">
-                  <SelectValue placeholder="Selecione a comarca" />
+                  <SelectValue placeholder="Selecione a comarca..." />
                 </SelectTrigger>
                 <SelectContent>
                   {comarcasAtivas?.map(c => (

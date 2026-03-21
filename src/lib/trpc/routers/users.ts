@@ -636,7 +636,7 @@ export const usersRouter = router({
         nucleo: z.string().optional(),
         funcao: z.string().default("defensor_titular"),
         oab: z.string().optional(),
-        comarcaId: z.number().int().positive().default(1),
+        comarcaId: z.number().int().positive(),
         podeVerTodosAssistidos: z.boolean().default(true),
         podeVerTodosProcessos: z.boolean().default(true),
         mensagemPersonalizada: z.string().optional(),
