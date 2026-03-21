@@ -56,6 +56,7 @@ export const radarNoticias = pgTable("radar_noticias", {
   comarcaId: integer("comarca_id").references(() => comarcas.id).default(1).notNull(),
   contentHash: text("content_hash"),
   relevanciaScore: integer("relevancia_score").default(0).notNull(),
+  municipio: text("municipio").notNull().default("camacari"),
   enrichmentStatus: radarEnrichmentStatusEnum("enrichment_status").default("pending").notNull(),
   errorCount: integer("error_count").default(0).notNull(),
   lastError: text("last_error"),
@@ -75,6 +76,8 @@ export const radarNoticias = pgTable("radar_noticias", {
   index("radar_noticias_status_datapub_idx").on(table.enrichmentStatus, table.dataPublicacao),
   index("radar_noticias_status_relevancia_datapub_idx").on(table.enrichmentStatus, table.relevanciaScore, table.dataPublicacao),
   index("radar_noticias_comarca_id_idx").on(table.comarcaId),
+  index("radar_noticias_municipio_idx").on(table.municipio),
+  index("radar_noticias_municipio_status_idx").on(table.municipio, table.enrichmentStatus, table.dataPublicacao),
 ]);
 
 export type RadarNoticia = typeof radarNoticias.$inferSelect;

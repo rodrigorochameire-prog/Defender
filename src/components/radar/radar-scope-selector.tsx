@@ -1,0 +1,96 @@
+"use client";
+
+import { MapPin, Building2, Map } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export type RadarScope = "camacari" | "rms" | "salvador";
+
+const SCOPES: { value: RadarScope; label: string; sublabel: string; icon: React.ElementType; color: string }[] = [
+  {
+    value: "camacari",
+    label: "Camaçari",
+    sublabel: "Foco operacional",
+    icon: MapPin,
+    color: "emerald",
+  },
+  {
+    value: "rms",
+    label: "RMS",
+    sublabel: "Região Metropolitana",
+    icon: Map,
+    color: "blue",
+  },
+  {
+    value: "salvador",
+    label: "Salvador",
+    sublabel: "Inteligência",
+    icon: Building2,
+    color: "purple",
+  },
+];
+
+const COLOR_MAP = {
+  emerald: {
+    active: "bg-emerald-500 text-white shadow-sm",
+    icon: "text-emerald-200",
+    dot: "bg-emerald-400",
+  },
+  blue: {
+    active: "bg-blue-500 text-white shadow-sm",
+    icon: "text-blue-200",
+    dot: "bg-blue-400",
+  },
+  purple: {
+    active: "bg-purple-500 text-white shadow-sm",
+    icon: "text-purple-200",
+    dot: "bg-purple-400",
+  },
+};
+
+interface RadarScopeSelectorProps {
+  value: RadarScope;
+  onChange: (scope: RadarScope) => void;
+  counts?: Partial<Record<RadarScope, number>>;
+}
+
+export function RadarScopeSelector({ value, onChange, counts }: RadarScopeSelectorProps) {
+  return (
+    <div className="flex items-center gap-1 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700">
+      {SCOPES.map((scope) => {
+        const isActive = value === scope.value;
+        const colors = COLOR_MAP[scope.color as keyof typeof COLOR_MAP];
+        const Icon = scope.icon;
+        const count = counts?.[scope.value];
+
+        return (
+          <button
+            key={scope.value}
+            onClick={() => onChange(scope.value)}
+            className={cn(
+              "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer",
+              isActive
+                ? colors.active
+                : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700"
+            )}
+          >
+            <Icon className={cn("h-3.5 w-3.5", isActive ? colors.icon : "opacity-60")} />
+            <span className="hidden sm:inline">{scope.label}</span>
+            <span className="sm:hidden">{scope.label.split(" ")[0]}</span>
+            {count !== undefined && count > 0 && (
+              <span
+                className={cn(
+                  "text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
+                  isActive
+                    ? "bg-white/20 text-white"
+                    : "bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
+                )}
+              >
+                {count}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}

@@ -3,7 +3,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ExternalLink, MapPin, Clock, Users, Link2, RefreshCw, CheckCircle2, XCircle, Zap } from "lucide-react";
+import { ExternalLink, MapPin, Clock, Users, Link2, RefreshCw, CheckCircle2, XCircle, Zap, ChevronDown, FileText, Shield, Crosshair } from "lucide-react";
+import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getCrimeBadgeColor, getCrimeLabel } from "./radar-filtros";
@@ -66,6 +67,8 @@ interface NoticiaCardProps {
   onClick?: () => void;
   onQuickAction?: (matchId: number, action: "confirmar" | "descartar") => void;
   viewMode?: "cards" | "list";
+  expanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 /** Normaliza envolvidos que pode vir como string JSON ou array */
@@ -117,7 +120,7 @@ const papelLabels: Record<string, string> = {
   outro: "Outro",
 };
 
-export function RadarNoticiaCard({ noticia, relevanciaScore, onClick, onQuickAction, viewMode }: NoticiaCardProps) {
+export function RadarNoticiaCard({ noticia, relevanciaScore, onClick, onQuickAction, viewMode, expanded = false, onToggleExpand }: NoticiaCardProps) {
   const dataDisplay = noticia.dataFato || noticia.dataPublicacao;
   const hasMatch = (noticia.matchCount ?? 0) > 0;
   const envolvidos = parseEnvolvidos(noticia.envolvidos);
@@ -307,7 +310,7 @@ export function RadarNoticiaCard({ noticia, relevanciaScore, onClick, onQuickAct
               onQuickAction={onQuickAction}
             />
 
-            {/* Metadata */}
+            {/* Metadata row + expand toggle */}
             <div className="flex items-center gap-3 text-xs text-zinc-400">
               {dataDisplay && (
                 <span className="flex items-center gap-1">
@@ -343,7 +346,103 @@ export function RadarNoticiaCard({ noticia, relevanciaScore, onClick, onQuickAct
                 <ExternalLink className="h-3 w-3" />
                 Fonte
               </a>
+
+              {/* Expand toggle — só aparece quando há dados de IA */}
+              {(noticia.resumoIA || noticia.bairro || noticia.armaMeio || envolvidosComNome.length > 0) && onToggleExpand && (
+                <button
+                  className={cn(
+                    "ml-auto flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer",
+                    expanded
+                      ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
+                      : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  )}
+                  onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
+                  title={expanded ? "Recolher" : "Ver inteligência"}
+                >
+                  <Shield className="h-3 w-3" />
+                  {expanded ? "Recolher" : "Intel"}
+                  <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", expanded && "rotate-180")} />
+                </button>
+              )}
             </div>
+
+            {/* Painel de inteligência inline — expandível */}
+            {expanded && (
+              <div
+                className="mt-2 border-t border-zinc-100 dark:border-zinc-800 pt-3 space-y-2.5"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Localização + Tempo */}
+                {(noticia.bairro || noticia.armaMeio) && (
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-zinc-600 dark:text-zinc-400">
+                    {noticia.bairro && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3 text-zinc-400 shrink-0" />
+                        <span className="font-medium text-zinc-700 dark:text-zinc-300">{noticia.bairro}</span>
+                      </span>
+                    )}
+                    {noticia.armaMeio && (
+                      <span className="flex items-center gap-1">
+                        <Crosshair className="h-3 w-3 text-zinc-400 shrink-0" />
+                        <span>{noticia.armaMeio}</span>
+                      </span>
+                    )}
+                    {dataDisplay && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3 text-zinc-400 shrink-0" />
+                        <span>{format(new Date(dataDisplay), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Envolvidos completos */}
+                {envolvidosComNome.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">Envolvidos</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {envolvidosComNome.map((e, i) => (
+                        <span
+                          key={`exp-${e.nome}-${i}`}
+                          className={cn(
+                            "inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md font-medium",
+                            papelColors[e.papel] || "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+                          )}
+                        >
+                          <Users className="h-2.5 w-2.5 shrink-0" />
+                          {e.nome}{e.idade ? `, ${e.idade} anos` : ""}{e.vulgo ? ` (${e.vulgo})` : ""}
+                          <span className="opacity-60 text-[10px]">· {papelLabels[e.papel] || e.papel}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Resumo IA completo */}
+                {noticia.resumoIA && (
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide flex items-center gap-1">
+                      <FileText className="h-3 w-3" />
+                      Resumo IA
+                    </p>
+                    <p className="text-[12px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                      {noticia.resumoIA}
+                    </p>
+                  </div>
+                )}
+
+                {/* CTA — abrir sheet */}
+                <div className="flex justify-end pt-1">
+                  <button
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors cursor-pointer"
+                    onClick={(e) => { e.stopPropagation(); onClick?.(); }}
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Ver completo no sheet
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>

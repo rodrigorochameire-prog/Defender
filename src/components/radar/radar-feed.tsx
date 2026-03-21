@@ -26,6 +26,7 @@ interface FiltrosState {
 
 interface RadarFeedProps {
   filtros: FiltrosState;
+  municipio?: "camacari" | "rms" | "salvador";
 }
 
 function groupByDate<T extends { dataFato?: Date | string | null; dataPublicacao?: Date | string | null; createdAt?: Date | string | null }>(
@@ -56,10 +57,11 @@ function groupByDate<T extends { dataFato?: Date | string | null; dataPublicacao
     .map(([label, items]) => ({ label, items }));
 }
 
-export function RadarFeed({ filtros }: RadarFeedProps) {
+export function RadarFeed({ filtros, municipio = "camacari" }: RadarFeedProps) {
   const [selectedNoticiaId, setSelectedNoticiaId] = useState<number | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const {
     data,
@@ -81,6 +83,7 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
       soMatches: filtros.soMatches,
       circunstancia: filtros.circunstancia,
       relevanciaMin: filtros.relevanciaMin,
+      municipio,
       limit: 20,
     },
     {
@@ -292,6 +295,8 @@ export function RadarFeed({ filtros }: RadarFeedProps) {
               }}
               onQuickAction={handleQuickAction}
               viewMode={viewMode}
+              expanded={expandedId === noticia.id}
+              onToggleExpand={() => setExpandedId(expandedId === noticia.id ? null : noticia.id)}
             />
           ))}
         </div>

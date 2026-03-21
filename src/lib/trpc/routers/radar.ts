@@ -36,6 +36,7 @@ export const radarRouter = router({
         soMatches: z.boolean().optional().default(false),
         circunstancia: z.string().optional(),
         relevanciaMin: z.number().min(0).max(100).optional(),
+        municipio: z.enum(["camacari", "rms", "salvador"]).optional().default("camacari"),
         limit: z.number().min(1).max(100).optional().default(20),
         cursor: z.number().optional(), // id of the last item
       })
@@ -107,6 +108,9 @@ export const radarRouter = router({
       if (input.relevanciaMin !== undefined) {
         conditions.push(gte(radarNoticias.relevanciaScore, input.relevanciaMin));
       }
+
+      // Filtro por município (escopo geográfico)
+      conditions.push(eq(radarNoticias.municipio, input.municipio ?? "camacari"));
 
       // Base query
       let query;
@@ -384,6 +388,71 @@ export const radarRouter = router({
         count: Number(r.total),
         tipoCrimeDominante: r.tipo_crime_dominante,
       }));
+    }),
+
+  // Stats comparativas por município (para Intelligence Panel)
+  statsByMunicipio: protectedProcedure
+    .input(z.object({ dias: z.number().min(1).max(90).default(30) }))
+    .query(async ({ input }) => {
+      const since = new Date();
+      since.setDate(since.getDate() - input.dias);
+
+      const rows = await db.execute(sql`
+        SELECT
+          municipio,
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER (WHERE tipo_crime = 'homicidio')::int AS homicidios,
+          COUNT(*) FILTER (WHERE tipo_crime = 'trafico')::int AS trafico,
+          COUNT(*) FILTER (WHERE tipo_crime = 'roubo')::int AS roubos,
+          COUNT(*) FILTER (WHERE tipo_crime = 'sexual')::int AS sexual,
+          COUNT(*) FILTER (WHERE tipo_crime = 'violencia_domestica')::int AS vd,
+          COUNT(*) FILTER (WHERE bairro IS NOT NULL)::int AS com_bairro
+        FROM radar_noticias
+        WHERE
+          enrichment_status IN ('extracted', 'matched')
+          AND data_publicacao >= ${since.toISOString()}
+        GROUP BY municipio
+        ORDER BY total DESC
+      `);
+
+      const topBairrosRows = await db.execute(sql`
+        SELECT
+          municipio,
+          bairro,
+          COUNT(*)::int AS total
+        FROM radar_noticias
+        WHERE
+          enrichment_status IN ('extracted', 'matched')
+          AND bairro IS NOT NULL
+          AND data_publicacao >= ${since.toISOString()}
+        GROUP BY municipio, bairro
+        ORDER BY municipio, total DESC
+      `);
+
+      // Agrupar top bairros por município (top 5 cada)
+      const bairrosByMunicipio: Record<string, { bairro: string; total: number }[]> = {};
+      for (const row of topBairrosRows as unknown as any[]) {
+        const m = row.municipio as string;
+        if (!bairrosByMunicipio[m]) bairrosByMunicipio[m] = [];
+        if (bairrosByMunicipio[m].length < 5) {
+          bairrosByMunicipio[m].push({ bairro: row.bairro, total: row.total });
+        }
+      }
+
+      return {
+        stats: (rows as unknown as any[]).map((r) => ({
+          municipio: r.municipio as string,
+          total: r.total as number,
+          homicidios: r.homicidios as number,
+          trafico: r.trafico as number,
+          roubos: r.roubos as number,
+          sexual: r.sexual as number,
+          vd: r.vd as number,
+          comBairro: r.com_bairro as number,
+        })),
+        topBairros: bairrosByMunicipio,
+        dias: input.dias,
+      };
     }),
 
   // Dados para mapa (lat/lng de todas notícias com coordenadas)

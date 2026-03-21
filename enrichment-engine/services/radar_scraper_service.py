@@ -102,6 +102,22 @@ KEYWORDS_CAMACARI_REGIAO = [
     "cia-rms", "cia rms", "rms norte",
 ]
 
+# Mapeamento para detecção de município pelo título
+KEYWORDS_RMS = [
+    "simões filho", "simoes filho", "lauro de freitas",
+    "madre de deus", "dias d'ávila", "dias davila", "dias d avila",
+]
+
+KEYWORDS_SALVADOR = [
+    "salvador", "bonfim", "liberdade", "cajazeiras", "brotas",
+    "itapuã", "itapua", "pituba", "ondina", "barra", "federação",
+    "federacao", "pau da lima", "fazenda grande", "nordeste de amaralina",
+    "costa azul", "imbuí", "imbui", "boca do rio", "pernambués", "pernambues",
+    "sussuarana", "tancredo neves", "são caetano", "sao caetano",
+    "engenho velho", "garcía", "garcia", "calçada", "calcada",
+    "periperi", "plataforma", "subúrbio", "suburbio",
+]
+
 
 class RadarScraperService:
     """Scraper de notícias policiais de portais da região de Camaçari."""
@@ -319,7 +335,12 @@ class RadarScraperService:
                                "parafuso", "polo petroquímico", "polo industrial",
                                "dias d'ávila", "dias d avila", "dias davila"]
                 )
-                if not tem_camacari_titulo:
+                # Para feeds Salvador/RMS, o check de título é diferente
+                is_salvador_feed = any(k in nome_fonte.lower() for k in ["salvador", "simões", "lauro", "dias d"])
+                if is_salvador_feed:
+                    # Aceitar se título mencionar cidade específica (já garantido pelo nome da fonte)
+                    pass  # não precisa checar camaçari no título
+                elif not tem_camacari_titulo:
                     logger.debug("Google News: título sem Camaçari, ignorando: %s", titulo[:80])
                     continue
 
@@ -407,6 +428,7 @@ class RadarScraperService:
             "raw_html": "",
             "content_hash": self._generate_content_hash(titulo, corpo_limpo or titulo),
             "relevancia_score": relevancia_score,
+            "municipio": self._detect_municipio(titulo),
         }
 
     def _get_search_urls(self, base_url: str) -> list[str]:
@@ -598,6 +620,7 @@ class RadarScraperService:
             "raw_html": html[:200000],
             "content_hash": self._generate_content_hash(titulo, corpo),
             "relevancia_score": relevancia_score,
+            "municipio": self._detect_municipio(titulo),
         }
 
     def _extract_title(self, soup: BeautifulSoup) -> str | None:
@@ -781,6 +804,16 @@ class RadarScraperService:
         except Exception as e:
             logger.debug("Pré-triagem IA falhou: %s", str(e))
             return 0  # Em caso de erro, não ajusta o score
+
+    @staticmethod
+    def _detect_municipio(titulo: str) -> str:
+        """Detecta o município da notícia pelo título."""
+        t = titulo.lower()
+        if any(kw in t for kw in KEYWORDS_RMS):
+            return "rms"
+        if any(kw in t for kw in KEYWORDS_SALVADOR):
+            return "salvador"
+        return "camacari"
 
     def _is_camacari_region(self, titulo: str, corpo: str | None, confiabilidade: str = "regional") -> bool:
         """
