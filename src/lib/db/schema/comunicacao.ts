@@ -300,6 +300,10 @@ export const whatsappChatMessages = pgTable("whatsapp_chat_messages", {
   // Metadados
   metadata: jsonb("metadata").default({}),
 
+  // Import flag
+  imported: boolean("imported").default(false).notNull(),
+  importedAt: timestamp("imported_at"),
+
   // Timestamps
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
