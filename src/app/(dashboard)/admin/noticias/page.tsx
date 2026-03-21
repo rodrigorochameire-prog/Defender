@@ -110,7 +110,7 @@ export default function NoticiasPage() {
     <div className="flex flex-col h-full overflow-hidden">
 
       {/* Header — toolbar unificada */}
-      <div className="border-b bg-background shrink-0 px-3 h-11 flex items-center gap-1.5">
+      <div className="border-b bg-white dark:bg-zinc-950 shrink-0 px-3 flex items-stretch gap-1.5" style={{ height: "44px" }}>
 
         {/* Toggle sidebar (só em categorias com pasta) */}
         {CATEGORIAS_COM_SIDEBAR.has(categoria) && (
@@ -118,7 +118,7 @@ export default function NoticiasPage() {
             <button
               onClick={toggleSidebar}
               className={cn(
-                "h-7 w-7 inline-flex items-center justify-center rounded-md transition-colors shrink-0",
+                "self-center h-7 w-7 inline-flex items-center justify-center rounded-md transition-colors shrink-0",
                 sidebarOpen
                   ? "text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800"
                   : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
@@ -127,33 +127,36 @@ export default function NoticiasPage() {
             >
               <PanelLeft className="h-3.5 w-3.5" />
             </button>
-            <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-0.5 shrink-0" />
+            <div className="w-px h-4 self-center bg-zinc-200 dark:bg-zinc-700 mx-0.5 shrink-0" />
           </>
         )}
 
-        {/* Pills de categoria */}
-        <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none">
+        {/* Pills de categoria — tab style */}
+        <div className="flex items-stretch gap-0 overflow-x-auto scrollbar-none">
           {CATEGORIA_PILLS.map(({ value, label }) => (
             <button
               key={value}
               onClick={() => setCategoria(value)}
               className={cn(
-                "px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap shrink-0",
+                "relative px-3.5 flex items-center text-sm font-medium transition-all whitespace-nowrap shrink-0",
                 categoria === value
-                  ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
-                  : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  ? "text-zinc-900 dark:text-zinc-100"
+                  : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
               )}
             >
               {label}
+              {categoria === value && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-t-full" />
+              )}
             </button>
           ))}
         </div>
 
         {/* Separador vertical */}
-        <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-1 shrink-0" />
+        <div className="w-px h-4 self-center bg-zinc-200 dark:bg-zinc-700 mx-1 shrink-0" />
 
         {/* Busca inline */}
-        <div className="relative shrink-0">
+        <div className="relative self-center shrink-0">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 pointer-events-none" />
           <Input
             placeholder="Buscar..."
@@ -175,7 +178,7 @@ export default function NoticiasPage() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className={cn(
-              "flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs transition-colors shrink-0",
+              "self-center flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs transition-colors shrink-0",
               fonteFilter
                 ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
                 : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
@@ -221,7 +224,7 @@ export default function NoticiasPage() {
         </DropdownMenu>
 
         {/* Ações à direita */}
-        <div className="ml-auto flex items-center gap-1 shrink-0">
+        <div className="ml-auto self-center flex items-center gap-1 shrink-0">
           {(pendentesCount ?? 0) > 0 && (
             <Button
               variant="outline"
@@ -265,8 +268,8 @@ export default function NoticiasPage() {
         <div className={cn(
           "overflow-y-auto transition-all duration-300 ease-out",
           readerOpen
-            ? "w-[380px] shrink-0 border-r border-zinc-100 dark:border-zinc-800"
-            : "flex-1"
+            ? "w-[380px] shrink-0 border-r border-zinc-200 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-900/80"
+            : "flex-1 bg-white dark:bg-zinc-950"
         )}>
           <div className={cn(!readerOpen && "max-w-2xl mx-auto")}>
             {categoria === "relatorios" ? (
@@ -290,7 +293,7 @@ export default function NoticiasPage() {
 
         {/* Painel direito: reader (só quando noticiaReader !== null) */}
         {readerOpen && (
-          <div className="flex-1 overflow-hidden min-w-0">
+          <div className="flex-1 overflow-hidden min-w-0 bg-white dark:bg-zinc-950">
             <NoticiaReaderPanel
               noticia={noticiaReader!}
               corFonte={corFonteReader}

@@ -6,10 +6,43 @@ import { trpc } from "@/lib/trpc/client";
 import { NoticiaCard } from "./noticias-card";
 import { NoticiasPastasSidebar } from "./noticias-pastas-sidebar";
 import { useDebounce } from "@/hooks/use-debounce";
+import { isToday, isYesterday, isThisWeek, isThisMonth, parseISO } from "date-fns";
 import type { NoticiaJuridica } from "@/lib/db/schema";
 
 
 export type CategoriaFeed = "legislativa" | "jurisprudencial" | "artigo" | "salvos" | "recentes";
+
+type GrupoData = {
+  label: string;
+  items: NoticiaJuridica[];
+};
+
+function getGrupoData(noticias: NoticiaJuridica[], useAprovadoEm: boolean): GrupoData[] {
+  const grupos: Map<string, NoticiaJuridica[]> = new Map([
+    ["Hoje", []],
+    ["Ontem", []],
+    ["Esta semana", []],
+    ["Este mês", []],
+    ["Anteriores", []],
+  ]);
+
+  for (const n of noticias) {
+    const rawDate = useAprovadoEm
+      ? (n.aprovadoEm ?? n.publicadoEm)
+      : n.publicadoEm;
+    if (!rawDate) { grupos.get("Anteriores")!.push(n); continue; }
+    const date = typeof rawDate === "string" ? parseISO(rawDate) : rawDate;
+    if (isToday(date)) grupos.get("Hoje")!.push(n);
+    else if (isYesterday(date)) grupos.get("Ontem")!.push(n);
+    else if (isThisWeek(date, { weekStartsOn: 1 })) grupos.get("Esta semana")!.push(n);
+    else if (isThisMonth(date)) grupos.get("Este mês")!.push(n);
+    else grupos.get("Anteriores")!.push(n);
+  }
+
+  return Array.from(grupos.entries())
+    .filter(([, items]) => items.length > 0)
+    .map(([label, items]) => ({ label, items }));
+}
 
 interface NoticiasFeedProps {
   categoria: CategoriaFeed;
@@ -163,24 +196,41 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter,
           </div>
         )}
 
-        {/* Cards em coluna única (sem featured) */}
-        {noticias.length > 0 && (
-          <div>
-            {noticias.map(noticia => (
-              <NoticiaCard
-                key={noticia.id}
-                noticia={noticia}
-                corFonte={noticia.fonteId ? (fonteIdToCorMap[noticia.fonteId] ?? "#71717a") : "#71717a"}
-                nomeFonte={noticia.fonteId ? (fonteIdToNomeMap[noticia.fonteId] ?? noticia.fonte.replace(/-/g, " ")) : noticia.fonte.replace(/-/g, " ")}
-                isFavorito={favoritosIds.includes(noticia.id)}
-                isSelected={selectedNoticiaId === noticia.id}
-                onToggleFavorito={() => toggleFavorito.mutate({ noticiaId: noticia.id })}
-                onSalvarNoCaso={() => onOpenSalvarCaso?.(noticia)}
-                onClick={() => onOpenReader?.(noticia, noticias)}
-              />
-            ))}
-          </div>
-        )}
+        {/* Cards agrupados por data */}
+        {noticias.length > 0 && (() => {
+          const useAprovadoEm = categoria === "recentes";
+          const grupos = getGrupoData(noticias, useAprovadoEm);
+          return (
+            <div>
+              {grupos.map(({ label, items }) => (
+                <div key={label}>
+                  {/* Separador de grupo */}
+                  <div className="flex items-center gap-2 px-4 py-2 sticky top-0 z-10 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-sm">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 shrink-0">
+                      {label}
+                    </span>
+                    <span className="text-[10px] text-zinc-300 dark:text-zinc-700 shrink-0">{items.length}</span>
+                    <div className="flex-1 h-px bg-zinc-100 dark:bg-zinc-800" />
+                  </div>
+                  {/* Cards do grupo */}
+                  {items.map(noticia => (
+                    <NoticiaCard
+                      key={noticia.id}
+                      noticia={noticia}
+                      corFonte={noticia.fonteId ? (fonteIdToCorMap[noticia.fonteId] ?? "#71717a") : "#71717a"}
+                      nomeFonte={noticia.fonteId ? (fonteIdToNomeMap[noticia.fonteId] ?? noticia.fonte.replace(/-/g, " ")) : noticia.fonte.replace(/-/g, " ")}
+                      isFavorito={favoritosIds.includes(noticia.id)}
+                      isSelected={selectedNoticiaId === noticia.id}
+                      onToggleFavorito={() => toggleFavorito.mutate({ noticiaId: noticia.id })}
+                      onSalvarNoCaso={() => onOpenSalvarCaso?.(noticia)}
+                      onClick={() => onOpenReader?.(noticia, noticias)}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          );
+        })()}
 
         {/* Load more */}
         {hasNextPage && categoria !== "salvos" && categoria !== "recentes" && pastaAtiva === null && (
