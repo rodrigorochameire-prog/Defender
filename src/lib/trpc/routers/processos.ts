@@ -520,6 +520,9 @@ export const processosRouter = router({
         resultadoJuri: z.string().nullable().optional(),
         observacoes: z.string().nullable().optional(),
         linkDrive: z.string().nullable().optional(),
+        localDoFatoEndereco: z.string().nullable().optional(),
+        localDoFatoLat: z.string().nullable().optional(),
+        localDoFatoLng: z.string().nullable().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -544,6 +547,26 @@ export const processosRouter = router({
         )
         .returning();
       
+      return atualizado;
+    }),
+
+  // Atualizar apenas localização do fato (usado no painel inline)
+  updateLocalDoFato: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        localDoFatoEndereco: z.string().nullable(),
+        localDoFatoLat: z.string().nullable(),
+        localDoFatoLng: z.string().nullable(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      const [atualizado] = await db
+        .update(processos)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(processos.id, id))
+        .returning();
       return atualizado;
     }),
 
@@ -863,6 +886,7 @@ export const processosRouter = router({
           localDoFatoEndereco: processos.localDoFatoEndereco,
           assistidoNome: assistidos.nome,
           assistidoId: assistidos.id,
+          createdAt: processos.createdAt,
         })
         .from(processos)
         .innerJoin(assistidos, and(eq(processos.assistidoId, assistidos.id), isNull(assistidos.deletedAt)))

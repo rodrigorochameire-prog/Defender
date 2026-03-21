@@ -26,6 +26,8 @@ import {
   Gavel,
   Loader2,
   AlertTriangle,
+  MapPin,
+  Search,
 } from "lucide-react";
 
 const AREA_OPTIONS = [
@@ -71,6 +73,9 @@ interface FormData {
   resultadoJuri: string;
   observacoes: string;
   linkDrive: string;
+  localDoFatoEndereco: string;
+  localDoFatoLat: string;
+  localDoFatoLng: string;
 }
 
 function LoadingSkeleton() {
@@ -104,10 +109,23 @@ function LoadingSkeleton() {
   );
 }
 
+async function geocodificar(endereco: string): Promise<{ lat: string; lng: string } | null> {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(endereco)}&format=json&limit=1&countrycodes=br`;
+    const res = await fetch(url, { headers: { "Accept-Language": "pt-BR" } });
+    const data = await res.json();
+    if (data.length === 0) return null;
+    return { lat: parseFloat(data[0].lat).toFixed(7), lng: parseFloat(data[0].lon).toFixed(7) };
+  } catch {
+    return null;
+  }
+}
+
 export default function EditarProcessoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const utils = trpc.useUtils();
+  const [isGeocodificando, setIsGeocodificando] = useState(false);
 
   const { data: processo, isLoading, error } = trpc.processos.getById.useQuery(
     { id: Number(id) },
@@ -144,6 +162,9 @@ export default function EditarProcessoPage({ params }: { params: Promise<{ id: s
     resultadoJuri: "",
     observacoes: "",
     linkDrive: "",
+    localDoFatoEndereco: "",
+    localDoFatoLat: "",
+    localDoFatoLng: "",
   });
 
   // Pre-fill form when data loads
@@ -170,6 +191,9 @@ export default function EditarProcessoPage({ params }: { params: Promise<{ id: s
       resultadoJuri: processo.resultadoJuri || "",
       observacoes: processo.observacoes || "",
       linkDrive: processo.linkDrive || "",
+      localDoFatoEndereco: processo.localDoFatoEndereco || "",
+      localDoFatoLat: processo.localDoFatoLat ? String(processo.localDoFatoLat) : "",
+      localDoFatoLng: processo.localDoFatoLng ? String(processo.localDoFatoLng) : "",
     });
   }, [processo]);
 
@@ -195,11 +219,30 @@ export default function EditarProcessoPage({ params }: { params: Promise<{ id: s
       resultadoJuri: formData.resultadoJuri || null,
       observacoes: formData.observacoes || null,
       linkDrive: formData.linkDrive || null,
+      localDoFatoEndereco: formData.localDoFatoEndereco || null,
+      localDoFatoLat: formData.localDoFatoLat || null,
+      localDoFatoLng: formData.localDoFatoLng || null,
     });
   };
 
   const handleChange = (field: keyof FormData, value: string | boolean | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleGeocodificar = async () => {
+    if (!formData.localDoFatoEndereco.trim()) {
+      toast.error("Informe o endereço antes de geocodificar");
+      return;
+    }
+    setIsGeocodificando(true);
+    const resultado = await geocodificar(formData.localDoFatoEndereco);
+    setIsGeocodificando(false);
+    if (!resultado) {
+      toast.error("Endereço não encontrado. Tente um endereço mais específico.");
+      return;
+    }
+    setFormData((prev) => ({ ...prev, localDoFatoLat: resultado.lat, localDoFatoLng: resultado.lng }));
+    toast.success("Coordenadas encontradas!");
   };
 
   if (isLoading) {
@@ -476,6 +519,84 @@ export default function EditarProcessoPage({ params }: { params: Promise<{ id: s
               </div>
             </CardContent>
           )}
+        </Card>
+
+        {/* Local do Fato */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-emerald-600" />
+              Local do Fato
+            </CardTitle>
+            <CardDescription>
+              Endereço georreferenciado para exibição no mapa de casos
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="localDoFatoEndereco">Endereço</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="localDoFatoEndereco"
+                  value={formData.localDoFatoEndereco}
+                  onChange={(e) => handleChange("localDoFatoEndereco", e.target.value)}
+                  placeholder="Ex: Rua das Flores, 123, Centro, Camaçari - BA"
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleGeocodificar(); } }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGeocodificar}
+                  disabled={isGeocodificando}
+                  className="shrink-0"
+                  title="Buscar coordenadas via OpenStreetMap"
+                >
+                  {isGeocodificando ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+                Pressione Enter ou clique na lupa para geocodificar automaticamente via OpenStreetMap.
+              </p>
+            </div>
+
+            {(formData.localDoFatoLat || formData.localDoFatoLng) && (
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="localDoFatoLat">Latitude</Label>
+                  <Input
+                    id="localDoFatoLat"
+                    value={formData.localDoFatoLat}
+                    onChange={(e) => handleChange("localDoFatoLat", e.target.value)}
+                    placeholder="-12.6976000"
+                    className="font-mono text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="localDoFatoLng">Longitude</Label>
+                  <Input
+                    id="localDoFatoLng"
+                    value={formData.localDoFatoLng}
+                    onChange={(e) => handleChange("localDoFatoLng", e.target.value)}
+                    placeholder="-38.3244000"
+                    className="font-mono text-sm"
+                  />
+                </div>
+              </div>
+            )}
+
+            {formData.localDoFatoLat && formData.localDoFatoLng && (
+              <div className="flex items-center gap-2 text-[11px] text-emerald-600 dark:text-emerald-400">
+                <MapPin className="h-3 w-3" />
+                <span>
+                  Coordenadas prontas — este processo aparecerá no mapa após salvar.
+                </span>
+              </div>
+            )}
+          </CardContent>
         </Card>
 
         {/* Integracoes e Observacoes */}
