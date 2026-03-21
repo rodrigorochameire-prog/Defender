@@ -78,7 +78,7 @@ export default function ImportarWhatsAppPage() {
             <p className="font-medium">1. Fazer backup do iPhone</p>
             <p className="text-zinc-500">
               Conecte o iPhone ao Mac → abra o Finder → selecione o iPhone → clique em{" "}
-              <strong>"Fazer backup agora"</strong> → sem senha (não criptografado).
+              <strong>&ldquo;Fazer backup agora&rdquo;</strong> → sem senha (não criptografado).
             </p>
           </div>
           <div className="space-y-1">
