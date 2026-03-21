@@ -522,6 +522,10 @@ class RadarExtractionService:
                 bairro = noticia.get("bairro", "") or ""
                 logradouro = noticia.get("logradouro", "") or ""
 
+                # Bounding box da região de Camaçari + RMS costeiro (validação de resultado)
+                # lat: -12.85 a -12.40 | lon: -38.55 a -38.05
+                BBOX = {"lat_min": -12.85, "lat_max": -12.40, "lon_min": -38.55, "lon_max": -38.05}
+
                 # 1. Tentar Nominatim (funciona com bairro ou logradouro)
                 nominatim_ok = False
                 if bairro or logradouro:
@@ -536,15 +540,29 @@ class RadarExtractionService:
                         async with httpx.AsyncClient(timeout=10.0) as http:
                             resp = await http.get(
                                 "https://nominatim.openstreetmap.org/search",
-                                params={"q": query, "format": "json", "limit": 1, "countrycodes": "br"},
+                                params={
+                                    "q": query,
+                                    "format": "json",
+                                    "limit": 3,
+                                    "countrycodes": "br",
+                                    # Viewbox biasa resultados para a região de Camaçari (lon_west,lat_north,lon_east,lat_south)
+                                    "viewbox": "-38.55,-12.40,-38.05,-12.85",
+                                    "bounded": "0",
+                                },
                                 headers={"User-Agent": "OMBUDS-Radar/1.0 (ombuds.vercel.app)"},
                             )
 
                         if resp.status_code == 200:
                             data = resp.json()
-                            if data:
-                                lat = float(data[0]["lat"])
-                                lon = float(data[0]["lon"])
+                            # Filtrar apenas resultados dentro do bounding box da região
+                            valid_results = [
+                                r for r in data
+                                if BBOX["lat_min"] <= float(r["lat"]) <= BBOX["lat_max"]
+                                and BBOX["lon_min"] <= float(r["lon"]) <= BBOX["lon_max"]
+                            ]
+                            if valid_results:
+                                lat = float(valid_results[0]["lat"])
+                                lon = float(valid_results[0]["lon"])
                                 client_db.table("radar_noticias").update({
                                     "latitude": lat, "longitude": lon,
                                 }).eq("id", noticia["id"]).execute()
@@ -555,6 +573,11 @@ class RadarExtractionService:
                                     noticia["id"], bairro, logradouro, lat, lon,
                                 )
                                 return True
+                            elif data:
+                                logger.debug(
+                                    "Nominatim devolveu resultado fora da bbox para id=%d bairro='%s' (%.4f,%.4f) — usando centroide",
+                                    noticia["id"], bairro, float(data[0]["lat"]), float(data[0]["lon"]),
+                                )
                     except Exception as e:
                         logger.debug("Nominatim falhou para id=%d: %s", noticia["id"], str(e))
 
