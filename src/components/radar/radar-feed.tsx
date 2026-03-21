@@ -65,7 +65,7 @@ export function RadarFeed({ filtros, municipio = "camacari" }: RadarFeedProps) {
       const saved = localStorage.getItem("radar-view-mode");
       if (saved === "compact" || saved === "cards" || saved === "list") return saved;
     }
-    return "compact";
+    return "cards";
   });
   const [sortBy, setSortBy] = useState<"recent" | "oldest" | "relevance">(() => {
     if (typeof window !== "undefined") {
@@ -255,23 +255,12 @@ export function RadarFeed({ filtros, municipio = "camacari" }: RadarFeedProps) {
         </div>
 
         <div className="flex items-center gap-2 ml-auto">
-          {/* Ordenação */}
-          <select
-            value={sortBy}
-            onChange={(e) => handleSortBy(e.target.value as "recent" | "oldest" | "relevance")}
-            className="h-7 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2 text-xs text-zinc-600 dark:text-zinc-400 cursor-pointer focus:outline-none focus:ring-1 focus:ring-zinc-300"
-          >
-            <option value="recent">↓ Mais recentes</option>
-            <option value="oldest">↑ Mais antigos</option>
-            <option value="relevance">★ Relevância</option>
-          </select>
-
           {/* Toggle de visualização — 3 modos */}
           <div className="flex items-center gap-0.5 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
             {([
-              { mode: "compact", icon: AlignJustify, title: "Compact (padrão)" },
               { mode: "cards", icon: LayoutGrid, title: "Grid" },
-              { mode: "list", icon: List, title: "Lista densa" },
+              { mode: "compact", icon: AlignJustify, title: "Compacto" },
+              { mode: "list", icon: List, title: "Lista" },
             ] as const).map(({ mode, icon: Icon, title }) => (
               <button
                 key={mode}
@@ -288,6 +277,17 @@ export function RadarFeed({ filtros, municipio = "camacari" }: RadarFeedProps) {
               </button>
             ))}
           </div>
+
+          {/* Ordenação */}
+          <select
+            value={sortBy}
+            onChange={(e) => handleSortBy(e.target.value as "recent" | "oldest" | "relevance")}
+            className="h-7 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2 text-xs text-zinc-600 dark:text-zinc-400 cursor-pointer focus:outline-none focus:ring-1 focus:ring-zinc-300"
+          >
+            <option value="recent">↓ Mais recentes</option>
+            <option value="oldest">↑ Mais antigos</option>
+            <option value="relevance">★ Relevância</option>
+          </select>
 
           {allNoticias.length > 0 && (
             <Button
@@ -317,7 +317,7 @@ export function RadarFeed({ filtros, municipio = "camacari" }: RadarFeedProps) {
           {/* Grid usa 2 colunas em sm+; compact e list são verticais */}
           <div className={cn(
             viewMode === "cards"
-              ? "grid grid-cols-1 sm:grid-cols-2 gap-3"
+              ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3"
               : "flex flex-col"
           )}>
             {group.map((noticia) => (
