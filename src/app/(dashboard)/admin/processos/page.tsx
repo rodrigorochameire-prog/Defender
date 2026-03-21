@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState, useMemo, useEffect, Fragment } from "react";
 import { Card } from "@/components/ui/card";
-import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
 import {
   DataTable,
   DataTableHeader,

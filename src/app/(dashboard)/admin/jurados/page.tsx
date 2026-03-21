@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SwissCard, SwissCardContent, SwissCardHeader, SwissCardTitle } from "@/components/ui/swiss-card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -124,26 +124,26 @@ export default function JuradosPage() {
 
       {/* Seção de Inteligência Visual - NOVA */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <SwissCard className="p-6 flex flex-col items-center justify-center">
-          <SwissCardHeader className="w-full p-0 border-0 mb-4">
-            <SwissCardTitle className="text-sm font-serif font-bold text-stone-900 dark:text-stone-100 flex items-center justify-center gap-2">
+        <Card className="p-6 flex flex-col items-center justify-center">
+          <CardHeader className="w-full p-0 border-0 mb-4">
+            <CardTitle className="text-sm font-serif font-bold text-stone-900 dark:text-stone-100 flex items-center justify-center gap-2">
               <TrendingUp className="w-4 h-4 text-emerald-600" />
               Tendência de Absolvição
-            </SwissCardTitle>
-          </SwissCardHeader>
+            </CardTitle>
+          </CardHeader>
           <DonutChart value={tendenciaAbsolutoria} color="#059669" label="Favorável à Defesa" />
           <p className="text-xs text-stone-500 dark:text-zinc-400 text-center mt-3 max-w-[200px]">
             Baseado em {totalVotos} votos históricos
           </p>
-        </SwissCard>
+        </Card>
 
-        <SwissCard className="p-6 flex flex-col items-center justify-center">
-          <SwissCardHeader className="w-full p-0 border-0 mb-4">
-            <SwissCardTitle className="text-sm font-serif font-bold text-stone-900 dark:text-stone-100 flex items-center justify-center gap-2">
+        <Card className="p-6 flex flex-col items-center justify-center">
+          <CardHeader className="w-full p-0 border-0 mb-4">
+            <CardTitle className="text-sm font-serif font-bold text-stone-900 dark:text-stone-100 flex items-center justify-center gap-2">
               <Users className="w-4 h-4 text-blue-600" />
               Composição de Gênero
-            </SwissCardTitle>
-          </SwissCardHeader>
+            </CardTitle>
+          </CardHeader>
           <DonutChartGroup>
             <DonutChart value={percHomens} color="#2563eb" label="Homens" size="sm" />
             <DonutChart value={percMulheres} color="#db2777" label="Mulheres" size="sm" />
@@ -151,26 +151,26 @@ export default function JuradosPage() {
           <p className="text-xs text-stone-500 dark:text-zinc-400 text-center mt-3">
             {homens} homens / {mulheres} mulheres
           </p>
-        </SwissCard>
+        </Card>
 
-        <SwissCard className="p-6 flex flex-col items-center justify-center">
-          <SwissCardHeader className="w-full p-0 border-0 mb-4">
-            <SwissCardTitle className="text-sm font-serif font-bold text-stone-900 dark:text-stone-100 flex items-center justify-center gap-2">
+        <Card className="p-6 flex flex-col items-center justify-center">
+          <CardHeader className="w-full p-0 border-0 mb-4">
+            <CardTitle className="text-sm font-serif font-bold text-stone-900 dark:text-stone-100 flex items-center justify-center gap-2">
               <Brain className="w-4 h-4 text-purple-600" />
               Perfil Condenatório
-            </SwissCardTitle>
-          </SwissCardHeader>
+            </CardTitle>
+          </CardHeader>
           <DonutChart value={percConservador} color="#7c3aed" label="Risco Alto" />
           <p className="text-xs text-stone-500 dark:text-zinc-400 text-center mt-3 max-w-[200px]">
             {perfilConservador} de {mockJurados.length} jurados
           </p>
-        </SwissCard>
+        </Card>
       </div>
 
       {/* Stats - Padrão Swiss */}
       <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-        <SwissCard className="border-l-[3px] border-l-slate-500 dark:border-l-slate-400">
-          <SwissCardContent className="p-3 sm:p-4">
+        <Card className="border-l-[3px] border-l-slate-500 dark:border-l-slate-400">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl sm:text-3xl font-bold">{mockJurados.length}</p>
@@ -180,10 +180,10 @@ export default function JuradosPage() {
                 <User className="h-5 w-5 text-slate-600 dark:text-slate-400" />
               </div>
             </div>
-          </SwissCardContent>
-        </SwissCard>
-        <SwissCard className="border-l-[3px] border-l-rose-500 dark:border-l-rose-400">
-          <SwissCardContent className="p-3 sm:p-4">
+          </CardContent>
+        </Card>
+        <Card className="border-l-[3px] border-l-rose-500 dark:border-l-rose-400">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl sm:text-3xl font-bold">
@@ -195,10 +195,10 @@ export default function JuradosPage() {
                 <ThumbsDown className="h-5 w-5 text-rose-600" />
               </div>
             </div>
-          </SwissCardContent>
-        </SwissCard>
-        <SwissCard className="border-l-[3px] border-l-emerald-500 dark:border-l-emerald-400">
-          <SwissCardContent className="p-3 sm:p-4">
+          </CardContent>
+        </Card>
+        <Card className="border-l-[3px] border-l-emerald-500 dark:border-l-emerald-400">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl sm:text-3xl font-bold">
@@ -210,10 +210,10 @@ export default function JuradosPage() {
                 <ThumbsUp className="h-5 w-5 text-emerald-600" />
               </div>
             </div>
-          </SwissCardContent>
-        </SwissCard>
-        <SwissCard className="border-l-[3px] border-l-blue-500 dark:border-l-blue-400">
-          <SwissCardContent className="p-3 sm:p-4">
+          </CardContent>
+        </Card>
+        <Card className="border-l-[3px] border-l-blue-500 dark:border-l-blue-400">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl sm:text-3xl font-bold">
@@ -225,8 +225,8 @@ export default function JuradosPage() {
                 <BarChart3 className="h-5 w-5 text-blue-600" />
               </div>
             </div>
-          </SwissCardContent>
-        </SwissCard>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Search - Padrão Swiss */}
@@ -255,7 +255,7 @@ export default function JuradosPage() {
             : 0;
 
           return (
-            <SwissCard
+            <Card
               key={jurado.id}
               className={cn(
                 "transition-all duration-200 hover:shadow-md cursor-pointer group",
@@ -265,7 +265,7 @@ export default function JuradosPage() {
                 jurado.perfilTendencia === "neutro" && "border-l-slate-400 dark:border-l-slate-500"
               )}
             >
-              <SwissCardContent className="p-3 sm:p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="min-w-0 flex-1">
                     <h3 className="font-semibold text-sm sm:text-base truncate">{jurado.nome}</h3>
@@ -313,22 +313,22 @@ export default function JuradosPage() {
                     <span className="text-emerald-600 dark:text-emerald-400">{jurado.votosAbsolvicao} abs.</span>
                   </div>
                 </div>
-              </SwissCardContent>
-            </SwissCard>
+              </CardContent>
+            </Card>
           );
         })}
       </div>
 
       {/* Empty State */}
       {filteredJurados.length === 0 && (
-        <SwissCard className="border-dashed">
-          <SwissCardContent className="text-center py-12">
+        <Card className="border-dashed">
+          <CardContent className="text-center py-12">
             <div className="mx-auto w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-3">
               <UserCheck className="w-6 h-6 text-blue-500" />
             </div>
             <p className="text-sm text-muted-foreground">Nenhum jurado encontrado</p>
-          </SwissCardContent>
-        </SwissCard>
+          </CardContent>
+        </Card>
       )}
     </PageLayout>
   );

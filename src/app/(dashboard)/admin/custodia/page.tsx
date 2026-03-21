@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -107,8 +107,8 @@ export default function CustodiaPage() {
 
       {/* Stats - Padrão Swiss */}
       <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-        <SwissCard className="border-l-[3px] border-l-amber-500 dark:border-l-amber-400">
-          <SwissCardContent className="p-3 sm:p-4">
+        <Card className="border-l-[3px] border-l-amber-500 dark:border-l-amber-400">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl sm:text-3xl font-bold">{hoje.length}</p>
@@ -118,10 +118,10 @@ export default function CustodiaPage() {
                 <Clock className="h-5 w-5 text-amber-600" />
               </div>
             </div>
-          </SwissCardContent>
-        </SwissCard>
-        <SwissCard className="border-l-[3px] border-l-emerald-500 dark:border-l-emerald-400">
-          <SwissCardContent className="p-3 sm:p-4">
+          </CardContent>
+        </Card>
+        <Card className="border-l-[3px] border-l-emerald-500 dark:border-l-emerald-400">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl sm:text-3xl font-bold">
@@ -133,10 +133,10 @@ export default function CustodiaPage() {
                 <CheckCircle2 className="h-5 w-5 text-emerald-600" />
               </div>
             </div>
-          </SwissCardContent>
-        </SwissCard>
-        <SwissCard className="border-l-[3px] border-l-rose-500 dark:border-l-rose-400">
-          <SwissCardContent className="p-3 sm:p-4">
+          </CardContent>
+        </Card>
+        <Card className="border-l-[3px] border-l-rose-500 dark:border-l-rose-400">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl sm:text-3xl font-bold">
@@ -148,10 +148,10 @@ export default function CustodiaPage() {
                 <XCircle className="h-5 w-5 text-rose-600" />
               </div>
             </div>
-          </SwissCardContent>
-        </SwissCard>
-        <SwissCard className="border-l-[3px] border-l-violet-500 dark:border-l-violet-400">
-          <SwissCardContent className="p-3 sm:p-4">
+          </CardContent>
+        </Card>
+        <Card className="border-l-[3px] border-l-violet-500 dark:border-l-violet-400">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl sm:text-3xl font-bold">{mockCustodias.length}</p>
@@ -161,8 +161,8 @@ export default function CustodiaPage() {
                 <Gavel className="h-5 w-5 text-violet-600" />
               </div>
             </div>
-          </SwissCardContent>
-        </SwissCard>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Search - Padrão Swiss */}
@@ -191,8 +191,8 @@ export default function CustodiaPage() {
           </h2>
           <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
             {hoje.map((custodia) => (
-              <SwissCard key={custodia.id} className="border-l-[3px] border-l-amber-400 hover:shadow-md transition-shadow">
-                <SwissCardContent className="p-3 sm:p-4">
+              <Card key={custodia.id} className="border-l-[3px] border-l-amber-400 hover:shadow-md transition-shadow">
+                <CardContent className="p-3 sm:p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <h3 className="font-semibold text-sm sm:text-base truncate">{custodia.assistido}</h3>
@@ -210,8 +210,8 @@ export default function CustodiaPage() {
                       <p className="text-xs sm:text-xs text-muted-foreground">{custodia.local}</p>
                     </div>
                   </div>
-                </SwissCardContent>
-              </SwissCard>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
@@ -228,7 +228,7 @@ export default function CustodiaPage() {
             const ResultadoIcon = resultado?.icon || Scale;
 
             return (
-              <SwissCard
+              <Card
                 key={custodia.id}
                 className={cn(
                   "hover:shadow-md transition-shadow",
@@ -238,7 +238,7 @@ export default function CustodiaPage() {
                   resultado?.color === "text-blue-700" && "border-l-blue-500"
                 )}
               >
-                <SwissCardContent className="p-3 sm:p-4">
+                <CardContent className="p-3 sm:p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                       <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
@@ -259,8 +259,8 @@ export default function CustodiaPage() {
                       </Badge>
                     )}
                   </div>
-                </SwissCardContent>
-              </SwissCard>
+                </CardContent>
+              </Card>
             );
           })}
         </div>
@@ -268,14 +268,14 @@ export default function CustodiaPage() {
 
       {/* Empty State */}
       {filteredCustodias.length === 0 && (
-        <SwissCard className="border-dashed">
-          <SwissCardContent className="text-center py-12">
+        <Card className="border-dashed">
+          <CardContent className="text-center py-12">
             <div className="mx-auto w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-3">
               <AlertTriangle className="w-6 h-6 text-amber-500" />
             </div>
             <p className="text-sm text-muted-foreground">Nenhuma audiência de custódia encontrada</p>
-          </SwissCardContent>
-        </SwissCard>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

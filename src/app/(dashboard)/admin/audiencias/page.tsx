@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { AudienciasHub } from "@/components/casos/audiencias-hub";
-import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -327,11 +327,11 @@ export default function AudienciasPage() {
 
         {/* Stats Cards - Design Suíço com borda lateral */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
-          <SwissCard className={cn(
+          <Card className={cn(
             "border-l-2",
             stats.hoje > 0 ? "border-l-rose-500" : "border-l-zinc-300"
           )}>
-            <SwissCardContent className="p-3 sm:p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
                   <AlertCircle className={cn(
@@ -354,14 +354,14 @@ export default function AudienciasPage() {
                   </p>
                 </div>
               </div>
-            </SwissCardContent>
-          </SwissCard>
+            </CardContent>
+          </Card>
           
-          <SwissCard className={cn(
+          <Card className={cn(
             "border-l-2",
             stats.amanha > 0 ? "border-l-amber-500" : "border-l-zinc-300"
           )}>
-            <SwissCardContent className="p-3 sm:p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
                   <Clock className={cn(
@@ -384,14 +384,14 @@ export default function AudienciasPage() {
                   </p>
                 </div>
               </div>
-            </SwissCardContent>
-          </SwissCard>
+            </CardContent>
+          </Card>
           
-          <SwissCard className={cn(
+          <Card className={cn(
             "border-l-2",
             stats.aguardandoAta > 0 ? "border-l-orange-500" : "border-l-zinc-300"
           )}>
-            <SwissCardContent className="p-3 sm:p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
                   <CheckCircle2 className={cn(
@@ -414,14 +414,14 @@ export default function AudienciasPage() {
                   </p>
                 </div>
               </div>
-            </SwissCardContent>
-          </SwissCard>
+            </CardContent>
+          </Card>
           
-          <SwissCard className={cn(
+          <Card className={cn(
             "border-l-2",
             stats.reuPreso > 0 ? "border-l-rose-500" : "border-l-zinc-300"
           )}>
-            <SwissCardContent className="p-3 sm:p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
                   <Lock className={cn(
@@ -444,8 +444,8 @@ export default function AudienciasPage() {
                   </p>
                 </div>
               </div>
-            </SwissCardContent>
-          </SwissCard>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Audiências Hub */}

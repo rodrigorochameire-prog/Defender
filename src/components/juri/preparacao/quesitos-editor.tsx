@@ -20,13 +20,13 @@ import {
   ArrowRight,
 } from "lucide-react";
 import {
-  SwissCard,
-  SwissCardContent,
-  SwissCardHeader,
-  SwissCardTitle,
-  SwissCardDescription,
-  SwissCardFooter,
-} from "@/components/ui/swiss-card";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -904,7 +904,7 @@ function VotingSimulatorView({ quesitos }: { quesitos: Quesito[] }) {
 
       {/* Outcome Summary */}
       {outcome && (
-        <SwissCard
+        <Card
           className={cn(
             "border-2",
             outcome.variant === "success"
@@ -914,7 +914,7 @@ function VotingSimulatorView({ quesitos }: { quesitos: Quesito[] }) {
                 : "border-amber-300 dark:border-amber-800"
           )}
         >
-          <SwissCardContent className="py-4">
+          <CardContent className="py-4">
             <div className="flex items-center gap-3">
               <div
                 className={cn(
@@ -946,8 +946,8 @@ function VotingSimulatorView({ quesitos }: { quesitos: Quesito[] }) {
                 </p>
               </div>
             </div>
-          </SwissCardContent>
-        </SwissCard>
+          </CardContent>
+        </Card>
       )}
 
       {/* Actions */}
@@ -1075,14 +1075,14 @@ export function QuesitosEditor({ sessaoId, casoId }: QuesitosEditorProps) {
   // ---- Empty state: no casoId ----
   if (!casoId) {
     return (
-      <SwissCard className="min-h-[400px]">
-        <SwissCardHeader>
-          <SwissCardTitle className="flex items-center gap-2">
+      <Card className="min-h-[400px]">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
             <ListChecks className="w-5 h-5 text-primary" />
             Editor de Quesitos
-          </SwissCardTitle>
-        </SwissCardHeader>
-        <SwissCardContent>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="text-center py-16">
             <ListChecks className="w-14 h-14 mx-auto mb-4 text-stone-300 dark:text-zinc-700" />
             <p className="text-sm font-medium text-stone-500 dark:text-zinc-500">
@@ -1093,22 +1093,22 @@ export function QuesitosEditor({ sessaoId, casoId }: QuesitosEditorProps) {
               comecar a elaborar os quesitos da defesa.
             </p>
           </div>
-        </SwissCardContent>
-      </SwissCard>
+        </CardContent>
+      </Card>
     );
   }
 
   // ---- Loading ----
   if (isLoading) {
     return (
-      <SwissCard className="min-h-[400px]">
-        <SwissCardHeader>
-          <SwissCardTitle className="flex items-center gap-2">
+      <Card className="min-h-[400px]">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
             <ListChecks className="w-5 h-5 text-primary" />
             Editor de Quesitos
-          </SwissCardTitle>
-        </SwissCardHeader>
-        <SwissCardContent>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
               <div
@@ -1117,20 +1117,20 @@ export function QuesitosEditor({ sessaoId, casoId }: QuesitosEditorProps) {
               />
             ))}
           </div>
-        </SwissCardContent>
-      </SwissCard>
+        </CardContent>
+      </Card>
     );
   }
 
   // ---- Main Render ----
   return (
-    <SwissCard className="min-h-[400px]">
-      <SwissCardHeader>
+    <Card className="min-h-[400px]">
+      <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <SwissCardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
             <ListChecks className="w-5 h-5 text-primary" />
             Editor de Quesitos
-          </SwissCardTitle>
+          </CardTitle>
           <div className="flex items-center gap-2">
             <Badge variant="default" className="text-xs font-mono">
               {quesitos.length} quesito{quesitos.length !== 1 ? "s" : ""}
@@ -1152,12 +1152,12 @@ export function QuesitosEditor({ sessaoId, casoId }: QuesitosEditorProps) {
             )}
           </div>
         </div>
-        <SwissCardDescription>
+        <CardDescription>
           Crie, organize e simule a votacao dos quesitos do juri
-        </SwissCardDescription>
-      </SwissCardHeader>
+        </CardDescription>
+      </CardHeader>
 
-      <SwissCardContent className="px-0 py-0">
+      <CardContent className="px-0 py-0">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="px-6 pt-4">
             <TabsList className="w-full justify-start h-10 bg-stone-50 dark:bg-zinc-900/50 border border-border/40 p-1 rounded-lg">
@@ -1238,10 +1238,10 @@ export function QuesitosEditor({ sessaoId, casoId }: QuesitosEditorProps) {
             </div>
           </TabsContent>
         </Tabs>
-      </SwissCardContent>
+      </CardContent>
 
       {quesitos.length > 0 && (
-        <SwissCardFooter>
+        <CardFooter>
           <div className="flex items-center justify-between text-xs text-stone-500 dark:text-zinc-500">
             <span className="flex items-center gap-1">
               <ListChecks className="w-3.5 h-3.5" />
@@ -1269,8 +1269,8 @@ export function QuesitosEditor({ sessaoId, casoId }: QuesitosEditorProps) {
               ))}
             </span>
           </div>
-        </SwissCardFooter>
+        </CardFooter>
       )}
-    </SwissCard>
+    </Card>
   );
 }

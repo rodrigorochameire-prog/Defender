@@ -10,7 +10,7 @@ import { PreparacaoHub } from "./preparacao/preparacao-hub";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SwissCard, SwissCardContent, SwissCardHeader, SwissCardTitle } from "@/components/ui/swiss-card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -31,7 +31,7 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
   return (
     <div className="space-y-6">
       {/* Cabeçalho do Processo - Sempre Visível */}
-      <SwissCard className="p-6">
+      <Card className="p-6">
         <div className="flex flex-col md:flex-row justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -72,7 +72,7 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
             </div>
           </div>
         </div>
-      </SwissCard>
+      </Card>
 
       {/* Navegação por Abas */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -122,14 +122,14 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
         {/* Conteúdo: Cockpit */}
         <TabsContent value="cockpit" className="mt-0">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <SwissCard className="md:col-span-2 p-6">
-              <SwissCardHeader className="p-0 mb-4">
-                <SwissCardTitle className="flex items-center gap-2">
+            <Card className="md:col-span-2 p-6">
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="flex items-center gap-2">
                   <Mic2 className="w-5 h-5 text-primary" />
                   Roteiro de Sustentação
-                </SwissCardTitle>
-              </SwissCardHeader>
-              <SwissCardContent className="p-0">
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
                 <div className="text-stone-400 dark:text-zinc-500 text-sm text-center py-10 border-2 border-dashed border-stone-200 dark:border-zinc-800 rounded-lg">
                   <Zap className="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-zinc-700" />
                   <p>Módulo de Cronômetro e Roteiro</p>
@@ -138,17 +138,17 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
                     Abrir Cockpit Completo
                   </Button>
                 </div>
-              </SwissCardContent>
-            </SwissCard>
+              </CardContent>
+            </Card>
 
-            <SwissCard className="p-6">
-              <SwissCardHeader className="p-0 mb-4">
-                <SwissCardTitle className="flex items-center gap-2">
+            <Card className="p-6">
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5 text-blue-600" />
                   Testemunhas
-                </SwissCardTitle>
-              </SwissCardHeader>
-              <SwissCardContent className="p-0 space-y-2">
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-stone-500 dark:text-zinc-400">Acusação</span>
                   <span className="font-mono font-semibold">{sessao.testemunhas?.acusacao || 3}</span>
@@ -163,21 +163,21 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
                     {sessao.testemunhas?.ouvidas || 4}
                   </span>
                 </div>
-              </SwissCardContent>
-            </SwissCard>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
         {/* Conteúdo: Investigação */}
         <TabsContent value="investigacao" className="mt-0">
-          <SwissCard className="p-6 min-h-[400px]">
-            <SwissCardHeader className="p-0 mb-4">
-              <SwissCardTitle className="flex items-center gap-2">
+          <Card className="p-6 min-h-[400px]">
+            <CardHeader className="p-0 mb-4">
+              <CardTitle className="flex items-center gap-2">
                 <Search className="w-5 h-5 text-primary" />
                 Provas Coletadas
-              </SwissCardTitle>
-            </SwissCardHeader>
-            <SwissCardContent className="p-0">
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
               <div className="text-stone-400 dark:text-zinc-500 text-sm text-center py-10 border-2 border-dashed border-stone-200 dark:border-zinc-800 rounded-lg">
                 <FileText className="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-zinc-700" />
                 <p>Módulo de Investigação Defensiva</p>
@@ -185,103 +185,103 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
                   Gestão de provas, depoimentos e evidências
                 </p>
               </div>
-            </SwissCardContent>
-          </SwissCard>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Conteúdo: Jurados */}
         <TabsContent value="jurados" className="mt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <SwissCard className="p-6">
-              <SwissCardHeader className="p-0 mb-4">
-                <SwissCardTitle className="flex items-center gap-2">
+            <Card className="p-6">
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5 text-primary" />
                   Convocados
-                </SwissCardTitle>
-              </SwissCardHeader>
-              <SwissCardContent className="p-0">
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
                 <div className="text-center">
                   <div className="text-4xl font-bold text-stone-900 dark:text-stone-100 mb-2">
                     {sessao.jurados?.convocados || 25}
                   </div>
                   <p className="text-sm text-stone-500 dark:text-zinc-400">jurados convocados</p>
                 </div>
-              </SwissCardContent>
-            </SwissCard>
+              </CardContent>
+            </Card>
 
-            <SwissCard className="p-6">
-              <SwissCardHeader className="p-0 mb-4">
-                <SwissCardTitle className="flex items-center gap-2">
+            <Card className="p-6">
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                   Presentes
-                </SwissCardTitle>
-              </SwissCardHeader>
-              <SwissCardContent className="p-0">
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
                 <div className="text-center">
                   <div className="text-4xl font-bold text-emerald-700 dark:text-emerald-500 mb-2">
                     {sessao.jurados?.presentes || 0}
                   </div>
                   <p className="text-sm text-stone-500 dark:text-zinc-400">jurados presentes</p>
                 </div>
-              </SwissCardContent>
-            </SwissCard>
+              </CardContent>
+            </Card>
           </div>
 
-          <SwissCard className="p-6 mt-6">
+          <Card className="p-6 mt-6">
             <div className="text-stone-400 dark:text-zinc-500 text-sm text-center py-10 border-2 border-dashed border-stone-200 dark:border-zinc-800 rounded-lg">
               <Brain className="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-zinc-700" />
               <p>Perfil detalhado dos jurados será exibido aqui</p>
             </div>
-          </SwissCard>
+          </Card>
         </TabsContent>
 
         {/* Conteúdo: Teses */}
         <TabsContent value="teses" className="mt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <SwissCard className="p-6">
-              <SwissCardHeader className="p-0 mb-4">
-                <SwissCardTitle className="flex items-center gap-2">
+            <Card className="p-6">
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="flex items-center gap-2">
                   <Shield className="w-5 h-5 text-emerald-600" />
                   Tese da Defesa
-                </SwissCardTitle>
-              </SwissCardHeader>
-              <SwissCardContent className="p-0">
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
                 <div className="bg-emerald-50 dark:bg-emerald-950/20 p-4 rounded-lg border border-emerald-100 dark:border-emerald-900">
                   <p className="text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed font-serif italic">
                     &ldquo;Legítima defesa. Réu agiu para proteger sua vida após ser atacado com faca pela vítima.&rdquo;
                   </p>
                 </div>
-              </SwissCardContent>
-            </SwissCard>
+              </CardContent>
+            </Card>
 
-            <SwissCard className="p-6">
-              <SwissCardHeader className="p-0 mb-4">
-                <SwissCardTitle className="flex items-center gap-2">
+            <Card className="p-6">
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="flex items-center gap-2">
                   <Target className="w-5 h-5 text-red-600" />
                   Tese da Acusação
-                </SwissCardTitle>
-              </SwissCardHeader>
-              <SwissCardContent className="p-0">
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
                 <div className="bg-red-50 dark:bg-red-950/20 p-4 rounded-lg border border-red-100 dark:border-red-900">
                   <p className="text-sm text-red-800 dark:text-red-200 leading-relaxed">
                     Homicídio qualificado por motivo fútil e meio cruel.
                   </p>
                 </div>
-              </SwissCardContent>
-            </SwissCard>
+              </CardContent>
+            </Card>
           </div>
 
-          <SwissCard className="p-6 mt-6">
-            <SwissCardHeader className="p-0 mb-4">
-              <SwissCardTitle>Quesitos</SwissCardTitle>
-            </SwissCardHeader>
-            <SwissCardContent className="p-0">
+          <Card className="p-6 mt-6">
+            <CardHeader className="p-0 mb-4">
+              <CardTitle>Quesitos</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
               <div className="text-stone-400 dark:text-zinc-500 text-sm text-center py-10 border-2 border-dashed border-stone-200 dark:border-zinc-800 rounded-lg">
                 <FileText className="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-zinc-700" />
                 <p>Lista de quesitos será exibida aqui</p>
               </div>
-            </SwissCardContent>
-          </SwissCard>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Conteúdo: Preparação */}

@@ -19,12 +19,12 @@ import {
   StickyNote,
 } from "lucide-react";
 import {
-  SwissCard,
-  SwissCardContent,
-  SwissCardFooter,
-  SwissCardHeader,
-  SwissCardTitle,
-} from "@/components/ui/swiss-card";
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -252,18 +252,18 @@ export function DossiePersonagem({ personagem, onEdit }: DossiePersonagemProps) 
     .filter(Boolean) ?? [];
 
   return (
-    <SwissCard className={cn("border-l-4", config.accentBorder)}>
+    <Card className={cn("border-l-4", config.accentBorder)}>
       {/* ---- HEADER ---- */}
-      <SwissCardHeader className="pb-4">
+      <CardHeader className="pb-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <SwissCardTitle className="flex items-center gap-2 flex-wrap">
+            <CardTitle className="flex items-center gap-2 flex-wrap">
               <span className="truncate">{personagem.nome}</span>
               <Badge className={cn("text-xs shrink-0", config.badgeClass)}>
                 {config.icon}
                 <span className="ml-1">{config.label}</span>
               </Badge>
-            </SwissCardTitle>
+            </CardTitle>
             {(personagem.vara || personagem.comarca) && (
               <p className="text-xs text-stone-500 dark:text-zinc-500 mt-1.5">
                 {[personagem.vara, personagem.comarca].filter(Boolean).join(" - ")}
@@ -271,10 +271,10 @@ export function DossiePersonagem({ personagem, onEdit }: DossiePersonagemProps) 
             )}
           </div>
         </div>
-      </SwissCardHeader>
+      </CardHeader>
 
       {/* ---- CONTENT ---- */}
-      <SwissCardContent className="space-y-5">
+      <CardContent className="space-y-5">
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-2">
           <StatBox
@@ -460,10 +460,10 @@ export function DossiePersonagem({ personagem, onEdit }: DossiePersonagemProps) 
             </CollapsibleSection>
           )}
         </div>
-      </SwissCardContent>
+      </CardContent>
 
       {/* ---- FOOTER ---- */}
-      <SwissCardFooter className="flex items-center justify-between">
+      <CardFooter className="flex items-center justify-between">
         <span className="text-xs text-stone-400 dark:text-zinc-500">
           {personagem.ultimaSessaoData ? (
             <>
@@ -485,7 +485,7 @@ export function DossiePersonagem({ personagem, onEdit }: DossiePersonagemProps) 
             Editar
           </Button>
         )}
-      </SwissCardFooter>
-    </SwissCard>
+      </CardFooter>
+    </Card>
   );
 }

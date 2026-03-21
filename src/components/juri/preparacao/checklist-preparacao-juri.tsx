@@ -17,11 +17,11 @@ import {
   CalendarCheck,
 } from "lucide-react";
 import {
-  SwissCard,
-  SwissCardContent,
-  SwissCardHeader,
-  SwissCardTitle,
-} from "@/components/ui/swiss-card";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -432,13 +432,13 @@ function StaticFallbackChecklist({
   }, []);
 
   return (
-    <SwissCard>
-      <SwissCardHeader>
+    <Card>
+      <CardHeader>
         <div className="flex items-center justify-between">
-          <SwissCardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
             <CheckSquare className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             Checklist de Preparação
-          </SwissCardTitle>
+          </CardTitle>
           <Badge variant="default" className="text-xs">
             <ListChecks className="w-3 h-3 mr-1" />
             Modo básico
@@ -458,8 +458,8 @@ function StaticFallbackChecklist({
             personalizados baseados nos dados do caso.
           </p>
         </div>
-      </SwissCardHeader>
-      <SwissCardContent>
+      </CardHeader>
+      <CardContent>
         <ScrollArea className="max-h-[500px]">
           <div className="space-y-3">
             {(
@@ -488,8 +488,8 @@ function StaticFallbackChecklist({
             {BASE_ITEMS.filter((i) => i.critical).length} críticos
           </span>
         </div>
-      </SwissCardContent>
-    </SwissCard>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -657,14 +657,14 @@ export function ChecklistPreparacaoJuri({
   // ---- Loading ----
   if (isLoading) {
     return (
-      <SwissCard>
-        <SwissCardHeader>
-          <SwissCardTitle className="flex items-center gap-2">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
             <CheckSquare className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             Checklist de Preparação
-          </SwissCardTitle>
-        </SwissCardHeader>
-        <SwissCardContent>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="space-y-4">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="space-y-2">
@@ -676,20 +676,20 @@ export function ChecklistPreparacaoJuri({
               </div>
             ))}
           </div>
-        </SwissCardContent>
-      </SwissCard>
+        </CardContent>
+      </Card>
     );
   }
 
   // ---- Render ----
   return (
-    <SwissCard>
-      <SwissCardHeader>
+    <Card>
+      <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <SwissCardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
             <CheckSquare className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             Checklist de Preparação
-          </SwissCardTitle>
+          </CardTitle>
           <div className="flex items-center gap-2">
             {data && (
               <Badge variant="default" className="text-[10px]">
@@ -754,9 +754,9 @@ export function ChecklistPreparacaoJuri({
             </div>
           </div>
         </div>
-      </SwissCardHeader>
+      </CardHeader>
 
-      <SwissCardContent>
+      <CardContent>
         <ScrollArea className="max-h-[600px]">
           <div className="space-y-3">
             {(
@@ -788,7 +788,7 @@ export function ChecklistPreparacaoJuri({
             {criticalDone}/{criticalTotal} críticos
           </span>
         </div>
-      </SwissCardContent>
-    </SwissCard>
+      </CardContent>
+    </Card>
   );
 }

@@ -11,11 +11,11 @@ import {
   X,
 } from "lucide-react";
 import {
-  SwissCard,
-  SwissCardContent,
-  SwissCardHeader,
-  SwissCardTitle,
-} from "@/components/ui/swiss-card";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -440,14 +440,14 @@ function DetailPanel({
 
 function LoadingSkeleton() {
   return (
-    <SwissCard>
-      <SwissCardHeader>
-        <SwissCardTitle className="flex items-center gap-2">
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
           <Map className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           Mapa do Caso
-        </SwissCardTitle>
-      </SwissCardHeader>
-      <SwissCardContent>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[0, 1, 2].map((col) => (
             <div key={col} className="space-y-3">
@@ -458,21 +458,21 @@ function LoadingSkeleton() {
             </div>
           ))}
         </div>
-      </SwissCardContent>
-    </SwissCard>
+      </CardContent>
+    </Card>
   );
 }
 
 function EmptyState() {
   return (
-    <SwissCard className="min-h-[400px]">
-      <SwissCardHeader>
-        <SwissCardTitle className="flex items-center gap-2">
+    <Card className="min-h-[400px]">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
           <Map className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           Mapa do Caso
-        </SwissCardTitle>
-      </SwissCardHeader>
-      <SwissCardContent>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
         <div className="text-stone-400 dark:text-zinc-500 text-sm text-center py-16 border-2 border-dashed border-stone-200 dark:border-zinc-800 rounded-lg">
           <Map className="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-zinc-700" />
           <p className="font-medium">Vincule um caso para visualizar o mapa</p>
@@ -481,8 +481,8 @@ function EmptyState() {
             visualmente, destacando contradicoes e relacoes entre depoimentos.
           </p>
         </div>
-      </SwissCardContent>
-    </SwissCard>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -607,13 +607,13 @@ export function WarRoom({ sessaoId, casoId }: WarRoomProps) {
             : null;
 
   return (
-    <SwissCard>
-      <SwissCardHeader>
+    <Card>
+      <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <SwissCardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
             <Map className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             Mapa do Caso
-          </SwissCardTitle>
+          </CardTitle>
           <div className="flex items-center gap-2">
             <Badge variant="default" className="text-[10px]">
               {atores.length} atores
@@ -638,9 +638,9 @@ export function WarRoom({ sessaoId, casoId }: WarRoomProps) {
             destacados.
           </p>
         )}
-      </SwissCardHeader>
+      </CardHeader>
 
-      <SwissCardContent>
+      <CardContent>
         {/* 3-column Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           {/* ===== Column 1: Atores ===== */}
@@ -804,7 +804,7 @@ export function WarRoom({ sessaoId, casoId }: WarRoomProps) {
             onClose={() => setSelectedItem(null)}
           />
         )}
-      </SwissCardContent>
-    </SwissCard>
+      </CardContent>
+    </Card>
   );
 }

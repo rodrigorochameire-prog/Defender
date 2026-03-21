@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -213,11 +213,11 @@ function KanbanCard({ demanda, onMove }: KanbanCardProps) {
   const prazoInfo = getPrazoInfo(demanda.prazo);
   
   return (
-    <SwissCard className={cn(
+    <Card className={cn(
       "mb-2 hover:shadow-md transition-shadow",
       demanda.reuPreso && "border-l-[3px] border-l-rose-500"
     )}>
-      <SwissCardContent className="p-3">
+      <CardContent className="p-3">
         {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -289,8 +289,8 @@ function KanbanCard({ demanda, onMove }: KanbanCardProps) {
             </span>
           </div>
         </div>
-      </SwissCardContent>
-    </SwissCard>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -369,7 +369,7 @@ export default function KanbanPage() {
       {/* Stats - Padrão Swiss */}
       <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
         {stats.map((col) => (
-          <SwissCard 
+          <Card 
             key={col.id}
             className="border-l-[3px]"
             style={{ borderLeftColor: col.color.replace("bg-", "").includes("zinc") ? "#a1a1aa" : 
@@ -377,7 +377,7 @@ export default function KanbanPage() {
               col.color.includes("blue") ? "#3b82f6" :
               col.color.includes("emerald") ? "#10b981" : "#a1a1aa" }}
           >
-            <SwissCardContent className="p-2 sm:p-3">
+            <CardContent className="p-2 sm:p-3">
               <div className="flex items-center gap-2">
                 <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full", col.color)} />
                 <div>
@@ -385,11 +385,11 @@ export default function KanbanPage() {
                   <p className="text-[9px] sm:text-xs text-muted-foreground">{col.title}</p>
                 </div>
               </div>
-            </SwissCardContent>
-          </SwissCard>
+            </CardContent>
+          </Card>
         ))}
-        <SwissCard className="border-l-[3px] border-l-rose-500">
-          <SwissCardContent className="p-2 sm:p-3">
+        <Card className="border-l-[3px] border-l-rose-500">
+          <CardContent className="p-2 sm:p-3">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-rose-600" />
               <div>
@@ -397,8 +397,8 @@ export default function KanbanPage() {
                 <p className="text-[9px] sm:text-xs text-muted-foreground">Urgentes</p>
               </div>
             </div>
-          </SwissCardContent>
-        </SwissCard>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters - Padrão Swiss */}

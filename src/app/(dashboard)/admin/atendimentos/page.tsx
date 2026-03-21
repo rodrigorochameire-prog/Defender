@@ -1,6 +1,6 @@
 "use client";
 
-import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   UserCheck,
@@ -43,8 +43,8 @@ export default function AtendimentosPage() {
 
       {/* Stats Cards - Design Suíço com borda lateral */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
-        <SwissCard className="border-l-2 border-l-rose-500">
-          <SwissCardContent className="p-3 sm:p-4">
+        <Card className="border-l-2 border-l-rose-500">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
                 <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
@@ -54,11 +54,11 @@ export default function AtendimentosPage() {
                 <p className="text-xs sm:text-xs text-rose-600 dark:text-rose-400">Hoje</p>
               </div>
             </div>
-          </SwissCardContent>
-        </SwissCard>
+          </CardContent>
+        </Card>
         
-        <SwissCard className="border-l-2 border-l-blue-500">
-          <SwissCardContent className="p-3 sm:p-4">
+        <Card className="border-l-2 border-l-blue-500">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
                 <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
@@ -68,11 +68,11 @@ export default function AtendimentosPage() {
                 <p className="text-xs sm:text-xs text-blue-600 dark:text-blue-400">Presenciais</p>
               </div>
             </div>
-          </SwissCardContent>
-        </SwissCard>
+          </CardContent>
+        </Card>
         
-        <SwissCard className="border-l-2 border-l-violet-500">
-          <SwissCardContent className="p-3 sm:p-4">
+        <Card className="border-l-2 border-l-violet-500">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
                 <Video className="w-4 h-4 sm:w-5 sm:h-5 text-violet-500" />
@@ -82,11 +82,11 @@ export default function AtendimentosPage() {
                 <p className="text-xs sm:text-xs text-violet-600 dark:text-violet-400">Vídeo</p>
               </div>
             </div>
-          </SwissCardContent>
-        </SwissCard>
+          </CardContent>
+        </Card>
         
-        <SwissCard className="border-l-2 border-l-amber-500">
-          <SwissCardContent className="p-3 sm:p-4">
+        <Card className="border-l-2 border-l-amber-500">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
                 <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
@@ -96,13 +96,13 @@ export default function AtendimentosPage() {
                 <p className="text-xs sm:text-xs text-amber-600 dark:text-amber-400">Telefone</p>
               </div>
             </div>
-          </SwissCardContent>
-        </SwissCard>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Empty State - Design Suíço */}
-      <SwissCard className="border-dashed">
-        <SwissCardContent className="text-center py-16">
+      <Card className="border-dashed">
+        <CardContent className="text-center py-16">
           <div className="mx-auto w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4">
             <UserCheck className="w-8 h-8 text-purple-500" />
           </div>
@@ -118,8 +118,8 @@ export default function AtendimentosPage() {
               Agendar Atendimento
             </Button>
           </Link>
-        </SwissCardContent>
-      </SwissCard>
+        </CardContent>
+      </Card>
     </div>
   );
 }

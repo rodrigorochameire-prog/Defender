@@ -20,10 +20,10 @@ const buttonVariants = cva(
           "hover:bg-accent hover:text-accent-foreground",
         link: 
           "text-primary underline-offset-4 hover:underline",
-        premium: 
-          "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md",
-        accent: 
-          "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md",
+        premium:
+          "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md ring-1 ring-primary/20",
+        accent:
+          "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 hover:shadow-md",
         soft:
           "bg-primary/10 text-primary hover:bg-primary/20",
       },

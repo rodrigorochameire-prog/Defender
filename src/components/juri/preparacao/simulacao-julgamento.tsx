@@ -19,11 +19,11 @@ import {
   Target,
 } from "lucide-react";
 import {
-  SwissCard,
-  SwissCardContent,
-  SwissCardHeader,
-  SwissCardTitle,
-} from "@/components/ui/swiss-card";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
@@ -452,14 +452,14 @@ export function SimulacaoJulgamento({
   // ---- No casoId ----
   if (!casoId) {
     return (
-      <SwissCard className="p-6 min-h-[400px]">
-        <SwissCardHeader className="p-0 mb-4">
-          <SwissCardTitle className="flex items-center gap-2">
+      <Card className="p-6 min-h-[400px]">
+        <CardHeader className="p-0 mb-4">
+          <CardTitle className="flex items-center gap-2">
             <Brain className="w-5 h-5 text-primary" />
             Simulacao de Julgamento
-          </SwissCardTitle>
-        </SwissCardHeader>
-        <SwissCardContent className="p-0">
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Brain className="w-12 h-12 text-stone-300 dark:text-zinc-700 mb-3" />
             <p className="text-sm font-medium text-stone-500 dark:text-zinc-500">
@@ -469,22 +469,22 @@ export function SimulacaoJulgamento({
               A simulacao precisa dos dados do caso (fatos, teses, testemunhas) para gerar cenarios.
             </p>
           </div>
-        </SwissCardContent>
-      </SwissCard>
+        </CardContent>
+      </Card>
     );
   }
 
   // ---- Loading query ----
   if (simulacaoQuery.isLoading) {
     return (
-      <SwissCard className="p-6 min-h-[400px]">
-        <SwissCardHeader className="p-0 mb-4">
-          <SwissCardTitle className="flex items-center gap-2">
+      <Card className="p-6 min-h-[400px]">
+        <CardHeader className="p-0 mb-4">
+          <CardTitle className="flex items-center gap-2">
             <Brain className="w-5 h-5 text-primary" />
             Simulacao de Julgamento
-          </SwissCardTitle>
-        </SwissCardHeader>
-        <SwissCardContent className="p-0">
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
               <div
@@ -493,16 +493,16 @@ export function SimulacaoJulgamento({
               />
             ))}
           </div>
-        </SwissCardContent>
-      </SwissCard>
+        </CardContent>
+      </Card>
     );
   }
 
   // ---- Simulating state ----
   if (isSimulating) {
     return (
-      <SwissCard className="p-6 min-h-[400px]">
-        <SwissCardContent className="p-0">
+      <Card className="p-6 min-h-[400px]">
+        <CardContent className="p-0">
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
             <div className="relative mb-4">
               <Brain className="h-12 w-12 text-emerald-500" />
@@ -518,22 +518,22 @@ export function SimulacaoJulgamento({
               <div className="h-full bg-emerald-500 rounded-full animate-[indeterminate_1.5s_ease-in-out_infinite] w-1/3" />
             </div>
           </div>
-        </SwissCardContent>
-      </SwissCard>
+        </CardContent>
+      </Card>
     );
   }
 
   // ---- Error state ----
   if (simularMutation.error && !simulacaoResultado) {
     return (
-      <SwissCard className="p-6 min-h-[400px]">
-        <SwissCardHeader className="p-0 mb-4">
-          <SwissCardTitle className="flex items-center gap-2">
+      <Card className="p-6 min-h-[400px]">
+        <CardHeader className="p-0 mb-4">
+          <CardTitle className="flex items-center gap-2">
             <Brain className="w-5 h-5 text-primary" />
             Simulacao de Julgamento
-          </SwissCardTitle>
-        </SwissCardHeader>
-        <SwissCardContent className="p-0">
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="p-3 rounded-full bg-red-50 dark:bg-red-950/30 mb-3">
               <AlertCircle className="w-8 h-8 text-red-500" />
@@ -555,22 +555,22 @@ export function SimulacaoJulgamento({
               Tentar Novamente
             </button>
           </div>
-        </SwissCardContent>
-      </SwissCard>
+        </CardContent>
+      </Card>
     );
   }
 
   // ---- No result yet ----
   if (!simulacaoResultado) {
     return (
-      <SwissCard className="p-6 min-h-[400px]">
-        <SwissCardHeader className="p-0 mb-4">
-          <SwissCardTitle className="flex items-center gap-2">
+      <Card className="p-6 min-h-[400px]">
+        <CardHeader className="p-0 mb-4">
+          <CardTitle className="flex items-center gap-2">
             <Brain className="w-5 h-5 text-primary" />
             Simulacao de Julgamento
-          </SwissCardTitle>
-        </SwissCardHeader>
-        <SwissCardContent className="p-0">
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Brain className="w-12 h-12 text-stone-300 dark:text-zinc-700 mb-3" />
             <p className="text-sm font-medium text-stone-600 dark:text-zinc-400 mb-1">
@@ -591,8 +591,8 @@ export function SimulacaoJulgamento({
               Simular Julgamento
             </button>
           </div>
-        </SwissCardContent>
-      </SwissCard>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -608,13 +608,13 @@ export function SimulacaoJulgamento({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <SwissCard>
-        <SwissCardHeader>
+      <Card>
+        <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <SwissCardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
               <Brain className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               Simulacao de Julgamento
-            </SwissCardTitle>
+            </CardTitle>
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-stone-400 dark:text-zinc-500">
                 Gerado em{" "}
@@ -645,8 +645,8 @@ export function SimulacaoJulgamento({
               </button>
             </div>
           </div>
-        </SwissCardHeader>
-      </SwissCard>
+        </CardHeader>
+      </Card>
 
       {/* Cenarios */}
       {cenarios && cenarios.length > 0 && (

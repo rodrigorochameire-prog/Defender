@@ -11,12 +11,12 @@ import {
   RefreshCw,
 } from "lucide-react";
 import {
-  SwissCard,
-  SwissCardContent,
-  SwissCardHeader,
-  SwissCardTitle,
-  SwissCardDescription,
-} from "@/components/ui/swiss-card";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,15 +64,15 @@ interface Personagem {
 
 function SkeletonCard() {
   return (
-    <SwissCard className="border-l-4 border-l-stone-200 dark:border-l-zinc-700">
-      <SwissCardHeader className="pb-4">
+    <Card className="border-l-4 border-l-stone-200 dark:border-l-zinc-700">
+      <CardHeader className="pb-4">
         <div className="flex items-center gap-3">
           <Skeleton className="h-6 w-40" />
           <Skeleton className="h-5 w-20 rounded-md" />
         </div>
         <Skeleton className="h-4 w-32 mt-2" />
-      </SwissCardHeader>
-      <SwissCardContent className="space-y-4">
+      </CardHeader>
+      <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-2">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-16 rounded-lg" />
@@ -84,8 +84,8 @@ function SkeletonCard() {
           <Skeleton className="h-10 rounded-lg" />
           <Skeleton className="h-10 rounded-lg" />
         </div>
-      </SwissCardContent>
-    </SwissCard>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -149,22 +149,22 @@ function AddPersonagemCard({
   };
 
   return (
-    <SwissCard
+    <Card
       className={cn(
         "border-l-4 border-dashed border-stone-200 dark:border-zinc-700",
         c.accentBorder
       )}
     >
-      <SwissCardHeader>
-        <SwissCardTitle className="flex items-center gap-2 text-base">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
           <Plus className={cn("w-5 h-5", c.iconColor)} />
           Adicionar {c.label}
-        </SwissCardTitle>
-        <SwissCardDescription>
+        </CardTitle>
+        <CardDescription>
           Cadastre o perfil para acompanhar historico e estrategias
-        </SwissCardDescription>
-      </SwissCardHeader>
-      <SwissCardContent>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Nome */}
           <div className="space-y-1.5">
@@ -250,8 +250,8 @@ function AddPersonagemCard({
             )}
           </Button>
         </form>
-      </SwissCardContent>
-    </SwissCard>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -327,34 +327,34 @@ export function DossieHub({ sessaoId, casoId }: DossieHubProps) {
   // ---- Loading state ----
   if (isLoading) {
     return (
-      <SwissCard className="p-6">
-        <SwissCardHeader className="p-0 mb-4">
-          <SwissCardTitle className="flex items-center gap-2">
+      <Card className="p-6">
+        <CardHeader className="p-0 mb-4">
+          <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
             Dossie dos Personagens
-          </SwissCardTitle>
-        </SwissCardHeader>
-        <SwissCardContent className="p-0">
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <SkeletonCard />
             <SkeletonCard />
           </div>
-        </SwissCardContent>
-      </SwissCard>
+        </CardContent>
+      </Card>
     );
   }
 
   // ---- Error state ----
   if (isError) {
     return (
-      <SwissCard className="p-6">
-        <SwissCardHeader className="p-0 mb-4">
-          <SwissCardTitle className="flex items-center gap-2">
+      <Card className="p-6">
+        <CardHeader className="p-0 mb-4">
+          <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
             Dossie dos Personagens
-          </SwissCardTitle>
-        </SwissCardHeader>
-        <SwissCardContent className="p-0">
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
           <div className="flex flex-col items-center justify-center py-10 text-center space-y-4">
             <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/30 flex items-center justify-center">
               <AlertCircle className="w-6 h-6 text-red-500 dark:text-red-400" />
@@ -378,20 +378,20 @@ export function DossieHub({ sessaoId, casoId }: DossieHubProps) {
               Tentar novamente
             </Button>
           </div>
-        </SwissCardContent>
-      </SwissCard>
+        </CardContent>
+      </Card>
     );
   }
 
   // ---- Render ----
   return (
-    <SwissCard className="p-6">
-      <SwissCardHeader className="p-0 mb-5">
+    <Card className="p-6">
+      <CardHeader className="p-0 mb-5">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <SwissCardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
             Dossie dos Personagens
-          </SwissCardTitle>
+          </CardTitle>
           <div className="flex items-center gap-2">
             {juizes.length > 0 && (
               <Badge
@@ -411,9 +411,9 @@ export function DossieHub({ sessaoId, casoId }: DossieHubProps) {
             )}
           </div>
         </div>
-      </SwissCardHeader>
+      </CardHeader>
 
-      <SwissCardContent className="p-0">
+      <CardContent className="p-0">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* ---- LEFT: Juiz column ---- */}
           <div className="space-y-4">
@@ -465,7 +465,7 @@ export function DossieHub({ sessaoId, casoId }: DossieHubProps) {
             )}
           </div>
         </div>
-      </SwissCardContent>
-    </SwissCard>
+      </CardContent>
+    </Card>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { trpc } from "@/lib/trpc/client";
-import { SwissCard, SwissCardContent, SwissCardHeader, SwissCardTitle, SwissCardDescription } from "@/components/ui/swiss-card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -90,8 +90,8 @@ export default function BuscaPage() {
       </div>
 
       {/* Search Bar */}
-      <SwissCard>
-        <SwissCardContent className="p-3 sm:p-4 space-y-3">
+      <Card>
+        <CardContent className="p-3 sm:p-4 space-y-3">
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -126,8 +126,8 @@ export default function BuscaPage() {
               </TabsTrigger>
             </TabsList>
           </Tabs>
-        </SwissCardContent>
-      </SwissCard>
+        </CardContent>
+      </Card>
 
       {/* Results */}
       {activeQuery && (
@@ -142,13 +142,13 @@ export default function BuscaPage() {
               )}
 
               {semanticSearch.data && semanticSearch.data.results.length === 0 && (
-                <SwissCard>
-                  <SwissCardContent className="p-6 text-center text-muted-foreground">
+                <Card>
+                  <CardContent className="p-6 text-center text-muted-foreground">
                     <FileSearch className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p>Nenhum resultado encontrado para &ldquo;{activeQuery}&rdquo;</p>
                     <p className="text-xs mt-1">Tente outros termos ou verifique se os documentos foram indexados</p>
-                  </SwissCardContent>
-                </SwissCard>
+                  </CardContent>
+                </Card>
               )}
 
               {semanticSearch.data && semanticSearch.data.results.length > 0 && (
@@ -166,8 +166,8 @@ export default function BuscaPage() {
                     const scorePercent = Math.round(result.score * 100);
 
                     return (
-                      <SwissCard key={`${result.entity_type}-${result.entity_id}-${idx}`} className="hover:shadow-md transition-shadow">
-                        <SwissCardContent className="p-3 sm:p-4">
+                      <Card key={`${result.entity_type}-${result.entity_id}-${idx}`} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-3 sm:p-4">
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1.5">
@@ -194,8 +194,8 @@ export default function BuscaPage() {
                               </Button>
                             </Link>
                           </div>
-                        </SwissCardContent>
-                      </SwissCard>
+                        </CardContent>
+                      </Card>
                     );
                   })}
                 </div>
@@ -223,15 +223,15 @@ export default function BuscaPage() {
                       </h3>
                       {localSearch.data.assistidos.map((a) => (
                         <Link key={a.id} href={`/admin/assistidos/${a.id}`}>
-                          <SwissCard className="hover:shadow-md transition-shadow cursor-pointer">
-                            <SwissCardContent className="p-3 flex items-center justify-between">
+                          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                            <CardContent className="p-3 flex items-center justify-between">
                               <div>
                                 <p className="text-sm font-medium">{a.nome}</p>
                                 {a.cpf && <p className="text-xs text-muted-foreground font-mono">{a.cpf}</p>}
                               </div>
                               <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                            </SwissCardContent>
-                          </SwissCard>
+                            </CardContent>
+                          </Card>
                         </Link>
                       ))}
                     </div>
@@ -246,8 +246,8 @@ export default function BuscaPage() {
                       </h3>
                       {localSearch.data.processos.map((p) => (
                         <Link key={p.id} href={`/admin/processos/${p.id}`}>
-                          <SwissCard className="hover:shadow-md transition-shadow cursor-pointer">
-                            <SwissCardContent className="p-3 flex items-center justify-between">
+                          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                            <CardContent className="p-3 flex items-center justify-between">
                               <div>
                                 <p className="text-sm font-medium font-mono">{p.numeroAutos}</p>
                                 <p className="text-xs text-muted-foreground">
@@ -255,20 +255,20 @@ export default function BuscaPage() {
                                 </p>
                               </div>
                               <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                            </SwissCardContent>
-                          </SwissCard>
+                            </CardContent>
+                          </Card>
                         </Link>
                       ))}
                     </div>
                   )}
 
                   {localSearch.data.assistidos.length === 0 && localSearch.data.processos.length === 0 && (
-                    <SwissCard>
-                      <SwissCardContent className="p-6 text-center text-muted-foreground">
+                    <Card>
+                      <CardContent className="p-6 text-center text-muted-foreground">
                         <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
                         <p>Nenhum resultado encontrado para &ldquo;{activeQuery}&rdquo;</p>
-                      </SwissCardContent>
-                    </SwissCard>
+                      </CardContent>
+                    </Card>
                   )}
                 </div>
               )}
@@ -278,18 +278,18 @@ export default function BuscaPage() {
       )}
 
       {/* External Links */}
-      <SwissCard>
-        <SwissCardHeader className="pb-3">
-          <SwissCardTitle className="text-sm sm:text-base">Consultas Externas</SwissCardTitle>
-          <SwissCardDescription>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm sm:text-base">Consultas Externas</CardTitle>
+          <CardDescription>
             Acesse os sistemas dos tribunais para consulta
-          </SwissCardDescription>
-        </SwissCardHeader>
-        <SwissCardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
           <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
             <a href="https://esaj.tjba.jus.br/esaj/portal.do?servico=740000" target="_blank" rel="noopener noreferrer">
-              <SwissCard className="cursor-pointer hover:shadow-md transition-shadow group">
-                <SwissCardContent className="p-3 sm:p-4 flex items-center justify-between">
+              <Card className="cursor-pointer hover:shadow-md transition-shadow group">
+                <CardContent className="p-3 sm:p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
                       <Scale className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -300,12 +300,12 @@ export default function BuscaPage() {
                     </div>
                   </div>
                   <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </SwissCardContent>
-              </SwissCard>
+                </CardContent>
+              </Card>
             </a>
             <a href="https://pje.tjba.jus.br/pje/login.seam" target="_blank" rel="noopener noreferrer">
-              <SwissCard className="cursor-pointer hover:shadow-md transition-shadow group">
-                <SwissCardContent className="p-3 sm:p-4 flex items-center justify-between">
+              <Card className="cursor-pointer hover:shadow-md transition-shadow group">
+                <CardContent className="p-3 sm:p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
                       <Scale className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -316,12 +316,12 @@ export default function BuscaPage() {
                     </div>
                   </div>
                   <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </SwissCardContent>
-              </SwissCard>
+                </CardContent>
+              </Card>
             </a>
           </div>
-        </SwissCardContent>
-      </SwissCard>
+        </CardContent>
+      </Card>
     </div>
   );
 }
