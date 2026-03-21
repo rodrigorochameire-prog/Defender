@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { Newspaper, RefreshCw, Sparkles, Filter } from "lucide-react";
+import { RefreshCw, Sparkles, Search, X, ChevronDown, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { NoticiasFeed } from "@/components/noticias/noticias-feed";
 import { NoticiasTriagem } from "@/components/noticias/noticias-triagem";
 import { NoticiaReaderPanel } from "@/components/noticias/noticias-reader-panel";
@@ -33,6 +34,8 @@ export default function NoticiasPage() {
   const [noticiaCaso, setNoticiaCaso] = useState<NoticiaJuridica | null>(null);
   // Lista de notícias atual para navegação J/K
   const [noticiasList, setNoticiasList] = useState<NoticiaJuridica[]>([]);
+  const [busca, setBusca] = useState("");
+  const [fonteFilter, setFonteFilter] = useState<string | undefined>(undefined);
 
   const { data: pendentesCount } = trpc.noticias.countPendentes.useQuery();
   const { data: fontes = [] } = trpc.noticias.listFontes.useQuery();
@@ -92,111 +95,183 @@ export default function NoticiasPage() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Header — uma linha limpa */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-2 shrink-0">
-        <div className="flex items-center gap-2 min-w-0">
-          {/* Ícone */}
-          <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg shrink-0">
-            <Newspaper className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-          </div>
 
-          {/* Pills de categoria — scroll horizontal em telas pequenas */}
-          <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none flex-1 min-w-0">
-            {CATEGORIA_PILLS.map(({ value, label }) => (
-              <button
-                key={value}
-                onClick={() => setCategoria(value)}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap shrink-0",
-                  categoria === value
-                    ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
-                    : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+      {/* Header — toolbar unificada */}
+      <div className="border-b bg-background shrink-0 px-3 h-11 flex items-center gap-1.5">
 
-          {/* Ações — sempre visíveis à direita */}
-          <div className="flex items-center gap-1 shrink-0">
-            {(pendentesCount ?? 0) > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setTriagemOpen(true)}
-                className="gap-1.5 h-7 text-xs"
-              >
-                <Filter className="h-3 w-3" />
-                <span className="hidden sm:inline">Triagem</span>
-                <Badge variant="danger" className="animate-pulse text-[10px] px-1.5 py-0">
-                  {pendentesCount}
-                </Badge>
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => enriquecerBatch.mutate()}
-              disabled={enriquecerBatch.isPending}
-              title="Enriquecer com IA"
-              className="h-7 w-7 p-0 text-zinc-400"
+        {/* Pills de categoria */}
+        <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none">
+          {CATEGORIA_PILLS.map(({ value, label }) => (
+            <button
+              key={value}
+              onClick={() => setCategoria(value)}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap shrink-0",
+                categoria === value
+                  ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
+                  : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              )}
             >
-              <Sparkles className={cn("h-3.5 w-3.5", enriquecerBatch.isPending && "animate-spin")} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBuscarAgora}
-              disabled={buscarAgora.isPending}
-              title="Buscar notícias agora"
-              className="h-7 w-7 p-0 text-zinc-400"
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Separador vertical */}
+        <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-1 shrink-0" />
+
+        {/* Busca inline */}
+        <div className="relative shrink-0">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 pointer-events-none" />
+          <Input
+            placeholder="Buscar..."
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            className="pl-8 h-7 text-xs w-40 focus:w-56 transition-all duration-200"
+          />
+          {busca && (
+            <button
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+              onClick={() => setBusca("")}
             >
-              <RefreshCw className={cn("h-3.5 w-3.5", buscarAgora.isPending && "animate-spin")} />
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+
+        {/* Filtro de fonte */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className={cn(
+              "flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs transition-colors shrink-0",
+              fonteFilter
+                ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+            )}>
+              {fonteFilter ? (
+                <>
+                  <span
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ backgroundColor: fonteIdToCorMap[fontes.find(f => f.nome.toLowerCase().replace(/\s+/g, "-") === fonteFilter)?.id ?? 0] ?? "#71717a" }}
+                  />
+                  {fontes.find(f => f.nome.toLowerCase().replace(/\s+/g, "-") === fonteFilter)?.nome ?? fonteFilter}
+                </>
+              ) : (
+                "Fonte"
+              )}
+              <ChevronDown className="h-3 w-3 opacity-50" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-44">
+            <DropdownMenuItem
+              onClick={() => setFonteFilter(undefined)}
+              className="gap-2 text-sm cursor-pointer"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 shrink-0" />
+              Todas as fontes
+              {!fonteFilter && <Check className="h-3.5 w-3.5 ml-auto text-emerald-500" />}
+            </DropdownMenuItem>
+            {fontes.filter(f => f.ativo).map(f => {
+              const slug = f.nome.toLowerCase().replace(/\s+/g, "-");
+              return (
+                <DropdownMenuItem
+                  key={f.id}
+                  onClick={() => setFonteFilter(fonteFilter === slug ? undefined : slug)}
+                  className="gap-2 text-sm cursor-pointer"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: f.cor ?? "#71717a" }} />
+                  {f.nome}
+                  {fonteFilter === slug && <Check className="h-3.5 w-3.5 ml-auto text-emerald-500" />}
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Ações à direita */}
+        <div className="ml-auto flex items-center gap-1 shrink-0">
+          {(pendentesCount ?? 0) > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTriagemOpen(true)}
+              className="gap-1.5 h-7 text-xs"
+            >
+              <span className="hidden sm:inline">Triagem</span>
+              <Badge variant="danger" className="animate-pulse text-[10px] px-1.5 py-0">
+                {pendentesCount}
+              </Badge>
             </Button>
-          </div>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => enriquecerBatch.mutate()}
+            disabled={enriquecerBatch.isPending}
+            title="Enriquecer com IA"
+            className="h-7 w-7 p-0 text-zinc-400"
+          >
+            <Sparkles className={cn("h-3.5 w-3.5", enriquecerBatch.isPending && "animate-spin")} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBuscarAgora}
+            disabled={buscarAgora.isPending}
+            title="Buscar notícias agora"
+            className="h-7 w-7 p-0 text-zinc-400"
+          >
+            <RefreshCw className={cn("h-3.5 w-3.5", buscarAgora.isPending && "animate-spin")} />
+          </Button>
         </div>
       </div>
 
-      {/* Feed — sempre largura total */}
-      <div className="flex-1 overflow-y-auto">
-        {categoria === "relatorios" ? (
-          <NoticiasRelatorio />
-        ) : (
-          <NoticiasFeed
-            categoria={categoria as "legislativa" | "jurisprudencial" | "artigo" | "salvos"}
-            selectedNoticiaId={noticiaReader?.id}
-            onOpenReader={(noticia, list) => {
-              setNoticiaReader(noticia);
-              if (list) setNoticiasList(list);
-            }}
-            onOpenSalvarCaso={setNoticiaCaso}
-          />
-        )}
-      </div>
+      {/* Body — split-pane dinâmico */}
+      <div className="flex flex-1 overflow-hidden">
 
-      {/* Reader Panel — drawer overlay da direita */}
-      <Sheet open={readerOpen} onOpenChange={(open) => { if (!open) setNoticiaReader(null); }}>
-        <SheetContent
-          side="right"
-          className="w-[75vw] sm:max-w-[75vw] p-0 flex flex-col gap-0 [&>button:first-child]:hidden"
-        >
-          {noticiaReader && (
+        {/* Painel esquerdo: feed (full-width ou 380px) */}
+        <div className={cn(
+          "overflow-y-auto transition-all duration-300 ease-out",
+          readerOpen
+            ? "w-[380px] shrink-0 border-r border-zinc-100 dark:border-zinc-800"
+            : "flex-1"
+        )}>
+          {categoria === "relatorios" ? (
+            <NoticiasRelatorio />
+          ) : (
+            <NoticiasFeed
+              categoria={categoria as "legislativa" | "jurisprudencial" | "artigo" | "salvos"}
+              selectedNoticiaId={noticiaReader?.id}
+              busca={busca}
+              setBusca={setBusca}
+              fonteFilter={fonteFilter}
+              onOpenReader={(noticia, list) => {
+                setNoticiaReader(noticia);
+                if (list) setNoticiasList(list);
+              }}
+              onOpenSalvarCaso={setNoticiaCaso}
+            />
+          )}
+        </div>
+
+        {/* Painel direito: reader (só quando noticiaReader !== null) */}
+        {readerOpen && (
+          <div className="flex-1 overflow-y-auto min-w-0">
             <NoticiaReaderPanel
-              noticia={noticiaReader}
+              noticia={noticiaReader!}
               corFonte={corFonteReader}
               nomeFonte={nomeFonteReader}
-              isFavorito={favoritosIds.includes(noticiaReader.id)}
-              onToggleFavorito={() => toggleFavorito.mutate({ noticiaId: noticiaReader.id })}
+              isFavorito={favoritosIds.includes(noticiaReader!.id)}
+              onToggleFavorito={() => toggleFavorito.mutate({ noticiaId: noticiaReader!.id })}
               onClose={() => setNoticiaReader(null)}
               onPrevious={handlePrevious}
               onNext={handleNext}
               hasPrevious={readerIndex > 0}
               hasNext={readerIndex < noticiasList.length - 1}
             />
-          )}
-        </SheetContent>
-      </Sheet>
+          </div>
+        )}
+      </div>
 
       {/* Triagem overlay */}
       {triagemOpen && (
