@@ -80,7 +80,7 @@ export const observatoryRouter = router({
       demandas: { total: Number(a.demandas), variacao: pct(Number(a.demandas), Number(p.demandas)) },
       processos: { total: Number(a.processos), variacao: pct(Number(a.processos), Number(p.processos)) },
       assistidosNovos: { total: Number(a.assistidos_novos), variacao: pct(Number(a.assistidos_novos), Number(p.assistidos_novos)) },
-      analises_ia: { total: Number(a.analises_ia), variacao: pct(Number(a.analises_ia), Number(p.analises_ia)) },
+      analisesIa: { total: Number(a.analises_ia), variacao: pct(Number(a.analises_ia), Number(p.analises_ia)) },
       defensoresAtivos: { total: Number(a.defensores_ativos), variacao: null },
     };
   }),
