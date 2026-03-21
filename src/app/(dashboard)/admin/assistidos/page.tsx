@@ -1358,6 +1358,7 @@ export default function AssistidosPage() {
             {/* Toggle Ver RMS */}
             <button
               onClick={() => toggleVerRMS(!verRMS)}
+              aria-pressed={verRMS}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium border transition-colors shrink-0",
                 verRMS

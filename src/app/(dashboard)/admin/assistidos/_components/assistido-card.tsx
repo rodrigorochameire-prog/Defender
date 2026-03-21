@@ -1,5 +1,9 @@
 "use client";
 
+// Comarca de origem do usuário logado — exibir badge quando assistido for de outra comarca.
+// Atualizar quando o sistema expandir para múltiplas comarcas ativas (ver comarca-scope.ts).
+const HOME_COMARCA = "Camaçari";
+
 import React, { useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -151,7 +155,7 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
                 <span className="text-[10px] text-rose-400 font-mono tabular-nums">{tempoPreso}</span>
               )}
               {idade && <span className="text-[10px] text-zinc-400">{idade}a</span>}
-              {assistido.comarcaNome && assistido.comarcaNome !== "Camaçari" && (
+              {assistido.comarcaNome && assistido.comarcaNome !== HOME_COMARCA && (
                 <span className="inline-flex items-center gap-0.5 text-[10px] text-zinc-400 dark:text-zinc-500">
                   <MapPin className="w-2.5 h-2.5" />
                   {assistido.comarcaNome}
