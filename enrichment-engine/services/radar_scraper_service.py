@@ -835,18 +835,27 @@ class RadarScraperService:
     @staticmethod
     def _detect_municipio(titulo: str) -> str:
         """
-        Detecta o município da notícia pelo título.
-        Retorna 'outro' para cidades do interior BA que não pertencem a nenhum escopo.
+        Detecta o município da notícia pelo título usando detecção POSITIVA.
+
+        Ordem de verificação:
+        1. Salvador (verificar antes de Camaçari — "salvador" é genérico)
+        2. RMS (Simões Filho, Lauro de Freitas, Madre de Deus, Dias d'Ávila)
+        3. Camaçari (cidade + bairros + delegacias)
+        4. Default → "outro" (não mostrar em nenhum escopo)
+
+        Filosofia: se o artigo não menciona explicitamente Camaçari ou
+        uma localidade conhecida, ele não deve aparecer no feed de Camaçari.
+        Isso é mais robusto do que manter uma blocklist de cidades do interior.
         """
         t = titulo.lower()
-        # Interior BA: verificar primeiro para não poluir escopos válidos
-        if any(kw in t for kw in KEYWORDS_INTERIOR_BA):
-            return "outro"
-        if any(kw in t for kw in KEYWORDS_RMS):
-            return "rms"
         if any(kw in t for kw in KEYWORDS_SALVADOR):
             return "salvador"
-        return "camacari"
+        if any(kw in t for kw in KEYWORDS_RMS):
+            return "rms"
+        if any(kw in t for kw in KEYWORDS_CAMACARI_REGIAO):
+            return "camacari"
+        # Sem match positivo → não exibir em nenhum escopo
+        return "outro"
 
     def _is_camacari_region(self, titulo: str, corpo: str | None, confiabilidade: str = "regional") -> bool:
         """
