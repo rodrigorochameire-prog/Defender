@@ -35,32 +35,37 @@ const PERIODOS = [
   { value: "total", label: "Total" },
 ] as const;
 
+// Cores alinhadas com CRIME_TYPES em radar-filtros.tsx (fonte canônica)
 const CRIME_CHART_COLORS: Record<string, string> = {
-  homicidio: "#ef4444",
-  tentativa_homicidio: "#f97316",
-  trafico: "#a855f7",
-  roubo: "#3b82f6",
-  furto: "#eab308",
-  violencia_domestica: "#ec4899",
-  sexual: "#d946ef",
-  lesao_corporal: "#f59e0b",
-  porte_arma: "#64748b",
-  estelionato: "#14b8a6",
-  outros: "#71717a",
+  homicidio:           "#16a34a", // green-600
+  tentativa_homicidio: "#22c55e", // green-500
+  feminicidio:         "#16a34a", // green-600
+  trafico:             "#dc2626", // red-600
+  roubo:               "#ea580c", // orange-600
+  violencia_domestica: "#ca8a04", // yellow-600
+  sexual:              "#9333ea", // purple-600
+  lesao_corporal:      "#e11d48", // rose-600
+  furto:               "#f97316", // orange-500
+  porte_arma:          "#db2777", // pink-600
+  estelionato:         "#c026d3", // fuchsia-600
+  execucao_penal:      "#1d4ed8", // blue-700
+  outros:              "#71717a", // zinc-500
 };
 
 function getCrimeBadgeColor(tipo: string): string {
   const map: Record<string, string> = {
-    homicidio: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
-    tentativa_homicidio: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
-    trafico: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
-    roubo: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
-    furto: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
-    violencia_domestica: "bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300",
-    sexual: "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/40 dark:text-fuchsia-300",
-    lesao_corporal: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
-    porte_arma: "bg-slate-100 text-slate-700 dark:bg-slate-900/40 dark:text-slate-300",
-    estelionato: "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300",
+    homicidio:           "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+    tentativa_homicidio: "bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400",
+    feminicidio:         "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+    trafico:             "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+    roubo:               "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
+    violencia_domestica: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
+    sexual:              "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
+    lesao_corporal:      "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
+    furto:               "bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-300",
+    porte_arma:          "bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300",
+    estelionato:         "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/40 dark:text-fuchsia-300",
+    execucao_penal:      "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
   };
   return map[tipo] ?? "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";
 }

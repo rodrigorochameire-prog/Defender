@@ -20,16 +20,21 @@ const SCOPE_LABELS: Record<RadarScope, string> = {
   salvador: "Salvador",
 };
 
-// Cores e labels por tipo de crime
+// Cores alinhadas com CRIME_TYPES em radar-filtros.tsx (fonte canônica)
 const CRIME_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  homicidio: { label: "Homicídio", color: "text-red-600 dark:text-red-400", bg: "bg-red-500" },
-  trafico: { label: "Tráfico", color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-500" },
-  roubo: { label: "Roubo", color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500" },
-  sexual: { label: "Crime Sexual", color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-500" },
-  violencia_domestica: { label: "Viol. Dom.", color: "text-pink-600 dark:text-pink-400", bg: "bg-pink-500" },
-  tentativa_homicidio: { label: "Tent. Homicídio", color: "text-red-500 dark:text-red-400", bg: "bg-red-400" },
-  lesao_corporal: { label: "Lesão Corporal", color: "text-yellow-600 dark:text-yellow-400", bg: "bg-yellow-500" },
-  outros: { label: "Outros", color: "text-zinc-600 dark:text-zinc-400", bg: "bg-zinc-400" },
+  homicidio:          { label: "Homicídio",       color: "text-green-700 dark:text-green-400",  bg: "bg-green-600" },
+  tentativa_homicidio:{ label: "Tent. Homicídio", color: "text-green-600 dark:text-green-400",  bg: "bg-green-500" },
+  feminicidio:        { label: "Feminicídio",     color: "text-green-700 dark:text-green-400",  bg: "bg-green-600" },
+  trafico:            { label: "Tráfico",         color: "text-red-600 dark:text-red-400",      bg: "bg-red-600" },
+  roubo:              { label: "Roubo",           color: "text-orange-700 dark:text-orange-400",bg: "bg-orange-600" },
+  violencia_domestica:{ label: "Viol. Dom.",      color: "text-yellow-700 dark:text-yellow-400",bg: "bg-yellow-500" },
+  sexual:             { label: "Crime Sexual",    color: "text-purple-600 dark:text-purple-400",bg: "bg-purple-600" },
+  lesao_corporal:     { label: "Lesão Corporal",  color: "text-rose-700 dark:text-rose-400",    bg: "bg-rose-600" },
+  furto:              { label: "Furto",           color: "text-orange-600 dark:text-orange-300",bg: "bg-orange-500" },
+  porte_arma:         { label: "Porte Arma",      color: "text-pink-600 dark:text-pink-400",    bg: "bg-pink-600" },
+  estelionato:        { label: "Estelionato",     color: "text-fuchsia-700 dark:text-fuchsia-400",bg: "bg-fuchsia-600" },
+  execucao_penal:     { label: "Exec. Penal",     color: "text-blue-700 dark:text-blue-400",    bg: "bg-blue-700" },
+  outros:             { label: "Outros",          color: "text-zinc-600 dark:text-zinc-400",    bg: "bg-zinc-400" },
 };
 
 interface Props {

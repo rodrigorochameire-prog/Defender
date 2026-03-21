@@ -49,19 +49,20 @@ export function getCrimeLabel(tipo: string | null | undefined): string {
 }
 
 export function getCrimeBorderColor(tipo: string | null | undefined): string {
+  // Cores alinhadas com CRIME_TYPES (fonte canônica)
   const colors: Record<string, string> = {
-    homicidio: "border-l-red-500",
-    tentativa_homicidio: "border-l-red-400",
-    feminicidio: "border-l-rose-500",
-    trafico: "border-l-orange-500",
-    roubo: "border-l-amber-500",
-    violencia_domestica: "border-l-purple-500",
+    homicidio: "border-l-green-600",
+    tentativa_homicidio: "border-l-green-500",
+    feminicidio: "border-l-green-600",
+    trafico: "border-l-red-600",
+    roubo: "border-l-orange-600",
+    violencia_domestica: "border-l-yellow-500",
     sexual: "border-l-purple-600",
-    lesao_corporal: "border-l-rose-400",
-    furto: "border-l-yellow-500",
+    lesao_corporal: "border-l-rose-600",
+    furto: "border-l-orange-400",
     porte_arma: "border-l-pink-500",
-    estelionato: "border-l-fuchsia-500",
-    execucao_penal: "border-l-blue-500",
+    estelionato: "border-l-fuchsia-600",
+    execucao_penal: "border-l-blue-600",
     outros: "border-l-zinc-300",
   };
   return colors[tipo || ""] || colors.outros;
