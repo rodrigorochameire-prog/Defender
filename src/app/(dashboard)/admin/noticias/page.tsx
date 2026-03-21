@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { RefreshCw, Sparkles, Search, X, ChevronDown, Check } from "lucide-react";
+import { RefreshCw, Sparkles, Search, X, ChevronDown, Check, PanelLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,18 +19,29 @@ import type { NoticiaJuridica } from "@/lib/db/schema";
 export type CategoriaTab = "legislativa" | "jurisprudencial" | "artigo" | "salvos" | "recentes" | "relatorios";
 
 const CATEGORIA_PILLS: { value: CategoriaTab; label: string }[] = [
+  { value: "recentes", label: "Recentes" },
   { value: "jurisprudencial", label: "Jurisprudencial" },
   { value: "legislativa", label: "Legislativa" },
   { value: "artigo", label: "Artigo" },
-  { value: "recentes", label: "Recentes" },
   { value: "salvos", label: "Salvos" },
   { value: "relatorios", label: "Relatórios" },
 ];
 
+const CATEGORIAS_COM_SIDEBAR = new Set(["jurisprudencial", "legislativa", "artigo"]);
+
 
 export default function NoticiasPage() {
-  const [categoria, setCategoria] = useState<CategoriaTab>("jurisprudencial");
+  const [categoria, setCategoria] = useState<CategoriaTab>("recentes");
   const [triagemOpen, setTriagemOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("noticias-sidebar-open") !== "false";
+  });
+  const toggleSidebar = () => setSidebarOpen(prev => {
+    const next = !prev;
+    localStorage.setItem("noticias-sidebar-open", String(next));
+    return next;
+  });
   const [noticiaReader, setNoticiaReader] = useState<NoticiaJuridica | null>(null);
   const [noticiaCaso, setNoticiaCaso] = useState<NoticiaJuridica | null>(null);
   // Lista de notícias atual para navegação J/K
@@ -100,6 +111,25 @@ export default function NoticiasPage() {
 
       {/* Header — toolbar unificada */}
       <div className="border-b bg-background shrink-0 px-3 h-11 flex items-center gap-1.5">
+
+        {/* Toggle sidebar (só em categorias com pasta) */}
+        {CATEGORIAS_COM_SIDEBAR.has(categoria) && (
+          <>
+            <button
+              onClick={toggleSidebar}
+              className={cn(
+                "h-7 w-7 inline-flex items-center justify-center rounded-md transition-colors shrink-0",
+                sidebarOpen
+                  ? "text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800"
+                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+              )}
+              title={sidebarOpen ? "Ocultar pastas" : "Mostrar pastas"}
+            >
+              <PanelLeft className="h-3.5 w-3.5" />
+            </button>
+            <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-0.5 shrink-0" />
+          </>
+        )}
 
         {/* Pills de categoria */}
         <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none">
@@ -238,21 +268,24 @@ export default function NoticiasPage() {
             ? "w-[380px] shrink-0 border-r border-zinc-100 dark:border-zinc-800"
             : "flex-1"
         )}>
-          {categoria === "relatorios" ? (
-            <NoticiasRelatorio />
-          ) : (
-            <NoticiasFeed
-              categoria={categoria as "legislativa" | "jurisprudencial" | "artigo" | "salvos" | "recentes"}
-              selectedNoticiaId={noticiaReader?.id}
-              busca={busca}
-              fonteFilter={fonteFilter}
-              onOpenReader={(noticia, list) => {
-                setNoticiaReader(noticia);
-                if (list) setNoticiasList(list);
-              }}
-              onOpenSalvarCaso={setNoticiaCaso}
-            />
-          )}
+          <div className={cn(!readerOpen && "max-w-2xl mx-auto")}>
+            {categoria === "relatorios" ? (
+              <NoticiasRelatorio />
+            ) : (
+              <NoticiasFeed
+                categoria={categoria as "legislativa" | "jurisprudencial" | "artigo" | "salvos" | "recentes"}
+                selectedNoticiaId={noticiaReader?.id}
+                busca={busca}
+                fonteFilter={fonteFilter}
+                sidebarOpen={sidebarOpen}
+                onOpenReader={(noticia, list) => {
+                  setNoticiaReader(noticia);
+                  if (list) setNoticiasList(list);
+                }}
+                onOpenSalvarCaso={setNoticiaCaso}
+              />
+            )}
+          </div>
         </div>
 
         {/* Painel direito: reader (só quando noticiaReader !== null) */}

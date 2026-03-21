@@ -16,11 +16,12 @@ interface NoticiasFeedProps {
   selectedNoticiaId?: number;
   busca: string;
   fonteFilter: string | undefined;
+  sidebarOpen?: boolean;
   onOpenReader?: (noticia: NoticiaJuridica, list: NoticiaJuridica[]) => void;
   onOpenSalvarCaso?: (noticia: NoticiaJuridica) => void;
 }
 
-export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter, onOpenReader, onOpenSalvarCaso }: NoticiasFeedProps) {
+export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter, sidebarOpen = true, onOpenReader, onOpenSalvarCaso }: NoticiasFeedProps) {
   const [cursor, setCursor] = useState<number | undefined>(undefined);
   const [accumulated, setAccumulated] = useState<NoticiaJuridica[]>([]);
   const [pastaAtiva, setPastaAtiva] = useState<number | null>(null);
@@ -113,11 +114,13 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter,
     return (
       <div className="flex gap-4">
         {/* Sidebar placeholder */}
-        <div className="w-44 shrink-0 space-y-1 pt-2 px-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-7 bg-zinc-100 dark:bg-zinc-800 rounded-lg animate-pulse" />
-          ))}
-        </div>
+        {sidebarOpen && categoria !== "salvos" && categoria !== "recentes" && (
+          <div className="w-36 shrink-0 space-y-1 pt-3 px-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-6 bg-zinc-100 dark:bg-zinc-800 rounded animate-pulse" />
+            ))}
+          </div>
+        )}
         {/* Cards placeholder */}
         <div className="flex-1">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -139,7 +142,7 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter,
   return (
     <div className="flex min-h-full min-w-0">
       {/* Sidebar de Pastas */}
-      {categoria !== "salvos" && categoria !== "recentes" && (
+      {categoria !== "salvos" && categoria !== "recentes" && sidebarOpen && (
         <NoticiasPastasSidebar pastaAtiva={pastaAtiva} onSelectPasta={setPastaAtiva} />
       )}
 

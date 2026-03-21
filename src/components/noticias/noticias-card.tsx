@@ -64,11 +64,12 @@ export function NoticiaCard({
     <div
       className={cn(
         "group relative cursor-pointer",
-        "px-4 py-3 transition-colors",
+        "pl-[14px] pr-4 py-3.5 transition-colors",
         "border-b border-zinc-100 dark:border-zinc-800",
+        "border-l-2",
         isSelected
-          ? "bg-zinc-50 dark:bg-zinc-800/50 border-l-2 border-l-emerald-500 pl-[14px]"
-          : "hover:bg-zinc-50 dark:hover:bg-zinc-800/40"
+          ? "border-l-emerald-500 bg-zinc-50 dark:bg-zinc-800/50"
+          : "border-l-transparent hover:border-l-zinc-200 dark:hover:border-l-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/40"
       )}
       onClick={onClick}
     >
@@ -181,10 +182,10 @@ export function NoticiaCard({
 
       {/* Linha 2 — título */}
       <h3 className={cn(
-        "text-sm font-medium leading-snug line-clamp-2 transition-colors",
+        "text-[13px] font-semibold leading-snug line-clamp-2 transition-colors",
         isSelected
           ? "text-zinc-900 dark:text-zinc-100"
-          : "text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-100"
+          : "text-zinc-800 dark:text-zinc-200 group-hover:text-zinc-900 dark:group-hover:text-zinc-100"
       )}>
         {decodeHtmlEntities(noticia.titulo)}
       </h3>
