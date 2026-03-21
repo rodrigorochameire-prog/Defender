@@ -10,6 +10,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { users } from "./core";
+import { comarcas } from "./comarcas";
 
 // ==========================================
 // PROFISSIONAIS (Defensores)
@@ -25,12 +26,14 @@ export const profissionais = pgTable("profissionais", {
   vara: varchar("vara", { length: 50 }),
   cor: varchar("cor", { length: 20 }).default("zinc"),
   ativo: boolean("ativo").default(true).notNull(),
+  comarcaId: integer("comarca_id").references(() => comarcas.id).default(1).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
   index("profissionais_grupo_idx").on(table.grupo),
   index("profissionais_user_id_idx").on(table.userId),
   index("profissionais_ativo_idx").on(table.ativo),
+  index("profissionais_comarca_id_idx").on(table.comarcaId),
 ]);
 
 export type Profissional = typeof profissionais.$inferSelect;
@@ -47,10 +50,12 @@ export const escalasAtribuicao = pgTable("escalas_atribuicao", {
   mes: integer("mes").notNull(),
   ano: integer("ano").notNull(),
   ativo: boolean("ativo").default(true).notNull(),
+  comarcaId: integer("comarca_id").references(() => comarcas.id).default(1).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   index("escalas_mes_ano_idx").on(table.mes, table.ano),
   index("escalas_profissional_idx").on(table.profissionalId),
+  index("escalas_comarca_id_idx").on(table.comarcaId),
 ]);
 
 export type EscalaAtribuicao = typeof escalasAtribuicao.$inferSelect;

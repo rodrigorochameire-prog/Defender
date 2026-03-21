@@ -4,16 +4,23 @@ import { db } from "@/lib/db";
 import { profissionais, escalasAtribuicao, compartilhamentos } from "@/lib/db/schema";
 import { eq, and, desc, sql, gte, lte, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { getComarcaId } from "../comarca-scope";
 
 export const profissionaisRouter = router({
   // Listar todos os profissionais
-  list: protectedProcedure.query(async () => {
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const comarcaId = getComarcaId(ctx.user);
     const result = await db
       .select()
       .from(profissionais)
-      .where(eq(profissionais.ativo, true))
+      .where(
+        and(
+          eq(profissionais.ativo, true),
+          eq(profissionais.comarcaId, comarcaId)
+        )
+      )
       .orderBy(profissionais.id);
-    
+
     return result;
   }),
 
@@ -30,10 +37,11 @@ export const profissionaisRouter = router({
     }),
 
   // Buscar escala atual (mês/ano corrente)
-  getEscalaAtual: protectedProcedure.query(async () => {
+  getEscalaAtual: protectedProcedure.query(async ({ ctx }) => {
     const now = new Date();
     const mesAtual = now.getMonth() + 1;
     const anoAtual = now.getFullYear();
+    const comarcaId = getComarcaId(ctx.user);
 
     const escalas = await db
       .select({
@@ -52,7 +60,8 @@ export const profissionaisRouter = router({
         and(
           eq(escalasAtribuicao.mes, mesAtual),
           eq(escalasAtribuicao.ano, anoAtual),
-          eq(escalasAtribuicao.ativo, true)
+          eq(escalasAtribuicao.ativo, true),
+          eq(escalasAtribuicao.comarcaId, comarcaId)
         )
       );
 
@@ -67,10 +76,11 @@ export const profissionaisRouter = router({
       mesFim: z.number().min(1).max(12),
       anoFim: z.number(),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       // Converter para comparação numérica: ano*100+mes (ex: 202603)
       const inicio = input.anoInicio * 100 + input.mesInicio;
       const fim = input.anoFim * 100 + input.mesFim;
+      const comarcaId = getComarcaId(ctx.user);
 
       const escalas = await db
         .select({
@@ -91,6 +101,7 @@ export const profissionaisRouter = router({
         .where(
           and(
             eq(escalasAtribuicao.ativo, true),
+            eq(escalasAtribuicao.comarcaId, comarcaId),
             gte(sql`${escalasAtribuicao.ano} * 100 + ${escalasAtribuicao.mes}`, inicio),
             lte(sql`${escalasAtribuicao.ano} * 100 + ${escalasAtribuicao.mes}`, fim)
           )
@@ -107,7 +118,9 @@ export const profissionaisRouter = router({
       mes: z.number().min(1).max(12),
       ano: z.number().min(2024).max(2030),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const comarcaId = getComarcaId(ctx.user);
+
       const [existente] = await db
         .select()
         .from(escalasAtribuicao)
@@ -116,7 +129,8 @@ export const profissionaisRouter = router({
             eq(escalasAtribuicao.profissionalId, input.profissionalId),
             eq(escalasAtribuicao.atribuicao, input.atribuicao),
             eq(escalasAtribuicao.mes, input.mes),
-            eq(escalasAtribuicao.ano, input.ano)
+            eq(escalasAtribuicao.ano, input.ano),
+            eq(escalasAtribuicao.comarcaId, comarcaId)
           )
         );
 
@@ -131,6 +145,7 @@ export const profissionaisRouter = router({
           atribuicao: input.atribuicao,
           mes: input.mes,
           ano: input.ano,
+          comarcaId,
         });
       }
 
@@ -147,8 +162,11 @@ export const profissionaisRouter = router({
         ano: z.number().min(2024).max(2030),
       })),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const comarcaId = getComarcaId(ctx.user);
+
       // Deletar escalas existentes para os meses no range e reinserir
+      // CRITICAL: scope DELETE por comarca para não apagar dados de outras comarcas
       const mesesAnos = [...new Set(input.escalas.map(e => `${e.ano}-${e.mes}`))];
 
       for (const ma of mesesAnos) {
@@ -158,12 +176,13 @@ export const profissionaisRouter = router({
           .where(
             and(
               eq(escalasAtribuicao.mes, mes),
-              eq(escalasAtribuicao.ano, ano)
+              eq(escalasAtribuicao.ano, ano),
+              eq(escalasAtribuicao.comarcaId, comarcaId)
             )
           );
       }
 
-      // Inserir todas de uma vez
+      // Inserir todas de uma vez, carimbando a comarca
       if (input.escalas.length > 0) {
         await db.insert(escalasAtribuicao).values(
           input.escalas.map(e => ({
@@ -171,6 +190,7 @@ export const profissionaisRouter = router({
             atribuicao: e.atribuicao,
             mes: e.mes,
             ano: e.ano,
+            comarcaId,
           }))
         );
       }
