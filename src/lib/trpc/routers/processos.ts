@@ -887,6 +887,9 @@ export const processosRouter = router({
           assistidoNome: assistidos.nome,
           assistidoId: assistidos.id,
           createdAt: processos.createdAt,
+          assunto: processos.assunto,
+          fase: processos.fase,
+          situacao: processos.situacao,
         })
         .from(processos)
         .innerJoin(assistidos, and(eq(processos.assistidoId, assistidos.id), isNull(assistidos.deletedAt)))

@@ -7,13 +7,24 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Maximize2, Minimize2, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Pastel fills — synchronized with cadastro-mapa-leaflet.tsx
 const ATRIBUICAO_COLORS: Record<string, string> = {
-  JURI_CAMACARI: "#16a34a",
-  GRUPO_JURI: "#ea580c",
-  VVD_CAMACARI: "#d97706",
-  EXECUCAO_PENAL: "#2563eb",
-  SUBSTITUICAO: "#e11d48",
-  SUBSTITUICAO_CIVEL: "#7c3aed",
+  JURI_CAMACARI:    "#4ade80",
+  GRUPO_JURI:       "#86efac",
+  VVD_CAMACARI:     "#fbbf24",
+  EXECUCAO_PENAL:   "#60a5fa",
+  SUBSTITUICAO:     "#fb923c",
+  SUBSTITUICAO_CIVEL: "#a78bfa",
+};
+
+// Dark borders for chip dots
+const ATRIBUICAO_BORDERS: Record<string, string> = {
+  JURI_CAMACARI:    "#166534",
+  GRUPO_JURI:       "#166534",
+  VVD_CAMACARI:     "#78350f",
+  EXECUCAO_PENAL:   "#1e3a8a",
+  SUBSTITUICAO:     "#7c2d12",
+  SUBSTITUICAO_CIVEL: "#4c1d95",
 };
 
 const ATRIBUICAO_LABELS: Record<string, string> = {
@@ -359,7 +370,8 @@ export function CadastroMapa() {
                     <div
                       className="w-3 h-3"
                       style={{
-                        backgroundColor: ativo ? cor : "#a1a1aa",
+                        backgroundColor: ativo ? cor : "#d4d4d8",
+                        border: `1.5px solid ${ativo ? (ATRIBUICAO_BORDERS[atribuicao] || "#52525b") : "#a1a1aa"}`,
                         transform: "rotate(45deg)",
                         borderRadius: "1px",
                       }}
@@ -375,13 +387,19 @@ export function CadastroMapa() {
                       />
                       <div
                         className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: ativo ? cor : "#a1a1aa" }}
+                        style={{
+                          backgroundColor: ativo ? cor : "#d4d4d8",
+                          border: `1.5px solid ${ativo ? (ATRIBUICAO_BORDERS[atribuicao] || "#52525b") : "#a1a1aa"}`,
+                        }}
                       />
                     </>
                   ) : (
                     <div
                       className="w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: ativo ? cor : "#a1a1aa" }}
+                      style={{
+                        backgroundColor: ativo ? cor : "#d4d4d8",
+                        border: `1.5px solid ${ativo ? (ATRIBUICAO_BORDERS[atribuicao] || "#52525b") : "#a1a1aa"}`,
+                      }}
                     />
                   )}
                 </div>
@@ -399,41 +417,88 @@ export function CadastroMapa() {
     </aside>
   );
 
+  // Mini-stats chips (top 5 atribuições by count)
+  const topAtribuicoes = useMemo(() => {
+    return ALL_ATRIBUICOES
+      .filter((a) => (contagens[a] ?? 0) > 0)
+      .sort((a, b) => (contagens[b] ?? 0) - (contagens[a] ?? 0))
+      .slice(0, 5)
+      .map((a) => ({ atribuicao: a, count: contagens[a] ?? 0 }));
+  }, [contagens]);
+
   const mapArea = (
-    <div className="flex-1 min-w-0 h-full relative">
-      {isLoading ? (
-        <div className="h-full w-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Carregando processos...
-            </p>
+    <div className="flex-1 min-w-0 h-full flex flex-col">
+      {/* Mini-stats bar */}
+      {topAtribuicoes.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap px-3 py-2 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900">
+          {topAtribuicoes.map(({ atribuicao: a, count }) => {
+            const fill   = ATRIBUICAO_COLORS[a]  || "#a1a1aa";
+            const border = ATRIBUICAO_BORDERS[a] || "#52525b";
+            const label  = ATRIBUICAO_LABELS[a]  || a;
+            const isDiamondA = DIAMOND_ATRIBUICOES.has(a);
+            return (
+              <div
+                key={a}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-sm"
+              >
+                {isDiamondA ? (
+                  <span
+                    className="w-2 h-2 flex-shrink-0"
+                    style={{ backgroundColor: fill, border: `1.5px solid ${border}`, borderRadius: "1px", transform: "rotate(45deg)", display: "inline-block" }}
+                  />
+                ) : (
+                  <span
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: fill, border: `1.5px solid ${border}` }}
+                  />
+                )}
+                <span className="text-zinc-700 dark:text-zinc-300">{label}</span>
+                <span className="text-zinc-400 font-normal">{count}</span>
+              </div>
+            );
+          })}
+          <div className="inline-flex items-center px-2.5 py-1 rounded-full text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
+            {processosVisiveis.length} visíveis
           </div>
         </div>
-      ) : !data || data.length === 0 ? (
-        <div className="h-full w-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
-          <div className="flex flex-col items-center gap-3 text-center max-w-xs">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800">
-              <MapPin className="h-6 w-6 text-zinc-400" />
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                Nenhum processo georreferenciado
-              </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                O mapa será populado conforme processos com localização do fato
-                forem cadastrados.
+      )}
+
+      {/* Map */}
+      <div className="flex-1 min-h-0 relative">
+        {isLoading ? (
+          <div className="h-full w-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Carregando processos...
               </p>
             </div>
           </div>
-        </div>
-      ) : (
-        <LeafletMap
-          processos={processosVisiveis}
-          showProcessos={showProcessos}
-          resetViewTrigger={resetViewTrigger}
-        />
-      )}
+        ) : !data || data.length === 0 ? (
+          <div className="h-full w-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+            <div className="flex flex-col items-center gap-3 text-center max-w-xs">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800">
+                <MapPin className="h-6 w-6 text-zinc-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  Nenhum processo georreferenciado
+                </h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                  O mapa será populado conforme processos com localização do fato
+                  forem cadastrados.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <LeafletMap
+            processos={processosVisiveis}
+            showProcessos={showProcessos}
+            resetViewTrigger={resetViewTrigger}
+          />
+        )}
+      </div>
     </div>
   );
 
