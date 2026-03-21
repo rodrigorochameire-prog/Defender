@@ -24,7 +24,6 @@ export const processosRouter = router({
       const { search, area, isJuri, limit = 50, offset = 0 } = input || {};
       const isAdmin = ctx.user.role === "admin";
       
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const conditions: any[] = [isNull(processos.deletedAt)];
 
       if (search) {

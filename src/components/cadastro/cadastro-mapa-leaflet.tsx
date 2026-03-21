@@ -115,8 +115,7 @@ export default function CadastroMapaLeaflet({
 }: Props) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const markersRef = useRef<any>(null);
+  const markersRef = useRef<L.LayerGroup | null>(null);
 
   // Initialize map once
   useEffect(() => {

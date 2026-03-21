@@ -66,7 +66,6 @@ export async function getAssistidosVisibilityFilter(
  * Filtro simples por comarca — para processos, radar, configs.
  * Recebe a tabela como parâmetro para ser reutilizável.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getComarcaFilter<T extends { comarcaId: any }>(
   table: T,
   user: User
