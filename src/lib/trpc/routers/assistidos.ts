@@ -2,7 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { assistidos, processos, demandas, audiencias, documentos, movimentacoes, anotacoes, driveFiles, assistidosProcessos, users, comarcas } from "@/lib/db/schema";
-import { getAssistidosVisibilityFilter } from "@/lib/trpc/comarca-scope";
+import { getAssistidosVisibilityFilter, getComarcaId } from "@/lib/trpc/comarca-scope";
 import { eq, ilike, or, desc, sql, and, isNull, inArray, asc, getTableColumns, type SQL } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { uploadImageBuffer } from "@/lib/supabase/storage";
@@ -394,6 +394,18 @@ export const assistidosRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
       }
 
+      // Verificar visibilidade por comarca para não-admins
+      const isAdmin = ctx.user.role === "admin";
+      if (!isAdmin) {
+        const visibilityFilter = await getAssistidosVisibilityFilter(ctx.user);
+        const check = await db
+          .select({ id: assistidos.id })
+          .from(assistidos)
+          .where(and(eq(assistidos.id, input.id), visibilityFilter))
+          .limit(1);
+        if (!check[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
+      }
+
       return {
         ...baseRows[0],
         processos: processosRows,
@@ -507,6 +519,7 @@ export const assistidosRouter = router({
           defensorId: input.defensorId || ctx.user.id,
           atribuicaoPrimaria: input.atribuicaoPrimaria || "SUBSTITUICAO",
           driveFolderId: input.driveFolderId || null,
+          comarcaId: getComarcaId(ctx.user),
         })
         .returning();
 
@@ -560,13 +573,21 @@ export const assistidosRouter = router({
         tipo: "exato" | "cpf" | "similar";
       }> = [];
 
+      const isAdmin = ctx.user.role === "admin";
+      const comarcaCondition = isAdmin ? undefined : eq(assistidos.comarcaId, getComarcaId(ctx.user));
+
       // Verificar CPF
       if (input.cpf) {
         const cpfLimpo = input.cpf.replace(/\D/g, "");
         const [existenteCpf] = await db
           .select({ id: assistidos.id, nome: assistidos.nome, cpf: assistidos.cpf })
           .from(assistidos)
-          .where(sql`REPLACE(REPLACE(REPLACE(${assistidos.cpf}, '.', ''), '-', ''), ' ', '') = ${cpfLimpo}`)
+          .where(
+            and(
+              sql`REPLACE(REPLACE(REPLACE(${assistidos.cpf}, '.', ''), '-', ''), ' ', '') = ${cpfLimpo}`,
+              comarcaCondition
+            )
+          )
           .limit(1);
         
         if (existenteCpf) {
@@ -585,7 +606,7 @@ export const assistidosRouter = router({
       const candidatos = await db
         .select({ id: assistidos.id, nome: assistidos.nome, cpf: assistidos.cpf })
         .from(assistidos)
-        .where(ilike(assistidos.nome, `%${primeiroNome}%`))
+        .where(and(ilike(assistidos.nome, `%${primeiroNome}%`), comarcaCondition))
         .limit(20);
 
       for (const candidato of candidatos) {
@@ -951,7 +972,9 @@ export const assistidosRouter = router({
   // Estatísticas
   stats: protectedProcedure.query(async ({ ctx }) => {
     const isAdmin = ctx.user.role === "admin";
-    const baseConditions = [isNull(assistidos.deletedAt)];
+    const baseConditions = isAdmin
+      ? [isNull(assistidos.deletedAt)]
+      : [isNull(assistidos.deletedAt), eq(assistidos.comarcaId, getComarcaId(ctx.user))];
 
 
     const total = await db

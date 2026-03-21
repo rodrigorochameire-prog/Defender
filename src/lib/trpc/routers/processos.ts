@@ -24,8 +24,9 @@ export const processosRouter = router({
       const { search, area, isJuri, limit = 50, offset = 0 } = input || {};
       const isAdmin = ctx.user.role === "admin";
       
-      let conditions = [];
-      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const conditions: any[] = [isNull(processos.deletedAt)];
+
       if (search) {
         conditions.push(
           or(
@@ -275,6 +276,7 @@ export const processosRouter = router({
         .insert(processos)
         .values({
           ...input,
+          comarcaId: getComarcaId(ctx.user),
         })
         .returning();
 
@@ -361,6 +363,7 @@ export const processosRouter = router({
           nome: input.nome,
           atribuicaoPrimaria: input.atribuicaoPrimaria,
           statusPrisional: "SOLTO",
+          comarcaId: getComarcaId(ctx.user),
         })
         .returning();
 
@@ -436,6 +439,7 @@ export const processosRouter = router({
           area,
           fase: "conhecimento",
           situacao: "ativo",
+          comarcaId: getComarcaId(ctx.user),
         })
         .returning();
 
@@ -549,21 +553,20 @@ export const processosRouter = router({
   // Estatísticas
   stats: protectedProcedure.query(async ({ ctx }) => {
     const isAdmin = ctx.user.role === "admin";
-    const baseCondition = undefined;
+    const baseCondition = and(
+      isNull(processos.deletedAt),
+      isAdmin ? undefined : eq(processos.comarcaId, getComarcaId(ctx.user))
+    );
 
     const total = await db
       .select({ count: sql<number>`count(*)` })
       .from(processos)
       .where(baseCondition);
-    
+
     const juris = await db
       .select({ count: sql<number>`count(*)` })
       .from(processos)
-      .where(
-        baseCondition
-          ? and(baseCondition, eq(processos.isJuri, true))
-          : eq(processos.isJuri, true)
-      );
+      .where(and(baseCondition, eq(processos.isJuri, true)));
     
     return {
       total: Number(total[0]?.count || 0),
