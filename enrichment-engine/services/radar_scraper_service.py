@@ -509,7 +509,7 @@ class RadarScraperService:
         elif "atarde" in domain:
             paths = ["/tag/camacari", "/municipios/camacari", "/bahia/policia"]
         elif "bahianoticias" in domain:
-            paths = ["/municipios/camacari", "/seguranca-publica", "/municipios"]
+            paths = ["/municipios/camacari"]  # /municipios é amplo demais — inclui interior
         elif "relatabahia" in domain:
             paths = ["/policia", "/noticias"]
         elif "maisregiao" in domain:
@@ -854,19 +854,28 @@ class RadarScraperService:
         Detecta o município da notícia pelo título (e corpo, quando disponível).
 
         Ordem de verificação:
+        0. Interior da Bahia — se título menciona cidade do interior E NÃO menciona
+           Camaçari/RMS/Salvador → "outro" imediato (bloqueio positivo)
         1. Salvador — verificado no título; se match, confirma no corpo (evita falso positivo
            quando "salvador" aparece como nome próprio em notícia baiana genérica)
         2. RMS (Simões Filho, Lauro de Freitas, Madre de Deus, Dias d'Ávila) — título
         3. Camaçari (cidade + bairros + delegacias + sistemas locais) — título OU corpo
         4. Default → "outro" (não exibido em nenhum escopo)
-
-        O corpo é útil para artigos onde a cidade aparece no texto mas não no título,
-        ex: "Suspeito preso" sem mencionar Camaçari no título mas o corpo diz
-        "... foi detido no bairro Cassange, em Camaçari...".
         """
         t = titulo.lower()
         c = (corpo or "").lower()
         corpo_trecho = c[:1000]
+
+        # 0. Exclusão antecipada: interior da Bahia no título sem match de Camaçari/RMS/Salvador
+        if any(kw in t for kw in KEYWORDS_INTERIOR_BA):
+            # Só bloqueia se não há keyword positiva de escopo no título
+            has_scope = (
+                any(kw in t for kw in KEYWORDS_CAMACARI_REGIAO)
+                or any(kw in t for kw in KEYWORDS_RMS)
+                or any(kw in t for kw in KEYWORDS_SALVADOR)
+            )
+            if not has_scope:
+                return "outro"
 
         # Hierarquia: Salvador > RMS > Camaçari — verificada no título PRIMEIRO,
         # depois no corpo (mesma ordem). Isso evita que keywords compartilhadas
@@ -881,12 +890,19 @@ class RadarScraperService:
             return "camacari"
 
         # 2. Corpo — mesma hierarquia (primeiras 1000 chars)
+        #    Porém: se o corpo menciona cidade do interior, não confiar no match de Camaçari no corpo
+        has_interior_in_corpo = any(kw in corpo_trecho for kw in KEYWORDS_INTERIOR_BA)
         if any(kw in corpo_trecho for kw in KEYWORDS_SALVADOR):
             return "salvador"
         if any(kw in corpo_trecho for kw in KEYWORDS_RMS):
             return "rms"
-        if any(kw in corpo_trecho for kw in KEYWORDS_CAMACARI_REGIAO):
+        if not has_interior_in_corpo and any(kw in corpo_trecho for kw in KEYWORDS_CAMACARI_REGIAO):
             return "camacari"
+        # Se o corpo menciona interior E Camaçari, só aceitar se o título também confirmou
+        if has_interior_in_corpo and any(kw in corpo_trecho for kw in KEYWORDS_CAMACARI_REGIAO):
+            # Exige keyword estrita de Camaçari no corpo para aceitar
+            if any(kw in corpo_trecho for kw in KEYWORDS_CAMACARI_STRICT):
+                return "camacari"
 
         # Sem match positivo → não exibir em nenhum escopo
         return "outro"
@@ -897,6 +913,17 @@ class RadarScraperService:
         Regras variam por confiabilidade da fonte.
         """
         titulo_lower = titulo.lower()
+
+        # Exclusão antecipada: se o título menciona cidade do interior da Bahia
+        # sem keyword de escopo → rejeitar imediatamente, independente da fonte
+        if any(kw in titulo_lower for kw in KEYWORDS_INTERIOR_BA):
+            has_scope = (
+                any(kw in titulo_lower for kw in KEYWORDS_CAMACARI_REGIAO)
+                or any(kw in titulo_lower for kw in KEYWORDS_RMS)
+                or any(kw in titulo_lower for kw in KEYWORDS_SALVADOR)
+            )
+            if not has_scope:
+                return False
 
         if confiabilidade == "local":
             # Fonte local: aceitar Camaçari OU RMS no título (blogs locais cobrem toda a RMS)

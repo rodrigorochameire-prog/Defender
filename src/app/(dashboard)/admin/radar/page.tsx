@@ -306,74 +306,78 @@ export default function RadarCriminalPage() {
           {/* Desktop layout: sidebar colapsável + feed */}
           <div className="hidden lg:flex gap-0 relative">
 
-            {/* Sidebar colapsável */}
+            {/* Sidebar colapsável — overflow-hidden apenas no wrapper de conteúdo */}
             <div className={cn(
-              "shrink-0 transition-[width] duration-200 ease-in-out overflow-hidden relative",
+              "shrink-0 transition-[width] duration-200 ease-in-out",
               sidebarCollapsed ? "w-10" : "w-72"
             )}>
-              {/* Conteúdo expandido */}
-              <div className={cn(
-                "pr-4 space-y-4 transition-opacity duration-150",
-                sidebarCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
-              )}>
-                {/* Scope selector no topo da sidebar */}
-                <RadarScopeSelector value={scope} onChange={handleScopeChange} fullWidth />
+              {/* Wrapper com overflow-hidden para clipar o conteúdo ao colapsar */}
+              <div className="overflow-hidden w-full">
+                {/* Conteúdo expandido */}
+                <div className={cn(
+                  "pr-4 space-y-4 transition-opacity duration-150",
+                  sidebarCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
+                )}>
+                  {/* Scope selector no topo da sidebar */}
+                  <RadarScopeSelector value={scope} onChange={handleScopeChange} fullWidth />
 
-                {/* Inteligência primeiro */}
-                <RadarIntelligencePanel scope={scope} />
+                  {/* Inteligência primeiro */}
+                  <RadarIntelligencePanel scope={scope} onSelectTipoCrime={(tipo) => setFiltros(f => ({ ...f, tipoCrime: tipo }))} />
 
-                {/* Filtros */}
-                <RadarFiltros filtros={filtros} onChange={setFiltros} />
+                  {/* Filtros */}
+                  <RadarFiltros filtros={filtros} onChange={setFiltros} />
 
-                {/* Reincidentes */}
-                <RadarReincidentesPanel />
-              </div>
-
-              {/* Ícones quando colapsada */}
-              {sidebarCollapsed && (
-                <div className="flex flex-col items-center gap-3 pt-1">
-                  <button
-                    onClick={() => { setSidebarCollapsed(false); localStorage.setItem("radar-sidebar-collapsed", "false"); }}
-                    className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                    title="Inteligência"
-                  >
-                    <BarChart2 className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => { setSidebarCollapsed(false); localStorage.setItem("radar-sidebar-collapsed", "false"); }}
-                    className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                    title="Filtros"
-                  >
-                    <SlidersHorizontal className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => { setSidebarCollapsed(false); localStorage.setItem("radar-sidebar-collapsed", "false"); }}
-                    className="p-1.5 rounded-md text-zinc-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors cursor-pointer"
-                    title="Reincidentes"
-                  >
-                    <Users className="h-4 w-4" />
-                  </button>
+                  {/* Reincidentes */}
+                  <RadarReincidentesPanel />
                 </div>
-              )}
 
-              {/* Botão toggle — sempre visível na borda direita */}
-              <button
-                onClick={handleSidebarToggle}
-                className={cn(
-                  "absolute top-0 -right-3 z-10 flex items-center justify-center",
-                  "w-6 h-6 rounded-full border border-zinc-200 dark:border-zinc-700",
-                  "bg-white dark:bg-zinc-900 shadow-sm",
-                  "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200",
-                  "transition-colors cursor-pointer"
+                {/* Ícones quando colapsada */}
+                {sidebarCollapsed && (
+                  <div className="flex flex-col items-center gap-3 pt-1">
+                    <button
+                      onClick={() => { setSidebarCollapsed(false); localStorage.setItem("radar-sidebar-collapsed", "false"); }}
+                      className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                      title="Inteligência"
+                    >
+                      <BarChart2 className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => { setSidebarCollapsed(false); localStorage.setItem("radar-sidebar-collapsed", "false"); }}
+                      className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                      title="Filtros"
+                    >
+                      <SlidersHorizontal className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => { setSidebarCollapsed(false); localStorage.setItem("radar-sidebar-collapsed", "false"); }}
+                      className="p-1.5 rounded-md text-zinc-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors cursor-pointer"
+                      title="Reincidentes"
+                    >
+                      <Users className="h-4 w-4" />
+                    </button>
+                  </div>
                 )}
-                title={sidebarCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
-              >
-                {sidebarCollapsed
-                  ? <ChevronRight className="h-3.5 w-3.5" />
-                  : <ChevronLeft className="h-3.5 w-3.5" />
-                }
-              </button>
+              </div>
             </div>
+
+            {/* Botão toggle — fora do overflow-hidden, sempre visível */}
+            <button
+              onClick={handleSidebarToggle}
+              className={cn(
+                "absolute top-0 z-20 flex items-center justify-center",
+                "w-6 h-6 rounded-full border border-zinc-200 dark:border-zinc-700",
+                "bg-white dark:bg-zinc-900 shadow-sm",
+                "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200",
+                "transition-all duration-200 cursor-pointer"
+              )}
+              style={{ left: sidebarCollapsed ? "calc(2.5rem - 12px)" : "calc(18rem - 12px)" }}
+              title={sidebarCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
+            >
+              {sidebarCollapsed
+                ? <ChevronRight className="h-3.5 w-3.5" />
+                : <ChevronLeft className="h-3.5 w-3.5" />
+              }
+            </button>
 
             {/* Feed principal */}
             <div className="flex-1 min-w-0 border-l border-zinc-100 dark:border-zinc-800 pl-4">

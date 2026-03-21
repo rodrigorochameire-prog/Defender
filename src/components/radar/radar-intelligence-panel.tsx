@@ -40,9 +40,10 @@ const CRIME_CONFIG: Record<string, { label: string; color: string; bg: string }>
 interface Props {
   scope: RadarScope;
   dias?: number;
+  onSelectTipoCrime?: (tipo: string) => void;
 }
 
-export function RadarIntelligencePanel({ scope, dias = 30 }: Props) {
+export function RadarIntelligencePanel({ scope, dias = 30, onSelectTipoCrime }: Props) {
   const { data, isLoading } = trpc.radar.statsByMunicipio.useQuery({ dias });
 
   if (isLoading) {
@@ -140,8 +141,17 @@ export function RadarIntelligencePanel({ scope, dias = 30 }: Props) {
             crimeRanking.map((c) => {
               const config = CRIME_CONFIG[c.tipo] ?? CRIME_CONFIG.outros;
               const pct = totalCrimes > 0 ? Math.round((c.count / totalCrimes) * 100) : 0;
+              const isClickable = !!onSelectTipoCrime;
               return (
-                <div key={c.tipo} className="flex items-center gap-2">
+                <div
+                  key={c.tipo}
+                  className={cn(
+                    "flex items-center gap-2 rounded-md px-1.5 py-0.5 -mx-1.5 transition-colors",
+                    isClickable && "cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                  )}
+                  onClick={isClickable ? () => onSelectTipoCrime(c.tipo) : undefined}
+                  title={isClickable ? `Filtrar por ${config.label}` : undefined}
+                >
                   <div className={cn("w-2 h-2 rounded-full flex-shrink-0", config.bg)} />
                   <span className={cn("text-xs font-medium flex-1", config.color)}>{config.label}</span>
                   <div className="w-16 h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">

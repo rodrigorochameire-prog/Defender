@@ -470,14 +470,14 @@ export function RadarNoticiaCard({
           {/* Accent bar sobreposta no topo da imagem */}
           <div
             className="absolute top-0 left-0 right-0 h-[3px]"
-            style={{ background: crimeHex }}
+            style={{ background: crimeHex + "bb" }}
           />
         </div>
       ) : (
         /* Accent bar sem imagem */
         <div
           className="absolute top-0 left-0 right-0 h-[3px] rounded-t-xl"
-          style={{ background: crimeHex }}
+          style={{ background: crimeHex + "bb" }}
         />
       )}
 
@@ -487,13 +487,13 @@ export function RadarNoticiaCard({
           <span
             className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full"
             style={{
-              background: crimeHex + "22",
-              color: crimeHex,
-              border: `1px solid ${crimeHex}44`,
+              background: crimeHex + "15",
+              color: crimeHex + "dd",
+              border: `1px solid ${crimeHex}28`,
             }}
           >
             <span
-              style={{ width: 5, height: 5, borderRadius: "50%", background: crimeHex, flexShrink: 0, display: "inline-block" }}
+              style={{ width: 5, height: 5, borderRadius: "50%", background: crimeHex + "cc", flexShrink: 0, display: "inline-block" }}
             />
             {getCrimeLabel(noticia.tipoCrime)}
           </span>
