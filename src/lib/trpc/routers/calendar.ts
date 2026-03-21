@@ -6,27 +6,28 @@ import { Errors, safeAsync } from "@/lib/errors";
 import { idSchema, calendarEventSchema } from "@/lib/validations";
 import { startOfMonth, endOfMonth, startOfDay, endOfDay, addDays, addWeeks, addMonths, addYears } from "date-fns";
 import { getDefensoresVisiveis } from "../defensor-scope";
+import { getParceirosIds } from "@/lib/trpc/comarca-scope";
 
 /**
  * Gera condições de filtro para o calendário baseado no defensor.
  * - Admin/Servidor: vê todos os eventos (agenda integrada)
- * - Rodrigo (1) e Juliane (4): agenda compartilhada (veem eventos de ambos)
+ * - Defensor com parceiros: agenda compartilhada (veem eventos de todos os parceiros)
  * - Outros defensores: vê apenas eventos que criou
  * - Estagiário: vê eventos do supervisor
  */
-const AGENDA_COMPARTILHADA = [1, 4]; // Rodrigo=1, Juliane=4
-
-function getCalendarDefensorFilter(user: any) {
+async function getCalendarDefensorFilter(user: any) {
   const defensoresVisiveis = getDefensoresVisiveis(user);
   if (defensoresVisiveis === "all") return []; // Admin/servidor: sem filtro
 
   // Defensor/estagiário: filtrar por createdById
   if (defensoresVisiveis.length === 1) {
-    // Rodrigo e Juliane compartilham agenda
-    if (AGENDA_COMPARTILHADA.includes(defensoresVisiveis[0])) {
-      return [inArray(calendarEvents.createdById, AGENDA_COMPARTILHADA)];
+    const userId = defensoresVisiveis[0];
+    const parceirosIds = await getParceirosIds(userId);
+    if (parceirosIds.length > 0) {
+      const defensoresVisiveisNaAgenda = [userId, ...parceirosIds];
+      return [inArray(calendarEvents.createdById, defensoresVisiveisNaAgenda)];
     }
-    return [eq(calendarEvents.createdById, defensoresVisiveis[0])];
+    return [eq(calendarEvents.createdById, userId)];
   }
   if (defensoresVisiveis.length > 1) {
     return [inArray(calendarEvents.createdById, defensoresVisiveis)];
@@ -108,7 +109,7 @@ export const calendarRouter = router({
         const isAdmin = ctx.user.role === "admin";
         const startDate = new Date(input.start);
         const endDate = new Date(input.end);
-        const defensorFilter = getCalendarDefensorFilter(ctx.user);
+        const defensorFilter = await getCalendarDefensorFilter(ctx.user);
 
         // Base query com filtro por defensor (agenda separada para defensores)
         let events = await db
@@ -172,7 +173,7 @@ export const calendarRouter = router({
     .query(async ({ ctx, input }) => {
       return safeAsync(async () => {
         const isAdmin = ctx.user.role === "admin";
-        const defensorFilter = getCalendarDefensorFilter(ctx.user);
+        const defensorFilter = await getCalendarDefensorFilter(ctx.user);
         const now = new Date();
         const month = input?.month ?? now.getMonth();
         const year = input?.year ?? now.getFullYear();
@@ -445,7 +446,7 @@ export const calendarRouter = router({
   today: protectedProcedure.query(async ({ ctx }) => {
     return safeAsync(async () => {
       const isAdmin = ctx.user.role === "admin";
-      const defensorFilter = getCalendarDefensorFilter(ctx.user);
+      const defensorFilter = await getCalendarDefensorFilter(ctx.user);
       const now = new Date();
       const start = startOfDay(now);
       const end = endOfDay(now);
