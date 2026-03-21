@@ -16,6 +16,7 @@ import { DriveStatusBar } from "@/components/drive/DriveStatusBar";
 import { DriveTabEnhanced } from "@/components/drive/DriveTabEnhanced";
 import { ProcessoTimeline } from "@/components/processos/ProcessoTimeline";
 import { InstrucaoStatus } from "@/components/processos/InstrucaoStatus";
+import { LocalDoFatoPanel } from "@/components/processos/LocalDoFatoPanel";
 
 type Tab = "partes" | "demandas" | "drive" | "audiencias" | "timeline" | "vinculados" | "inteligencia" | "fundamentos" | "noticias";
 
@@ -290,6 +291,16 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
           <Sparkles className="h-3 w-3" />
           Sistematização
         </button>
+      </div>
+
+      {/* Local do Fato */}
+      <div className="px-6 py-2 border-b border-zinc-100 dark:border-zinc-800">
+        <LocalDoFatoPanel
+          processoId={data.id}
+          localDoFatoEndereco={data.localDoFatoEndereco}
+          localDoFatoLat={data.localDoFatoLat}
+          localDoFatoLng={data.localDoFatoLng}
+        />
       </div>
 
       {/* Drive Status Bar */}
