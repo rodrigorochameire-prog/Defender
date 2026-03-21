@@ -133,7 +133,11 @@ export const observatoryRouter = router({
           AND pr_periodo.deleted_at IS NULL
           AND pr_periodo.created_at >= ${inicio}::timestamp
           AND pr_periodo.created_at < ${fim}::timestamp
-        LEFT JOIN evolution_config ec ON ec.created_by_id = u.id AND ec.is_active = true
+        LEFT JOIN LATERAL (
+          SELECT id FROM evolution_config
+          WHERE created_by_id = u.id AND is_active = true
+          LIMIT 1
+        ) ec ON true
         LEFT JOIN analises_ia ai_periodo ON ai_periodo.criado_por_id = u.id
           AND ai_periodo.created_at >= ${inicio}::timestamp
           AND ai_periodo.created_at < ${fim}::timestamp
@@ -142,6 +146,7 @@ export const observatoryRouter = router({
           AND u.role IN ('defensor', 'estagiario', 'servidor')
           AND u.approval_status = 'approved'
         GROUP BY u.id, u.name, u.role, u.comarca_id, c.nome, ui.accepted_at, ec.id
+      -- ec.id de subquery LATERAL: no máximo 1 linha por user, sem duplicatas
         ORDER BY c.nome, u.name
       `);
 
