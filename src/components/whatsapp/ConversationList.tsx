@@ -512,11 +512,18 @@ export function ConversationList({
             <Loader2 className="h-5 w-5 animate-spin text-zinc-400 dark:text-zinc-500" />
           </div>
         ) : filteredContacts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-32 gap-2">
-            <Search className="h-6 w-6 text-zinc-300 dark:text-zinc-600" />
-            <p className="text-xs text-zinc-400 dark:text-zinc-500">
-              Nenhuma conversa encontrada
-            </p>
+          <div className="flex flex-col items-center justify-center h-48 gap-3 px-6 text-center">
+            <div className="h-12 w-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+              <Search className="h-5 w-5 text-zinc-300 dark:text-zinc-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                Nenhuma conversa ainda
+              </p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 leading-relaxed">
+                As conversas aparecerão aqui quando mensagens forem enviadas ou recebidas pelo número do WhatsApp
+              </p>
+            </div>
           </div>
         ) : (
           <div>

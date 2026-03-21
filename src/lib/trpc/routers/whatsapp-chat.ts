@@ -84,6 +84,7 @@ const contactFilterSchema = z.object({
   isArchived: z.boolean().optional(),
   isFavorite: z.boolean().optional(),
   hasUnread: z.boolean().optional(),
+  hasConversation: z.boolean().optional(),
   assistidoId: z.number().optional(),
   tag: z.string().optional(),
   limit: z.number().min(1).max(100).optional(),
@@ -434,6 +435,7 @@ export const whatsappChatRouter = router({
       isArchived,
       isFavorite,
       hasUnread,
+      hasConversation,
       assistidoId,
       tag,
       limit = 50,
@@ -453,6 +455,10 @@ export const whatsappChatRouter = router({
 
     if (hasUnread) {
       conditions.push(sql`${whatsappContacts.unreadCount} > 0`);
+    }
+
+    if (hasConversation) {
+      conditions.push(sql`${whatsappContacts.lastMessageAt} IS NOT NULL`);
     }
 
     if (assistidoId) {

@@ -65,6 +65,7 @@ export default function WhatsAppChatPage() {
         isArchived: filter === "archived" ? true : filter === "all" ? undefined : false,
         isFavorite: filter === "favorites" ? true : undefined,
         hasUnread: filter === "unread" ? true : undefined,
+        hasConversation: filter !== "archived" ? true : undefined,
         tag: selectedTag || undefined,
         limit: 100,
       },
@@ -211,7 +212,7 @@ export default function WhatsAppChatPage() {
             {/* Stats inline — hidden on small mobile */}
             {stats && (
               <div className="hidden sm:flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
-                <span>{stats.totalContacts.toLocaleString()} contatos</span>
+                <span>{contactsData?.total ?? 0} conversas</span>
                 {stats.unreadMessages > 0 && (
                   <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
