@@ -9,6 +9,7 @@ import {
   date,
   index,
   jsonb,
+  numeric,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { statusMPUEnum, tipoIntimacaoEnum, canalEntradaVVDEnum, tipoRelatoVVDEnum } from "./enums";
@@ -192,6 +193,15 @@ export const processosVVD = pgTable("processos_vvd", {
   // Dados analíticos - Medidas deferidas (JSONB array de medidas específicas)
   medidasDeferidas: jsonb("medidas_deferidas").$type<string[]>(),
 
+  // Geolocalização — restrição e endereços do agressor
+  raioRestricaoMetros: integer("raio_restricao_metros"),
+  agressorResidenciaEndereco: text("agressor_residencia_endereco"),
+  agressorResidenciaLat: numeric("agressor_residencia_lat", { precision: 10, scale: 7 }),
+  agressorResidenciaLng: numeric("agressor_residencia_lng", { precision: 10, scale: 7 }),
+  agressorTrabalhoEndereco: text("agressor_trabalho_endereco"),
+  agressorTrabalhoLat: numeric("agressor_trabalho_lat", { precision: 10, scale: 7 }),
+  agressorTrabalhoLng: numeric("agressor_trabalho_lng", { precision: 10, scale: 7 }),
+
   // Metadados
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -209,6 +219,7 @@ export const processosVVD = pgTable("processos_vvd", {
   index("processos_vvd_tipo_relato_idx").on(table.tipoRelato),
   index("processos_vvd_tem_acao_familia_idx").on(table.temAcaoFamilia),
   index("processos_vvd_data_fato_idx").on(table.dataFato),
+  index("processos_vvd_agressor_residencia_geo_idx").on(table.agressorResidenciaLat, table.agressorResidenciaLng),
 ]);
 
 export type ProcessoVVD = typeof processosVVD.$inferSelect;

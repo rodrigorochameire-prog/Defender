@@ -1,0 +1,2 @@
+CREATE INDEX IF NOT EXISTS "processos_local_fato_geo_idx" ON "processos" USING btree ("local_do_fato_lat","local_do_fato_lng");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "processos_vvd_agressor_residencia_geo_idx" ON "processos_vvd" USING btree ("agressor_residencia_lat","agressor_residencia_lng");

@@ -795,4 +795,23 @@ export const atendimentosRouter = router({
 
       return results;
     }),
+
+  // ==========================================
+  // MAPA — Atendimentos georreferenciados
+  // ==========================================
+
+  /**
+   * Retorna atendimentos para exibição no mapa.
+   *
+   * TODO: A tabela `assistidos` não possui campos de lat/lng de endereço
+   * (apenas `endereco` como texto livre). Para exibir atendimentos no mapa
+   * seria necessário geocodificar o endereço do assistido (via API externa)
+   * ou adicionar campos lat/lng à tabela `assistidos`.
+   *
+   * Por ora retorna array vazio para manter a interface contratual.
+   * Implementar quando campos geo forem adicionados à tabela `assistidos`.
+   */
+  mapa: protectedProcedure.query(async () => {
+    return [];
+  }),
 });

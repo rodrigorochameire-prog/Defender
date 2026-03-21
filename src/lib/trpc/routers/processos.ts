@@ -2,10 +2,11 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { processos, assistidos, assistidosProcessos, audiencias, movimentacoes, demandas, calendarEvents, driveFiles, users, testemunhas } from "@/lib/db/schema";
-import { eq, ilike, or, desc, asc, sql, and, isNull, ne } from "drizzle-orm";
+import { eq, ilike, or, desc, asc, sql, and, isNull, isNotNull, ne, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { TRPCError } from "@trpc/server";
 import { getComarcaId } from "@/lib/trpc/comarca-scope";
+import { getDefensoresVisiveis } from "@/lib/trpc/defensor-scope";
 
 export const processosRouter = router({
   // Listar todos os processos
@@ -796,5 +797,59 @@ export const processosRouter = router({
         },
         intercorrencias,
       };
+    }),
+
+  // ==========================================
+  // MAPA — Processos georreferenciados
+  // ==========================================
+
+  /**
+   * Retorna processos com coordenadas do local do fato para exibição no mapa.
+   * Filtra por defensor visível ao usuário (usando defensor-scope).
+   * Apenas processos com localDoFatoLat e localDoFatoLng preenchidos.
+   */
+  mapa: protectedProcedure
+    .input(
+      z.object({
+        atribuicao: z.string().optional(),
+        defensoresIds: z.array(z.number()).optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
+
+      const conditions = [
+        isNotNull(processos.localDoFatoLat),
+        isNotNull(processos.localDoFatoLng),
+        isNull(processos.deletedAt),
+      ];
+
+      if (input.atribuicao) {
+        conditions.push(eq(processos.atribuicao, input.atribuicao as any));
+      }
+
+      if (input.defensoresIds && input.defensoresIds.length > 0) {
+        conditions.push(inArray(processos.defensorId, input.defensoresIds));
+      } else if (defensoresVisiveis !== "all") {
+        conditions.push(inArray(processos.defensorId, defensoresVisiveis));
+      }
+
+      const result = await db
+        .select({
+          id: processos.id,
+          numeroProcesso: processos.numeroAutos,
+          atribuicao: processos.atribuicao,
+          localDoFatoLat: processos.localDoFatoLat,
+          localDoFatoLng: processos.localDoFatoLng,
+          localDoFatoEndereco: processos.localDoFatoEndereco,
+          assistidoNome: assistidos.nome,
+          assistidoId: assistidos.id,
+        })
+        .from(processos)
+        .innerJoin(assistidos, and(eq(processos.assistidoId, assistidos.id), isNull(assistidos.deletedAt)))
+        .where(and(...conditions))
+        .orderBy(desc(processos.createdAt));
+
+      return result;
     }),
 });
