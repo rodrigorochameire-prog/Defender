@@ -70,6 +70,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   // Cowork export
+  const [exportingAudienciaId, setExportingAudienciaId] = useState<number | null>(null);
   const exportarParaCowork = trpc.briefing.exportarParaCowork.useMutation({
     onSuccess: (result) => {
       toast.success(`Briefing exportado para o Drive`, {
@@ -80,6 +81,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     onError: (err) => {
       toast.error("Erro ao exportar briefing", { description: err.message });
     },
+    onSettled: () => setExportingAudienciaId(null),
   });
 
   // Transcription state
@@ -684,17 +686,32 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               <p className="text-sm text-zinc-400 text-center py-8">Nenhuma audiência registrada</p>
             ) : (
               data.audiencias.map((a) => (
-                <div key={a.id} className="border border-zinc-200 rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-medium text-zinc-700">{a.tipo ?? "Audiência"}</span>
+                <div key={a.id} className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-medium text-zinc-700 dark:text-zinc-300 flex-1 truncate">{a.tipo ?? "Audiência"}</span>
                     <span className={cn(
-                      "text-[10px] px-1.5 py-0.5 rounded-full",
+                      "text-[10px] px-1.5 py-0.5 rounded-full shrink-0",
                       a.dataAudiencia && new Date(a.dataAudiencia) < new Date()
-                        ? "bg-zinc-100 text-zinc-500"
-                        : "bg-emerald-100 text-emerald-700"
+                        ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                        : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
                     )}>
                       {a.dataAudiencia && new Date(a.dataAudiencia) < new Date() ? "Realizada" : "Futura"}
                     </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-zinc-400 hover:text-violet-600 shrink-0 transition-colors"
+                      title="Exportar briefing desta audiência para Cowork"
+                      disabled={exportingAudienciaId === a.id}
+                      onClick={() => {
+                        setExportingAudienciaId(a.id);
+                        exportarParaCowork.mutate({ assistidoId: Number(id), audienciaId: a.id, tipo: "audiencia" });
+                      }}
+                    >
+                      {exportingAudienciaId === a.id
+                        ? <Loader2 className="h-3 w-3 animate-spin" />
+                        : <Bot className="h-3 w-3" />}
+                    </Button>
                   </div>
                   {a.dataAudiencia && (
                     <p className="text-[11px] text-zinc-400 mt-0.5">
