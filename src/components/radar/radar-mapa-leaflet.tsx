@@ -41,41 +41,25 @@ interface MarkerCluster {
   getAllChildMarkers: () => L.Marker[];
 }
 
-// ─── Semantic color system (pastel fills + dark borders) ───────────────────
+// ─── Semantic color system (white fill + colored ring) ─────────────────────
 const CRIME_COLORS: Record<string, string> = {
-  // Tribunal do Júri — verde pastel
+  // Tribunal do Júri — green-400
   homicidio: "#4ade80",
   tentativa_homicidio: "#4ade80",
   feminicidio: "#4ade80",
-  // Violência doméstica — âmbar pastel
+  // Violência doméstica — amber-400
   violencia_domestica: "#fbbf24",
-  // Execução penal — azul pastel
+  // Execução penal — blue-400
   execucao_penal: "#60a5fa",
-  // Demais — tons pasteis distintos
+  // Demais — 400-range
   trafico: "#f87171",
   roubo: "#fb923c",
   lesao_corporal: "#f472b6",
   sexual: "#c084fc",
-  furto: "#fdba74",
+  furto: "#fcd34d",
   porte_arma: "#e879f9",
-  estelionato: "#a78bfa",
+  estelionato: "#818cf8",
   outros: "#a1a1aa",
-};
-
-const CRIME_BORDERS: Record<string, string> = {
-  homicidio: "#166534",
-  tentativa_homicidio: "#166534",
-  feminicidio: "#166534",
-  violencia_domestica: "#78350f",
-  execucao_penal: "#1e3a8a",
-  trafico: "#7f1d1d",
-  roubo: "#7c2d12",
-  lesao_corporal: "#831843",
-  sexual: "#4c1d95",
-  furto: "#9a3412",
-  porte_arma: "#701a75",
-  estelionato: "#4c1d95",
-  outros: "#3f3f46",
 };
 
 const CRIME_LABELS: Record<string, string> = {
@@ -116,36 +100,37 @@ const JURY_CRIMES = new Set(["homicidio", "tentativa_homicidio", "feminicidio"])
 
 // ─── Marker size by risk tier ──────────────────────────────────────────────
 function getMarkerSize(tipoCrime: string): number {
-  if (JURY_CRIMES.has(tipoCrime)) return 16;
-  if (tipoCrime === "violencia_domestica") return 14;
-  if (tipoCrime === "trafico" || tipoCrime === "roubo") return 12;
-  if (["lesao_corporal", "sexual", "furto"].includes(tipoCrime)) return 10;
-  return 8;
+  if (JURY_CRIMES.has(tipoCrime)) return 18;
+  if (tipoCrime === "violencia_domestica") return 15;
+  if (tipoCrime === "trafico" || tipoCrime === "roubo") return 13;
+  if (["lesao_corporal", "sexual", "furto"].includes(tipoCrime)) return 12;
+  return 10;
 }
+
+const MARKER_SHADOW = "0 2px 6px rgba(0,0,0,0.14),0 0 0 1px rgba(0,0,0,0.04)";
 
 interface MarkerOptionsWithTipo extends L.MarkerOptions {
   tipoCrime?: string;
   dataFato?: string | Date | null;
 }
 
-// ─── Create individual marker icon ────────────────────────────────────────
+// ─── Create individual marker icon (white ring style) ─────────────────────
 function createMarkerIcon(tipoCrime: string, dataFato?: string | Date | null): L.DivIcon {
-  const fill = CRIME_COLORS[tipoCrime] || CRIME_COLORS.outros;
-  const border = CRIME_BORDERS[tipoCrime] || CRIME_BORDERS.outros;
+  const ring = CRIME_COLORS[tipoCrime] || CRIME_COLORS.outros;
   const size = getMarkerSize(tipoCrime);
 
   if (JURY_CRIMES.has(tipoCrime)) {
     const isRecent = dataFato
       ? Date.now() - new Date(dataFato).getTime() < 72 * 60 * 60 * 1000
       : false;
-    const wrapSize = size + 10;
+    // Outer halo ring
+    const haloSize = size + 10;
+    const wrapSize = size + 14;
     const half = wrapSize / 2;
-    const ringSize = size + 6;
-    const ringHalf = ringSize / 2;
     const pulse = isRecent
-      ? `<div class="radar-pulse-ring" style="position:absolute;top:50%;left:50%;width:${ringSize}px;height:${ringSize}px;margin:-${ringHalf}px 0 0 -${ringHalf}px;border-radius:50%;border:1.5px solid ${fill};opacity:0.5;"></div>`
-      : `<div style="position:absolute;top:50%;left:50%;width:${ringSize}px;height:${ringSize}px;margin:-${ringHalf}px 0 0 -${ringHalf}px;border-radius:50%;border:1px solid ${fill};opacity:0.22;"></div>`;
-    const dot = `<div style="position:absolute;top:50%;left:50%;width:${size}px;height:${size}px;margin:-${size / 2}px 0 0 -${size / 2}px;border-radius:50%;background:${fill};border:2px solid ${border};box-shadow:0 1px 3px rgba(0,0,0,0.18);"></div>`;
+      ? `<div class="radar-pulse-ring" style="position:absolute;top:50%;left:50%;width:${haloSize}px;height:${haloSize}px;margin:-${haloSize / 2}px 0 0 -${haloSize / 2}px;border-radius:50%;border:1.5px solid ${ring};opacity:0.45;"></div>`
+      : `<div style="position:absolute;top:50%;left:50%;width:${haloSize}px;height:${haloSize}px;margin:-${haloSize / 2}px 0 0 -${haloSize / 2}px;border-radius:50%;border:1px solid ${ring};opacity:0.28;"></div>`;
+    const dot = `<div style="position:absolute;top:50%;left:50%;width:${size}px;height:${size}px;margin:-${size / 2}px 0 0 -${size / 2}px;border-radius:50%;background:white;border:2.5px solid ${ring};box-shadow:${MARKER_SHADOW};"></div>`;
     return L.divIcon({
       html: `<div style="position:relative;width:${wrapSize}px;height:${wrapSize}px;">${pulse}${dot}</div>`,
       className: "",
@@ -154,19 +139,21 @@ function createMarkerIcon(tipoCrime: string, dataFato?: string | Date | null): L
     });
   }
 
+  // VD: rounded square (white + colored border)
   if (tipoCrime === "violencia_domestica") {
     const wrapSize = size + 4;
     const half = wrapSize / 2;
     return L.divIcon({
-      html: `<div style="position:relative;width:${wrapSize}px;height:${wrapSize}px;display:flex;align-items:center;justify-content:center;"><div style="width:${size}px;height:${size}px;background:${fill};transform:rotate(45deg);border:2px solid ${border};box-shadow:0 1px 3px rgba(0,0,0,0.18);"></div></div>`,
+      html: `<div style="position:relative;width:${wrapSize}px;height:${wrapSize}px;display:flex;align-items:center;justify-content:center;"><div style="width:${size}px;height:${size}px;background:white;border-radius:3px;border:2.5px solid ${ring};box-shadow:${MARKER_SHADOW};"></div></div>`,
       className: "",
       iconSize: [wrapSize, wrapSize],
       iconAnchor: [half, half],
     });
   }
 
+  // Standard: white circle + colored ring
   return L.divIcon({
-    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${fill};border:1.5px solid ${border};box-shadow:0 1px 3px rgba(0,0,0,0.15);"></div>`,
+    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:white;border:2px solid ${ring};box-shadow:${MARKER_SHADOW};"></div>`,
     className: "",
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
@@ -191,11 +178,11 @@ function createDonutIcon(cluster: MarkerCluster): L.DivIcon {
   const count = markers.length;
 
   // Scale size with count
-  const size = count <= 10 ? 36 : count <= 50 ? 44 : 54;
-  const fontSize = count <= 10 ? 11 : count <= 50 ? 12 : 14;
+  const size = count <= 10 ? 34 : count <= 50 ? 40 : 48;
+  const fontSize = count <= 10 ? 11 : count <= 50 ? 12 : 13;
   const cx = size / 2;
   const r = size / 2 - 2;
-  const innerR = size <= 36 ? 11 : size <= 44 ? 14 : 18;
+  const innerR = Math.round(r * 0.42); // 42% hole
 
   // Count per tipoCrime
   const crimeCounts: Record<string, number> = {};
@@ -214,19 +201,18 @@ function createDonutIcon(cluster: MarkerCluster): L.DivIcon {
     ? `<circle cx="${cx}" cy="${cx}" r="${r + 1}" fill="none" stroke="#d4d4d8" stroke-width="1.5"/>`
     : "";
 
+  // Unique filter IDs per cluster to avoid SVG filter collisions
+  const filterId = `cd${size}x${count}`;
+
   // Single type: solid circle
   if (types.length === 1) {
     const color = CRIME_COLORS[types[0]] || CRIME_COLORS.outros;
-    const isJury = JURY_CRIMES.has(types[0]);
-    const juryRing = isJury
-      ? `<circle cx="${cx}" cy="${cx}" r="${r - 1}" fill="none" stroke="${color}" stroke-width="2" stroke-opacity="0.35"/>`
-      : "";
     const svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
-      <filter id="cs${size}"><feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.22"/></filter>
+      <filter id="${filterId}"><feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.18"/></filter>
       ${outerStroke}
-      <circle cx="${cx}" cy="${cx}" r="${r}" fill="${color}" fill-opacity="0.92" filter="url(#cs${size})"/>
-      ${juryRing}
-      <text x="${cx}" y="${cx + fontSize * 0.4}" text-anchor="middle" font-size="${fontSize}" font-weight="700" fill="white" font-family="system-ui,sans-serif">${count}</text>
+      <circle cx="${cx}" cy="${cx}" r="${r}" fill="${color}" fill-opacity="0.88" filter="url(#${filterId})"/>
+      <circle cx="${cx}" cy="${cx}" r="${innerR}" fill="white"/>
+      <text x="${cx}" y="${cx + fontSize * 0.4}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="#3f3f46" font-family="system-ui,sans-serif">${count}</text>
     </svg>`;
     return L.divIcon({ html: svg, className: "", iconSize: [size, size], iconAnchor: [cx, cx] });
   }
@@ -238,17 +224,16 @@ function createDonutIcon(cluster: MarkerCluster): L.DivIcon {
     const sliceDeg = (typeCount / count) * 360;
     const endAngle = currentAngle + sliceDeg;
     const color = CRIME_COLORS[tipo] || CRIME_COLORS.outros;
-    paths.push(`<path d="${arcPath(cx, cx, r, currentAngle, endAngle)}" fill="${color}" fill-opacity="0.92"/>`);
+    paths.push(`<path d="${arcPath(cx, cx, r, currentAngle, endAngle)}" fill="${color}" fill-opacity="0.88"/>`);
     currentAngle = endAngle;
   }
 
   const svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
-    <filter id="cd${size}"><feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.18"/></filter>
-    <g filter="url(#cd${size})">${paths.join("")}</g>
+    <filter id="${filterId}"><feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.15"/></filter>
+    <g filter="url(#${filterId})">${paths.join("")}</g>
     ${outerStroke}
     <circle cx="${cx}" cy="${cx}" r="${innerR}" fill="white"/>
-    <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="#e4e4e7" stroke-width="0.75"/>
-    <text x="${cx}" y="${cx + fontSize * 0.4}" text-anchor="middle" font-size="${fontSize}" font-weight="700" fill="#18181b" font-family="system-ui,sans-serif">${count}</text>
+    <text x="${cx}" y="${cx + fontSize * 0.4}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="#3f3f46" font-family="system-ui,sans-serif">${count}</text>
   </svg>`;
 
   return L.divIcon({
@@ -261,9 +246,11 @@ function createDonutIcon(cluster: MarkerCluster): L.DivIcon {
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 const CAMACARI_CENTER: [number, number] = [-12.6976, -38.3244];
+// Bounds extended east to -38.17 to include orla (Arembepe, Monte Gordo, Barra do Jacuípe...)
+// and north to -12.47 to include Barra de Pojuca / Imbassaí
 const CAMACARI_BOUNDS: [[number, number], [number, number]] = [
-  [-12.58, -38.42],
-  [-12.83, -38.25],
+  [-12.47, -38.47],
+  [-12.83, -38.17],
 ];
 
 // CSS injected once for pulse animations
@@ -286,28 +273,31 @@ function buildLegendHTML(): string {
     "furto", "porte_arma", "estelionato", "execucao_penal", "outros",
   ];
 
-  const juryRows = juryItems.map((k) => `
+  const juryRows = juryItems.map((k) => {
+    const ring = CRIME_COLORS[k];
+    return `
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
       <div style="position:relative;width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-        <div style="width:18px;height:18px;border-radius:50%;border:1px solid #4ade80;opacity:0.22;position:absolute;"></div>
-        <div style="width:10px;height:10px;border-radius:50%;background:#4ade80;border:1.5px solid #166534;"></div>
+        <div style="width:18px;height:18px;border-radius:50%;border:1px solid ${ring};opacity:0.28;position:absolute;"></div>
+        <div style="width:11px;height:11px;border-radius:50%;background:white;border:2px solid ${ring};box-shadow:0 1px 4px rgba(0,0,0,0.12);"></div>
       </div>
       <span style="color:#374151;font-size:11px;">${CRIME_LABELS[k]}</span>
-    </div>`).join("");
+    </div>`;
+  }).join("");
 
+  const vdRing = CRIME_COLORS.violencia_domestica;
   const vdRow = `
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
       <div style="width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-        <div style="width:11px;height:11px;background:#fbbf24;transform:rotate(45deg);border:1.5px solid #78350f;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+        <div style="width:11px;height:11px;background:white;border-radius:3px;border:2px solid ${vdRing};box-shadow:0 1px 4px rgba(0,0,0,0.12);"></div>
       </div>
       <span style="color:#374151;font-size:11px;">Violência Doméstica</span>
     </div>`;
 
   const otherRows = otherItems.map((k) => {
-    const fill = CRIME_COLORS[k] || CRIME_COLORS.outros;
-    const border = CRIME_BORDERS[k] || CRIME_BORDERS.outros;
+    const ring = CRIME_COLORS[k] || CRIME_COLORS.outros;
     return `<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">
-      <div style="width:7px;height:7px;border-radius:50%;background:${fill};flex-shrink:0;border:1px solid ${border};"></div>
+      <div style="width:8px;height:8px;border-radius:50%;background:white;flex-shrink:0;border:1.5px solid ${ring};box-shadow:0 1px 3px rgba(0,0,0,0.1);"></div>
       <span style="color:#6b7280;font-size:10px;">${CRIME_LABELS[k]}</span>
     </div>`;
   }).join("");
@@ -539,8 +529,7 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
       if (isNaN(lat) || isNaN(lng)) return;
 
       const crimeKey = point.tipoCrime || "outros";
-      const color = CRIME_COLORS[crimeKey] || CRIME_COLORS.outros;
-      const border = CRIME_BORDERS[crimeKey] || CRIME_BORDERS.outros;
+      const ring = CRIME_COLORS[crimeKey] || CRIME_COLORS.outros;
       const crimeLabel = CRIME_LABELS[crimeKey] || "Outros";
 
       const icon = createMarkerIcon(crimeKey, point.dataFato);
@@ -555,22 +544,14 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
       const envolvidosCount = Array.isArray(point.envolvidos) ? point.envolvidos.length : 0;
       const isJury = JURY_CRIMES.has(crimeKey);
       const isVD = crimeKey === "violencia_domestica";
-      const headerBg = isJury ? "#14532d" : isVD ? "#78350f" : "#18181b";
 
-      const markerSymbol = isJury
-        ? `<div style="width:10px;height:10px;border-radius:50%;background:${color};border:1.5px solid rgba(255,255,255,0.5);"></div>`
-        : isVD
-          ? `<div style="width:8px;height:8px;background:${color};transform:rotate(45deg);border:1px solid rgba(255,255,255,0.5);"></div>`
-          : `<div style="width:8px;height:8px;border-radius:50%;background:${color};"></div>`;
-
-      const fill = color;
       const popupHtml = `
         <div style="max-width:280px;font-family:system-ui,sans-serif;overflow:hidden;">
           <div style="background:#18181b;padding:8px 12px;margin:-1px -1px 0;border-radius:0;">
             <div style="display:flex;align-items:center;gap:6px;">
               ${isVD
-                ? `<div style="width:7px;height:7px;background:${fill};transform:rotate(45deg);flex-shrink:0;border:1px solid ${border};"></div>`
-                : `<div style="width:7px;height:7px;border-radius:50%;background:${fill};flex-shrink:0;border:1px solid ${border};"></div>`
+                ? `<div style="width:8px;height:8px;background:white;border-radius:2px;flex-shrink:0;border:1.5px solid ${ring};"></div>`
+                : `<div style="width:8px;height:8px;border-radius:50%;background:white;flex-shrink:0;border:1.5px solid ${ring};"></div>`
               }
               <span style="font-size:10px;color:rgba(255,255,255,0.7);font-weight:500;letter-spacing:0.05em;">${crimeLabel}</span>
             </div>
