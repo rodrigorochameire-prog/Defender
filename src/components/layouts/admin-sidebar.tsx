@@ -259,10 +259,10 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
         isActive={isActive}
         tooltip={item.label}
         className={cn(
-          "h-10 transition-all duration-200 rounded-xl group/item relative overflow-hidden",
+          "h-10 transition-all duration-250 ease-in-out rounded-xl group/item relative overflow-hidden",
           isActive
             ? "bg-emerald-500/15 text-emerald-400 font-semibold"
-            : "text-zinc-700 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+            : "text-zinc-700 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-black/[0.05] dark:hover:bg-white/[0.08] hover:scale-[1.01]"
         )}
       >
         <Link href={item.path} prefetch={true} onClick={onNavigate}>
@@ -1787,7 +1787,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
         )}
       >
         {/* Header */}
-        <SidebarHeader className="h-16 border-b border-black/[0.06] dark:border-white/[0.06] flex items-center justify-center">
+        <SidebarHeader className="h-[60px] border-b border-black/[0.06] dark:border-white/[0.04] flex items-center justify-center px-3">
           <SidebarLogo collapsed={isCollapsed} />
         </SidebarHeader>
 
