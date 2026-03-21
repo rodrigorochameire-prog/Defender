@@ -46,8 +46,8 @@ const CRIME_COLORS: Record<string, string> = {
   homicidio: "#15803d",
   tentativa_homicidio: "#15803d",
   feminicidio: "#15803d",
-  // Violência doméstica — âmbar
-  violencia_domestica: "#b45309",
+  // Violência doméstica — amarelo
+  violencia_domestica: "#ca8a04",
   // Execução penal — azul
   execucao_penal: "#1d4ed8",
   // Demais — vermelho/laranja/rosa/roxo em tons distintos
@@ -283,7 +283,7 @@ function buildLegendHTML(): string {
   const vdRow = `
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
       <div style="width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-        <div style="width:11px;height:11px;background:#b45309;transform:rotate(45deg);border:1.5px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+        <div style="width:11px;height:11px;background:#ca8a04;transform:rotate(45deg);border:1.5px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
       </div>
       <span style="color:#374151;font-size:11px;">Violência Doméstica</span>
     </div>`;
@@ -369,12 +369,66 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
       zoomControl: true,
     });
 
-    // CartoDB Positron — minimal, professional base map
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-      subdomains: "abcd",
-      maxZoom: 20,
-    }).addTo(map);
+    // CartoDB Voyager — intermediate detail (default): shows neighborhood names + roads
+    const tileLayers: Record<string, L.TileLayer> = {
+      voyager: L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+        subdomains: "abcd", maxZoom: 20,
+      }),
+      positron: L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+        subdomains: "abcd", maxZoom: 20,
+      }),
+      osm: L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }),
+      dark: L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+        subdomains: "abcd", maxZoom: 20,
+      }),
+    };
+    tileLayers.voyager.addTo(map);
+
+    // Tile switcher control — top-left
+    const tileSwitcher = (L.control as any)({ position: "topleft" });
+    tileSwitcher.onAdd = () => {
+      const div = L.DomUtil.create("div");
+      div.style.cssText = [
+        "background:white", "border-radius:8px", "padding:4px",
+        "box-shadow:0 2px 8px rgba(0,0,0,0.15)", "font-family:system-ui,sans-serif",
+        "display:flex", "gap:2px", "border:1px solid #f3f4f6",
+      ].join(";");
+      const options = [
+        { key: "voyager", label: "Padrão" },
+        { key: "positron", label: "Limpo" },
+        { key: "osm", label: "Detalhado" },
+        { key: "dark", label: "Escuro" },
+      ];
+      let activeKey = "voyager";
+      const buttons: Record<string, HTMLButtonElement> = {};
+      const activeStyle = "background:#18181b;color:white;border-radius:5px;";
+      const inactiveStyle = "background:transparent;color:#52525b;border-radius:5px;";
+      options.forEach(({ key, label }) => {
+        const btn = document.createElement("button");
+        btn.textContent = label;
+        btn.style.cssText = `padding:3px 8px;font-size:10px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s;${key === "voyager" ? activeStyle : inactiveStyle}`;
+        btn.addEventListener("click", () => {
+          if (activeKey === key) return;
+          map.removeLayer(tileLayers[activeKey]);
+          tileLayers[key].addTo(map);
+          activeKey = key;
+          Object.entries(buttons).forEach(([k, b]) => {
+            b.style.cssText = `padding:3px 8px;font-size:10px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s;${k === key ? activeStyle : inactiveStyle}`;
+          });
+        });
+        buttons[key] = btn;
+        div.appendChild(btn);
+      });
+      L.DomEvent.disableClickPropagation(div);
+      return div;
+    };
+    tileSwitcher.addTo(map);
 
     map.fitBounds(CAMACARI_BOUNDS);
 
@@ -439,6 +493,18 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
       markersRef.current = null;
     }
 
+    // Critical crimes (Júri + VD): dissolve into individual markers much earlier
+    const criticalCluster = (L as any).markerClusterGroup({
+      chunkedLoading: true,
+      maxClusterRadius: 8,
+      disableClusteringAtZoom: 11,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+      zoomToBoundsOnClick: true,
+      iconCreateFunction: createDonutIcon,
+    } as MarkerClusterGroupOptions);
+
+    // Other crimes: standard clustering
     const clusterGroup = (L as any).markerClusterGroup({
       chunkedLoading: true,
       maxClusterRadius: 20,
@@ -514,11 +580,19 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
         }, 10);
       });
 
-      clusterGroup.addLayer(marker);
+      // Júri + VD → dissolve earlier; others → standard cluster
+      const isCritical = JURY_CRIMES.has(crimeKey) || crimeKey === "violencia_domestica";
+      if (isCritical) {
+        criticalCluster.addLayer(marker);
+      } else {
+        clusterGroup.addLayer(marker);
+      }
     });
 
-    markersRef.current = clusterGroup;
-    if (!showHeatmap) clusterGroup.addTo(mapRef.current);
+    // Store both clusters together
+    const combinedGroup = L.layerGroup([criticalCluster, clusterGroup]);
+    markersRef.current = combinedGroup;
+    if (!showHeatmap) combinedGroup.addTo(mapRef.current);
   }, [data, showHeatmap]);
 
   // Toggle heatmap layer

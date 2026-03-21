@@ -11,31 +11,36 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Map, Maximize2, Minimize2 } from "lucide-react";
 
+// Synchronized with radar-mapa-leaflet.tsx CRIME_COLORS
 const CRIME_COLORS: Record<string, string> = {
-  homicidio: "#ef4444",
-  tentativa_homicidio: "#f97316",
-  trafico: "#a855f7",
-  roubo: "#3b82f6",
-  furto: "#eab308",
-  violencia_domestica: "#ec4899",
-  sexual: "#d946ef",
-  lesao_corporal: "#f59e0b",
-  porte_arma: "#64748b",
-  estelionato: "#14b8a6",
-  outros: "#71717a",
+  homicidio: "#15803d",
+  tentativa_homicidio: "#15803d",
+  feminicidio: "#15803d",
+  violencia_domestica: "#ca8a04",
+  execucao_penal: "#1d4ed8",
+  trafico: "#dc2626",
+  roubo: "#c2410c",
+  lesao_corporal: "#be185d",
+  sexual: "#7c3aed",
+  furto: "#ea580c",
+  porte_arma: "#db2777",
+  estelionato: "#a21caf",
+  outros: "#52525b",
 };
 
 const CRIME_LABELS: Record<string, string> = {
   homicidio: "Homicídio",
-  tentativa_homicidio: "Tent. Homicídio",
+  tentativa_homicidio: "Tentativa",
+  feminicidio: "Feminicídio",
   trafico: "Tráfico",
   roubo: "Roubo",
   furto: "Furto",
-  violencia_domestica: "V. Doméstica",
+  violencia_domestica: "VD",
   sexual: "Sexual",
-  lesao_corporal: "Lesão Corporal",
-  porte_arma: "Porte de Arma",
+  lesao_corporal: "Lesão",
+  porte_arma: "Porte Arma",
   estelionato: "Estelionato",
+  execucao_penal: "Exec. Penal",
   outros: "Outros",
 };
 
@@ -61,9 +66,10 @@ interface RadarMapaProps {
 }
 
 const ALL_LAYERS = [
-  "homicidio", "tentativa_homicidio", "trafico", "roubo", "furto",
-  "violencia_domestica", "sexual", "lesao_corporal", "porte_arma",
-  "estelionato", "outros",
+  "homicidio", "tentativa_homicidio", "feminicidio",
+  "violencia_domestica", "execucao_penal",
+  "trafico", "roubo", "lesao_corporal", "sexual",
+  "furto", "porte_arma", "estelionato", "outros",
 ];
 
 function loadMapPrefs() {
@@ -140,12 +146,12 @@ export function RadarMapa({ filtros, onSelectNoticia }: RadarMapaProps) {
       .map(([tipo, count]) => ({ tipo, count }));
   }, [filteredData]);
 
+  // Click to isolate: first click shows only this type; if already isolated, restore all
   const toggleLayer = (layer: string) => {
-    setVisibleLayers((prev) =>
-      prev.includes(layer)
-        ? prev.filter((l) => l !== layer)
-        : [...prev, layer]
-    );
+    setVisibleLayers((prev) => {
+      const isIsolated = prev.length === 1 && prev[0] === layer;
+      return isIsolated ? ALL_LAYERS : [layer];
+    });
   };
 
   if (isLoading) {
@@ -217,26 +223,39 @@ export function RadarMapa({ filtros, onSelectNoticia }: RadarMapaProps) {
             <Label className="text-xs">Heatmap</Label>
           </div>
           <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {[
-              { key: "homicidio", label: "Homicídio", color: "bg-red-500" },
-              { key: "trafico", label: "Tráfico", color: "bg-purple-500" },
-              { key: "roubo", label: "Roubo", color: "bg-blue-500" },
-              { key: "violencia_domestica", label: "VD", color: "bg-pink-500" },
-              { key: "sexual", label: "Sexual", color: "bg-fuchsia-500" },
-              { key: "outros", label: "Outros", color: "bg-zinc-500" },
-            ].map((layer) => (
-              <button
-                key={layer.key}
-                onClick={() => toggleLayer(layer.key)}
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs cursor-pointer transition-opacity ${
-                  visibleLayers.includes(layer.key) ? "opacity-100" : "opacity-40"
-                }`}
-              >
-                <span className={`h-2 w-2 rounded-full ${layer.color}`} />
-                {layer.label}
-              </button>
-            ))}
+          <div className="flex items-center gap-1 flex-wrap">
+            {ALL_LAYERS.map((key) => {
+              const color = CRIME_COLORS[key] ?? "#52525b";
+              const label = CRIME_LABELS[key] ?? key;
+              const isActive = visibleLayers.includes(key);
+              const isIsolated = visibleLayers.length === 1 && visibleLayers[0] === key;
+              const isVD = key === "violencia_domestica";
+              return (
+                <button
+                  key={key}
+                  onClick={() => toggleLayer(key)}
+                  title={isIsolated ? "Clique para mostrar todos" : `Clique para filtrar: ${label}`}
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] cursor-pointer transition-all ${
+                    isIsolated
+                      ? "ring-1 ring-offset-1 font-semibold"
+                      : isActive
+                      ? "opacity-80 hover:opacity-100"
+                      : "opacity-25 hover:opacity-50"
+                  }`}
+                  style={isIsolated ? { outline: `2px solid ${color}`, outlineOffset: "1px" } : undefined}
+                >
+                  {isVD ? (
+                    <span
+                      className="w-2 h-2 flex-shrink-0 rotate-45"
+                      style={{ backgroundColor: color, borderRadius: "1px" }}
+                    />
+                  ) : (
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  )}
+                  {label}
+                </button>
+              );
+            })}
           </div>
           <div className="ml-auto flex items-center gap-2">
             <span className="text-xs text-zinc-400">
