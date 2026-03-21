@@ -30,6 +30,7 @@ interface MarkerClusterGroupOptions {
   maxClusterRadius?: number;
   disableClusteringAtZoom?: number;
   spiderfyOnMaxZoom?: boolean;
+  spiderfyDistanceMultiplier?: number;
   showCoverageOnHover?: boolean;
   zoomToBoundsOnClick?: boolean;
   iconCreateFunction?: (cluster: MarkerCluster) => L.DivIcon;
@@ -493,23 +494,24 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
       markersRef.current = null;
     }
 
-    // Critical crimes (Júri + VD): dissolve into individual markers much earlier
+    // Critical crimes (Júri + VD): tight radius so they show individually sooner
+    // No disableClusteringAtZoom → spiderfy handles overlapping markers at all zooms
     const criticalCluster = (L as any).markerClusterGroup({
       chunkedLoading: true,
-      maxClusterRadius: 8,
-      disableClusteringAtZoom: 11,
+      maxClusterRadius: 10,
       spiderfyOnMaxZoom: true,
+      spiderfyDistanceMultiplier: 1.5,
       showCoverageOnHover: false,
       zoomToBoundsOnClick: true,
       iconCreateFunction: createDonutIcon,
     } as MarkerClusterGroupOptions);
 
-    // Other crimes: standard clustering
+    // Other crimes: standard clustering, spiderfy handles overlapping
     const clusterGroup = (L as any).markerClusterGroup({
       chunkedLoading: true,
-      maxClusterRadius: 20,
-      disableClusteringAtZoom: 14,
+      maxClusterRadius: 22,
       spiderfyOnMaxZoom: true,
+      spiderfyDistanceMultiplier: 1.5,
       showCoverageOnHover: false,
       zoomToBoundsOnClick: true,
       iconCreateFunction: createDonutIcon,
