@@ -103,9 +103,11 @@ export const whatsappChatRouter = router({
    * Lista todas as configurações de instância
    */
   listConfigs: protectedProcedure.query(async ({ ctx }) => {
+    const isAdmin = ctx.user.role === "admin";
     const configs = await db
       .select()
       .from(evolutionConfig)
+      .where(isAdmin ? undefined : eq(evolutionConfig.createdById, ctx.user.id))
       .orderBy(desc(evolutionConfig.createdAt));
 
     return configs;
@@ -114,11 +116,17 @@ export const whatsappChatRouter = router({
   /**
    * Busca configuração por ID
    */
-  getConfig: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+  getConfig: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input, ctx }) => {
+    const isAdmin = ctx.user.role === "admin";
     const [config] = await db
       .select()
       .from(evolutionConfig)
-      .where(eq(evolutionConfig.id, input.id))
+      .where(
+        and(
+          eq(evolutionConfig.id, input.id),
+          isAdmin ? undefined : eq(evolutionConfig.createdById, ctx.user.id),
+        )
+      )
       .limit(1);
 
     if (!config) {
