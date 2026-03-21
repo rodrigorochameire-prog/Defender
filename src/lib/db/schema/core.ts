@@ -11,6 +11,7 @@ import {
   uniqueIndex,
   jsonb,
   numeric,
+  unique,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import {
@@ -462,3 +463,19 @@ export const handoffConfig = pgTable("handoff_config", {
 }, (table) => [
   uniqueIndex("handoff_config_comarca_idx").on(table.comarca),
 ]);
+
+// ==========================================
+// DEFENSOR PARCEIROS
+// ==========================================
+export const defensorParceiros = pgTable("defensor_parceiros", {
+  id: serial("id").primaryKey(),
+  defensorId: integer("defensor_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  parceiroId: integer("parceiro_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("defensor_parceiros_defensor_idx").on(table.defensorId),
+  index("defensor_parceiros_parceiro_idx").on(table.parceiroId),
+  unique("defensor_parceiros_unique").on(table.defensorId, table.parceiroId),
+]);
+export type DefensorParceiro = typeof defensorParceiros.$inferSelect;
+export type InsertDefensorParceiro = typeof defensorParceiros.$inferInsert;
