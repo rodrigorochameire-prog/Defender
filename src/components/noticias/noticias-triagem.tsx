@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { X, Check, XCircle, CheckCircle2, ExternalLink, Zap } from "lucide-react";
+import { X, Check, XCircle, CheckCircle2, ExternalLink, Zap, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -88,6 +88,12 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
 
   const aprovar = trpc.noticias.aprovar.useMutation({ onSuccess: invalidate });
   const descartar = trpc.noticias.descartar.useMutation({ onSuccess: invalidate });
+  const descartarAntigos = trpc.noticias.descartarAntigos.useMutation({
+    onSuccess: (data) => {
+      toast.success(`${data.descartados} itens antigos removidos`);
+      invalidate();
+    },
+  });
 
   const handleAprovar = useCallback((id: number, categoria: string) => {
     setRemovingIds(prev => new Set(prev).add(id));
@@ -194,6 +200,20 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
             ↑↓ navegar · A aprovar · D descartar
           </span>
         </div>
+
+        <button
+          onClick={() => {
+            if (confirm("Descartar todos os itens pendentes com mais de 60 dias?")) {
+              descartarAntigos.mutate({ diasLimite: 60 });
+            }
+          }}
+          disabled={descartarAntigos.isPending}
+          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-red-500 transition-colors disabled:opacity-50"
+          title="Descartar itens pendentes com mais de 60 dias"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Limpar antigos</span>
+        </button>
       </div>
 
       {/* Feed agrupado por categoria */}

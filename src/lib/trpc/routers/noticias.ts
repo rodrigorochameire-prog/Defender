@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { noticiasJuridicas, noticiasFontes, noticiasTemas, noticiasFavoritos, noticiasProcessos, jurisprudenciaJulgados, noticiasPastas, noticiasPastaItens } from "@/lib/db/schema";
 import { processos } from "@/lib/db/schema/core";
 import { notifications } from "@/lib/db/schema/comunicacao";
-import { eq, and, desc, sql, inArray, gte } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, gte, lt, or } from "drizzle-orm";
 import { safeAsync } from "@/lib/errors";
 import { enriquecerNoticia, enriquecerPendentes } from "@/lib/noticias/enricher";
 import { fetchFullContent } from "@/lib/noticias/scraper";
@@ -238,7 +238,8 @@ export const noticiasRouter = router({
       return db.select()
         .from(noticiasJuridicas)
         .where(eq(noticiasJuridicas.status, "pendente"))
-        .orderBy(desc(noticiasJuridicas.scrapeadoEm));
+        .orderBy(desc(noticiasJuridicas.scrapeadoEm))
+        .limit(200);
     }),
 
   countPendentes: protectedProcedure
@@ -247,6 +248,26 @@ export const noticiasRouter = router({
         .from(noticiasJuridicas)
         .where(eq(noticiasJuridicas.status, "pendente"));
       return result?.count ?? 0;
+    }),
+
+  descartarAntigos: protectedProcedure
+    .input(z.object({ diasLimite: z.number().min(1).max(365).default(60) }))
+    .mutation(async ({ input }) => {
+      const limite = new Date(Date.now() - input.diasLimite * 24 * 60 * 60 * 1000);
+      const result = await db.update(noticiasJuridicas)
+        .set({ status: "descartado", updatedAt: new Date() })
+        .where(and(
+          eq(noticiasJuridicas.status, "pendente"),
+          or(
+            lt(noticiasJuridicas.scrapeadoEm, limite),
+            and(
+              sql`${noticiasJuridicas.scrapeadoEm} IS NULL`,
+              lt(noticiasJuridicas.publicadoEm, limite),
+            ),
+          ),
+        ))
+        .returning({ id: noticiasJuridicas.id });
+      return { descartados: result.length };
     }),
 
   listRecentes: protectedProcedure
