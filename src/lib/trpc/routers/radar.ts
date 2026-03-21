@@ -45,18 +45,31 @@ export const radarRouter = router({
       // Cidades fora da jurisdição da DPE-BA Camaçari (7ª Regional)
       // Jurisdição cobre: Camaçari, Dias d'Ávila, Simões Filho, Madre de Deus, Lauro de Freitas
       const CIDADES_FORA_DA_JURISDICAO = [
-        "Nazaré", "Alagoinhas", "Feira de Santana", "Itaparica", "Mar Grande",
-        "Vera Cruz", "Jaguaripe", "Bom Jesus da Lapa", "São Félix", "Copacabana",
-        "Ilhéus", "Itabuna", "Paulo Afonso", "Cachoeira", "Santo Antônio de Jesus",
-        "Cruz das Almas", "Santo Amaro", "Candeias", "Eunápolis", "Porto Seguro",
-        "Vitória da Conquista", "Barreiras", "Juazeiro", "Jacobina", "Valença",
-        "Cairu", "Belmonte", "Rio Real",
+        // RMS (não coberta pela 7ª Regional)
+        "Nazaré", "Candeias",
+        // Interior da Bahia — norte
+        "Alagoinhas", "Feira de Santana", "Jacobina", "Juazeiro", "Paulo Afonso",
+        "Serrinha", "Senhor do Bonfim", "Ribeira do Pombal", "Inhambupe", "Cícero Dantas",
+        "Euclides da Cunha", "Jeremoabo", "Itaberaba",
+        // Interior — sul/oeste
+        "Vitória da Conquista", "Jequié", "Brumado", "Guanambi", "Barreiras",
+        "Bom Jesus da Lapa", "Eunápolis", "Porto Seguro", "Teixeira de Freitas",
+        "Ilhéus", "Itabuna", "Valença", "Belmonte", "Cairu",
+        // Interior — recôncavo
+        "Cachoeira", "Santo Amaro", "São Félix", "Cruz das Almas",
+        "Santo Antônio de Jesus", "Amargosa",
+        // Ilha de Itaparica
+        "Itaparica", "Mar Grande", "Vera Cruz", "Jaguaripe",
+        // Outros
+        "Copacabana", "Rio Real",
       ];
 
       const conditions = [
         // Só mostra artigos já enriquecidos (não pending)
         ne(radarNoticias.enrichmentStatus, "pending"),
-        // Excluir artigos de cidades claramente fora da jurisdição
+        // Excluir artigos marcados como interior da Bahia pelo scraper
+        ne(radarNoticias.municipio, "outro"),
+        // Excluir artigos de cidades do interior que podem ter sido salvos antes do filtro "outro"
         ...CIDADES_FORA_DA_JURISDICAO.map((cidade) =>
           sql`${radarNoticias.titulo} NOT ILIKE ${"%" + cidade + "%"}`
         ),

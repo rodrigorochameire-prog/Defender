@@ -109,13 +109,40 @@ KEYWORDS_RMS = [
 ]
 
 KEYWORDS_SALVADOR = [
-    "salvador", "bonfim", "liberdade", "cajazeiras", "brotas",
+    "salvador", "liberdade", "cajazeiras", "brotas",
     "itapuã", "itapua", "pituba", "ondina", "barra", "federação",
     "federacao", "pau da lima", "fazenda grande", "nordeste de amaralina",
     "costa azul", "imbuí", "imbui", "boca do rio", "pernambués", "pernambues",
     "sussuarana", "tancredo neves", "são caetano", "sao caetano",
     "engenho velho", "garcía", "garcia", "calçada", "calcada",
     "periperi", "plataforma", "subúrbio", "suburbio",
+    "bonfim salvador",  # bairro Bonfim de Salvador (evitar confundir com Senhor do Bonfim)
+]
+
+# Cidades do interior da Bahia — não pertencem a nenhum escopo coberto
+KEYWORDS_INTERIOR_BA = [
+    # Norte e nordeste
+    "alagoinhas", "feira de santana", "jacobina", "juazeiro", "paulo afonso",
+    "serrinha", "senhor do bonfim", "ribeira do pombal", "inhambupe",
+    "cícero dantas", "cicero dantas", "euclides da cunha", "jeremoabo",
+    "itaberaba", "conceição do coité", "conceicao do coite",
+    # Sul e extremo sul
+    "vitória da conquista", "vitoria da conquista", "jequié", "jequie",
+    "brumado", "guanambi", "bom jesus da lapa", "eunápolis", "eunapolis",
+    "porto seguro", "teixeira de freitas", "itabuna", "ilhéus", "ilheus",
+    "belmonte", "camacan",
+    # Oeste
+    "barreiras", "luís eduardo magalhães", "luis eduardo magalhaes",
+    "ibotirama", "bom jesus da lapa",
+    # Recôncavo
+    "cachoeira", "santo amaro", "são félix", "sao felix",
+    "cruz das almas", "santo antônio de jesus", "santo antonio de jesus",
+    "amargosa", "nazaré", "nazare",
+    # Ilha de Itaparica
+    "itaparica", "mar grande", "vera cruz", "jaguaripe",
+    # Outros
+    "valença", "valenca", "cairu", "candeias", "rio real",
+    "conjunto penal de", "presídio de", "penitenciária de",
 ]
 
 
@@ -807,8 +834,14 @@ class RadarScraperService:
 
     @staticmethod
     def _detect_municipio(titulo: str) -> str:
-        """Detecta o município da notícia pelo título."""
+        """
+        Detecta o município da notícia pelo título.
+        Retorna 'outro' para cidades do interior BA que não pertencem a nenhum escopo.
+        """
         t = titulo.lower()
+        # Interior BA: verificar primeiro para não poluir escopos válidos
+        if any(kw in t for kw in KEYWORDS_INTERIOR_BA):
+            return "outro"
         if any(kw in t for kw in KEYWORDS_RMS):
             return "rms"
         if any(kw in t for kw in KEYWORDS_SALVADOR):
