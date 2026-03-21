@@ -85,38 +85,43 @@ KEYWORDS_CAMACARI_STRICT = [
     "26ª cipm", "31ª cipm", "12º bpm", "12o bpm",
 ]
 
-# Palavras-chave para verificar se a notícia é da região de Camaçari/RMS
+# Palavras-chave para verificar se a notícia é de Camaçari (município ou localidades inconfundíveis)
+# REGRA: só incluir termos que sejam EXCLUSIVOS ou FORTEMENTE ASSOCIADOS a Camaçari.
+# Evitar termos genéricos (nomes de animais, palavras comuns, nomes de bairro em múltiplas cidades).
 KEYWORDS_CAMACARI_REGIAO = [
     "camaçari", "camacari", "camaçarí", "camacarí",
-    # Distritos e bairros de Camaçari
-    "abrantes", "catu de abrantes", "vila de abrantes", "arembepe",
-    "barra do jacuípe", "barra do jacuipe", "guarajuba", "jauá", "jaua",
-    "monte gordo", "parafuso", "gleba", "phoc",
-    "polo petroquímico", "polo industrial", "pólo petroquímico",
-    "dias d'ávila", "dias d avila", "dias davila",
-    # Bairros urbanos de Camaçari
-    "parque verde",      # bairro residencial
+    # Distritos e praias de Camaçari — nomes únicos
+    "arembepe", "guarajuba", "jauá", "jaua", "monte gordo",
+    "barra do jacuípe", "barra do jacuipe",
+    "catu de abrantes", "vila de abrantes",  # formas completas apenas
+    "parafuso",          # localidade de Camaçari
+    "phoc",              # Porto de Caju (Camaçari)
+    "polo petroquímico", "polo industrial", "pólo petroquímico",  # contexto único da cidade
+    # Bairros urbanos de Camaçari com nome suficientemente específico
     "parque camaçari", "parque camacari",
-    "capivara",          # bairro de Camaçari
-    "buraquinho",
     "jardim camaçari", "jardim camacari",
     # Distritos do município de Camaçari
-    "barra de pojuca",   # distrito de Camaçari (município)
-    "pojuca",
-    # Delegacias e órgãos da região
+    "barra de pojuca",   # DISTRITO de Camaçari — nome completo obrigatório
+    # Delegacias e órgãos exclusivamente de Camaçari
     "18ª delegacia", "18a delegacia", "cicom camaçari",
     "delegacia de camaçari", "dpc camaçari", "dpc camacari",
     "26ª cipm", "26a cipm", "31ª cipm", "31a cipm",
-    # Sistemas e referências exclusivamente locais
+    # Sistemas e siglas exclusivamente locais
     "sicom",             # Sistema Integrado de Controle de Ocorrências de Camaçari
-    "cia-rms", "cia rms", "rms norte",
 ]
 
-# Mapeamento para detecção de município pelo título
+# Municípios e bairros da RMS (excluindo Camaçari — cobertos acima)
 KEYWORDS_RMS = [
-    "simões filho", "simoes filho", "lauro de freitas",
-    "madre de deus", "dias d'ávila", "dias davila", "dias d avila",
-    "cassange",  # bairro de Lauro de Freitas (não de Camaçari)
+    "simões filho", "simoes filho",
+    "lauro de freitas",
+    "madre de deus",
+    "dias d'ávila", "dias davila", "dias d avila",
+    "pojuca",            # município de Pojuca (RMS adjacente, não é bairro de Camaçari)
+    "candeias",          # município da RMS
+    "itaparica",         # ilha — parte da RMS
+    "vera cruz",         # município da RMS
+    "cassange",          # bairro de Lauro de Freitas
+    "cia-rms", "cia rms", "rms norte",  # referências à região metropolitana
 ]
 
 KEYWORDS_SALVADOR = [
@@ -861,20 +866,28 @@ class RadarScraperService:
         """
         t = titulo.lower()
         c = (corpo or "").lower()
+        corpo_trecho = c[:1000]
 
+        # Hierarquia: Salvador > RMS > Camaçari — verificada no título PRIMEIRO,
+        # depois no corpo (mesma ordem). Isso evita que keywords compartilhadas
+        # (ex: "dias d'ávila" que é RMS) sejam mal classificadas.
+
+        # 1. Título — ordem de especificidade decrescente
         if any(kw in t for kw in KEYWORDS_SALVADOR):
             return "salvador"
         if any(kw in t for kw in KEYWORDS_RMS):
             return "rms"
-        # Match positivo no título OU no corpo (primeiras 1000 chars para eficiência)
-        corpo_trecho = c[:1000]
         if any(kw in t for kw in KEYWORDS_CAMACARI_REGIAO):
             return "camacari"
-        if any(kw in corpo_trecho for kw in KEYWORDS_CAMACARI_REGIAO):
-            return "camacari"
-        # Verificar RMS também no corpo (ex: "Lauro de Freitas" no corpo mas não no título)
+
+        # 2. Corpo — mesma hierarquia (primeiras 1000 chars)
+        if any(kw in corpo_trecho for kw in KEYWORDS_SALVADOR):
+            return "salvador"
         if any(kw in corpo_trecho for kw in KEYWORDS_RMS):
             return "rms"
+        if any(kw in corpo_trecho for kw in KEYWORDS_CAMACARI_REGIAO):
+            return "camacari"
+
         # Sem match positivo → não exibir em nenhum escopo
         return "outro"
 
@@ -886,12 +899,14 @@ class RadarScraperService:
         titulo_lower = titulo.lower()
 
         if confiabilidade == "local":
-            # Fonte local: exigir keyword regional no título OU keyword ESTRITA nos primeiros 300 chars do corpo
+            # Fonte local: aceitar Camaçari OU RMS no título (blogs locais cobrem toda a RMS)
             if any(kw in titulo_lower for kw in KEYWORDS_CAMACARI_REGIAO):
                 return True
+            if any(kw in titulo_lower for kw in KEYWORDS_RMS):
+                return True
             if corpo:
-                trecho = corpo[:300].lower()  # reduzido de 1000 para 300
-                if any(kw in trecho for kw in KEYWORDS_CAMACARI_STRICT):  # exigir keyword ESTRITA no corpo (não só regional)
+                trecho = corpo[:300].lower()  # primeiros 300 chars do corpo
+                if any(kw in trecho for kw in KEYWORDS_CAMACARI_STRICT):  # exigir keyword ESTRITA no corpo
                     return True
             return False
 
