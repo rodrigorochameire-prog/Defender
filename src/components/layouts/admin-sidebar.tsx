@@ -11,7 +11,7 @@ import {
   Columns3, History, PieChart, Handshake, CalendarDays, Sparkles, MessageCircle,
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
   MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput, Sun,
-  MessageSquare, FileCheck, ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map
+  MessageSquare, FileCheck, ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -170,6 +170,7 @@ const MORE_NAV: AssignmentMenuItem[] = [
   { label: "Relatórios", path: "/admin/relatorios", icon: "BarChart3", requiredRoles: ["admin", "defensor"] },
   { label: "Sincronização", path: "/admin/sync", icon: "RefreshCw" },
   { label: "Enrichment", path: "/admin/settings/enrichment", icon: "Brain", requiredRoles: ["admin"] },
+  { label: "Observatory", path: "/admin/observatory", icon: "Activity", requiredRoles: ["admin"] },
   { label: "Configurações", path: "/admin/settings", icon: "Settings", requiredRoles: ["admin", "defensor"] },
 ];
 
@@ -181,7 +182,7 @@ const iconMap: Record<string, React.ElementType> = {
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
   ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
   BookUser, Users2, Home, FolderInput, Sun, MessageSquare, FileCheck,
-  ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map
+  ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
