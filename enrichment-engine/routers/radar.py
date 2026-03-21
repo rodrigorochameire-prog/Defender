@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Response, status
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger("enrichment-engine.router.radar")
@@ -185,94 +185,64 @@ async def radar_match(input_data: RadarMatchInput | None = None) -> RadarMatchOu
         )
 
 
-@router.post("/radar/pipeline", response_model=RadarPipelineOutput)
-async def radar_pipeline() -> RadarPipelineOutput:
-    """
-    Pipeline completo: Scrape → Extração → Geocoding → Matching.
-    Ideal para cron job diário.
-
-    Extração processa em batches de 10 para caber no timeout de 55s do Vercel cron.
-    Usa concorrência (5 simultâneas) para maximizar throughput.
-    """
-    logger.info("Iniciando pipeline completo do Radar Criminal")
-
-    result = RadarPipelineOutput(success=True)
+async def _run_pipeline_background() -> None:
+    """Executa o pipeline completo em background (sem timeout de HTTP)."""
+    logger.info("[BG] Pipeline completo iniciado")
 
     # 1. Scraping
     try:
         from services.radar_scraper_service import get_radar_scraper_service
-
         scraper = get_radar_scraper_service()
         noticias = await scraper.scrape_all_fontes()
         saved = await scraper.save_noticias(noticias)
-
-        result.etapa_scraping = {
-            "coletadas": len(noticias),
-            "salvas": saved,
-            "status": "ok",
-        }
-        logger.info("Pipeline scraping: %d coletadas, %d salvas", len(noticias), saved)
+        logger.info("[BG] Scraping: %d coletadas, %d salvas", len(noticias), saved)
     except Exception as e:
-        result.etapa_scraping = {"status": "erro", "error": str(e)}
-        logger.error("Pipeline scraping falhou: %s", str(e))
+        logger.error("[BG] Scraping falhou: %s", str(e))
 
-    # 2. Extração via Claude Sonnet (batch de 10 para caber no timeout)
+    # 2. Extração via IA
     try:
         from services.radar_extraction_service import get_radar_extraction_service
-
         extractor = get_radar_extraction_service()
-        processed = await extractor.extract_batch(limit=10)
-
-        result.etapa_extracao = {
-            "processadas": processed,
-            "status": "ok",
-        }
-        logger.info("Pipeline extração: %d processadas", processed)
+        processed = await extractor.extract_batch(limit=20)
+        logger.info("[BG] Extração: %d processadas", processed)
     except Exception as e:
-        result.etapa_extracao = {"status": "erro", "error": str(e)}
-        logger.error("Pipeline extração falhou: %s", str(e))
+        logger.error("[BG] Extração falhou: %s", str(e))
 
     # 3. Geocoding
     try:
         from services.radar_extraction_service import get_radar_extraction_service
-
-        geo_extractor = get_radar_extraction_service()
-        geocoded = await geo_extractor.geocode_batch(limit=50)
-
-        result.etapa_geocoding = {
-            "geocodificadas": geocoded,
-            "status": "ok",
-        }
-        logger.info("Pipeline geocoding: %d geocodificadas", geocoded)
+        geo = get_radar_extraction_service()
+        geocoded = await geo.geocode_batch(limit=100)
+        logger.info("[BG] Geocoding: %d geocodificadas", geocoded)
     except Exception as e:
-        result.etapa_geocoding = {"status": "erro", "error": str(e)}
-        logger.error("Pipeline geocoding falhou: %s", str(e))
+        logger.error("[BG] Geocoding falhou: %s", str(e))
 
-    # 4. Matching
+    # 4. Matching com assistidos
     try:
         from services.radar_matching_service import get_radar_matching_service
-
         matcher = get_radar_matching_service()
-        matches = await matcher.match_batch(limit=50)
-
-        result.etapa_matching = {
-            "matches": matches,
-            "status": "ok",
-        }
-        logger.info("Pipeline matching: %d matches", matches)
+        matches = await matcher.match_batch(limit=100)
+        logger.info("[BG] Matching: %d matches", matches)
     except Exception as e:
-        result.etapa_matching = {"status": "erro", "error": str(e)}
-        logger.error("Pipeline matching falhou: %s", str(e))
+        logger.error("[BG] Matching falhou: %s", str(e))
 
-    result.message = (
-        f"Pipeline concluído: "
-        f"{result.etapa_scraping.get('salvas', 0)} notícias, "
-        f"{result.etapa_extracao.get('processadas', 0)} extraídas, "
-        f"{result.etapa_geocoding.get('geocodificadas', 0)} geocodificadas, "
-        f"{result.etapa_matching.get('matches', 0)} matches"
+    logger.info("[BG] Pipeline concluído")
+
+
+@router.post("/radar/pipeline")
+async def radar_pipeline(background_tasks: BackgroundTasks) -> Response:
+    """
+    Pipeline completo: Scrape → Extração → Geocoding → Matching.
+    Retorna 202 imediatamente — processa em background no Railway.
+    Isso evita o timeout de 60s do Vercel quando chamado pelo frontend.
+    """
+    logger.info("Pipeline agendado em background")
+    background_tasks.add_task(_run_pipeline_background)
+    return Response(
+        content='{"success":true,"message":"Pipeline iniciado em background"}',
+        status_code=202,
+        media_type="application/json",
     )
-
-    return result
 
 
 @router.post("/api/radar/scrape-instagram")

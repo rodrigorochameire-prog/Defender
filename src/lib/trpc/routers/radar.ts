@@ -41,9 +41,24 @@ export const radarRouter = router({
       })
     )
     .query(async ({ input, ctx }) => {
+      // Cidades fora da jurisdição da DPE-BA Camaçari (7ª Regional)
+      // Jurisdição cobre: Camaçari, Dias d'Ávila, Simões Filho, Madre de Deus, Lauro de Freitas
+      const CIDADES_FORA_DA_JURISDICAO = [
+        "Nazaré", "Alagoinhas", "Feira de Santana", "Itaparica", "Mar Grande",
+        "Vera Cruz", "Jaguaripe", "Bom Jesus da Lapa", "São Félix", "Copacabana",
+        "Ilhéus", "Itabuna", "Paulo Afonso", "Cachoeira", "Santo Antônio de Jesus",
+        "Cruz das Almas", "Santo Amaro", "Candeias", "Eunápolis", "Porto Seguro",
+        "Vitória da Conquista", "Barreiras", "Juazeiro", "Jacobina", "Valença",
+        "Cairu", "Belmonte", "Rio Real",
+      ];
+
       const conditions = [
         // Só mostra artigos já enriquecidos (não pending)
         ne(radarNoticias.enrichmentStatus, "pending"),
+        // Excluir artigos de cidades claramente fora da jurisdição
+        ...CIDADES_FORA_DA_JURISDICAO.map((cidade) =>
+          sql`${radarNoticias.titulo} NOT ILIKE ${"%" + cidade + "%"}`
+        ),
       ];
 
       // Filtro por comarca — não-admins só veem notícias da sua comarca
