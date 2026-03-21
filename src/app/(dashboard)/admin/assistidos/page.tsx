@@ -1357,7 +1357,7 @@ export default function AssistidosPage() {
           <div className="flex items-center gap-1.5 px-3 py-1.5 overflow-x-auto scrollbar-none">
             {/* Toggle Ver RMS */}
             <button
-              onClick={() => toggleVerRMS(!verRMS)}
+              onClick={() => toggleVerRMS({ verRMS: !verRMS })}
               aria-pressed={verRMS}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium border transition-colors shrink-0",

@@ -5,7 +5,7 @@ import { processos, assistidos, assistidosProcessos, audiencias, movimentacoes, 
 import { eq, ilike, or, desc, asc, sql, and, isNull, isNotNull, ne, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { TRPCError } from "@trpc/server";
-import { getComarcaId } from "@/lib/trpc/comarca-scope";
+import { getComarcaId, getParceirosIds } from "@/lib/trpc/comarca-scope";
 import { getDefensoresVisiveis } from "@/lib/trpc/defensor-scope";
 
 export const processosRouter = router({
@@ -16,6 +16,7 @@ export const processosRouter = router({
         search: z.string().optional(),
         area: z.string().optional(),
         isJuri: z.boolean().optional(),
+        verComarca: z.boolean().optional(),
         limit: z.number().min(1).max(100).default(50),
         offset: z.number().min(0).default(0),
       }).optional()
@@ -44,7 +45,23 @@ export const processosRouter = router({
       }
 
       if (!isAdmin) {
-        conditions.push(eq(processos.comarcaId, getComarcaId(ctx.user)));
+        const verComarca = input?.verComarca ?? false;
+        if (verComarca) {
+          // Layer 3: toda a comarca
+          conditions.push(eq(processos.comarcaId, getComarcaId(ctx.user)));
+        } else {
+          // Layer 1 + 2: próprios + parceiros
+          const parceirosIds = await getParceirosIds(ctx.user.id);
+          const defensoresVisiveis = [ctx.user.id, ...parceirosIds];
+          // Guard: inArray requires non-empty array (always safe — has at least ctx.user.id)
+          const defensorFilter = inArray(processos.defensorId, defensoresVisiveis);
+          // Also include processos without assigned defensor that belong to the comarca
+          const semDefensorFilter = and(
+            isNull(processos.defensorId),
+            eq(processos.comarcaId, getComarcaId(ctx.user))
+          );
+          conditions.push(or(defensorFilter, semDefensorFilter)!);
+        }
       }
 
       const defensorAlias = alias(users, "defensor");

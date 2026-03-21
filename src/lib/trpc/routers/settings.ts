@@ -68,6 +68,7 @@ export const settingsRouter = router({
     const settings = (result[0]?.settings ?? {}) as Record<string, any>;
     return {
       verRMS: (settings?.comarcaVisibilidade?.verRMS as boolean) ?? false,
+      verComarca: (settings?.comarcaVisibilidade?.verComarca as boolean) ?? false,
     };
   }),
 
@@ -75,18 +76,20 @@ export const settingsRouter = router({
    * Set comarca visibility settings (verRMS toggle) — upsert via JSONB merge
    */
   setComarcaVisibilidade: protectedProcedure
-    .input(z.object({ verRMS: z.boolean() }))
+    .input(z.object({ verRMS: z.boolean(), verComarca: z.boolean().optional() }))
     .mutation(async ({ ctx, input }) => {
+      const patch: Record<string, boolean> = { verRMS: input.verRMS };
+      if (input.verComarca !== undefined) patch.verComarca = input.verComarca;
       await db
         .insert(userSettings)
         .values({
           userId: ctx.user.id,
-          settings: { comarcaVisibilidade: { verRMS: input.verRMS } },
+          settings: { comarcaVisibilidade: patch },
         })
         .onConflictDoUpdate({
           target: userSettings.userId,
           set: {
-            settings: sql`user_settings.settings || ${JSON.stringify({ comarcaVisibilidade: { verRMS: input.verRMS } })}::jsonb`,
+            settings: sql`user_settings.settings || ${JSON.stringify({ comarcaVisibilidade: patch })}::jsonb`,
             updatedAt: new Date(),
           },
         });

@@ -14,7 +14,12 @@ export function useComarcaVisibilidade() {
 
   return {
     verRMS: data?.verRMS ?? false,
-    toggle: (verRMS: boolean) => mutation.mutate({ verRMS }),
+    verComarca: data?.verComarca ?? false,
+    toggle: (opts: { verRMS?: boolean; verComarca?: boolean }) =>
+      mutation.mutate({
+        verRMS: opts.verRMS ?? data?.verRMS ?? false,
+        verComarca: opts.verComarca,
+      }),
     isLoading: mutation.isPending,
   };
 }
