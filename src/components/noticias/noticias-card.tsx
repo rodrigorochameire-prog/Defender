@@ -190,12 +190,6 @@ export function NoticiaCard({
         {decodeHtmlEntities(noticia.titulo)}
       </h3>
 
-      {/* Linha 3 — resumo (1 linha, sempre visível se houver) */}
-      {noticia.resumo && (
-        <p className="text-[11px] text-zinc-400 dark:text-zinc-500 line-clamp-1 mt-0.5 leading-relaxed">
-          {noticia.resumo}
-        </p>
-      )}
     </div>
   );
 }
