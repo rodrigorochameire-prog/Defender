@@ -522,9 +522,32 @@ class RadarExtractionService:
                 bairro = noticia.get("bairro", "") or ""
                 logradouro = noticia.get("logradouro", "") or ""
 
-                # Bounding box da região de Camaçari + RMS costeiro (validação de resultado)
-                # lat: -12.85 a -12.40 | lon: -38.55 a -38.05
-                BBOX = {"lat_min": -12.85, "lat_max": -12.40, "lon_min": -38.55, "lon_max": -38.05}
+                # Bounding box da região de Camaçari + orla costeira estendida
+                # lat: -12.90 a -12.40 | lon: -38.55 a -37.90
+                # Extensão sul/lon cobre Jauá (-12.83) e Imbassaí (-37.93)
+                BBOX = {"lat_min": -12.90, "lat_max": -12.40, "lon_min": -38.55, "lon_max": -37.90}
+
+                # Bairros costeiros com coordenadas curadas: usar centroide diretamente
+                # sem passar por Nominatim em consultas de bairro-only (Nominatim bairro-only
+                # costuma retornar centroide administrativo impreciso para vilarejos da orla)
+                BAIRROS_COSTEIROS_CURADOS = {
+                    "Arembepe", "Monte Gordo", "Guarajuba", "Barra do Jacuípe",
+                    "Barra de Pojuca", "Jauá", "Imbassaí", "Vila Praiana",
+                    "Itacimirim", "Praia de Arembepe",
+                }
+                if bairro in BAIRROS_COSTEIROS_CURADOS and not logradouro:
+                    centroid = self._get_centroid(bairro)
+                    if centroid:
+                        lat, lon = centroid
+                        client_db.table("radar_noticias").update({
+                            "latitude": lat, "longitude": lon,
+                        }).eq("id", noticia["id"]).execute()
+                        geocoded += 1
+                        logger.debug(
+                            "Centroide curado (orla) | id=%d bairro='%s' lat=%.4f lon=%.4f",
+                            noticia["id"], bairro, lat, lon,
+                        )
+                        return True
 
                 # 1. Tentar Nominatim (funciona com bairro ou logradouro)
                 nominatim_ok = False
@@ -545,8 +568,9 @@ class RadarExtractionService:
                                     "format": "json",
                                     "limit": 3,
                                     "countrycodes": "br",
-                                    # Viewbox biasa resultados para a região de Camaçari (lon_west,lat_north,lon_east,lat_south)
-                                    "viewbox": "-38.55,-12.40,-38.05,-12.85",
+                                    # Viewbox biasa resultados para a região de Camaçari + orla costeira
+                                    # formato: lon_west,lat_north,lon_east,lat_south
+                                    "viewbox": "-38.55,-12.40,-37.90,-12.90",
                                     "bounded": "0",
                                 },
                                 headers={"User-Agent": "OMBUDS-Radar/1.0 (ombuds.vercel.app)"},
