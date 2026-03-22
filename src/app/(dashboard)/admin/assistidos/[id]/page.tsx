@@ -88,6 +88,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
   // Cowork export
   const [exportingAudienciaId, setExportingAudienciaId] = useState<number | null>(null);
+  const [exportingProcessoId, setExportingProcessoId] = useState<number | null>(null);
   const exportarParaCowork = trpc.briefing.exportarParaCowork.useMutation({
     onSuccess: (result) => {
       toast.success(`Briefing exportado para o Drive`, {
@@ -600,15 +601,33 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 truncate">{p.numeroAutos ?? "Sem número"}</span>
-                      <span className={cn(
-                        "text-[9px] px-1.5 py-0.5 rounded-full font-semibold shrink-0",
-                        p.papel === "REU" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400"
-                          : p.papel === "CORREU" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
-                          : p.papel === "VITIMA" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
-                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
-                      )}>
-                        {p.papel?.toLowerCase() ?? "réu"}
-                      </span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className={cn(
+                          "text-[9px] px-1.5 py-0.5 rounded-full font-semibold",
+                          p.papel === "REU" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400"
+                            : p.papel === "CORREU" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+                            : p.papel === "VITIMA" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                        )}>
+                          {p.papel?.toLowerCase() ?? "réu"}
+                        </span>
+                        <Button
+                          variant="ghost" size="sm"
+                          className="h-5 w-5 p-0 text-zinc-400 hover:text-violet-600 transition-colors"
+                          title="Exportar briefing deste processo para Cowork"
+                          disabled={exportingProcessoId === p.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExportingProcessoId(p.id);
+                            exportarParaCowork.mutate(
+                              { assistidoId: Number(id), processoId: p.id, tipo: "processo" },
+                              { onSettled: () => setExportingProcessoId(null) }
+                            );
+                          }}
+                        >
+                          {exportingProcessoId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bot className="h-3 w-3" />}
+                        </Button>
+                      </div>
                     </div>
                     {p.assunto && <p className="text-[11px] font-medium text-zinc-600 dark:text-zinc-300 mt-0.5 truncate">{p.assunto}</p>}
                     {p.vara && <p className="text-[10px] text-zinc-400 mt-0.5 truncate">{p.vara}</p>}

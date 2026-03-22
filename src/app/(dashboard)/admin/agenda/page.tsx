@@ -74,6 +74,8 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
+  Bot,
+  Loader2,
 } from "lucide-react";
 import {
   isToday,
@@ -288,18 +290,22 @@ function StatCard({
 }
 
 // Componente de Evento Detalhado (para lista detalhada)
-function EventoDetalhado({ 
-  evento, 
-  onEdit, 
-  onDelete, 
+function EventoDetalhado({
+  evento,
+  onEdit,
+  onDelete,
   onStatusChange,
-  onClick 
-}: { 
+  onClick,
+  onExportCowork,
+  isExportingCowork,
+}: {
   evento: AgendaItem;
   onEdit: (evento: any) => void;
   onDelete: (id: string) => void;
   onStatusChange: (id: string, status: string) => void;
   onClick: (evento: AgendaItem) => void;
+  onExportCowork?: (evento: AgendaItem) => void;
+  isExportingCowork?: boolean;
 }) {
   const atribuicaoConfig = getAtribuicaoColors(evento.atribuicaoKey || "SUBSTITUICAO");
   const solidColor = (atribuicaoConfig as any).color || "#71717a";
@@ -368,7 +374,7 @@ function EventoDetalhado({
         </div>
       </div>
       
-      {/* Status indicator */}
+      {/* Status indicator + Cowork export */}
       <div className="flex flex-col items-center justify-center gap-1.5">
         {evento.status === "confirmada" && (
           <div className="w-2 h-2 rounded-full bg-emerald-500" title="Confirmada" />
@@ -381,6 +387,16 @@ function EventoDetalhado({
         )}
         {evento.status === "cancelada" && (
           <div className="w-2 h-2 rounded-full bg-red-500" title="Cancelada" />
+        )}
+        {onExportCowork && evento.fonte === "audiencias" && evento.assistidoId && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onExportCowork(evento); }}
+            disabled={isExportingCowork}
+            title="Exportar briefing para Cowork"
+            className="text-zinc-400 hover:text-violet-600 transition-colors disabled:opacity-40"
+          >
+            {isExportingCowork ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bot className="w-3.5 h-3.5" />}
+          </button>
         )}
       </div>
     </div>
@@ -840,6 +856,19 @@ export default function AgendaPage() {
     },
     onError: (error) => {
       toast.error("Erro ao atualizar evento", { description: error.message });
+    },
+  });
+
+  // Mutation Cowork export
+  const [exportingAgendaId, setExportingAgendaId] = useState<string | null>(null);
+  const exportarParaCowork = trpc.briefing.exportarParaCowork.useMutation({
+    onSuccess: () => {
+      toast.success("Briefing exportado para o Drive (Cowork)");
+      setExportingAgendaId(null);
+    },
+    onError: (err) => {
+      toast.error("Erro ao exportar briefing", { description: err.message });
+      setExportingAgendaId(null);
     },
   });
 
@@ -1606,6 +1635,19 @@ export default function AgendaPage() {
                     setSelectedEvento(e);
                     setIsDetailModalOpen(true);
                   }}
+                  onExportCowork={(e) => {
+                    if (!e.assistidoId) return;
+                    const audienciaId = e.fonte === "audiencias"
+                      ? Number(e.id.replace("audiencia-", ""))
+                      : undefined;
+                    setExportingAgendaId(e.id);
+                    exportarParaCowork.mutate({
+                      assistidoId: e.assistidoId,
+                      audienciaId,
+                      tipo: "audiencia",
+                    });
+                  }}
+                  isExportingCowork={exportingAgendaId === evento.id}
                 />
               ))
             )}

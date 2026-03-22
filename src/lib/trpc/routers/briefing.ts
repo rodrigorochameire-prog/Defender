@@ -521,7 +521,7 @@ export const briefingRouter = router({
         assistidoId: z.number(),
         audienciaId: z.number().optional(),
         processoId: z.number().optional(),
-        tipo: z.enum(["audiencia", "assistido"]).default("assistido"),
+        tipo: z.enum(["audiencia", "assistido", "processo"]).default("assistido"),
       })
     )
     .mutation(async ({ ctx, input }) => {
