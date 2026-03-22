@@ -749,3 +749,9 @@ ALTER TABLE "simulacao_assets" DROP COLUMN IF EXISTS "workspace_id";--> statemen
 ALTER TABLE "simulacoes_3d" DROP COLUMN IF EXISTS "workspace_id";--> statement-breakpoint
 ALTER TABLE "tipo_prazos" DROP COLUMN IF EXISTS "workspace_id";--> statement-breakpoint
 ALTER TABLE "users" DROP COLUMN IF EXISTS "workspace_id";
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "analises_cowork" ADD CONSTRAINT "analises_cowork_audiencia_id_audiencias_id_fk" FOREIGN KEY ("audiencia_id") REFERENCES "public"."audiencias"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;

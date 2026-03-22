@@ -13,7 +13,7 @@ import {
 import { relations } from "drizzle-orm";
 import { tipoTestemunhaEnum, statusTestemunhaEnum } from "./enums";
 import { users, processos, assistidos, demandas } from "./core";
-import { casos } from "./casos";
+import { casos, analisesCowork } from "./casos";
 
 // ==========================================
 // AUDIÊNCIAS
@@ -242,9 +242,10 @@ export type InsertTestemunha = typeof testemunhas.$inferInsert;
 // RELAÇÕES - Agenda
 // ==========================================
 
-export const audienciasRelations = relations(audiencias, ({ one }) => ({
+export const audienciasRelations = relations(audiencias, ({ one, many }) => ({
   processo: one(processos, { fields: [audiencias.processoId], references: [processos.id] }),
   defensor: one(users, { fields: [audiencias.defensorId], references: [users.id] }),
+  analisesCowork: many(analisesCowork),
 }));
 
 export const audienciasHistoricoRelations = relations(audienciasHistorico, ({ one }) => ({

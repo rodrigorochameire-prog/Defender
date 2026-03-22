@@ -1,0 +1,2 @@
+ALTER TABLE "analises_cowork" ADD COLUMN "updated_at" timestamp DEFAULT now() NOT NULL;--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "analises_cowork_audiencia_id_idx" ON "analises_cowork" USING btree ("audiencia_id");

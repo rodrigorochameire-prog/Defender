@@ -398,11 +398,13 @@ export const analisesCowork = pgTable("analises_cowork", {
   fonteArquivo: text("fonte_arquivo"),
   importadoEm: timestamp("importado_em").defaultNow().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
   index("analises_cowork_assistido_id_idx").on(table.assistidoId),
   index("analises_cowork_processo_id_idx").on(table.processoId),
   index("analises_cowork_tipo_idx").on(table.tipo),
   index("analises_cowork_importado_em_idx").on(table.importadoEm),
+  index("analises_cowork_audiencia_id_idx").on(table.audienciaId),
 ]);
 
 export type AnaliseCowork = typeof analisesCowork.$inferSelect;

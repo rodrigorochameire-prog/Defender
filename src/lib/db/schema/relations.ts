@@ -102,6 +102,7 @@ export const processosRelations = relations(processos, ({ one, many }) => ({
   documentos: many(documentos),
   anotacoes: many(anotacoes),
   calendarEvents: many(calendarEvents),
+  analisesCowork: many(analisesCowork),
 }));
 
 export const demandasRelations = relations(demandas, ({ one, many }) => ({
