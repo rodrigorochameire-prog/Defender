@@ -15,7 +15,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { testemunhas, depoimentosAnalise, driveFiles, audiencias, processos, casos, assistidos, casePersonas, demandas } from "@/lib/db/schema";
+import { testemunhas, depoimentosAnalise, driveFiles, audiencias, processos, assistidos, casePersonas, demandas } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import {
   pythonBackend,
@@ -571,6 +571,20 @@ export const briefingRouter = router({
         }
       }
 
+      // 4b. Buscar depoimentos históricos do processo
+      let depoimentosDb: typeof depoimentosAnalise.$inferSelect[] = [];
+      if (audienciaDb?.processoId) {
+        const processoParaDepoimentos = await db.query.processos.findFirst({
+          where: eq(processos.id, audienciaDb.processoId),
+          columns: { casoId: true },
+        });
+        if (processoParaDepoimentos?.casoId) {
+          depoimentosDb = await db.query.depoimentosAnalise.findMany({
+            where: eq(depoimentosAnalise.casoId, processoParaDepoimentos.casoId),
+          });
+        }
+      }
+
       // 5. Arquivos do Drive vinculados
       const processoIds = processosDb.map((p) => p.id);
       let arquivosDb: { name: string; mimeType: string | null }[] = [];
@@ -687,6 +701,33 @@ export const briefingRouter = router({
               }
             }
             lines.push("");
+          }
+        }
+
+        // Depoimentos históricos comparativos
+        if (depoimentosDb.length > 0) {
+          lines.push("## Histórico de Depoimentos (Análise Comparativa)");
+          lines.push("");
+          for (const d of depoimentosDb) {
+            lines.push(`### ${d.testemunhaNome ?? "Testemunha desconhecida"}`);
+            if (d.versaoDelegacia) {
+              lines.push("**Versão na Delegacia:**");
+              lines.push(d.versaoDelegacia);
+              lines.push("");
+            }
+            if (d.versaoJuizo) {
+              lines.push("**Versão no Juízo:**");
+              lines.push(d.versaoJuizo);
+              lines.push("");
+            }
+            if (d.contradicoesIdentificadas) {
+              lines.push(`**Contradições identificadas:** ${d.contradicoesIdentificadas}`);
+              lines.push("");
+            }
+            if (d.estrategiaInquiricao) {
+              lines.push(`**Estratégia de inquirição:** ${d.estrategiaInquiricao}`);
+              lines.push("");
+            }
           }
         }
       }
