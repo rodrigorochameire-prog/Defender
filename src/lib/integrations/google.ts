@@ -191,6 +191,37 @@ export async function createOrUpdateDriveFile(
   }
 }
 
+/**
+ * Lê o conteúdo de um arquivo no Drive por nome dentro de uma pasta.
+ * Retorna o texto do arquivo ou null se não encontrado.
+ */
+export async function readDriveFileFromFolder(
+  accessToken: string,
+  folderId: string,
+  fileName: string
+): Promise<string | null> {
+  try {
+    const query = `'${folderId}' in parents and name = '${fileName}' and trashed = false`;
+    const listRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    const listData = await listRes.json();
+    const fileId = listData.files?.[0]?.id;
+    if (!fileId) return null;
+
+    const contentRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (!contentRes.ok) return null;
+    return await contentRes.text();
+  } catch (error) {
+    console.error("Error reading Drive file:", error);
+    return null;
+  }
+}
+
 // Google Calendar Functions
 export async function createCalendarEvent(
   accessToken: string,

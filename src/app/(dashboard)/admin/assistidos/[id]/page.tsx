@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, Lock, User, Loader2, FileText, Plus, Sparkles, Pencil, Clock, Send, Scale, Calendar, FolderOpen, PanelRight, ChevronDown, Bot } from "lucide-react";
+import { ArrowLeft, Lock, User, Loader2, FileText, Plus, Sparkles, Pencil, Clock, Send, Scale, Calendar, FolderOpen, PanelRight, ChevronDown, Bot, Download } from "lucide-react";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -68,6 +68,20 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
   // AI Analysis state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // Cowork import
+  const importarAnaliseCowork = trpc.briefing.importarAnaliseCowork.useMutation({
+    onSuccess: (result) => {
+      toast.success("Análise IA importada com sucesso", {
+        description: result.camposImportados.length > 0
+          ? `Campos: ${result.camposImportados.join(", ")}`
+          : "analysisData atualizado",
+      });
+    },
+    onError: (err) => {
+      toast.error("Erro ao importar análise", { description: err.message });
+    },
+  });
 
   // Cowork export
   const [exportingAudienciaId, setExportingAudienciaId] = useState<number | null>(null);
@@ -377,6 +391,20 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                   ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   : <Bot className="h-3.5 w-3.5" />}
               </Button>
+              {data.driveFolderId && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600 transition-colors"
+                  title="Importar análise IA gerada pelo Cowork (_analise_ia.json)"
+                  disabled={importarAnaliseCowork.isPending}
+                  onClick={() => importarAnaliseCowork.mutate({ assistidoId: Number(id) })}
+                >
+                  {importarAnaliseCowork.isPending
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <Download className="h-3.5 w-3.5" />}
+                </Button>
+              )}
               {isPreso && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 animate-pulse">
                   <Lock className="h-3 w-3" />

@@ -25,7 +25,7 @@ import {
   type PessoaInfo,
 } from "@/lib/services/python-backend";
 import { getAccessToken } from "@/lib/services/google-drive";
-import { createOrUpdateDriveFile } from "@/lib/integrations/google";
+import { createOrUpdateDriveFile, readDriveFileFromFolder } from "@/lib/integrations/google";
 
 // ==========================================
 // ROUTER
@@ -769,6 +769,78 @@ export const briefingRouter = router({
         fileName,
         fileUrl: result.webViewLink,
         assistidoNome: assistido.nome,
+      };
+    }),
+
+  /**
+   * Importa análise gerada pelo Cowork (_analise_ia.json) da pasta Drive do assistido.
+   *
+   * O Cowork lê o briefing exportado, gera _analise_ia.json e salva na mesma pasta.
+   * Esta mutation detecta o arquivo, parseia e popula analysisData no banco.
+   */
+  importarAnaliseCowork: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const assistido = await db.query.assistidos.findFirst({
+        where: eq(assistidos.id, input.assistidoId),
+      });
+
+      if (!assistido) throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
+      if (!assistido.driveFolderId) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Assistido sem pasta no Drive" });
+
+      const accessToken = await getAccessToken();
+      if (!accessToken) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Falha ao obter token do Drive" });
+
+      const raw = await readDriveFileFromFolder(accessToken, assistido.driveFolderId, "_analise_ia.json");
+      if (!raw) throw new TRPCError({ code: "NOT_FOUND", message: "Arquivo _analise_ia.json não encontrado na pasta do Drive. Gere a análise no Cowork primeiro." });
+
+      let analise: Record<string, unknown>;
+      try {
+        analise = JSON.parse(raw);
+      } catch {
+        throw new TRPCError({ code: "PARSE_ERROR", message: "Arquivo _analise_ia.json inválido (não é JSON válido)" });
+      }
+
+      // Monta analysisData mesclando campos novos com existentes
+      const existing = assistido.analysisData ?? {};
+      const newData = {
+        ...existing,
+        ...(analise.resumo ? { resumo: String(analise.resumo) } : {}),
+        ...(Array.isArray(analise.achadosChave) ? { achadosChave: analise.achadosChave as string[] } : {}),
+        ...(Array.isArray(analise.recomendacoes) ? { recomendacoes: analise.recomendacoes as string[] } : {}),
+        ...(Array.isArray(analise.inconsistencias) ? { inconsistencias: analise.inconsistencias as string[] } : {}),
+      };
+
+      await db.update(assistidos).set({
+        analysisData: newData,
+        analysisStatus: "cowork",
+        analyzedAt: new Date(),
+        updatedAt: new Date(),
+      }).where(eq(assistidos.id, input.assistidoId));
+
+      // Se o JSON tem teses ou resumo por processo, atualiza o processo principal também
+      if ((analise.teses || analise.resumoProcesso) && analise.processoId) {
+        const proc = await db.query.processos.findFirst({
+          where: eq(processos.id, Number(analise.processoId)),
+        });
+        if (proc) {
+          const existingProc = proc.analysisData ?? {};
+          await db.update(processos).set({
+            analysisData: {
+              ...existingProc,
+              ...(analise.resumoProcesso ? { resumo: String(analise.resumoProcesso) } : {}),
+              ...(Array.isArray(analise.teses) ? { teses: analise.teses as string[] } : {}),
+            },
+            analysisStatus: "cowork",
+            analyzedAt: new Date(),
+          }).where(eq(processos.id, proc.id));
+        }
+      }
+
+      return {
+        success: true,
+        camposImportados: Object.keys(analise).filter(k => ["resumo","achadosChave","recomendacoes","inconsistencias","teses"].includes(k)),
+        geradoEm: analise.geradoEm ? String(analise.geradoEm) : undefined,
       };
     }),
 
