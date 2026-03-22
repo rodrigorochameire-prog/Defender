@@ -452,6 +452,7 @@ export default function RadarCriminalPage() {
           if (!open) setSelectedNoticiaId(null);
         }}
         onNavigateToMatches={handleNavigateToMatches}
+        onVerNoMapa={handleVerNoMapa}
       />
     </PageLayout>
   );

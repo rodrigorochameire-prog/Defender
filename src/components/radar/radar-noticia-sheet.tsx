@@ -76,6 +76,7 @@ interface RadarNoticiaSheetProps {
   onOpenChange: (open: boolean) => void;
   onSelectNoticia?: (id: number) => void;
   onNavigateToMatches?: (noticiaId: number) => void;
+  onVerNoMapa?: (noticiaId: number) => void;
 }
 
 interface Envolvido {
@@ -342,7 +343,7 @@ function EnvolvidoAvatar({ nome, papel }: { nome: string | null; papel: string }
   );
 }
 
-export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNoticia, onNavigateToMatches }: RadarNoticiaSheetProps) {
+export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNoticia, onNavigateToMatches, onVerNoMapa }: RadarNoticiaSheetProps) {
   const utils = trpc.useUtils();
 
   const { data, isLoading } = trpc.radar.getById.useQuery(
@@ -933,6 +934,17 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                       Abrir fonte
                     </a>
                   </Button>
+                  {onVerNoMapa && noticiaId && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-1.5 cursor-pointer text-zinc-600 hover:text-emerald-700 hover:border-emerald-300"
+                      onClick={() => { onOpenChange(false); onVerNoMapa(noticiaId); }}
+                    >
+                      <MapPin className="h-3.5 w-3.5" />
+                      Ver no mapa
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"

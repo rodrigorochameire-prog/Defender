@@ -356,6 +356,7 @@ export function RadarFeed({ filtros, municipio = "camacari", onVerNoMapa }: Rada
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         onSelectNoticia={setSelectedNoticiaId}
+        onVerNoMapa={onVerNoMapa ? (id) => { setSheetOpen(false); onVerNoMapa(id); } : undefined}
       />
     </div>
   );
