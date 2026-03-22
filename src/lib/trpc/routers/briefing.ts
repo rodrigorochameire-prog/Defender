@@ -571,16 +571,33 @@ export const briefingRouter = router({
         }
       }
 
-      // 4b. Buscar depoimentos históricos do processo
-      let depoimentosDb: typeof depoimentosAnalise.$inferSelect[] = [];
+      // 4b. Buscar depoimentos históricos do processo (caso vinculado)
+      let depoimentosDb: {
+        id: number;
+        testemunhaNome: string | null;
+        versaoDelegacia: string | null;
+        versaoJuizo: string | null;
+        contradicoesIdentificadas: string | null;
+        pontosFracos: string | null;
+        pontosFortes: string | null;
+        estrategiaInquiricao: string | null;
+      }[] = [];
       if (audienciaDb?.processoId) {
-        const processoParaDepoimentos = await db.query.processos.findFirst({
-          where: eq(processos.id, audienciaDb.processoId),
-          columns: { casoId: true },
-        });
-        if (processoParaDepoimentos?.casoId) {
+        const processoDoCase = processosDb.find((p) => p.id === audienciaDb.processoId);
+        const casoId = processoDoCase?.casoId;
+        if (casoId) {
           depoimentosDb = await db.query.depoimentosAnalise.findMany({
-            where: eq(depoimentosAnalise.casoId, processoParaDepoimentos.casoId),
+            where: eq(depoimentosAnalise.casoId, casoId),
+            columns: {
+              id: true,
+              testemunhaNome: true,
+              versaoDelegacia: true,
+              versaoJuizo: true,
+              contradicoesIdentificadas: true,
+              pontosFracos: true,
+              pontosFortes: true,
+              estrategiaInquiricao: true,
+            },
           });
         }
       }
