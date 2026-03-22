@@ -10,6 +10,7 @@ import json
 import hashlib
 import os
 import shutil
+import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -28,7 +29,25 @@ MESSAGE_TYPES = {
     15: "image",  # GIF
 }
 
-def find_backup_dir():
+def find_backup_dir(custom_path: str = None):
+    if custom_path:
+        p = Path(custom_path).expanduser()
+        if not p.exists():
+            raise FileNotFoundError(f"Caminho informado não encontrado: {p}")
+        # Se o usuário apontou para a pasta raiz do backup (com subpastas de 2 chars), usa diretamente
+        # Se apontou para a pasta MobileSync/Backup, pega o mais recente dentro dela
+        children = [d for d in p.iterdir() if d.is_dir()]
+        # Heurística: pasta de backup tem subpastas com nomes de 2 chars (ex: "00", "ab")
+        two_char = [d for d in children if len(d.name) == 2]
+        if two_char:
+            print(f"Usando backup: {p.name}")
+            return p
+        # Caso contrário, é a pasta raiz — pega o mais recente
+        if children:
+            children.sort(key=lambda d: d.stat().st_mtime, reverse=True)
+            print(f"Usando backup: {children[0].name}")
+            return children[0]
+        raise FileNotFoundError(f"Nenhuma subpasta encontrada em: {p}")
     backup_root = Path.home() / "Library/Application Support/MobileSync/Backup"
     if not backup_root.exists():
         raise FileNotFoundError(f"Diretório de backup não encontrado: {backup_root}")
@@ -140,8 +159,9 @@ def extract_contacts_and_messages(db_path: Path) -> dict:
 
 def main():
     print("=== Extrator WhatsApp Business iOS -> OMBUDS ===\n")
+    custom_path = sys.argv[1] if len(sys.argv) > 1 else None
     try:
-        backup_dir = find_backup_dir()
+        backup_dir = find_backup_dir(custom_path)
         db_path = find_whatsapp_db(backup_dir)
         data = extract_contacts_and_messages(db_path)
         output_path = Path.home() / "Desktop/whatsapp-ombuds-export.json"
