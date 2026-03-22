@@ -69,6 +69,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   // AI Analysis state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  const utils = trpc.useUtils();
+
   // Cowork import
   const importarAnaliseCowork = trpc.briefing.importarAnaliseCowork.useMutation({
     onSuccess: (result) => {
@@ -167,8 +169,6 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     { id: Number(id) },
     { staleTime: 60_000 },
   );
-
-  const utils = trpc.useUtils();
 
   // Supabase Realtime: listen for enrichment_status changes instead of heavy polling
   const handleRealtimeStatusChange = useCallback(
