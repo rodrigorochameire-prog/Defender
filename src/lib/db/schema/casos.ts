@@ -376,3 +376,34 @@ export const crossAnalyses = pgTable("cross_analyses", {
 
 export type CrossAnalysis = typeof crossAnalyses.$inferSelect;
 export type InsertCrossAnalysis = typeof crossAnalyses.$inferInsert;
+
+// ==========================================
+// ANÁLISES COWORK — importadas do _analise_ia.json
+// ==========================================
+
+export const analisesCowork = pgTable("analises_cowork", {
+  id: serial("id").primaryKey(),
+  assistidoId: integer("assistido_id").notNull().references(() => assistidos.id, { onDelete: "cascade" }),
+  processoId: integer("processo_id").references(() => processos.id, { onDelete: "set null" }),
+  // audienciaId: sem FK direta (agenda.ts importa casos.ts — circular). Relação gerenciada em relations.ts.
+  audienciaId: integer("audiencia_id"),
+  tipo: varchar("tipo", { length: 50 }).notNull(),
+  schemaVersion: varchar("schema_version", { length: 10 }).notNull().default("1.0"),
+  resumoFato: text("resumo_fato"),
+  teseDefesa: text("tese_defesa"),
+  estrategiaAtual: text("estrategia_atual"),
+  crimePrincipal: varchar("crime_principal", { length: 200 }),
+  pontosCriticos: jsonb("pontos_criticos").$type<string[]>().default([]),
+  payload: jsonb("payload").notNull().$type<Record<string, unknown>>(),
+  fonteArquivo: text("fonte_arquivo"),
+  importadoEm: timestamp("importado_em").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("analises_cowork_assistido_id_idx").on(table.assistidoId),
+  index("analises_cowork_processo_id_idx").on(table.processoId),
+  index("analises_cowork_tipo_idx").on(table.tipo),
+  index("analises_cowork_importado_em_idx").on(table.importadoEm),
+]);
+
+export type AnaliseCowork = typeof analisesCowork.$inferSelect;
+export type InsertAnaliseCowork = typeof analisesCowork.$inferInsert;

@@ -34,6 +34,7 @@ import {
   juriScriptItems,
   quesitos,
   crossAnalyses,
+  analisesCowork,
 } from "./casos";
 
 // Agenda tables
@@ -88,6 +89,7 @@ export const assistidosRelations = relations(assistidos, ({ one, many }) => ({
   atendimentos: many(atendimentos),
   calendarEvents: many(calendarEvents),
   personas: many(casePersonas),
+  analisesCowork: many(analisesCowork),
 }));
 
 export const processosRelations = relations(processos, ({ one, many }) => ({
@@ -205,4 +207,10 @@ export const juriScriptItemsRelations = relations(juriScriptItems, ({ one }) => 
 
 export const crossAnalysesRelations = relations(crossAnalyses, ({ one }) => ({
   assistido: one(assistidos, { fields: [crossAnalyses.assistidoId], references: [assistidos.id] }),
+}));
+
+export const analisesCoworkRelations = relations(analisesCowork, ({ one }) => ({
+  assistido: one(assistidos, { fields: [analisesCowork.assistidoId], references: [assistidos.id] }),
+  processo: one(processos, { fields: [analisesCowork.processoId], references: [processos.id] }),
+  audiencia: one(audiencias, { fields: [analisesCowork.audienciaId], references: [audiencias.id] }),
 }));
