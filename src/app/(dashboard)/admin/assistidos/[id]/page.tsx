@@ -89,6 +89,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   // Cowork export
   const [exportingAudienciaId, setExportingAudienciaId] = useState<number | null>(null);
   const [exportingProcessoId, setExportingProcessoId] = useState<number | null>(null);
+  const [importingProcessoId, setImportingProcessoId] = useState<number | null>(null);
+  const [importingAudienciaId, setImportingAudienciaId] = useState<number | null>(null);
   const exportarParaCowork = trpc.briefing.exportarParaCowork.useMutation({
     onSuccess: (result) => {
       toast.success(`Briefing exportado para o Drive`, {
@@ -627,6 +629,22 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                         >
                           {exportingProcessoId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bot className="h-3 w-3" />}
                         </Button>
+                        <Button
+                          variant="ghost" size="sm"
+                          className="h-5 w-5 p-0 text-zinc-400 hover:text-emerald-600 transition-colors"
+                          title="Importar análise IA deste processo do Cowork"
+                          disabled={importingProcessoId === p.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setImportingProcessoId(p.id);
+                            importarAnaliseCowork.mutate(
+                              { assistidoId: Number(id), processoId: p.id },
+                              { onSettled: () => setImportingProcessoId(null) }
+                            );
+                          }}
+                        >
+                          {importingProcessoId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+                        </Button>
                       </div>
                     </div>
                     {p.assunto && <p className="text-[11px] font-medium text-zinc-600 dark:text-zinc-300 mt-0.5 truncate">{p.assunto}</p>}
@@ -759,6 +777,24 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                       {exportingAudienciaId === a.id
                         ? <Loader2 className="h-3 w-3 animate-spin" />
                         : <Bot className="h-3 w-3" />}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-zinc-400 hover:text-emerald-600 shrink-0 transition-colors"
+                      title="Importar análise IA desta audiência do Cowork"
+                      disabled={importingAudienciaId === a.id}
+                      onClick={() => {
+                        setImportingAudienciaId(a.id);
+                        importarAnaliseCowork.mutate(
+                          { assistidoId: Number(id), audienciaId: a.id, processoId: a.processoId ?? undefined },
+                          { onSettled: () => setImportingAudienciaId(null) }
+                        );
+                      }}
+                    >
+                      {importingAudienciaId === a.id
+                        ? <Loader2 className="h-3 w-3 animate-spin" />
+                        : <Download className="h-3 w-3" />}
                     </Button>
                   </div>
                   {a.dataAudiencia && (
