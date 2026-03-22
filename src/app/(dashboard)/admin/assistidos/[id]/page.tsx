@@ -75,8 +75,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   const importarAnaliseCowork = trpc.briefing.importarAnaliseCowork.useMutation({
     onSuccess: (result) => {
       toast.success("Análise IA importada com sucesso", {
-        description: result.camposImportados.length > 0
-          ? `Campos: ${result.camposImportados.join(", ")}`
+        description: result.campos_atualizados.length > 0
+          ? `Campos: ${result.campos_atualizados.join(", ")}`
           : "analysisData atualizado",
       });
       void utils.intelligence.getForAssistido.invalidate({ assistidoId: Number(id) });
