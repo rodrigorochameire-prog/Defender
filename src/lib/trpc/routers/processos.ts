@@ -898,4 +898,76 @@ export const processosRouter = router({
 
       return result;
     }),
+
+  // Enriquecer processo com dados do DataJud (CNJ)
+  enrichFromDatajud: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const [processo] = await db
+        .select()
+        .from(processos)
+        .where(eq(processos.id, input.id));
+
+      if (!processo) throw new TRPCError({ code: "NOT_FOUND", message: "Processo não encontrado" });
+
+      const numero = processo.numeroAutos.replace(/\s/g, "");
+
+      const response = await fetch(
+        "https://api-publica.datajud.cnj.jus.br/api_publica_tjba/_search",
+        {
+          method: "POST",
+          headers: {
+            Authorization: "ApiKey cDZHYzlZa0JadVREZDJCendFeGJWWGowQlBleVV5UFZwNHZwdmNHZGh3SA==",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query: { match: { numeroProcesso: numero } },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erro ao consultar DataJud" });
+      }
+
+      const data = await response.json();
+      const hit = data?.hits?.hits?.[0]?._source;
+
+      if (!hit) {
+        return { found: false, message: "Processo não encontrado no DataJud (pode haver latência de dias)", data: null, updated: [] };
+      }
+
+      // Mapear campos DataJud → schema (só preenche se vazio)
+      const updates: Record<string, string | undefined> = {};
+
+      if (hit.classe?.nome && !processo.classeProcessual) {
+        updates.classeProcessual = hit.classe.nome;
+      }
+      if (hit.assuntos?.length > 0 && !processo.assunto) {
+        updates.assunto = hit.assuntos.map((a: { nome: string }) => a.nome).join("; ");
+      }
+      if (hit.orgaoJulgador?.nome && !processo.vara) {
+        updates.vara = hit.orgaoJulgador.nome;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await db.update(processos)
+          .set({ ...updates, updatedAt: new Date() })
+          .where(eq(processos.id, input.id));
+      }
+
+      return {
+        found: true,
+        updated: Object.keys(updates),
+        data: {
+          classe: hit.classe?.nome ?? null,
+          assuntos: hit.assuntos?.map((a: { nome: string }) => a.nome) ?? [],
+          orgaoJulgador: hit.orgaoJulgador?.nome ?? null,
+          tribunal: hit.tribunal ?? null,
+          dataUltimaAtualizacao: hit.dataHoraUltimaAtualizacao ?? null,
+          totalMovimentos: hit.movimentos?.length ?? 0,
+        },
+        message: null,
+      };
+    }),
 });

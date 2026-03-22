@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
-import { ArrowLeft, Brain, Calendar, ExternalLink, FileText, FolderOpen, Loader2, Lock, Newspaper, Pencil, Plus, Scale, Sun, User, Users, Sparkles, Library, BookOpen, Trash2 } from "lucide-react";
+import { ArrowLeft, Brain, Calendar, Database, ExternalLink, FileText, FolderOpen, Loader2, Lock, Newspaper, Pencil, Plus, Scale, Sun, User, Users, Sparkles, Library, BookOpen, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
@@ -40,6 +40,27 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
     ja_existia: boolean;
     atendimento_id?: string | null;
   } | null>(null);
+
+  const enrichDatajudMutation = trpc.processos.enrichFromDatajud.useMutation({
+    onSuccess: (result) => {
+      if (!result.found) {
+        toast.info("Processo não encontrado no DataJud", {
+          description: "Os dados podem levar alguns dias para aparecer no CNJ.",
+        });
+        return;
+      }
+      if (result.updated.length === 0) {
+        toast.success("DataJud consultado", {
+          description: `Classe: ${result.data?.classe ?? "—"} | Movimentos: ${result.data?.totalMovimentos ?? 0}`,
+        });
+      } else {
+        toast.success("Processo enriquecido pelo DataJud", {
+          description: `Campos atualizados: ${result.updated.join(", ")}`,
+        });
+      }
+    },
+    onError: (err) => toast.error(`Erro DataJud: ${err.message}`),
+  });
 
   const cadastrarMutation = trpc.solar.cadastrarNoSolar.useMutation({
     onSuccess: (data) => {
@@ -290,6 +311,19 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
         >
           <Sparkles className="h-3 w-3" />
           Sistematização
+        </button>
+        <button
+          onClick={() => enrichDatajudMutation.mutate({ id: Number(id) })}
+          disabled={enrichDatajudMutation.isPending}
+          className="text-[11px] px-2 py-1 rounded border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 transition-colors disabled:opacity-50 flex items-center gap-1"
+          title="Consultar DataJud CNJ — preenche classe, assunto e vara"
+        >
+          {enrichDatajudMutation.isPending ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Database className="h-3 w-3" />
+          )}
+          {enrichDatajudMutation.isPending ? "Consultando..." : "DataJud"}
         </button>
       </div>
 
