@@ -160,6 +160,31 @@ function createMarkerIcon(tipoCrime: string, dataFato?: string | Date | null): L
   });
 }
 
+// ─── Focused marker icon (colored fill + double pulsing rings) ────────────
+function createFocusedMarkerIcon(tipoCrime: string): L.DivIcon {
+  const ring = CRIME_COLORS[tipoCrime] || CRIME_COLORS.outros;
+  const dotSize = 20;
+  const wrapSize = 56;
+  const half = wrapSize / 2;
+
+  const rings = `
+    <div class="radar-focus-ring-1" style="position:absolute;top:50%;left:50%;width:${dotSize}px;height:${dotSize}px;margin:-${dotSize / 2}px 0 0 -${dotSize / 2}px;border-radius:${tipoCrime === "violencia_domestica" ? "4px" : "50%"};border:2px solid ${ring};"></div>
+    <div class="radar-focus-ring-2" style="position:absolute;top:50%;left:50%;width:${dotSize}px;height:${dotSize}px;margin:-${dotSize / 2}px 0 0 -${dotSize / 2}px;border-radius:${tipoCrime === "violencia_domestica" ? "4px" : "50%"};border:2px solid ${ring};"></div>
+  `;
+
+  const isVD = tipoCrime === "violencia_domestica";
+  const dot = isVD
+    ? `<div style="position:absolute;top:50%;left:50%;width:${dotSize}px;height:${dotSize}px;margin:-${dotSize / 2}px 0 0 -${dotSize / 2}px;border-radius:4px;background:${ring};border:2.5px solid white;box-shadow:0 0 0 2px ${ring},0 4px 12px rgba(0,0,0,0.25);"></div>`
+    : `<div style="position:absolute;top:50%;left:50%;width:${dotSize}px;height:${dotSize}px;margin:-${dotSize / 2}px 0 0 -${dotSize / 2}px;border-radius:50%;background:${ring};border:2.5px solid white;box-shadow:0 0 0 2px ${ring},0 4px 12px rgba(0,0,0,0.25);"></div>`;
+
+  return L.divIcon({
+    html: `<div style="position:relative;width:${wrapSize}px;height:${wrapSize}px;">${rings}${dot}</div>`,
+    className: "",
+    iconSize: [wrapSize, wrapSize],
+    iconAnchor: [half, half],
+  });
+}
+
 // ─── Donut cluster icon ────────────────────────────────────────────────────
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
@@ -263,6 +288,17 @@ const PULSE_CSS = `
   .radar-pulse-ring {
     animation: radar-pulse 3s ease-out infinite;
   }
+  @keyframes radar-focus-pulse {
+    0% { transform: translate(-50%,-50%) scale(1); opacity: 0.65; }
+    80% { transform: translate(-50%,-50%) scale(3.2); opacity: 0; }
+    100% { transform: translate(-50%,-50%) scale(3.2); opacity: 0; }
+  }
+  .radar-focus-ring-1 {
+    animation: radar-focus-pulse 1.4s ease-out infinite;
+  }
+  .radar-focus-ring-2 {
+    animation: radar-focus-pulse 1.4s ease-out 0.45s infinite;
+  }
 `;
 
 // ─── Grouped legend HTML ───────────────────────────────────────────────────
@@ -355,6 +391,7 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
   const onSelectNoticiaRef = useRef(onSelectNoticia);
   const markersMapRef = useRef<Map<number, L.Marker>>(new Map());
   const dataRef = useRef(data);
+  const focusedMarkerRef = useRef<{ marker: L.Marker; originalIcon: L.Icon | L.DivIcon } | null>(null);
 
   useEffect(() => { onSelectNoticiaRef.current = onSelectNoticia; }, [onSelectNoticia]);
   useEffect(() => { dataRef.current = data; }, [data]);
@@ -497,11 +534,36 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
   // Fly to focused notícia marker and open popup
   useEffect(() => {
     if (!focusedNoticiaId || !mapRef.current) return;
+
+    // Restore previous focused marker icon
+    if (focusedMarkerRef.current) {
+      const { marker: prev, originalIcon } = focusedMarkerRef.current;
+      prev.setIcon(originalIcon);
+      focusedMarkerRef.current = null;
+    }
+
     const marker = markersMapRef.current.get(focusedNoticiaId);
     if (marker) {
+      // Save original icon and apply focused icon
+      const originalIcon = marker.getIcon() as L.Icon | L.DivIcon;
+      const point = dataRef.current.find((p) => p.id === focusedNoticiaId);
+      const tipoCrime = point?.tipoCrime || "outros";
+      marker.setIcon(createFocusedMarkerIcon(tipoCrime));
+      // Raise z-index so the marker renders on top of others
+      marker.setZIndexOffset(1000);
+      focusedMarkerRef.current = { marker, originalIcon };
+
       const latlng = marker.getLatLng();
       mapRef.current.setView(latlng, 16, { animate: true });
-      setTimeout(() => { marker.openPopup(); }, 500);
+      setTimeout(() => {
+        marker.openPopup();
+        // Restore icon when popup is closed
+        marker.once("popupclose", () => {
+          marker.setIcon(originalIcon);
+          marker.setZIndexOffset(0);
+          focusedMarkerRef.current = null;
+        });
+      }, 500);
     } else {
       // No marker (no coords) — just fly to data point if we can
       const point = dataRef.current.find((p) => p.id === focusedNoticiaId);
