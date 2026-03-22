@@ -35,6 +35,7 @@ export default function RadarCriminalPage() {
   const [activeTab, setActiveTab] = useState("feed");
   const [selectedNoticiaId, setSelectedNoticiaId] = useState<number | null>(null);
   const [matchesNoticiaFilter, setMatchesNoticiaFilter] = useState<number | null>(null);
+  const [focusedNoticiaId, setFocusedNoticiaId] = useState<number | null>(null);
   const [reincidentesOpen, setReincidentesOpen] = useState(false);
   const [intelOpen, setIntelOpen] = useState(false); // mobile intel panel
 
@@ -64,6 +65,11 @@ export default function RadarCriminalPage() {
     setSelectedNoticiaId(null);
     setActiveTab("matches");
     setMatchesNoticiaFilter(noticiaId);
+  };
+
+  const handleVerNoMapa = (noticiaId: number) => {
+    setFocusedNoticiaId(noticiaId);
+    setActiveTab("mapa");
   };
 
   // Filtros compartilhados entre tabs
@@ -381,13 +387,13 @@ export default function RadarCriminalPage() {
 
             {/* Feed principal */}
             <div className="flex-1 min-w-0 border-l border-zinc-100 dark:border-zinc-800 pl-4">
-              <RadarFeed filtros={filtros} municipio={scope} />
+              <RadarFeed filtros={filtros} municipio={scope} onVerNoMapa={handleVerNoMapa} />
             </div>
           </div>
 
           {/* Mobile: feed sem sidebar */}
           <div className="lg:hidden">
-            <RadarFeed filtros={filtros} municipio={scope} />
+            <RadarFeed filtros={filtros} municipio={scope} onVerNoMapa={handleVerNoMapa} />
           </div>
 
           {/* Sheet de inteligência — mobile */}
@@ -412,7 +418,7 @@ export default function RadarCriminalPage() {
         </TabsContent>
 
         <TabsContent value="mapa">
-          <RadarMapa filtros={filtros} onSelectNoticia={setSelectedNoticiaId} />
+          <RadarMapa filtros={filtros} onSelectNoticia={setSelectedNoticiaId} focusedNoticiaId={focusedNoticiaId} />
         </TabsContent>
 
         <TabsContent value="estatisticas">

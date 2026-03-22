@@ -63,6 +63,7 @@ interface FiltrosState {
 interface RadarMapaProps {
   filtros: FiltrosState;
   onSelectNoticia?: (id: number) => void;
+  focusedNoticiaId?: number | null;
 }
 
 const ALL_LAYERS = [
@@ -89,7 +90,7 @@ function saveMapPref(key: string, value: unknown) {
   } catch {}
 }
 
-export function RadarMapa({ filtros, onSelectNoticia }: RadarMapaProps) {
+export function RadarMapa({ filtros, onSelectNoticia, focusedNoticiaId }: RadarMapaProps) {
   const [showHeatmap, setShowHeatmapState] = useState<boolean>(() => {
     const prefs = loadMapPrefs();
     return prefs.showHeatmap ?? false;
@@ -302,6 +303,7 @@ export function RadarMapa({ filtros, onSelectNoticia }: RadarMapaProps) {
           }}
           fullscreen={isFullscreen}
           resetViewTrigger={resetViewTrigger}
+          focusedNoticiaId={focusedNoticiaId}
         />
       </div>
     </div>

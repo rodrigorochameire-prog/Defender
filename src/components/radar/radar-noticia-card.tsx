@@ -105,6 +105,7 @@ interface NoticiaCardProps {
   viewMode?: "compact" | "cards" | "list";
   expanded?: boolean;
   onToggleExpand?: () => void;
+  onVerNoMapa?: () => void;
 }
 
 /** Normaliza envolvidos que pode vir como string JSON ou array */
@@ -263,6 +264,7 @@ export function RadarNoticiaCard({
   viewMode = "compact",
   expanded = false,
   onToggleExpand,
+  onVerNoMapa,
 }: NoticiaCardProps) {
   const dataDisplay = noticia.dataFato || noticia.dataPublicacao;
   const hasMatch = (noticia.matchCount ?? 0) > 0;
@@ -326,6 +328,15 @@ export function RadarNoticiaCard({
           )}
           {noticia.enrichmentStatus === "pending" && (
             <RefreshCw className="h-3 w-3 text-zinc-400 animate-spin" />
+          )}
+          {onVerNoMapa && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onVerNoMapa(); }}
+              className="text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+              title="Ver no mapa"
+            >
+              <MapPin className="h-3 w-3" />
+            </button>
           )}
           <a
             href={noticia.url}
@@ -399,6 +410,16 @@ export function RadarNoticiaCard({
                 }}
                 title="Match DPE"
               />
+            )}
+            {onVerNoMapa && (
+              <button
+                className="flex items-center gap-0.5 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                onClick={(e) => { e.stopPropagation(); onVerNoMapa(); }}
+                title="Ver no mapa"
+              >
+                <MapPin className="h-2.5 w-2.5" />
+                <span>Mapa</span>
+              </button>
             )}
             <a
               href={noticia.url}
@@ -572,6 +593,15 @@ export function RadarNoticiaCard({
 
           <div className="flex items-center gap-2 ml-auto shrink-0">
             <span className="text-zinc-400 truncate max-w-[80px]">{noticia.fonte}</span>
+            {onVerNoMapa && (
+              <button
+                className="flex items-center gap-0.5 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                onClick={(e) => { e.stopPropagation(); onVerNoMapa(); }}
+                title="Ver no mapa"
+              >
+                <MapPin className="h-3 w-3" />
+              </button>
+            )}
             <a
               href={noticia.url}
               target="_blank"

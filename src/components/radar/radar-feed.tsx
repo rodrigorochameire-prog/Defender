@@ -27,6 +27,7 @@ interface FiltrosState {
 interface RadarFeedProps {
   filtros: FiltrosState;
   municipio?: "camacari" | "rms" | "salvador";
+  onVerNoMapa?: (noticiaId: number) => void;
 }
 
 function groupByDate<T extends { dataFato?: Date | string | null; dataPublicacao?: Date | string | null; createdAt?: Date | string | null }>(
@@ -57,7 +58,7 @@ function groupByDate<T extends { dataFato?: Date | string | null; dataPublicacao
     .map(([label, items]) => ({ label, items }));
 }
 
-export function RadarFeed({ filtros, municipio = "camacari" }: RadarFeedProps) {
+export function RadarFeed({ filtros, municipio = "camacari", onVerNoMapa }: RadarFeedProps) {
   const [selectedNoticiaId, setSelectedNoticiaId] = useState<number | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"compact" | "cards" | "list">(() => {
@@ -333,6 +334,7 @@ export function RadarFeed({ filtros, municipio = "camacari" }: RadarFeedProps) {
                 viewMode={viewMode}
                 expanded={expandedId === noticia.id}
                 onToggleExpand={() => setExpandedId(expandedId === noticia.id ? null : noticia.id)}
+                onVerNoMapa={onVerNoMapa ? () => onVerNoMapa(noticia.id) : undefined}
               />
             ))}
           </div>
