@@ -5,6 +5,7 @@ Popula: analises_cowork, processos (analysis_data), testemunhas, depoimentos_ana
 """
 from __future__ import annotations
 
+import json as _json
 import logging
 from typing import Any
 
@@ -53,6 +54,8 @@ class CoworkImportService:
             "fonte_arquivo": arquivo_nome,
         }
         result = client.table("analises_cowork").insert(row).execute()
+        if not result.data:
+            raise RuntimeError(f"Falha ao inserir em analises_cowork: resposta vazia do banco")
         analise_cowork_id = result.data[0]["id"]
         campos_atualizados.append("analises_cowork")
 
@@ -88,7 +91,6 @@ class CoworkImportService:
                 nome_busca = item.get("nome", "").lower().strip()
                 match_id = testemunhas_map.get(nome_busca)
                 if match_id:
-                    import json as _json
                     client.table("testemunhas").update({
                         "perguntas_sugeridas": _json.dumps(
                             item.get("perguntas", []), ensure_ascii=False

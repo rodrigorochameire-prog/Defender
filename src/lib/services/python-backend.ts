@@ -892,10 +892,10 @@ class PythonBackendClient {
     arquivoNome?: string;
     accessToken: string;
   }): Promise<{
-    analiseCoworkId: number;
+    analise_cowork_id: number;
     tipo: string;
-    camposAtualizados: string[];
-    testemunhasAtualizadas: number;
+    campos_atualizados: string[];
+    testemunhas_atualizadas: number;
     sucesso: boolean;
     mensagem: string;
   }> {
