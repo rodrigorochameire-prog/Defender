@@ -78,6 +78,8 @@ KEYWORDS_CAMACARI_STRICT = [
     "camaçari", "camacari", "camaçarí", "camacarí",
     "arembepe", "guarajuba", "jauá", "jaua", "monte gordo",
     "barra do jacuípe", "barra do jacuipe",
+    "barra de pojuca", "barra do pojuca",
+    "itacimirim", "guagirus",
     "catu de abrantes", "vila de abrantes",
     "parafuso", "phoc", "polo petroquímico", "polo industrial",
     "18ª delegacia", "18a delegacia", "cicom camaçari",
@@ -101,7 +103,10 @@ KEYWORDS_CAMACARI_REGIAO = [
     "parque camaçari", "parque camacari",
     "jardim camaçari", "jardim camacari",
     # Distritos do município de Camaçari
-    "barra de pojuca",   # DISTRITO de Camaçari — nome completo obrigatório
+    "barra de pojuca", "barra do pojuca",  # DISTRITO de Camaçari — nome completo obrigatório
+    # Localidades costeiras do Distrito Monte Gordo
+    "itacimirim",        # vila costeira entre Barra de Pojuca e Imbassaí
+    "guagirus",          # vila costeira norte de Camaçari
     # Delegacias e órgãos exclusivamente de Camaçari
     "18ª delegacia", "18a delegacia", "cicom camaçari",
     "delegacia de camaçari", "dpc camaçari", "dpc camacari",
@@ -133,6 +138,10 @@ KEYWORDS_SALVADOR = [
     "engenho velho", "garcía", "garcia", "calçada", "calcada",
     "periperi", "plataforma", "subúrbio", "suburbio",
     "bonfim salvador",  # bairro Bonfim de Salvador (evitar confundir com Senhor do Bonfim)
+    # Subúrbio Ferroviário — bairros de Salvador próximos ao limite com Camaçari
+    "paripe", "são tomé de paripe", "sao tome de paripe",
+    "base naval de aratu", "coutos", "fazenda coutos",
+    "periperi", "plataforma", "são joão do cabrito", "sao joao do cabrito",
 ]
 
 # Cidades do interior da Bahia — não pertencem a nenhum escopo coberto
