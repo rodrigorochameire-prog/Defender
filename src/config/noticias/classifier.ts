@@ -306,24 +306,41 @@ export function temContextoJuridico(titulo: string, resumo: string): boolean {
 // CLASSIFICAÇÃO POR CATEGORIA
 // ==========================================
 
+// Sinais de NOVIDADE LEGISLATIVA: lei aprovada/sancionada, PL em tramitação, MP nova
+// NÃO incluir "lei nº" / "decreto nº" sozinhos — qualquer artigo cita leis existentes
 export const KEYWORDS_LEGISLATIVA = [
-  "lei nº", "lei n.", "sancionou", "sancionada", "promulgada", "promulgou",
+  // Atos normativos novos
+  "sancionou", "sancionada", "promulgada", "promulgou",
+  "publicada no DOU", "entrou em vigor", "vacatio legis",
+  // Projetos e tramitação
   "PL ", "PLC ", "PLS ", "PEC ", "MP nº", "medida provisória",
-  "nova redação", "alteração legislativa", "alterou", "revogou", "revogada",
-  "decreto nº", "decreto n.", "resolução nº", "portaria nº",
-  "entrou em vigor", "vacatio legis", "publicada no DOU",
   "projeto de lei", "aprovado pelo senado", "aprovado pela câmara",
+  "câmara aprovou", "senado aprovou", "câmara votou", "senado votou",
+  "primeira votação", "segundo turno", "aprovação em plenário",
+  // Mudança em vigor
+  "nova redação", "alteração legislativa", "revogou", "revogada",
+  "texto aprovado", "redação final", "nova lei",
 ];
 
+// Sinais de DECISÃO/PRECEDENTE JUDICIAL: tribunal proferiu decisão ou fixou tese
+// NÃO incluir "habeas corpus" / "acórdão" sozinhos — artigos de análise os citam constantemente
 export const KEYWORDS_JURISPRUDENCIAL = [
-  "STF decidiu", "STJ decidiu", "STF fixou", "STJ fixou",
+  // Tribunal + verbo de decisão (sinal forte)
+  "STF decidiu", "STF julgou", "STF fixou", "STF concedeu", "STF negou",
+  "STJ decidiu", "STJ julgou", "STJ fixou", "STJ concedeu", "STJ negou",
+  "TJBA decidiu", "TJBA julgou", "TRF decidiu", "TRF julgou",
+  "turma decidiu", "turma julgou", "plenário decidiu", "seção decidiu",
+  "câmara criminal decidiu", "câmara decidiu",
+  // Instrumentos de fixação de tese
   "informativo nº", "informativo stf", "informativo stj",
-  "tese fixada", "tese firmada", "repercussão geral", "recurso repetitivo",
-  "HC", "habeas corpus", "RHC", "recurso especial", "REsp",
-  "recurso extraordinário", "RE ", "ADPF", "ADI", "ADC",
-  "súmula vinculante", "súmula nº", "overruling",
-  "turma decidiu", "plenário decidiu", "seção decidiu",
-  "jurisprudência", "julgamento", "acórdão",
+  "tese fixada", "tese firmada", "tese aprovada",
+  "repercussão geral", "recurso repetitivo",
+  "súmula vinculante", "súmula nº",
+  "overruling", "precedente obrigatório",
+  // Resultado de julgamento concreto
+  "deu provimento", "negou provimento", "provimento negado",
+  "concedeu a ordem", "negou a ordem",
+  "HC concedido", "HC negado", "HC deferido",
 ];
 
 export const TEMAS_PADRAO: { nome: string; keywords: string[] }[] = [
@@ -419,17 +436,17 @@ export const TEMAS_PADRAO: { nome: string; keywords: string[] }[] = [
   },
 ];
 
-/** Classifica uma notícia pela categoria baseado no título + resumo */
+/** Classifica uma notícia pela categoria baseado no título + resumo.
+ *  "artigo" é residual: qualquer coisa que não seja novidade legislativa ou decisão judicial. */
 export function classificarNoticia(titulo: string, texto: string): CategoriaNoticia {
   const combined = `${titulo} ${texto}`.toLowerCase();
 
   const scoreleg = KEYWORDS_LEGISLATIVA.reduce((s, k) => s + (combined.includes(k.toLowerCase()) ? 1 : 0), 0);
   const scorejur = KEYWORDS_JURISPRUDENCIAL.reduce((s, k) => s + (combined.includes(k.toLowerCase()) ? 1 : 0), 0);
 
-  if (scoreleg > scorejur && scoreleg > 0) return "legislativa";
-  if (scorejur > scoreleg && scorejur > 0) return "jurisprudencial";
-  if (scoreleg > 0) return "legislativa";
-  if (scorejur > 0) return "jurisprudencial";
+  if (scoreleg > 0 && scoreleg > scorejur) return "legislativa";
+  if (scorejur > 0 && scorejur > scoreleg) return "jurisprudencial";
+  // Empate ou nenhum sinal forte → artigo (residual)
   return "artigo";
 }
 

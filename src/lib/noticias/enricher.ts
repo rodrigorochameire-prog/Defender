@@ -48,13 +48,15 @@ function buildPrompt(noticia: {
   "impactoPratico": "O que isso muda na prática para defensores públicos criminais? Seja concreto.",
   ${ratioInstrucao},
   "casosAplicaveis": ["situação concreta 1", "situação concreta 2", "situação concreta 3"],
-  "categoriaIA": "legislativa"
+  "categoriaIA": "jurisprudencial"
 }
 
-REGRAS PARA categoriaIA:
-- "jurisprudencial": decisões de STF, STJ, TRF, TJBA, ou qualquer tribunal
-- "legislativa": leis aprovadas, projetos de lei, decretos, medidas provisórias
-- "artigo": doutrina, comentários, análises, artigos acadêmicos
+REGRAS PARA categoriaIA (escolha UMA):
+- "jurisprudencial": notícias que RELATAM DECISÕES ou PRECEDENTES de tribunais (STF, STJ, TRF, TJBA etc.) — acórdãos, súmulas, informativos, teses fixadas, julgamentos concretos. O tribunal proferiu ou vai proferir uma decisão específica.
+- "legislativa": notícias sobre ALTERAÇÕES LEGISLATIVAS em andamento ou recentes — lei aprovada/sancionada/promulgada, PL ou PEC em tramitação, medida provisória nova, decreto normativo. Deve haver NOVIDADE LEGISLATIVA concreta, não apenas citação de lei existente.
+- "artigo": TODO O RESTANTE — análises doutrinais, opiniões de juristas, artigos acadêmicos, comentários sobre tendências, entrevistas, reportagens sobre política criminal, debate de políticas públicas, notícias sem decisão judicial específica e sem novidade legislativa. É a CATEGORIA RESIDUAL.
+
+IMPORTANTE: Se houver dúvida entre "artigo" e outra categoria → escolha "artigo". Só use "jurisprudencial" se houver uma decisão judicial concreta. Só use "legislativa" se houver uma lei/PL/MP nova ou em tramitação.
 Categoria atual (pode estar incorreta): ${noticia.categoria}
 
 Título: ${noticia.titulo}

@@ -548,12 +548,14 @@ class RadarExtractionService:
                 # Extensão sul/lon cobre Jauá (-12.83) e Imbassaí (-37.93)
                 BBOX = {"lat_min": -12.90, "lat_max": -12.40, "lon_min": -38.55, "lon_max": -37.90}
 
-                # Bairros costeiros com coordenadas curadas: usar centroide diretamente
-                # sem passar por Nominatim em consultas de bairro-only (Nominatim bairro-only
-                # costuma retornar centroide administrativo impreciso para vilarejos da orla)
+                # Bairros com coordenadas curadas: usar centroide diretamente sem passar
+                # por Nominatim. Nominatim é impreciso para bairros de orla costeira.
+                # NOTA: bairros do Distrito de Abrantes (Vila de Abrantes, Catu de Abrantes,
+                # etc.) ficam na Estrada do Coco, sul de Camaçari — Nominatim é correto para
+                # eles e NÃO devem estar aqui.
                 BAIRROS_COSTEIROS_CURADOS = {
                     "Arembepe", "Monte Gordo", "Guarajuba", "Barra do Jacuípe",
-                    "Barra de Pojuca", "Jauá", "Imbassaí", "Vila Praiana",
+                    "Barra de Pojuca", "Imbassaí", "Vila Praiana",
                     "Itacimirim", "Praia de Arembepe",
                 }
                 if bairro in BAIRROS_COSTEIROS_CURADOS and not logradouro:

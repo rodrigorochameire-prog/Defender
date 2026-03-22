@@ -341,10 +341,11 @@ interface LeafletMapProps {
   onSelectNoticia?: (id: number) => void;
   fullscreen?: boolean;
   resetViewTrigger?: number;
+  focusedNoticiaId?: number | null;
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────
-export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, fullscreen, resetViewTrigger }: LeafletMapProps) {
+export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, fullscreen, resetViewTrigger, focusedNoticiaId }: LeafletMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
@@ -352,8 +353,11 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
   const legendRef = useRef<any>(null);
   const heatLegendRef = useRef<any>(null);
   const onSelectNoticiaRef = useRef(onSelectNoticia);
+  const markersMapRef = useRef<Map<number, L.Marker>>(new Map());
+  const dataRef = useRef(data);
 
   useEffect(() => { onSelectNoticiaRef.current = onSelectNoticia; }, [onSelectNoticia]);
+  useEffect(() => { dataRef.current = data; }, [data]);
 
   // Inject pulse CSS once on mount
   useEffect(() => {
@@ -490,6 +494,23 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
     mapRef.current.fitBounds(CAMACARI_BOUNDS);
   }, [resetViewTrigger]);
 
+  // Fly to focused notícia marker and open popup
+  useEffect(() => {
+    if (!focusedNoticiaId || !mapRef.current) return;
+    const marker = markersMapRef.current.get(focusedNoticiaId);
+    if (marker) {
+      const latlng = marker.getLatLng();
+      mapRef.current.setView(latlng, 16, { animate: true });
+      setTimeout(() => { marker.openPopup(); }, 500);
+    } else {
+      // No marker (no coords) — just fly to data point if we can
+      const point = dataRef.current.find((p) => p.id === focusedNoticiaId);
+      if (point?.latitude && point?.longitude) {
+        mapRef.current.setView([parseFloat(point.latitude), parseFloat(point.longitude)], 16, { animate: true });
+      }
+    }
+  }, [focusedNoticiaId]);
+
   // Update markers when data changes
   useEffect(() => {
     if (!mapRef.current) return;
@@ -498,6 +519,7 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
       mapRef.current.removeLayer(markersRef.current);
       markersRef.current = null;
     }
+    markersMapRef.current.clear();
 
     // Critical crimes (Júri + VD): tight radius so they show individually sooner
     // No disableClusteringAtZoom → spiderfy handles overlapping markers at all zooms
@@ -534,6 +556,7 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
 
       const icon = createMarkerIcon(crimeKey, point.dataFato);
       const marker = L.marker([lat, lng], { icon, tipoCrime: crimeKey, dataFato: point.dataFato } as MarkerOptionsWithTipo);
+      markersMapRef.current.set(point.id, marker);
 
       const dateStr = point.dataFato
         ? new Date(point.dataFato).toLocaleDateString("pt-BR")
