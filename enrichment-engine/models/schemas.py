@@ -805,6 +805,29 @@ class ExtractDataOutput(BaseModel):
     confidence: float = Field(0.0, ge=0, le=1, description="Score de confiança da extração")
 
 
+# ==========================================
+# COWORK IMPORT
+# ==========================================
+
+class CoworkImportInput(BaseModel):
+    """Input para importar _analise_ia.json do Drive."""
+    assistido_id: int
+    processo_id: Optional[int] = None
+    audiencia_id: Optional[int] = None
+    drive_folder_id: str
+    arquivo_nome: str = "_analise_ia.json"
+    access_token: str  # Google OAuth token do OMBUDS
+
+class CoworkImportOutput(BaseModel):
+    """Output do import com resumo do que foi populado."""
+    analise_cowork_id: int
+    tipo: str
+    campos_atualizados: list[str]
+    testemunhas_atualizadas: int
+    sucesso: bool
+    mensagem: str
+
+
 # === Health ===
 
 class HealthResponse(BaseModel):

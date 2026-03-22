@@ -879,6 +879,38 @@ class PythonBackendClient {
       body: JSON.stringify(request),
     });
   }
+
+  /**
+   * Importa _analise_ia.json gerado pelo Cowork da pasta Drive.
+   * Popula analises_cowork, processos.analysis_data, testemunhas e depoimentos_analise.
+   */
+  async importarAnaliseCowork(input: {
+    assistidoId: number;
+    processoId?: number;
+    audienciaId?: number;
+    driveFolderId: string;
+    arquivoNome?: string;
+    accessToken: string;
+  }): Promise<{
+    analiseCoworkId: number;
+    tipo: string;
+    camposAtualizados: string[];
+    testemunhasAtualizadas: number;
+    sucesso: boolean;
+    mensagem: string;
+  }> {
+    return this.request("/cowork/import", {
+      method: "POST",
+      body: JSON.stringify({
+        assistido_id: input.assistidoId,
+        processo_id: input.processoId,
+        audiencia_id: input.audienciaId,
+        drive_folder_id: input.driveFolderId,
+        arquivo_nome: input.arquivoNome ?? "_analise_ia.json",
+        access_token: input.accessToken,
+      }),
+    });
+  }
 }
 
 // Singleton
