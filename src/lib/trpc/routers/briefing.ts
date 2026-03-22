@@ -812,8 +812,8 @@ export const briefingRouter = router({
       };
 
       await db.update(assistidos).set({
-        analysisData: newData,
-        analysisStatus: "cowork",
+        analysisData: { ...newData, fonte: "cowork" },
+        analysisStatus: "completed",
         analyzedAt: new Date(),
         updatedAt: new Date(),
       }).where(eq(assistidos.id, input.assistidoId));

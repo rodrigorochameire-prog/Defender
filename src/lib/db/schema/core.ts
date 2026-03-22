@@ -100,6 +100,7 @@ export const assistidos = pgTable("assistidos", {
     achadosChave?: string[];
     recomendacoes?: string[];
     inconsistencias?: string[];
+    fonte?: string;
     kpis?: {
       totalPessoas: number;
       totalAcusacoes: number;

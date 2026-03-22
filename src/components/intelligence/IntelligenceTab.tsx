@@ -15,6 +15,7 @@ import {
   Sparkles,
   AlertCircle,
   BarChart3,
+  Bot,
 } from "lucide-react";
 import { toast } from "sonner";
 import { IntelligenceOverview } from "./IntelligenceOverview";
@@ -260,6 +261,7 @@ export function IntelligenceTab({
     achadosChave?: string[];
     recomendacoes?: string[];
     inconsistencias?: string[];
+    fonte?: string;
     kpis?: {
       totalPessoas: number;
       totalAcusacoes: number;
@@ -413,23 +415,31 @@ export function IntelligenceTab({
           )}
         </div>
 
-        <button
-          onClick={handleGenerate}
-          disabled={isGenerating}
-          className={cn(
-            "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors",
-            "text-zinc-600 hover:text-zinc-800 bg-zinc-100 hover:bg-zinc-200",
-            "dark:text-zinc-400 dark:hover:text-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700",
-            "disabled:opacity-50 disabled:cursor-not-allowed",
+        <div className="flex items-center gap-2">
+          {analysisData.fonte === "cowork" && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400">
+              <Bot className="h-2.5 w-2.5" />
+              Cowork
+            </span>
           )}
-        >
-          {isGenerating ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : (
-            <RefreshCw className="h-3 w-3" />
-          )}
-          Reanalisar
-        </button>
+          <button
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className={cn(
+              "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors",
+              "text-zinc-600 hover:text-zinc-800 bg-zinc-100 hover:bg-zinc-200",
+              "dark:text-zinc-400 dark:hover:text-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+            )}
+          >
+            {isGenerating ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3 w-3" />
+            )}
+            Reanalisar
+          </button>
+        </div>
       </div>
     </div>
   );

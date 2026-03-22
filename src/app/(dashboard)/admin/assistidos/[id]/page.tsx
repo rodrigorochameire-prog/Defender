@@ -77,6 +77,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           ? `Campos: ${result.camposImportados.join(", ")}`
           : "analysisData atualizado",
       });
+      void utils.intelligence.getForAssistido.invalidate({ assistidoId: Number(id) });
     },
     onError: (err) => {
       toast.error("Erro ao importar análise", { description: err.message });
