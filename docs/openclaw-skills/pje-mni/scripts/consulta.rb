@@ -81,14 +81,18 @@ def find_certificate(session)
   selected_x509 = nil
 
   certs.each_with_index do |cert_obj, i|
-    cert_der = cert_obj[:VALUE]
-    cert_id  = cert_obj[:ID]
+    cert_der = cert_obj[:VALUE] rescue nil
+    cert_id  = cert_obj[:ID] rescue nil
+    next unless cert_der
+
     x509 = OpenSSL::X509::Certificate.new(cert_der)
 
     cn = x509.subject.to_a.find { |attr| attr[0] == "CN" }&.dig(1) || "(sem CN)"
-    puts "[INFO]   #{i + 1}. #{cn} (ID: #{cert_id.unpack1('H*')})"
+    id_hex = cert_id ? cert_id.unpack1("H*") : "sem-id"
+    puts "[INFO]   #{i + 1}. #{cn} (ID: #{id_hex})"
 
-    # Verificar se existe chave privada correspondente
+    # Verificar se existe chave privada correspondente (precisa de CKA_ID)
+    next unless cert_id
     keys = session.find_objects(CLASS: PKCS11::CKO_PRIVATE_KEY, ID: cert_id)
     if keys.any?
       puts "[INFO]      ^ TEM chave privada — este é o certificado pessoal"
