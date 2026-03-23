@@ -1,0 +1,6 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+gem "nokogiri", "~> 1.16"   # XML parsing + Exclusive C14N canonicalization
+gem "pkcs11", "~> 0.3"      # PKCS#11 interface for SafeNet token
