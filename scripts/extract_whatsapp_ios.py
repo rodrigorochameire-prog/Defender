@@ -59,16 +59,40 @@ def find_backup_dir(custom_path: str = None):
     return backups[0]
 
 def find_whatsapp_db(backup_dir: Path) -> Path:
-    # Tenta WhatsApp Business primeiro
+    # iOS 10+ usa Manifest.db para mapear fileID -> domain/relativePath
+    manifest_db = backup_dir / "Manifest.db"
+    if manifest_db.exists():
+        conn = sqlite3.connect(str(manifest_db))
+        try:
+            # Tenta WhatsApp Business primeiro, depois pessoal
+            for domain_pattern in ["%WhatsAppSMB%", "%WhatsApp%"]:
+                rows = conn.execute(
+                    "SELECT fileID, domain FROM Files WHERE domain LIKE ? AND relativePath = 'ChatStorage.sqlite'",
+                    (domain_pattern,)
+                ).fetchall()
+                for file_id, domain in rows:
+                    db_path = backup_dir / file_id[:2] / file_id
+                    if db_path.exists():
+                        label = "WhatsApp Business" if "SMB" in domain else "WhatsApp"
+                        print(f"Banco encontrado: {label} ({domain})")
+                        return db_path
+        finally:
+            conn.close()
+
+    # Fallback: SHA1 do path completo (iOS antigo)
     for domain_path in [
+        "AppDomainGroup-group.net.whatsapp.WhatsAppSMB.shared/ChatStorage.sqlite",
+        "AppDomainGroup-group.net.whatsapp.WhatsApp.shared/ChatStorage.sqlite",
         "AppDomain-net.whatsapp.WhatsAppSMB-Documents/ChatStorage.sqlite",
         "AppDomain-net.whatsapp.WhatsApp-Documents/ChatStorage.sqlite",
     ]:
         file_hash = hashlib.sha1(domain_path.encode()).hexdigest()
         db_path = backup_dir / file_hash[:2] / file_hash
         if db_path.exists():
-            print(f"Banco encontrado: {'WhatsApp Business' if 'SMB' in domain_path else 'WhatsApp'}")
+            label = "WhatsApp Business" if "SMB" in domain_path else "WhatsApp"
+            print(f"Banco encontrado: {label}")
             return db_path
+
     raise FileNotFoundError(
         "Banco do WhatsApp não encontrado no backup.\n"
         "Certifique-se que o backup foi feito sem criptografia no Finder."
