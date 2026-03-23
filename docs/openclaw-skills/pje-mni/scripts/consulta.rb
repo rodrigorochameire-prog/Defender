@@ -71,21 +71,45 @@ def find_certificate(session)
   certs = session.find_objects(CLASS: PKCS11::CKO_CERTIFICATE)
   abort "ERRO: nenhum certificado no token" if certs.empty?
 
-  # Pegar o primeiro certificado X.509
-  cert_obj = certs.first
-  cert_der = cert_obj[:VALUE]
-  cert_id  = cert_obj[:ID]
-  x509 = OpenSSL::X509::Certificate.new(cert_der)
+  puts "[INFO] #{certs.size} certificado(s) encontrado(s) no token"
 
-  puts "[INFO] Certificado: #{x509.subject}"
-  puts "[INFO] Emitido por: #{x509.issuer}"
-  puts "[INFO] Validade: #{x509.not_before} — #{x509.not_after}"
+  # Iterar todos os certificados e encontrar o pessoal (não CA)
+  # O certificado pessoal tem chave privada correspondente no token
+  selected_cert = nil
+  selected_der = nil
+  selected_id = nil
+  selected_x509 = nil
 
-  if x509.not_after < Time.now
-    abort "ERRO: certificado expirado em #{x509.not_after}"
+  certs.each_with_index do |cert_obj, i|
+    cert_der = cert_obj[:VALUE]
+    cert_id  = cert_obj[:ID]
+    x509 = OpenSSL::X509::Certificate.new(cert_der)
+
+    cn = x509.subject.to_a.find { |attr| attr[0] == "CN" }&.dig(1) || "(sem CN)"
+    puts "[INFO]   #{i + 1}. #{cn} (ID: #{cert_id.unpack1('H*')})"
+
+    # Verificar se existe chave privada correspondente
+    keys = session.find_objects(CLASS: PKCS11::CKO_PRIVATE_KEY, ID: cert_id)
+    if keys.any?
+      puts "[INFO]      ^ TEM chave privada — este é o certificado pessoal"
+      selected_cert = cert_obj
+      selected_der = cert_der
+      selected_id = cert_id
+      selected_x509 = x509
+    end
   end
 
-  [cert_der, cert_id, x509]
+  abort "ERRO: nenhum certificado com chave privada encontrado no token" unless selected_x509
+
+  puts "[INFO] Selecionado: #{selected_x509.subject}"
+  puts "[INFO] Emitido por: #{selected_x509.issuer}"
+  puts "[INFO] Validade: #{selected_x509.not_before} — #{selected_x509.not_after}"
+
+  if selected_x509.not_after < Time.now
+    abort "ERRO: certificado expirado em #{selected_x509.not_after}"
+  end
+
+  [selected_der, selected_id, selected_x509]
 end
 
 def find_private_key(session, cert_id)
