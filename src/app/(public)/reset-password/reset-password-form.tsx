@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Lock, Loader2, CheckCircle, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
+import { updatePasswordInDb } from "./actions";
 
 // Criar cliente Supabase
 function getSupabase() {
@@ -146,6 +147,25 @@ export function ResetPasswordForm() {
       if (error) {
         console.error("[Reset Password] Erro ao atualizar:", error);
         toast.error("Erro ao atualizar senha: " + error.message);
+        return;
+      }
+
+      // Atualizar também o passwordHash na tabela de usuários do app
+      // (o login usa bcrypt no banco, não o Supabase Auth)
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) {
+        const dbResult = await updatePasswordInDb(
+          sessionData.session.access_token,
+          sessionData.session.refresh_token,
+          formData.password
+        );
+        if (!dbResult.success) {
+          console.error("[Reset Password] Falha ao salvar no banco:", dbResult.error);
+          toast.error("Erro ao salvar a nova senha. Tente novamente.");
+          return;
+        }
+      } else {
+        toast.error("Sessão expirada. Solicite um novo link de recuperação.");
         return;
       }
 

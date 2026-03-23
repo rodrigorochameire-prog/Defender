@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
               </div>
             </div>
             <h1 className="text-lg font-bold bg-gradient-to-r from-orange-600 to-rose-500 bg-clip-text text-transparent">
-              DefesaHub
+              OMBUDS
             </h1>
           </div>
 
