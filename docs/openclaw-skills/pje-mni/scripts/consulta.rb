@@ -292,55 +292,26 @@ def send_soap_request(envelope, x509 = nil, cert_der = nil)
   send_via_net_http(envelope, x509)
 end
 
-# Enviar via curl (usa SecureTransport no macOS para smart card)
+# Enviar via curl
 def send_via_curl(envelope, cert_der)
   # Salvar envelope em arquivo temporário
   tmp_envelope = Tempfile.new(["soap", ".xml"])
   tmp_envelope.write(envelope)
   tmp_envelope.close
 
-  # Salvar certificado em PEM para curl
-  tmp_cert = nil
-  cert_args = []
-  if cert_der
-    tmp_cert = Tempfile.new(["cert", ".pem"])
-    x509 = OpenSSL::X509::Certificate.new(cert_der)
-    tmp_cert.write(x509.to_pem)
-    tmp_cert.close
-    cert_args = ["--cert", tmp_cert.path]
-  end
-
-  # Tentar com PKCS#11 engine primeiro (requer libp11 instalado)
-  pkcs11_args = []
-  begin
-    # Testar se curl tem suporte a engine
-    engine_test = `curl --engine list 2>&1`
-    if engine_test.include?("pkcs11")
-      puts "[INFO] curl tem engine pkcs11 — usando mTLS via PKCS#11"
-      pkcs11_args = [
-        "--engine", "pkcs11",
-        "--cert-type", "ENG",
-        "--cert", "pkcs11:pin-value=#{PKCS11_PIN}",
-        "--key-type", "ENG",
-        "--key", "pkcs11:pin-value=#{PKCS11_PIN}"
-      ]
-      cert_args = [] # engine cuida do cert
-    end
-  rescue
-    # ignore
-  end
-
+  # Headers que passam pelo WAF do TJ-BA:
+  # - SOAPAction vazio (document/literal style, padrão MNI)
+  # - User-Agent simulando Java (PJe é Java, WAF pode filtrar agentes incomuns)
+  # - Accept explícito para XML
   cmd = [
     "curl", "-s", "-S",
-    "--tlsv1.2", "--max-time", "60", "--connect-timeout", "30",
-    "-X", "POST",
-    "-H", "Content-Type: text/xml; charset=utf-8",
-    "-H", "SOAPAction: consultarAvisosPendentes",
-    *pkcs11_args,
-    *cert_args,
+    "--max-time", "60", "--connect-timeout", "30",
+    "-H", "Content-Type: text/xml;charset=UTF-8",
+    "-H", 'SOAPAction: ""',
+    "-H", "User-Agent: Apache-CXF/3.5.5",
+    "-H", "Accept: text/xml, application/xml",
     "-d", "@#{tmp_envelope.path}",
     "-w", "\n__HTTP_CODE__%{http_code}",
-    "-D", "-",
     MNI_ENDPOINT
   ]
 
@@ -350,10 +321,10 @@ def send_via_curl(envelope, cert_der)
   output = nil
   3.times do |attempt|
     output = `#{cmd.shelljoin} 2>&1`
-    break unless output.include?("Connection reset") || output.include?("ECONNRESET") || output.include?("curl: (56)")
+    break unless output.include?("Connection reset") || output.include?("ECONNRESET") || output.include?("curl: (56)") || output.include?("Access Denied")
 
     wait = 2 ** (attempt + 1)
-    puts "[WARN] Tentativa #{attempt + 1} falhou (connection reset), aguardando #{wait}s..."
+    puts "[WARN] Tentativa #{attempt + 1} falhou, aguardando #{wait}s..."
     sleep(wait)
   end
 
@@ -386,27 +357,11 @@ def send_via_net_http(envelope, x509 = nil)
   http.open_timeout = 30
   http.read_timeout = 60
 
-  # mTLS: enviar certificado do cliente
-  if x509
-    http.cert = x509
-    puts "[INFO] Certificado do cliente configurado para mTLS"
-
-    # Tentar carregar chave privada via OpenSSL PKCS#11 engine
-    begin
-      engine = OpenSSL::Engine.by_id("pkcs11")
-      engine.ctrl_cmd("MODULE_PATH", PKCS11_LIB)
-      engine.ctrl_cmd("PIN", PKCS11_PIN)
-      http.key = engine.load_private_key("pkcs11:")
-      puts "[INFO] Chave privada carregada via OpenSSL PKCS#11 engine"
-    rescue => e
-      puts "[WARN] OpenSSL PKCS#11 engine indisponível: #{e.message}"
-      puts "[WARN] mTLS pode falhar sem chave privada no TLS handshake"
-    end
-  end
-
   request = Net::HTTP::Post.new(uri.path)
-  request["Content-Type"] = "text/xml; charset=utf-8"
-  request["SOAPAction"] = "consultarAvisosPendentes"
+  request["Content-Type"] = "text/xml;charset=UTF-8"
+  request["SOAPAction"] = '""'
+  request["User-Agent"] = "Apache-CXF/3.5.5"
+  request["Accept"] = "text/xml, application/xml"
   request.body = envelope
 
   response = nil
