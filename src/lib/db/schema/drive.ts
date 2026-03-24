@@ -200,8 +200,21 @@ export const driveDocumentSections = pgTable("drive_document_sections", {
   // Ficha tipo-específica gerada pela IA
   fichaData: jsonb("ficha_data").$type<Record<string, unknown>>(),
 
-  // Metadados estruturados
+  // Metadados estruturados (v3 — inclui dados de percepção e fase processual)
   metadata: jsonb("metadata").$type<{
+    // v3: Fase processual (obrigatório para depoimentos/interrogatórios)
+    fase?: "inquerito" | "instrucao" | "plenario" | null;
+    autoridade?: string; // delegado, juiz ou presidente do júri
+    sob_compromisso?: boolean; // testemunha prestou compromisso legal?
+
+    // v2: Dados estruturados extraídos pela classificação
+    pessoas?: Array<{ nome: string; papel: string; descricao?: string }>;
+    cronologia?: Array<{ data: string; descricao: string; fonte?: string }>;
+    tesesDefensivas?: Array<{ tipo: string; descricao: string; fundamentacao?: string; confianca?: number }>;
+    contradicoes?: string[];
+    pontosCriticos?: string[];
+
+    // v1: Campos legados (mantidos para backward compatibility)
     partesmencionadas?: string[];
     datasExtraidas?: string[];
     artigosLei?: string[];
