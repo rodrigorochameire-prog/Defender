@@ -42,6 +42,7 @@ import {
   FileSearch,
   FolderOpen,
   Download,
+  ArrowUpDown,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
@@ -53,6 +54,7 @@ import { DriveFilePicker } from "./DriveFilePicker";
 import { MessageBubble } from "./MessageBubble";
 import { MessageSkeleton } from "./MessageSkeleton";
 import { ScrollToBottom } from "./ScrollToBottom";
+import { DisconnectBanner } from "./DisconnectBanner";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -112,6 +114,13 @@ export function ChatWindow({
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Message order
+  const [messageOrder, setMessageOrder] = useState<"newest" | "oldest">(() =>
+    typeof window !== "undefined" && localStorage.getItem("whatsapp_msg_order") === "newest"
+      ? "newest"
+      : "oldest"
+  );
 
   // Selection mode
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -217,6 +226,11 @@ export function ChatWindow({
     }, 5000);
     return () => clearInterval(interval);
   }, [contactId, refetchMessages]);
+
+  // Persist message order preference
+  useEffect(() => {
+    localStorage.setItem("whatsapp_msg_order", messageOrder);
+  }, [messageOrder]);
 
   // Focus search input when opened
   useEffect(() => {
@@ -501,7 +515,8 @@ export function ChatWindow({
     return allMessages.filter((m) => m.content?.toLowerCase().includes(q));
   }, [allMessages, searchQuery]);
 
-  const messageGroups = groupMessagesByDate(filteredMessages);
+  const orderedMessages = messageOrder === "newest" ? [...filteredMessages].reverse() : filteredMessages;
+  const messageGroups = groupMessagesByDate(orderedMessages);
 
   // -- Loading / Error states -----------------------------------------------
 
@@ -608,6 +623,28 @@ export function ChatWindow({
                 <TooltipContent>Selecionar mensagens</TooltipContent>
               </Tooltip>
 
+              {/* Message order toggle */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "h-8 w-8",
+                      messageOrder === "newest" && "bg-zinc-100 dark:bg-zinc-800"
+                    )}
+                    onClick={() =>
+                      setMessageOrder((prev) => (prev === "oldest" ? "newest" : "oldest"))
+                    }
+                  >
+                    <ArrowUpDown className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {messageOrder === "oldest" ? "Mais recentes primeiro" : "Mais antigas primeiro"}
+                </TooltipContent>
+              </Tooltip>
+
               {/* Details panel toggle */}
               {onToggleDetails && (
                 <Tooltip>
@@ -710,6 +747,11 @@ export function ChatWindow({
           </Button>
         </div>
       )}
+
+      {/* ================================================================== */}
+      {/* DISCONNECT BANNER                                                  */}
+      {/* ================================================================== */}
+      <DisconnectBanner configId={configId} />
 
       {/* ================================================================== */}
       {/* MESSAGES AREA                                                      */}

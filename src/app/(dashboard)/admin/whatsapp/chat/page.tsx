@@ -78,7 +78,7 @@ export default function WhatsAppChatPage() {
         tag: selectedTag || undefined,
         limit: 100,
       },
-      { enabled: !!selectedConfigId }
+      { enabled: !!selectedConfigId, refetchInterval: 15_000 }
     );
 
   const { data: stats, refetch: refetchStats } = trpc.whatsappChat.getStats.useQuery(
