@@ -1438,6 +1438,62 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
       return { sectionsStored: inserted.length };
     });
 
+    // Step: Auto-review sections by confidence threshold
+    await step.run("auto-review-by-confidence", async () => {
+      const { db } = await import("@/lib/db");
+      const { driveDocumentSections } = await import("@/lib/db/schema");
+      const { eq, and, gte, lt } = await import("drizzle-orm");
+
+      // Get all newly created sections for this file
+      const sections = await db
+        .select({
+          id: driveDocumentSections.id,
+          tipo: driveDocumentSections.tipo,
+          confianca: driveDocumentSections.confianca,
+          textoExtraido: driveDocumentSections.textoExtraido,
+        })
+        .from(driveDocumentSections)
+        .where(eq(driveDocumentSections.driveFileId, driveFileId));
+
+      let autoApproved = 0;
+      let flaggedReview = 0;
+      const fichaEvents: Array<{ name: "section/generate-ficha"; data: { sectionId: number } }> = [];
+
+      for (const section of sections) {
+        if (section.confianca && section.confianca >= 90) {
+          // High confidence → auto-approve
+          await db
+            .update(driveDocumentSections)
+            .set({ reviewStatus: "approved", updatedAt: new Date() })
+            .where(eq(driveDocumentSections.id, section.id));
+          autoApproved++;
+
+          // Queue ficha generation if section has text
+          if (section.textoExtraido && section.textoExtraido.trim().length >= 20) {
+            fichaEvents.push({
+              name: "section/generate-ficha" as const,
+              data: { sectionId: section.id },
+            });
+          }
+        } else if (section.confianca != null && section.confianca < 50) {
+          // Low confidence → flag for review
+          await db
+            .update(driveDocumentSections)
+            .set({ reviewStatus: "needs_review", updatedAt: new Date() })
+            .where(eq(driveDocumentSections.id, section.id));
+          flaggedReview++;
+        }
+        // 50-89: stays as "pending" (default)
+      }
+
+      // Batch trigger ficha generation for auto-approved sections
+      if (fichaEvents.length > 0) {
+        await inngest.send(fichaEvents);
+      }
+
+      return { autoApproved, flaggedReview, fichaTriggered: fichaEvents.length };
+    });
+
     // Step: Mark OCR status in driveFileContents
     if (needsOcr) {
       await step.run("mark-ocr-applied", async () => {
