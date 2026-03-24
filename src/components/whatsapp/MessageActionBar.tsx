@@ -93,7 +93,7 @@ export function MessageActionBar({
     <TooltipProvider delayDuration={300}>
       <div
         className={cn(
-          "absolute -top-9 right-0 z-20",
+          "absolute top-1 right-1 z-20",
           "flex items-center gap-0.5 p-1",
           "bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg",
           "opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150 pointer-events-none group-hover/msg:pointer-events-auto",
