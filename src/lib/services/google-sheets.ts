@@ -488,7 +488,7 @@ async function formatSheet(sheetId: number, title: string, dataRowCount = 500): 
             values: [...VALID_SHEET_LABELS].map(v => ({ userEnteredValue: v })),
           },
           showCustomUi: true,
-          strict: false,
+          strict: true,
         },
       },
     },
@@ -517,7 +517,7 @@ async function formatSheet(sheetId: number, title: string, dataRowCount = 500): 
             ].map(v => ({ userEnteredValue: v })),
           },
           showCustomUi: true,
-          strict: false,
+          strict: true,
         },
       },
     },
@@ -539,21 +539,9 @@ async function formatSheet(sheetId: number, title: string, dataRowCount = 500): 
     });
   }
 
-  // Cores condicionais: Ato (col G)
-  for (const [label, color] of Object.entries(ATO_COLORS)) {
-    requests.push({
-      addConditionalFormatRule: {
-        rule: {
-          ranges: [{ sheetId, startRowIndex: DATA_START_ROW - 1, endRowIndex: endRow, startColumnIndex: COL.ATO - 1, endColumnIndex: COL.ATO }],
-          booleanRule: {
-            condition: { type: "TEXT_EQ", values: [{ userEnteredValue: label }] },
-            format: { backgroundColor: color },
-          },
-        },
-        index: 0,
-      },
-    });
-  }
+  // Nota: Ato (col G) NÃO usa formatação condicional de fundo.
+  // O dropdown UI-nativo (criado manualmente) já fornece chips visuais.
+  // Cores de chip só podem ser configuradas pela UI do Google Sheets.
 
   await sheetsPost(":batchUpdate", { requests });
 }
