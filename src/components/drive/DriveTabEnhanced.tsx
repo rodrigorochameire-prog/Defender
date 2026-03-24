@@ -20,7 +20,22 @@ import {
   FileAudio,
   Calendar,
   Scale,
+  FolderOpen,
+  Link2,
 } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { SubpastaExplorer } from "@/components/hub/SubpastaExplorer";
 import { TimelineDocumental } from "@/components/hub/TimelineDocumental";
@@ -37,6 +52,7 @@ type ViewMode = "tree" | "timeline" | "status" | "processo";
 
 interface DriveFileData {
   id: number;
+  driveFileId?: string | null;
   name: string;
   mimeType: string | null;
   webViewLink: string | null;
@@ -54,6 +70,8 @@ interface DriveTabEnhancedProps {
   files: DriveFileData[];
   assistidoId?: number;
   processoId?: number;
+  driveFolderId?: string | null;
+  atribuicaoPrimaria?: string | null;
 }
 
 const VIEW_MODES: { key: ViewMode; label: string; icon: React.ElementType }[] = [
@@ -401,13 +419,42 @@ function FileDetailSheet({
   );
 }
 
-export function DriveTabEnhanced({ files, assistidoId, processoId }: DriveTabEnhancedProps) {
+export function DriveTabEnhanced({
+  files,
+  assistidoId,
+  processoId,
+  driveFolderId,
+  atribuicaoPrimaria,
+}: DriveTabEnhancedProps) {
   const [view, setView] = useState<ViewMode>("tree");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFile, setSelectedFile] = useState<DriveFileData | null>(null);
 
-  // Get the driveFolderId from the first file (all files share same root)
-  const driveFolderId = files[0]?.driveFolderId;
+  // --- Fluxo de vinculação de pasta ---
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const showLinkFlow = assistidoId != null && !driveFolderId;
+
+  const { data: suggestion, isLoading: loadingSuggestion } =
+    trpc.drive.getSuggestedFolderForAssistido.useQuery(
+      { assistidoId: assistidoId! },
+      { enabled: showLinkFlow }
+    );
+
+  const { data: unlinkedFolders } =
+    trpc.drive.listUnlinkedFoldersByAtribuicao.useQuery(
+      { atribuicaoPrimaria: atribuicaoPrimaria ?? null },
+      { enabled: showLinkFlow && pickerOpen }
+    );
+
+  const utils = trpc.useUtils();
+  const linkFolder = trpc.assistidos.linkDriveFolder.useMutation({
+    onSuccess: () => {
+      toast.success("Pasta vinculada com sucesso.");
+      setPickerOpen(false);
+      utils.assistidos.getById.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   const processFolder = trpc.enrichment.batchProcess.useMutation({
     onSuccess: (data) => {
@@ -430,6 +477,94 @@ export function DriveTabEnhanced({ files, assistidoId, processoId }: DriveTabEnh
 
   return (
     <div className="space-y-3">
+      {/* Fluxo de vinculação quando sem pasta vinculada */}
+      {showLinkFlow && (
+        <div className="p-4 border rounded-lg bg-zinc-50 mb-4">
+          {loadingSuggestion ? (
+            <div className="flex items-center gap-2 text-sm text-zinc-500">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Procurando pasta correspondente…
+            </div>
+          ) : suggestion ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-zinc-700">
+                <FolderOpen className="w-4 h-4 text-emerald-600" />
+                Pasta sugerida encontrada
+              </div>
+              <p className="text-sm text-zinc-600">
+                &ldquo;{suggestion.name}&rdquo; &middot; {suggestion.fileCount} arquivo(s)
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  disabled={linkFolder.isPending}
+                  onClick={() =>
+                    linkFolder.mutate({
+                      assistidoId: assistidoId!,
+                      driveFileId: suggestion.driveFileId,
+                    })
+                  }
+                >
+                  {linkFolder.isPending ? (
+                    <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                  ) : (
+                    <Link2 className="w-3 h-3 mr-1" />
+                  )}
+                  Confirmar vínculo
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPickerOpen(true)}
+                >
+                  Escolher outra
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm text-zinc-500">Nenhuma pasta Drive vinculada.</p>
+              <Button size="sm" variant="outline" onClick={() => setPickerOpen(true)}>
+                <FolderOpen className="w-3 h-3 mr-1" />
+                Vincular pasta manualmente
+              </Button>
+            </div>
+          )}
+
+          {/* Picker de pastas */}
+          <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+            <PopoverTrigger asChild>
+              <span />
+            </PopoverTrigger>
+            <PopoverContent className="w-72 p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Buscar pasta…" />
+                <CommandList>
+                  <CommandEmpty>Nenhuma pasta disponível.</CommandEmpty>
+                  <CommandGroup>
+                    {(unlinkedFolders ?? []).map((folder) => (
+                      <CommandItem
+                        key={folder.driveFileId}
+                        value={folder.name ?? ""}
+                        onSelect={() =>
+                          linkFolder.mutate({
+                            assistidoId: assistidoId!,
+                            driveFileId: folder.driveFileId,
+                          })
+                        }
+                      >
+                        <FolderOpen className="w-3 h-3 mr-2 text-zinc-400" />
+                        {folder.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
+      )}
+
       {/* View toggle + search */}
       <div className="flex items-center gap-2 flex-wrap">
         {/* View mode buttons */}
@@ -515,6 +650,38 @@ export function DriveTabEnhanced({ files, assistidoId, processoId }: DriveTabEnh
           </Button>
         )}
       </div>
+
+      {/* Link para o Drive quando vinculado */}
+      {driveFolderId && (
+        <div className="flex items-center justify-between mb-2 pb-2 border-b">
+          <span className="text-xs text-zinc-500">Pasta vinculada</span>
+          <div className="flex gap-2">
+            {(() => {
+              const rootFolder = files.find(
+                (f) => f.isFolder && f.driveFileId === driveFolderId
+              );
+              return rootFolder?.webViewLink ? (
+                <a
+                  href={rootFolder.webViewLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-emerald-600 hover:underline flex items-center gap-1"
+                >
+                  Abrir no Drive <ExternalLink className="w-3 h-3" />
+                </a>
+              ) : null;
+            })()}
+            {assistidoId && (
+              <button
+                className="text-xs text-zinc-400 hover:text-zinc-600"
+                onClick={() => setPickerOpen(true)}
+              >
+                Alterar pasta
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* View content */}
       {view === "tree" && (
