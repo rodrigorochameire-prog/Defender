@@ -4736,4 +4736,90 @@ export const driveRouter = router({
         .where(and(...whereConditions))
         .orderBy(driveFiles.name);
     }),
+
+  backfillAssistidoLinks: protectedProcedure
+    .input(z.object({ limit: z.number().min(1).max(100).default(50) }))
+    .mutation(async ({ input }) => {
+      // 1. Busca assistidos sem pasta vinculada
+      const unlinked = await db
+        .select({
+          id: assistidos.id,
+          nome: assistidos.nome,
+          atribuicaoPrimaria: assistidos.atribuicaoPrimaria,
+        })
+        .from(assistidos)
+        .where(isNull(assistidos.driveFolderId))
+        .limit(input.limit + 1); // +1 para saber se hasMore
+
+      const hasMore = unlinked.length > input.limit;
+      const batch = unlinked.slice(0, input.limit);
+
+      let linked = 0;
+      let skipped = 0;
+      let errors = 0;
+
+      for (const assistido of batch) {
+        try {
+          const atribuicao = assistido.atribuicaoPrimaria as keyof typeof ATRIBUICAO_FOLDER_IDS | null;
+          if (!atribuicao || !(atribuicao in ATRIBUICAO_FOLDER_IDS) || !assistido.nome) {
+            skipped++;
+            continue;
+          }
+
+          const rootFolderId = getFolderIdForAtribuicao(atribuicao);
+          const normalizedTarget = normalizeNameForMatch(assistido.nome);
+
+          // Busca pastas não vinculadas na pasta raiz da atribuição
+          const candidates = await db
+            .select({ driveFileId: driveFiles.driveFileId, name: driveFiles.name })
+            .from(driveFiles)
+            .where(
+              and(
+                eq(driveFiles.isFolder, true),
+                isNull(driveFiles.assistidoId),
+                eq(driveFiles.driveFolderId, rootFolderId)
+              )
+            );
+
+          // Procura match exato normalizado
+          const exactMatch = candidates.find(
+            (c) => normalizeNameForMatch(c.name ?? "") === normalizedTarget
+          );
+
+          if (!exactMatch) {
+            skipped++;
+            continue;
+          }
+
+          // Executa o vínculo (mesma lógica de linkDriveFolder)
+          await db.transaction(async (tx) => {
+            await tx
+              .update(assistidos)
+              .set({ driveFolderId: exactMatch.driveFileId, updatedAt: new Date() })
+              .where(eq(assistidos.id, assistido.id));
+
+            await tx
+              .update(driveFiles)
+              .set({ assistidoId: assistido.id, updatedAt: new Date() })
+              .where(eq(driveFiles.driveFileId, exactMatch.driveFileId));
+
+            await tx
+              .update(driveFiles)
+              .set({ assistidoId: assistido.id, updatedAt: new Date() })
+              .where(
+                and(
+                  eq(driveFiles.driveFolderId, exactMatch.driveFileId),
+                  isNull(driveFiles.assistidoId)
+                )
+              );
+          });
+
+          linked++;
+        } catch {
+          errors++;
+        }
+      }
+
+      return { linked, skipped, errors, hasMore };
+    }),
 });
