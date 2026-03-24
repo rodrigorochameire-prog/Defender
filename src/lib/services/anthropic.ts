@@ -1,15 +1,15 @@
 /**
  * OMBUDS - Integração Anthropic Claude
  *
- * Serviços de IA usando Claude para:
- * - Claude Sonnet 4.6: Revisão de documentos, coerência, tom jurídico
- * - Claude Opus 4.6: High reasoning sobre dados ESTRUTURADOS (uso restrito)
+ * Serviços de IA usando Claude Sonnet 4.6 para:
+ * - Classificação de PDFs processuais (engine primária)
+ * - Análise de depoimentos e cross-analysis
+ * - Análise de dados estruturados
+ * - Revisão e geração de ofícios (disponível mas não prioritário)
  *
- * ⚠️ RESTRIÇÕES DO OPUS 4.6:
- * - Apenas para funções superiores de inteligência sobre dados já depurados
- * - NÃO usar para processar PDFs longos ou contextos grandes
- * - Dados devem chegar já estruturados (JSON, tabelas, resumos)
- * - Custo alto — reservar para decisões que exijam raciocínio profundo
+ * Estratégia de custos (mar/2026):
+ * - Sonnet para todas as funções (Opus removido — custo 5x maior sem ganho proporcional)
+ * - Notícias jurídicas migradas para Gemini 2.5 Pro
  */
 
 import Anthropic from "@anthropic-ai/sdk";
@@ -441,9 +441,9 @@ TITULO: [titulo sugerido para o oficio]
 // ==========================================
 
 /**
- * Analisa padrões em dados ESTRUTURADOS de ofícios
+ * Analisa padrões em dados ESTRUTURADOS
  *
- * ⚠️ USA OPUS 4.6 — CARO. Apenas para dados já depurados.
+ * Usa Claude Sonnet 4.6 — qualidade excelente para análise de JSON estruturado.
  * Input DEVE ser JSON/dados estruturados, NÃO texto livre ou PDFs.
  *
  * @param dadosEstruturados - JSON com dados já classificados/extraídos
@@ -455,12 +455,12 @@ export async function analisarDadosEstruturados(
 ): Promise<InsightEstruturadoResult> {
   const client = getClient();
 
-  // Guard: verificar tamanho do input para evitar uso abusivo
+  // Guard: verificar tamanho do input
   const inputSize = JSON.stringify(dadosEstruturados).length;
-  if (inputSize > 50000) {
+  if (inputSize > 100000) {
     throw new Error(
-      `Input muito grande para Opus (${inputSize} chars). ` +
-        `Opus deve receber dados já depurados (max ~50k chars). ` +
+      `Input muito grande (${inputSize} chars). ` +
+        `Dados devem chegar já depurados (max ~100k chars). ` +
         `Use Gemini para processar grandes volumes primeiro.`
     );
   }
@@ -490,7 +490,7 @@ Responda APENAS com JSON válido:
 }`;
 
   const message = await client.messages.create({
-    model: CLAUDE_MODELS.OPUS,
+    model: CLAUDE_MODELS.SONNET,
     max_tokens: 4096,
     system: `${CONTEXTO_JURIDICO_SISTEMA}\n\nVocê está analisando dados ESTRUTURADOS. Forneça insights de alto nível com raciocínio profundo.`,
     messages: [{ role: "user", content: prompt }],
@@ -525,10 +525,10 @@ Responda APENAS com JSON válido:
 
   return {
     conteudo: responseText,
-    modeloUsado: CLAUDE_MODELS.OPUS,
+    modeloUsado: CLAUDE_MODELS.SONNET,
     tokensEntrada,
     tokensSaida,
-    custoEstimado: estimarCusto(CLAUDE_MODELS.OPUS, tokensEntrada, tokensSaida),
+    custoEstimado: estimarCusto(CLAUDE_MODELS.SONNET, tokensEntrada, tokensSaida),
     insights: parsed.insights ?? [],
     padroesIdentificados: parsed.padroesIdentificados ?? [],
     recomendacoes: parsed.recomendacoes ?? [],

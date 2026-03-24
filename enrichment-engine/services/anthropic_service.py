@@ -1,8 +1,8 @@
 """
-Anthropic Claude Service — Revisão e análise de dados estruturados.
+Anthropic Claude Service — Análise de dados e revisão de documentos.
 
-- Claude Sonnet 4.6: Revisão de documentos, coerência, tom jurídico
-- Claude Opus 4.6: High reasoning sobre dados ESTRUTURADOS (uso restrito)
+- Claude Sonnet 4.6: Todas as funções (análise, revisão, dados estruturados)
+- Opus removido (mar/2026) — custo 5x maior sem ganho proporcional para JSON estruturado
 """
 from __future__ import annotations
 
@@ -152,20 +152,20 @@ Retorne APENAS o texto melhorado, sem explicações.""",
         pergunta: str,
     ) -> dict[str, Any]:
         """
-        Opus 4.6 — High reasoning sobre dados JÁ ESTRUTURADOS.
+        Sonnet 4.6 — Análise de dados JÁ ESTRUTURADOS.
         Input DEVE ser JSON depurado, NÃO texto livre.
         """
         input_size = len(json.dumps(dados))
-        if input_size > 50000:
+        if input_size > 100000:
             raise ValueError(
-                f"Input muito grande para Opus ({input_size} chars). "
+                f"Input muito grande ({input_size} chars). "
                 "Use Gemini para processar grandes volumes primeiro."
             )
 
         client = self._get_client()
 
         message = client.messages.create(
-            model=self.settings.claude_opus_model,
+            model=self.settings.claude_sonnet_model,
             max_tokens=self.settings.claude_max_tokens,
             system=f"{CONTEXTO_JURIDICO}\n\nVocê analisa dados ESTRUTURADOS com raciocínio profundo.",
             messages=[{
@@ -196,7 +196,7 @@ Retorne APENAS o texto melhorado, sem explicações.""",
 
         return {
             **parsed,
-            "modelo": self.settings.claude_opus_model,
+            "modelo": self.settings.claude_sonnet_model,
             "tokens_entrada": message.usage.input_tokens,
             "tokens_saida": message.usage.output_tokens,
         }

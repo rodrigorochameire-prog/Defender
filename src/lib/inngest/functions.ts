@@ -822,6 +822,16 @@ export const intelligenceEnrichDocumentFn = inngest.createFunction(
       }
     });
 
+    // Trigger auto-consolidation if enrichment succeeded and we have an assistidoId
+    if (result.success && !("skipped" in result && result.skipped) && assistidoId) {
+      await step.run("trigger-consolidation", async () => {
+        await inngest.send({
+          name: "intelligence/consolidate",
+          data: { assistidoId, processoId: processoId ?? undefined, userId: "system" },
+        });
+      });
+    }
+
     return result;
   }
 );
@@ -1473,6 +1483,26 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
       });
     });
 
+    // Step 7: Trigger auto-consolidation if file is linked to an assistido
+    await step.run("trigger-consolidation", async () => {
+      const { db } = await import("@/lib/db");
+      const { driveFiles } = await import("@/lib/db/schema");
+      const { eq } = await import("drizzle-orm");
+
+      const [file] = await db
+        .select({ assistidoId: driveFiles.assistidoId })
+        .from(driveFiles)
+        .where(eq(driveFiles.id, driveFileId))
+        .limit(1);
+
+      if (file?.assistidoId) {
+        await inngest.send({
+          name: "intelligence/consolidate",
+          data: { assistidoId: file.assistidoId, userId: "system" },
+        });
+      }
+    });
+
     return {
       success: true,
       driveFileId,
@@ -1767,6 +1797,26 @@ export const transcribeDriveFileFn = inngest.createFunction(
         .where(eq(driveFiles.driveFileId, driveFileId));
     });
 
+    // Trigger auto-consolidation after transcription
+    await step.run("trigger-consolidation", async () => {
+      const { db } = await import("@/lib/db");
+      const { driveFiles: driveFilesSchema } = await import("@/lib/db/schema");
+      const { eq } = await import("drizzle-orm");
+
+      const [file] = await db
+        .select({ assistidoId: driveFilesSchema.assistidoId })
+        .from(driveFilesSchema)
+        .where(eq(driveFilesSchema.driveFileId, driveFileId))
+        .limit(1);
+
+      if (file?.assistidoId) {
+        await inngest.send({
+          name: "intelligence/consolidate",
+          data: { assistidoId: file.assistidoId, userId: "system" },
+        });
+      }
+    });
+
     return {
       success: true,
       driveFileId,
@@ -1774,6 +1824,43 @@ export const transcribeDriveFileFn = inngest.createFunction(
       speakers: transcriptionResult.speakers?.length ?? 0,
       duration: transcriptionResult.duration,
     };
+  }
+);
+
+/**
+ * Auto-consolidate enriched data for an assistido/processo.
+ * Debounced: waits 5 min after last enrichment event, max 30 min.
+ * Concurrency: 1 per assistido to avoid duplicate runs.
+ */
+export const intelligenceConsolidateFn = inngest.createFunction(
+  {
+    id: "intelligence-consolidate",
+    name: "Intelligence: Auto-Consolidate Case",
+    retries: 2,
+    debounce: {
+      key: "event.data.assistidoId",
+      period: "5m",
+      timeout: "30m",
+    },
+    concurrency: [{ limit: 1, key: "event.data.assistidoId" }],
+  },
+  { event: "intelligence/consolidate" },
+  async ({ event, step }) => {
+    const { assistidoId, processoId, userId } = event.data;
+
+    const result = await step.run("consolidate-case", async () => {
+      const { consolidateForAssistido, consolidateForProcesso } =
+        await import("@/lib/services/intelligence-consolidation");
+
+      if (assistidoId) {
+        return consolidateForAssistido(assistidoId, userId || "system");
+      } else if (processoId) {
+        return consolidateForProcesso(processoId, userId || "system");
+      }
+      return { success: false, error: "No assistidoId or processoId provided" };
+    });
+
+    return result;
   }
 );
 
@@ -1801,4 +1888,5 @@ export const functions = [
   sectionGenerateFichaFn,
   transcribeDriveFileFn,
   enrichmentProcessFolderFn,
+  intelligenceConsolidateFn,
 ];

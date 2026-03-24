@@ -146,6 +146,24 @@ export const enrichmentRouter = router({
           })
           .where(eq(documentos.id, documentoId));
 
+        // Trigger auto-consolidation
+        if (doc.assistidoId) {
+          try {
+            const { inngest } = await import("@/lib/inngest/client");
+            await inngest.send({
+              name: "intelligence/consolidate",
+              data: {
+                assistidoId: doc.assistidoId,
+                processoId: doc.processoId ?? undefined,
+                userId: ctx.user.id.toString(),
+              },
+            });
+          } catch (e) {
+            // Non-critical: don't fail enrichment if consolidation trigger fails
+            console.warn("[Enrichment] Failed to trigger consolidation:", e);
+          }
+        }
+
         return {
           success: true,
           data: result,
@@ -269,6 +287,23 @@ export const enrichmentRouter = router({
             updatedAt: new Date(),
           })
           .where(eq(atendimentos.id, atendimentoId));
+
+        // Trigger auto-consolidation
+        if (atendimento.assistidoId) {
+          try {
+            const { inngest } = await import("@/lib/inngest/client");
+            await inngest.send({
+              name: "intelligence/consolidate",
+              data: {
+                assistidoId: atendimento.assistidoId,
+                processoId: atendimento.processoId ?? undefined,
+                userId: ctx.user.id.toString(),
+              },
+            });
+          } catch (e) {
+            console.warn("[Enrichment] Failed to trigger consolidation:", e);
+          }
+        }
 
         return {
           success: true,
