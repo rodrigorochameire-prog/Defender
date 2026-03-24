@@ -1088,7 +1088,7 @@ export default function AssistidosPage() {
                 disabled={backfillDriveMutation.isPending}
                 onClick={() => backfillDriveMutation.mutate({ limit: 50 })}
               >
-                Continuar ({backfillResult.linked} vinculados até agora)
+                Continuar ({backfillResult.linked} nesta rodada — continuar)
               </Button>
             )}
             {/* Botao batch Solar export */}

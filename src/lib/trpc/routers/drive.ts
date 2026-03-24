@@ -4769,30 +4769,27 @@ export const driveRouter = router({
           const rootFolderId = getFolderIdForAtribuicao(atribuicao);
           const normalizedTarget = normalizeNameForMatch(assistido.nome);
 
-          // Busca pastas não vinculadas na pasta raiz da atribuição
-          const candidates = await db
-            .select({ driveFileId: driveFiles.driveFileId, name: driveFiles.name })
-            .from(driveFiles)
-            .where(
-              and(
-                eq(driveFiles.isFolder, true),
-                isNull(driveFiles.assistidoId),
-                eq(driveFiles.driveFolderId, rootFolderId)
-              )
+          // Executa dentro de uma transação para evitar race conditions
+          const wasLinked = await db.transaction(async (tx) => {
+            // Busca pastas não vinculadas na pasta raiz da atribuição (dentro da tx)
+            const candidates = await tx
+              .select({ driveFileId: driveFiles.driveFileId, name: driveFiles.name })
+              .from(driveFiles)
+              .where(
+                and(
+                  eq(driveFiles.isFolder, true),
+                  isNull(driveFiles.assistidoId),
+                  eq(driveFiles.driveFolderId, rootFolderId)
+                )
+              );
+
+            // Procura match exato normalizado
+            const exactMatch = candidates.find(
+              (c) => normalizeNameForMatch(c.name ?? "") === normalizedTarget
             );
 
-          // Procura match exato normalizado
-          const exactMatch = candidates.find(
-            (c) => normalizeNameForMatch(c.name ?? "") === normalizedTarget
-          );
+            if (!exactMatch) return false;
 
-          if (!exactMatch) {
-            skipped++;
-            continue;
-          }
-
-          // Executa o vínculo (mesma lógica de linkDriveFolder)
-          await db.transaction(async (tx) => {
             await tx
               .update(assistidos)
               .set({ driveFolderId: exactMatch.driveFileId, updatedAt: new Date() })
@@ -4812,9 +4809,15 @@ export const driveRouter = router({
                   isNull(driveFiles.assistidoId)
                 )
               );
+
+            return true;
           });
 
-          linked++;
+          if (wasLinked) {
+            linked++;
+          } else {
+            skipped++;
+          }
         } catch {
           errors++;
         }

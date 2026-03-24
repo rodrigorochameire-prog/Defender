@@ -443,7 +443,7 @@ export function DriveTabEnhanced({
   const { data: unlinkedFolders } =
     trpc.drive.listUnlinkedFoldersByAtribuicao.useQuery(
       { atribuicaoPrimaria: atribuicaoPrimaria ?? null },
-      { enabled: showLinkFlow && pickerOpen }
+      { enabled: pickerOpen && assistidoId != null }
     );
 
   const utils = trpc.useUtils();
