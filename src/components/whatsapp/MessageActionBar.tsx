@@ -58,7 +58,7 @@ function ActionButton({
           }}
           className={cn(
             "flex items-center justify-center w-[30px] h-[30px] rounded-md",
-            "bg-zinc-700 hover:bg-zinc-600 transition-colors duration-150",
+            "bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors duration-150",
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
             className,
           )}
@@ -95,7 +95,7 @@ export function MessageActionBar({
         className={cn(
           "absolute -top-9 right-0 z-20",
           "flex items-center gap-0.5 p-1",
-          "bg-zinc-800 border border-zinc-700 rounded-lg shadow-lg",
+          "bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg",
           "opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150 pointer-events-none group-hover/msg:pointer-events-auto",
         )}
         onClick={(e) => e.stopPropagation()}
@@ -127,6 +127,9 @@ export function MessageActionBar({
           />
         </ActionButton>
 
+        {/* Divider */}
+        <div className="w-px h-5 bg-zinc-300 dark:bg-zinc-600 mx-0.5" />
+
         {/* More dropdown */}
         <DropdownMenu>
           <Tooltip>
@@ -137,7 +140,7 @@ export function MessageActionBar({
                   onClick={(e) => e.stopPropagation()}
                   className={cn(
                     "flex items-center justify-center w-[30px] h-[30px] rounded-md",
-                    "bg-zinc-700 hover:bg-zinc-600 transition-colors duration-150",
+                    "bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors duration-150",
                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
                   )}
                   aria-label="Mais opções"
