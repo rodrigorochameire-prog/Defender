@@ -245,8 +245,25 @@ export function MessageBubble({
     replyText = lines.slice(restIndex).join("\n");
   }
 
-  const hasMedia = msg.type !== "text" && (msg.mediaUrl || msg.type === "document");
+  const hasMedia = msg.type !== "text" && !!(msg.mediaUrl || msg.type === "document");
   const hasContent = !!msg.content;
+
+  // Label for non-text messages that have no renderable content or media URL
+  const typeLabel: Record<string, string> = {
+    sticker: "[Sticker]",
+    image: "[Imagem]",
+    audio: "[Áudio]",
+    video: "[Vídeo]",
+    document: "[Documento]",
+    location: "[Localização]",
+    contact: "[Contato]",
+    reaction: "[Reação]",
+    poll: "[Enquete]",
+  };
+  const fallbackTypeLabel =
+    !hasContent && !hasMedia && msg.type !== "text"
+      ? (typeLabel[msg.type] ?? `[${msg.type}]`)
+      : null;
 
   return (
     <div
@@ -368,8 +385,16 @@ export function MessageBubble({
             </p>
           )}
 
+          {/* Fallback label for stickers/unrenderable media types */}
+          {fallbackTypeLabel && (
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 italic">
+              {fallbackTypeLabel}
+              <TimestampRow time={time} isOutbound={isOutbound} status={msg.status} />
+            </p>
+          )}
+
           {/* Timestamp only (for media-only messages or edge cases) */}
-          {(!hasContent || (hasQuote && !replyText)) && (
+          {(!hasContent || (hasQuote && !replyText)) && !fallbackTypeLabel && (
             <div className="flex items-center justify-end gap-1 mt-0.5">
               <span className="text-[10px] text-zinc-400 tabular-nums">{time}</span>
               {isOutbound && <StatusIcon status={msg.status} />}

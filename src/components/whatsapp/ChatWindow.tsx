@@ -73,6 +73,7 @@ interface Message {
   mediaFilename: string | null;
   status: string;
   createdAt: Date;
+  isFavorite?: boolean | null;
 }
 
 interface Contact {
@@ -118,12 +119,13 @@ export function ChatWindow({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchIndex, setSearchIndex] = useState(0);
 
-  // Message order
-  const [messageOrder, setMessageOrder] = useState<"newest" | "oldest">(() =>
-    typeof window !== "undefined" && localStorage.getItem("whatsapp_msg_order") === "newest"
-      ? "newest"
-      : "oldest"
-  );
+  // Message order — default is "newest" (newest messages first)
+  const [messageOrder, setMessageOrder] = useState<"newest" | "oldest">(() => {
+    if (typeof window === "undefined") return "newest";
+    const saved = localStorage.getItem("whatsapp_msg_order");
+    // Only use "oldest" if explicitly saved; default to "newest"
+    return saved === "oldest" ? "oldest" : "newest";
+  });
 
   // Selection mode
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -207,6 +209,21 @@ export function ChatWindow({
       onContactUpdate?.();
     },
   });
+
+  const toggleFavoriteMutation = trpc.whatsappChat.toggleFavorite.useMutation({
+    onSuccess: () => {
+      refetchMessages();
+    },
+    onError: () => {
+      toast.error("Erro ao favoritar mensagem");
+    },
+  });
+
+  // Contact context (assistido + active processo) for message action modals
+  const { data: contextData } = trpc.whatsappChat.getContactContext.useQuery(
+    { contactId, configId },
+    { enabled: !!contactId && !!configId }
+  );
 
   // -- Effects --------------------------------------------------------------
 
@@ -1026,6 +1043,11 @@ export function ChatWindow({
                           onCopy={copyToClipboard}
                           searchQuery={searchQuery}
                           highlightMatch={searchQuery ? highlightMatch : undefined}
+                          isFavorite={msg.isFavorite ?? false}
+                          contactId={contactId}
+                          assistidoId={contextData?.assistido?.id ?? null}
+                          processoId={contextData?.processoAtivo?.id ?? null}
+                          onToggleFavorite={(m) => toggleFavoriteMutation.mutate({ messageId: m.id })}
                         />
                       </div>
                     ))}
