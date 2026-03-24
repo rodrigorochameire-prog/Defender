@@ -11,6 +11,7 @@ import { db } from "@/lib/db";
 import { processos, driveFiles, driveSyncFolders, driveSyncLogs, driveWebhooks, assistidos, casos } from "@/lib/db/schema";
 import { eq, and, desc, ilike, or, sql, gt, lt, isNull } from "drizzle-orm";
 import { ATRIBUICAO_FOLDER_IDS, SPECIAL_FOLDER_IDS, normalizeName, toTitleCase } from "@/lib/utils/text-extraction";
+import { calculateSimilarity } from "@/lib/utils/name-matching";
 export { ATRIBUICAO_FOLDER_IDS, SPECIAL_FOLDER_IDS };
 import { inngest } from "@/lib/inngest/client";
 
@@ -4173,32 +4174,6 @@ const FOLDER_ID_TO_ATRIBUICAO: Record<string, string> = Object.fromEntries(
   })
 );
 
-/**
- * Calcula similaridade normalizada entre duas strings (Levenshtein)
- */
-function calculateSimilarityNormalized(str1: string, str2: string): number {
-  const s1 = str1.toLowerCase();
-  const s2 = str2.toLowerCase();
-  if (s1 === s2) return 1;
-  if (s1.length === 0 || s2.length === 0) return 0;
-
-  const matrix: number[][] = [];
-  for (let i = 0; i <= s1.length; i++) matrix[i] = [i];
-  for (let j = 0; j <= s2.length; j++) matrix[0][j] = j;
-
-  for (let i = 1; i <= s1.length; i++) {
-    for (let j = 1; j <= s2.length; j++) {
-      const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
-      matrix[i][j] = Math.min(
-        matrix[i - 1][j] + 1,
-        matrix[i][j - 1] + 1,
-        matrix[i - 1][j - 1] + cost
-      );
-    }
-  }
-  return 1 - matrix[s1.length][s2.length] / Math.max(s1.length, s2.length);
-}
-
 export interface ReverseSyncResult {
   action: "linked" | "created" | "created_pending" | "skipped";
   assistidoId: number;
@@ -4264,7 +4239,7 @@ export async function handleNewAssistidoFolder(
 
   for (const a of allAssistidos) {
     const normalizedAssistido = normalizeName(a.nome);
-    const similarity = calculateSimilarityNormalized(normalizedFolderName, normalizedAssistido);
+    const similarity = calculateSimilarity(normalizedFolderName, normalizedAssistido);
 
     if (similarity >= 0.60 && (!bestMatch || similarity > bestMatch.confidence)) {
       bestMatch = {
