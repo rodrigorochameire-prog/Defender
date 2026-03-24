@@ -43,6 +43,8 @@ import {
   FolderOpen,
   Download,
   ArrowUpDown,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
@@ -114,6 +116,7 @@ export function ChatWindow({
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchIndex, setSearchIndex] = useState(0);
 
   // Message order
   const [messageOrder, setMessageOrder] = useState<"newest" | "oldest">(() =>
@@ -137,6 +140,7 @@ export function ChatWindow({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const messageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   const utils = trpc.useUtils();
 
@@ -244,6 +248,7 @@ export function ChatWindow({
     setReplyingTo(null);
     setSearchOpen(false);
     setSearchQuery("");
+    setSearchIndex(0);
     setIsSelectionMode(false);
     setSelectedMessageIds(new Set());
   }, [contactId]);
@@ -653,6 +658,45 @@ export function ChatWindow({
     return allMessages.filter((m) => m.content?.toLowerCase().includes(q));
   }, [allMessages, searchQuery]);
 
+  // Reset search index when query or results change
+  useEffect(() => {
+    setSearchIndex(0);
+  }, [searchQuery]);
+
+  // Navigate between search results
+  const navigateSearch = useCallback(
+    (direction: -1 | 1) => {
+      if (filteredMessages.length === 0) return;
+      const orderedFiltered = messageOrder === "newest" ? [...filteredMessages].reverse() : filteredMessages;
+      const nextIndex = (searchIndex + direction + orderedFiltered.length) % orderedFiltered.length;
+      setSearchIndex(nextIndex);
+      const targetMsg = orderedFiltered[nextIndex];
+      if (targetMsg) {
+        const el = messageRefs.current.get(targetMsg.id);
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    },
+    [filteredMessages, messageOrder, searchIndex]
+  );
+
+  const handleSearchKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          navigateSearch(-1);
+        } else {
+          navigateSearch(1);
+        }
+      } else if (e.key === "Escape") {
+        setSearchOpen(false);
+        setSearchQuery("");
+        setSearchIndex(0);
+      }
+    },
+    [navigateSearch]
+  );
+
   const orderedMessages = messageOrder === "newest" ? [...filteredMessages].reverse() : filteredMessages;
   const messageGroups = groupMessagesByDate(orderedMessages);
 
@@ -852,37 +896,51 @@ export function ChatWindow({
       {/* SEARCH BAR (toggleable)                                            */}
       {/* ================================================================== */}
       {searchOpen && (
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80">
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80">
           <Search className="h-4 w-4 text-zinc-400 shrink-0" />
-          <Input
+          <input
             ref={searchInputRef}
-            placeholder="Buscar nas mensagens..."
+            autoFocus
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-8 text-sm bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                setSearchOpen(false);
-                setSearchQuery("");
-              }
-            }}
+            onKeyDown={handleSearchKeyDown}
+            placeholder="Buscar nesta conversa..."
+            className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-zinc-200 outline-none placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
           />
-          {searchQuery && (
-            <span className="text-xs text-zinc-500 whitespace-nowrap">
-              {filteredMessages.length} resultado{filteredMessages.length !== 1 ? "s" : ""}
+          {searchQuery.trim() && filteredMessages.length > 0 && (
+            <span className="text-xs text-zinc-400 dark:text-zinc-500 flex-shrink-0 tabular-nums">
+              {searchIndex + 1} de {filteredMessages.length}
             </span>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 shrink-0"
+          {searchQuery.trim() && filteredMessages.length === 0 && (
+            <span className="text-xs text-zinc-400 dark:text-zinc-500 flex-shrink-0">
+              0 resultados
+            </span>
+          )}
+          <button
+            onClick={() => navigateSearch(-1)}
+            disabled={filteredMessages.length === 0}
+            className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded disabled:opacity-40"
+          >
+            <ChevronUp className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+          </button>
+          <button
+            onClick={() => navigateSearch(1)}
+            disabled={filteredMessages.length === 0}
+            className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded disabled:opacity-40"
+          >
+            <ChevronDown className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+          </button>
+          <button
             onClick={() => {
               setSearchOpen(false);
               setSearchQuery("");
+              setSearchIndex(0);
             }}
+            className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded"
           >
-            <X className="h-3.5 w-3.5" />
-          </Button>
+            <X className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+          </button>
         </div>
       )}
 
@@ -952,17 +1010,24 @@ export function ChatWindow({
                   {/* Messages */}
                   <div className="space-y-0.5">
                     {group.messages.map((msg) => (
-                      <MessageBubble
+                      <div
                         key={msg.id}
-                        message={msg}
-                        isSelectionMode={isSelectionMode}
-                        isSelected={selectedMessageIds.has(msg.id)}
-                        onToggleSelect={toggleMessageSelection}
-                        onReply={(msg) => setReplyingTo(msg as Message)}
-                        onCopy={copyToClipboard}
-                        searchQuery={searchQuery}
-                        highlightMatch={searchQuery ? highlightMatch : undefined}
-                      />
+                        ref={(el) => {
+                          if (el) messageRefs.current.set(msg.id, el);
+                          else messageRefs.current.delete(msg.id);
+                        }}
+                      >
+                        <MessageBubble
+                          message={msg}
+                          isSelectionMode={isSelectionMode}
+                          isSelected={selectedMessageIds.has(msg.id)}
+                          onToggleSelect={toggleMessageSelection}
+                          onReply={(msg) => setReplyingTo(msg as Message)}
+                          onCopy={copyToClipboard}
+                          searchQuery={searchQuery}
+                          highlightMatch={searchQuery ? highlightMatch : undefined}
+                        />
+                      </div>
                     ))}
                   </div>
                 </div>

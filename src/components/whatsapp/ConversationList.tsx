@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -128,12 +128,21 @@ export function ConversationList({
   onTagFilterChange,
 }: ConversationListProps) {
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isNewContactOpen, setIsNewContactOpen] = useState(false);
   const [newContactPhone, setNewContactPhone] = useState("");
   const [newContactName, setNewContactName] = useState("");
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
 
   const utils = trpc.useUtils();
+
+  // Debounce search input by 300ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // Query for dynamic tags
   const { data: tagsData } = trpc.whatsappChat.listTags.useQuery(
@@ -162,15 +171,32 @@ export function ConversationList({
     },
   });
 
-  // Filtra contatos pela busca
+  // Highlight matching text in search results
+  const highlightText = (text: string, query: string) => {
+    if (!query.trim()) return text;
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+    const parts = text.split(regex);
+    return parts.map((part, i) =>
+      regex.test(part) ? (
+        <span key={i} className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 rounded-sm">
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  };
+
+  // Filtra contatos pela busca (usando debouncedSearch para performance)
   const filteredContacts = contacts.filter((contact) => {
-    if (!search) return true;
-    const searchLower = search.toLowerCase();
+    if (!debouncedSearch) return true;
+    const searchLower = debouncedSearch.toLowerCase();
     return (
-      contact.phone.includes(search) ||
+      contact.phone.includes(debouncedSearch) ||
       contact.name?.toLowerCase().includes(searchLower) ||
       contact.pushName?.toLowerCase().includes(searchLower) ||
-      contact.assistido?.nome?.toLowerCase().includes(searchLower)
+      contact.assistido?.nome?.toLowerCase().includes(searchLower) ||
+      contact.lastMessageContent?.toLowerCase().includes(searchLower)
     );
   });
 
@@ -565,7 +591,9 @@ export function ConversationList({
                           isPhoneDisplayName(contact) && "font-mono text-xs"
                         )}
                       >
-                        {getContactDisplayName(contact)}
+                        {debouncedSearch
+                          ? highlightText(getContactDisplayName(contact), debouncedSearch)
+                          : getContactDisplayName(contact)}
                       </span>
                       {contact.isFavorite && (
                         <Star className="h-3 w-3 fill-amber-400 text-amber-400 shrink-0 transition-transform duration-200 hover:scale-110" />
@@ -631,7 +659,9 @@ export function ConversationList({
                             </span>
                           ) : (
                             <span className="truncate">
-                              {contact.lastMessageContent}
+                              {debouncedSearch
+                                ? highlightText(contact.lastMessageContent, debouncedSearch)
+                                : contact.lastMessageContent}
                             </span>
                           )}
                         </>
