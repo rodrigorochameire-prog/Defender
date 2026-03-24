@@ -432,6 +432,144 @@ export function ChatWindow({
     });
   }, []);
 
+  // -- Slash command execution ----------------------------------------------
+
+  const handleSlashExecute = useCallback(
+    async (command: string, arg?: string) => {
+      setShowSlashMenu(false);
+      setMessage("");
+
+      switch (command) {
+        case "nota": {
+          if (!contact?.assistido) {
+            toast.error("Vincule este contato a um assistido primeiro");
+            return;
+          }
+          const noteText = arg?.trim();
+          if (!noteText) {
+            toast.info("Digite a anotação após /nota — ex: /nota Reunião amanhã");
+            return;
+          }
+          // Insert note text into the input for the user to review/send
+          setMessage(noteText);
+          inputRef.current?.focus();
+          toast.info("Texto inserido — revise e envie ou salve como anotação");
+          break;
+        }
+
+        case "prazo": {
+          if (!contact?.assistido) {
+            toast.error("Vincule este contato a um assistido primeiro");
+            return;
+          }
+          try {
+            const result = await utils.whatsappChat.getQuickContext.fetch({
+              contactId,
+              tipo: "prazos",
+            });
+            if (!result.items.length) {
+              toast.info("Nenhum prazo aberto encontrado");
+              return;
+            }
+            const lines = result.items.map((item: Record<string, unknown>) => {
+              const prazo = item.prazo as string | null;
+              const ato = item.ato as string | null;
+              return `• ${ato ?? "Prazo"}: ${prazo ? new Date(prazo).toLocaleDateString("pt-BR") : "—"}`;
+            });
+            toast.info(`Prazos abertos (${result.items.length})`, {
+              description: lines.join("\n"),
+              duration: 8000,
+            });
+          } catch {
+            toast.error("Erro ao buscar prazos");
+          }
+          break;
+        }
+
+        case "audiencia": {
+          if (!contact?.assistido) {
+            toast.error("Vincule este contato a um assistido primeiro");
+            return;
+          }
+          try {
+            const result = await utils.whatsappChat.getQuickContext.fetch({
+              contactId,
+              tipo: "audiencias",
+            });
+            if (!result.items.length) {
+              toast.info("Nenhuma audiência futura encontrada");
+              return;
+            }
+            const lines = result.items.map((item: Record<string, unknown>) => {
+              const data = item.dataAudiencia as string | null;
+              const tipo = item.tipo as string | null;
+              const local = item.local as string | null;
+              const dateStr = data
+                ? new Date(data).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })
+                : "—";
+              return `• ${tipo ?? "Audiência"} — ${dateStr}${local ? ` @ ${local}` : ""}`;
+            });
+            toast.info(`Próximas audiências (${result.items.length})`, {
+              description: lines.join("\n"),
+              duration: 8000,
+            });
+          } catch {
+            toast.error("Erro ao buscar audiências");
+          }
+          break;
+        }
+
+        case "processo": {
+          if (!contact?.assistido) {
+            toast.error("Vincule este contato a um assistido primeiro");
+            return;
+          }
+          window.open(`/admin/assistidos/${contact.assistido.id}`, "_blank");
+          break;
+        }
+
+        case "drive": {
+          if (!contact?.assistido) {
+            toast.error("Vincule este contato a um assistido primeiro");
+            return;
+          }
+          try {
+            const result = await utils.whatsappChat.getQuickContext.fetch({
+              contactId,
+              tipo: "drive",
+            });
+            if (!result.items.length) {
+              toast.info("Nenhum arquivo no Drive encontrado");
+              return;
+            }
+            const lines = result.items.map((item: Record<string, unknown>) => {
+              const name = item.name as string | null;
+              return `• ${name ?? "Arquivo"}`;
+            });
+            toast.info(`Últimos arquivos no Drive (${result.items.length})`, {
+              description: lines.join("\n"),
+              duration: 8000,
+            });
+          } catch {
+            toast.error("Erro ao buscar arquivos");
+          }
+          break;
+        }
+
+        case "modelo": {
+          setShowSlashMenu(false);
+          // Template picker popover is already in the toolbar — re-use it
+          toast.info("Use o botão de templates na barra de ferramentas para selecionar um modelo");
+          break;
+        }
+
+        default:
+          break;
+      }
+    },
+    [contact, contactId, utils]
+  );
+
   // -- Helpers --------------------------------------------------------------
 
   const formatPhone = (phone: string) => {
@@ -926,11 +1064,7 @@ export function ChatWindow({
             <SlashCommandMenu
               filter={slashFilter}
               contactId={contactId}
-              onSelect={(content) => {
-                setMessage(content);
-                setShowSlashMenu(false);
-                inputRef.current?.focus();
-              }}
+              onExecute={handleSlashExecute}
               onClose={() => {
                 setShowSlashMenu(false);
               }}
