@@ -26,18 +26,32 @@ const CAMPO_MAP: Record<string, string> = {
   delegadoPara: "delegadoPara", // tratamento especial
 };
 
-// Status válidos do banco
-const STATUS_VALIDOS = new Set([
-  "2_ATENDER",
-  "4_MONITORAR",
-  "5_FILA",
-  "7_PROTOCOLADO",
-  "7_CIENCIA",
-  "7_SEM_ATUACAO",
-  "URGENTE",
-  "CONCLUIDO",
-  "ARQUIVADO",
-]);
+// Mapeamento completo: label da planilha (uppercase) → status DB + substatus
+const SHEETS_LABEL_TO_STATUS: Record<string, { status: string; substatus: string | null }> = {
+  "1 - URGENTE":            { status: "URGENTE",       substatus: null },
+  "2 - RELATÓRIO":          { status: "2_ATENDER",     substatus: "2 - Relatório" },
+  "2 - ANALISAR":           { status: "2_ATENDER",     substatus: "2 - Analisar" },
+  "2 - ATENDER":            { status: "2_ATENDER",     substatus: null },
+  "2 - BUSCAR":             { status: "2_ATENDER",     substatus: "2 - Buscar" },
+  "2 - DILIGENCIAR":        { status: "2_ATENDER",     substatus: "2 - Diligenciar" },
+  "2 - INVESTIGAR":         { status: "2_ATENDER",     substatus: "2 - Investigar" },
+  "2 - ELABORAR":           { status: "2_ATENDER",     substatus: "2 - Elaborar" },
+  "2 - ELABORANDO":         { status: "2_ATENDER",     substatus: "2 - Elaborando" },
+  "2 - REVISAR":            { status: "2_ATENDER",     substatus: "2 - Revisar" },
+  "2 - REVISANDO":          { status: "2_ATENDER",     substatus: "2 - Revisando" },
+  "3 - PROTOCOLAR":         { status: "2_ATENDER",     substatus: "3 - Protocolar" },
+  "4 - AMANDA":             { status: "4_MONITORAR",   substatus: "4 - Amanda" },
+  "4 - ESTÁGIO - TAISSA":   { status: "4_MONITORAR",   substatus: "4 - Estágio - Taissa" },
+  "4 - EMILLY":             { status: "4_MONITORAR",   substatus: "4 - Emilly" },
+  "4 - MONITORAR":          { status: "4_MONITORAR",   substatus: null },
+  "5 - FILA":               { status: "5_FILA",        substatus: null },
+  "6 - DOCUMENTOS":         { status: "4_MONITORAR",   substatus: "6 - Documentos" },
+  "6 - TESTEMUNHAS":        { status: "4_MONITORAR",   substatus: "6 - Testemunhas" },
+  "7 - PROTOCOLADO":        { status: "7_PROTOCOLADO", substatus: null },
+  "7 - SIGAD":              { status: "7_CIENCIA",     substatus: "7 - Sigad" },
+  "7 - CIÊNCIA":            { status: "7_CIENCIA",     substatus: null },
+  "7 - RESOLVIDO":          { status: "CONCLUIDO",     substatus: null },
+};
 
 function getWebhookSecret(): string {
   return process.env.SHEETS_WEBHOOK_SECRET ?? "";
@@ -103,17 +117,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     switch (campoDb) {
       case "status": {
-        // Normaliza o valor (planilha pode ter "2 - Elaborar" → "2_ATENDER")
-        const statusNormalizado = normalizarStatus(valorStr);
-        if (!STATUS_VALIDOS.has(statusNormalizado)) {
+        const resultado = normalizarStatus(valorStr);
+        if (!resultado) {
           return NextResponse.json({
             error: `Status inválido: "${valorStr}"`,
-            validos: [...STATUS_VALIDOS],
+            validos: Object.keys(SHEETS_LABEL_TO_STATUS),
           }, { status: 400 });
         }
         await db
           .update(demandas)
-          .set({ status: statusNormalizado as never, updatedAt: new Date() })
+          .set({ status: resultado.status as never, substatus: resultado.substatus, updatedAt: new Date() })
           .where(eq(demandas.id, demandaId));
         break;
       }
@@ -201,41 +214,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 // ==========================================
 
 /**
- * Normaliza status da planilha para o enum do banco.
- * Ex: "5 - Fila" → "5_FILA", "URGENTE" → "URGENTE"
+ * Converte label da planilha para { status, substatus } do banco.
+ * Ex: "2 - Elaborar" → { status: "2_ATENDER", substatus: "2 - Elaborar" }
  */
-function normalizarStatus(valor: string): string {
+function normalizarStatus(valor: string): { status: string; substatus: string | null } | null {
   const upper = valor.toUpperCase().trim();
-
-  // Já no formato correto
-  if (STATUS_VALIDOS.has(upper)) return upper;
-
-  // Tenta mapear formatos legíveis
-  const mapeamento: Record<string, string> = {
-    "2 - ATENDER": "2_ATENDER",
-    "2_ATENDER": "2_ATENDER",
-    "ATENDER": "2_ATENDER",
-    "4 - MONITORAR": "4_MONITORAR",
-    "4_MONITORAR": "4_MONITORAR",
-    "MONITORAR": "4_MONITORAR",
-    "5 - FILA": "5_FILA",
-    "5_FILA": "5_FILA",
-    "FILA": "5_FILA",
-    "7 - PROTOCOLADO": "7_PROTOCOLADO",
-    "7_PROTOCOLADO": "7_PROTOCOLADO",
-    "PROTOCOLADO": "7_PROTOCOLADO",
-    "7 - CIENCIA": "7_CIENCIA",
-    "7_CIENCIA": "7_CIENCIA",
-    "CIENCIA": "7_CIENCIA",
-    "7 - SEM ATUACAO": "7_SEM_ATUACAO",
-    "7_SEM_ATUACAO": "7_SEM_ATUACAO",
-    "SEM ATUACAO": "7_SEM_ATUACAO",
-    "URGENTE": "URGENTE",
-    "CONCLUIDO": "CONCLUIDO",
-    "ARQUIVADO": "ARQUIVADO",
-  };
-
-  return mapeamento[upper] ?? upper;
+  return SHEETS_LABEL_TO_STATUS[upper] ?? null;
 }
 
 /**

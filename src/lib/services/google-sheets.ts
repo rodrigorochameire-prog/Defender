@@ -67,6 +67,7 @@ export const ATRIBUICAO_TO_SHEET: Record<string, string> = {
 export interface DemandaParaSync {
   id: number;
   status: string | null;
+  substatus: string | null;
   reuPreso: boolean | null;
   dataEntrada: string | null; // date string YYYY-MM-DD
   assistidoNome: string;
@@ -76,6 +77,73 @@ export interface DemandaParaSync {
   providencias: string | null;
   delegadoNome: string | null;
   atribuicao: string; // valor do enum
+}
+
+// Labels válidos da planilha (dropdown de status)
+export const VALID_SHEET_LABELS = new Set([
+  "1 - Urgente",
+  "2 - Relatório", "2 - Analisar", "2 - Atender", "2 - Buscar",
+  "2 - Diligenciar", "2 - Investigar", "2 - Elaborar", "2 - Elaborando",
+  "2 - Revisar", "2 - Revisando",
+  "3 - Protocolar",
+  "4 - Amanda", "4 - Estágio - Taissa", "4 - Emilly", "4 - Monitorar",
+  "5 - Fila",
+  "6 - Documentos", "6 - Testemunhas",
+  "7 - Protocolado", "7 - Sigad", "7 - Ciência", "7 - Resolvido",
+]);
+
+// Mapeamento DB status → label padrão da planilha
+const STATUS_TO_LABEL: Record<string, string> = {
+  URGENTE: "1 - Urgente",
+  "2_ATENDER": "2 - Atender",
+  "4_MONITORAR": "4 - Monitorar",
+  "5_FILA": "5 - Fila",
+  "7_PROTOCOLADO": "7 - Protocolado",
+  "7_CIENCIA": "7 - Ciência",
+  "7_SEM_ATUACAO": "5 - Fila",
+  CONCLUIDO: "7 - Resolvido",
+  ARQUIVADO: "7 - Resolvido",
+};
+
+/**
+ * Mapeamento para substatus "sujos" salvos sem prefixo numérico.
+ * Ex: "elaborar" → "2 - Elaborar", "protocolado" → "7 - Protocolado"
+ */
+const SUBSTATUS_NORMALIZE: Record<string, string> = {
+  urgente: "1 - Urgente",
+  relatório: "2 - Relatório", relatorio: "2 - Relatório",
+  analisar: "2 - Analisar",
+  atender: "2 - Atender",
+  buscar: "2 - Buscar",
+  diligenciar: "2 - Diligenciar",
+  investigar: "2 - Investigar",
+  elaborar: "2 - Elaborar",
+  elaborando: "2 - Elaborando",
+  revisar: "2 - Revisar",
+  revisando: "2 - Revisando",
+  protocolar: "3 - Protocolar",
+  amanda: "4 - Amanda",
+  emilly: "4 - Emilly",
+  monitorar: "4 - Monitorar",
+  fila: "5 - Fila",
+  documentos: "6 - Documentos",
+  testemunhas: "6 - Testemunhas",
+  protocolado: "7 - Protocolado",
+  sigad: "7 - Sigad",
+  ciência: "7 - Ciência", ciencia: "7 - Ciência",
+  resolvido: "7 - Resolvido",
+};
+
+/** Converte status+substatus do banco para o label da planilha */
+function statusParaLabel(status: string | null, substatus: string | null): string {
+  if (substatus) {
+    // Já no formato correto?
+    if (VALID_SHEET_LABELS.has(substatus)) return substatus;
+    // Tentar normalizar substatus "sujo" (ex: "elaborar" → "2 - Elaborar")
+    const normalized = SUBSTATUS_NORMALIZE[substatus.toLowerCase().trim()];
+    if (normalized) return normalized;
+  }
+  return STATUS_TO_LABEL[status ?? ""] ?? status ?? "";
 }
 
 export interface SyncStats {
@@ -302,7 +370,7 @@ function findRowById(rows: string[][], id: number): number | null {
 function demandaToRow(d: DemandaParaSync): string[] {
   return [
     String(d.id),
-    d.status ?? "",
+    statusParaLabel(d.status, d.substatus),
     d.reuPreso ? (d.dataEntrada ?? "Preso") : "",
     d.dataEntrada ?? "",
     d.assistidoNome,

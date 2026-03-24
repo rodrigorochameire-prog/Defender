@@ -232,7 +232,7 @@ export const syncDriveFn = inngest.createFunction(
     name: "Sync Google Drive Folders",
     retries: 3,
   },
-  { cron: "*/5 * * * *" }, // A cada 5 minutos
+  { cron: "*/30 * * * *" }, // A cada 30 minutos
   async ({ step }) => {
     const folders = await step.run("get-sync-folders", async () => {
       return await getSyncFolders();
@@ -621,7 +621,7 @@ export const checkDistributionFolderFn = inngest.createFunction(
     name: "Check Distribution Folder",
     retries: 3,
   },
-  { cron: "*/5 * * * *" }, // A cada 5 minutos
+  { cron: "*/15 * * * *" }, // A cada 15 minutos
   async ({ step }) => {
     const files = await step.run("list-pending-files", async () => {
       return await listDistributionPendingFiles();
@@ -1171,7 +1171,7 @@ export const healthCheckFn = inngest.createFunction(
     name: "Drive Sync Health Check",
     retries: 1,
   },
-  { cron: "*/30 * * * *" },
+  { cron: "0 */2 * * *" }, // A cada 2 horas
   async ({ step }) => {
     const health = await step.run("check-health", async () => {
       return checkSyncHealth();

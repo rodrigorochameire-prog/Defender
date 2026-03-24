@@ -17,6 +17,7 @@ async function buildDemandaSync(demandaId: number): Promise<DemandaParaSync | nu
     .select({
       id: demandas.id,
       status: demandas.status,
+      substatus: demandas.substatus,
       reuPreso: demandas.reuPreso,
       dataEntrada: demandas.dataEntrada,
       ato: demandas.ato,
@@ -40,6 +41,7 @@ async function buildDemandaSync(demandaId: number): Promise<DemandaParaSync | nu
   return {
     id: row.id,
     status: row.status,
+    substatus: row.substatus ?? null,
     reuPreso: row.reuPreso,
     dataEntrada: row.dataEntrada,
     ato: row.ato,

@@ -594,7 +594,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
         prazo,
         assistido,
         processos,
-        ato: ato || "Demanda importada",
+        ato: ato || "",
         providencias,
         atribuicao: selectedAtribuicao,
         valido: erros.length === 0,
