@@ -844,22 +844,21 @@ export function ChatWindow({
                 </TooltipContent>
               </Tooltip>
 
-              {/* Details panel toggle */}
-              {onToggleDetails && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={onToggleDetails}
-                    >
-                      <PanelRight className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Detalhes do contato</TooltipContent>
-                </Tooltip>
-              )}
+              {/* Details panel toggle — always visible */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={onToggleDetails}
+                    disabled={!onToggleDetails}
+                  >
+                    <PanelRight className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Detalhes do contato</TooltipContent>
+              </Tooltip>
 
               {/* More actions */}
               <DropdownMenu>
