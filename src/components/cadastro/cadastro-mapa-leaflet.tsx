@@ -8,6 +8,18 @@ import "leaflet-defaulticon-compatibility";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import "leaflet.heat";
+
+declare module "leaflet" {
+  function heatLayer(
+    latlngs: [number, number, number?][],
+    options?: {
+      radius?: number; blur?: number; maxZoom?: number;
+      max?: number; minOpacity?: number;
+      gradient?: Record<number, string>;
+    }
+  ): L.Layer;
+}
 
 interface MarkerClusterGroupOptions {
   chunkedLoading?: boolean;
@@ -55,6 +67,16 @@ const ATRIBUICAO_LABELS: Record<string, string> = {
 const FALLBACK_FILL   = "#a1a1aa";
 const FALLBACK_BORDER = "#3f3f46";
 
+// ─── Heatmap weights — criticidade do processo ────────────────────────────
+const ATRIBUICAO_WEIGHTS: Record<string, number> = {
+  JURI_CAMACARI:      5,
+  GRUPO_JURI:         5,
+  VVD_CAMACARI:       4,
+  EXECUCAO_PENAL:     3,
+  SUBSTITUICAO:       2,
+  SUBSTITUICAO_CIVEL: 1,
+};
+
 const JURY_ATRIBUICOES  = new Set(["JURI_CAMACARI", "GRUPO_JURI"]);
 const DIAMOND_ATRIBUICOES = new Set(["VVD_CAMACARI"]);
 
@@ -65,16 +87,28 @@ const PULSE_CSS = `
     70%  { transform: translate(-50%,-50%) scale(2); opacity: 0; }
     100% { transform: translate(-50%,-50%) scale(2); opacity: 0; }
   }
-  .cadastro-pulse-ring {
-    animation: cadastro-pulse 3s ease-out infinite;
+  .cadastro-pulse-ring { animation: cadastro-pulse 3s ease-out infinite; }
+
+  @keyframes cadastro-focus-pulse {
+    0%   { transform: translate(-50%,-50%) scale(1); opacity: 0.65; }
+    80%  { transform: translate(-50%,-50%) scale(3.2); opacity: 0; }
+    100% { transform: translate(-50%,-50%) scale(3.2); opacity: 0; }
   }
+  .cadastro-focus-ring-1 { animation: cadastro-focus-pulse 1.4s ease-out infinite; }
+  .cadastro-focus-ring-2 { animation: cadastro-focus-pulse 1.4s ease-out 0.45s infinite; }
 `;
 
 // ─── Tile layers ──────────────────────────────────────────────────────────
-const TILE_LAYERS: Record<string, { url: string; attribution: string }> = {
+const TILE_LAYERS: Record<string, { url: string; attribution: string; subdomains?: string }> = {
   "Voyager": {
     url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: "abcd",
+  },
+  "Limpo": {
+    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: "abcd",
   },
   "OSM": {
     url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -83,6 +117,11 @@ const TILE_LAYERS: Record<string, { url: string; attribution: string }> = {
   "Satélite": {
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     attribution: "Tiles &copy; Esri",
+  },
+  "Escuro": {
+    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: "abcd",
   },
 };
 
@@ -163,6 +202,30 @@ function createMarkerIcon(
     </div>`,
     className: "",
     iconSize: [wrap, wrap],
+    iconAnchor: [half, half],
+  });
+}
+
+// ─── Focused marker icon (colored fill + double pulsing rings) ────────────
+function createFocusedMarkerIcon(atribuicao: string): L.DivIcon {
+  const fill = ATRIBUICAO_FILLS[atribuicao] || FALLBACK_FILL;
+  const isDiamond = DIAMOND_ATRIBUICOES.has(atribuicao);
+  const dotSize = 20;
+  const wrapSize = 56;
+  const half = wrapSize / 2;
+  const borderRadius = isDiamond ? "3px" : "50%";
+  const transform = isDiamond ? "rotate(45deg)" : "none";
+
+  const rings = `
+    <div class="cadastro-focus-ring-1" style="position:absolute;top:50%;left:50%;width:${dotSize}px;height:${dotSize}px;margin:-${dotSize/2}px 0 0 -${dotSize/2}px;border-radius:${borderRadius};border:2px solid ${fill};transform:${transform};"></div>
+    <div class="cadastro-focus-ring-2" style="position:absolute;top:50%;left:50%;width:${dotSize}px;height:${dotSize}px;margin:-${dotSize/2}px 0 0 -${dotSize/2}px;border-radius:${borderRadius};border:2px solid ${fill};transform:${transform};"></div>
+  `;
+  const dot = `<div style="position:absolute;top:50%;left:50%;width:${dotSize}px;height:${dotSize}px;margin:-${dotSize/2}px 0 0 -${dotSize/2}px;border-radius:${borderRadius};background:${fill};border:2.5px solid white;box-shadow:0 0 0 2px ${fill},0 4px 12px rgba(0,0,0,0.25);transform:${transform};"></div>`;
+
+  return L.divIcon({
+    html: `<div style="position:relative;width:${wrapSize}px;height:${wrapSize}px;">${rings}${dot}</div>`,
+    className: "",
+    iconSize: [wrapSize, wrapSize],
     iconAnchor: [half, half],
   });
 }
@@ -342,14 +405,23 @@ interface ProcessoMapPoint {
 interface Props {
   processos: ProcessoMapPoint[];
   showProcessos: boolean;
+  showHeatmap?: boolean;
   resetViewTrigger?: number;
+  focusedProcessoId?: number | null;
 }
 
-export default function CadastroMapaLeaflet({ processos, showProcessos, resetViewTrigger }: Props) {
+export default function CadastroMapaLeaflet({ processos, showProcessos, showHeatmap = false, resetViewTrigger, focusedProcessoId }: Props) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef          = useRef<L.Map | null>(null);
   const markersRef      = useRef<L.LayerGroup | null>(null);
+  const heatRef         = useRef<L.Layer | null>(null);
+  const heatLegendRef   = useRef<any>(null);
   const tilePairRef     = useRef<{ key: string; layer: L.TileLayer } | null>(null);
+  const markersMapRef   = useRef<Map<number, L.Marker>>(new Map());
+  const dataRef         = useRef(processos);
+  const focusedMarkerRef = useRef<{ marker: L.Marker; originalIcon: L.Icon | L.DivIcon } | null>(null);
+
+  useEffect(() => { dataRef.current = processos; }, [processos]);
 
   // Inject pulse CSS once
   useEffect(() => {
@@ -377,7 +449,8 @@ export default function CadastroMapaLeaflet({ processos, showProcessos, resetVie
     const defaultKey = "Voyager";
     const tileLayer = L.tileLayer(TILE_LAYERS[defaultKey].url, {
       attribution: TILE_LAYERS[defaultKey].attribution,
-      maxZoom: 19,
+      subdomains: TILE_LAYERS[defaultKey].subdomains || "abc",
+      maxZoom: 20,
     }).addTo(map);
     tilePairRef.current = { key: defaultKey, layer: tileLayer };
 
@@ -400,7 +473,8 @@ export default function CadastroMapaLeaflet({ processos, showProcessos, resetVie
         if (tilePairRef.current) map.removeLayer(tilePairRef.current.layer);
         const newLayer = L.tileLayer(TILE_LAYERS[key].url, {
           attribution: TILE_LAYERS[key].attribution,
-          maxZoom: 19,
+          subdomains: TILE_LAYERS[key].subdomains || "abc",
+          maxZoom: 20,
         }).addTo(map);
         tilePairRef.current = { key, layer: newLayer };
 
@@ -445,6 +519,8 @@ export default function CadastroMapaLeaflet({ processos, showProcessos, resetVie
       map.remove();
       mapRef.current = null;
       markersRef.current = null;
+      heatRef.current = null;
+      heatLegendRef.current = null;
       tilePairRef.current = null;
     };
   }, []);
@@ -455,6 +531,98 @@ export default function CadastroMapaLeaflet({ processos, showProcessos, resetVie
     mapRef.current.fitBounds(CAMACARI_BOUNDS);
   }, [resetViewTrigger]);
 
+  // Toggle heatmap layer
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current;
+
+    if (showHeatmap) {
+      if (markersRef.current) map.removeLayer(markersRef.current);
+
+      const heatPoints: [number, number, number][] = processos
+        .filter((p) => p.localDoFatoLat && p.localDoFatoLng)
+        .map((p) => {
+          const w = ATRIBUICAO_WEIGHTS[p.atribuicao ?? ""] ?? 1;
+          return [parseFloat(p.localDoFatoLat!), parseFloat(p.localDoFatoLng!), w];
+        });
+
+      if (heatRef.current) map.removeLayer(heatRef.current);
+      if (heatPoints.length > 0) {
+        heatRef.current = (L as any).heatLayer(heatPoints, {
+          radius: 28, blur: 18, maxZoom: 17, max: 5, minOpacity: 0.3,
+          gradient: { 0.0: "#3b82f6", 0.25: "#06b6d4", 0.5: "#22c55e", 0.75: "#f59e0b", 1.0: "#dc2626" },
+        });
+        heatRef.current!.addTo(map);
+      }
+
+      if (!heatLegendRef.current) {
+        const heatLegend = (L.control as any)({ position: "bottomright" });
+        heatLegend.onAdd = () => {
+          const div = L.DomUtil.create("div");
+          div.style.cssText = "background:white;border-radius:10px;padding:10px 12px;box-shadow:0 4px 20px rgba(0,0,0,0.12);font-family:system-ui,sans-serif;min-width:155px;border:1px solid #f3f4f6;";
+          div.innerHTML = `
+            <div style="font-weight:700;color:#111827;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Intensidade de Risco</div>
+            <div style="height:8px;border-radius:4px;background:linear-gradient(to right,#3b82f6,#06b6d4,#22c55e,#f59e0b,#dc2626);margin-bottom:4px;"></div>
+            <div style="display:flex;justify-content:space-between;color:#9ca3af;font-size:10px;margin-bottom:10px;"><span>Baixo</span><span>Alto</span></div>
+            <div style="border-top:1px solid #f3f4f6;padding-top:7px;">
+              <div style="font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px;">Peso por atribuição</div>
+              ${[["Tribunal do Júri","5×"],["VVD","4×"],["Execução Penal","3×"],["Substituição","2×"],["Cível","1×"]]
+                .map(([l,w]) => `<div style="display:flex;justify-content:space-between;font-size:10px;color:#6b7280;margin-bottom:2px;"><span>${l}</span><span style="font-weight:600;">${w}</span></div>`)
+                .join("")}
+            </div>`;
+          L.DomEvent.disableClickPropagation(div);
+          return div;
+        };
+        heatLegend.addTo(map);
+        heatLegendRef.current = heatLegend;
+      }
+    } else {
+      if (heatRef.current) { map.removeLayer(heatRef.current); heatRef.current = null; }
+      if (heatLegendRef.current) { heatLegendRef.current.remove(); heatLegendRef.current = null; }
+      if (markersRef.current) markersRef.current.addTo(map);
+    }
+  }, [showHeatmap, processos]);
+
+  // Fly to focused processo marker
+  useEffect(() => {
+    if (!focusedProcessoId || !mapRef.current) return;
+
+    // Restore previous
+    if (focusedMarkerRef.current) {
+      const { marker: prev, originalIcon } = focusedMarkerRef.current;
+      prev.setIcon(originalIcon);
+      prev.setZIndexOffset(0);
+      focusedMarkerRef.current = null;
+    }
+
+    const marker = markersMapRef.current.get(focusedProcessoId);
+    if (marker) {
+      const originalIcon = marker.getIcon() as L.Icon | L.DivIcon;
+      const point = dataRef.current.find((p) => p.id === focusedProcessoId);
+      const atribuicao = point?.atribuicao || "";
+      marker.setIcon(createFocusedMarkerIcon(atribuicao));
+      marker.setZIndexOffset(1000);
+      focusedMarkerRef.current = { marker, originalIcon };
+
+      mapRef.current.setView(marker.getLatLng(), 16, { animate: true });
+      setTimeout(() => {
+        marker.openPopup();
+        marker.once("popupclose", () => {
+          marker.setIcon(originalIcon);
+          marker.setZIndexOffset(0);
+          focusedMarkerRef.current = null;
+        });
+      }, 500);
+    } else {
+      const point = dataRef.current.find((p) => p.id === focusedProcessoId);
+      if (point?.localDoFatoLat && point?.localDoFatoLng) {
+        mapRef.current.setView(
+          [parseFloat(point.localDoFatoLat), parseFloat(point.localDoFatoLng)], 16, { animate: true }
+        );
+      }
+    }
+  }, [focusedProcessoId]);
+
   // Update markers
   useEffect(() => {
     if (!mapRef.current) return;
@@ -463,6 +631,7 @@ export default function CadastroMapaLeaflet({ processos, showProcessos, resetVie
       mapRef.current.removeLayer(markersRef.current);
       markersRef.current = null;
     }
+    markersMapRef.current.clear();
 
     if (!showProcessos) return;
 
@@ -489,6 +658,7 @@ export default function CadastroMapaLeaflet({ processos, showProcessos, resetVie
 
       const icon = createMarkerIcon(atribuicaoKey, point.createdAt);
       const marker = L.marker([lat, lng], { icon, atribuicao: atribuicaoKey } as MarkerOptionsWithAtribuicao);
+      markersMapRef.current.set(point.id, marker);
 
       // ── Popup ───────────────────────────────────────────────────────
       const relDate = formatRelDate(point.createdAt);

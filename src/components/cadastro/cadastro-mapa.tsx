@@ -2,8 +2,11 @@
 
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { MapPin, Maximize2, Minimize2, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -78,6 +81,12 @@ function extractBairro(endereco: string | null): string | null {
 }
 
 export function CadastroMapa() {
+  const searchParams = useSearchParams();
+  const focusedProcessoId = useMemo(() => {
+    const raw = searchParams.get("processo");
+    return raw ? parseInt(raw, 10) : null;
+  }, [searchParams]);
+
   const [atribuicoesVisiveis, setAtribuicoesVisiveisState] = useState<string[]>(
     () => {
       const prefs = loadPrefs();
@@ -90,6 +99,10 @@ export function CadastroMapa() {
     const prefs = loadPrefs();
     return prefs.showProcessos ?? true;
   });
+  const [showHeatmap, setShowHeatmapState] = useState<boolean>(() => {
+    const prefs = loadPrefs();
+    return prefs.showHeatmap ?? false;
+  });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [resetViewTrigger, setResetViewTrigger] = useState(0);
 
@@ -101,6 +114,11 @@ export function CadastroMapa() {
   const setShowProcessos = (val: boolean) => {
     setShowProcessosState(val);
     savePref("showProcessos", val);
+  };
+
+  const setShowHeatmap = (val: boolean) => {
+    setShowHeatmapState(val);
+    savePref("showHeatmap", val);
   };
 
   const { data, isLoading } = trpc.processos.mapa.useQuery({});
@@ -141,12 +159,11 @@ export function CadastroMapa() {
       .slice(0, 5);
   }, [data]);
 
+  // Isolation click: 1st click isolates; 2nd click on same restores all
   const toggleAtribuicao = (atribuicao: string) => {
-    setAtribuicoesVisiveis(
-      atribuicoesVisiveis.includes(atribuicao)
-        ? atribuicoesVisiveis.filter((a) => a !== atribuicao)
-        : [...atribuicoesVisiveis, atribuicao]
-    );
+    const isIsolated =
+      atribuicoesVisiveis.length === 1 && atribuicoesVisiveis[0] === atribuicao;
+    setAtribuicoesVisiveis(isIsolated ? ALL_ATRIBUICOES : [atribuicao]);
   };
 
   const sidebar = (
@@ -329,24 +346,19 @@ export function CadastroMapa() {
           <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Atribuição
           </p>
-          <button
-            onClick={() =>
-              setAtribuicoesVisiveis(
-                atribuicoesVisiveis.length === ALL_ATRIBUICOES.length
-                  ? []
-                  : ALL_ATRIBUICOES
-              )
-            }
-            className="text-[10px] text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer transition-colors"
-          >
-            {atribuicoesVisiveis.length === ALL_ATRIBUICOES.length
-              ? "Limpar"
-              : "Todos"}
-          </button>
+          {atribuicoesVisiveis.length !== ALL_ATRIBUICOES.length && (
+            <button
+              onClick={() => setAtribuicoesVisiveis(ALL_ATRIBUICOES)}
+              className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 cursor-pointer transition-colors"
+            >
+              Mostrar todos
+            </button>
+          )}
         </div>
         <div className="space-y-0.5">
           {ALL_ATRIBUICOES.map((atribuicao) => {
             const ativo = atribuicoesVisiveis.includes(atribuicao);
+            const isIsolated = atribuicoesVisiveis.length === 1 && atribuicoesVisiveis[0] === atribuicao;
             const cor = ATRIBUICAO_COLORS[atribuicao] || "#71717a";
             const label = ATRIBUICAO_LABELS[atribuicao] || atribuicao;
             const count = contagens[atribuicao] ?? 0;
@@ -357,12 +369,16 @@ export function CadastroMapa() {
               <button
                 key={atribuicao}
                 onClick={() => toggleAtribuicao(atribuicao)}
+                title={isIsolated ? "Clique para mostrar todos" : `Clique para isolar: ${label}`}
                 className={cn(
                   "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer w-full text-left",
-                  ativo
+                  isIsolated
+                    ? "ring-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                    : ativo
                     ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
                     : "text-zinc-400 dark:text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                 )}
+                style={isIsolated ? { outlineColor: cor } : undefined}
               >
                 {/* Ícone miniatura refletindo forma do marcador */}
                 <div className="relative flex-shrink-0 w-4 h-4 flex items-center justify-center">
@@ -436,10 +452,19 @@ export function CadastroMapa() {
             const border = ATRIBUICAO_BORDERS[a] || "#52525b";
             const label  = ATRIBUICAO_LABELS[a]  || a;
             const isDiamondA = DIAMOND_ATRIBUICOES.has(a);
+            const isIsolated = atribuicoesVisiveis.length === 1 && atribuicoesVisiveis[0] === a;
             return (
-              <div
+              <button
                 key={a}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-sm"
+                onClick={() => toggleAtribuicao(a)}
+                title={isIsolated ? "Clique para mostrar todos" : `Filtrar: ${label}`}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-white dark:bg-zinc-900 border shadow-sm cursor-pointer transition-all",
+                  isIsolated
+                    ? "border-zinc-400 dark:border-zinc-500 ring-1 ring-offset-1"
+                    : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                )}
+                style={isIsolated ? { outlineColor: fill } : undefined}
               >
                 {isDiamondA ? (
                   <span
@@ -454,11 +479,23 @@ export function CadastroMapa() {
                 )}
                 <span className="text-zinc-700 dark:text-zinc-300">{label}</span>
                 <span className="text-zinc-400 font-normal">{count}</span>
-              </div>
+              </button>
             );
           })}
           <div className="inline-flex items-center px-2.5 py-1 rounded-full text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
             {processosVisiveis.length} visíveis
+          </div>
+          {/* Heatmap toggle */}
+          <div className="ml-auto flex items-center gap-1.5">
+            <Switch
+              id="heatmap-toggle"
+              checked={showHeatmap}
+              onCheckedChange={setShowHeatmap}
+              className="cursor-pointer h-4 w-7"
+            />
+            <Label htmlFor="heatmap-toggle" className="text-xs text-zinc-500 cursor-pointer">
+              Heatmap
+            </Label>
           </div>
         </div>
       )}
@@ -495,6 +532,8 @@ export function CadastroMapa() {
           <LeafletMap
             processos={processosVisiveis}
             showProcessos={showProcessos}
+            showHeatmap={showHeatmap}
+            focusedProcessoId={focusedProcessoId}
             resetViewTrigger={resetViewTrigger}
           />
         )}
