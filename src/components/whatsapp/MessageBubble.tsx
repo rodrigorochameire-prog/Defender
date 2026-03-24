@@ -1,17 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import { format } from "date-fns";
 import {
   Check,
   CheckCheck,
   Clock,
   AlertCircle,
-  Reply,
-  Copy,
   FileText,
   Mic,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MessageActionBar } from "./MessageActionBar";
+import {
+  SaveToProcessModal,
+  CreateNoteModal,
+  SaveToDriveModal,
+} from "./MessageActionModals";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -39,6 +44,15 @@ export interface MessageBubbleProps {
   searchQuery?: string;
   highlightMatch?: (text: string, query: string) => React.ReactNode;
   isNew?: boolean;
+  // Action bar props
+  isFavorite?: boolean;
+  assistidoId?: number | null;
+  processoId?: number | null;
+  contactId?: number;
+  onSaveToProcess?: (msg: MessageBubbleMessage) => void;
+  onCreateNote?: (msg: MessageBubbleMessage) => void;
+  onSaveToDrive?: (msg: MessageBubbleMessage) => void;
+  onToggleFavorite?: (msg: MessageBubbleMessage) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -190,9 +204,22 @@ export function MessageBubble({
   searchQuery,
   highlightMatch,
   isNew,
+  isFavorite = false,
+  assistidoId = null,
+  processoId = null,
+  contactId,
+  onSaveToProcess,
+  onCreateNote,
+  onSaveToDrive,
+  onToggleFavorite,
 }: MessageBubbleProps) {
   const isOutbound = msg.direction === "outbound";
   const time = format(new Date(msg.createdAt), "HH:mm");
+
+  // Modal state
+  const [showSaveToProcess, setShowSaveToProcess] = useState(false);
+  const [showCreateNote, setShowCreateNote] = useState(false);
+  const [showSaveToDrive, setShowSaveToDrive] = useState(false);
 
   // Parse quoted content ("> " prefix lines)
   const hasQuote = msg.content?.startsWith("> ");
@@ -260,32 +287,37 @@ export function MessageBubble({
           isSelected && "ring-2 ring-emerald-500/50 rounded-2xl",
         )}
       >
-        {/* Hover action buttons */}
+        {/* Hover action bar — replaces old inline reply/copy buttons */}
         {!isSelectionMode && (
-          <div className="flex items-start pt-1 px-1 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150">
-            <div className="flex bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-zinc-200/80 dark:border-zinc-700/80">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onReply(msg);
-                }}
-                className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-l-lg transition-colors"
-                title="Responder"
-              >
-                <Reply className="h-3.5 w-3.5 text-zinc-500" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (msg.content) onCopy(msg.content);
-                }}
-                className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-r-lg transition-colors"
-                title="Copiar"
-              >
-                <Copy className="h-3.5 w-3.5 text-zinc-500" />
-              </button>
-            </div>
-          </div>
+          <MessageActionBar
+            isFavorite={isFavorite}
+            hasMedia={hasMedia}
+            onSaveToProcess={() => {
+              if (onSaveToProcess) {
+                onSaveToProcess(msg);
+              } else {
+                setShowSaveToProcess(true);
+              }
+            }}
+            onCreateNote={() => {
+              if (onCreateNote) {
+                onCreateNote(msg);
+              } else {
+                setShowCreateNote(true);
+              }
+            }}
+            onSaveToDrive={() => {
+              if (onSaveToDrive) {
+                onSaveToDrive(msg);
+              } else {
+                setShowSaveToDrive(true);
+              }
+            }}
+            onToggleFavorite={() => onToggleFavorite?.(msg)}
+            onCopy={() => { if (msg.content) onCopy(msg.content); }}
+            onReply={() => onReply(msg)}
+            onShowDetails={() => {}}
+          />
         )}
 
         {/* Message bubble */}
@@ -345,6 +377,35 @@ export function MessageBubble({
           )}
         </div>
       </div>
+
+      {/* Action modals (rendered inline to keep state scoped per message) */}
+      {!isSelectionMode && (
+        <>
+          <SaveToProcessModal
+            open={showSaveToProcess}
+            onOpenChange={setShowSaveToProcess}
+            messageId={msg.id}
+            messageText={msg.content}
+            assistidoId={assistidoId}
+            processoId={processoId}
+          />
+          <CreateNoteModal
+            open={showCreateNote}
+            onOpenChange={setShowCreateNote}
+            messageId={msg.id}
+            messageText={msg.content}
+            assistidoId={assistidoId}
+            processoId={processoId}
+          />
+          <SaveToDriveModal
+            open={showSaveToDrive}
+            onOpenChange={setShowSaveToDrive}
+            contactId={contactId ?? 0}
+            messageIds={[msg.id]}
+            mediaFilename={msg.mediaFilename}
+          />
+        </>
+      )}
     </div>
   );
 }
