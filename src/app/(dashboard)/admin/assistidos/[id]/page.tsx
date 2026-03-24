@@ -734,6 +734,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           <DriveTabEnhanced
             files={data.driveFiles}
             assistidoId={Number(id)}
+            driveFolderId={data.driveFolderId}
+            atribuicaoPrimaria={data.atribuicaoPrimaria}
           />
         )}
 
