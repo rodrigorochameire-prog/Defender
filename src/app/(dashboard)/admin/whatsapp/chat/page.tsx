@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc/client";
 import { ConversationList } from "@/components/whatsapp/ConversationList";
 import { ChatWindow } from "@/components/whatsapp/ChatWindow";
 import { ContactDetailsPanel } from "@/components/whatsapp/ContactDetailsPanel";
+import { ContextPanel } from "@/components/whatsapp/ContextPanel";
 import { ChatEmptyState } from "@/components/whatsapp/ChatEmptyState";
 import { ConnectionStatus } from "@/components/whatsapp/ConnectionStatus";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ import {
   ChevronDown,
   ChevronUp,
   Upload,
+  PanelRight,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -55,6 +57,12 @@ export default function WhatsAppChatPage() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [pendingExpanded, setPendingExpanded] = useState(true);
+  const [showContextPanel, setShowContextPanel] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("whatsapp_context_panel") !== "false";
+    }
+    return true;
+  });
 
   // Queries
   const { data: configs, isLoading: loadingConfigs } = trpc.whatsappChat.listConfigs.useQuery();
@@ -131,6 +139,11 @@ export default function WhatsAppChatPage() {
       }
     }
   }, [contactsData, phoneParam, contactIdParam]);
+
+  // Persist context panel visibility
+  useEffect(() => {
+    localStorage.setItem("whatsapp_context_panel", String(showContextPanel));
+  }, [showContextPanel]);
 
   // Handlers
   const handleSelectContact = (contactId: number) => {
@@ -294,6 +307,25 @@ export default function WhatsAppChatPage() {
                   </Link>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">Configurações</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "h-8 w-8",
+                      showContextPanel
+                        ? "text-emerald-500 hover:text-emerald-400"
+                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    )}
+                    onClick={() => setShowContextPanel((v) => !v)}
+                  >
+                    <PanelRight className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Painel de contexto</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
@@ -475,6 +507,17 @@ export default function WhatsAppChatPage() {
             </div>
           )}
         </div>
+
+        {/* Context Panel — 3rd column, desktop only */}
+        {showContextPanel && selectedContactId && selectedConfigId && (
+          <div className="hidden md:block">
+            <ContextPanel
+              contactId={selectedContactId}
+              configId={selectedConfigId}
+              onClose={() => setShowContextPanel(false)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
