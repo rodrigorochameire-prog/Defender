@@ -12,14 +12,19 @@ import {
   evolutionConfig,
   whatsappContacts,
   whatsappChatMessages,
+  whatsappMessageActions,
   whatsappTemplates,
   assistidos,
   processos,
   assistidosProcessos,
   anotacoes,
   driveFiles,
+  audiencias,
+  demandas,
+  movimentacoes,
+  documentos,
 } from "@/lib/db/schema";
-import { eq, and, desc, like, ilike, sql, or, lt, ne, inArray, asc } from "drizzle-orm";
+import { eq, and, desc, like, ilike, sql, or, lt, ne, inArray, asc, gte } from "drizzle-orm";
 import { uploadFileBuffer } from "@/lib/services/google-drive";
 import {
   EvolutionApiClient,
@@ -2364,5 +2369,351 @@ export const whatsappChatRouter = router({
         messagesSkipped,
         total: parsed.chats.length,
       };
+    }),
+
+  // ===========================================================================
+  // COMMAND CENTER — Context & Actions
+  // ===========================================================================
+
+  /**
+   * getContactContext
+   * Lightweight lookup: contact → assistido → active processo
+   */
+  getContactContext: protectedProcedure
+    .input(z.object({ contactId: z.number(), configId: z.number() }))
+    .query(async ({ input }) => {
+      const contact = await db.query.whatsappContacts.findFirst({
+        where: and(
+          eq(whatsappContacts.id, input.contactId),
+          eq(whatsappContacts.configId, input.configId),
+        ),
+      });
+
+      if (!contact?.assistidoId) {
+        return { assistido: null, processoAtivo: null };
+      }
+
+      const assistido = await db.query.assistidos.findFirst({
+        where: eq(assistidos.id, contact.assistidoId),
+        columns: { id: true, nome: true, cpf: true },
+      });
+
+      if (!assistido) {
+        return { assistido: null, processoAtivo: null };
+      }
+
+      // Find the most recent active processo linked via assistidosProcessos
+      const link = await db.query.assistidosProcessos.findFirst({
+        where: eq(assistidosProcessos.assistidoId, assistido.id),
+        columns: { processoId: true },
+        orderBy: [desc(assistidosProcessos.createdAt)],
+      });
+
+      let processoAtivo = null;
+      if (link) {
+        const processo = await db.query.processos.findFirst({
+          where: and(
+            eq(processos.id, link.processoId),
+            eq(processos.situacao, "ativo"),
+          ),
+          columns: {
+            id: true,
+            numeroAutos: true,
+            vara: true,
+            assunto: true,
+            situacao: true,
+          },
+        });
+        processoAtivo = processo ?? null;
+      }
+
+      return { assistido, processoAtivo };
+    }),
+
+  /**
+   * getContactTimeline
+   * Returns próxima audiência, próximo prazo (demanda), última movimentação
+   */
+  getContactTimeline: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input }) => {
+      const now = new Date();
+
+      // Collect all processoIds for this assistido
+      const links = await db
+        .select({ processoId: assistidosProcessos.processoId })
+        .from(assistidosProcessos)
+        .where(eq(assistidosProcessos.assistidoId, input.assistidoId));
+
+      const processoIds = links.map((l) => l.processoId);
+
+      if (processoIds.length === 0) {
+        return { proximaAudiencia: null, prazoAberto: null, ultimaMovimentacao: null };
+      }
+
+      // Próxima audiência (future, soonest first)
+      const proximaAudienciaRow = await db.query.audiencias.findFirst({
+        where: and(
+          inArray(audiencias.processoId, processoIds),
+          gte(audiencias.dataAudiencia, now),
+        ),
+        orderBy: [asc(audiencias.dataAudiencia)],
+        columns: { id: true, dataAudiencia: true, tipo: true, local: true, status: true },
+      });
+
+      const proximaAudiencia = proximaAudienciaRow
+        ? {
+            ...proximaAudienciaRow,
+            diasRestantes: Math.ceil(
+              (proximaAudienciaRow.dataAudiencia.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+            ),
+          }
+        : null;
+
+      // Próximo prazo (demanda com prazo futuro, soonest first)
+      const prazoRow = await db.query.demandas.findFirst({
+        where: and(
+          inArray(demandas.processoId, processoIds),
+          gte(demandas.prazo, now.toISOString().slice(0, 10) as unknown as Date),
+        ),
+        orderBy: [asc(demandas.prazo)],
+        columns: { id: true, prazo: true, ato: true, status: true, prioridade: true },
+      });
+
+      const prazoAberto = prazoRow?.prazo
+        ? {
+            ...prazoRow,
+            diasRestantes: Math.ceil(
+              (new Date(prazoRow.prazo).getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+            ),
+          }
+        : null;
+
+      // Última movimentação
+      const ultimaMovimentacaoRow = await db.query.movimentacoes.findFirst({
+        where: inArray(movimentacoes.processoId, processoIds),
+        orderBy: [desc(movimentacoes.dataMovimentacao)],
+        columns: { id: true, dataMovimentacao: true, descricao: true, tipo: true, origem: true },
+      });
+
+      const ultimaMovimentacao = ultimaMovimentacaoRow
+        ? {
+            ...ultimaMovimentacaoRow,
+            diasAtras: Math.floor(
+              (now.getTime() - ultimaMovimentacaoRow.dataMovimentacao.getTime()) / (1000 * 60 * 60 * 24),
+            ),
+          }
+        : null;
+
+      return { proximaAudiencia, prazoAberto, ultimaMovimentacao };
+    }),
+
+  /**
+   * saveMessageToProcess
+   * Save a chat message as anotacao or documento linked to a processo
+   */
+  saveMessageToProcess: protectedProcedure
+    .input(
+      z.object({
+        messageId: z.number(),
+        processoId: z.number(),
+        tipo: z.enum(["documento", "anotacao", "evidencia"]),
+        observacao: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const userId = (ctx.session.user as { id: number }).id;
+
+      // Fetch message content
+      const message = await db.query.whatsappChatMessages.findFirst({
+        where: eq(whatsappChatMessages.id, input.messageId),
+        columns: { content: true },
+      });
+
+      const messageText = message?.content ?? "";
+
+      let targetId: number;
+      let targetType: string;
+
+      if (input.tipo === "anotacao") {
+        const [inserted] = await db
+          .insert(anotacoes)
+          .values({
+            processoId: input.processoId,
+            conteudo: messageText,
+            tipo: "whatsapp",
+            createdById: userId,
+          })
+          .returning({ id: anotacoes.id });
+
+        targetId = inserted.id;
+        targetType = "anotacao";
+      } else {
+        // documento or evidencia
+        const categoria = input.tipo === "evidencia" ? "evidencia_whatsapp" : "whatsapp";
+        const [inserted] = await db
+          .insert(documentos)
+          .values({
+            processoId: input.processoId,
+            titulo: messageText.slice(0, 100) || `Mensagem WhatsApp`,
+            categoria,
+            fileUrl: "",
+            uploadedById: userId,
+          })
+          .returning({ id: documentos.id });
+
+        targetId = inserted.id;
+        targetType = "documento";
+      }
+
+      // Record the action in the junction table
+      await db.insert(whatsappMessageActions).values({
+        messageId: input.messageId,
+        actionType: "save",
+        targetType,
+        targetId,
+        processoId: input.processoId,
+        observacao: input.observacao,
+        createdById: userId,
+      });
+
+      return { targetId, targetType };
+    }),
+
+  /**
+   * createNoteFromMessage
+   * Create an anotacao from a chat message
+   */
+  createNoteFromMessage: protectedProcedure
+    .input(
+      z.object({
+        messageId: z.number(),
+        processoId: z.number().optional(),
+        assistidoId: z.number().optional(),
+        texto: z.string().min(1),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const userId = (ctx.session.user as { id: number }).id;
+
+      const [inserted] = await db
+        .insert(anotacoes)
+        .values({
+          processoId: input.processoId,
+          assistidoId: input.assistidoId,
+          conteudo: input.texto,
+          tipo: "whatsapp",
+          createdById: userId,
+        })
+        .returning({ id: anotacoes.id });
+
+      // Record in junction table
+      await db.insert(whatsappMessageActions).values({
+        messageId: input.messageId,
+        actionType: "note",
+        targetType: "anotacao",
+        targetId: inserted.id,
+        processoId: input.processoId,
+        createdById: userId,
+      });
+
+      return { noteId: inserted.id };
+    }),
+
+  /**
+   * toggleFavorite
+   * Toggle the isFavorite flag on a whatsappChatMessages row
+   */
+  toggleFavorite: protectedProcedure
+    .input(z.object({ messageId: z.number() }))
+    .mutation(async ({ input }) => {
+      const message = await db.query.whatsappChatMessages.findFirst({
+        where: eq(whatsappChatMessages.id, input.messageId),
+        columns: { id: true, isFavorite: true },
+      });
+
+      if (!message) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Mensagem não encontrada" });
+      }
+
+      const newValue = !message.isFavorite;
+
+      await db
+        .update(whatsappChatMessages)
+        .set({ isFavorite: newValue })
+        .where(eq(whatsappChatMessages.id, input.messageId));
+
+      return { isFavorite: newValue };
+    }),
+
+  /**
+   * getQuickContext
+   * Slash-command context: returns up to 5 items of prazos, audiencias or drive
+   */
+  getQuickContext: protectedProcedure
+    .input(
+      z.object({
+        contactId: z.number(),
+        tipo: z.enum(["prazos", "audiencias", "drive"]),
+      }),
+    )
+    .query(async ({ input }) => {
+      // Resolve assistidoId from contact
+      const contact = await db.query.whatsappContacts.findFirst({
+        where: eq(whatsappContacts.id, input.contactId),
+        columns: { assistidoId: true },
+      });
+
+      if (!contact?.assistidoId) {
+        return { items: [] };
+      }
+
+      const assistidoId = contact.assistidoId;
+      const now = new Date();
+
+      if (input.tipo === "prazos") {
+        const rows = await db.query.demandas.findMany({
+          where: and(
+            eq(demandas.assistidoId, assistidoId),
+            gte(demandas.prazo, now.toISOString().slice(0, 10) as unknown as Date),
+          ),
+          orderBy: [asc(demandas.prazo)],
+          limit: 5,
+          columns: { id: true, prazo: true, ato: true, status: true, prioridade: true },
+        });
+        return { items: rows };
+      }
+
+      if (input.tipo === "audiencias") {
+        // Get processoIds for assistido
+        const links = await db
+          .select({ processoId: assistidosProcessos.processoId })
+          .from(assistidosProcessos)
+          .where(eq(assistidosProcessos.assistidoId, assistidoId));
+
+        const processoIds = links.map((l) => l.processoId);
+
+        if (processoIds.length === 0) return { items: [] };
+
+        const rows = await db.query.audiencias.findMany({
+          where: and(
+            inArray(audiencias.processoId, processoIds),
+            gte(audiencias.dataAudiencia, now),
+          ),
+          orderBy: [asc(audiencias.dataAudiencia)],
+          limit: 5,
+          columns: { id: true, dataAudiencia: true, tipo: true, local: true, status: true },
+        });
+        return { items: rows };
+      }
+
+      // drive
+      const rows = await db.query.driveFiles.findMany({
+        where: eq(driveFiles.assistidoId, assistidoId),
+        orderBy: [desc(driveFiles.updatedAt)],
+        limit: 5,
+        columns: { id: true, name: true, mimeType: true, updatedAt: true, webViewLink: true },
+      });
+      return { items: rows };
     }),
 });
