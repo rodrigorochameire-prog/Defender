@@ -14,13 +14,21 @@ import { GoogleAuth } from "google-auth-library";
 // CONFIGURAÇÃO
 // ==========================================
 
-const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_SPREADSHEET_ID ?? "";
+/** Lazy — garante que o env já foi carregado pelo Next.js antes de ler */
+function getSpreadsheetId(): string {
+  return (process.env.GOOGLE_SHEETS_SPREADSHEET_ID ?? "").trim();
+}
 const SHEETS_API_BASE = "https://sheets.googleapis.com/v4/spreadsheets";
 
-// Linha do cabeçalho (1-indexed)
-const HEADER_ROW = 1;
+// Layout VVD:
+// Row 1: Título (ex: "Demandas - Tribunal do Júri")
+// Row 2: Separador cinza
+// Row 3: Cabeçalho (headers)
+// Row 4+: Dados
+const TITLE_ROW = 1;
+const HEADER_ROW = 3;
 // Primeira linha de dados
-const DATA_START_ROW = 2;
+const DATA_START_ROW = 4;
 
 // Colunas (1-indexed para Sheets API)
 export const COL = {
@@ -50,15 +58,34 @@ const HEADERS = [
   "Delegado Para",
 ];
 
+// Título decorativo por aba (row 1)
+const SHEET_TITLE_TEXT: Record<string, string> = {
+  "Júri": "    Demandas - Tribunal do Júri",
+  "Violência Doméstica": "    Intimações - Paz em casa",
+  "EP": "    Demandas - Execução Penal",
+  "Substituição criminal": "    Demandas - Substituição Criminal",
+  "Curadoria": "    Demandas - Curadoria",
+  "Plenários": "    Demandas - Plenários",
+  "Protocolo integrado": "    Demandas - Protocolo Integrado",
+  "Liberdade": "    Demandas - Liberdade",
+  "Candeias": "    Demandas - Candeias",
+};
+
 // Mapeamento atribuição DB → nome da aba na planilha
 export const ATRIBUICAO_TO_SHEET: Record<string, string> = {
   JURI_CAMACARI: "Júri",
-  VVD_CAMACARI: "Violência Doméstica",
+  VVD_CAMACARI: "Violência Doméstic",  // Nome real da aba (sem 'a' final)
   EXECUCAO_PENAL: "EP",
   SUBSTITUICAO: "Substituição criminal",
   SUBSTITUICAO_CIVEL: "Substituição criminal",
   GRUPO_JURI: "Plenários",
 };
+
+/**
+ * Abas manuais: têm layout diferente (Status na col A, sem __id__).
+ * formatSheet() NÃO deve ocultar col A nem aplicar formato automático.
+ */
+const MANUAL_SHEETS = new Set(["Violência Doméstic"]);
 
 // ==========================================
 // TIPOS
@@ -205,7 +232,7 @@ async function sheetsGet(path: string): Promise<unknown> {
   const token = await getToken();
   if (!token) throw new Error("Sem token de autenticação");
 
-  const res = await fetch(`${SHEETS_API_BASE}/${SPREADSHEET_ID}${path}`, {
+  const res = await fetch(`${SHEETS_API_BASE}/${getSpreadsheetId()}${path}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -221,7 +248,7 @@ async function sheetsPost(path: string, body: unknown): Promise<unknown> {
   const token = await getToken();
   if (!token) throw new Error("Sem token de autenticação");
 
-  const res = await fetch(`${SHEETS_API_BASE}/${SPREADSHEET_ID}${path}`, {
+  const res = await fetch(`${SHEETS_API_BASE}/${getSpreadsheetId()}${path}`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -242,7 +269,7 @@ async function sheetsPut(path: string, body: unknown): Promise<unknown> {
   const token = await getToken();
   if (!token) throw new Error("Sem token de autenticação");
 
-  const res = await fetch(`${SHEETS_API_BASE}/${SPREADSHEET_ID}${path}`, {
+  const res = await fetch(`${SHEETS_API_BASE}/${getSpreadsheetId()}${path}`, {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -309,33 +336,226 @@ async function ensureSheet(title: string): Promise<number> {
 
   const sheetId = result.replies[0].addSheet.properties.sheetId;
 
-  // Escreve cabeçalho e oculta coluna A (__id__)
+  // Escreve layout VVD: título (row 1), separador (row 2), headers (row 3)
+  const titleText = SHEET_TITLE_TEXT[title] ?? `    Demandas - ${title}`;
+  const titleRow = Array(HEADERS.length).fill("");
+  titleRow[1] = titleText; // Col B (visível)
   await sheetsPut(
-    `/values/${encodeURIComponent(title)}!A1:${colToLetter(HEADERS.length)}1?valueInputOption=RAW`,
-    { values: [HEADERS] }
+    `/values/${encodeURIComponent(title)}!A1:${colToLetter(HEADERS.length)}${HEADER_ROW}?valueInputOption=RAW`,
+    { values: [titleRow, Array(HEADERS.length).fill(""), HEADERS] }
   );
 
-  await sheetsPost(":batchUpdate", {
-    requests: [
-      {
-        // Oculta coluna A (índice 0)
-        updateDimensionProperties: {
-          range: { sheetId, dimension: "COLUMNS", startIndex: 0, endIndex: 1 },
-          properties: { hiddenByUser: true },
-          fields: "hiddenByUser",
-        },
-      },
-      {
-        // Congela linha 1 (cabeçalho)
-        updateSheetProperties: {
-          properties: { sheetId, gridProperties: { frozenRowCount: 1 } },
-          fields: "gridProperties.frozenRowCount",
-        },
-      },
-    ],
-  });
-
+  await formatSheet(sheetId, title);
   return sheetId;
+}
+
+// ==========================================
+// CORES PARA FORMATAÇÃO CONDICIONAL
+// ==========================================
+
+type RGBColor = { red: number; green: number; blue: number };
+
+/** Cores dos status (semáforo: vermelho→amarelo→lilás→cinza→azul→verde) */
+const STATUS_COLORS: Record<string, RGBColor> = {
+  "1 - Urgente":            { red: 0.918, green: 0.341, blue: 0.341 },
+  "2 - Relatório":          { red: 1.0,   green: 0.851, blue: 0.4 },
+  "2 - Analisar":           { red: 1.0,   green: 0.851, blue: 0.4 },
+  "2 - Atender":            { red: 1.0,   green: 0.788, blue: 0.322 },
+  "2 - Buscar":             { red: 1.0,   green: 0.851, blue: 0.4 },
+  "2 - Diligenciar":        { red: 1.0,   green: 0.851, blue: 0.4 },
+  "2 - Investigar":         { red: 0.988, green: 0.733, blue: 0.278 },
+  "2 - Elaborar":           { red: 1.0,   green: 0.788, blue: 0.322 },
+  "2 - Elaborando":         { red: 0.988, green: 0.733, blue: 0.278 },
+  "2 - Revisar":            { red: 0.988, green: 0.733, blue: 0.278 },
+  "2 - Revisando":          { red: 0.957, green: 0.671, blue: 0.227 },
+  "3 - Protocolar":         { red: 0.957, green: 0.608, blue: 0.188 },
+  "4 - Amanda":             { red: 0.796, green: 0.718, blue: 0.961 },
+  "4 - Estágio - Taissa":   { red: 0.835, green: 0.773, blue: 0.969 },
+  "4 - Emilly":             { red: 0.757, green: 0.659, blue: 0.949 },
+  "4 - Monitorar":          { red: 0.875, green: 0.827, blue: 0.976 },
+  "5 - Fila":               { red: 0.851, green: 0.851, blue: 0.851 },
+  "6 - Documentos":         { red: 0.710, green: 0.847, blue: 0.910 },
+  "6 - Testemunhas":        { red: 0.753, green: 0.882, blue: 0.949 },
+  "7 - Protocolado":        { red: 0.467, green: 0.788, blue: 0.467 },
+  "7 - Sigad":              { red: 0.353, green: 0.702, blue: 0.353 },
+  "7 - Ciência":            { red: 0.533, green: 0.827, blue: 0.533 },
+  "7 - Resolvido":          { red: 0.443, green: 0.761, blue: 0.443 },
+  "7 - Constituiu advogado":{ red: 0.443, green: 0.761, blue: 0.443 },
+  "7 - Sem atuação":        { red: 0.600, green: 0.851, blue: 0.600 },
+};
+
+/** Cores dos atos por categoria */
+const _GREEN_DARK:  RGBColor = { red: 0.467, green: 0.749, blue: 0.467 };
+const _GREEN_MED:   RGBColor = { red: 0.573, green: 0.816, blue: 0.573 };
+const _GREEN_LIGHT: RGBColor = { red: 0.718, green: 0.882, blue: 0.718 };
+const _YELLOW:      RGBColor = { red: 1.0,   green: 0.851, blue: 0.400 };
+const _ORANGE:      RGBColor = { red: 0.988, green: 0.733, blue: 0.278 };
+const _BLUE_LIGHT:  RGBColor = { red: 0.710, green: 0.847, blue: 0.910 };
+const _GRAY:        RGBColor = { red: 0.851, green: 0.851, blue: 0.851 };
+
+const ATO_COLORS: Record<string, RGBColor> = {
+  // Peças urgentes
+  "Resposta à Acusação": _GREEN_DARK, "Alegações finais": _GREEN_DARK,
+  "Memoriais": _GREEN_DARK, "Contestação": _GREEN_DARK,
+  // Recursos
+  "Apelação": _GREEN_MED, "Razões de apelação": _GREEN_MED,
+  "Contrarrazões de apelação": _GREEN_MED,
+  "RESE": _GREEN_MED, "Razões de RESE": _GREEN_MED,
+  "Contrarrazões de RESE": _GREEN_MED, "Contrarrazões de ED": _GREEN_MED,
+  "Embargos de Declaração": _GREEN_MED, "Agravo em Execução": _GREEN_MED,
+  // Liberdade/prisão
+  "Habeas Corpus": _ORANGE, "Mandado de Segurança": _ORANGE,
+  "Revogação da prisão preventiva": _YELLOW,
+  "Relaxamento da prisão preventiva": _YELLOW,
+  "Relaxamento e revogação de prisão": _YELLOW,
+  "Revogação de medida protetiva": _YELLOW, "Modulação de MPU": _YELLOW,
+  "Revogação do monitoramento": _YELLOW, "Revogação de monitoramento": _YELLOW,
+  // Intermediários
+  "Diligências do 422": _GREEN_LIGHT, "Incidente de insanidade": _GREEN_LIGHT,
+  "Petição intermediária": _GREEN_LIGHT, "Prosseguimento do feito": _GREEN_LIGHT,
+  "Atualização de endereço": _GREEN_LIGHT, "Juntada de documentos": _GREEN_LIGHT,
+  "Ofício": _GREEN_LIGHT, "Quesitos": _GREEN_LIGHT,
+  "Requerimento de progressão": _GREEN_LIGHT,
+  "Requerimento de produção probatória": _GREEN_LIGHT,
+  "Requerimento audiência de justificação": _GREEN_LIGHT,
+  // Ciências
+  "Ciência": _BLUE_LIGHT, "Ciência habilitação DPE": _BLUE_LIGHT,
+  "Ciência habilitação dpe": _BLUE_LIGHT, "Ciência de decisão": _BLUE_LIGHT,
+  "Ciência absolvição": _BLUE_LIGHT, "Ciência condenação": _BLUE_LIGHT,
+  "Ciência da pronúncia": _BLUE_LIGHT, "Ciência da impronúncia": _BLUE_LIGHT,
+  "Ciência da absolvição": _BLUE_LIGHT, "Ciência desclassificação": _BLUE_LIGHT,
+  "Ciência acórdão": _BLUE_LIGHT, "Ciência de sentença favorável": _BLUE_LIGHT,
+  "Ciência condenação parcial": _BLUE_LIGHT,
+  "Ciência de extinção da punibilidade": _BLUE_LIGHT,
+  "Ciência de extinção processual": _BLUE_LIGHT,
+  "Ciência de sentença": _BLUE_LIGHT, "Ciência de prescrição": _BLUE_LIGHT,
+  // Outros
+  "Outro": _GRAY,
+};
+
+/**
+ * Aplica formatação padrão VVD: oculta coluna A, dropdowns Status/Ato, cores condicionais.
+ * Idempotente — seguro chamar em abas já formatadas.
+ * @param dataRowCount Número de linhas de dados (para range dos dropdowns). Default=500.
+ */
+async function formatSheet(sheetId: number, title: string, dataRowCount = 500): Promise<void> {
+  // Abas manuais (ex: VVD) têm layout próprio — não aplicar formatação automática
+  if (MANUAL_SHEETS.has(title)) return;
+
+  const endRow = DATA_START_ROW - 1 + dataRowCount; // index 0-based: row 3 + N dados
+
+  // Primeiro: remover formatação condicional existente (evitar duplicatas)
+  const clearRequests: unknown[] = [];
+  try {
+    const meta = await sheetsGet(`?fields=sheets(properties.sheetId,conditionalFormats)`) as {
+      sheets: Array<{ properties: { sheetId: number }; conditionalFormats?: unknown[] }>;
+    };
+    const sheet = meta.sheets.find(s => s.properties.sheetId === sheetId);
+    if (sheet?.conditionalFormats?.length) {
+      // Deletar de trás para frente para não mudar os índices
+      for (let i = sheet.conditionalFormats.length - 1; i >= 0; i--) {
+        clearRequests.push({ deleteConditionalFormatRule: { sheetId, index: i } });
+      }
+    }
+  } catch {
+    // Se falhar a leitura, segue sem limpar
+  }
+
+  const requests: unknown[] = [
+    ...clearRequests,
+    // Oculta coluna A (índice 0) — __id__
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: "COLUMNS", startIndex: 0, endIndex: 1 },
+        properties: { hiddenByUser: true },
+        fields: "hiddenByUser",
+      },
+    },
+    // Não congela (padrão VVD)
+    {
+      updateSheetProperties: {
+        properties: { sheetId, gridProperties: { frozenRowCount: 0 } },
+        fields: "gridProperties.frozenRowCount",
+      },
+    },
+    // Dropdown: Status (col B = index 1)
+    {
+      setDataValidation: {
+        range: { sheetId, startRowIndex: DATA_START_ROW - 1, endRowIndex: endRow, startColumnIndex: COL.STATUS - 1, endColumnIndex: COL.STATUS },
+        rule: {
+          condition: {
+            type: "ONE_OF_LIST",
+            values: [...VALID_SHEET_LABELS].map(v => ({ userEnteredValue: v })),
+          },
+          showCustomUi: true,
+          strict: false,
+        },
+      },
+    },
+    // Dropdown: Ato (col G = index 6)
+    {
+      setDataValidation: {
+        range: { sheetId, startRowIndex: DATA_START_ROW - 1, endRowIndex: endRow, startColumnIndex: COL.ATO - 1, endColumnIndex: COL.ATO },
+        rule: {
+          condition: {
+            type: "ONE_OF_LIST",
+            values: [
+              "Resposta à Acusação", "Alegações finais", "Memoriais", "Apelação",
+              "Razões de apelação", "Contrarrazões de apelação",
+              "RESE", "Razões de RESE", "Contrarrazões de RESE",
+              "Contrarrazões de ED", "Embargos de Declaração",
+              "Diligências do 422", "Incidente de insanidade",
+              "Revogação da prisão preventiva", "Relaxamento da prisão preventiva",
+              "Relaxamento e revogação de prisão", "Revogação do monitoramento",
+              "Revogação de medida protetiva", "Modulação de MPU",
+              "Habeas Corpus", "Mandado de Segurança",
+              "Requerimento de progressão", "Agravo em Execução",
+              "Ofício", "Petição intermediária", "Prosseguimento do feito",
+              "Atualização de endereço", "Juntada de documentos",
+              "Ciência habilitação DPE", "Ciência de decisão", "Ciência",
+              "Outro",
+            ].map(v => ({ userEnteredValue: v })),
+          },
+          showCustomUi: true,
+          strict: false,
+        },
+      },
+    },
+  ];
+
+  // Cores condicionais: Status (col B)
+  for (const [label, color] of Object.entries(STATUS_COLORS)) {
+    requests.push({
+      addConditionalFormatRule: {
+        rule: {
+          ranges: [{ sheetId, startRowIndex: DATA_START_ROW - 1, endRowIndex: endRow, startColumnIndex: COL.STATUS - 1, endColumnIndex: COL.STATUS }],
+          booleanRule: {
+            condition: { type: "TEXT_EQ", values: [{ userEnteredValue: label }] },
+            format: { backgroundColor: color },
+          },
+        },
+        index: 0,
+      },
+    });
+  }
+
+  // Cores condicionais: Ato (col G)
+  for (const [label, color] of Object.entries(ATO_COLORS)) {
+    requests.push({
+      addConditionalFormatRule: {
+        rule: {
+          ranges: [{ sheetId, startRowIndex: DATA_START_ROW - 1, endRowIndex: endRow, startColumnIndex: COL.ATO - 1, endColumnIndex: COL.ATO }],
+          booleanRule: {
+            condition: { type: "TEXT_EQ", values: [{ userEnteredValue: label }] },
+            format: { backgroundColor: color },
+          },
+        },
+        index: 0,
+      },
+    });
+  }
+
+  await sheetsPost(":batchUpdate", { requests });
 }
 
 /**
@@ -396,14 +616,16 @@ export function getSheetName(atribuicao: string): string {
 /**
  * Insere ou atualiza uma demanda na planilha.
  * Cria a aba se não existir.
+ * Pula abas manuais (VVD) — essas são mantidas pelo usuário.
  */
 export async function pushDemanda(demanda: DemandaParaSync): Promise<void> {
-  if (!SPREADSHEET_ID) {
+  if (!getSpreadsheetId()) {
     console.warn("[Sheets] GOOGLE_SHEETS_SPREADSHEET_ID não configurado — sync ignorado");
     return;
   }
 
   const sheetName = getSheetName(demanda.atribuicao);
+  if (MANUAL_SHEETS.has(sheetName)) return; // VVD é manual
 
   try {
     await ensureSheet(sheetName);
@@ -428,9 +650,10 @@ export async function removeDemanda(
   demandaId: number,
   atribuicao: string
 ): Promise<void> {
-  if (!SPREADSHEET_ID) return;
+  if (!getSpreadsheetId()) return;
 
   const sheetName = getSheetName(atribuicao);
+  if (MANUAL_SHEETS.has(sheetName)) return; // VVD é manual
 
   try {
     const sheets = await getSheets();
@@ -458,7 +681,7 @@ export async function moveDemanda(
   demanda: DemandaParaSync,
   atribuicaoAntiga: string
 ): Promise<void> {
-  if (!SPREADSHEET_ID) return;
+  if (!getSpreadsheetId()) return;
   await removeDemanda(demanda.id, atribuicaoAntiga);
   await pushDemanda(demanda);
 }
@@ -470,7 +693,7 @@ export async function moveDemanda(
 export async function syncAll(demandas: DemandaParaSync[]): Promise<SyncStats> {
   const stats: SyncStats = { inserted: 0, updated: 0, removed: 0, errors: [] };
 
-  if (!SPREADSHEET_ID) {
+  if (!getSpreadsheetId()) {
     stats.errors.push("GOOGLE_SHEETS_SPREADSHEET_ID não configurado");
     return stats;
   }
@@ -484,11 +707,14 @@ export async function syncAll(demandas: DemandaParaSync[]): Promise<SyncStats> {
   }
 
   for (const [sheetName, items] of bySheet) {
+    // Pular abas manuais (VVD) — mantidas pelo usuário
+    if (MANUAL_SHEETS.has(sheetName)) continue;
+
     try {
-      await ensureSheet(sheetName);
+      const sheetId = await ensureSheet(sheetName);
       const rows = await readSheet(sheetName);
 
-      // IDs já presentes na aba
+      // IDs já presentes na aba (dados começam na DATA_START_ROW, 1-indexed → index 3)
       const existingIds = new Set<string>();
       for (let i = DATA_START_ROW - 1; i < rows.length; i++) {
         const id = rows[i]?.[COL.ID - 1];
@@ -503,12 +729,19 @@ export async function syncAll(demandas: DemandaParaSync[]): Promise<SyncStats> {
         return a.prazo.localeCompare(b.prazo);
       });
 
-      const newValues = [HEADERS, ...sorted.map(demandaToRow)];
+      // Layout VVD: título (row 1) + separador (row 2) + headers (row 3) + dados (row 4+)
+      const titleText = SHEET_TITLE_TEXT[sheetName] ?? `    Demandas - ${sheetName}`;
+      const titleRow = Array(HEADERS.length).fill("");
+      titleRow[1] = titleText;
+      const newValues = [titleRow, Array(HEADERS.length).fill(""), HEADERS, ...sorted.map(demandaToRow)];
 
       await sheetsPut(
         `/values/${encodeURIComponent(sheetName)}!A1:${colToLetter(HEADERS.length)}${newValues.length}?valueInputOption=USER_ENTERED`,
         { values: newValues }
       );
+
+      // Aplicar formatação + dropdowns após escrever dados
+      await formatSheet(sheetId, sheetName, sorted.length);
 
       for (const d of items) {
         if (existingIds.has(String(d.id))) {
@@ -530,7 +763,7 @@ export async function syncAll(demandas: DemandaParaSync[]): Promise<SyncStats> {
  * Verifica se a integração está configurada e acessível.
  */
 export async function testConnection(): Promise<{ ok: boolean; error?: string; sheets?: string[] }> {
-  if (!SPREADSHEET_ID) {
+  if (!getSpreadsheetId()) {
     return { ok: false, error: "GOOGLE_SHEETS_SPREADSHEET_ID não configurado" };
   }
 
