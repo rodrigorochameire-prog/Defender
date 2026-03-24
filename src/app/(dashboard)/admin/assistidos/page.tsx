@@ -46,6 +46,7 @@ import {
   Scale,
   BarChart3,
   MapPin,
+  FolderOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAssignment } from "@/contexts/assignment-context";
@@ -557,6 +558,27 @@ export default function AssistidosPage() {
     },
   });
 
+  // Backfill Drive folders state
+  const [backfillResult, setBackfillResult] = useState<{
+    linked: number;
+    skipped: number;
+    errors: number;
+    hasMore: boolean;
+  } | null>(null);
+
+  const backfillDriveMutation = trpc.drive.backfillAssistidoLinks.useMutation({
+    onSuccess: (result) => {
+      setBackfillResult(result);
+      if (result.linked > 0) {
+        utils.assistidos.list.invalidate();
+      }
+      toast.success(
+        `${result.linked} assistido(s) vinculado(s). ${result.skipped} sem correspondência.`
+      );
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   const toggleBatchSelect = (id: number, hasCpf: boolean) => {
     if (!hasCpf) return;
     setBatchSelectedIds((prev) => {
@@ -1040,6 +1062,35 @@ export default function AssistidosPage() {
             >
               <Download className="w-3.5 h-3.5" />
             </Button>
+            {/* Botao Vincular pastas Drive */}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={backfillDriveMutation.isPending}
+              onClick={() => backfillDriveMutation.mutate({ limit: 50 })}
+            >
+              {backfillDriveMutation.isPending ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                  Vinculando…
+                </>
+              ) : (
+                <>
+                  <FolderOpen className="w-3 h-3 mr-1" />
+                  Vincular pastas Drive
+                </>
+              )}
+            </Button>
+            {backfillResult?.hasMore && (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={backfillDriveMutation.isPending}
+                onClick={() => backfillDriveMutation.mutate({ limit: 50 })}
+              >
+                Continuar ({backfillResult.linked} vinculados até agora)
+              </Button>
+            )}
             {/* Botao batch Solar export */}
             {!batchSelectMode ? (
               <Button
