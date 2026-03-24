@@ -1183,4 +1183,40 @@ export const assistidosRouter = router({
 
       return timeline;
     }),
+
+  linkDriveFolder: protectedProcedure
+    .input(
+      z.object({
+        assistidoId: z.number(),
+        driveFileId: z.string(), // driveFiles.driveFileId da pasta a vincular
+      })
+    )
+    .mutation(async ({ input }) => {
+      await db.transaction(async (tx) => {
+        // 1. Atualiza o assistido
+        await tx
+          .update(assistidos)
+          .set({ driveFolderId: input.driveFileId, updatedAt: new Date() })
+          .where(eq(assistidos.id, input.assistidoId));
+
+        // 2. Marca a pasta em driveFiles com o assistidoId
+        await tx
+          .update(driveFiles)
+          .set({ assistidoId: input.assistidoId, updatedAt: new Date() })
+          .where(eq(driveFiles.driveFileId, input.driveFileId));
+
+        // 3. Vincula os arquivos filhos diretos (aqueles cujo driveFolderId aponta para esta pasta)
+        await tx
+          .update(driveFiles)
+          .set({ assistidoId: input.assistidoId, updatedAt: new Date() })
+          .where(
+            and(
+              eq(driveFiles.driveFolderId, input.driveFileId),
+              isNull(driveFiles.assistidoId)
+            )
+          );
+      });
+
+      return { success: true };
+    }),
 });
