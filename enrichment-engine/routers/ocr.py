@@ -27,6 +27,15 @@ class OcrRequest(BaseModel):
 class OcrPage(BaseModel):
     page_number: int
     text: str
+    char_count: int = 0
+    dpi_used: int = 300
+    quality: str = "good"  # good | low | failed
+
+
+class QualitySummary(BaseModel):
+    good: int = 0
+    low: int = 0
+    failed: int = 0
 
 
 class OcrResponse(BaseModel):
@@ -34,6 +43,7 @@ class OcrResponse(BaseModel):
     total_pages: int
     ocr_engine: str
     processing_time_ms: int
+    quality_summary: QualitySummary | None = None
 
 
 @router.post("/ocr", response_model=OcrResponse)
@@ -69,6 +79,7 @@ async def ocr_endpoint(request: OcrRequest):
             total_pages=result["total_pages"],
             ocr_engine=result["ocr_engine"],
             processing_time_ms=result["processing_time_ms"],
+            quality_summary=QualitySummary(**result.get("quality_summary", {})) if result.get("quality_summary") else None,
         )
 
     except httpx.HTTPStatusError as e:

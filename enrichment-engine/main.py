@@ -24,6 +24,7 @@ from routers.consolidation import router as consolidation_router
 from routers.transcription import router as transcription_router
 from routers.oficios import router as oficios_router
 from routers.ocr import router as ocr_router
+from routers.extract import router as extract_router
 from routers.ficha import router as ficha_router
 from routers.analysis import router as analysis_router
 from routers.cross_analysis import router as cross_analysis_router
@@ -107,6 +108,7 @@ def create_app() -> FastAPI:
     app.include_router(transcription_router, prefix="/api", tags=["Transcription"])
     app.include_router(oficios_router, prefix="/api", tags=["Oficios"])
     app.include_router(ocr_router, prefix="/api", tags=["OCR"])
+    app.include_router(extract_router, prefix="/api", tags=["Extraction"])
     app.include_router(ficha_router, prefix="/enrich", tags=["Ficha"])
     app.include_router(analysis_router, prefix="/api", tags=["Analysis"])
     app.include_router(cross_analysis_router, prefix="/api", tags=["Cross-Analysis"])

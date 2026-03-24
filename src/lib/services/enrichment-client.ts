@@ -959,6 +959,28 @@ class EnrichmentClient {
     });
   }
 
+  /**
+   * Extract text from PDF using Docling (with built-in OCR).
+   * Returns structured Markdown + per-page text with quality metrics.
+   * Use this for scanned/complex PDFs instead of raw Tesseract OCR.
+   */
+  async extractText(input: {
+    fileUrl: string;
+    driveFileId?: string;
+  }): Promise<{
+    pages: { page_number: number; text: string; char_count: number; quality: string }[];
+    markdown: string;
+    total_pages: number;
+    ocr_applied: boolean;
+    extraction_engine: string;
+    processing_time_ms: number;
+  }> {
+    return this.request("/api/extract-text", {
+      file_url: input.fileUrl,
+      drive_file_id: input.driveFileId || null,
+    });
+  }
+
   // === Ficha Methods ===
 
   /**

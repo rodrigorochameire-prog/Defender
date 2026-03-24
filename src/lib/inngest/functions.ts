@@ -1268,36 +1268,79 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
       return { success: false, error: extraction.error, driveFileId };
     }
 
-    // Step: Check if OCR is needed
-    const needsOcr = await step.run("check-ocr-need", async () => {
+    // Step: Check extraction quality — decide if Docling needed
+    const needsDocling = await step.run("check-extraction-quality", async () => {
       const { detectNeedsOcr } = await import("@/lib/services/pdf-extractor");
-      return detectNeedsOcr(extraction.pages);
+
+      const needsOcr = detectNeedsOcr(extraction.pages);
+      const avgCharsPerPage = extraction.pages.reduce((sum, p) => sum + p.text.length, 0) / Math.max(extraction.pages.length, 1);
+
+      // Use Docling for: scanned PDFs, sparse text, or complex layouts
+      return needsOcr || avgCharsPerPage < 200;
     });
 
-    // Step: Run OCR if needed
+    // Step: Extract with Docling if needed (superior quality for scanned/complex docs)
     let finalPages = extraction.pages;
-    if (needsOcr) {
-      const ocrResult = await step.run("run-ocr", async () => {
+    let doclingMarkdown: string | null = null;
+    let needsOcr = needsDocling; // Track for later OCR marking
+
+    if (needsDocling) {
+      const doclingResult = await step.run("extract-with-docling", async () => {
         try {
           const { enrichmentClient } = await import("@/lib/services/enrichment-client");
-          const result = await enrichmentClient.ocr({
+
+          // Try Docling first (has built-in OCR + layout/table preservation)
+          const result = await enrichmentClient.extractText({
             fileUrl: `drive://${driveGoogleId}`,
             driveFileId: driveGoogleId,
           });
-          return { success: true, pages: result.pages };
-        } catch (err) {
-          console.error("OCR failed, continuing with original extraction:", err);
-          return { success: false, pages: [] as { page_number: number; text: string }[] };
+
+          return {
+            success: true,
+            engine: "docling" as const,
+            pages: result.pages,
+            markdown: result.markdown,
+            ocrApplied: result.ocr_applied,
+          };
+        } catch (doclingErr) {
+          // Docling failed — fall back to Tesseract OCR
+          console.warn("Docling extraction failed, falling back to Tesseract:", doclingErr);
+
+          try {
+            const { enrichmentClient } = await import("@/lib/services/enrichment-client");
+            const ocrResult = await enrichmentClient.ocr({
+              fileUrl: `drive://${driveGoogleId}`,
+              driveFileId: driveGoogleId,
+            });
+
+            return {
+              success: true,
+              engine: "tesseract" as const,
+              pages: ocrResult.pages.map(p => ({
+                page_number: p.page_number,
+                text: p.text,
+                char_count: p.text.length,
+                quality: p.text.length > 100 ? "good" : p.text.length >= 10 ? "low" : "failed",
+              })),
+              markdown: null,
+              ocrApplied: true,
+            };
+          } catch (ocrErr) {
+            console.error("Both Docling and OCR failed:", ocrErr);
+            return { success: false, engine: "none" as const, pages: [], markdown: null, ocrApplied: false };
+          }
         }
       });
 
-      if (ocrResult.success && ocrResult.pages.length > 0) {
-        finalPages = ocrResult.pages.map((p) => ({
+      if (doclingResult.success && doclingResult.pages.length > 0) {
+        finalPages = doclingResult.pages.filter(Boolean).map((p: any) => ({
           pageNumber: p.page_number,
-          text: p.text,
-          lineCount: p.text.split("\n").length,
+          text: p.text || "",
+          lineCount: (p.text || "").split("\n").length,
         }));
+        doclingMarkdown = doclingResult.markdown;
       }
+      // If both failed, finalPages stays as original pdfjs extraction
     }
 
     // Step 3: Mark as processing
@@ -1321,7 +1364,7 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
         return { success: false, sections: [], error: "Gemini not configured" };
       }
 
-      const chunks = chunkPages(finalPages, 20);
+      const chunks = chunkPages(finalPages);
       return await classifyFullDocument(chunks);
     });
 
@@ -1431,7 +1474,7 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
             sub_type: subType,
             extracted_sections: extractedSections,
             confidence: Math.round(avgConfidence * 100) / 100,
-          },
+          } as any,
         })
         .where(eq(driveFiles.id, driveFileId));
 
@@ -1511,7 +1554,7 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
             .update(driveFileContents)
             .set({
               ocrApplied: true,
-              contentText: finalPages.map((p) => p.text).join("\n\n---PAGE---\n\n"),
+              contentText: doclingMarkdown || finalPages.map((p) => p.text).join("\n\n---PAGE---\n\n"),
               extractionStatus: "COMPLETED",
               extractedAt: new Date(),
             })
@@ -1523,7 +1566,7 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
               driveFileId: driveFileId,
               extractionStatus: "COMPLETED",
               ocrApplied: true,
-              contentText: finalPages.map((p) => p.text).join("\n\n---PAGE---\n\n"),
+              contentText: doclingMarkdown || finalPages.map((p) => p.text).join("\n\n---PAGE---\n\n"),
               pageCount: finalPages.length,
               extractedAt: new Date(),
             });
