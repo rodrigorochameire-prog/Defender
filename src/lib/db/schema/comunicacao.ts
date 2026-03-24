@@ -304,6 +304,9 @@ export const whatsappChatMessages = pgTable("whatsapp_chat_messages", {
   imported: boolean("imported").default(false).notNull(),
   importedAt: timestamp("imported_at"),
 
+  // Favoritos e ações
+  isFavorite: boolean("is_favorite").default(false),
+
   // Timestamps
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
@@ -315,6 +318,30 @@ export const whatsappChatMessages = pgTable("whatsapp_chat_messages", {
 
 export type WhatsAppChatMessage = typeof whatsappChatMessages.$inferSelect;
 export type InsertWhatsAppChatMessage = typeof whatsappChatMessages.$inferInsert;
+
+// ==========================================
+// AÇÕES SOBRE MENSAGENS WHATSAPP
+// ==========================================
+
+export const whatsappMessageActions = pgTable("whatsapp_message_actions", {
+  id: serial("id").primaryKey(),
+  messageId: integer("message_id")
+    .notNull()
+    .references(() => whatsappChatMessages.id, { onDelete: "cascade" }),
+  actionType: varchar("action_type", { length: 20 }).notNull(),
+  targetType: varchar("target_type", { length: 20 }).notNull(),
+  targetId: integer("target_id"),
+  processoId: integer("processo_id").references(() => processos.id, { onDelete: "set null" }),
+  observacao: text("observacao"),
+  createdById: integer("created_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("whatsapp_message_actions_message_idx").on(table.messageId),
+  index("whatsapp_message_actions_processo_idx").on(table.processoId),
+]);
+
+export type WhatsappMessageAction = typeof whatsappMessageActions.$inferSelect;
+export type InsertWhatsappMessageAction = typeof whatsappMessageActions.$inferInsert;
 
 // ==========================================
 // PLAUD CONFIGURATION
@@ -448,8 +475,15 @@ export const whatsappContactsRelations = relations(whatsappContacts, ({ one, man
   messages: many(whatsappChatMessages),
 }));
 
-export const whatsappChatMessagesRelations = relations(whatsappChatMessages, ({ one }) => ({
+export const whatsappChatMessagesRelations = relations(whatsappChatMessages, ({ one, many }) => ({
   contact: one(whatsappContacts, { fields: [whatsappChatMessages.contactId], references: [whatsappContacts.id] }),
+  actions: many(whatsappMessageActions),
+}));
+
+export const whatsappMessageActionsRelations = relations(whatsappMessageActions, ({ one }) => ({
+  message: one(whatsappChatMessages, { fields: [whatsappMessageActions.messageId], references: [whatsappChatMessages.id] }),
+  processo: one(processos, { fields: [whatsappMessageActions.processoId], references: [processos.id] }),
+  createdBy: one(users, { fields: [whatsappMessageActions.createdById], references: [users.id] }),
 }));
 
 export const plaudConfigRelations = relations(plaudConfig, ({ one, many }) => ({
