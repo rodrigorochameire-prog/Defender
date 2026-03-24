@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db, driveFiles, driveSyncFolders, driveSyncLogs } from "@/lib/db";
-import { eq, and, desc, asc, sql, isNull, or, like, not, gt, lt, inArray } from "drizzle-orm";
+import { type SQL, eq, and, desc, asc, sql, isNull, or, like, not, gt, lt, inArray } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
 import {
   listFilesInFolder,
@@ -48,13 +48,15 @@ import {
   checkSyncHealth,
   // Auth
   getAccessToken,
+  ATRIBUICAO_FOLDER_IDS,
 } from "@/lib/services/google-drive";
+import { getFolderIdForAtribuicao } from "@/lib/utils/text-extraction";
 import { processos, assistidos, casos, demandas, atendimentos, audiencias, driveDocumentSections, driveFileContents } from "@/lib/db/schema";
 import {
   enrichmentClient,
   type TranscribeOutput,
 } from "@/lib/services/enrichment-client";
-import { calculateSimilarity } from "@/lib/utils/name-matching";
+import { calculateSimilarity, normalizeNameForMatch } from "@/lib/utils/name-matching";
 
 export const driveRouter = router({
   /**
@@ -4638,5 +4640,100 @@ export const driveRouter = router({
       }
 
       return { enqueued: enqueuedIds.length, skipped, fileIds: enqueuedIds };
+    }),
+
+  /**
+   * Sugere uma pasta do Drive não vinculada para um assistido com base na similaridade de nome
+   */
+  getSuggestedFolderForAssistido: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input }) => {
+      // 1. Busca o assistido
+      const assistido = await db.query.assistidos.findFirst({
+        where: eq(assistidos.id, input.assistidoId),
+        columns: { nome: true, atribuicaoPrimaria: true },
+      });
+
+      if (!assistido?.atribuicaoPrimaria || !assistido.nome) return null;
+
+      // 2. Obtém o Drive folder ID da pasta raiz da atribuição
+      const atribuicao = assistido.atribuicaoPrimaria as keyof typeof ATRIBUICAO_FOLDER_IDS;
+      if (!(atribuicao in ATRIBUICAO_FOLDER_IDS)) return null;
+      const rootFolderId = getFolderIdForAtribuicao(atribuicao);
+
+      // 3. Busca pastas não vinculadas dentro dessa raiz
+      const candidates = await db
+        .select({
+          driveFileId: driveFiles.driveFileId,
+          name: driveFiles.name,
+          webViewLink: driveFiles.webViewLink,
+          fileCount: sql<number>`(
+            SELECT COUNT(*) FROM drive_files cf
+            WHERE cf.drive_folder_id = ${driveFiles.driveFileId}
+          )`.mapWith(Number),
+        })
+        .from(driveFiles)
+        .where(
+          and(
+            eq(driveFiles.isFolder, true),
+            isNull(driveFiles.assistidoId),
+            eq(driveFiles.driveFolderId, rootFolderId)
+          )
+        );
+
+      if (candidates.length === 0) return null;
+
+      // 4. Calcula scores e retorna o melhor >= 0.8
+      const normalizedTarget = normalizeNameForMatch(assistido.nome);
+      let best: (typeof candidates[0] & { score: number }) | null = null;
+
+      for (const c of candidates) {
+        const score = calculateSimilarity(
+          normalizeNameForMatch(c.name ?? ""),
+          normalizedTarget
+        );
+        if (score >= 0.8 && (!best || score > best.score)) {
+          best = { ...c, score };
+        }
+      }
+
+      return best;
+    }),
+
+  /**
+   * Lista pastas do Drive não vinculadas, opcionalmente filtradas pela atribuição
+   */
+  listUnlinkedFoldersByAtribuicao: protectedProcedure
+    .input(
+      z.object({
+        atribuicaoPrimaria: z.string().nullable(),
+      })
+    )
+    .query(async ({ input }) => {
+      const atribuicao = input.atribuicaoPrimaria as keyof typeof ATRIBUICAO_FOLDER_IDS | null;
+      const rootFolderId =
+        atribuicao && atribuicao in ATRIBUICAO_FOLDER_IDS
+          ? getFolderIdForAtribuicao(atribuicao)
+          : null;
+
+      const whereConditions: SQL[] = [
+        eq(driveFiles.isFolder, true),
+        isNull(driveFiles.assistidoId),
+      ];
+
+      if (rootFolderId) {
+        whereConditions.push(eq(driveFiles.driveFolderId, rootFolderId));
+      }
+
+      return db
+        .select({
+          driveFileId: driveFiles.driveFileId,
+          name: driveFiles.name,
+          webViewLink: driveFiles.webViewLink,
+          driveFolderId: driveFiles.driveFolderId,
+        })
+        .from(driveFiles)
+        .where(and(...whereConditions))
+        .orderBy(driveFiles.name);
     }),
 });
