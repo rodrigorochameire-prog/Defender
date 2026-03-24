@@ -100,18 +100,26 @@ src/components/whatsapp/ContextPanel.tsx (novo)
 ### 3.4 Dados necessários (tRPC)
 
 ```typescript
-// Novo endpoint
+// Endpoint leve — carregado ao selecionar contato (cacheável)
 whatsappChat.getContactContext
-  Input: { contactId: number }
+  Input: { contactId: number, configId: number }
   Output: {
     assistido: { id, nome, cpf } | null
     processoAtivo: { id, numero, vara, crime } | null
+  }
+
+// Endpoint de timeline — carregado ao abrir painel contextual
+whatsappChat.getContactTimeline
+  Input: { assistidoId: number }
+  Output: {
     proximaAudiencia: { id, data, tipo, diasRestantes } | null
     prazoAberto: { id, tipo, vencimento, diasRestantes } | null
     ultimaMovimentacao: { tipo, data, fonte } | null
-    driveFiles: { id, nome, tipo, tamanho, updatedAt }[]
-    midiaChat: { type, count }[]
   }
+
+// Drive files e mídia usam endpoints existentes:
+// - drive.listFiles({ assistidoId }) para aba Drive
+// - whatsappChat.listMessages({ type: 'image' | 'document' | 'audio' }) para aba Mídia
 ```
 
 ---
@@ -173,9 +181,11 @@ whatsappChat.saveMessageToProcess
 whatsappChat.createNoteFromMessage
   Input: { messageId: number, processoId?: number, assistidoId?: number, texto: string }
 
-// Salvar arquivo do chat no Drive
+// Salvar arquivo do chat no Drive — estende endpoint existente (linha 1795)
+// Endpoint atual: Input: { contactId, messageIds[] }
+// Adicionar parâmetros opcionais:
 whatsappChat.saveMediaToDrive
-  Input: { messageId: number, assistidoId: number, pasta?: string, nomeArquivo?: string }
+  Input: { contactId: number, messageIds: number[], assistidoId?: number, pasta?: string, nomeArquivo?: string }
 ```
 
 ---
@@ -263,7 +273,8 @@ Quando status = desconectado por > 30s:
 
 ### 6.6 Notificação sonora (opt-in)
 
-- `user_settings.whatsapp_notification_sound` (boolean, default false)
+- Preferência armazenada em `localStorage: whatsapp_notification_sound` (boolean, default false)
+- Toggle em Settings do chat (ícone Bell no header)
 - Usa `new Audio('/sounds/notification.mp3')` no polling quando detecta mensagem nova
 - Browser Notification API como fallback quando aba não está focada
 
@@ -278,7 +289,7 @@ Toggle no header do chat:
 - "Mais antigas primeiro" (ASC — comportamento atual)
 - Armazenado em `localStorage: whatsapp_msg_order`
 
-**Endpoint**: adicionar parâmetro `orderBy: 'asc' | 'desc'` em `whatsappChat.listMessages`
+**Implementação**: a ordenação é feita **client-side** (reverter o array já carregado). O endpoint `listMessages` existente usa cursor-based pagination DESC — mudar a direção do cursor quebraria a paginação. O toggle apenas inverte a renderização no frontend.
 
 ### 7.2 Busca global (lista de conversas)
 
@@ -292,7 +303,7 @@ No `ConversationList.tsx`:
 
 No header do `ChatWindow.tsx`:
 - Botão `Search` abre input inline
-- Backend: `whatsappChat.searchMessages({ contactId, query, configId })`
+- Backend: estender endpoint existente `whatsappChat.searchMessages` (linha 1533 do router) com parâmetro `contactId` para filtrar por conversa
 - Frontend: destaca matches com `<mark>`, navega com ↑↓
 - Contador: "3 de 15 resultados"
 
@@ -324,7 +335,11 @@ Hover msg → FileUp → Modal "Salvar no Processo"
 ├── Observação: [textarea opcional]
 └── [Cancelar] [Salvar]
 
-→ Backend: cria registro em `anotacoes` ou `documentos` vinculado ao processo
+→ Backend:
+   - tipo=documento: insere em `documentos` com titulo=primeiros 100 chars, categoria="whatsapp"
+   - tipo=anotacao: insere em `anotacoes` com conteudo=texto da msg
+   - tipo=evidencia: insere em `documentos` com categoria="evidencia_whatsapp"
+   - Registra em `whatsapp_message_actions` (junction table)
 → Toast: "Salvo no processo 0500123-45.2025"
 ```
 
@@ -371,27 +386,57 @@ Painel → Aba Mídia → Selecionar múltiplos → "Salvar no Drive"
 
 ## 9. Schema Changes
 
-### 9.1 Novas colunas
+### 9.1 Novas colunas em `whatsapp_chat_messages`
 
 ```sql
--- Marcar mensagens favoritas
 ALTER TABLE whatsapp_chat_messages ADD COLUMN is_favorite boolean DEFAULT false;
-
--- Marcar mensagens salvas no processo
-ALTER TABLE whatsapp_chat_messages ADD COLUMN saved_to_process_id integer REFERENCES processos(id);
-ALTER TABLE whatsapp_chat_messages ADD COLUMN saved_to_drive boolean DEFAULT false;
 ```
 
-### 9.2 Novos índices
+### 9.2 Nova tabela junction: `whatsapp_message_actions`
+
+Uma mensagem pode ser salva em múltiplos destinos (processo + Drive + anotação). Usar junction table em vez de colunas na mensagem:
+
+```sql
+CREATE TABLE whatsapp_message_actions (
+  id serial PRIMARY KEY,
+  message_id integer NOT NULL REFERENCES whatsapp_chat_messages(id) ON DELETE CASCADE,
+  action_type varchar(20) NOT NULL, -- 'save_to_process' | 'create_note' | 'save_to_drive'
+  target_type varchar(20) NOT NULL, -- 'anotacao' | 'documento' | 'drive_file'
+  target_id integer,                -- ID na tabela destino (anotacoes.id, documentos.id, drive_files.id)
+  processo_id integer REFERENCES processos(id) ON DELETE SET NULL,
+  observacao text,
+  created_by_id integer REFERENCES users(id),
+  created_at timestamp DEFAULT now() NOT NULL
+);
+```
+
+### 9.3 Novos índices
 
 ```sql
 CREATE INDEX whatsapp_chat_messages_is_favorite_idx ON whatsapp_chat_messages(is_favorite) WHERE is_favorite = true;
-CREATE INDEX whatsapp_chat_messages_saved_process_idx ON whatsapp_chat_messages(saved_to_process_id) WHERE saved_to_process_id IS NOT NULL;
+CREATE INDEX whatsapp_chat_messages_contact_created_idx ON whatsapp_chat_messages(contact_id, created_at);
+CREATE INDEX whatsapp_message_actions_message_idx ON whatsapp_message_actions(message_id);
+CREATE INDEX whatsapp_message_actions_processo_idx ON whatsapp_message_actions(processo_id) WHERE processo_id IS NOT NULL;
 ```
 
 ---
 
-## 10. Design System (Padrão Defender)
+## 10. Empty States e Fallbacks
+
+| Situação | Comportamento |
+|----------|--------------|
+| Contato sem assistido vinculado | Painel contextual mostra: "Contato não vinculado. [Vincular a assistido]" |
+| Assistido sem processos | Aba Processo mostra: "Nenhum processo ativo" com botão "Criar processo" |
+| Assistido sem arquivos no Drive | Aba Drive mostra: "Nenhum arquivo" com botão "Upload" |
+| Conversa sem mídia | Aba Mídia mostra: "Nenhuma mídia nesta conversa" |
+| `/nota` sem assistido vinculado | Toast warning: "Vincule este contato a um assistido primeiro" |
+| `/nota` com múltiplos processos ativos | Modal com dropdown para selecionar qual processo |
+| Conexão perdida durante ação | Toast error + retry automático 1x + botão "Tentar novamente" |
+| Mobile bottom sheet | Usar `vaul` (Drawer) — compatível com shadcn/ui patterns |
+
+---
+
+## 11. Design System (Padrão Defender)
 
 Todas as novas interfaces seguem:
 
@@ -407,7 +452,7 @@ Todas as novas interfaces seguem:
 
 ---
 
-## 11. Fora de Escopo (YAGNI)
+## 12. Fora de Escopo (YAGNI)
 
 - Chamadas de voz/vídeo pelo OMBUDS
 - Chatbot automático / respostas automáticas com IA
@@ -419,7 +464,7 @@ Todas as novas interfaces seguem:
 
 ---
 
-## 12. Dependências
+## 13. Dependências
 
 - Evolution API v2.3.7 funcionando no Railway
 - Número migrado do celular para Evolution API (OTP por ligação)
