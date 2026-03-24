@@ -27,6 +27,8 @@ require "base64"
 require "digest"
 require "time"
 require "openssl"
+require "shellwords"
+require "tempfile"
 
 # ---------------------------------------------------------------------------
 # Configuração
@@ -275,30 +277,170 @@ def build_signed_envelope(session, private_key, cert_der, x509)
 end
 
 # ---------------------------------------------------------------------------
-# Enviar envelope SOAP via HTTP POST
+# Enviar envelope SOAP via HTTP POST (com mTLS via PKCS#11)
 # ---------------------------------------------------------------------------
-def send_soap_request(envelope)
+def send_soap_request(envelope, x509 = nil, cert_der = nil)
+  puts "[INFO] Enviando para #{MNI_ENDPOINT}..."
+  puts "[INFO] Content-Length: #{envelope.bytesize}"
+
+  # Tentar primeiro via curl (mais confiável para mTLS com smart card no macOS)
+  response = send_via_curl(envelope, cert_der)
+  return response if response
+
+  # Fallback: Net::HTTP com OpenSSL PKCS#11 engine
+  puts "[INFO] curl falhou, tentando Net::HTTP com PKCS#11 engine..."
+  send_via_net_http(envelope, x509)
+end
+
+# Enviar via curl (usa SecureTransport no macOS para smart card)
+def send_via_curl(envelope, cert_der)
+  # Salvar envelope em arquivo temporário
+  tmp_envelope = Tempfile.new(["soap", ".xml"])
+  tmp_envelope.write(envelope)
+  tmp_envelope.close
+
+  # Salvar certificado em PEM para curl
+  tmp_cert = nil
+  cert_args = []
+  if cert_der
+    tmp_cert = Tempfile.new(["cert", ".pem"])
+    x509 = OpenSSL::X509::Certificate.new(cert_der)
+    tmp_cert.write(x509.to_pem)
+    tmp_cert.close
+    cert_args = ["--cert", tmp_cert.path]
+  end
+
+  # Tentar com PKCS#11 engine primeiro (requer libp11 instalado)
+  pkcs11_args = []
+  begin
+    # Testar se curl tem suporte a engine
+    engine_test = `curl --engine list 2>&1`
+    if engine_test.include?("pkcs11")
+      puts "[INFO] curl tem engine pkcs11 — usando mTLS via PKCS#11"
+      pkcs11_args = [
+        "--engine", "pkcs11",
+        "--cert-type", "ENG",
+        "--cert", "pkcs11:pin-value=#{PKCS11_PIN}",
+        "--key-type", "ENG",
+        "--key", "pkcs11:pin-value=#{PKCS11_PIN}"
+      ]
+      cert_args = [] # engine cuida do cert
+    end
+  rescue
+    # ignore
+  end
+
+  cmd = [
+    "curl", "-s", "-S",
+    "--tlsv1.2", "--max-time", "60", "--connect-timeout", "30",
+    "-X", "POST",
+    "-H", "Content-Type: text/xml; charset=utf-8",
+    "-H", "SOAPAction: consultarAvisosPendentes",
+    *pkcs11_args,
+    *cert_args,
+    "-d", "@#{tmp_envelope.path}",
+    "-w", "\n__HTTP_CODE__%{http_code}",
+    "-D", "-",
+    MNI_ENDPOINT
+  ]
+
+  puts "[INFO] Executando curl..."
+  puts "[DEBUG] #{cmd.join(' ')}" if ENV["DEBUG"]
+
+  output = nil
+  3.times do |attempt|
+    output = `#{cmd.shelljoin} 2>&1`
+    break unless output.include?("Connection reset") || output.include?("ECONNRESET") || output.include?("curl: (56)")
+
+    wait = 2 ** (attempt + 1)
+    puts "[WARN] Tentativa #{attempt + 1} falhou (connection reset), aguardando #{wait}s..."
+    sleep(wait)
+  end
+
+  # Parsear resposta do curl
+  if output && output.include?("__HTTP_CODE__")
+    http_code = output[/__HTTP_CODE__(\d+)/, 1]
+    # Separar headers e body
+    body = output.sub(/\A.*?\r?\n\r?\n/m, "").sub(/__HTTP_CODE__\d+\z/, "").strip
+    puts "[INFO] HTTP #{http_code} (via curl)"
+
+    # Criar objeto similar a Net::HTTP::Response
+    FakeCurlResponse.new(http_code, body)
+  else
+    puts "[WARN] curl não retornou resposta válida: #{output[0..200]}"
+    nil
+  end
+ensure
+  tmp_envelope&.unlink
+  tmp_cert&.unlink
+end
+
+# Fallback: Net::HTTP com TLS 1.2
+def send_via_net_http(envelope, x509 = nil)
   uri = URI(MNI_ENDPOINT)
 
   http = Net::HTTP.new(uri.host, uri.port)
   http.use_ssl = true
+  http.ssl_version = :TLSv1_2
   http.verify_mode = OpenSSL::SSL::VERIFY_PEER
   http.open_timeout = 30
   http.read_timeout = 60
+
+  # mTLS: enviar certificado do cliente
+  if x509
+    http.cert = x509
+    puts "[INFO] Certificado do cliente configurado para mTLS"
+
+    # Tentar carregar chave privada via OpenSSL PKCS#11 engine
+    begin
+      engine = OpenSSL::Engine.by_id("pkcs11")
+      engine.ctrl_cmd("MODULE_PATH", PKCS11_LIB)
+      engine.ctrl_cmd("PIN", PKCS11_PIN)
+      http.key = engine.load_private_key("pkcs11:")
+      puts "[INFO] Chave privada carregada via OpenSSL PKCS#11 engine"
+    rescue => e
+      puts "[WARN] OpenSSL PKCS#11 engine indisponível: #{e.message}"
+      puts "[WARN] mTLS pode falhar sem chave privada no TLS handshake"
+    end
+  end
 
   request = Net::HTTP::Post.new(uri.path)
   request["Content-Type"] = "text/xml; charset=utf-8"
   request["SOAPAction"] = "consultarAvisosPendentes"
   request.body = envelope
 
-  puts "[INFO] Enviando para #{MNI_ENDPOINT}..."
-  puts "[INFO] Content-Length: #{envelope.bytesize}"
+  response = nil
+  3.times do |attempt|
+    begin
+      response = http.request(request)
+      puts "[INFO] HTTP #{response.code} #{response.message}"
+      break
+    rescue Errno::ECONNRESET, IOError => e
+      wait = 2 ** (attempt + 1)
+      puts "[WARN] Tentativa #{attempt + 1} falhou (#{e.message}), aguardando #{wait}s..."
+      sleep(wait)
+    end
+  end
 
-  response = http.request(request)
+  response or abort("ERRO: todas as tentativas de conexão falharam")
+end
 
-  puts "[INFO] HTTP #{response.code} #{response.message}"
+# Wrapper para resposta do curl parecer com Net::HTTP::Response
+class FakeCurlResponse
+  attr_reader :code, :body
 
-  response
+  def initialize(code, body)
+    @code = code.to_s
+    @body = body
+  end
+
+  def message
+    case @code.to_i
+    when 200 then "OK"
+    when 500 then "Internal Server Error"
+    else "HTTP #{@code}"
+    end
+  end
 end
 
 # ---------------------------------------------------------------------------
@@ -381,9 +523,9 @@ def main
     File.write(debug_path, envelope)
     puts "[DEBUG] Envelope salvo em #{debug_path}"
 
-    # 4. Enviar
+    # 4. Enviar (com mTLS)
     puts "\n[PASSO 4] Enviando requisição SOAP..."
-    response = send_soap_request(envelope)
+    response = send_soap_request(envelope, x509, cert_der)
 
     # 5. Parsear resposta
     puts "\n[PASSO 5] Parseando resposta..."
