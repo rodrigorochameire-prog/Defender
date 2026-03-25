@@ -550,6 +550,23 @@ export async function syncIncremental(
               syncStatus: "synced",
               lastSyncAt: new Date(),
               createdById: userId,
+            }).onConflictDoUpdate({
+              target: driveFiles.driveFileId,
+              set: {
+                name: file.name,
+                mimeType: file.mimeType,
+                fileSize: file.size ? parseInt(file.size) : null,
+                webViewLink: file.webViewLink,
+                webContentLink: file.webContentLink,
+                thumbnailLink: file.thumbnailLink,
+                iconLink: file.iconLink,
+                description: file.description,
+                lastModifiedTime: file.modifiedTime ? new Date(file.modifiedTime) : null,
+                driveChecksum: file.md5Checksum,
+                syncStatus: "synced" as const,
+                lastSyncAt: new Date(),
+                updatedAt: new Date(),
+              },
             }).returning({ id: driveFiles.id });
             result.filesAdded++;
             if (inserted) {
