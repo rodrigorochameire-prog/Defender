@@ -1963,12 +1963,12 @@ export default function Demandas() {
   }, [activeTab, demandasOrdenadas, focusedDemandaIndex, setPreviewDemandaId]);
 
   return (
-    <div className="w-full min-h-screen bg-zinc-100 dark:bg-[#0f0f11] overflow-x-hidden">
+    <div className="w-full min-h-screen bg-zinc-50 dark:bg-zinc-950 overflow-x-hidden">
       {/* Compact Header — Single-line with Tabs + Toolbar */}
       <div className="px-3 sm:px-5 md:px-8 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Left: Tabs (icon-only, label when active) */}
-          <div className="flex items-center gap-0.5 shrink-0">
+          <div className="flex items-center gap-0.5 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 shrink-0">
             {[
               { key: "kanban" as const, label: "Kanban", icon: Layers },
               { key: "planilha" as const, label: "Planilha", icon: Table2 },
@@ -1988,34 +1988,40 @@ export default function Demandas() {
                     }
                   }}
                   title={tab.label}
-                  className={`relative flex items-center gap-1.5 py-1.5 text-xs font-medium transition-all duration-200 cursor-pointer rounded-md ${
+                  className={`relative flex items-center gap-1.5 py-1.5 text-xs font-medium transition-all duration-200 cursor-pointer ${
                     isActive
-                      ? "px-2.5 text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800"
-                      : "px-2 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                      ? "px-2.5 text-white bg-zinc-800 dark:bg-zinc-200 dark:text-zinc-900 shadow-sm rounded-lg"
+                      : "px-2 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 rounded-lg"
                   }`}
                 >
                   <tab.icon className="w-3.5 h-3.5" />
-                  {isActive && <span>{tab.label}</span>}
+                  {isActive && (
+                    <>
+                      <span>{tab.label}</span>
+                      <span className="text-[9px] font-semibold tabular-nums bg-white/20 px-1.5 py-0.5 rounded-full">
+                        {demandas.filter(d => !d.arquivado).length}
+                      </span>
+                    </>
+                  )}
                 </button>
               );
             })}
           </div>
           {/* Counters — badges compactos com Lucide icons (hidden on mobile) */}
           <div className="hidden sm:flex items-center gap-1.5 whitespace-nowrap shrink-0">
-            <span className="text-xs font-mono tabular-nums text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">{demandas.filter(d => !d.arquivado).length}</span>
             {(() => {
               const urgentes = demandas.filter(d => !d.arquivado && (d.prioridade === "URGENTE" || d.prioridade === "REU_PRESO")).length;
               const presos = demandas.filter(d => !d.arquivado && d.estadoPrisional === "preso").length;
               return (
                 <>
                   {urgentes > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-md">
+                    <span className="flex items-center gap-1 text-[10px] font-semibold text-rose-500 bg-rose-50 dark:bg-rose-950/30 px-1.5 py-0.5 rounded-md">
                       <AlertTriangle className="w-3 h-3" />
                       {urgentes}
                     </span>
                   )}
                   {presos > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-md">
+                    <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-500 bg-amber-50 dark:bg-amber-950/30 px-1.5 py-0.5 rounded-md">
                       <Lock className="w-3 h-3" />
                       {presos}
                     </span>
@@ -2081,7 +2087,7 @@ export default function Demandas() {
               {isFiltersExpanded && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setIsFiltersExpanded(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl shadow-lg py-1.5 min-w-[220px]">
+                  <div className="absolute right-0 top-full mt-2 z-50 bg-white/95 dark:bg-[#141416]/95 backdrop-blur-xl border border-zinc-200/80 dark:border-white/[0.08] rounded-xl shadow-2xl shadow-black/10 dark:shadow-black/40 py-1.5 min-w-[220px] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200">
                     {/* Sort */}
                     <div className="px-3 py-1.5">
                       <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Ordenar</span>

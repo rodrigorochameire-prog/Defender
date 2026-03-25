@@ -822,6 +822,16 @@ export const intelligenceEnrichDocumentFn = inngest.createFunction(
       }
     });
 
+    // Trigger auto-consolidation if enrichment succeeded and we have an assistidoId
+    if (result.success && !("skipped" in result && result.skipped) && assistidoId) {
+      await step.run("trigger-consolidation", async () => {
+        await inngest.send({
+          name: "intelligence/consolidate",
+          data: { assistidoId, processoId: processoId ?? undefined, userId: "system" },
+        });
+      });
+    }
+
     return result;
   }
 );
@@ -1258,36 +1268,79 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
       return { success: false, error: extraction.error, driveFileId };
     }
 
-    // Step: Check if OCR is needed
-    const needsOcr = await step.run("check-ocr-need", async () => {
+    // Step: Check extraction quality — decide if Docling needed
+    const needsDocling = await step.run("check-extraction-quality", async () => {
       const { detectNeedsOcr } = await import("@/lib/services/pdf-extractor");
-      return detectNeedsOcr(extraction.pages);
+
+      const needsOcr = detectNeedsOcr(extraction.pages);
+      const avgCharsPerPage = extraction.pages.reduce((sum, p) => sum + p.text.length, 0) / Math.max(extraction.pages.length, 1);
+
+      // Use Docling for: scanned PDFs, sparse text, or complex layouts
+      return needsOcr || avgCharsPerPage < 200;
     });
 
-    // Step: Run OCR if needed
+    // Step: Extract with Docling if needed (superior quality for scanned/complex docs)
     let finalPages = extraction.pages;
-    if (needsOcr) {
-      const ocrResult = await step.run("run-ocr", async () => {
+    let doclingMarkdown: string | null = null;
+    let needsOcr = needsDocling; // Track for later OCR marking
+
+    if (needsDocling) {
+      const doclingResult = await step.run("extract-with-docling", async () => {
         try {
           const { enrichmentClient } = await import("@/lib/services/enrichment-client");
-          const result = await enrichmentClient.ocr({
+
+          // Try Docling first (has built-in OCR + layout/table preservation)
+          const result = await enrichmentClient.extractText({
             fileUrl: `drive://${driveGoogleId}`,
             driveFileId: driveGoogleId,
           });
-          return { success: true, pages: result.pages };
-        } catch (err) {
-          console.error("OCR failed, continuing with original extraction:", err);
-          return { success: false, pages: [] as { page_number: number; text: string }[] };
+
+          return {
+            success: true,
+            engine: "docling" as const,
+            pages: result.pages,
+            markdown: result.markdown,
+            ocrApplied: result.ocr_applied,
+          };
+        } catch (doclingErr) {
+          // Docling failed — fall back to Tesseract OCR
+          console.warn("Docling extraction failed, falling back to Tesseract:", doclingErr);
+
+          try {
+            const { enrichmentClient } = await import("@/lib/services/enrichment-client");
+            const ocrResult = await enrichmentClient.ocr({
+              fileUrl: `drive://${driveGoogleId}`,
+              driveFileId: driveGoogleId,
+            });
+
+            return {
+              success: true,
+              engine: "tesseract" as const,
+              pages: ocrResult.pages.map(p => ({
+                page_number: p.page_number,
+                text: p.text,
+                char_count: p.text.length,
+                quality: p.text.length > 100 ? "good" : p.text.length >= 10 ? "low" : "failed",
+              })),
+              markdown: null,
+              ocrApplied: true,
+            };
+          } catch (ocrErr) {
+            console.error("Both Docling and OCR failed:", ocrErr);
+            return { success: false, engine: "none" as const, pages: [], markdown: null, ocrApplied: false };
+          }
         }
       });
 
-      if (ocrResult.success && ocrResult.pages.length > 0) {
-        finalPages = ocrResult.pages.map((p) => ({
+      if (doclingResult.success && doclingResult.pages.length > 0) {
+        finalPages = doclingResult.pages.filter(Boolean).map((p: any) => ({
           pageNumber: p.page_number,
-          text: p.text,
-          lineCount: p.text.split("\n").length,
+          text: p.text || "",
+          lineCount: (p.text || "").split("\n").length,
         }));
+        doclingMarkdown = doclingResult.markdown;
       }
+      // If both failed, finalPages stays as original pdfjs extraction
     }
 
     // Step 3: Mark as processing
@@ -1311,7 +1364,7 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
         return { success: false, sections: [], error: "Gemini not configured" };
       }
 
-      const chunks = chunkPages(finalPages, 20);
+      const chunks = chunkPages(finalPages);
       return await classifyFullDocument(chunks);
     });
 
@@ -1421,11 +1474,67 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
             sub_type: subType,
             extracted_sections: extractedSections,
             confidence: Math.round(avgConfidence * 100) / 100,
-          },
+          } as any,
         })
         .where(eq(driveFiles.id, driveFileId));
 
       return { sectionsStored: inserted.length };
+    });
+
+    // Step: Auto-review sections by confidence threshold
+    await step.run("auto-review-by-confidence", async () => {
+      const { db } = await import("@/lib/db");
+      const { driveDocumentSections } = await import("@/lib/db/schema");
+      const { eq, and, gte, lt } = await import("drizzle-orm");
+
+      // Get all newly created sections for this file
+      const sections = await db
+        .select({
+          id: driveDocumentSections.id,
+          tipo: driveDocumentSections.tipo,
+          confianca: driveDocumentSections.confianca,
+          textoExtraido: driveDocumentSections.textoExtraido,
+        })
+        .from(driveDocumentSections)
+        .where(eq(driveDocumentSections.driveFileId, driveFileId));
+
+      let autoApproved = 0;
+      let flaggedReview = 0;
+      const fichaEvents: Array<{ name: "section/generate-ficha"; data: { sectionId: number } }> = [];
+
+      for (const section of sections) {
+        if (section.confianca && section.confianca >= 90) {
+          // High confidence → auto-approve
+          await db
+            .update(driveDocumentSections)
+            .set({ reviewStatus: "approved", updatedAt: new Date() })
+            .where(eq(driveDocumentSections.id, section.id));
+          autoApproved++;
+
+          // Queue ficha generation if section has text
+          if (section.textoExtraido && section.textoExtraido.trim().length >= 20) {
+            fichaEvents.push({
+              name: "section/generate-ficha" as const,
+              data: { sectionId: section.id },
+            });
+          }
+        } else if (section.confianca != null && section.confianca < 50) {
+          // Low confidence → flag for review
+          await db
+            .update(driveDocumentSections)
+            .set({ reviewStatus: "needs_review", updatedAt: new Date() })
+            .where(eq(driveDocumentSections.id, section.id));
+          flaggedReview++;
+        }
+        // 50-89: stays as "pending" (default)
+      }
+
+      // Batch trigger ficha generation for auto-approved sections
+      if (fichaEvents.length > 0) {
+        await inngest.send(fichaEvents);
+      }
+
+      return { autoApproved, flaggedReview, fichaTriggered: fichaEvents.length };
     });
 
     // Step: Mark OCR status in driveFileContents
@@ -1445,7 +1554,7 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
             .update(driveFileContents)
             .set({
               ocrApplied: true,
-              contentText: finalPages.map((p) => p.text).join("\n\n---PAGE---\n\n"),
+              contentText: doclingMarkdown || finalPages.map((p) => p.text).join("\n\n---PAGE---\n\n"),
               extractionStatus: "COMPLETED",
               extractedAt: new Date(),
             })
@@ -1457,7 +1566,7 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
               driveFileId: driveFileId,
               extractionStatus: "COMPLETED",
               ocrApplied: true,
-              contentText: finalPages.map((p) => p.text).join("\n\n---PAGE---\n\n"),
+              contentText: doclingMarkdown || finalPages.map((p) => p.text).join("\n\n---PAGE---\n\n"),
               pageCount: finalPages.length,
               extractedAt: new Date(),
             });
@@ -1471,6 +1580,26 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
         name: "pdf/insert-bookmarks",
         data: { driveFileId, driveGoogleId },
       });
+    });
+
+    // Step 7: Trigger auto-consolidation if file is linked to an assistido
+    await step.run("trigger-consolidation", async () => {
+      const { db } = await import("@/lib/db");
+      const { driveFiles } = await import("@/lib/db/schema");
+      const { eq } = await import("drizzle-orm");
+
+      const [file] = await db
+        .select({ assistidoId: driveFiles.assistidoId })
+        .from(driveFiles)
+        .where(eq(driveFiles.id, driveFileId))
+        .limit(1);
+
+      if (file?.assistidoId) {
+        await inngest.send({
+          name: "intelligence/consolidate",
+          data: { assistidoId: file.assistidoId, userId: "system" },
+        });
+      }
     });
 
     return {
@@ -1767,6 +1896,26 @@ export const transcribeDriveFileFn = inngest.createFunction(
         .where(eq(driveFiles.driveFileId, driveFileId));
     });
 
+    // Trigger auto-consolidation after transcription
+    await step.run("trigger-consolidation", async () => {
+      const { db } = await import("@/lib/db");
+      const { driveFiles: driveFilesSchema } = await import("@/lib/db/schema");
+      const { eq } = await import("drizzle-orm");
+
+      const [file] = await db
+        .select({ assistidoId: driveFilesSchema.assistidoId })
+        .from(driveFilesSchema)
+        .where(eq(driveFilesSchema.driveFileId, driveFileId))
+        .limit(1);
+
+      if (file?.assistidoId) {
+        await inngest.send({
+          name: "intelligence/consolidate",
+          data: { assistidoId: file.assistidoId, userId: "system" },
+        });
+      }
+    });
+
     return {
       success: true,
       driveFileId,
@@ -1827,6 +1976,43 @@ export const driveWatchdogFn = inngest.createFunction(
   }
 );
 
+/**
+ * Auto-consolidate enriched data for an assistido/processo.
+ * Debounced: waits 5 min after last enrichment event, max 30 min.
+ * Concurrency: 1 per assistido to avoid duplicate runs.
+ */
+export const intelligenceConsolidateFn = inngest.createFunction(
+  {
+    id: "intelligence-consolidate",
+    name: "Intelligence: Auto-Consolidate Case",
+    retries: 2,
+    debounce: {
+      key: "event.data.assistidoId",
+      period: "5m",
+      timeout: "30m",
+    },
+    concurrency: [{ limit: 1, key: "event.data.assistidoId" }],
+  },
+  { event: "intelligence/consolidate" },
+  async ({ event, step }) => {
+    const { assistidoId, processoId, userId } = event.data;
+
+    const result = await step.run("consolidate-case", async () => {
+      const { consolidateForAssistido, consolidateForProcesso } =
+        await import("@/lib/services/intelligence-consolidation");
+
+      if (assistidoId) {
+        return consolidateForAssistido(assistidoId, userId || "system");
+      } else if (processoId) {
+        return consolidateForProcesso(processoId, userId || "system");
+      }
+      return { success: false, error: "No assistidoId or processoId provided" };
+    });
+
+    return result;
+  }
+);
+
 export const functions = [
   sendWhatsAppMessageFn,
   notifyPrazoFn,
@@ -1852,4 +2038,5 @@ export const functions = [
   transcribeDriveFileFn,
   enrichmentProcessFolderFn,
   driveWatchdogFn,
+  intelligenceConsolidateFn,
 ];

@@ -27,14 +27,14 @@ Todos os scripts anteriores usavam connection string **INCORRETA**:
 ### Session Pooler (Porta 5432) - OFICIAL
 
 ```
-postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-1-sa-east-1.pooler.supabase.com:5432/postgres
+postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-1-sa-east-1.pooler.supabase.com:5432/postgres
 ```
 
 **Características:**
 - ✅ Host: `aws-1-sa-east-1` (com **1**)
 - ✅ Porta: 5432 (Session Pooler)
 - ✅ Usuário: `postgres.hxfvlaeqhkmelvyzgfqp`
-- ✅ Senha: `401bFr505@`
+- ✅ Senha: `[REDACTED]@`
 
 ---
 
@@ -142,7 +142,7 @@ Se preferir configurar manualmente:
 4. Edite `DATABASE_URL` para:
 
 ```
-postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-1-sa-east-1.pooler.supabase.com:5432/postgres
+postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-1-sa-east-1.pooler.supabase.com:5432/postgres
 ```
 
 5. Selecione: Production, Preview, Development
@@ -158,11 +158,11 @@ vercel env rm DATABASE_URL preview -y
 vercel env rm DATABASE_URL development -y
 
 # Adicionar correta
-echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-1-sa-east-1.pooler.supabase.com:5432/postgres" | vercel env add DATABASE_URL production
+echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-1-sa-east-1.pooler.supabase.com:5432/postgres" | vercel env add DATABASE_URL production
 
-echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-1-sa-east-1.pooler.supabase.com:5432/postgres" | vercel env add DATABASE_URL preview
+echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-1-sa-east-1.pooler.supabase.com:5432/postgres" | vercel env add DATABASE_URL preview
 
-echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-1-sa-east-1.pooler.supabase.com:5432/postgres" | vercel env add DATABASE_URL development
+echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-1-sa-east-1.pooler.supabase.com:5432/postgres" | vercel env add DATABASE_URL development
 
 # Redeploy
 vercel --prod
@@ -253,7 +253,7 @@ npm run dev
 
 Se ainda houver problemas após usar a connection string correta:
 
-1. Verifique se a senha está correta: `401bFr505@`
+1. Verifique se a senha está correta: `[REDACTED]@`
 2. Confirme que o projeto Supabase está ativo
 3. Teste a conexão localmente primeiro
 4. Verifique se há outras variáveis faltando

@@ -117,8 +117,8 @@ export function detectNeedsOcr(pages: PageText[]): boolean {
  */
 export function chunkPages(
   pages: PageText[],
-  chunkSize: number = 20,
-  overlap: number = 2
+  chunkSize: number = 30,
+  overlap: number = 3
 ): Array<{ startPage: number; endPage: number; text: string }> {
   const chunks: Array<{ startPage: number; endPage: number; text: string }> = [];
   const step = Math.max(1, chunkSize - overlap);

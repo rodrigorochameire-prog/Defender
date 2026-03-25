@@ -4,6 +4,7 @@ FastAPI service: Docling (parsing) + Gemini Flash (semântica) + Supabase (stora
 """
 
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -24,6 +25,7 @@ from routers.consolidation import router as consolidation_router
 from routers.transcription import router as transcription_router
 from routers.oficios import router as oficios_router
 from routers.ocr import router as ocr_router
+from routers.extract import router as extract_router
 from routers.ficha import router as ficha_router
 from routers.analysis import router as analysis_router
 from routers.cross_analysis import router as cross_analysis_router
@@ -34,6 +36,9 @@ from routers.radar import router as radar_router
 from routers.summarize_chat import router as summarize_chat_router
 from routers.extract_data import router as extract_data_router
 from routers.cowork import router as cowork_router
+from routers.pje_scraper import router as pje_scraper_router
+from routers.pje_download import router as pje_download_router
+from routers.drive_organizer import router as drive_organizer_router
 
 # Logging estruturado (sem PII)
 logging.basicConfig(
@@ -85,9 +90,10 @@ def create_app() -> FastAPI:
     )
 
     # --- Middleware ---
+    allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Railway → Vercel (restringir em produção)
+        allow_origins=[o.strip() for o in allowed_origins],
         allow_methods=["POST", "GET"],
         allow_headers=["*"],
     )
@@ -107,6 +113,7 @@ def create_app() -> FastAPI:
     app.include_router(transcription_router, prefix="/api", tags=["Transcription"])
     app.include_router(oficios_router, prefix="/api", tags=["Oficios"])
     app.include_router(ocr_router, prefix="/api", tags=["OCR"])
+    app.include_router(extract_router, prefix="/api", tags=["Extraction"])
     app.include_router(ficha_router, prefix="/enrich", tags=["Ficha"])
     app.include_router(analysis_router, prefix="/api", tags=["Analysis"])
     app.include_router(cross_analysis_router, prefix="/api", tags=["Cross-Analysis"])
@@ -117,6 +124,9 @@ def create_app() -> FastAPI:
     app.include_router(summarize_chat_router, prefix="/enrich", tags=["Enrich"])
     app.include_router(extract_data_router, prefix="/enrich", tags=["Enrich"])
     app.include_router(cowork_router, prefix="/cowork", tags=["cowork"])
+    app.include_router(pje_scraper_router, prefix="/enrich", tags=["PJe Scraper"])
+    app.include_router(pje_download_router, prefix="/enrich", tags=["PJe Download"])
+    app.include_router(drive_organizer_router, prefix="/enrich", tags=["Drive Organizer"])
 
     return app
 

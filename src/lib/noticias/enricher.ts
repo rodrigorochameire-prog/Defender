@@ -1,10 +1,28 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import { db } from "@/lib/db";
 import { noticiasJuridicas } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { extractPlainText } from "./html-cleaner";
 
-const anthropic = new Anthropic();
+const GEMINI_API_KEY =
+  process.env.GEMINI_API_KEY ||
+  process.env.GOOGLE_GEMINI_API_KEY ||
+  process.env.GOOGLE_AI_API_KEY;
+
+let geminiClient: GoogleGenerativeAI | null = null;
+
+function getGeminiClient(): GoogleGenerativeAI {
+  if (!GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY não está configurada para enrichment de notícias");
+  }
+  if (!geminiClient) {
+    geminiClient = new GoogleGenerativeAI(GEMINI_API_KEY);
+  }
+  return geminiClient;
+}
+
+/** Gemini 2.5 Pro — bom equilíbrio qualidade/custo para análise de notícias */
+const ENRICHMENT_MODEL = "gemini-2.5-pro";
 
 export type AnaliseIA = {
   resumoExecutivo: string;
@@ -76,18 +94,26 @@ export async function enriquecerNoticia(noticiaId: number): Promise<AnaliseIA> {
   // Retornar cache se já processado
   if (noticia.analiseIa) return noticia.analiseIa as AnaliseIA;
 
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 1024,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: buildPrompt(noticia) }],
+  const client = getGeminiClient();
+  const model = client.getGenerativeModel({
+    model: ENRICHMENT_MODEL,
+    safetySettings: [
+      { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+      { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+      { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+      { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+    ],
+    systemInstruction: SYSTEM_PROMPT,
   });
 
-  const content = message.content[0];
-  if (content.type !== "text") throw new Error("Resposta inesperada da API");
+  const result = await model.generateContent(buildPrompt(noticia));
+  const response = result.response;
+  const text = response.text();
 
-  // Parsear JSON — Claude às vezes inclui markdown code blocks
-  const jsonText = content.text.replace(/```json\n?|```\n?/g, "").trim();
+  if (!text) throw new Error("Resposta vazia do Gemini");
+
+  // Parsear JSON — Gemini às vezes inclui markdown code blocks
+  const jsonText = text.replace(/```json\n?|```\n?/g, "").trim();
   const parsed = JSON.parse(jsonText);
 
   const CATEGORIAS_VALIDAS = ["legislativa", "jurisprudencial", "artigo"] as const;
@@ -102,7 +128,7 @@ export async function enriquecerNoticia(noticiaId: number): Promise<AnaliseIA> {
     casosAplicaveis: parsed.casosAplicaveis ?? [],
     categoriaIA,
     processadoEm: new Date().toISOString(),
-    modeloUsado: "claude-sonnet-4-6",
+    modeloUsado: ENRICHMENT_MODEL,
   };
 
   await db

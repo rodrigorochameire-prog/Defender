@@ -46,6 +46,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import dynamic from "next/dynamic";
+const DocumentCompareModal = dynamic(
+  () => import("@/components/drive/DocumentCompareModal").then(m => m.DocumentCompareModal || m.default),
+  { ssr: false }
+);
 
 // ─── Section Type Config (matching PdfViewerModal) ──────────────
 
@@ -88,6 +93,10 @@ export default function SistematizacaoPage({ params }: { params: Promise<{ id: s
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<SistematizacaoTab>("porTipo");
   const [searchQuery, setSearchQuery] = useState("");
+  const [timelineMode, setTimelineMode] = useState<"cronologico" | "por_pessoa">("cronologico");
+  const [faseFilter, setFaseFilter] = useState<"todos" | "inquerito" | "instrucao" | "plenario">("todos");
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [compareFileA, setCompareFileA] = useState<any>(null);
 
   // Fetch processo data
   const { data: processo, isLoading: processoLoading } = trpc.processos.getById.useQuery(
@@ -146,28 +155,51 @@ export default function SistematizacaoPage({ params }: { params: Promise<{ id: s
       parsedDate: Date | null;
       section: (typeof sections)[0];
       label: string;
+      descricao?: string;
+      fonte?: string;
+      fase?: string | null;
     }> = [];
 
     for (const s of filteredSections) {
-      const dates = s.metadata?.datasExtraidas || [];
-      if (dates.length > 0) {
-        for (const d of dates) {
-          const parsed = parseBrazilianDate(d);
+      const meta = s.metadata || {};
+      const fase = meta.fase || null;
+
+      // v3: Use cronologia[] array if available
+      const cronologiaArr = meta.cronologia || [];
+      if (cronologiaArr.length > 0) {
+        for (const c of cronologiaArr) {
           events.push({
-            date: d,
-            parsedDate: parsed,
+            date: c.data || "",
+            parsedDate: parseBrazilianDate(c.data || ""),
             section: s,
             label: `${getSectionConfig(s.tipo).label} — ${s.titulo}`,
+            descricao: c.descricao,
+            fonte: c.fonte,
+            fase,
           });
         }
       } else {
-        // Use createdAt as fallback
-        events.push({
-          date: s.createdAt ? format(new Date(s.createdAt), "dd/MM/yyyy", { locale: ptBR }) : "",
-          parsedDate: s.createdAt ? new Date(s.createdAt) : null,
-          section: s,
-          label: `${getSectionConfig(s.tipo).label} — ${s.titulo}`,
-        });
+        // v1 fallback: datasExtraidas
+        const dates = meta.datasExtraidas || [];
+        if (dates.length > 0) {
+          for (const d of dates) {
+            events.push({
+              date: d,
+              parsedDate: parseBrazilianDate(d),
+              section: s,
+              label: `${getSectionConfig(s.tipo).label} — ${s.titulo}`,
+              fase,
+            });
+          }
+        } else {
+          events.push({
+            date: s.createdAt ? format(new Date(s.createdAt), "dd/MM/yyyy", { locale: ptBR }) : "",
+            parsedDate: s.createdAt ? new Date(s.createdAt) : null,
+            section: s,
+            label: `${getSectionConfig(s.tipo).label} — ${s.titulo}`,
+            fase,
+          });
+        }
       }
     }
 
@@ -177,6 +209,37 @@ export default function SistematizacaoPage({ params }: { params: Promise<{ id: s
       return a.parsedDate.getTime() - b.parsedDate.getTime();
     });
   }, [filteredSections]);
+
+  // Group sections by person name
+  const pessoaGroups = useMemo(() => {
+    const groups = new Map<string, typeof filteredSections>();
+    for (const s of filteredSections) {
+      const pessoas = (s.metadata?.pessoas || []) as Array<{ nome: string; papel: string }>;
+      if (pessoas.length > 0) {
+        for (const p of pessoas) {
+          const key = p.nome.toLowerCase().trim();
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key)!.push(s);
+        }
+      }
+    }
+    // Sort by number of appearances (most appearances first)
+    return [...groups.entries()]
+      .filter(([_, sections]) => sections.length >= 2)
+      .sort((a, b) => b[1].length - a[1].length);
+  }, [filteredSections]);
+
+  // Compare handler
+  const handleCompare = (section: any) => {
+    setCompareFileA({
+      id: section.fileId,
+      name: section.fileName,
+      webViewLink: null,
+      driveFolderId: null,
+      driveFileId: null,
+    });
+    setCompareOpen(true);
+  };
 
   // Stats
   const stats = useMemo(() => {
@@ -276,10 +339,18 @@ export default function SistematizacaoPage({ params }: { params: Promise<{ id: s
       {/* Tab Content */}
       <div className="min-h-[400px]">
         {activeTab === "porTipo" && (
-          <ByTypeView sectionsByType={sectionsByType} processoId={processoId} />
+          <ByTypeView sectionsByType={sectionsByType} processoId={processoId} onCompare={handleCompare} />
         )}
         {activeTab === "cronologia" && (
-          <CronologiaView cronologia={cronologia} processoId={processoId} />
+          <CronologiaView
+            cronologia={cronologia}
+            processoId={processoId}
+            timelineMode={timelineMode}
+            setTimelineMode={setTimelineMode}
+            faseFilter={faseFilter}
+            setFaseFilter={setFaseFilter}
+            pessoaGroups={pessoaGroups}
+          />
         )}
         {activeTab === "contradicoes" && (
           <ContradicoesView
@@ -295,6 +366,15 @@ export default function SistematizacaoPage({ params }: { params: Promise<{ id: s
           />
         )}
       </div>
+
+      {compareOpen && (
+        <DocumentCompareModal
+          isOpen={compareOpen}
+          onClose={() => { setCompareOpen(false); setCompareFileA(null); }}
+          initialFileA={compareFileA}
+          assistidoId={processo?.assistidoId}
+        />
+      )}
     </div>
   );
 }
@@ -346,9 +426,11 @@ function StatCard({
 function ByTypeView({
   sectionsByType,
   processoId,
+  onCompare,
 }: {
   sectionsByType: [string, any[]][];
   processoId: number;
+  onCompare?: (section: any) => void;
 }) {
   const [expandedType, setExpandedType] = useState<string | null>(null);
 
@@ -400,7 +482,7 @@ function ByTypeView({
             {isExpanded && (
               <div className="border-t border-zinc-100 dark:border-zinc-800">
                 {items.map((section) => (
-                  <SectionRow key={section.id} section={section} processoId={processoId} />
+                  <SectionRow key={section.id} section={section} processoId={processoId} onCompare={onCompare} />
                 ))}
               </div>
             )}
@@ -411,7 +493,7 @@ function ByTypeView({
   );
 }
 
-function SectionRow({ section, processoId }: { section: any; processoId: number }) {
+function SectionRow({ section, processoId, onCompare }: { section: any; processoId: number; onCompare?: (section: any) => void }) {
   const config = getSectionConfig(section.tipo);
   const statusBadge = getStatusBadge(section.reviewStatus);
   const hasFicha = section.fichaData && Object.keys(section.fichaData).length > 0;
@@ -460,6 +542,18 @@ function SectionRow({ section, processoId }: { section: any; processoId: number 
             Ficha
           </Button>
         )}
+        {/* Show compare button for depoimentos */}
+        {onCompare && (section.tipo.startsWith("depoimento") || section.tipo === "interrogatorio") && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-[10px] gap-1 text-blue-500 hover:text-blue-600"
+            onClick={() => onCompare(section)}
+          >
+            <ExternalLink className="w-3 h-3" />
+            Comparar
+          </Button>
+        )}
       </div>
 
       {/* Ficha expandida */}
@@ -501,65 +595,289 @@ function SectionRow({ section, processoId }: { section: any; processoId: number 
 function CronologiaView({
   cronologia,
   processoId,
+  timelineMode,
+  setTimelineMode,
+  faseFilter,
+  setFaseFilter,
+  pessoaGroups,
 }: {
-  cronologia: Array<{
-    date: string;
-    parsedDate: Date | null;
-    section: any;
-    label: string;
-  }>;
+  cronologia: Array<{ date: string; parsedDate: Date | null; section: any; label: string; descricao?: string; fonte?: string; fase?: string | null }>;
   processoId: number;
+  timelineMode: "cronologico" | "por_pessoa";
+  setTimelineMode: (m: "cronologico" | "por_pessoa") => void;
+  faseFilter: string;
+  setFaseFilter: (f: any) => void;
+  pessoaGroups: [string, any[]][];
 }) {
-  if (cronologia.length === 0) {
+  const FASE_LABELS: Record<string, { label: string; color: string }> = {
+    inquerito: { label: "Inquérito", color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" },
+    instrucao: { label: "Instrução", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+    plenario: { label: "Plenário", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" },
+  };
+
+  const hasFases = cronologia.some(e => e.fase);
+
+  // Filter by fase
+  const filteredCronologia = faseFilter === "todos"
+    ? cronologia
+    : cronologia.filter(e => e.fase === faseFilter);
+
+  if (cronologia.length === 0 && pessoaGroups.length === 0) {
     return <EmptyState message="Nenhum evento com datas extraídas" />;
   }
 
   return (
-    <div className="relative">
-      {/* Timeline line */}
-      <div className="absolute left-6 top-0 bottom-0 w-px bg-zinc-200 dark:bg-zinc-700" />
+    <div className="space-y-4">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1">
+          <button
+            onClick={() => setTimelineMode("cronologico")}
+            className={cn(
+              "px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5",
+              timelineMode === "cronologico"
+                ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
+                : "text-zinc-500 hover:text-zinc-700"
+            )}
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            Cronológico
+          </button>
+          <button
+            onClick={() => setTimelineMode("por_pessoa")}
+            className={cn(
+              "px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5",
+              timelineMode === "por_pessoa"
+                ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
+                : "text-zinc-500 hover:text-zinc-700"
+            )}
+          >
+            <Users className="w-3.5 h-3.5" />
+            Por Pessoa
+            {pessoaGroups.length > 0 && (
+              <span className="text-[9px] bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 px-1.5 py-0.5 rounded-full">
+                {pessoaGroups.length}
+              </span>
+            )}
+          </button>
+        </div>
 
-      <div className="space-y-0">
-        {cronologia.map((event, idx) => {
-          const config = getSectionConfig(event.section.tipo);
-          const Icon = config.icon;
-
-          return (
-            <div key={`${event.section.id}-${idx}`} className="relative flex items-start gap-4 py-3 pl-2">
-              {/* Timeline dot */}
-              <div
-                className="relative z-10 w-9 h-9 rounded-full flex items-center justify-center border-2 border-white dark:border-zinc-900 shadow-sm"
-                style={{ backgroundColor: `${config.color}20` }}
-              >
-                <Icon className="w-4 h-4" style={{ color: config.color }} />
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 hover:shadow-sm transition-shadow">
-                <div className="flex items-center gap-2 mb-1">
-                  <Badge variant="outline" className="text-[9px] font-mono">
-                    {event.date}
-                  </Badge>
-                  <span className={cn("text-[9px] font-semibold px-1.5 py-0.5 rounded-md border", config.bgColor)}>
-                    {config.label}
-                  </span>
-                </div>
-                <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                  {event.section.titulo}
-                </p>
-                {event.section.resumo && (
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">
-                    {event.section.resumo}
-                  </p>
+        {/* Fase filter chips */}
+        {hasFases && timelineMode === "cronologico" && (
+          <div className="flex gap-1">
+            <button
+              onClick={() => setFaseFilter("todos")}
+              className={cn(
+                "px-2.5 py-1 rounded-full text-[10px] font-medium transition-all border",
+                faseFilter === "todos"
+                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-transparent"
+                  : "bg-transparent text-zinc-500 border-zinc-300 dark:border-zinc-600 hover:border-zinc-400"
+              )}
+            >
+              Todos
+            </button>
+            {Object.entries(FASE_LABELS).map(([key, { label, color }]) => (
+              <button
+                key={key}
+                onClick={() => setFaseFilter(key)}
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-[10px] font-medium transition-all border",
+                  faseFilter === key
+                    ? cn(color, "border-transparent")
+                    : "bg-transparent text-zinc-500 border-zinc-300 dark:border-zinc-600 hover:border-zinc-400"
                 )}
-                <span className="text-[9px] text-zinc-400 mt-1 block">
-                  {event.section.fileName} · pg {event.section.paginaInicio}-{event.section.paginaFim}
-                </span>
-              </div>
-            </div>
-          );
-        })}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Cronológico mode */}
+      {timelineMode === "cronologico" && (
+        <div className="relative">
+          <div className="absolute left-6 top-0 bottom-0 w-px bg-zinc-200 dark:bg-zinc-700" />
+          <div className="space-y-0">
+            {filteredCronologia.map((event, idx) => {
+              const config = getSectionConfig(event.section.tipo);
+              const Icon = config.icon;
+              const meta = event.section.metadata || {};
+              const contradicoes = meta.contradicoes || [];
+              const pontosCriticos = meta.pontosCriticos || [];
+
+              return (
+                <div key={`${event.section.id}-${idx}`} className="relative flex items-start gap-4 py-3 pl-2">
+                  <div
+                    className="relative z-10 w-9 h-9 rounded-full flex items-center justify-center border-2 border-white dark:border-zinc-900 shadow-sm"
+                    style={{ backgroundColor: `${config.color}20` }}
+                  >
+                    <Icon className="w-4 h-4" style={{ color: config.color }} />
+                  </div>
+                  <div className="flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 hover:shadow-sm transition-shadow">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <Badge variant="outline" className="text-[9px] font-mono">
+                        {event.date}
+                      </Badge>
+                      <span className={cn("text-[9px] font-semibold px-1.5 py-0.5 rounded-md border", config.bgColor)}>
+                        {config.label}
+                      </span>
+                      {event.fase && FASE_LABELS[event.fase] && (
+                        <span className={cn("text-[9px] font-medium px-1.5 py-0.5 rounded-full", FASE_LABELS[event.fase].color)}>
+                          {FASE_LABELS[event.fase].label}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                      {event.section.titulo}
+                    </p>
+                    {event.descricao && (
+                      <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5">
+                        {event.descricao}
+                      </p>
+                    )}
+                    {event.section.resumo && !event.descricao && (
+                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">
+                        {event.section.resumo}
+                      </p>
+                    )}
+                    {/* Contradições inline */}
+                    {contradicoes.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {contradicoes.map((c: string, i: number) => (
+                          <div key={i} className="flex items-start gap-1.5 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10 rounded px-2 py-1">
+                            <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                            <span>{c}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {/* Pontos críticos inline */}
+                    {pontosCriticos.length > 0 && (
+                      <div className="mt-1.5 space-y-1">
+                        {pontosCriticos.map((p: string, i: number) => (
+                          <div key={i} className="flex items-start gap-1.5 text-[10px] text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 rounded px-2 py-1">
+                            <XCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                            <span>{p}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <span className="text-[9px] text-zinc-400 mt-1 block">
+                      {event.section.fileName} · pg {event.section.paginaInicio}-{event.section.paginaFim}
+                      {event.fonte && ` · Fonte: ${event.fonte}`}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Por Pessoa mode */}
+      {timelineMode === "por_pessoa" && (
+        <div className="space-y-6">
+          {pessoaGroups.length === 0 ? (
+            <EmptyState message="Nenhuma pessoa identificada em múltiplas peças" />
+          ) : (
+            pessoaGroups.map(([personName, personSections]) => {
+              // Sort by fase order: inquerito -> instrucao -> plenario
+              const FASE_ORDER: Record<string, number> = { inquerito: 0, instrucao: 1, plenario: 2 };
+              const sorted = [...personSections].sort((a, b) => {
+                const faseA = FASE_ORDER[a.metadata?.fase] ?? 3;
+                const faseB = FASE_ORDER[b.metadata?.fase] ?? 3;
+                return faseA - faseB;
+              });
+
+              // Find the person's role
+              const personRole = (() => {
+                for (const s of personSections) {
+                  const pessoas = (s.metadata?.pessoas || []) as Array<{ nome: string; papel: string; descricao?: string }>;
+                  const match = pessoas.find(p => p.nome.toLowerCase().trim() === personName);
+                  if (match) return match;
+                }
+                return null;
+              })();
+
+              // Check for contradictions across phases
+              const hasMultiplePhases = new Set(sorted.map(s => s.metadata?.fase).filter(Boolean)).size > 1;
+
+              return (
+                <div key={personName} className="border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
+                  <div className="px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                      <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 capitalize">
+                        {personName}
+                      </p>
+                      <p className="text-[10px] text-zinc-500">
+                        {personRole?.papel && <span className="capitalize">{personRole.papel}</span>}
+                        {personRole?.descricao && ` — ${personRole.descricao}`}
+                        {" · "}{sorted.length} {sorted.length === 1 ? "aparição" : "aparições"}
+                        {hasMultiplePhases && (
+                          <span className="ml-2 text-amber-500 font-medium">Múltiplas fases — comparar versões</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    {sorted.map((section) => {
+                      const config = getSectionConfig(section.tipo);
+                      const fase = section.metadata?.fase;
+                      const faseLabel = fase && FASE_LABELS[fase];
+                      const contradicoes = section.metadata?.contradicoes || [];
+
+                      return (
+                        <div key={section.id} className="px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            {faseLabel && (
+                              <span className={cn("text-[9px] font-medium px-1.5 py-0.5 rounded-full", faseLabel.color)}>
+                                {faseLabel.label}
+                              </span>
+                            )}
+                            <span className={cn("text-[9px] font-semibold px-1.5 py-0.5 rounded-md border", config.bgColor)}>
+                              {config.label}
+                            </span>
+                            {section.confianca != null && (
+                              <span className="text-[9px] font-mono text-zinc-400">
+                                {section.confianca}%
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                            {section.titulo}
+                          </p>
+                          {section.resumo && (
+                            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 line-clamp-2">
+                              {section.resumo}
+                            </p>
+                          )}
+                          {contradicoes.length > 0 && (
+                            <div className="mt-1.5">
+                              {contradicoes.map((c: string, i: number) => (
+                                <div key={i} className="flex items-start gap-1.5 text-[10px] text-amber-600 bg-amber-50 dark:bg-amber-900/10 rounded px-2 py-1 mt-1">
+                                  <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                                  <span>{c}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <span className="text-[9px] text-zinc-400 mt-1 block">
+                            {section.fileName} · pg {section.paginaInicio}-{section.paginaFim}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
     </div>
   );
 }

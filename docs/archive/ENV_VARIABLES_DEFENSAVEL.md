@@ -41,7 +41,7 @@ O Supabase oferece dois tipos de pooler:
 
 ```bash
 # Connection String - Transaction Pooler (Porta 6543)
-DATABASE_URL="postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
+DATABASE_URL="postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
 
 # Supabase URLs e Keys
 NEXT_PUBLIC_SUPABASE_URL="https://hxfvlaeqhkmelvyzgfqp.supabase.co"
@@ -57,17 +57,17 @@ Se você precisa usar Session Pooler (porta 5432):
 
 ```bash
 # Connection String - Session Pooler (Porta 5432)
-DATABASE_URL="postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-0-sa-east-1.pooler.supabase.com:5432/postgres"
+DATABASE_URL="postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-0-sa-east-1.pooler.supabase.com:5432/postgres"
 ```
 
 ### Para Desenvolvimento Local
 
 ```bash
 # Direct Connection (Porta 5432)
-DATABASE_URL="postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@db.hxfvlaeqhkmelvyzgfqp.supabase.co:5432/postgres"
+DATABASE_URL="postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]db.hxfvlaeqhkmelvyzgfqp.supabase.co:5432/postgres"
 
 # Ou Session Pooler
-DATABASE_URL="postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-0-sa-east-1.pooler.supabase.com:5432/postgres"
+DATABASE_URL="postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-0-sa-east-1.pooler.supabase.com:5432/postgres"
 ```
 
 ---
@@ -91,7 +91,7 @@ DATABASE_URL="postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-0-sa-eas
 Para o projeto **defensavel** no Vercel, use **Transaction Pooler (porta 6543)**:
 
 ```bash
-DATABASE_URL="postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
+DATABASE_URL="postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
 ```
 
 **Por quê?**
@@ -132,11 +132,11 @@ vercel login
 vercel link
 
 # Adicionar DATABASE_URL (Transaction Pooler - Porta 6543)
-echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-0-sa-east-1.pooler.supabase.com:6543/postgres" | vercel env add DATABASE_URL production
+echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-0-sa-east-1.pooler.supabase.com:6543/postgres" | vercel env add DATABASE_URL production
 
-echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-0-sa-east-1.pooler.supabase.com:6543/postgres" | vercel env add DATABASE_URL preview
+echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-0-sa-east-1.pooler.supabase.com:6543/postgres" | vercel env add DATABASE_URL preview
 
-echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-0-sa-east-1.pooler.supabase.com:6543/postgres" | vercel env add DATABASE_URL development
+echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-0-sa-east-1.pooler.supabase.com:6543/postgres" | vercel env add DATABASE_URL development
 
 # Adicionar outras variáveis
 echo "https://hxfvlaeqhkmelvyzgfqp.supabase.co" | vercel env add NEXT_PUBLIC_SUPABASE_URL production
@@ -153,7 +153,7 @@ vercel --prod
 2. Selecione o projeto **defensavel**
 3. **Settings** → **Environment Variables**
 4. Adicione cada variável:
-   - `DATABASE_URL` = `postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-0-sa-east-1.pooler.supabase.com:6543/postgres`
+   - `DATABASE_URL` = `postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-0-sa-east-1.pooler.supabase.com:6543/postgres`
    - `NEXT_PUBLIC_SUPABASE_URL` = `https://hxfvlaeqhkmelvyzgfqp.supabase.co`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = (anon key acima)
    - `SUPABASE_SERVICE_ROLE_KEY` = (obter no dashboard)
@@ -181,7 +181,7 @@ Procure por:
 
 ```bash
 # Criar .env.local
-echo 'DATABASE_URL="postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@db.hxfvlaeqhkmelvyzgfqp.supabase.co:5432/postgres"' > .env.local
+echo 'DATABASE_URL="postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]db.hxfvlaeqhkmelvyzgfqp.supabase.co:5432/postgres"' > .env.local
 
 # Testar
 npm run dev
@@ -196,7 +196,7 @@ npm run dev
 **Causa:** Senha incorreta ou formato errado
 
 **Solução:**
-1. Verificar senha: `401bFr505@`
+1. Verificar senha: `[REDACTED]@`
 2. Usar Transaction Pooler (porta 6543)
 3. Verificar @ está escapado corretamente
 
@@ -242,12 +242,12 @@ export default {
 
 **Para Vercel (Production):**
 ```
-DATABASE_URL=postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-0-sa-east-1.pooler.supabase.com:6543/postgres
+DATABASE_URL=postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-0-sa-east-1.pooler.supabase.com:6543/postgres
 ```
 
 **Para Local (Development):**
 ```
-DATABASE_URL=postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@db.hxfvlaeqhkmelvyzgfqp.supabase.co:5432/postgres
+DATABASE_URL=postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]db.hxfvlaeqhkmelvyzgfqp.supabase.co:5432/postgres
 ```
 
 **Porta 6543 = Transaction Pooler (Vercel)**  

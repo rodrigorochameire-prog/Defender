@@ -3,6 +3,7 @@
 import React from "react";
 import { X } from "lucide-react";
 import { Gavel, Target, Home, Lock, RefreshCw, Shield } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Ícones por atribuição
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -23,6 +24,18 @@ export const ATRIBUICAO_COLORS: Record<string, string> = {
   "Substituição Criminal": "#8b5cf6",
   "Curadoria Especial": "#71717a",
 };
+
+// Tailwind classes por atribuição (para active state com bg sólido)
+const COLOR_CLASSES: Record<string, { active: string; icon: string }> = {
+  "Tribunal do Júri": { active: "bg-emerald-500 text-white shadow-sm", icon: "text-emerald-200" },
+  "Grupo Especial do Júri": { active: "bg-orange-500 text-white shadow-sm", icon: "text-orange-200" },
+  "Violência Doméstica": { active: "bg-amber-500 text-white shadow-sm", icon: "text-amber-200" },
+  "Execução Penal": { active: "bg-blue-500 text-white shadow-sm", icon: "text-blue-200" },
+  "Substituição Criminal": { active: "bg-violet-500 text-white shadow-sm", icon: "text-violet-200" },
+  "Curadoria Especial": { active: "bg-zinc-500 text-white shadow-sm", icon: "text-zinc-300" },
+};
+
+const DEFAULT_COLORS = { active: "bg-zinc-500 text-white shadow-sm", icon: "text-zinc-300" };
 
 interface AtribuicaoPillsProps {
   options: Array<{ value: string; label: string }>;
@@ -57,7 +70,6 @@ export function AtribuicaoPills({
 
   const handleClick = (value: string) => {
     if (singleSelect) {
-      // In single-select: always switch to the clicked one (don't toggle off)
       if (!selectedValues.includes(value)) {
         onToggle(value);
       }
@@ -67,45 +79,58 @@ export function AtribuicaoPills({
   };
 
   return (
-    <div className={className ?? "flex items-center gap-1.5 overflow-x-auto scrollbar-none"}>
-      {filtered.map((opt) => {
-        const isActive = selectedValues.includes(opt.value);
-        const color = ATRIBUICAO_COLORS[opt.label] || "#71717a";
-        const Icon = ICONS[opt.label];
-        const count = counts?.[opt.label];
+    <div className={className ?? "flex items-center gap-1"}>
+      {/* Switch container */}
+      <div className="flex items-center gap-0.5 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60">
+        {filtered.map((opt) => {
+          const isActive = selectedValues.includes(opt.value);
+          const colors = COLOR_CLASSES[opt.label] || DEFAULT_COLORS;
+          const Icon = ICONS[opt.label];
+          const count = counts?.[opt.label];
 
-        return (
-          <button
-            key={opt.value}
-            onClick={() => handleClick(opt.value)}
-            title={opt.label}
-            className={`flex items-center gap-1.5 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap transition-all duration-200 border cursor-pointer ${
-              isActive ? "px-2.5 shadow-sm" : "px-1.5 hover:shadow-sm"
-            }`}
-            style={
-              isActive
-                ? { backgroundColor: `${color}12`, borderColor: `${color}50`, color }
-                : { backgroundColor: "transparent", borderColor: "transparent", color: `${color}99` }
-            }
-          >
-            {Icon && <Icon className="w-3.5 h-3.5 flex-shrink-0" />}
-            {/* Label visible only when selected */}
-            {isActive && <span>{opt.label}</span>}
-            {/* Count badge */}
-            {count !== undefined && (
-              <span className="text-[9px] font-mono tabular-nums opacity-50">{count}</span>
-            )}
-          </button>
-        );
-      })}
+          return (
+            <button
+              key={opt.value}
+              onClick={() => handleClick(opt.value)}
+              title={opt.label}
+              className={cn(
+                "flex items-center gap-1.5 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all duration-200 cursor-pointer",
+                isActive
+                  ? cn(colors.active, "px-2.5")
+                  : "px-1.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700"
+              )}
+            >
+              {Icon && (
+                <Icon className={cn(
+                  "w-3.5 h-3.5 flex-shrink-0 transition-colors",
+                  isActive ? colors.icon : "opacity-50"
+                )} />
+              )}
+              {/* Label expande quando selecionado */}
+              {isActive && <span>{opt.label}</span>}
+              {/* Count badge */}
+              {count !== undefined && (
+                <span className={cn(
+                  "text-[9px] font-semibold tabular-nums px-1 py-0.5 rounded-full min-w-[18px] text-center",
+                  isActive
+                    ? "bg-white/20 text-white"
+                    : "bg-zinc-200 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400"
+                )}>
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
 
       {/* Clear button — only in multi-select mode */}
       {!singleSelect && selectedValues.length > 0 && (
         <button
           onClick={onClear}
-          className="flex items-center gap-1 px-1.5 py-1 rounded-lg text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+          className="flex items-center justify-center w-7 h-7 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
         >
-          <X className="w-3 h-3" />
+          <X className="w-3.5 h-3.5" />
         </button>
       )}
 

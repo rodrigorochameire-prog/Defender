@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
-import { ArrowLeft, Brain, Calendar, Database, ExternalLink, FileText, FolderOpen, Loader2, Lock, Newspaper, Pencil, Plus, Scale, Sun, User, Users, Sparkles, Library, BookOpen, Trash2 } from "lucide-react";
+import { ArrowLeft, Brain, Calendar, Database, Download, ExternalLink, FileText, FolderOpen, Loader2, Lock, Newspaper, Pencil, Plus, Scale, Sun, User, Users, Sparkles, Library, BookOpen, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
@@ -40,6 +40,23 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
     ja_existia: boolean;
     atendimento_id?: string | null;
   } | null>(null);
+
+  const importPjeMutation = trpc.enrichment.importFromPje.useMutation({
+    onSuccess: (result) => {
+      const msgs: string[] = [];
+      if (result.scrape?.scraped) msgs.push("Dados extraídos do PJe");
+      if (result.download?.downloaded) msgs.push("Autos baixados para o Drive");
+      if (result.scrape?.error) msgs.push(`Scrape: ${result.scrape.error}`);
+      if (result.download?.error) msgs.push(`Download: ${result.download.error}`);
+
+      if (result.scrape?.scraped || result.download?.downloaded) {
+        toast.success("Importação do PJe concluída", { description: msgs.join(" · ") });
+      } else {
+        toast.error("Importação falhou", { description: msgs.join(" · ") });
+      }
+    },
+    onError: (err) => toast.error(`Erro PJe: ${err.message}`),
+  });
 
   const enrichDatajudMutation = trpc.processos.enrichFromDatajud.useMutation({
     onSuccess: (result) => {
@@ -324,6 +341,58 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
             <Database className="h-3 w-3" />
           )}
           {enrichDatajudMutation.isPending ? "Consultando..." : "DataJud"}
+        </button>
+        <button
+          onClick={() => {
+            if (!data.numeroAutos) {
+              toast.error("Processo sem número de autos");
+              return;
+            }
+            const assistido = data.assistidos?.[0];
+            importPjeMutation.mutate({
+              processoId: data.id,
+              numeroProcesso: data.numeroAutos,
+              atribuicao: data.area ?? undefined,
+              assistidoName: assistido?.nome ?? null,
+              scrapeData: true,
+              downloadAutos: true,
+            });
+          }}
+          disabled={importPjeMutation.isPending}
+          className="text-[11px] px-2 py-1 rounded border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors disabled:opacity-50 flex items-center gap-1"
+          title="Auto-detecta aba aberta no PJe ou busca nas intimações"
+        >
+          {importPjeMutation.isPending ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Download className="h-3 w-3" />
+          )}
+          {importPjeMutation.isPending ? "Importando..." : "Importar PJe"}
+        </button>
+        <button
+          onClick={() => {
+            const link = prompt("Cole o link do PJe (URL com ?id=...&ca=...):");
+            if (!link || !data.numeroAutos) return;
+            if (!link.includes("ca=")) {
+              toast.error("Link inválido — precisa conter o token 'ca='");
+              return;
+            }
+            const assistido = data.assistidos?.[0];
+            importPjeMutation.mutate({
+              processoId: data.id,
+              numeroProcesso: data.numeroAutos,
+              linkPje: link.trim(),
+              atribuicao: data.area ?? undefined,
+              assistidoName: assistido?.nome ?? null,
+              scrapeData: true,
+              downloadAutos: true,
+            });
+          }}
+          disabled={importPjeMutation.isPending}
+          className="text-[11px] px-2 py-1 rounded border border-orange-200 bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors disabled:opacity-50"
+          title="Colar link do PJe manualmente"
+        >
+          📋
         </button>
       </div>
 

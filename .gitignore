@@ -69,3 +69,19 @@ supabase/.temp/
 src/lib/db/schema.old.ts
 .worktrees/
 .superpowers/
+
+# Environment & Secrets (AIOX)
+*.key
+*.pem
+
+# Dependencies (AIOX)
+node_modules
+
+# Build & Logs (AIOX)
+*.log
+logs/
+
+# AIOX Local (AIOX)
+.aiox-core/local/
+.claude/settings.local.json
+.aiox/install-log.txt

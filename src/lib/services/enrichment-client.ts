@@ -959,6 +959,28 @@ class EnrichmentClient {
     });
   }
 
+  /**
+   * Extract text from PDF using Docling (with built-in OCR).
+   * Returns structured Markdown + per-page text with quality metrics.
+   * Use this for scanned/complex PDFs instead of raw Tesseract OCR.
+   */
+  async extractText(input: {
+    fileUrl: string;
+    driveFileId?: string;
+  }): Promise<{
+    pages: { page_number: number; text: string; char_count: number; quality: string }[];
+    markdown: string;
+    total_pages: number;
+    ocr_applied: boolean;
+    extraction_engine: string;
+    processing_time_ms: number;
+  }> {
+    return this.request("/api/extract-text", {
+      file_url: input.fileUrl,
+      drive_file_id: input.driveFileId || null,
+    });
+  }
+
   // === Ficha Methods ===
 
   /**
@@ -1099,6 +1121,89 @@ class EnrichmentClient {
     }
 
     return (await response.json()) as EmbedStatusOutput;
+  }
+
+  /**
+   * PJe Scrape — escaneia processos via Chrome CDP (apenas local).
+   * Conecta ao Chrome já aberto com sessão PJe autenticada.
+   */
+  async scrapePjeProcessos(input: {
+    processos: Array<{ numero_processo: string; link_pje?: string | null }>;
+    defensor_id: string;
+  }): Promise<{
+    processos: Array<{
+      numero_processo: string;
+      classe?: string | null;
+      assunto?: string | null;
+      vara?: string | null;
+      comarca?: string | null;
+      status?: string | null;
+      partes: Array<{ nome: string; tipo?: string | null }>;
+      movimentacoes: Array<{ data?: string | null; tipo?: string | null; descricao?: string | null }>;
+      documentos: Array<{ tipo?: string | null; data?: string | null; descricao?: string | null }>;
+      ultima_decisao?: string | null;
+      relato_vitima?: string | null;
+      tipo_penal?: string | null;
+      scraped: boolean;
+      error?: string | null;
+    }>;
+    total_scraped: number;
+    total_errors: number;
+  }> {
+    return this.request("/enrich/pje-scrape", input, 300_000); // 5min timeout — scraping is slow
+  }
+
+  /**
+   * PJe Download — baixa autos de processos e organiza no Drive local.
+   * Conecta ao Chrome já aberto com sessão PJe autenticada.
+   */
+  async downloadPjeProcessos(input: {
+    processos: Array<{
+      numero_processo: string;
+      link_pje?: string | null;
+      atribuicao?: string;
+      assistido_name?: string | null;
+    }>;
+    defensor_id: string;
+  }): Promise<{
+    resultados: Array<{
+      numero_processo: string;
+      assistido?: string | null;
+      downloaded: boolean;
+      dest_path?: string | null;
+      atribuicao_folder?: string | null;
+      error?: string | null;
+    }>;
+    total_downloaded: number;
+    total_errors: number;
+  }> {
+    return this.request("/enrich/pje-download", input, 600_000); // 10min — download is very slow
+  }
+
+  /**
+   * Drive Organize — organiza PDFs soltos no Drive local por assistido/processo.
+   */
+  async organizeDrive(input: {
+    scan_drive_root?: boolean;
+    scan_defensoria_root?: boolean;
+    dry_run?: boolean;
+  }): Promise<{
+    total_scanned: number;
+    moved: number;
+    skipped_no_match: number;
+    skipped_exists: number;
+    errors: number;
+    dry_run: boolean;
+    details: Array<{
+      file: string;
+      cnj: string;
+      assistido?: string | null;
+      action: string;
+      dest?: string | null;
+      reason?: string | null;
+    }>;
+  }> {
+    return this.request("/enrich/drive-organize", input, 120_000);
   }
 
   /**

@@ -22,6 +22,9 @@ import {
   SidebarTrigger, useSidebar,
 } from "@/components/ui/sidebar";
 import {
+  Tooltip, TooltipContent, TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -201,7 +204,7 @@ export function AdminSidebar({ children, userName, userEmail }: AdminSidebarProp
   const currentWidth = mounted ? sidebarWidth : DEFAULT_WIDTH;
 
   return (
-    <SidebarProvider defaultOpen={true} style={{ "--sidebar-width": `${currentWidth}px` } as CSSProperties}>
+    <SidebarProvider defaultOpen={false} style={{ "--sidebar-width": `${currentWidth}px` } as CSSProperties}>
       <EntitySheetProvider>
         <AdminSidebarContent setSidebarWidth={setSidebarWidth} userName={userName} userEmail={userEmail}>
           {children}
@@ -294,6 +297,161 @@ function NavDivider({ collapsed }: { collapsed: boolean }) {
 }
 
 // ==========================================
+// TOOLTIP WRAPPER PARA ÍCONES COLAPSADOS
+// ==========================================
+
+function CollapsedTooltip({ label, open: popoverOpen, children }: { label: string; open?: boolean; children: React.ReactNode }) {
+  return (
+    <Tooltip open={popoverOpen ? false : undefined}>
+      <TooltipTrigger asChild>
+        <div className="flex items-center justify-center">
+          {children}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="right" align="center">
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+// ==========================================
+// POPOVER MENU REUTILIZÁVEL - DESIGN PREMIUM
+// ==========================================
+
+// Cores temáticas por seção
+const SECTION_THEMES = {
+  principal: { accent: "emerald", headerColor: "text-emerald-400", iconColor: "text-emerald-400/70", activeBg: "bg-emerald-500/12", activeText: "text-emerald-400", activeBorder: "bg-emerald-400", hoverBg: "hover:bg-white/[0.06]" },
+  cadastros: { accent: "blue", headerColor: "text-blue-400", iconColor: "text-blue-400/70", activeBg: "bg-blue-500/12", activeText: "text-blue-400", activeBorder: "bg-blue-400", hoverBg: "hover:bg-white/[0.06]" },
+  documentos: { accent: "amber", headerColor: "text-amber-400", iconColor: "text-amber-400/70", activeBg: "bg-amber-500/12", activeText: "text-amber-400", activeBorder: "bg-amber-400", hoverBg: "hover:bg-white/[0.06]" },
+  cowork: { accent: "purple", headerColor: "text-purple-400", iconColor: "text-purple-400/70", activeBg: "bg-purple-500/12", activeText: "text-purple-400", activeBorder: "bg-purple-400", hoverBg: "hover:bg-white/[0.06]" },
+  news: { accent: "emerald", headerColor: "text-emerald-400", iconColor: "text-emerald-400/70", activeBg: "bg-emerald-500/12", activeText: "text-emerald-400", activeBorder: "bg-emerald-400", hoverBg: "hover:bg-white/[0.06]" },
+  ferramentas: { accent: "teal", headerColor: "text-teal-400", iconColor: "text-teal-400/70", activeBg: "bg-teal-500/12", activeText: "text-teal-400", activeBorder: "bg-teal-400", hoverBg: "hover:bg-white/[0.06]" },
+  mais: { accent: "zinc", headerColor: "text-zinc-300", iconColor: "text-zinc-400/70", activeBg: "bg-emerald-500/12", activeText: "text-emerald-400", activeBorder: "bg-emerald-400", hoverBg: "hover:bg-white/[0.06]" },
+  especialidades: { accent: "emerald", headerColor: "text-emerald-400", iconColor: "text-emerald-400/70", activeBg: "bg-emerald-500/12", activeText: "text-emerald-400", activeBorder: "bg-emerald-400", hoverBg: "hover:bg-white/[0.06]" },
+} as const;
+
+type SectionThemeKey = keyof typeof SECTION_THEMES;
+
+function SidebarPopoverMenu({
+  items,
+  pathname,
+  onNavigate,
+  userRole,
+  label,
+  icon: HeaderIcon,
+  theme: themeKey = "principal",
+  separatorAfter,
+  extraHeader,
+}: {
+  items: AssignmentMenuItem[];
+  pathname: string;
+  onNavigate: () => void;
+  userRole?: UserRole;
+  label: string;
+  icon: React.ElementType;
+  theme?: SectionThemeKey;
+  separatorAfter?: number[];
+  extraHeader?: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const theme = SECTION_THEMES[themeKey];
+  const hasActiveItem = items.some(item =>
+    item.exactMatch ? pathname === item.path : pathname.startsWith(item.path)
+  );
+
+  return (
+    <SidebarMenuItem>
+      <CollapsedTooltip label={label} open={open}>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <button
+              className={cn(
+                "h-10 w-10 p-0 mx-auto transition-all duration-200 rounded-xl flex items-center justify-center",
+                hasActiveItem
+                  ? "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/20"
+                  : "text-zinc-500 dark:text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-200"
+              )}
+            >
+              <HeaderIcon className="h-5 w-5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="right"
+            align="start"
+            sideOffset={28}
+            className="w-56 p-0 glass-dark shadow-2xl shadow-black/40 border-white/[0.08] rounded-xl overflow-hidden"
+          >
+            {/* Header com ícone + título */}
+            <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+              <div className={cn("flex items-center justify-center h-6 w-6 rounded-lg bg-white/[0.06]", theme.iconColor)}>
+                <HeaderIcon className="h-3.5 w-3.5" />
+              </div>
+              <span className={cn("text-[11px] font-semibold uppercase tracking-wider", theme.headerColor)}>
+                {label}
+              </span>
+            </div>
+
+            {extraHeader}
+
+            {/* Separador sutil */}
+            <div className="mx-3 h-px bg-white/[0.06] mb-1" />
+
+            {/* Lista de itens */}
+            <div className="p-1.5 space-y-0.5">
+              {items.map((item, idx) => {
+                if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) return null;
+                const Icon = iconMap[item.icon] || Briefcase;
+                const isActive = item.exactMatch ? pathname === item.path : pathname.startsWith(item.path);
+                return (
+                  <div key={item.path}>
+                    <Link
+                      href={item.path}
+                      onClick={() => { setOpen(false); onNavigate(); }}
+                      className={cn(
+                        "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-150 relative group/popitem",
+                        isActive
+                          ? cn(theme.activeBg, theme.activeText, "font-medium")
+                          : cn("text-zinc-300 hover:text-white", theme.hoverBg)
+                      )}
+                    >
+                      {/* Barra lateral ativa */}
+                      {isActive && (
+                        <div className={cn("absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full", theme.activeBorder)} />
+                      )}
+                      <Icon className={cn(
+                        "h-4 w-4 flex-shrink-0 transition-colors duration-150",
+                        isActive ? theme.activeText : "text-zinc-400 group-hover/popitem:text-zinc-200"
+                      )} />
+                      <span className="truncate">{item.label}</span>
+                      {/* Badge sutil */}
+                      {typeof item.badge === "number" && item.badge > 0 && (
+                        <span className={cn(
+                          "ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-md text-[10px] font-semibold tabular-nums",
+                          item.badge > 50
+                            ? "bg-white/[0.08] text-zinc-300 ring-1 ring-white/[0.06]"
+                            : "bg-white/[0.08] text-zinc-300 ring-1 ring-white/[0.06]"
+                        )}>
+                          {item.badge > 99 ? "99+" : item.badge}
+                        </span>
+                      )}
+                    </Link>
+                    {/* Separador opcional entre grupos */}
+                    {separatorAfter?.includes(idx) && (
+                      <div className="mx-2.5 my-1.5 h-px bg-white/[0.05]" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </CollapsedTooltip>
+    </SidebarMenuItem>
+  );
+}
+
+// ==========================================
 // MENU "MAIS" EM POPOVER - ESTILO PREMIUM
 // ==========================================
 
@@ -309,54 +467,15 @@ function MoreMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
 
   if (isCollapsed) {
     return (
-      <SidebarMenuItem>
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <button
-              className={cn(
-                "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
-                hasActiveItem
-                  ? "bg-black/[0.05] dark:bg-white/[0.08] text-zinc-700 dark:text-zinc-200"
-                  : "text-zinc-600 dark:text-zinc-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-zinc-900 dark:hover:text-zinc-200"
-              )}
-            >
-              <MoreHorizontal className="h-5 w-5" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            side="right"
-            align="start"
-            className="w-52 p-2 glass-dark shadow-xl shadow-black/30"
-          >
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-2 pb-2">
-              Mais opções
-            </p>
-            {items.map((item) => {
-              if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
-                return null;
-              }
-              const Icon = iconMap[item.icon] || Briefcase;
-              const isActive = pathname.startsWith(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  onClick={() => { setOpen(false); onNavigate(); }}
-                  className={cn(
-                    "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
-                    isActive
-                      ? "bg-emerald-500/15 text-emerald-400 font-medium"
-                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </PopoverContent>
-        </Popover>
-      </SidebarMenuItem>
+      <SidebarPopoverMenu
+        items={items}
+        pathname={pathname}
+        onNavigate={onNavigate}
+        userRole={userRole}
+        label="Mais"
+        icon={MoreHorizontal}
+        theme="mais"
+      />
     );
   }
 
@@ -445,58 +564,15 @@ function NewsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
 
   if (isCollapsed) {
     return (
-      <SidebarMenuItem>
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              className={cn(
-                "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
-                hasActiveItem
-                  ? "bg-emerald-600/20 text-emerald-400 ring-1 ring-emerald-500/30"
-                  : "text-zinc-600 dark:text-zinc-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-zinc-900 dark:hover:text-zinc-200"
-              )}
-            >
-              <Rss className="h-5 w-5" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            side="right"
-            align="start"
-            className="w-56 p-2 glass-dark shadow-xl shadow-black/30"
-          >
-            <p className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
-              <Rss className="h-3 w-3" />
-              News
-            </p>
-            {items.map((item) => {
-              if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) return null;
-              const Icon = iconMap[item.icon] || Briefcase;
-              const isActive = item.exactMatch ? pathname === item.path : pathname.startsWith(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  onClick={onNavigate}
-                  className={cn(
-                    "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
-                    isActive
-                      ? "bg-emerald-500/20 text-emerald-400 font-medium"
-                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                  {typeof item.badge === "number" && item.badge > 0 && (
-                    <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-amber-500 text-white">
-                      {item.badge > 99 ? "99+" : item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </PopoverContent>
-        </Popover>
-      </SidebarMenuItem>
+      <SidebarPopoverMenu
+        items={items}
+        pathname={pathname}
+        onNavigate={onNavigate}
+        userRole={userRole}
+        label="News"
+        icon={Rss}
+        theme="news"
+      />
     );
   }
 
@@ -603,60 +679,15 @@ function ToolsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
 
   if (isCollapsed) {
     return (
-      <SidebarMenuItem>
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              className={cn(
-                "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
-                hasActiveItem
-                  ? "bg-emerald-600/20 text-emerald-400 ring-1 ring-emerald-500/30"
-                  : "text-zinc-600 dark:text-zinc-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-zinc-900 dark:hover:text-zinc-200"
-              )}
-            >
-              <Puzzle className="h-5 w-5" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            side="right"
-            align="start"
-            className="w-56 p-2 glass-dark shadow-xl shadow-black/30"
-          >
-            <p className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
-              <Puzzle className="h-3 w-3" />
-              Ferramentas
-            </p>
-            {items.map((item) => {
-              if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
-                return null;
-              }
-              const Icon = iconMap[item.icon] || Briefcase;
-              const isActive = pathname.startsWith(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  onClick={onNavigate}
-                  className={cn(
-                    "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
-                    isActive
-                      ? "bg-emerald-500/20 text-emerald-400 font-medium"
-                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                  {typeof item.badge === "number" && item.badge > 0 && (
-                    <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-amber-500 text-white">
-                      {item.badge > 99 ? "99+" : item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </PopoverContent>
-        </Popover>
-      </SidebarMenuItem>
+      <SidebarPopoverMenu
+        items={items}
+        pathname={pathname}
+        onNavigate={onNavigate}
+        userRole={userRole}
+        label="Ferramentas"
+        icon={Puzzle}
+        theme="ferramentas"
+      />
     );
   }
 
@@ -770,60 +801,15 @@ function PrincipalMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
 
   if (isCollapsed) {
     return (
-      <SidebarMenuItem>
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              className={cn(
-                "h-10 w-10 p-0 mx-auto transition-all duration-200 rounded-xl flex items-center justify-center",
-                hasActiveItem
-                  ? "bg-emerald-500/15 text-emerald-400"
-                  : "text-zinc-600 dark:text-zinc-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-zinc-900 dark:hover:text-zinc-200"
-              )}
-            >
-              <Home className="h-5 w-5" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            side="right"
-            align="start"
-            className="w-56 p-2 glass-dark shadow-xl shadow-black/30"
-          >
-            <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
-              <Home className="h-3 w-3" />
-              Principal
-            </p>
-            {items.map((item) => {
-              if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
-                return null;
-              }
-              const Icon = iconMap[item.icon] || Briefcase;
-              const isActive = pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path));
-              return (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  onClick={onNavigate}
-                  className={cn(
-                    "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
-                    isActive
-                      ? "bg-emerald-500/20 text-emerald-400 font-medium"
-                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                  {typeof item.badge === "number" && item.badge > 0 && (
-                    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1 text-[10px] font-bold text-white">
-                      {item.badge > 99 ? "99+" : item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </PopoverContent>
-        </Popover>
-      </SidebarMenuItem>
+      <SidebarPopoverMenu
+        items={items}
+        pathname={pathname}
+        onNavigate={onNavigate}
+        userRole={userRole}
+        label="Principal"
+        icon={Home}
+        theme="principal"
+      />
     );
   }
 
@@ -934,55 +920,15 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
 
   if (isCollapsed) {
     return (
-      <SidebarMenuItem>
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              className={cn(
-                "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
-                hasActiveItem
-                  ? "bg-emerald-600/20 text-emerald-400 ring-1 ring-emerald-500/30"
-                  : "text-zinc-600 dark:text-zinc-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-zinc-900 dark:hover:text-zinc-200"
-              )}
-            >
-              <BookUser className="h-5 w-5" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            side="right"
-            align="start"
-            className="w-56 p-2 glass-dark shadow-xl shadow-black/30"
-          >
-            <p className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
-              <BookUser className="h-3 w-3" />
-              Cadastros
-            </p>
-            {items.map((item) => {
-              if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
-                return null;
-              }
-              const Icon = iconMap[item.icon] || Briefcase;
-              const isActive = pathname.startsWith(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  onClick={onNavigate}
-                  className={cn(
-                    "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
-                    isActive
-                      ? "bg-emerald-500/20 text-emerald-400 font-medium"
-                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </PopoverContent>
-        </Popover>
-      </SidebarMenuItem>
+      <SidebarPopoverMenu
+        items={items}
+        pathname={pathname}
+        onNavigate={onNavigate}
+        userRole={userRole}
+        label="Cadastros"
+        icon={BookUser}
+        theme="cadastros"
+      />
     );
   }
 
@@ -1088,55 +1034,15 @@ function DocumentosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: 
 
   if (isCollapsed) {
     return (
-      <SidebarMenuItem>
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              className={cn(
-                "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
-                hasActiveItem
-                  ? "bg-emerald-600/20 text-emerald-400 ring-1 ring-emerald-500/30"
-                  : "text-zinc-600 dark:text-zinc-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-zinc-900 dark:hover:text-zinc-200"
-              )}
-            >
-              <FolderOpen className="h-5 w-5" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            side="right"
-            align="start"
-            className="w-56 p-2 glass-dark shadow-xl shadow-black/30"
-          >
-            <p className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
-              <FolderOpen className="h-3 w-3" />
-              Documentos
-            </p>
-            {items.map((item) => {
-              if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
-                return null;
-              }
-              const Icon = iconMap[item.icon] || Briefcase;
-              const isActive = pathname.startsWith(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  onClick={onNavigate}
-                  className={cn(
-                    "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
-                    isActive
-                      ? "bg-emerald-500/20 text-emerald-400 font-medium"
-                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </PopoverContent>
-        </Popover>
-      </SidebarMenuItem>
+      <SidebarPopoverMenu
+        items={items}
+        pathname={pathname}
+        onNavigate={onNavigate}
+        userRole={userRole}
+        label="Documentos"
+        icon={FileText}
+        theme="documentos"
+      />
     );
   }
 
@@ -1242,57 +1148,16 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
 
   if (isCollapsed) {
     return (
-      <SidebarMenuItem>
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              className={cn(
-                "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
-                hasActiveItem
-                  ? "bg-emerald-600/20 text-emerald-400 ring-1 ring-emerald-500/30"
-                  : "text-zinc-600 dark:text-zinc-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-zinc-900 dark:hover:text-zinc-200"
-              )}
-            >
-              <Users2 className="h-5 w-5" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            side="right"
-            align="start"
-            className="w-56 p-2 glass-dark shadow-xl shadow-black/30"
-          >
-            <p className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
-              <Users2 className="h-3 w-3" />
-              Cowork
-            </p>
-            {items.map((item, idx) => {
-              if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
-                return null;
-              }
-              const Icon = iconMap[item.icon] || Briefcase;
-              const isActive = pathname.startsWith(item.path);
-              return (
-                <div key={item.path}>
-                  {idx === 2 && <div className="my-1.5 mx-2 h-px bg-black/[0.06] dark:bg-white/[0.06]" />}
-                  <Link
-                    href={item.path}
-                    onClick={onNavigate}
-                    className={cn(
-                      "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
-                      isActive
-                        ? "bg-emerald-500/20 text-emerald-400 font-medium"
-                        : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                </div>
-              );
-            })}
-          </PopoverContent>
-        </Popover>
-      </SidebarMenuItem>
+      <SidebarPopoverMenu
+        items={items}
+        pathname={pathname}
+        onNavigate={onNavigate}
+        userRole={userRole}
+        label="Cowork"
+        icon={UsersRound}
+        theme="cowork"
+        separatorAfter={[1]}
+      />
     );
   }
 
@@ -1445,96 +1310,45 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
   }, [hasActiveItem, pathname]);
 
   if (isCollapsed) {
-    return (
-      <SidebarMenuItem>
-        <Popover>
-          <PopoverTrigger asChild>
+    const flatItems = sections.flatMap(s => s.items);
+    const especialidadeSelector = (
+      <div className="flex items-center gap-1 px-3 pb-2">
+        {[
+          { id: "JURI" as Especialidade, label: "Júri", icon: Gavel, colors: ESPECIALIDADE_COLORS.JURI },
+          { id: "VVD" as Especialidade, label: "VVD", icon: Shield, colors: ESPECIALIDADE_COLORS.VVD },
+          { id: "EP" as Especialidade, label: "EP", icon: Lock, colors: ESPECIALIDADE_COLORS.EP },
+        ].map((esp) => {
+          const isSelected = especialidade === esp.id;
+          return (
             <button
+              key={esp.id}
+              onClick={() => setEspecialidade(esp.id)}
               className={cn(
-                "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
-                hasActiveItem
-                  ? "bg-emerald-600/20 text-emerald-400 ring-1 ring-emerald-500/30"
-                  : "text-zinc-600 dark:text-zinc-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-zinc-900 dark:hover:text-zinc-200"
+                "py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer",
+                isSelected
+                  ? `${esp.colors.bg} ${esp.colors.text} ring-1 ${esp.colors.ring} px-3`
+                  : "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.06] px-2"
               )}
             >
-              <Target className="h-5 w-5" />
+              <esp.icon className={cn("h-3.5 w-3.5", isSelected && esp.colors.text)} />
+              {isSelected && <span>{esp.label}</span>}
             </button>
-          </PopoverTrigger>
-          <PopoverContent
-            side="right"
-            align="start"
-            className="w-64 p-2 glass-dark shadow-xl shadow-black/30"
-          >
-            <p className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
-              <Target className="h-3 w-3" />
-              Especialidades
-            </p>
+          );
+        })}
+      </div>
+    );
 
-            {/* Seletor de especialidade — ícones compactos, label só no selecionado */}
-            <div className="flex items-center gap-1 px-2 pb-2 mb-2 border-b border-zinc-200/60 dark:border-zinc-700/30">
-              {[
-                { id: "JURI" as Especialidade, label: "Júri", icon: Gavel, colors: ESPECIALIDADE_COLORS.JURI },
-                { id: "VVD" as Especialidade, label: "VVD", icon: Shield, colors: ESPECIALIDADE_COLORS.VVD },
-                { id: "EP" as Especialidade, label: "EP", icon: Lock, colors: ESPECIALIDADE_COLORS.EP },
-              ].map((esp) => {
-                const isSelected = especialidade === esp.id;
-                return (
-                  <button
-                    key={esp.id}
-                    onClick={() => setEspecialidade(esp.id)}
-                    className={cn(
-                      "py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer",
-                      isSelected
-                        ? `${esp.colors.bg} ${esp.colors.text} ring-1 ${esp.colors.ring} px-3`
-                        : "text-zinc-500 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] px-2"
-                    )}
-                  >
-                    <esp.icon className={cn("h-3.5 w-3.5", isSelected && esp.colors.text)} />
-                    {isSelected && <span>{esp.label}</span>}
-                  </button>
-                );
-              })}
-            </div>
-
-            {sections.map((section, sIdx) => (
-              <div key={section.title || `pop-section-${sIdx}`}>
-                {section.title && (
-                  <div className="flex items-center gap-2 px-2 pt-2.5 pb-1">
-                    <div className="h-px flex-1 bg-zinc-200/60 dark:bg-zinc-700/30" />
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 select-none">
-                      {section.title}
-                    </span>
-                    <div className="h-px flex-1 bg-zinc-200/60 dark:bg-zinc-700/30" />
-                  </div>
-                )}
-                {section.items.map((item) => {
-                  if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
-                    return null;
-                  }
-                  const Icon = iconMap[item.icon] || Briefcase;
-                  const isActive = item.exactMatch ? pathname === item.path : pathname.startsWith(item.path);
-                  return (
-                    <Link
-                      key={item.path}
-                      href={item.path}
-                      onClick={onNavigate}
-                      className={cn(
-                        "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
-                        isActive
-                          ? "bg-emerald-500/20 text-emerald-400 font-medium"
-                          : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {item.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            ))}
-          </PopoverContent>
-        </Popover>
-      </SidebarMenuItem>
+    return (
+      <SidebarPopoverMenu
+        items={flatItems}
+        pathname={pathname}
+        onNavigate={onNavigate}
+        userRole={userRole}
+        label="Especialidades"
+        icon={Target}
+        theme="especialidades"
+        extraHeader={especialidadeSelector}
+      />
     );
   }
 

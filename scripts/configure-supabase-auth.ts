@@ -5,7 +5,7 @@
  * npx tsx scripts/configure-supabase-auth.ts
  * 
  * Requer:
- * - SUPABASE_PROJECT_REF (ID do projeto, ex: siwapjqndevuwsluncnr)
+ * - SUPABASE_PROJECT_REF (ID do projeto Supabase)
  * - SUPABASE_ACCESS_TOKEN (Token de acesso da dashboard, Settings > Access Tokens)
  */
 

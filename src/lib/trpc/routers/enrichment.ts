@@ -146,6 +146,24 @@ export const enrichmentRouter = router({
           })
           .where(eq(documentos.id, documentoId));
 
+        // Trigger auto-consolidation
+        if (doc.assistidoId) {
+          try {
+            const { inngest } = await import("@/lib/inngest/client");
+            await inngest.send({
+              name: "intelligence/consolidate",
+              data: {
+                assistidoId: doc.assistidoId,
+                processoId: doc.processoId ?? undefined,
+                userId: ctx.user.id.toString(),
+              },
+            });
+          } catch (e) {
+            // Non-critical: don't fail enrichment if consolidation trigger fails
+            console.warn("[Enrichment] Failed to trigger consolidation:", e);
+          }
+        }
+
         return {
           success: true,
           data: result,
@@ -269,6 +287,23 @@ export const enrichmentRouter = router({
             updatedAt: new Date(),
           })
           .where(eq(atendimentos.id, atendimentoId));
+
+        // Trigger auto-consolidation
+        if (atendimento.assistidoId) {
+          try {
+            const { inngest } = await import("@/lib/inngest/client");
+            await inngest.send({
+              name: "intelligence/consolidate",
+              data: {
+                assistidoId: atendimento.assistidoId,
+                processoId: atendimento.processoId ?? undefined,
+                userId: ctx.user.id.toString(),
+              },
+            });
+          } catch (e) {
+            console.warn("[Enrichment] Failed to trigger consolidation:", e);
+          }
+        }
 
         return {
           success: true,
@@ -923,6 +958,133 @@ export const enrichmentRouter = router({
       }
 
       throw new Error("Invalid action or missing mergeTargetId");
+    }),
+
+  /**
+   * PJe Scrape — escaneia processos via Chrome CDP.
+   * Funciona apenas localmente (Chrome com --remote-debugging-port=9222).
+   * Protegido por flag pjeScrapingEnabled no perfil do usuário.
+   */
+  scrapePje: protectedProcedure
+    .input(
+      z.object({
+        processos: z.array(
+          z.object({
+            numero_processo: z.string(),
+            link_pje: z.string().nullish(),
+          })
+        ).min(1),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const result = await enrichmentClient.scrapePjeProcessos({
+        processos: input.processos,
+        defensor_id: String(ctx.user.id),
+      });
+
+      return result;
+    }),
+
+  /**
+   * Importar do PJe — scrape + download dos autos + organiza no Drive.
+   * Combina scraping de dados (partes, movimentações) com download de PDFs.
+   * Funciona apenas localmente (Chrome com --remote-debugging-port=9222).
+   */
+  importFromPje: protectedProcedure
+    .input(
+      z.object({
+        processoId: z.number(),
+        numeroProcesso: z.string(),
+        linkPje: z.string().nullish(),
+        atribuicao: z.string().optional(),
+        assistidoName: z.string().nullish(),
+        scrapeData: z.boolean().default(true),
+        downloadAutos: z.boolean().default(true),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const defensorId = String(ctx.user.id);
+      const results: {
+        scrape?: { scraped: boolean; error?: string | null; data?: Record<string, unknown> };
+        download?: { downloaded: boolean; dest_path?: string | null; error?: string | null };
+      } = {};
+
+      // 1. Scrape data from PJe (partes, movimentações, documentos)
+      if (input.scrapeData) {
+        try {
+          const scrapeResult = await enrichmentClient.scrapePjeProcessos({
+            processos: [{ numero_processo: input.numeroProcesso, link_pje: input.linkPje }],
+            defensor_id: defensorId,
+          });
+          const proc = scrapeResult.processos?.[0];
+          if (proc?.scraped) {
+            // Update processo with scraped data
+            const updateData: Record<string, unknown> = {};
+            if (proc.classe) updateData.classeProcessual = proc.classe;
+            if (proc.assunto) updateData.assunto = proc.assunto;
+            if (proc.vara) updateData.vara = proc.vara;
+            if (proc.comarca) updateData.comarca = proc.comarca;
+
+            if (Object.keys(updateData).length > 0) {
+              await db
+                .update(processos)
+                .set({ ...updateData, updatedAt: new Date() })
+                .where(eq(processos.id, input.processoId));
+            }
+
+            results.scrape = { scraped: true, data: proc as unknown as Record<string, unknown> };
+          } else {
+            results.scrape = { scraped: false, error: proc?.error ?? "Scraping falhou" };
+          }
+        } catch (e) {
+          results.scrape = { scraped: false, error: e instanceof Error ? e.message : "Erro no scraping" };
+        }
+      }
+
+      // 2. Download autos (PDF) and organize in Drive
+      if (input.downloadAutos) {
+        try {
+          const downloadResult = await enrichmentClient.downloadPjeProcessos({
+            processos: [{
+              numero_processo: input.numeroProcesso,
+              link_pje: input.linkPje,
+              atribuicao: input.atribuicao,
+              assistido_name: input.assistidoName,
+            }],
+            defensor_id: defensorId,
+          });
+          const res = downloadResult.resultados?.[0];
+          results.download = {
+            downloaded: res?.downloaded ?? false,
+            dest_path: res?.dest_path,
+            error: res?.error,
+          };
+        } catch (e) {
+          results.download = { downloaded: false, error: e instanceof Error ? e.message : "Erro no download" };
+        }
+      }
+
+      return results;
+    }),
+
+  /**
+   * Organizar Drive — move PDFs soltos para pastas corretas por assistido/processo.
+   * Consulta Supabase para identificar assistido + atribuição de cada PDF.
+   */
+  organizeDrive: protectedProcedure
+    .input(
+      z.object({
+        scanDriveRoot: z.boolean().default(true),
+        scanDefensoriaRoot: z.boolean().default(true),
+        dryRun: z.boolean().default(false),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return enrichmentClient.organizeDrive({
+        scan_drive_root: input.scanDriveRoot,
+        scan_defensoria_root: input.scanDefensoriaRoot,
+        dry_run: input.dryRun,
+      });
     }),
 });
 
