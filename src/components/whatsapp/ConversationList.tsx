@@ -74,6 +74,7 @@ interface Contact {
   lastMessageContent?: string | null;
   lastMessageDirection?: string | null;
   lastMessageType?: string | null;
+  lastMessageStatus?: string | null;
   contactRelation?: string | null;
   contactRelationDetail?: string | null;
   tags?: string[] | null;
@@ -641,7 +642,15 @@ export function ConversationList({
                       {contact.lastMessageContent ? (
                         <>
                           {contact.lastMessageDirection === "outbound" && (
-                            <CheckCheck className="h-[16px] w-[16px] shrink-0" style={{ color: 'var(--wa-tick-read)' }} />
+                            contact.lastMessageStatus === "read" || contact.lastMessageStatus === "played" ? (
+                              <CheckCheck className="h-[16px] w-[16px] shrink-0" style={{ color: 'var(--wa-tick-read)' }} />
+                            ) : contact.lastMessageStatus === "delivered" ? (
+                              <CheckCheck className="h-[16px] w-[16px] shrink-0" style={{ color: 'var(--wa-tick-default)' }} />
+                            ) : contact.lastMessageStatus === "sent" ? (
+                              <Check className="h-[16px] w-[16px] shrink-0" style={{ color: 'var(--wa-tick-default)' }} />
+                            ) : (
+                              <Clock className="h-3 w-3 shrink-0" style={{ color: 'var(--wa-tick-default)' }} />
+                            )
                           )}
                           {contact.lastMessageType &&
                           contact.lastMessageType !== "text" &&

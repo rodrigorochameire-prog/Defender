@@ -182,6 +182,7 @@ async function handleMessageUpsert(configId: number, message: EvolutionMessage) 
           lastMessageContent: (text || "").substring(0, 150) || null,
           lastMessageDirection: fromMe ? "outbound" : "inbound",
           lastMessageType: type,
+          lastMessageStatus: fromMe ? "sent" : "received",
           unreadCount: fromMe ? 0 : 1,
         })
         .returning();
@@ -198,6 +199,7 @@ async function handleMessageUpsert(configId: number, message: EvolutionMessage) 
           lastMessageContent: (text || "").substring(0, 150) || null,
           lastMessageDirection: fromMe ? "outbound" : "inbound",
           lastMessageType: type,
+          lastMessageStatus: fromMe ? "sent" : "received",
           unreadCount: fromMe ? contact.unreadCount : contact.unreadCount + 1,
           updatedAt: new Date(),
         })
@@ -290,10 +292,19 @@ async function handleMessageUpdate(configId: number, data: unknown) {
     const statusString = statusMap[status] || "unknown";
 
     // Atualiza status da mensagem
-    await db
+    const [updatedMsg] = await db
       .update(whatsappChatMessages)
       .set({ status: statusString })
-      .where(eq(whatsappChatMessages.waMessageId, messageId));
+      .where(eq(whatsappChatMessages.waMessageId, messageId))
+      .returning({ contactId: whatsappChatMessages.contactId });
+
+    // Atualiza lastMessageStatus no contato (se é a última mensagem outbound)
+    if (updatedMsg && updateData.key?.fromMe) {
+      await db
+        .update(whatsappContacts)
+        .set({ lastMessageStatus: statusString, updatedAt: new Date() })
+        .where(eq(whatsappContacts.id, updatedMsg.contactId));
+    }
 
     console.log(`[Evolution Webhook] Status atualizado: ${messageId} -> ${statusString}`);
   } catch (error) {

@@ -250,6 +250,7 @@ export const whatsappContacts = pgTable("whatsapp_contacts", {
   lastMessageContent: text("last_message_content"),
   lastMessageDirection: varchar("last_message_direction", { length: 10 }),
   lastMessageType: varchar("last_message_type", { length: 20 }),
+  lastMessageStatus: varchar("last_message_status", { length: 20 }),
   unreadCount: integer("unread_count").default(0).notNull(),
   isArchived: boolean("is_archived").default(false).notNull(),
   isFavorite: boolean("is_favorite").default(false).notNull(),
