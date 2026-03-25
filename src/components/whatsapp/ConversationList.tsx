@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +37,9 @@ import {
   Plus,
   Phone,
   Loader2,
+  Check,
   CheckCheck,
+  Clock,
   Image as ImageIcon,
   FileText,
   Mic2,
@@ -106,6 +106,24 @@ function getTagColor(tag: string) {
 
 function getTagLabel(tag: string) {
   return TAG_LABELS[tag] || tag.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatWhatsAppTime(date: Date): string {
+  const now = new Date();
+  const msgDate = new Date(date);
+  const diffMs = now.getTime() - msgDate.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return msgDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  }
+  if (diffDays === 1) {
+    return "Ontem";
+  }
+  if (diffDays < 7) {
+    return msgDate.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "");
+  }
+  return msgDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" });
 }
 
 interface ConversationListProps {
@@ -326,7 +344,8 @@ export function ConversationList({
             placeholder="Buscar conversas..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 h-8 text-xs rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200/50 dark:border-zinc-800/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-emerald-500/30"
+            className="pl-8 h-8 text-xs rounded-xl border-zinc-200/50 dark:border-zinc-800/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-emerald-500/30"
+            style={{ backgroundColor: 'var(--wa-bg-input)', color: 'var(--wa-text-primary)' }}
           />
         </div>
 
@@ -557,98 +576,72 @@ export function ConversationList({
               <div
                 key={contact.id}
                 className={cn(
-                  "group flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all duration-150",
-                  "hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70",
-                  "border-b border-zinc-100 dark:border-zinc-800/50",
+                  "group flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors",
                   selectedContactId === contact.id
-                    ? "bg-emerald-50/50 dark:bg-emerald-950/20 border-l-2 border-l-emerald-500"
-                    : "border-l-2 border-l-transparent"
+                    ? "bg-[var(--wa-selected)]"
+                    : "hover:bg-[var(--wa-hover)]",
                 )}
+                style={{ borderBottom: '1px solid var(--wa-border)' }}
                 onClick={() => onSelectContact(contact.id)}
               >
                 {/* Avatar */}
-                <Avatar className={cn(
-                  "h-10 w-10 shrink-0",
-                  contact.lastMessageDirection === "inbound" &&
+                <div className="relative shrink-0">
+                  <Avatar className="h-[49px] w-[49px]">
+                    <AvatarImage src={contact.profilePicUrl || undefined} />
+                    <AvatarFallback
+                      className="text-sm font-medium"
+                      style={{ backgroundColor: 'var(--wa-bg-input)', color: 'var(--wa-text-secondary)' }}
+                    >
+                      {getContactInitials(contact)}
+                    </AvatarFallback>
+                  </Avatar>
+                  {contact.lastMessageDirection === "inbound" &&
                     contact.lastMessageAt &&
-                    (Date.now() - new Date(contact.lastMessageAt).getTime()) > 4 * 60 * 60 * 1000 &&
-                    "ring-2 ring-amber-400"
-                )}>
-                  <AvatarImage src={contact.profilePicUrl || undefined} />
-                  <AvatarFallback className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-medium">
-                    {getContactInitials(contact)}
-                  </AvatarFallback>
-                </Avatar>
+                    (Date.now() - new Date(contact.lastMessageAt).getTime()) > 4 * 60 * 60 * 1000 && (
+                    <div className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-amber-400 border-2" style={{ borderColor: 'var(--wa-bg-sidebar)' }} />
+                  )}
+                </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  {/* Name line: name ... time */}
+                  {/* Row 1: Name + Timestamp */}
                   <div className="flex justify-between items-baseline gap-2">
-                    <div className="flex items-center gap-1 min-w-0 max-w-[70%]">
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
                       <span
                         className={cn(
-                          "text-sm font-medium truncate text-zinc-900 dark:text-zinc-100",
-                          isPhoneDisplayName(contact) && "font-mono text-xs"
+                          "text-[15px] font-normal truncate",
+                          isPhoneDisplayName(contact) && "font-mono text-sm"
                         )}
+                        style={{ color: 'var(--wa-text-primary)' }}
                       >
                         {debouncedSearch
                           ? highlightText(getContactDisplayName(contact), debouncedSearch)
                           : getContactDisplayName(contact)}
                       </span>
                       {contact.isFavorite && (
-                        <Star className="h-3 w-3 fill-amber-400 text-amber-400 shrink-0 transition-transform duration-200 hover:scale-110" />
-                      )}
-                      {renderRelationIcon(contact.contactRelation)}
-                      {/* Tag badges */}
-                      {contact.tags && contact.tags.length > 0 && (
-                        <div className="flex items-center gap-0.5 shrink-0">
-                          {contact.tags.slice(0, 2).map((tag) => {
-                            const color = getTagColor(tag);
-                            return (
-                              <span
-                                key={tag}
-                                className={cn(
-                                  "inline-flex items-center px-1 py-0 rounded text-[9px] leading-tight font-medium",
-                                  color.bg,
-                                  color.text
-                                )}
-                              >
-                                {getTagLabel(tag).slice(0, 8)}
-                              </span>
-                            );
-                          })}
-                          {contact.tags.length > 2 && (
-                            <span className="text-[9px] text-zinc-400 dark:text-zinc-500 font-medium">
-                              +{contact.tags.length - 2}
-                            </span>
-                          )}
-                        </div>
+                        <Star className="h-3 w-3 fill-amber-400 text-amber-400 shrink-0" />
                       )}
                     </div>
                     {contact.lastMessageAt && (
                       <span
-                        className={cn(
-                          "text-[10px] shrink-0 whitespace-nowrap",
-                          contact.unreadCount > 0
-                            ? "text-emerald-600 dark:text-emerald-400 font-medium"
-                            : "text-zinc-400 dark:text-zinc-500"
-                        )}
+                        className="text-xs shrink-0 whitespace-nowrap"
+                        style={{ color: contact.unreadCount > 0 ? 'var(--wa-unread-badge)' : 'var(--wa-text-secondary)' }}
                       >
-                        {formatDistanceToNow(
-                          new Date(contact.lastMessageAt),
-                          { addSuffix: false, locale: ptBR }
-                        )}
+                        {formatWhatsAppTime(new Date(contact.lastMessageAt))}
                       </span>
                     )}
                   </div>
 
-                  {/* Preview line: preview ... badge */}
+                  {/* Row 2: Message preview + Unread badge */}
                   <div className="flex justify-between items-center mt-0.5 gap-2">
-                    <span className="text-xs text-zinc-500 dark:text-zinc-400 truncate flex items-center gap-1">
+                    <span
+                      className="text-sm truncate flex items-center gap-1"
+                      style={{ color: 'var(--wa-text-secondary)' }}
+                    >
                       {contact.lastMessageContent ? (
                         <>
                           {contact.lastMessageDirection === "outbound" && (
-                            <CheckCheck className="h-3 w-3 text-zinc-400 dark:text-zinc-500 shrink-0" />
+                            <CheckCheck className="h-[16px] w-[16px] shrink-0" style={{ color: 'var(--wa-tick-read)' }} />
                           )}
                           {contact.lastMessageType &&
                           contact.lastMessageType !== "text" &&
@@ -666,62 +659,58 @@ export function ConversationList({
                           )}
                         </>
                       ) : contact.assistido ? (
-                        <span className="flex items-center gap-1 text-zinc-400 dark:text-zinc-500">
+                        <span className="flex items-center gap-1">
                           <UserPlus className="h-3 w-3 shrink-0" />
-                          <span className="truncate">
-                            {contact.assistido.nome}
-                          </span>
+                          <span className="truncate">{contact.assistido.nome}</span>
                         </span>
                       ) : (
-                        <span className="font-mono text-zinc-400 dark:text-zinc-500">
+                        <span className="font-mono">
                           {formatPhone(contact.phone)}
                         </span>
                       )}
                     </span>
 
-                    {contact.unreadCount > 0 && (
-                      <span className="h-[18px] min-w-[18px] px-1 flex items-center justify-center rounded-full bg-emerald-500 text-white text-[10px] font-medium shrink-0 animate-bounce-subtle">
-                        {contact.unreadCount}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {contact.tags && contact.tags.length > 0 && (
+                        <span
+                          className={cn(
+                            "inline-flex items-center px-1 py-0 rounded text-[9px] leading-tight font-medium",
+                            getTagColor(contact.tags[0]).bg,
+                            getTagColor(contact.tags[0]).text
+                          )}
+                        >
+                          {getTagLabel(contact.tags[0]).slice(0, 6)}
+                        </span>
+                      )}
+                      {contact.unreadCount > 0 && (
+                        <span
+                          className="h-5 min-w-5 px-1.5 flex items-center justify-center rounded-full text-white text-[11px] font-medium"
+                          style={{ backgroundColor: 'var(--wa-unread-badge)' }}
+                        >
+                          {contact.unreadCount}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Context Menu - visible only on hover */}
+                {/* Context Menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className={cn(
-                        "h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200",
-                        "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300",
-                        "hover:bg-zinc-100 dark:hover:bg-zinc-700/50"
-                      )}
+                      className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <MoreVertical className="h-3.5 w-3.5" />
+                      <MoreVertical className="h-3.5 w-3.5" style={{ color: 'var(--wa-text-secondary)' }} />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem
-                      onClick={() => handleToggleFavorite(contact)}
-                      className="text-xs"
-                    >
-                      <Star
-                        className={cn(
-                          "mr-2 h-3.5 w-3.5",
-                          contact.isFavorite &&
-                            "fill-amber-400 text-amber-400"
-                        )}
-                      />
-                      {contact.isFavorite
-                        ? "Remover dos favoritos"
-                        : "Adicionar aos favoritos"}
+                    <DropdownMenuItem onClick={() => handleToggleFavorite(contact)} className="text-xs">
+                      <Star className={cn("mr-2 h-3.5 w-3.5", contact.isFavorite && "fill-amber-400 text-amber-400")} />
+                      {contact.isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleToggleArchive(contact)}
-                      className="text-xs"
-                    >
+                    <DropdownMenuItem onClick={() => handleToggleArchive(contact)} className="text-xs">
                       <Archive className="mr-2 h-3.5 w-3.5" />
                       {contact.isArchived ? "Desarquivar" : "Arquivar"}
                     </DropdownMenuItem>
