@@ -152,21 +152,27 @@ class PjeAuthService:
             # Se ainda no Keycloak, pode ter erro de credenciais ou tela extra
             if PJE_SELECTORS["login_url_pattern"] in current_url:
                 # Capturar conteúdo da página para debug
-                page_text = await page.evaluate("() => document.body ? document.body.innerText.substring(0, 500) : 'NO BODY'")
-                logger.info("Page content after submit: %s", page_text)
+                page_text = await page.evaluate("() => document.body ? document.body.innerText.substring(0, 1500) : 'NO BODY'")
+                logger.info("Page text after submit: %s", page_text)
 
-                # Capturar todos os botões/inputs visíveis
-                buttons_info = await page.evaluate("""() => {
-                    const els = document.querySelectorAll('button, input[type="submit"], a.btn, .btn-primary');
-                    return Array.from(els).map(e => ({
-                        tag: e.tagName,
-                        type: e.type || '',
-                        text: e.textContent?.trim().substring(0, 50) || '',
-                        id: e.id || '',
-                        class: e.className?.substring(0, 50) || ''
+                # Capturar todos os inputs, selects e forms
+                form_info = await page.evaluate("""() => {
+                    const inputs = document.querySelectorAll('input, select, textarea');
+                    const inputsList = Array.from(inputs).map(e => ({
+                        tag: e.tagName, type: e.type || '', name: e.name || '',
+                        id: e.id || '', placeholder: e.placeholder || '',
+                        value: e.type === 'password' ? '***' : (e.value || '').substring(0, 30)
                     }));
+                    const buttons = document.querySelectorAll('button, input[type="submit"], a.btn, .btn-primary');
+                    const btnList = Array.from(buttons).map(e => ({
+                        tag: e.tagName, type: e.type || '',
+                        text: e.textContent?.trim().substring(0, 50) || '',
+                        id: e.id || '', class: e.className?.substring(0, 50) || ''
+                    }));
+                    return { inputs: inputsList, buttons: btnList };
                 }""")
-                logger.info("Buttons on page: %s", buttons_info)
+                logger.info("Form inputs: %s", form_info.get("inputs", []))
+                logger.info("Buttons: %s", form_info.get("buttons", []))
 
                 # Verificar se há mensagem de erro
                 error_msg = await page.query_selector(".alert-error, .kc-feedback-text, #input-error, .alert-warning")
