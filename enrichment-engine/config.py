@@ -44,6 +44,14 @@ class Settings(BaseSettings):
     solar_max_pdfs_per_sync: int = 10  # max PDFs to download per processo
     solar_headless: bool = True  # False for local debugging
 
+    # --- PJe (TJ-BA) ---
+    pje_cpf: str = ""
+    pje_senha: str = ""
+    pje_base_url: str = "https://pje.tjba.jus.br"
+    pje_session_timeout: int = 1800  # 30 min
+    pje_rate_limit_seconds: float = 3.0
+    pje_headless: bool = True
+
     # --- Transcription (Whisper + pyannote) ---
     openai_api_key: str = ""
     whisper_model: str = "whisper-1"  # OpenAI Whisper API model
