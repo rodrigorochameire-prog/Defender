@@ -721,7 +721,7 @@ export function ChatWindow({
 
   if (loadingContact) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+      <div className="flex-1 flex items-center justify-center wa-chat-bg">
         <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
       </div>
     );
@@ -745,7 +745,12 @@ export function ChatWindow({
       {/* HEADER (normal or selection mode)                                 */}
       {/* ================================================================== */}
       {/* ---- Header ---- */}
-      <div className="flex items-center justify-between px-2 sm:px-4 py-2 h-14 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+      <div
+        className="flex items-center justify-between px-3 sm:px-4 py-2 h-[60px]"
+        style={{
+          backgroundColor: 'var(--wa-bg-header-chat)',
+          borderBottom: '1px solid var(--wa-border)',
+        }}>
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             {/* Back button — mobile only */}
             {onBack && (
@@ -760,7 +765,8 @@ export function ChatWindow({
             )}
             <Avatar className="h-9 w-9 shrink-0">
               <AvatarImage src={contact.profilePicUrl || undefined} />
-              <AvatarFallback className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 text-xs font-medium">
+              <AvatarFallback className="text-xs font-medium"
+style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
                 {getContactInitials(contact)}
               </AvatarFallback>
             </Avatar>
@@ -968,10 +974,10 @@ export function ChatWindow({
       {/* ================================================================== */}
       {/* MESSAGES AREA                                                      */}
       {/* ================================================================== */}
-      <div className="flex-1 relative overflow-hidden bg-zinc-50 dark:bg-zinc-950">
+      <div className="flex-1 relative overflow-hidden">
         <div
           ref={scrollRef}
-          className="h-full overflow-y-auto px-4 py-3"
+          className="h-full overflow-y-auto wa-chat-bg px-4 sm:px-12 lg:px-16 py-4"
           onScroll={handleScroll}
         >
           {loadingMessages ? (
@@ -1017,8 +1023,14 @@ export function ChatWindow({
               {messageGroups.map((group) => (
                 <div key={group.date}>
                   {/* Date separator */}
-                  <div className="flex items-center justify-center my-3">
-                    <span className="px-3 py-0.5 rounded-full bg-white dark:bg-zinc-800 text-[11px] text-zinc-500 shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
+                  <div className="flex justify-center my-3">
+                    <span
+                      className="px-3 py-1 rounded-lg text-xs shadow-sm"
+                      style={{
+                        backgroundColor: 'var(--wa-bg-system)',
+                        color: 'var(--wa-text-primary)',
+                      }}
+                    >
                       {formatDateHeader(group.date)}
                     </span>
                   </div>
@@ -1187,7 +1199,13 @@ export function ChatWindow({
       {/* ================================================================== */}
       {/* INPUT AREA                                                         */}
       {/* ================================================================== */}
-      <div className="bg-zinc-50/80 dark:bg-zinc-900/80 border-t border-zinc-200 dark:border-zinc-800 p-3">
+      <div
+        className="p-3"
+        style={{
+          backgroundColor: 'var(--wa-bg-input)',
+          borderTop: '1px solid var(--wa-border)',
+        }}
+      >
         <div className="flex items-end gap-2">
           {/* Attachment dropdown */}
           <DropdownMenu>
@@ -1267,24 +1285,28 @@ export function ChatWindow({
                 }
               }}
               onKeyDown={handleKeyDown}
-              className="min-h-[40px] max-h-[120px] resize-none flex-1 text-sm border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none px-1 py-2.5"
+              className="rounded-lg border-0 px-3 py-2 text-sm resize-none focus-visible:ring-0"
+              style={{
+                backgroundColor: 'var(--wa-bg-inbound)',
+                color: 'var(--wa-text-primary)',
+              }}
               rows={1}
             />
           </div>
 
           {/* Send button — circular emerald */}
-          <Button
-            size="icon"
-            className="h-9 w-9 shrink-0 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors"
+          <button
+            className="h-10 w-10 rounded-full flex items-center justify-center shrink-0 transition-colors disabled:opacity-40"
+            style={{ backgroundColor: 'var(--wa-unread-badge)' }}
             onClick={handleSend}
             disabled={!message.trim() || sendMessageMutation.isPending || replyToMessageMutation.isPending}
           >
             {sendMessageMutation.isPending || replyToMessageMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-5 w-5 text-white animate-spin" />
             ) : (
-              <SendHorizontal className="h-4 w-4" />
+              <SendHorizontal className="h-5 w-5 text-white" />
             )}
-          </Button>
+          </button>
         </div>
       </div>
 
