@@ -283,6 +283,37 @@ class PjeDownloadOutput(BaseModel):
     total_errors: int = 0
 
 
+# === Drive Organizer ===
+
+class DriveOrganizeInput(BaseModel):
+    """Input para /enrich/drive-organize — organização de PDFs soltos."""
+    scan_drive_root: bool = Field(True, description="Escanear ~/My Drive/ (raiz)")
+    scan_defensoria_root: bool = Field(True, description="Escanear pasta da Defensoria (raiz)")
+    dry_run: bool = Field(False, description="Se True, apenas simula sem mover arquivos")
+
+
+class DriveOrganizeFileResult(BaseModel):
+    """Resultado da organização de um arquivo."""
+    file: str
+    cnj: str
+    assistido: str | None = None
+    atribuicao: str | None = None
+    action: str  # moved, would_move, skipped
+    dest: str | None = None
+    reason: str | None = None
+
+
+class DriveOrganizeOutput(BaseModel):
+    """Output de /enrich/drive-organize — relatório da organização."""
+    total_scanned: int = 0
+    moved: int = 0
+    skipped_no_match: int = 0
+    skipped_exists: int = 0
+    errors: int = 0
+    dry_run: bool = False
+    details: list[DriveOrganizeFileResult] = Field(default_factory=list)
+
+
 # === Transcript ===
 
 class TranscriptInput(BaseModel):

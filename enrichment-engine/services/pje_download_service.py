@@ -43,7 +43,9 @@ PJE_DOWNLOAD_AREA_URL = f"{PJE_BASE_URL}/pje/AreaDeDownload/listView.seam"
 DRIVE_BASE = Path.home() / "My Drive" / "1 - Defensoria 9ª DP"
 
 # Mapeamento atribuição → pasta do Drive
+# Suporta tanto texto livre (vindo do PJe) quanto enums do banco (Drizzle schema)
 ATRIBUICAO_FOLDER_MAP: dict[str, str] = {
+    # Texto livre (PJe)
     "tribunal do júri": "Processos - Júri",
     "júri": "Processos - Júri",
     "juri": "Processos - Júri",
@@ -57,6 +59,20 @@ ATRIBUICAO_FOLDER_MAP: dict[str, str] = {
     "substituição criminal": "Processos - Substituição criminal",
     "substituicao criminal": "Processos - Substituição criminal",
     "criminal": "Processos",
+    # Enums do banco (atribuicaoEnum no Drizzle schema)
+    "juri_camacari": "Processos - Júri",
+    "vvd_camacari": "Processos - VVD",
+    "execucao_penal": "Processos - Execução Penal",
+    "substituicao": "Processos - Substituição criminal",
+    "substituicao_civel": "Processos - Substituição cível",
+    "substituição cível": "Processos - Substituição cível",
+    "substituicao civel": "Processos - Substituição cível",
+    "cível": "Processos - Substituição cível",
+    "civel": "Processos - Substituição cível",
+    "grupo_juri": "Processos - Grupo do juri",
+    # Peticionamento integrado
+    "peticionamento integrado": "Processos - Peticionamento integrado",
+    "peticionamento_integrado": "Processos - Peticionamento integrado",
 }
 
 # Diretório padrão de downloads do Chrome
@@ -72,6 +88,168 @@ def _resolve_drive_folder(atribuicao: str) -> Path:
     key = atribuicao.strip().lower()
     folder_name = ATRIBUICAO_FOLDER_MAP.get(key, "Processos")
     return DRIVE_BASE / folder_name
+
+
+# Regex para número CNJ: 0000000-00.0000.0.00.0000
+_CNJ_RE = re.compile(r"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}")
+
+# === Classificação de processos: principal vs acessório ===
+# Apenas processos PRINCIPAIS justificam subpastas separadas.
+# Acessórios ficam na mesma pasta da Ação Penal correspondente.
+# Classes que SEMPRE criam subpasta própria (eixo principal)
+CLASSES_PRINCIPAIS: set[str] = {
+    "ação penal",
+    "ação penal de competência do júri",
+    "execução da pena",
+    "execução penal",
+}
+
+# MPU é especial: principal quando sozinha, acessória quando há AP no mesmo caso
+CLASSES_MPU: set[str] = {
+    "medidas protetivas de urgência",
+}
+
+# Classes que NUNCA criam subpasta — ficam junto da AP correspondente
+CLASSES_ACESSORIAS: set[str] = {
+    "inquérito policial",
+    "auto de prisão em flagrante",
+    "carta precatória criminal",
+    "pedido de prisão preventiva",
+    "pedido de medida cautelar",
+    "habeas corpus",
+    "mandado de segurança criminal",
+}
+
+# Prefixo para nome de subpasta: "AP 8000640-...", "IP 8000387-...", etc.
+CLASSE_PREFIXO_MAP: dict[str, str] = {
+    "ação penal": "AP",
+    "ação penal de competência do júri": "AP",
+    "medidas protetivas de urgência": "MPU",
+    "execução da pena": "EP",
+    "execução penal": "EP",
+    "inquérito policial": "IP",
+    "auto de prisão em flagrante": "APF",
+    "carta precatória criminal": "CP",
+    "pedido de prisão preventiva": "PP",
+    "pedido de medida cautelar": "MC",
+    "habeas corpus": "HC",
+    "mandado de segurança criminal": "MS",
+}
+
+
+def _classe_prefixo(classe: str | None) -> str:
+    """Retorna o prefixo para o nome da subpasta (ex: AP, IP, MPU)."""
+    if not classe:
+        return ""
+    return CLASSE_PREFIXO_MAP.get(classe.strip().lower(), "")
+
+
+def _folder_name_for_processo(numero_processo: str, classe: str | None) -> str:
+    """Gera nome da subpasta com prefixo: 'AP 8000640-...' ou só '8000640-...'."""
+    prefixo = _classe_prefixo(classe)
+    if prefixo:
+        return f"{prefixo} {numero_processo}"
+    return numero_processo
+
+
+def _is_classe_principal(classe: str | None) -> bool:
+    """Verifica se a classe processual é de um processo principal (Ação Penal, EP)."""
+    if not classe:
+        return False
+    return classe.strip().lower() in CLASSES_PRINCIPAIS
+
+
+def _is_classe_mpu(classe: str | None) -> bool:
+    """Verifica se é MPU (principal sozinha, acessória se houver AP)."""
+    if not classe:
+        return False
+    return classe.strip().lower() in CLASSES_MPU
+
+
+def _is_classe_acessoria(classe: str | None) -> bool:
+    """Verifica se a classe processual é de um processo acessório (IP, APF, etc.)."""
+    if not classe:
+        return False
+    return classe.strip().lower() in CLASSES_ACESSORIAS
+
+
+def _find_ap_folder(assistido_folder: Path) -> Path | None:
+    """Encontra subpasta de Ação Penal dentro da pasta do assistido (prefixo 'AP ')."""
+    for d in assistido_folder.iterdir():
+        if d.is_dir() and d.name.startswith("AP "):
+            return d
+    return None
+
+
+def _looks_like_cnj(text: str) -> bool:
+    """Verifica se o texto parece um número CNJ."""
+    return bool(_CNJ_RE.fullmatch(text.strip()))
+
+
+def _extract_cnj_from_filename(filename: str) -> str | None:
+    """Extrai número CNJ de um nome de arquivo."""
+    m = _CNJ_RE.search(filename)
+    return m.group(0) if m else None
+
+
+def _detect_existing_processos(folder: Path) -> set[str]:
+    """Detecta números CNJ de processos já existentes numa pasta (arquivos e subpastas)."""
+    cnjs: set[str] = set()
+    if not folder.exists():
+        return cnjs
+    for item in folder.iterdir():
+        if item.is_dir():
+            # Subpasta pode ser "AP 8000640-..." ou "8000640-..."
+            cnj = _extract_cnj_from_filename(item.name)
+            if cnj:
+                cnjs.add(cnj)
+        elif item.is_file() and item.suffix.lower() == ".pdf":
+            cnj = _extract_cnj_from_filename(item.stem)
+            if cnj:
+                cnjs.add(cnj)
+    return cnjs
+
+
+def _find_subfolder_for_cnj(assistido_folder: Path, cnj: str) -> Path | None:
+    """Encontra subpasta existente que contém o CNJ (com ou sem prefixo)."""
+    for d in assistido_folder.iterdir():
+        if d.is_dir() and cnj in d.name:
+            return d
+    return None
+
+
+def _promote_to_subfolders(
+    assistido_folder: Path,
+    existing_cnjs: set[str],
+    classe_map: dict[str, str | None] | None = None,
+):
+    """
+    Migra arquivos soltos na pasta do assistido para subpastas por processo.
+
+    Usa prefixo de classe quando disponível (ex: "AP 8000640-...").
+    Apenas move PDFs cujo nome contém um CNJ. Outros arquivos permanecem.
+    """
+    classe_map = classe_map or {}
+    for f in list(assistido_folder.iterdir()):
+        if not f.is_file():
+            continue
+        cnj = _extract_cnj_from_filename(f.name)
+        if not cnj:
+            continue
+        # Verificar se já existe subpasta com esse CNJ
+        existing = _find_subfolder_for_cnj(assistido_folder, cnj)
+        if existing:
+            subfolder = existing
+        else:
+            folder_name = _folder_name_for_processo(cnj, classe_map.get(cnj))
+            subfolder = assistido_folder / folder_name
+        subfolder.mkdir(exist_ok=True)
+        dest = subfolder / f.name
+        if not dest.exists():
+            shutil.move(str(f), str(dest))
+            logger.info("Reorganized %s → %s/", f.name, subfolder.name)
+        else:
+            logger.debug("Skipped duplicate: %s", f.name)
 
 
 def _sanitize_folder_name(name: str) -> str:
@@ -369,24 +547,91 @@ class PjeDownloadService:
         atribuicao: str,
         assistido_name: str,
         numero_processo: str,
+        classe_processual: str | None = None,
     ) -> Path:
         """
         Move PDF para a pasta correta no Drive local.
 
-        Estrutura: ~/My Drive/1 - Defensoria 9ª DP/{atribuição}/{assistido}/
+        Regra de organização:
+        - Apenas Ações Penais (AP) criam subpastas: "AP 8000640-..."
+        - Acessórios (IP, APF) ficam na pasta da AP correspondente.
+        - MPU: principal se sozinha ("MPU 8002384-..."), acessória se houver AP.
+        - Se não há AP ainda, tudo na pasta do assistido.
+        - Subpastas nomeadas com prefixo: AP, IP, MPU, EP, APF, etc.
         """
-        # Resolver pasta da atribuição
         atrib_folder = _resolve_drive_folder(atribuicao)
-
-        # Criar pasta do assistido
         assistido_folder_name = _sanitize_folder_name(assistido_name)
-        dest_folder = atrib_folder / assistido_folder_name
-        dest_folder.mkdir(parents=True, exist_ok=True)
+        assistido_folder = atrib_folder / assistido_folder_name
+        assistido_folder.mkdir(parents=True, exist_ok=True)
 
-        # Nome do arquivo: {numero_processo}.pdf
+        is_principal = _is_classe_principal(classe_processual)
+        is_mpu = _is_classe_mpu(classe_processual)
+        is_acessorio = _is_classe_acessoria(classe_processual)
+
+        # Procurar subpasta de AP existente
+        ap_folder = _find_ap_folder(assistido_folder)
+
+        # Detectar todas as subpastas com CNJ
+        existing_subfolders = [
+            d for d in assistido_folder.iterdir()
+            if d.is_dir() and _extract_cnj_from_filename(d.name)
+        ]
+
+        if is_acessorio:
+            # Acessório → junto com AP se existir 1, senão raiz
+            if ap_folder:
+                dest_folder = ap_folder
+            else:
+                dest_folder = assistido_folder
+
+        elif is_mpu:
+            # MPU → acessória se AP existe, principal se sozinha
+            if ap_folder:
+                dest_folder = ap_folder
+            else:
+                # MPU é o processo referência
+                folder_name = _folder_name_for_processo(numero_processo, classe_processual)
+                existing = _find_subfolder_for_cnj(assistido_folder, numero_processo)
+                if existing:
+                    dest_folder = existing
+                elif existing_subfolders:
+                    dest_folder = assistido_folder / folder_name
+                    dest_folder.mkdir(exist_ok=True)
+                else:
+                    # Única MPU, sem subpastas ainda → raiz do assistido
+                    dest_folder = assistido_folder
+
+        elif is_principal:
+            # AP / EP → sempre cria subpasta se há outros processos
+            existing_cnjs = _detect_existing_processos(assistido_folder)
+            other_cnjs = existing_cnjs - {numero_processo}
+            folder_name = _folder_name_for_processo(numero_processo, classe_processual)
+
+            # Já existe subpasta para este processo?
+            existing = _find_subfolder_for_cnj(assistido_folder, numero_processo)
+            if existing:
+                dest_folder = existing
+            elif other_cnjs and not existing_subfolders:
+                _promote_to_subfolders(assistido_folder, existing_cnjs)
+                dest_folder = assistido_folder / folder_name
+                dest_folder.mkdir(exist_ok=True)
+            elif existing_subfolders:
+                dest_folder = assistido_folder / folder_name
+                dest_folder.mkdir(exist_ok=True)
+            else:
+                dest_folder = assistido_folder
+
+        else:
+            # Classe desconhecida → raiz ou subpasta se já houver
+            if existing_subfolders:
+                folder_name = _folder_name_for_processo(numero_processo, classe_processual)
+                dest_folder = assistido_folder / folder_name
+                dest_folder.mkdir(exist_ok=True)
+            else:
+                dest_folder = assistido_folder
+
+        # Nome do arquivo
         dest_file = dest_folder / f"{numero_processo}.pdf"
-
-        # Se já existe, adicionar sufixo
         if dest_file.exists():
             counter = 1
             while dest_file.exists():
@@ -397,12 +642,34 @@ class PjeDownloadService:
         logger.info("Moved PDF to %s", dest_file)
         return dest_file
 
+    async def _extract_classe_processual(self, page: Page) -> str | None:
+        """Extrai a classe processual da página do processo (ex: Ação Penal, IP)."""
+        try:
+            return await page.evaluate("""() => {
+                var dls = document.querySelectorAll('dl.dl-horizontal');
+                for (var i = 0; i < dls.length; i++) {
+                    var children = dls[i].children;
+                    for (var j = 0; j < children.length - 1; j++) {
+                        if (children[j].tagName === 'DT') {
+                            var key = children[j].textContent.trim().toLowerCase();
+                            if (key.indexOf('classe') > -1) {
+                                return children[j+1].textContent.trim();
+                            }
+                        }
+                    }
+                }
+                return null;
+            }""")
+        except Exception:
+            return None
+
     async def download_processo(
         self,
         numero_processo: str,
         link_pje: str | None = None,
         atribuicao: str = "criminal",
         assistido_name: str | None = None,
+        classe_processual: str | None = None,
     ) -> dict[str, Any]:
         """
         Baixa os autos completos de um processo e organiza no Drive.
@@ -447,6 +714,10 @@ class PjeDownloadService:
                 if not assistido_name:
                     assistido_name = numero_processo  # fallback
 
+            # Extrair classe processual da página se não fornecida
+            if not classe_processual:
+                classe_processual = await self._extract_classe_processual(page)
+
             # Tentar extrair atribuição da página se não fornecida explicitamente
             if atribuicao == "criminal":
                 page_atrib = await self._extract_atribuicao_from_page(page)
@@ -482,7 +753,8 @@ class PjeDownloadService:
 
             # Mover para Drive
             dest_path = self._move_to_drive(
-                downloaded_file, atribuicao, assistido_name, numero_processo
+                downloaded_file, atribuicao, assistido_name, numero_processo,
+                classe_processual=classe_processual,
             )
 
             return {
@@ -534,6 +806,7 @@ class PjeDownloadService:
                 link_pje=proc.get("link_pje"),
                 atribuicao=proc.get("atribuicao", "criminal"),
                 assistido_name=proc.get("assistido_name"),
+                classe_processual=proc.get("classe_processual"),
             )
             results.append(result)
 

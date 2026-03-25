@@ -38,6 +38,7 @@ from routers.extract_data import router as extract_data_router
 from routers.cowork import router as cowork_router
 from routers.pje_scraper import router as pje_scraper_router
 from routers.pje_download import router as pje_download_router
+from routers.drive_organizer import router as drive_organizer_router
 
 # Logging estruturado (sem PII)
 logging.basicConfig(
@@ -125,6 +126,7 @@ def create_app() -> FastAPI:
     app.include_router(cowork_router, prefix="/cowork", tags=["cowork"])
     app.include_router(pje_scraper_router, prefix="/enrich", tags=["PJe Scraper"])
     app.include_router(pje_download_router, prefix="/enrich", tags=["PJe Download"])
+    app.include_router(drive_organizer_router, prefix="/enrich", tags=["Drive Organizer"])
 
     return app
 

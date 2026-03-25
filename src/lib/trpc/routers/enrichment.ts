@@ -984,6 +984,88 @@ export const enrichmentRouter = router({
 
       return result;
     }),
+
+  /**
+   * Importar do PJe — scrape + download dos autos + organiza no Drive.
+   * Combina scraping de dados (partes, movimentações) com download de PDFs.
+   * Funciona apenas localmente (Chrome com --remote-debugging-port=9222).
+   */
+  importFromPje: protectedProcedure
+    .input(
+      z.object({
+        processoId: z.number(),
+        numeroProcesso: z.string(),
+        linkPje: z.string().nullish(),
+        atribuicao: z.string().optional(),
+        assistidoName: z.string().nullish(),
+        scrapeData: z.boolean().default(true),
+        downloadAutos: z.boolean().default(true),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const defensorId = String(ctx.user.id);
+      const results: {
+        scrape?: { scraped: boolean; error?: string | null; data?: Record<string, unknown> };
+        download?: { downloaded: boolean; dest_path?: string | null; error?: string | null };
+      } = {};
+
+      // 1. Scrape data from PJe (partes, movimentações, documentos)
+      if (input.scrapeData) {
+        try {
+          const scrapeResult = await enrichmentClient.scrapePjeProcessos({
+            processos: [{ numero_processo: input.numeroProcesso, link_pje: input.linkPje }],
+            defensor_id: defensorId,
+          });
+          const proc = scrapeResult.processos?.[0];
+          if (proc?.scraped) {
+            // Update processo with scraped data
+            const updateData: Record<string, unknown> = {};
+            if (proc.classe) updateData.classeProcessual = proc.classe;
+            if (proc.assunto) updateData.assunto = proc.assunto;
+            if (proc.vara) updateData.vara = proc.vara;
+            if (proc.comarca) updateData.comarca = proc.comarca;
+
+            if (Object.keys(updateData).length > 0) {
+              await db
+                .update(processos)
+                .set({ ...updateData, updatedAt: new Date() })
+                .where(eq(processos.id, input.processoId));
+            }
+
+            results.scrape = { scraped: true, data: proc as unknown as Record<string, unknown> };
+          } else {
+            results.scrape = { scraped: false, error: proc?.error ?? "Scraping falhou" };
+          }
+        } catch (e) {
+          results.scrape = { scraped: false, error: e instanceof Error ? e.message : "Erro no scraping" };
+        }
+      }
+
+      // 2. Download autos (PDF) and organize in Drive
+      if (input.downloadAutos) {
+        try {
+          const downloadResult = await enrichmentClient.downloadPjeProcessos({
+            processos: [{
+              numero_processo: input.numeroProcesso,
+              link_pje: input.linkPje,
+              atribuicao: input.atribuicao,
+              assistido_name: input.assistidoName,
+            }],
+            defensor_id: defensorId,
+          });
+          const res = downloadResult.resultados?.[0];
+          results.download = {
+            downloaded: res?.downloaded ?? false,
+            dest_path: res?.dest_path,
+            error: res?.error,
+          };
+        } catch (e) {
+          results.download = { downloaded: false, error: e instanceof Error ? e.message : "Erro no download" };
+        }
+      }
+
+      return results;
+    }),
 });
 
 export type EnrichmentRouter = typeof enrichmentRouter;

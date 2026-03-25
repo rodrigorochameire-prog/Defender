@@ -1154,6 +1154,59 @@ class EnrichmentClient {
   }
 
   /**
+   * PJe Download — baixa autos de processos e organiza no Drive local.
+   * Conecta ao Chrome já aberto com sessão PJe autenticada.
+   */
+  async downloadPjeProcessos(input: {
+    processos: Array<{
+      numero_processo: string;
+      link_pje?: string | null;
+      atribuicao?: string;
+      assistido_name?: string | null;
+    }>;
+    defensor_id: string;
+  }): Promise<{
+    resultados: Array<{
+      numero_processo: string;
+      assistido?: string | null;
+      downloaded: boolean;
+      dest_path?: string | null;
+      atribuicao_folder?: string | null;
+      error?: string | null;
+    }>;
+    total_downloaded: number;
+    total_errors: number;
+  }> {
+    return this.request("/enrich/pje-download", input, 600_000); // 10min — download is very slow
+  }
+
+  /**
+   * Drive Organize — organiza PDFs soltos no Drive local por assistido/processo.
+   */
+  async organizeDrive(input: {
+    scan_drive_root?: boolean;
+    scan_defensoria_root?: boolean;
+    dry_run?: boolean;
+  }): Promise<{
+    total_scanned: number;
+    moved: number;
+    skipped_no_match: number;
+    skipped_exists: number;
+    errors: number;
+    dry_run: boolean;
+    details: Array<{
+      file: string;
+      cnj: string;
+      assistido?: string | null;
+      action: string;
+      dest?: string | null;
+      reason?: string | null;
+    }>;
+  }> {
+    return this.request("/enrich/drive-organize", input, 120_000);
+  }
+
+  /**
    * Chamar enriquecimento de forma assíncrona (fire-and-forget).
    * Não bloqueia o fluxo principal — erros são logados mas ignorados.
    */
