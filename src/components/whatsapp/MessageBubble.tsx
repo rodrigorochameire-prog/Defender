@@ -62,13 +62,15 @@ export interface MessageBubbleProps {
 function StatusIcon({ status }: { status: string }) {
   switch (status) {
     case "pending":
-      return <Clock className="h-3 w-3 text-zinc-400" />;
+      return <Clock className="h-3 w-3" style={{ color: 'var(--wa-tick-default)' }} />;
     case "sent":
-      return <Check className="h-3 w-3 text-zinc-400" />;
+      return <Check className="h-3 w-3" style={{ color: 'var(--wa-tick-default)' }} />;
     case "delivered":
-      return <CheckCheck className="h-3 w-3 text-zinc-400" />;
+      return <CheckCheck className="h-3 w-3" style={{ color: 'var(--wa-tick-default)' }} />;
     case "read":
-      return <CheckCheck className="h-3 w-3 text-blue-500" />;
+      return <CheckCheck className="h-3 w-3" style={{ color: 'var(--wa-tick-read)' }} />;
+    case "played":
+      return <CheckCheck className="h-3 w-3" style={{ color: 'var(--wa-tick-read)' }} />;
     case "error":
       return <AlertCircle className="h-3 w-3 text-red-500" />;
     default:
@@ -108,11 +110,11 @@ function ReplyQuote({
       className={cn(
         "mb-1.5 px-2.5 py-1.5 rounded-lg border-l-[3px] text-xs",
         isOutbound
-          ? "bg-emerald-100/60 dark:bg-emerald-900/20 border-emerald-500 text-zinc-600 dark:text-zinc-400"
-          : "bg-zinc-100/70 dark:bg-zinc-800/50 border-zinc-400 text-zinc-600 dark:text-zinc-400",
+          ? "bg-[#d1f4cc] dark:bg-[#025144] border-[#06cf9c]"
+          : "bg-[#f0f0f0] dark:bg-[#1d282f] border-[#06cf9c]",
       )}
     >
-      <p className="line-clamp-2 whitespace-pre-wrap">
+      <p className="line-clamp-2 whitespace-pre-wrap" style={{ color: 'var(--wa-text-primary)' }}>
         {renderText(quotedText, searchQuery, highlightMatch)}
       </p>
     </div>
@@ -131,7 +133,7 @@ function TimestampRow({
 }) {
   return (
     <span className="inline-flex items-center gap-1 float-right ml-2 mt-1 translate-y-0.5">
-      <span className="text-[10px] leading-none text-zinc-400 tabular-nums">
+      <span className="text-[11px] leading-none tabular-nums" style={{ color: 'var(--wa-text-secondary)' }}>
         {time}
       </span>
       {isOutbound && <StatusIcon status={status} />}
@@ -182,10 +184,36 @@ function MediaDocument({
 
 function MediaAudio({ url }: { url: string | null }) {
   return (
-    <div className="flex items-center gap-2 p-2 bg-zinc-100/80 dark:bg-zinc-800/50 rounded-xl mb-1.5">
-      <Mic className="h-5 w-5 text-zinc-400 shrink-0" />
+    <div className="flex items-center gap-3 py-1.5 px-1 min-w-[240px]">
+      <button
+        className="h-8 w-8 rounded-full flex items-center justify-center shrink-0"
+        style={{ backgroundColor: 'var(--wa-unread-badge)' }}
+        onClick={(e) => {
+          e.stopPropagation();
+          const audio = e.currentTarget.parentElement?.querySelector('audio');
+          if (audio) {
+            if (audio.paused) audio.play();
+            else audio.pause();
+          }
+        }}
+      >
+        <Mic className="h-4 w-4 text-white" />
+      </button>
+      <div className="flex items-end gap-[2px] h-5 flex-1">
+        {Array.from({ length: 28 }).map((_, i) => (
+          <div
+            key={i}
+            className="wa-audio-bar"
+            style={{
+              height: `${Math.max(3, Math.random() * 16)}px`,
+              animationDelay: `${i * 0.05}s`,
+              animationPlayState: 'paused',
+            }}
+          />
+        ))}
+      </div>
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-      <audio controls src={url || undefined} className="h-8 flex-1 max-w-[200px]" />
+      <audio src={url || undefined} className="hidden" />
     </div>
   );
 }
@@ -268,7 +296,7 @@ export function MessageBubble({
   return (
     <div
       className={cn(
-        "flex mb-1.5 items-start",
+        "flex mb-0.5 items-start",
         isOutbound ? "justify-end" : "justify-start",
         isSelectionMode && "cursor-pointer",
         isNew && "animate-message-in",
@@ -340,11 +368,14 @@ export function MessageBubble({
         {/* Message bubble */}
         <div
           className={cn(
-            "rounded-2xl px-3 py-1.5 shadow-sm",
+            "rounded-lg px-2.5 py-1.5 shadow-sm max-w-full",
             isOutbound
-              ? "rounded-tr-md bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/80 dark:border-emerald-900/30"
-              : "rounded-tl-md bg-white dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800/80",
+              ? "wa-tail-outbound rounded-tr-none"
+              : "wa-tail-inbound rounded-tl-none",
           )}
+          style={{
+            backgroundColor: isOutbound ? 'var(--wa-bg-outbound)' : 'var(--wa-bg-inbound)',
+          }}
         >
           {/* Reply quote */}
           {hasQuote && quotedText && (
@@ -371,7 +402,7 @@ export function MessageBubble({
 
           {/* Text content */}
           {hasContent && !hasQuote && (
-            <p className="text-sm text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap break-words">
+            <p className="text-sm whitespace-pre-wrap break-words" style={{ color: 'var(--wa-text-primary)' }}>
               {renderText(msg.content!, searchQuery, highlightMatch)}
               <TimestampRow time={time} isOutbound={isOutbound} status={msg.status} />
             </p>
@@ -379,7 +410,7 @@ export function MessageBubble({
 
           {/* Reply text (after quote) */}
           {hasQuote && replyText && (
-            <p className="text-sm text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap break-words">
+            <p className="text-sm whitespace-pre-wrap break-words" style={{ color: 'var(--wa-text-primary)' }}>
               {renderText(replyText, searchQuery, highlightMatch)}
               <TimestampRow time={time} isOutbound={isOutbound} status={msg.status} />
             </p>
@@ -387,7 +418,7 @@ export function MessageBubble({
 
           {/* Fallback label for stickers/unrenderable media types */}
           {fallbackTypeLabel && (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 italic">
+            <p className="text-sm italic" style={{ color: 'var(--wa-text-secondary)' }}>
               {fallbackTypeLabel}
               <TimestampRow time={time} isOutbound={isOutbound} status={msg.status} />
             </p>
