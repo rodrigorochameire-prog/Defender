@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect, useMemo } from "react";
-import { FileText, AlertCircle, CheckCircle2, Upload, Download, Settings, User, Scale, ArrowRight, Sparkles, Info, Edit3, AlertTriangle, ChevronDown, Shield, MessageCircle, RefreshCw, Loader2 } from "lucide-react";
+import { FileText, AlertCircle, CheckCircle2, Upload, Download, Settings, User, Scale, ArrowRight, Sparkles, Info, Edit3, AlertTriangle, ChevronDown, Shield, MessageCircle, RefreshCw, Loader2, Radar } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
@@ -92,6 +92,10 @@ export function PJeImportModal({
   // PJe Import v2 — review table rows
   const [reviewRows, setReviewRows] = useState<PjeReviewRow[]>([]);
 
+  // PJe Scraping — automação via Chrome CDP
+  const [isScraping, setIsScraping] = useState(false);
+  const [scrapeProgress, setScrapeProgress] = useState<string | null>(null);
+
   // Mutation para importação VVD
   const importarVVDMutation = trpc.vvd.importarIntimacoesPJe.useMutation({
     onSuccess: (resultado) => {
@@ -110,6 +114,48 @@ export function PJeImportModal({
       setIsImporting(false);
     },
   });
+
+  // Settings do usuário (para verificar pjeScrapingEnabled)
+  const settingsQuery = trpc.settings.get.useQuery(undefined, {
+    staleTime: 60_000,
+  });
+  const pjeScrapingEnabled = (settingsQuery.data as Record<string, unknown>)?.pjeScrapingEnabled === true;
+
+  // Mutation para scraping PJe via Chrome CDP
+  const scrapePjeMutation = trpc.enrichment.scrapePje.useMutation({
+    onSuccess: (result) => {
+      setIsScraping(false);
+      setScrapeProgress(null);
+      if (result.total_scraped > 0) {
+        toast.success(
+          `${result.total_scraped} processos escaneados com sucesso${result.total_errors > 0 ? ` (${result.total_errors} erros)` : ""}`,
+          { duration: 5000 }
+        );
+      }
+      if (result.total_errors > 0 && result.total_scraped === 0) {
+        toast.error("Nenhum processo pôde ser escaneado. Verifique se o Chrome está aberto com o PJe.");
+      }
+    },
+    onError: (error) => {
+      setIsScraping(false);
+      setScrapeProgress(null);
+      toast.error(`Erro no scraping: ${error.message}`);
+    },
+  });
+
+  const handleScrapePje = () => {
+    const processosParaScrape = reviewRows
+      .filter((r) => !r.excluded)
+      .map((r) => ({
+        numero_processo: r.numeroProcesso,
+      }));
+
+    if (processosParaScrape.length === 0) return;
+
+    setIsScraping(true);
+    setScrapeProgress(`Escaneando ${processosParaScrape.length} processos no PJe...`);
+    scrapePjeMutation.mutate({ processos: processosParaScrape });
+  };
 
   // Batch match de assistidos (PJe Import v2)
   const nomesParaMatch = useMemo(
@@ -948,13 +994,57 @@ export function PJeImportModal({
 
             {/* As listas simplificadas de MPU/Gerais foram substituídas pela review table acima */}
 
+            {/* Botão de Scraping PJe — aparece quando >= 5 intimações novas e pjeScrapingEnabled */}
+            {pjeScrapingEnabled && reviewRows.filter(r => !r.excluded).length >= 5 && (
+              <div className="p-4 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30 border border-violet-200 dark:border-violet-800 rounded-xl">
+                <div className="flex gap-3 items-center">
+                  <div className="w-10 h-10 rounded-xl bg-violet-500 dark:bg-violet-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-500/30">
+                    <Radar className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm text-violet-900 dark:text-violet-100">
+                      Escaneamento automático disponível
+                    </p>
+                    <p className="text-xs text-violet-700 dark:text-violet-300 mt-0.5">
+                      {reviewRows.filter(r => !r.excluded).length} processos detectados — escanear via PJe para extrair dados completos (partes, movimentações, decisões)
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={handleScrapePje}
+                    disabled={isScraping}
+                    className="h-10 px-5 text-sm font-semibold bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-lg shadow-violet-500/30 disabled:opacity-50"
+                  >
+                    {isScraping ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Escaneando...
+                      </>
+                    ) : (
+                      <>
+                        <Radar className="w-4 h-4 mr-2" />
+                        Escanear Processos
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {isScraping && scrapeProgress && (
+                  <div className="mt-3 pt-3 border-t border-violet-200 dark:border-violet-700">
+                    <p className="text-xs text-violet-600 dark:text-violet-400 animate-pulse">
+                      {scrapeProgress}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Botões */}
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-zinc-200 dark:border-zinc-800">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleVoltar}
-                disabled={isImporting}
+                disabled={isImporting || isScraping}
                 className="h-11 px-6 text-sm font-semibold border-zinc-300 dark:border-zinc-700"
               >
                 Voltar

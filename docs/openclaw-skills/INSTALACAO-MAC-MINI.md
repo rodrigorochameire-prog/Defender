@@ -189,7 +189,25 @@ Cole e preencha:
 {
   "model": {
     "provider": "anthropic",
-    "name": "claude-opus-4-6"
+    "name": "claude-sonnet-4-6"
+  },
+  "heartbeat": {
+    "every": "0m",
+    "isolatedSession": true,
+    "lightContext": true
+  },
+  "thinking": {
+    "type": "disabled"
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "anthropic/claude-sonnet-4-6",
+        "fallbacks": ["anthropic/claude-haiku-4-5"]
+      },
+      "bootstrapMaxChars": 8000,
+      "bootstrapTotalMaxChars": 80000
+    }
   },
   "channels": {
     "imessage": {
@@ -359,6 +377,102 @@ ssh openclaw@IP_DO_MAC_MINI "openclaw status"
 
 ---
 
+## 11. Integração com Claude Code (MacBook)
+
+Para que o Claude Code no MacBook possa acionar o OpenClaw no Mac Mini:
+
+### 11.1 SSH Tunnel (rede local ou Tailscale)
+
+```bash
+# No MacBook, abra um túnel para o gateway do OpenClaw no Mac Mini:
+ssh -N -L 18789:127.0.0.1:18789 openclaw@IP_DO_MAC_MINI
+```
+
+Ou instale Tailscale em ambas as máquinas para acesso sempre-ativo sem gerenciar túneis.
+
+### 11.2 Instalar o MCP Bridge (openclaw-mcp)
+
+No MacBook, instale o servidor MCP que conecta Claude Code ao OpenClaw:
+
+```bash
+npm install -g @freema/openclaw-mcp
+```
+
+### 11.3 Configurar no Claude Code
+
+Adicione ao `.claude/mcp.json` do projeto Defender:
+
+```json
+{
+  "mcpServers": {
+    "openclaw": {
+      "command": "npx",
+      "args": ["@freema/openclaw-mcp"],
+      "env": {
+        "OPENCLAW_BASE_URL": "http://127.0.0.1:18789",
+        "OPENCLAW_GATEWAY_TOKEN": "SEU_TOKEN_GATEWAY",
+        "OPENCLAW_AGENT_ID": "main"
+      }
+    }
+  }
+}
+```
+
+### 11.4 Uso no Claude Code
+
+Com o MCP configurado, o Claude Code pode:
+- Enviar comandos ao OpenClaw: "verifica o PJe", "qual a agenda do Solar?"
+- Acionar skills remotamente: pje-bahia, pje-monitoramento, etc.
+- Verificar status do agente no Mac Mini
+
+### 11.5 Segurança
+
+- O gateway do OpenClaw NUNCA deve ser exposto à internet
+- Use sempre SSH tunnel ou Tailscale
+- O token do gateway deve ter `chmod 600` no arquivo de config
+- Quem tem acesso ao gateway controla tudo que o agente pode fazer
+
+---
+
+## 12. Otimização de Custos
+
+### Config otimizada (já aplicada no openclaw.json acima)
+
+| Parâmetro | Valor | Economia |
+|-----------|-------|----------|
+| Modelo padrão | Sonnet 4.6 (não Opus) | ~80% por chamada |
+| Fallback | Haiku 4.5 | ~95% por chamada |
+| Heartbeat | Desativado (`"0m"`) | ~$30-100/mês |
+| Thinking | Desabilitado | 10-50x menos tokens |
+| Bootstrap | 8K/80K (era 20K/150K) | ~40% menos contexto |
+| Crons | 1x/dia (não a cada 30min) | ~90% menos chamadas |
+
+### Custo estimado mensal
+
+| Cenário | Custo |
+|---------|-------|
+| Opus para tudo + cron agressivo | $200-500+ |
+| **Config otimizada (atual)** | **$10-30** |
+
+### Limites de gasto (OBRIGATÓRIO)
+
+1. Acesse console.anthropic.com → Settings → Limits
+2. Defina cap mensal: $50 (recomendado)
+3. Configure alerta em 75% ($37.50)
+4. Use API key separada para o OpenClaw (diferente do Claude Code)
+
+### Monitoramento
+
+```bash
+# Ver uso de ontem
+openclaw usage --yesterday
+
+# Ver uso detalhado
+openclaw usage --full
+```
+
+---
+
 ## Resumo — checklist de instalação
 
 ```
@@ -377,4 +491,8 @@ ssh openclaw@IP_DO_MAC_MINI "openclaw status"
 [ ] iMessage configurado e testado
 [ ] Serviço launchd ativo (openclaw roda no boot)
 [ ] Teste final: agenda, PJe e recursos respondendo
+[ ] SSH tunnel ou Tailscale configurado para Claude Code
+[ ] MCP bridge (openclaw-mcp) instalado no MacBook
+[ ] .claude/mcp.json atualizado com openclaw
+[ ] Limites de gasto configurados na Anthropic Console
 ```

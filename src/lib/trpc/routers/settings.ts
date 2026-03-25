@@ -23,6 +23,9 @@ const settingsSchema = z.object({
   googleDriveEnabled: z.boolean().optional(),
   googleCalendarEnabled: z.boolean().optional(),
   whatsappEnabled: z.boolean().optional(),
+
+  // Automação PJe (scraping via Chrome CDP — apenas local)
+  pjeScrapingEnabled: z.boolean().optional(),
 }).passthrough(); // Allow extra fields for future settings
 
 export const settingsRouter = router({
@@ -49,6 +52,7 @@ export const settingsRouter = router({
         googleDriveEnabled: false,
         googleCalendarEnabled: false,
         whatsappEnabled: false,
+        pjeScrapingEnabled: false,
       };
     }
 

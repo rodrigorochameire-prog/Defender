@@ -959,6 +959,31 @@ export const enrichmentRouter = router({
 
       throw new Error("Invalid action or missing mergeTargetId");
     }),
+
+  /**
+   * PJe Scrape — escaneia processos via Chrome CDP.
+   * Funciona apenas localmente (Chrome com --remote-debugging-port=9222).
+   * Protegido por flag pjeScrapingEnabled no perfil do usuário.
+   */
+  scrapePje: protectedProcedure
+    .input(
+      z.object({
+        processos: z.array(
+          z.object({
+            numero_processo: z.string(),
+            link_pje: z.string().nullish(),
+          })
+        ).min(1),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const result = await enrichmentClient.scrapePjeProcessos({
+        processos: input.processos,
+        defensor_id: String(ctx.user.id),
+      });
+
+      return result;
+    }),
 });
 
 export type EnrichmentRouter = typeof enrichmentRouter;

@@ -1124,6 +1124,36 @@ class EnrichmentClient {
   }
 
   /**
+   * PJe Scrape — escaneia processos via Chrome CDP (apenas local).
+   * Conecta ao Chrome já aberto com sessão PJe autenticada.
+   */
+  async scrapePjeProcessos(input: {
+    processos: Array<{ numero_processo: string; link_pje?: string | null }>;
+    defensor_id: string;
+  }): Promise<{
+    processos: Array<{
+      numero_processo: string;
+      classe?: string | null;
+      assunto?: string | null;
+      vara?: string | null;
+      comarca?: string | null;
+      status?: string | null;
+      partes: Array<{ nome: string; tipo?: string | null }>;
+      movimentacoes: Array<{ data?: string | null; tipo?: string | null; descricao?: string | null }>;
+      documentos: Array<{ tipo?: string | null; data?: string | null; descricao?: string | null }>;
+      ultima_decisao?: string | null;
+      relato_vitima?: string | null;
+      tipo_penal?: string | null;
+      scraped: boolean;
+      error?: string | null;
+    }>;
+    total_scraped: number;
+    total_errors: number;
+  }> {
+    return this.request("/enrich/pje-scrape", input, 300_000); // 5min timeout — scraping is slow
+  }
+
+  /**
    * Chamar enriquecimento de forma assíncrona (fire-and-forget).
    * Não bloqueia o fluxo principal — erros são logados mas ignorados.
    */

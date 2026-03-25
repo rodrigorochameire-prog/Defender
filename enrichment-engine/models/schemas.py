@@ -188,6 +188,101 @@ class PjeOutput(BaseModel):
     total_processadas: int = 0
 
 
+# === PJe Scraper (CDP) ===
+
+class PjeScrapeProcesso(BaseModel):
+    """Um processo a ser escaneado via CDP."""
+    numero_processo: str = Field(..., description="Número CNJ do processo")
+    link_pje: str | None = Field(None, description="URL direta no PJe (opcional)")
+
+
+class PjeScrapeInput(BaseModel):
+    """Input para /enrich/pje-scrape — lista de processos para scraping via Chrome CDP."""
+    processos: list[PjeScrapeProcesso] = Field(..., min_length=1)
+    defensor_id: str = Field(..., description="ID do defensor solicitante")
+
+
+class PjeMovimentacao(BaseModel):
+    """Uma movimentação processual extraída."""
+    data: str | None = None
+    tipo: str | None = None
+    descricao: str | None = None
+    conteudo: str | None = None
+
+
+class PjeParte(BaseModel):
+    """Uma parte processual."""
+    nome: str
+    tipo: str | None = None  # autor, réu, vítima, advogado, defensor
+    cpf: str | None = None
+
+
+class PjeDocumento(BaseModel):
+    """Documento anexo ao processo."""
+    id_documento: str | None = None
+    tipo: str | None = None
+    data: str | None = None
+    descricao: str | None = None
+
+
+class PjeProcessoCompleto(BaseModel):
+    """Dados completos extraídos de um processo PJe."""
+    numero_processo: str
+    classe: str | None = None
+    assunto: str | None = None
+    vara: str | None = None
+    comarca: str | None = None
+    status: str | None = None  # Em andamento, Suspenso, Arquivado, etc.
+    partes: list[PjeParte] = Field(default_factory=list)
+    movimentacoes: list[PjeMovimentacao] = Field(default_factory=list)
+    documentos: list[PjeDocumento] = Field(default_factory=list)
+    ultima_decisao: str | None = None
+    relato_vitima: str | None = None  # VVD: relato da petição inicial/BO
+    tipo_penal: str | None = None
+    scraped: bool = True
+    error: str | None = None
+
+
+class PjeScrapeOutput(BaseModel):
+    """Output de /enrich/pje-scrape — dados completos de cada processo."""
+    processos: list[PjeProcessoCompleto] = Field(default_factory=list)
+    total_scraped: int = 0
+    total_errors: int = 0
+
+
+# === PJe Download ===
+
+class PjeDownloadProcesso(BaseModel):
+    """Um processo para download de autos via CDP."""
+    numero_processo: str = Field(..., description="Número CNJ do processo")
+    link_pje: str | None = Field(None, description="URL direta no PJe (com token ca)")
+    atribuicao: str = Field("criminal", description="Atribuição (júri, vvd, execução penal, etc.)")
+    assistido_name: str | None = Field(None, description="Nome do assistido (se None, extrai do PJe)")
+
+
+class PjeDownloadInput(BaseModel):
+    """Input para /enrich/pje-download — download de autos de processos."""
+    processos: list[PjeDownloadProcesso] = Field(..., min_length=1)
+    defensor_id: str = Field(..., description="ID do defensor solicitante")
+
+
+class PjeDownloadResult(BaseModel):
+    """Resultado do download de um processo."""
+    numero_processo: str
+    assistido: str | None = None
+    downloaded: bool = False
+    dest_path: str | None = None
+    atribuicao_folder: str | None = None
+    error: str | None = None
+
+
+class PjeDownloadOutput(BaseModel):
+    """Output de /enrich/pje-download — resultado dos downloads."""
+    resultados: list[PjeDownloadResult] = Field(default_factory=list)
+    total_downloaded: int = 0
+    total_errors: int = 0
+
+
 # === Transcript ===
 
 class TranscriptInput(BaseModel):
