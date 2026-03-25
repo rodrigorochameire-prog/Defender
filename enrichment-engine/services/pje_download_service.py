@@ -697,6 +697,24 @@ class PjeDownloadService:
         logger.info("Moved PDF to %s", dest_file)
         return dest_file
 
+    async def _find_processo_in_open_tabs(self, numero_processo: str) -> str | None:
+        """Procura URL autenticada do processo em abas abertas no Chrome."""
+        context = await self._get_context()
+        numero_limpo = numero_processo.replace(".", "").replace("-", "")
+
+        for page in context.pages:
+            try:
+                url = page.url
+                title = await page.title()
+                if (numero_processo in url or numero_processo in title
+                        or numero_limpo in url.replace(".", "").replace("-", "")):
+                    if "pje" in url.lower() and "ca=" in url:
+                        logger.info("Found processo in open tab: %s", title[:50])
+                        return url
+            except Exception:
+                continue
+        return None
+
     async def _extract_classe_processual(self, page: Page) -> str | None:
         """Extrai a classe processual da página do processo (ex: Ação Penal, IP)."""
         try:
@@ -742,17 +760,19 @@ class PjeDownloadService:
         page = await context.new_page()
 
         try:
-            # Navegar para o processo
-            if link_pje:
-                url = link_pje
-            else:
+            # Navegar para o processo (prioridade: link_pje > aba aberta)
+            url = link_pje
+            if not url:
+                # Procurar em abas abertas do Chrome
+                url = await self._find_processo_in_open_tabs(numero_processo)
+            if not url:
                 logger.warning(
                     "No link_pje for %s, cannot navigate directly", numero_processo
                 )
                 return {
                     "numero_processo": numero_processo,
                     "downloaded": False,
-                    "error": "link_pje necessário para navegação direta",
+                    "error": "Processo não encontrado. Abra-o no PJe ou forneça o link_pje.",
                 }
 
             await self._rate_limit()

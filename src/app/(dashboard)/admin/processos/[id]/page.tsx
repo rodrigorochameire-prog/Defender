@@ -360,7 +360,7 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
           }}
           disabled={importPjeMutation.isPending}
           className="text-[11px] px-2 py-1 rounded border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors disabled:opacity-50 flex items-center gap-1"
-          title="Importar dados + baixar autos do PJe via Chrome CDP (requer sessão PJe ativa)"
+          title="Auto-detecta aba aberta no PJe ou busca nas intimações"
         >
           {importPjeMutation.isPending ? (
             <Loader2 className="h-3 w-3 animate-spin" />
@@ -368,6 +368,31 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
             <Download className="h-3 w-3" />
           )}
           {importPjeMutation.isPending ? "Importando..." : "Importar PJe"}
+        </button>
+        <button
+          onClick={() => {
+            const link = prompt("Cole o link do PJe (URL com ?id=...&ca=...):");
+            if (!link || !data.numeroAutos) return;
+            if (!link.includes("ca=")) {
+              toast.error("Link inválido — precisa conter o token 'ca='");
+              return;
+            }
+            const assistido = data.assistidos?.[0];
+            importPjeMutation.mutate({
+              processoId: data.id,
+              numeroProcesso: data.numeroAutos,
+              linkPje: link.trim(),
+              atribuicao: data.area ?? undefined,
+              assistidoName: assistido?.nome ?? null,
+              scrapeData: true,
+              downloadAutos: true,
+            });
+          }}
+          disabled={importPjeMutation.isPending}
+          className="text-[11px] px-2 py-1 rounded border border-orange-200 bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors disabled:opacity-50"
+          title="Colar link do PJe manualmente"
+        >
+          📋
         </button>
       </div>
 

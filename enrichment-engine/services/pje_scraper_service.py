@@ -317,6 +317,50 @@ class PjeScraperService:
             logger.error("Failed to extract data from processo: %s", e)
             return {"error": str(e)}
 
+    async def _find_processo_in_open_tabs(
+        self, numero_processo: str
+    ) -> str | None:
+        """
+        Procura o processo em abas já abertas no Chrome.
+
+        Se o defensor já abriu o processo manualmente no PJe, captura a URL
+        autenticada (com token ca) diretamente da aba.
+
+        Returns:
+            URL autenticada ou None se não encontrada.
+        """
+        context = await self._get_context()
+        numero_limpo = numero_processo.replace(".", "").replace("-", "")
+
+        for page in context.pages:
+            try:
+                url = page.url
+                title = await page.title()
+
+                # Verificar se a aba contém o número do processo
+                if numero_processo in url or numero_processo in title:
+                    if "pje" in url.lower() and "ca=" in url:
+                        logger.info(
+                            "Found processo %s in open tab: %s",
+                            numero_processo,
+                            title[:50],
+                        )
+                        return url
+
+                # Verificar match sem formatação
+                if numero_limpo in url.replace(".", "").replace("-", ""):
+                    if "pje" in url.lower() and "ca=" in url:
+                        logger.info(
+                            "Found processo %s in open tab (partial): %s",
+                            numero_processo,
+                            title[:50],
+                        )
+                        return url
+            except Exception:
+                continue
+
+        return None
+
     async def scrape_processos(
         self,
         processos: list[dict[str, str | None]],
@@ -324,11 +368,11 @@ class PjeScraperService:
         """
         Escaneia múltiplos processos no PJe via Chrome CDP.
 
-        Estratégia:
-        1. Na página de intimações, extrai URLs autenticadas (com token ca)
-        2. Para cada processo, abre em nova aba usando a URL autenticada
-        3. Extrai dados da página de detalhes
-        4. Fecha a aba
+        Estratégia (em ordem de prioridade):
+        1. Usa link_pje fornecido diretamente
+        2. Procura URL autenticada em abas já abertas no Chrome
+        3. Extrai URLs da tabela de intimações do Painel do Defensor
+        4. Reporta erro se nenhuma fonte disponível
 
         Args:
             processos: Lista de {"numero_processo": "...", "link_pje": "..." | None}
@@ -358,14 +402,19 @@ class PjeScraperService:
             await self._rate_limit()
 
             try:
-                # Determine URL to use
+                # Determine URL to use (priority: link_pje > open tab > intimações)
                 url = None
                 if link:
                     url = link
-                elif numero in url_map:
-                    url = PJE_BASE_URL + url_map[numero]
                 else:
-                    # Try partial match (number without dashes/dots)
+                    # Try finding in open Chrome tabs
+                    url = await self._find_processo_in_open_tabs(numero)
+
+                if not url and numero in url_map:
+                    url = PJE_BASE_URL + url_map[numero]
+
+                if not url:
+                    # Try partial match in intimações
                     numero_limpo = numero.replace(".", "").replace("-", "")
                     for key, val in url_map.items():
                         if key.replace(".", "").replace("-", "") == numero_limpo:
@@ -377,7 +426,7 @@ class PjeScraperService:
                     results.append({
                         "numero_processo": numero,
                         "scraped": False,
-                        "error": f"URL não encontrada na página de intimações para {numero}",
+                        "error": f"Processo não encontrado. Abra-o no PJe ou forneça o link_pje.",
                     })
                     continue
 
