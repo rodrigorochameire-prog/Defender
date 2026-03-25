@@ -28,9 +28,11 @@ from services.pje_download_service import (
     _promote_to_subfolders,
     _looks_like_cnj,
     _is_classe_principal,
+    _is_classe_ep,
     _is_classe_mpu,
     _is_classe_acessoria,
     _find_ap_folder,
+    _find_ep_folder,
     _find_subfolder_for_cnj,
     _folder_name_for_processo,
 )
@@ -210,18 +212,47 @@ class DriveOrganizerService:
         assistido_folder = atrib_folder / assistido_folder_name
         assistido_folder.mkdir(parents=True, exist_ok=True)
 
-        is_principal = _is_classe_principal(classe_processual)
+        is_ap = _is_classe_principal(classe_processual)
+        is_ep = _is_classe_ep(classe_processual)
         is_mpu = _is_classe_mpu(classe_processual)
         is_acessorio = _is_classe_acessoria(classe_processual)
 
         ap_folder = _find_ap_folder(assistido_folder)
+        ep_folder = _find_ep_folder(assistido_folder)
         existing_subfolders = [
             d for d in assistido_folder.iterdir()
             if d.is_dir() and _extract_cnj_from_filename(d.name)
         ]
 
-        if is_acessorio:
-            dest_folder = ap_folder if ap_folder else assistido_folder
+        if is_ep:
+            folder_name = _folder_name_for_processo(numero_processo, classe_processual)
+            existing = _find_subfolder_for_cnj(assistido_folder, numero_processo)
+            if existing:
+                dest_folder = existing
+            elif existing_subfolders:
+                dest_folder = assistido_folder / folder_name
+                dest_folder.mkdir(exist_ok=True)
+            else:
+                dest_folder = assistido_folder
+        elif is_ap:
+            if ep_folder:
+                dest_folder = ep_folder
+            else:
+                existing_cnjs = _detect_existing_processos(assistido_folder)
+                other_cnjs = existing_cnjs - {numero_processo}
+                folder_name = _folder_name_for_processo(numero_processo, classe_processual)
+                existing = _find_subfolder_for_cnj(assistido_folder, numero_processo)
+                if existing:
+                    dest_folder = existing
+                elif other_cnjs and not existing_subfolders:
+                    _promote_to_subfolders(assistido_folder, existing_cnjs)
+                    dest_folder = assistido_folder / folder_name
+                    dest_folder.mkdir(exist_ok=True)
+                elif existing_subfolders:
+                    dest_folder = assistido_folder / folder_name
+                    dest_folder.mkdir(exist_ok=True)
+                else:
+                    dest_folder = assistido_folder
         elif is_mpu:
             if ap_folder:
                 dest_folder = ap_folder
@@ -235,21 +266,11 @@ class DriveOrganizerService:
                     dest_folder.mkdir(exist_ok=True)
                 else:
                     dest_folder = assistido_folder
-        elif is_principal:
-            existing_cnjs = _detect_existing_processos(assistido_folder)
-            other_cnjs = existing_cnjs - {numero_processo}
-            folder_name = _folder_name_for_processo(numero_processo, classe_processual)
-
-            existing = _find_subfolder_for_cnj(assistido_folder, numero_processo)
-            if existing:
-                dest_folder = existing
-            elif other_cnjs and not existing_subfolders:
-                _promote_to_subfolders(assistido_folder, existing_cnjs)
-                dest_folder = assistido_folder / folder_name
-                dest_folder.mkdir(exist_ok=True)
-            elif existing_subfolders:
-                dest_folder = assistido_folder / folder_name
-                dest_folder.mkdir(exist_ok=True)
+        elif is_acessorio:
+            if ep_folder:
+                dest_folder = ep_folder
+            elif ap_folder:
+                dest_folder = ap_folder
             else:
                 dest_folder = assistido_folder
         else:

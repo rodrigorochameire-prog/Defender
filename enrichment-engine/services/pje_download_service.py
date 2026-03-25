@@ -100,6 +100,10 @@ _CNJ_RE = re.compile(r"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}")
 CLASSES_PRINCIPAIS: set[str] = {
     "ação penal",
     "ação penal de competência do júri",
+}
+
+# EP é especial: principal na execução penal (AP vira acessória)
+CLASSES_EP: set[str] = {
     "execução da pena",
     "execução penal",
 }
@@ -153,10 +157,17 @@ def _folder_name_for_processo(numero_processo: str, classe: str | None) -> str:
 
 
 def _is_classe_principal(classe: str | None) -> bool:
-    """Verifica se a classe processual é de um processo principal (Ação Penal, EP)."""
+    """Verifica se a classe processual é de um processo principal (Ação Penal)."""
     if not classe:
         return False
     return classe.strip().lower() in CLASSES_PRINCIPAIS
+
+
+def _is_classe_ep(classe: str | None) -> bool:
+    """Verifica se é Execução Penal (principal na EP; AP vira acessória)."""
+    if not classe:
+        return False
+    return classe.strip().lower() in CLASSES_EP
 
 
 def _is_classe_mpu(classe: str | None) -> bool:
@@ -173,12 +184,22 @@ def _is_classe_acessoria(classe: str | None) -> bool:
     return classe.strip().lower() in CLASSES_ACESSORIAS
 
 
-def _find_ap_folder(assistido_folder: Path) -> Path | None:
-    """Encontra subpasta de Ação Penal dentro da pasta do assistido (prefixo 'AP ')."""
+def _find_prefixed_folder(assistido_folder: Path, prefix: str) -> Path | None:
+    """Encontra subpasta com prefixo específico (ex: 'AP ', 'EP ')."""
     for d in assistido_folder.iterdir():
-        if d.is_dir() and d.name.startswith("AP "):
+        if d.is_dir() and d.name.startswith(prefix + " "):
             return d
     return None
+
+
+def _find_ap_folder(assistido_folder: Path) -> Path | None:
+    """Encontra subpasta de Ação Penal."""
+    return _find_prefixed_folder(assistido_folder, "AP")
+
+
+def _find_ep_folder(assistido_folder: Path) -> Path | None:
+    """Encontra subpasta de Execução Penal."""
+    return _find_prefixed_folder(assistido_folder, "EP")
 
 
 def _looks_like_cnj(text: str) -> bool:
@@ -564,12 +585,14 @@ class PjeDownloadService:
         assistido_folder = atrib_folder / assistido_folder_name
         assistido_folder.mkdir(parents=True, exist_ok=True)
 
-        is_principal = _is_classe_principal(classe_processual)
+        is_ap = _is_classe_principal(classe_processual)
+        is_ep = _is_classe_ep(classe_processual)
         is_mpu = _is_classe_mpu(classe_processual)
         is_acessorio = _is_classe_acessoria(classe_processual)
 
-        # Procurar subpasta de AP existente
+        # Procurar subpastas existentes por tipo
         ap_folder = _find_ap_folder(assistido_folder)
+        ep_folder = _find_ep_folder(assistido_folder)
 
         # Detectar todas as subpastas com CNJ
         existing_subfolders = [
@@ -577,19 +600,46 @@ class PjeDownloadService:
             if d.is_dir() and _extract_cnj_from_filename(d.name)
         ]
 
-        if is_acessorio:
-            # Acessório → junto com AP se existir 1, senão raiz
-            if ap_folder:
-                dest_folder = ap_folder
+        if is_ep:
+            # EP é SEMPRE o processo referência na execução penal
+            folder_name = _folder_name_for_processo(numero_processo, classe_processual)
+            existing = _find_subfolder_for_cnj(assistido_folder, numero_processo)
+            if existing:
+                dest_folder = existing
+            elif existing_subfolders:
+                dest_folder = assistido_folder / folder_name
+                dest_folder.mkdir(exist_ok=True)
             else:
                 dest_folder = assistido_folder
+
+        elif is_ap:
+            # Na execução penal (EP existe), AP é acessória → vai dentro da EP
+            if ep_folder:
+                dest_folder = ep_folder
+            else:
+                # Sem EP → AP é principal (júri, substituição, etc.)
+                existing_cnjs = _detect_existing_processos(assistido_folder)
+                other_cnjs = existing_cnjs - {numero_processo}
+                folder_name = _folder_name_for_processo(numero_processo, classe_processual)
+
+                existing = _find_subfolder_for_cnj(assistido_folder, numero_processo)
+                if existing:
+                    dest_folder = existing
+                elif other_cnjs and not existing_subfolders:
+                    _promote_to_subfolders(assistido_folder, existing_cnjs)
+                    dest_folder = assistido_folder / folder_name
+                    dest_folder.mkdir(exist_ok=True)
+                elif existing_subfolders:
+                    dest_folder = assistido_folder / folder_name
+                    dest_folder.mkdir(exist_ok=True)
+                else:
+                    dest_folder = assistido_folder
 
         elif is_mpu:
             # MPU → acessória se AP existe, principal se sozinha
             if ap_folder:
                 dest_folder = ap_folder
             else:
-                # MPU é o processo referência
                 folder_name = _folder_name_for_processo(numero_processo, classe_processual)
                 existing = _find_subfolder_for_cnj(assistido_folder, numero_processo)
                 if existing:
@@ -598,26 +648,14 @@ class PjeDownloadService:
                     dest_folder = assistido_folder / folder_name
                     dest_folder.mkdir(exist_ok=True)
                 else:
-                    # Única MPU, sem subpastas ainda → raiz do assistido
                     dest_folder = assistido_folder
 
-        elif is_principal:
-            # AP / EP → sempre cria subpasta se há outros processos
-            existing_cnjs = _detect_existing_processos(assistido_folder)
-            other_cnjs = existing_cnjs - {numero_processo}
-            folder_name = _folder_name_for_processo(numero_processo, classe_processual)
-
-            # Já existe subpasta para este processo?
-            existing = _find_subfolder_for_cnj(assistido_folder, numero_processo)
-            if existing:
-                dest_folder = existing
-            elif other_cnjs and not existing_subfolders:
-                _promote_to_subfolders(assistido_folder, existing_cnjs)
-                dest_folder = assistido_folder / folder_name
-                dest_folder.mkdir(exist_ok=True)
-            elif existing_subfolders:
-                dest_folder = assistido_folder / folder_name
-                dest_folder.mkdir(exist_ok=True)
+        elif is_acessorio:
+            # IP, APF, etc. → junto com EP se existir, senão AP, senão raiz
+            if ep_folder:
+                dest_folder = ep_folder
+            elif ap_folder:
+                dest_folder = ap_folder
             else:
                 dest_folder = assistido_folder
 
