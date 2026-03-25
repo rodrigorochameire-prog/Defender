@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 from fastapi import APIRouter, HTTPException, status
 
 from services.pje_auth_service import get_pje_auth_service
-from services.pje_download_service import get_pje_download_service
+from services.pje_playwright_service import get_pje_playwright_service
 
 logger = logging.getLogger("enrichment-engine.pje-download-router")
 
@@ -106,7 +106,7 @@ async def download_pje_docs(input_data: PjeDownloadInput) -> PjeDownloadOutput:
     )
 
     try:
-        service = get_pje_download_service()
+        service = get_pje_playwright_service()
         result = await service.download_and_upload_processo(
             processo_id=input_data.processo_id,
             numero_autos=input_data.numero_autos,
@@ -131,7 +131,7 @@ async def download_pje_batch(input_data: PjeBatchInput) -> PjeBatchOutput:
     """Download em lote — processa sequencialmente para respeitar rate limits."""
     logger.info("Batch download | processos=%d", len(input_data.processos))
 
-    service = get_pje_download_service()
+    service = get_pje_playwright_service()
     resultados = []
     total_downloaded = 0
     total_uploaded = 0
