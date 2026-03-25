@@ -51,9 +51,9 @@ ATRIBUICAO_FOLDER_MAP: dict[str, str] = {
     "juri": "Processos - Júri",
     "execução penal": "Processos - Execução Penal",
     "execucao penal": "Processos - Execução Penal",
-    "violência doméstica": "Processos - VVD",
-    "violencia domestica": "Processos - VVD",
-    "vvd": "Processos - VVD",
+    "violência doméstica": "Processos - VVD (Criminal)",
+    "violencia domestica": "Processos - VVD (Criminal)",
+    "vvd": "Processos - VVD (Criminal)",
     "grupo do júri": "Processos - Grupo do juri",
     "grupo do juri": "Processos - Grupo do juri",
     "substituição criminal": "Processos - Substituição criminal",
@@ -61,7 +61,7 @@ ATRIBUICAO_FOLDER_MAP: dict[str, str] = {
     "criminal": "Processos",
     # Enums do banco (atribuicaoEnum no Drizzle schema)
     "juri_camacari": "Processos - Júri",
-    "vvd_camacari": "Processos - VVD",
+    "vvd_camacari": "Processos - VVD (Criminal)",
     "execucao_penal": "Processos - Execução Penal",
     "substituicao": "Processos - Substituição criminal",
     "substituicao_civel": "Processos - Substituição cível",
@@ -74,13 +74,13 @@ ATRIBUICAO_FOLDER_MAP: dict[str, str] = {
     "peticionamento integrado": "Processos - Peticionamento integrado",
     "peticionamento_integrado": "Processos - Peticionamento integrado",
     # MPU autônoma (sem AP vinculada)
-    "mpu": "Processos - MPU",
-    "medidas protetivas": "Processos - MPU",
-    "medidas protetivas de urgência": "Processos - MPU",
+    "mpu": "Processos - VVD (MPU)",
+    "medidas protetivas": "Processos - VVD (MPU)",
+    "medidas protetivas de urgência": "Processos - VVD (MPU)",
 }
 
 # Pasta de MPU autônoma (override quando classe = MPU e não há AP)
-MPU_FOLDER_NAME = "Processos - MPU"
+MPU_FOLDER_NAME = "Processos - VVD (MPU)"
 
 # Diretório padrão de downloads do Chrome
 CHROME_DOWNLOADS = Path.home() / "Downloads"
