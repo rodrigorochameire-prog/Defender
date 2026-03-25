@@ -718,7 +718,7 @@ export async function registerWebhookForFolder(
 
     // Register the webhook
     const webhookUrl = `${webhookBaseUrl}/api/webhooks/drive`;
-    const watchResult = await watchChanges(syncToken, webhookUrl);
+    const watchResult = await watchChanges(syncToken, webhookUrl, process.env.DRIVE_WEBHOOK_SECRET);
     if (!watchResult) return null;
 
     // Save to database with upsert
