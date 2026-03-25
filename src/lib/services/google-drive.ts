@@ -761,7 +761,13 @@ export async function renewExpiringChannels(
   const stats = { renewed: 0, failed: 0, errors: [] as string[] };
 
   try {
-    const cutoff = new Date(Date.now() + 24 * 60 * 60 * 1000); // now + 24h
+    // Passo 0: marcar como inativos todos os canais já expirados
+    await db
+      .update(driveWebhooks)
+      .set({ isActive: false })
+      .where(and(eq(driveWebhooks.isActive, true), lt(driveWebhooks.expiration, new Date())));
+
+    const cutoff = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48h em vez de 24h
     const expiringChannels = await db
       .select()
       .from(driveWebhooks)
