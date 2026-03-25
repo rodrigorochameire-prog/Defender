@@ -70,20 +70,23 @@ export function DisconnectBanner({ configId }: DisconnectBannerProps) {
   return (
     <div
       className={cn(
-        "flex items-center justify-between px-4 py-2 gap-3",
-        "bg-red-500/10 border-b border-red-500/30",
+        "flex items-center justify-between px-4 py-2.5 gap-3",
         "transition-opacity duration-300",
         fadingOut ? "opacity-0" : "opacity-100"
       )}
+      style={{
+        backgroundColor: '#fdf3d2',
+        borderBottom: '1px solid #e8d48b',
+      }}
     >
-      <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+      <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
         <WifiOff className="h-4 w-4 shrink-0" />
         <span className="text-xs font-medium">Conexao perdida com o WhatsApp</span>
       </div>
       <Button
         size="sm"
         variant="ghost"
-        className="h-7 text-xs text-red-600 dark:text-red-400 hover:bg-red-500/10 hover:text-red-700 dark:hover:text-red-300 shrink-0"
+        className="h-7 text-xs text-amber-800 dark:text-amber-200 hover:bg-amber-500/20 hover:text-amber-900 dark:hover:text-amber-100 shrink-0"
         disabled={reconnectMutation.isPending}
         onClick={() => reconnectMutation.mutate({ configId })}
       >
