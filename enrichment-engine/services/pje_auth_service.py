@@ -151,23 +151,41 @@ class PjeAuthService:
 
             # Se ainda no Keycloak, pode ter erro de credenciais ou tela extra
             if PJE_SELECTORS["login_url_pattern"] in current_url:
+                # Capturar conteúdo da página para debug
+                page_text = await page.evaluate("() => document.body ? document.body.innerText.substring(0, 500) : 'NO BODY'")
+                logger.info("Page content after submit: %s", page_text)
+
+                # Capturar todos os botões/inputs visíveis
+                buttons_info = await page.evaluate("""() => {
+                    const els = document.querySelectorAll('button, input[type="submit"], a.btn, .btn-primary');
+                    return Array.from(els).map(e => ({
+                        tag: e.tagName,
+                        type: e.type || '',
+                        text: e.textContent?.trim().substring(0, 50) || '',
+                        id: e.id || '',
+                        class: e.className?.substring(0, 50) || ''
+                    }));
+                }""")
+                logger.info("Buttons on page: %s", buttons_info)
+
                 # Verificar se há mensagem de erro
-                error_msg = await page.query_selector(".alert-error, .kc-feedback-text, #input-error")
+                error_msg = await page.query_selector(".alert-error, .kc-feedback-text, #input-error, .alert-warning")
                 if error_msg:
                     error_text = await error_msg.text_content()
-                    logger.error("Keycloak login error: %s", error_text)
-                    return False
+                    logger.error("Keycloak login error/warning: %s", error_text)
 
-                # Pode ser tela de "update password" ou "accept terms"
-                # Tentar clicar em botões de aceitar/continuar
+                # Tentar clicar em qualquer botão de aceitar/continuar/submit
                 accept_btn = await page.query_selector(
                     "input[type='submit'], button[type='submit'], "
-                    "#kc-accept, .btn-primary"
+                    "#kc-accept, .btn-primary, button.pf-c-button"
                 )
                 if accept_btn:
-                    logger.info("Found secondary submit button, clicking...")
+                    btn_text = await accept_btn.text_content()
+                    logger.info("Found secondary button: '%s', clicking...", btn_text)
                     await accept_btn.click()
-                    await asyncio.sleep(3)
+                    await asyncio.sleep(5)
+                    current_url = page.url
+                    logger.info("URL after secondary click: %s", current_url)
 
             # 3. Aguardar redirect para PJe
             try:
