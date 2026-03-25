@@ -115,33 +115,59 @@ class PjeAuthService:
                 wait_until="domcontentloaded",
                 timeout=30000,
             )
+            await page.wait_for_load_state("networkidle", timeout=15000)
 
-            # 2. Aguardar página de login Keycloak
+            # 2. Detectar onde estamos e preencher credenciais
             current_url = page.url
-            if PJE_SELECTORS["login_url_pattern"] in current_url:
-                # Na página Keycloak — preencher credenciais
-                logger.info("On Keycloak login page, filling credentials...")
-                await page.wait_for_selector(PJE_SELECTORS["username_input"], timeout=10000)
-                await page.fill(PJE_SELECTORS["username_input"], self.settings.pje_cpf)
-                await page.fill(PJE_SELECTORS["password_input"], self.settings.pje_senha)
-                await page.click(PJE_SELECTORS["submit_button"])
-            elif PJE_SELECTORS["pje_url_pattern"] in current_url:
+            logger.info("Current URL after navigation: %s", current_url)
+
+            if PJE_SELECTORS["pje_url_pattern"] in current_url and PJE_SELECTORS["login_url_pattern"] not in current_url:
                 # Já autenticado via cookies
                 logger.info("Already authenticated via cookies")
                 self._last_auth_time = time.time()
                 return True
-            else:
-                # PJe tem formulário próprio na landing page
-                logger.info("On PJe login page, filling credentials...")
-                cpf_input = await page.wait_for_selector("#username, input[name='username']", timeout=10000)
-                if cpf_input:
-                    await cpf_input.fill(self.settings.pje_cpf)
-                    pwd_input = await page.query_selector("#password, input[name='password']")
-                    if pwd_input:
-                        await pwd_input.fill(self.settings.pje_senha)
-                    submit = await page.query_selector("#kc-login, button[type='submit'], #btnEntrar")
-                    if submit:
-                        await submit.click()
+
+            # Aguardar campo de CPF (funciona tanto na landing do PJe quanto no Keycloak)
+            # O PJe redireciona para Keycloak SSO que tem #username/#password
+            cpf_selector = "#username"
+            pwd_selector = "#password"
+            submit_selector = "#kc-login"
+
+            logger.info("Waiting for login form...")
+            await page.wait_for_selector(cpf_selector, timeout=15000)
+
+            # Preencher CPF e senha
+            await page.fill(cpf_selector, self.settings.pje_cpf)
+            await page.fill(pwd_selector, self.settings.pje_senha)
+            logger.info("Credentials filled, submitting...")
+
+            # Submeter e aguardar navegação
+            await page.click(submit_selector)
+            await asyncio.sleep(3)
+
+            # Verificar se há tela intermediária (termos, CAPTCHA, etc.)
+            current_url = page.url
+            logger.info("URL after submit: %s", current_url)
+
+            # Se ainda no Keycloak, pode ter erro de credenciais ou tela extra
+            if PJE_SELECTORS["login_url_pattern"] in current_url:
+                # Verificar se há mensagem de erro
+                error_msg = await page.query_selector(".alert-error, .kc-feedback-text, #input-error")
+                if error_msg:
+                    error_text = await error_msg.text_content()
+                    logger.error("Keycloak login error: %s", error_text)
+                    return False
+
+                # Pode ser tela de "update password" ou "accept terms"
+                # Tentar clicar em botões de aceitar/continuar
+                accept_btn = await page.query_selector(
+                    "input[type='submit'], button[type='submit'], "
+                    "#kc-accept, .btn-primary"
+                )
+                if accept_btn:
+                    logger.info("Found secondary submit button, clicking...")
+                    await accept_btn.click()
+                    await asyncio.sleep(3)
 
             # 3. Aguardar redirect para PJe
             try:
