@@ -357,8 +357,8 @@ export const syncAllDriveFn = inngest.createFunction(
 // VERIFICAÇÃO DIÁRIA DE PRAZOS
 // ============================================
 
-import { db, demandas, notifications, users, assistidos, processos, driveSyncLogs } from "@/lib/db";
-import { and, eq, lte, gte, isNull, or, sql } from "drizzle-orm";
+import { db, demandas, notifications, users, assistidos, processos, driveSyncLogs, driveSyncFolders } from "@/lib/db";
+import { and, eq, lte, gte, isNull, or, sql, lt } from "drizzle-orm";
 
 /**
  * Verificação diária de prazos críticos
@@ -1777,6 +1777,56 @@ export const transcribeDriveFileFn = inngest.createFunction(
   }
 );
 
+// ============================================
+// DRIVE SYNC WATCHDOG (A CADA 5 MINUTOS)
+// ============================================
+
+/**
+ * Verifica pastas com sync estagnado (> 20 min) e dispara incremental sync.
+ * Funciona como segurança quando webhooks falham.
+ * Usa rateLimit global para evitar sobrecarga se o cron atrasar.
+ */
+export const driveWatchdogFn = inngest.createFunction(
+  {
+    id: "drive-watchdog",
+    name: "Drive Sync Watchdog",
+    retries: 0,
+    rateLimit: { limit: 1, period: "5m" }, // máx 1 run global por janela de 5 min
+  },
+  { cron: "*/5 * * * *" },
+  async ({ step }) => {
+    const staleThreshold = new Date(Date.now() - 20 * 60 * 1000); // 20 min atrás
+
+    const staleFolders = await step.run("find-stale-folders", async () => {
+      return db
+        .select({ driveFolderId: driveSyncFolders.driveFolderId, name: driveSyncFolders.name })
+        .from(driveSyncFolders)
+        .where(
+          and(
+            eq(driveSyncFolders.isActive, true),
+            or(
+              lt(driveSyncFolders.lastSyncAt, staleThreshold),
+              isNull(driveSyncFolders.lastSyncAt)
+            )
+          )
+        );
+    });
+
+    if (staleFolders.length === 0) {
+      return { staleFolders: 0 };
+    }
+
+    for (const folder of staleFolders) {
+      await inngest.send({
+        name: "drive/incremental-sync",
+        data: { folderId: folder.driveFolderId, triggerSource: "watchdog" },
+      });
+    }
+
+    return { staleFolders: staleFolders.length, dispatched: staleFolders.map(f => f.name) };
+  }
+);
+
 export const functions = [
   sendWhatsAppMessageFn,
   notifyPrazoFn,
@@ -1801,4 +1851,5 @@ export const functions = [
   sectionGenerateFichaFn,
   transcribeDriveFileFn,
   enrichmentProcessFolderFn,
+  driveWatchdogFn,
 ];
