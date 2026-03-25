@@ -11,6 +11,15 @@ import {
   Flame,
   Archive,
   Activity,
+  ListTodo,
+  User,
+  AlertTriangle,
+  FileEdit,
+  Search,
+  FileCheck,
+  Upload,
+  Eye,
+  CheckCircle2,
 } from "lucide-react";
 import {
   KANBAN_COLUMNS,
@@ -23,6 +32,26 @@ import {
   type StatusGroup,
 } from "@/config/demanda-status";
 import { StatusPipelineSelector } from "./StatusPipelineSelector";
+
+// ==========================================
+// STATUS ICON MAPPING (fallback when statusCfg.icon unavailable)
+// ==========================================
+
+const STATUS_ICONS: Record<string, React.ElementType> = {
+  fila: ListTodo,
+  atender: User,
+  urgente: AlertTriangle,
+  elaborar: FileEdit,
+  elaborando: FileEdit,
+  analisar: Search,
+  revisar: FileCheck,
+  revisando: FileCheck,
+  protocolar: Upload,
+  monitorar: Eye,
+  protocolado: CheckCircle2,
+  ciencia: Eye,
+  resolvido: CheckCircle2,
+};
 
 // ==========================================
 // TYPES
@@ -140,6 +169,8 @@ function KanbanCard({
         transition-all duration-200
         overflow-hidden
         ${isBeingDragged ? "opacity-50 scale-[0.98] shadow-lg" : ""}
+        ${prazoDiff !== null && prazoDiff < 0 ? "ring-1 ring-rose-300/40 dark:ring-rose-500/20 bg-rose-50/30 dark:bg-rose-950/10" : ""}
+        ${prazoDiff !== null && prazoDiff >= 0 && prazoDiff <= 3 ? "ring-1 ring-amber-300/30 dark:ring-amber-500/15" : ""}
       `}
     >
       {/* Left bar — group color */}
@@ -236,6 +267,11 @@ function KanbanCard({
             }}
             title={onStatusChange ? "Alterar status" : undefined}
           >
+            {(() => {
+              const statusKey = (demanda.substatus || demanda.status || "fila").toLowerCase().replace(/\s+/g, "_");
+              const StatusIcon = statusCfg?.icon || STATUS_ICONS[statusKey] || ListTodo;
+              return <StatusIcon className="w-3 h-3 shrink-0" />;
+            })()}
             {statusCfg?.label || demanda.status}
             {onStatusChange && (
               <ChevronDown className="w-2.5 h-2.5 opacity-0 group-hover/kcard:opacity-70 transition-opacity" />
@@ -858,28 +894,7 @@ export function KanbanPremium({
                       <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 tracking-tight whitespace-nowrap">
                         Em Andamento
                       </span>
-                      {/* Sub-group mini counts (collapsed only) */}
-                      {!emAndamentoExpanded && (
-                        <div className="flex items-center gap-1 ml-1">
-                          {(["preparacao", "diligencias", "saida"] as EmAndamentoSubGroup[]).map((sg) => {
-                            const count = subGroupDemandas[sg].length;
-                            if (count === 0) return null;
-                            return (
-                              <span
-                                key={sg}
-                                className="text-[8px] font-mono font-bold px-1 py-0.5 rounded"
-                                style={{
-                                  backgroundColor: `${SUB_GROUPS[sg].color}15`,
-                                  color: SUB_GROUPS[sg].color,
-                                }}
-                                title={SUB_GROUPS[sg].label}
-                              >
-                                {count}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
+                      {/* Spacer for layout */}
                       <span
                         className="ml-auto text-[10px] font-mono font-bold tabular-nums px-1.5 py-0.5 rounded-md"
                         style={{
@@ -932,7 +947,7 @@ export function KanbanPremium({
                         </p>
                       )}
                       {items.length === 0 && (
-                        <div className="flex items-center justify-center h-20 text-[10px] text-zinc-400 dark:text-zinc-600">
+                        <div className="flex items-center justify-center py-8 text-zinc-300 dark:text-zinc-600 text-xs">
                           Nenhuma demanda
                         </div>
                       )}

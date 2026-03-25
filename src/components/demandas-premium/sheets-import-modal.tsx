@@ -489,6 +489,29 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
     let contadorOrdem = 0; // Contador para preservar ordem original da planilha
     let lastKnownStatus = ""; // Carry-forward de status para linhas de grupo
 
+    // Auto-detect if first column is the __id__ column
+    let colOffset = 0;
+    const sampleLines = lines.slice(0, Math.min(10, lines.length));
+    for (const sampleLine of sampleLines) {
+      const sampleCols = sampleLine.split("\t");
+      const firstCol = sampleCols[0]?.trim() || "";
+      // Detect by header: if first col is "__id__" or "id"
+      if (firstCol.toLowerCase() === "__id__" || firstCol.toLowerCase() === "id") {
+        colOffset = 1;
+        break;
+      }
+      // If first column is purely numeric (ID) and NOT a status pattern (digit + dash)
+      if (/^\d+$/.test(firstCol) && sampleCols[1]?.trim()) {
+        if (!/^\d+\s*-\s*/.test(firstCol)) {
+          colOffset = 1;
+          break;
+        }
+      }
+    }
+    if (colOffset === 1) {
+      console.log("[sheets-import] Detected __id__ column at index 0, applying colOffset=1");
+    }
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
 
@@ -507,8 +530,8 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
       // Detectar linhas de cabeçalho de grupo (ex: "7 - Protocolado" sozinho)
       // Se a linha tem só 1-2 colunas e parece ser um status, salvar como carry-forward
       const nonEmptyCols = columns.filter(c => c.trim().length > 0);
-      if (nonEmptyCols.length <= 2 && columns[0]?.trim()) {
-        const possibleStatus = columns[0].trim();
+      if (nonEmptyCols.length <= (2 + colOffset) && columns[0 + colOffset]?.trim()) {
+        const possibleStatus = columns[0 + colOffset].trim();
         // Parece status se começa com número + traço ou bate com algum status conhecido
         if (/^\d+\s*-\s*.+/.test(possibleStatus) || Object.keys(STATUS_MAP).some(k => possibleStatus.toLowerCase().includes(k))) {
           lastKnownStatus = possibleStatus;
@@ -517,12 +540,12 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
         }
       }
 
-      const temColunaTipo = columns.length >= 9;
+      const temColunaTipo = columns.length >= (9 + colOffset);
 
-      let statusRaw = columns[0]?.trim() || "";
-      const estadoPrisionalRaw = columns[1]?.trim() || "";
-      const dataRaw = columns[2]?.trim() || "";
-      const assistido = columns[3]?.trim() || "";
+      let statusRaw = columns[0 + colOffset]?.trim() || "";
+      const estadoPrisionalRaw = columns[1 + colOffset]?.trim() || "";
+      const dataRaw = columns[2 + colOffset]?.trim() || "";
+      const assistido = columns[3 + colOffset]?.trim() || "";
 
       // Se o status está vazio mas temos um carry-forward de grupo, usar ele
       if (!statusRaw && lastKnownStatus) {
@@ -541,18 +564,18 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
 
       if (temColunaTipo) {
         // Formato com 9 colunas (inclui Tipo)
-        tipoProcessoRaw = columns[4]?.trim() || "";
-        processoRaw = columns[5]?.trim() || "";
-        ato = columns[6]?.trim() || "";
-        prazoRaw = columns[7]?.trim() || "";
-        providencias = columns[8]?.trim() || "";
+        tipoProcessoRaw = columns[4 + colOffset]?.trim() || "";
+        processoRaw = columns[5 + colOffset]?.trim() || "";
+        ato = columns[6 + colOffset]?.trim() || "";
+        prazoRaw = columns[7 + colOffset]?.trim() || "";
+        providencias = columns[8 + colOffset]?.trim() || "";
       } else {
         // Formato com 8 colunas (sem Tipo)
         tipoProcessoRaw = "";
-        processoRaw = columns[4]?.trim() || "";
-        ato = columns[5]?.trim() || "";
-        prazoRaw = columns[6]?.trim() || "";
-        providencias = columns[7]?.trim() || "";
+        processoRaw = columns[4 + colOffset]?.trim() || "";
+        ato = columns[5 + colOffset]?.trim() || "";
+        prazoRaw = columns[6 + colOffset]?.trim() || "";
+        providencias = columns[7 + colOffset]?.trim() || "";
       }
 
       // FILTRO: Ignorar linhas sem dados essenciais
