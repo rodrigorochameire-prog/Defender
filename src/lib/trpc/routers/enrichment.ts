@@ -1066,6 +1066,26 @@ export const enrichmentRouter = router({
 
       return results;
     }),
+
+  /**
+   * Organizar Drive — move PDFs soltos para pastas corretas por assistido/processo.
+   * Consulta Supabase para identificar assistido + atribuição de cada PDF.
+   */
+  organizeDrive: protectedProcedure
+    .input(
+      z.object({
+        scanDriveRoot: z.boolean().default(true),
+        scanDefensoriaRoot: z.boolean().default(true),
+        dryRun: z.boolean().default(false),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return enrichmentClient.organizeDrive({
+        scan_drive_root: input.scanDriveRoot,
+        scan_defensoria_root: input.scanDefensoriaRoot,
+        dry_run: input.dryRun,
+      });
+    }),
 });
 
 export type EnrichmentRouter = typeof enrichmentRouter;

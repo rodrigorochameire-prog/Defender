@@ -479,6 +479,12 @@ export default function DriveConfigPage() {
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<SyncFolder | null>(null);
   const [syncingFolderId, setSyncingFolderId] = useState<string | null>(null);
+  const [organizeResult, setOrganizeResult] = useState<{
+    total_scanned: number;
+    moved: number;
+    skipped_no_match: number;
+    dry_run: boolean;
+  } | null>(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -518,6 +524,24 @@ export default function DriveConfigPage() {
     onError: (error) => {
       toast.error(error.message || "Erro ao registrar pasta");
     },
+  });
+
+  const organizeDriveMutation = trpc.enrichment.organizeDrive.useMutation({
+    onSuccess: (result) => {
+      setOrganizeResult(result);
+      if (result.moved > 0) {
+        toast.success(`${result.moved} PDFs organizados`, {
+          description: `${result.skipped_no_match} sem match no banco · ${result.skipped_exists} já no destino`,
+        });
+      } else if (result.total_scanned === 0) {
+        toast.info("Nenhum PDF solto encontrado");
+      } else {
+        toast.info(`${result.total_scanned} PDFs escaneados, nenhum movido`, {
+          description: `${result.skipped_no_match} sem match no banco`,
+        });
+      }
+    },
+    onError: (err) => toast.error(`Erro ao organizar: ${err.message}`),
   });
 
   const removeMutation = trpc.drive.removeFolder.useMutation({
@@ -667,6 +691,20 @@ export default function DriveConfigPage() {
               </Button>
             </a>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => organizeDriveMutation.mutate({ dryRun: false })}
+            disabled={organizeDriveMutation.isPending}
+            className="border-orange-200 text-orange-700 hover:bg-orange-50"
+          >
+            {organizeDriveMutation.isPending ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <FolderSync className="w-4 h-4 mr-2" />
+            )}
+            {organizeDriveMutation.isPending ? "Organizando..." : "Organizar PDFs"}
+          </Button>
         </div>
       </div>
 
