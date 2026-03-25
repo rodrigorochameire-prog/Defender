@@ -192,10 +192,16 @@ export default function WhatsAppChatPage() {
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
       {/* Compact Header — hidden on mobile when chat is open */}
-      <div className={cn(
-        "shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] dark:shadow-[0_1px_3px_0_rgba(0,0,0,0.3)] bg-white dark:bg-zinc-900 px-3 sm:px-4 py-2",
-        selectedContactId && "hidden md:block"
-      )}>
+      <div
+        className={cn(
+          "px-3 sm:px-4 py-2",
+          selectedContactId && "hidden md:block"
+        )}
+        style={{
+          backgroundColor: 'var(--wa-bg-header)',
+          color: 'var(--wa-text-header)',
+        }}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             {/* Instance selector (only if multiple) */}
@@ -225,11 +231,11 @@ export default function WhatsAppChatPage() {
 
             {/* Stats inline — hidden on small mobile */}
             {stats && (
-              <div className="hidden sm:flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="hidden sm:flex items-center gap-3 text-xs text-white/70">
                 <span>{contactsData?.total ?? 0} conversas</span>
                 {stats.unreadMessages > 0 && (
-                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="flex items-center gap-1 text-white font-medium">
+                    <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
                     {stats.unreadMessages} não lidas
                   </span>
                 )}
@@ -244,7 +250,7 @@ export default function WhatsAppChatPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10"
                     onClick={() => {
                       if (selectedConfigId) {
                         syncContactsMutation.mutate({ configId: selectedConfigId });
@@ -267,7 +273,7 @@ export default function WhatsAppChatPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10"
                     onClick={() => {
                       refetchContacts();
                       refetchStats();
@@ -285,7 +291,7 @@ export default function WhatsAppChatPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                      className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10"
                     >
                       <Upload className="h-4 w-4" />
                     </Button>
@@ -300,7 +306,7 @@ export default function WhatsAppChatPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                      className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10"
                     >
                       <Settings className="h-4 w-4" />
                     </Button>
@@ -315,10 +321,10 @@ export default function WhatsAppChatPage() {
                     variant="ghost"
                     size="icon"
                     className={cn(
-                      "h-8 w-8",
+                      "h-8 w-8 hover:bg-white/10",
                       showContextPanel
-                        ? "text-emerald-500 hover:text-emerald-400"
-                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                        ? "text-white hover:text-white"
+                        : "text-white/80 hover:text-white"
                     )}
                     onClick={() => setShowContextPanel((v) => !v)}
                   >
@@ -336,36 +342,34 @@ export default function WhatsAppChatPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Conversation List */}
         {/* On mobile: hidden when a contact is selected (show chat instead) */}
-        <div className={cn(
-          "w-full md:w-80 border-r border-zinc-200 dark:border-zinc-800 flex flex-col bg-white dark:bg-zinc-900",
-          selectedContactId ? "hidden md:flex" : "flex"
-        )}>
+        <div
+          className={cn(
+            "w-full md:w-80 flex flex-col",
+            selectedContactId ? "hidden md:flex" : "flex"
+          )}
+          style={{
+            backgroundColor: 'var(--wa-bg-sidebar)',
+            borderRight: '1px solid var(--wa-border)',
+          }}
+        >
           {/* Filters */}
-          <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800/50 flex gap-1">
-            {[
-              { key: "all" as const, icon: Inbox, label: "Todas" },
-              { key: "unread" as const, icon: MessageSquare, label: "Não lidas" },
-              { key: "favorites" as const, icon: Star, label: null },
-              { key: "archived" as const, icon: Archive, label: null },
-            ].map(({ key, icon: Icon, label }) => (
-              <Button
-                key={key}
-                variant="ghost"
-                size="sm"
-                onClick={() => setFilter(key)}
-                className={cn(
-                  "h-7 text-xs gap-1 px-2 rounded-none",
-                  label ? "flex-1" : "w-8 px-0",
-                  filter === key
-                    ? "font-medium text-zinc-900 dark:text-zinc-100 border-b-2 border-emerald-500 bg-transparent hover:bg-transparent"
-                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {label && <span>{label}</span>}
-              </Button>
-            ))}
-          </div>
+            <div className="flex items-center gap-1 px-3 py-2" style={{ backgroundColor: 'var(--wa-bg-sidebar)' }}>
+              {(["all", "unread", "favorites", "archived"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+                    filter === f
+                      ? "text-white"
+                      : ""
+                  )}
+                  style={filter === f ? { backgroundColor: 'var(--wa-unread-badge)' } : { color: 'var(--wa-text-secondary)' }}
+                >
+                  {{ all: "Todas", unread: "Não lidas", favorites: "Favoritas", archived: "Arquivadas" }[f]}
+                </button>
+              ))}
+            </div>
 
           {/* Aguardando Resposta — pending contacts panel */}
           {pendingContacts && pendingContacts.length > 0 && filter !== "archived" && (
@@ -492,7 +496,9 @@ export default function WhatsAppChatPage() {
                 onBack={handleBackToList}
               />
             ) : (
-              <ChatEmptyState variant="select" />
+              <div className="flex-1 flex items-center justify-center wa-chat-bg">
+                <ChatEmptyState variant="select" />
+              </div>
             )}
           </div>
 
