@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db, driveFiles, driveSyncFolders, driveSyncLogs } from "@/lib/db";
+import { db, driveFiles, driveSyncFolders, driveSyncLogs, driveWebhooks } from "@/lib/db";
 import { type SQL, eq, and, desc, asc, sql, isNull, or, like, not, gt, lt, inArray } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
 import {
@@ -46,10 +46,12 @@ import {
   // Webhook & health
   registerWebhookForFolder,
   checkSyncHealth,
+  stopChannel,
   // Auth
   getAccessToken,
   ATRIBUICAO_FOLDER_IDS,
 } from "@/lib/services/google-drive";
+import { inngest } from "@/lib/inngest/client";
 import { getFolderIdForAtribuicao } from "@/lib/utils/text-extraction";
 import { processos, assistidos, casos, demandas, atendimentos, audiencias, driveDocumentSections, driveFileContents } from "@/lib/db/schema";
 import {
@@ -3079,6 +3081,124 @@ export const driveRouter = router({
         .limit(limit);
       return files;
     }),
+
+  /**
+   * Status de sync por pasta monitorada — usado pelo painel /admin/drive-sync
+   * Retorna health per-folder (lastSyncAt, webhook, fileCount) + stats globais.
+   */
+  getSyncStatus: adminProcedure.query(async () => {
+    const now = new Date();
+
+    // Batch 1: pastas ativas
+    const folders = await db
+      .select()
+      .from(driveSyncFolders)
+      .where(eq(driveSyncFolders.isActive, true));
+
+    // Batch 2: file counts por pasta (1 query com GROUP BY)
+    const fileCounts = await db
+      .select({
+        driveFolderId: driveFiles.driveFolderId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(driveFiles)
+      .groupBy(driveFiles.driveFolderId);
+
+    const fileCountMap = new Map(fileCounts.map((r) => [r.driveFolderId, r.count]));
+
+    // Batch 3: webhook mais recente ativo por pasta (1 query)
+    const activeWebhooks = await db
+      .select({
+        folderId: driveWebhooks.folderId,
+        channelId: driveWebhooks.channelId,
+        expiration: driveWebhooks.expiration,
+      })
+      .from(driveWebhooks)
+      .where(and(eq(driveWebhooks.isActive, true), gt(driveWebhooks.expiration, now)))
+      .orderBy(desc(driveWebhooks.expiration));
+
+    const webhookMap = new Map<string, { channelId: string; expiration: Date }>();
+    for (const w of activeWebhooks) {
+      if (!webhookMap.has(w.folderId)) {
+        webhookMap.set(w.folderId, { channelId: w.channelId, expiration: w.expiration });
+      }
+    }
+
+    const result = folders.map((folder) => {
+      const webhook = webhookMap.get(folder.driveFolderId) ?? null;
+      const syncAgoMs = folder.lastSyncAt
+        ? now.getTime() - folder.lastSyncAt.getTime()
+        : null;
+      const syncAgoMin = syncAgoMs !== null ? Math.floor(syncAgoMs / 60000) : null;
+
+      const health: "healthy" | "warning" | "critical" =
+        !folder.lastSyncAt || syncAgoMin! > 60
+          ? "critical"
+          : syncAgoMin! > 15 || !webhook
+          ? "warning"
+          : "healthy";
+
+      return {
+        id: folder.id,
+        name: folder.name,
+        driveFolderId: folder.driveFolderId,
+        lastSyncAt: folder.lastSyncAt,
+        syncAgoMin,
+        fileCount: Number(fileCountMap.get(folder.driveFolderId) ?? 0),
+        hasSyncToken: !!folder.syncToken,
+        health,
+        activeWebhook: webhook,
+      };
+    });
+
+    // Stats globais via checkSyncHealth existente
+    const globalHealth = await checkSyncHealth();
+
+    return { folders: result, global: globalHealth };
+  }),
+
+  /**
+   * Força sync imediato de uma pasta específica via Inngest.
+   * Usado pelo botão "Forçar sync" no painel /admin/drive-sync.
+   */
+  forceSyncFolder: adminProcedure
+    .input(z.object({ driveFolderId: z.string() }))
+    .mutation(async ({ input }) => {
+      await inngest.send({
+        name: "drive/incremental-sync",
+        data: { folderId: input.driveFolderId, triggerSource: "admin-force" },
+      });
+      return { dispatched: true };
+    }),
+
+  /**
+   * Marca canais expirados como inativos no banco e tenta stopá-los no Google.
+   * Usado pelo botão "Limpar canais expirados" no painel /admin/drive-sync.
+   */
+  cleanExpiredChannels: adminProcedure.mutation(async () => {
+    const cleaned = await db
+      .update(driveWebhooks)
+      .set({ isActive: false })
+      .where(
+        and(
+          eq(driveWebhooks.isActive, true),
+          lt(driveWebhooks.expiration, new Date())
+        )
+      )
+      .returning({
+        channelId: driveWebhooks.channelId,
+        resourceId: driveWebhooks.resourceId,
+      });
+
+    // Best-effort: tentar parar no Google (404 = já expirou, tratado como sucesso)
+    for (const ch of cleaned) {
+      if (ch.resourceId) {
+        stopChannel(ch.channelId, ch.resourceId).catch(() => {});
+      }
+    }
+
+    return { cleaned: cleaned.length };
+  }),
 
   /**
    * Health status do sistema de sincronização Drive
