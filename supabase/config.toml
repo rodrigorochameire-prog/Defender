@@ -1,7 +1,7 @@
-# Configuração do Supabase para TeteCare
+# Configuração do Supabase para OMBUDS
 # https://supabase.com/docs/guides/cli/config
 
-project_id = "siwapjqndevuwsluncnr"
+project_id = "hxfvlaeqhkmelvyzgfqp"
 
 [api]
 enabled = true
@@ -21,10 +21,10 @@ file_size_limit = "50MiB"
 
 [auth]
 enabled = true
-site_url = "https://tetecare-v2.vercel.app"
+site_url = "https://ombuds.vercel.app"
 additional_redirect_urls = [
   "http://localhost:3000",
-  "https://tetecare-v2.vercel.app",
+  "https://ombuds.vercel.app",
   "https://*.vercel.app"
 ]
 

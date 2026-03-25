@@ -110,7 +110,7 @@ Run directly via node (avoids interactive `db:push` prompts):
 node -e "
 const { Client } = require('pg');
 async function run() {
-  const client = new Client({ connectionString: process.env.DATABASE_URL || 'postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505%40%40@aws-1-sa-east-1.pooler.supabase.com:6543/postgres' });
+  const client = new Client({ connectionString: process.env.DATABASE_URL || 'postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]%40%40@aws-1-sa-east-1.pooler.supabase.com:6543/postgres' });
   await client.connect();
   await client.query('ALTER TABLE whatsapp_chat_messages ADD COLUMN IF NOT EXISTS is_favorite boolean DEFAULT false');
   await client.query(\`CREATE TABLE IF NOT EXISTS whatsapp_message_actions (

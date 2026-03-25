@@ -25,7 +25,7 @@ Execute o script interativo que testa 3 variações de connection string:
 
 ### Opção 1: Transaction Pooler com SSL (RECOMENDADO)
 ```
-postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?sslmode=require
+postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-0-sa-east-1.pooler.supabase.com:6543/postgres?sslmode=require
 ```
 - ✅ Otimizado para Vercel/Serverless
 - ✅ Porta 6543
@@ -33,7 +33,7 @@ postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-0-sa-east-1.pooler.sup
 
 ### Opção 2: Direct Connection com SSL
 ```
-postgresql://postgres:401bFr505@@db.hxfvlaeqhkmelvyzgfqp.supabase.co:5432/postgres?sslmode=require
+postgresql://postgres:[REDACTED]db.hxfvlaeqhkmelvyzgfqp.supabase.co:5432/postgres?sslmode=require
 ```
 - ✅ Conexão direta ao banco
 - ✅ Porta 5432
@@ -41,7 +41,7 @@ postgresql://postgres:401bFr505@@db.hxfvlaeqhkmelvyzgfqp.supabase.co:5432/postgr
 
 ### Opção 3: Session Pooler com SSL
 ```
-postgresql://postgres:401bFr505@@aws-0-sa-east-1.pooler.supabase.com:5432/postgres?sslmode=require
+postgresql://postgres:[REDACTED]aws-0-sa-east-1.pooler.supabase.com:5432/postgres?sslmode=require
 ```
 - ✅ Session pooling
 - ✅ Porta 5432
@@ -103,7 +103,7 @@ Nos logs do Vercel, você deve ver:
 
 1. **Verificar senha no Supabase:**
    - Acesse: https://supabase.com/dashboard/project/hxfvlaeqhkmelvyzgfqp/settings/database
-   - Confirme a senha: `401bFr505@`
+   - Confirme a senha: `[REDACTED]@`
    - Se necessário, reset a senha
 
 2. **Obter connection string oficial:**
@@ -153,11 +153,11 @@ vercel env rm DATABASE_URL preview -y
 vercel env rm DATABASE_URL development -y
 
 # Adicionar nova (Opção 1)
-echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?sslmode=require" | vercel env add DATABASE_URL production
+echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-0-sa-east-1.pooler.supabase.com:6543/postgres?sslmode=require" | vercel env add DATABASE_URL production
 
-echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?sslmode=require" | vercel env add DATABASE_URL preview
+echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-0-sa-east-1.pooler.supabase.com:6543/postgres?sslmode=require" | vercel env add DATABASE_URL preview
 
-echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?sslmode=require" | vercel env add DATABASE_URL development
+echo "postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]aws-0-sa-east-1.pooler.supabase.com:6543/postgres?sslmode=require" | vercel env add DATABASE_URL development
 
 # Redeploy
 vercel --prod

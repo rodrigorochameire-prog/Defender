@@ -55,7 +55,7 @@ Crie o arquivo `.env.local`:
 
 ```bash
 cat > .env.local << 'EOF'
-DATABASE_URL=postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505%40%40@aws-1-sa-east-1.pooler.supabase.com:5432/postgres
+DATABASE_URL=postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]%40%40@aws-1-sa-east-1.pooler.supabase.com:5432/postgres
 NEXT_PUBLIC_SUPABASE_URL=https://hxfvlaeqhkmelvyzgfqp.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4ZnZsYWVxaGttZWx2eXpnZnFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0ODczNDUsImV4cCI6MjA4NDA2MzM0NX0.ocKIwnSRscT1C6OUuuL0ijSqsC8oUYf3Juawe_FKLWc
 EOF
@@ -342,7 +342,7 @@ npm install
 
 # 5. Configurar .env.local
 cat > .env.local << 'EOF'
-DATABASE_URL=postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505%40%40@aws-1-sa-east-1.pooler.supabase.com:5432/postgres
+DATABASE_URL=postgresql://postgres.hxfvlaeqhkmelvyzgfqp:[REDACTED]%40%40@aws-1-sa-east-1.pooler.supabase.com:5432/postgres
 NEXT_PUBLIC_SUPABASE_URL=https://hxfvlaeqhkmelvyzgfqp.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4ZnZsYWVxaGttZWx2eXpnZnFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0ODczNDUsImV4cCI6MjA4NDA2MzM0NX0.ocKIwnSRscT1C6OUuuL0ijSqsC8oUYf3Juawe_FKLWc
 EOF

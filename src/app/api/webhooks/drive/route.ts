@@ -93,10 +93,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing channel ID" }, { status: 400 });
     }
 
-    // Verify webhook secret token
+    // Verify webhook secret token (fail-closed: reject if secret not configured)
+    const expectedSecret = process.env.DRIVE_WEBHOOK_SECRET;
+    if (!expectedSecret) {
+      console.error('[Drive Webhook] DRIVE_WEBHOOK_SECRET not configured — rejecting request');
+      return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
+    }
     const channelToken = request.headers.get("x-goog-channel-token") || "";
-    const expectedSecret = process.env.DRIVE_WEBHOOK_SECRET || "";
-    if (expectedSecret && channelToken !== expectedSecret) {
+    try {
+      const secretBuf = Buffer.from(expectedSecret);
+      const tokenBuf = Buffer.from(channelToken);
+      if (secretBuf.length !== tokenBuf.length || !require("crypto").timingSafeEqual(secretBuf, tokenBuf)) {
+        console.warn('[Drive Webhook] Invalid token — possible spoofing');
+        return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+      }
+    } catch {
       console.warn('[Drive Webhook] Invalid token — possible spoofing');
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }

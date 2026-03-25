@@ -1,8 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Configuração do Supabase
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://siwapjqndevuwsluncnr.supabase.co";
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpd2FwanFuZGV2dXdzbHVuY25yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1MDcwOTQsImV4cCI6MjA4MjA4MzA5NH0.TZY7Niw2qT-Pp3vMc2l5HO-Pq6dcEGvjKBrxBYQwm_4";
+// Configuração do Supabase — credenciais via variáveis de ambiente (obrigatórias)
+function getRequiredEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is required. Set it in your environment variables.`);
+  }
+  return value;
+}
+
+const SUPABASE_URL = getRequiredEnv("NEXT_PUBLIC_SUPABASE_URL");
+const SUPABASE_ANON_KEY = getRequiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
 
 // Singleton para o cliente Supabase
 let supabaseClient: ReturnType<typeof createClient> | null = null;

@@ -2474,7 +2474,7 @@ export const whatsappChatRouter = router({
       const prazoRow = await db.query.demandas.findFirst({
         where: and(
           inArray(demandas.processoId, processoIds),
-          gte(demandas.prazo, now.toISOString().slice(0, 10) as unknown as Date),
+          gte(demandas.prazo, now.toISOString().slice(0, 10)),
         ),
         orderBy: [asc(demandas.prazo)],
         columns: { id: true, prazo: true, ato: true, status: true, prioridade: true },
@@ -2522,7 +2522,7 @@ export const whatsappChatRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const userId = (ctx.session.user as { id: number }).id;
+      const userId = ctx.user.id;
 
       // Fetch message content
       const message = await db.query.whatsappChatMessages.findFirst({
@@ -2594,7 +2594,7 @@ export const whatsappChatRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const userId = (ctx.session.user as { id: number }).id;
+      const userId = ctx.user.id;
 
       const [inserted] = await db
         .insert(anotacoes)
@@ -2675,7 +2675,7 @@ export const whatsappChatRouter = router({
         const rows = await db.query.demandas.findMany({
           where: and(
             eq(demandas.assistidoId, assistidoId),
-            gte(demandas.prazo, now.toISOString().slice(0, 10) as unknown as Date),
+            gte(demandas.prazo, now.toISOString().slice(0, 10)),
           ),
           orderBy: [asc(demandas.prazo)],
           limit: 5,
