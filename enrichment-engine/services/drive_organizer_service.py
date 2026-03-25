@@ -22,6 +22,7 @@ from services.supabase_service import get_supabase_service, SupabaseService
 from services.pje_download_service import (
     DRIVE_BASE,
     ATRIBUICAO_FOLDER_MAP,
+    MPU_FOLDER_NAME,
     _sanitize_folder_name,
     _extract_cnj_from_filename,
     _detect_existing_processos,
@@ -35,6 +36,7 @@ from services.pje_download_service import (
     _find_ep_folder,
     _find_subfolder_for_cnj,
     _folder_name_for_processo,
+    _resolve_drive_folder,
 )
 
 logger = logging.getLogger("enrichment-engine.drive-organizer")
@@ -206,16 +208,27 @@ class DriveOrganizerService:
         - Acessórios (IP, APF) ficam na mesma pasta da AP correspondente.
         - Se não há AP, tudo na pasta do assistido.
         """
-        folder_name = _resolve_atribuicao_folder(atribuicao)
-        atrib_folder = DRIVE_BASE / folder_name
         assistido_folder_name = _sanitize_folder_name(assistido_name)
-        assistido_folder = atrib_folder / assistido_folder_name
-        assistido_folder.mkdir(parents=True, exist_ok=True)
 
         is_ap = _is_classe_principal(classe_processual)
         is_ep = _is_classe_ep(classe_processual)
         is_mpu = _is_classe_mpu(classe_processual)
         is_acessorio = _is_classe_acessoria(classe_processual)
+
+        # MPU autônoma → "Processos - MPU", senão pasta da atribuição
+        if is_mpu:
+            vvd_base = DRIVE_BASE / _resolve_atribuicao_folder(atribuicao)
+            vvd_assistido = vvd_base / assistido_folder_name
+            ap_in_vvd = _find_ap_folder(vvd_assistido) if vvd_assistido.exists() else None
+            if ap_in_vvd:
+                atrib_folder = vvd_base
+            else:
+                atrib_folder = DRIVE_BASE / MPU_FOLDER_NAME
+        else:
+            atrib_folder = DRIVE_BASE / _resolve_atribuicao_folder(atribuicao)
+
+        assistido_folder = atrib_folder / assistido_folder_name
+        assistido_folder.mkdir(parents=True, exist_ok=True)
 
         ap_folder = _find_ap_folder(assistido_folder)
         ep_folder = _find_ep_folder(assistido_folder)

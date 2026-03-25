@@ -73,7 +73,14 @@ ATRIBUICAO_FOLDER_MAP: dict[str, str] = {
     # Peticionamento integrado
     "peticionamento integrado": "Processos - Peticionamento integrado",
     "peticionamento_integrado": "Processos - Peticionamento integrado",
+    # MPU autônoma (sem AP vinculada)
+    "mpu": "Processos - MPU",
+    "medidas protetivas": "Processos - MPU",
+    "medidas protetivas de urgência": "Processos - MPU",
 }
+
+# Pasta de MPU autônoma (override quando classe = MPU e não há AP)
+MPU_FOLDER_NAME = "Processos - MPU"
 
 # Diretório padrão de downloads do Chrome
 CHROME_DOWNLOADS = Path.home() / "Downloads"
@@ -580,15 +587,32 @@ class PjeDownloadService:
         - Se não há AP ainda, tudo na pasta do assistido.
         - Subpastas nomeadas com prefixo: AP, IP, MPU, EP, APF, etc.
         """
-        atrib_folder = _resolve_drive_folder(atribuicao)
         assistido_folder_name = _sanitize_folder_name(assistido_name)
-        assistido_folder = atrib_folder / assistido_folder_name
-        assistido_folder.mkdir(parents=True, exist_ok=True)
 
         is_ap = _is_classe_principal(classe_processual)
         is_ep = _is_classe_ep(classe_processual)
         is_mpu = _is_classe_mpu(classe_processual)
         is_acessorio = _is_classe_acessoria(classe_processual)
+
+        # MPU autônoma (sem AP) → pasta separada "Processos - MPU"
+        # AP de VVD → pasta "Processos - VVD"
+        # Decidir pasta-base ANTES de resolver subpastas
+        if is_mpu:
+            # Checar se há AP na pasta VVD deste assistido
+            vvd_folder = _resolve_drive_folder(atribuicao) / assistido_folder_name
+            ap_in_vvd = _find_ap_folder(vvd_folder) if vvd_folder.exists() else None
+
+            if ap_in_vvd:
+                # MPU é acessória da AP → vai dentro da pasta VVD/AP
+                atrib_folder = _resolve_drive_folder(atribuicao)
+            else:
+                # MPU autônoma → pasta própria "Processos - MPU"
+                atrib_folder = DRIVE_BASE / MPU_FOLDER_NAME
+        else:
+            atrib_folder = _resolve_drive_folder(atribuicao)
+
+        assistido_folder = atrib_folder / assistido_folder_name
+        assistido_folder.mkdir(parents=True, exist_ok=True)
 
         # Procurar subpastas existentes por tipo
         ap_folder = _find_ap_folder(assistido_folder)
@@ -617,7 +641,7 @@ class PjeDownloadService:
             if ep_folder:
                 dest_folder = ep_folder
             else:
-                # Sem EP → AP é principal (júri, substituição, etc.)
+                # Sem EP → AP é principal (júri, substituição, VVD criminal)
                 existing_cnjs = _detect_existing_processos(assistido_folder)
                 other_cnjs = existing_cnjs - {numero_processo}
                 folder_name = _folder_name_for_processo(numero_processo, classe_processual)
@@ -636,19 +660,12 @@ class PjeDownloadService:
                     dest_folder = assistido_folder
 
         elif is_mpu:
-            # MPU → acessória se AP existe, principal se sozinha
+            # MPU com AP → acessória (já redirecionada para pasta VVD acima)
             if ap_folder:
                 dest_folder = ap_folder
             else:
-                folder_name = _folder_name_for_processo(numero_processo, classe_processual)
-                existing = _find_subfolder_for_cnj(assistido_folder, numero_processo)
-                if existing:
-                    dest_folder = existing
-                elif existing_subfolders:
-                    dest_folder = assistido_folder / folder_name
-                    dest_folder.mkdir(exist_ok=True)
-                else:
-                    dest_folder = assistido_folder
+                # MPU autônoma → pasta do assistido em "Processos - MPU"
+                dest_folder = assistido_folder
 
         elif is_acessorio:
             # IP, APF, etc. → junto com EP se existir, senão AP, senão raiz
