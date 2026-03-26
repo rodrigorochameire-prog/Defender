@@ -1,559 +1,199 @@
 "use client";
 
-import { useState, useMemo, Fragment } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useState, useMemo, lazy, Suspense } from "react";
 import { cn } from "@/lib/utils";
+import { trpc } from "@/lib/trpc/client";
 import {
-  Gavel,
-  Plus,
-  Search,
-  Download,
-  Calendar,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  AlertCircle,
-  User,
-  Users,
-  ArrowRight,
-  FileSearch,
-  FileEdit,
-  ClipboardCheck,
-  ClipboardList,
-  Target,
-  Mic,
-  Zap,
-  Brain,
-  UserCheck,
-  Clock,
-  Scale,
-  Lock,
-  TrendingUp,
-  ChevronRight,
-  LayoutGrid,
-  List,
-  Eye,
-  MoreHorizontal,
+  Gavel, Calendar, CheckCircle2, Clock, AlertTriangle, Zap,
+  Users, ChevronLeft, ChevronRight, ClipboardList, Loader2,
 } from "lucide-react";
 import Link from "next/link";
-import { format, parseISO, differenceInDays, isToday, isTomorrow } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { trpc } from "@/lib/trpc/client";
-import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
-// ============================================
-// HELPERS
-// ============================================
-function getStatusConfig(status: string) {
-  const configs: Record<string, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
-    AGENDADA: { label: "Agendada", color: "text-violet-700 dark:text-violet-400", bgColor: "bg-violet-100 dark:bg-violet-900/40", icon: Calendar },
-    agendada: { label: "Agendada", color: "text-violet-700 dark:text-violet-400", bgColor: "bg-violet-100 dark:bg-violet-900/40", icon: Calendar },
-    REALIZADA: { label: "Realizada", color: "text-emerald-700 dark:text-emerald-400", bgColor: "bg-emerald-100 dark:bg-emerald-900/40", icon: CheckCircle2 },
-    realizada: { label: "Realizada", color: "text-emerald-700 dark:text-emerald-400", bgColor: "bg-emerald-100 dark:bg-emerald-900/40", icon: CheckCircle2 },
-    ADIADA: { label: "Adiada", color: "text-amber-700 dark:text-amber-400", bgColor: "bg-amber-100 dark:bg-amber-900/40", icon: Clock },
-    adiada: { label: "Adiada", color: "text-amber-700 dark:text-amber-400", bgColor: "bg-amber-100 dark:bg-amber-900/40", icon: Clock },
-    CANCELADA: { label: "Cancelada", color: "text-rose-700 dark:text-rose-400", bgColor: "bg-rose-100 dark:bg-rose-900/40", icon: XCircle },
-    cancelada: { label: "Cancelada", color: "text-rose-700 dark:text-rose-400", bgColor: "bg-rose-100 dark:bg-rose-900/40", icon: XCircle },
-  };
-  return configs[status] || { label: status, color: "text-zinc-700", bgColor: "bg-zinc-100", icon: Calendar };
+// Lazy-load tab components
+const PautaTab = lazy(() => import("@/components/juri/PautaTab"));
+const SessoesTab = lazy(() => import("@/components/juri/SessoesTab").then(m => ({ default: m.SessoesTab })));
+const JuradosTab = lazy(() => import("@/components/juri/JuradosTab").then(m => ({ default: m.JuradosTab })));
+
+type Tab = "pauta" | "sessoes" | "jurados";
+
+const TABS: { key: Tab; label: string; icon: typeof Gavel }[] = [
+  { key: "pauta", label: "Pauta", icon: Calendar },
+  { key: "sessoes", label: "Sessões", icon: Gavel },
+  { key: "jurados", label: "Jurados", icon: Users },
+];
+
+function TabSpinner() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+    </div>
+  );
 }
 
-function getResultadoConfig(resultado: string | null) {
-  if (!resultado) return null;
-  const configs: Record<string, { label: string; color: string; bgColor: string }> = {
-    absolvicao: { label: "Absolvição", color: "text-white", bgColor: "bg-emerald-600" },
-    ABSOLVICAO: { label: "Absolvição", color: "text-white", bgColor: "bg-emerald-600" },
-    condenacao: { label: "Condenação", color: "text-white", bgColor: "bg-rose-600" },
-    CONDENACAO: { label: "Condenação", color: "text-white", bgColor: "bg-rose-600" },
-    desclassificacao: { label: "Desclassificação", color: "text-white", bgColor: "bg-amber-500" },
-    DESCLASSIFICACAO: { label: "Desclassificação", color: "text-white", bgColor: "bg-amber-500" },
-  };
-  return configs[resultado] || null;
-}
-
-function getProximidade(data: Date) {
-  if (isToday(data)) return { label: "Hoje", color: "text-rose-600 bg-rose-100 dark:bg-rose-900/40", urgent: true };
-  if (isTomorrow(data)) return { label: "Amanhã", color: "text-amber-600 bg-amber-100 dark:bg-amber-900/40", urgent: true };
-  const dias = differenceInDays(data, new Date());
-  if (dias <= 3) return { label: `${dias}d`, color: "text-amber-600 bg-amber-100 dark:bg-amber-900/40", urgent: true };
-  if (dias <= 7) return { label: `${dias}d`, color: "text-violet-600 bg-violet-100 dark:bg-violet-900/40", urgent: false };
-  return { label: format(data, "dd/MM"), color: "text-zinc-600 bg-zinc-100 dark:bg-zinc-800", urgent: false };
-}
-
-// ============================================
-// COMPONENTE PRINCIPAL
-// ============================================
 export default function JuriPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [activeTab, setActiveTab] = useState<Tab>("pauta");
+  const [ano, setAno] = useState(new Date().getFullYear());
 
-  // Buscar dados reais
-  const { data: sessoes, isLoading } = trpc.juri.list.useQuery({
-    status: statusFilter === "all" ? undefined : statusFilter,
-    limit: 50,
-  });
-
-  const { data: proximasSessoes, isLoading: loadingProximas } = trpc.juri.proximas.useQuery({ dias: 30 });
-
-  // Sessões realizadas sem registro completo
+  // Stats queries
+  const { data: proximasSessoes } = trpc.juri.proximas.useQuery({ dias: 30 });
   const { data: pendentes } = trpc.avaliacaoJuri.registroPendentes.useQuery();
+  const { data: statsData } = trpc.juri.stats.useQuery();
 
-  // Filtrar por busca
-  const sessoesFiltradas = useMemo(() => {
-    if (!sessoes) return [];
-    if (!searchTerm.trim()) return sessoes;
-    const query = searchTerm.toLowerCase();
-    return sessoes.filter((s) =>
-      s.assistidoNome?.toLowerCase().includes(query) ||
-      s.defensorNome?.toLowerCase().includes(query) ||
-      s.processo?.numeroAutos?.includes(query)
-    );
-  }, [sessoes, searchTerm]);
-
-  // Stats calculados - métricas úteis para gestão
   const stats = useMemo(() => {
-    if (!sessoes) return { agendadas: 0, esteMes: 0, adiadas: 0, diasProxima: null as number | null };
-    
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-    const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-    
-    const agendadas = sessoes.filter((s) => s.status === "AGENDADA" || s.status === "agendada").length;
-    
-    // Sessões agendadas para este mês
-    const esteMes = sessoes.filter((s) => {
-      if (s.status !== "AGENDADA" && s.status !== "agendada") return false;
-      if (!s.dataSessao) return false;
-      const data = new Date(s.dataSessao);
-      return data >= inicioMes && data <= fimMes;
-    }).length;
-    
-    // Sessões adiadas (precisam de atenção)
-    const adiadas = sessoes.filter((s) => s.status === "ADIADA" || s.status === "adiada").length;
-    
-    // Dias até a próxima sessão
-    const sessoesAgendadas = sessoes
-      .filter((s) => (s.status === "AGENDADA" || s.status === "agendada") && s.dataSessao)
-      .map((s) => new Date(s.dataSessao!))
-      .filter((d) => d >= hoje)
-      .sort((a, b) => a.getTime() - b.getTime());
-    
-    const diasProxima = sessoesAgendadas.length > 0
-      ? Math.ceil((sessoesAgendadas[0].getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
-      : null;
-    
-    return { agendadas, esteMes, adiadas, diasProxima };
-  }, [sessoes]);
+    const agendadas = statsData?.agendadas ?? 0;
+    const realizadas = statsData?.realizadas ?? 0;
+
+    let proximaDias: number | null = null;
+    if (proximasSessoes && proximasSessoes.length > 0) {
+      const next = new Date(proximasSessoes[0].dataSessao);
+      const now = new Date(); now.setHours(0, 0, 0, 0);
+      proximaDias = Math.ceil((next.getTime() - now.getTime()) / 86400000);
+    }
+
+    return { agendadas, realizadas, proximaDias, pendentesCount: pendentes?.length ?? 0 };
+  }, [statsData, proximasSessoes, pendentes]);
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-      {/* Header - Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shrink-0">
-              <Gavel className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+    <div className="w-full min-h-screen bg-zinc-50 dark:bg-zinc-950">
+      {/* Header */}
+      <div className="px-4 sm:px-6 md:px-8 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 space-y-3">
+        {/* Row 1: Title + Stats + Cockpit button */}
+        <div className="flex items-center gap-4">
+          {/* Title */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-zinc-800 dark:bg-zinc-200 flex items-center justify-center">
+              <Gavel className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Tribunal do Júri</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Gestão de sessões e julgamentos</p>
+              <h1 className="font-serif text-xl font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                Tribunal do Júri
+              </h1>
+              <p className="text-[11px] text-zinc-400 dark:text-zinc-500 -mt-0.5">
+                Gestão de sessões e julgamentos
+              </p>
             </div>
           </div>
-          
-          <div className="flex items-center gap-1.5">
-            <Link href="/admin/juri/cockpit">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
-                title="Cockpit"
-              >
-                <Target className="w-3.5 h-3.5" />
-              </Button>
-            </Link>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
-              title="Exportar"
-            >
-              <Download className="w-3.5 h-3.5" />
-            </Button>
-            <Link href="/admin/juri/nova">
-              <Button 
-                size="sm" 
-                className="h-7 px-2.5 ml-1 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5 mr-1" />
-                Nova
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
 
-      {/* CONTEÚDO PRINCIPAL */}
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        
-        {/* Stats Ribbon — compact inline KPIs */}
-        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
-          {[
-            { icon: Calendar, value: isLoading ? "-" : stats.agendadas, label: "agendadas" },
-            { icon: Clock, value: isLoading ? "-" : stats.esteMes, label: "este mês" },
-            { icon: AlertTriangle, value: isLoading ? "-" : stats.adiadas, label: "adiadas", alert: stats.adiadas > 0 },
-            { icon: Zap, value: isLoading ? "-" : (stats.diasProxima !== null ? (stats.diasProxima === 0 ? "Hoje" : `${stats.diasProxima}d`) : "-"), label: "próxima", highlight: stats.diasProxima !== null && stats.diasProxima <= 7 },
-          ].map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <Fragment key={index}>
-                {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
-                <div className={cn(
-                  "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800",
-                  stat.alert ? "bg-amber-50 dark:bg-amber-950/20" : "",
-                  stat.highlight ? "bg-emerald-50 dark:bg-emerald-950/20" : ""
-                )}>
-                  <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-amber-500 dark:text-amber-400" : stat.highlight ? "text-emerald-500 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500")} />
-                  <span className={cn("font-bold tabular-nums", stat.alert ? "text-amber-600 dark:text-amber-400" : stat.highlight ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-800 dark:text-zinc-100")}>{stat.value}</span>
-                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.label}</span>
-                </div>
-              </Fragment>
-            );
-          })}
-        </div>
+          {/* Spacer */}
+          <div className="flex-1" />
 
-        {/* REGISTRO PENDENTE — sessões realizadas sem registro completo */}
-        {pendentes && pendentes.length > 0 && (
-          <Card className="border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-950/20">
-            <CardHeader className="pb-2">
-              <div className="flex items-center gap-2">
-                <ClipboardList className="w-4 h-4 text-amber-600" />
-                <CardTitle className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                  Registro Pendente
-                </CardTitle>
-                <Badge className="bg-amber-500 text-white border-0 text-[10px]">
-                  {pendentes.length}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
-                {pendentes.map((s) => (
-                  <Link key={s.id} href={`/admin/juri/registro/${s.id}`}>
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-white dark:bg-zinc-900 border border-amber-200 dark:border-amber-800/40 hover:border-emerald-300 dark:hover:border-emerald-700 transition-all cursor-pointer group">
-                      <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
-                        <FileEdit className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
-                          {s.assistidoNome || "Reu"}
-                        </p>
-                        <p className="text-[10px] text-zinc-500 font-mono">
-                          {s.dataSessao ? format(new Date(s.dataSessao), "dd/MM/yyyy") : "\u2014"}
-                        </p>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-emerald-500 transition-colors" />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* PRÓXIMAS SESSÕES - Suavizado */}
-        {(loadingProximas || (proximasSessoes && proximasSessoes.length > 0)) && (
-          <Card className="border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-zinc-500" />
-                  <CardTitle className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Próximas Sessões</CardTitle>
-                  <Badge variant="outline" className="text-[10px] border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400">
-                    {proximasSessoes?.length || 0}
-                  </Badge>
-                </div>
-                <Link href="/admin/juri/cockpit">
-                  <Button variant="ghost" size="sm" className="h-7 text-xs text-zinc-600 hover:text-emerald-600 dark:text-zinc-400">
-                    Abrir Cockpit <ArrowRight className="w-3 h-3 ml-1" />
-                  </Button>
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {loadingProximas ? (
-                <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-                  {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-28 sm:h-24 rounded-xl" />)}
-                </div>
-              ) : (
-                <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-                  {proximasSessoes?.slice(0, 4).map((sessao) => {
-                    const dataSessao = sessao.dataSessao ? new Date(sessao.dataSessao) : new Date();
-                    const prox = getProximidade(dataSessao);
-                    
-                    return (
-                      <Link key={sessao.id} href={`/admin/juri/${sessao.id}`}>
-                        <div className="group p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 transition-all hover:border-emerald-300/50 dark:hover:border-emerald-700/50 hover:shadow-sm cursor-pointer">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
-                              {prox.label}
-                            </span>
-                            <span className="text-[10px] text-zinc-400">{format(dataSessao, "HH:mm")}</span>
-                          </div>
-                          <p className="font-medium text-sm text-zinc-800 dark:text-zinc-200 truncate">{sessao.assistidoNome}</p>
-                          <p className="text-[10px] text-zinc-500 truncate font-mono mt-1">{sessao.processo?.numeroAutos}</p>
-                          {sessao.defensorNome && (
-                            <div className="flex items-center gap-1 mt-2 text-[10px] text-zinc-400">
-                              <User className="w-3 h-3" />
-                              {sessao.defensorNome}
-                            </div>
-                          )}
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* FERRAMENTAS - Padrão Defender (neutro) */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-          {[
-            { id: "cockpit", label: "Plenario Live", desc: "Cockpit do julgamento", href: "/admin/juri/cockpit", icon: Zap, premium: true },
-            { id: "cosmovisao", label: "Cosmovisao", desc: "Analytics do juri", href: "/admin/juri/cosmovisao", icon: Brain, premium: true },
-            { id: "jurados", label: "Jurados", desc: "Perfis psicológicos", href: "/admin/juri/jurados", icon: Users },
-            { id: "teses", label: "Teses do Juri", desc: "Narrativa e argumentos", href: "/admin/juri/teses", icon: Target },
-            { id: "calculadora", label: "Calculadora", desc: "Execucao penal", href: "/admin/juri/calculadora", icon: Scale, premium: true },
-          ].map((tool) => {
-            const Icon = tool.icon;
-            
-            return (
-              <Link key={tool.id} href={tool.href}>
-                <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
-                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-                  <div className="flex items-center justify-between mb-4 sm:mb-3">
-                    <div className="w-12 h-12 sm:w-10 sm:h-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-                      <Icon className="w-6 h-6 sm:w-5 sm:h-5 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
-                    </div>
-                    {tool.premium && (
-                      <Badge className="bg-zinc-800 dark:bg-zinc-700 text-white text-[10px] sm:text-[9px] border-0">Premium</Badge>
-                    )}
-                  </div>
-                  <h3 className="font-semibold text-base sm:text-sm text-zinc-800 dark:text-zinc-200">{tool.label}</h3>
-                  <p className="text-sm sm:text-[11px] text-zinc-500 mt-0.5">{tool.desc}</p>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* LISTA DE SESSÕES */}
-        <Card className="border-zinc-100 dark:border-zinc-800">
-          <CardHeader className="pb-3">
-            <div className="flex flex-col md:flex-row md:items-center gap-3">
-              <div className="flex items-center gap-2 flex-1">
-                <Gavel className="w-4 h-4 text-zinc-500" />
-                <CardTitle className="text-sm font-semibold">Todas as Sessões</CardTitle>
-                <Badge variant="outline" className="text-[10px]">{sessoesFiltradas.length}</Badge>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
-                  <Input
-                    placeholder="Buscar réu, processo..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 h-8 text-xs w-full sm:w-56"
-                  />
-                </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-32 h-8 text-xs">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="AGENDADA">Agendadas</SelectItem>
-                    <SelectItem value="REALIZADA">Realizadas</SelectItem>
-                    <SelectItem value="ADIADA">Adiadas</SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
-                  <button
-                    onClick={() => setViewMode("grid")}
-                    className={cn(
-                      "px-2 h-7 rounded-md transition-all",
-                      viewMode === "grid" ? "bg-white dark:bg-zinc-700 shadow-sm" : "text-zinc-500"
-                    )}
-                  >
-                    <LayoutGrid className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode("list")}
-                    className={cn(
-                      "px-2 h-7 rounded-md transition-all",
-                      viewMode === "list" ? "bg-white dark:bg-zinc-700 shadow-sm" : "text-zinc-500"
-                    )}
-                  >
-                    <List className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-36 sm:h-32 rounded-xl" />)}
-              </div>
-            ) : sessoesFiltradas.length === 0 ? (
-              <div className="text-center py-12">
-                <Gavel className="w-12 h-12 mx-auto mb-3 text-zinc-300" />
-                <p className="text-sm text-zinc-500">Nenhuma sessão encontrada</p>
-                <Link href="/admin/juri/nova">
-                  <Button size="sm" className="mt-4 bg-violet-600 hover:bg-violet-700">
-                    <Plus className="w-3.5 h-3.5 mr-1.5" />
-                    Nova Sessão
-                  </Button>
-                </Link>
-              </div>
-            ) : viewMode === "grid" ? (
-              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {sessoesFiltradas.map((sessao) => {
-                  const dataSessao = sessao.dataSessao ? new Date(sessao.dataSessao) : null;
-                  const statusCfg = getStatusConfig(sessao.status || "AGENDADA");
-                  const resultadoCfg = getResultadoConfig(sessao.resultado);
-                  const StatusIcon = statusCfg.icon;
-                  
-                  return (
-                    <Link key={sessao.id} href={`/admin/juri/${sessao.id}`}>
-                      <div className="p-4 rounded-xl bg-white dark:bg-zinc-900/80 border border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all group">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <Badge className={cn("text-[10px] border-0", statusCfg.bgColor, statusCfg.color)}>
-                              <StatusIcon className="w-3 h-3 mr-1" />
-                              {statusCfg.label}
-                            </Badge>
-                            {resultadoCfg && (
-                              <Badge className={cn("text-[10px] border-0", resultadoCfg.bgColor, resultadoCfg.color)}>
-                                {resultadoCfg.label}
-                              </Badge>
-                            )}
-                          </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
-                                <MoreHorizontal className="w-3.5 h-3.5" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Eye className="w-3.5 h-3.5 mr-2" />
-                                Ver detalhes
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Zap className="w-3.5 h-3.5 mr-2" />
-                                Abrir cockpit
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                        
-                        <div className="flex items-center gap-3 mb-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback className="text-xs bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-400">
-                              {sessao.assistidoNome?.split(" ").map(n => n[0]).slice(0, 2).join("") || "?"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm text-zinc-800 dark:text-zinc-200 truncate">
-                              {sessao.assistidoNome || "Réu não informado"}
-                            </p>
-                            <p className="text-[10px] text-zinc-500 font-mono truncate">
-                              {sessao.processo?.numeroAutos}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-zinc-800">
-                          <div className="flex items-center gap-1 text-[10px] text-zinc-500">
-                            <Calendar className="w-3 h-3" />
-                            {dataSessao ? format(dataSessao, "dd/MM/yyyy HH:mm") : "—"}
-                          </div>
-                          {sessao.defensorNome && (
-                            <div className="flex items-center gap-1 text-[10px] text-zinc-500">
-                              <User className="w-3 h-3" />
-                              {sessao.defensorNome.split(" ")[0]}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {sessoesFiltradas.map((sessao) => {
-                  const dataSessao = sessao.dataSessao ? new Date(sessao.dataSessao) : null;
-                  const statusCfg = getStatusConfig(sessao.status || "AGENDADA");
-                  const resultadoCfg = getResultadoConfig(sessao.resultado);
-                  
-                  return (
-                    <Link key={sessao.id} href={`/admin/juri/${sessao.id}`}>
-                      <div className="flex items-center gap-4 p-3 rounded-lg bg-white dark:bg-zinc-900/80 border border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all">
-                        <Avatar className="h-9 w-9">
-                          <AvatarFallback className="text-xs bg-violet-100 text-violet-700">
-                            {sessao.assistidoNome?.split(" ").map(n => n[0]).slice(0, 2).join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{sessao.assistidoNome}</p>
-                          <p className="text-[10px] text-zinc-500 font-mono">{sessao.processo?.numeroAutos}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge className={cn("text-[10px] border-0", statusCfg.bgColor, statusCfg.color)}>
-                            {statusCfg.label}
-                          </Badge>
-                          {resultadoCfg && (
-                            <Badge className={cn("text-[10px] border-0", resultadoCfg.bgColor, resultadoCfg.color)}>
-                              {resultadoCfg.label}
-                            </Badge>
-                          )}
-                        </div>
-                        <span className="text-[10px] text-zinc-400">
-                          {dataSessao ? format(dataSessao, "dd/MM") : "—"}
-                        </span>
-                        <ChevronRight className="w-4 h-4 text-zinc-400" />
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
+          {/* Stats inline */}
+          <div className="hidden md:flex items-center gap-1 p-1 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-700/40">
+            <StatChip icon={Calendar} value={stats.agendadas} label="Agendadas" />
+            <StatChip icon={CheckCircle2} value={stats.realizadas} label="Realizadas" color="emerald" />
+            {stats.pendentesCount > 0 && (
+              <StatChip icon={ClipboardList} value={stats.pendentesCount} label="Pendentes" color="amber" />
             )}
-          </CardContent>
-        </Card>
+            <div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700 mx-0.5" />
+            <div className={cn(
+              "flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold",
+              stats.proximaDias !== null && stats.proximaDias <= 3
+                ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20"
+                : stats.proximaDias !== null && stats.proximaDias <= 7
+                  ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20"
+                  : "text-zinc-500 dark:text-zinc-400"
+            )}>
+              <Zap className="w-3 h-3" />
+              <span className="tabular-nums">
+                {stats.proximaDias === null ? "—"
+                  : stats.proximaDias === 0 ? "Hoje"
+                  : stats.proximaDias === 1 ? "Amanhã"
+                  : `${stats.proximaDias}d`}
+              </span>
+            </div>
+          </div>
+
+          {/* Cockpit button */}
+          <Link
+            href="/admin/juri/cockpit"
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all shrink-0",
+              "bg-zinc-500 dark:bg-zinc-300 text-white dark:text-zinc-900",
+              "hover:bg-zinc-400 dark:hover:bg-zinc-200 shadow-sm"
+            )}
+          >
+            <Zap className="w-3.5 h-3.5" />
+            Cockpit
+          </Link>
+        </div>
+
+        {/* Row 2: Tabs + contextual controls */}
+        <div className="flex items-center justify-between">
+          {/* Tabs */}
+          <div className="flex items-center gap-0.5 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60">
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.key;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer",
+                    isActive
+                      ? "bg-zinc-500 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
+                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700"
+                  )}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {isActive && <span>{tab.label}</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Year selector (Pauta tab only) */}
+          {activeTab === "pauta" && (
+            <div className="flex items-center gap-0.5 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60">
+              <button onClick={() => setAno(ano - 1)} className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-colors">
+                <ChevronLeft className="w-3.5 h-3.5 text-zinc-500" />
+              </button>
+              <span className="px-3 text-sm font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">{ano}</span>
+              <button onClick={() => setAno(ano + 1)} className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-colors">
+                <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Tab content */}
+      <div className="px-4 sm:px-6 md:px-8 pt-4">
+        <Suspense fallback={<TabSpinner />}>
+          {activeTab === "pauta" && <PautaTab ano={ano} />}
+          {activeTab === "sessoes" && <SessoesTab />}
+          {activeTab === "jurados" && <JuradosTab />}
+        </Suspense>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// STAT CHIP - Compact inline stat
+// ==========================================
+
+function StatChip({ icon: Icon, value, label, color }: {
+  icon: typeof Calendar;
+  value: number;
+  label: string;
+  color?: "emerald" | "amber";
+}) {
+  return (
+    <div className={cn(
+      "flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors",
+      color === "emerald" ? "text-emerald-600/60 dark:text-emerald-400/50"
+        : color === "amber" ? "text-amber-600/60 dark:text-amber-400/50"
+        : "text-zinc-500 dark:text-zinc-400"
+    )}>
+      <Icon className={cn(
+        "w-3 h-3",
+        color === "emerald" ? "text-emerald-400/60"
+          : color === "amber" ? "text-amber-400/60"
+          : "text-zinc-400/70"
+      )} />
+      <span className="tabular-nums">{value}</span>
+      <span className="text-[9px] font-medium text-zinc-400/70 hidden lg:inline">{label}</span>
     </div>
   );
 }

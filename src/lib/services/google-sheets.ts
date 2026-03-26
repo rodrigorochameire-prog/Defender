@@ -58,6 +58,46 @@ const HEADERS = [
   "Delegado Para",
 ];
 
+// ==========================================
+// PLENÁRIOS - Layout específico
+// ==========================================
+
+const PLENARIOS_SHEET = "Plenários";
+const PLENARIOS_HEADERS = ["__id__", "Data", "Réu", "Processo", "Defensor", "Status", "Obs"];
+
+export interface PlenarioParaSync {
+  id: number;
+  dataSessao: string; // ISO date or formatted
+  assistidoNome: string;
+  numeroAutos: string;
+  defensorNome: string | null;
+  status: string;
+  observacoes: string | null;
+}
+
+function plenarioToRow(p: PlenarioParaSync): string[] {
+  // Format date as DD/MM/YYYY
+  let dataFormatada = "";
+  if (p.dataSessao) {
+    try {
+      const d = new Date(p.dataSessao);
+      if (!isNaN(d.getTime())) {
+        dataFormatada = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+      }
+    } catch { /* ignore */ }
+  }
+
+  return [
+    String(p.id),
+    dataFormatada,
+    p.assistidoNome || "",
+    p.numeroAutos || "",
+    p.defensorNome || "",
+    p.status || "",
+    p.observacoes || "",
+  ];
+}
+
 // Título decorativo por aba (row 1)
 const SHEET_TITLE_TEXT: Record<string, string> = {
   "Júri": "    Demandas - Tribunal do Júri",
@@ -659,6 +699,108 @@ export async function removeDemanda(
     );
   } catch (err) {
     console.error(`[Sheets] Erro ao remover demanda ${demandaId}:`, err);
+  }
+}
+
+/**
+ * Insere ou atualiza uma sessão de plenário na aba "Plenários".
+ */
+export async function pushPlenario(plenario: PlenarioParaSync): Promise<void> {
+  if (!getSpreadsheetId()) {
+    console.warn("[Sheets] GOOGLE_SHEETS_SPREADSHEET_ID não configurado — sync plenário ignorado");
+    return;
+  }
+
+  try {
+    await ensureSheet(PLENARIOS_SHEET);
+    const rows = await readSheet(PLENARIOS_SHEET);
+
+    // Check if headers match — if not, rewrite header row
+    const headerRow = rows[HEADER_ROW - 1];
+    if (!headerRow || headerRow[0] !== PLENARIOS_HEADERS[0]) {
+      // Write title
+      await sheetsPut(
+        `/values/${encodeURIComponent(PLENARIOS_SHEET)}!A${TITLE_ROW}:A${TITLE_ROW}?valueInputOption=USER_ENTERED`,
+        { values: [["    Distribuição de Plenários"]] }
+      );
+      // Write headers
+      await sheetsPut(
+        `/values/${encodeURIComponent(PLENARIOS_SHEET)}!A${HEADER_ROW}:${colToLetter(PLENARIOS_HEADERS.length)}${HEADER_ROW}?valueInputOption=USER_ENTERED`,
+        { values: [PLENARIOS_HEADERS] }
+      );
+    }
+
+    const rowIndex = findRowById(rows, plenario.id);
+    const rowData = plenarioToRow(plenario);
+    const targetRow = rowIndex ?? rows.length + 1;
+    const range = `${PLENARIOS_SHEET}!A${targetRow}:${colToLetter(PLENARIOS_HEADERS.length)}${targetRow}`;
+
+    await sheetsPut(
+      `/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+      { values: [rowData] }
+    );
+  } catch (err) {
+    console.error(`[Sheets] Erro ao sincronizar plenário ${plenario.id}:`, err);
+  }
+}
+
+/**
+ * Sincroniza todas as sessões de plenário para a aba "Plenários".
+ * Reescreve toda a aba com dados atuais.
+ */
+export async function syncAllPlenarios(plenarios: PlenarioParaSync[]): Promise<{ synced: number; errors: string[] }> {
+  if (!getSpreadsheetId()) {
+    return { synced: 0, errors: ["GOOGLE_SHEETS_SPREADSHEET_ID não configurado"] };
+  }
+
+  const errors: string[] = [];
+
+  try {
+    await ensureSheet(PLENARIOS_SHEET);
+
+    // Clear existing data (keep title and header)
+    const rows = await readSheet(PLENARIOS_SHEET);
+    if (rows.length > HEADER_ROW) {
+      const sheets = await getSheets();
+      const sheet = sheets.find(s => s.title === PLENARIOS_SHEET);
+      if (sheet) {
+        // Clear data rows
+        const clearRange = `${PLENARIOS_SHEET}!A${DATA_START_ROW}:${colToLetter(PLENARIOS_HEADERS.length)}${Math.max(rows.length, DATA_START_ROW)}`;
+        await sheetsPut(
+          `/values/${encodeURIComponent(clearRange)}?valueInputOption=USER_ENTERED`,
+          { values: Array(Math.max(rows.length - HEADER_ROW, 0)).fill(PLENARIOS_HEADERS.map(() => "")) }
+        );
+      }
+    }
+
+    // Write title
+    await sheetsPut(
+      `/values/${encodeURIComponent(PLENARIOS_SHEET)}!A${TITLE_ROW}:A${TITLE_ROW}?valueInputOption=USER_ENTERED`,
+      { values: [["    Distribuição de Plenários"]] }
+    );
+
+    // Write headers
+    await sheetsPut(
+      `/values/${encodeURIComponent(PLENARIOS_SHEET)}!A${HEADER_ROW}:${colToLetter(PLENARIOS_HEADERS.length)}${HEADER_ROW}?valueInputOption=USER_ENTERED`,
+      { values: [PLENARIOS_HEADERS] }
+    );
+
+    // Write all data rows at once
+    if (plenarios.length > 0) {
+      const allRows = plenarios.map(plenarioToRow);
+      const range = `${PLENARIOS_SHEET}!A${DATA_START_ROW}:${colToLetter(PLENARIOS_HEADERS.length)}${DATA_START_ROW + allRows.length - 1}`;
+      await sheetsPut(
+        `/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+        { values: allRows }
+      );
+    }
+
+    return { synced: plenarios.length, errors };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    errors.push(msg);
+    console.error("[Sheets] Erro no syncAllPlenarios:", err);
+    return { synced: 0, errors };
   }
 }
 

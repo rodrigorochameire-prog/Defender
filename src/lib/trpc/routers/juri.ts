@@ -235,6 +235,202 @@ export const juriRouter = router({
       return excluido;
     }),
 
+  // Distribuição de plenário por ano
+  distribuicao: protectedProcedure
+    .input(
+      z.object({
+        ano: z.number().optional(),
+      }).optional()
+    )
+    .query(async ({ input }) => {
+      const ano = input?.ano ?? new Date().getFullYear();
+      const startDate = new Date(ano, 0, 1);
+      const endDate = new Date(ano + 1, 0, 1);
+
+      const sessoes = await db
+        .select({
+          id: sessoesJuri.id,
+          dataSessao: sessoesJuri.dataSessao,
+          defensorNome: sessoesJuri.defensorNome,
+          assistidoNome: sessoesJuri.assistidoNome,
+          status: sessoesJuri.status,
+          resultado: sessoesJuri.resultado,
+          observacoes: sessoesJuri.observacoes,
+          processoId: sessoesJuri.processoId,
+          processo: {
+            id: processos.id,
+            numeroAutos: processos.numeroAutos,
+          },
+        })
+        .from(sessoesJuri)
+        .leftJoin(processos, eq(sessoesJuri.processoId, processos.id))
+        .where(
+          and(
+            sql`${sessoesJuri.dataSessao} >= ${startDate.toISOString()}`,
+            sql`${sessoesJuri.dataSessao} < ${endDate.toISOString()}`
+          )
+        )
+        .orderBy(sessoesJuri.dataSessao);
+
+      // Count per defender (only agendada + realizada)
+      const contagem: Record<string, number> = {};
+      for (const s of sessoes) {
+        if (s.status === "cancelada" || s.status === "adiada") continue;
+        const nome = s.defensorNome || "Não atribuído";
+        contagem[nome] = (contagem[nome] || 0) + 1;
+      }
+
+      return { sessoes, contagem };
+    }),
+
+  // Atribuir defensor a uma sessão
+  atribuirDefensor: protectedProcedure
+    .input(
+      z.object({
+        sessaoId: z.number(),
+        defensorNome: z.string().nullable(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { sessaoId, defensorNome } = input;
+
+      const [updated] = await db
+        .update(sessoesJuri)
+        .set({
+          defensorNome: defensorNome,
+          updatedAt: new Date(),
+        })
+        .where(eq(sessoesJuri.id, sessaoId))
+        .returning({ id: sessoesJuri.id, defensorNome: sessoesJuri.defensorNome });
+
+      if (!updated) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Sessão não encontrada" });
+      }
+
+      return updated;
+    }),
+
+  // Importar sessões da pauta do PJe (batch)
+  // Cria sessões designadas e atualiza status de canceladas/redesignadas
+  importarPauta: protectedProcedure
+    .input(
+      z.object({
+        sessoes: z.array(
+          z.object({
+            dataSessao: z.string(),
+            horario: z.string().optional(),
+            processo: z.string(),
+            assistidoNome: z.string(),
+            reus: z.array(z.string()).optional(),
+            situacao: z.enum(["designada", "cancelada", "redesignada"]),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ input }) => {
+      let created = 0;
+      let updated = 0;
+      let skipped = 0;
+
+      for (const s of input.sessoes) {
+        // 1. Find or create processo
+        let processo = await db.query.processos.findFirst({
+          where: eq(processos.numeroAutos, s.processo),
+        });
+
+        if (!processo) {
+          const [novo] = await db
+            .insert(processos)
+            .values({
+              numeroAutos: s.processo,
+              atribuicao: "JURI_CAMACARI" as any,
+              comarca: "Camaçari",
+              vara: "Vara do Júri e Execuções Penais",
+            })
+            .returning();
+          processo = novo;
+        }
+
+        // Parse date and set to 08:30 BRT (11:30 UTC) to match existing sessions
+        const d = new Date(s.dataSessao);
+        const dataSessao = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 11, 30, 0));
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+        // 2. Check existing session (same processo + same date)
+        const existing = await db
+          .select({ id: sessoesJuri.id, status: sessoesJuri.status })
+          .from(sessoesJuri)
+          .where(
+            and(
+              eq(sessoesJuri.processoId, processo.id),
+              sql`DATE(${sessoesJuri.dataSessao}) = ${dateStr}::date`
+            )
+          )
+          .limit(1);
+
+        if (existing.length > 0) {
+          // Session exists — update status if changed
+          const newStatus = s.situacao === "cancelada" ? "cancelada"
+            : s.situacao === "redesignada" ? "adiada"
+            : "agendada";
+
+          if (existing[0].status !== newStatus) {
+            await db
+              .update(sessoesJuri)
+              .set({ status: newStatus as any, updatedAt: new Date() })
+              .where(eq(sessoesJuri.id, existing[0].id));
+            updated++;
+          } else {
+            skipped++;
+          }
+          continue;
+        }
+
+        // 3. No existing session
+        if (s.situacao !== "designada") {
+          // Cancelada/redesignada sem sessão existente — buscar por processo (qualquer data)
+          const anyExisting = await db
+            .select({ id: sessoesJuri.id, status: sessoesJuri.status })
+            .from(sessoesJuri)
+            .where(eq(sessoesJuri.processoId, processo.id))
+            .limit(1);
+
+          if (anyExisting.length > 0) {
+            const newStatus = s.situacao === "cancelada" ? "cancelada" : "adiada";
+            if (anyExisting[0].status !== newStatus) {
+              await db
+                .update(sessoesJuri)
+                .set({ status: newStatus as any, updatedAt: new Date() })
+                .where(eq(sessoesJuri.id, anyExisting[0].id));
+              updated++;
+            } else {
+              skipped++;
+            }
+          } else {
+            skipped++; // Nenhuma sessão encontrada para cancelar/redesignar
+          }
+          continue;
+        }
+
+        // 4. Create new designada session
+        await db
+          .insert(sessoesJuri)
+          .values({
+            processoId: processo.id,
+            dataSessao,
+            horario: s.horario || "08:30",
+            assistidoNome: s.assistidoNome,
+            status: "agendada",
+            observacoes: s.reus && s.reus.length > 1
+              ? `Réus: ${s.reus.join(", ")}`
+              : undefined,
+          });
+        created++;
+      }
+
+      return { created, updated, skipped };
+    }),
+
   // Estatísticas
   stats: protectedProcedure.query(async () => {
     const [result] = await db

@@ -129,8 +129,7 @@ const JURI_SECTIONS: SidebarSection[] = [
   {
     title: "Gestão",
     items: [
-      { label: "Sessões", path: "/admin/juri", icon: "Gavel", exactMatch: true },
-      { label: "Jurados", path: "/admin/juri/jurados", icon: "Users" },
+      { label: "Júri", path: "/admin/juri", icon: "Gavel", exactMatch: true },
     ],
   },
   {

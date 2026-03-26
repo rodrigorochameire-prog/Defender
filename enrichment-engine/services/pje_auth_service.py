@@ -7,7 +7,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from typing import Optional
+from typing import Any, Optional
 
 from config import get_settings
 
@@ -35,7 +35,7 @@ class PjeAuthService:
         self._lock = asyncio.Lock()
 
     @property
-    def is_authenticated(self) -> bool:
+    def authenticated(self) -> bool:
         return self._last_auth_time is not None and self._is_session_fresh()
 
     @property
@@ -79,6 +79,25 @@ class PjeAuthService:
             except ImportError:
                 logger.error("Playwright not installed")
                 raise RuntimeError("Playwright not available")
+
+    async def is_authenticated(self) -> bool:
+        """Verifica se há sessão PJe ativa (async, usado pelo router)."""
+        return self.authenticated
+
+    async def login(self) -> dict[str, Any]:
+        """Tenta login no PJe. Retorna dict com status (usado pelo router)."""
+        try:
+            success = await self.ensure_authenticated()
+            return {
+                "authenticated": success,
+                "method": "keycloak_sso" if success else "failed",
+            }
+        except Exception as e:
+            return {
+                "authenticated": False,
+                "method": "error",
+                "error": str(e),
+            }
 
     async def ensure_authenticated(self) -> bool:
         """Garante sessão autenticada no PJe. Re-autentica se expirada."""
@@ -128,7 +147,6 @@ class PjeAuthService:
                 return True
 
             # Aguardar campo de CPF (funciona tanto na landing do PJe quanto no Keycloak)
-            # O PJe redireciona para Keycloak SSO que tem #username/#password
             cpf_selector = "#username"
             pwd_selector = "#password"
             submit_selector = "#kc-login"
@@ -151,11 +169,9 @@ class PjeAuthService:
 
             # Se ainda no Keycloak, pode ter erro de credenciais ou tela extra
             if PJE_SELECTORS["login_url_pattern"] in current_url:
-                # Capturar conteúdo da página para debug
                 page_text = await page.evaluate("() => document.body ? document.body.innerText.substring(0, 1500) : 'NO BODY'")
                 logger.info("Page text after submit: %s", page_text)
 
-                # Capturar todos os inputs, selects e forms
                 form_info = await page.evaluate("""() => {
                     const inputs = document.querySelectorAll('input, select, textarea');
                     const inputsList = Array.from(inputs).map(e => ({
@@ -174,13 +190,11 @@ class PjeAuthService:
                 logger.info("Form inputs: %s", form_info.get("inputs", []))
                 logger.info("Buttons: %s", form_info.get("buttons", []))
 
-                # Verificar se há mensagem de erro
                 error_msg = await page.query_selector(".alert-error, .kc-feedback-text, #input-error, .alert-warning")
                 if error_msg:
                     error_text = await error_msg.text_content()
                     logger.error("Keycloak login error/warning: %s", error_text)
 
-                # Tentar clicar em qualquer botão de aceitar/continuar/submit
                 accept_btn = await page.query_selector(
                     "input[type='submit'], button[type='submit'], "
                     "#kc-accept, .btn-primary, button.pf-c-button"
@@ -200,7 +214,6 @@ class PjeAuthService:
                     timeout=15000,
                 )
             except Exception:
-                # Fallback: verificar se chegou ao painel
                 await page.wait_for_load_state("domcontentloaded", timeout=10000)
 
             current_url = page.url

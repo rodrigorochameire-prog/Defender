@@ -20,9 +20,32 @@ from models.schemas import (
     PjeDocumento,
 )
 from services.pje_scraper_service import get_pje_scraper_service
+from services.pje_auth_service import get_pje_auth_service
 
 logger = logging.getLogger("enrichment-engine.pje-scraper")
 router = APIRouter()
+
+
+@router.get("/pje-status")
+async def pje_auth_status():
+    """Verifica se há sessão PJe ativa no Chrome."""
+    auth = get_pje_auth_service()
+    try:
+        authenticated = await auth.is_authenticated()
+        return {"authenticated": authenticated}
+    except Exception as e:
+        return {"authenticated": False, "error": str(e)}
+
+
+@router.post("/pje-login")
+async def pje_login():
+    """Tenta login automático no PJe (requer token A3 plugado ou credenciais)."""
+    auth = get_pje_auth_service()
+    try:
+        result = await auth.login()
+        return result
+    except Exception as e:
+        return {"authenticated": False, "method": "error", "error": str(e)}
 
 
 @router.post("/pje-scrape", response_model=PjeScrapeOutput)
