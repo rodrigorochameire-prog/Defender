@@ -22,6 +22,7 @@ const FAST_QUERIES = new Set([
   "users.me",
   "auth.me",
   "notifications.unreadCount",
+  "profissionais.list",
   "profissionais.getEscalaAtual",
   "whatsappChat.listConfigs",
   "whatsappChat.getStats",
@@ -30,6 +31,8 @@ const FAST_QUERIES = new Set([
 // Queries que recebem HTTP request próprio (sem batching) para não disputar pool de DB
 const SOLO_QUERIES = new Set([
   "radar.list",
+  "whatsappChat.listMessages",
+  "whatsappChat.listContacts",
 ]);
 
 // Loading spinner minimalista

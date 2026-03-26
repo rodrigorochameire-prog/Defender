@@ -154,7 +154,7 @@ export function ChatWindow({
     data: messagesData,
     isLoading: loadingMessages,
     refetch: refetchMessages,
-  } = trpc.whatsappChat.listMessages.useQuery({ contactId, limit: 100 });
+  } = trpc.whatsappChat.listMessages.useQuery({ contactId, limit: 50 });
 
   // -- Mutations ------------------------------------------------------------
   const sendMessageMutation = trpc.whatsappChat.sendMessage.useMutation({
