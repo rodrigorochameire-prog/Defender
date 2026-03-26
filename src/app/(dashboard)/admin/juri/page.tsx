@@ -4,21 +4,19 @@ import { useState, useMemo, lazy, Suspense } from "react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
 import {
-  Gavel, Calendar, CheckCircle2, Clock, AlertTriangle, Zap,
+  Gavel, Calendar, CheckCircle2, Clock, AlertTriangle, Zap, Eye,
   Users, ChevronLeft, ChevronRight, ClipboardList, Loader2,
 } from "lucide-react";
 import Link from "next/link";
 
 // Lazy-load tab components
 const PautaTab = lazy(() => import("@/components/juri/PautaTab"));
-const SessoesTab = lazy(() => import("@/components/juri/SessoesTab").then(m => ({ default: m.SessoesTab })));
 const JuradosTab = lazy(() => import("@/components/juri/JuradosTab").then(m => ({ default: m.JuradosTab })));
 
-type Tab = "pauta" | "sessoes" | "jurados";
+type Tab = "pauta" | "jurados";
 
 const TABS: { key: Tab; label: string; icon: typeof Gavel }[] = [
   { key: "pauta", label: "Pauta", icon: Calendar },
-  { key: "sessoes", label: "Sessões", icon: Gavel },
   { key: "jurados", label: "Jurados", icon: Users },
 ];
 
@@ -142,7 +140,7 @@ export default function JuriPage() {
             })}
           </div>
 
-          {/* Year selector (Pauta tab only) */}
+          {/* Year selector (Pauta tab) */}
           {activeTab === "pauta" && (
             <div className="flex items-center gap-0.5 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60">
               <button onClick={() => setAno(ano - 1)} className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-colors">
@@ -161,7 +159,6 @@ export default function JuriPage() {
       <div className="px-4 sm:px-6 md:px-8 pt-4">
         <Suspense fallback={<TabSpinner />}>
           {activeTab === "pauta" && <PautaTab ano={ano} />}
-          {activeTab === "sessoes" && <SessoesTab />}
           {activeTab === "jurados" && <JuradosTab />}
         </Suspense>
       </div>

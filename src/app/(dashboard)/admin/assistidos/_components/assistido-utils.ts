@@ -1,4 +1,17 @@
 import { differenceInDays, differenceInYears, parseISO } from "date-fns";
+import { AssistidoUI } from "./assistido-types";
+
+/** Compute completude score (0-100) for a single assistido */
+export function computeCompletude(a: AssistidoUI): number {
+  let score = 0;
+  if (a.cpf) score += 20;
+  if (a.telefone || a.telefoneContato) score += 15;
+  if (a.endereco) score += 15;
+  if (a.driveFolderId) score += 20;
+  if (a.numeroProcesso || a.processoPrincipal) score += 15;
+  if (a.observacoes) score += 15;
+  return score;
+}
 
 export function getPrazoInfo(prazoStr: string | null) {
   if (!prazoStr) return null;

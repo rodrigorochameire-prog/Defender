@@ -47,6 +47,7 @@ import {
   BarChart3,
   MapPin,
   FolderOpen,
+  MessageCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAssignment } from "@/contexts/assignment-context";
@@ -61,6 +62,7 @@ import {
   ATRIBUICAO_OPTIONS,
   getAtribuicaoColors,
   SOLID_COLOR_MAP,
+  normalizeAreaToFilter,
 } from "@/lib/config/atribuicoes";
 import { differenceInDays, parseISO, format } from "date-fns";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
@@ -69,7 +71,9 @@ import { toast } from "sonner";
 // Extracted components
 import { AssistidoUI } from "./_components/assistido-types";
 import { statusConfig, faseConfig, areaConfig, ATRIBUICAO_ICONS } from "./_components/assistido-config";
-import { getPrazoInfo, calcularIdade, calcularTempoPreso } from "./_components/assistido-utils";
+import { getPrazoInfo, calcularIdade, calcularTempoPreso, computeCompletude } from "./_components/assistido-utils";
+import { AnalyticsTab } from "./_components/analytics-tab";
+import { useRecentAssistidos } from "./_components/use-recent-assistidos";
 import { PhotoUploadDialog } from "./_components/photo-upload-dialog";
 import { AssistidoQuickPreview } from "./_components/assistido-quick-preview";
 import { AssistidoCard } from "./_components/assistido-card";
@@ -77,22 +81,11 @@ import { AssistidoTableView } from "./_components/assistido-table-view";
 import { ProcessingQueuePanel } from "@/components/drive/ProcessingQueuePanel";
 import { useProcessingQueue } from "@/contexts/processing-queue";
 import { useComarcaVisibilidade } from "@/hooks/use-comarca-visibilidade";
+import { AtribuicaoPills } from "@/components/demandas-premium/AtribuicaoPills";
 
 // ========================================
 // HELPERS
 // ========================================
-
-/** Compute completude score (0-100) for a single assistido */
-function computeCompletude(a: AssistidoUI): number {
-  let score = 0;
-  if (a.cpf) score += 20;
-  if (a.telefone || a.telefoneContato) score += 15;
-  if (a.endereco) score += 15;
-  if (a.driveFolderId) score += 20;
-  if (a.numeroProcesso || a.processoPrincipal) score += 15;
-  if (a.observacoes) score += 15;
-  return score;
-}
 
 /** Compute smart alerts for an assistido */
 function computeAlerts(a: AssistidoUI): Array<{ label: string; color: "rose" | "amber" }> {
@@ -150,236 +143,6 @@ function exportToCSV(assistidos: AssistidoUI[]) {
 }
 
 // ========================================
-// SIMPLE CSS DONUT CHART (no external deps)
-// ========================================
-
-function DonutChart({ data }: { data: Array<{ label: string; value: number; color: string }> }) {
-  const total = data.reduce((sum, d) => sum + d.value, 0);
-  if (total === 0) return <div className="text-xs text-zinc-400">Sem dados</div>;
-
-  let cumPercent = 0;
-  const gradientParts = data
-    .filter((d) => d.value > 0)
-    .map((d) => {
-      const start = cumPercent;
-      const pct = (d.value / total) * 100;
-      cumPercent += pct;
-      return `${d.color} ${start}% ${cumPercent}%`;
-    });
-
-  return (
-    <div className="flex items-center gap-4">
-      <div
-        className="w-24 h-24 rounded-full shrink-0"
-        style={{
-          background: `conic-gradient(${gradientParts.join(", ")})`,
-          mask: "radial-gradient(circle at center, transparent 40%, black 41%)",
-          WebkitMask: "radial-gradient(circle at center, transparent 40%, black 41%)",
-        }}
-      />
-      <div className="space-y-1">
-        {data
-          .filter((d) => d.value > 0)
-          .map((d) => (
-            <div key={d.label} className="flex items-center gap-2 text-xs">
-              <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-              <span className="text-zinc-600 dark:text-zinc-400">{d.label}</span>
-              <span className="font-semibold text-zinc-800 dark:text-zinc-200 tabular-nums">{d.value}</span>
-              <span className="text-zinc-400 text-[10px]">({Math.round((d.value / total) * 100)}%)</span>
-            </div>
-          ))}
-      </div>
-    </div>
-  );
-}
-
-function BarChartSimple({ data }: { data: Array<{ label: string; value: number; color: string }> }) {
-  const max = Math.max(...data.map((d) => d.value), 1);
-  return (
-    <div className="flex items-end gap-1.5 h-24">
-      {data.map((d) => (
-        <Tooltip key={d.label}>
-          <TooltipTrigger asChild>
-            <div className="flex-1 flex flex-col items-center gap-1">
-              <span className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-300 tabular-nums">{d.value}</span>
-              <div
-                className="w-full rounded-t-md transition-all min-h-[2px]"
-                style={{
-                  height: `${Math.max((d.value / max) * 80, 2)}px`,
-                  backgroundColor: d.color,
-                }}
-              />
-              <span className="text-[9px] text-zinc-400 truncate max-w-[40px]">{d.label}</span>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent className="text-xs">{d.label}: {d.value}</TooltipContent>
-        </Tooltip>
-      ))}
-    </div>
-  );
-}
-
-// ========================================
-// ANALYTICS TAB COMPONENT
-// ========================================
-
-function AnalyticsTab({ assistidos }: { assistidos: AssistidoUI[] }) {
-  const atribuicaoData = useMemo(() => {
-    const counts: Record<string, number> = {};
-    assistidos.forEach((a) => {
-      const attrs = a.atribuicoes || a.areas || [];
-      if (attrs.length === 0) {
-        counts["Sem atribuicao"] = (counts["Sem atribuicao"] || 0) + 1;
-      } else {
-        attrs.forEach((attr) => {
-          const normalizedAttr = attr.toUpperCase().replace(/_/g, " ");
-          const option = ATRIBUICAO_OPTIONS.find(
-            (o) =>
-              o.value.toUpperCase() === normalizedAttr ||
-              o.label.toUpperCase().includes(normalizedAttr) ||
-              normalizedAttr.includes(o.value.toUpperCase())
-          );
-          const label = option?.shortLabel || attr;
-          counts[label] = (counts[label] || 0) + 1;
-        });
-      }
-    });
-    return Object.entries(counts).map(([label, value]) => {
-      const option = ATRIBUICAO_OPTIONS.find((o) => o.shortLabel === label);
-      const color = option ? SOLID_COLOR_MAP[option.value] || "#71717a" : "#71717a";
-      return { label, value, color };
-    });
-  }, [assistidos]);
-
-  const statusData = useMemo(() => {
-    const presos = assistidos.filter((a) =>
-      ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(a.statusPrisional)
-    ).length;
-    const monitorados = assistidos.filter((a) =>
-      ["MONITORADO", "DOMICILIAR"].includes(a.statusPrisional)
-    ).length;
-    const soltos = assistidos.filter((a) => a.statusPrisional === "SOLTO" || !a.statusPrisional).length;
-    return [
-      { label: "Presos", value: presos, color: "#f43f5e" },
-      { label: "Monitorados", value: monitorados, color: "#f59e0b" },
-      { label: "Soltos", value: soltos, color: "#10b981" },
-    ];
-  }, [assistidos]);
-
-  const generalStats = useMemo(() => {
-    const totalProcessos = assistidos.reduce((sum, a) => sum + (a.processosAtivos || 0), 0);
-    const mediaProcessos = assistidos.length > 0 ? (totalProcessos / assistidos.length).toFixed(1) : "0";
-    const comDrive = assistidos.filter((a) => a.driveFolderId).length;
-    const pctDrive = assistidos.length > 0 ? Math.round((comDrive / assistidos.length) * 100) : 0;
-    const comAudienciaProxima = assistidos.filter((a) => {
-      if (!a.proximaAudiencia) return false;
-      const dias = differenceInDays(parseISO(a.proximaAudiencia), new Date());
-      return dias >= 0 && dias <= 30;
-    }).length;
-    const pctAudiencia = assistidos.length > 0 ? Math.round((comAudienciaProxima / assistidos.length) * 100) : 0;
-    const completudeMedia = assistidos.length > 0
-      ? Math.round(assistidos.reduce((sum, a) => sum + computeCompletude(a), 0) / assistidos.length)
-      : 0;
-    return { mediaProcessos, pctDrive, pctAudiencia, completudeMedia };
-  }, [assistidos]);
-
-  const monthlyData = useMemo(() => {
-    const months: Record<string, number> = {};
-    const now = new Date();
-    // Last 6 months
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = format(d, "yyyy-MM");
-      months[key] = 0;
-    }
-    assistidos.forEach((a) => {
-      if (!a.createdAt) return;
-      const key = a.createdAt.substring(0, 7); // yyyy-MM
-      if (key in months) months[key]++;
-    });
-    return Object.entries(months).map(([key, value]) => ({
-      label: format(parseISO(key + "-01"), "MMM"),
-      value,
-      color: "#10b981",
-    }));
-  }, [assistidos]);
-
-  return (
-    <div className="space-y-6 p-5">
-      {/* Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: "Media processos/assistido", value: generalStats.mediaProcessos },
-          { label: "Com Drive vinculado", value: `${generalStats.pctDrive}%` },
-          { label: "Audiencia proxima (30d)", value: `${generalStats.pctAudiencia}%` },
-          { label: "Completude media", value: `${generalStats.completudeMedia}%` },
-        ].map((s) => (
-          <div key={s.label} className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/60 dark:border-zinc-700/60">
-            <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100 tabular-nums">{s.value}</p>
-            <p className="text-[10px] text-zinc-400 mt-1">{s.label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Atribuicoes Donut */}
-        <div className="p-4 rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 bg-white dark:bg-zinc-900">
-          <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 mb-4">Distribuicao por Atribuicao</p>
-          <DonutChart data={atribuicaoData} />
-        </div>
-
-        {/* Status Bar */}
-        <div className="p-4 rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 bg-white dark:bg-zinc-900">
-          <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 mb-4">Distribuicao por Status</p>
-          <BarChartSimple data={statusData} />
-        </div>
-      </div>
-
-      {/* Monthly Trend */}
-      <div className="p-4 rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 bg-white dark:bg-zinc-900">
-        <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 mb-4">Novos cadastros (ultimos 6 meses)</p>
-        <BarChartSimple data={monthlyData} />
-      </div>
-    </div>
-  );
-}
-
-// ========================================
-// RECENT ASSISTIDOS SECTION
-// ========================================
-
-const RECENT_STORAGE_KEY = "ombuds:recent-assistidos";
-const MAX_RECENT = 5;
-
-function useRecentAssistidos() {
-  const [recentIds, setRecentIds] = useState<number[]>([]);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(RECENT_STORAGE_KEY);
-      if (stored) setRecentIds(JSON.parse(stored));
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  const addRecent = useCallback((id: number) => {
-    setRecentIds((prev) => {
-      const next = [id, ...prev.filter((x) => x !== id)].slice(0, MAX_RECENT);
-      try {
-        localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        // ignore
-      }
-      return next;
-    });
-  }, []);
-
-  return { recentIds, addRecent };
-}
-
-// ========================================
 // MAIN PAGE COMPONENT
 // ========================================
 
@@ -428,9 +191,10 @@ export default function AssistidosPage() {
         endereco: a.endereco || "",
         photoUrl: a.photoUrl || "",
         observacoes: a.observacoes || "",
-        area: areas[0] || "CRIMINAL",
+        area: areas[0] || "",
         areas: areas,
         atribuicoes: atribuicoes,
+        atribuicaoPrimaria: ((a as any).atribuicaoPrimaria || "") as string,
         vulgo: "",
         crimePrincipal: (a as any).crimePrincipal || "",
         defensor: "Nao atribuido",
@@ -700,7 +464,9 @@ export default function AssistidosPage() {
       const matchesStatus = statusFilter === "all" || a.statusPrisional === statusFilter;
       const matchesArea = areaFilter === "all" || a.area === areaFilter;
       const matchesPinned = !showPinnedOnly || pinnedIds.has(a.id);
-      const matchesAtribuicao = atribuicaoFilter === "all" || a.area === atribuicaoFilter;
+      const matchesAtribuicao = atribuicaoFilter === "all" ||
+        normalizeAreaToFilter(a.atribuicaoPrimaria) === atribuicaoFilter ||
+        (a.atribuicoes || []).some(attr => normalizeAreaToFilter(attr) === atribuicaoFilter);
       const matchesComarca = comarcaFilter === "all" || (a.comarcas || []).includes(comarcaFilter);
 
       // Smart preset filters
@@ -877,6 +643,30 @@ export default function AssistidosPage() {
     };
   }, [realAssistidos, pinnedIds]);
 
+  // Contagens por atribuição (usando mesma lógica de normalização do filtro)
+  const atribuicaoCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const option of ATRIBUICAO_OPTIONS) {
+      if (option.value === "all") continue;
+      counts[option.value] = 0;
+    }
+    for (const a of realAssistidos) {
+      const matched = new Set<string>();
+      // Check atribuicaoPrimaria
+      const normPrimaria = normalizeAreaToFilter(a.atribuicaoPrimaria);
+      if (normPrimaria !== "all") matched.add(normPrimaria);
+      // Check atribuicoes from processos
+      for (const attr of (a.atribuicoes || [])) {
+        const norm = normalizeAreaToFilter(attr);
+        if (norm !== "all") matched.add(norm);
+      }
+      for (const key of matched) {
+        if (counts[key] !== undefined) counts[key]++;
+      }
+    }
+    return counts;
+  }, [realAssistidos]);
+
   // ========================================
   // CALLBACKS
   // ========================================
@@ -1027,126 +817,79 @@ export default function AssistidosPage() {
         </div>
 
         {/* Busca + Acoes */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
               <Input
                 ref={searchInputRef}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Nome, CPF, processo, endereco, mae..."
-                className="pl-8 w-[140px] sm:w-[200px] md:w-[280px] h-8 text-xs border-zinc-200/80 dark:border-zinc-700/80 bg-zinc-100 dark:bg-zinc-800 rounded-lg transition-colors"
+                placeholder="Nome, CPF, processo..."
+                className="pl-8 w-[140px] sm:w-[200px] md:w-[260px] h-8 text-xs border-zinc-200/80 dark:border-zinc-700/80 bg-zinc-50 dark:bg-zinc-800 rounded-lg"
               />
               {isProcessoSearch && (
                 <p className="text-[10px] text-zinc-400 mt-0.5 absolute left-0 -bottom-4 whitespace-nowrap">
-                  Buscando por numero de processo...
+                  Buscando por processo...
                 </p>
               )}
             </div>
+
+            {/* Icon actions — ghost buttons */}
             <Link href="/admin/inteligencia">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                title="Inteligencia"
-              >
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 cursor-pointer" title="Inteligência">
                 <Brain className="w-3.5 h-3.5" />
               </Button>
             </Link>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 cursor-pointer" title="Exportar CSV" onClick={() => exportToCSV(filteredAssistidos)}>
+              <Download className="w-3.5 h-3.5" />
+            </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-              title="Exportar CSV"
-              onClick={() => exportToCSV(filteredAssistidos)}
-            >
-              <Download className="w-3.5 h-3.5" />
-            </Button>
-            {/* Botao Vincular pastas Drive */}
-            <Button
-              variant="outline"
-              size="sm"
+              className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 cursor-pointer"
+              title="Vincular pastas Drive"
               disabled={backfillDriveMutation.isPending}
               onClick={() => backfillDriveMutation.mutate({ limit: 50 })}
             >
-              {backfillDriveMutation.isPending ? (
-                <>
-                  <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                  Vinculando…
-                </>
-              ) : (
-                <>
-                  <FolderOpen className="w-3 h-3 mr-1" />
-                  Vincular pastas Drive
-                </>
-              )}
+              {backfillDriveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FolderOpen className="w-3.5 h-3.5" />}
             </Button>
-            {backfillResult?.hasMore && (
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={backfillDriveMutation.isPending}
-                onClick={() => backfillDriveMutation.mutate({ limit: 50 })}
-              >
-                Continuar ({backfillResult.linked} nesta rodada — continuar)
-              </Button>
-            )}
-            {/* Botao batch Solar export */}
-            {!batchSelectMode ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 px-2.5 border-amber-200 text-amber-700 hover:bg-amber-50 text-xs font-medium rounded-md"
-                onClick={() => setBatchSelectMode(true)}
-                title="Exportar multiplos assistidos ao Solar via SIGAD"
-              >
-                <Sun className="w-3.5 h-3.5 mr-1" />
-                Solar
-              </Button>
-            ) : (
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-zinc-500">
-                  {batchSelectedIds.size} selecionados
-                </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn("h-8 w-8 p-0 cursor-pointer", batchSelectMode ? "text-amber-600 bg-amber-50 dark:bg-amber-950/30" : "text-zinc-400 hover:text-amber-600")}
+              title="Exportar ao Solar"
+              onClick={() => setBatchSelectMode(!batchSelectMode)}
+            >
+              <Sun className="w-3.5 h-3.5" />
+            </Button>
+
+            {/* Batch Solar mode bar */}
+            {batchSelectMode && (
+              <div className="flex items-center gap-1.5 ml-1 pl-2 border-l border-zinc-200 dark:border-zinc-700">
+                <span className="text-[10px] text-zinc-500 tabular-nums">{batchSelectedIds.size} sel.</span>
                 <Button
                   size="sm"
-                  variant="outline"
-                  className="h-7 px-2 text-xs border-zinc-200 text-zinc-500"
-                  onClick={() => {
-                    setBatchSelectMode(false);
-                    setBatchSelectedIds(new Set());
-                  }}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  size="sm"
-                  className="h-7 px-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium rounded-md"
+                  className="h-7 px-2.5 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-medium rounded-lg"
                   disabled={batchSelectedIds.size === 0 || exportarBatch.isPending}
-                  onClick={() =>
-                    exportarBatch.mutate({
-                      assistidoIds: Array.from(batchSelectedIds),
-                    })
-                  }
+                  onClick={() => exportarBatch.mutate({ assistidoIds: Array.from(batchSelectedIds) })}
                 >
-                  {exportarBatch.isPending ? (
-                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                  ) : (
-                    <Sun className="w-3 h-3 mr-1" />
-                  )}
-                  {exportarBatch.isPending
-                    ? `Exportando ${batchSelectedIds.size}...`
-                    : `Exportar ${batchSelectedIds.size} ao Solar`}
+                  {exportarBatch.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Exportar"}
                 </Button>
+                <button onClick={() => { setBatchSelectMode(false); setBatchSelectedIds(new Set()); }} className="text-zinc-400 hover:text-zinc-600">
+                  <XCircle className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
+
+            <div className="w-px h-5 bg-zinc-200/60 dark:bg-zinc-700/60 mx-0.5" />
+
             <Link href="/admin/assistidos/novo">
               <Button
                 size="sm"
-                className="h-9 px-4 ml-1 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer"
+                className="h-8 px-3.5 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
               >
-                <Plus className="w-4 h-4 mr-1" />
-                Novo Assistido
+                <Plus className="w-3.5 h-3.5 mr-1" />
+                Novo
               </Button>
             </Link>
         </div>
@@ -1211,34 +954,65 @@ export default function AssistidosPage() {
       )}
 
       {/* Conteudo Principal */}
-      <div className="p-5 md:p-8 space-y-5 md:space-y-7">
+      <div className="px-5 md:px-8 py-3 md:py-4 space-y-3">
 
-      {/* Tab System: Lista | Analytics */}
-      <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg w-fit">
-        <button
-          onClick={() => setActiveTab("lista")}
-          className={cn(
-            "flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium rounded-md transition-all",
-            activeTab === "lista"
-              ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-              : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-          )}
-        >
-          <Users className="w-3.5 h-3.5" />
-          Lista
-        </button>
-        <button
-          onClick={() => setActiveTab("analytics")}
-          className={cn(
-            "flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium rounded-md transition-all",
-            activeTab === "analytics"
-              ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-              : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-          )}
-        >
-          <BarChart3 className="w-3.5 h-3.5" />
-          Analytics
-        </button>
+      {/* Tabs + Stats + WhatsApp — single line */}
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg shrink-0">
+          <button
+            onClick={() => setActiveTab("lista")}
+            className={cn(
+              "flex items-center gap-1 px-3 py-1 text-[11px] font-medium rounded-md transition-all",
+              activeTab === "lista"
+                ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
+                : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+            )}
+          >
+            <Users className="w-3 h-3" />
+            Lista
+          </button>
+          <button
+            onClick={() => setActiveTab("analytics")}
+            className={cn(
+              "flex items-center gap-1 px-3 py-1 text-[11px] font-medium rounded-md transition-all",
+              activeTab === "analytics"
+                ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
+                : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+            )}
+          >
+            <BarChart3 className="w-3 h-3" />
+            Analytics
+          </button>
+        </div>
+        <div className="w-px h-3.5 bg-zinc-200/60 dark:bg-zinc-700/60 shrink-0" />
+        {/* Inline stats */}
+        {[
+          { icon: Users, value: stats.total - naoIdentificadosCount, label: "total", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); }, active: statusFilter === "all" && !showPinnedOnly },
+          { icon: Lock, value: stats.presos, label: "presos", onClick: () => { setStatusFilter(statusFilter === "CADEIA_PUBLICA" ? "all" : "CADEIA_PUBLICA"); setShowPinnedOnly(false); }, active: statusFilter === "CADEIA_PUBLICA", color: stats.presos > 0 ? "text-rose-600 dark:text-rose-400" : "" },
+          { icon: Timer, value: stats.monitorados, label: "monit.", onClick: () => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }, active: statusFilter === "MONITORADO" },
+          { icon: BookmarkCheck, value: stats.pinned, label: "fixados", onClick: () => { setShowPinnedOnly(!showPinnedOnly); setStatusFilter("all"); }, active: showPinnedOnly },
+        ].map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <button
+              key={stat.label}
+              onClick={stat.onClick}
+              className={cn(
+                "flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] whitespace-nowrap transition-colors shrink-0 cursor-pointer",
+                stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-zinc-100 dark:hover:bg-zinc-800",
+              )}
+            >
+              <Icon className={cn("w-3 h-3 shrink-0", stat.active ? "text-emerald-500" : (stat as any).color || "text-zinc-400")} />
+              <span className={cn("font-bold tabular-nums", stat.active ? "text-emerald-600 dark:text-emerald-400" : (stat as any).color || "text-zinc-800 dark:text-zinc-100")}>{stat.value}</span>
+              <span className="text-zinc-400 dark:text-zinc-500 text-[10px]">{stat.label}</span>
+            </button>
+          );
+        })}
+        <div className="flex-1" />
+        <Link href="/admin/whatsapp" className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors shrink-0">
+          <MessageCircle className="w-3 h-3" />
+          <span className="hidden sm:inline">WhatsApp</span>
+        </Link>
       </div>
 
       {/* Analytics Tab Content */}
@@ -1296,213 +1070,105 @@ export default function AssistidosPage() {
         </div>
       )}
 
-      {/* Unified Toolbar */}
+      {/* === Filter Bar: stats left | atribuição center | presets right === */}
       {!showNaoIdentificados && (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl shadow-sm overflow-hidden">
-          {/* Row 1: Stats + urgency badges + sort + toggle */}
-          <div ref={statsRef} className="flex items-center gap-1 px-3 py-1.5 border-b border-zinc-100 dark:border-zinc-800 overflow-x-auto scrollbar-none">
+        <div ref={statsRef} className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+          {/* RMS toggle */}
+          <button
+            onClick={() => toggleVerRMS({ verRMS: !verRMS })}
+            aria-pressed={verRMS}
+            className={cn(
+              "flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors shrink-0",
+              verRMS
+                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            )}
+          >
+            <MapPin className="h-3 w-3" />
+            {verRMS ? "RMS" : "Comarca"}
+          </button>
+
+          {/* Atribuição switches */}
+          <AtribuicaoPills
+            options={[
+              { value: "Tribunal do Júri", label: "Tribunal do Júri" },
+              { value: "Violência Doméstica", label: "Violência Doméstica" },
+              { value: "Execução Penal", label: "Execução Penal" },
+              { value: "Substituição Criminal", label: "Substituição Criminal" },
+              { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri" },
+            ]}
+            selectedValues={atribuicaoFilter !== "all" ? [(() => {
+              const map: Record<string, string> = { JURI: "Tribunal do Júri", VVD: "Violência Doméstica", EXECUCAO: "Execução Penal", SUBSTITUICAO: "Substituição Criminal", SUBSTITUICAO_CIVEL: "Substituição Criminal", CURADORIA: "Curadoria Especial" };
+              return map[atribuicaoFilter] || atribuicaoFilter;
+            })()] : []}
+            onToggle={(value) => {
+              const reverseMap: Record<string, string> = { "Tribunal do Júri": "JURI", "Violência Doméstica": "VVD", "Execução Penal": "EXECUCAO", "Substituição Criminal": "SUBSTITUICAO", "Grupo Especial do Júri": "JURI", "Curadoria Especial": "CURADORIA" };
+              const normalized = reverseMap[value] || value;
+              setAtribuicaoFilter(atribuicaoFilter === normalized ? "all" : normalized);
+            }}
+            onClear={() => setAtribuicaoFilter("all")}
+            counts={{ "Tribunal do Júri": (atribuicaoCounts["JURI"] || 0), "Violência Doméstica": (atribuicaoCounts["VVD"] || 0), "Execução Penal": (atribuicaoCounts["EXECUCAO"] || 0), "Substituição Criminal": (atribuicaoCounts["SUBSTITUICAO"] || 0), "Grupo Especial do Júri": 0 }}
+            singleSelect
+          />
+
+          {/* Spacer */}
+          <div className="flex-1 min-w-2" />
+
+          {/* Smart presets — icon-only, pushed right */}
+          <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/60 shrink-0">
             {[
-              { icon: Users, value: stats.total - naoIdentificadosCount, label: "assistidos", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); }, active: statusFilter === "all" && !showPinnedOnly },
-              { icon: Lock, value: stats.presos, label: "presos", onClick: () => { setStatusFilter(statusFilter === "CADEIA_PUBLICA" ? "all" : "CADEIA_PUBLICA"); setShowPinnedOnly(false); }, active: statusFilter === "CADEIA_PUBLICA", alert: stats.presos > 0 },
-              { icon: Timer, value: stats.monitorados, label: "monit.", onClick: () => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }, active: statusFilter === "MONITORADO" },
-              { icon: Calendar, value: stats.audienciasHoje, label: "aud. hoje", alert: stats.audienciasHoje > 0 },
-              { icon: FileText, value: stats.comDemandas, label: "demandas" },
-              { icon: BookmarkCheck, value: stats.pinned, label: "fixados", onClick: () => { setShowPinnedOnly(!showPinnedOnly); setStatusFilter("all"); }, active: showPinnedOnly },
-            ].map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <Fragment key={index}>
-                  {index > 0 && <div className="w-px h-3.5 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
-                  <button
-                    onClick={stat.onClick}
-                    className={cn(
-                      "flex items-center gap-1 whitespace-nowrap px-2 py-1 rounded-lg transition-colors text-xs",
-                      stat.onClick && "cursor-pointer",
-                      stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-zinc-50 dark:hover:bg-zinc-800",
-                      stat.alert && !stat.active ? "bg-rose-50 dark:bg-rose-950/20" : ""
-                    )}
-                  >
-                    <Icon className={cn("w-3 h-3 flex-shrink-0", stat.alert ? "text-rose-500" : stat.active ? "text-emerald-500" : "text-zinc-400")} />
-                    <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-600 dark:text-rose-400" : "text-zinc-800 dark:text-zinc-100")}>{stat.value}</span>
-                    <span className="text-zinc-500 dark:text-zinc-400">{stat.label}</span>
-                    {stat.alert && <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse flex-shrink-0" />}
-                  </button>
-                </Fragment>
-              );
-            })}
-            {/* Inline urgency badges */}
-            {stats.prazosVencidos > 0 && (
-              <>
-                <div className="w-px h-3.5 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />
-                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 text-[10px] font-medium whitespace-nowrap border border-rose-200/60 dark:border-rose-800/30 flex-shrink-0">
-                  <AlertCircle className="w-3 h-3" />
-                  {stats.prazosVencidos} vencido{stats.prazosVencidos > 1 ? 's' : ''}
-                </span>
-              </>
-            )}
-            {stats.prazosUrgentes > 0 && (
-              <>
-                <div className="w-px h-3.5 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />
-                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 text-[10px] font-medium whitespace-nowrap border border-amber-200/60 dark:border-amber-800/30 flex-shrink-0">
-                  <Clock className="w-3 h-3" />
-                  {stats.prazosUrgentes} urgente{stats.prazosUrgentes > 1 ? 's' : ''}
-                </span>
-              </>
-            )}
-            <div className="flex-1 min-w-2" />
-            {/* Sort */}
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              <span className="text-[10px] text-zinc-400 hidden sm:inline">Ordenar:</span>
-              <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
-                {(["nome", "prioridade", "prazo"] as const).map((opt) => (
-                  <button
-                    key={opt}
-                    onClick={() => setSortBy(opt)}
-                    className={cn(
-                      "px-2 py-1 text-[10px] font-medium rounded-md transition-all",
-                      sortBy === opt
-                        ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                    )}
-                  >
-                    {opt === "nome" ? "Nome" : opt === "prioridade" ? "Prio." : "Prazo"}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {/* Processing queue + view toggle */}
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <ProcessingQueuePanel>
-                <button
-                  className={cn(
-                    "h-7 w-7 inline-flex items-center justify-center gap-1 rounded-md transition-colors",
-                    activeCount > 0
-                      ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400"
-                      : "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                  )}
-                  title="Fila de processamento"
-                >
-                  <Activity className={cn("h-3.5 w-3.5", activeCount > 0 && "animate-pulse")} />
-                  {activeCount > 0 && <span className="text-[10px] font-medium">{activeCount}</span>}
-                </button>
-              </ProcessingQueuePanel>
-              <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={cn("flex items-center justify-center w-7 h-7 rounded-md transition-all", viewMode === "grid" ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300")}
-                  title="Grade"
-                >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={cn("flex items-center justify-center w-7 h-7 rounded-md transition-all", viewMode === "list" ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300")}
-                  title="Lista"
-                >
-                  <List className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          </div>
-          {/* Row 2: Atribuição chips + filtros rápidos */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 overflow-x-auto scrollbar-none">
-            {/* Toggle Ver RMS */}
-            <button
-              onClick={() => toggleVerRMS({ verRMS: !verRMS })}
-              aria-pressed={verRMS}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium border transition-colors shrink-0",
-                verRMS
-                  ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-400"
-                  : "border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400"
-              )}
-              title={verRMS ? "Exibindo toda a RMS — clique para mostrar só Camaçari" : "Mostrar toda a Região Metropolitana de Salvador"}
-            >
-              <MapPin className="h-3.5 w-3.5" />
-              {verRMS ? "RMS" : "Comarca"}
-            </button>
-            <div className="w-px h-3.5 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />
-            <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium shrink-0">Atrib.</span>
-            {ATRIBUICAO_OPTIONS.filter(o => o.value !== "all").map((option) => {
-              const isActive = atribuicaoFilter === option.value;
-              const color = SOLID_COLOR_MAP[option.value] || '#71717a';
-              return (
-                <button
-                  key={option.value}
-                  onClick={() => setAtribuicaoFilter(isActive ? "all" : option.value)}
-                  className={cn(
-                    "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-all border shrink-0",
-                    isActive
-                      ? "text-white border-transparent shadow-sm"
-                      : "bg-transparent text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
-                  )}
-                  style={isActive ? { backgroundColor: color, borderColor: color } : undefined}
-                >
-                  {ATRIBUICAO_ICONS[option.value] || null}
-                  {option.shortLabel}
-                </button>
-              );
-            })}
-            {atribuicaoFilter !== "all" && (
-              <button onClick={() => setAtribuicaoFilter("all")} className="text-[10px] text-zinc-400 hover:text-zinc-600 transition-colors shrink-0">
-                <XCircle className="w-3.5 h-3.5" />
-              </button>
-            )}
-            <div className="w-px h-3.5 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0 mx-0.5" />
-            {[
-              { id: "meus_presos", label: "Presos", icon: Lock, count: stats.presos },
-              { id: "audiencias_semana", label: "Aud. semana", icon: Calendar, count: stats.audienciasSemana },
-              { id: "prazos_vencidos", label: "Prazos venc.", icon: AlertCircle, count: stats.prazosVencidos },
-              { id: "sem_drive", label: "Sem Drive", icon: Link2Off, count: stats.semDrive },
-              { id: "novos_30d", label: "Novos 30d", icon: Plus, count: stats.novos30d },
+              { id: "meus_presos", tip: "Presos", icon: Lock, count: stats.presos },
+              { id: "audiencias_semana", tip: "Audiências esta semana", icon: Calendar, count: stats.audienciasSemana },
+              { id: "prazos_vencidos", tip: "Prazos vencidos", icon: AlertCircle, count: stats.prazosVencidos },
+              { id: "sem_drive", tip: "Sem pasta no Drive", icon: Link2Off, count: stats.semDrive },
+              { id: "novos_30d", tip: "Novos últimos 30 dias", icon: Plus, count: stats.novos30d },
             ].map((preset) => {
               const active = smartPreset === preset.id;
               const PresetIcon = preset.icon;
               return (
-                <button
-                  key={preset.id}
-                  onClick={() => {
-                    if (active) {
-                      setSmartPreset(null);
-                      setStatusFilter("all");
-                      setSortBy("nome");
-                    } else {
-                      setSmartPreset(preset.id);
-                      if (preset.id === "meus_presos") { setStatusFilter("CADEIA_PUBLICA"); setSortBy("prioridade"); }
-                      else if (preset.id === "audiencias_semana") { setStatusFilter("all"); setSortBy("prazo"); }
-                      else if (preset.id === "prazos_vencidos") { setStatusFilter("all"); setSortBy("prazo"); }
-                      else { setStatusFilter("all"); setSortBy("nome"); }
-                    }
-                  }}
-                  className={cn(
-                    "inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-medium transition-all shrink-0",
-                    active
-                      ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40"
-                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-transparent"
-                  )}
-                >
-                  <PresetIcon className="w-3 h-3" />
-                  {preset.label}
-                  {preset.count > 0 && (
-                    <span className={cn(
-                      "text-[10px] font-semibold tabular-nums px-1 rounded-full",
-                      active ? "bg-emerald-200/60 dark:bg-emerald-800/40 text-emerald-700" : "bg-zinc-200 dark:bg-zinc-700 text-zinc-500"
-                    )}>
-                      {preset.count}
-                    </span>
-                  )}
-                </button>
+                <Tooltip key={preset.id}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => {
+                        if (active) { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }
+                        else {
+                          setSmartPreset(preset.id);
+                          if (preset.id === "meus_presos") { setStatusFilter("CADEIA_PUBLICA"); setSortBy("prioridade"); }
+                          else if (preset.id === "audiencias_semana") { setStatusFilter("all"); setSortBy("prazo"); }
+                          else if (preset.id === "prazos_vencidos") { setStatusFilter("all"); setSortBy("prazo"); }
+                          else { setStatusFilter("all"); setSortBy("nome"); }
+                        }
+                      }}
+                      className={cn(
+                        "relative inline-flex items-center justify-center w-7 h-7 rounded-md transition-all shrink-0",
+                        active
+                          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                          : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700"
+                      )}
+                    >
+                      <PresetIcon className="w-3.5 h-3.5" />
+                      {preset.count > 0 && (
+                        <span className={cn(
+                          "absolute -top-1 -right-1 text-[8px] font-bold tabular-nums min-w-[14px] h-[14px] flex items-center justify-center rounded-full",
+                          active ? "bg-emerald-500 text-white"
+                            : preset.id === "prazos_vencidos" ? "bg-rose-500 text-white"
+                            : "bg-zinc-300 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-200"
+                        )}>
+                          {preset.count}
+                        </span>
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-[10px]">{preset.tip} ({preset.count})</TooltipContent>
+                </Tooltip>
               );
             })}
-            {smartPreset && (
-              <button
-                onClick={() => { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }}
-                className="text-[10px] text-zinc-400 hover:text-zinc-600 transition-colors shrink-0"
-              >
-                <XCircle className="w-3.5 h-3.5" />
-              </button>
-            )}
           </div>
+          {smartPreset && (
+            <button onClick={() => { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }} className="text-zinc-400 hover:text-zinc-600 transition-colors shrink-0">
+              <XCircle className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       )}
 
@@ -1546,8 +1212,8 @@ export default function AssistidosPage() {
 
       {/* Card de Listagem */}
       <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark">
-        {/* Header */}
-        <div className="px-5 py-3.5 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/50">
+        {/* Header with count + sort + view toggle */}
+        <div className="px-5 py-3 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
@@ -1556,6 +1222,66 @@ export default function AssistidosPage() {
               <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                 {filteredAssistidos.length} assistido{filteredAssistidos.length !== 1 && 's'}
               </span>
+              {stats.prazosUrgentes > 0 && (
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 text-[10px] font-medium border border-amber-200/60 dark:border-amber-800/30">
+                  <Clock className="w-3 h-3" />
+                  {stats.prazosUrgentes} urgente{stats.prazosUrgentes > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Sort */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-zinc-400 hidden sm:inline">Ordenar:</span>
+                <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
+                  {(["nome", "prioridade", "prazo"] as const).map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => setSortBy(opt)}
+                      className={cn(
+                        "px-2 py-1 text-[10px] font-medium rounded-md transition-all",
+                        sortBy === opt
+                          ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
+                          : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                      )}
+                    >
+                      {opt === "nome" ? "Nome" : opt === "prioridade" ? "Prio." : "Prazo"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Processing queue */}
+              <ProcessingQueuePanel>
+                <button
+                  className={cn(
+                    "h-7 w-7 inline-flex items-center justify-center gap-1 rounded-md transition-colors",
+                    activeCount > 0
+                      ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400"
+                      : "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  )}
+                  title="Fila de processamento"
+                >
+                  <Activity className={cn("h-3.5 w-3.5", activeCount > 0 && "animate-pulse")} />
+                  {activeCount > 0 && <span className="text-[10px] font-medium">{activeCount}</span>}
+                </button>
+              </ProcessingQueuePanel>
+              {/* View toggle */}
+              <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={cn("flex items-center justify-center w-7 h-7 rounded-md transition-all", viewMode === "grid" ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300")}
+                  title="Grade"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={cn("flex items-center justify-center w-7 h-7 rounded-md transition-all", viewMode === "list" ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300")}
+                  title="Lista"
+                >
+                  <List className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -52,7 +52,7 @@ import {
   ATRIBUICAO_FOLDER_IDS,
 } from "@/lib/services/google-drive";
 import { inngest } from "@/lib/inngest/client";
-import { getFolderIdForAtribuicao } from "@/lib/utils/text-extraction";
+import { getFolderIdForAtribuicao, mapAtribuicaoEnumToSimple } from "@/lib/utils/text-extraction";
 import { processos, assistidos, casos, demandas, atendimentos, audiencias, driveDocumentSections, driveFileContents } from "@/lib/db/schema";
 import {
   enrichmentClient,
@@ -3120,7 +3120,7 @@ export const driveRouter = router({
     const webhookMap = new Map<string, { channelId: string; expiration: Date }>();
     for (const w of activeWebhooks) {
       if (!webhookMap.has(w.folderId)) {
-        webhookMap.set(w.folderId, { channelId: w.channelId, expiration: w.expiration });
+        webhookMap.set(w.folderId, { channelId: w.channelId, expiration: w.expiration! });
       }
     }
 
@@ -4830,11 +4830,15 @@ export const driveRouter = router({
       })
     )
     .query(async ({ input }) => {
-      const atribuicao = input.atribuicaoPrimaria as keyof typeof ATRIBUICAO_FOLDER_IDS | null;
-      const rootFolderId =
-        atribuicao && atribuicao in ATRIBUICAO_FOLDER_IDS
-          ? getFolderIdForAtribuicao(atribuicao)
-          : null;
+      let rootFolderId: string | null = null;
+      if (input.atribuicaoPrimaria) {
+        try {
+          const atribuicaoSimple = mapAtribuicaoEnumToSimple(input.atribuicaoPrimaria);
+          rootFolderId = getFolderIdForAtribuicao(atribuicaoSimple);
+        } catch {
+          // Se não conseguir mapear, ignora filtro de atribuição
+        }
+      }
 
       const whereConditions: SQL[] = [
         eq(driveFiles.isFolder, true),
@@ -4880,13 +4884,14 @@ export const driveRouter = router({
 
       for (const assistido of batch) {
         try {
-          const atribuicao = assistido.atribuicaoPrimaria as keyof typeof ATRIBUICAO_FOLDER_IDS | null;
-          if (!atribuicao || !(atribuicao in ATRIBUICAO_FOLDER_IDS) || !assistido.nome) {
+          if (!assistido.atribuicaoPrimaria || !assistido.nome) {
             skipped++;
             continue;
           }
 
-          const rootFolderId = getFolderIdForAtribuicao(atribuicao);
+          // Mapeia enum do banco (JURI_CAMACARI, VVD_CAMACARI, etc.) para chave do Drive (JURI, VVD, etc.)
+          const atribuicaoSimple = mapAtribuicaoEnumToSimple(assistido.atribuicaoPrimaria);
+          const rootFolderId = getFolderIdForAtribuicao(atribuicaoSimple);
           const normalizedTarget = normalizeNameForMatch(assistido.nome);
 
           // Executa dentro de uma transação para evitar race conditions
@@ -4904,28 +4909,43 @@ export const driveRouter = router({
               );
 
             // Procura match exato normalizado
-            const exactMatch = candidates.find(
+            let matchedFolder = candidates.find(
               (c) => normalizeNameForMatch(c.name ?? "") === normalizedTarget
             );
 
-            if (!exactMatch) return false;
+            // Fallback: fuzzy match com similaridade >= 0.85
+            if (!matchedFolder) {
+              let bestSim = 0;
+              for (const c of candidates) {
+                const sim = calculateSimilarity(
+                  normalizeNameForMatch(c.name ?? ""),
+                  normalizedTarget
+                );
+                if (sim > bestSim && sim >= 0.85) {
+                  bestSim = sim;
+                  matchedFolder = c;
+                }
+              }
+            }
+
+            if (!matchedFolder) return false;
 
             await tx
               .update(assistidos)
-              .set({ driveFolderId: exactMatch.driveFileId, updatedAt: new Date() })
+              .set({ driveFolderId: matchedFolder.driveFileId, updatedAt: new Date() })
               .where(eq(assistidos.id, assistido.id));
 
             await tx
               .update(driveFiles)
               .set({ assistidoId: assistido.id, updatedAt: new Date() })
-              .where(eq(driveFiles.driveFileId, exactMatch.driveFileId));
+              .where(eq(driveFiles.driveFileId, matchedFolder.driveFileId));
 
             await tx
               .update(driveFiles)
               .set({ assistidoId: assistido.id, updatedAt: new Date() })
               .where(
                 and(
-                  eq(driveFiles.driveFolderId, exactMatch.driveFileId),
+                  eq(driveFiles.driveFolderId, matchedFolder.driveFileId),
                   isNull(driveFiles.assistidoId)
                 )
               );
@@ -4944,5 +4964,168 @@ export const driveRouter = router({
       }
 
       return { linked, skipped, errors, hasMore };
+    }),
+
+  /**
+   * Part A: Links drive_files rows to assistidos that already have drive_folder_id set.
+   *
+   * Problem: 347 assistidos have drive_folder_id but their corresponding drive_files
+   * rows don't have assistido_id set. This mutation fixes that reverse linkage.
+   *
+   * For each assistido with drive_folder_id:
+   * 1. Sets assistido_id on the folder's drive_files row
+   * 2. Sets assistido_id on ALL children (files inside that folder)
+   * 3. Recursively links sub-folder contents too
+   */
+  linkDriveFilesToAssistidos: protectedProcedure
+    .input(z.object({ dryRun: z.boolean().default(false) }).default({}))
+    .mutation(async ({ input }) => {
+      // 1. Busca todos os assistidos que já têm pasta vinculada
+      const withFolder = await db
+        .select({
+          id: assistidos.id,
+          nome: assistidos.nome,
+          driveFolderId: assistidos.driveFolderId,
+        })
+        .from(assistidos)
+        .where(sql`${assistidos.driveFolderId} IS NOT NULL`);
+
+      let linkedFolders = 0;
+      let linkedFiles = 0;
+      let alreadyLinked = 0;
+      let missingFolders = 0;
+      let errors = 0;
+
+      for (const assistido of withFolder) {
+        try {
+          if (!assistido.driveFolderId) continue;
+
+          if (input.dryRun) {
+            // Em dry run, apenas conta quantos seriam afetados
+            const [folderRow] = await db
+              .select({ driveFileId: driveFiles.driveFileId, assistidoId: driveFiles.assistidoId })
+              .from(driveFiles)
+              .where(eq(driveFiles.driveFileId, assistido.driveFolderId))
+              .limit(1);
+
+            if (!folderRow) {
+              missingFolders++;
+              continue;
+            }
+
+            if (folderRow.assistidoId === assistido.id) {
+              alreadyLinked++;
+            } else {
+              linkedFolders++;
+            }
+
+            // Conta filhos não linkados (diretos e recursivos)
+            const [childCount] = await db
+              .select({ count: sql<number>`count(*)` })
+              .from(driveFiles)
+              .where(
+                and(
+                  eq(driveFiles.driveFolderId, assistido.driveFolderId),
+                  or(
+                    isNull(driveFiles.assistidoId),
+                    sql`${driveFiles.assistidoId} != ${assistido.id}`
+                  )
+                )
+              );
+
+            linkedFiles += Number(childCount?.count ?? 0);
+            continue;
+          }
+
+          // 2. Atualiza a pasta raiz do assistido
+          const folderResult = await db
+            .update(driveFiles)
+            .set({ assistidoId: assistido.id, updatedAt: new Date() })
+            .where(
+              and(
+                eq(driveFiles.driveFileId, assistido.driveFolderId),
+                or(
+                  isNull(driveFiles.assistidoId),
+                  sql`${driveFiles.assistidoId} != ${assistido.id}`
+                )
+              )
+            );
+
+          const folderUpdated = (folderResult as unknown as { rowCount?: number }).rowCount ?? 0;
+          if (folderUpdated > 0) {
+            linkedFolders++;
+          } else {
+            // Verifica se a pasta existe
+            const [exists] = await db
+              .select({ driveFileId: driveFiles.driveFileId })
+              .from(driveFiles)
+              .where(eq(driveFiles.driveFileId, assistido.driveFolderId))
+              .limit(1);
+
+            if (!exists) {
+              missingFolders++;
+            } else {
+              alreadyLinked++;
+            }
+          }
+
+          // 3. Atualiza todos os filhos diretos da pasta
+          const childResult = await db
+            .update(driveFiles)
+            .set({ assistidoId: assistido.id, updatedAt: new Date() })
+            .where(
+              and(
+                eq(driveFiles.driveFolderId, assistido.driveFolderId),
+                or(
+                  isNull(driveFiles.assistidoId),
+                  sql`${driveFiles.assistidoId} != ${assistido.id}`
+                )
+              )
+            );
+
+          linkedFiles += (childResult as unknown as { rowCount?: number }).rowCount ?? 0;
+
+          // 4. Recursivamente linka sub-pastas e seus conteúdos
+          // Busca sub-pastas dentro da pasta do assistido
+          const subFolders = await db
+            .select({ driveFileId: driveFiles.driveFileId })
+            .from(driveFiles)
+            .where(
+              and(
+                eq(driveFiles.driveFolderId, assistido.driveFolderId),
+                eq(driveFiles.isFolder, true)
+              )
+            );
+
+          for (const subFolder of subFolders) {
+            const subResult = await db
+              .update(driveFiles)
+              .set({ assistidoId: assistido.id, updatedAt: new Date() })
+              .where(
+                and(
+                  eq(driveFiles.driveFolderId, subFolder.driveFileId),
+                  or(
+                    isNull(driveFiles.assistidoId),
+                    sql`${driveFiles.assistidoId} != ${assistido.id}`
+                  )
+                )
+              );
+
+            linkedFiles += (subResult as unknown as { rowCount?: number }).rowCount ?? 0;
+          }
+        } catch {
+          errors++;
+        }
+      }
+
+      return {
+        totalAssistidos: withFolder.length,
+        linkedFolders,
+        linkedFiles,
+        alreadyLinked,
+        missingFolders,
+        errors,
+        dryRun: input.dryRun,
+      };
     }),
 });

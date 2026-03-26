@@ -44,4 +44,5 @@ export interface AssistidoUI {
   driveFolderId?: string | null;
   driveFilesCount?: number;
   nomeMae?: string;
+  atribuicaoPrimaria?: string;
 }

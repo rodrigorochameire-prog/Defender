@@ -342,6 +342,7 @@ export const juriRouter = router({
           const [novo] = await db
             .insert(processos)
             .values({
+              assistidoId: assistido.id,
               numeroAutos: s.processo,
               atribuicao: "JURI_CAMACARI" as any,
               comarca: "Camaçari",

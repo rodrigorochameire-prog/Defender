@@ -345,57 +345,58 @@ export default function CosmovisaoPage() {
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 sm:px-6 md:px-8 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/admin/juri">
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
+            <Link href="/admin/juri" className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+              <ArrowLeft className="w-4 h-4 text-zinc-400" />
             </Link>
-            <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Cosmovisao</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Analytics do Tribunal do Juri</p>
+            <div className="w-9 h-9 rounded-lg bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center">
+              <Eye className="w-4 h-4 text-white dark:text-zinc-900" />
             </div>
+            <div>
+              <h1 className="font-serif text-lg font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">Cosmovisão</h1>
+              <p className="text-[11px] text-zinc-400">Analytics completo do Tribunal do Júri</p>
+            </div>
+          </div>
+
+          {/* Period filter — inline in header */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/60 dark:border-zinc-700/40">
+              {([
+                { key: "mes", label: "Mês" },
+                { key: "trimestre", label: "Trim." },
+                { key: "semestre", label: "Sem." },
+                { key: "ano", label: "Ano" },
+                { key: "tudo", label: "Tudo" },
+              ] as const).map(opt => (
+                <button
+                  key={opt.key}
+                  onClick={() => setPeriodo(opt.key)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-md text-[10px] font-medium transition-all",
+                    periodo === opt.key
+                      ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 shadow-sm"
+                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {periodo === "custom" && (
+              <div className="flex items-center gap-1.5">
+                <Input type="date" value={customInicio} onChange={(e) => setCustomInicio(e.target.value)} className="w-32 h-7 text-[10px]" />
+                <span className="text-[10px] text-zinc-400">—</span>
+                <Input type="date" value={customFim} onChange={(e) => setCustomFim(e.target.value)} className="w-32 h-7 text-[10px]" />
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Filter Bar */}
-        <div className="flex flex-wrap items-center gap-3 p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800">
-          <Select value={periodo} onValueChange={(v) => setPeriodo(v as Periodo)}>
-            <SelectTrigger className="w-44 h-8 text-xs">
-              <SelectValue placeholder="Periodo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="mes">Ultimo mes</SelectItem>
-              <SelectItem value="trimestre">Ultimo trimestre</SelectItem>
-              <SelectItem value="semestre">Ultimo semestre</SelectItem>
-              <SelectItem value="ano">Ultimo ano</SelectItem>
-              <SelectItem value="tudo">Todo periodo</SelectItem>
-              <SelectItem value="custom">Personalizado</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {periodo === "custom" && (
-            <>
-              <Input
-                type="date"
-                value={customInicio}
-                onChange={(e) => setCustomInicio(e.target.value)}
-                className="w-36 h-8 text-xs"
-              />
-              <span className="text-xs text-zinc-400">ate</span>
-              <Input
-                type="date"
-                value={customFim}
-                onChange={(e) => setCustomFim(e.target.value)}
-                className="w-36 h-8 text-xs"
-              />
-            </>
-          )}
-        </div>
+      <div className="px-4 sm:px-6 md:px-8 py-4 space-y-4">
 
         {/* Loading State */}
         {loadingPanorama && (

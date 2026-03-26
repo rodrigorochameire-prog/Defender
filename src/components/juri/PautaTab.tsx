@@ -17,8 +17,8 @@ import { PautaImportModal, type SessaoParsed } from "./pauta-parser";
 // ==========================================
 
 const DEFENSORES = [
-  { nome: "Dr. Rodrigo", short: "Rodrigo", bg: "bg-emerald-500/80", bgLight: "bg-emerald-500/5", text: "text-emerald-600/70 dark:text-emerald-400/70", ring: "ring-emerald-500/20", icon: "text-emerald-100", initial: "R" },
-  { nome: "Dra. Juliane", short: "Juliane", bg: "bg-violet-500/80", bgLight: "bg-violet-500/5", text: "text-violet-600/70 dark:text-violet-400/70", ring: "ring-violet-500/20", icon: "text-violet-100", initial: "J" },
+  { nome: "Dr. Rodrigo", short: "Rodrigo", bg: "bg-emerald-500", bgLight: "bg-emerald-500/5", text: "text-white", ring: "ring-emerald-500/20", icon: "text-emerald-200", initial: "R" },
+  { nome: "Dra. Juliane", short: "Juliane", bg: "bg-violet-500", bgLight: "bg-violet-500/5", text: "text-white", ring: "ring-violet-500/20", icon: "text-violet-200", initial: "J" },
 ] as const;
 
 const MESES = [
@@ -183,14 +183,14 @@ export default function PautaTab({ ano }: PautaTabProps) {
         <div className="flex items-center gap-4 p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80">
           {/* Rodrigo */}
           <div className="flex items-center gap-2.5 flex-1">
-            <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-xs font-bold">R</div>
+            <div className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center text-white text-xs font-bold">R</div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Dr. Rodrigo</span>
-                <span className="text-sm font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">{totalRodrigo}</span>
+                <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">Dr. Rodrigo</span>
+                <span className="text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{totalRodrigo}</span>
               </div>
-              <div className="h-1 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-                <div className="h-full rounded-full bg-emerald-400/60 dark:bg-emerald-500/40 transition-all duration-500" style={{ width: `${(totalRodrigo / maxCount) * 100}%` }} />
+              <div className="h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                <div className="h-full rounded-full bg-emerald-500 transition-all duration-500" style={{ width: `${(totalRodrigo / maxCount) * 100}%` }} />
               </div>
             </div>
           </div>
@@ -212,29 +212,17 @@ export default function PautaTab({ ano }: PautaTabProps) {
           <div className="flex items-center gap-2.5 flex-1">
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">{totalJuliane}</span>
-                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Dra. Juliane</span>
+                <span className="text-sm font-bold tabular-nums text-violet-600 dark:text-violet-400">{totalJuliane}</span>
+                <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">Dra. Juliane</span>
               </div>
-              <div className="h-1 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-                <div className="h-full rounded-full bg-violet-400/60 dark:bg-violet-500/40 transition-all duration-500 ml-auto" style={{ width: `${(totalJuliane / maxCount) * 100}%` }} />
+              <div className="h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                <div className="h-full rounded-full bg-violet-500 transition-all duration-500 ml-auto" style={{ width: `${(totalJuliane / maxCount) * 100}%` }} />
               </div>
             </div>
-            <div className="w-7 h-7 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400 text-xs font-bold">J</div>
+            <div className="w-7 h-7 rounded-lg bg-violet-500 flex items-center justify-center text-white text-xs font-bold">J</div>
           </div>
 
-          {/* Pending */}
-          {totalNaoAtribuido > 0 && (
-            <>
-              <div className="w-px h-8 bg-zinc-200 dark:bg-zinc-800 shrink-0" />
-              <div className="flex items-center gap-2 shrink-0">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-400/70" />
-                <div>
-                  <span className="text-sm font-semibold tabular-nums text-zinc-600 dark:text-zinc-300">{totalNaoAtribuido}</span>
-                  <p className="text-[9px] text-zinc-400">pendente{totalNaoAtribuido !== 1 ? "s" : ""}</p>
-                </div>
-              </div>
-            </>
-          )}
+          {/* Pending — shown in parent page header only */}
         </div>
       </div>
 
@@ -341,10 +329,10 @@ function EmptyState({ ano, message, sub }: { ano: number; message: string; sub: 
 }
 
 const STATUS_STYLE: Record<string, { icon: typeof Calendar; color: string; badge: string }> = {
-  agendada: { icon: Calendar, color: "text-zinc-400", badge: "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 ring-zinc-200/60 dark:ring-zinc-700/40" },
-  realizada: { icon: CheckCircle2, color: "text-emerald-400/70", badge: "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-500/70 dark:text-emerald-400/60 ring-emerald-200/40 dark:ring-emerald-800/30" },
-  adiada: { icon: Clock, color: "text-amber-400/70", badge: "bg-amber-50 dark:bg-amber-950/20 text-amber-500/70 dark:text-amber-400/60 ring-amber-200/40 dark:ring-amber-800/30" },
-  cancelada: { icon: XCircle, color: "text-zinc-300", badge: "bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 dark:text-zinc-500 ring-zinc-200/30 dark:ring-zinc-700/20" },
+  agendada: { icon: Calendar, color: "text-zinc-500", badge: "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 ring-zinc-200/60 dark:ring-zinc-700/60" },
+  realizada: { icon: CheckCircle2, color: "text-zinc-500", badge: "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 ring-zinc-200/60 dark:ring-zinc-700/60" },
+  adiada: { icon: Clock, color: "text-zinc-400", badge: "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 ring-zinc-200/60 dark:ring-zinc-700/60" },
+  cancelada: { icon: XCircle, color: "text-zinc-400", badge: "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 ring-zinc-200/60 dark:ring-zinc-700/60" },
 };
 
 function MonthSections({ sessoesPorMes, onAtribuir, onInativar, onReativar, isUpdating, variant }: {
@@ -403,46 +391,48 @@ function MonthSections({ sessoesPorMes, onAtribuir, onInativar, onReativar, isUp
  * Intensidade varia por proximidade: <=7d intenso, 8-30d médio, >30d neutro
  */
 function getProximityStyle(diffDays: number, defensorNome: string | null) {
-  // Paletas suaves — cores apenas como acento sutil, não como fundo dominante
+  // Determinar paleta de cor
   if (defensorNome === "Dr. Rodrigo") {
+    // Emerald — 100-90-80
     if (diffDays <= 7) return {
-      dateBg: "bg-emerald-50/50 dark:bg-emerald-950/10", dateText: "text-emerald-600/70 dark:text-emerald-400/60",
-      border: "border-zinc-200/80 dark:border-zinc-800/60", cardBg: "bg-white dark:bg-zinc-900",
-      bar: "bg-emerald-400/70",
+      dateBg: "bg-emerald-500/10", dateText: "text-zinc-900 dark:text-zinc-100",
+      border: "border-emerald-300/40 dark:border-emerald-700/40", cardBg: "bg-emerald-50/40 dark:bg-emerald-950/10",
+      bar: "bg-emerald-500",
       badge: diffDays === 0 ? "HOJE" : diffDays === 1 ? "AMANHÃ" : `${diffDays}d`,
-      badgeStyle: "text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800",
+      badgeStyle: "",
     };
     if (diffDays <= 30) return {
-      dateBg: "", dateText: "text-zinc-500 dark:text-zinc-400",
-      border: "border-zinc-200/60 dark:border-zinc-800/40", cardBg: "bg-white dark:bg-zinc-900",
-      bar: "bg-emerald-300/60 dark:bg-emerald-600/40", badge: null, badgeStyle: "",
+      dateBg: "", dateText: "text-zinc-900/90 dark:text-zinc-100/85",
+      border: "border-zinc-200/60 dark:border-zinc-800/60", cardBg: "bg-white dark:bg-zinc-900",
+      bar: "bg-emerald-500/90", badge: null, badgeStyle: "",
     };
-    return { dateBg: "", dateText: "text-zinc-400 dark:text-zinc-500", border: "border-zinc-200/50 dark:border-zinc-800/40", cardBg: "bg-white dark:bg-zinc-900", bar: "bg-emerald-200/50 dark:bg-emerald-700/30", badge: null, badgeStyle: "" };
+    return { dateBg: "", dateText: "text-zinc-900/80 dark:text-zinc-100/75", border: "border-zinc-200/40 dark:border-zinc-800/40", cardBg: "bg-white dark:bg-zinc-900", bar: "bg-emerald-500/80", badge: null, badgeStyle: "" };
   }
 
   if (defensorNome === "Dra. Juliane") {
+    // Violet — 100-90-80
     if (diffDays <= 7) return {
-      dateBg: "bg-violet-50/50 dark:bg-violet-950/10", dateText: "text-violet-600/70 dark:text-violet-400/60",
-      border: "border-zinc-200/80 dark:border-zinc-800/60", cardBg: "bg-white dark:bg-zinc-900",
-      bar: "bg-violet-400/70",
+      dateBg: "bg-violet-500/10", dateText: "text-zinc-900 dark:text-zinc-100",
+      border: "border-violet-300/40 dark:border-violet-700/40", cardBg: "bg-violet-50/40 dark:bg-violet-950/10",
+      bar: "bg-violet-500",
       badge: diffDays === 0 ? "HOJE" : diffDays === 1 ? "AMANHÃ" : `${diffDays}d`,
-      badgeStyle: "text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800",
+      badgeStyle: "",
     };
     if (diffDays <= 30) return {
-      dateBg: "", dateText: "text-zinc-500 dark:text-zinc-400",
-      border: "border-zinc-200/60 dark:border-zinc-800/40", cardBg: "bg-white dark:bg-zinc-900",
-      bar: "bg-violet-300/60 dark:bg-violet-600/40", badge: null, badgeStyle: "",
+      dateBg: "", dateText: "text-zinc-900/90 dark:text-zinc-100/85",
+      border: "border-zinc-200/60 dark:border-zinc-800/60", cardBg: "bg-white dark:bg-zinc-900",
+      bar: "bg-violet-500/90", badge: null, badgeStyle: "",
     };
-    return { dateBg: "", dateText: "text-zinc-400 dark:text-zinc-500", border: "border-zinc-200/50 dark:border-zinc-800/40", cardBg: "bg-white dark:bg-zinc-900", bar: "bg-violet-200/50 dark:bg-violet-700/30", badge: null, badgeStyle: "" };
+    return { dateBg: "", dateText: "text-zinc-900/80 dark:text-zinc-100/75", border: "border-zinc-200/40 dark:border-zinc-800/40", cardBg: "bg-white dark:bg-zinc-900", bar: "bg-violet-500/80", badge: null, badgeStyle: "" };
   }
 
-  // Não atribuído — tons neutros com leve acento
+  // Não atribuído — tons neutros
   if (diffDays <= 7) return {
     dateBg: "bg-zinc-100/50 dark:bg-zinc-800/30", dateText: "text-zinc-600 dark:text-zinc-300",
     border: "border-zinc-200/80 dark:border-zinc-800/60", cardBg: "bg-white dark:bg-zinc-900",
     bar: "bg-zinc-400/60",
     badge: diffDays === 0 ? "HOJE" : diffDays === 1 ? "AMANHÃ" : `${diffDays}d`,
-    badgeStyle: "text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800",
+    badgeStyle: "",
   };
   if (diffDays <= 30) return {
     dateBg: "", dateText: "text-zinc-500 dark:text-zinc-400",
@@ -486,27 +476,26 @@ function SessionCard({ sessao, onAtribuir, onInativar, onReativar, isUpdating, m
       (isCancelled || isAdiada) && !muted && "opacity-60",
       isUnassigned && !muted && !isCancelled && "ring-1 ring-zinc-300/30 dark:ring-zinc-600/20"
     )}>
-      {/* Left color bar — defensor or proximity */}
+      {/* Left color bar — same color as date number */}
       <div className={cn(
-        "w-0.5 h-7 rounded-full shrink-0",
-        defensorAtual ? defensorAtual.bg
-          : isUnassigned && !muted && proximity ? proximity.bar
-          : "bg-zinc-200/60 dark:bg-zinc-700/40"
+        "w-1 h-10 rounded-full shrink-0",
+        muted ? "bg-zinc-200 dark:bg-zinc-700"
+          : proximity?.bar || "bg-zinc-200 dark:bg-zinc-700"
       )} />
 
-      {/* Date block */}
+      {/* Date block — bar and number share same color family */}
       <div className={cn(
         "flex flex-col items-center w-10 shrink-0 rounded-lg py-0.5",
         !muted && proximity?.dateBg
       )}>
-        <span className="text-[9px] uppercase text-zinc-400 leading-none font-medium">{diaSemana}</span>
+        <span className={cn("text-[9px] uppercase leading-none font-medium opacity-70", muted ? "text-zinc-400" : proximity?.dateText || "text-zinc-400")}>{diaSemana}</span>
         <span className={cn(
-          "text-base font-bold tabular-nums leading-tight",
+          "text-lg font-bold tabular-nums leading-tight",
           muted ? "text-zinc-400" : proximity?.dateText || "text-zinc-800 dark:text-zinc-200"
         )}>
           {dia}
         </span>
-        <span className="text-[9px] text-zinc-400 capitalize">{mesAbrev}</span>
+        <span className={cn("text-[9px] capitalize opacity-60", muted ? "text-zinc-400" : proximity?.dateText || "text-zinc-400")}>{mesAbrev}</span>
       </div>
 
       {/* Info */}
@@ -524,7 +513,7 @@ function SessionCard({ sessao, onAtribuir, onInativar, onReativar, isUpdating, m
             {sessao.assistidoNome || "Réu não informado"}
           </Link>
           {proximity?.badge && (
-            <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0", proximity.badgeStyle)}>
+            <span className="text-[9px] font-medium text-zinc-400 dark:text-zinc-500 shrink-0">
               {proximity.badge}
             </span>
           )}
@@ -566,20 +555,22 @@ function SessionCard({ sessao, onAtribuir, onInativar, onReativar, isUpdating, m
           <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/60 dark:border-zinc-700/40">
             {DEFENSORES.map((def) => {
               const isActive = sessao.defensorNome === def.nome;
+              // Switch opacity matches card proximity: 100-80-60
+              const switchBg = isActive && proximity ? proximity.bar : isActive ? def.bg : "";
               return (
                 <button
                   key={def.nome}
                   onClick={() => onAtribuir(sessao.id as number, isActive ? null : def.nome)}
                   disabled={isUpdating}
                   className={cn(
-                    "flex items-center gap-1 py-1 rounded-md text-[10px] font-medium whitespace-nowrap transition-all duration-200 cursor-pointer",
+                    "flex items-center gap-1 py-1 rounded-md text-[10px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
                     isActive
-                      ? cn(def.bg, "text-white px-2")
-                      : "px-1.5 text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700/50",
+                      ? cn(switchBg, def.text, "shadow-sm px-2 font-bold")
+                      : "px-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700",
                     isUpdating && "opacity-50 pointer-events-none"
                   )}
                 >
-                  <Gavel className={cn("w-3 h-3 shrink-0", isActive ? def.icon : "opacity-40")} />
+                  <Gavel className={cn("w-3 h-3 shrink-0", isActive ? "" : "opacity-40")} />
                   {isActive && <span>{def.short}</span>}
                 </button>
               );
