@@ -243,7 +243,7 @@ export default function AssistidosPage() {
   );
   const [atribuicaoFilter, setAtribuicaoFilter] = useState<string>(searchParams.get("atribuicao") || "all");
   const [viewMode, setViewMode] = useState<"grid" | "list">(
-    (searchParams.get("view") as "grid" | "list") || "grid"
+    (searchParams.get("view") as "grid" | "list") || "list"
   );
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "all");
@@ -806,14 +806,13 @@ export default function AssistidosPage() {
   return (
     <TooltipProvider>
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-      {/* Header Compacto */}
-      <div className="flex items-center justify-between px-5 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-2 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shrink-0">
-            <Users className="w-3.5 h-3.5 text-white dark:text-zinc-900" />
+          <div className="w-8 h-8 rounded-lg bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center shrink-0">
+            <Users className="w-4 h-4 text-white dark:text-zinc-900" />
           </div>
           <h1 className="font-serif text-base font-semibold text-zinc-900 dark:text-zinc-50">Assistidos</h1>
-          <span className="hidden md:inline text-[10px] text-zinc-400 font-mono ml-1">/ buscar · n novo · g grid · t tabela</span>
         </div>
 
         {/* Busca + Acoes */}
@@ -1073,20 +1072,33 @@ export default function AssistidosPage() {
       {/* === Filter Bar: stats left | atribuição center | presets right === */}
       {!showNaoIdentificados && (
         <div ref={statsRef} className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-          {/* RMS toggle */}
-          <button
-            onClick={() => toggleVerRMS({ verRMS: !verRMS })}
-            aria-pressed={verRMS}
-            className={cn(
-              "flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors shrink-0",
-              verRMS
-                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
-                : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            )}
-          >
-            <MapPin className="h-3 w-3" />
-            {verRMS ? "RMS" : "Comarca"}
-          </button>
+          {/* RMS toggle — pill switch */}
+          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60 shrink-0">
+            <button
+              onClick={() => verRMS && toggleVerRMS({ verRMS: false })}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all duration-200",
+                !verRMS
+                  ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
+                  : "text-zinc-400 dark:text-zinc-500"
+              )}
+            >
+              <MapPin className="w-3 h-3" />
+              Comarca
+            </button>
+            <button
+              onClick={() => !verRMS && toggleVerRMS({ verRMS: true })}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all duration-200",
+                verRMS
+                  ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
+                  : "text-zinc-400 dark:text-zinc-500"
+              )}
+            >
+              <MapPin className="w-3 h-3" />
+              RMS
+            </button>
+          </div>
 
           {/* Atribuição switches */}
           <AtribuicaoPills
@@ -1115,7 +1127,7 @@ export default function AssistidosPage() {
           <div className="flex-1 min-w-2" />
 
           {/* Smart presets — icon-only, pushed right */}
-          <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/60 shrink-0">
+          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60 shrink-0">
             {[
               { id: "meus_presos", tip: "Presos", icon: Lock, count: stats.presos },
               { id: "audiencias_semana", tip: "Audiências esta semana", icon: Calendar, count: stats.audienciasSemana },
@@ -1140,10 +1152,10 @@ export default function AssistidosPage() {
                         }
                       }}
                       className={cn(
-                        "relative inline-flex items-center justify-center w-7 h-7 rounded-md transition-all shrink-0",
+                        "relative inline-flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 shrink-0 cursor-pointer",
                         active
-                          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                          : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700"
+                          ? "bg-emerald-600 text-white shadow-sm"
+                          : "text-zinc-400 dark:text-zinc-500"
                       )}
                     >
                       <PresetIcon className="w-3.5 h-3.5" />
@@ -1173,62 +1185,15 @@ export default function AssistidosPage() {
       )}
 
 
-      {/* Recent Assistidos (Feature #6) */}
-      {recentAssistidos.length > 0 && !showNaoIdentificados && (
-        <div className="flex items-center gap-3 px-1">
-          <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium shrink-0">Recentes</span>
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-            {recentAssistidos.map((a) => {
-              const attrs = a.atribuicoes || a.areas || [];
-              const primaryAttrValue = attrs.length > 0
-                ? ATRIBUICAO_OPTIONS.find(o =>
-                    o.value.toUpperCase() === attrs[0].toUpperCase().replace(/_/g, ' ') ||
-                    attrs[0].toUpperCase().replace(/_/g, ' ').includes(o.value.toUpperCase())
-                  )?.value || null
-                : null;
-
-              return (
-                <Link
-                  key={a.id}
-                  href={`/admin/assistidos/${a.id}`}
-                  className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors shrink-0 group"
-                >
-                  <AssistidoAvatar
-                    nome={a.nome}
-                    photoUrl={a.photoUrl}
-                    size="xs"
-                    atribuicao={primaryAttrValue}
-                    statusPrisional={a.statusPrisional}
-                  />
-                  <span className="text-[10px] font-medium text-zinc-600 dark:text-zinc-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors max-w-[80px] truncate">
-                    {a.nome.split(" ")[0]}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Card de Listagem */}
-      <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark">
-        {/* Header with count + sort + view toggle */}
-        <div className="px-5 py-3 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/50">
+      <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden">
+        {/* Header — count + sort + view */}
+        <div className="px-4 py-2 border-b border-zinc-100 dark:border-zinc-800/60">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                <Users className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
-              </div>
-              <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                {filteredAssistidos.length} assistido{filteredAssistidos.length !== 1 && 's'}
-              </span>
-              {stats.prazosUrgentes > 0 && (
-                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 text-[10px] font-medium border border-amber-200/60 dark:border-amber-800/30">
-                  <Clock className="w-3 h-3" />
-                  {stats.prazosUrgentes} urgente{stats.prazosUrgentes > 1 ? 's' : ''}
-                </span>
-              )}
-            </div>
+            <span className="text-xs text-zinc-400 tabular-nums">
+              {filteredAssistidos.length} resultado{filteredAssistidos.length !== 1 && 's'}
+            </span>
             <div className="flex items-center gap-2">
               {/* Sort */}
               <div className="flex items-center gap-1.5">

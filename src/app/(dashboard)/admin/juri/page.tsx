@@ -118,7 +118,7 @@ export default function JuriPage() {
         {/* Row 2: Tabs + contextual controls */}
         <div className="flex items-center justify-between">
           {/* Tabs */}
-          <div className="flex items-center gap-0.5 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60">
+          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
             {TABS.map((tab) => {
               const isActive = activeTab === tab.key;
               const Icon = tab.icon;
@@ -127,13 +127,13 @@ export default function JuriPage() {
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer",
+                    "flex items-center gap-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
                     isActive
-                      ? "bg-zinc-500 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
-                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700"
+                      ? "px-3 py-1.5 bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
+                      : "px-2.5 py-1.5 text-zinc-400 dark:text-zinc-500"
                   )}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className="w-[15px] h-[15px]" />
                   {isActive && <span>{tab.label}</span>}
                 </button>
               );
@@ -142,12 +142,12 @@ export default function JuriPage() {
 
           {/* Year selector (Pauta tab) */}
           {activeTab === "pauta" && (
-            <div className="flex items-center gap-0.5 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60">
-              <button onClick={() => setAno(ano - 1)} className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-colors">
+            <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
+              <button onClick={() => setAno(ano - 1)} className="p-1.5 rounded-full hover:bg-white dark:hover:bg-zinc-700 transition-colors">
                 <ChevronLeft className="w-3.5 h-3.5 text-zinc-500" />
               </button>
               <span className="px-3 text-sm font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">{ano}</span>
-              <button onClick={() => setAno(ano + 1)} className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-colors">
+              <button onClick={() => setAno(ano + 1)} className="p-1.5 rounded-full hover:bg-white dark:hover:bg-zinc-700 transition-colors">
                 <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
               </button>
             </div>

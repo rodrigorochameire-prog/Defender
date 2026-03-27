@@ -383,28 +383,28 @@ export const ATRIBUICAO_COLORS = {
 // Mapeamento de cores sólidas por atribuição (para estilos inline)
 export const SOLID_COLOR_MAP: Record<string, string> = {
   all: "#71717a",           // zinc-500
-  VVD: "#f59e0b",           // amber-500
-  "Violência Doméstica": "#f59e0b",
-  VVD_CAMACARI: "#f59e0b",
-  VIOLENCIA_DOMESTICA: "#f59e0b",
-  JURI: "#10b981",          // emerald-500
-  "Tribunal do Júri": "#10b981",
-  JURI_CAMACARI: "#10b981",
-  "Grupo Especial do Júri": "#f97316", // orange-500
-  GRUPO_JURI: "#f97316",
-  EXECUCAO: "#3b82f6",      // blue-500
-  EXECUCAO_PENAL: "#3b82f6",
-  "Execução Penal": "#3b82f6",
-  SUBSTITUICAO: "#f43f5e",  // rose-500
-  CRIMINAL: "#f43f5e",
-  "Criminal Geral": "#f43f5e",
-  Substituição: "#f43f5e",
-  SUBSTITUICAO_CIVEL: "#f97316", // orange-500
-  CIVEL: "#f97316",
-  FAMILIA: "#f97316",
-  FAZENDA_PUBLICA: "#f97316",
-  CURADORIA: "#8b5cf6",     // violet-500
-  "Curadoria Especial": "#8b5cf6",
+  VVD: "#eab308",           // yellow-500 (mais quente e suave que amber-500)
+  "Violência Doméstica": "#eab308",
+  VVD_CAMACARI: "#eab308",
+  VIOLENCIA_DOMESTICA: "#eab308",
+  JURI: "#34d399",          // emerald-400 (mais suave, mantém vivacidade)
+  "Tribunal do Júri": "#34d399",
+  JURI_CAMACARI: "#34d399",
+  "Grupo Especial do Júri": "#fb923c", // orange-400
+  GRUPO_JURI: "#fb923c",
+  EXECUCAO: "#60a5fa",      // blue-400 (mais suave e equilibrado)
+  EXECUCAO_PENAL: "#60a5fa",
+  "Execução Penal": "#60a5fa",
+  SUBSTITUICAO: "#fb7185",  // rose-400 (suave e elegante)
+  CRIMINAL: "#fb7185",
+  "Criminal Geral": "#fb7185",
+  Substituição: "#fb7185",
+  SUBSTITUICAO_CIVEL: "#fb923c", // orange-400
+  CIVEL: "#fb923c",
+  FAMILIA: "#fb923c",
+  FAZENDA_PUBLICA: "#fb923c",
+  CURADORIA: "#a78bfa",     // violet-400 (mais suave)
+  "Curadoria Especial": "#a78bfa",
 };
 
 // Mapeamento de gradientes pastel suaves para avatares

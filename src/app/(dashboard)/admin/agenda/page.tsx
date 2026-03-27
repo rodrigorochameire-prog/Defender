@@ -160,11 +160,11 @@ import {
 // Cores HEX por chave de filtro
 const FILTER_HEX: Record<string, string> = {
   all: "#71717a",
-  VVD: "#f59e0b",
-  JURI: "#10b981",
-  EXECUCAO: "#3b82f6",
-  SUBSTITUICAO: "#f43f5e",
-  SUBSTITUICAO_CIVEL: "#f97316",
+  VVD: "#eab308",
+  JURI: "#34d399",
+  EXECUCAO: "#60a5fa",
+  SUBSTITUICAO: "#fb7185",
+  SUBSTITUICAO_CIVEL: "#fb923c",
 };
 
 // Opções de filtro para a agenda (sem duplicatas)
@@ -504,20 +504,30 @@ function FilterPill({
       onClick={onClick}
       title={label}
       className={cn(
-        "flex items-center gap-1.5 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap transition-all duration-200 border cursor-pointer",
-        isActive ? "px-2.5 shadow-sm" : "px-1.5 hover:shadow-sm"
+        "flex items-center gap-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
+        isActive
+          ? "px-3.5 py-1.5 shadow-sm text-white"
+          : "px-2 py-1.5"
       )}
       style={
         isActive
-          ? { backgroundColor: `${color}12`, borderColor: `${color}50`, color }
-          : { backgroundColor: "transparent", borderColor: "transparent", color: `${color}99` }
+          ? { backgroundColor: color }
+          : { color: "#9ca3af" }
       }
     >
-      <span className="flex-shrink-0 [&>svg]:w-3.5 [&>svg]:h-3.5">{config.icon}</span>
-      {/* Label visible only when selected */}
+      <span className="flex-shrink-0 [&>svg]:w-[16px] [&>svg]:h-[16px]" style={{ color: isActive ? "#fff" : "#71717a" }}>{config.icon}</span>
       {isActive && <span>{label}</span>}
       {count > 0 && (
-        <span className="text-[9px] font-mono tabular-nums opacity-50">{count}</span>
+        <span
+          className="text-[9px] font-bold tabular-nums px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
+          style={
+            isActive
+              ? { backgroundColor: "rgba(255,255,255,0.25)", color: "#fff" }
+              : { color: "#9ca3af" }
+          }
+        >
+          {count}
+        </span>
       )}
     </button>
   );
@@ -1318,7 +1328,32 @@ export default function AgendaPage() {
         headerSlot
       )}
       {/* Header unificado — stats + atribuição + busca + filtros + view + ações */}
-      <div className="px-3 md:px-4 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
+      <div className="px-5 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
+        {/* Title row */}
+        <div className="flex items-center justify-between mb-2.5">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-[10px] bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center">
+              <CalendarIcon className="w-[18px] h-[18px] text-white dark:text-zinc-900" />
+            </div>
+            <div>
+              <h1 className="font-serif text-[17px] font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">
+                Agenda
+              </h1>
+              <p className="text-[10px] text-zinc-400">
+                Audiências, prazos e compromissos
+              </p>
+            </div>
+          </div>
+          {/* New event — primary action */}
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-100 dark:hover:bg-emerald-600 text-white dark:text-zinc-900 dark:hover:text-white text-xs font-semibold transition-colors cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Novo evento</span>
+          </button>
+        </div>
+        {/* Toolbar row */}
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
           {/* Mobile: Atribuição dropdown button */}
           <div className="flex sm:hidden shrink-0">
@@ -1366,7 +1401,7 @@ export default function AgendaPage() {
           </div>
 
           {/* Desktop: Atribuição pills (icon-only, text when selected) */}
-          <div className="hidden sm:flex items-center gap-1.5">
+          <div className="hidden sm:inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
             {Object.entries(ATRIBUICAO_CONFIG).map(([key, config]) => (
               <FilterPill
                 key={key}
@@ -1407,10 +1442,10 @@ export default function AgendaPage() {
             <button
               onClick={() => { setIsSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
               className={cn(
-                "h-7 w-7 p-0 flex items-center justify-center rounded-md transition-colors cursor-pointer shrink-0",
+                "h-8 w-8 p-0 flex items-center justify-center rounded-lg transition-colors cursor-pointer shrink-0",
                 searchTerm
                   ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400"
-                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  : "text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400"
               )}
               title="Buscar"
             >
@@ -1423,10 +1458,10 @@ export default function AgendaPage() {
             <DropdownMenuTrigger asChild>
               <button
                 className={cn(
-                  "relative h-7 w-7 p-0 flex items-center justify-center rounded-md transition-colors cursor-pointer shrink-0",
+                  "relative h-8 w-8 p-0 flex items-center justify-center rounded-lg transition-colors cursor-pointer shrink-0",
                   (selectedTipo || selectedDefensor)
                     ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400"
-                    : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    : "text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400"
                 )}
                 title="Filtros"
               >
@@ -1506,7 +1541,7 @@ export default function AgendaPage() {
               setViewMode(nextMode);
               setSelectedPeriodo(null);
             }}
-            className="h-7 w-7 p-0 flex items-center justify-center rounded-md text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
+            className="h-8 w-8 p-0 flex items-center justify-center rounded-lg text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer shrink-0"
             title={viewMode === "calendar" ? "Mês (clique para Semana)" : viewMode === "week" ? "Semana (clique para Lista)" : "Lista (clique para Mês)"}
           >
             {viewMode === "calendar" ? <Grid3x3 className="w-3.5 h-3.5" /> : viewMode === "week" ? <CalendarDays className="w-3.5 h-3.5" /> : <List className="w-3.5 h-3.5" />}
@@ -1515,7 +1550,7 @@ export default function AgendaPage() {
           {/* Overflow menu — settings + imports/exports */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="h-7 w-7 p-0 flex items-center justify-center rounded-md text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer shrink-0">
+              <button className="h-8 w-8 p-0 flex items-center justify-center rounded-lg text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer shrink-0">
                 <MoreHorizontal className="w-3.5 h-3.5" />
               </button>
             </DropdownMenuTrigger>
@@ -1557,19 +1592,11 @@ export default function AgendaPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* New event — icon only */}
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="h-7 w-7 p-0 flex items-center justify-center rounded-md bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white transition-colors cursor-pointer shrink-0"
-            title="Novo evento"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
         </div>
       </div>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <div className="p-3 md:p-4 space-y-3">
+      <div className="px-5 md:px-8 py-3 md:py-4 space-y-3">
 
       {/* ==========================================
           VISUALIZAÇÃO PRINCIPAL

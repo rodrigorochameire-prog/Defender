@@ -162,26 +162,6 @@ export function AssistidoTableView({
                         )} />
                         {statusCfg?.label || "Solto"}
                       </span>
-                      {/* Atribuição dot-label — soft colored */}
-                      {atribuicoesUnicas.slice(0, 2).map((attr, idx) => {
-                        const normalizedAttr = attr.toUpperCase().replace(/_/g, " ");
-                        const option = ATRIBUICAO_OPTIONS.find(
-                          (o) =>
-                            o.value.toUpperCase() === normalizedAttr ||
-                            o.label.toUpperCase().includes(normalizedAttr) ||
-                            normalizedAttr.includes(o.value.toUpperCase()),
-                        );
-                        const dotColor = option ? SOLID_COLOR_MAP[option.value] || "#a1a1aa" : "#a1a1aa";
-                        return (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center gap-1 text-[10px] font-medium text-zinc-500 dark:text-zinc-400"
-                          >
-                            <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
-                            {option?.shortLabel || attr.substring(0, 5)}
-                          </span>
-                        );
-                      })}
                       {/* Tempo preso inline */}
                       {isPreso && tempoPreso && (
                         <span className="text-[10px] font-mono tabular-nums text-rose-400">
@@ -328,7 +308,8 @@ export function AssistidoTableView({
               {expandedId === assistido.id && (
                 <div className="border-t border-zinc-100 dark:border-zinc-800 animate-in slide-in-from-top-1 duration-200">
                   <div className="px-6 py-4 bg-zinc-50/30 dark:bg-zinc-800/20 rounded-b-xl">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+                      {/* Col 1: Dados Pessoais */}
                       <div className="space-y-1.5">
                         <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium mb-2">Dados Pessoais</p>
                         {assistido.cpf && (
@@ -337,13 +318,61 @@ export function AssistidoTableView({
                         {assistido.dataNascimento && (
                           <p className="text-xs"><span className="text-zinc-400">Nasc.: </span><span className="text-zinc-600 dark:text-zinc-300">{format(parseISO(assistido.dataNascimento), "dd/MM/yyyy")}</span></p>
                         )}
+                        {assistido.nomeMae && (
+                          <p className="text-xs"><span className="text-zinc-400">Mãe: </span><span className="text-zinc-600 dark:text-zinc-300">{assistido.nomeMae}</span></p>
+                        )}
+                        {assistido.naturalidade && (
+                          <p className="text-xs"><span className="text-zinc-400">Natural.: </span><span className="text-zinc-600 dark:text-zinc-300">{assistido.naturalidade}</span></p>
+                        )}
                         {assistido.endereco && (
-                          <p className="text-xs"><span className="text-zinc-400">End.: </span><span className="text-zinc-600 dark:text-zinc-300 truncate">{assistido.endereco}</span></p>
+                          <p className="text-xs"><span className="text-zinc-400">End.: </span><span className="text-zinc-600 dark:text-zinc-300">{assistido.endereco}</span></p>
                         )}
                         {isPreso && assistido.unidadePrisional && (
                           <p className="text-xs flex items-center gap-1"><MapPin className="w-3 h-3 text-rose-500" /><span className="text-rose-600 dark:text-rose-400">{assistido.unidadePrisional}</span></p>
                         )}
                       </div>
+
+                      {/* Col 2: Contato / WhatsApp */}
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium mb-2">Contato</p>
+                        {telefone && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-3 h-3 text-zinc-400" />
+                            <a href={`tel:${telefone.replace(/\D/g, "")}`} className="text-xs text-zinc-600 dark:text-zinc-300 hover:text-emerald-600 transition-colors" onClick={(e) => e.stopPropagation()}>
+                              {telefone}
+                            </a>
+                          </div>
+                        )}
+                        {assistido.telefoneContato && assistido.telefoneContato !== assistido.telefone && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-3 h-3 text-zinc-400" />
+                            <span className="text-xs text-zinc-500">{assistido.telefoneContato}</span>
+                            {assistido.nomeContato && <span className="text-[10px] text-zinc-400">({assistido.nomeContato})</span>}
+                          </div>
+                        )}
+                        {whatsappUrl && (
+                          <div className="flex items-center gap-2 pt-1">
+                            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-emerald-600 hover:text-emerald-700 transition-colors" onClick={(e) => e.stopPropagation()}>
+                              <MessageCircle className="w-3.5 h-3.5" />
+                              WhatsApp externo
+                            </a>
+                          </div>
+                        )}
+                        {telefone && (
+                          <div className="pt-0.5">
+                            <Link
+                              href={`/admin/whatsapp?phone=${telefone.replace(/\D/g, "")}`}
+                              className="flex items-center gap-1.5 text-xs text-emerald-600 hover:text-emerald-700 transition-colors"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MessageCircle className="w-3.5 h-3.5" />
+                              Conversa no OMBUDS
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Col 3: Processo */}
                       <div className="space-y-1.5">
                         <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium mb-2">Processo</p>
                         {assistido.crimePrincipal && (
@@ -352,29 +381,23 @@ export function AssistidoTableView({
                         {assistido.numeroProcesso && (
                           <p className="text-xs"><span className="text-zinc-400">Nº: </span><span className="font-mono tabular-nums text-zinc-500">{assistido.numeroProcesso}</span></p>
                         )}
-                        {telefone && (
-                          <div className="flex items-center gap-2 pt-1">
-                            <Phone className="w-3 h-3 text-zinc-400" />
-                            <span className="text-xs text-zinc-600 dark:text-zinc-300">{telefone}</span>
-                            {whatsappUrl && (
-                              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-emerald-600" onClick={(e) => e.stopPropagation()}>
-                                <MessageCircle className="w-3 h-3" />
-                              </a>
-                            )}
-                          </div>
+                        {assistido.observacoes && (
+                          <p className="text-xs text-zinc-400 truncate max-w-[200px]" title={assistido.observacoes}>{assistido.observacoes}</p>
                         )}
                       </div>
+
+                      {/* Col 4: Ações */}
                       <div className="space-y-1.5">
                         <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium mb-2">Ações</p>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <Link href={`/admin/assistidos/${assistido.id}`} onClick={(e) => e.stopPropagation()}>
                             <Button variant="outline" size="sm" className="h-7 px-2.5 text-[10px] rounded-lg border-zinc-200 dark:border-zinc-700">
-                              <Eye className="h-3 w-3 mr-1" />Ver Perfil
+                              <Eye className="h-3 w-3 mr-1" />Perfil
                             </Button>
                           </Link>
                           <Link href={`/admin/demandas/nova?assistido=${assistido.id}`} onClick={(e) => e.stopPropagation()}>
                             <Button variant="outline" size="sm" className="h-7 px-2.5 text-[10px] rounded-lg border-zinc-200 dark:border-zinc-700">
-                              <Plus className="h-3 w-3 mr-1" />Nova Demanda
+                              <Plus className="h-3 w-3 mr-1" />Demanda
                             </Button>
                           </Link>
                           {assistido.driveFolderId && (

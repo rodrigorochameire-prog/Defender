@@ -40,16 +40,16 @@ export function FilterSectionAssistidos({
       {/* Sort pill group */}
       <div className="flex items-center gap-1.5">
         <span className="text-[10px] text-zinc-400 mr-0.5">Ordenar:</span>
-        <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
+        <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
           {SORT_OPTIONS.map((opt) => (
             <button
               key={opt.id}
               onClick={() => setSortBy(opt.id)}
               className={cn(
-                "px-2.5 py-1 text-[10px] font-medium rounded-md transition-all",
+                "px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all duration-200 cursor-pointer",
                 sortBy === opt.id
-                  ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
+                  : "text-zinc-400 dark:text-zinc-500"
               )}
             >
               {opt.label}
@@ -77,30 +77,30 @@ export function FilterSectionAssistidos({
           </button>
         </ProcessingQueuePanel>
 
-        <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
+        <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
           <button
             onClick={() => setViewMode("grid")}
             className={cn(
-              "flex items-center justify-center w-7 h-7 rounded-md transition-all",
+              "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 cursor-pointer",
               viewMode === "grid"
-                ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
+                : "text-zinc-400 dark:text-zinc-500"
             )}
             title="Grade"
           >
-            <LayoutGrid className="w-3.5 h-3.5" />
+            <LayoutGrid className="w-[15px] h-[15px]" />
           </button>
           <button
             onClick={() => setViewMode("list")}
             className={cn(
-              "flex items-center justify-center w-7 h-7 rounded-md transition-all",
+              "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 cursor-pointer",
               viewMode === "list"
-                ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
+                : "text-zinc-400 dark:text-zinc-500"
             )}
             title="Lista"
           >
-            <List className="w-3.5 h-3.5" />
+            <List className="w-[15px] h-[15px]" />
           </button>
         </div>
       </div>

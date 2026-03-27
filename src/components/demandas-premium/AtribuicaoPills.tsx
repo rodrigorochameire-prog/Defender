@@ -4,9 +4,10 @@ import React from "react";
 import { X } from "lucide-react";
 import { Gavel, Target, Home, Lock, RefreshCw, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SOLID_COLOR_MAP } from "@/lib/config/atribuicoes";
 
 // Ícones por atribuição
-const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+const ICONS: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
   "Tribunal do Júri": Gavel,
   "Grupo Especial do Júri": Target,
   "Violência Doméstica": Home,
@@ -15,17 +16,17 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "Curadoria Especial": Shield,
 };
 
-// Cores HEX por atribuição
+// Re-export do master config para compatibilidade com consumers existentes
 export const ATRIBUICAO_COLORS: Record<string, string> = {
-  "Tribunal do Júri": "#22c55e",
-  "Grupo Especial do Júri": "#f97316",
-  "Violência Doméstica": "#f59e0b",
-  "Execução Penal": "#3b82f6",
-  "Substituição Criminal": "#8b5cf6",
-  "Curadoria Especial": "#71717a",
+  "Tribunal do Júri": SOLID_COLOR_MAP["Tribunal do Júri"] || SOLID_COLOR_MAP.JURI,
+  "Grupo Especial do Júri": SOLID_COLOR_MAP["Grupo Especial do Júri"] || SOLID_COLOR_MAP.GRUPO_JURI,
+  "Violência Doméstica": SOLID_COLOR_MAP["Violência Doméstica"] || SOLID_COLOR_MAP.VVD,
+  "Execução Penal": SOLID_COLOR_MAP["Execução Penal"] || SOLID_COLOR_MAP.EXECUCAO,
+  "Substituição Criminal": SOLID_COLOR_MAP.SUBSTITUICAO,
+  "Curadoria Especial": SOLID_COLOR_MAP["Curadoria Especial"] || SOLID_COLOR_MAP.CURADORIA,
 };
 
-const DEFAULT_HEX = "#71717a";
+const DEFAULT_HEX = SOLID_COLOR_MAP.all || "#71717a";
 
 interface AtribuicaoPillsProps {
   options: Array<{ value: string; label: string }>;
@@ -70,8 +71,8 @@ export function AtribuicaoPills({
 
   return (
     <div className={className ?? "flex items-center gap-1"}>
-      {/* Switch container */}
-      <div className="flex items-center gap-0.5 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60">
+      {/* Switch container — segmented control style */}
+      <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-zinc-200/60 dark:bg-zinc-800 border border-zinc-300/70 dark:border-zinc-700/60">
         {filtered.map((opt) => {
           const isActive = selectedValues.includes(opt.value);
           const hex = ATRIBUICAO_COLORS[opt.label] || DEFAULT_HEX;
@@ -84,33 +85,31 @@ export function AtribuicaoPills({
               onClick={() => handleClick(opt.value)}
               title={opt.label}
               className={cn(
-                "flex items-center gap-1.5 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all duration-200 cursor-pointer border",
+                "flex items-center gap-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
                 isActive
-                  ? "px-2.5 shadow-sm"
-                  : "px-1.5 hover:shadow-sm"
+                  ? "px-3 py-1.5 shadow-sm text-white"
+                  : "px-2 py-1.5"
               )}
               style={
                 isActive
-                  ? { backgroundColor: `${hex}18`, borderColor: `${hex}40`, color: hex }
-                  : { backgroundColor: "transparent", borderColor: "transparent", color: `${hex}80` }
+                  ? { backgroundColor: hex }
+                  : { color: "#9ca3af" }
               }
             >
               {Icon && (
                 <Icon
-                  className="w-3.5 h-3.5 flex-shrink-0 transition-colors"
-                  style={{ color: isActive ? hex : undefined }}
+                  className="w-[16px] h-[16px] flex-shrink-0"
+                  style={{ color: isActive ? "#fff" : "#71717a" }}
                 />
               )}
-              {/* Label expande quando selecionado */}
               {isActive && <span>{opt.label}</span>}
-              {/* Count badge */}
               {count !== undefined && (
                 <span
-                  className="text-[9px] font-semibold tabular-nums px-1 py-0.5 rounded-full min-w-[18px] text-center"
+                  className="text-[9px] font-bold tabular-nums px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
                   style={
                     isActive
-                      ? { backgroundColor: `${hex}20`, color: hex }
-                      : { backgroundColor: `${hex}15`, color: `${hex}90` }
+                      ? { backgroundColor: "rgba(255,255,255,0.25)", color: "#fff" }
+                      : { color: "#9ca3af" }
                   }
                 >
                   {count}

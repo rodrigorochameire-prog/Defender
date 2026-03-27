@@ -1195,28 +1195,28 @@ function FilterSectionCasos({
           />
         </div>
 
-        <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
+        <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
           <button
             onClick={() => setViewMode("grid")}
             className={cn(
-              "flex items-center gap-1 px-2.5 h-7 text-xs font-medium rounded-md transition-all",
+              "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 cursor-pointer",
               viewMode === "grid"
-                ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                : "text-zinc-500 hover:text-zinc-700"
+                ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
+                : "text-zinc-400 dark:text-zinc-500"
             )}
           >
-            <LayoutGrid className="w-3.5 h-3.5" />
+            <LayoutGrid className="w-[15px] h-[15px]" />
           </button>
           <button
             onClick={() => setViewMode("list")}
             className={cn(
-              "flex items-center gap-1 px-2.5 h-7 text-xs font-medium rounded-md transition-all",
+              "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 cursor-pointer",
               viewMode === "list"
-                ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                : "text-zinc-500 hover:text-zinc-700"
+                ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
+                : "text-zinc-400 dark:text-zinc-500"
             )}
           >
-            <List className="w-3.5 h-3.5" />
+            <List className="w-[15px] h-[15px]" />
           </button>
         </div>
       </div>

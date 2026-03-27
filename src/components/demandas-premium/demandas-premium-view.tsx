@@ -1,6 +1,7 @@
 // @ts-nocheck
 "use client";
 
+import { cn } from "@/lib/utils";
 import { DemandaCreateModal, type DemandaFormData } from "@/components/demandas-premium/demanda-create-modal";
 import { ConfigModal } from "@/components/demandas-premium/config-modal";
 import { FilterSectionsCompact } from "@/components/demandas-premium/filter-sections-compact";
@@ -107,6 +108,7 @@ import {
   SlidersHorizontal,
   Filter,
   Layers,
+  ClipboardList,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
@@ -1963,12 +1965,23 @@ export default function Demandas() {
   }, [activeTab, demandasOrdenadas, focusedDemandaIndex, setPreviewDemandaId]);
 
   return (
-    <div className="w-full min-h-screen bg-zinc-50 dark:bg-zinc-950 overflow-x-hidden">
-      {/* Compact Header — Single-line with Tabs + Toolbar */}
-      <div className="px-3 sm:px-5 md:px-8 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Left: Tabs (icon-only, label when active) */}
-          <div className="flex items-center gap-0.5 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 shrink-0">
+    <div className="w-full min-h-screen bg-zinc-100 dark:bg-[#0f0f11] overflow-x-hidden">
+      {/* Header — Title + Tabs + Actions in one line */}
+      <div className="px-5 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
+        <div className="flex items-center gap-3">
+          {/* Icon + Title */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="w-9 h-9 rounded-[10px] bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center shrink-0">
+              <ClipboardList className="w-[18px] h-[18px] text-white dark:text-zinc-900" />
+            </div>
+            <div className="min-w-0 hidden sm:block">
+              <h1 className="font-serif text-[17px] font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">Demandas</h1>
+              <p className="text-[10px] text-zinc-400 leading-tight">Gestão de intimações e providências</p>
+            </div>
+          </div>
+
+          {/* Tabs — inline with title */}
+          <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-zinc-200/60 dark:bg-zinc-800 border border-zinc-300/70 dark:border-zinc-700/60 shrink-0">
             {[
               { key: "kanban" as const, label: "Kanban", icon: Layers },
               { key: "planilha" as const, label: "Planilha", icon: Table2 },
@@ -1981,28 +1994,20 @@ export default function Demandas() {
                   key={tab.key}
                   onClick={() => {
                     setActiveTab(tab.key);
-                    // Planilha tab always opens in compact mode
                     if (tab.key === "planilha" && viewMode === "cards") {
                       setViewMode("compact");
                       localStorage.setItem("defender_demandas_view_mode", "compact");
                     }
                   }}
                   title={tab.label}
-                  className={`relative flex items-center gap-1.5 py-1.5 text-xs font-medium transition-all duration-200 cursor-pointer ${
+                  className={cn(
+                    "flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer w-7 h-7",
                     isActive
-                      ? "px-2.5 text-white bg-zinc-800 dark:bg-zinc-200 dark:text-zinc-900 shadow-sm rounded-lg"
-                      : "px-2 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 rounded-lg"
-                  }`}
+                      ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
+                      : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 hover:bg-white dark:hover:bg-zinc-700"
+                  )}
                 >
                   <tab.icon className="w-3.5 h-3.5" />
-                  {isActive && (
-                    <>
-                      <span>{tab.label}</span>
-                      <span className="text-[9px] font-semibold tabular-nums bg-white/20 px-1.5 py-0.5 rounded-full">
-                        {demandas.filter(d => !d.arquivado).length}
-                      </span>
-                    </>
-                  )}
                 </button>
               );
             })}
@@ -2034,8 +2039,9 @@ export default function Demandas() {
           {/* Spacer */}
           <div className="flex-1 min-w-0" />
 
-          {/* Right: 4 Toolbar buttons only — Search, Filtros, Settings, Nova */}
-          <div className="flex items-center gap-1 shrink-0">
+          {/* Right: Search + Filtros + Settings grouped, then Nova */}
+          <div className="flex items-center gap-2 shrink-0">
+          <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-zinc-200/60 dark:bg-zinc-800 border border-zinc-300/70 dark:border-zinc-700/60">
             {/* 1. Search — expandable */}
             {isMobileSearchOpen ? (
               <div className="flex-1 min-w-0 relative animate-in slide-in-from-right-2 duration-200">
@@ -2047,7 +2053,7 @@ export default function Demandas() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onBlur={() => { if (!searchTerm) setIsMobileSearchOpen(false); }}
                   autoFocus
-                  className="pl-8 pr-7 h-7 text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200/80 dark:border-zinc-700/80 focus:border-emerald-400 rounded-lg w-48 sm:w-56"
+                  className="pl-8 pr-7 h-8 text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200/80 dark:border-zinc-700/80 focus:border-emerald-400 rounded-lg w-48 sm:w-56"
                 />
                 <button onClick={() => { setSearchTerm(""); setIsMobileSearchOpen(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer">
                   <X className="w-3 h-3 text-zinc-400 hover:text-zinc-600" />
@@ -2056,12 +2062,12 @@ export default function Demandas() {
             ) : (
               <button
                 onClick={() => { setIsMobileSearchOpen(true); setTimeout(() => mobileSearchRef.current?.focus(), 100); }}
-                className={`h-7 w-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer ${
-                  searchTerm ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20" : "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors cursor-pointer ${
+                  searchTerm ? "text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-700 shadow-sm" : "text-zinc-400 hover:text-zinc-600 hover:bg-white dark:hover:bg-zinc-700"
                 }`}
                 title="Buscar"
               >
-                <Search className="w-4 h-4" />
+                <Search className="w-3.5 h-3.5" />
               </button>
             )}
 
@@ -2069,14 +2075,14 @@ export default function Demandas() {
             <div className="relative">
               <button
                 onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-                className={`h-7 w-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer relative ${
+                className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors cursor-pointer relative ${
                   isFiltersExpanded || selectedStatusGroup || selectedEstadoPrisional || selectedTipoAto || groupBy || showColumnFilters || showArchived
-                    ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20"
-                    : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    ? "text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-700 shadow-sm"
+                    : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700"
                 }`}
                 title="Filtros e opções de visualização"
               >
-                <SlidersHorizontal className="w-4 h-4" />
+                <SlidersHorizontal className="w-3.5 h-3.5" />
                 {(() => {
                   const count = [selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto, groupBy, showColumnFilters, showArchived].filter(Boolean).length;
                   return count > 0 ? (
@@ -2195,7 +2201,7 @@ export default function Demandas() {
             <div className="relative">
               <button
                 onClick={() => setIsSettingsDropdownOpen(!isSettingsDropdownOpen)}
-                className="h-7 w-7 flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="h-7 w-7 flex items-center justify-center rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 transition-colors cursor-pointer"
                 title="Configurações e importação"
               >
                 <Settings className="w-4 h-4" />
@@ -2242,12 +2248,14 @@ export default function Demandas() {
               )}
             </div>
 
+          </div>{/* close grouped icons container */}
+
             {/* 4. Nova Demanda — primary action */}
             <Button
               size="sm"
               onClick={() => setIsCreateModalOpen(true)}
               title="Nova Demanda"
-              className="h-7 px-2.5 ml-0.5 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-[11px] font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+              className="h-8 px-3.5 ml-0.5 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow-sm transition-all duration-200 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span className="hidden sm:inline ml-1">Nova</span>
@@ -2257,7 +2265,7 @@ export default function Demandas() {
       </div>
 
       {/* Conteúdo Principal */}
-      <div className="p-2 md:p-4 space-y-2 md:space-y-3">
+      <div className="px-5 md:px-8 py-3 md:py-4 space-y-2 md:space-y-3">
         {activeTab === "planilha" ? (
         <>
 

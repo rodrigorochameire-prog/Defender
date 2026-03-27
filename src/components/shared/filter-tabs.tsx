@@ -33,42 +33,30 @@ export function FilterTab({
     <button
       onClick={() => onSelect?.(value)}
       className={cn(
-        "group relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200",
-        "border overflow-hidden",
+        "group relative flex items-center gap-1.5 rounded-full text-[13px] font-semibold transition-all duration-200 whitespace-nowrap cursor-pointer",
         selected
-          ? "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 shadow-sm"
-          : "bg-transparent border-transparent text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300",
+          ? "px-3 py-1.5 bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
+          : "px-2.5 py-1.5 text-zinc-400 dark:text-zinc-500",
         className
       )}
     >
-      {/* Indicador colorido à esquerda quando selecionado */}
-      {selected && color && (
-        <div 
-          className="absolute left-0 top-0 bottom-0 w-0.5 rounded-l-lg"
-          style={{ backgroundColor: color }}
-        />
-      )}
-      
-      {/* Ícone */}
       {icon && (
         <span className={cn(
-          "flex-shrink-0 [&>svg]:w-3.5 [&>svg]:h-3.5 transition-colors",
-          selected ? "text-zinc-600 dark:text-zinc-300" : "text-zinc-400 dark:text-zinc-500"
+          "flex-shrink-0 [&>svg]:w-[15px] [&>svg]:h-[15px] transition-colors",
+          selected ? "text-white dark:text-zinc-900" : "text-zinc-400 dark:text-zinc-500"
         )}>
           {icon}
         </span>
       )}
 
-      {/* Label */}
-      <span className="whitespace-nowrap">{label}</span>
+      <span>{label}</span>
 
-      {/* Count */}
       {count !== undefined && (
         <span className={cn(
-          "flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded text-[10px] font-semibold transition-all",
-          selected 
-            ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" 
-            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
+          "flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full text-[9px] font-bold transition-all",
+          selected
+            ? "bg-white/20 dark:bg-black/15 text-white dark:text-zinc-900"
+            : "text-zinc-400 dark:text-zinc-500"
         )}>
           {count}
         </span>
@@ -95,7 +83,7 @@ export function FilterTabsGroup({ children, label, className }: FilterTabsGroupP
           {label}
         </label>
       )}
-      <div className="flex flex-wrap gap-1.5 py-1">
+      <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
         {children}
       </div>
     </div>
@@ -130,27 +118,26 @@ export function FilterPill({
     <button
       onClick={() => onSelect?.(value)}
       className={cn(
-        "relative flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all duration-200",
+        "relative flex items-center gap-1.5 rounded-full text-[12px] font-semibold transition-all duration-200 cursor-pointer whitespace-nowrap",
         selected
-          ? "bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900"
-          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700",
+          ? "px-3 py-1.5 bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
+          : "px-2.5 py-1.5 text-zinc-400 dark:text-zinc-500",
         className
       )}
     >
-      {/* Dot colorido */}
       {color && (
-        <span 
+        <span
           className="w-1.5 h-1.5 rounded-full flex-shrink-0"
           style={{ backgroundColor: color }}
         />
       )}
-      
+
       <span>{label}</span>
-      
+
       {count !== undefined && count > 0 && (
         <span className={cn(
-          "text-[10px] font-bold",
-          selected ? "text-zinc-300 dark:text-zinc-600" : "text-zinc-400 dark:text-zinc-500"
+          "text-[9px] font-bold tabular-nums",
+          selected ? "text-white/70 dark:text-zinc-900/60" : "text-zinc-400 dark:text-zinc-500"
         )}>
           {count}
         </span>

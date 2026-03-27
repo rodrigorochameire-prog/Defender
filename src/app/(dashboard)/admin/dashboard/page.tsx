@@ -744,27 +744,25 @@ export default function DashboardJuriPage() {
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
 
-      {/* Header — Premium hero-style */}
-      <div className="relative px-4 sm:px-5 md:px-8 py-5 sm:py-6 md:py-8 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
-        {/* Subtle gradient accent */}
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/40 via-transparent to-transparent dark:from-emerald-950/20 dark:via-transparent pointer-events-none" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-900 dark:from-white dark:to-zinc-100 flex items-center justify-center shadow-lg shadow-zinc-900/10 dark:shadow-black/10 ring-4 ring-zinc-900/5 dark:ring-white/10 shrink-0">
-              <Briefcase className="w-5 h-5 sm:w-5.5 sm:h-5.5 text-white dark:text-zinc-900" />
+      {/* Header — Compact standardized */}
+      <div className="px-5 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-[10px] bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center shrink-0">
+              <Briefcase className="w-4 h-4 text-white dark:text-zinc-900" />
             </div>
             <div>
-              <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">Dashboard</h1>
-              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Painel de atividades e acompanhamento</p>
+              <h1 className="font-serif text-[17px] font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">Dashboard</h1>
+              <p className="text-[10px] text-zinc-400">Painel de atividades e acompanhamento</p>
             </div>
           </div>
 
           <Link href="/admin/demandas/nova">
             <Button
               size="sm"
-              className="h-9 px-4 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-emerald-500 dark:hover:text-white text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer w-full sm:w-auto"
+              className="h-8 px-3 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-emerald-500 dark:hover:text-white text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
             >
-              <Plus className="w-4 h-4 mr-1.5" />
+              <Plus className="w-3.5 h-3.5 mr-1.5" />
               Nova Demanda
             </Button>
           </Link>
@@ -772,7 +770,7 @@ export default function DashboardJuriPage() {
       </div>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <div className="p-5 md:p-8 space-y-6 md:space-y-8">
+      <div className="px-5 md:px-8 py-3 md:py-4 space-y-6 md:space-y-8">
 
         {/* ===== 1. REGISTRO RÁPIDO (full-width, stacked rows) ===== */}
         <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
