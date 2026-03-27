@@ -45,6 +45,8 @@ interface AtribuicaoPillsProps {
    * Used in Kanban and Planilha tabs.
    */
   singleSelect?: boolean;
+  /** Compact mode: no counts, labels hidden on small screens */
+  compact?: boolean;
 }
 
 export function AtribuicaoPills({
@@ -56,6 +58,7 @@ export function AtribuicaoPills({
   children,
   className,
   singleSelect = false,
+  compact = false,
 }: AtribuicaoPillsProps) {
   const filtered = options.filter((o) => o.value !== "Todas");
 
@@ -102,8 +105,8 @@ export function AtribuicaoPills({
                   style={{ color: isActive ? "#fff" : "#71717a" }}
                 />
               )}
-              {isActive && <span>{opt.label}</span>}
-              {count !== undefined && (
+              {isActive && <span className={compact ? "hidden sm:inline" : ""}>{opt.label}</span>}
+              {!compact && count !== undefined && (
                 <span
                   className="text-[9px] font-bold tabular-nums px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
                   style={

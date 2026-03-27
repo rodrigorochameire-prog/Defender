@@ -1966,8 +1966,9 @@ export default function Demandas() {
 
   return (
     <div className="w-full min-h-screen bg-zinc-100 dark:bg-[#0f0f11] overflow-x-hidden">
-      {/* Header — Title + Tabs + Actions in one line */}
-      <div className="px-5 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
+      {/* Header — Title + Actions */}
+      <div className="px-5 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 space-y-2">
+        {/* Row 1: Icon + Title + Search/Config + Stats + Nova */}
         <div className="flex items-center gap-3">
           {/* Icon + Title */}
           <div className="flex items-center gap-2.5 shrink-0">
@@ -1980,64 +1981,33 @@ export default function Demandas() {
             </div>
           </div>
 
-          {/* Tabs — inline with title */}
-          <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-zinc-200/60 dark:bg-zinc-800 border border-zinc-300/70 dark:border-zinc-700/60 shrink-0">
-            {[
-              { key: "kanban" as const, label: "Kanban", icon: Layers },
-              { key: "planilha" as const, label: "Planilha", icon: Table2 },
-              { key: "prazos" as const, label: "Prazos", icon: Clock },
-              { key: "analytics" as const, label: "Analytics", icon: BarChartIcon },
-            ].map((tab) => {
-              const isActive = activeTab === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  onClick={() => {
-                    setActiveTab(tab.key);
-                    if (tab.key === "planilha" && viewMode === "cards") {
-                      setViewMode("compact");
-                      localStorage.setItem("defender_demandas_view_mode", "compact");
-                    }
-                  }}
-                  title={tab.label}
-                  className={cn(
-                    "flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer w-7 h-7",
-                    isActive
-                      ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
-                      : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 hover:bg-white dark:hover:bg-zinc-700"
-                  )}
-                >
-                  <tab.icon className="w-3.5 h-3.5" />
-                </button>
-              );
-            })}
-          </div>
-          {/* Counters — badges compactos com Lucide icons (hidden on mobile) */}
-          <div className="hidden sm:flex items-center gap-1.5 whitespace-nowrap shrink-0">
+          {/* Spacer */}
+          <div className="flex-1 min-w-0" />
+
+          {/* Stats — triagem / andamento / concluída */}
+          <div className="hidden md:flex items-center gap-1 shrink-0">
             {(() => {
-              const urgentes = demandas.filter(d => !d.arquivado && (d.prioridade === "URGENTE" || d.prioridade === "REU_PRESO")).length;
-              const presos = demandas.filter(d => !d.arquivado && d.estadoPrisional === "preso").length;
+              const total = demandas.filter(d => !d.arquivado).length;
+              const concluida = demandas.filter(d => d.arquivado || d.status === "CONCLUIDO" || d.status === "ARQUIVADO").length;
+              const triagem = demandas.filter(d => !d.arquivado && ["TRIAGEM", "FILA", "ATENDER", "URGENTE"].includes(d.status?.toUpperCase?.() || "")).length;
+              const andamento = total - triagem - concluida;
               return (
                 <>
-                  {urgentes > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] font-semibold text-rose-500 bg-rose-50 dark:bg-rose-950/30 px-1.5 py-0.5 rounded-md">
-                      <AlertTriangle className="w-3 h-3" />
-                      {urgentes}
-                    </span>
-                  )}
-                  {presos > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-500 bg-amber-50 dark:bg-amber-950/30 px-1.5 py-0.5 rounded-md">
-                      <Lock className="w-3 h-3" />
-                      {presos}
-                    </span>
-                  )}
+                  <span className="flex items-center gap-1 text-[10px] font-medium text-zinc-500 dark:text-zinc-400 px-1.5 py-0.5">
+                    <span className="font-bold tabular-nums text-zinc-800 dark:text-zinc-100">{triagem}</span> triagem
+                  </span>
+                  <div className="w-px h-3 bg-zinc-200/60 dark:bg-zinc-700/60" />
+                  <span className="flex items-center gap-1 text-[10px] font-medium text-zinc-500 dark:text-zinc-400 px-1.5 py-0.5">
+                    <span className="font-bold tabular-nums text-zinc-800 dark:text-zinc-100">{andamento}</span> andamento
+                  </span>
+                  <div className="w-px h-3 bg-zinc-200/60 dark:bg-zinc-700/60" />
+                  <span className="flex items-center gap-1 text-[10px] font-medium text-zinc-500 dark:text-zinc-400 px-1.5 py-0.5">
+                    <span className="font-bold tabular-nums text-zinc-800 dark:text-zinc-100">{concluida}</span> concluída
+                  </span>
                 </>
               );
             })()}
           </div>
-
-          {/* Spacer */}
-          <div className="flex-1 min-w-0" />
 
           {/* Right: Search + Filtros + Settings grouped, then Nova */}
           <div className="flex items-center gap-2 shrink-0">
@@ -2262,6 +2232,54 @@ export default function Demandas() {
             </Button>
           </div>
         </div>
+
+      </div>
+
+      {/* Filter bar — Atribuição + View tabs (outside header) */}
+      <div className="mx-3 sm:mx-5 md:mx-8 my-3 px-3 py-2.5 flex items-center gap-2 overflow-x-auto scrollbar-none bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80">
+        <AtribuicaoPills
+          options={atribuicaoOptions}
+          selectedValues={selectedAtribuicoes}
+          onToggle={handleSingleAtribuicaoSelect}
+          onClear={() => {}}
+          singleSelect
+          compact
+        />
+
+        <div className="flex-1 min-w-2" />
+
+        {/* View tabs — Kanban/Planilha/Prazos/Analytics */}
+        <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-zinc-200/60 dark:bg-zinc-800 border border-zinc-300/70 dark:border-zinc-700/60 shrink-0">
+          {[
+            { key: "kanban" as const, label: "Kanban", icon: Layers },
+            { key: "planilha" as const, label: "Planilha", icon: Table2 },
+            { key: "prazos" as const, label: "Prazos", icon: Clock },
+            { key: "analytics" as const, label: "Analytics", icon: BarChartIcon },
+          ].map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  if (tab.key === "planilha" && viewMode === "cards") {
+                    setViewMode("compact");
+                    localStorage.setItem("defender_demandas_view_mode", "compact");
+                  }
+                }}
+                title={tab.label}
+                className={cn(
+                  "flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer w-7 h-7",
+                  isActive
+                    ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
+                    : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 hover:bg-white dark:hover:bg-zinc-700"
+                )}
+              >
+                <tab.icon className="w-3.5 h-3.5" />
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Conteúdo Principal */}
@@ -2271,60 +2289,6 @@ export default function Demandas() {
 
         {/* Lista de Demandas */}
         <div className="group/card relative bg-white dark:bg-zinc-900">
-            <div className="px-3 md:px-4 py-2">
-              {/* Atribuição pills + Deadline stats */}
-              <AtribuicaoPills
-                options={atribuicaoOptions}
-                selectedValues={selectedAtribuicoes}
-                onToggle={handleSingleAtribuicaoSelect}
-                onClear={() => {}}
-                counts={atribuicaoCounts}
-                singleSelect
-                className="flex items-center gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1 pb-0.5"
-              >
-                {/* Deadline stats — right-aligned */}
-                <div className="ml-auto flex items-center gap-1 shrink-0">
-                    {deadlineStats.vencidas > 0 && (
-                      <button onClick={() => setSelectedPrazoFilter(selectedPrazoFilter === "vencidos" ? null : "vencidos")}
-                        className={`font-semibold px-1.5 py-0.5 rounded-md text-[10px] transition-colors cursor-pointer ${selectedPrazoFilter === "vencidos" ? "bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400" : "text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20"}`}
-                      >
-                        {deadlineStats.vencidas} venc.
-                      </button>
-                    )}
-                    {deadlineStats.hoje > 0 && (
-                      <button onClick={() => setSelectedPrazoFilter(selectedPrazoFilter === "hoje" ? null : "hoje")}
-                        className={`font-semibold px-1.5 py-0.5 rounded-md text-[10px] transition-colors cursor-pointer ${selectedPrazoFilter === "hoje" ? "bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400" : "text-amber-500 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20"}`}
-                      >
-                        {deadlineStats.hoje} hoje
-                      </button>
-                    )}
-                    {deadlineStats.semana > 0 && (
-                      <button onClick={() => setSelectedPrazoFilter(selectedPrazoFilter === "semana" ? null : "semana")}
-                        className={`font-medium px-1.5 py-0.5 rounded-md text-[10px] transition-colors cursor-pointer ${selectedPrazoFilter === "semana" ? "bg-yellow-100 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400" : "text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-950/20"}`}
-                      >
-                        {deadlineStats.semana} sem.
-                      </button>
-                    )}
-                    {(() => {
-                      const presoCount = demandas.filter(d => !d.arquivado && d.estadoPrisional === "preso").length;
-                      if (presoCount === 0) return null;
-                      const isActive = selectedEstadoPrisional === "preso";
-                      return (
-                        <button
-                          onClick={() => setSelectedEstadoPrisional(isActive ? null : "preso")}
-                          className={`flex items-center gap-1 font-semibold px-1.5 py-0.5 rounded-md text-[10px] transition-colors cursor-pointer ${isActive ? "bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400" : "text-rose-400 dark:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20"}`}
-                          title="Filtrar apenas presos"
-                        >
-                          <Lock className="w-2.5 h-2.5" />
-                          {presoCount}
-                        </button>
-                      );
-                    })()}
-                  </div>
-              </AtribuicaoPills>
-
-              {/* Secondary Filters now inside the unified Filtros dropdown in the header */}
-            </div>
 
             {showArchived && (
               <div className="mx-4 mt-4 p-3 rounded-lg bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-950/30 dark:to-orange-950/30 border-2 border-amber-300 dark:border-amber-800">
@@ -2678,18 +2642,6 @@ export default function Demandas() {
         ) : activeTab === "kanban" ? (
           /* ========== TAB KANBAN PREMIUM ========== */
           <div className="space-y-3">
-            {/* Atribuição pills */}
-            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 px-3 py-2">
-              <AtribuicaoPills
-                options={atribuicaoOptions}
-                selectedValues={selectedAtribuicoes}
-                onToggle={handleSingleAtribuicaoSelect}
-                onClear={() => {}}
-                counts={atribuicaoCounts}
-                singleSelect
-              />
-            </div>
-
             {/* Kanban Premium Board */}
             <KanbanPremium
               demandas={demandasFiltradas}
@@ -2714,16 +2666,6 @@ export default function Demandas() {
         ) : (
           /* ========== TAB ANALYTICS ========== */
           <div className="space-y-6">
-            {/* Filtro por atribuição no Analytics */}
-            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 px-3 py-2">
-              <AtribuicaoPills
-                options={atribuicaoOptions}
-                selectedValues={selectedAtribuicoes}
-                onToggle={handleAtribuicaoToggle}
-                onClear={() => setSelectedAtribuicoes([])}
-                counts={atribuicaoCounts}
-              />
-            </div>
 
             {/* Stats KPIs */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
