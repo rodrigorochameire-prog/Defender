@@ -1157,4 +1157,74 @@ Elabore a estratégia de defesa com este formato JSON:
         modelo: "claude-sonnet-4-6",
       };
     }),
+
+  /**
+   * Análise Cowork completa — um clique ($0).
+   * Cria tarefa no banco → worker local roda claude -p → resultado volta pro banco.
+   */
+  coworkAnalise: protectedProcedure
+    .input(
+      z.object({
+        assistidoId: z.number(),
+        processoId: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // 1. Buscar assistido e processo
+      const [assistido] = await db.select().from(assistidos).where(eq(assistidos.id, input.assistidoId)).limit(1);
+      if (!assistido) throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
+
+      const [processo] = await db.select().from(processos).where(eq(processos.id, input.processoId)).limit(1);
+      if (!processo) throw new TRPCError({ code: "NOT_FOUND", message: "Processo não encontrado" });
+
+      // 2. Gerar briefing
+      const processosDb = await db.query.processos.findMany({
+        where: and(eq(processos.assistidoId, input.assistidoId), isNull(processos.deletedAt)),
+      });
+      const demandasDb = await db.query.demandas.findMany({
+        where: and(eq(demandas.assistidoId, input.assistidoId), isNull(demandas.deletedAt)),
+      });
+
+      const lines: string[] = [];
+      lines.push(`# Briefing OMBUDS — ${assistido.nome}`);
+      lines.push(`> Competência: Tribunal do Júri`);
+      lines.push("");
+      lines.push("## Assistido");
+      lines.push(`- **Nome**: ${assistido.nome}`);
+      if (assistido.cpf) lines.push(`- **CPF**: ${assistido.cpf}`);
+      if (assistido.statusPrisional) lines.push(`- **Status prisional**: ${assistido.statusPrisional}`);
+      lines.push("");
+
+      for (const p of processosDb) {
+        lines.push(`## Processo: ${p.numeroAutos}`);
+        if (p.assunto) lines.push(`- **Assunto**: ${p.assunto}`);
+        if (p.vara) lines.push(`- **Vara**: ${p.vara}`);
+        if (p.isJuri) lines.push(`- **Júri**: Sim`);
+        lines.push("");
+      }
+
+      const demandasAbertas = demandasDb.filter((d) => d.status !== "ARQUIVADO");
+      if (demandasAbertas.length > 0) {
+        lines.push("## Demandas");
+        for (const d of demandasAbertas) {
+          lines.push(`- **${d.ato}** [${d.status}]${d.reuPreso ? " [RÉU PRESO]" : ""}`);
+        }
+        lines.push("");
+      }
+
+      const briefing = lines.join("\n");
+
+      // 3. Criar tarefa no banco (worker local vai processar)
+      const [task] = await db.execute<{ id: number }>(
+        `INSERT INTO cowork_tasks (assistido_id, processo_id, tipo, status, briefing, created_by)
+         VALUES (${input.assistidoId}, ${input.processoId}, 'juri', 'pending', '${briefing.replace(/'/g, "''")}', '${ctx.user?.id ?? 0}')
+         RETURNING id`
+      );
+
+      return {
+        success: true,
+        taskId: (task as unknown as { id: number }).id,
+        message: `Tarefa criada. O worker local vai processar com claude -p ($0). Acompanhe na aba Inteligência.`,
+      };
+    }),
 });

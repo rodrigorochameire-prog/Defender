@@ -102,6 +102,19 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     },
   });
 
+  // Cowork Análise completa ($0 — worker local)
+  const coworkAnalise = trpc.briefing.coworkAnalise.useMutation({
+    onSuccess: (result) => {
+      toast.success("Tarefa Cowork criada", {
+        description: result.message,
+        duration: 8000,
+      });
+    },
+    onError: (err) => {
+      toast.error("Erro ao criar tarefa Cowork", { description: err.message });
+    },
+  });
+
   // Cowork export
   const [exportingAudienciaId, setExportingAudienciaId] = useState<number | null>(null);
   const [exportingProcessoId, setExportingProcessoId] = useState<number | null>(null);
@@ -431,7 +444,26 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                   Preso
                 </span>
               )}
-              {/* Análise Profunda — Sonnet (manual) */}
+              {/* Cowork — Análise completa (gera + importa + Drive) */}
+              {data.processos?.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 gap-1 px-2.5 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition-colors text-[11px]"
+                  title="Análise completa Cowork — gera relatório, extrai dados, importa tudo"
+                  disabled={coworkAnalise.isPending}
+                  onClick={() => {
+                    const proc = data.processos[0];
+                    coworkAnalise.mutate({ processoId: proc.id, assistidoId: Number(id) });
+                  }}
+                >
+                  {coworkAnalise.isPending
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <Sparkles className="h-3.5 w-3.5" />}
+                  Cowork
+                </Button>
+              )}
+              {/* Sonnet — só sob demanda */}
               {data.processos?.length > 0 && (
                 <Button
                   variant="ghost"
