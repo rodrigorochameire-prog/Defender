@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { matchSkill } from "@/lib/skills/matcher";
+import { initializeSkills, getAllSkills } from "@/lib/skills/registry";
+import { executeSkill, type ExecutionCallback } from "@/lib/skills/executor";
+import type { MatchResult } from "@/lib/skills/types";
+import { toast } from "sonner";
 import {
   CommandDialog,
   CommandEmpty,
@@ -42,6 +47,7 @@ export function CommandPalette() {
   const { modules } = useAssignment();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [skillMatches, setSkillMatches] = useState<MatchResult[]>([]);
 
   // Debounced search query — only fire when 2+ chars and dialog is open
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -59,6 +65,24 @@ export function CommandPalette() {
     const timer = setTimeout(() => setDebouncedSearch(search), 250);
     return () => clearTimeout(timer);
   }, [search, open]);
+
+  // Initialize skill engine on mount
+  useEffect(() => {
+    initializeSkills();
+  }, []);
+
+  // Skill matching when search changes
+  useEffect(() => {
+    if (search.length >= 2) {
+      const match = matchSkill(search);
+      setSkillMatches(match ? [match] : []);
+    } else if (search.startsWith("/")) {
+      const match = matchSkill(search);
+      setSkillMatches(match ? [match] : []);
+    } else {
+      setSkillMatches([]);
+    }
+  }, [search]);
 
   // tRPC search.local — busca assistidos e processos no banco
   const searchQuery = trpc.search.local.useQuery(
@@ -166,6 +190,22 @@ export function CommandPalette() {
     { label: "Abrir Agenda", path: "/admin/agenda", icon: <Calendar className="h-4 w-4 text-indigo-500" /> },
   ];
 
+  const skillCallbacks: ExecutionCallback = {
+    navigate: (url) => { router.push(url); setOpen(false); setSearch(""); },
+    openPanel: (title, _component, _params) => { toast.info(`Abrindo: ${title}`); setOpen(false); },
+    showToast: (msg) => toast(msg),
+    openDelegate: (url, fallback) => {
+      try {
+        window.open(url, "_blank");
+        toast.success("Enviado para Cowork");
+      } catch {
+        navigator.clipboard?.writeText(fallback);
+        toast.info("Prompt copiado! Cole no Cowork (⌘V)");
+      }
+      setOpen(false);
+    },
+  };
+
   const handleImportSEEU = () => {
     setOpen(false);
     // Navega para demandas e dispara evento para abrir o modal SEEU
@@ -212,6 +252,31 @@ export function CommandPalette() {
               "Digite para buscar assistidos, processos..."
             )}
           </CommandEmpty>
+
+          {/* Skills matches — mostrado antes dos resultados de busca */}
+          {skillMatches.length > 0 && (
+            <CommandGroup heading="⚡ Skills">
+              {skillMatches.map((m) => (
+                <CommandItem
+                  key={m.skill.id}
+                  value={`skill-${m.skill.id}`}
+                  onSelect={async () => {
+                    await executeSkill(m, skillCallbacks);
+                  }}
+                >
+                  <div className="flex items-center gap-2 w-full">
+                    <span className="font-medium text-sm">{m.skill.name}</span>
+                    <span className="text-xs text-muted-foreground flex-1">{m.skill.description}</span>
+                    {Object.keys(m.params).length > 0 && (
+                      <span className="text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-1.5 rounded">
+                        {Object.values(m.params).join(", ")}
+                      </span>
+                    )}
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
 
           {/* Skeleton enquanto busca */}
           {isSearching && (
@@ -355,6 +420,22 @@ export function CommandPalette() {
               </CommandGroup>
               <CommandSeparator />
             </>
+          )}
+
+          {/* Skills disponíveis — quando busca está vazia */}
+          {!search && (
+            <CommandGroup heading="Skills Disponíveis">
+              {getAllSkills().slice(0, 6).map((s) => (
+                <CommandItem
+                  key={s.id}
+                  value={`skill-suggest-${s.id}`}
+                  onSelect={() => { setSearch(`/${s.id} `); }}
+                >
+                  <span className="text-sm">{s.name}</span>
+                  <span className="ml-auto text-xs text-muted-foreground font-mono">/{s.id}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
           )}
 
           {/* Ações rápidas */}
