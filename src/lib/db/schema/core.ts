@@ -21,6 +21,7 @@ import {
   prioridadeEnum,
   areaEnum,
   papelProcessoEnum,
+  syncOrigemEnum,
 } from "./enums";
 import { comarcas } from "./comarcas";
 
@@ -283,6 +284,7 @@ export const demandas = pgTable("demandas", {
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  syncedAt: timestamp("synced_at"),
 }, (table) => [
   index("demandas_processo_id_idx").on(table.processoId),
   index("demandas_assistido_id_idx").on(table.assistidoId),
@@ -480,3 +482,26 @@ export const defensorParceiros = pgTable("defensor_parceiros", {
 ]);
 export type DefensorParceiro = typeof defensorParceiros.$inferSelect;
 export type InsertDefensorParceiro = typeof defensorParceiros.$inferInsert;
+
+// ==========================================
+// SYNC LOG
+// ==========================================
+
+export const syncLog = pgTable("sync_log", {
+  id: serial("id").primaryKey(),
+  demandaId: integer("demanda_id").references(() => demandas.id, { onDelete: "cascade" }),
+  campo: varchar("campo", { length: 50 }).notNull(),
+  valorBanco: text("valor_banco"),
+  valorPlanilha: text("valor_planilha"),
+  origem: syncOrigemEnum("origem").notNull(),
+  bancoUpdatedAt: timestamp("banco_updated_at"),
+  planilhaUpdatedAt: timestamp("planilha_updated_at"),
+  conflito: boolean("conflito").default(false),
+  resolvidoEm: timestamp("resolvido_em"),
+  resolvidoPor: varchar("resolvido_por", { length: 100 }),
+  resolvidoValor: text("resolvido_valor"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type SyncLogEntry = typeof syncLog.$inferSelect;
+export type InsertSyncLog = typeof syncLog.$inferInsert;

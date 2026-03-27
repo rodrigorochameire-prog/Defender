@@ -522,3 +522,10 @@ export const radarFonteConfiabilidadeEnum = pgEnum("radar_fonte_confiabilidade",
   "regional",   // Portal da RMS/Bahia com seção de Camaçari
   "estadual",   // Portal estadual/nacional com cobertura esporádica
 ]);
+
+export const syncOrigemEnum = pgEnum("sync_origem", [
+  "BANCO",
+  "PLANILHA",
+  "MOVE",
+  "CONFLITO_RESOLVIDO",
+]);
