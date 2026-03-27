@@ -57,7 +57,7 @@ export default function ConflitosPage() {
       )}
 
       {conflicts?.map((c) => (
-        <Card key={c.id} className="border-orange-300/50 dark:border-orange-700/30">
+        <Card key={c.conflictId} className="border-orange-300/50 dark:border-orange-700/30">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <FileText className="h-4 w-4 text-muted-foreground" />
@@ -85,7 +85,7 @@ export default function ConflitosPage() {
                 size="sm"
                 variant="outline"
                 className="border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-950/30"
-                onClick={() => resolve.mutate({ conflictId: c.id, resolution: "PLANILHA" })}
+                onClick={() => resolve.mutate({ conflictId: c.conflictId, resolution: "PLANILHA" })}
                 disabled={resolve.isPending}
               >
                 Aceitar Planilha
@@ -93,7 +93,7 @@ export default function ConflitosPage() {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => resolve.mutate({ conflictId: c.id, resolution: "BANCO" })}
+                onClick={() => resolve.mutate({ conflictId: c.conflictId, resolution: "BANCO" })}
                 disabled={resolve.isPending}
               >
                 Aceitar OMBUDS

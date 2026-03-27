@@ -27,11 +27,11 @@ export const syncRouter = router({
       const { conflictId, resolution, customValue } = input;
 
       const conflicts = await listPendingConflicts();
-      const conflict = conflicts.find(c => c.id === conflictId);
+      const conflict = conflicts.find(c => c.conflictId === conflictId);
       if (!conflict) throw new Error("Conflito não encontrado");
 
       let finalValue: string;
-      let applyTo: "BANCO" | "PLANILHA" | "AMBOS";
+      let applyTo: "BANCO" | "PLANILHA" | "BOTH";
 
       switch (resolution) {
         case "PLANILHA":
@@ -44,7 +44,7 @@ export const syncRouter = router({
           break;
         case "CUSTOM":
           finalValue = customValue ?? "";
-          applyTo = "AMBOS";
+          applyTo = "BOTH";
           break;
         default:
           throw new Error("Resolução inválida");

@@ -14,7 +14,7 @@ export function ConflictBadge() {
 
   return (
     <Link href="/conflitos">
-      <Badge variant="destructive" className="gap-1 cursor-pointer">
+      <Badge variant="warning" className="gap-1 cursor-pointer">
         <AlertTriangle className="h-3 w-3" />
         {count} conflito{count > 1 ? "s" : ""}
       </Badge>

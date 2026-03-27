@@ -40,6 +40,7 @@ import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { StatusBar } from "@/components/layout/status-bar";
 import { OfflineSyncProvider } from "@/components/layout/offline-sync-provider";
 import { MobileBottomNav } from "@/components/shared/mobile-bottom-nav";
+import { ConflictBadge } from "@/components/conflict-badge";
 import { FloatingAgendaButton } from "@/components/shared/floating-agenda";
 import { type AssignmentMenuItem } from "@/contexts/assignment-context";
 import { useProfissional } from "@/contexts/profissional-context";
@@ -1804,6 +1805,9 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
 
             {/* Separador */}
             <div className="hidden lg:block h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
+
+            {/* Badge de conflitos de sync */}
+            <ConflictBadge />
 
             {/* Controles */}
             <div className="flex items-center gap-1">

@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { demandas, processos, assistidos, users } from "@/lib/db/schema";
 import { eq, isNull } from "drizzle-orm";
-import { syncAll_DEPRECATED, type DemandaParaSync } from "@/lib/services/google-sheets";
+import { pushDemanda, type DemandaParaSync } from "@/lib/services/google-sheets";
 
 function getWebhookSecret(): string {
   return process.env.SHEETS_WEBHOOK_SECRET ?? "";
@@ -61,7 +61,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     delegadoNome: r.delegadoNome ?? null,
   }));
 
-  const stats = await syncAll_DEPRECATED(lista);
+  let pushed = 0;
+  let conflicts = 0;
+  for (const row of lista) {
+    const result = await pushDemanda(row);
+    if (result.pushed) pushed++;
+    if (result.conflict) conflicts++;
+  }
 
-  return NextResponse.json({ ok: true, total: lista.length, stats });
+  return NextResponse.json({
+    total: lista.length,
+    pushed,
+    conflicts,
+    message: conflicts > 0
+      ? `${conflicts} conflitos detectados — resolva em /conflitos`
+      : "Sync completo",
+  });
 }
