@@ -2091,7 +2091,7 @@ export const syncSheetPollingFn = inngest.createFunction(
                 const mapping = LABEL_TO_STATUS[planilhaStatus];
                 if (mapping) {
                   await db.update(demandas).set({
-                    status: mapping.status,
+                    status: mapping.status as typeof demandas.status.enumValues[number],
                     substatus: mapping.substatus,
                     syncedAt: new Date(),
                   }).where(eq(demandas.id, demandaId));

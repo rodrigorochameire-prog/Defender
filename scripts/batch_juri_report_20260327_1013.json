@@ -1,0 +1,9 @@
+[
+  {
+    "processo_id": 200,
+    "numero_autos": "0000704-32.2010.8.05.0039",
+    "assistido": "José Raimundo Ramalho dos Santos",
+    "status": "error",
+    "error": "404 This model models/gemini-2.0-flash is no longer available to new users. Please update your code to use a newer model for the latest features and improvements."
+  }
+]

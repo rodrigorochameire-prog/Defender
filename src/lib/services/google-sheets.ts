@@ -202,7 +202,7 @@ const SUBSTATUS_NORMALIZE: Record<string, string> = {
 };
 
 /** Converte status+substatus do banco para o label da planilha */
-function statusParaLabel(status: string | null, substatus: string | null): string {
+export function statusParaLabel(status: string | null, substatus: string | null): string {
   if (substatus) {
     // Já no formato correto?
     if (VALID_SHEET_LABELS.has(substatus)) return substatus;

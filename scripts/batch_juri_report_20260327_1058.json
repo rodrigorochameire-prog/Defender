@@ -1,0 +1,9 @@
+[
+  {
+    "processo_id": 265,
+    "numero_autos": "8003969-75.2025.8.05.0039",
+    "assistido": "Adenilson da Silva",
+    "status": "error",
+    "error": "Expecting ',' delimiter: line 406 column 6 (char 50354)"
+  }
+]

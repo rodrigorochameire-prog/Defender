@@ -339,17 +339,10 @@ export const juriRouter = router({
         });
 
         if (!processo) {
-          const [novo] = await db
-            .insert(processos)
-            .values({
-              assistidoId: assistido.id,
-              numeroAutos: s.processo,
-              atribuicao: "JURI_CAMACARI" as any,
-              comarca: "Camaçari",
-              vara: "Vara do Júri e Execuções Penais",
-            })
-            .returning();
-          processo = novo;
+          // TODO: Lookup or create assistido properly
+          // For now, skip creating processo without assistido
+          skipped++;
+          continue;
         }
 
         // Parse date and set to 08:30 BRT (11:30 UTC) to match existing sessions

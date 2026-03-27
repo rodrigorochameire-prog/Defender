@@ -46,6 +46,13 @@
 │   │ # Ideação
 │   ├── ideias-defesa.md      # /ideias-defesa - Gerador de ideias
 │   │
+│   │ # Scraping & Drive
+│   ├── pje-download.md       # /pje-download - Download Autos PJe (pipeline 3 etapas)
+│   ├── pje-intimacoes.md     # /pje-intimacoes - Baixar/organizar intimações PJe
+│   ├── pje-autos-batch.md    # /pje-autos-batch - Download em lote de Autos
+│   ├── drive-upload.md       # /drive-upload - Upload de arquivos ao Drive
+│   ├── drive-organizar.md    # /drive-organizar - Organizar pastas/arquivos no Drive
+│   │
 │   │ # Gerenciamento
 │   └── jira.md               # /jira - Gerenciamento Jira (backlog, tickets, sprint)
 │
@@ -89,6 +96,11 @@ Detalhes: `/tool-selection`
 | "lista tarefas", "o que tem pendente" | `/jira` |
 | "anota no jira", "cria um card" | `/jira` |
 | "CI falhou", "build quebrou", "GitHub Actions erro" | `/fix-ci` |
+| "baixar autos", "download pje", "autos digitais" | `/pje-download` (Cowork ou Code) |
+| "autos em lote", "baixar lista de processos" | `/pje-autos-batch` (Cowork ou Code) |
+| "intimações", "baixar intimações", "expedientes" | `/pje-intimacoes` (Cowork ou Code) |
+| "upload drive", "subir pro drive" | `/drive-upload` (Cowork ou Code) |
+| "organizar drive", "arrumar pastas", "mover pro drive" | `/drive-organizar` (Cowork ou Code) |
 | "otimizar query", "performance do banco", "índices" | `supabase-postgres-best-practices` |
 | "melhorar UI", "design", "cores", "tipografia" | `ui-ux-pro-max` |
 | "vamos pensar", "explorar ideia", "como fazer X" | `brainstorming` |

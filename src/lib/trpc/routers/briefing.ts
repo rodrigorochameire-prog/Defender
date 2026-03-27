@@ -949,4 +949,212 @@ export const briefingRouter = router({
         };
       });
     }),
+
+  /**
+   * Análise profunda com Claude Sonnet — acionamento manual.
+   * Usa os dados já extraídos (Haiku/enrichment) + documentos do Drive
+   * para gerar análise estratégica completa (teses, quesitos, matriz de guerra).
+   */
+  analiseProfunda: protectedProcedure
+    .input(
+      z.object({
+        processoId: z.number(),
+        assistidoId: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // 1. Buscar processo e assistido
+      const [processo] = await db
+        .select()
+        .from(processos)
+        .where(eq(processos.id, input.processoId))
+        .limit(1);
+
+      if (!processo) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Processo não encontrado" });
+      }
+
+      const [assistido] = await db
+        .select()
+        .from(assistidos)
+        .where(eq(assistidos.id, input.assistidoId))
+        .limit(1);
+
+      if (!assistido) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
+      }
+
+      // 2. Montar contexto: dados extraídos + analysisData existente
+      const analysisData = (processo.analysisData ?? {}) as Record<string, unknown>;
+      const extractedJson = JSON.stringify(analysisData, null, 1);
+
+      if (!extractedJson || extractedJson === "{}") {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Processo sem dados extraídos. Execute primeiro a análise básica (Haiku).",
+        });
+      }
+
+      // 3. Chamar Claude Sonnet via API Anthropic
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "ANTHROPIC_API_KEY não configurada" });
+      }
+
+      const systemPrompt = `Você é o estrategista criminal sênior da Defensoria Pública da Bahia, especializado em Tribunal do Júri.
+Com base nos DADOS EXTRAÍDOS do processo, elabore a estratégia de defesa.
+Seja PRÁTICO e ESPECÍFICO. Cite artigos de lei e jurisprudência.
+Retorne APENAS JSON válido.`;
+
+      const userPrompt = `ASSISTIDO: ${assistido.nome}
+PROCESSO: ${processo.numeroAutos}
+
+DADOS EXTRAÍDOS:
+${extractedJson.slice(0, 60000)}
+
+---
+
+Elabore a estratégia de defesa com este formato JSON:
+
+{
+  "teses": {
+    "principal": "Tese principal com fundamento",
+    "fundamento_fatico": "Base nos fatos",
+    "fundamento_juridico": "Base legal com artigos",
+    "subsidiarias": [{"tese": "Tese alternativa", "quando_usar": "cenário"}],
+    "desclassificacao": {"possivel": true, "para_crime": "crime menos grave", "fundamento": "razão"},
+    "quesitos_sugeridos": ["quesito de defesa"]
+  },
+  "matriz_guerra": [
+    {"fato": "Fato controverso", "versao_acusacao": "...", "versao_defesa": "...", "contradicoes": ["..."]}
+  ],
+  "osint": {
+    "linhas_investigacao": ["diligência"],
+    "testemunhas_sugeridas": ["pessoa"],
+    "provas_buscar": ["prova"]
+  },
+  "recomendacoes": ["ação para o defensor"],
+  "achados_chave": ["ponto crucial"]
+}`;
+
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 8192,
+          temperature: 0.3,
+          system: systemPrompt,
+          messages: [{ role: "user", content: userPrompt }],
+        }),
+      });
+
+      if (!resp.ok) {
+        const errText = await resp.text();
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Claude API error: ${resp.status} ${errText.slice(0, 200)}`,
+        });
+      }
+
+      const data = (await resp.json()) as { content: Array<{ text: string }> };
+      let text = data.content[0].text;
+
+      // Parse JSON
+      const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (jsonMatch) {
+        text = jsonMatch[1];
+      } else {
+        const bs = text.indexOf("{");
+        const be = text.lastIndexOf("}");
+        if (bs !== -1 && be > bs) text = text.slice(bs, be + 1);
+      }
+
+      const strategy = JSON.parse(
+        text.trim().replace(/,\s*}/g, "}").replace(/,\s*]/g, "]")
+      ) as Record<string, unknown>;
+
+      // 4. Merge com analysisData existente
+      const currentData = (analysisData ?? {}) as Record<string, unknown>;
+      const merged = {
+        ...currentData,
+        teses: (strategy.teses as Record<string, unknown>)
+          ? [((strategy.teses as Record<string, string>)?.principal ?? "")]
+          : currentData.teses,
+        achadosChave: Array.isArray(strategy.achados_chave)
+          ? (strategy.achados_chave as string[])
+          : (currentData.achadosChave as string[] | undefined),
+        recomendacoes: Array.isArray(strategy.recomendacoes)
+          ? (strategy.recomendacoes as string[])
+          : (currentData.recomendacoes as string[] | undefined),
+        // Campos extras fora do tipo estrito — salvos no JSON
+      } as typeof processo.analysisData;
+
+      // Salvar estratégia completa como JSON separado (sem restrição de tipo)
+      const fullStrategy = {
+        ...currentData,
+        tesesCompleto: strategy.teses,
+        matrizGuerra: strategy.matriz_guerra,
+        osint: strategy.osint,
+        analiseProfunda: {
+          modelo: "claude-sonnet-4-6",
+          geradoEm: new Date().toISOString(),
+          fonte: "manual",
+        },
+      };
+
+      // 5. Salvar no banco — usa spread para manter campos extras no JSONB
+      await db
+        .update(processos)
+        .set({
+          analysisData: {
+            ...(merged ?? {}),
+            ...fullStrategy,
+          } as typeof processo.analysisData,
+        })
+        .where(eq(processos.id, input.processoId));
+
+      // 6. Salvar no Drive se possível
+      try {
+        const accessToken = await getAccessToken();
+        if (accessToken && assistido.driveFolderId) {
+          const reportMd = [
+            `# ANÁLISE PROFUNDA — ${assistido.nome}`,
+            `**Processo:** ${processo.numeroAutos}`,
+            `**Modelo:** Claude Sonnet 4.6`,
+            `**Data:** ${new Date().toLocaleDateString("pt-BR")}`,
+            "",
+            "## Tese Principal",
+            `${(strategy.teses as Record<string, string>)?.principal ?? "N/A"}`,
+            "",
+            "## Recomendações",
+            ...((strategy.recomendacoes as string[]) ?? []).map((r, i) => `${i + 1}. ${r}`),
+            "",
+            "---",
+            "_Gerado via OMBUDS — Análise Profunda_",
+          ].join("\n");
+
+          const dateSlug = new Date().toISOString().slice(0, 10);
+          await createOrUpdateDriveFile(
+            accessToken,
+            assistido.driveFolderId,
+            `_analise_profunda_${dateSlug}.md`,
+            reportMd,
+            "text/markdown"
+          );
+        }
+      } catch {
+        // Drive save é best-effort
+      }
+
+      return {
+        success: true,
+        tese: (strategy.teses as Record<string, string>)?.principal ?? "Análise gerada",
+        modelo: "claude-sonnet-4-6",
+      };
+    }),
 });

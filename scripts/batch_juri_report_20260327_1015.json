@@ -1,0 +1,9 @@
+[
+  {
+    "processo_id": 265,
+    "numero_autos": "8003969-75.2025.8.05.0039",
+    "assistido": "Adenilson da Silva",
+    "status": "error",
+    "error": "404 models/gemini-2.5-flash-preview-05-20 is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+  }
+]

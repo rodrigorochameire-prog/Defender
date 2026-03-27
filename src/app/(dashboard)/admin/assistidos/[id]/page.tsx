@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, Lock, User, Loader2, FileText, Plus, Sparkles, Pencil, Clock, Send, Scale, Calendar, FolderOpen, PanelRight, ChevronDown, Bot, Download } from "lucide-react";
+import { ArrowLeft, Lock, User, Loader2, FileText, Plus, Sparkles, Pencil, Clock, Send, Scale, Calendar, FolderOpen, PanelRight, ChevronDown, Bot, Download, Zap } from "lucide-react";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -83,6 +83,22 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     },
     onError: (err) => {
       toast.error("Erro ao importar análise", { description: err.message });
+    },
+  });
+
+  // Análise profunda (Sonnet)
+  const [sonnetProcessoId, setSonnetProcessoId] = useState<number | null>(null);
+  const analiseProfunda = trpc.briefing.analiseProfunda.useMutation({
+    onSuccess: (result) => {
+      toast.success("Análise profunda concluída", {
+        description: result.tese,
+      });
+      setSonnetProcessoId(null);
+      void utils.intelligence.getForAssistido.invalidate({ assistidoId: Number(id) });
+    },
+    onError: (err) => {
+      toast.error("Erro na análise profunda", { description: err.message });
+      setSonnetProcessoId(null);
     },
   });
 
@@ -415,6 +431,26 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                   Preso
                 </span>
               )}
+              {/* Análise Profunda — Sonnet (manual) */}
+              {data.processos?.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 gap-1 px-2 text-zinc-400 hover:text-amber-600 transition-colors text-[11px]"
+                  title="Análise profunda com Claude Sonnet (teses, quesitos, estratégia)"
+                  disabled={analiseProfunda.isPending}
+                  onClick={() => {
+                    const proc = data.processos[0];
+                    setSonnetProcessoId(proc.id);
+                    analiseProfunda.mutate({ processoId: proc.id, assistidoId: Number(id) });
+                  }}
+                >
+                  {analiseProfunda.isPending
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <Zap className="h-3.5 w-3.5" />}
+                  Sonnet
+                </Button>
+              )}
             </div>
             <div className="flex items-center gap-2.5 mt-1">
               {data.cpf && (
@@ -645,6 +681,22 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                         >
                           {importingProcessoId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
                         </Button>
+                        <Button
+                          variant="ghost" size="sm"
+                          className="h-5 w-5 p-0 text-zinc-400 hover:text-amber-500 transition-colors"
+                          title="Análise profunda (Sonnet) — teses, quesitos, estratégia"
+                          disabled={sonnetProcessoId === p.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSonnetProcessoId(p.id);
+                            analiseProfunda.mutate(
+                              { processoId: p.id, assistidoId: Number(id) },
+                              { onSettled: () => setSonnetProcessoId(null) }
+                            );
+                          }}
+                        >
+                          {sonnetProcessoId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
+                        </Button>
                       </div>
                     </div>
                     {p.assunto && <p className="text-[11px] font-medium text-zinc-600 dark:text-zinc-300 mt-0.5 truncate">{p.assunto}</p>}
@@ -707,6 +759,24 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                           )}>
                             {d.status?.replace(/^\d+_/, "") ?? "—"}
                           </span>
+                          {d.processoId && (
+                            <Button
+                              variant="ghost" size="sm"
+                              className="h-5 w-5 p-0 text-zinc-400 hover:text-amber-500 transition-colors"
+                              title="Análise profunda (Sonnet) — teses, quesitos, estratégia"
+                              disabled={sonnetProcessoId === d.processoId}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSonnetProcessoId(d.processoId!);
+                                analiseProfunda.mutate(
+                                  { processoId: d.processoId!, assistidoId: Number(id) },
+                                  { onSettled: () => setSonnetProcessoId(null) }
+                                );
+                              }}
+                            >
+                              {sonnetProcessoId === d.processoId ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
+                            </Button>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           {d.prazo && (
@@ -798,6 +868,24 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                         ? <Loader2 className="h-3 w-3 animate-spin" />
                         : <Download className="h-3 w-3" />}
                     </Button>
+                    {a.processoId && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 text-zinc-400 hover:text-amber-500 shrink-0 transition-colors"
+                        title="Análise profunda (Sonnet) — teses, quesitos, estratégia"
+                        disabled={sonnetProcessoId === a.processoId}
+                        onClick={() => {
+                          setSonnetProcessoId(a.processoId!);
+                          analiseProfunda.mutate(
+                            { processoId: a.processoId!, assistidoId: Number(id) },
+                            { onSettled: () => setSonnetProcessoId(null) }
+                          );
+                        }}
+                      >
+                        {sonnetProcessoId === a.processoId ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
+                      </Button>
+                    )}
                   </div>
                   {a.dataAudiencia && (
                     <p className="text-[11px] text-zinc-400 mt-0.5">
