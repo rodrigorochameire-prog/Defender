@@ -19,7 +19,9 @@
     "db:create-admin": "tsx scripts/create-admin.ts",
     "db:migrate-food": "node scripts/migrate-food-tables.mjs",
     "import:csv": "tsx scripts/import-csv.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.10",
@@ -113,6 +115,7 @@
     "@types/node": "^22.10.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vitest/coverage-v8": "^4.1.2",
     "autoprefixer": "^10.4.20",
     "cheerio": "^1.2.0",
     "drizzle-kit": "^0.28.1",
@@ -122,6 +125,7 @@
     "serwist": "^9.5.6",
     "tailwindcss": "^3.4.16",
     "tsx": "^4.21.0",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.2"
   }
 }
