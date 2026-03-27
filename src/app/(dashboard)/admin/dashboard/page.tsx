@@ -760,24 +760,22 @@ export default function DashboardJuriPage() {
           <Link href="/admin/demandas/nova">
             <Button
               size="sm"
-              className="h-8 px-3 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-emerald-500 dark:hover:text-white text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+              className="h-8 px-3.5 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 mr-1.5" />
-              Nova Demanda
+              Nova
             </Button>
           </Link>
         </div>
       </div>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <div className="px-5 md:px-8 py-3 md:py-4 space-y-6 md:space-y-8">
+      <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
 
         {/* ===== 1. REGISTRO RÁPIDO (full-width, stacked rows) ===== */}
-        <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
-          {/* Accent top bar */}
-          <div className="h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500" />
+        <Card className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl overflow-hidden">
           <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
+            <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center">
               <Plus className="w-4 h-4 text-white dark:text-zinc-900" />
             </div>
             <div>
@@ -1335,8 +1333,7 @@ export default function DashboardJuriPage() {
 
         {/* ===== PENDÊNCIAS SOLAR (condicional) ===== */}
         {solarSync && (solarSync.stats.pending > 0 || solarSync.stats.errors > 0) && (
-          <Card className="group/solar relative bg-white dark:bg-zinc-900 border border-amber-200/60 dark:border-amber-800/30 rounded-2xl overflow-hidden hover:border-amber-300 dark:hover:border-amber-700/50 transition-all duration-300 shadow-apple dark:shadow-apple-dark">
-            <div className="h-1 bg-gradient-to-r from-amber-400 via-amber-500 to-orange-400" />
+          <Card className="bg-white dark:bg-zinc-900 border border-amber-200/60 dark:border-amber-800/30 rounded-xl overflow-hidden">
             <div className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -1477,8 +1474,7 @@ export default function DashboardJuriPage() {
         <div className={cn("grid gap-6", isDefensorCriminalGeral ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2")}>
 
         {/* PRAZOS COM AÇÃO RÁPIDA */}
-        <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
-          <div className="h-1 bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400" />
+        <Card className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl overflow-hidden">
           <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -1598,8 +1594,7 @@ export default function DashboardJuriPage() {
 
         {/* PRÓXIMOS JÚRIS — só especializado */}
         {!isDefensorCriminalGeral && (
-          <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
-            <div className="h-1 bg-gradient-to-r from-violet-400 via-purple-400 to-indigo-400" />
+          <Card className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl overflow-hidden">
             <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
@@ -1715,7 +1710,7 @@ export default function DashboardJuriPage() {
         {/* ===== 6. AUDIÊNCIAS (full-width) ===== */}
         {isDefensorCriminalGeral ? (
           /* Criminal Geral: Minhas Audiências */
-          <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
+          <Card className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl overflow-hidden">
             <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -1808,7 +1803,7 @@ export default function DashboardJuriPage() {
           </Card>
         ) : (
           /* Especializado: Audiências da Semana */
-          <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
+          <Card className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl overflow-hidden">
               <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
