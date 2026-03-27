@@ -64,6 +64,7 @@ import { noticiasRouter } from "./noticias";
 import { bibliotecaRouter } from "./biblioteca";
 import { comarcasRouter } from "./comarcas";
 import { observatoryRouter } from "./observatory";
+import { syncRouter } from "./sync";
 
 
 export const appRouter = router({
@@ -293,6 +294,11 @@ export const appRouter = router({
   // OBSERVATORY - PAINEL ADMINISTRATIVO
   // ==========================================
   observatory: observatoryRouter,
+
+  // ==========================================
+  // SYNC - GERENCIAMENTO DE CONFLITOS
+  // ==========================================
+  sync: syncRouter,
 });
 
 export type AppRouter = typeof appRouter;
