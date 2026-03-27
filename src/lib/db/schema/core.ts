@@ -505,3 +505,21 @@ export const syncLog = pgTable("sync_log", {
 
 export type SyncLogEntry = typeof syncLog.$inferSelect;
 export type InsertSyncLog = typeof syncLog.$inferInsert;
+
+// ==========================================
+// CHAT HISTORY (Skills)
+// ==========================================
+
+export const chatHistory = pgTable("chat_history", {
+  id: serial("id").primaryKey(),
+  assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "cascade" }),
+  userId: integer("user_id").references(() => users.id),
+  role: varchar("role", { length: 20 }).notNull(),
+  content: text("content").notNull(),
+  skillId: varchar("skill_id", { length: 50 }),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type ChatHistoryEntry = typeof chatHistory.$inferSelect;
+export type InsertChatHistory = typeof chatHistory.$inferInsert;

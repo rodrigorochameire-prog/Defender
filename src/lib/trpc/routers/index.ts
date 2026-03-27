@@ -65,6 +65,7 @@ import { bibliotecaRouter } from "./biblioteca";
 import { comarcasRouter } from "./comarcas";
 import { observatoryRouter } from "./observatory";
 import { syncRouter } from "./sync";
+import { skillsRouter } from "./skills";
 
 
 export const appRouter = router({
@@ -299,6 +300,11 @@ export const appRouter = router({
   // SYNC - GERENCIAMENTO DE CONFLITOS
   // ==========================================
   sync: syncRouter,
+
+  // ==========================================
+  // SKILLS ENGINE - CHAT HISTORY + AUTOCOMPLETE
+  // ==========================================
+  skills: skillsRouter,
 });
 
 export type AppRouter = typeof appRouter;
