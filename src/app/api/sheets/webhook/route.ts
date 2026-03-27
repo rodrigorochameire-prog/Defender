@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { demandas, processos, assistidos } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
+import { registerConflict, logSyncAction, classifySync } from "@/lib/services/sync-engine";
 
 // Mapeamento: nome do campo no Apps Script → campo no banco
 const CAMPO_MAP: Record<string, string> = {
@@ -113,6 +114,41 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Demanda não encontrada" }, { status: 404 });
   }
 
+  // --- DETECÇÃO DE CONFLITO ---
+  const direction = classifySync(campoDb);
+  if (direction === "BANCO_TO_SHEET") {
+    // Campo unidirecional — planilha não deveria editar este campo
+    return NextResponse.json({ ok: true, skipped: "banco_to_sheet_only" });
+  }
+
+  // Verificar se banco mudou desde último sync
+  const currentDemanda = await db.query.demandas.findFirst({
+    where: eq(demandas.id, demandaId),
+    columns: { status: true, substatus: true, providencias: true, updatedAt: true, syncedAt: true },
+  });
+
+  if (currentDemanda) {
+    const syncedAt = currentDemanda.syncedAt ?? new Date(0);
+    const bancoMudou = currentDemanda.updatedAt > syncedAt;
+
+    if (bancoMudou) {
+      // Banco mudou desde último sync — verificar se é conflito real
+      // (valores diferentes = conflito, valores iguais = ok)
+      const valorAtualBanco = String((currentDemanda as any)[campoDb] ?? "");
+      const valorNovoPlanilha = String(valor);
+
+      if (valorAtualBanco !== valorNovoPlanilha) {
+        await registerConflict(
+          demandaId, campoDb,
+          valorAtualBanco, valorNovoPlanilha,
+          currentDemanda.updatedAt, new Date(),
+        );
+        return NextResponse.json({ ok: true, conflict: true, field: campoDb });
+      }
+    }
+  }
+  // --- FIM DETECÇÃO DE CONFLITO ---
+
   // 4. Aplica a mudança com skipSheetSync (evita loop)
   try {
     switch (campoDb) {
@@ -200,6 +236,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         return NextResponse.json({ ok: true, info: "Delegação via planilha não suportada ainda" });
       }
     }
+
+    // Atualizar syncedAt após sync bem-sucedido
+    await db.update(demandas)
+      .set({ syncedAt: new Date() })
+      .where(eq(demandas.id, demandaId));
+
+    // Registrar log
+    await logSyncAction(demandaId, campoDb, null, String(valor), "PLANILHA");
 
     console.log(`[Sheets Webhook] Demanda ${demandaId} — campo "${campo}" atualizado: "${valorStr}"`);
     return NextResponse.json({ ok: true });
