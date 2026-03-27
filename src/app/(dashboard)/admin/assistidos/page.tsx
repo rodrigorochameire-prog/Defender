@@ -1016,7 +1016,7 @@ export default function AssistidosPage() {
 
       {/* Analytics Tab Content */}
       {activeTab === "analytics" && (
-        <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark">
+        <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden">
           <AnalyticsTab assistidos={realAssistidos.filter(a => {
             const isNI = a.nome.toLowerCase().includes("nao identificado") || a.nome === "" || a.nome === "-";
             return !isNI;
@@ -1187,7 +1187,7 @@ export default function AssistidosPage() {
 
 
       {/* Card de Listagem */}
-      <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden">
+      <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden">
         {/* Header — count + sort + view */}
         <div className="px-4 py-2 border-b border-zinc-100 dark:border-zinc-800/60">
           <div className="flex items-center justify-between">

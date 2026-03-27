@@ -89,7 +89,7 @@ export function EquipeCoworkCard({
   ];
 
   return (
-    <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
+    <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl overflow-hidden transition-all duration-200">
       {/* Accent bar */}
       <div className="h-1 bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-600" />
       {/* Header */}

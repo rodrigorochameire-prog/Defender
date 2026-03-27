@@ -18,7 +18,7 @@ export function RadarWidget() {
 
   if (isLoading) {
     return (
-      <Card className="relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark">
+      <Card className="relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl overflow-hidden">
         <div className="h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500" />
         <div className="p-5 space-y-3">
           <Skeleton className="h-5 w-32" />
@@ -38,7 +38,7 @@ export function RadarWidget() {
   const homicidios = stats.porTipo.find((t) => t.tipo === "homicidio")?.count ?? 0;
 
   return (
-    <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark hover:border-emerald-200 dark:hover:border-emerald-800/50 transition-all duration-300">
+    <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl overflow-hidden hover:border-emerald-200 dark:hover:border-emerald-800/50 transition-all duration-300">
       {/* Accent bar */}
       <div className="h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500" />
 
