@@ -10,6 +10,8 @@
 import { inngest } from "./client";
 import { sendWhatsAppMessage } from "./whatsapp-helper";
 import { syncFolderWithDatabase, getSyncFolders, smartSync, renewExpiringChannels, checkSyncHealth } from "@/lib/services/google-drive";
+import { readSheet, getSheetName, COL, ATRIBUICAO_TO_SHEET, statusParaLabel } from "@/lib/services/google-sheets";
+import { registerConflict, logSyncAction } from "@/lib/services/sync-engine";
 
 // ============================================
 // WHATSAPP FUNCTIONS
@@ -2013,6 +2015,103 @@ export const intelligenceConsolidateFn = inngest.createFunction(
   }
 );
 
+// ============================================
+// SYNC PLANILHA POLLING
+// ============================================
+
+/**
+ * Polling de segurança: lê a planilha a cada 5 minutos e sincroniza
+ * mudanças que o webhook pode ter perdido.
+ */
+export const syncSheetPollingFn = inngest.createFunction(
+  { id: "sync-sheet-polling", name: "Sync Planilha Polling (5min)" },
+  { cron: "*/5 * * * *" },
+  async ({ step }) => {
+    const stats = { checked: 0, updated: 0, conflicts: 0, errors: 0 };
+
+    await step.run("poll-sheets", async () => {
+      const { db } = await import("@/lib/db");
+      const { demandas } = await import("@/lib/db/schema");
+      const { eq } = await import("drizzle-orm");
+
+      // Status label → DB status mapping
+      const LABEL_TO_STATUS: Record<string, { status: string; substatus: string | null }> = {
+        "1 - Urgente": { status: "URGENTE", substatus: null },
+        "2 - Atender": { status: "2_ATENDER", substatus: "2 - Atender" },
+        "2 - Analisar": { status: "2_ATENDER", substatus: "2 - Analisar" },
+        "2 - Elaborar": { status: "2_ATENDER", substatus: "2 - Elaborar" },
+        "2 - Buscar": { status: "2_ATENDER", substatus: "2 - Buscar" },
+        "4 - Monitorar": { status: "4_MONITORAR", substatus: null },
+        "5 - Fila": { status: "5_FILA", substatus: null },
+        "7 - Protocolado": { status: "7_PROTOCOLADO", substatus: null },
+        "7 - Ciência": { status: "7_CIENCIA", substatus: null },
+        "7 - Sem atuação": { status: "7_SEM_ATUACAO", substatus: null },
+        "7 - Resolvido": { status: "CONCLUIDO", substatus: "7 - Resolvido" },
+        "7 - Sigad": { status: "7_PROTOCOLADO", substatus: "7 - Sigad" },
+      };
+
+      const DATA_START_ROW = 4; // Row 4 in sheets = index 3
+
+      for (const [atribuicao, sheetName] of Object.entries(ATRIBUICAO_TO_SHEET)) {
+        if (sheetName === "Violência Doméstic" || sheetName === "Plenários") continue;
+
+        try {
+          const rows = await readSheet(sheetName);
+
+          for (let i = DATA_START_ROW - 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || !row[COL.ID - 1]) continue;
+
+            const demandaId = parseInt(row[COL.ID - 1]);
+            if (isNaN(demandaId)) continue;
+
+            const demanda = await db.query.demandas.findFirst({
+              where: eq(demandas.id, demandaId),
+              columns: { id: true, status: true, substatus: true, updatedAt: true, syncedAt: true },
+            });
+            if (!demanda) continue;
+
+            stats.checked++;
+
+            const planilhaStatus = (row[COL.STATUS - 1] ?? "").trim();
+            if (!planilhaStatus) continue;
+
+            const bancoStatusLabel = statusParaLabel(demanda.status, demanda.substatus);
+
+            if (planilhaStatus !== bancoStatusLabel) {
+              const syncedAt = demanda.syncedAt ?? new Date(0);
+              const bancoMudou = demanda.updatedAt > syncedAt;
+
+              if (bancoMudou) {
+                // Conflito — ambos mudaram
+                await registerConflict(demandaId, "status", bancoStatusLabel, planilhaStatus, demanda.updatedAt, new Date());
+                stats.conflicts++;
+              } else {
+                // Planilha vence — atualizar banco
+                const mapping = LABEL_TO_STATUS[planilhaStatus];
+                if (mapping) {
+                  await db.update(demandas).set({
+                    status: mapping.status,
+                    substatus: mapping.substatus,
+                    syncedAt: new Date(),
+                  }).where(eq(demandas.id, demandaId));
+                  await logSyncAction(demandaId, "status", bancoStatusLabel, planilhaStatus, "PLANILHA");
+                  stats.updated++;
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.error(`[Polling] Erro na aba ${sheetName}:`, err);
+          stats.errors++;
+        }
+      }
+    });
+
+    return stats;
+  }
+);
+
 export const functions = [
   sendWhatsAppMessageFn,
   notifyPrazoFn,
@@ -2039,4 +2138,5 @@ export const functions = [
   enrichmentProcessFolderFn,
   driveWatchdogFn,
   intelligenceConsolidateFn,
+  syncSheetPollingFn,
 ];
