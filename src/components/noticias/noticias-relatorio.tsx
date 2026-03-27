@@ -121,16 +121,16 @@ export function NoticiasRelatorio() {
         {/* Período — segmented control */}
         <div>
           <p className="text-sm font-medium mb-2">Período</p>
-          <div className="inline-flex rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-1 gap-1">
+          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
             {PERIODOS.map(p => (
               <button
                 key={p.value}
                 onClick={() => setPeriodo(p.value)}
                 className={cn(
-                  "px-3 py-1.5 text-sm rounded-md transition-all duration-150 font-medium",
+                  "px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all duration-200 cursor-pointer",
                   periodo === p.value
-                    ? "bg-white dark:bg-zinc-900 text-emerald-700 dark:text-emerald-400 shadow-sm border border-zinc-200 dark:border-zinc-700"
-                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
+                    : "text-zinc-400 dark:text-zinc-500"
                 )}
               >
                 {p.label}

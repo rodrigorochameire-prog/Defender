@@ -796,7 +796,7 @@ export const whatsappChatRouter = router({
         limit: z.number().min(1).max(100).optional(),
         offset: z.number().min(0).optional(),
         beforeId: z.number().optional(), // Legacy: alias for cursor (loads older messages)
-        cursor: z.number().optional(), // Cursor-based pagination: ID-based, loads messages with id < cursor (older)
+        cursor: z.string().optional(), // Cursor-based pagination: ISO date string, loads messages older than cursor
       })
     )
     .query(async ({ input }) => {
@@ -804,32 +804,36 @@ export const whatsappChatRouter = router({
 
       const conditions = [eq(whatsappChatMessages.contactId, contactId)];
 
-      // Cursor takes precedence over beforeId (both do the same thing)
-      const cursorId = cursor ?? beforeId;
-      if (cursorId) {
-        conditions.push(lt(whatsappChatMessages.id, cursorId));
+      // Cursor-based pagination by createdAt (cursor is an ISO date string)
+      if (cursor) {
+        conditions.push(lt(whatsappChatMessages.createdAt, new Date(cursor)));
+      } else if (beforeId) {
+        // Legacy: load messages with id < beforeId
+        conditions.push(lt(whatsappChatMessages.id, beforeId));
       }
 
+      const hasCursor = !!(cursor || beforeId);
+
       // Fetch one extra to determine if there are more results
-      const fetchLimit = cursorId ? limit + 1 : limit;
+      const fetchLimit = hasCursor ? limit + 1 : limit;
 
       const messages = await db
         .select()
         .from(whatsappChatMessages)
         .where(and(...conditions))
-        .orderBy(desc(whatsappChatMessages.id))
+        .orderBy(desc(whatsappChatMessages.createdAt), desc(whatsappChatMessages.id))
         .limit(fetchLimit)
-        .offset(cursorId ? 0 : offset); // When using cursor, ignore offset
+        .offset(hasCursor ? 0 : offset);
 
       // Detect if there are more messages beyond this page
-      const hasMore = cursorId ? messages.length > limit : messages.length === limit;
-      if (cursorId && messages.length > limit) {
+      const hasMore = hasCursor ? messages.length > limit : messages.length === limit;
+      if (hasCursor && messages.length > limit) {
         messages.pop(); // Remove the extra detection item
       }
 
       // Conta total (only when not using cursor, to avoid expensive COUNT on every scroll)
       let total: number | null = null;
-      if (!cursorId) {
+      if (!hasCursor) {
         const [{ count }] = await db
           .select({ count: sql<number>`count(*)` })
           .from(whatsappChatMessages)
@@ -837,9 +841,9 @@ export const whatsappChatRouter = router({
         total = Number(count);
       }
 
-      // nextCursor = the smallest ID in the current page (for loading older messages)
+      // nextCursor = the createdAt of the oldest message in the current page
       const nextCursor = hasMore && messages.length > 0
-        ? messages[messages.length - 1].id
+        ? messages[messages.length - 1].createdAt.toISOString()
         : null;
 
       // Retorna em ordem cronológica
@@ -2288,9 +2292,13 @@ export const whatsappChatRouter = router({
 
         const lastMsg = chat.messages[chat.messages.length - 1];
         const lastMessageAt = lastMsg?.timestamp ? new Date(lastMsg.timestamp) : null;
+        const lastMessageContent = lastMsg?.content || (lastMsg?.hasMedia ? `[${lastMsg.type}]` : null);
+        const lastMessageDirection = lastMsg?.fromMe ? "outbound" : "inbound";
+        const lastMessageType = lastMsg?.type || "text";
+        const lastMessageStatus = lastMsg?.fromMe ? "sent" : "received";
 
         const [existing] = await db
-          .select({ id: whatsappContacts.id })
+          .select({ id: whatsappContacts.id, lastMessageAt: whatsappContacts.lastMessageAt })
           .from(whatsappContacts)
           .where(and(
             eq(whatsappContacts.configId, configId),
@@ -2301,11 +2309,21 @@ export const whatsappChatRouter = router({
         let contactId: number;
 
         if (existing) {
+          // Only update lastMessage fields if imported data is more recent
+          const shouldUpdateLastMsg = lastMessageAt && (
+            !existing.lastMessageAt || lastMessageAt > existing.lastMessageAt
+          );
           await db
             .update(whatsappContacts)
             .set({
               ...(chat.name ? { pushName: chat.name } : {}),
-              ...(lastMessageAt ? { lastMessageAt } : {}),
+              ...(shouldUpdateLastMsg ? {
+                lastMessageAt,
+                lastMessageContent,
+                lastMessageDirection,
+                lastMessageType,
+                lastMessageStatus,
+              } : {}),
               updatedAt: new Date(),
             })
             .where(eq(whatsappContacts.id, existing.id));
@@ -2319,6 +2337,10 @@ export const whatsappChatRouter = router({
               phone,
               pushName: chat.name || null,
               lastMessageAt,
+              lastMessageContent,
+              lastMessageDirection,
+              lastMessageType,
+              lastMessageStatus,
               unreadCount: 0,
             })
             .returning({ id: whatsappContacts.id });

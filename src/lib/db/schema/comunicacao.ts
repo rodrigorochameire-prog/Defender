@@ -315,6 +315,7 @@ export const whatsappChatMessages = pgTable("whatsapp_chat_messages", {
   index("whatsapp_chat_messages_wa_message_id_idx").on(table.waMessageId),
   index("whatsapp_chat_messages_direction_idx").on(table.direction),
   index("whatsapp_chat_messages_created_at_idx").on(table.createdAt),
+  index("whatsapp_chat_messages_contact_created_idx").on(table.contactId, table.createdAt),
 ]);
 
 export type WhatsAppChatMessage = typeof whatsappChatMessages.$inferSelect;

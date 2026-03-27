@@ -577,7 +577,7 @@ export function ConversationList({
               <div
                 key={contact.id}
                 className={cn(
-                  "group flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors",
+                  "group flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors overflow-hidden",
                   selectedContactId === contact.id
                     ? "bg-[var(--wa-selected)]"
                     : "hover:bg-[var(--wa-hover)]",
@@ -606,31 +606,29 @@ export function ConversationList({
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   {/* Row 1: Name + Timestamp */}
-                  <div className="flex justify-between items-baseline gap-2">
-                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                      <span
-                        className={cn(
-                          "text-[15px] font-normal truncate",
-                          isPhoneDisplayName(contact) && "font-mono text-sm"
-                        )}
-                        style={{ color: 'var(--wa-text-primary)' }}
-                      >
-                        {debouncedSearch
-                          ? highlightText(getContactDisplayName(contact), debouncedSearch)
-                          : getContactDisplayName(contact)}
-                      </span>
-                      {contact.isFavorite && (
-                        <Star className="h-3 w-3 fill-amber-400 text-amber-400 shrink-0" />
+                  <div className="flex items-baseline">
+                    <span
+                      className={cn(
+                        "text-[15px] font-normal truncate",
+                        isPhoneDisplayName(contact) && "font-mono text-sm"
                       )}
-                    </div>
-                    {contact.lastMessageAt && (
-                      <span
-                        className="text-xs shrink-0 whitespace-nowrap"
-                        style={{ color: contact.unreadCount > 0 ? 'var(--wa-unread-badge)' : 'var(--wa-text-secondary)' }}
-                      >
-                        {formatWhatsAppTime(new Date(contact.lastMessageAt))}
-                      </span>
+                      style={{ color: 'var(--wa-text-primary)', flex: '1 1 0%', minWidth: 0 }}
+                    >
+                      {debouncedSearch
+                        ? highlightText(getContactDisplayName(contact), debouncedSearch)
+                        : getContactDisplayName(contact)}
+                    </span>
+                    {contact.isFavorite && (
+                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" style={{ flexShrink: 0 }} />
                     )}
+                    <span
+                      className="text-[11px] whitespace-nowrap"
+                      style={{ flexShrink: 0, color: contact.unreadCount > 0 ? 'var(--wa-unread-badge)' : 'var(--wa-text-secondary)' }}
+                    >
+                      {contact.lastMessageAt
+                        ? formatWhatsAppTime(new Date(contact.lastMessageAt))
+                        : ""}
+                    </span>
                   </div>
 
                   {/* Row 2: Message preview + Unread badge */}
