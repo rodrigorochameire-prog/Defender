@@ -1893,10 +1893,10 @@ export default function ProcessosPage() {
               <Link href="/admin/processos/novo">
                 <Button
                   size="sm"
-                  className="h-8 px-3 ml-1.5 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer"
+                  className="h-8 px-3.5 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5 mr-1" />
-                  Novo Processo
+                  Novo
                 </Button>
               </Link>
             </div>
@@ -1904,10 +1904,10 @@ export default function ProcessosPage() {
         </div>
 
         {/* Conteúdo Principal */}
-        <div className="px-5 md:px-8 py-3 md:py-4 space-y-5 md:space-y-7">
+        <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
 
         {/* Stats Ribbon — compact inline KPIs */}
-        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none">
           {[
             { icon: Scale, value: stats.total, label: "total", sublabel: `${stats.comarcas} comarcas`, onClick: undefined, active: false, alert: false },
             { icon: Gavel, value: stats.juri, label: "júri", onClick: () => setAreaFilter(areaFilter === "JURI" ? "all" : "JURI"), active: areaFilter === "JURI", alert: false },
@@ -1941,7 +1941,7 @@ export default function ProcessosPage() {
         </div>
 
         {/* Filtros de Prazo - Chips Premium */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 p-5 shadow-apple dark:shadow-apple-dark">
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <CalendarClock className="w-4 h-4 text-zinc-400" />
@@ -1967,7 +1967,7 @@ export default function ProcessosPage() {
         </div>
 
         {/* Card de Filtros - Padrão Demandas */}
-        <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl p-5 shadow-apple dark:shadow-apple-dark">
+        <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-xl p-5">
           <FilterSectionProcessos
             selectedArea={areaFilter}
             setSelectedArea={setAreaFilter}
@@ -1985,7 +1985,7 @@ export default function ProcessosPage() {
         </Card>
 
         {/* Card de Listagem */}
-        <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark">
+        <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden">
 
           {/* Header da listagem */}
           <div className="px-4 py-3 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/50">
