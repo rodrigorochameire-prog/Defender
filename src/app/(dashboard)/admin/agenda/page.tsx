@@ -488,13 +488,12 @@ function SemanaView({
 function FilterPill({
   label,
   isActive,
-  count,
   config,
   onClick
 }: {
   label: string;
   isActive: boolean;
-  count: number;
+  count?: number;
   config: typeof ATRIBUICAO_CONFIG[string];
   onClick: () => void;
 }) {
@@ -506,7 +505,7 @@ function FilterPill({
       className={cn(
         "flex items-center gap-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
         isActive
-          ? "px-3.5 py-1.5 shadow-sm text-white"
+          ? "px-3 py-1.5 shadow-sm text-white"
           : "px-2 py-1.5"
       )}
       style={
@@ -516,22 +515,11 @@ function FilterPill({
       }
     >
       <span className="flex-shrink-0 [&>svg]:w-[16px] [&>svg]:h-[16px]" style={{ color: isActive ? "#fff" : "#71717a" }}>{config.icon}</span>
-      {isActive && <span>{label}</span>}
-      {count > 0 && (
-        <span
-          className="text-[9px] font-bold tabular-nums px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
-          style={
-            isActive
-              ? { backgroundColor: "rgba(255,255,255,0.25)", color: "#fff" }
-              : { color: "#9ca3af" }
-          }
-        >
-          {count}
-        </span>
-      )}
+      {isActive && <span className="hidden sm:inline">{label}</span>}
     </button>
   );
 }
+
 
 // ==========================================
 // PÁGINA PRINCIPAL
@@ -1403,14 +1391,6 @@ export default function AgendaPage() {
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-            {/* View mode */}
-            <button
-              onClick={() => { const modes = ["calendar", "week", "list"] as const; const i = modes.indexOf(viewMode as any); setViewMode(modes[(i + 1) % modes.length]); setSelectedPeriodo(null); }}
-              className="w-7 h-7 flex items-center justify-center rounded-full text-zinc-400 hover:text-zinc-600 hover:bg-white dark:hover:bg-zinc-700 transition-colors cursor-pointer"
-              title={viewMode === "calendar" ? "Mês → Semana" : viewMode === "week" ? "Semana → Lista" : "Lista → Mês"}
-            >
-              {viewMode === "calendar" ? <Grid3x3 className="w-3.5 h-3.5" /> : viewMode === "week" ? <CalendarDays className="w-3.5 h-3.5" /> : <List className="w-3.5 h-3.5" />}
-            </button>
             {/* Overflow */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -1475,7 +1455,7 @@ export default function AgendaPage() {
         {/* Desktop: Atribuição pills */}
         <div className="hidden sm:inline-flex items-center gap-0 p-[3px] rounded-full bg-zinc-200/60 dark:bg-zinc-800 border border-zinc-300/70 dark:border-zinc-700/60">
           {Object.entries(ATRIBUICAO_CONFIG).map(([key, config]) => (
-            <FilterPill key={key} label={config.shortLabel} isActive={areaFilters.has(key)} count={countByArea[key] || 0} config={config} onClick={() => handleAreaFilterToggle(key)} />
+            <FilterPill key={key} label={config.shortLabel} isActive={areaFilters.has(key)} config={config} onClick={() => handleAreaFilterToggle(key)} />
           ))}
         </div>
         <div className="flex-1 min-w-2" />
