@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { demandas, processos, assistidos, users } from "@/lib/db/schema";
 import { eq, isNull } from "drizzle-orm";
-import { syncAll, type DemandaParaSync } from "@/lib/services/google-sheets";
+import { syncAll_DEPRECATED, type DemandaParaSync } from "@/lib/services/google-sheets";
 
 function getWebhookSecret(): string {
   return process.env.SHEETS_WEBHOOK_SECRET ?? "";
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     delegadoNome: r.delegadoNome ?? null,
   }));
 
-  const stats = await syncAll(lista);
+  const stats = await syncAll_DEPRECATED(lista);
 
   return NextResponse.json({ ok: true, total: lista.length, stats });
 }

@@ -589,7 +589,7 @@ async function formatSheet(sheetId: number, title: string, dataRowCount = 500): 
 /**
  * Lê todos os dados de uma aba. Retorna array de linhas (cada linha = array de strings).
  */
-async function readSheet(title: string): Promise<string[][]> {
+export async function readSheet(title: string): Promise<string[][]> {
   try {
     const data = await sheetsGet(
       `/values/${encodeURIComponent(title)}?majorDimension=ROWS`
@@ -603,7 +603,7 @@ async function readSheet(title: string): Promise<string[][]> {
 /**
  * Encontra a linha de uma demanda pelo ID. Retorna índice 1-based ou null.
  */
-function findRowById(rows: string[][], id: number): number | null {
+export function findRowById(rows: string[][], id: number): number | null {
   for (let i = DATA_START_ROW - 1; i < rows.length; i++) {
     if (String(rows[i]?.[COL.ID - 1]) === String(id)) {
       return i + 1; // 1-indexed
@@ -645,20 +645,43 @@ export function getSheetName(atribuicao: string): string {
  * Insere ou atualiza uma demanda na planilha.
  * Cria a aba se não existir.
  * Pula abas manuais (VVD) — essas são mantidas pelo usuário.
+ * Verifica conflitos antes de sobrescrever: se o status na planilha difere do banco,
+ * registra o conflito via sync-engine e NÃO sobrescreve.
  */
-export async function pushDemanda(demanda: DemandaParaSync): Promise<void> {
+export async function pushDemanda(demanda: DemandaParaSync): Promise<{ pushed: boolean; conflict: boolean }> {
   if (!getSpreadsheetId()) {
     console.warn("[Sheets] GOOGLE_SHEETS_SPREADSHEET_ID não configurado — sync ignorado");
-    return;
+    return { pushed: false, conflict: false };
   }
 
   const sheetName = getSheetName(demanda.atribuicao);
-  if (MANUAL_SHEETS.has(sheetName)) return; // VVD é manual
+  if (MANUAL_SHEETS.has(sheetName)) return { pushed: false, conflict: false };
 
   try {
     await ensureSheet(sheetName);
     const rows = await readSheet(sheetName);
     const rowIndex = findRowById(rows, demanda.id);
+
+    if (rowIndex) {
+      // Linha existe — verificar se o status na planilha difere do que vamos escrever
+      const existingRow = rows[rowIndex - 1];
+      const planilhaStatus = existingRow?.[COL.STATUS - 1] ?? "";
+      const bancoStatus = statusParaLabel(demanda.status, demanda.substatus);
+
+      if (planilhaStatus && planilhaStatus !== bancoStatus) {
+        // Possível conflito — registrar e NÃO sobrescrever
+        const { registerConflict } = await import("./sync-engine");
+        await registerConflict(
+          demanda.id, "status",
+          bancoStatus, planilhaStatus,
+          new Date(), new Date(),
+        );
+        console.log(`[Sheets] Conflito detectado para demanda ${demanda.id}: banco="${bancoStatus}" planilha="${planilhaStatus}"`);
+        return { pushed: false, conflict: true };
+      }
+    }
+
+    // Sem conflito — escrever normalmente
     const rowData = demandaToRow(demanda);
     const range = `${sheetName}!A${rowIndex ?? rows.length + 1}:${colToLetter(HEADERS.length)}${rowIndex ?? rows.length + 1}`;
 
@@ -666,8 +689,11 @@ export async function pushDemanda(demanda: DemandaParaSync): Promise<void> {
       `/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
       { values: [rowData] }
     );
+
+    return { pushed: true, conflict: false };
   } catch (err) {
     console.error(`[Sheets] Erro ao sincronizar demanda ${demanda.id}:`, err);
+    return { pushed: false, conflict: false };
   }
 }
 
@@ -817,10 +843,12 @@ export async function moveDemanda(
 }
 
 /**
- * Sincroniza todas as demandas de uma lista para a planilha.
- * Usado para sync inicial ou re-sync completo.
+ * @deprecated Use pushDemanda() individualmente em vez desta função.
+ * syncAll é destrutivo — apaga e reescreve a planilha inteira.
+ * Mantido apenas para emergência.
  */
-export async function syncAll(demandas: DemandaParaSync[]): Promise<SyncStats> {
+export async function syncAll_DEPRECATED(demandas: DemandaParaSync[]): Promise<SyncStats> {
+  console.warn("[Sheets] ⚠️ syncAll_DEPRECATED chamado! Use pushDemanda() individualmente.");
   const stats: SyncStats = { inserted: 0, updated: 0, removed: 0, errors: [] };
 
   if (!getSpreadsheetId()) {
