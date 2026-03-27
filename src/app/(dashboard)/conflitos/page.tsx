@@ -1,0 +1,107 @@
+"use client";
+
+import { trpc } from "@/lib/trpc/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, Check, FileText } from "lucide-react";
+import { toast } from "sonner";
+
+export default function ConflitosPage() {
+  const utils = trpc.useUtils();
+  const { data: conflicts, isLoading } = trpc.sync.conflictList.useQuery();
+  const resolve = trpc.sync.resolveConflict.useMutation({
+    onSuccess: () => {
+      utils.sync.conflictList.invalidate();
+      utils.sync.conflictCount.invalidate();
+      toast.success("Conflito resolvido");
+    },
+    onError: (err) => {
+      toast.error("Erro ao resolver: " + err.message);
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded w-64" />
+          <div className="h-32 bg-zinc-200 dark:bg-zinc-800 rounded" />
+          <div className="h-32 bg-zinc-200 dark:bg-zinc-800 rounded" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center gap-3">
+        <AlertTriangle className="h-6 w-6 text-orange-500" />
+        <h1 className="text-2xl font-bold">Conflitos de Sincronização</h1>
+        <Badge variant="outline">{conflicts?.length ?? 0} pendentes</Badge>
+      </div>
+
+      <p className="text-sm text-muted-foreground">
+        Conflitos ocorrem quando o mesmo campo é editado na planilha e no OMBUDS simultaneamente.
+        Escolha qual valor manter.
+      </p>
+
+      {(!conflicts || conflicts.length === 0) && (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <Check className="h-10 w-10 mx-auto mb-3 text-emerald-500" />
+            <p className="text-lg font-medium">Nenhum conflito pendente</p>
+            <p className="text-sm mt-1">Planilha e OMBUDS estão sincronizados</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {conflicts?.map((c) => (
+        <Card key={c.id} className="border-orange-300/50 dark:border-orange-700/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <span>{c.assistidoNome}</span>
+              <span className="text-muted-foreground font-normal">—</span>
+              <span className="text-sm text-muted-foreground font-mono">{c.numeroAutos}</span>
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Campo: <code className="bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-xs">{c.campo}</code>
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
+                <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Planilha</p>
+                <p className="font-medium text-sm">{c.valorPlanilha || "(vazio)"}</p>
+              </div>
+              <div className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/50">
+                <p className="text-xs text-zinc-500 font-medium mb-1">OMBUDS</p>
+                <p className="font-medium text-sm">{c.valorBanco || "(vazio)"}</p>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-950/30"
+                onClick={() => resolve.mutate({ conflictId: c.id, resolution: "PLANILHA" })}
+                disabled={resolve.isPending}
+              >
+                Aceitar Planilha
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => resolve.mutate({ conflictId: c.id, resolution: "BANCO" })}
+                disabled={resolve.isPending}
+              >
+                Aceitar OMBUDS
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
