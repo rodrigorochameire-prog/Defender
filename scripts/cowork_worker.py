@@ -33,7 +33,9 @@ log = logging.getLogger("cowork-worker")
 SCRIPT_DIR = Path(__file__).parent
 PROJECT_DIR = SCRIPT_DIR.parent
 JURI_FOLDER = Path.home() / "Meu Drive" / "1 - Defensoria 9ª DP" / "Processos - Júri"
-SKILL_CACHE = SCRIPT_DIR / ".juri_skill_prompt.md"
+SKILL_CACHE_DIR = SCRIPT_DIR / ".skill_cache"
+SKILLS_CONFIG = SCRIPT_DIR / "cowork_skills.json"
+SKILLS_DIR = Path.home() / "Meu Drive" / "1 - Defensoria 9ª DP" / "Inteligencia artificial" / "Skills Atualizadas"
 
 def load_env():
     env = {}
@@ -51,15 +53,84 @@ SUPABASE_KEY = ENV["SUPABASE_SERVICE_ROLE_KEY"]
 HEADERS = {"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}", "Content-Type": "application/json"}
 
 
-def ensure_skill_prompt():
-    """Garante que o prompt da skill está extraído."""
-    if SKILL_CACHE.exists():
-        return SKILL_CACHE.read_text()
-    # Extrair da skill
-    subprocess.run([str(SCRIPT_DIR / "cowork_juri.sh"), "--help"], capture_output=True)
-    if SKILL_CACHE.exists():
-        return SKILL_CACHE.read_text()
-    raise FileNotFoundError("Skill prompt não encontrada. Rode ./scripts/cowork_juri.sh --help primeiro.")
+def load_skills_config():
+    """Carrega configuração de skills."""
+    with open(SKILLS_CONFIG) as f:
+        return json.load(f)
+
+
+def extract_skill_prompt(skill_name: str) -> str:
+    """Extrai o prompt de uma .skill file (zip com SKILL.md + references)."""
+    SKILL_CACHE_DIR.mkdir(exist_ok=True)
+    cache_file = SKILL_CACHE_DIR / f"{skill_name}.md"
+
+    skill_file = SKILLS_DIR / f"{skill_name}.skill"
+    if not skill_file.exists():
+        raise FileNotFoundError(f"Skill não encontrada: {skill_file}")
+
+    # Usar cache se skill não mudou
+    if cache_file.exists() and cache_file.stat().st_mtime >= skill_file.stat().st_mtime:
+        return cache_file.read_text()
+
+    log.info("  📦 Extraindo skill: %s", skill_name)
+    import zipfile
+    parts = []
+    with zipfile.ZipFile(skill_file, "r") as z:
+        # Encontrar SKILL.md (pode estar em skill_src/ ou skill_src/<name>/)
+        for name in z.namelist():
+            if name.endswith("SKILL.md") and not name.endswith(".bak"):
+                with z.open(name) as f:
+                    parts.append(f.read().decode("utf-8"))
+            elif "/references/" in name and name.endswith(".md") and not name.endswith(".bak"):
+                with z.open(name) as f:
+                    content = f.read().decode("utf-8")
+                    if len(content) > 100:
+                        parts.append(content)
+
+    prompt = "\n\n---\n\n".join(parts)
+    cache_file.write_text(prompt)
+    log.info("  ✅ Skill extraída: %d chars", len(prompt))
+    return prompt
+
+
+def get_skill_prompt_for_task(tipo: str) -> str:
+    """Retorna o prompt combinado das skills para um tipo de tarefa."""
+    config = load_skills_config()
+
+    # Mapear tipo da tarefa → funcionalidade
+    func_map = {
+        "juri": "relatorio_juri",
+        "audiencia": "preparar_audiencia",
+        "criminal": "analise_criminal",
+        "vvd": "analise_vvd",
+        "execucao_penal": "analise_ep",
+        "peca": "gerar_peca",
+        "briefing": "briefing_completo",
+    }
+
+    func_name = func_map.get(tipo, "relatorio_juri")
+    func = config["funcionalidades"].get(func_name)
+    if not func:
+        func = config["funcionalidades"]["relatorio_juri"]
+
+    # Carregar e combinar prompts das skills
+    skill_names = func["skills"]
+    prompts = []
+    for sn in skill_names:
+        skill_info = config["skills"].get(sn)
+        if skill_info:
+            try:
+                prompt = extract_skill_prompt(sn)
+                prompts.append(prompt)
+            except Exception as e:
+                log.warning("  ⚠️ Skill '%s' falhou: %s", sn, e)
+
+    if not prompts:
+        raise RuntimeError(f"Nenhuma skill carregada para tipo '{tipo}'")
+
+    combined = "\n\n===== SKILL ADICIONAL =====\n\n".join(prompts)
+    log.info("  📚 Skills carregadas: %s (%d chars)", ", ".join(skill_names), len(combined))
+    return combined
 
 
 def get_pending_tasks():
@@ -243,12 +314,13 @@ Retorne TAMBÉM um bloco JSON com EXATAMENTE este schema:
 """
 
 
-def process_task(task, skill_prompt):
+def process_task(task):
     """Processa uma tarefa."""
     task_id = task["id"]
     assistido_id = task["assistido_id"]
     processo_id = task.get("processo_id")
     briefing = task.get("briefing", "")
+    tipo = task.get("tipo", "juri")
 
     # Buscar nome do assistido
     resp = httpx.get(f"{SUPABASE_URL}/rest/v1/assistidos",
@@ -262,6 +334,9 @@ def process_task(task, skill_prompt):
     update_task(task_id, {"status": "processing", "started_at": datetime.now().isoformat()})
 
     try:
+        # Carregar skills para o tipo da tarefa
+        skill_prompt = get_skill_prompt_for_task(tipo)
+
         # Buscar docs do Drive local
         docs = get_assistido_docs(nome)
         full_content = briefing
@@ -344,15 +419,19 @@ def main():
     log.info("   Drive: %s", JURI_FOLDER)
     log.info("   Modo: %s", "daemon" if args.daemon else "one-shot")
 
-    skill_prompt = ensure_skill_prompt()
-    log.info("   Skill: %d chars", len(skill_prompt))
+    # Pré-extrair skill principal para validar
+    try:
+        test_prompt = get_skill_prompt_for_task("juri")
+        log.info("   Skill juri: %d chars ✅", len(test_prompt))
+    except Exception as e:
+        log.error("   Skill juri falhou: %s", e)
 
     while True:
         tasks = get_pending_tasks()
         if tasks:
             log.info("📬 %d tarefas pendentes", len(tasks))
             for task in tasks:
-                process_task(task, skill_prompt)
+                process_task(task)
         else:
             if not args.daemon:
                 log.info("Nenhuma tarefa pendente.")

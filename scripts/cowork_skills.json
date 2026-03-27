@@ -1,0 +1,149 @@
+{
+  "_doc": "Mapeamento de funcionalidades OMBUDS → skills do Cowork. Cada funcionalidade define quais skills usar e como combinar.",
+
+  "skills": {
+    "juri": {
+      "nome": "Tribunal do Júri",
+      "arquivo": "juri.skill",
+      "referencias": ["analise_para_juri.md", "analise_estrategica_juri.md"],
+      "descricao": "Análise estratégica completa para plenário do júri"
+    },
+    "criminal-comum": {
+      "nome": "Criminal Comum",
+      "arquivo": "criminal-comum.skill",
+      "referencias": [],
+      "descricao": "Análise de processos criminais comuns (não júri)"
+    },
+    "vvd": {
+      "nome": "Violência Doméstica",
+      "arquivo": "vvd.skill",
+      "referencias": [],
+      "descricao": "Análise de processos de violência doméstica (Maria da Penha)"
+    },
+    "execucao-penal": {
+      "nome": "Execução Penal",
+      "arquivo": "execucao-penal.skill",
+      "referencias": [],
+      "descricao": "Análise de processos de execução penal (progressão, livramento, etc.)"
+    },
+    "analise-audiencias": {
+      "nome": "Análise de Audiências",
+      "arquivo": "analise-audiencias.skill",
+      "referencias": [],
+      "descricao": "Preparação e análise para audiências (perguntas, contradições, estratégia)"
+    },
+    "dpe-ba-pecas": {
+      "nome": "Peças Processuais DPE-BA",
+      "arquivo": "dpe-ba-pecas.skill",
+      "referencias": [],
+      "descricao": "Geração de peças processuais com formatação institucional DPE-BA"
+    },
+    "citacao-depoimentos": {
+      "nome": "Citação de Depoimentos",
+      "arquivo": "citacao-depoimentos.skill",
+      "referencias": [],
+      "descricao": "Formatação de citações e referências a depoimentos"
+    },
+    "institucional": {
+      "nome": "Institucional",
+      "arquivo": "institucional.skill",
+      "referencias": [],
+      "descricao": "Documentos e análises institucionais da Defensoria"
+    }
+  },
+
+  "funcionalidades": {
+    "relatorio_juri": {
+      "nome": "Relatório do Júri",
+      "descricao": "Análise completa de processo do júri: teses, quesitos, matriz de guerra",
+      "skills": ["juri"],
+      "output": {
+        "relatorio_md": true,
+        "analise_json": true,
+        "drive_save": true,
+        "db_import": true
+      },
+      "areas": ["JURI"],
+      "icone": "Scale"
+    },
+    "preparar_audiencia": {
+      "nome": "Preparar Audiência",
+      "descricao": "Perguntas para testemunhas, contradições, orientação ao assistido",
+      "skills": ["analise-audiencias", "juri"],
+      "output": {
+        "relatorio_md": true,
+        "analise_json": true,
+        "drive_save": true,
+        "db_import": true
+      },
+      "areas": ["JURI", "EXECUCAO_PENAL", "VIOLENCIA_DOMESTICA", "SUBSTITUICAO"],
+      "icone": "Users"
+    },
+    "analise_criminal": {
+      "nome": "Análise Criminal",
+      "descricao": "Análise estratégica de processo criminal comum",
+      "skills": ["criminal-comum"],
+      "output": {
+        "relatorio_md": true,
+        "analise_json": true,
+        "drive_save": true,
+        "db_import": true
+      },
+      "areas": ["SUBSTITUICAO"],
+      "icone": "FileSearch"
+    },
+    "analise_vvd": {
+      "nome": "Análise VVD",
+      "descricao": "Análise de processo de violência doméstica (medidas protetivas, audiência)",
+      "skills": ["vvd"],
+      "output": {
+        "relatorio_md": true,
+        "analise_json": true,
+        "drive_save": true,
+        "db_import": true
+      },
+      "areas": ["VIOLENCIA_DOMESTICA"],
+      "icone": "Shield"
+    },
+    "analise_ep": {
+      "nome": "Análise Execução Penal",
+      "descricao": "Benefícios, progressão, datas críticas",
+      "skills": ["execucao-penal"],
+      "output": {
+        "relatorio_md": true,
+        "analise_json": true,
+        "drive_save": true,
+        "db_import": true
+      },
+      "areas": ["EXECUCAO_PENAL"],
+      "icone": "Clock"
+    },
+    "gerar_peca": {
+      "nome": "Gerar Peça Processual",
+      "descricao": "Gera peça jurídica (.docx) com formatação DPE-BA",
+      "skills": ["dpe-ba-pecas", "juri"],
+      "output": {
+        "relatorio_md": false,
+        "analise_json": false,
+        "drive_save": true,
+        "db_import": false,
+        "docx": true
+      },
+      "areas": ["JURI", "EXECUCAO_PENAL", "VIOLENCIA_DOMESTICA", "SUBSTITUICAO"],
+      "icone": "FileText"
+    },
+    "briefing_completo": {
+      "nome": "Briefing Completo",
+      "descricao": "Briefing consolidado do assistido com todas as informações",
+      "skills": ["analise-audiencias", "citacao-depoimentos"],
+      "output": {
+        "relatorio_md": true,
+        "analise_json": false,
+        "drive_save": true,
+        "db_import": false
+      },
+      "areas": ["JURI", "EXECUCAO_PENAL", "VIOLENCIA_DOMESTICA", "SUBSTITUICAO"],
+      "icone": "BookOpen"
+    }
+  }
+}

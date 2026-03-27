@@ -1167,6 +1167,15 @@ Elabore a estratégia de defesa com este formato JSON:
       z.object({
         assistidoId: z.number(),
         processoId: z.number(),
+        funcionalidade: z.enum([
+          "relatorio_juri",
+          "preparar_audiencia",
+          "analise_criminal",
+          "analise_vvd",
+          "analise_ep",
+          "gerar_peca",
+          "briefing_completo",
+        ]).default("relatorio_juri"),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -1214,10 +1223,22 @@ Elabore a estratégia de defesa com este formato JSON:
 
       const briefing = lines.join("\n");
 
-      // 3. Criar tarefa no banco (worker local vai processar)
+      // 3. Mapear funcionalidade → tipo
+      const funcToTipo: Record<string, string> = {
+        relatorio_juri: "juri",
+        preparar_audiencia: "audiencia",
+        analise_criminal: "criminal",
+        analise_vvd: "vvd",
+        analise_ep: "execucao_penal",
+        gerar_peca: "peca",
+        briefing_completo: "briefing",
+      };
+      const tipo = funcToTipo[input.funcionalidade] ?? "juri";
+
+      // 4. Criar tarefa no banco (worker local vai processar)
       const [task] = await db.execute<{ id: number }>(
-        `INSERT INTO cowork_tasks (assistido_id, processo_id, tipo, status, briefing, created_by)
-         VALUES (${input.assistidoId}, ${input.processoId}, 'juri', 'pending', '${briefing.replace(/'/g, "''")}', '${ctx.user?.id ?? 0}')
+        `INSERT INTO cowork_tasks (assistido_id, processo_id, tipo, funcionalidade, status, briefing, created_by)
+         VALUES (${input.assistidoId}, ${input.processoId}, '${tipo}', '${input.funcionalidade}', 'pending', '${briefing.replace(/'/g, "''")}', '${ctx.user?.id ?? 0}')
          RETURNING id`
       );
 
