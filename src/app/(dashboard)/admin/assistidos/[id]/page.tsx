@@ -490,7 +490,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               <CoworkActionGroup
                 assistidoNome={data.nome}
                 numeroAutos={data.processos?.[0]?.numeroAutos ?? ""}
-                classeProcessual={data.processos?.[0]?.classeProcessual ?? ""}
+                classeProcessual={(data.processos?.[0] as any)?.classeProcessual ?? ""}
                 vara={data.processos?.[0]?.vara ?? ""}
                 atribuicao={(data as any).atribuicaoPrimaria ?? ""}
                 drivePath=""

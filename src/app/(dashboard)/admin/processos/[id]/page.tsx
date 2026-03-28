@@ -288,9 +288,9 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
           </button>
         )}
         <CoworkActionGroup
-          assistidoNome={data.assistido?.nome ?? ""}
+          assistidoNome={data.assistidos?.[0]?.nome ?? ""}
           numeroAutos={data.numeroAutos}
-          classeProcessual={data.classeProcessual ?? ""}
+          classeProcessual={(data as any).classeProcessual ?? ""}
           vara={data.vara ?? ""}
           atribuicao={data.atribuicao ?? ""}
           drivePath=""
