@@ -39,6 +39,7 @@
     "node_modules",
     "_archive",
     "public/sw.js",
-    "public/sw.js.map"
+    "public/sw.js.map",
+    "src/lib/db/schema.old.ts"
   ]
 }
