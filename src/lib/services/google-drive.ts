@@ -577,6 +577,22 @@ export async function syncIncremental(
               if (isFolder) {
                 knownFolderDriveIds.add(file.id);
               }
+              // Auto-detect _analise_ia.json → trigger Cowork import
+              if (file.name === "_analise_ia.json" && file.parents?.[0]) {
+                console.log(`[Drive] Detected _analise_ia.json in folder ${file.parents[0]} — scheduling Cowork import`);
+                try {
+                  await inngest.send({
+                    name: "cowork/import-analysis",
+                    data: {
+                      driveFolderId: file.parents[0],
+                      fileName: file.name,
+                      driveFileId: file.id,
+                    },
+                  });
+                } catch (err) {
+                  console.error("[Drive] Failed to schedule Cowork import:", err);
+                }
+              }
             }
           }
         }
@@ -1663,6 +1679,22 @@ export async function syncFolderWithDatabase(
           result.filesAdded++;
           if (inserted) {
             result.newFileIds.push(inserted.id);
+            // Auto-detect _analise_ia.json → trigger Cowork import
+            if (driveFile.name === "_analise_ia.json" && driveFile.parents?.[0]) {
+              console.log(`[Drive] Detected _analise_ia.json in folder ${driveFile.parents[0]} — scheduling Cowork import`);
+              try {
+                await inngest.send({
+                  name: "cowork/import-analysis",
+                  data: {
+                    driveFolderId: driveFile.parents[0],
+                    fileName: driveFile.name,
+                    driveFileId: driveFile.id,
+                  },
+                });
+              } catch (err) {
+                console.error("[Drive] Failed to schedule Cowork import:", err);
+              }
+            }
           }
         } catch (insertError) {
           console.error(`[Drive] Failed to insert/upsert file ${driveFile.id} (${driveFile.name}):`, insertError);

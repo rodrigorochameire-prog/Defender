@@ -2112,6 +2112,121 @@ export const syncSheetPollingFn = inngest.createFunction(
   }
 );
 
+// ============================================
+// COWORK IMPORT — Auto-detect _analise_ia.json
+// ============================================
+
+export const coworkImportAnalysisFn = inngest.createFunction(
+  {
+    id: "cowork-import-analysis",
+    name: "Cowork: Importar _analise_ia.json",
+    retries: 3,
+  },
+  { event: "cowork/import-analysis" },
+  async ({ event, step }) => {
+    const { driveFolderId, fileName, driveFileId } = event.data as {
+      driveFolderId: string;
+      fileName: string;
+      driveFileId: string;
+    };
+
+    return await step.run("import-analysis-json", async () => {
+      const { db } = await import("@/lib/db");
+      const { driveFiles, processos, assistidos } = await import("@/lib/db/schema");
+      const { eq, and, isNull } = await import("drizzle-orm");
+      const { getAccessToken } = await import("@/lib/services/google-drive");
+
+      // 1. Obter access token
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        throw new Error("Sem access token para Google Drive");
+      }
+
+      // 2. Identificar assistido e processo pela pasta no Drive
+      // A pasta pai do _analise_ia.json deve ser a pasta do processo/assistido
+      // Buscar no banco qual assistido/processo tem essa pasta
+      const folderFile = await db.query.driveFiles.findFirst({
+        where: and(
+          eq(driveFiles.driveFileId, driveFolderId),
+          eq(driveFiles.isFolder, true),
+        ),
+        columns: { id: true, name: true, driveFolderId: true },
+      });
+
+      // Tentar encontrar processo pelo driveFolderId
+      let processoId: number | null = null;
+      let assistidoId: number | null = null;
+
+      const processo = await db.query.processos.findFirst({
+        where: eq(processos.driveFolderId, driveFolderId),
+        columns: { id: true, assistidoId: true },
+      });
+
+      if (processo) {
+        processoId = processo.id;
+        assistidoId = processo.assistidoId;
+      } else {
+        // Tentar pelo assistido (pasta pode ser do assistido, não do processo)
+        const assistido = await db.query.assistidos.findFirst({
+          where: eq(assistidos.driveFolderId, driveFolderId),
+          columns: { id: true },
+        });
+        if (assistido) {
+          assistidoId = assistido.id;
+        }
+      }
+
+      if (!assistidoId) {
+        console.warn(`[CoworkImport] Não encontrou assistido/processo para pasta ${driveFolderId}`);
+        // Tentar encontrar pela hierarquia de pastas (pasta pai)
+        if (folderFile?.driveFolderId) {
+          const parentAssistido = await db.query.assistidos.findFirst({
+            where: eq(assistidos.driveFolderId, folderFile.driveFolderId),
+            columns: { id: true },
+          });
+          if (parentAssistido) {
+            assistidoId = parentAssistido.id;
+          }
+        }
+      }
+
+      if (!assistidoId) {
+        console.error(`[CoworkImport] Impossível identificar assistido para ${driveFolderId}/${fileName}`);
+        return { success: false, error: "Assistido não identificado" };
+      }
+
+      // 3. Chamar enrichment engine para importar
+      const enrichmentUrl = process.env.ENRICHMENT_ENGINE_URL || "http://localhost:8000";
+      try {
+        const response = await fetch(`${enrichmentUrl}/cowork/import`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            assistido_id: assistidoId,
+            processo_id: processoId,
+            audiencia_id: null,
+            drive_folder_id: driveFolderId,
+            arquivo_nome: fileName,
+            access_token: accessToken,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`Enrichment retornou ${response.status}: ${error}`);
+        }
+
+        const result = await response.json();
+        console.log(`[CoworkImport] Sucesso: ${JSON.stringify(result)}`);
+        return { success: true, ...result };
+      } catch (err) {
+        console.error(`[CoworkImport] Erro ao importar ${fileName}:`, err);
+        throw err; // Inngest vai retry
+      }
+    });
+  }
+);
+
 export const functions = [
   sendWhatsAppMessageFn,
   notifyPrazoFn,
@@ -2139,4 +2254,5 @@ export const functions = [
   driveWatchdogFn,
   intelligenceConsolidateFn,
   syncSheetPollingFn,
+  coworkImportAnalysisFn,
 ];
