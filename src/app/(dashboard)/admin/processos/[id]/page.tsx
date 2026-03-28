@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
-import { ArrowLeft, Brain, Calendar, Database, Download, ExternalLink, FileText, FolderOpen, Loader2, Lock, Newspaper, Pencil, Plus, Scale, Sun, User, Users, Sparkles, Library, BookOpen, Trash2 } from "lucide-react";
+import { ArrowLeft, Calendar, Database, Download, ExternalLink, FileText, FolderOpen, Loader2, Lock, Newspaper, Pencil, Plus, Scale, Sun, User, Users, Sparkles, Library, BookOpen, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
@@ -17,6 +17,7 @@ import { DriveTabEnhanced } from "@/components/drive/DriveTabEnhanced";
 import { ProcessoTimeline } from "@/components/processos/ProcessoTimeline";
 import { InstrucaoStatus } from "@/components/processos/InstrucaoStatus";
 import { LocalDoFatoPanel } from "@/components/processos/LocalDoFatoPanel";
+import { CoworkActionGroup } from "@/components/shared/cowork-action-button";
 
 type Tab = "partes" | "demandas" | "drive" | "audiencias" | "timeline" | "vinculados" | "inteligencia" | "fundamentos" | "noticias";
 
@@ -33,8 +34,6 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
   const { id } = use(params);
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("partes");
-  const [isAnalyzingProcesso, setIsAnalyzingProcesso] = useState(false);
-
   const [solarResult, setSolarResult] = useState<{
     cadastrado: boolean;
     ja_existia: boolean;
@@ -288,40 +287,19 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
             {cadastrarMutation.isPending ? "Verificando..." : "Cadastrar no Solar"}
           </button>
         )}
-        {data.driveFolderId && (
-          <button
-            onClick={async () => {
-              setIsAnalyzingProcesso(true);
-              try {
-                const res = await fetch("/api/ai/analyze-folder", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ processoId: Number(id) }),
-                });
-                if (!res.ok) {
-                  const err = (await res.json().catch(() => ({}))) as { error?: string };
-                  throw new Error(err?.error ?? "Falha na análise");
-                }
-                const json = (await res.json()) as { summary?: string };
-                toast.success(json.summary ?? "Análise concluída");
-              } catch (err) {
-                const message = err instanceof Error ? err.message : "Erro ao analisar";
-                toast.error(message);
-              } finally {
-                setIsAnalyzingProcesso(false);
-              }
-            }}
-            disabled={isAnalyzingProcesso}
-            className="text-[11px] px-2 py-1 rounded border border-purple-200 bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors disabled:opacity-50 flex items-center gap-1"
-          >
-            {isAnalyzingProcesso ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <Brain className="h-3 w-3" />
-            )}
-            {isAnalyzingProcesso ? "Analisando..." : "Análise IA"}
-          </button>
-        )}
+        <CoworkActionGroup
+          assistidoNome={data.assistido?.nome ?? ""}
+          numeroAutos={data.numeroAutos}
+          classeProcessual={data.classeProcessual ?? ""}
+          vara={data.vara ?? ""}
+          atribuicao={data.atribuicao ?? ""}
+          drivePath=""
+          actions={
+            data.atribuicao === "JURI_CAMACARI"
+              ? ["analise-autos", "gerar-peca", "preparar-audiencia", "analise-juri", "feedback-estagiario"]
+              : ["analise-autos", "gerar-peca", "preparar-audiencia", "feedback-estagiario"]
+          }
+        />
         <button
           onClick={() => router.push(`/admin/processos/${id}/sistematizacao`)}
           className="text-[11px] px-2 py-1 rounded border border-violet-200 bg-violet-50 text-violet-600 hover:bg-violet-100 transition-colors flex items-center gap-1"

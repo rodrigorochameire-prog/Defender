@@ -31,6 +31,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CoworkActionGroup } from "@/components/shared/cowork-action-button";
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
@@ -483,6 +484,19 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                   Sonnet
                 </Button>
               )}
+            </div>
+            {/* Cowork AI action buttons */}
+            <div className="mt-2">
+              <CoworkActionGroup
+                assistidoNome={data.nome}
+                numeroAutos={data.processos?.[0]?.numeroAutos ?? ""}
+                classeProcessual={data.processos?.[0]?.classeProcessual ?? ""}
+                vara={data.processos?.[0]?.vara ?? ""}
+                atribuicao={(data as any).atribuicaoPrimaria ?? ""}
+                drivePath=""
+                actions={["analise-autos", "gerar-peca", "feedback-estagiario"]}
+                size="sm"
+              />
             </div>
             <div className="flex items-center gap-2.5 mt-1">
               {data.cpf && (
