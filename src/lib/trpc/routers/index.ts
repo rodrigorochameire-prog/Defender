@@ -66,6 +66,8 @@ import { comarcasRouter } from "./comarcas";
 import { observatoryRouter } from "./observatory";
 import { syncRouter } from "./sync";
 import { skillsRouter } from "./skills";
+import { institutosRouter } from "./institutos";
+import { delitosRouter } from "./delitos";
 
 
 export const appRouter = router({
@@ -305,6 +307,16 @@ export const appRouter = router({
   // SKILLS ENGINE - CHAT HISTORY + AUTOCOMPLETE
   // ==========================================
   skills: skillsRouter,
+
+  // ==========================================
+  // INSTITUTOS PROCESSUAIS (ANPP, SURSIS, TRANSAÇÃO, COMPOSIÇÃO)
+  // ==========================================
+  institutos: institutosRouter,
+
+  // ==========================================
+  // DELITOS (TIPIFICAÇÃO + BENEFÍCIOS AUTOMÁTICOS)
+  // ==========================================
+  delitos: delitosRouter,
 });
 
 export type AppRouter = typeof appRouter;
