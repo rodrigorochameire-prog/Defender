@@ -6,7 +6,9 @@ import {
 import type { User } from "@/lib/db/schema";
 
 // Helper to construct minimal User objects for testing
-function makeUser(overrides: Partial<User> & { role: string }): User {
+function makeUser(
+  overrides: Partial<User> & { role: string; defensoresVinculados?: number[] | null }
+): User {
   return {
     id: 1,
     name: "Test User",
@@ -87,5 +89,24 @@ describe("getDefensoresVisiveis", () => {
   it("returns [user.id] for estagiario without supervisor", () => {
     const user = makeUser({ id: 5, role: "estagiario", supervisorId: null });
     expect(getDefensoresVisiveis(user)).toEqual([5]);
+  });
+});
+
+// ─── getDefensoresVisiveis — servidor vinculado ────────────────────────────
+
+describe("getDefensoresVisiveis — servidor vinculado", () => {
+  it("returns specific IDs for servidor with defensoresVinculados", () => {
+    const user = makeUser({ role: "servidor", defensoresVinculados: [5, 7] });
+    expect(getDefensoresVisiveis(user)).toEqual([5, 7]);
+  });
+
+  it("returns 'all' for servidor without defensoresVinculados", () => {
+    const user = makeUser({ role: "servidor" });
+    expect(getDefensoresVisiveis(user)).toBe("all");
+  });
+
+  it("returns 'all' for servidor with empty defensoresVinculados", () => {
+    const user = makeUser({ role: "servidor", defensoresVinculados: [] });
+    expect(getDefensoresVisiveis(user)).toBe("all");
   });
 });

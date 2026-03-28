@@ -61,8 +61,17 @@ export function getDefensoresVisiveis(user: User): number[] | "all" {
   const isEstagiario = user.role === "estagiario";
   const isDefensor = user.role === "defensor";
 
-  // Admin e servidor veem todos
-  if (isAdmin || isServidor) {
+  // Admin vê todos
+  if (isAdmin) {
+    return "all";
+  }
+
+  // Servidor: vê apenas dos defensores vinculados (se houver), ou todos
+  if (isServidor) {
+    const vinculados = (user as any).defensoresVinculados as number[] | null | undefined;
+    if (vinculados && vinculados.length > 0) {
+      return vinculados;
+    }
     return "all";
   }
 
