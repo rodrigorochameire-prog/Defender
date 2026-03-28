@@ -12,6 +12,7 @@ export const atribuicaoEnum = pgEnum("atribuicao", [
   "SUBSTITUICAO",       // Substituição Criminal
   "SUBSTITUICAO_CIVEL", // Substituição Não Penal (Cível, Família, etc.)
   "GRUPO_JURI",         // Grupo Especial de Atuação (Apenas Plenários pelo Estado)
+  "CRIMINAL_CAMACARI",  // Varas Criminais de Camaçari
 ]);
 
 // Áreas de atuação da Defensoria (compatibilidade)

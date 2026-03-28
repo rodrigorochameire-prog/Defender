@@ -47,6 +47,7 @@ export const users = pgTable("users", {
   isAdmin: boolean("is_admin").default(false),
   podeVerTodosAssistidos: boolean("pode_ver_todos_assistidos").default(true),
   podeVerTodosProcessos: boolean("pode_ver_todos_processos").default(true),
+  defensoresVinculados: jsonb("defensores_vinculados").$type<number[]>(),
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
