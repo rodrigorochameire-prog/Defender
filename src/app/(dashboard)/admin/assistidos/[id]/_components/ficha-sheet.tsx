@@ -490,26 +490,26 @@ export function AssistidoFichaSheet({
                   )}
 
                   {/* Radar Liberdade */}
-                  {analysisData.radarLiberdade && (
+                  {(analysisData as any).radarLiberdade && (
                     <div className={`rounded p-2 border-l-2 ${
-                      analysisData.radarLiberdade.urgencia === "ALTA" ? "border-l-red-500 bg-red-50/50 dark:bg-red-950/10" :
-                      analysisData.radarLiberdade.urgencia === "MEDIA" ? "border-l-amber-500 bg-amber-50/50 dark:bg-amber-950/10" :
+                      (analysisData as any).radarLiberdade.urgencia === "ALTA" ? "border-l-red-500 bg-red-50/50 dark:bg-red-950/10" :
+                      (analysisData as any).radarLiberdade.urgencia === "MEDIA" ? "border-l-amber-500 bg-amber-50/50 dark:bg-amber-950/10" :
                       "border-l-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/10"
                     }`}>
                       <div className="flex items-center gap-1.5 mb-0.5">
                         <Shield className="h-3 w-3" />
-                        <span className="text-[10px] font-semibold">{analysisData.radarLiberdade.status}</span>
+                        <span className="text-[10px] font-semibold">{(analysisData as any).radarLiberdade.status}</span>
                       </div>
-                      <p className="text-[10px] text-zinc-500">{analysisData.radarLiberdade.detalhes}</p>
+                      <p className="text-[10px] text-zinc-500">{(analysisData as any).radarLiberdade.detalhes}</p>
                     </div>
                   )}
 
                   {/* Teses */}
-                  {analysisData.teses && analysisData.teses.length > 0 && (
+                  {(analysisData as any).teses && (analysisData as any).teses.length > 0 && (
                     <div>
                       <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-1">Teses</p>
                       <ul className="space-y-1">
-                        {analysisData.teses.map((tese: string, i: number) => (
+                        {(analysisData as any).teses.map((tese: string, i: number) => (
                           <li key={i} className="flex items-start gap-1.5 text-[11px] text-zinc-700 dark:text-zinc-300">
                             <Scale className="h-3 w-3 text-blue-500 mt-0.5 shrink-0" />
                             <span className="leading-relaxed">{tese}</span>
@@ -520,11 +520,11 @@ export function AssistidoFichaSheet({
                   )}
 
                   {/* Saneamento */}
-                  {analysisData.saneamento?.pendencias?.length > 0 && (
+                  {(analysisData as any).saneamento?.pendencias?.length > 0 && (
                     <div>
                       <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-1">Pendências</p>
                       <ul className="space-y-0.5">
-                        {analysisData.saneamento.pendencias.map((p: string, i: number) => (
+                        {(analysisData as any).saneamento.pendencias.map((p: string, i: number) => (
                           <li key={i} className="text-[10px] text-orange-600 dark:text-orange-400 flex items-start gap-1">
                             <span>•</span> {p}
                           </li>

@@ -82,7 +82,7 @@ export function AnalysisPanel({ data, analysisStatus, analyzedAt }: AnalysisPane
               <Shield className="h-4 w-4" />
               <span className="font-medium text-sm">Radar Liberdade</span>
               <Badge variant={
-                data.radarLiberdade.urgencia === "ALTA" ? "destructive" :
+                data.radarLiberdade.urgencia === "ALTA" ? "danger" :
                 data.radarLiberdade.urgencia === "MEDIA" ? "default" : "outline"
               } className="text-[10px]">
                 {data.radarLiberdade.status}
@@ -177,7 +177,7 @@ export function AnalysisPanel({ data, analysisStatus, analyzedAt }: AnalysisPane
                 <li key={i} className="text-sm">
                   <div className="flex items-center gap-2 mb-0.5">
                     <Badge variant={
-                      n.severidade === "alta" ? "destructive" :
+                      n.severidade === "alta" ? "danger" :
                       n.severidade === "media" ? "default" : "outline"
                     } className="text-[10px]">
                       {n.severidade}
