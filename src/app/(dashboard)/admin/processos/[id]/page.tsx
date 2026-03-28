@@ -18,6 +18,7 @@ import { ProcessoTimeline } from "@/components/processos/ProcessoTimeline";
 import { InstrucaoStatus } from "@/components/processos/InstrucaoStatus";
 import { LocalDoFatoPanel } from "@/components/processos/LocalDoFatoPanel";
 import { CoworkActionGroup } from "@/components/shared/cowork-action-button";
+import { AnalysisPanel } from "@/components/analysis/analysis-panel";
 
 type Tab = "partes" | "demandas" | "drive" | "audiencias" | "timeline" | "vinculados" | "inteligencia" | "fundamentos" | "noticias";
 
@@ -603,6 +604,15 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
               processoId={Number(id)}
               casoId={data.casoId}
             />
+            {(data as any).analysisData && (
+              <div className="mt-4">
+                <AnalysisPanel
+                  data={(data as any).analysisData}
+                  analysisStatus={(data as any).analysisStatus}
+                  analyzedAt={(data as any).analyzedAt}
+                />
+              </div>
+            )}
           </div>
         )}
 
