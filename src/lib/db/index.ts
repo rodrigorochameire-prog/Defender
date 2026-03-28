@@ -13,7 +13,7 @@ import * as schema from "./schema";
 const POOL_CONFIG = {
   // Número máximo de conexões no pool
   // Em serverless, manter baixo para evitar "too many connections"
-  max: process.env.NODE_ENV === "production" ? 5 : 10,
+  max: process.env.NODE_ENV === "production" ? 15 : 10,
   
   // Timeout de conexão ociosa (segundos)
   idle_timeout: 20,
