@@ -31,6 +31,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationsPopover } from "@/components/notifications-popover";
 import { ContextControl } from "@/components/layout/context-control";
 import { CommandPalette } from "@/components/shared/command-palette";
+import { ChatPanel } from "@/components/shared/chat-panel";
+import { chatPanelActions } from "@/hooks/use-chat-panel";
 import { EntitySheetProvider } from "@/contexts/entity-sheet-context";
 import { PlaudArrivalToast } from "@/components/atendimentos/plaud-arrival-toast";
 import { RadarMatchesToast } from "@/components/radar/radar-matches-toast";
@@ -1814,6 +1816,13 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
               <CommandPalette />
               <ThemeToggle />
               <NotificationsPopover />
+              <button
+                onClick={() => chatPanelActions.toggle()}
+                title="Assistente OMBUDS"
+                className="inline-flex items-center justify-center h-9 w-9 rounded-md text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
+              >
+                <MessageSquare className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </header>
@@ -1838,6 +1847,8 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
       <PrazoAlertToast />
       {/* Background offline sync (IndexedDB hydration + incremental) */}
       <OfflineSyncProvider />
+      {/* Chat lateral panel — Skills Engine */}
+      <ChatPanel />
     </>
   );
 }
