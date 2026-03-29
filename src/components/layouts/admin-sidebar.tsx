@@ -12,7 +12,7 @@ import {
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
   MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput, Sun,
   MessageSquare, FileCheck, ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity,
-  UserPlus, CreditCard
+  UserPlus, CreditCard, FileSpreadsheet
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { usePlan } from "@/hooks/use-plan";
@@ -182,6 +182,7 @@ const MORE_NAV: AssignmentMenuItem[] = [
   { label: "Observatory", path: "/admin/observatory", icon: "Activity", requiredRoles: ["admin"] },
   { label: "Convites", path: "/admin/defensoria/convites", icon: "UserPlus", requiredRoles: ["admin"] },
   { label: "Assinaturas", path: "/admin/assinaturas", icon: "CreditCard", requiredRoles: ["admin"] },
+  { label: "Planilha", path: "/admin/settings/planilha", icon: "FileSpreadsheet" },
   { label: "Configurações", path: "/admin/settings", icon: "Settings", requiredRoles: ["admin", "defensor"] },
 ];
 
@@ -193,7 +194,7 @@ const iconMap: Record<string, React.ElementType> = {
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
   ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
   BookUser, Users2, Home, FolderInput, Sun, MessageSquare, FileCheck,
-  ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity, UserPlus, CreditCard
+  ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity, UserPlus, CreditCard, FileSpreadsheet
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
