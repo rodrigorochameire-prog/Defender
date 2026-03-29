@@ -1,7 +1,8 @@
 import { z } from "zod";
 import crypto from "crypto";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db, users, processos, assistidos, userInvitations } from "@/lib/db";
+import { db, users, processos, assistidos, userInvitations, comarcas } from "@/lib/db";
+import { TRPCError } from "@trpc/server";
 import { eq, desc, sql, and, ne, ilike, or } from "drizzle-orm";
 import { Errors, safeAsync } from "@/lib/errors";
 import { idSchema, emailSchema, nameSchema, phoneSchema } from "@/lib/validations";
@@ -84,6 +85,7 @@ export const usersRouter = router({
             mustChangePassword: users.mustChangePassword,
             areasPrincipais: users.areasPrincipais,
             comarcaId: users.comarcaId,
+            expiresAt: users.expiresAt,
           })
           .from(users)
           .where(conditions.length > 0 ? and(...conditions) : undefined)
@@ -838,5 +840,63 @@ export const usersRouter = router({
 
         return { success: true };
       }, "Erro ao alterar senha");
+    }),
+
+  /**
+   * Gera link de demonstração (trial 7 dias) para um colega
+   */
+  generateDemoLink: adminProcedure
+    .input(
+      z.object({
+        name: z.string().min(1),
+        comarca: z.string().min(1),
+        areasPrincipais: z.array(z.string()),
+        diasValidade: z.number().default(7),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return safeAsync(async () => {
+        // Buscar comarca pelo nome
+        const comarca = await db.query.comarcas.findFirst({
+          where: eq(comarcas.nome, input.comarca),
+        });
+
+        if (!comarca) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Comarca não encontrada" });
+        }
+
+        // Gerar token seguro
+        const token = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
+
+        // Calcular expiração
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + input.diasValidade);
+
+        // Criar usuário demo
+        const [user] = await db
+          .insert(users)
+          .values({
+            name: input.name,
+            email: `demo.${Date.now()}@temp.ombuds.app`,
+            role: "defensor",
+            comarcaId: comarca.id,
+            approvalStatus: "approved",
+            emailVerified: false,
+            mustChangePassword: true,
+            inviteToken: token,
+            areasPrincipais: input.areasPrincipais,
+            expiresAt,
+            podeVerTodosAssistidos: false,
+            podeVerTodosProcessos: false,
+          })
+          .returning();
+
+        return {
+          userId: user.id,
+          token,
+          link: `https://ombuds.vercel.app/convite/${token}`,
+          expiresAt: expiresAt.toISOString(),
+        };
+      }, "Erro ao gerar link de demonstração");
     }),
 });

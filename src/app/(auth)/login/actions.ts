@@ -72,6 +72,11 @@ export async function loginAction(input: LoginInput): Promise<LoginResult> {
         return { success: false, error: "Email ou senha incorretos" };
       }
 
+      // Verificar se acesso demo expirou
+      if (user.expiresAt && new Date(user.expiresAt) < new Date()) {
+        return { success: false, error: "Seu acesso de demonstração expirou. Entre em contato com o administrador." };
+      }
+
       // Criar sessão
       await createSession(user.id, user.role);
 

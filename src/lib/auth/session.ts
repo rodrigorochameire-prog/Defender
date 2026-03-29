@@ -122,7 +122,16 @@ export async function getSession(): Promise<User | null> {
     // Busca usuário (com cache para evitar round-trip em toda requisição)
     try {
       const user = await getCachedUser(payload.userId);
-      if (user) return user;
+      if (user) {
+        // Verificar se acesso demo expirou
+        if (user.expiresAt && new Date(user.expiresAt) < new Date()) {
+          // Limpar cache e destruir sessão
+          userCache.delete(user.id);
+          try { const cs = await cookies(); cs.delete(SESSION_COOKIE_NAME); } catch {}
+          return null;
+        }
+        return user;
+      }
     } catch (dbError) {
       console.log("[getSession] Erro ao buscar usuário no banco:", dbError);
       return null;

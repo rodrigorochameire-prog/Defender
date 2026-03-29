@@ -6,7 +6,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   UserPlus,
   Search,
@@ -14,6 +31,7 @@ import {
   Check,
   Mail,
   MapPin,
+  Timer,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
@@ -34,15 +52,20 @@ const AREA_COLORS: Record<string, string> = {
 };
 
 const AREA_LABELS: Record<string, string> = {
-  JURI: "Júri",
+  JURI: "Juri",
   CRIMINAL: "Criminal",
   EXECUCAO_PENAL: "EP",
   VIOLENCIA_DOMESTICA: "VVD",
-  INFANCIA_JUVENTUDE: "Infância",
-  CIVEL: "Cível",
-  FAMILIA: "Família",
+  INFANCIA_JUVENTUDE: "Infancia",
+  CIVEL: "Civel",
+  FAMILIA: "Familia",
   FAZENDA_PUBLICA: "Fazenda",
 };
+
+const AREA_OPTIONS = Object.entries(AREA_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}));
 
 // ──────────────────────────────────────────
 // Sub-componentes
@@ -106,6 +129,29 @@ function StatusBadge({ isPending }: { isPending: boolean }) {
   );
 }
 
+function DemoBadge({ expiresAt }: { expiresAt: Date | string }) {
+  const expDate = new Date(expiresAt);
+  const now = new Date();
+  const diffMs = expDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 0) {
+    return (
+      <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs gap-1">
+        <Timer className="h-3 w-3" />
+        Expirado
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs gap-1">
+      <Timer className="h-3 w-3" />
+      Demo · {diffDays}d restante{diffDays !== 1 ? "s" : ""}
+    </Badge>
+  );
+}
+
 // ──────────────────────────────────────────
 // Tipos
 // ──────────────────────────────────────────
@@ -125,6 +171,7 @@ interface User {
   mustChangePassword: boolean | null;
   areasPrincipais: string[] | null;
   comarcaId: number | null;
+  expiresAt: Date | string | null;
 }
 
 type FilterStatus = "todos" | "pendentes" | "ativos";
@@ -138,13 +185,13 @@ function getRoleLabel(role: string) {
     admin: "admin",
     defensor: "defensor",
     servidor: "servidor",
-    estagiario: "estagiário",
+    estagiario: "estagiario",
   };
   return map[role] ?? role;
 }
 
 // ──────────────────────────────────────────
-// Linha de usuário
+// Linha de usuario
 // ──────────────────────────────────────────
 
 function UserRow({ user }: { user: User }) {
@@ -172,14 +219,242 @@ function UserRow({ user }: { user: User }) {
         <AreaBadges areas={user.areasPrincipais} />
       </div>
 
-      {/* Status + ação */}
+      {/* Status + acao */}
       <div className="flex items-center gap-2 shrink-0">
-        <StatusBadge isPending={isPending} />
+        {user.expiresAt && <DemoBadge expiresAt={user.expiresAt} />}
+        {!user.expiresAt && <StatusBadge isPending={isPending} />}
         {isPending && user.inviteToken && (
           <CopyInviteButton token={user.inviteToken} />
         )}
       </div>
     </div>
+  );
+}
+
+// ──────────────────────────────────────────
+// Dialog para gerar link demo
+// ──────────────────────────────────────────
+
+function GenerateDemoDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [name, setName] = useState("");
+  const [comarca, setComarca] = useState("");
+  const [areas, setAreas] = useState<string[]>([]);
+  const [dias, setDias] = useState(7);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [generatedExpires, setGeneratedExpires] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const { data: comarcasList } = trpc.comarcas.listAll.useQuery();
+  const utils = trpc.useUtils();
+
+  const generateMutation = trpc.users.generateDemoLink.useMutation({
+    onSuccess: (data) => {
+      setGeneratedLink(data.link);
+      setGeneratedExpires(data.expiresAt);
+      utils.users.list.invalidate();
+    },
+  });
+
+  const handleToggleArea = (area: string) => {
+    setAreas((prev) =>
+      prev.includes(area) ? prev.filter((a) => a !== area) : [...prev, area]
+    );
+  };
+
+  const handleSubmit = () => {
+    if (!name.trim() || !comarca) return;
+    generateMutation.mutate({
+      name: name.trim(),
+      comarca,
+      areasPrincipais: areas,
+      diasValidade: dias,
+    });
+  };
+
+  const handleCopyLink = async () => {
+    if (!generatedLink) return;
+    await navigator.clipboard.writeText(generatedLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleClose = () => {
+    onOpenChange(false);
+    // Reset state after close animation
+    setTimeout(() => {
+      setName("");
+      setComarca("");
+      setAreas([]);
+      setDias(7);
+      setGeneratedLink(null);
+      setGeneratedExpires(null);
+      setCopied(false);
+      generateMutation.reset();
+    }, 200);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="bg-zinc-900 border-zinc-700 text-zinc-100 sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-zinc-100">
+            <Timer className="h-5 w-5 text-emerald-500" />
+            Gerar Link de Demonstracao
+          </DialogTitle>
+          <DialogDescription className="text-zinc-400">
+            Crie um link temporario para um colega experimentar o OMBUDS.
+          </DialogDescription>
+        </DialogHeader>
+
+        {!generatedLink ? (
+          <div className="space-y-4 py-2">
+            {/* Nome */}
+            <div className="space-y-2">
+              <Label className="text-zinc-300 text-sm">Nome do colega</Label>
+              <Input
+                placeholder="Ex: Dr. Fulano de Tal"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-600"
+              />
+            </div>
+
+            {/* Comarca */}
+            <div className="space-y-2">
+              <Label className="text-zinc-300 text-sm">Comarca</Label>
+              <Select value={comarca} onValueChange={setComarca}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100">
+                  <SelectValue placeholder="Selecione a comarca" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  {comarcasList?.map((c) => (
+                    <SelectItem
+                      key={c.id}
+                      value={c.nome}
+                      className="text-zinc-100 focus:bg-zinc-700 focus:text-zinc-100"
+                    >
+                      {c.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Areas */}
+            <div className="space-y-2">
+              <Label className="text-zinc-300 text-sm">Areas principais</Label>
+              <div className="flex flex-wrap gap-2">
+                {AREA_OPTIONS.map((opt) => (
+                  <label
+                    key={opt.value}
+                    className={cn(
+                      "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs cursor-pointer transition-colors",
+                      areas.includes(opt.value)
+                        ? "bg-emerald-600/20 border-emerald-500/40 text-emerald-400"
+                        : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-zinc-200"
+                    )}
+                  >
+                    <Checkbox
+                      checked={areas.includes(opt.value)}
+                      onCheckedChange={() => handleToggleArea(opt.value)}
+                      className="h-3 w-3 border-zinc-600 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                    />
+                    {opt.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Dias de validade */}
+            <div className="space-y-2">
+              <Label className="text-zinc-300 text-sm">Dias de validade</Label>
+              <Input
+                type="number"
+                min={1}
+                max={30}
+                value={dias}
+                onChange={(e) => setDias(Number(e.target.value))}
+                className="bg-zinc-800 border-zinc-700 text-zinc-100 w-24"
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                onClick={handleSubmit}
+                disabled={!name.trim() || !comarca || generateMutation.isPending}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                {generateMutation.isPending ? "Gerando..." : "Gerar Link Demo"}
+              </Button>
+            </DialogFooter>
+
+            {generateMutation.isError && (
+              <p className="text-red-400 text-xs mt-2">
+                {generateMutation.error?.message ?? "Erro ao gerar link"}
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4 py-2">
+            {/* Link gerado */}
+            <div className="space-y-2">
+              <Label className="text-zinc-300 text-sm">Link gerado</Label>
+              <div className="flex items-center gap-2 p-3 bg-zinc-800 border border-emerald-500/40 rounded-lg">
+                <code className="text-xs text-emerald-400 break-all flex-1">
+                  {generatedLink}
+                </code>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyLink}
+                  className="shrink-0 gap-1 text-xs h-7 px-2 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                >
+                  {copied ? (
+                    <Check className="h-3 w-3" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
+                  {copied ? "Copiado!" : "Copiar"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Info de expiracao */}
+            {generatedExpires && (
+              <div className="flex items-center gap-2 text-xs text-zinc-400">
+                <Timer className="h-3.5 w-3.5 text-amber-400" />
+                <span>
+                  Expira em{" "}
+                  <span className="text-amber-400 font-medium">
+                    {new Date(generatedExpires).toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </span>
+                </span>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={handleClose}
+                className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+              >
+                Fechar
+              </Button>
+            </DialogFooter>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -213,13 +488,14 @@ function LoadingSkeleton() {
 }
 
 // ──────────────────────────────────────────
-// Página principal
+// Pagina principal
 // ──────────────────────────────────────────
 
 export default function ConvitesPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("todos");
   const [activeComarca, setActiveComarca] = useState<string | null>(null);
+  const [demoDialogOpen, setDemoDialogOpen] = useState(false);
 
   const { data: usersData, isLoading } = trpc.users.list.useQuery();
 
@@ -283,7 +559,7 @@ export default function ConvitesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho */}
+      {/* Cabecalho */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-emerald-500/10 rounded-lg">
@@ -291,24 +567,33 @@ export default function ConvitesPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
-              Convites — 7ª Regional
+              Convites -- 7a Regional
             </h1>
             <p className="text-sm text-zinc-500 mt-0.5">
-              Gestão de links de convite para defensores da regional
+              Gestao de links de convite para defensores da regional
             </p>
           </div>
         </div>
 
-        {/* Counters */}
-        <div className="flex gap-3">
-          <div className="text-center">
-            <p className="text-xl font-bold text-emerald-400">{totalAtivos}</p>
-            <p className="text-xs text-zinc-500">Ativos</p>
-          </div>
-          <div className="w-px bg-zinc-700" />
-          <div className="text-center">
-            <p className="text-xl font-bold text-amber-400">{totalPendentes}</p>
-            <p className="text-xs text-zinc-500">Pendentes</p>
+        {/* Counters + Demo button */}
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => setDemoDialogOpen(true)}
+            className="gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700"
+          >
+            <Timer className="h-4 w-4 text-emerald-500" />
+            Gerar Link Demo
+          </Button>
+          <div className="flex gap-3">
+            <div className="text-center">
+              <p className="text-xl font-bold text-emerald-400">{totalAtivos}</p>
+              <p className="text-xs text-zinc-500">Ativos</p>
+            </div>
+            <div className="w-px bg-zinc-700" />
+            <div className="text-center">
+              <p className="text-xl font-bold text-amber-400">{totalPendentes}</p>
+              <p className="text-xs text-zinc-500">Pendentes</p>
+            </div>
           </div>
         </div>
       </div>
@@ -345,7 +630,7 @@ export default function ConvitesPage() {
         </div>
       </div>
 
-      {/* Comarca tabs — só se houver mais de uma */}
+      {/* Comarca tabs -- so se houver mais de uma */}
       {comarcas.length > 1 && (
         <div className="flex flex-wrap gap-2">
           <button
@@ -378,13 +663,13 @@ export default function ConvitesPage() {
         </div>
       )}
 
-      {/* Conteúdo */}
+      {/* Conteudo */}
       {isLoading ? (
         <LoadingSkeleton />
       ) : displayComarcas.length === 0 ? (
         <div className="text-center py-16 text-zinc-500">
           <UserPlus className="h-10 w-10 mx-auto mb-3 opacity-30" />
-          <p>Nenhum usuário encontrado para os filtros aplicados.</p>
+          <p>Nenhum usuario encontrado para os filtros aplicados.</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -402,7 +687,7 @@ export default function ConvitesPage() {
                       {comarca}
                     </span>
                     <span className="text-xs font-normal text-zinc-500">
-                      {users.length} usuário{users.length !== 1 ? "s" : ""}
+                      {users.length} usuario{users.length !== 1 ? "s" : ""}
                       {pendentes > 0 && (
                         <span className="ml-2 text-amber-400">
                           · {pendentes} pendente{pendentes !== 1 ? "s" : ""}
@@ -421,6 +706,9 @@ export default function ConvitesPage() {
           })}
         </div>
       )}
+
+      {/* Demo Dialog */}
+      <GenerateDemoDialog open={demoDialogOpen} onOpenChange={setDemoDialogOpen} />
     </div>
   );
 }
