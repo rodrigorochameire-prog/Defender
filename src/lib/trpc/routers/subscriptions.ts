@@ -253,7 +253,7 @@ export const subscriptionsRouter = router({
       try {
         const { WhatsAppService } = await import("@/lib/services/whatsapp");
         const whatsapp = WhatsAppService.fromEnv();
-        await whatsapp.sendText(
+        await whatsapp?.sendText(
           "5584994113298",
           `💰 *Pagamento reportado*\n\n${ctx.user.name} reportou pagamento de R$ ${sub.valorFinal} (plano ${sub.plano}).\n\nConfirme em: ombuds.vercel.app/admin/assinaturas`
         );

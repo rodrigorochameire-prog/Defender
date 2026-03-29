@@ -56,7 +56,7 @@ export async function activateAccountAction(token: string, formData: FormData) {
   try {
     const { WhatsAppService } = await import("@/lib/services/whatsapp");
     const whatsapp = WhatsAppService.fromEnv();
-    await whatsapp.sendText(
+    await whatsapp?.sendText(
       "5584994113298",
       `✅ *Nova ativação*\n\n${user.name} ativou sua conta no OMBUDS.\nComarca: ${user.comarca || "N/A"}`
     );

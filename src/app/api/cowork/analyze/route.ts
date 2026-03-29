@@ -116,25 +116,49 @@ Pasta no Drive: Processos - ${atribuicaoLabel[p.atribuicao]?.split(" ")[0] ?? "J
     // Escapar prompt para shell
     const escapedPrompt = fullPrompt.replace(/'/g, "'\\''");
 
-    // Spawna claude worker
+    // Spawna claude worker com skills jurídicas
     // -p = print mode (executa e retorna)
-    // --add-dir = permite acesso ao Drive
-    // O worker usa a assinatura do defensor (zero custo)
+    // --add-dir = permite acesso ao Drive + skills Cowork
+    // cwd = diretório do projeto (tem .claude/skills-cowork/ com as 20 skills)
     const driveDir = `${process.env.HOME}/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com`;
-    const cmd = `claude -p --add-dir "${driveDir}" '${escapedPrompt}'`;
+    const projectDir = `${process.env.HOME}/Projetos/Defender`;
+    const skillsDir = `${projectDir}/.claude/skills-cowork`;
 
-    console.log(`[CoworkWorker] Disparando análise para ${assistidoNome} (processo ${p.numeroAutos})`);
+    // Mapear skill do botão → skill Cowork
+    const SKILL_MAP: Record<string, string> = {
+      "analise-autos": "analise-audiencias",
+      "preparar-audiencia": "analise-audiencias",
+      "gerar-peca": "dpe-ba-pecas",
+      "analise-juri": "juri",
+      "feedback-estagiario": "analise-audiencias",
+    };
+
+    const coworkSkill = SKILL_MAP[skill] ?? "analise-audiencias";
+
+    // Construir system prompt que inclui a skill
+    const systemPromptFile = `${skillsDir}/${coworkSkill}/SKILL.md`;
+
+    const cmd = [
+      "claude -p",
+      `--system-prompt-file "${systemPromptFile}"`,
+      `--add-dir "${driveDir}"`,
+      `--add-dir "${skillsDir}"`,
+      `--permission-mode auto`,
+      `'${escapedPrompt}'`,
+    ].join(" ");
+
+    console.log(`[CoworkWorker] Disparando: skill=${coworkSkill} assistido=${assistidoNome} processo=${p.numeroAutos}`);
 
     // Executar em background (não bloquear a request)
-    // O resultado vai para o Drive → auto-import
     execAsync(cmd, {
-      cwd: process.env.HOME,
+      cwd: projectDir,
       timeout: 600000, // 10 min max
-      env: { ...process.env, CLAUDE_CODE_SIMPLE: "1" },
+      env: { ...process.env },
+      maxBuffer: 10 * 1024 * 1024, // 10MB buffer para outputs grandes
     }).then((result) => {
-      console.log(`[CoworkWorker] Concluído: ${result.stdout.substring(0, 200)}`);
+      console.log(`[CoworkWorker] Concluído (${coworkSkill}): ${result.stdout.substring(0, 300)}`);
     }).catch((err) => {
-      console.error(`[CoworkWorker] Erro: ${err.message}`);
+      console.error(`[CoworkWorker] Erro (${coworkSkill}): ${err.message?.substring(0, 200)}`);
     });
 
     return NextResponse.json({

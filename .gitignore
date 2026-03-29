@@ -85,3 +85,6 @@ logs/
 .aiox-core/local/
 .claude/settings.local.json
 .aiox/install-log.txt
+
+# Cowork skills (copied from Desktop, not tracked)
+.claude/skills-cowork/
