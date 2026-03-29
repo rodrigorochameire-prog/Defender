@@ -12,7 +12,11 @@ export const atribuicaoEnum = pgEnum("atribuicao", [
   "SUBSTITUICAO",       // Substituição Criminal
   "SUBSTITUICAO_CIVEL", // Substituição Não Penal (Cível, Família, etc.)
   "GRUPO_JURI",         // Grupo Especial de Atuação (Apenas Plenários pelo Estado)
-  "CRIMINAL_CAMACARI",  // Varas Criminais de Camaçari
+  "CRIMINAL_CAMACARI",        // Varas Criminais Comuns Camaçari
+  "CRIMINAL_SIMOES_FILHO",    // Varas Criminais Simões Filho
+  "CRIMINAL_LAURO_DE_FREITAS",// Varas Criminais Lauro de Freitas
+  "CRIMINAL_CANDEIAS",        // Crime + Júri + Infância (integral)
+  "CRIMINAL_ITAPARICA",       // Crime + Júri + EP + Infância (integral)
 ]);
 
 // Áreas de atuação da Defensoria (compatibilidade)
@@ -68,6 +72,7 @@ export const unidadeEnum = pgEnum("unidade", [
   "SIMOES_FILHO",
   "LAURO_DE_FREITAS",
   "SALVADOR",
+  "ITAPARICA",
 ]);
 
 // Status do processo
