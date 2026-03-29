@@ -90,6 +90,10 @@ export function ActivateForm({ token, userEmail }: ActivateFormProps) {
           disabled={isLoading}
           className="h-10 text-sm bg-zinc-900 border-zinc-800/80 text-zinc-100 placeholder:text-zinc-600 focus:border-emerald-500/40 focus:ring-emerald-500/10 rounded-lg transition-colors"
         />
+
+        <p className="text-[11px] text-zinc-500 mt-1">
+          Recomendamos usar seu email Google (@gmail.com) para facilitar a sincronizacao com Google Sheets.
+        </p>
       </div>
 
       <div className="space-y-1.5">
