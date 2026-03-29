@@ -65,7 +65,7 @@ function crc16ccitt(str: string): number {
 }
 
 export const PIX_CONFIG = {
-  key: "04849830404",
+  key: "+5584994113298",
   merchantName: "RODRIGO ROCHA MEIRE",
   merchantCity: "CAMACARI",
 } as const;

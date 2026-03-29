@@ -136,6 +136,7 @@ type CoworkActionType = keyof typeof COWORK_ACTIONS;
 interface CoworkActionButtonProps {
   action: CoworkActionType;
   params: Record<string, string>;
+  processoId?: number;
   context?: string;
   variant?: "default" | "outline" | "ghost";
   size?: "default" | "sm" | "lg" | "icon";
@@ -146,6 +147,7 @@ interface CoworkActionButtonProps {
 export function CoworkActionButton({
   action,
   params,
+  processoId,
   context = "",
   variant = "outline",
   size = "sm",
@@ -159,9 +161,29 @@ export function CoworkActionButton({
   async function handleClick() {
     setLoading(true);
     try {
-      const prompt = buildDelegatePrompt(config.delegate, params, context);
+      // Strategy 1: Worker API (runs claude -p locally, zero cost)
+      if (processoId) {
+        try {
+          const res = await fetch("/api/cowork/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ processoId, skill: action }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            toast.success(`${config.label}: análise disparada`, {
+              description: `${data.assistido} — resultado aparecerá automaticamente`,
+              duration: 8000,
+            });
+            return;
+          }
+        } catch {
+          // Worker failed, fallback to deep link
+        }
+      }
 
-      // Try deep link first
+      // Strategy 2: Deep link to Cowork
+      const prompt = buildDelegatePrompt(config.delegate, params, context);
       const deepLink = `claude://cowork?prompt=${encodeURIComponent(prompt)}`;
 
       try {
@@ -170,7 +192,7 @@ export function CoworkActionButton({
           description: `Caso de ${params.assistidoNome || "assistido"}`,
         });
       } catch {
-        // Fallback: copy to clipboard
+        // Strategy 3: Clipboard fallback
         await navigator.clipboard?.writeText(prompt);
         toast.info("Prompt copiado para clipboard!", {
           description: "Cole no Cowork (⌘V) para executar",
@@ -208,6 +230,7 @@ export function CoworkActionButton({
 interface CoworkActionGroupProps {
   assistidoNome: string;
   numeroAutos: string;
+  processoId?: number;
   classeProcessual?: string;
   vara?: string;
   atribuicao?: string;
@@ -219,6 +242,7 @@ interface CoworkActionGroupProps {
 export function CoworkActionGroup({
   assistidoNome,
   numeroAutos,
+  processoId,
   classeProcessual = "",
   vara = "",
   atribuicao = "",
@@ -238,12 +262,13 @@ export function CoworkActionGroup({
   };
 
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-2">
       {actions.map((action) => (
         <CoworkActionButton
           key={action}
           action={action}
           params={params}
+          processoId={processoId}
           size={size}
         />
       ))}

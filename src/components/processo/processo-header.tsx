@@ -113,6 +113,7 @@ export function ProcessoHeader({
       <CoworkActionGroup
         assistidoNome={assistidos[0]?.nome ?? ""}
         numeroAutos={numeroAutos}
+        processoId={id}
         classeProcessual={classeProcessual ?? ""}
         vara={vara ?? ""}
         atribuicao={atribuicao}
