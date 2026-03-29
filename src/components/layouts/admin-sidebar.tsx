@@ -176,6 +176,7 @@ const MORE_NAV: AssignmentMenuItem[] = [
   { label: "Integrações", path: "/admin/integracoes", icon: "Zap" },
   { label: "Relatórios", path: "/admin/relatorios", icon: "BarChart3", requiredRoles: ["admin", "defensor"] },
   { label: "Sincronização", path: "/admin/sync", icon: "RefreshCw" },
+  { label: "Minha Assinatura", path: "/admin/minha-assinatura", icon: "CreditCard", requiredRoles: ["defensor"] },
   { label: "Enrichment", path: "/admin/settings/enrichment", icon: "Brain", requiredRoles: ["admin"] },
   { label: "Observatory", path: "/admin/observatory", icon: "Activity", requiredRoles: ["admin"] },
   { label: "Convites", path: "/admin/defensoria/convites", icon: "UserPlus", requiredRoles: ["admin"] },

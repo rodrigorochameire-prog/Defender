@@ -1,7 +1,7 @@
 import { router, adminProcedure, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { subscriptions, payments, users } from "@/lib/db/schema";
-import { eq, sql, and, count } from "drizzle-orm";
+import { eq, sql, and, count, desc } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 
@@ -192,6 +192,97 @@ export const subscriptionsRouter = router({
 
       return payment;
     }),
+
+  // ─── DEFENSOR REPORTA PAGAMENTO ─────────────────────────────────
+  reportPayment: protectedProcedure
+    .input(z.object({
+      nota: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const sub = await db.query.subscriptions.findFirst({
+        where: eq(subscriptions.userId, ctx.user.id),
+      });
+      if (!sub) throw new TRPCError({ code: "NOT_FOUND", message: "Assinatura não encontrada" });
+
+      const now = new Date();
+      const refMes = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+      const [payment] = await db.insert(payments).values({
+        subscriptionId: sub.id,
+        userId: ctx.user.id,
+        valor: sub.valorFinal,
+        status: "aguardando_confirmacao",
+        metodo: "pix",
+        referenciaMes: refMes,
+        dataVencimento: sub.dataVencimento,
+        nota: input.nota || null,
+      }).returning();
+
+      return payment;
+    }),
+
+  // ─── HISTORICO DE PAGAMENTOS DO DEFENSOR ───────────────────────
+  myPayments: protectedProcedure.query(async ({ ctx }) => {
+    return db.query.payments.findMany({
+      where: eq(payments.userId, ctx.user.id),
+      orderBy: desc(payments.createdAt),
+    });
+  }),
+
+  // ─── ADMIN CONFIRMA PAGAMENTO POR ID ──────────────────────────
+  confirmPaymentById: adminProcedure
+    .input(z.object({ paymentId: z.number() }))
+    .mutation(async ({ input }) => {
+      const [payment] = await db.update(payments)
+        .set({ status: "confirmado", dataPagamento: new Date() })
+        .where(eq(payments.id, input.paymentId))
+        .returning();
+
+      if (payment) {
+        const nextVencimento = new Date();
+        nextVencimento.setDate(nextVencimento.getDate() + 30);
+
+        await db.update(subscriptions).set({
+          status: "ativo",
+          dataUltimoPagamento: new Date().toISOString().split("T")[0],
+          dataVencimento: nextVencimento.toISOString().split("T")[0],
+          updatedAt: new Date(),
+        }).where(eq(subscriptions.id, payment.subscriptionId));
+      }
+
+      return payment;
+    }),
+
+  // ─── ADMIN REJEITA PAGAMENTO POR ID ───────────────────────────
+  rejectPaymentById: adminProcedure
+    .input(z.object({ paymentId: z.number() }))
+    .mutation(async ({ input }) => {
+      const [payment] = await db.update(payments)
+        .set({ status: "rejeitado" })
+        .where(eq(payments.id, input.paymentId))
+        .returning();
+      return payment;
+    }),
+
+  // ─── PAGAMENTOS AGUARDANDO CONFIRMACAO (ADMIN) ────────────────
+  pendingPayments: adminProcedure.query(async () => {
+    const result = await db
+      .select({
+        payment: payments,
+        user: {
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          comarca: users.comarca,
+        },
+      })
+      .from(payments)
+      .innerJoin(users, eq(payments.userId, users.id))
+      .where(eq(payments.status, "aguardando_confirmacao"))
+      .orderBy(desc(payments.createdAt));
+
+    return result;
+  }),
 
   // ─── ESTATÍSTICAS (ADMIN) ──────────────────────────────────────
   stats: adminProcedure.query(async () => {

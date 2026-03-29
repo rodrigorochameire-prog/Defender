@@ -74,6 +74,8 @@ export const payments = pgTable("payments", {
   pixQrCode: text("pix_qr_code"),
   pixCopiaCola: text("pix_copia_cola"),
 
+  nota: text("nota"), // nota/referencia informada pelo defensor ao reportar pagamento
+
   dataPagamento: timestamp("data_pagamento"),
   dataVencimento: date("data_vencimento"),
 

@@ -93,8 +93,29 @@ export default function AdminAssinaturasPage() {
     onSuccess: () => {
       toast.success("Pagamento confirmado!");
       refetch();
+      refetchPending();
     },
     onError: (e) => toast.error("Erro ao confirmar pagamento", { description: e.message }),
+  });
+
+  // Pagamentos aguardando confirmacao (reportados por defensores)
+  const { data: pendingPayments, refetch: refetchPending } = trpc.subscriptions.pendingPayments.useQuery();
+
+  const confirmPaymentById = trpc.subscriptions.confirmPaymentById.useMutation({
+    onSuccess: () => {
+      toast.success("Pagamento confirmado!");
+      refetch();
+      refetchPending();
+    },
+    onError: (e) => toast.error("Erro ao confirmar", { description: e.message }),
+  });
+
+  const rejectPaymentById = trpc.subscriptions.rejectPaymentById.useMutation({
+    onSuccess: () => {
+      toast.success("Pagamento rejeitado");
+      refetchPending();
+    },
+    onError: (e) => toast.error("Erro ao rejeitar", { description: e.message }),
   });
 
   // ─── DADOS PROCESSADOS ────────────────────────────────────────
@@ -236,6 +257,70 @@ export default function AdminAssinaturasPage() {
           color="blue"
         />
       </div>
+
+      {/* Pending Payments Section */}
+      {pendingPayments && pendingPayments.length > 0 && (
+        <Card className="bg-zinc-900/50 border-amber-800/40 border-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base text-amber-400 flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Pagamentos aguardando confirmacao ({pendingPayments.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {pendingPayments.map((item) => (
+                <div
+                  key={item.payment.id}
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 bg-zinc-800/30 rounded-lg"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-zinc-200 text-sm">{item.user.name}</span>
+                      <span className="text-xs text-zinc-500">{item.user.comarca}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-zinc-500 mt-0.5">
+                      <span>R$ {parseFloat(item.payment.valor).toFixed(2).replace(".", ",")}</span>
+                      <span>Ref: {item.payment.referenciaMes}</span>
+                      <span>{item.payment.createdAt ? new Date(item.payment.createdAt).toLocaleDateString("pt-BR") : ""}</span>
+                      {item.payment.nota && (
+                        <span className="text-zinc-400 italic truncate max-w-[200px]">
+                          &quot;{item.payment.nota}&quot;
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs border-emerald-800 text-emerald-400 hover:bg-emerald-900/30"
+                      onClick={() => confirmPaymentById.mutate({ paymentId: item.payment.id })}
+                      disabled={confirmPaymentById.isPending || rejectPaymentById.isPending}
+                    >
+                      {confirmPaymentById.isPending ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                      )}
+                      Confirmar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs border-red-800 text-red-400 hover:bg-red-900/30"
+                      onClick={() => rejectPaymentById.mutate({ paymentId: item.payment.id })}
+                      disabled={confirmPaymentById.isPending || rejectPaymentById.isPending}
+                    >
+                      Rejeitar
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Plan Descriptions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
