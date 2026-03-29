@@ -15,6 +15,7 @@ const publicRoutes = [
   "/api/webhooks",
   "/api/whatsapp/sync-on-connect",
   "/api/auth",
+  "/convite",
 ];
 
 // Verifica se a rota é pública

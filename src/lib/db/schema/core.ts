@@ -50,6 +50,7 @@ export const users = pgTable("users", {
   defensoresVinculados: jsonb("defensores_vinculados").$type<number[]>(),
   areasPrincipais: jsonb("areas_principais").$type<string[]>(),
   mustChangePassword: boolean("must_change_password").default(false),
+  inviteToken: varchar("invite_token", { length: 64 }),
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
