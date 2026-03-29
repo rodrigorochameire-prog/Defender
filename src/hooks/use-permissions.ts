@@ -62,6 +62,7 @@ interface SessionUser {
   role: UserRole;
   supervisorId?: number | null;
   funcao?: string | null;
+  areasPrincipais?: string[] | null;
 }
 
 // Interface para membros da equipe
@@ -92,6 +93,7 @@ export function usePermissions() {
         role: sessionData.role as UserRole,
         supervisorId: (sessionData as any).supervisorId,
         funcao: (sessionData as any).funcao,
+        areasPrincipais: (sessionData as any).areasPrincipais ?? null,
       });
     }
   }, [sessionData]);
@@ -143,6 +145,14 @@ export function usePermissions() {
     return userSupervisorId === user.id;
   };
 
+  // Verificar se usuário tem acesso a uma área de atuação
+  const hasArea = (area: string): boolean => {
+    if (!user) return false;
+    if (user.role === "admin") return true;
+    if (!user.areasPrincipais) return true; // null = sees everything (backward compat)
+    return user.areasPrincipais.includes(area);
+  };
+
   // Obter label amigável da role
   const getRoleLabel = (role: UserRole): string => {
     const labels: Record<UserRole, string> = {
@@ -174,6 +184,7 @@ export function usePermissions() {
     canManageTeam,
     canViewTeam,
     hasMinRole,
+    hasArea,
     isSupervisorOf,
     getRoleLabel,
     getRoleColor,

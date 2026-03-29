@@ -31,6 +31,7 @@ export const usersRouter = router({
         comarca: user.comarca,
         emailVerified: user.emailVerified,
         approvalStatus: user.approvalStatus,
+        areasPrincipais: user.areasPrincipais ?? null,
       };
     }, "Erro ao buscar dados do usuário");
   }),

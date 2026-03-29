@@ -102,7 +102,8 @@ const COWORK_NAV: AssignmentMenuItem[] = [
 
 // 5. News - Notícias jurídicas, monitoramento e informação institucional
 const NEWS_NAV: AssignmentMenuItem[] = [
-  { label: "Notícias", path: "/admin/noticias", icon: "Newspaper" },
+  { label: "Diário da Bahia", path: "/admin/noticias-factuais", icon: "Globe" },
+  { label: "Notícias Jurídicas", path: "/admin/noticias", icon: "Newspaper" },
   { label: "Radar Criminal", path: "/admin/radar", icon: "Radio" },
   { label: "Institucional", path: "/admin/institucional", icon: "Building2" },
 ];
@@ -1278,14 +1279,27 @@ const ESPECIALIDADE_COLORS = {
   }
 };
 
-function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
+function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, availableEspecialidades }: {
   pathname: string;
   onNavigate: () => void;
   userRole?: UserRole;
   isCollapsed: boolean;
+  availableEspecialidades?: string[];
 }) {
+  // Filter tabs based on available areas
+  const visibleTabs = useMemo(() => {
+    const allTabs: { id: Especialidade; label: string; icon: typeof Gavel; colors: typeof ESPECIALIDADE_COLORS.JURI }[] = [
+      { id: "JURI", label: "Júri", icon: Gavel, colors: ESPECIALIDADE_COLORS.JURI },
+      { id: "VVD", label: "VVD", icon: Shield, colors: ESPECIALIDADE_COLORS.VVD },
+      { id: "EP", label: "EP", icon: Lock, colors: ESPECIALIDADE_COLORS.EP },
+    ];
+    if (!availableEspecialidades || availableEspecialidades.length === 0) return allTabs;
+    return allTabs.filter(t => availableEspecialidades.includes(t.id));
+  }, [availableEspecialidades]);
+
   const [expanded, setExpanded] = useState(false);
-  const [especialidade, setEspecialidade] = useState<Especialidade>("JURI");
+  const defaultEsp = visibleTabs.length > 0 ? visibleTabs[0].id : "JURI";
+  const [especialidade, setEspecialidade] = useState<Especialidade>(defaultEsp);
 
   // Determinar seções baseado na especialidade selecionada
   const sections = especialidade === "JURI" ? JURI_SECTIONS
@@ -1301,25 +1315,22 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
     if (hasActiveItem && !expanded) {
       setExpanded(true);
     }
-    // Detectar especialidade ativa baseado no path
-    if (pathname.includes('/juri')) {
+    // Detectar especialidade ativa baseado no path (only if that tab is visible)
+    const visibleIds = visibleTabs.map(t => t.id);
+    if (pathname.includes('/juri') && visibleIds.includes("JURI")) {
       setEspecialidade("JURI");
-    } else if (pathname.includes('/vvd')) {
+    } else if (pathname.includes('/vvd') && visibleIds.includes("VVD")) {
       setEspecialidade("VVD");
-    } else if (pathname.includes('/execucao-penal')) {
+    } else if (pathname.includes('/execucao-penal') && visibleIds.includes("EP")) {
       setEspecialidade("EP");
     }
-  }, [hasActiveItem, pathname]);
+  }, [hasActiveItem, pathname, visibleTabs]);
 
   if (isCollapsed) {
     const flatItems = sections.flatMap(s => s.items);
     const especialidadeSelector = (
       <div className="flex items-center gap-1 px-3 pb-2">
-        {[
-          { id: "JURI" as Especialidade, label: "Júri", icon: Gavel, colors: ESPECIALIDADE_COLORS.JURI },
-          { id: "VVD" as Especialidade, label: "VVD", icon: Shield, colors: ESPECIALIDADE_COLORS.VVD },
-          { id: "EP" as Especialidade, label: "EP", icon: Lock, colors: ESPECIALIDADE_COLORS.EP },
-        ].map((esp) => {
+        {visibleTabs.map((esp) => {
           const isSelected = especialidade === esp.id;
           return (
             <button
@@ -1405,11 +1416,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
 
           {/* Seletor de especialidade — ícones compactos, label só no selecionado */}
           <div className="flex items-center gap-1 py-1.5 pr-2">
-            {[
-              { id: "JURI" as Especialidade, label: "Júri", icon: Gavel, colors: ESPECIALIDADE_COLORS.JURI },
-              { id: "VVD" as Especialidade, label: "VVD", icon: Shield, colors: ESPECIALIDADE_COLORS.VVD },
-              { id: "EP" as Especialidade, label: "EP", icon: Lock, colors: ESPECIALIDADE_COLORS.EP },
-            ].map((esp) => {
+            {visibleTabs.map((esp) => {
               const isSelected = especialidade === esp.id;
               return (
                 <button
@@ -1508,11 +1515,25 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
   const pathname = usePathname();
   const { state, open, setOpen, openMobile, setOpenMobile } = useSidebar();
   const { theme } = useTheme();
-  const { user: sessionUser } = usePermissions();
+  const { user: sessionUser, hasArea } = usePermissions();
   const { profissionalLogado } = useProfissional();
 
-  const canSeeSpecializedModules = sessionUser?.role === "admin" ||
-    (sessionUser?.role === "defensor" && profissionalLogado?.grupo === "juri_ep_vvd");
+  // Granular area-based visibility
+  const canSeeJuri = hasArea("JURI");
+  const canSeeEP = hasArea("EXECUCAO_PENAL");
+  const canSeeVVD = hasArea("VIOLENCIA_DOMESTICA");
+  const canSeeCriminal = hasArea("CRIMINAL");
+  const canSeeInfancia = hasArea("INFANCIA_JUVENTUDE");
+  const canSeeSpecializedModules = canSeeJuri || canSeeEP || canSeeVVD;
+
+  // Build list of available especialidades for the menu
+  const availableEspecialidades = useMemo(() => {
+    const list: string[] = [];
+    if (canSeeJuri) list.push("JURI");
+    if (canSeeVVD) list.push("VVD");
+    if (canSeeEP) list.push("EP");
+    return list;
+  }, [canSeeJuri, canSeeVVD, canSeeEP]);
   const isMobile = useIsMobile();
   const [mounted, setMounted] = useState(false);
   const [prevWasDrive, setPrevWasDrive] = useState(false);
@@ -1556,16 +1577,30 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
   });
   const matchesPendentes = radarPendentesData?.count ?? 0;
 
-  const newsNavWithBadge = useMemo(() => {
-    return NEWS_NAV.map(item => {
-      if (item.label === "Radar Criminal" && matchesPendentes > 0) {
-        return { ...item, badge: matchesPendentes };
-      }
-      return item;
-    });
-  }, [matchesPendentes]);
+  // Criminal area check: user has any criminal-related area
+  const canSeeCriminalTools = canSeeJuri || canSeeCriminal || canSeeVVD;
 
-  const toolsNavWithBadge = useMemo(() => TOOLS_NAV, []);
+  const newsNavWithBadge = useMemo(() => {
+    return NEWS_NAV
+      .filter(item => {
+        if (item.label === "Radar Criminal") return canSeeCriminalTools;
+        return true;
+      })
+      .map(item => {
+        if (item.label === "Radar Criminal" && matchesPendentes > 0) {
+          return { ...item, badge: matchesPendentes };
+        }
+        return item;
+      });
+  }, [matchesPendentes, canSeeCriminalTools]);
+
+  const toolsNavWithBadge = useMemo(() => {
+    const criminalOnlyTools = ["Palácio da Mente", "Simulador 3D", "Investigação"];
+    return TOOLS_NAV.filter(item => {
+      if (criminalOnlyTools.includes(item.label)) return canSeeCriminalTools;
+      return true;
+    });
+  }, [canSeeCriminalTools]);
 
   useEffect(() => {
     setMounted(true);
@@ -1695,6 +1730,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
                     onNavigate={handleNavigate}
                     userRole={userRole}
                     isCollapsed={isCollapsed}
+                    availableEspecialidades={availableEspecialidades}
                   />
                 </SidebarMenu>
               </>
