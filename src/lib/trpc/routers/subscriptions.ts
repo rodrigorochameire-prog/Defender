@@ -1,6 +1,6 @@
 import { router, adminProcedure, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { subscriptions, payments, users } from "@/lib/db/schema";
+import { subscriptions, payments, users, notifications } from "@/lib/db/schema";
 import { eq, sql, and, count, desc } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
@@ -74,6 +74,8 @@ export const subscriptionsRouter = router({
         where: eq(subscriptions.userId, input.userId),
       });
 
+      const planLabels: Record<string, string> = { essencial: "Essencial", criminal: "Criminal", completo: "Completo" };
+
       if (existing) {
         const [updated] = await db
           .update(subscriptions)
@@ -88,6 +90,16 @@ export const subscriptionsRouter = router({
           })
           .where(eq(subscriptions.userId, input.userId))
           .returning();
+
+        // Notify the defensor
+        await db.insert(notifications).values({
+          userId: input.userId,
+          type: "info",
+          title: "Plano atribuído",
+          message: `Seu plano foi definido como ${planLabels[input.plano] || input.plano} — R$ ${valorFinal}/mês.`,
+          actionUrl: "/admin/minha-assinatura",
+        });
+
         return updated;
       }
 
@@ -104,6 +116,16 @@ export const subscriptionsRouter = router({
           dataInicio: new Date().toISOString().split("T")[0],
         })
         .returning();
+
+      // Notify the defensor
+      await db.insert(notifications).values({
+        userId: input.userId,
+        type: "info",
+        title: "Plano atribuído",
+        message: `Seu plano foi definido como ${planLabels[input.plano] || input.plano} — R$ ${valorFinal}/mês.`,
+        actionUrl: "/admin/minha-assinatura",
+      });
+
       return created;
     }),
 
@@ -218,6 +240,27 @@ export const subscriptionsRouter = router({
         nota: input.nota || null,
       }).returning();
 
+      // Notify admin (id=1) via in-app notification
+      await db.insert(notifications).values({
+        userId: 1,
+        type: "info",
+        title: "Pagamento reportado",
+        message: `${ctx.user.name} reportou pagamento de R$ ${sub.valorFinal} (${sub.plano}).`,
+        actionUrl: "/admin/assinaturas",
+      });
+
+      // WhatsApp notification to admin (best-effort)
+      try {
+        const { WhatsAppService } = await import("@/lib/services/whatsapp");
+        const whatsapp = WhatsAppService.fromEnv();
+        await whatsapp.sendText(
+          "5584994113298",
+          `💰 *Pagamento reportado*\n\n${ctx.user.name} reportou pagamento de R$ ${sub.valorFinal} (plano ${sub.plano}).\n\nConfirme em: ombuds.vercel.app/admin/assinaturas`
+        );
+      } catch (e) {
+        console.log("WhatsApp notification skipped:", (e as Error).message);
+      }
+
       return payment;
     }),
 
@@ -248,6 +291,15 @@ export const subscriptionsRouter = router({
           dataVencimento: nextVencimento.toISOString().split("T")[0],
           updatedAt: new Date(),
         }).where(eq(subscriptions.id, payment.subscriptionId));
+
+        // Notify the defensor
+        await db.insert(notifications).values({
+          userId: payment.userId,
+          type: "success",
+          title: "Pagamento confirmado",
+          message: `Seu pagamento de R$ ${payment.valor} foi confirmado. Assinatura ativa até ${nextVencimento.toLocaleDateString("pt-BR")}.`,
+          actionUrl: "/admin/minha-assinatura",
+        });
       }
 
       return payment;

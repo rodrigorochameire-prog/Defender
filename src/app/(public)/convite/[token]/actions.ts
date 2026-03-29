@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { users, notifications } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { hashPassword } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth/session";
@@ -42,6 +42,27 @@ export async function activateAccountAction(token: string, formData: FormData) {
     inviteToken: null,
     emailVerified: true,
   }).where(eq(users.id, user.id));
+
+  // Notify admin (id=1) via in-app notification
+  await db.insert(notifications).values({
+    userId: 1, // admin
+    type: "success",
+    title: "Novo defensor ativou conta",
+    message: `${user.name} ativou sua conta no OMBUDS.`,
+    actionUrl: "/admin/defensoria/convites",
+  });
+
+  // WhatsApp notification to admin (best-effort)
+  try {
+    const { WhatsAppService } = await import("@/lib/services/whatsapp");
+    const whatsapp = WhatsAppService.fromEnv();
+    await whatsapp.sendText(
+      "5584994113298",
+      `✅ *Nova ativação*\n\n${user.name} ativou sua conta no OMBUDS.\nComarca: ${user.comarca || "N/A"}`
+    );
+  } catch (e) {
+    console.log("WhatsApp notification skipped:", (e as Error).message);
+  }
 
   // Auto-login
   await createSession(user.id, user.role);
