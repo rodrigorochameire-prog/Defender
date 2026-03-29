@@ -21,8 +21,10 @@ import { CoworkActionGroup } from "@/components/shared/cowork-action-button";
 import { AnalysisPanel } from "@/components/analysis/analysis-panel";
 import { DelitosTab } from "@/components/processo/delitos-tab";
 import { InstitutosTab } from "@/components/processo/institutos-tab";
+import { AtosInfracionaisTab } from "@/components/processo/atos-infracionais-tab";
+import { MedidasTab } from "@/components/processo/medidas-tab";
 
-type Tab = "partes" | "demandas" | "drive" | "audiencias" | "timeline" | "vinculados" | "inteligencia" | "fundamentos" | "noticias" | "delitos" | "institutos";
+type Tab = "partes" | "demandas" | "drive" | "audiencias" | "timeline" | "vinculados" | "inteligencia" | "fundamentos" | "noticias" | "delitos" | "institutos" | "atos-infracionais" | "medidas";
 
 const PRESOS = [
   "CADEIA_PUBLICA",
@@ -139,6 +141,8 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
     { key: "noticias", label: "Notícias" },
     { key: "delitos", label: "Delitos" },
     { key: "institutos", label: "Institutos" },
+    { key: "atos-infracionais", label: "Atos Infracionais" },
+    { key: "medidas", label: "Medidas Socioed." },
   ];
 
   return (
@@ -634,6 +638,17 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
 
         {tab === "institutos" && (
           <InstitutosTab
+            processoId={data.id}
+            assistidos={data.assistidos.map((a) => ({ id: a.id, nome: a.nome }))}
+          />
+        )}
+
+        {tab === "atos-infracionais" && (
+          <AtosInfracionaisTab processoId={data.id} />
+        )}
+
+        {tab === "medidas" && (
+          <MedidasTab
             processoId={data.id}
             assistidos={data.assistidos.map((a) => ({ id: a.id, nome: a.nome }))}
           />

@@ -68,6 +68,9 @@ import { syncRouter } from "./sync";
 import { skillsRouter } from "./skills";
 import { institutosRouter } from "./institutos";
 import { delitosRouter } from "./delitos";
+import { factualRouter } from "./factual";
+import { atosInfracionaisRouter } from "./atos-infracionais";
+import { medidasSocioeducativasRouter } from "./medidas-socioeducativas";
 
 
 export const appRouter = router({
@@ -317,6 +320,17 @@ export const appRouter = router({
   // DELITOS (TIPIFICAÇÃO + BENEFÍCIOS AUTOMÁTICOS)
   // ==========================================
   delitos: delitosRouter,
+
+  // ==========================================
+  // NOTÍCIAS FACTUAIS — DIÁRIO DA BAHIA
+  // ==========================================
+  factual: factualRouter,
+
+  // ==========================================
+  // INFÂNCIA E JUVENTUDE (ECA)
+  // ==========================================
+  atosInfracionais: atosInfracionaisRouter,
+  medidasSocioeducativas: medidasSocioeducativasRouter,
 });
 
 export type AppRouter = typeof appRouter;
