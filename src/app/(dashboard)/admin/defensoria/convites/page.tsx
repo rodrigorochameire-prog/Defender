@@ -118,6 +118,7 @@ interface User {
   phone: string | null;
   oab: string | null;
   comarca: string | null;
+  funcao: string | null;
   emailVerified: boolean;
   createdAt: Date;
   inviteToken: string | null;
@@ -154,6 +155,9 @@ function UserRow({ user }: { user: User }) {
       {/* Info principal */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
+          {user.funcao && (
+            <span className="text-xs font-mono text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded">{user.funcao}</span>
+          )}
           <span className="font-medium text-zinc-100 text-sm">{user.name}</span>
           <span className="text-xs text-zinc-500">{getRoleLabel(user.role)}</span>
         </div>
@@ -253,6 +257,15 @@ export default function ConvitesPage() {
       const key = u.comarca ?? "Sem Comarca";
       if (!groups[key]) groups[key] = [];
       groups[key].push(u);
+    }
+
+    // Sort users within each comarca by DP number
+    for (const key of Object.keys(groups)) {
+      groups[key].sort((a, b) => {
+        const dpA = a.funcao?.match(/(\d+)/)?.[1] ?? "99";
+        const dpB = b.funcao?.match(/(\d+)/)?.[1] ?? "99";
+        return parseInt(dpA) - parseInt(dpB);
+      });
     }
 
     const sortedComarcas = Object.keys(groups).sort();

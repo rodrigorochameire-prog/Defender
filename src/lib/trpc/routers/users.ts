@@ -79,6 +79,7 @@ export const usersRouter = router({
             comarca: users.comarca,
             emailVerified: users.emailVerified,
             createdAt: users.createdAt,
+            funcao: users.funcao,
             inviteToken: users.inviteToken,
             mustChangePassword: users.mustChangePassword,
             areasPrincipais: users.areasPrincipais,
