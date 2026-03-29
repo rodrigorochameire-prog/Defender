@@ -1,8 +1,6 @@
-// src/components/processo/processo-tabs.tsx
 "use client";
 
 import { Brain, ListTodo, Calendar, FolderOpen, Link2 } from "lucide-react";
-import { TAB_STYLE } from "@/lib/config/design-tokens";
 import { cn } from "@/lib/utils";
 
 export type MainTab = "analise" | "demandas" | "agenda" | "documentos" | "vinculados";
@@ -23,22 +21,30 @@ interface ProcessoTabsProps {
 
 export function ProcessoTabs({ active, onChange, counts }: ProcessoTabsProps) {
   return (
-    <div className={TAB_STYLE.bar}>
+    <div className="flex items-center gap-8 border-b border-zinc-100 dark:border-zinc-800/50 px-8">
       {TABS.map((tab) => (
         <button
           key={tab.key}
           onClick={() => onChange(tab.key)}
-          className={cn(TAB_STYLE.item, active === tab.key && TAB_STYLE.active)}
+          className={cn(
+            "flex items-center gap-2 py-3.5 text-sm font-medium border-b-2 transition-colors",
+            active === tab.key
+              ? "text-zinc-900 dark:text-zinc-50 border-emerald-500"
+              : "text-zinc-400 border-transparent hover:text-zinc-600 dark:hover:text-zinc-300"
+          )}
         >
-          <div className="flex items-center gap-1.5">
-            <tab.icon className="h-4 w-4" />
-            <span>{tab.label}</span>
-            {counts?.[tab.key] !== undefined && counts[tab.key]! > 0 && (
-              <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 rounded-full">
-                {counts[tab.key]}
-              </span>
-            )}
-          </div>
+          <tab.icon className="h-4 w-4" />
+          <span>{tab.label}</span>
+          {counts?.[tab.key] !== undefined && counts[tab.key]! > 0 && (
+            <span className={cn(
+              "text-[10px] min-w-[18px] text-center px-1.5 py-0.5 rounded-full",
+              active === tab.key
+                ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+            )}>
+              {counts[tab.key]}
+            </span>
+          )}
         </button>
       ))}
     </div>

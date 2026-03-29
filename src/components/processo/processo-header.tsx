@@ -1,12 +1,9 @@
-// src/components/processo/processo-header.tsx
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ArrowLeft, MoreHorizontal } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Calendar, ArrowLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { TYPO, COLORS, prisaoColor } from "@/lib/config/design-tokens";
 import { CoworkActionGroup } from "@/components/shared/cowork-action-button";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -52,77 +49,81 @@ export function ProcessoHeader({
     ? differenceInDays(new Date(proximaAudiencia.data), new Date())
     : null;
 
-  const audienciaUrgency =
-    diasAteAudiencia !== null && diasAteAudiencia < 3 ? "ALTA" :
-    diasAteAudiencia !== null && diasAteAudiencia < 7 ? "MEDIA" : "BAIXA";
-
   const atribuicaoLabel: Record<string, string> = {
-    JURI_CAMACARI: "Júri",
-    VVD_CAMACARI: "VVD",
-    EXECUCAO_PENAL: "EP",
-    SUBSTITUICAO: "Substituição",
+    JURI_CAMACARI: "Tribunal do Júri",
+    VVD_CAMACARI: "Violência Doméstica",
+    EXECUCAO_PENAL: "Execução Penal",
+    SUBSTITUICAO: "Substituição Criminal",
   };
 
   return (
-    <div className="px-6 pt-4 pb-4 border-b border-zinc-200 dark:border-zinc-800 space-y-3">
-      {/* Back */}
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-600 transition-colors"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Voltar
-      </button>
+    <div className="px-8 pt-6 pb-6 border-b border-zinc-100 dark:border-zinc-800/50">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-1.5 text-xs text-zinc-400 mb-5">
+        <button onClick={() => router.back()} className="hover:text-zinc-600 transition-colors">
+          Processos
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <span className="text-zinc-600 dark:text-zinc-300">{numeroAutos}</span>
+      </div>
 
-      {/* Número do processo */}
-      <h1 className={`${TYPO.mono} text-xl`}>{numeroAutos}</h1>
+      {/* Número do processo — grande, respiração */}
+      <h1 className="text-2xl font-bold font-mono tracking-tight text-zinc-900 dark:text-zinc-50 mb-2">
+        {numeroAutos}
+      </h1>
 
-      {/* Assistidos como chips */}
-      <div className="flex flex-wrap gap-2">
+      {/* Atribuição · Vara · Comarca — sutil */}
+      <p className="text-sm text-zinc-400 dark:text-zinc-500 mb-5">
+        {atribuicaoLabel[atribuicao] ?? atribuicao}
+        {vara ? ` · ${vara}` : ""}
+        {comarca ? ` · ${comarca}` : ""}
+      </p>
+
+      {/* Assistidos — chips grandes, clicáveis, sem badge "Solto" (só marca se Preso) */}
+      <div className="flex flex-wrap gap-2.5 mb-5">
         {assistidos.map((a) => {
           const preso = PRESOS.includes(a.statusPrisional ?? "");
-          const colors = prisaoColor(preso);
           return (
             <Link key={a.id} href={`/admin/assistidos/${a.id}`}>
-              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border
-                ${preso ? "border-red-200 dark:border-red-800" : "border-zinc-200 dark:border-zinc-700"}
-                hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors`}>
-                <span className="text-sm font-medium">{a.nome}</span>
-                <Badge variant={preso ? "danger" : "success"} className="text-[10px]">
-                  {preso ? "Preso" : "Solto"}
-                </Badge>
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all
+                ${preso
+                  ? "border-red-200 dark:border-red-800/50 bg-red-50/30 dark:bg-red-950/10"
+                  : "border-zinc-200 dark:border-zinc-700/50 hover:border-emerald-300 dark:hover:border-emerald-700"
+                }
+                hover:shadow-sm`}>
+                <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{a.nome}</span>
+                {preso && (
+                  <span className="text-[10px] font-semibold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded">
+                    PRESO
+                  </span>
+                )}
               </div>
             </Link>
           );
         })}
       </div>
 
-      {/* Vara · Comarca · Atribuição */}
-      <p className={TYPO.body + " text-muted-foreground"}>
-        {atribuicaoLabel[atribuicao] ?? atribuicao}
-        {vara ? ` · ${vara}` : ""}
-        {comarca ? ` · ${comarca}` : ""}
-      </p>
-
-      {/* Próxima audiência */}
+      {/* Próxima audiência — só aparece se existir, destaque proporcional à urgência */}
       {proximaAudiencia && diasAteAudiencia !== null && (
-        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
-          audienciaUrgency === "ALTA" ? "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400" :
-          audienciaUrgency === "MEDIA" ? "bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400" :
-          "bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
+        <div className={`flex items-center gap-3 px-4 py-2.5 rounded-lg mb-5 ${
+          diasAteAudiencia < 3
+            ? "bg-red-50 dark:bg-red-950/15 text-red-700 dark:text-red-300 border border-red-200/50 dark:border-red-800/30"
+            : diasAteAudiencia < 7
+            ? "bg-amber-50 dark:bg-amber-950/15 text-amber-700 dark:text-amber-300 border border-amber-200/50 dark:border-amber-800/30"
+            : "bg-zinc-50 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400"
         }`}>
-          <Calendar className="h-4 w-4" />
+          <Calendar className="h-4 w-4 shrink-0" />
           <span className="text-sm font-medium">{proximaAudiencia.tipo}</span>
           <span className="text-sm">
-            — {format(new Date(proximaAudiencia.data), "dd/MM 'às' HH:mm", { locale: ptBR })}
+            {format(new Date(proximaAudiencia.data), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
           </span>
-          <span className="text-xs text-muted-foreground">
-            (em {diasAteAudiencia} dia{diasAteAudiencia !== 1 ? "s" : ""})
+          <span className="text-xs opacity-60">
+            ({diasAteAudiencia === 0 ? "hoje" : diasAteAudiencia === 1 ? "amanhã" : `em ${diasAteAudiencia} dias`})
           </span>
         </div>
       )}
 
-      {/* Botões Cowork */}
+      {/* Botões Cowork — compactos, só 3 principais */}
       <CoworkActionGroup
         assistidoNome={assistidos[0]?.nome ?? ""}
         numeroAutos={numeroAutos}
@@ -132,8 +133,8 @@ export function ProcessoHeader({
         drivePath=""
         actions={
           atribuicao === "JURI_CAMACARI"
-            ? ["analise-autos", "gerar-peca", "preparar-audiencia", "analise-juri", "feedback-estagiario"]
-            : ["analise-autos", "gerar-peca", "preparar-audiencia", "feedback-estagiario"]
+            ? ["analise-autos", "gerar-peca", "preparar-audiencia"]
+            : ["analise-autos", "gerar-peca", "preparar-audiencia"]
         }
       />
     </div>

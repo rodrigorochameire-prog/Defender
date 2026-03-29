@@ -1,8 +1,6 @@
-// src/components/processo/analise-hub.tsx
 "use client";
 
 import { useState } from "react";
-import { PILL_STYLE } from "@/lib/config/design-tokens";
 import { cn } from "@/lib/utils";
 import { AnaliseResumo } from "./analise-resumo";
 import { AnalisePartes } from "./analise-partes";
@@ -46,14 +44,19 @@ export function AnaliseHub(props: AnaliseHubProps) {
   const [subTab, setSubTab] = useState<AnaliseSubTab>("resumo");
 
   return (
-    <div className="px-6 py-4">
-      {/* Pills */}
-      <div className={PILL_STYLE.bar}>
+    <div className="px-8 py-6">
+      {/* Pills — espaçadas, maiores, visualmente distintas das abas */}
+      <div className="flex items-center gap-2 mb-6">
         {SUB_TABS.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setSubTab(tab.key)}
-            className={cn(PILL_STYLE.item, subTab === tab.key && PILL_STYLE.active)}
+            className={cn(
+              "px-4 py-1.5 text-xs font-medium rounded-full transition-all",
+              subTab === tab.key
+                ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
+                : "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            )}
           >
             {tab.label}
           </button>
