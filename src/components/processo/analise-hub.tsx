@@ -38,6 +38,12 @@ interface AnaliseHubProps {
   achados: string[];
   recomendacoes: string[];
   inconsistencias: string[];
+  // Rich fields
+  alertas?: any[];
+  checklistTatico?: string[];
+  orientacaoAssistido?: string;
+  perspectivaPlenaria?: string;
+  perguntasEstrategicas?: any[];
 }
 
 export function AnaliseHub(props: AnaliseHubProps) {
@@ -75,13 +81,23 @@ export function AnaliseHub(props: AnaliseHubProps) {
           recomendacoes={props.recomendacoes}
           inconsistencias={props.inconsistencias}
           saneamento={props.saneamento}
+          alertas={props.alertas}
+          checklistTatico={props.checklistTatico}
         />
       )}
       {subTab === "partes" && <AnalisePartes pessoas={props.pessoas} />}
       {subTab === "depoimentos" && <AnaliseDepoimentos depoimentos={props.depoimentos} />}
       {subTab === "timeline" && <AnaliseTimeline cronologia={props.cronologia} />}
       {subTab === "teses" && (
-        <AnaliseTeses teses={props.teses} nulidades={props.nulidades} matrizGuerra={props.matrizGuerra} />
+        <AnaliseTeses
+          teses={props.teses}
+          nulidades={props.nulidades}
+          matrizGuerra={props.matrizGuerra}
+          orientacaoAssistido={props.orientacaoAssistido}
+          perspectivaPlenaria={props.perspectivaPlenaria}
+          perguntasEstrategicas={props.perguntasEstrategicas}
+          checklistTatico={props.checklistTatico}
+        />
       )}
       {subTab === "mapa" && <AnaliseMapa locais={props.locais} />}
     </div>

@@ -65,7 +65,7 @@ export async function createUserDriveStructure(userId: number): Promise<{
   if (!user) throw new Error("Usuário não encontrado");
 
   const comarcaResult = await db.execute(sql`SELECT nome FROM comarcas WHERE id = ${user.comarcaId}`);
-  const comarcaNome = (comarcaResult.rows[0] as any)?.nome ?? "";
+  const comarcaNome = (comarcaResult[0] as any)?.nome ?? "";
 
   const rootFolder = await driveRequest(accessToken, "/drive/v3/files", {
     method: "POST",

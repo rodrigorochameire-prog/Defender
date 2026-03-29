@@ -5,6 +5,11 @@ import {
   CheckCircle2, Clock, Users, Scale, FileText,
 } from "lucide-react";
 
+interface Alerta {
+  tipo: string; // "risco" | "atencao" | "info" | "positivo"
+  texto: string;
+}
+
 interface AnaliseResumoProps {
   radarLiberdade: { status: string; detalhes: string; urgencia: string } | null;
   kpis: { totalPessoas?: number; totalAcusacoes?: number; totalDocumentosAnalisados?: number; totalEventos?: number; totalNulidades?: number } | null;
@@ -13,6 +18,8 @@ interface AnaliseResumoProps {
   estrategia: string;
   achados: string[];
   recomendacoes: string[];
+  alertas?: Alerta[];
+  checklistTatico?: string[];
   inconsistencias: string[];
   saneamento: { pendencias: string[]; status: string } | null;
 }
@@ -20,6 +27,7 @@ interface AnaliseResumoProps {
 export function AnaliseResumo({
   radarLiberdade, kpis, resumo, crimePrincipal,
   estrategia, achados, recomendacoes, inconsistencias, saneamento,
+  alertas, checklistTatico,
 }: AnaliseResumoProps) {
 
   const hasContent = resumo || crimePrincipal || radarLiberdade || kpis || estrategia || achados.length > 0;
@@ -150,6 +158,33 @@ export function AnaliseResumo({
         </div>
       )}
 
+      {/* Alertas Operacionais */}
+      {alertas && alertas.length > 0 && (
+        <div className="space-y-2">
+          {alertas.map((a, i) => {
+            const alertColors: Record<string, string> = {
+              risco: "bg-red-50/60 dark:bg-red-950/15 border-red-200/50 dark:border-red-800/30 text-red-800 dark:text-red-200",
+              atencao: "bg-amber-50/60 dark:bg-amber-950/15 border-amber-200/50 dark:border-amber-800/30 text-amber-800 dark:text-amber-200",
+              info: "bg-blue-50/60 dark:bg-blue-950/15 border-blue-200/50 dark:border-blue-800/30 text-blue-800 dark:text-blue-200",
+              positivo: "bg-emerald-50/60 dark:bg-emerald-950/15 border-emerald-200/50 dark:border-emerald-800/30 text-emerald-800 dark:text-emerald-200",
+            };
+            const alertIcons: Record<string, typeof AlertTriangle> = {
+              risco: AlertTriangle,
+              atencao: AlertCircle,
+              info: Lightbulb,
+              positivo: CheckCircle2,
+            };
+            const Icon = alertIcons[a.tipo] ?? AlertCircle;
+            return (
+              <div key={i} className={`flex items-start gap-3 rounded-xl border p-4 ${alertColors[a.tipo] ?? alertColors.info}`}>
+                <Icon className="h-4 w-4 mt-0.5 shrink-0" />
+                <p className="text-sm leading-relaxed">{a.texto}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Saneamento */}
       {saneamento && saneamento.pendencias?.length > 0 && (
         <div className="rounded-xl border border-zinc-200/50 dark:border-zinc-700/30 p-5">
@@ -165,6 +200,24 @@ export function AnaliseResumo({
               <li key={i} className="text-sm text-zinc-500 dark:text-zinc-400 flex items-start gap-2">
                 <span className="text-zinc-300 dark:text-zinc-600 mt-0.5">—</span>
                 <span>{p}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Checklist Tático */}
+      {checklistTatico && checklistTatico.length > 0 && (
+        <div className="rounded-xl border border-emerald-200/30 dark:border-emerald-800/20 bg-emerald-50/20 dark:bg-emerald-950/5 p-5">
+          <div className="flex items-center gap-2.5 mb-3">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            <span className="text-base font-semibold">Plano de Ação — 48h</span>
+          </div>
+          <ul className="space-y-2">
+            {checklistTatico.map((item, i) => (
+              <li key={i} className="flex items-start gap-3 text-sm text-zinc-600 dark:text-zinc-300">
+                <div className="h-4 w-4 mt-0.5 shrink-0 rounded border border-zinc-300 dark:border-zinc-600" />
+                <span className="leading-relaxed">{item}</span>
               </li>
             ))}
           </ul>

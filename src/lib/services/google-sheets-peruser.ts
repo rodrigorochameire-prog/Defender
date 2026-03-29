@@ -50,7 +50,7 @@ export async function createUserSpreadsheet(userId: number): Promise<{
 
   const accessToken = await getAccessToken(token.refreshToken);
   const comarcaResult = await db.execute(sql`SELECT nome FROM comarcas WHERE id = ${user.comarcaId}`);
-  const comarcaNome = (comarcaResult.rows[0] as any)?.nome ?? "Comarca";
+  const comarcaNome = (comarcaResult[0] as any)?.nome ?? "Comarca";
 
   const areas = user.areasPrincipais ?? ["CRIMINAL"];
   const tabs = areas.map(area => AREA_TAB_MAP[area]).filter(Boolean);

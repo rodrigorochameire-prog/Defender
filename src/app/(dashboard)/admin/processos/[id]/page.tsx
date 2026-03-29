@@ -172,6 +172,11 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
             estrategia={ad.estrategia ?? ""}
             achados={ad.achadosChave ?? []}
             recomendacoes={ad.recomendacoes ?? []}
+            alertas={payload.alertas_operacionais ?? ad.alertas ?? []}
+            checklistTatico={payload.checklist_tatico ?? ad.checklistTatico ?? []}
+            orientacaoAssistido={payload.orientacao_ao_assistido ?? ad.orientacaoAssistido ?? ""}
+            perspectivaPlenaria={payload.perspectiva_plenaria ?? ad.perspectivaPlenaria ?? ""}
+            perguntasEstrategicas={payload.perguntas_por_testemunha ?? ad.perguntasEstrategicas ?? []}
             inconsistencias={ad.inconsistencias ?? []}
           />
         )}
