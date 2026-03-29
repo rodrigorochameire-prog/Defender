@@ -1,9 +1,7 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Calendar, ArrowLeft, ChevronRight } from "lucide-react";
+import { Calendar } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { CoworkActionGroup } from "@/components/shared/cowork-action-button";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -43,8 +41,6 @@ export function ProcessoHeader({
   proximaAudiencia,
   classeProcessual,
 }: ProcessoHeaderProps) {
-  const router = useRouter();
-
   const diasAteAudiencia = proximaAudiencia
     ? differenceInDays(new Date(proximaAudiencia.data), new Date())
     : null;
@@ -57,27 +53,17 @@ export function ProcessoHeader({
   };
 
   return (
-    <div className="px-8 pt-6 pb-6 border-b border-zinc-100 dark:border-zinc-800/50">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-xs text-zinc-400 mb-5">
-        <button onClick={() => router.back()} className="hover:text-zinc-600 transition-colors">
-          Processos
-        </button>
-        <ChevronRight className="h-3 w-3" />
-        <span className="text-zinc-600 dark:text-zinc-300">{numeroAutos}</span>
+    <div className="px-8 pt-5 pb-5 border-b border-zinc-100 dark:border-zinc-800/50">
+      {/* Número do processo + metadados numa linha */}
+      <div className="flex items-baseline gap-3 mb-4">
+        <h1 className="text-xl font-bold font-mono tracking-tight text-zinc-900 dark:text-zinc-50">
+          {numeroAutos}
+        </h1>
+        <span className="text-xs text-zinc-400 dark:text-zinc-500">
+          {atribuicaoLabel[atribuicao] ?? atribuicao}
+          {vara ? ` · ${vara}` : ""}
+        </span>
       </div>
-
-      {/* Número do processo — grande, respiração */}
-      <h1 className="text-2xl font-bold font-mono tracking-tight text-zinc-900 dark:text-zinc-50 mb-2">
-        {numeroAutos}
-      </h1>
-
-      {/* Atribuição · Vara · Comarca — sutil */}
-      <p className="text-sm text-zinc-400 dark:text-zinc-500 mb-5">
-        {atribuicaoLabel[atribuicao] ?? atribuicao}
-        {vara ? ` · ${vara}` : ""}
-        {comarca ? ` · ${comarca}` : ""}
-      </p>
 
       {/* Assistidos — chips grandes, clicáveis, sem badge "Solto" (só marca se Preso) */}
       <div className="flex flex-wrap gap-2.5 mb-5">

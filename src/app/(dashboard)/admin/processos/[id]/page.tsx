@@ -151,18 +151,18 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
         {tab === "analise" && (
           <AnaliseHub
             analysisData={ad}
-            pessoas={payload.pessoas ?? []}
-            depoimentos={payload.depoimentos ?? []}
-            cronologia={payload.cronologia ?? []}
-            teses={ad.teses ?? ad.tesesCompleto ?? null}
+            pessoas={payload.pessoas ?? ad.pessoas ?? []}
+            depoimentos={payload.depoimentos ?? ad.depoimentos ?? []}
+            cronologia={payload.cronologia ?? ad.cronologia ?? []}
+            teses={ad.tesesCompleto ?? ad.teses ?? null}
             nulidades={ad.nulidades ?? []}
             matrizGuerra={ad.matrizGuerra ?? payload.matriz_guerra ?? []}
-            locais={payload.locais ?? []}
+            locais={payload.locais ?? ad.locais ?? []}
             radarLiberdade={ad.radarLiberdade ?? null}
             saneamento={ad.saneamento ?? null}
             kpis={ad.kpis ?? null}
             resumo={ad.resumo ?? ""}
-            crimePrincipal={ad.crimePrincipal ?? ""}
+            crimePrincipal={ad.crimePrincipal ?? ad.kpis?.crimePrincipal ?? ""}
             estrategia={ad.estrategia ?? ""}
             achados={ad.achadosChave ?? []}
             recomendacoes={ad.recomendacoes ?? []}
