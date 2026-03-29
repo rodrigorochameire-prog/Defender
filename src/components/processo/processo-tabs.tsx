@@ -1,16 +1,27 @@
 "use client";
 
-import { Brain, ListTodo, Calendar, FolderOpen, Link2 } from "lucide-react";
+import { Brain, ListTodo, Calendar, FolderOpen, Link2, Scale, Library, Baby, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/hooks/use-permissions";
 
-export type MainTab = "analise" | "demandas" | "agenda" | "documentos" | "vinculados";
+export type MainTab = "analise" | "demandas" | "agenda" | "documentos" | "vinculados" | "delitos" | "institutos" | "atos_infracionais" | "medidas";
 
-const TABS: { key: MainTab; label: string; icon: React.ElementType }[] = [
+const BASE_TABS: { key: MainTab; label: string; icon: React.ElementType }[] = [
   { key: "analise", label: "Análise", icon: Brain },
   { key: "demandas", label: "Demandas", icon: ListTodo },
   { key: "agenda", label: "Agenda", icon: Calendar },
   { key: "documentos", label: "Documentos", icon: FolderOpen },
   { key: "vinculados", label: "Vinculados", icon: Link2 },
+];
+
+const CRIMINAL_TABS: { key: MainTab; label: string; icon: React.ElementType }[] = [
+  { key: "delitos", label: "Delitos", icon: Scale },
+  { key: "institutos", label: "Institutos", icon: Library },
+];
+
+const INFANCIA_TABS: { key: MainTab; label: string; icon: React.ElementType }[] = [
+  { key: "atos_infracionais", label: "Atos Infracionais", icon: Baby },
+  { key: "medidas", label: "Medidas", icon: Shield },
 ];
 
 interface ProcessoTabsProps {
@@ -20,8 +31,19 @@ interface ProcessoTabsProps {
 }
 
 export function ProcessoTabs({ active, onChange, counts }: ProcessoTabsProps) {
+  const { hasArea } = usePermissions();
+
+  const isCriminalArea = hasArea("CRIMINAL") || hasArea("JURI") || hasArea("EXECUCAO_PENAL") || hasArea("VIOLENCIA_DOMESTICA");
+  const isInfanciaArea = hasArea("INFANCIA_JUVENTUDE");
+
+  const TABS = [
+    ...BASE_TABS,
+    ...(isCriminalArea ? CRIMINAL_TABS : []),
+    ...(isInfanciaArea ? INFANCIA_TABS : []),
+  ];
+
   return (
-    <div className="flex items-center gap-8 border-b border-zinc-100 dark:border-zinc-800/50 px-8">
+    <div className="flex items-center gap-8 border-b border-zinc-100 dark:border-zinc-800/50 px-8 overflow-x-auto">
       {TABS.map((tab) => (
         <button
           key={tab.key}

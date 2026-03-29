@@ -20,6 +20,12 @@ import { VinculadosCards } from "@/components/processo/vinculados-cards";
 // Existing components to keep
 import { DriveTabEnhanced } from "@/components/drive/DriveTabEnhanced";
 
+// Area-specific tabs
+import { DelitosTab } from "@/components/processo/delitos-tab";
+import { InstitutosTab } from "@/components/processo/institutos-tab";
+import { AtosInfracionaisTab } from "@/components/processo/atos-infracionais-tab";
+import { MedidasTab } from "@/components/processo/medidas-tab";
+
 export default function ProcessoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
@@ -292,6 +298,40 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
             classeProcessual: p.classeProcessual ?? null,
             atribuicao: p.atribuicao ?? "",
           }))} />
+        )}
+
+        {/* DELITOS (Criminal areas) */}
+        {tab === "delitos" && (
+          <div className="px-6 py-4">
+            <DelitosTab processoId={data.id} />
+          </div>
+        )}
+
+        {/* INSTITUTOS (Criminal areas) */}
+        {tab === "institutos" && (
+          <div className="px-6 py-4">
+            <InstitutosTab
+              processoId={data.id}
+              assistidos={data.assistidos?.map((a: any) => ({ id: a.id, nome: a.nome })) ?? []}
+            />
+          </div>
+        )}
+
+        {/* ATOS INFRACIONAIS (Infancia) */}
+        {tab === "atos_infracionais" && (
+          <div className="px-6 py-4">
+            <AtosInfracionaisTab processoId={data.id} />
+          </div>
+        )}
+
+        {/* MEDIDAS (Infancia) */}
+        {tab === "medidas" && (
+          <div className="px-6 py-4">
+            <MedidasTab
+              processoId={data.id}
+              assistidos={data.assistidos?.map((a: any) => ({ id: a.id, nome: a.nome })) ?? []}
+            />
+          </div>
         )}
       </div>
     </div>

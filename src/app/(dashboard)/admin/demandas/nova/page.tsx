@@ -579,11 +579,23 @@ export default function NovaDemandaPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CRIMINAL">Criminal (dias corridos)</SelectItem>
-                  <SelectItem value="JURI">Júri (dias corridos)</SelectItem>
-                  <SelectItem value="EXECUCAO_PENAL">Execução Penal (dias corridos)</SelectItem>
-                  <SelectItem value="CIVEL">Cível (dias úteis)</SelectItem>
-                  <SelectItem value="TRABALHISTA">Trabalhista (dias úteis)</SelectItem>
+                  {[
+                    { value: "CRIMINAL", label: "Criminal (dias corridos)" },
+                    { value: "JURI", label: "Júri (dias corridos)" },
+                    { value: "EXECUCAO_PENAL", label: "Execução Penal (dias corridos)" },
+                    { value: "VIOLENCIA_DOMESTICA", label: "Violência Doméstica (dias corridos)" },
+                    { value: "INFANCIA_JUVENTUDE", label: "Infância e Juventude (dias corridos)" },
+                    { value: "CIVEL", label: "Cível (dias úteis)" },
+                    { value: "FAMILIA", label: "Família (dias úteis)" },
+                    { value: "FAZENDA_PUBLICA", label: "Fazenda Pública (dias úteis)" },
+                    { value: "TRABALHISTA", label: "Trabalhista (dias úteis)" },
+                  ]
+                    .filter((opt) => hasArea(opt.value))
+                    .map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>

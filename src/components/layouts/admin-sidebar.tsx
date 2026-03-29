@@ -15,6 +15,7 @@ import {
   UserPlus, CreditCard
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
+import { usePlan } from "@/hooks/use-plan";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
 import {
@@ -1520,6 +1521,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
   const { state, open, setOpen, openMobile, setOpenMobile } = useSidebar();
   const { theme } = useTheme();
   const { user: sessionUser, hasArea } = usePermissions();
+  const { isCompleto, isExempt, hasPlan } = usePlan();
   const { profissionalLogado } = useProfissional();
 
   // Granular area-based visibility
@@ -1602,9 +1604,21 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
     const criminalOnlyTools = ["Palácio da Mente", "Simulador 3D", "Investigação"];
     return TOOLS_NAV.filter(item => {
       if (criminalOnlyTools.includes(item.label)) return canSeeCriminalTools;
+      // Inteligencia requires plan Completo (or exempt roles)
+      if (item.label === "Inteligência") return isCompleto || isExempt;
+      // Calc. Exec. Penal requires EP area
+      if (item.label === "Calc. Exec. Penal") return canSeeEP;
       return true;
     });
-  }, [canSeeCriminalTools]);
+  }, [canSeeCriminalTools, isCompleto, isExempt, canSeeEP]);
+
+  const moreNavFiltered = useMemo(() => {
+    return MORE_NAV.filter(item => {
+      // Enrichment requires plan Completo (already admin-gated via requiredRoles, add plan check)
+      if (item.label === "Enrichment") return isCompleto || isExempt;
+      return true;
+    });
+  }, [isCompleto, isExempt]);
 
   useEffect(() => {
     setMounted(true);
@@ -1744,7 +1758,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
             <NavDivider collapsed={isCollapsed} />
             <SidebarMenu className="space-y-0.5">
               <MoreMenu
-                items={MORE_NAV}
+                items={moreNavFiltered}
                 pathname={pathname}
                 onNavigate={handleNavigate}
                 userRole={userRole}
