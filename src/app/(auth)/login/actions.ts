@@ -14,6 +14,7 @@ interface LoginResult {
   success: boolean;
   error?: string;
   role?: string;
+  mustChangePassword?: boolean;
 }
 
 // Credenciais hardcoded para fallback (desenvolvimento)
@@ -73,6 +74,10 @@ export async function loginAction(input: LoginInput): Promise<LoginResult> {
 
       // Criar sessão
       await createSession(user.id, user.role);
+
+      if (user.mustChangePassword) {
+        return { success: true, role: user.role, mustChangePassword: true };
+      }
 
       return { success: true, role: user.role };
     } catch (dbError) {

@@ -1,15 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { loginAction } from "./actions";
+import { setPasswordAction } from "./actions";
 import { Loader2 } from "lucide-react";
 
-export function LoginForm() {
-  const router = useRouter();
+export function SetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -17,33 +15,35 @@ export function LoginForm() {
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+    const confirm = formData.get("confirm") as string;
+
+    // Validacao client-side
+    if (!password || password.length < 6) {
+      toast.error("Senha deve ter no minimo 6 caracteres");
+      setIsLoading(false);
+      return;
+    }
+
+    if (password !== confirm) {
+      toast.error("Senhas nao conferem");
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      const result = await loginAction({ email, password });
+      const result = await setPasswordAction(formData);
 
-      if (result.error) {
+      if (result?.error) {
         toast.error(result.error);
         return;
       }
 
-      toast.success("Login realizado com sucesso!");
-
-      // Aguardar um momento para garantir que o cookie foi setado
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Se o usuário precisa definir senha no primeiro acesso, redirecionar
-      if (result.mustChangePassword) {
-        window.location.href = "/set-password";
-        return;
-      }
-
-      // Usar window.location para forçar reload completo em vez de navegação client-side
-      // Isso garante que o servidor veja o cookie na próxima requisição
-      window.location.href = "/admin";
+      // Se chegou aqui sem erro, o redirect do server action ja aconteceu
+      toast.success("Senha definida com sucesso!");
     } catch {
-      toast.error("Erro ao fazer login. Tente novamente.");
+      // redirect() do Next.js lanca um erro especial - isso e esperado
+      // O redirect ja aconteceu no server action
     } finally {
       setIsLoading(false);
     }
@@ -53,17 +53,17 @@ export function LoginForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1.5">
         <label
-          htmlFor="email"
+          htmlFor="password"
           className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium"
         >
-          Email
+          Nova Senha
         </label>
         <Input
-          id="email"
-          name="email"
-          type="text"
-          placeholder="seu@email.com"
-          autoComplete="email"
+          id="password"
+          name="password"
+          type="password"
+          placeholder="Minimo 6 caracteres"
+          autoComplete="new-password"
           disabled={isLoading}
           className="h-10 text-sm bg-zinc-900 border-zinc-800/80 text-zinc-100 placeholder:text-zinc-600 focus:border-emerald-500/40 focus:ring-emerald-500/10 rounded-lg transition-colors"
         />
@@ -71,17 +71,17 @@ export function LoginForm() {
 
       <div className="space-y-1.5">
         <label
-          htmlFor="password"
+          htmlFor="confirm"
           className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium"
         >
-          Senha
+          Confirmar Senha
         </label>
         <Input
-          id="password"
-          name="password"
+          id="confirm"
+          name="confirm"
           type="password"
-          placeholder="••••••••"
-          autoComplete="current-password"
+          placeholder="Repita a senha"
+          autoComplete="new-password"
           disabled={isLoading}
           className="h-10 text-sm bg-zinc-900 border-zinc-800/80 text-zinc-100 placeholder:text-zinc-600 focus:border-emerald-500/40 focus:ring-emerald-500/10 rounded-lg transition-colors"
         />
@@ -96,10 +96,10 @@ export function LoginForm() {
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Entrando...
+              Salvando...
             </>
           ) : (
-            "Entrar"
+            "Definir Senha"
           )}
         </Button>
       </div>
