@@ -30,7 +30,7 @@ export function AnaliseResumo({
         <Target className="h-10 w-10 mx-auto text-zinc-200 dark:text-zinc-700 mb-3" />
         <p className="text-sm text-zinc-400">Nenhuma análise disponível</p>
         <p className="text-xs text-zinc-300 dark:text-zinc-600 mt-1">
-          Use o botão "Analisar Autos" para gerar uma análise estratégica
+          Use o botão Analisar Autos para gerar uma análise estratégica
         </p>
       </div>
     );
