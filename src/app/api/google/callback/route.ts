@@ -16,6 +16,13 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const error = request.nextUrl.searchParams.get("error");
 
+  // Parse state for per-user flow
+  let stateData: { userId?: number; returnTo?: string } = {};
+  try {
+    const stateParam = request.nextUrl.searchParams.get("state");
+    if (stateParam) stateData = JSON.parse(stateParam);
+  } catch {}
+
   if (error) {
     return new NextResponse(
       htmlPage("Erro na Autorização", `<p class="error">Erro: ${error}</p>`),
@@ -114,6 +121,33 @@ export async function GET(request: NextRequest) {
         console.error("[Google Auth] Erro ao salvar token no banco:", err);
       }
     }
+
+      // Save per-user token if userId provided
+      if (stateData.userId && refreshToken) {
+        try {
+          await db.execute(sql`
+            INSERT INTO user_google_tokens (user_id, email, refresh_token, access_token, expires_at)
+            VALUES (${stateData.userId}, ${userEmail}, ${refreshToken}, ${accessToken},
+                    ${new Date(Date.now() + expiresIn * 1000).toISOString()}::timestamptz)
+            ON CONFLICT (user_id) DO UPDATE SET
+              email = EXCLUDED.email,
+              refresh_token = EXCLUDED.refresh_token,
+              access_token = EXCLUDED.access_token,
+              expires_at = EXCLUDED.expires_at,
+              updated_at = NOW()
+          `);
+          await db.execute(sql`UPDATE users SET google_linked = true WHERE id = ${stateData.userId}`);
+          console.log("[Google Auth] Per-user token saved for userId:", stateData.userId);
+        } catch (err) {
+          console.error("[Google Auth] Error saving per-user token:", err);
+        }
+      }
+
+      // Per-user flow: redirect back to app instead of showing HTML
+      if (stateData.returnTo && stateData.userId) {
+        const redirectUrl = new URL(stateData.returnTo, process.env.NEXTAUTH_URL || "http://localhost:3000");
+        return NextResponse.redirect(redirectUrl.toString());
+      }
 
     const html = htmlPage("Google Drive Conectado!", `
       <div class="success-badge">Autorizado com sucesso</div>
