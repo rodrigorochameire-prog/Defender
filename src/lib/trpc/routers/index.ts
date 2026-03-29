@@ -71,6 +71,7 @@ import { delitosRouter } from "./delitos";
 import { factualRouter } from "./factual";
 import { atosInfracionaisRouter } from "./atos-infracionais";
 import { medidasSocioeducativasRouter } from "./medidas-socioeducativas";
+import { subscriptionsRouter } from "./subscriptions";
 
 
 export const appRouter = router({
@@ -331,6 +332,11 @@ export const appRouter = router({
   // ==========================================
   atosInfracionais: atosInfracionaisRouter,
   medidasSocioeducativas: medidasSocioeducativasRouter,
+
+  // ==========================================
+  // ASSINATURAS E PAGAMENTOS
+  // ==========================================
+  subscriptions: subscriptionsRouter,
 });
 
 export type AppRouter = typeof appRouter;

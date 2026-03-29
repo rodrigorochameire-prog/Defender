@@ -1,13 +1,18 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { db, users, type User } from "@/lib/db";
+import { db, users, subscriptions, type User } from "@/lib/db";
 import { eq } from "drizzle-orm";
 
+// Tipo estendido do usuário com status da assinatura
+export type UserWithSubscription = User & {
+  subscriptionStatus?: string | null; // "ativo" | "pendente" | "vencido" | "cancelado" | "isento" | null
+};
+
 // Cache de usuários para evitar query ao banco em toda requisição tRPC
-const userCache = new Map<number, { user: User; expiresAt: number }>();
+const userCache = new Map<number, { user: UserWithSubscription; expiresAt: number }>();
 const USER_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutos
 
-async function getCachedUser(userId: number): Promise<User | null> {
+async function getCachedUser(userId: number): Promise<UserWithSubscription | null> {
   const cached = userCache.get(userId);
   if (cached && cached.expiresAt > Date.now()) {
     return cached.user;
@@ -16,16 +21,36 @@ async function getCachedUser(userId: number): Promise<User | null> {
   const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
 
   if (user) {
-    userCache.set(userId, { user, expiresAt: Date.now() + USER_CACHE_TTL_MS });
+    // Buscar status da assinatura (leve, single column)
+    let subscriptionStatus: string | null = null;
+    try {
+      const sub = await db.query.subscriptions.findFirst({
+        where: eq(subscriptions.userId, userId),
+        columns: { status: true },
+      });
+      // Estagiarios e servidores sao automaticamente isentos
+      if (user.role === "estagiario" || user.role === "servidor") {
+        subscriptionStatus = "isento";
+      } else {
+        subscriptionStatus = sub?.status ?? null;
+      }
+    } catch {
+      // Tabela pode nao existir ainda — graceful fallback
+      subscriptionStatus = null;
+    }
+
+    const userWithSub: UserWithSubscription = { ...user, subscriptionStatus };
+    userCache.set(userId, { user: userWithSub, expiresAt: Date.now() + USER_CACHE_TTL_MS });
     // Limpeza de entradas expiradas quando o cache cresce
     if (userCache.size > 200) {
       for (const [key, value] of userCache.entries()) {
         if (value.expiresAt <= Date.now()) userCache.delete(key);
       }
     }
+    return userWithSub;
   }
 
-  return user ?? null;
+  return null;
 }
 
 const SESSION_COOKIE_NAME = "defesahub_session";
@@ -104,7 +129,7 @@ export async function createSession(userId: number, role: string) {
 /**
  * Obtém a sessão atual do usuário via JWT
  */
-export async function getSession(): Promise<User | null> {
+export async function getSession(): Promise<UserWithSubscription | null> {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
