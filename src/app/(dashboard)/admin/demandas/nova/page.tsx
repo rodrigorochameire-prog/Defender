@@ -57,9 +57,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/hooks/use-permissions";
 
 export default function NovaDemandaPage() {
   const router = useRouter();
+  const { hasArea } = usePermissions();
+  const isCriminal = hasArea("CRIMINAL") || hasArea("JURI") || hasArea("EXECUCAO_PENAL") || hasArea("VIOLENCIA_DOMESTICA");
   const searchParams = useSearchParams();
   const processoIdParam = searchParams.get("processoId");
   const assistidoIdParam = searchParams.get("assistidoId");
@@ -499,22 +502,24 @@ export default function NovaDemandaPage() {
                 </Popover>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="reuPreso"
-                checked={formData.reuPreso}
-                onCheckedChange={(checked) =>
-                  handleChange("reuPreso", checked as boolean)
-                }
-              />
-              <label
-                htmlFor="reuPreso"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1"
-              >
-                <Lock className="w-3 h-3 text-rose-500" />
-                Réu Preso (prioridade máxima)
-              </label>
-            </div>
+            {isCriminal && (
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="reuPreso"
+                  checked={formData.reuPreso}
+                  onCheckedChange={(checked) =>
+                    handleChange("reuPreso", checked as boolean)
+                  }
+                />
+                <label
+                  htmlFor="reuPreso"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1"
+                >
+                  <Lock className="w-3 h-3 text-rose-500" />
+                  Réu Preso (prioridade máxima)
+                </label>
+              </div>
+            )}
           </CardContent>
         </Card>
 

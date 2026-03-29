@@ -44,6 +44,7 @@ import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/hooks/use-permissions";
 
 // Componente de alerta de duplicados
 function DuplicateWarningModal({
@@ -154,6 +155,8 @@ function DuplicateWarningModal({
 
 export default function NovoAssistidoPage() {
   const router = useRouter();
+  const { hasArea } = usePermissions();
+  const isCriminal = hasArea("CRIMINAL") || hasArea("JURI") || hasArea("EXECUCAO_PENAL") || hasArea("VIOLENCIA_DOMESTICA");
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
@@ -345,51 +348,55 @@ export default function NovoAssistidoPage() {
                 </Select>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="preso" 
-                checked={preso}
-                onCheckedChange={(checked) => setPreso(checked as boolean)}
-              />
-              <label
-                htmlFor="preso"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1"
-              >
-                <Lock className="w-3 h-3 text-rose-500" />
-                Está Preso
-              </label>
-            </div>
-            {preso && (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Status Prisional</Label>
-                  <Select 
-                    value={formData.statusPrisional} 
-                    onValueChange={(v) => handleInputChange("statusPrisional", v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="CADEIA_PUBLICA">Cadeia Pública</SelectItem>
-                      <SelectItem value="PENITENCIARIA">Penitenciária</SelectItem>
-                      <SelectItem value="COP">COP</SelectItem>
-                      <SelectItem value="HOSPITAL_CUSTODIA">Hospital Custódia</SelectItem>
-                      <SelectItem value="DOMICILIAR">Prisão Domiciliar</SelectItem>
-                      <SelectItem value="MONITORADO">Monitoramento Eletrônico</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="unidadePrisional">Unidade Prisional</Label>
-                  <Input 
-                    id="unidadePrisional" 
-                    placeholder="Nome da unidade"
-                    value={formData.unidadePrisional}
-                    onChange={(e) => handleInputChange("unidadePrisional", e.target.value)}
+            {isCriminal && (
+              <>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="preso"
+                    checked={preso}
+                    onCheckedChange={(checked) => setPreso(checked as boolean)}
                   />
+                  <label
+                    htmlFor="preso"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1"
+                  >
+                    <Lock className="w-3 h-3 text-rose-500" />
+                    Está Preso
+                  </label>
                 </div>
-              </div>
+                {preso && (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Status Prisional</Label>
+                      <Select
+                        value={formData.statusPrisional}
+                        onValueChange={(v) => handleInputChange("statusPrisional", v)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CADEIA_PUBLICA">Cadeia Pública</SelectItem>
+                          <SelectItem value="PENITENCIARIA">Penitenciária</SelectItem>
+                          <SelectItem value="COP">COP</SelectItem>
+                          <SelectItem value="HOSPITAL_CUSTODIA">Hospital Custódia</SelectItem>
+                          <SelectItem value="DOMICILIAR">Prisão Domiciliar</SelectItem>
+                          <SelectItem value="MONITORADO">Monitoramento Eletrônico</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="unidadePrisional">Unidade Prisional</Label>
+                      <Input
+                        id="unidadePrisional"
+                        placeholder="Nome da unidade"
+                        value={formData.unidadePrisional}
+                        onChange={(e) => handleInputChange("unidadePrisional", e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>

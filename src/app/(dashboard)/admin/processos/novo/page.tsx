@@ -16,14 +16,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  Scale, 
+import {
+  Scale,
   ArrowLeft,
   Save,
   Gavel,
   Loader2,
   Plus,
 } from "lucide-react";
+import { usePermissions } from "@/hooks/use-permissions";
 
 // Mock de assistidos para o select
 const mockAssistidos = [
@@ -34,7 +35,7 @@ const mockAssistidos = [
   { id: 5, nome: "Roberto Ferreira Lima" },
 ];
 
-const AREA_OPTIONS = [
+const ALL_AREA_OPTIONS = [
   { value: "JURI", label: "Tribunal do Júri" },
   { value: "EXECUCAO_PENAL", label: "Execução Penal" },
   { value: "VIOLENCIA_DOMESTICA", label: "Violência Doméstica" },
@@ -43,6 +44,8 @@ const AREA_OPTIONS = [
   { value: "FAMILIA", label: "Família" },
   { value: "CIVEL", label: "Cível" },
   { value: "FAZENDA_PUBLICA", label: "Fazenda Pública" },
+  { value: "CRIMINAL", label: "Criminal" },
+  { value: "INFANCIA_JUVENTUDE", label: "Infância e Juventude" },
 ];
 
 const FASE_OPTIONS = [
@@ -82,6 +85,7 @@ interface FormData {
 
 export default function NovoProcessoPage() {
   const router = useRouter();
+  const { hasArea } = usePermissions();
   const [isSaving, setIsSaving] = useState(false);
   
   const [formData, setFormData] = useState<FormData>({
@@ -262,7 +266,7 @@ export default function NovoProcessoPage() {
                     <SelectValue placeholder="Selecione a área" />
                   </SelectTrigger>
                   <SelectContent>
-                    {AREA_OPTIONS.map((option) => (
+                    {ALL_AREA_OPTIONS.filter(opt => hasArea(opt.value)).map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
@@ -367,51 +371,53 @@ export default function NovoProcessoPage() {
         </Card>
 
         {/* Tribunal do Júri */}
-        <Card className={formData.isJuri ? "border-purple-200 dark:border-purple-800/50" : ""}>
-          <CardHeader className={formData.isJuri ? "bg-purple-50/50 dark:bg-purple-900/10" : ""}>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className={`flex items-center gap-2 ${formData.isJuri ? "text-purple-700 dark:text-purple-400" : ""}`}>
-                  <Gavel className="h-5 w-5" />
-                  Tribunal do Júri
-                </CardTitle>
-                <CardDescription>Configure se este é um processo do Júri</CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="isJuri">Processo do Júri</Label>
-                <Switch
-                  id="isJuri"
-                  checked={formData.isJuri}
-                  onCheckedChange={(checked) => handleChange("isJuri", checked)}
-                />
-              </div>
-            </div>
-          </CardHeader>
-          {formData.isJuri && (
-            <CardContent className="pt-4 space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="dataSessaoJuri">Data da Sessão</Label>
-                  <Input
-                    id="dataSessaoJuri"
-                    type="date"
-                    value={formData.dataSessaoJuri}
-                    onChange={(e) => handleChange("dataSessaoJuri", e.target.value)}
-                  />
+        {hasArea("JURI") && (
+          <Card className={formData.isJuri ? "border-purple-200 dark:border-purple-800/50" : ""}>
+            <CardHeader className={formData.isJuri ? "bg-purple-50/50 dark:bg-purple-900/10" : ""}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className={`flex items-center gap-2 ${formData.isJuri ? "text-purple-700 dark:text-purple-400" : ""}`}>
+                    <Gavel className="h-5 w-5" />
+                    Tribunal do Júri
+                  </CardTitle>
+                  <CardDescription>Configure se este é um processo do Júri</CardDescription>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="resultadoJuri">Resultado</Label>
-                  <Input
-                    id="resultadoJuri"
-                    value={formData.resultadoJuri}
-                    onChange={(e) => handleChange("resultadoJuri", e.target.value)}
-                    placeholder="Resultado do julgamento"
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="isJuri">Processo do Júri</Label>
+                  <Switch
+                    id="isJuri"
+                    checked={formData.isJuri}
+                    onCheckedChange={(checked) => handleChange("isJuri", checked)}
                   />
                 </div>
               </div>
-            </CardContent>
-          )}
-        </Card>
+            </CardHeader>
+            {formData.isJuri && (
+              <CardContent className="pt-4 space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="dataSessaoJuri">Data da Sessão</Label>
+                    <Input
+                      id="dataSessaoJuri"
+                      type="date"
+                      value={formData.dataSessaoJuri}
+                      onChange={(e) => handleChange("dataSessaoJuri", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="resultadoJuri">Resultado</Label>
+                    <Input
+                      id="resultadoJuri"
+                      value={formData.resultadoJuri}
+                      onChange={(e) => handleChange("resultadoJuri", e.target.value)}
+                      placeholder="Resultado do julgamento"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            )}
+          </Card>
+        )}
 
         {/* Integrações e Observações */}
         <Card>
