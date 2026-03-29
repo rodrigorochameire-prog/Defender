@@ -93,6 +93,50 @@ interface TeamMember {
   comarca: string | null;
   createdAt: Date;
   emailVerified: boolean;
+  inviteToken?: string | null;
+  mustChangePassword?: boolean | null;
+  areasPrincipais?: string[] | null;
+  comarcaId?: number | null;
+}
+
+const AREA_COLORS: Record<string, string> = {
+  JURI: "bg-purple-600",
+  CRIMINAL: "bg-red-600",
+  EXECUCAO_PENAL: "bg-orange-600",
+  VIOLENCIA_DOMESTICA: "bg-rose-600",
+  INFANCIA_JUVENTUDE: "bg-amber-600",
+  CIVEL: "bg-blue-600",
+  FAMILIA: "bg-cyan-600",
+  FAZENDA_PUBLICA: "bg-teal-600",
+};
+
+const AREA_LABELS: Record<string, string> = {
+  JURI: "Júri",
+  CRIMINAL: "Criminal",
+  EXECUCAO_PENAL: "EP",
+  VIOLENCIA_DOMESTICA: "VVD",
+  INFANCIA_JUVENTUDE: "Infância",
+  CIVEL: "Cível",
+  FAMILIA: "Família",
+  FAZENDA_PUBLICA: "Fazenda",
+};
+
+function CopyInviteButton({ token }: { token: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    const url = `https://ombuds.vercel.app/convite/${token}`;
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Button variant="outline" size="sm" onClick={handleCopy} className="gap-1 text-xs h-7 px-2">
+      {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+      {copied ? "Copiado!" : "Copiar Link"}
+    </Button>
+  );
 }
 
 export default function EquipePage() {
@@ -663,18 +707,42 @@ export default function EquipePage() {
                     )}
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs text-zinc-500">
-                    <span>Desde {format(new Date(membro.createdAt), "MMM yyyy", { locale: ptBR })}</span>
-                    {membro.emailVerified ? (
-                      <Badge variant="outline" className="text-emerald-600 border-emerald-200">
-                        <CheckCircle2 className="w-3 h-3 mr-1" />
-                        Verificado
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-amber-600 border-amber-200">
-                        <AlertCircle className="w-3 h-3 mr-1" />
-                        Pendente
-                      </Badge>
+                  {/* Area badges */}
+                  {membro.areasPrincipais && membro.areasPrincipais.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1">
+                      {membro.areasPrincipais.map((area) => (
+                        <span
+                          key={area}
+                          className={cn(
+                            "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium text-white",
+                            AREA_COLORS[area] ?? "bg-zinc-500"
+                          )}
+                        >
+                          {AREA_LABELS[area] ?? area}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
+                    <div className="flex items-center justify-between text-xs text-zinc-500">
+                      <span>Desde {format(new Date(membro.createdAt), "MMM yyyy", { locale: ptBR })}</span>
+                      {membro.inviteToken ? (
+                        <Badge variant="outline" className="text-amber-600 border-amber-200">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          Pendente
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-emerald-600 border-emerald-200">
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          Ativo
+                        </Badge>
+                      )}
+                    </div>
+                    {membro.inviteToken && (
+                      <div className="flex justify-end">
+                        <CopyInviteButton token={membro.inviteToken} />
+                      </div>
                     )}
                   </div>
                 </Card>

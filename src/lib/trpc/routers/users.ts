@@ -79,6 +79,10 @@ export const usersRouter = router({
             comarca: users.comarca,
             emailVerified: users.emailVerified,
             createdAt: users.createdAt,
+            inviteToken: users.inviteToken,
+            mustChangePassword: users.mustChangePassword,
+            areasPrincipais: users.areasPrincipais,
+            comarcaId: users.comarcaId,
           })
           .from(users)
           .where(conditions.length > 0 ? and(...conditions) : undefined)
