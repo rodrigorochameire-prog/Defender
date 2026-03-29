@@ -72,6 +72,7 @@ import { factualRouter } from "./factual";
 import { atosInfracionaisRouter } from "./atos-infracionais";
 import { medidasSocioeducativasRouter } from "./medidas-socioeducativas";
 import { subscriptionsRouter } from "./subscriptions";
+import { googleIntegrationRouter } from "./google-integration";
 
 
 export const appRouter = router({
@@ -337,6 +338,11 @@ export const appRouter = router({
   // ASSINATURAS E PAGAMENTOS
   // ==========================================
   subscriptions: subscriptionsRouter,
+
+  // ==========================================
+  // GOOGLE INTEGRATION (DRIVE + SHEETS)
+  // ==========================================
+  googleIntegration: googleIntegrationRouter,
 });
 
 export type AppRouter = typeof appRouter;
