@@ -39,6 +39,7 @@ export * from "./biblioteca";
 export * from "./institutos";
 export * from "./delitos";
 export * from "./atos-infracionais";
+export * from "./medidas-socioeducativas";
 
 // Cross-domain relations (core + casos relations that reference other domains)
 export * from "./relations";
