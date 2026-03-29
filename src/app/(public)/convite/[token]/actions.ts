@@ -66,5 +66,5 @@ export async function activateAccountAction(token: string, formData: FormData) {
 
   // Auto-login
   await createSession(user.id, user.role);
-  redirect("/admin/dashboard");
+  redirect("/admin/onboarding");
 }
