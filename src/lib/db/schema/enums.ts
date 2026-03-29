@@ -29,6 +29,8 @@ export const areaEnum = pgEnum("area", [
   "FAMILIA",
   "CIVEL",
   "FAZENDA_PUBLICA",
+  "CRIMINAL",              // Vara Criminal Comum
+  "INFANCIA_JUVENTUDE",    // Infância e Juventude (infracional + protetivo)
 ]);
 
 // Status prisional do assistido

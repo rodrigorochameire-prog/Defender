@@ -516,7 +516,10 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
               </div>
 
               {/* Title */}
-              <SheetTitle className="mt-2 text-sm font-semibold line-clamp-2 text-left">
+              <SheetTitle
+                className="mt-2 text-sm font-semibold line-clamp-2 text-left"
+                style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
+              >
                 {noticia.titulo}
               </SheetTitle>
 

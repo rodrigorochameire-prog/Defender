@@ -1,0 +1,9 @@
+# === Dependências do News Pipeline ===
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=5.1.0
+python-dotenv>=1.0.0
+
+# LLM (use ao menos um)
+# anthropic>=0.30.0   # Se preferir SDK oficial do Claude
+# openai>=1.30.0      # Se preferir OpenAI

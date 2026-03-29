@@ -387,7 +387,10 @@ export function RadarNoticiaCard({
         </div>
 
         {/* Row 2: título — 2 linhas */}
-        <h3 className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 leading-snug line-clamp-2 mb-1.5">
+        <h3
+          className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 leading-snug line-clamp-2 mb-1.5"
+          style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
+        >
           {noticia.titulo}
         </h3>
 
@@ -538,7 +541,10 @@ export function RadarNoticiaCard({
         </div>
 
         {/* Título */}
-        <h3 className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2 leading-snug mb-2">
+        <h3
+          className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2 leading-snug mb-2"
+          style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
+        >
           {noticia.titulo}
         </h3>
 

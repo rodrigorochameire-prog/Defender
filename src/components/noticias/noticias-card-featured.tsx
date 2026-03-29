@@ -70,7 +70,10 @@ export function NoticiaCardFeatured({
         </div>
 
         {/* Título grande */}
-        <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-3 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors leading-snug">
+        <h2
+          className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-3 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors leading-snug"
+          style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
+        >
           {noticia.titulo}
         </h2>
 

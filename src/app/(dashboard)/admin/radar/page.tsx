@@ -199,10 +199,14 @@ export default function RadarCriminalPage() {
       compact
     >
       {/* Header compacto */}
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&display=swap');`}</style>
       <div className="flex items-center justify-between gap-4 pb-3 border-b border-zinc-100 dark:border-zinc-800">
         <div className="flex items-center gap-3 min-w-0">
           <Radio className="w-4 h-4 text-zinc-400 shrink-0" />
-          <h1 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 leading-tight">
+          <h1
+            className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 leading-tight"
+            style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
+          >
             Radar Criminal
           </h1>
           <span className="text-xs text-zinc-400">·</span>

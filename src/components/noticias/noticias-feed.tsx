@@ -205,11 +205,11 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter,
               {grupos.map(({ label, items }) => (
                 <div key={label}>
                   {/* Separador de grupo */}
-                  <div className="flex items-center gap-2 px-4 py-2 sticky top-0 z-10 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-sm">
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 shrink-0">
+                  <div className="flex items-center gap-2 px-5 py-2.5 sticky top-0 z-10 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-sm">
+                    <span className="text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 shrink-0">
                       {label}
                     </span>
-                    <span className="text-[10px] text-zinc-300 dark:text-zinc-700 shrink-0">{items.length}</span>
+                    <span className="text-xs text-zinc-300 dark:text-zinc-700 shrink-0">{items.length}</span>
                     <div className="flex-1 h-px bg-zinc-100 dark:bg-zinc-800" />
                   </div>
                   {/* Cards do grupo */}

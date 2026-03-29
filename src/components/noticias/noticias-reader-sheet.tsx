@@ -125,7 +125,10 @@ export function NoticiaReaderSheet({
               </Button>
             </div>
           </div>
-          <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mt-3 leading-snug">
+          <h2
+            className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mt-3 leading-snug"
+            style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
+          >
             {noticia.titulo}
           </h2>
         </div>

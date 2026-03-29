@@ -64,7 +64,7 @@ export function NoticiaCard({
     <div
       className={cn(
         "group relative cursor-pointer",
-        "pl-[14px] pr-4 py-3.5 transition-colors",
+        "pl-4 pr-5 py-4 transition-colors",
         "border-b border-zinc-100 dark:border-zinc-800",
         "border-l-2",
         isSelected
@@ -81,19 +81,19 @@ export function NoticiaCard({
           style={{ backgroundColor: corFonte }}
         />
         {/* Nome da fonte */}
-        <span className="text-[11px] text-zinc-400 font-medium truncate max-w-[80px]">
+        <span className="text-xs text-zinc-400 font-medium truncate max-w-[80px]">
           {nomeFonte}
         </span>
         <span className="text-zinc-200 dark:text-zinc-700 shrink-0">·</span>
         {/* Categoria */}
-        <span className="text-[11px] text-zinc-400 capitalize shrink-0">
+        <span className="text-xs text-zinc-400 capitalize shrink-0">
           {nomeCategoria}
         </span>
         {/* Tempo */}
         {noticia.publicadoEm && (
           <>
             <span className="text-zinc-200 dark:text-zinc-700 shrink-0">·</span>
-            <span className="text-[11px] text-zinc-400 shrink-0">
+            <span className="text-xs text-zinc-400 shrink-0">
               {formatDistanceToNow(new Date(noticia.publicadoEm), { addSuffix: true, locale: ptBR })}
             </span>
           </>
@@ -181,12 +181,15 @@ export function NoticiaCard({
       </div>
 
       {/* Linha 2 — título */}
-      <h3 className={cn(
-        "text-[13px] font-semibold leading-snug line-clamp-2 transition-colors",
-        isSelected
-          ? "text-zinc-900 dark:text-zinc-100"
-          : "text-zinc-800 dark:text-zinc-200 group-hover:text-zinc-900 dark:group-hover:text-zinc-100"
-      )}>
+      <h3
+        className={cn(
+          "text-base font-semibold leading-snug line-clamp-2 transition-colors",
+          isSelected
+            ? "text-zinc-900 dark:text-zinc-100"
+            : "text-zinc-800 dark:text-zinc-200 group-hover:text-zinc-900 dark:group-hover:text-zinc-100"
+        )}
+        style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
+      >
         {decodeHtmlEntities(noticia.titulo)}
       </h3>
 

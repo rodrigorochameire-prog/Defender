@@ -109,6 +109,32 @@ export default function NoticiasPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
 
+      {/* Masthead editorial — Diário Criminal */}
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap');`}</style>
+      <header className="-mx-6 md:-mx-8 -mt-6 md:-mt-8 bg-[#6b1d1d] dark:bg-zinc-950 dark:border-b dark:border-zinc-800 text-white shrink-0">
+        <div className="flex flex-col items-center py-4 px-4">
+          <div className="flex items-center gap-3 mb-2 w-full max-w-lg">
+            <div className="flex-1 h-px bg-white/20" />
+            <div className="h-1 w-1 rounded-full bg-amber-400" />
+            <div className="flex-1 h-px bg-white/20" />
+          </div>
+          <h1
+            className="text-3xl sm:text-4xl font-semibold tracking-tight leading-none"
+            style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
+          >
+            Diário Criminal
+          </h1>
+          <p className="mt-1.5 text-[10px] sm:text-xs tracking-[0.2em] uppercase text-zinc-400">
+            Direito Penal &middot; Segurança Pública &middot; Tribunais &middot; Processo Penal
+          </p>
+          <div className="flex items-center gap-3 mt-2 w-full max-w-lg">
+            <div className="flex-1 h-px bg-white/20" />
+            <div className="h-1 w-1 rounded-full bg-amber-400" />
+            <div className="flex-1 h-px bg-white/20" />
+          </div>
+        </div>
+      </header>
+
       {/* Header — toolbar unificada */}
       <div className="border-b bg-white dark:bg-zinc-950 shrink-0 px-3 flex items-stretch gap-1.5" style={{ height: "44px" }}>
 
@@ -264,14 +290,14 @@ export default function NoticiasPage() {
       {/* Body — split-pane dinâmico */}
       <div className="flex flex-1 overflow-hidden">
 
-        {/* Painel esquerdo: feed (full-width ou 380px) */}
+        {/* Painel esquerdo: feed (full-width ou 420px) */}
         <div className={cn(
           "overflow-y-auto transition-all duration-300 ease-out",
           readerOpen
-            ? "w-[380px] shrink-0 border-r border-zinc-200 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-900/80"
+            ? "w-[420px] shrink-0 border-r border-zinc-200 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-900/80"
             : "flex-1 bg-white dark:bg-zinc-950"
         )}>
-          <div className={cn(!readerOpen && "max-w-2xl mx-auto")}>
+          <div>
             {categoria === "relatorios" ? (
               <NoticiasRelatorio />
             ) : (

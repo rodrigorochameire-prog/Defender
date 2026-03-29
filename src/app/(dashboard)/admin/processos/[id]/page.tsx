@@ -112,7 +112,7 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
     .filter((a: any) => a.dataAudiencia && new Date(a.dataAudiencia) > new Date())
     .sort((a: any, b: any) => String(a.dataAudiencia).localeCompare(String(b.dataAudiencia)));
   const proximaAudiencia = futureAudiencias[0]
-    ? { id: futureAudiencias[0].id, tipo: futureAudiencias[0].tipo ?? "Audiencia", data: futureAudiencias[0].dataAudiencia }
+    ? { id: futureAudiencias[0].id, tipo: futureAudiencias[0].tipo ?? "Audiencia", data: String(futureAudiencias[0].dataAudiencia) }
     : null;
 
   return (
@@ -286,7 +286,12 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
 
         {/* VINCULADOS */}
         {tab === "vinculados" && (
-          <VinculadosCards processos={data.processosVinculados ?? []} />
+          <VinculadosCards processos={(data.processosVinculados ?? []).map((p: any) => ({
+            id: p.id,
+            numeroAutos: p.numeroAutos ?? "",
+            classeProcessual: p.classeProcessual ?? null,
+            atribuicao: p.atribuicao ?? "",
+          }))} />
         )}
       </div>
     </div>

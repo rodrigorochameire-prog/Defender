@@ -175,7 +175,10 @@ export function NoticiaReaderPanel({
         </div>
 
         {/* Linha 2: título completo */}
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 leading-snug">
+        <h2
+          className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 leading-snug"
+          style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
+        >
           {decodeHtmlEntities(noticia.titulo)}
         </h2>
       </div>
