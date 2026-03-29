@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useCallback, Fragment } from "react";
 import { CountdownBadge, UrgencyDot } from "@/components/agenda/countdown-badge";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -63,6 +63,8 @@ import {
   Radio,
   Sparkles,
   Loader2,
+  Baby,
+  Handshake,
 } from "lucide-react";
 import {
   Popover,
@@ -288,7 +290,7 @@ function ParecerRecebidoSection() {
 // ============================================
 
 export default function DashboardJuriPage() {
-  const { user, isLoading: loadingUser } = usePermissions();
+  const { user, isLoading: loadingUser, hasArea } = usePermissions();
 
   const {
     profissionalAtivo,
@@ -329,9 +331,19 @@ export default function DashboardJuriPage() {
 
   const { data: jurisData, isLoading: loadingJuris } = trpc.juri.proximas.useQuery(
     {},
-    { enabled: !!user },
+    { enabled: !!user && hasArea("JURI") },
   );
   const juris = jurisData ?? [];
+
+  const { data: medidasAtivas } = trpc.medidasSocioeducativas.listByDefensor.useQuery(
+    { status: "EM_CUMPRIMENTO" },
+    { enabled: !!user && hasArea("INFANCIA_JUVENTUDE") }
+  );
+
+  const { data: institutosAtivos } = trpc.institutos.listByDefensor.useQuery(
+    { status: "EM_CUMPRIMENTO" },
+    { enabled: !!user && hasArea("CRIMINAL") }
+  );
 
   const { data: processos = [] } = trpc.processos.list.useQuery(
     { limit: 20 },
@@ -1440,7 +1452,7 @@ export default function DashboardJuriPage() {
         {/* Stats ribbon removido — dados redundantes com cards abaixo */}
 
         {/* ===== 4. ALERTA CRÍTICO - Réu Preso com Prazo Vencido ===== */}
-        {estatisticasPrazos.reuPresoVencido > 0 && (
+        {(hasArea("CRIMINAL") || hasArea("JURI") || hasArea("EXECUCAO_PENAL") || hasArea("VIOLENCIA_DOMESTICA")) && estatisticasPrazos.reuPresoVencido > 0 && (
           <Card className="border-red-500 bg-red-50 dark:bg-red-950/50 animate-pulse">
             <div className="p-3">
               <div className="flex items-center gap-3">
@@ -1592,8 +1604,8 @@ export default function DashboardJuriPage() {
           </div>
         </Card>
 
-        {/* PRÓXIMOS JÚRIS — só especializado */}
-        {!isDefensorCriminalGeral && (
+        {/* PRÓXIMOS JÚRIS — só especializado, só quem tem área JURI */}
+        {!isDefensorCriminalGeral && hasArea("JURI") && (
           <Card className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl overflow-hidden">
             <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1908,6 +1920,51 @@ export default function DashboardJuriPage() {
               </div>
             </Card>
 
+        )}
+
+        {/* ===== 7. CARDS POR ÁREA ===== */}
+        {(hasArea("INFANCIA_JUVENTUDE") || hasArea("CRIMINAL")) && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-1">
+              <div className="w-1.5 h-5 rounded-full bg-amber-500" />
+              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Acompanhamento por Área</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+              {/* Medidas Socioeducativas — Infância */}
+              {hasArea("INFANCIA_JUVENTUDE") && (
+                <Card className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2 font-bold text-zinc-800 dark:text-zinc-200">
+                      <Baby className="h-4 w-4 text-amber-500" />
+                      Medidas Socioeducativas
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{medidasAtivas?.length ?? 0}</p>
+                    <p className="text-xs text-zinc-500">em cumprimento</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Institutos Despenalizadores — Criminal Comum */}
+              {hasArea("CRIMINAL") && (
+                <Card className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2 font-bold text-zinc-800 dark:text-zinc-200">
+                      <Handshake className="h-4 w-4 text-emerald-500" />
+                      Institutos Despenalizadores
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{institutosAtivos?.length ?? 0}</p>
+                    <p className="text-xs text-zinc-500">ANPPs/sursis em cumprimento</p>
+                  </CardContent>
+                </Card>
+              )}
+
+            </div>
+          </div>
         )}
       </div>
 
