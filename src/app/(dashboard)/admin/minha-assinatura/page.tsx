@@ -225,7 +225,7 @@ export default function MinhaAssinaturaPage() {
             {/* PIX Info */}
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-zinc-500">Chave PIX (CPF):</span>
+                <span className="text-zinc-500">Chave PIX (Celular):</span>
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-zinc-200">{PIX_CONFIG.key}</span>
                   <Button
