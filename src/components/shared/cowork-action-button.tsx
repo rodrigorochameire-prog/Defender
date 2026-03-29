@@ -162,7 +162,8 @@ export function CoworkActionButton({
     setLoading(true);
     try {
       // Strategy 1: Worker API (runs claude -p locally, zero cost)
-      if (processoId) {
+      // Only works on localhost (developer machine)
+      if (processoId && window.location.hostname === "localhost") {
         try {
           const res = await fetch("/api/cowork/analyze", {
             method: "POST",
@@ -178,27 +179,47 @@ export function CoworkActionButton({
             return;
           }
         } catch {
-          // Worker failed, fallback to deep link
+          // Worker failed, fallback
         }
       }
 
-      // Strategy 2: Deep link to Cowork
+      // Strategy 2+3: Copy to clipboard + open Cowork/Manus
       const prompt = buildDelegatePrompt(config.delegate, params, context);
-      const deepLink = `claude://cowork?prompt=${encodeURIComponent(prompt)}`;
 
-      try {
-        window.open(deepLink, "_blank");
-        toast.success(`Enviado para Cowork: ${config.label}`, {
-          description: `Caso de ${params.assistidoNome || "assistido"}`,
-        });
-      } catch {
-        // Strategy 3: Clipboard fallback
-        await navigator.clipboard?.writeText(prompt);
-        toast.info("Prompt copiado para clipboard!", {
-          description: "Cole no Cowork (⌘V) para executar",
-          duration: 5000,
-        });
-      }
+      // Build instruction header
+      const pastaAssistido = params.assistidoNome
+        ? `Processos - ${params.atribuicao === "JURI_CAMACARI" ? "Júri" : params.atribuicao === "VVD_CAMACARI" ? "VVD" : "Criminal"} / ${params.assistidoNome}`
+        : "";
+
+      const instruction = [
+        `--- ${config.label.toUpperCase()} ---`,
+        `Assistido: ${params.assistidoNome}`,
+        `Processo: ${params.numeroAutos}`,
+        pastaAssistido ? `Pasta: ${pastaAssistido}` : "",
+        "",
+        "INSTRUÇÕES:",
+        "1. Abra o Claude Cowork ou Manus Desktop",
+        pastaAssistido ? `2. Selecione a pasta: ${pastaAssistido}` : "2. Selecione a pasta do assistido no Drive",
+        "3. Cole este prompt (já está no clipboard)",
+        "4. Execute e aguarde o resultado",
+        "",
+        "--- PROMPT ---",
+        "",
+        prompt,
+      ].filter(Boolean).join("\n");
+
+      await navigator.clipboard?.writeText(instruction);
+
+      toast(`${config.label}`, {
+        description: `Prompt copiado! Abra o Cowork, selecione a pasta de ${params.assistidoNome || "assistido"} e cole (Cmd+V)`,
+        duration: 10000,
+        action: {
+          label: "Abrir Cowork",
+          onClick: () => {
+            try { window.open("claude://", "_blank"); } catch { /* ok */ }
+          },
+        },
+      });
     } catch (err) {
       toast.error("Erro ao preparar análise");
       console.error(err);
