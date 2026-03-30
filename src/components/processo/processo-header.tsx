@@ -54,12 +54,15 @@ export function ProcessoHeader({
   };
 
   return (
-    <div className="px-6 lg:px-8 pt-6 pb-5 border-b border-zinc-200/80 dark:border-zinc-800/50">
+    <div className="px-6 lg:px-8 pt-7 pb-6 border-b border-zinc-200/80 dark:border-zinc-800/60">
       {/* Número do processo */}
-      <h1 className="text-2xl font-bold font-mono tracking-tight text-zinc-900 dark:text-zinc-50">
+      <h1
+        className="text-2xl font-bold font-mono tracking-tight text-zinc-800 dark:text-zinc-100 select-all hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer transition-colors"
+        title="Clique para selecionar"
+      >
         {numeroAutos}
       </h1>
-      <div className="flex items-center gap-2 mt-1.5">
+      <div className="flex items-center gap-2 mt-2">
         <span className="text-sm text-zinc-500 dark:text-zinc-400">
           {atribuicaoLabel[atribuicao] ?? atribuicao}
         </span>
@@ -78,7 +81,7 @@ export function ProcessoHeader({
       </div>
 
       {/* Assistidos */}
-      <div className="flex flex-wrap gap-2.5 mt-4">
+      <div className="flex flex-wrap gap-2.5 mt-5">
         {assistidos.map((a) => {
           const preso = PRESOS.includes(a.statusPrisional ?? "");
           return (
@@ -123,8 +126,8 @@ export function ProcessoHeader({
       )}
 
       {/* Actions */}
-      <div className="mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2.5">
+      <div className="mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-700/30">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2.5">
           Ações IA
         </p>
         <CoworkActionGroup

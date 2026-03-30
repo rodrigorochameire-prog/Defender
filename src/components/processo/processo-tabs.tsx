@@ -43,15 +43,15 @@ export function ProcessoTabs({ active, onChange, counts }: ProcessoTabsProps) {
   ];
 
   return (
-    <div className="flex items-center gap-1 border-b border-zinc-200/80 dark:border-zinc-800/50 px-6 lg:px-8 overflow-x-auto">
+    <div className="flex items-center gap-1 border-b border-zinc-200/80 dark:border-zinc-800/60 px-6 lg:px-8 overflow-x-auto">
       {TABS.map((tab) => (
         <button
           key={tab.key}
           onClick={() => onChange(tab.key)}
           className={cn(
-            "flex items-center gap-2 px-3.5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap shrink-0",
+            "flex items-center gap-2 px-4 py-3.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap shrink-0",
             active === tab.key
-              ? "text-zinc-900 dark:text-zinc-50 border-emerald-500"
+              ? "text-zinc-900 dark:text-zinc-50 border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-t-lg"
               : "text-zinc-400 border-transparent hover:text-zinc-700 dark:hover:text-zinc-300"
           )}
         >
@@ -59,7 +59,7 @@ export function ProcessoTabs({ active, onChange, counts }: ProcessoTabsProps) {
           <span>{tab.label}</span>
           {counts?.[tab.key] !== undefined && counts[tab.key]! > 0 && (
             <span className={cn(
-              "text-[10px] min-w-[20px] text-center px-1.5 py-0.5 rounded-md font-medium",
+              "text-[10px] min-w-[22px] text-center px-1.5 py-0.5 rounded-full font-medium",
               active === tab.key
                 ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
                 : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
