@@ -166,18 +166,32 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
             locais={payload.locais ?? ad.locais ?? []}
             radarLiberdade={ad.radarLiberdade ?? null}
             saneamento={ad.saneamento ?? null}
-            kpis={ad.kpis ?? null}
+            kpis={ad.painelControle ?? ad.kpis ?? null}
             resumo={ad.resumo ?? ""}
             crimePrincipal={ad.crimePrincipal ?? ad.kpis?.crimePrincipal ?? ""}
             estrategia={ad.estrategia ?? ""}
             achados={ad.achadosChave ?? []}
             recomendacoes={ad.recomendacoes ?? []}
-            alertas={payload.alertas_operacionais ?? ad.alertas ?? []}
+            alertas={payload.alertas_operacionais ?? ad.alertasOperacionais ?? ad.alertas ?? []}
             checklistTatico={payload.checklist_tatico ?? ad.checklistTatico ?? []}
             orientacaoAssistido={payload.orientacao_ao_assistido ?? ad.orientacaoAssistido ?? ""}
             perspectivaPlenaria={payload.perspectiva_plenaria ?? ad.perspectivaPlenaria ?? ""}
             perguntasEstrategicas={payload.perguntas_por_testemunha ?? ad.perguntasEstrategicas ?? []}
             inconsistencias={ad.inconsistencias ?? []}
+            // v7 fields
+            inventarioProvas={ad.inventarioProvas ?? payload.inventario_provas ?? []}
+            mapaDocumental={ad.mapaDocumental ?? payload.mapa_documental ?? []}
+            laudos={ad.laudos ?? payload.laudos ?? []}
+            imputacoes={ad.imputacoes ?? payload.imputacoes ?? []}
+            acusacaoRadiografia={ad.acusacaoRadiografia ?? payload.acusacao_radiografia ?? null}
+            ritoBifasico={ad.ritoBifasico ?? payload.rito_bifasico ?? null}
+            preparacaoPlenario={ad.preparacaoPlenario ?? payload.preparacao_plenario ?? null}
+            cadeiaCustodia={ad.cadeiaCustodia ?? payload.cadeia_custodia ?? null}
+            licitudeProva={ad.licitudeProva ?? payload.licitude_prova ?? null}
+            calculoPena={ad.calculoPena ?? payload.calculo_pena ?? null}
+            cronogramaBeneficios={ad.cronogramaBeneficios ?? payload.cronograma_beneficios ?? null}
+            mpu={ad.mpu ?? payload.mpu ?? null}
+            contextoRelacional={ad.contextoRelacional ?? payload.contexto_relacional ?? null}
           />
         )}
 
