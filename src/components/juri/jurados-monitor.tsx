@@ -373,7 +373,7 @@ function ConselhoResumo({
       </div>
 
       {/* Distribuição Visual */}
-      <div className="grid grid-cols-4 gap-2 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
         <div className={cn(
           "text-center p-2 rounded-lg",
           isDarkMode ? "bg-emerald-500/10 border border-emerald-500/30" : "bg-emerald-50 border border-emerald-200"

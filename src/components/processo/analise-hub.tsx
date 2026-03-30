@@ -80,7 +80,7 @@ export function AnaliseHub(props: AnaliseHubProps) {
   });
 
   return (
-    <div className="px-8 py-6">
+    <div className="px-4 md:px-8 py-4 md:py-6">
       {/* Pills */}
       <div className="flex items-center gap-2 mb-6 flex-wrap">
         {visibleTabs.map((tab) => (

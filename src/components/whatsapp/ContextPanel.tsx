@@ -39,7 +39,7 @@ export function ContextPanel({ contactId, configId, onClose }: ContextPanelProps
   );
 
   return (
-    <div className="w-[280px] flex-shrink-0 border-l border-zinc-200 dark:border-border bg-white dark:bg-card flex flex-col h-full">
+    <div className="hidden md:flex w-[280px] flex-shrink-0 border-l border-zinc-200 dark:border-border bg-white dark:bg-card flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 dark:border-border">
         <div className="flex items-center gap-1.5 min-w-0">

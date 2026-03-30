@@ -593,7 +593,7 @@ export default function IntegracoesPage() {
 
           <TabsContent value="workflows" className="mt-6 space-y-6">
             {/* Stats */}
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/20 border-0">
                 <div className="flex items-center gap-3">
                   <Play className="w-5 h-5 text-emerald-500" />

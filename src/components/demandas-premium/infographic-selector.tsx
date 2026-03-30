@@ -61,7 +61,7 @@ export function InfographicSelector({
 
       {/* Chart Options */}
       {isExpanded && (
-        <div className="mt-4 grid grid-cols-4 gap-3 flex-1">
+        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 flex-1">
           {chartOptions.map((chart) => {
             const ChartIcon = chart.icon;
             const isSelected = selectedCharts.includes(chart.value);

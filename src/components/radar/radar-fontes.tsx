@@ -137,7 +137,7 @@ export function RadarFontes() {
       )}
 
       {/* KPIs */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-xs text-zinc-500 mb-1">

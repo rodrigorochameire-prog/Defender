@@ -54,7 +54,7 @@ export default function LotacaoPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card>
           <CardContent className="pt-4 pb-3 text-center">
             <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{totalOcupacao.toLocaleString()}</p>

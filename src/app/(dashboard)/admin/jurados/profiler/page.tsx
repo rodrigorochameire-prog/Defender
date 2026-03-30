@@ -196,7 +196,7 @@ export default function ProfilerJuradosPage() {
             <CardDescription>Selecione um assento e associe o jurado.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {assentos.map((jurado, index) => (
                 <button
                   key={index}

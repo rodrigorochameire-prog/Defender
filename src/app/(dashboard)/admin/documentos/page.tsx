@@ -90,7 +90,7 @@ export default function DocumentosPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Documentos</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Documentos</h1>
           <p className="text-muted-foreground mt-1">
             Peças processuais e arquivos sincronizados com o Google Drive
           </p>

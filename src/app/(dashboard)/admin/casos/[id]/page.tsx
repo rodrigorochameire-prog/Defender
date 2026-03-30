@@ -384,7 +384,7 @@ export default function CasoDetailPage() {
       <div className="p-6 space-y-6 max-w-7xl mx-auto">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-12 w-full" />
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Skeleton className="h-32" />
           <Skeleton className="h-32" />
           <Skeleton className="h-32" />

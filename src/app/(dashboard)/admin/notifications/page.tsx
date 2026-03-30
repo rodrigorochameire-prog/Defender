@@ -108,7 +108,7 @@ export default function AdminNotificationsPage() {
       </div>
 
       {/* Stats */}
-      <div className="stats-grid grid-cols-4">
+      <div className="stats-grid grid-cols-2 md:grid-cols-4">
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="title">Total</span>

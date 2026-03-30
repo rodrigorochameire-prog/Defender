@@ -121,7 +121,7 @@ export function DestaquesSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[400px] sm:max-w-[400px] p-0 flex flex-col">
+      <SheetContent className="w-[90vw] sm:w-[400px] sm:max-w-[400px] p-0 flex flex-col">
         <SheetHeader className="px-4 pt-4 pb-3 border-b border-zinc-200 dark:border-border">
           <SheetTitle className="flex items-center gap-2 text-base">
             <Bookmark className="h-4 w-4 text-emerald-600" />
@@ -138,7 +138,7 @@ export function DestaquesSheet({
             onValueChange={(v) => setFilter(v as FilterTab)}
             className="mt-2"
           >
-            <TabsList className="w-full grid grid-cols-4 h-8">
+            <TabsList className="w-full grid grid-cols-2 sm:grid-cols-4 h-8">
               <TabsTrigger value="todos" className="text-xs">
                 Todos
               </TabsTrigger>

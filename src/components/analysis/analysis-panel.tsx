@@ -95,7 +95,7 @@ export function AnalysisPanel({ data, analysisStatus, analyzedAt }: AnalysisPane
 
       {/* KPIs */}
       {data.kpis && (
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           {[
             { label: "Pessoas", value: data.kpis.totalPessoas, icon: Users },
             { label: "Acusações", value: data.kpis.totalAcusacoes, icon: Scale },

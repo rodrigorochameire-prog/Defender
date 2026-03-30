@@ -225,7 +225,7 @@ export default function PreviewPerfisPage() {
           {isLoading && (
             <div className="space-y-4">
               <Skeleton className="h-20 w-full" />
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Skeleton className="h-24" />
                 <Skeleton className="h-24" />
                 <Skeleton className="h-24" />

@@ -843,7 +843,7 @@ export function RegistroRapidoAprimorado({
             </div>
 
             {/* Destinos */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <label className="flex items-center gap-2 p-2 rounded-lg border border-zinc-200 dark:border-border hover:border-emerald-300 dark:hover:border-emerald-700 cursor-pointer transition-colors">
                 <Checkbox
                   checked={data.criarDemanda}
@@ -881,7 +881,7 @@ export function RegistroRapidoAprimorado({
             {/* Campos de Demanda */}
             {data.criarDemanda && (
               <div className="space-y-3 pt-3 border-t border-zinc-200 dark:border-border">
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {/* Atribuição */}
                   <div className="space-y-1">
                     <label className="text-[10px] font-medium text-zinc-500">Atribuição</label>

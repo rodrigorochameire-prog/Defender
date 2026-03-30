@@ -73,7 +73,7 @@ export function DriveDropZone({
       {/* ── Drop overlay ── */}
       {isDragging && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/80 backdrop-blur-sm transition-opacity duration-200">
-          <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-emerald-500/50 bg-zinc-900/60 px-16 py-12">
+          <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-emerald-500/50 bg-zinc-900/60 px-6 md:px-16 py-8 md:py-12">
             <div className="rounded-xl bg-emerald-500/10 p-4">
               <Upload className="h-10 w-10 text-emerald-400" />
             </div>

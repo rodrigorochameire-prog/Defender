@@ -22,7 +22,7 @@ export function RadarWidget() {
         <div className="h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500" />
         <div className="p-5 space-y-3">
           <Skeleton className="h-5 w-32" />
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Skeleton className="h-16 rounded-lg" />
             <Skeleton className="h-16 rounded-lg" />
             <Skeleton className="h-16 rounded-lg" />
@@ -62,7 +62,7 @@ export function RadarWidget() {
       </div>
 
       <div className="p-4">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* KPI 1: Notícias */}
           <div className="text-center p-3 rounded-lg bg-zinc-50/80 dark:bg-muted/50">
             <div className="flex items-center justify-center gap-1 mb-1">

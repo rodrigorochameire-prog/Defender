@@ -376,7 +376,7 @@ export function AnotacoesAprimoradas({
             </span>
           </div>
 
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {categoriasAnotacoes.map((cat, idx) => {
               const Icon = iconMap[cat.icon];
               const isSelected = categoriaSelecionada === cat.id;

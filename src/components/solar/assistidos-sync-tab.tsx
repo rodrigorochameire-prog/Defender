@@ -250,7 +250,7 @@ export function AssistidosSyncTab() {
 
       {/* KPI Cards */}
       {stats && (
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           <KpiCard
             label="Total"
             value={stats.total}
@@ -365,7 +365,7 @@ export function AssistidosSyncTab() {
       </div>
 
       {/* Tabela */}
-      <Card>
+      <Card className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

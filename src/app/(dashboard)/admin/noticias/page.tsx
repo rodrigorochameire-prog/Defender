@@ -296,7 +296,7 @@ export default function NoticiasPage() {
         <div className={cn(
           "overflow-y-auto transition-all duration-300 ease-out",
           readerOpen
-            ? "w-[420px] shrink-0 border-r border-zinc-200 dark:border-border bg-zinc-50/80 dark:bg-card/80"
+            ? "w-full md:w-[420px] shrink-0 border-r border-zinc-200 dark:border-border bg-zinc-50/80 dark:bg-card/80"
             : "flex-1 bg-white dark:bg-background"
         )}>
           <div>

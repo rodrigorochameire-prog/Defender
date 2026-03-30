@@ -132,7 +132,7 @@ export function VvdMapa() {
   return (
     <div className="flex h-full w-full overflow-hidden">
       {/* Painel lateral esquerdo */}
-      <aside className="w-[280px] flex-shrink-0 flex flex-col border-r border-zinc-200/80 dark:border-border/80 bg-white dark:bg-card overflow-y-auto">
+      <aside className="hidden md:flex w-[280px] flex-shrink-0 flex-col border-r border-zinc-200/80 dark:border-border/80 bg-white dark:bg-card overflow-y-auto">
         {/* Header */}
         <div className="flex items-center gap-2 px-4 py-4 border-b border-zinc-200/80 dark:border-border/80">
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/40">

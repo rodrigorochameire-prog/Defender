@@ -495,7 +495,7 @@ export function AudienciaManagerModal({
                   Adicionar Testemunha
                 </h3>
 
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div className="col-span-2 space-y-2">
                     <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                       Nome Completo
@@ -662,7 +662,7 @@ export function AudienciaManagerModal({
                             </Button>
                           </div>
 
-                          <div className="grid grid-cols-4 gap-3 mt-3">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
                             <div>
                               <div className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">
                                 Intimação

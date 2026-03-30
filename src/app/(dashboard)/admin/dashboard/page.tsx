@@ -1370,7 +1370,7 @@ export default function DashboardJuriPage() {
                 </Link>
               </div>
 
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {/* Pendentes de exportação */}
                 <div className="text-center p-2 rounded-lg bg-amber-50/50 dark:bg-amber-900/10">
                   <p className="text-lg font-bold text-amber-600 dark:text-amber-400">

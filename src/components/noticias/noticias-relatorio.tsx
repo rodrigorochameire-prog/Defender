@@ -196,7 +196,7 @@ export function NoticiasRelatorio() {
       {gerarRelatorio.isPending && (
         <div className="space-y-4">
           {/* Stats row skeleton */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[0, 1, 2].map(i => (
               <Skeleton key={i} className="h-16 rounded-xl" />
             ))}
@@ -253,7 +253,7 @@ export function NoticiasRelatorio() {
 
           <div className="p-5 space-y-6">
             {/* Stats row */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="bg-muted/50 rounded-lg p-3 flex items-center gap-2.5">
                 <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div>

@@ -125,7 +125,7 @@ export function EquipeCoworkCard({
         {/* Row 1 — Stats (grid compacto 3×2) + Ações (coluna) */}
         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-start">
           {/* Stats grid 3×2 */}
-          <div className="grid grid-cols-3 gap-x-4 gap-y-1">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1">
             {miniStats.map((stat) => {
               const StatIcon = stat.icon;
               return (

@@ -381,7 +381,7 @@ export default function CalculadorasPage() {
                 {/* Pena Total */}
                 <div>
                   <Label className="text-sm font-medium mb-3 block">Pena Total</Label>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <Label className="text-xs text-muted-foreground">Anos</Label>
                       <Input

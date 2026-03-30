@@ -167,7 +167,7 @@ export function CadastroMapa() {
   };
 
   const sidebar = (
-    <aside className="w-[280px] flex-shrink-0 flex flex-col border-r border-border bg-background overflow-y-auto">
+    <aside className="hidden md:flex w-[280px] flex-shrink-0 flex-col border-r border-border bg-background overflow-y-auto">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4 border-b border-border">
         <div className="flex items-center gap-2">

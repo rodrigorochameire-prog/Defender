@@ -51,7 +51,7 @@ export function AnaliseResumo({
       {kpis && (
         <div>
           <SectionLabel icon={Users} label="Painel de Controle" />
-          <div className="grid grid-cols-5 gap-3 mt-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-3">
             {[
               { label: "Pessoas", value: kpis.totalPessoas, icon: Users },
               { label: "Acusações", value: kpis.totalAcusacoes, icon: Scale },
