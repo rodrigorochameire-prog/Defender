@@ -190,7 +190,7 @@ export const noticiasRouter = router({
 
   list: protectedProcedure
     .input(z.object({
-      categoria: z.enum(["legislativa", "jurisprudencial", "artigo"]).optional(),
+      categoria: z.enum(["legislativa", "jurisprudencial", "artigo", "radar", "institucional"]).optional(),
       fonte: z.string().optional(),
       tag: z.string().optional(),
       busca: z.string().optional(),
@@ -371,7 +371,7 @@ export const noticiasRouter = router({
   updateCategoria: protectedProcedure
     .input(z.object({
       id: z.number(),
-      categoria: z.enum(["legislativa", "jurisprudencial", "artigo"]),
+      categoria: z.enum(["legislativa", "jurisprudencial", "artigo", "radar", "institucional"]),
     }))
     .mutation(async ({ input }) => {
       const [updated] = await db.update(noticiasJuridicas)
@@ -669,7 +669,7 @@ export const noticiasRouter = router({
     .input(z.object({
       periodo: z.enum(["7d", "30d", "90d"]),
       temas: z.array(z.string()),
-      categorias: z.array(z.enum(["legislativa", "jurisprudencial", "artigo"])).optional(),
+      categorias: z.array(z.enum(["legislativa", "jurisprudencial", "artigo", "radar", "institucional"])).optional(),
     }))
     .mutation(async ({ input }) => {
       const agora = new Date();

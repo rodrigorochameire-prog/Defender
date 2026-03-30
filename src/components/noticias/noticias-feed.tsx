@@ -10,7 +10,7 @@ import { isToday, isYesterday, isThisWeek, isThisMonth, parseISO } from "date-fn
 import type { NoticiaJuridica } from "@/lib/db/schema";
 
 
-export type CategoriaFeed = "legislativa" | "jurisprudencial" | "artigo" | "salvos" | "recentes";
+export type CategoriaFeed = "legislativa" | "jurisprudencial" | "artigo" | "radar" | "institucional" | "salvos" | "recentes";
 
 type GrupoData = {
   label: string;

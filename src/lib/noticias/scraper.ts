@@ -112,58 +112,17 @@ export async function fetchFullContent(url: string): Promise<string> {
 }
 
 // ==========================================
-// CAMADA 3: CLASSIFICAÇÃO POR IA (opcional)
+// CAMADA 3: CLASSIFICAÇÃO POR IA (DESATIVADA)
 // ==========================================
+// Classificação agora é feita offline via Cowork (claude -p)
+// que gera JSON importável. Sem chamadas à API Anthropic.
 
-async function classificarComIA(titulo: string, resumo: string): Promise<{
+async function classificarComIA(_titulo: string, _resumo: string): Promise<{
   relevante: boolean;
   categoria: "legislativa" | "jurisprudencial" | "artigo";
   motivo: string;
 } | null> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return null;
-
-  try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 150,
-        messages: [{
-          role: "user",
-          content: `Você é um filtro de notícias para a Defensoria Pública Criminal da Bahia.
-Analise esta notícia e responda em JSON:
-
-Título: ${titulo}
-Resumo: ${resumo}
-
-Responda APENAS com JSON válido:
-{"relevante": true/false, "categoria": "legislativa"|"jurisprudencial"|"artigo", "motivo": "explicação em 1 frase"}
-
-Considere RELEVANTE se trata de: direito penal, processo penal, execução penal, tribunal do júri, drogas, violência doméstica, ECA, defensoria pública, direitos humanos, segurança pública, sistema prisional, decisões STF/STJ em matéria criminal.
-
-Considere IRRELEVANTE se é: evento/congresso/curso, processo seletivo, notícia administrativa, assunto cível/trabalhista/tributário sem relação com criminal.`,
-        }],
-      }),
-      signal: AbortSignal.timeout(10000),
-    });
-
-    if (!res.ok) return null;
-
-    const data = await res.json();
-    const text = data.content?.[0]?.text || "";
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return null;
-
-    return JSON.parse(jsonMatch[0]);
-  } catch {
-    return null;
-  }
+  return null;
 }
 
 // ==========================================
@@ -248,26 +207,12 @@ export async function scrapeAllFontes(): Promise<ScrapeResult[]> {
           // CAMADA 2.5: Contexto jurídico → distingue análise de notícia factual pura
           // Notícia factual ("preso por furto") tem relevância mas SEM contexto → vai para IA
           const temContexto = temContextoJuridico(item.titulo, plainText);
-          let autoAprovado = false;
-
-          if (!temRelevancia || !temContexto) {
-            // CAMADA 3: IA como tiebreaker para itens ambíguos
-            const iaResult = await classificarComIA(item.titulo, resumo);
-
-            if (iaResult && !iaResult.relevante) {
-              result.filtrados++;
-              continue;
-            }
-
-            // Se IA não disponível e sem keywords positivas → descartar
-            if (!iaResult) {
-              result.filtrados++;
-              continue;
-            }
-
-            // IA confirmou relevância → auto-aprovar sem triagem manual
-            autoAprovado = true;
+          if (!temRelevancia && !temContexto) {
+            // Sem nenhum sinal de relevância → descartar
+            result.filtrados++;
+            continue;
           }
+          // Com pelo menos 1 sinal → entra como pendente para triagem via Cowork
 
           // Classificar e salvar
           const categoria = classificarNoticia(item.titulo, plainText);
@@ -283,8 +228,7 @@ export async function scrapeAllFontes(): Promise<ScrapeResult[]> {
             autor: item.autor,
             categoria,
             tags,
-            status: autoAprovado ? "aprovado" : "pendente",
-            aprovadoEm: autoAprovado ? new Date() : undefined,
+            status: "pendente",
             publicadoEm: item.publicadoEm,
           });
 
@@ -323,13 +267,19 @@ export async function scrapeAllFontes(): Promise<ScrapeResult[]> {
 
         if (existing.length > 0) continue;
 
-        // Filtrar por relevância + contexto jurídico (mesmo pipeline)
-        if (isIrrelevante(item.titulo, "")) { googleResult.filtrados++; continue; }
-        if (!isRelevante(item.titulo, "")) { googleResult.filtrados++; continue; }
-        if (!temContextoJuridico(item.titulo, "")) { googleResult.filtrados++; continue; }
+        // Itens com tag de query (radar/institucional) passam sem filtro de keywords
+        // pois as queries já são altamente direcionadas
+        const hasQueryTag = !!item.categoriaTag;
 
-        // Classificar
-        const categoria = classificarNoticia(item.titulo, "");
+        if (!hasQueryTag) {
+          // Filtrar por relevância + contexto jurídico (mesmo pipeline)
+          if (isIrrelevante(item.titulo, "")) { googleResult.filtrados++; continue; }
+          if (!isRelevante(item.titulo, "")) { googleResult.filtrados++; continue; }
+          if (!temContextoJuridico(item.titulo, "")) { googleResult.filtrados++; continue; }
+        }
+
+        // Classificar — usar tag da query se disponível
+        const categoria = item.categoriaTag ?? classificarNoticia(item.titulo, "");
         const tags = extrairTags(item.titulo, "");
 
         await db.insert(noticiasJuridicas).values({

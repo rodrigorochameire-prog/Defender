@@ -1,28 +1,45 @@
 // Queries especializadas em direito penal brasileiro
 // Cada query tem limite próprio configurado em QUERY_LIMITS
-const GOOGLE_NEWS_QUERIES: { q: string; limit: number }[] = [
+// Tag _radar/_institucional usadas para classificação automática
+const GOOGLE_NEWS_QUERIES: { q: string; limit: number; tag?: "radar" | "institucional" }[] = [
+  // ============================================================
+  // RADAR CRIMINAL — Camaçari e Região Metropolitana de Salvador
+  // ============================================================
+  { q: 'Camaçari "homicídio" OR "latrocínio" OR "feminicídio" OR "tráfico" OR "apreensão" OR "operação"', limit: 10, tag: "radar" },
+  { q: 'Camaçari "polícia" OR "flagrante" OR "preso" OR "crime" OR "tiroteio"', limit: 10, tag: "radar" },
+  { q: '"Dias d\'Ávila" OR "Lauro de Freitas" OR "Simões Filho" "crime" OR "polícia" OR "homicídio"', limit: 8, tag: "radar" },
+  { q: '"região metropolitana de Salvador" "crime" OR "polícia" OR "operação" OR "tráfico"', limit: 8, tag: "radar" },
+  { q: '"presídio" OR "penitenciária" Bahia "fuga" OR "rebelião" OR "transferência"', limit: 5, tag: "radar" },
+
+  // ============================================================
+  // JURÍDICAS — Legislação, Jurisprudência, Artigos
+  // ============================================================
+  // STJ — câmaras criminais (alta prioridade)
+  { q: 'site:stj.jus.br "turma criminal" OR "habeas corpus" OR "tráfico" OR "execução penal" OR "júri"', limit: 15 },
+  // STJ informativos penais
+  { q: 'STJ "Informativo" "criminal" OR "penal" OR "habeas corpus" OR "execução penal"', limit: 15 },
+  // STF matéria penal
+  { q: '"STF" "habeas corpus" OR "tese fixada" OR "repercussão geral" "processo penal" OR "direito penal"', limit: 10 },
   // Jurisprudência geral penal
   { q: '"habeas corpus" OR "STJ decidiu" OR "STF fixou" OR "tese fixada" "processo penal"', limit: 10 },
   // Legislação penal
   { q: '"lei penal" OR "código penal" OR "CPP" "execução penal" OR "reforma penal"', limit: 10 },
   // Defensoria / sistema prisional
   { q: '"defensoria pública" OR "presídio" OR "preso provisório" direito penal', limit: 10 },
-  // STJ — câmaras criminais (alta prioridade)
-  { q: 'site:stj.jus.br "turma criminal" OR "habeas corpus" OR "tráfico" OR "execução penal" OR "júri"', limit: 15 },
-  // STJ informativos penais
-  { q: 'STJ "Informativo" "criminal" OR "penal" OR "habeas corpus" OR "execução penal"', limit: 15 },
-  // TJBA decisões criminais
-  { q: 'site:tjba.jus.br "criminal" OR "penal" OR "habeas corpus" OR "tráfico" OR "homicídio"', limit: 15 },
-  // TJBA notícias e jurisprudência (sem site: para pegar portais que repercutem TJBA)
-  { q: '"TJBA" OR "Tribunal de Justiça da Bahia" "criminal" OR "penal" OR "decisão"', limit: 12 },
-  // Segurança pública / criminalidade — Bahia e nacional
-  { q: '"segurança pública" OR "policial" OR "homicídio" OR "tráfico de drogas" Bahia direito', limit: 10 },
-  // Operações policiais com repercussão jurídica
-  { q: '"operação policial" OR "flagrante" OR "prisão preventiva" OR "mandado de busca" Bahia OR "STJ" OR "STF"', limit: 10 },
+
+  // ============================================================
+  // INSTITUCIONAL — TJBA, DPE-BA, MP-BA em matéria criminal
+  // ============================================================
+  { q: 'site:tjba.jus.br "criminal" OR "penal" OR "habeas corpus" OR "tráfico" OR "homicídio"', limit: 15, tag: "institucional" },
+  { q: '"TJBA" OR "Tribunal de Justiça da Bahia" "criminal" OR "penal" OR "decisão"', limit: 12, tag: "institucional" },
+  { q: 'site:defensoria.ba.def.br OR "Defensoria Pública da Bahia" "criminal" OR "penal" OR "preso"', limit: 8, tag: "institucional" },
+  { q: 'site:mpba.mp.br OR "Ministério Público da Bahia" "denúncia" OR "operação" OR "criminal"', limit: 8, tag: "institucional" },
+  { q: '"audiência de custódia" OR "mutirão carcerário" Bahia', limit: 5, tag: "institucional" },
 ];
 
 // Mapa de domínios conhecidos → slug
 const DOMAIN_TO_SLUG: Record<string, string> = {
+  // Jurídicos
   "migalhas.com.br": "migalhas",
   "conjur.com.br": "conjur",
   "jota.info": "jota",
@@ -33,14 +50,28 @@ const DOMAIN_TO_SLUG: Record<string, string> = {
   "emporiododireito.com.br": "emporio-do-direito",
   "trf1.jus.br": "trf1",
   "trf5.jus.br": "trf5",
-  "defensoria.ba.def.br": "dpeba",
   "ibccrim.org.br": "ibccrim",
   "cnj.jus.br": "cnj",
   "senado.leg.br": "senado-federal",
+  "genjuridico.com.br": "genjuridico",
+  "justificando.com": "justificando",
+  // Institucional
+  "defensoria.ba.def.br": "dpeba",
+  "mpba.mp.br": "mpba",
+  "anadep.org.br": "anadep",
+  "condege.org.br": "condege",
+  // Radar — Bahia / Camaçari
   "pm.ba.gov.br": "pm-bahia",
   "ssp.ba.gov.br": "ssp-bahia",
-  "genjuridico.com.br": "genjurídico",
-  "justificando.com": "justificando",
+  "acordacidade.com.br": "acorda-cidade",
+  "bahianoar.com": "bahia-no-ar",
+  "blogdovalente.com.br": "blog-do-valente",
+  "correio24horas.com.br": "correio",
+  "ibahia.com": "ibahia",
+  "atarde.com.br": "a-tarde",
+  "g1.globo.com": "g1",
+  "radarcamacari.com.br": "radar-camacari",
+  "vozdabahia.com.br": "voz-da-bahia",
 };
 
 export type GoogleNewsItem = {
@@ -49,6 +80,7 @@ export type GoogleNewsItem = {
   fonte: string;       // slug derivado do domínio
   publicadoEm?: Date;
   conteudoHtml?: string;
+  categoriaTag?: "radar" | "institucional"; // Classificação automática pela query de origem
 };
 
 async function resolveGoogleNewsUrl(googleUrl: string): Promise<string> {
@@ -87,7 +119,7 @@ export async function scrapeGoogleNews(): Promise<GoogleNewsItem[]> {
   const allItems: GoogleNewsItem[] = [];
   const seenUrls = new Set<string>();
 
-  for (const { q: query, limit } of GOOGLE_NEWS_QUERIES) {
+  for (const { q: query, limit, tag } of GOOGLE_NEWS_QUERIES) {
     try {
       const encodedQuery = encodeURIComponent(query);
       const rssUrl = `https://news.google.com/rss/search?q=${encodedQuery}&hl=pt-BR&gl=BR&ceid=BR:pt`;
@@ -132,6 +164,7 @@ export async function scrapeGoogleNews(): Promise<GoogleNewsItem[]> {
           url: realUrl,
           fonte,
           publicadoEm: pubDate ? new Date(pubDate) : undefined,
+          categoriaTag: tag,
         });
       }
 

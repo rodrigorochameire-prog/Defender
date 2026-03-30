@@ -4,7 +4,6 @@ import { db } from "@/lib/db";
 import { noticiasJuridicas, noticiasProcessos, evolutionConfig } from "@/lib/db/schema";
 import { eq, gte, and, inArray } from "drizzle-orm";
 import { sendText } from "@/lib/services/evolution-api";
-import Anthropic from "@anthropic-ai/sdk";
 
 /**
  * Cron job para scraping de notícias jurídicas.
@@ -56,60 +55,34 @@ async function gerarEEnviarDigest(): Promise<{
   const noticiasComProcesso = noticias.filter((n) => noticiaIdsComProcesso.has(n.id));
   const noticiasSemProcesso = noticias.filter((n) => !noticiaIdsComProcesso.has(n.id));
 
-  // 3. Chama Claude Haiku para formatar mensagem WhatsApp
-  const client = new Anthropic();
-
+  // 3. Formatar mensagem WhatsApp (sem IA — template direto)
   const dataInicio = seteDiasAtras.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
   const dataFim = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
   const periodo = `${dataInicio} a ${dataFim}`;
 
-  const noticiasComProcessoTexto = noticiasComProcesso
+  const comProcessoBullets = noticiasComProcesso
     .slice(0, 5)
-    .map((n) => `- ${n.titulo}`)
+    .map((n) => `• ${n.titulo}`)
     .join("\n");
 
-  const noticiasSemProcessoTexto = noticiasSemProcesso
+  const semProcessoBullets = noticiasSemProcesso
     .slice(0, 5)
-    .map((n) => `- ${n.titulo}`)
+    .map((n) => `• ${n.titulo}`)
     .join("\n");
 
-  const prompt = `Você é um assistente jurídico. Formate uma mensagem de digest semanal para WhatsApp usando APENAS markdown do WhatsApp (*negrito*, bullet •).
+  const partes = [
+    `📰 *Panorama Jurídico — ${periodo}*`,
+    "",
+    "⚠️ *Afeta seus processos:*",
+    comProcessoBullets || "• Nenhuma esta semana.",
+    "",
+    "📋 *Destaques da semana:*",
+    semProcessoBullets || "• Nenhum destaque adicional.",
+    "",
+    "🔗 Ver todas: ombuds.vercel.app/admin/noticias",
+  ];
 
-Período: ${periodo}
-
-Notícias que afetam processos vinculados:
-${noticiasComProcessoTexto || "Nenhuma esta semana."}
-
-Destaques gerais da semana:
-${noticiasSemProcessoTexto || "Nenhum destaque adicional."}
-
-Use EXATAMENTE este formato (substitua os colchetes pelo conteúdo real):
-📰 *Panorama Jurídico — [período]*
-
-⚠️ *Afeta seus processos:*
-• [notícias vinculadas a processos, uma por linha com •]
-
-📋 *Destaques da semana:*
-• [top 5 notícias gerais, uma por linha com •]
-
-🔗 Ver todas: ombuds.vercel.app/admin/noticias
-
-Seja conciso. Títulos podem ser encurtados se necessário. Não adicione texto extra fora do formato acima.`;
-
-  const aiResponse = await client.messages.create({
-    model: "claude-haiku-4-5",
-    max_tokens: 1024,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const mensagem =
-    aiResponse.content[0].type === "text"
-      ? aiResponse.content[0].text.trim()
-      : "";
-
-  if (!mensagem) {
-    return { success: false, noticiasFound: noticias.length, instancesEnviadas: 0, error: "Claude não retornou mensagem" };
-  }
+  const mensagem = partes.join("\n");
 
   // 4. Busca configs Evolution ativas com phoneNumber
   const configs = await db

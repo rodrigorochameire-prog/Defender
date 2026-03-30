@@ -9,25 +9,27 @@ import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
-import { NoticiasFeed } from "@/components/noticias/noticias-feed";
+import { NoticiasFeed, type CategoriaFeed } from "@/components/noticias/noticias-feed";
 import { NoticiasTriagem } from "@/components/noticias/noticias-triagem";
 import { NoticiaReaderPanel } from "@/components/noticias/noticias-reader-panel";
 import { NoticiaSalvarCasoSheet } from "@/components/noticias/noticias-salvar-caso-sheet";
 import { NoticiasRelatorio } from "@/components/noticias/noticias-relatorio";
 import type { NoticiaJuridica } from "@/lib/db/schema";
 
-export type CategoriaTab = "legislativa" | "jurisprudencial" | "artigo" | "salvos" | "recentes" | "relatorios";
+export type CategoriaTab = "legislativa" | "jurisprudencial" | "artigo" | "radar" | "institucional" | "salvos" | "recentes" | "relatorios";
 
 const CATEGORIA_PILLS: { value: CategoriaTab; label: string }[] = [
   { value: "recentes", label: "Recentes" },
+  { value: "radar", label: "Radar Criminal" },
   { value: "jurisprudencial", label: "Jurisprudencial" },
   { value: "legislativa", label: "Legislativa" },
+  { value: "institucional", label: "Institucional" },
   { value: "artigo", label: "Artigo" },
   { value: "salvos", label: "Salvos" },
   { value: "relatorios", label: "Relatórios" },
 ];
 
-const CATEGORIAS_COM_SIDEBAR = new Set(["jurisprudencial", "legislativa", "artigo"]);
+const CATEGORIAS_COM_SIDEBAR = new Set(["jurisprudencial", "legislativa", "artigo", "radar", "institucional"]);
 
 
 export default function NoticiasPage() {
@@ -302,7 +304,7 @@ export default function NoticiasPage() {
               <NoticiasRelatorio />
             ) : (
               <NoticiasFeed
-                categoria={categoria as "legislativa" | "jurisprudencial" | "artigo" | "salvos" | "recentes"}
+                categoria={categoria as CategoriaFeed}
                 selectedNoticiaId={noticiaReader?.id}
                 busca={busca}
                 fonteFilter={fonteFilter}

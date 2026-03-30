@@ -1,16 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 
 // Configuração do Supabase — credenciais via variáveis de ambiente (obrigatórias)
-function getRequiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`${name} is required. Set it in your environment variables.`);
-  }
-  return value;
-}
-
-const SUPABASE_URL = getRequiredEnv("NEXT_PUBLIC_SUPABASE_URL");
-const SUPABASE_ANON_KEY = getRequiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+// IMPORTANT: Next.js only inlines NEXT_PUBLIC_* when accessed as a static literal
+// (process.env.NEXT_PUBLIC_XYZ), NOT via dynamic access (process.env[varName]).
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 
 // Singleton para o cliente Supabase
 let supabaseClient: ReturnType<typeof createClient> | null = null;

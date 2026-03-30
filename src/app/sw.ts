@@ -18,8 +18,7 @@ const serwist = new Serwist({
   runtimeCaching: [
     // Fonts — cache-first, long TTL
     {
-      // @ts-ignore
-      urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
+      matcher: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
       handler: new CacheFirst({
         cacheName: "google-fonts",
         matchOptions: { ignoreVary: true },
@@ -34,8 +33,7 @@ const serwist = new Serwist({
     },
     // Static assets (images, logos) — cache-first, 30 days
     {
-      // @ts-ignore
-      urlPattern: /\.(?:png|jpg|jpeg|svg|gif|ico|webp)$/i,
+      matcher: /\.(?:png|jpg|jpeg|svg|gif|ico|webp)$/i,
       handler: new CacheFirst({
         cacheName: "static-images",
         plugins: [
@@ -49,16 +47,14 @@ const serwist = new Serwist({
     },
     // CSS/JS chunks — stale-while-revalidate
     {
-      // @ts-ignore
-      urlPattern: /\/_next\/static\/.*/i,
+      matcher: /\/_next\/static\/.*/i,
       handler: new StaleWhileRevalidate({
         cacheName: "next-static",
       }),
     },
     // tRPC GET API calls — network-first with cache fallback
     {
-      // @ts-ignore
-      urlPattern: /\/api\/trpc\/.+\?.*batch=1/i,
+      matcher: /\/api\/trpc\/.+\?.*batch=1/i,
       handler: new NetworkFirst({
         cacheName: "trpc-api",
         networkTimeoutSeconds: 10,
@@ -74,8 +70,7 @@ const serwist = new Serwist({
     },
     // Supabase images — cache-first
     {
-      // @ts-ignore
-      urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/.*/i,
+      matcher: /^https:\/\/.*\.supabase\.co\/storage\/.*/i,
       handler: new CacheFirst({
         cacheName: "supabase-storage",
         plugins: [

@@ -26,9 +26,11 @@ const CATEGORIA_LABEL: Record<string, string> = {
   jurisprudencial: "Jurisprudencial",
   legislativa: "Legislativa",
   artigo: "Artigo",
+  radar: "Radar Criminal",
+  institucional: "Institucional",
 };
 
-const CATEGORIA_ORDER = ["jurisprudencial", "legislativa", "artigo"];
+const CATEGORIA_ORDER = ["radar", "jurisprudencial", "legislativa", "institucional", "artigo"];
 
 export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
   const [focusedId, setFocusedId] = useState<number | null>(null);

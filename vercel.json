@@ -10,16 +10,8 @@
   },
   "crons": [
     {
-      "path": "/api/cron/radar",
-      "schedule": "0 9,21 * * *"
-    },
-    {
       "path": "/api/cron/noticias",
       "schedule": "0 10 * * *"
-    },
-    {
-      "path": "/api/cron/radar-extract",
-      "schedule": "0 */4 * * *"
     }
   ],
   "headers": [

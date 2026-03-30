@@ -190,69 +190,17 @@ async function extractPageContent(url: string): Promise<string | null> {
 }
 
 // ==========================================
-// 3. CLAUDE SUMMARIZATION
+// 3. CLAUDE SUMMARIZATION (DESATIVADA)
 // ==========================================
+// Sumarização agora é feita offline via Cowork (claude -p)
+// que gera JSON importável. Sem chamadas à API Anthropic.
 
 async function summarizeArticle(
-  title: string,
-  content: string,
-  sectionContext: string,
+  _title: string,
+  _content: string,
+  _sectionContext: string,
 ): Promise<string | null> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    console.log("[factual] ANTHROPIC_API_KEY not configured, skipping summarization");
-    return null;
-  }
-
-  if (!content || content.length < 100) {
-    return null;
-  }
-
-  try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 500,
-        messages: [
-          {
-            role: "user",
-            content: `Voce e um jornalista brasileiro escrevendo para um jornal digital regional.
-Contexto da secao: ${sectionContext}
-
-Resuma a noticia abaixo em 2-4 paragrafos curtos. Seja factual, objetivo, sem opinioes.
-Mantenha os fatos mais importantes, datas, nomes e numeros.
-Escreva em portugues brasileiro, linguagem acessivel.
-
-Titulo: ${title}
-
-Conteudo:
-${content.substring(0, 4000)}
-
-Escreva APENAS o resumo, sem titulo, sem "Resumo:", sem aspas.`,
-          },
-        ],
-      }),
-      signal: AbortSignal.timeout(30000),
-    });
-
-    if (!res.ok) {
-      console.log(`[factual] Claude API error: HTTP ${res.status}`);
-      return null;
-    }
-
-    const data = await res.json();
-    const text = data.content?.[0]?.text || "";
-    return text.trim() || null;
-  } catch (err) {
-    console.log("[factual] Summarization error:", err instanceof Error ? err.message : String(err));
-    return null;
-  }
+  return null;
 }
 
 // ==========================================

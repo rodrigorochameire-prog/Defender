@@ -20,6 +20,8 @@ const LABEL_CATEGORIA: Record<string, string> = {
   legislativa: "Legislativa",
   jurisprudencial: "Jurisprudencial",
   artigo: "Artigo",
+  radar: "Radar Criminal",
+  institucional: "Institucional",
 };
 
 interface NoticiaCardProps {
