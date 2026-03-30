@@ -17,7 +17,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Scale,
   ArrowLeft,
   Save,
   Gavel,
@@ -25,15 +24,8 @@ import {
   Plus,
 } from "lucide-react";
 import { usePermissions } from "@/hooks/use-permissions";
-
-// Mock de assistidos para o select
-const mockAssistidos = [
-  { id: 1, nome: "Diego Bonfim Almeida" },
-  { id: 2, nome: "Maria Silva Santos" },
-  { id: 3, nome: "José Carlos Oliveira" },
-  { id: 4, nome: "Ana Paula Costa" },
-  { id: 5, nome: "Roberto Ferreira Lima" },
-];
+import { trpc } from "@/lib/trpc/client";
+import { toast } from "sonner";
 
 const ALL_AREA_OPTIONS = [
   { value: "JURI", label: "Tribunal do Júri" },
@@ -86,8 +78,20 @@ interface FormData {
 export default function NovoProcessoPage() {
   const router = useRouter();
   const { hasArea } = usePermissions();
-  const [isSaving, setIsSaving] = useState(false);
-  
+
+  const { data: assistidosData, isLoading: loadingAssistidos } = trpc.assistidos.list.useQuery({});
+  const assistidosList = (assistidosData ?? []).map((a) => ({ id: a.id, nome: a.nome }));
+
+  const createMutation = trpc.processos.create.useMutation({
+    onSuccess: (result) => {
+      toast.success("Processo criado com sucesso!");
+      router.push(`/admin/processos/${result.id}`);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao criar processo");
+    },
+  });
+
   const [formData, setFormData] = useState<FormData>({
     numeroAutos: "",
     numeroAntigo: "",
@@ -111,31 +115,27 @@ export default function NovoProcessoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validação básica
     if (!formData.numeroAutos.trim()) {
-      alert("O número dos autos é obrigatório");
+      toast.error("O número dos autos é obrigatório");
       return;
     }
     if (!formData.assistidoId) {
-      alert("Selecione um assistido");
+      toast.error("Selecione um assistido");
       return;
     }
-    
-    setIsSaving(true);
-    
-    try {
-      // Em produção, chamar TRPC para criar
-      // Simular delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Redirecionar para a lista de processos
-      router.push("/admin/processos");
-    } catch (error) {
-      console.error("Erro ao criar:", error);
-    } finally {
-      setIsSaving(false);
-    }
+
+    createMutation.mutate({
+      assistidoId: formData.assistidoId,
+      numeroAutos: formData.numeroAutos,
+      comarca: formData.comarca || undefined,
+      vara: formData.vara || undefined,
+      area: formData.area as "JURI" | "EXECUCAO_PENAL" | "VIOLENCIA_DOMESTICA" | "SUBSTITUICAO" | "CURADORIA" | "FAMILIA" | "CIVEL" | "FAZENDA_PUBLICA",
+      classeProcessual: formData.classeProcessual || undefined,
+      assunto: formData.assunto || undefined,
+      isJuri: formData.isJuri,
+    });
   };
 
   const handleChange = (field: keyof FormData, value: string | boolean | number) => {
@@ -213,11 +213,17 @@ export default function NovoProcessoPage() {
                   <SelectValue placeholder="Selecione o assistido" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockAssistidos.map((assistido) => (
-                    <SelectItem key={assistido.id} value={String(assistido.id)}>
-                      {assistido.nome}
-                    </SelectItem>
-                  ))}
+                  {loadingAssistidos ? (
+                    <SelectItem value="__loading" disabled>Carregando...</SelectItem>
+                  ) : assistidosList.length === 0 ? (
+                    <SelectItem value="__empty" disabled>Nenhum assistido encontrado</SelectItem>
+                  ) : (
+                    assistidosList.map((assistido) => (
+                      <SelectItem key={assistido.id} value={String(assistido.id)}>
+                        {assistido.nome}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
@@ -457,8 +463,8 @@ export default function NovoProcessoPage() {
               Cancelar
             </Button>
           </Link>
-          <Button type="submit" disabled={isSaving}>
-            {isSaving ? (
+          <Button type="submit" disabled={createMutation.isPending}>
+            {createMutation.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Salvando...

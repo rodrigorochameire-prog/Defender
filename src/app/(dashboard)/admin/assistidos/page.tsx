@@ -169,11 +169,9 @@ export default function AssistidosPage() {
   const realAssistidos = useMemo(() => {
     if (!assistidosData) return [];
     return assistidosData.map((a) => {
-      const atribuicoesStr = ((a as any).atribuicoes || "") as string;
-      const areasStr = ((a as any).areas || "") as string;
-      const atribuicoes = atribuicoesStr ? atribuicoesStr.split(',').filter(Boolean) : [];
-      const areas = areasStr ? areasStr.split(',').filter(Boolean) : [];
-      const comarcasStr = ((a as any).comarcas || "") as string;
+      const atribuicoes = (a as any).atribuicoes || [];
+      const areas = (a as any).areas || [];
+      const comarcasArr = (a as any).comarcas || [];
 
       return {
         id: a.id,
@@ -222,7 +220,7 @@ export default function AssistidosPage() {
         nomeMae: a.nomeMae || "",
         bairro: "",
         cidade: "Camacari",
-        comarcas: comarcasStr ? comarcasStr.split(',').filter(Boolean) : [],
+        comarcas: comarcasArr,
         comarcaNome: (a as any).comarcaNome || null,
         scoreComplexidade: ((a as any).processosCount || 0) * 10 +
           ((a as any).demandasAbertasCount || 0) * 5 +

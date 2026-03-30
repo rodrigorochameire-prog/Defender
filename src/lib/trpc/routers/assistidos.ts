@@ -157,97 +157,101 @@ export const assistidosRouter = router({
         return [];
       }
 
-      // Buscar dados agregados usando Drizzle ORM
+      // Buscar dados agregados em paralelo usando Promise.all
       const assistidoIds = result.map(a => a.id);
-      
-      // Contagem de processos por assistido
-      const processosCountData = await db
-        .select({
-          assistidoId: processos.assistidoId,
-          count: sql<number>`count(*)::int`,
-        })
-        .from(processos)
-        .where(and(
-          inArray(processos.assistidoId, assistidoIds),
-          isNull(processos.deletedAt)
-        ))
-        .groupBy(processos.assistidoId);
-      
-      const processosCountMap = new Map(processosCountData.map(p => [p.assistidoId, p.count]));
-      
-      // Contagem de demandas por assistido
-      const demandasCountData = await db
-        .select({
-          assistidoId: demandas.assistidoId,
-          count: sql<number>`count(*)::int`,
-        })
-        .from(demandas)
-        .where(and(
-          inArray(demandas.assistidoId, assistidoIds),
-          sql`${demandas.status} NOT IN ('CONCLUIDO', 'ARQUIVADO')`,
-          isNull(demandas.deletedAt)
-        ))
-        .groupBy(demandas.assistidoId);
-      
-      const demandasCountMap = new Map(demandasCountData.map(d => [d.assistidoId, d.count]));
-
-      // Contagem de arquivos do Drive por assistido (para quem tem pasta vinculada)
       const assistidosComPasta = result.filter(a => a.driveFolderId);
-      let driveFilesCountMap = new Map<number, number>();
 
-      if (assistidosComPasta.length > 0) {
-        const driveFilesCountData = await db
+      const [
+        processosCountData,
+        demandasCountData,
+        driveFilesCountData,
+        audienciasData,
+        processosData,
+      ] = await Promise.all([
+        // Contagem de processos por assistido
+        db
           .select({
-            assistidoId: driveFiles.assistidoId,
+            assistidoId: processos.assistidoId,
             count: sql<number>`count(*)::int`,
           })
-          .from(driveFiles)
+          .from(processos)
           .where(and(
-            inArray(driveFiles.assistidoId, assistidosComPasta.map(a => a.id)),
-            sql`${driveFiles.isFolder} = false` // Só conta arquivos, não pastas
+            inArray(processos.assistidoId, assistidoIds),
+            isNull(processos.deletedAt)
           ))
-          .groupBy(driveFiles.assistidoId);
+          .groupBy(processos.assistidoId),
 
-        driveFilesCountMap = new Map(driveFilesCountData.map(d => [d.assistidoId!, d.count]));
-      }
+        // Contagem de demandas por assistido
+        db
+          .select({
+            assistidoId: demandas.assistidoId,
+            count: sql<number>`count(*)::int`,
+          })
+          .from(demandas)
+          .where(and(
+            inArray(demandas.assistidoId, assistidoIds),
+            sql`${demandas.status} NOT IN ('CONCLUIDO', 'ARQUIVADO')`,
+            isNull(demandas.deletedAt)
+          ))
+          .groupBy(demandas.assistidoId),
 
-      // Próxima audiência por assistido
-      const audienciasData = await db
-        .select({
-          assistidoId: audiencias.assistidoId,
-          dataAudiencia: audiencias.dataAudiencia,
-        })
-        .from(audiencias)
-        .where(and(
-          inArray(audiencias.assistidoId!, assistidoIds),
-          sql`${audiencias.dataAudiencia} >= NOW()`
-        ))
-        .orderBy(audiencias.dataAudiencia);
-      
-      // Agrupar por assistido (pegar a primeira - mais próxima)
+        // Contagem de arquivos do Drive por assistido
+        assistidosComPasta.length > 0
+          ? db
+              .select({
+                assistidoId: driveFiles.assistidoId,
+                count: sql<number>`count(*)::int`,
+              })
+              .from(driveFiles)
+              .where(and(
+                inArray(driveFiles.assistidoId, assistidosComPasta.map(a => a.id)),
+                sql`${driveFiles.isFolder} = false`
+              ))
+              .groupBy(driveFiles.assistidoId)
+          : Promise.resolve([] as { assistidoId: number | null; count: number }[]),
+
+        // Próxima audiência por assistido
+        db
+          .select({
+            assistidoId: audiencias.assistidoId,
+            dataAudiencia: audiencias.dataAudiencia,
+          })
+          .from(audiencias)
+          .where(and(
+            inArray(audiencias.assistidoId!, assistidoIds),
+            sql`${audiencias.dataAudiencia} >= NOW()`
+          ))
+          .orderBy(audiencias.dataAudiencia),
+
+        // Dados dos processos por assistido
+        db
+          .select({
+            assistidoId: processos.assistidoId,
+            area: processos.area,
+            atribuicao: processos.atribuicao,
+            comarca: processos.comarca,
+            numeroAutos: processos.numeroAutos,
+            assunto: processos.assunto,
+          })
+          .from(processos)
+          .where(and(
+            inArray(processos.assistidoId, assistidoIds),
+            isNull(processos.deletedAt)
+          ))
+          .orderBy(desc(processos.createdAt)),
+      ]);
+
+      const processosCountMap = new Map(processosCountData.map(p => [p.assistidoId, p.count]));
+      const demandasCountMap = new Map(demandasCountData.map(d => [d.assistidoId, d.count]));
+      const driveFilesCountMap = new Map(driveFilesCountData.map(d => [d.assistidoId!, d.count]));
+
+      // Agrupar audiências por assistido (pegar a primeira - mais próxima)
       const audienciasMap = new Map<number, Date>();
       for (const a of audienciasData) {
         if (a.assistidoId && !audienciasMap.has(a.assistidoId)) {
           audienciasMap.set(a.assistidoId, a.dataAudiencia);
         }
       }
-      
-      // Dados dos processos por assistido
-      const processosData = await db
-        .select({
-          assistidoId: processos.assistidoId,
-          area: processos.area,
-          atribuicao: processos.atribuicao,
-          comarca: processos.comarca,
-          numeroAutos: processos.numeroAutos,
-          assunto: processos.assunto,
-        })
-        .from(processos)
-        .where(and(
-          inArray(processos.assistidoId, assistidoIds),
-          isNull(processos.deletedAt)
-        ))
-        .orderBy(desc(processos.createdAt));
       
       // Agrupar por assistido - coletar todas as áreas e atribuições
       const processosDataMap = new Map<number, {
@@ -288,9 +292,9 @@ export const assistidosRouter = router({
           demandasAbertasCount: demandasCountMap.get(a.id) || 0,
           driveFilesCount: driveFilesCountMap.get(a.id) || 0, // Contagem de arquivos no Drive
           proximaAudiencia: audienciasMap.get(a.id)?.toISOString() || null,
-          areas: processoData ? Array.from(processoData.areas).join(',') : null,
-          atribuicoes: processoData ? Array.from(processoData.atribuicoes).join(',') : null,
-          comarcas: processoData ? Array.from(processoData.comarcas).join(',') : null,
+          areas: processoData ? Array.from(processoData.areas) : [],
+          atribuicoes: processoData ? Array.from(processoData.atribuicoes) : [],
+          comarcas: processoData ? Array.from(processoData.comarcas) : [],
           processoPrincipal: processoData?.numeroAutos || null,
           crimePrincipal: processoData?.assunto || null,
           proximoPrazo: null as string | null,
@@ -523,16 +527,22 @@ export const assistidosRouter = router({
         })
         .returning();
 
-      // Drive lifecycle: auto-criar pasta (fire-and-forget)
+      // Drive lifecycle: await folder creation, but don't block assistido creation on failure
+      let driveFolderError = false;
       if (!input.driveFolderId) {
-        ensureDriveFolderForAssistido(
-          novoAssistido.id,
-          novoAssistido.nome,
-          input.atribuicaoPrimaria || "SUBSTITUICAO",
-        ).catch(() => {}); // silencioso
+        try {
+          await ensureDriveFolderForAssistido(
+            novoAssistido.id,
+            novoAssistido.nome,
+            input.atribuicaoPrimaria || "SUBSTITUICAO",
+          );
+        } catch {
+          driveFolderError = true;
+          console.error(`[Drive] Falha ao criar pasta para assistido ${novoAssistido.id}, mas assistido foi criado com sucesso.`);
+        }
       }
 
-      return novoAssistido;
+      return { ...novoAssistido, driveFolderError };
     }),
   
   // Verificar duplicados potenciais antes de criar

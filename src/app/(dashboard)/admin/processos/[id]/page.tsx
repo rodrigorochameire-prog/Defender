@@ -197,45 +197,45 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
 
         {/* DEMANDAS */}
         {tab === "demandas" && (
-          <div className="px-6 py-4 space-y-1.5">
-            <div className="flex items-center justify-between mb-2">
+          <div className="px-6 lg:px-8 py-5 space-y-2">
+            <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                 Demandas ({data.demandas.length})
               </h3>
               <Link
                 href={`/admin/demandas/nova?processoId=${data.id}`}
-                className="h-6 w-6 flex items-center justify-center rounded text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors"
+                className="h-8 w-8 flex items-center justify-center rounded-lg text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors"
                 title="Nova Demanda"
               >
                 <Plus className="h-4 w-4" />
               </Link>
             </div>
             {data.demandas.length === 0 ? (
-              <p className="text-sm text-zinc-400 text-center py-8">Nenhuma demanda</p>
+              <p className="text-sm text-zinc-400 text-center py-12">Nenhuma demanda</p>
             ) : (
               data.demandas.map((d) => (
                 <Link
                   key={d.id}
                   href={`/admin/demandas/${d.id}`}
-                  className="flex items-center gap-2 border border-zinc-100 dark:border-zinc-700 rounded px-3 py-2 hover:border-emerald-300 hover:bg-emerald-50/30 cursor-pointer transition-all"
+                  className="flex items-center gap-3 border border-zinc-200/80 dark:border-zinc-700 rounded-xl px-4 py-3 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 cursor-pointer transition-all"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300 truncate">
+                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">
                       {d.ato ?? d.tipoAto ?? "Demanda"}
                     </p>
-                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
                       {d.defensorNome && (
-                        <span className="text-xs px-1.5 py-0.5 bg-zinc-100 text-zinc-600 rounded-full">
+                        <span className="text-xs px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-md">
                           {d.defensorNome}
                         </span>
                       )}
                       {d.assistidoNome && (
-                        <span className="text-xs px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-full">
+                        <span className="text-xs px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-md">
                           {d.assistidoNome}
                         </span>
                       )}
                       {d.prazo && (
-                        <span className="text-xs text-zinc-400">
+                        <span className="text-xs text-zinc-400 font-mono tabular-nums">
                           {format(new Date(d.prazo), "dd/MM/yy", { locale: ptBR })}
                         </span>
                       )}
@@ -249,36 +249,36 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
 
         {/* AGENDA */}
         {tab === "agenda" && (
-          <div className="px-6 py-4 space-y-2">
-            <div className="flex items-center justify-between mb-2">
+          <div className="px-6 lg:px-8 py-5 space-y-2">
+            <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                Audiencias ({data.audiencias.length})
+                Audiências ({data.audiencias.length})
               </h3>
               <Link
                 href={`/admin/agenda?processoId=${data.id}`}
-                className="h-6 w-6 flex items-center justify-center rounded text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors"
-                title="Agendar Audiencia"
+                className="h-8 w-8 flex items-center justify-center rounded-lg text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors"
+                title="Agendar Audiência"
               >
                 <Plus className="h-4 w-4" />
               </Link>
             </div>
             {data.audiencias.length === 0 ? (
-              <p className="text-sm text-zinc-400 text-center py-8">
-                Nenhuma audiencia registrada
+              <p className="text-sm text-zinc-400 text-center py-12">
+                Nenhuma audiência registrada
               </p>
             ) : (
               data.audiencias.map((a) => (
-                <div key={a.id} className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-3">
-                  <div className="flex items-center justify-between">
+                <div key={a.id} className="border border-zinc-200/80 dark:border-zinc-700 rounded-xl p-4 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors">
+                  <div className="flex items-center justify-between gap-3">
                     <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                      {a.tipo ?? "Audiencia"}
+                      {a.tipo ?? "Audiência"}
                     </span>
                     <span
                       className={cn(
-                        "text-xs px-1.5 py-0.5 rounded-full",
+                        "text-xs px-2 py-0.5 rounded-md font-medium",
                         a.dataAudiencia && new Date(a.dataAudiencia) < new Date()
-                          ? "bg-zinc-100 text-zinc-500"
-                          : "bg-emerald-100 text-emerald-700"
+                          ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                          : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
                       )}
                     >
                       {a.dataAudiencia && new Date(a.dataAudiencia) < new Date()
@@ -287,15 +287,15 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
                     </span>
                   </div>
                   {a.dataAudiencia && (
-                    <p className="text-sm text-zinc-400 mt-0.5">
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
                       {format(
                         new Date(a.dataAudiencia),
-                        "dd/MM/yyyy 'as' HH'h'mm",
+                        "dd/MM/yyyy 'às' HH'h'mm",
                         { locale: ptBR }
                       )}
                     </p>
                   )}
-                  {a.local && <p className="text-sm text-zinc-400">{a.local}</p>}
+                  {a.local && <p className="text-xs text-zinc-400 mt-0.5">{a.local}</p>}
                 </div>
               ))
             )}

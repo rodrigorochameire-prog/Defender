@@ -126,8 +126,17 @@ export const processosRouter = router({
     .query(async ({ ctx, input }) => {
       const isAdmin = ctx.user.role === "admin";
 
-      const baseConditions = [eq(processos.id, input.id)];
+      const baseConditions: any[] = [eq(processos.id, input.id)];
       if (!isAdmin) {
+        // Same visibility logic as list(): own + parceiros + unassigned in comarca
+        const parceirosIds = await getParceirosIds(ctx.user.id);
+        const defensoresVisiveis = [ctx.user.id, ...parceirosIds];
+        const defensorFilter = inArray(processos.defensorId, defensoresVisiveis);
+        const semDefensorFilter = and(
+          isNull(processos.defensorId),
+          eq(processos.comarcaId, getComarcaId(ctx.user))
+        );
+        baseConditions.push(or(defensorFilter, semDefensorFilter)!);
       }
 
       // Alias para assistidos na query de demandas (evita conflito de nome com o join de partes)
@@ -903,6 +912,10 @@ export const processosRouter = router({
   enrichFromDatajud: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
+      if (!process.env.DATAJUD_API_KEY) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DATAJUD_API_KEY não configurada" });
+      }
+
       const [processo] = await db
         .select()
         .from(processos)
@@ -917,7 +930,7 @@ export const processosRouter = router({
         {
           method: "POST",
           headers: {
-            Authorization: "ApiKey cDZHYzlZa0JadVREZDJCendFeGJWWGowQlBleVV5UFZwNHZwdmNHZGh3SA==",
+            Authorization: `ApiKey ${process.env.DATAJUD_API_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({

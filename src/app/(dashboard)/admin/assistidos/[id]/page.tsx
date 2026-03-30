@@ -371,204 +371,182 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header Premium */}
-      <div className="px-6 pt-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
+      {/* ── Header: Identity ── */}
+      <div className="px-6 lg:px-8 pt-5 pb-5 border-b border-zinc-200/80 dark:border-zinc-800">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-[10px] text-zinc-400 hover:text-zinc-600 mb-3 transition-colors uppercase tracking-wide font-medium"
+          className="flex items-center gap-1.5 text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 mb-4 transition-colors uppercase tracking-wider font-medium"
         >
           <ArrowLeft className="h-3 w-3" /> Voltar
         </button>
-        <div className="flex items-center gap-4">
-          {/* Avatar grande com iniciais */}
+
+        <div className="flex items-start gap-5">
+          {/* Avatar */}
           {(() => {
             const colors = getAtribuicaoColors((data as any).atribuicaoPrimaria);
             const initials = data.nome.split(" ").filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
             return (
               <div
                 className={cn(
-                  "h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 shadow-md text-white font-bold text-lg",
+                  "h-16 w-16 rounded-2xl flex items-center justify-center shrink-0 shadow-lg text-white font-bold text-xl",
                   colors.bgSolid || "bg-emerald-500"
                 )}
               >
-                {initials || <User className="h-6 w-6" />}
+                {initials || <User className="h-7 w-7" />}
               </div>
             );
           })()}
+
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 truncate">
+            {/* Name + Edit */}
+            <div className="flex items-center gap-3">
+              <h1 className="font-serif text-2xl font-semibold text-zinc-900 dark:text-zinc-50 truncate">
                 {data.nome}
               </h1>
               <Link href={`/admin/assistidos/${data.id}/editar`}>
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600">
-                  <Pencil className="h-3.5 w-3.5" />
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600">
+                  <Pencil className="h-4 w-4" />
                 </Button>
               </Link>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
+                className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600"
                 onClick={() => setFichaSheetOpen(true)}
+                title="Ficha completa"
               >
-                <PanelRight className="h-3.5 w-3.5" />
+                <PanelRight className="h-4 w-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 text-zinc-400 hover:text-violet-600 transition-colors"
-                title="Exportar briefing para pasta do Drive (Cowork)"
-                disabled={exportarParaCowork.isPending}
-                onClick={() => exportarParaCowork.mutate({ assistidoId: Number(id), tipo: "assistido" })}
-              >
-                {exportarParaCowork.isPending
-                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  : <Bot className="h-3.5 w-3.5" />}
-              </Button>
-              {data.driveFolderId && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600 transition-colors"
-                  title="Importar análise IA gerada pelo Cowork (_analise_ia.json)"
-                  disabled={importarAnaliseCowork.isPending}
-                  onClick={() => importarAnaliseCowork.mutate({ assistidoId: Number(id) })}
-                >
-                  {importarAnaliseCowork.isPending
-                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    : <Download className="h-3.5 w-3.5" />}
-                </Button>
-              )}
               {isPreso && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 animate-pulse">
-                  <Lock className="h-3 w-3" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50">
+                  <Lock className="h-3.5 w-3.5" />
                   Preso
                 </span>
               )}
-              {/* Cowork — Análise completa (gera + importa + Drive) */}
-              {data.processos?.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 gap-1 px-2.5 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition-colors text-[11px]"
-                  title="Análise completa Cowork — gera relatório, extrai dados, importa tudo"
-                  disabled={coworkAnalise.isPending}
-                  onClick={() => {
-                    const proc = data.processos[0];
-                    coworkAnalise.mutate({ processoId: proc.id, assistidoId: Number(id) });
-                  }}
-                >
-                  {coworkAnalise.isPending
-                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    : <Sparkles className="h-3.5 w-3.5" />}
-                  Cowork
-                </Button>
-              )}
-              {/* Sonnet — só sob demanda */}
-              {data.processos?.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1 px-2 text-zinc-400 hover:text-amber-600 transition-colors text-[11px]"
-                  title="Análise profunda com Claude Sonnet (teses, quesitos, estratégia)"
-                  disabled={analiseProfunda.isPending}
-                  onClick={() => {
-                    const proc = data.processos[0];
-                    setSonnetProcessoId(proc.id);
-                    analiseProfunda.mutate({ processoId: proc.id, assistidoId: Number(id) });
-                  }}
-                >
-                  {analiseProfunda.isPending
-                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    : <Zap className="h-3.5 w-3.5" />}
-                  Sonnet
-                </Button>
-              )}
             </div>
-            {/* Cowork AI action buttons */}
-            <div className="mt-2">
-              <CoworkActionGroup
-                assistidoNome={data.nome}
-                numeroAutos={data.processos?.[0]?.numeroAutos ?? ""}
-                classeProcessual={(data.processos?.[0] as any)?.classeProcessual ?? ""}
-                vara={data.processos?.[0]?.vara ?? ""}
-                atribuicao={(data as any).atribuicaoPrimaria ?? ""}
-                drivePath=""
-                actions={["analise-autos", "gerar-peca", "feedback-estagiario"]}
-                size="sm"
-              />
-            </div>
-            <div className="flex items-center gap-2.5 mt-1">
-              {data.cpf && (
-                <span className="text-[11px] text-zinc-400 font-mono tabular-nums">{data.cpf}</span>
-              )}
-              {data.statusPrisional && !isPreso && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">
-                  {statusLabel[data.statusPrisional] ?? data.statusPrisional.toLowerCase()}
-                </span>
-              )}
+
+            {/* Metadata line */}
+            <div className="flex items-center gap-3 mt-1.5 flex-wrap">
               {(data as any).atribuicaoPrimaria && (
                 <span className={cn(
-                  "text-[10px] px-1.5 py-0.5 rounded-md font-medium",
+                  "text-xs px-2 py-0.5 rounded-md font-medium",
                   getAtribuicaoColors((data as any).atribuicaoPrimaria).bg,
                   getAtribuicaoColors((data as any).atribuicaoPrimaria).text
                 )}>
                   {(data as any).atribuicaoPrimaria}
                 </span>
               )}
+              {data.statusPrisional && !isPreso && (
+                <span className="text-xs px-2 py-0.5 rounded-md font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">
+                  {statusLabel[data.statusPrisional] ?? data.statusPrisional.toLowerCase()}
+                </span>
+              )}
+              {data.cpf && (
+                <span className="text-xs text-zinc-400 font-mono tabular-nums">{data.cpf}</span>
+              )}
+              {data.telefone && (
+                <a href={`tel:${data.telefone}`} className="text-xs text-zinc-400 hover:text-emerald-600 transition-colors">
+                  {data.telefone}
+                </a>
+              )}
             </div>
-          </div>
-          {/* Mini KPIs inline — desktop only */}
-          <div className="hidden lg:flex items-center gap-3 shrink-0">
-            <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-              <Scale className="w-3.5 h-3.5 text-zinc-400" />
-              <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.processos.length}</span>
-              <span className="text-zinc-400">proc.</span>
-            </div>
-            <span className="text-zinc-200 dark:text-zinc-700">|</span>
-            <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-              <FileText className="w-3.5 h-3.5 text-zinc-400" />
-              <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.demandas.length}</span>
-              <span className="text-zinc-400">dem.</span>
-            </div>
-            <span className="text-zinc-200 dark:text-zinc-700">|</span>
-            <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-              <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-              <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.audiencias.length}</span>
-              <span className="text-zinc-400">aud.</span>
-            </div>
-            <span className="text-zinc-200 dark:text-zinc-700">|</span>
-            <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-              <FolderOpen className="w-3.5 h-3.5 text-zinc-400" />
-              <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.driveFiles.length}</span>
-              <span className="text-zinc-400">arq.</span>
+
+            {/* Stats line */}
+            <div className="flex items-center gap-4 mt-3">
+              {[
+                { icon: Scale, value: data.processos.length, label: "processos" },
+                { icon: FileText, value: data.demandas.length, label: "demandas" },
+                { icon: Calendar, value: data.audiencias.length, label: "audiências" },
+                { icon: FolderOpen, value: data.driveFiles.length, label: "arquivos" },
+              ].map(({ icon: Icon, value, label }) => (
+                <div key={label} className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                  <Icon className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+                  <span className="font-semibold text-zinc-700 dark:text-zinc-300">{value}</span>
+                  <span className="hidden sm:inline">{label}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
-        {/* Mini KPIs — mobile/tablet compact row */}
-        <div className="flex lg:hidden items-center gap-3 mt-3 px-1">
-          <div className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-            <Scale className="w-3 h-3" />
-            <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.processos.length}</span>
-            <span>proc.</span>
-          </div>
-          <span className="text-zinc-300 dark:text-zinc-600">·</span>
-          <div className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-            <FileText className="w-3 h-3" />
-            <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.demandas.length}</span>
-            <span>dem.</span>
-          </div>
-          <span className="text-zinc-300 dark:text-zinc-600">·</span>
-          <div className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-            <Calendar className="w-3 h-3" />
-            <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.audiencias.length}</span>
-            <span>aud.</span>
-          </div>
-          <span className="text-zinc-300 dark:text-zinc-600">·</span>
-          <div className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-            <FolderOpen className="w-3 h-3" />
-            <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.driveFiles.length}</span>
-            <span>arq.</span>
+
+        {/* ── Actions bar ── */}
+        <div className="flex items-center gap-2 mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
+          {data.processos?.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 px-3 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition-colors text-xs font-medium"
+              title="Análise completa Cowork — gera relatório, extrai dados, importa tudo"
+              disabled={coworkAnalise.isPending}
+              onClick={() => {
+                const proc = data.processos[0];
+                coworkAnalise.mutate({ processoId: proc.id, assistidoId: Number(id) });
+              }}
+            >
+              {coworkAnalise.isPending
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : <Sparkles className="h-3.5 w-3.5" />}
+              Cowork
+            </Button>
+          )}
+          {data.processos?.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1.5 px-3 text-zinc-500 hover:text-amber-600 transition-colors text-xs"
+              title="Análise profunda com Claude Sonnet"
+              disabled={analiseProfunda.isPending}
+              onClick={() => {
+                const proc = data.processos[0];
+                setSonnetProcessoId(proc.id);
+                analiseProfunda.mutate({ processoId: proc.id, assistidoId: Number(id) });
+              }}
+            >
+              {analiseProfunda.isPending
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : <Zap className="h-3.5 w-3.5" />}
+              Sonnet
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1.5 px-3 text-zinc-500 hover:text-violet-600 transition-colors text-xs"
+            title="Exportar briefing para pasta do Drive"
+            disabled={exportarParaCowork.isPending}
+            onClick={() => exportarParaCowork.mutate({ assistidoId: Number(id), tipo: "assistido" })}
+          >
+            {exportarParaCowork.isPending
+              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              : <Bot className="h-3.5 w-3.5" />}
+            Exportar
+          </Button>
+          {data.driveFolderId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1.5 px-3 text-zinc-500 hover:text-emerald-600 transition-colors text-xs"
+              title="Importar análise IA gerada pelo Cowork"
+              disabled={importarAnaliseCowork.isPending}
+              onClick={() => importarAnaliseCowork.mutate({ assistidoId: Number(id) })}
+            >
+              {importarAnaliseCowork.isPending
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : <Download className="h-3.5 w-3.5" />}
+              Importar
+            </Button>
+          )}
+          <div className="ml-auto">
+            <CoworkActionGroup
+              assistidoNome={data.nome}
+              numeroAutos={data.processos?.[0]?.numeroAutos ?? ""}
+              classeProcessual={(data.processos?.[0] as any)?.classeProcessual ?? ""}
+              vara={data.processos?.[0]?.vara ?? ""}
+              atribuicao={(data as any).atribuicaoPrimaria ?? ""}
+              drivePath=""
+              actions={["analise-autos", "gerar-peca", "feedback-estagiario"]}
+              size="sm"
+            />
           </div>
         </div>
       </div>
@@ -593,28 +571,30 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         }}
       />
 
-      {/* Tabs */}
-      <div className="flex gap-0 border-b border-zinc-100 dark:border-zinc-800 px-6 overflow-x-auto">
+      {/* ── Tabs ── */}
+      <div className="flex items-center gap-1 border-b border-zinc-200/80 dark:border-zinc-800 px-6 lg:px-8 overflow-x-auto">
         {tabs.map((t) => (
           <button
             key={t.key}
             type="button"
             onClick={() => handleSetTab(t.key)}
             className={cn(
-              "px-3 py-2.5 text-[11px] font-medium border-b-2 transition-colors whitespace-nowrap shrink-0",
+              "px-3.5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap shrink-0",
               tab === t.key
-                ? "border-emerald-500 text-emerald-700 dark:text-emerald-400"
-                : "border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                ? "border-emerald-500 text-zinc-900 dark:text-zinc-50"
+                : "border-transparent text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
             )}
           >
             {t.label}
             {t.count !== undefined && t.count > 0 && (
               <span className={cn(
-                "ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full",
+                "ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full font-medium",
                 t.urgency === "red"
-                  ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 animate-pulse"
+                  ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"
                   : t.urgency === "amber"
                   ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+                  : tab === t.key
+                  ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
                   : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
               )}>
                 {t.count}
@@ -628,13 +608,13 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             <button
               type="button"
               className={cn(
-                "px-3 py-2.5 text-[11px] font-medium border-b-2 transition-colors flex items-center gap-1 shrink-0",
+                "px-3 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 shrink-0",
                 overflowTabs.some(t => t.key === tab)
-                  ? "border-emerald-500 text-emerald-700 dark:text-emerald-400"
-                  : "border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  ? "border-emerald-500 text-zinc-900 dark:text-zinc-50"
+                  : "border-transparent text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
               )}
             >
-              + <ChevronDown className="h-3 w-3" />
+              Mais <ChevronDown className="h-3.5 w-3.5" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

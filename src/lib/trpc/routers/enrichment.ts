@@ -16,7 +16,7 @@ import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db } from "@/lib/db";
 import { documentos, atendimentos, demandas, driveFiles, processos, assistidos } from "@/lib/db/schema";
-import { eq, and, isNull, sql } from "drizzle-orm";
+import { eq, and, or, isNull, notInArray, sql } from "drizzle-orm";
 import {
   enrichmentClient,
   type EnrichDocumentOutput,
@@ -89,35 +89,32 @@ export const enrichmentRouter = router({
     .mutation(async ({ input, ctx }) => {
       const { documentoId } = input;
 
-      // 1. Buscar documento no banco (exclui enrichmentData e conteudoCompleto — pesados e desnecessários aqui)
+      // 1. Atomic check+update: mark as processing only if not already processing/completed
       const [doc] = await db
-        .select({
+        .update(documentos)
+        .set({ enrichmentStatus: "processing" })
+        .where(
+          and(
+            eq(documentos.id, documentoId),
+            or(
+              isNull(documentos.enrichmentStatus),
+              notInArray(documentos.enrichmentStatus, ["processing", "completed"]),
+            ),
+          ),
+        )
+        .returning({
           id: documentos.id,
-          enrichmentStatus: documentos.enrichmentStatus,
           fileUrl: documentos.fileUrl,
           mimeType: documentos.mimeType,
           assistidoId: documentos.assistidoId,
           processoId: documentos.processoId,
           casoId: documentos.casoId,
-        })
-        .from(documentos)
-        .where(eq(documentos.id, documentoId))
-        .limit(1);
+        });
 
       if (!doc) {
-        return { success: false, error: "Documento não encontrado" };
+        // Either document doesn't exist or is already processing/completed
+        return { alreadyProcessing: true, success: false, error: "Documento não encontrado ou já está sendo processado" };
       }
-
-      // 2. Verificar se já está sendo processado
-      if (doc.enrichmentStatus === "processing") {
-        return { success: false, error: "Documento já está sendo processado" };
-      }
-
-      // 3. Marcar como processing
-      await db
-        .update(documentos)
-        .set({ enrichmentStatus: "processing" })
-        .where(eq(documentos.id, documentoId));
 
       // 4. Chamar Enrichment Engine
       try {
@@ -224,13 +221,12 @@ export const enrichmentRouter = router({
     .mutation(async ({ input, ctx }) => {
       const { atendimentoId, context } = input;
 
-      // 1. Buscar atendimento (apenas campos necessários, exclui enrichmentData/pontosChave/transcricaoMetadados)
-      const [atendimento] = await db
+      // 1. Buscar atendimento first to check transcription exists
+      const [atendimentoData] = await db
         .select({
           id: atendimentos.id,
           transcricao: atendimentos.transcricao,
           resumo: atendimentos.resumo,
-          enrichmentStatus: atendimentos.enrichmentStatus,
           assistidoId: atendimentos.assistidoId,
           processoId: atendimentos.processoId,
           casoId: atendimentos.casoId,
@@ -239,26 +235,39 @@ export const enrichmentRouter = router({
         .where(eq(atendimentos.id, atendimentoId))
         .limit(1);
 
-      if (!atendimento) {
+      if (!atendimentoData) {
         return { success: false, error: "Atendimento não encontrado" };
       }
 
       // 2. Verificar se tem transcrição
-      const transcricao = atendimento.transcricao || atendimento.resumo;
+      const transcricao = atendimentoData.transcricao || atendimentoData.resumo;
       if (!transcricao) {
         return { success: false, error: "Atendimento não possui transcrição" };
       }
 
-      // 3. Verificar se já está sendo processado
-      if (atendimento.enrichmentStatus === "processing") {
-        return { success: false, error: "Atendimento já está sendo processado" };
-      }
-
-      // 4. Marcar como processing
-      await db
+      // 3. Atomic check+update: mark as processing only if not already processing/completed
+      const [atendimento] = await db
         .update(atendimentos)
         .set({ enrichmentStatus: "processing" })
-        .where(eq(atendimentos.id, atendimentoId));
+        .where(
+          and(
+            eq(atendimentos.id, atendimentoId),
+            or(
+              isNull(atendimentos.enrichmentStatus),
+              notInArray(atendimentos.enrichmentStatus, ["processing", "completed"]),
+            ),
+          ),
+        )
+        .returning({
+          id: atendimentos.id,
+          assistidoId: atendimentos.assistidoId,
+          processoId: atendimentos.processoId,
+          casoId: atendimentos.casoId,
+        });
+
+      if (!atendimento) {
+        return { alreadyProcessing: true, success: false, error: "Atendimento já está sendo processado" };
+      }
 
       // 5. Chamar Enrichment Engine
       try {

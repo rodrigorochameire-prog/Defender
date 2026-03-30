@@ -92,6 +92,7 @@ export function IntelligenceTab({
   casoId,
 }: IntelligenceTabProps) {
   const [subTab, setSubTab] = useState<SubTab>("overview");
+  const utils = trpc.useUtils();
 
   // Queries
   const isAssistido = !!assistidoId;
@@ -111,6 +112,17 @@ export function IntelligenceTab({
     { staleTime: 30_000 },
   );
 
+  function invalidateAll() {
+    if (isAssistido) {
+      utils.intelligence.getForAssistido.invalidate({ assistidoId: assistidoId! });
+    } else {
+      utils.intelligence.getForProcesso.invalidate({ processoId: processoId! });
+    }
+    utils.intelligence.getPendingEnrichments.invalidate(
+      isAssistido ? { assistidoId } : { processoId },
+    );
+  }
+
   // Mutations
   const generateAssistido =
     trpc.intelligence.generateForAssistido.useMutation({
@@ -119,8 +131,7 @@ export function IntelligenceTab({
           toast.success(
             `Analise concluida: ${result.totalPersonas} pessoas, ${result.totalFacts} fatos`,
           );
-          analysisQuery.refetch();
-          pendingQuery.refetch();
+          invalidateAll();
         } else {
           toast.error(result.error || "Erro na analise");
         }
@@ -135,8 +146,7 @@ export function IntelligenceTab({
           toast.success(
             `Analise concluida: ${result.totalPersonas} pessoas, ${result.totalFacts} fatos`,
           );
-          analysisQuery.refetch();
-          pendingQuery.refetch();
+          invalidateAll();
         } else {
           toast.error(result.error || "Erro na analise");
         }

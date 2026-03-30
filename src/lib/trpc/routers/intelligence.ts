@@ -223,65 +223,22 @@ export const intelligenceRouter = router({
       }
 
       if (input.processoId) {
-        const [enrichedDocs] = await db
-          .select({ count: count() })
-          .from(documentos)
-          .where(
-            and(
-              eq(documentos.processoId, input.processoId),
-              eq(documentos.enrichmentStatus, "enriched"),
-            ),
-          );
-
-        const [totalDocs] = await db
-          .select({ count: count() })
-          .from(documentos)
-          .where(eq(documentos.processoId, input.processoId));
-
-        // Count Drive files
-        const [driveEnriched] = await db
-          .select({ count: count() })
-          .from(driveFiles)
-          .where(
-            and(
-              eq(driveFiles.processoId, input.processoId),
-              eq(driveFiles.enrichmentStatus, "completed"),
-              eq(driveFiles.isFolder, false),
-            ),
-          );
-
-        const [driveTotal] = await db
-          .select({ count: count() })
-          .from(driveFiles)
-          .where(
-            and(
-              eq(driveFiles.processoId, input.processoId),
-              eq(driveFiles.isFolder, false),
-            ),
-          );
-
-        const [processo] = await db
-          .select({
-            analyzedAt: processos.analyzedAt,
-            analysisStatus: processos.analysisStatus,
-          })
-          .from(processos)
-          .where(eq(processos.id, input.processoId))
-          .limit(1);
-
-        let pendingCount = 0;
-        if (processo?.analyzedAt) {
-          const [pendingDocs] = await db
+        // Consolidated: 5 parallel queries instead of 5 sequential
+        const [enrichedDocsResult, totalDocsResult, driveEnrichedResult, driveTotalResult, [processo]] = await Promise.all([
+          db
             .select({ count: count() })
             .from(documentos)
             .where(
               and(
                 eq(documentos.processoId, input.processoId),
                 eq(documentos.enrichmentStatus, "enriched"),
-                sql`${documentos.enrichedAt} > ${processo.analyzedAt}`,
               ),
-            );
-          const [pendingDrive] = await db
+            ),
+          db
+            .select({ count: count() })
+            .from(documentos)
+            .where(eq(documentos.processoId, input.processoId)),
+          db
             .select({ count: count() })
             .from(driveFiles)
             .where(
@@ -289,9 +246,59 @@ export const intelligenceRouter = router({
                 eq(driveFiles.processoId, input.processoId),
                 eq(driveFiles.enrichmentStatus, "completed"),
                 eq(driveFiles.isFolder, false),
-                sql`${driveFiles.enrichedAt} > ${processo.analyzedAt}`,
               ),
-            );
+            ),
+          db
+            .select({ count: count() })
+            .from(driveFiles)
+            .where(
+              and(
+                eq(driveFiles.processoId, input.processoId),
+                eq(driveFiles.isFolder, false),
+              ),
+            ),
+          db
+            .select({
+              analyzedAt: processos.analyzedAt,
+              analysisStatus: processos.analysisStatus,
+            })
+            .from(processos)
+            .where(eq(processos.id, input.processoId))
+            .limit(1),
+        ]);
+
+        const [enrichedDocs] = enrichedDocsResult;
+        const [totalDocs] = totalDocsResult;
+        const [driveEnriched] = driveEnrichedResult;
+        const [driveTotal] = driveTotalResult;
+
+        let pendingCount = 0;
+        if (processo?.analyzedAt) {
+          const [pendingDocsResult, pendingDriveResult] = await Promise.all([
+            db
+              .select({ count: count() })
+              .from(documentos)
+              .where(
+                and(
+                  eq(documentos.processoId, input.processoId),
+                  eq(documentos.enrichmentStatus, "enriched"),
+                  sql`${documentos.enrichedAt} > ${processo.analyzedAt}`,
+                ),
+              ),
+            db
+              .select({ count: count() })
+              .from(driveFiles)
+              .where(
+                and(
+                  eq(driveFiles.processoId, input.processoId),
+                  eq(driveFiles.enrichmentStatus, "completed"),
+                  eq(driveFiles.isFolder, false),
+                  sql`${driveFiles.enrichedAt} > ${processo.analyzedAt}`,
+                ),
+              ),
+          ]);
+          const [pendingDocs] = pendingDocsResult;
+          const [pendingDrive] = pendingDriveResult;
           pendingCount = (pendingDocs?.count || 0) + (pendingDrive?.count || 0);
         } else {
           pendingCount = (enrichedDocs?.count || 0) + (driveEnriched?.count || 0);
