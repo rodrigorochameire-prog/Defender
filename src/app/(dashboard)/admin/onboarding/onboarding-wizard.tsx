@@ -48,12 +48,12 @@ export default function OnboardingWizard({ userName, userComarca, userAreas, use
   const prev = () => setStep(s => Math.max(s - 1, 1));
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-      <Card className="w-full max-w-lg bg-zinc-900 border-zinc-800 p-8">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="w-full max-w-lg bg-card border-border p-8">
         {/* Progress bar */}
         <div className="flex gap-1 mb-8">
           {Array.from({ length: totalSteps }).map((_, i) => (
-            <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i < step ? "bg-emerald-500" : "bg-zinc-800"}`} />
+            <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i < step ? "bg-emerald-500" : "bg-muted"}`} />
           ))}
         </div>
 
@@ -61,16 +61,16 @@ export default function OnboardingWizard({ userName, userComarca, userAreas, use
         {step === 1 && (
           <div className="space-y-4 text-center">
             <div className="text-4xl">&#9878;&#65039;</div>
-            <h1 className="text-xl font-bold text-zinc-100">Bem-vindo ao OMBUDS, {userName}!</h1>
-            <p className="text-zinc-400">Comarca de {userComarca}</p>
-            <p className="text-sm text-zinc-500">Vamos configurar tudo em 3 minutos.</p>
+            <h1 className="text-xl font-bold text-foreground">Bem-vindo ao OMBUDS, {userName}!</h1>
+            <p className="text-muted-foreground">Comarca de {userComarca}</p>
+            <p className="text-sm text-muted-foreground">Vamos configurar tudo em 3 minutos.</p>
           </div>
         )}
 
         {/* Step 2 — System overview */}
         {step === 2 && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-zinc-100">O que o OMBUDS faz por voce</h2>
+            <h2 className="text-lg font-bold text-foreground">O que o OMBUDS faz por voce</h2>
             <div className="space-y-3">
               {[
                 { icon: ListTodo, label: "Demandas", desc: "Suas intimacoes e prazos num kanban visual" },
@@ -82,8 +82,8 @@ export default function OnboardingWizard({ userName, userComarca, userAreas, use
                 <div key={label} className="flex gap-3 items-start">
                   <Icon className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-sm font-medium text-zinc-200">{label}</p>
-                    <p className="text-xs text-zinc-500">{desc}</p>
+                    <p className="text-sm font-medium text-foreground">{label}</p>
+                    <p className="text-xs text-muted-foreground">{desc}</p>
                   </div>
                 </div>
               ))}
@@ -94,22 +94,22 @@ export default function OnboardingWizard({ userName, userComarca, userAreas, use
         {/* Step 3 — Your areas (dynamic) */}
         {step === 3 && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-zinc-100">Seus modulos especializados</h2>
-            <p className="text-sm text-zinc-500">Baseado na sua area de atuacao, voce tem acesso a:</p>
+            <h2 className="text-lg font-bold text-foreground">Seus modulos especializados</h2>
+            <p className="text-sm text-muted-foreground">Baseado na sua area de atuacao, voce tem acesso a:</p>
             <div className="space-y-3">
               {userAreas.map(area => {
                 const info = AREA_INFO[area];
                 if (!info) return null;
                 return (
-                  <div key={area} className="flex gap-3 items-start p-3 rounded-lg bg-zinc-800/50 border border-zinc-800">
+                  <div key={area} className="flex gap-3 items-start p-3 rounded-lg bg-muted/50 border border-border">
                     <Badge className={`${info.color} text-white text-xs shrink-0`}>{info.label}</Badge>
-                    <p className="text-xs text-zinc-400">{info.desc}</p>
+                    <p className="text-xs text-muted-foreground">{info.desc}</p>
                   </div>
                 );
               })}
             </div>
             {userAreas.length === 0 && (
-              <p className="text-sm text-zinc-500">Suas areas ainda nao foram configuradas. Fale com o administrador.</p>
+              <p className="text-sm text-muted-foreground">Suas areas ainda nao foram configuradas. Fale com o administrador.</p>
             )}
           </div>
         )}
@@ -117,11 +117,11 @@ export default function OnboardingWizard({ userName, userComarca, userAreas, use
         {/* Step 4 — Link Google Drive (MOST IMPORTANT) */}
         {step === 4 && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-zinc-100">
+            <h2 className="text-lg font-bold text-foreground">
               <FolderOpen className="h-5 w-5 inline mr-2 text-emerald-500" />
               Vincular Google Drive
             </h2>
-            <p className="text-sm text-zinc-400">O Drive e o coracao do OMBUDS. Documentos, pecas, autos — tudo organizado automaticamente.</p>
+            <p className="text-sm text-muted-foreground">O Drive e o coracao do OMBUDS. Documentos, pecas, autos — tudo organizado automaticamente.</p>
 
             <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
               <div className="flex gap-2 items-start">
@@ -135,8 +135,8 @@ export default function OnboardingWizard({ userName, userComarca, userAreas, use
 
             {!gs?.googleLinked ? (
               <div className="space-y-3">
-                <p className="text-xs text-zinc-500">O que vai acontecer:</p>
-                <ol className="text-xs text-zinc-400 space-y-1 list-decimal list-inside">
+                <p className="text-xs text-muted-foreground">O que vai acontecer:</p>
+                <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
                   <li>Uma janela do Google abre</li>
                   <li>Voce autoriza o OMBUDS</li>
                   <li>Uma pasta &quot;OMBUDS&quot; e criada no seu Drive</li>
@@ -174,7 +174,7 @@ export default function OnboardingWizard({ userName, userComarca, userAreas, use
               </div>
             )}
 
-            <button onClick={next} className="text-xs text-zinc-600 hover:text-zinc-400 underline">
+            <button onClick={next} className="text-xs text-muted-foreground/50 hover:text-muted-foreground underline">
               Fazer depois nas configuracoes
             </button>
           </div>
@@ -183,14 +183,14 @@ export default function OnboardingWizard({ userName, userComarca, userAreas, use
         {/* Step 5 — Create Sheets */}
         {step === 5 && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-zinc-100">
+            <h2 className="text-lg font-bold text-foreground">
               <FileSpreadsheet className="h-5 w-5 inline mr-2 text-emerald-500" />
               Planilha de Demandas
             </h2>
-            <p className="text-sm text-zinc-400">Suas demandas espelhadas numa planilha Google. Edite em qualquer lugar — o OMBUDS sincroniza.</p>
+            <p className="text-sm text-muted-foreground">Suas demandas espelhadas numa planilha Google. Edite em qualquer lugar — o OMBUDS sincroniza.</p>
 
             {!gs?.googleLinked ? (
-              <p className="text-sm text-zinc-500">Vincule o Google primeiro (passo anterior) para criar a planilha.</p>
+              <p className="text-sm text-muted-foreground">Vincule o Google primeiro (passo anterior) para criar a planilha.</p>
             ) : gs?.sheetsSpreadsheetUrl ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
@@ -204,7 +204,7 @@ export default function OnboardingWizard({ userName, userComarca, userAreas, use
               </div>
             ) : (
               <div className="space-y-3">
-                <p className="text-xs text-zinc-500">Abas que serao criadas:</p>
+                <p className="text-xs text-muted-foreground">Abas que serao criadas:</p>
                 <div className="flex flex-wrap gap-1">
                   {userAreas.map(area => {
                     const info = AREA_INFO[area];
@@ -220,7 +220,7 @@ export default function OnboardingWizard({ userName, userComarca, userAreas, use
               </div>
             )}
 
-            <button onClick={next} className="text-xs text-zinc-600 hover:text-zinc-400 underline">
+            <button onClick={next} className="text-xs text-muted-foreground/50 hover:text-muted-foreground underline">
               Pular por agora
             </button>
           </div>
@@ -229,26 +229,26 @@ export default function OnboardingWizard({ userName, userComarca, userAreas, use
         {/* Step 6 — Plan & payment */}
         {step === 6 && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-zinc-100">
+            <h2 className="text-lg font-bold text-foreground">
               <CreditCard className="h-5 w-5 inline mr-2 text-emerald-500" />
               Plano e Pagamento
             </h2>
-            <p className="text-sm text-zinc-400">O OMBUDS funciona por assinatura mensal. Pagamento via PIX.</p>
+            <p className="text-sm text-muted-foreground">O OMBUDS funciona por assinatura mensal. Pagamento via PIX.</p>
             <div className="space-y-2 text-sm">
-              <div className="p-3 rounded-lg bg-zinc-800/50 border border-zinc-800">
-                <p className="font-medium text-zinc-200">Essencial — R$ 100/mes</p>
-                <p className="text-xs text-zinc-500">Processos, demandas, docs, agenda, Drive</p>
+              <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                <p className="font-medium text-foreground">Essencial — R$ 100/mes</p>
+                <p className="text-xs text-muted-foreground">Processos, demandas, docs, agenda, Drive</p>
               </div>
-              <div className="p-3 rounded-lg bg-zinc-800/50 border border-emerald-800/50">
-                <p className="font-medium text-zinc-200">Criminal — R$ 150/mes</p>
-                <p className="text-xs text-zinc-500">+ Modulos especializados por area</p>
+              <div className="p-3 rounded-lg bg-muted/50 border border-emerald-800/50">
+                <p className="font-medium text-foreground">Criminal — R$ 150/mes</p>
+                <p className="text-xs text-muted-foreground">+ Modulos especializados por area</p>
               </div>
-              <div className="p-3 rounded-lg bg-zinc-800/50 border border-purple-800/50">
-                <p className="font-medium text-zinc-200">Completo — R$ 200/mes</p>
-                <p className="text-xs text-zinc-500">+ Inteligencia artificial e enrichment</p>
+              <div className="p-3 rounded-lg bg-muted/50 border border-purple-800/50">
+                <p className="font-medium text-foreground">Completo — R$ 200/mes</p>
+                <p className="text-xs text-muted-foreground">+ Inteligencia artificial e enrichment</p>
               </div>
             </div>
-            <p className="text-xs text-zinc-500">Seu plano sera configurado pelo administrador. Voce pode ver e pagar em &quot;Minha Assinatura&quot; no menu.</p>
+            <p className="text-xs text-muted-foreground">Seu plano sera configurado pelo administrador. Voce pode ver e pagar em &quot;Minha Assinatura&quot; no menu.</p>
           </div>
         )}
 
@@ -256,10 +256,10 @@ export default function OnboardingWizard({ userName, userComarca, userAreas, use
         {step === 7 && (
           <div className="space-y-4 text-center">
             <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto" />
-            <h2 className="text-lg font-bold text-zinc-100">Tudo pronto!</h2>
-            <div className="text-sm text-zinc-400 space-y-2 text-left">
+            <h2 className="text-lg font-bold text-foreground">Tudo pronto!</h2>
+            <div className="text-sm text-muted-foreground space-y-2 text-left">
               <p>Dicas rapidas:</p>
-              <ul className="list-disc list-inside text-xs text-zinc-500 space-y-1">
+              <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
                 <li>Comece cadastrando seu primeiro assistido</li>
                 <li>Ou importe demandas do PJe</li>
                 <li>Duvidas? Fale com Rodrigo via WhatsApp</li>
@@ -271,7 +271,7 @@ export default function OnboardingWizard({ userName, userComarca, userAreas, use
         {/* Navigation */}
         <div className="flex justify-between mt-8">
           {step > 1 ? (
-            <Button variant="ghost" onClick={prev} className="text-zinc-400">
+            <Button variant="ghost" onClick={prev} className="text-muted-foreground">
               <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
             </Button>
           ) : <div />}

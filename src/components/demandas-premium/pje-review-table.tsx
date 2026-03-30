@@ -69,7 +69,7 @@ function getConfidenceDot(confidence: "high" | "medium" | "low") {
     case "medium":
       return "bg-amber-500";
     case "low":
-      return "bg-zinc-400";
+      return "bg-muted-foreground";
   }
 }
 
@@ -264,8 +264,8 @@ export function PjeReviewTable({
     <TooltipProvider>
       <div className="space-y-3">
         {/* Barra de resumo */}
-        <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400 px-1">
-          <span className="font-medium text-zinc-700 dark:text-zinc-300">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground px-1">
+          <span className="font-medium text-foreground/80">
             {includedCount}/{rows.length} para importar
           </span>
           <span className="flex items-center gap-1">
@@ -292,15 +292,15 @@ export function PjeReviewTable({
         <div className="flex flex-wrap items-center gap-2 px-1">
           {/* Filtros rápidos */}
           <div className="flex items-center gap-1">
-            <Filter className="w-3 h-3 text-zinc-400" />
-            <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium mr-0.5">Filtros:</span>
+            <Filter className="w-3 h-3 text-muted-foreground" />
+            <span className="text-[10px] text-muted-foreground font-medium mr-0.5">Filtros:</span>
             {/* Confiança */}
             <button
               onClick={() => setConfidenceFilter(confidenceFilter === "low" ? "all" : "low")}
               className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
                 confidenceFilter === "low"
                   ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                  : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
               Baixa confiança
@@ -311,7 +311,7 @@ export function PjeReviewTable({
               className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
                 matchFilter === "new"
                   ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                  : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
               Novos
@@ -321,8 +321,8 @@ export function PjeReviewTable({
               onClick={() => setShowExcluded(!showExcluded)}
               className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors flex items-center gap-0.5 ${
                 !showExcluded
-                  ? "bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300"
-                  : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                  ? "bg-secondary text-foreground/80"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
               {showExcluded ? <Eye className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
@@ -332,19 +332,19 @@ export function PjeReviewTable({
             {(confidenceFilter !== "all" || matchFilter !== "all" || !showExcluded) && (
               <button
                 onClick={() => { setConfidenceFilter("all"); setMatchFilter("all"); setShowExcluded(true); }}
-                className="px-1.5 py-0.5 rounded text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                className="px-1.5 py-0.5 rounded text-[10px] text-muted-foreground hover:text-foreground"
               >
                 Limpar
               </button>
             )}
           </div>
 
-          <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700 mx-1" />
+          <div className="h-4 w-px bg-border mx-1" />
 
           {/* Ações em massa */}
           <div className="flex items-center gap-1">
-            <Wand2 className="w-3 h-3 text-zinc-400" />
-            <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium mr-0.5">Lote:</span>
+            <Wand2 className="w-3 h-3 text-muted-foreground" />
+            <span className="text-[10px] text-muted-foreground font-medium mr-0.5">Lote:</span>
             {/* Bulk Ato — via InlineDropdown */}
             <InlineDropdown
               value={bulkAto}
@@ -375,7 +375,7 @@ export function PjeReviewTable({
                 <TooltipTrigger asChild>
                   <button
                     onClick={handleExcludeCiencias}
-                    className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
+                    className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
                   >
                     Excluir {cienciaCount} ciências
                   </button>
@@ -389,50 +389,50 @@ export function PjeReviewTable({
         </div>
 
         {/* Tabela */}
-        <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden">
+        <div className="border border-border rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-700">
+                <tr className="bg-muted/50 border-b border-border">
                   <th className="w-8 px-2 py-2 text-center">
                     <button
                       onClick={handleToggleAll}
-                      className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
                       title={rows.every((r) => !r.excluded) ? "Desmarcar todos" : "Marcar todos"}
                     >
                       <Check className="h-3.5 w-3.5" />
                     </button>
                   </th>
-                  <th className="w-8 px-1 py-2 text-center text-zinc-500 dark:text-zinc-400 font-medium">
+                  <th className="w-8 px-1 py-2 text-center text-muted-foreground font-medium">
                     #
                   </th>
-                  <th className="px-2 py-2 text-left text-zinc-500 dark:text-zinc-400 font-medium min-w-[160px]">
+                  <th className="px-2 py-2 text-left text-muted-foreground font-medium min-w-[160px]">
                     Assistido
                   </th>
-                  <th className="px-2 py-2 text-left text-zinc-500 dark:text-zinc-400 font-medium min-w-[140px]">
+                  <th className="px-2 py-2 text-left text-muted-foreground font-medium min-w-[140px]">
                     Processo
                   </th>
                   {showTipoProcesso && (
-                    <th className="px-2 py-2 text-left text-zinc-500 dark:text-zinc-400 font-medium min-w-[60px]">
+                    <th className="px-2 py-2 text-left text-muted-foreground font-medium min-w-[60px]">
                       Tipo
                     </th>
                   )}
-                  <th className="px-2 py-2 text-left text-zinc-500 dark:text-zinc-400 font-medium min-w-[75px]">
+                  <th className="px-2 py-2 text-left text-muted-foreground font-medium min-w-[75px]">
                     Expedição
                   </th>
-                  <th className="px-2 py-2 text-left text-zinc-500 dark:text-zinc-400 font-medium min-w-[150px]">
+                  <th className="px-2 py-2 text-left text-muted-foreground font-medium min-w-[150px]">
                     Ato
                   </th>
-                  <th className="px-2 py-2 text-left text-zinc-500 dark:text-zinc-400 font-medium min-w-[90px]">
+                  <th className="px-2 py-2 text-left text-muted-foreground font-medium min-w-[90px]">
                     Prazo
                   </th>
-                  <th className="px-2 py-2 text-left text-zinc-500 dark:text-zinc-400 font-medium min-w-[100px]">
+                  <th className="px-2 py-2 text-left text-muted-foreground font-medium min-w-[100px]">
                     Status
                   </th>
-                  <th className="px-2 py-2 text-left text-zinc-500 dark:text-zinc-400 font-medium min-w-[80px]">
+                  <th className="px-2 py-2 text-left text-muted-foreground font-medium min-w-[80px]">
                     Preso
                   </th>
-                  <th className="w-8 px-2 py-2 text-center text-zinc-500 dark:text-zinc-400 font-medium">
+                  <th className="w-8 px-2 py-2 text-center text-muted-foreground font-medium">
                     <FileText className="h-3 w-3 inline" />
                   </th>
                 </tr>
@@ -459,7 +459,7 @@ export function PjeReviewTable({
             </table>
           </div>
           {filteredRows.length === 0 && (
-            <div className="py-6 text-center text-xs text-zinc-400 dark:text-zinc-500">
+            <div className="py-6 text-center text-xs text-muted-foreground">
               Nenhuma intimação corresponde aos filtros selecionados
             </div>
           )}
@@ -527,12 +527,12 @@ function PjeReviewRowComponent({
   return (
     <>
     <tr
-      className={`border-b border-zinc-100 dark:border-zinc-800 transition-colors ${
+      className={`border-b border-border transition-colors ${
         row.excluded
-          ? "opacity-40 bg-zinc-50 dark:bg-zinc-900"
+          ? "opacity-40 bg-muted/50"
           : row.atoConfidence === "low"
           ? "bg-amber-50/40 dark:bg-amber-950/10"
-          : "hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
+          : "hover:bg-muted/50"
       }`}
     >
       {/* Checkbox */}
@@ -541,7 +541,7 @@ function PjeReviewRowComponent({
           onClick={() => onToggleExclude(index)}
           className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
             row.excluded
-              ? "border-zinc-300 dark:border-zinc-600"
+              ? "border-border"
               : "border-emerald-500 bg-emerald-500 text-white"
           }`}
         >
@@ -550,7 +550,7 @@ function PjeReviewRowComponent({
       </td>
 
       {/* Ordem */}
-      <td className="px-1 py-1.5 text-center text-zinc-400 dark:text-zinc-500 font-mono text-[10px]">
+      <td className="px-1 py-1.5 text-center text-muted-foreground font-mono text-[10px]">
         {row.ordemOriginal + 1}
       </td>
 
@@ -574,7 +574,7 @@ function PjeReviewRowComponent({
                   Similar: <strong>{row.assistidoMatch.matchedNome}</strong>
                   {row.assistidoMatch.similarity && ` — ${Math.round(row.assistidoMatch.similarity * 100)}%`}
                   <br />
-                  <span className="text-amber-400">Verificar se é a mesma pessoa</span>
+                  <span className="text-amber-600 dark:text-amber-400">Verificar se é a mesma pessoa</span>
                 </span>
               )}
               {row.assistidoMatch.type === "new" && (
@@ -582,7 +582,7 @@ function PjeReviewRowComponent({
               )}
             </TooltipContent>
           </Tooltip>
-          <span className="text-zinc-800 dark:text-zinc-200 truncate max-w-[150px]" title={row.assistidoNome}>
+          <span className="text-foreground truncate max-w-[150px]" title={row.assistidoNome}>
             {row.assistidoNome}
           </span>
         </div>
@@ -591,13 +591,13 @@ function PjeReviewRowComponent({
       {/* Processo + crime/tipoDoc como subtexto */}
       <td className="px-2 py-1.5">
         <div className="flex flex-col gap-0">
-          <span className="text-zinc-600 dark:text-zinc-400 font-mono text-[10px] truncate max-w-[130px] block" title={row.numeroProcesso}>
+          <span className="text-muted-foreground font-mono text-[10px] truncate max-w-[130px] block" title={row.numeroProcesso}>
             {row.numeroProcesso || "—"}
           </span>
           {extraInfo && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="text-[9px] text-zinc-400 dark:text-zinc-500 truncate max-w-[130px] block cursor-help flex items-center gap-0.5">
+                <span className="text-[9px] text-muted-foreground truncate max-w-[130px] block cursor-help flex items-center gap-0.5">
                   <FileText className="w-2.5 h-2.5 inline flex-shrink-0" />
                   {extraInfo}
                 </span>
@@ -619,7 +619,7 @@ function PjeReviewRowComponent({
             className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${
               row.tipoProcesso === "MPUMPCrim"
                 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                : "bg-muted text-muted-foreground"
             }`}
           >
             {row.tipoProcesso === "MPUMPCrim" ? "MPU" : "Geral"}
@@ -629,7 +629,7 @@ function PjeReviewRowComponent({
 
       {/* Data Expedição */}
       <td className="px-2 py-1.5">
-        <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono whitespace-nowrap">
+        <span className="text-[10px] text-muted-foreground font-mono whitespace-nowrap">
           {row.dataExpedicao ? row.dataExpedicao.split(" ")[0] : "—"}
         </span>
       </td>
@@ -643,7 +643,7 @@ function PjeReviewRowComponent({
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">
               Confiança: {row.atoConfidence === "high" ? "Alta" : row.atoConfidence === "medium" ? "Média" : "Baixa"}
-              {row.atoConfidence === "low" && <><br /><span className="text-amber-400">Confira manualmente</span></>}
+              {row.atoConfidence === "low" && <><br /><span className="text-amber-600 dark:text-amber-400">Confira manualmente</span></>}
             </TooltipContent>
           </Tooltip>
           <InlineDropdown
@@ -651,7 +651,7 @@ function PjeReviewRowComponent({
             compact
             showEditIcon
             displayValue={
-              <span className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate max-w-[120px] block">
+              <span className="text-[11px] text-foreground/80 truncate max-w-[120px] block">
                 {row.ato || "Selecionar"}
               </span>
             }
@@ -708,7 +708,7 @@ function PjeReviewRowComponent({
                 ? "text-red-600 dark:text-red-400"
                 : row.estadoPrisional === "monitorado"
                 ? "text-amber-600 dark:text-amber-400"
-                : "text-zinc-500 dark:text-zinc-400"
+                : "text-muted-foreground"
             }`}>
               {row.estadoPrisional === "preso"
                 ? "Preso"
@@ -731,8 +731,8 @@ function PjeReviewRowComponent({
           title={row.providencias?.trim() ? "Ver/editar providências" : "Adicionar providências"}
           className={`transition-colors rounded p-0.5 ${
             row.providencias?.trim()
-              ? "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
-              : "text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400"
+              ? "text-emerald-700 dark:text-emerald-400 hover:text-emerald-700"
+              : "text-muted-foreground/50 hover:text-muted-foreground"
           }`}
         >
           <FileText className="h-3.5 w-3.5" />
@@ -744,10 +744,10 @@ function PjeReviewRowComponent({
       <tr className={row.excluded ? "opacity-40" : ""}>
         <td
           colSpan={showTipoProcesso ? 11 : 10}
-          className="px-3 pb-2 pt-0 bg-zinc-50/70 dark:bg-zinc-800/30"
+          className="px-3 pb-2 pt-0 bg-muted/50"
         >
           <div className="flex items-start gap-2">
-            <FileText className="h-3 w-3 text-zinc-400 mt-1.5 flex-shrink-0" />
+            <FileText className="h-3 w-3 text-muted-foreground mt-1.5 flex-shrink-0" />
             <textarea
               autoFocus
               value={provDraft}
@@ -767,7 +767,7 @@ function PjeReviewRowComponent({
                 }
               }}
               placeholder="Providências para esta demanda..."
-              className="flex-1 text-xs bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 outline-none resize-none w-full"
+              className="flex-1 text-xs bg-background border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 outline-none resize-none w-full"
             />
           </div>
         </td>

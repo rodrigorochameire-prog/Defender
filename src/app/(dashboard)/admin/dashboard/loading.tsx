@@ -3,9 +3,9 @@ import { Card } from "@/components/ui/card";
 
 export default function DashboardLoading() {
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-background">
       {/* Header — Premium hero-style */}
-      <div className="relative px-4 sm:px-5 md:px-8 py-5 sm:py-6 md:py-8 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
+      <div className="relative px-4 sm:px-5 md:px-8 py-5 sm:py-6 md:py-8 bg-card border-b border-border overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/40 via-transparent to-transparent dark:from-emerald-950/20 dark:via-transparent pointer-events-none" />
         <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-3 sm:gap-4">
@@ -24,7 +24,7 @@ export default function DashboardLoading() {
         {/* Quick Register Card */}
         <Card className="rounded-2xl overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500" />
-          <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60 flex items-center gap-3">
+          <div className="px-5 py-4 border-b border-border flex items-center gap-3">
             <Skeleton className="w-9 h-9 rounded-xl" />
             <div className="space-y-1.5">
               <Skeleton className="h-4 w-32" />
@@ -56,7 +56,7 @@ export default function DashboardLoading() {
             <div className="w-1.5 h-5 rounded-full bg-emerald-500" />
             <Skeleton className="h-3 w-16" />
           </div>
-          <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm">
+          <div className="flex items-center gap-2.5 px-4 py-2.5 bg-card rounded-xl border border-border shadow-sm">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="flex items-center gap-1.5 px-2.5 py-1">
                 <Skeleton className="w-3.5 h-3.5 rounded" />
@@ -78,7 +78,7 @@ export default function DashboardLoading() {
           <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
             {/* Prazos Card */}
             <Card className="rounded-2xl overflow-hidden">
-              <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
+              <div className="px-5 py-4 border-b border-border">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <Skeleton className="w-8 h-8 rounded-lg" />
@@ -97,7 +97,7 @@ export default function DashboardLoading() {
 
             {/* Audiencias Card */}
             <Card className="rounded-2xl overflow-hidden">
-              <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
+              <div className="px-5 py-4 border-b border-border">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <Skeleton className="w-8 h-8 rounded-lg" />

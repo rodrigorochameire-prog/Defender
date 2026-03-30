@@ -64,7 +64,7 @@ function getTipoIcon(tipo: string, cor: string | null) {
     case "note":
       return <StickyNote className="h-3.5 w-3.5 shrink-0 text-blue-500" />;
     default:
-      return <Highlighter className="h-3.5 w-3.5 shrink-0 text-zinc-400" />;
+      return <Highlighter className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
   }
 }
 
@@ -122,7 +122,7 @@ export function DestaquesSheet({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[400px] sm:max-w-[400px] p-0 flex flex-col">
-        <SheetHeader className="px-4 pt-4 pb-3 border-b border-zinc-200 dark:border-zinc-800">
+        <SheetHeader className="px-4 pt-4 pb-3 border-b border-zinc-200 dark:border-border">
           <SheetTitle className="flex items-center gap-2 text-base">
             <Bookmark className="h-4 w-4 text-emerald-600" />
             Meus Destaques
@@ -167,11 +167,11 @@ export function DestaquesSheet({
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full py-16 px-6 text-center">
-              <Bookmark className="h-10 w-10 text-zinc-300 dark:text-zinc-600 mb-3" />
-              <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              <Bookmark className="h-10 w-10 text-muted-foreground/50 mb-3" />
+              <p className="text-sm font-medium text-muted-foreground">
                 Nenhum destaque encontrado
               </p>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Selecione textos nos artigos para criar destaques, notas e favoritos.
               </p>
             </div>
@@ -181,11 +181,11 @@ export function DestaquesSheet({
                 const lei = leiMap.get(leiId);
                 return (
                   <div key={leiId}>
-                    <div className="sticky top-0 z-10 bg-zinc-50 dark:bg-zinc-900 px-4 py-1.5 border-b border-zinc-100 dark:border-zinc-800">
-                      <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                    <div className="sticky top-0 z-10 bg-zinc-50 dark:bg-card px-4 py-1.5 border-b border-zinc-100 dark:border-border">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                         {lei?.nomeAbreviado ?? leiId}
                         {lei && (
-                          <span className="ml-1.5 font-normal normal-case tracking-normal text-zinc-400 dark:text-zinc-500">
+                          <span className="ml-1.5 font-normal normal-case tracking-normal text-muted-foreground">
                             - {lei.nome}
                           </span>
                         )}
@@ -200,8 +200,8 @@ export function DestaquesSheet({
                           onClick={() => onNavigate(item.leiId, item.artigoId)}
                           className={cn(
                             "group w-full text-left px-4 py-2.5 flex items-start gap-2.5",
-                            "hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors",
-                            "border-b border-zinc-100 dark:border-zinc-800/50 last:border-b-0"
+                            "hover:bg-zinc-100 dark:hover:bg-muted/50 transition-colors",
+                            "border-b border-zinc-100 dark:border-border/50 last:border-b-0"
                           )}
                         >
                           <div className="mt-0.5">
@@ -213,7 +213,7 @@ export function DestaquesSheet({
                               Art. {item.artigoId.replace(/^art-/, "")}
                             </span>
                             {preview && (
-                              <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5 leading-relaxed">
+                              <p className="text-xs text-zinc-600 dark:text-muted-foreground line-clamp-2 mt-0.5 leading-relaxed">
                                 {preview}
                               </p>
                             )}
@@ -224,7 +224,7 @@ export function DestaquesSheet({
                             size="icon"
                             className={cn(
                               "h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity",
-                              "text-zinc-400 hover:text-red-500"
+                              "text-muted-foreground hover:text-red-500"
                             )}
                             onClick={(e) => handleDelete(item.id, e)}
                             disabled={deleteMutation.isPending}

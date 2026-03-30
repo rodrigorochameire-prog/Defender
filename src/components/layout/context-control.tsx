@@ -56,12 +56,12 @@ interface ContextControlProps {
 // Filtros de atribuição removidos - agora gerenciados via menu Especialidades na sidebar
 
 const WORKSPACES_ESPECIAIS = [
-  { id: null as WorkspaceEspecial, nome: "Principal", icon: Briefcase, cor: "text-zinc-500" },
-  { id: "SUBSTITUICAO_CRIMINAL" as WorkspaceEspecial, nome: "Subst. Criminal", icon: RefreshCw, cor: "text-zinc-500" },
-  { id: "GRUPO_JURI" as WorkspaceEspecial, nome: "Grupo Juri", icon: Award, cor: "text-zinc-500" },
-  { id: "CURADORIA" as WorkspaceEspecial, nome: "Curadoria", icon: UserCheck, cor: "text-zinc-500" },
-  { id: "PETICIONAMENTO" as WorkspaceEspecial, nome: "Peticionamento", icon: FileText, cor: "text-zinc-500" },
-  { id: "SUBSTITUICAO_CIVEL" as WorkspaceEspecial, nome: "Subst. Civel", icon: Scale, cor: "text-zinc-500" },
+  { id: null as WorkspaceEspecial, nome: "Principal", icon: Briefcase, cor: "text-muted-foreground" },
+  { id: "SUBSTITUICAO_CRIMINAL" as WorkspaceEspecial, nome: "Subst. Criminal", icon: RefreshCw, cor: "text-muted-foreground" },
+  { id: "GRUPO_JURI" as WorkspaceEspecial, nome: "Grupo Juri", icon: Award, cor: "text-muted-foreground" },
+  { id: "CURADORIA" as WorkspaceEspecial, nome: "Curadoria", icon: UserCheck, cor: "text-muted-foreground" },
+  { id: "PETICIONAMENTO" as WorkspaceEspecial, nome: "Peticionamento", icon: FileText, cor: "text-muted-foreground" },
+  { id: "SUBSTITUICAO_CIVEL" as WorkspaceEspecial, nome: "Subst. Civel", icon: Scale, cor: "text-muted-foreground" },
 ];
 
 // ==========================================
@@ -368,13 +368,13 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
             {/* Info */}
             <div className="flex-1 min-w-0 text-left">
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold text-zinc-800 dark:text-zinc-100 truncate">
+                <span className="text-[11px] font-bold text-foreground truncate">
                   {defensorAtual.nome}
                 </span>
                 {isCriminalGeral && (
                   <>
-                    <span className="text-[10px] text-zinc-500">|</span>
-                    <div className="flex items-center gap-0.5 text-zinc-400">
+                    <span className="text-[10px] text-muted-foreground">|</span>
+                    <div className="flex items-center gap-0.5 text-muted-foreground">
                       <Building2 className="w-3 h-3" />
                       <span className="text-[10px] font-semibold">Vara Criminal</span>
                     </div>
@@ -384,7 +384,7 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
               {workspace && (
                 <div className="flex items-center gap-1 mt-0.5">
                   <workspaceAtual.icon className={cn("w-2.5 h-2.5", workspaceAtual.cor)} />
-                  <span className="text-[9px] text-zinc-400 truncate">
+                  <span className="text-[9px] text-muted-foreground truncate">
                     {workspaceAtual.nome}
                   </span>
                 </div>
@@ -393,8 +393,8 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
 
             {/* Chevron */}
             <Settings2 className={cn(
-              "w-4 h-4 text-zinc-400 dark:text-zinc-500 transition-all duration-200 flex-shrink-0",
-              "group-hover:text-zinc-600 dark:group-hover:text-zinc-300",
+              "w-4 h-4 text-muted-foreground transition-all duration-200 flex-shrink-0",
+              "group-hover:text-foreground",
               open && "rotate-90"
             )} />
           </button>
@@ -499,7 +499,7 @@ function ContextPopoverContent({
                 "text-[10px] leading-tight",
                 defensor === d.id
                   ? "font-semibold text-emerald-300"
-                  : "font-medium text-zinc-400"
+                  : "font-medium text-muted-foreground"
               )}>
                 {d.nomeCurto.split(' ').slice(0, 2).join(' ')}
               </p>
@@ -520,11 +520,11 @@ function ContextPopoverContent({
           >
             <Eye className={cn(
               "w-5 h-5",
-              defensor === geralOption.id ? "text-emerald-400" : "text-zinc-400"
+              defensor === geralOption.id ? "text-emerald-400" : "text-muted-foreground"
             )} />
             <p className={cn(
               "text-sm font-semibold",
-              defensor === geralOption.id ? "text-emerald-300" : "text-zinc-300"
+              defensor === geralOption.id ? "text-emerald-300" : "text-foreground/80"
             )}>
               Visão Geral
             </p>
@@ -535,11 +535,11 @@ function ContextPopoverContent({
         {varasCriminaisDefensores.length > 0 && (
           <Collapsible className="mt-3">
             <CollapsibleTrigger className="w-full pt-2 border-t border-white/[0.06] flex items-center justify-between group">
-              <p className="text-[9px] font-medium text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+              <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                 <Settings2 className="w-3 h-3" />
                 Modo Admin
               </p>
-              <ChevronRight className="w-3 h-3 text-zinc-500 transition-transform group-data-[state=open]:rotate-90" />
+              <ChevronRight className="w-3 h-3 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-2">
               <div className="flex gap-2">
@@ -560,7 +560,7 @@ function ContextPopoverContent({
                     )}>
                       {d.inicial}
                     </div>
-                    <p className="text-[9px] font-medium text-zinc-400 truncate">
+                    <p className="text-[9px] font-medium text-muted-foreground truncate">
                       {d.nomeCurto}
                     </p>
                   </button>
@@ -576,12 +576,12 @@ function ContextPopoverContent({
       <div className="p-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Eye className="w-4 h-4 text-zinc-400" />
+            <Eye className="w-4 h-4 text-muted-foreground" />
             <div>
-              <p className="text-xs font-medium text-zinc-200">
+              <p className="text-xs font-medium text-foreground">
                 Visao Integrada
               </p>
-              <p className="text-[10px] text-zinc-500">
+              <p className="text-[10px] text-muted-foreground">
                 Incluir todos os registros
               </p>
             </div>

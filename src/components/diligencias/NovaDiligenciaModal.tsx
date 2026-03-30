@@ -182,7 +182,7 @@ export function NovaDiligenciaModal({
                   )}>
                     <Icon className={cn("w-5 h-5", `text-${cat.cor}-600 dark:text-${cat.cor}-400`)} />
                   </div>
-                  <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                  <span className="text-xs font-medium text-foreground/80">
                     {cat.label}
                   </span>
                 </button>
@@ -266,7 +266,7 @@ export function NovaDiligenciaModal({
                   {selectedChecklist.map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center gap-2 p-2 rounded-lg bg-zinc-50 dark:bg-zinc-900"
+                      className="flex items-center gap-2 p-2 rounded-lg bg-muted/50"
                     >
                       <span className="flex-1 text-sm">{item}</span>
                       <Button

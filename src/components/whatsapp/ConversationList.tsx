@@ -102,7 +102,7 @@ const TAG_LABELS: Record<string, string> = {
 const PREDEFINED_TAGS = ["urgente", "aguardando_documento", "informativo", "juri", "execucao", "diligencia"];
 
 function getTagColor(tag: string) {
-  return TAG_COLORS[tag] || { bg: "bg-zinc-100 dark:bg-zinc-800", text: "text-zinc-600 dark:text-zinc-400", dot: "bg-zinc-400" };
+  return TAG_COLORS[tag] || { bg: "bg-zinc-100 dark:bg-muted", text: "text-zinc-600 dark:text-muted-foreground", dot: "bg-zinc-400" };
 }
 
 function getTagLabel(tag: string) {
@@ -324,7 +324,7 @@ export function ConversationList({
   /** Renders the contact relation icon badge */
   const renderRelationIcon = (relation: string | null | undefined) => {
     if (!relation || relation === "proprio") return null;
-    const iconClass = "h-3 w-3 text-zinc-400 dark:text-zinc-500 shrink-0";
+    const iconClass = "h-3 w-3 text-zinc-400 dark:text-muted-foreground shrink-0";
     switch (relation) {
       case "familiar":
         return <Users className={iconClass} />;
@@ -340,12 +340,12 @@ export function ConversationList({
       {/* Search + New Contact */}
       <div className="mx-3 mt-3 mb-2 flex items-center gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 dark:text-muted-foreground" />
           <Input
             placeholder="Buscar conversas..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 h-8 text-xs rounded-xl border-zinc-200/50 dark:border-zinc-800/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-emerald-500/30"
+            className="pl-8 h-8 text-xs rounded-xl border-zinc-200/50 dark:border-border/50 placeholder:text-zinc-400 dark:placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-emerald-500/30"
             style={{ backgroundColor: 'var(--wa-bg-input)', color: 'var(--wa-text-primary)' }}
           />
         </div>
@@ -360,7 +360,7 @@ export function ConversationList({
                 "h-8 w-8 shrink-0 relative",
                 selectedTag
                   ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
-                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  : "text-zinc-500 dark:text-muted-foreground hover:text-zinc-900 dark:hover:text-foreground hover:bg-zinc-100 dark:hover:bg-muted"
               )}
             >
               <Tag className="h-4 w-4" />
@@ -371,7 +371,7 @@ export function ConversationList({
           </PopoverTrigger>
           <PopoverContent align="start" className="w-56 p-2">
             <div className="space-y-1">
-              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 px-2 py-1">
+              <p className="text-xs font-medium text-zinc-500 dark:text-muted-foreground px-2 py-1">
                 Filtrar por tag
               </p>
               {/* Predefined tags */}
@@ -388,16 +388,16 @@ export function ConversationList({
                     className={cn(
                       "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors",
                       selectedTag === tag
-                        ? "bg-zinc-100 dark:bg-zinc-800"
-                        : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                        ? "bg-zinc-100 dark:bg-muted"
+                        : "hover:bg-zinc-50 dark:hover:bg-muted/50"
                     )}
                   >
                     <span className={cn("h-2 w-2 rounded-full shrink-0", color.dot)} />
-                    <span className="flex-1 text-left text-zinc-700 dark:text-zinc-300">
+                    <span className="flex-1 text-left text-zinc-700 dark:text-foreground/80">
                       {getTagLabel(tag)}
                     </span>
                     {dynamicTag && (
-                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                      <span className="text-[10px] text-zinc-400 dark:text-muted-foreground">
                         {dynamicTag.count}
                       </span>
                     )}
@@ -419,15 +419,15 @@ export function ConversationList({
                       className={cn(
                         "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors",
                         selectedTag === tag
-                          ? "bg-zinc-100 dark:bg-zinc-800"
-                          : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                          ? "bg-zinc-100 dark:bg-muted"
+                          : "hover:bg-zinc-50 dark:hover:bg-muted/50"
                       )}
                     >
                       <span className={cn("h-2 w-2 rounded-full shrink-0", color.dot)} />
-                      <span className="flex-1 text-left text-zinc-700 dark:text-zinc-300">
+                      <span className="flex-1 text-left text-zinc-700 dark:text-foreground/80">
                         {getTagLabel(tag)}
                       </span>
-                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                      <span className="text-[10px] text-zinc-400 dark:text-muted-foreground">
                         {count}
                       </span>
                     </button>
@@ -436,13 +436,13 @@ export function ConversationList({
               {/* Clear filter */}
               {selectedTag && (
                 <>
-                  <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
+                  <div className="border-t border-zinc-100 dark:border-border my-1" />
                   <button
                     onClick={() => {
                       onTagFilterChange?.(null);
                       setTagPopoverOpen(false);
                     }}
-                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-zinc-500 dark:text-muted-foreground hover:bg-zinc-50 dark:hover:bg-muted/50 transition-colors"
                   >
                     <X className="h-3 w-3" />
                     Limpar filtro
@@ -458,17 +458,17 @@ export function ConversationList({
             <Button
               size="icon"
               variant="ghost"
-              className="h-8 w-8 shrink-0 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              className="h-8 w-8 shrink-0 text-zinc-500 dark:text-muted-foreground hover:text-zinc-900 dark:hover:text-foreground hover:bg-zinc-100 dark:hover:bg-muted"
             >
               <Plus className="h-4 w-4" />
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-zinc-900 dark:text-zinc-100">
+              <DialogTitle className="text-zinc-900 dark:text-foreground">
                 Nova Conversa
               </DialogTitle>
-              <DialogDescription className="text-zinc-500 dark:text-zinc-400">
+              <DialogDescription className="text-zinc-500 dark:text-muted-foreground">
                 Inicie uma conversa com um novo numero de WhatsApp
               </DialogDescription>
             </DialogHeader>
@@ -476,12 +476,12 @@ export function ConversationList({
               <div className="grid gap-2">
                 <Label
                   htmlFor="phone"
-                  className="text-zinc-700 dark:text-zinc-300"
+                  className="text-zinc-700 dark:text-foreground/80"
                 >
                   Telefone
                 </Label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-muted-foreground" />
                   <Input
                     id="phone"
                     placeholder="(11) 99999-9999"
@@ -490,14 +490,14 @@ export function ConversationList({
                     className="pl-10 font-mono"
                   />
                 </div>
-                <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+                <p className="text-[11px] text-zinc-400 dark:text-muted-foreground">
                   Digite apenas numeros ou use o formato com DDD
                 </p>
               </div>
               <div className="grid gap-2">
                 <Label
                   htmlFor="name"
-                  className="text-zinc-700 dark:text-zinc-300"
+                  className="text-zinc-700 dark:text-foreground/80"
                 >
                   Nome (opcional)
                 </Label>
@@ -513,7 +513,7 @@ export function ConversationList({
               <Button
                 variant="outline"
                 onClick={() => setIsNewContactOpen(false)}
-                className="text-zinc-600 dark:text-zinc-400"
+                className="text-zinc-600 dark:text-muted-foreground"
               >
                 Cancelar
               </Button>
@@ -555,18 +555,18 @@ export function ConversationList({
       <ScrollArea className="flex-1">
         {isLoading ? (
           <div className="flex items-center justify-center h-32">
-            <Loader2 className="h-5 w-5 animate-spin text-zinc-400 dark:text-zinc-500" />
+            <Loader2 className="h-5 w-5 animate-spin text-zinc-400 dark:text-muted-foreground" />
           </div>
         ) : filteredContacts.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 gap-3 px-6 text-center">
-            <div className="h-12 w-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-              <Search className="h-5 w-5 text-zinc-300 dark:text-zinc-600" />
+            <div className="h-12 w-12 rounded-full bg-zinc-100 dark:bg-muted flex items-center justify-center">
+              <Search className="h-5 w-5 text-zinc-300 dark:text-muted-foreground/50" />
             </div>
             <div>
-              <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              <p className="text-sm font-medium text-zinc-500 dark:text-muted-foreground">
                 Nenhuma conversa ainda
               </p>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 leading-relaxed">
+              <p className="text-xs text-zinc-400 dark:text-muted-foreground mt-1 leading-relaxed">
                 As conversas aparecerão aqui quando mensagens forem enviadas ou recebidas pelo número do WhatsApp
               </p>
             </div>

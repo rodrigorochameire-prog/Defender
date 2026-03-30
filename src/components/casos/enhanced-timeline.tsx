@@ -34,8 +34,8 @@ export function EnhancedTimeline({ events }: { events: TimelineEvent[] }) {
   if (events.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Clock className="w-12 h-12 text-stone-300 dark:text-zinc-700 mb-3" />
-        <p className="text-sm text-stone-500 dark:text-zinc-400">
+        <Clock className="w-12 h-12 text-stone-300 dark:text-border mb-3" />
+        <p className="text-sm text-stone-500 dark:text-muted-foreground">
           Nenhum evento registrado ainda
         </p>
       </div>
@@ -43,7 +43,7 @@ export function EnhancedTimeline({ events }: { events: TimelineEvent[] }) {
   }
 
   return (
-    <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-stone-200 dark:before:via-zinc-800 before:to-transparent">
+    <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-stone-200 dark:before:via-border before:to-transparent">
       {events.map((event, index) => (
         <div 
           key={event.id} 
@@ -56,18 +56,18 @@ export function EnhancedTimeline({ events }: { events: TimelineEvent[] }) {
             "md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2",
             event.status === 'alert' ? "bg-red-100 dark:bg-red-950" : 
             event.status === 'completed' ? "bg-emerald-100 dark:bg-emerald-950" :
-            "bg-stone-100 dark:bg-zinc-900"
+            "bg-stone-100 dark:bg-card"
           )}>
             {event.status === 'alert' ? <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400"/> : 
              event.status === 'completed' ? <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400"/> :
-             <Gavel className="w-5 h-5 text-stone-500 dark:text-zinc-400"/>}
+             <Gavel className="w-5 h-5 text-stone-500 dark:text-muted-foreground"/>}
           </div>
 
           {/* Cartão do Evento */}
-          <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white dark:bg-zinc-900 p-4 rounded-xl border border-stone-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-all duration-200">
+          <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white dark:bg-card p-4 rounded-xl border border-stone-200 dark:border-border shadow-sm hover:shadow-md transition-all duration-200">
             
             {/* Contexto Superior (Processo + Assistido) - O DIFERENCIAL */}
-            <div className="flex flex-wrap gap-2 mb-3 pb-2 border-b border-stone-100 dark:border-zinc-800">
+            <div className="flex flex-wrap gap-2 mb-3 pb-2 border-b border-stone-100 dark:border-border">
               {/* Tag do Processo */}
               <Badge 
                 variant="outline" 
@@ -83,7 +83,7 @@ export function EnhancedTimeline({ events }: { events: TimelineEvent[] }) {
               {/* Tag do Assistido */}
               <Badge 
                 variant="outline" 
-                className="text-[10px] font-medium bg-stone-100 dark:bg-zinc-800 text-stone-600 dark:text-zinc-400 border-stone-200 dark:border-zinc-700"
+                className="text-[10px] font-medium bg-stone-100 dark:bg-muted text-stone-600 dark:text-muted-foreground border-stone-200 dark:border-border"
               >
                 <User className="w-3 h-3 mr-1" />
                 {event.assistido}
@@ -95,19 +95,19 @@ export function EnhancedTimeline({ events }: { events: TimelineEvent[] }) {
               <h3 className="font-serif font-semibold text-stone-800 dark:text-stone-200 text-base leading-tight">
                 {event.title}
               </h3>
-              <time className="font-mono text-xs text-stone-400 dark:text-zinc-500 flex-shrink-0 flex items-center gap-1">
+              <time className="font-mono text-xs text-stone-400 dark:text-muted-foreground flex-shrink-0 flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
                 {format(event.date, "dd/MM/yyyy", { locale: ptBR })}
               </time>
             </div>
             
-            <p className="text-sm text-stone-600 dark:text-zinc-400 leading-relaxed">
+            <p className="text-sm text-stone-600 dark:text-muted-foreground leading-relaxed">
               {event.description}
             </p>
 
             {/* Footer com horário */}
-            <div className="mt-3 pt-2 border-t border-stone-100 dark:border-zinc-800">
-              <span className="text-xs text-stone-400 dark:text-zinc-500 font-mono">
+            <div className="mt-3 pt-2 border-t border-stone-100 dark:border-border">
+              <span className="text-xs text-stone-400 dark:text-muted-foreground font-mono">
                 {format(event.date, "HH:mm", { locale: ptBR })}
               </span>
             </div>
@@ -125,11 +125,11 @@ export function TimelineGroup({ title, events }: { title: string; events: Timeli
   return (
     <div className="mb-8">
       <div className="mb-4 flex items-center gap-3">
-        <div className="h-px flex-1 bg-stone-200 dark:bg-zinc-800" />
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-stone-500 dark:text-zinc-400">
+        <div className="h-px flex-1 bg-stone-200 dark:bg-border" />
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-stone-500 dark:text-muted-foreground">
           {title}
         </h3>
-        <div className="h-px flex-1 bg-stone-200 dark:bg-zinc-800" />
+        <div className="h-px flex-1 bg-stone-200 dark:bg-border" />
       </div>
       <EnhancedTimeline events={events} />
     </div>

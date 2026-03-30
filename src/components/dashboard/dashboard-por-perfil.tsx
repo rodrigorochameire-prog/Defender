@@ -98,32 +98,32 @@ function StatCard({
     blue: "text-blue-600 dark:text-blue-400",
     rose: "text-rose-600 dark:text-rose-400",
     violet: "text-violet-600 dark:text-violet-400",
-    zinc: "text-zinc-500 dark:text-zinc-400",
+    zinc: "text-zinc-500 dark:text-muted-foreground",
   };
 
   const content = (
-    <div className={`group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 ${colors[color]} transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-${color}-500/[0.03]`}>
+    <div className={`group relative p-4 rounded-xl bg-white dark:bg-card border border-zinc-100 dark:border-border ${colors[color]} transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-${color}-500/[0.03]`}>
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-${color}-500/0 to-transparent group-hover:via-${color}-500/30 transition-all duration-300 rounded-t-xl" />
       
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0 space-y-1">
-          <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">
+          <p className="text-[10px] font-medium text-zinc-400 dark:text-foreground0 truncate uppercase tracking-wide">
             {title}
           </p>
           {loading ? (
             <Skeleton className="h-7 w-14" />
           ) : (
-            <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">
+            <p className="text-xl font-semibold text-zinc-700 dark:text-foreground/80">
               {value}
             </p>
           )}
           {subtitle && (
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+            <p className="text-[10px] text-zinc-400 dark:text-foreground0">
               {subtitle}
             </p>
           )}
         </div>
-        <div className={`w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 border border-zinc-200 dark:border-zinc-700 group-hover:bg-${color}-50 dark:group-hover:bg-${color}-900/20 transition-all duration-300`}>
+        <div className={`w-9 h-9 rounded-lg bg-zinc-100 dark:bg-muted flex items-center justify-center flex-shrink-0 border border-zinc-200 dark:border-border group-hover:bg-${color}-50 dark:group-hover:bg-${color}-900/20 transition-all duration-300`}>
           <Icon className={`w-4 h-4 ${iconColors[color]} transition-colors duration-300`} />
         </div>
       </div>
@@ -145,14 +145,14 @@ function DelegacaoCard({ delegacao }: { delegacao: any }) {
     : null;
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg border border-zinc-100 dark:border-zinc-800 hover:border-amber-200 dark:hover:border-amber-800/50 transition-colors">
+    <div className="flex items-center gap-3 p-3 rounded-lg border border-zinc-100 dark:border-border hover:border-amber-200 dark:hover:border-amber-800/50 transition-colors">
       <div className={`w-2 h-10 rounded-full ${
         delegacao.status === "pendente" ? "bg-amber-500" :
         delegacao.status === "em_andamento" ? "bg-blue-500" :
         "bg-emerald-500"
       }`} />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+        <p className="text-sm font-medium text-zinc-800 dark:text-foreground truncate">
           {delegacao.titulo || delegacao.instrucoes?.slice(0, 50) || "Tarefa delegada"}
         </p>
         <div className="flex items-center gap-2 text-[10px] text-zinc-500 mt-0.5">
@@ -206,17 +206,17 @@ function DashboardEstagiario({
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
       {/* Header Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-foreground tracking-tight">
                 Olá, {userName || "Estagiário(a)"}!
               </h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-zinc-500 dark:text-muted-foreground">
                 Vinculado(a) a {supervisorName || "Defensor"} • {delegacoesPendentes} tarefas pendentes
               </p>
             </div>
@@ -228,37 +228,37 @@ function DashboardEstagiario({
       <div className="p-4 md:p-6 space-y-6">
         {/* Stats Cards - Padrão Defender */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all">
+          <Card className="group relative p-5 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-2xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center shadow-md shadow-amber-500/30">
                 <ClipboardList className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{delegacoesPendentes}</p>
+                <p className="text-3xl font-bold text-zinc-900 dark:text-foreground tracking-tighter">{delegacoesPendentes}</p>
                 <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Pendentes</p>
               </div>
             </div>
           </Card>
 
-          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all">
+          <Card className="group relative p-5 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-2xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center shadow-md shadow-blue-500/30">
                 <RefreshCw className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{delegacoesEmAndamento}</p>
+                <p className="text-3xl font-bold text-zinc-900 dark:text-foreground tracking-tighter">{delegacoesEmAndamento}</p>
                 <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Andamento</p>
               </div>
             </div>
           </Card>
 
-          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all">
+          <Card className="group relative p-5 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-2xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center shadow-md shadow-emerald-500/30">
                 <CheckCircle2 className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{delegacoesConcluidas}</p>
+                <p className="text-3xl font-bold text-zinc-900 dark:text-foreground tracking-tighter">{delegacoesConcluidas}</p>
                 <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Concluídas</p>
               </div>
             </div>
@@ -266,24 +266,24 @@ function DashboardEstagiario({
 
           <Card className="group relative p-5 bg-zinc-900 dark:bg-white border-zinc-800 dark:border-zinc-200 rounded-2xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-md">
+              <div className="w-12 h-12 rounded-xl bg-white dark:bg-card flex items-center justify-center shadow-md">
                 <TrendingUp className="w-5 h-5 text-zinc-900 dark:text-white" />
               </div>
               <div>
                 <p className="text-3xl font-bold text-white dark:text-zinc-900 tracking-tighter">{taxaConclusao}%</p>
-                <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Performance</p>
+                <p className="text-[11px] font-semibold text-zinc-400 dark:text-foreground0 uppercase tracking-widest">Performance</p>
               </div>
             </div>
           </Card>
         </div>
 
         {/* Tarefas Delegadas */}
-        <Card className="bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+        <Card className="bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-zinc-100 dark:border-border bg-zinc-50/50 dark:bg-card/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ListTodo className="w-4 h-4 text-amber-500" />
-                <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                <h3 className="text-sm font-semibold text-zinc-800 dark:text-foreground">
                   Minhas Tarefas
                 </h3>
                 <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[9px]">
@@ -302,7 +302,7 @@ function DashboardEstagiario({
             ) : delegacoes.length === 0 ? (
               <div className="text-center py-12">
                 <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-emerald-500" />
-                <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                <p className="text-sm font-semibold text-zinc-700 dark:text-foreground/80">
                   Nenhuma tarefa pendente
                 </p>
                 <p className="text-xs text-zinc-500 mt-1">
@@ -323,38 +323,38 @@ function DashboardEstagiario({
         {/* Grid de acesso rápido */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Link href="/admin/assistidos">
-            <Card className="p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Assistidos</p>
+              <p className="text-sm font-semibold text-zinc-800 dark:text-foreground">Assistidos</p>
               <p className="text-[10px] text-zinc-500">{assistidos.length} cadastrados</p>
             </Card>
           </Link>
           <Link href="/admin/processos">
-            <Card className="p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <Scale className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
-              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Processos</p>
+              <p className="text-sm font-semibold text-zinc-800 dark:text-foreground">Processos</p>
               <p className="text-[10px] text-zinc-500">Consultar</p>
             </Card>
           </Link>
           <Link href="/admin/drive">
-            <Card className="p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <FolderOpen className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
-              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Drive</p>
+              <p className="text-sm font-semibold text-zinc-800 dark:text-foreground">Drive</p>
               <p className="text-[10px] text-zinc-500">Documentos</p>
             </Card>
           </Link>
           <Link href="/admin/juri">
-            <Card className="p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <Gavel className="w-5 h-5 text-violet-600 dark:text-violet-400" />
               </div>
-              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Júri</p>
+              <p className="text-sm font-semibold text-zinc-800 dark:text-foreground">Júri</p>
               <p className="text-[10px] text-zinc-500">Preparação</p>
             </Card>
           </Link>
@@ -386,17 +386,17 @@ function DashboardServidor({
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
       {/* Header Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
               <Briefcase className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-foreground tracking-tight">
                 Olá, {userName || "Servidor(a)"}!
               </h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-zinc-500 dark:text-muted-foreground">
                 Painel Administrativo • {delegacoesPendentes} tarefas pendentes
               </p>
             </div>
@@ -408,37 +408,37 @@ function DashboardServidor({
       <div className="p-4 md:p-6 space-y-6">
         {/* Stats Cards - Padrão Defender */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all">
+          <Card className="group relative p-5 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-2xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center shadow-md shadow-amber-500/30">
                 <ClipboardList className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{delegacoesPendentes}</p>
+                <p className="text-3xl font-bold text-zinc-900 dark:text-foreground tracking-tighter">{delegacoesPendentes}</p>
                 <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Tarefas</p>
               </div>
             </div>
           </Card>
 
-          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all">
+          <Card className="group relative p-5 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-2xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center shadow-md shadow-emerald-500/30">
                 <MessageSquare className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{atendimentosHoje}</p>
+                <p className="text-3xl font-bold text-zinc-900 dark:text-foreground tracking-tighter">{atendimentosHoje}</p>
                 <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Hoje</p>
               </div>
             </div>
           </Card>
 
-          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all">
+          <Card className="group relative p-5 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-2xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center shadow-md shadow-blue-500/30">
                 <ListTodo className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{demandas.length}</p>
+                <p className="text-3xl font-bold text-zinc-900 dark:text-foreground tracking-tighter">{demandas.length}</p>
                 <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Demandas</p>
               </div>
             </div>
@@ -446,23 +446,23 @@ function DashboardServidor({
 
           <Card className="group relative p-5 bg-zinc-900 dark:bg-white border-zinc-800 dark:border-zinc-200 rounded-2xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-md">
+              <div className="w-12 h-12 rounded-xl bg-white dark:bg-card flex items-center justify-center shadow-md">
                 <Users className="w-5 h-5 text-zinc-900 dark:text-white" />
               </div>
               <div>
                 <p className="text-3xl font-bold text-white dark:text-zinc-900 tracking-tighter">{assistidos.length}</p>
-                <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Assistidos</p>
+                <p className="text-[11px] font-semibold text-zinc-400 dark:text-foreground0 uppercase tracking-widest">Assistidos</p>
               </div>
             </div>
           </Card>
         </div>
 
         {/* Tarefas do Dia */}
-        <Card className="bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+        <Card className="bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-zinc-100 dark:border-border bg-zinc-50/50 dark:bg-card/50">
             <div className="flex items-center gap-2">
               <CalendarDays className="w-4 h-4 text-blue-500" />
-              <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+              <h3 className="text-sm font-semibold text-zinc-800 dark:text-foreground">
                 Agenda do Dia
               </h3>
             </div>
@@ -475,8 +475,8 @@ function DashboardServidor({
               </div>
             ) : audiencias.filter((a: any) => a.data && isToday(new Date(a.data))).length === 0 ? (
               <div className="text-center py-10">
-                <Calendar className="w-12 h-12 mx-auto mb-3 text-zinc-300 dark:text-zinc-600" />
-                <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Nenhum atendimento agendado para hoje</p>
+                <Calendar className="w-12 h-12 mx-auto mb-3 text-zinc-300 dark:text-muted-foreground/50" />
+                <p className="text-sm font-medium text-zinc-600 dark:text-muted-foreground">Nenhum atendimento agendado para hoje</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -484,12 +484,12 @@ function DashboardServidor({
                   .filter((a: any) => a.data && isToday(new Date(a.data)))
                   .slice(0, 5)
                   .map((aud: any) => (
-                    <div key={aud.id} className="flex items-center gap-3 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                    <div key={aud.id} className="flex items-center gap-3 p-3 rounded-xl border border-zinc-100 dark:border-border hover:bg-zinc-50 dark:hover:bg-muted/50 transition-colors">
                       <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                         <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                        <p className="text-sm font-medium text-zinc-800 dark:text-foreground truncate">
                           {aud.assistidoNome || "Atendimento"}
                         </p>
                         <p className="text-[10px] text-zinc-500">
@@ -506,43 +506,43 @@ function DashboardServidor({
         {/* Acesso Rápido */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <Link href="/admin/demandas">
-            <Card className="p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <ListTodo className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
-              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Demandas</p>
+              <p className="text-sm font-semibold text-zinc-800 dark:text-foreground">Demandas</p>
             </Card>
           </Link>
           <Link href="/admin/assistidos">
-            <Card className="p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Assistidos</p>
+              <p className="text-sm font-semibold text-zinc-800 dark:text-foreground">Assistidos</p>
             </Card>
           </Link>
           <Link href="/admin/processos">
-            <Card className="p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <Scale className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
-              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Processos</p>
+              <p className="text-sm font-semibold text-zinc-800 dark:text-foreground">Processos</p>
             </Card>
           </Link>
           <Link href="/admin/drive">
-            <Card className="p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <FolderOpen className="w-5 h-5 text-violet-600 dark:text-violet-400" />
               </div>
-              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Drive</p>
+              <p className="text-sm font-semibold text-zinc-800 dark:text-foreground">Drive</p>
             </Card>
           </Link>
           <Link href="/admin/whatsapp">
-            <Card className="p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:border-green-200 dark:hover:border-green-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-green-200 dark:hover:border-green-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <MessageSquare className="w-5 h-5 text-green-600 dark:text-green-400" />
               </div>
-              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">WhatsApp</p>
+              <p className="text-sm font-semibold text-zinc-800 dark:text-foreground">WhatsApp</p>
             </Card>
           </Link>
         </div>
@@ -575,7 +575,7 @@ function DashboardTriagem({
             <UserCheck className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-zinc-800 dark:text-zinc-100">
+            <h1 className="text-xl font-bold text-zinc-800 dark:text-foreground">
               Olá, {userName || "Triagem"}! 👋
             </h1>
             <p className="text-sm text-zinc-500">
@@ -625,16 +625,16 @@ function DashboardTriagem({
       </Card>
 
       {/* Últimos Cadastros */}
-      <Card className="bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden">
-        <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
+      <Card className="bg-white dark:bg-card border-zinc-100 dark:border-border rounded-xl overflow-hidden">
+        <div className="p-3 border-b border-zinc-100 dark:border-border">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-zinc-500" />
-            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+            <h3 className="text-sm font-semibold text-zinc-800 dark:text-foreground">
               Últimos Cadastros
             </h3>
           </div>
         </div>
-        <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+        <div className="divide-y divide-zinc-100 dark:divide-border">
           {isLoading ? (
             <div className="p-4 space-y-2">
               <Skeleton className="h-12 w-full" />
@@ -654,7 +654,7 @@ function DashboardTriagem({
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                  <p className="text-sm font-medium text-zinc-800 dark:text-foreground truncate">
                     {assistido.nome}
                   </p>
                   <p className="text-[10px] text-zinc-500">
@@ -711,7 +711,7 @@ function DashboardDefensorCriminal({
             <Scale className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-zinc-800 dark:text-zinc-100">
+            <h1 className="text-xl font-bold text-zinc-800 dark:text-foreground">
               {userName || "Defensor(a)"}
             </h1>
             <p className="text-sm text-zinc-500">
@@ -762,12 +762,12 @@ function DashboardDefensorCriminal({
       </div>
 
       {/* Prazos Próximos */}
-      <Card className="bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden">
-        <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
+      <Card className="bg-white dark:bg-card border-zinc-100 dark:border-border rounded-xl overflow-hidden">
+        <div className="p-3 border-b border-zinc-100 dark:border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-amber-500" />
-              <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+              <h3 className="text-sm font-semibold text-zinc-800 dark:text-foreground">
                 Próximos Prazos
               </h3>
             </div>
@@ -778,7 +778,7 @@ function DashboardDefensorCriminal({
             </Link>
           </div>
         </div>
-        <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+        <div className="divide-y divide-zinc-100 dark:divide-border">
           {isLoading ? (
             <div className="p-4 space-y-2">
               <Skeleton className="h-10 w-full" />
@@ -804,14 +804,14 @@ function DashboardDefensorCriminal({
                 
                 return (
                   <Link href={`/admin/demandas/${demanda.id}`} key={demanda.id}>
-                    <div className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                    <div className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-muted/50 transition-colors">
                       <div className={`w-2 h-2 rounded-full ${
                         diasRestantes <= 0 ? "bg-rose-500" :
                         diasRestantes <= 3 ? "bg-amber-500" :
                         "bg-zinc-400"
                       }`} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                        <p className="text-sm font-medium text-zinc-800 dark:text-foreground truncate">
                           {demanda.assistido?.nome || demanda.assistidoNome || "Sem assistido"}
                         </p>
                         <p className="text-[11px] text-zinc-400 truncate">{demanda.ato}</p>
@@ -838,28 +838,28 @@ function DashboardDefensorCriminal({
         <Link href="/admin/demandas">
           <Card className="p-4 hover:border-amber-200 dark:hover:border-amber-800 transition-colors cursor-pointer">
             <ListTodo className="w-5 h-5 text-amber-600 mb-2" />
-            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Demandas</p>
+            <p className="text-sm font-medium text-zinc-800 dark:text-foreground">Demandas</p>
             <p className="text-[10px] text-zinc-500">{demandas.length} total</p>
           </Card>
         </Link>
         <Link href="/admin/assistidos">
           <Card className="p-4 hover:border-emerald-200 dark:hover:border-emerald-800 transition-colors cursor-pointer">
             <Users className="w-5 h-5 text-emerald-600 mb-2" />
-            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Assistidos</p>
+            <p className="text-sm font-medium text-zinc-800 dark:text-foreground">Assistidos</p>
             <p className="text-[10px] text-zinc-500">{assistidos.length} total</p>
           </Card>
         </Link>
         <Link href="/admin/processos">
           <Card className="p-4 hover:border-blue-200 dark:hover:border-blue-800 transition-colors cursor-pointer">
             <Scale className="w-5 h-5 text-blue-600 mb-2" />
-            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Processos</p>
+            <p className="text-sm font-medium text-zinc-800 dark:text-foreground">Processos</p>
             <p className="text-[10px] text-zinc-500">{processos.length} total</p>
           </Card>
         </Link>
         <Link href="/admin/agenda">
           <Card className="p-4 hover:border-violet-200 dark:hover:border-violet-800 transition-colors cursor-pointer">
             <Calendar className="w-5 h-5 text-violet-600 mb-2" />
-            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Agenda</p>
+            <p className="text-sm font-medium text-zinc-800 dark:text-foreground">Agenda</p>
             <p className="text-[10px] text-zinc-500">Ver calendário</p>
           </Card>
         </Link>

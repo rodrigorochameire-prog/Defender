@@ -33,7 +33,7 @@ export function FactualMasthead({
       <header
         className={cn(
           "relative w-full bg-[#1a1a2e] text-white",
-          "dark:bg-zinc-950 dark:border-b dark:border-zinc-800"
+          "dark:bg-zinc-950 dark:border-b dark:border-border"
         )}
       >
         {/* Top bar */}

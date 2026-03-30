@@ -26,7 +26,7 @@ export default function LoginPage() {
               className="object-contain drop-shadow-[0_0_12px_rgba(16,185,129,0.2)]"
             />
           </div>
-          <h1 className="font-serif text-xl font-semibold text-zinc-100 tracking-tight">
+          <h1 className="font-serif text-xl font-semibold text-foreground tracking-tight">
             OMBUDS
           </h1>
           <p className="text-[10px] font-light tracking-[0.2em] uppercase text-zinc-500 mt-1">
@@ -35,7 +35,7 @@ export default function LoginPage() {
         </div>
 
         {/* Separador sutil */}
-        <div className="w-8 h-px bg-zinc-800 mx-auto mb-6" />
+        <div className="w-8 h-px bg-border mx-auto mb-6" />
 
         {/* Formulário */}
         <LoginForm />
@@ -44,14 +44,14 @@ export default function LoginPage() {
         <div className="mt-5 text-center">
           <Link
             href="/forgot-password"
-            className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors duration-200"
+            className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors duration-200"
           >
             Esqueceu sua senha?
           </Link>
         </div>
 
         {/* Footer institucional */}
-        <div className="mt-10 pt-5 border-t border-zinc-800/50">
+        <div className="mt-10 pt-5 border-t border-border/50">
           <p className="text-center text-[10px] text-zinc-700 tracking-wide">
             Defensoria Pública do Estado da Bahia
           </p>

@@ -113,7 +113,7 @@ export default function NoticiasPage() {
 
       {/* Masthead editorial — Diário Criminal */}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap');`}</style>
-      <header className="-mx-6 md:-mx-8 -mt-6 md:-mt-8 bg-[#6b1d1d] dark:bg-zinc-950 dark:border-b dark:border-zinc-800 text-white shrink-0">
+      <header className="-mx-6 md:-mx-8 -mt-6 md:-mt-8 bg-[#6b1d1d] dark:bg-zinc-950 dark:border-b dark:border-border text-white shrink-0">
         <div className="flex flex-col items-center py-4 px-4">
           <div className="flex items-center gap-3 mb-2 w-full max-w-lg">
             <div className="flex-1 h-px bg-white/20" />
@@ -126,7 +126,7 @@ export default function NoticiasPage() {
           >
             Diário Criminal
           </h1>
-          <p className="mt-1.5 text-[10px] sm:text-xs tracking-[0.2em] uppercase text-zinc-400">
+          <p className="mt-1.5 text-[10px] sm:text-xs tracking-[0.2em] uppercase text-muted-foreground">
             Direito Penal &middot; Segurança Pública &middot; Tribunais &middot; Processo Penal
           </p>
           <div className="flex items-center gap-3 mt-2 w-full max-w-lg">
@@ -138,7 +138,7 @@ export default function NoticiasPage() {
       </header>
 
       {/* Header — toolbar unificada */}
-      <div className="border-b bg-white dark:bg-zinc-950 shrink-0 px-3 flex items-stretch gap-1.5" style={{ height: "44px" }}>
+      <div className="border-b bg-white dark:bg-background shrink-0 px-3 flex items-stretch gap-1.5" style={{ height: "44px" }}>
 
         {/* Toggle sidebar (só em categorias com pasta) */}
         {CATEGORIAS_COM_SIDEBAR.has(categoria) && (
@@ -148,14 +148,14 @@ export default function NoticiasPage() {
               className={cn(
                 "self-center h-7 w-7 inline-flex items-center justify-center rounded-md transition-colors shrink-0",
                 sidebarOpen
-                  ? "text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800"
-                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                  ? "text-muted-foreground bg-zinc-100 dark:bg-muted"
+                  : "text-muted-foreground hover:text-foreground hover:bg-zinc-50 dark:hover:bg-muted/50"
               )}
               title={sidebarOpen ? "Ocultar pastas" : "Mostrar pastas"}
             >
               <PanelLeft className="h-3.5 w-3.5" />
             </button>
-            <div className="w-px h-4 self-center bg-zinc-200 dark:bg-zinc-700 mx-0.5 shrink-0" />
+            <div className="w-px h-4 self-center bg-zinc-200 dark:bg-border mx-0.5 shrink-0" />
           </>
         )}
 
@@ -168,8 +168,8 @@ export default function NoticiasPage() {
               className={cn(
                 "relative px-3.5 flex items-center text-sm font-medium transition-all whitespace-nowrap shrink-0",
                 categoria === value
-                  ? "text-zinc-900 dark:text-zinc-100"
-                  : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               {label}
@@ -181,7 +181,7 @@ export default function NoticiasPage() {
         </div>
 
         {/* Separador vertical */}
-        <div className="w-px h-4 self-center bg-zinc-200 dark:bg-zinc-700 mx-1 shrink-0" />
+        <div className="w-px h-4 self-center bg-zinc-200 dark:bg-border mx-1 shrink-0" />
 
         {/* Busca inline */}
         <div className="relative self-center shrink-0">
@@ -208,8 +208,8 @@ export default function NoticiasPage() {
             <button className={cn(
               "self-center flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs transition-colors shrink-0",
               fonteFilter
-                ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
-                : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                ? "bg-zinc-100 dark:bg-muted text-foreground/80"
+                : "text-muted-foreground hover:text-foreground hover:bg-zinc-50 dark:hover:bg-muted/50"
             )}>
               {fonteAtiva ? (
                 <>
@@ -296,8 +296,8 @@ export default function NoticiasPage() {
         <div className={cn(
           "overflow-y-auto transition-all duration-300 ease-out",
           readerOpen
-            ? "w-[420px] shrink-0 border-r border-zinc-200 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-900/80"
-            : "flex-1 bg-white dark:bg-zinc-950"
+            ? "w-[420px] shrink-0 border-r border-zinc-200 dark:border-border bg-zinc-50/80 dark:bg-card/80"
+            : "flex-1 bg-white dark:bg-background"
         )}>
           <div>
             {categoria === "relatorios" ? (
@@ -321,7 +321,7 @@ export default function NoticiasPage() {
 
         {/* Painel direito: reader (só quando noticiaReader !== null) */}
         {readerOpen && (
-          <div className="flex-1 overflow-hidden min-w-0 bg-white dark:bg-zinc-950">
+          <div className="flex-1 overflow-hidden min-w-0 bg-white dark:bg-background">
             <NoticiaReaderPanel
               noticia={noticiaReader!}
               corFonte={corFonteReader}

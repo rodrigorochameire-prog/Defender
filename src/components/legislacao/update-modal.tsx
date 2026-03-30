@@ -255,7 +255,7 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
         {/* ============================================================ */}
         {step === "select" && (
           <>
-            <div className="flex items-center gap-2 px-1 pb-2 border-b border-zinc-200 dark:border-zinc-800">
+            <div className="flex items-center gap-2 px-1 pb-2 border-b border-zinc-200 dark:border-border">
               <Checkbox
                 id="select-all"
                 checked={selectedLaws.size === LEGISLACOES.length}
@@ -279,9 +279,9 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
                     key={law.id}
                     className={cn(
                       "flex items-center gap-3 rounded-md px-3 py-2 cursor-pointer transition-colors",
-                      "hover:bg-zinc-100 dark:hover:bg-zinc-800/60",
+                      "hover:bg-zinc-100 dark:hover:bg-muted/50",
                       selectedLaws.has(law.id) &&
-                        "bg-zinc-100 dark:bg-zinc-800/40"
+                        "bg-zinc-100 dark:bg-muted/50"
                     )}
                   >
                     <Checkbox
@@ -296,12 +296,12 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
                       <span className="text-sm font-medium truncate block">
                         {law.nome}
                       </span>
-                      <span className="text-xs text-zinc-500">
+                      <span className="text-xs text-muted-foreground">
                         {law.nomeAbreviado} &middot; {law.referencia}
                       </span>
                     </div>
                     {law.dataUltimaAtualizacao && (
-                      <span className="text-xs text-zinc-400 shrink-0">
+                      <span className="text-xs text-muted-foreground shrink-0">
                         {law.dataUltimaAtualizacao}
                       </span>
                     )}
@@ -310,7 +310,7 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
               </div>
             </ScrollArea>
 
-            <div className="flex justify-end gap-2 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="flex justify-end gap-2 pt-4 border-t border-zinc-200 dark:border-border">
               <Button
                 variant="outline"
                 onClick={() => onOpenChange(false)}
@@ -336,7 +336,7 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
           <>
             <div className="space-y-2 pb-3">
               <Progress value={progressPercent} className="h-2" />
-              <p className="text-xs text-zinc-500 text-right">
+              <p className="text-xs text-muted-foreground text-right">
                 {completedCount}/{lawProgress.length} conclu\u00eddas
               </p>
             </div>
@@ -355,7 +355,7 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
                       {/* Status icon */}
                       <div className="h-5 w-5 shrink-0 flex items-center justify-center">
                         {lp.status === "pending" && (
-                          <div className="h-2 w-2 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+                          <div className="h-2 w-2 rounded-full bg-zinc-300 dark:bg-muted-foreground" />
                         )}
                         {(lp.status === "downloading" ||
                           lp.status === "analyzing") && (
@@ -382,10 +382,10 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
                       <span
                         className={cn(
                           "text-xs shrink-0",
-                          lp.status === "pending" && "text-zinc-400",
+                          lp.status === "pending" && "text-muted-foreground",
                           lp.status === "downloading" && "text-emerald-600",
                           lp.status === "analyzing" && "text-blue-600",
-                          lp.status === "done" && "text-zinc-500",
+                          lp.status === "done" && "text-muted-foreground",
                           lp.status === "error" && "text-red-500"
                         )}
                       >
@@ -403,8 +403,8 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
             </ScrollArea>
 
             {scrapingDone && (
-              <div className="space-y-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              <div className="space-y-3 pt-4 border-t border-zinc-200 dark:border-border">
+                <p className="text-sm text-muted-foreground">
                   {lawProgress.length} leis analisadas
                   {changedCount > 0 && (
                     <>, <strong className="text-emerald-600">{changedCount} com altera\u00e7\u00f5es</strong></>
@@ -458,18 +458,18 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
                   return (
                     <div
                       key={ld.lawId}
-                      className="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden"
+                      className="border border-zinc-200 dark:border-border rounded-lg overflow-hidden"
                     >
                       {/* Collapsible header */}
                       <button
                         type="button"
                         onClick={() => toggleDiffExpand(ld.lawId)}
-                        className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors"
+                        className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-muted/50 transition-colors"
                       >
                         {isExpanded ? (
-                          <ChevronDown className="h-4 w-4 text-zinc-400" />
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
                         ) : (
-                          <ChevronRight className="h-4 w-4 text-zinc-400" />
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         )}
                         <div
                           className="h-3 w-3 rounded-full shrink-0"
@@ -488,10 +488,10 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
 
                       {/* Diff content */}
                       {isExpanded && (
-                        <div className="border-t border-zinc-200 dark:border-zinc-700 divide-y divide-zinc-100 dark:divide-zinc-800">
+                        <div className="border-t border-zinc-200 dark:border-border divide-y divide-zinc-100 dark:divide-border ">
                           {ld.diffs.map((diff, idx) => (
                             <div key={idx} className="px-4 py-3 space-y-2">
-                              <span className="text-xs font-mono font-semibold text-zinc-600 dark:text-zinc-400">
+                              <span className="text-xs font-mono font-semibold text-zinc-600 dark:text-muted-foreground">
                                 {diff.artigo}
                               </span>
 
@@ -522,7 +522,7 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
               </div>
             </ScrollArea>
 
-            <div className="flex justify-end gap-2 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="flex justify-end gap-2 pt-4 border-t border-zinc-200 dark:border-border">
               <Button
                 variant="outline"
                 onClick={() => onOpenChange(false)}

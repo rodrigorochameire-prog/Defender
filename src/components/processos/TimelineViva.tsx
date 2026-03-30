@@ -42,10 +42,10 @@ const TIPO_CONFIG: Record<string, { icon: LucideIcon; color: string; bg: string;
   investigacao: { icon: Shield, color: "text-orange-400", bg: "bg-orange-400", label: "Investigacao" },
   audiencia: { icon: CalendarDays, color: "text-indigo-500", bg: "bg-indigo-500", label: "Audiencia" },
   midia: { icon: Music, color: "text-cyan-500", bg: "bg-cyan-500", label: "Midia" },
-  documento: { icon: FileText, color: "text-zinc-400", bg: "bg-zinc-400", label: "Documento" },
+  documento: { icon: FileText, color: "text-zinc-600 dark:text-zinc-400", bg: "bg-zinc-400", label: "Documento" },
 };
 
-const DEFAULT_CONFIG = { icon: HelpCircle, color: "text-zinc-400", bg: "bg-zinc-400", label: "Outro" };
+const DEFAULT_CONFIG = { icon: HelpCircle, color: "text-zinc-600 dark:text-zinc-400", bg: "bg-zinc-400", label: "Outro" };
 
 function getConfig(tipo: string) {
   return TIPO_CONFIG[tipo.toLowerCase()] || DEFAULT_CONFIG;
@@ -78,7 +78,7 @@ export function TimelineViva({ processoId, compact = false }: TimelineVivaProps)
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12 text-zinc-400">
+      <div className="flex items-center justify-center py-12 text-muted-foreground">
         <Loader2 className="h-5 w-5 animate-spin mr-2" />
         <span className="text-sm">Carregando timeline...</span>
       </div>
@@ -87,7 +87,7 @@ export function TimelineViva({ processoId, compact = false }: TimelineVivaProps)
 
   if (!data || data.events.length === 0) {
     return (
-      <div className="text-center py-12 text-zinc-400">
+      <div className="text-center py-12 text-muted-foreground">
         <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
         <p className="text-sm">Nenhum evento na timeline</p>
         <p className="text-xs mt-1">Documentos classificados pelo enrichment aparecerao aqui</p>
@@ -99,7 +99,7 @@ export function TimelineViva({ processoId, compact = false }: TimelineVivaProps)
     <div className="space-y-3">
       {/* Stats */}
       {!compact && (
-        <div className="flex items-center gap-3 text-xs text-zinc-500">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span>{data.stats.total} documento{data.stats.total !== 1 ? "s" : ""}</span>
           <span>{data.stats.enriched} enriquecido{data.stats.enriched !== 1 ? "s" : ""}</span>
           {data.stats.media > 0 && (
@@ -110,7 +110,7 @@ export function TimelineViva({ processoId, compact = false }: TimelineVivaProps)
 
       {/* Timeline */}
       <div className="relative">
-        <div className="absolute left-[5px] top-0 bottom-0 w-[2px] bg-zinc-200 dark:bg-zinc-800" />
+        <div className="absolute left-[5px] top-0 bottom-0 w-[2px] bg-muted" />
         <div className="space-y-2">
           {data.events.map((event) => (
             <TimelineEventCard key={event.id} event={event} compact={compact} />
@@ -137,7 +137,7 @@ export function TimelineVivaAssistido({ assistidoId }: TimelineVivaAssistidoProp
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12 text-zinc-400">
+      <div className="flex items-center justify-center py-12 text-muted-foreground">
         <Loader2 className="h-5 w-5 animate-spin mr-2" />
         <span className="text-sm">Carregando timeline...</span>
       </div>
@@ -146,7 +146,7 @@ export function TimelineVivaAssistido({ assistidoId }: TimelineVivaAssistidoProp
 
   if (!data || data.processos.length === 0) {
     return (
-      <div className="text-center py-12 text-zinc-400">
+      <div className="text-center py-12 text-muted-foreground">
         <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
         <p className="text-sm">Nenhum evento na timeline</p>
         <p className="text-xs mt-1">Documentos classificados pelo enrichment aparecerao aqui</p>
@@ -157,7 +157,7 @@ export function TimelineVivaAssistido({ assistidoId }: TimelineVivaAssistidoProp
   return (
     <div className="space-y-4">
       {/* Stats */}
-      <div className="flex items-center gap-3 text-xs text-zinc-500">
+      <div className="flex items-center gap-3 text-xs text-muted-foreground">
         <span>{data.stats.totalEvents} evento{data.stats.totalEvents !== 1 ? "s" : ""}</span>
         <span>em {data.stats.totalProcessos} processo{data.stats.totalProcessos !== 1 ? "s" : ""}</span>
       </div>
@@ -206,20 +206,20 @@ function ProcessoTimelineGroup({
   const [expanded, setExpanded] = useState(true);
 
   return (
-    <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden">
+    <div className="border border-border rounded-lg overflow-hidden">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-2 px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-left"
+        className="w-full flex items-center gap-2 px-3 py-2 bg-muted/50 hover:bg-muted transition-colors text-left"
       >
         {expanded ? (
-          <ChevronDown className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         ) : (
-          <ChevronRight className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         )}
-        <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate flex-1">
+        <span className="text-xs font-medium text-foreground/80 truncate flex-1">
           Processo {numeroAutos}
         </span>
-        <span className="text-[10px] text-zinc-400 shrink-0">
+        <span className="text-[10px] text-muted-foreground shrink-0">
           {events.length} evento{events.length !== 1 ? "s" : ""}
         </span>
       </button>
@@ -227,7 +227,7 @@ function ProcessoTimelineGroup({
       {expanded && (
         <div className="p-3">
           <div className="relative">
-            <div className="absolute left-[5px] top-0 bottom-0 w-[2px] bg-zinc-200 dark:bg-zinc-800" />
+            <div className="absolute left-[5px] top-0 bottom-0 w-[2px] bg-muted" />
             <div className="space-y-2">
               {events.map((event) => (
                 <TimelineEventCard key={event.id} event={event} compact={false} />
@@ -274,13 +274,13 @@ function TimelineEventCard({
       {/* Dot on timeline */}
       <div
         className={cn(
-          "relative z-10 mt-2 w-3 h-3 rounded-full shrink-0 ring-2 ring-white dark:ring-zinc-950",
+          "relative z-10 mt-2 w-3 h-3 rounded-full shrink-0 ring-2 ring-background",
           config.bg,
         )}
       />
 
       {/* Card */}
-      <div className="flex-1 min-w-0 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-900/80 transition-colors">
+      <div className="flex-1 min-w-0 rounded-lg border border-border bg-card p-2.5 hover:bg-muted/50 transition-colors">
         <div className="flex items-start gap-2">
           {/* Media play button or icon */}
           {event.isMedia && isAudio && event.webContentLink ? (
@@ -305,7 +305,7 @@ function TimelineEventCard({
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[12px] font-medium text-zinc-700 dark:text-zinc-300 truncate">
+              <span className="text-[12px] font-medium text-foreground/80 truncate">
                 {event.titulo}
               </span>
               <Badge variant="outline" className={cn("text-[9px] h-4", config.color)}>
@@ -314,19 +314,19 @@ function TimelineEventCard({
             </div>
 
             {!compact && event.resumo && (
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-2 mt-0.5 leading-relaxed">
+              <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5 leading-relaxed">
                 {event.resumo}
               </p>
             )}
 
-            <div className="flex items-center gap-2 text-[10px] text-zinc-400 mt-1">
+            <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-1">
               <span>{formatTimelineDate(event.data)}</span>
               {event.webViewLink && (
                 <a
                   href={event.webViewLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-0.5 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                  className="inline-flex items-center gap-0.5 hover:text-foreground transition-colors"
                 >
                   <ExternalLink className="h-2.5 w-2.5" />
                   Drive

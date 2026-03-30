@@ -702,8 +702,8 @@ export default function AssistidosPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-        <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="min-h-screen bg-muted dark:bg-[#0f0f11]">
+        <div className="px-4 md:px-6 py-3 bg-background dark:bg-card border-b border-border">
           <div className="flex items-center gap-3">
             <Skeleton className="h-7 w-7 rounded-md" />
             <Skeleton className="h-4 w-24" />
@@ -717,8 +717,8 @@ export default function AssistidosPage() {
               <Skeleton key={i} className="h-16 rounded-lg animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
             ))}
           </div>
-          <Card className="border border-zinc-200 dark:border-zinc-800">
-            <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+          <Card className="border border-border">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Skeleton className="h-4 w-4 rounded" />
                 <Skeleton className="h-4 w-32" />
@@ -730,7 +730,7 @@ export default function AssistidosPage() {
             </div>
             <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 space-y-3 animate-pulse" style={{ animationDelay: `${i * 80}ms` }}>
+                <div key={i} className="border border-border rounded-lg p-4 space-y-3 animate-pulse" style={{ animationDelay: `${i * 80}ms` }}>
                   <div className="flex items-center gap-3">
                     <Skeleton className="h-10 w-10 rounded-full" />
                     <div className="space-y-2 flex-1">
@@ -777,10 +777,10 @@ export default function AssistidosPage() {
           className={cn(
             "absolute top-2 left-2 z-10 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
             !a.cpf
-              ? "border-zinc-300 bg-zinc-100 cursor-not-allowed opacity-40"
+              ? "border-border bg-muted cursor-not-allowed opacity-40"
               : batchSelectedIds.has(a.id)
               ? "border-amber-500 bg-amber-500"
-              : "border-zinc-300 bg-white hover:border-amber-400"
+              : "border-border bg-background hover:border-amber-400"
           )}
           title={!a.cpf ? "Assistido sem CPF -- nao pode ser exportado" : undefined}
         >
@@ -803,29 +803,29 @@ export default function AssistidosPage() {
 
   return (
     <TooltipProvider>
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-muted dark:bg-[#0f0f11]">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-2 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
+      <div className="flex items-center justify-between px-5 py-2 bg-background dark:bg-card border-b border-border">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center shrink-0">
-            <Users className="w-4 h-4 text-white dark:text-zinc-900" />
+          <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center shrink-0">
+            <Users className="w-4 h-4 text-background" />
           </div>
-          <h1 className="font-serif text-base font-semibold text-zinc-900 dark:text-zinc-50">Assistidos</h1>
+          <h1 className="font-serif text-base font-semibold text-foreground">Assistidos</h1>
         </div>
 
         {/* Busca + Acoes */}
         <div className="flex items-center gap-1.5">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input
                 ref={searchInputRef}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Nome, CPF, processo..."
-                className="pl-8 w-[140px] sm:w-[200px] md:w-[260px] h-8 text-xs border-zinc-200/80 dark:border-zinc-700/80 bg-zinc-50 dark:bg-zinc-800 rounded-lg"
+                className="pl-8 w-[140px] sm:w-[200px] md:w-[260px] h-8 text-xs border-border bg-muted rounded-lg"
               />
               {isProcessoSearch && (
-                <p className="text-[10px] text-zinc-400 mt-0.5 absolute left-0 -bottom-4 whitespace-nowrap">
+                <p className="text-[10px] text-muted-foreground mt-0.5 absolute left-0 -bottom-4 whitespace-nowrap">
                   Buscando por processo...
                 </p>
               )}
@@ -833,17 +833,17 @@ export default function AssistidosPage() {
 
             {/* Icon actions — ghost buttons */}
             <Link href="/admin/inteligencia">
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 cursor-pointer" title="Inteligência">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-emerald-600 cursor-pointer" title="Inteligência">
                 <Brain className="w-3.5 h-3.5" />
               </Button>
             </Link>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 cursor-pointer" title="Exportar CSV" onClick={() => exportToCSV(filteredAssistidos)}>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-emerald-600 cursor-pointer" title="Exportar CSV" onClick={() => exportToCSV(filteredAssistidos)}>
               <Download className="w-3.5 h-3.5" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 cursor-pointer"
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-emerald-600 cursor-pointer"
               title="Vincular pastas Drive"
               disabled={backfillDriveMutation.isPending}
               onClick={() => backfillDriveMutation.mutate({ limit: 50 })}
@@ -853,7 +853,7 @@ export default function AssistidosPage() {
             <Button
               variant="ghost"
               size="sm"
-              className={cn("h-8 w-8 p-0 cursor-pointer", batchSelectMode ? "text-amber-600 bg-amber-50 dark:bg-amber-950/30" : "text-zinc-400 hover:text-amber-600")}
+              className={cn("h-8 w-8 p-0 cursor-pointer", batchSelectMode ? "text-amber-600 bg-amber-50 dark:bg-amber-950/30" : "text-muted-foreground hover:text-amber-600")}
               title="Exportar ao Solar"
               onClick={() => setBatchSelectMode(!batchSelectMode)}
             >
@@ -862,8 +862,8 @@ export default function AssistidosPage() {
 
             {/* Batch Solar mode bar */}
             {batchSelectMode && (
-              <div className="flex items-center gap-1.5 ml-1 pl-2 border-l border-zinc-200 dark:border-zinc-700">
-                <span className="text-[10px] text-zinc-500 tabular-nums">{batchSelectedIds.size} sel.</span>
+              <div className="flex items-center gap-1.5 ml-1 pl-2 border-l border-border">
+                <span className="text-[10px] text-muted-foreground tabular-nums">{batchSelectedIds.size} sel.</span>
                 <Button
                   size="sm"
                   className="h-7 px-2.5 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-medium rounded-lg"
@@ -872,18 +872,18 @@ export default function AssistidosPage() {
                 >
                   {exportarBatch.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Exportar"}
                 </Button>
-                <button onClick={() => { setBatchSelectMode(false); setBatchSelectedIds(new Set()); }} className="text-zinc-400 hover:text-zinc-600">
+                <button onClick={() => { setBatchSelectMode(false); setBatchSelectedIds(new Set()); }} className="text-muted-foreground hover:text-foreground">
                   <XCircle className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}
 
-            <div className="w-px h-5 bg-zinc-200/60 dark:bg-zinc-700/60 mx-0.5" />
+            <div className="w-px h-5 bg-border mx-0.5" />
 
             <Link href="/admin/assistidos/novo">
               <Button
                 size="sm"
-                className="h-8 px-3.5 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+                className="h-8 px-3.5 bg-foreground hover:bg-emerald-600 text-background text-xs font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5 mr-1" />
                 Novo
@@ -894,11 +894,11 @@ export default function AssistidosPage() {
 
       {/* Sticky Summary Bar */}
       {showStickyBar && (
-        <div className="sticky top-0 z-30 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border-b border-zinc-200/80 dark:border-zinc-800/80 shadow-sm animate-in slide-in-from-top duration-200">
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm animate-in slide-in-from-top duration-200">
           <div className="flex items-center justify-between px-6 py-2 max-w-screen-2xl mx-auto">
             <div className="flex items-center gap-3">
-              <Users className="w-4 h-4 text-zinc-400" />
-              <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+              <Users className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-semibold text-foreground/80">
                 {filteredAssistidos.length} assistidos
               </span>
               {smartPreset && (
@@ -912,23 +912,23 @@ export default function AssistidosPage() {
               )}
             </div>
             <div className="relative hidden sm:block">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar por nome, CPF ou processo..."
-                className="pl-8 w-[220px] h-7 text-xs border-zinc-200/80 dark:border-zinc-700/80 bg-zinc-100 dark:bg-zinc-800 rounded-lg"
+                className="pl-8 w-[220px] h-7 text-xs border-border bg-muted rounded-lg"
               />
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
+              <div className="flex bg-muted p-0.5 rounded-lg">
                 <button
                   onClick={() => setViewMode("grid")}
                   className={cn(
                     "flex items-center gap-1 px-2 h-6 text-xs font-medium rounded-md transition-all",
                     viewMode === "grid"
-                      ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                      : "text-zinc-500 hover:text-zinc-700"
+                      ? "bg-background dark:bg-muted text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   <LayoutGrid className="w-3 h-3" />
@@ -938,8 +938,8 @@ export default function AssistidosPage() {
                   className={cn(
                     "flex items-center gap-1 px-2 h-6 text-xs font-medium rounded-md transition-all",
                     viewMode === "list"
-                      ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                      : "text-zinc-500 hover:text-zinc-700"
+                      ? "bg-background dark:bg-muted text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   <List className="w-3 h-3" />
@@ -955,14 +955,14 @@ export default function AssistidosPage() {
 
       {/* Tabs + Stats + WhatsApp — single line */}
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg shrink-0">
+        <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg shrink-0">
           <button
             onClick={() => setActiveTab("lista")}
             className={cn(
               "flex items-center gap-1 px-3 py-1 text-[11px] font-medium rounded-md transition-all",
               activeTab === "lista"
-                ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                ? "bg-background dark:bg-muted text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             <Users className="w-3 h-3" />
@@ -973,15 +973,15 @@ export default function AssistidosPage() {
             className={cn(
               "flex items-center gap-1 px-3 py-1 text-[11px] font-medium rounded-md transition-all",
               activeTab === "analytics"
-                ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                ? "bg-background dark:bg-muted text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             <BarChart3 className="w-3 h-3" />
             Analytics
           </button>
         </div>
-        <div className="w-px h-3.5 bg-zinc-200/60 dark:bg-zinc-700/60 shrink-0" />
+        <div className="w-px h-3.5 bg-border shrink-0" />
         {/* Inline stats */}
         {[
           { icon: Users, value: stats.total - naoIdentificadosCount, label: "total", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); }, active: statusFilter === "all" && !showPinnedOnly },
@@ -996,17 +996,17 @@ export default function AssistidosPage() {
               onClick={stat.onClick}
               className={cn(
                 "flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] whitespace-nowrap transition-colors shrink-0 cursor-pointer",
-                stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-muted",
               )}
             >
-              <Icon className={cn("w-3 h-3 shrink-0", stat.active ? "text-emerald-500" : (stat as any).color || "text-zinc-400")} />
-              <span className={cn("font-bold tabular-nums", stat.active ? "text-emerald-600 dark:text-emerald-400" : (stat as any).color || "text-zinc-800 dark:text-zinc-100")}>{stat.value}</span>
-              <span className="text-zinc-400 dark:text-zinc-500 text-[10px]">{stat.label}</span>
+              <Icon className={cn("w-3 h-3 shrink-0", stat.active ? "text-emerald-500" : (stat as any).color || "text-muted-foreground")} />
+              <span className={cn("font-bold tabular-nums", stat.active ? "text-emerald-600 dark:text-emerald-400" : (stat as any).color || "text-foreground")}>{stat.value}</span>
+              <span className="text-muted-foreground text-[10px]">{stat.label}</span>
             </button>
           );
         })}
         <div className="flex-1" />
-        <Link href="/admin/whatsapp" className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors shrink-0">
+        <Link href="/admin/whatsapp" className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors shrink-0">
           <MessageCircle className="w-3 h-3" />
           <span className="hidden sm:inline">WhatsApp</span>
         </Link>
@@ -1014,7 +1014,7 @@ export default function AssistidosPage() {
 
       {/* Analytics Tab Content */}
       {activeTab === "analytics" && (
-        <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden">
+        <Card className="border border-border bg-card rounded-xl overflow-hidden">
           <AnalyticsTab assistidos={realAssistidos.filter(a => {
             const isNI = a.nome.toLowerCase().includes("nao identificado") || a.nome === "" || a.nome === "-";
             return !isNI;
@@ -1071,14 +1071,14 @@ export default function AssistidosPage() {
       {!showNaoIdentificados && (
         <div ref={statsRef} className="flex items-center gap-2 overflow-x-auto scrollbar-none">
           {/* RMS toggle — pill switch */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60 shrink-0">
+          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-muted border border-border shrink-0">
             <button
               onClick={() => verRMS && toggleVerRMS({ verRMS: false })}
               className={cn(
                 "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all duration-200",
                 !verRMS
-                  ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
-                  : "text-zinc-400 dark:text-zinc-500"
+                  ? "bg-foreground text-background shadow-sm"
+                  : "text-muted-foreground"
               )}
             >
               <MapPin className="w-3 h-3" />
@@ -1089,8 +1089,8 @@ export default function AssistidosPage() {
               className={cn(
                 "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all duration-200",
                 verRMS
-                  ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
-                  : "text-zinc-400 dark:text-zinc-500"
+                  ? "bg-foreground text-background shadow-sm"
+                  : "text-muted-foreground"
               )}
             >
               <MapPin className="w-3 h-3" />
@@ -1125,7 +1125,7 @@ export default function AssistidosPage() {
           <div className="flex-1 min-w-2" />
 
           {/* Smart presets — icon-only, pushed right */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60 shrink-0">
+          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-muted border border-border shrink-0">
             {[
               { id: "meus_presos", tip: "Presos", icon: Lock, count: stats.presos },
               { id: "audiencias_semana", tip: "Audiências esta semana", icon: Calendar, count: stats.audienciasSemana },
@@ -1153,7 +1153,7 @@ export default function AssistidosPage() {
                         "relative inline-flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 shrink-0 cursor-pointer",
                         active
                           ? "bg-emerald-600 text-white shadow-sm"
-                          : "text-zinc-400 dark:text-zinc-500"
+                          : "text-muted-foreground"
                       )}
                     >
                       <PresetIcon className="w-3.5 h-3.5" />
@@ -1162,7 +1162,7 @@ export default function AssistidosPage() {
                           "absolute -top-1 -right-1 text-[8px] font-bold tabular-nums min-w-[14px] h-[14px] flex items-center justify-center rounded-full",
                           active ? "bg-emerald-500 text-white"
                             : preset.id === "prazos_vencidos" ? "bg-rose-500 text-white"
-                            : "bg-zinc-300 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-200"
+                            : "bg-muted text-muted-foreground"
                         )}>
                           {preset.count}
                         </span>
@@ -1175,7 +1175,7 @@ export default function AssistidosPage() {
             })}
           </div>
           {smartPreset && (
-            <button onClick={() => { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }} className="text-zinc-400 hover:text-zinc-600 transition-colors shrink-0">
+            <button onClick={() => { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }} className="text-muted-foreground hover:text-foreground transition-colors shrink-0">
               <XCircle className="w-3.5 h-3.5" />
             </button>
           )}
@@ -1185,18 +1185,18 @@ export default function AssistidosPage() {
 
 
       {/* Card de Listagem */}
-      <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden">
+      <Card className="border border-border bg-card rounded-xl overflow-hidden">
         {/* Header — count + sort + view */}
-        <div className="px-4 py-2 border-b border-zinc-100 dark:border-zinc-800/60">
+        <div className="px-4 py-2 border-b border-border">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-zinc-400 tabular-nums">
+            <span className="text-xs text-muted-foreground tabular-nums">
               {filteredAssistidos.length} resultado{filteredAssistidos.length !== 1 && 's'}
             </span>
             <div className="flex items-center gap-2">
               {/* Sort */}
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-zinc-400 hidden sm:inline">Ordenar:</span>
-                <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
+                <span className="text-[10px] text-muted-foreground hidden sm:inline">Ordenar:</span>
+                <div className="flex bg-muted p-0.5 rounded-lg">
                   {(["nome", "prioridade", "prazo"] as const).map((opt) => (
                     <button
                       key={opt}
@@ -1204,8 +1204,8 @@ export default function AssistidosPage() {
                       className={cn(
                         "px-2 py-1 text-[10px] font-medium rounded-md transition-all",
                         sortBy === opt
-                          ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                          : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                          ? "bg-background dark:bg-muted text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
                       )}
                     >
                       {opt === "nome" ? "Nome" : opt === "prioridade" ? "Prio." : "Prazo"}
@@ -1220,7 +1220,7 @@ export default function AssistidosPage() {
                     "h-7 w-7 inline-flex items-center justify-center gap-1 rounded-md transition-colors",
                     activeCount > 0
                       ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400"
-                      : "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   )}
                   title="Fila de processamento"
                 >
@@ -1229,17 +1229,17 @@ export default function AssistidosPage() {
                 </button>
               </ProcessingQueuePanel>
               {/* View toggle */}
-              <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
+              <div className="flex bg-muted p-0.5 rounded-lg">
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={cn("flex items-center justify-center w-7 h-7 rounded-md transition-all", viewMode === "grid" ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300")}
+                  className={cn("flex items-center justify-center w-7 h-7 rounded-md transition-all", viewMode === "grid" ? "bg-background dark:bg-muted text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
                   title="Grade"
                 >
                   <LayoutGrid className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
-                  className={cn("flex items-center justify-center w-7 h-7 rounded-md transition-all", viewMode === "list" ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300")}
+                  className={cn("flex items-center justify-center w-7 h-7 rounded-md transition-all", viewMode === "list" ? "bg-background dark:bg-muted text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
                   title="Lista"
                 >
                   <List className="w-3.5 h-3.5" />
@@ -1274,14 +1274,14 @@ export default function AssistidosPage() {
                 <div className="flex items-center gap-3 mb-3 px-1">
                   <div className="flex items-center gap-2">
                     <div className="w-1 h-5 rounded-full bg-emerald-500" />
-                    <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 capitalize">
+                    <h3 className="text-sm font-semibold text-foreground/80 capitalize">
                       {groupName}
                     </h3>
                   </div>
-                  <span className="text-xs text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                     {items.length}
                   </span>
-                  <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-700" />
+                  <div className="flex-1 h-px bg-border" />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
                   {items.map((a) => renderCardWithBatch(a))}
@@ -1406,7 +1406,7 @@ export default function AssistidosPage() {
                   <AlertCircle className="h-3.5 w-3.5 text-rose-500 flex-shrink-0 mt-0.5" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                  <span className="font-medium text-foreground">
                     {r.nome ?? `Assistido #${r.assistidoId}`}
                   </span>
                   <p

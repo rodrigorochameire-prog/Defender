@@ -76,7 +76,7 @@ export function ActivateForm({ token, userEmail }: ActivateFormProps) {
       <div className="space-y-1.5">
         <label
           htmlFor="email"
-          className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium"
+          className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium"
         >
           Email
         </label>
@@ -88,10 +88,10 @@ export function ActivateForm({ token, userEmail }: ActivateFormProps) {
           placeholder="seu@email.com"
           autoComplete="email"
           disabled={isLoading}
-          className="h-10 text-sm bg-zinc-900 border-zinc-800/80 text-zinc-100 placeholder:text-zinc-600 focus:border-emerald-500/40 focus:ring-emerald-500/10 rounded-lg transition-colors"
+          className="h-10 text-sm bg-card border-border/80 text-foreground placeholder:text-muted-foreground/50 focus:border-emerald-500/40 focus:ring-emerald-500/10 rounded-lg transition-colors"
         />
 
-        <p className="text-[11px] text-zinc-500 mt-1">
+        <p className="text-[11px] text-muted-foreground mt-1">
           Recomendamos usar seu email Google (@gmail.com) para facilitar a sincronizacao com Google Sheets.
         </p>
       </div>
@@ -99,7 +99,7 @@ export function ActivateForm({ token, userEmail }: ActivateFormProps) {
       <div className="space-y-1.5">
         <label
           htmlFor="password"
-          className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium"
+          className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium"
         >
           Senha
         </label>
@@ -110,14 +110,14 @@ export function ActivateForm({ token, userEmail }: ActivateFormProps) {
           placeholder="Minimo 6 caracteres"
           autoComplete="new-password"
           disabled={isLoading}
-          className="h-10 text-sm bg-zinc-900 border-zinc-800/80 text-zinc-100 placeholder:text-zinc-600 focus:border-emerald-500/40 focus:ring-emerald-500/10 rounded-lg transition-colors"
+          className="h-10 text-sm bg-card border-border/80 text-foreground placeholder:text-muted-foreground/50 focus:border-emerald-500/40 focus:ring-emerald-500/10 rounded-lg transition-colors"
         />
       </div>
 
       <div className="space-y-1.5">
         <label
           htmlFor="confirm"
-          className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium"
+          className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium"
         >
           Confirmar Senha
         </label>
@@ -128,7 +128,7 @@ export function ActivateForm({ token, userEmail }: ActivateFormProps) {
           placeholder="Repita a senha"
           autoComplete="new-password"
           disabled={isLoading}
-          className="h-10 text-sm bg-zinc-900 border-zinc-800/80 text-zinc-100 placeholder:text-zinc-600 focus:border-emerald-500/40 focus:ring-emerald-500/10 rounded-lg transition-colors"
+          className="h-10 text-sm bg-card border-border/80 text-foreground placeholder:text-muted-foreground/50 focus:border-emerald-500/40 focus:ring-emerald-500/10 rounded-lg transition-colors"
         />
       </div>
 

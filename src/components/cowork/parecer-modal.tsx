@@ -141,8 +141,8 @@ export function ParecerModal({
     const colors: Record<string, string> = {
       admin: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
       defensor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-      servidor: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400",
-      estagiario: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400",
+      servidor: "bg-zinc-100 text-zinc-700 dark:bg-muted dark:text-muted-foreground",
+      estagiario: "bg-zinc-100 text-zinc-700 dark:bg-muted dark:text-muted-foreground",
     };
     return colors[role] || "bg-zinc-100 text-zinc-700";
   };
@@ -166,7 +166,7 @@ export function ParecerModal({
             </div>
             <div>
               <span className="text-lg">Pedir Parecer</span>
-              <p className="text-xs font-normal text-zinc-500 mt-0.5">
+              <p className="text-xs font-normal text-muted-foreground mt-0.5">
                 Consulte um colega sobre um caso sem transferir responsabilidade
               </p>
             </div>
@@ -176,16 +176,16 @@ export function ParecerModal({
         <div className="space-y-4 py-2">
           {/* Colega a consultar */}
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+            <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
               Consultar colega <span className="text-rose-500">*</span>
             </Label>
             {loadingColegas ? (
-              <div className="h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 animate-pulse flex items-center justify-center">
-                <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
+              <div className="h-10 rounded-xl bg-zinc-100 dark:bg-muted animate-pulse flex items-center justify-center">
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
               </div>
             ) : (
               <Select value={respondedorId} onValueChange={setRespondedorId}>
-                <SelectTrigger className="h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+                <SelectTrigger className="h-10 rounded-xl bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border">
                   <SelectValue placeholder="Selecione um colega..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -218,17 +218,17 @@ export function ParecerModal({
           {/* Contexto: Assistido e Processo (se fornecidos) */}
           {(assistidoNome || processoNumero) && (
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+              <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                 Contexto
               </Label>
               <div className="flex flex-wrap gap-2">
                 {assistidoNome && (
-                  <Badge variant="outline" className="text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+                  <Badge variant="outline" className="text-xs bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border">
                     Assistido: {assistidoNome}
                   </Badge>
                 )}
                 {processoNumero && (
-                  <Badge variant="outline" className="text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 font-mono">
+                  <Badge variant="outline" className="text-xs bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border font-mono">
                     {processoNumero}
                   </Badge>
                 )}
@@ -238,7 +238,7 @@ export function ParecerModal({
 
           {/* Urgência */}
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+            <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
               Urgencia
             </Label>
             <div className="flex gap-1.5">
@@ -255,7 +255,7 @@ export function ParecerModal({
                         ? "bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-400"
                         : isSelected && opt.id === "urgente"
                         ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400"
-                        : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-zinc-700 hover:border-zinc-300"
+                        : "bg-zinc-50 dark:bg-muted/50 border-zinc-200 dark:border-border text-muted-foreground hover:text-foreground hover:border-zinc-300"
                     )}
                   >
                     <UrgIcon className="w-3.5 h-3.5" />
@@ -268,16 +268,16 @@ export function ParecerModal({
 
           {/* Pergunta */}
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+            <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
               Pergunta <span className="text-rose-500">*</span>
             </Label>
             <Textarea
               placeholder="Descreva sua duvida ou questao..."
               value={pergunta}
               onChange={(e) => setPergunta(e.target.value)}
-              className="min-h-[120px] resize-none rounded-xl bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus:ring-violet-500/30"
+              className="min-h-[120px] resize-none rounded-xl bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border focus:ring-violet-500/30"
             />
-            <p className="text-[10px] text-zinc-400">
+            <p className="text-[10px] text-muted-foreground">
               Seja claro e objetivo. Inclua detalhes relevantes do caso para facilitar a resposta.
             </p>
           </div>

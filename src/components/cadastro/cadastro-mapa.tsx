@@ -167,18 +167,18 @@ export function CadastroMapa() {
   };
 
   const sidebar = (
-    <aside className="w-[280px] flex-shrink-0 flex flex-col border-r border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 overflow-y-auto">
+    <aside className="w-[280px] flex-shrink-0 flex flex-col border-r border-border bg-background overflow-y-auto">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-zinc-200/80 dark:border-zinc-800/80">
+      <div className="flex items-center justify-between px-4 py-4 border-b border-border">
         <div className="flex items-center gap-2">
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40">
             <MapPin className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h2 className="text-sm font-semibold text-foreground">
               Mapa de Casos
             </h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-muted-foreground">
               Camaçari, BA
             </p>
           </div>
@@ -186,14 +186,14 @@ export function CadastroMapa() {
         <div className="flex items-center gap-1">
           <button
             onClick={() => setResetViewTrigger((v) => v + 1)}
-            className="flex items-center justify-center w-7 h-7 rounded-md text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 transition-all cursor-pointer"
+            className="flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer"
             title="Centralizar em Camaçari"
           >
             <RotateCcw className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => setIsFullscreen((v) => !v)}
-            className="flex items-center justify-center w-7 h-7 rounded-md text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 transition-all cursor-pointer"
+            className="flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer"
             title={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
           >
             {isFullscreen ? (
@@ -206,18 +206,18 @@ export function CadastroMapa() {
       </div>
 
       {/* Contagem total */}
-      <div className="px-4 py-3 border-b border-zinc-200/80 dark:border-zinc-800/80">
+      <div className="px-4 py-3 border-b border-border">
         {isLoading ? (
           <Skeleton className="h-4 w-32" />
         ) : (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+          <p className="text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">
               {processosVisiveis.length}
             </span>{" "}
             processo{processosVisiveis.length !== 1 ? "s" : ""} visível
             {processosVisiveis.length !== 1 ? "s" : ""}
             {data && data.length !== processosVisiveis.length && (
-              <span className="text-zinc-400 dark:text-zinc-500">
+              <span className="text-muted-foreground">
                 {" "}
                 de {data.length}
               </span>
@@ -227,8 +227,8 @@ export function CadastroMapa() {
       </div>
 
       {/* Distribuição por atribuição */}
-      <div className="px-4 py-3 border-b border-zinc-200/80 dark:border-zinc-800/80">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
+      <div className="px-4 py-3 border-b border-border">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
           Distribuição
         </p>
         {isLoading ? (
@@ -252,17 +252,17 @@ export function CadastroMapa() {
                 return (
                   <div key={atribuicao}>
                     <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-[11px] text-zinc-600 dark:text-zinc-400 truncate flex-1 mr-2">
+                      <span className="text-[11px] text-muted-foreground truncate flex-1 mr-2">
                         {label}
                       </span>
-                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 flex-shrink-0">
+                      <span className="text-[10px] text-muted-foreground flex-shrink-0">
                         {count}{" "}
-                        <span className="text-zinc-300 dark:text-zinc-600">
+                        <span className="text-muted-foreground/50">
                           {pct}%
                         </span>
                       </span>
                     </div>
-                    <div className="h-1 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                    <div className="h-1 rounded-full bg-muted overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-300"
                         style={{
@@ -281,20 +281,20 @@ export function CadastroMapa() {
 
       {/* Top bairros */}
       {topBairros.length > 0 && (
-        <div className="px-4 py-3 border-b border-zinc-200/80 dark:border-zinc-800/80">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
+        <div className="px-4 py-3 border-b border-border">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
             Top Bairros
           </p>
           <div className="space-y-1.5">
             {topBairros.map(([bairro, count], i) => (
               <div key={bairro} className="flex items-center gap-2">
-                <span className="text-[10px] text-zinc-300 dark:text-zinc-600 w-3 flex-shrink-0 text-right">
+                <span className="text-[10px] text-muted-foreground/50 w-3 flex-shrink-0 text-right">
                   {i + 1}.
                 </span>
-                <span className="text-[11px] text-zinc-600 dark:text-zinc-400 flex-1 truncate">
+                <span className="text-[11px] text-muted-foreground flex-1 truncate">
                   {bairro}
                 </span>
-                <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400 flex-shrink-0">
+                <span className="text-[10px] font-medium text-muted-foreground flex-shrink-0">
                   {count}
                 </span>
               </div>
@@ -304,8 +304,8 @@ export function CadastroMapa() {
       )}
 
       {/* Camadas */}
-      <div className="px-4 py-3 border-b border-zinc-200/80 dark:border-zinc-800/80">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
+      <div className="px-4 py-3 border-b border-border">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
           Camadas
         </p>
         <button
@@ -313,8 +313,8 @@ export function CadastroMapa() {
           className={cn(
             "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer w-full text-left",
             showProcessos
-              ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-              : "text-zinc-400 dark:text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+              ? "bg-muted text-foreground"
+              : "text-muted-foreground hover:bg-muted/50"
           )}
         >
           <div
@@ -323,18 +323,18 @@ export function CadastroMapa() {
           />
           <span>Processos</span>
           {data && (
-            <span className="ml-auto text-[10px] text-zinc-400 dark:text-zinc-500">
+            <span className="ml-auto text-[10px] text-muted-foreground">
               {data.length}
             </span>
           )}
         </button>
         <button
           disabled
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all w-full text-left mt-1 text-zinc-300 dark:text-zinc-600 cursor-not-allowed"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all w-full text-left mt-1 text-muted-foreground/50 cursor-not-allowed"
         >
-          <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-zinc-200 dark:bg-zinc-700" />
+          <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-muted" />
           <span>Atendimentos</span>
-          <span className="ml-auto text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 px-1 rounded">
+          <span className="ml-auto text-[10px] bg-muted text-muted-foreground px-1 rounded">
             em breve
           </span>
         </button>
@@ -343,7 +343,7 @@ export function CadastroMapa() {
       {/* Filtros por atribuição */}
       <div className="px-4 py-3 flex-1">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Atribuição
           </p>
           {atribuicoesVisiveis.length !== ALL_ATRIBUICOES.length && (
@@ -373,10 +373,10 @@ export function CadastroMapa() {
                 className={cn(
                   "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer w-full text-left",
                   isIsolated
-                    ? "ring-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                    ? "ring-1 bg-muted text-foreground"
                     : ativo
-                    ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                    : "text-zinc-400 dark:text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:bg-muted/50"
                 )}
                 style={isIsolated ? { outlineColor: cor } : undefined}
               >
@@ -421,7 +421,7 @@ export function CadastroMapa() {
                 </div>
                 <span>{label}</span>
                 {count > 0 && (
-                  <span className="ml-auto text-[10px] text-zinc-400 dark:text-zinc-500">
+                  <span className="ml-auto text-[10px] text-muted-foreground">
                     {count}
                   </span>
                 )}
@@ -446,7 +446,7 @@ export function CadastroMapa() {
     <div className="flex-1 min-w-0 h-full flex flex-col">
       {/* Mini-stats bar */}
       {topAtribuicoes.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap px-3 py-2 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900">
+        <div className="flex items-center gap-2 flex-wrap px-3 py-2 border-b border-border bg-background">
           {topAtribuicoes.map(({ atribuicao: a, count }) => {
             const fill   = ATRIBUICAO_COLORS[a]  || "#a1a1aa";
             const border = ATRIBUICAO_BORDERS[a] || "#52525b";
@@ -459,10 +459,10 @@ export function CadastroMapa() {
                 onClick={() => toggleAtribuicao(a)}
                 title={isIsolated ? "Clique para mostrar todos" : `Filtrar: ${label}`}
                 className={cn(
-                  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-white dark:bg-zinc-900 border shadow-sm cursor-pointer transition-all",
+                  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-background border shadow-sm cursor-pointer transition-all",
                   isIsolated
-                    ? "border-zinc-400 dark:border-zinc-500 ring-1 ring-offset-1"
-                    : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                    ? "border-muted-foreground ring-1 ring-offset-1"
+                    : "border-border hover:border-muted-foreground"
                 )}
                 style={isIsolated ? { outlineColor: fill } : undefined}
               >
@@ -477,12 +477,12 @@ export function CadastroMapa() {
                     style={{ backgroundColor: fill, border: `1.5px solid ${border}` }}
                   />
                 )}
-                <span className="text-zinc-700 dark:text-zinc-300">{label}</span>
+                <span className="text-foreground/80">{label}</span>
                 <span className="text-zinc-400 font-normal">{count}</span>
               </button>
             );
           })}
-          <div className="inline-flex items-center px-2.5 py-1 rounded-full text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
+          <div className="inline-flex items-center px-2.5 py-1 rounded-full text-xs bg-muted text-muted-foreground">
             {processosVisiveis.length} visíveis
           </div>
           {/* Heatmap toggle */}
@@ -503,25 +503,25 @@ export function CadastroMapa() {
       {/* Map */}
       <div className="flex-1 min-h-0 relative">
         {isLoading ? (
-          <div className="h-full w-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+          <div className="h-full w-full flex items-center justify-center bg-muted/50">
             <div className="flex flex-col items-center gap-3">
               <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-muted-foreground">
                 Carregando processos...
               </p>
             </div>
           </div>
         ) : !data || data.length === 0 ? (
-          <div className="h-full w-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+          <div className="h-full w-full flex items-center justify-center bg-muted/50">
             <div className="flex flex-col items-center gap-3 text-center max-w-xs">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-muted">
                 <MapPin className="h-6 w-6 text-zinc-400" />
               </div>
               <div>
-                <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <h3 className="text-sm font-medium text-foreground">
                   Nenhum processo georreferenciado
                 </h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   O mapa será populado conforme processos com localização do fato
                   forem cadastrados.
                 </p>
@@ -543,7 +543,7 @@ export function CadastroMapa() {
 
   if (isFullscreen) {
     return (
-      <div className="fixed inset-0 z-50 flex bg-white dark:bg-zinc-900">
+      <div className="fixed inset-0 z-50 flex bg-background">
         {sidebar}
         {mapArea}
       </div>

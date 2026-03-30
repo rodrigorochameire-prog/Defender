@@ -139,10 +139,10 @@ export default function NoticiasFactuaisPage() {
         <div className="max-w-3xl mx-auto w-full px-4 py-8 space-y-6">
           {[1, 2, 3].map(i => (
             <div key={i} className="animate-pulse space-y-3">
-              <div className="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-24" />
-              <div className="h-6 bg-zinc-200 dark:bg-zinc-700 rounded w-3/4" />
-              <div className="h-4 bg-zinc-100 dark:bg-zinc-800 rounded w-full" />
-              <div className="h-4 bg-zinc-100 dark:bg-zinc-800 rounded w-5/6" />
+              <div className="h-3 bg-zinc-200 dark:bg-border rounded w-24" />
+              <div className="h-6 bg-zinc-200 dark:bg-border rounded w-3/4" />
+              <div className="h-4 bg-zinc-100 dark:bg-muted rounded w-full" />
+              <div className="h-4 bg-zinc-100 dark:bg-muted rounded w-5/6" />
             </div>
           ))}
         </div>

@@ -112,16 +112,16 @@ export function NoticiasRelatorio() {
         </div>
         <div>
           <h2 className="text-lg font-semibold">Relatório por Tema</h2>
-          <p className="text-sm text-zinc-500">Síntese IA das notícias aprovadas no período</p>
+          <p className="text-sm text-muted-foreground">Síntese IA das notícias aprovadas no período</p>
         </div>
       </div>
 
       {/* Configuração */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 space-y-5">
+      <div className="bg-card border border-border rounded-xl p-5 space-y-5">
         {/* Período — segmented control */}
         <div>
           <p className="text-sm font-medium mb-2">Período</p>
-          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
+          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-muted border border-border">
             {PERIODOS.map(p => (
               <button
                 key={p.value}
@@ -130,7 +130,7 @@ export function NoticiasRelatorio() {
                   "px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all duration-200 cursor-pointer",
                   periodo === p.value
                     ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
-                    : "text-zinc-400 dark:text-zinc-500"
+                    : "text-muted-foreground"
                 )}
               >
                 {p.label}
@@ -161,13 +161,13 @@ export function NoticiasRelatorio() {
                     "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-150",
                     selecionado
                       ? "bg-emerald-100 dark:bg-emerald-900/30 border-emerald-500 text-emerald-800 dark:text-emerald-300"
-                      : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600"
+                      : "bg-muted border-border text-muted-foreground hover:border-border"
                   )}
                 >
                   <span
                     className={cn(
                       "w-1.5 h-1.5 rounded-full shrink-0",
-                      selecionado ? "bg-emerald-500" : "bg-zinc-400 dark:bg-zinc-500"
+                      selecionado ? "bg-emerald-500" : "bg-muted-foreground"
                     )}
                   />
                   {nome}
@@ -176,7 +176,7 @@ export function NoticiasRelatorio() {
             })}
           </div>
           {temasSelecionados.length === 0 && (
-            <p className="text-xs text-zinc-400 mt-1.5">Selecione ao menos um tema</p>
+            <p className="text-xs text-muted-foreground mt-1.5">Selecione ao menos um tema</p>
           )}
         </div>
 
@@ -218,11 +218,11 @@ export function NoticiasRelatorio() {
       {/* Empty state inicial */}
       {!gerarRelatorio.isPending && !relatorio && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <FileSearch className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mb-4" />
-          <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+          <FileSearch className="h-12 w-12 text-muted-foreground/50 mb-4" />
+          <p className="text-sm font-medium text-muted-foreground">
             Gere um relatório para visualizar a síntese IA
           </p>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Selecione os temas e o período acima
           </p>
         </div>
@@ -230,12 +230,12 @@ export function NoticiasRelatorio() {
 
       {/* Resultado */}
       {relatorio && relatorio.sintese && (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
           {/* Header do relatório */}
-          <div className="bg-zinc-50 dark:bg-zinc-800/50 px-5 py-4 border-b flex items-center justify-between">
+          <div className="bg-muted/50 px-5 py-4 border-b flex items-center justify-between">
             <div>
               <p className="font-semibold">Relatório de Jurisprudência e Legislação</p>
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted-foreground">
                 {relatorio.periodoTexto} · {relatorio.noticias.length} notícias analisadas
               </p>
             </div>
@@ -254,35 +254,35 @@ export function NoticiasRelatorio() {
           <div className="p-5 space-y-6">
             {/* Stats row */}
             <div className="grid grid-cols-3 gap-3">
-              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 flex items-center gap-2.5">
-                <FileText className="h-4 w-4 text-zinc-400 shrink-0" />
+              <div className="bg-muted/50 rounded-lg p-3 flex items-center gap-2.5">
+                <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div>
                   <p className="text-lg font-bold leading-none">{relatorio.noticias.length}</p>
-                  <p className="text-xs text-zinc-500 mt-0.5">notícias</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">notícias</p>
                 </div>
               </div>
-              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 flex items-center gap-2.5">
-                <Globe className="h-4 w-4 text-zinc-400 shrink-0" />
+              <div className="bg-muted/50 rounded-lg p-3 flex items-center gap-2.5">
+                <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div>
                   <p className="text-lg font-bold leading-none">{fontes}</p>
-                  <p className="text-xs text-zinc-500 mt-0.5">fontes</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">fontes</p>
                 </div>
               </div>
-              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 flex items-center gap-2.5">
-                <Tag className="h-4 w-4 text-zinc-400 shrink-0" />
+              <div className="bg-muted/50 rounded-lg p-3 flex items-center gap-2.5">
+                <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div>
                   <p className="text-lg font-bold leading-none">{temasSelecionados.length}</p>
-                  <p className="text-xs text-zinc-500 mt-0.5">temas</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">temas</p>
                 </div>
               </div>
             </div>
 
             {/* Síntese narrativa */}
             <div>
-              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                 Síntese
               </p>
-              <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+              <p className="text-sm text-foreground/80 leading-relaxed">
                 {relatorio.sintese.sintese}
               </p>
             </div>
@@ -290,7 +290,7 @@ export function NoticiasRelatorio() {
             {/* Destaques com numeração e borda amber */}
             {(relatorio.sintese.destaques ?? []).length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                   Destaques
                 </p>
                 <div className="space-y-3">
@@ -304,10 +304,10 @@ export function NoticiasRelatorio() {
                           {i + 1}
                         </span>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                          <p className="text-sm font-semibold text-foreground">
                             {d.titulo}
                           </p>
-                          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1 leading-snug">
+                          <p className="text-sm text-muted-foreground mt-1 leading-snug">
                             {d.impacto}
                           </p>
                         </div>
@@ -321,7 +321,7 @@ export function NoticiasRelatorio() {
             {/* Alertas com ícone e fundo amarelado */}
             {(relatorio.sintese.alertas ?? []).length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                   Alertas para a Defesa
                 </p>
                 <div className="space-y-2">
@@ -331,7 +331,7 @@ export function NoticiasRelatorio() {
                       className="flex gap-2.5 items-start px-3 py-2 bg-amber-50/50 dark:bg-amber-900/10 border-l-2 border-amber-400 rounded-r-md"
                     >
                       <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300">{a}</p>
+                      <p className="text-sm text-foreground/80">{a}</p>
                     </div>
                   ))}
                 </div>
@@ -340,7 +340,7 @@ export function NoticiasRelatorio() {
 
             {/* Notícias referenciadas */}
             <div>
-              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                 Notícias Referenciadas ({relatorio.noticias.length})
               </p>
               <ol className="space-y-2">
@@ -348,21 +348,21 @@ export function NoticiasRelatorio() {
                   const analise = n.analiseIa as { ratioDecidendi?: string } | null;
                   return (
                     <li key={n.id} className="flex gap-3 text-sm">
-                      <span className="text-zinc-400 shrink-0 w-5 text-right">{i + 1}.</span>
+                      <span className="text-muted-foreground shrink-0 w-5 text-right">{i + 1}.</span>
                       <div className="min-w-0">
-                        <span className="text-zinc-500 mr-1.5">
+                        <span className="text-muted-foreground mr-1.5">
                           [{n.fonte.replace(/-/g, " ")}]
                         </span>
                         <a
                           href={n.urlOriginal}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-zinc-700 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400"
+                          className="text-foreground/80 hover:text-emerald-600 dark:hover:text-emerald-400"
                         >
                           {n.titulo}
                         </a>
                         {analise?.ratioDecidendi && (
-                          <p className="text-xs text-zinc-500 italic mt-0.5 line-clamp-1">
+                          <p className="text-xs text-muted-foreground italic mt-0.5 line-clamp-1">
                             {analise.ratioDecidendi}
                           </p>
                         )}
@@ -378,7 +378,7 @@ export function NoticiasRelatorio() {
 
       {/* Empty result */}
       {relatorio && relatorio.noticias.length === 0 && (
-        <div className="text-center py-12 text-zinc-400">
+        <div className="text-center py-12 text-muted-foreground">
           <p className="font-medium mb-1">Sem notícias no período</p>
           <p className="text-sm">Tente um período maior ou selecione outros temas</p>
         </div>

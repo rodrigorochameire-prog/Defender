@@ -93,9 +93,9 @@ const TYPE_CONFIG: Record<
     label: "Fato",
     borderColor: "border-stone-300",
     bgColor: "bg-stone-50",
-    darkBorderColor: "dark:border-zinc-700",
-    darkBgColor: "dark:bg-zinc-800/50",
-    iconColor: "text-stone-600 dark:text-zinc-400",
+    darkBorderColor: "dark:border-border",
+    darkBgColor: "dark:bg-muted/50",
+    iconColor: "text-muted-foreground",
   },
   prova: {
     icon: <FileText className="w-4 h-4" />,
@@ -169,20 +169,20 @@ export const WarRoomCard = forwardRef<HTMLDivElement, WarRoomCardProps>(
         </div>
 
         {/* Title */}
-        <p className="text-sm font-semibold text-stone-800 dark:text-zinc-200 leading-tight">
+        <p className="text-sm font-semibold text-foreground leading-tight">
           {title}
         </p>
 
         {/* Subtitle */}
         {subtitle && (
-          <p className="text-xs text-stone-500 dark:text-zinc-500 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             {subtitle}
           </p>
         )}
 
         {/* Detail (truncated) */}
         {detail && (
-          <p className="text-xs text-stone-400 dark:text-zinc-600 mt-1 line-clamp-2 leading-relaxed">
+          <p className="text-xs text-muted-foreground/50 mt-1 line-clamp-2 leading-relaxed">
             {detail}
           </p>
         )}

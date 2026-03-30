@@ -239,7 +239,7 @@ export function DemandasTable() {
         {/* Barra de Ferramentas */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Filtrar por nome, autos ou ato..." 
               className="pl-9"
@@ -356,7 +356,7 @@ export function DemandasTable() {
 
                     {/* Ato */}
                     <SwissTableCell>
-                      <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">{item.ato}</p>
+                      <p className="text-sm font-medium text-foreground/80 truncate">{item.ato}</p>
                     </SwissTableCell>
 
                     {/* Prazo */}
@@ -374,13 +374,13 @@ export function DemandasTable() {
                           {diasPrazo === 0 ? "Hoje" : diasPrazo === 1 ? "Amanhã" : diasPrazo < 0 ? "Vencido" : `${diasPrazo}d`}
                         </Badge>
                       ) : (
-                        <span className="text-xs text-zinc-300 dark:text-zinc-600 italic">-</span>
+                        <span className="text-xs text-muted-foreground/50 italic">-</span>
                       )}
                     </SwissTableCell>
 
                     {/* Providências */}
                     <SwissTableCell>
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                         {item.providencia}
                       </p>
                     </SwissTableCell>
@@ -391,7 +391,7 @@ export function DemandasTable() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Link href={`/admin/demandas/${item.id}`}>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
                                 <Eye className="w-4 h-4" />
                               </Button>
                             </Link>
@@ -400,7 +400,7 @@ export function DemandasTable() {
                         </Tooltip>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
                               <MoreHorizontal className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>

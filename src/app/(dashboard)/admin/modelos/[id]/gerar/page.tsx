@@ -275,7 +275,7 @@ export default function GerarDocumentoPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 p-6">
+      <div className="min-h-screen bg-zinc-50/50 dark:bg-background p-6">
         <div className="max-w-5xl mx-auto space-y-6">
           <Skeleton className="h-20 rounded-xl" />
           <div className="grid grid-cols-2 gap-6">
@@ -289,10 +289,10 @@ export default function GerarDocumentoPage() {
 
   if (!modelo) {
     return (
-      <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-50/50 dark:bg-background flex items-center justify-center">
         <div className="text-center">
           <FileStack className="w-16 h-16 mx-auto text-zinc-300 mb-4" />
-          <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="text-xl font-semibold text-foreground">
             Modelo não encontrado
           </h2>
           <Link href="/admin/modelos">
@@ -307,9 +307,9 @@ export default function GerarDocumentoPage() {
   const Icon = config.icon;
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950">
+    <div className="min-h-screen bg-zinc-50/50 dark:bg-background">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+      <div className="border-b border-zinc-200 dark:border-border bg-white dark:bg-card">
         <div className="px-6 py-4">
           <Breadcrumbs
             items={[
@@ -331,7 +331,7 @@ export default function GerarDocumentoPage() {
                 <Icon className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+                <h1 className="text-xl font-semibold text-foreground">
                   Gerar Documento
                 </h1>
                 <p className="text-sm text-zinc-500">
@@ -545,7 +545,7 @@ export default function GerarDocumentoPage() {
                 </Button>
               </CardHeader>
               <CardContent>
-                <div className="prose prose-zinc dark:prose-invert max-w-none p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg min-h-[500px] max-h-[600px] overflow-y-auto">
+                <div className="prose prose-zinc dark:prose-invert max-w-none p-4 bg-zinc-50 dark:bg-muted/50 rounded-lg min-h-[500px] max-h-[600px] overflow-y-auto">
                   <pre className="whitespace-pre-wrap font-sans text-sm">
                     {previewContent.split(/(\[[^\]]+\])/).map((part, i) => {
                       if (part.match(/^\[[^\]]+\]$/)) {

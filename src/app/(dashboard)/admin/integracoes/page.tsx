@@ -160,7 +160,7 @@ const WORKFLOWS: Workflow[] = [
 function IntegrationCard({ integration }: { integration: Integration }) {
   const statusConfig = {
     connected: { label: "Conectado", color: "bg-emerald-500", textColor: "text-emerald-700 dark:text-emerald-400" },
-    disconnected: { label: "Desconectado", color: "bg-zinc-400", textColor: "text-zinc-600 dark:text-zinc-400" },
+    disconnected: { label: "Desconectado", color: "bg-zinc-400", textColor: "text-muted-foreground" },
     error: { label: "Erro", color: "bg-rose-500", textColor: "text-rose-700 dark:text-rose-400" },
   };
 
@@ -173,7 +173,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
           "p-3 rounded-xl",
           integration.status === "connected" 
             ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-            : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+            : "bg-zinc-100 text-muted-foreground dark:bg-muted"
         )}>
           {integration.icon}
         </div>
@@ -185,15 +185,15 @@ function IntegrationCard({ integration }: { integration: Integration }) {
         </div>
       </div>
 
-      <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+      <h3 className="font-semibold text-foreground mb-1">
         {integration.name}
       </h3>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         {integration.description}
       </p>
 
       {integration.lastSync && (
-        <p className="text-xs text-zinc-400 mb-4 flex items-center gap-1">
+        <p className="text-xs text-muted-foreground mb-4 flex items-center gap-1">
           <Clock className="w-3 h-3" />
           Última sync: {integration.lastSync}
         </p>
@@ -248,14 +248,14 @@ function WorkflowCard({ workflow }: { workflow: Workflow }) {
   return (
     <Card className={cn(
       "p-4 transition-all",
-      isActive ? "border-l-[3px] border-l-emerald-500" : "border-l-[3px] border-l-zinc-300 dark:border-l-zinc-700"
+      isActive ? "border-l-[3px] border-l-emerald-500" : "border-l-[3px] border-l-zinc-300 dark:border-l-zinc-600"
     )}>
       <div className="flex items-start justify-between mb-3">
         <div>
-          <h4 className="font-semibold text-zinc-900 dark:text-zinc-100">
+          <h4 className="font-semibold text-foreground">
             {workflow.name}
           </h4>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-muted-foreground">
             {workflow.description}
           </p>
         </div>
@@ -266,7 +266,7 @@ function WorkflowCard({ workflow }: { workflow: Workflow }) {
         />
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 mb-3">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
         <Webhook className="w-3 h-3" />
         <span>{workflow.trigger}</span>
       </div>
@@ -275,10 +275,10 @@ function WorkflowCard({ workflow }: { workflow: Workflow }) {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
             <div className={cn("w-1.5 h-1.5 rounded-full", status.color)} />
-            <span className="text-xs text-zinc-500">{status.label}</span>
+            <span className="text-xs text-muted-foreground">{status.label}</span>
           </div>
           {workflow.lastRun && (
-            <span className="text-xs text-zinc-400">
+            <span className="text-xs text-muted-foreground">
               Último: {workflow.lastRun}
             </span>
           )}
@@ -303,10 +303,10 @@ function WebhookSection() {
           <Webhook className="w-5 h-5 text-violet-600 dark:text-violet-400" />
         </div>
         <div>
-          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+          <h3 className="font-semibold text-foreground">
             Endpoints Webhook
           </h3>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-muted-foreground">
             Use esses endpoints para enviar dados do n8n para o DefesaHub
           </p>
         </div>
@@ -314,7 +314,7 @@ function WebhookSection() {
 
       <div className="space-y-4">
         <div>
-          <Label className="text-xs text-zinc-500">URL do Webhook</Label>
+          <Label className="text-xs text-muted-foreground">URL do Webhook</Label>
           <div className="flex items-center gap-2 mt-1">
             <Input value={webhookUrl} readOnly className="font-mono text-sm" />
             <Button variant="outline" size="sm">
@@ -324,7 +324,7 @@ function WebhookSection() {
         </div>
 
         <div>
-          <Label className="text-xs text-zinc-500">Token de Autenticação</Label>
+          <Label className="text-xs text-muted-foreground">Token de Autenticação</Label>
           <div className="flex items-center gap-2 mt-1">
             <Input
               type={showToken ? "text" : "password"}
@@ -345,8 +345,8 @@ function WebhookSection() {
           </div>
         </div>
 
-        <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
-          <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">
+        <div className="pt-4 border-t border-zinc-100 dark:border-border">
+          <h4 className="text-sm font-medium text-foreground/80 mb-3">
             Endpoints Disponíveis
           </h4>
           <div className="space-y-2">
@@ -356,14 +356,14 @@ function WebhookSection() {
               { method: "POST", path: "/documentos", desc: "Registrar novo documento do Drive" },
               { method: "POST", path: "/alertas", desc: "Criar alerta/notificação" },
             ].map((endpoint, idx) => (
-              <div key={idx} className="flex items-center gap-3 p-2 rounded bg-zinc-50 dark:bg-zinc-900">
+              <div key={idx} className="flex items-center gap-3 p-2 rounded bg-zinc-50 dark:bg-card">
                 <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs">
                   {endpoint.method}
                 </Badge>
-                <code className="text-sm font-mono text-zinc-700 dark:text-zinc-300">
+                <code className="text-sm font-mono text-foreground/80">
                   {endpoint.path}
                 </code>
-                <span className="text-xs text-zinc-500 ml-auto">
+                <span className="text-xs text-muted-foreground ml-auto">
                   {endpoint.desc}
                 </span>
               </div>
@@ -383,35 +383,35 @@ function AISection() {
           <Bot className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+          <h3 className="font-semibold text-foreground flex items-center gap-2">
             Inteligência Artificial
             <Badge className="bg-violet-600 text-white text-xs">
               <Sparkles className="w-3 h-3 mr-1" />
               Premium
             </Badge>
           </h3>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-muted-foreground">
             Recursos avançados com IA para automação jurídica
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="p-3 rounded-lg bg-white/50 dark:bg-zinc-900/50 border border-violet-100 dark:border-violet-800">
+        <div className="p-3 rounded-lg bg-white/50 dark:bg-card/50 border border-violet-100 dark:border-violet-800">
           <FileText className="w-5 h-5 text-violet-600 dark:text-violet-400 mb-2" />
-          <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          <h4 className="text-sm font-medium text-foreground">
             Resumo de Documentos
           </h4>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Extração automática de pontos-chave de intimações e decisões
           </p>
         </div>
-        <div className="p-3 rounded-lg bg-white/50 dark:bg-zinc-900/50 border border-violet-100 dark:border-violet-800">
+        <div className="p-3 rounded-lg bg-white/50 dark:bg-card/50 border border-violet-100 dark:border-violet-800">
           <Calendar className="w-5 h-5 text-violet-600 dark:text-violet-400 mb-2" />
-          <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          <h4 className="text-sm font-medium text-foreground">
             Parser de Pautas
           </h4>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Extração de datas, réus e tipos de audiência de PDFs
           </p>
         </div>
@@ -419,10 +419,10 @@ function AISection() {
 
       <div className="flex items-center justify-between pt-4 border-t border-violet-200 dark:border-violet-800">
         <div>
-          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <p className="text-sm font-medium text-foreground/80">
             500 créditos/mês
           </p>
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-muted-foreground">
             Restam 342 créditos este mês
           </p>
         </div>
@@ -455,17 +455,17 @@ export default function IntegracoesPage() {
             <Zap className="w-6 h-6 text-violet-700 dark:text-violet-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-2xl font-bold text-foreground">
               Integrações & Automação
             </h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-muted-foreground">
               Conecte serviços externos e configure workflows automatizados
             </p>
           </div>
         </div>
 
         <Tabs defaultValue={initialTab}>
-          <TabsList className="bg-zinc-100 dark:bg-zinc-800">
+          <TabsList className="bg-zinc-100 dark:bg-muted">
             <TabsTrigger value="integracoes" className="flex items-center gap-2">
               <Link2 className="w-4 h-4" />
               Integrações
@@ -499,24 +499,24 @@ export default function IntegracoesPage() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                      <h3 className="text-lg font-semibold text-foreground">
                         Google Drive
                       </h3>
                       <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                         Principal
                       </Badge>
                     </div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       Armazenamento e sincronização de documentos processuais
                     </p>
                     <div className="flex items-center gap-4 mt-2">
-                      <span className="text-xs text-zinc-500 flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <FileText className="w-3 h-3" /> Upload automático
                       </span>
-                      <span className="text-xs text-zinc-500 flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <FolderOpen className="w-3 h-3" /> Pastas por processo
                       </span>
-                      <span className="text-xs text-zinc-500 flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <RefreshCw className="w-3 h-3" /> Sincronização bidirecional
                       </span>
                     </div>
@@ -540,24 +540,24 @@ export default function IntegracoesPage() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                      <h3 className="text-lg font-semibold text-foreground">
                         WhatsApp Business
                       </h3>
                       <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                         Comunicação
                       </Badge>
                     </div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       Notificações automáticas para assistidos via WhatsApp
                     </p>
                     <div className="flex items-center gap-4 mt-2">
-                      <span className="text-xs text-zinc-500 flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <Bell className="w-3 h-3" /> Lembretes de prazos
                       </span>
-                      <span className="text-xs text-zinc-500 flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <Calendar className="w-3 h-3" /> Avisos de audiências
                       </span>
-                      <span className="text-xs text-zinc-500 flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <Zap className="w-3 h-3" /> Automação inteligente
                       </span>
                     </div>
@@ -577,7 +577,7 @@ export default function IntegracoesPage() {
 
             {/* Outras Integrações */}
             <div>
-              <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4">
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
                 Outras Integrações
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -627,14 +627,14 @@ export default function IntegracoesPage() {
                   </div>
                 </div>
               </Card>
-              <Card className="p-4 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 border-0">
+              <Card className="p-4 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-card dark:to-muted border-0">
                 <div className="flex items-center gap-3">
-                  <Database className="w-5 h-5 text-zinc-500" />
+                  <Database className="w-5 h-5 text-muted-foreground" />
                   <div>
-                    <p className="text-2xl font-bold text-zinc-700 dark:text-zinc-300">
+                    <p className="text-2xl font-bold text-foreground/80">
                       {WORKFLOWS.length}
                     </p>
-                    <p className="text-xs text-zinc-500">Total</p>
+                    <p className="text-xs text-muted-foreground">Total</p>
                   </div>
                 </div>
               </Card>

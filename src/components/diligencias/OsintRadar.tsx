@@ -31,7 +31,7 @@ const CATEGORIA_ICONS: Record<string, React.ElementType> = {
 const CATEGORIA_COLORS: Record<string, string> = {
   JURIDICO: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
   SOCIAL: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  GERAL: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400",
+  GERAL: "bg-muted text-muted-foreground",
   GEO: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
   OFICIAL: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
   ARQUIVO: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
@@ -66,7 +66,7 @@ export function OsintRadar({ className, compact = false }: OsintRadarProps) {
       {/* Search input */}
       <div className="flex flex-col md:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -143,16 +143,16 @@ export function OsintRadar({ className, compact = false }: OsintRadarProps) {
                 <div className={cn("p-1.5 rounded-md", CATEGORIA_COLORS[link.categoria])}>
                   <Icon className="w-3 h-3" />
                 </div>
-                <span className="flex-1 text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">
+                <span className="flex-1 text-sm font-medium text-foreground/80 truncate">
                   {link.label}
                 </span>
-                <ExternalLink className="w-3 h-3 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </a>
             );
           })}
         </div>
       ) : (
-        <div className="text-center py-8 text-sm text-zinc-400">
+        <div className="text-center py-8 text-sm text-muted-foreground">
           <Globe className="w-8 h-8 mx-auto mb-2 opacity-30" />
           Digite um nome ou termo para gerar links de pesquisa em fontes abertas
         </div>

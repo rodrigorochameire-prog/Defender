@@ -126,7 +126,7 @@ const TIPOS_REGISTRO = {
     label: "Anotação",
     icon: PenLine,
     color: "text-zinc-600",
-    bgActive: "bg-zinc-100 dark:bg-zinc-800 border-zinc-300",
+    bgActive: "bg-zinc-100 dark:bg-muted border-zinc-300",
     description: "Adicionar nota ou observação",
   },
   delegacao: {
@@ -480,16 +480,16 @@ export function RegistroRapidoAprimorado({
   const isDelegacao = data.tipo === "delegacao";
 
   return (
-    <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
+    <Card className="group/card relative bg-white dark:bg-card border border-zinc-100 dark:border-border rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
       {/* Header */}
-      <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
+      <div className="p-3 border-b border-zinc-100 dark:border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
               <MessageSquare className="w-3.5 h-3.5 text-white" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Registro Rápido</h3>
+              <h3 className="text-sm font-semibold text-zinc-800 dark:text-foreground">Registro Rápido</h3>
               <p className="text-[10px] text-zinc-400">Registre e organize informações</p>
             </div>
           </div>
@@ -518,7 +518,7 @@ export function RegistroRapidoAprimorado({
                 <Button
                   variant="outline"
                   role="combobox"
-                  className="w-full h-9 justify-between text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
+                  className="w-full h-9 justify-between text-xs bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border"
                 >
                   {data.assistidoId ? (
                     <span className="flex items-center gap-2 truncate">
@@ -603,7 +603,7 @@ export function RegistroRapidoAprimorado({
                   variant="outline"
                   role="combobox"
                   disabled={!data.assistidoId}
-                  className="w-full h-9 justify-between text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
+                  className="w-full h-9 justify-between text-xs bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border"
                 >
                   {data.processoId ? (
                     <span className="flex items-center gap-2 truncate">
@@ -739,7 +739,7 @@ export function RegistroRapidoAprimorado({
                       ? config.bgActive + " border " + config.color
                       : isDelegacaoBtn
                         ? "border border-rose-200 dark:border-rose-800 hover:border-rose-400 bg-rose-50 dark:bg-rose-900/20 text-rose-600"
-                        : "border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                        : "border border-zinc-200 dark:border-border hover:border-zinc-300 bg-white dark:bg-muted text-zinc-600 dark:text-muted-foreground"
                   }`}
                   title={config.description}
                 >
@@ -761,7 +761,7 @@ export function RegistroRapidoAprimorado({
               placeholder={TIPOS_REGISTRO[data.tipo]?.description || "Descreva o registro..."}
               value={data.descricao}
               onChange={(e) => setData(prev => ({ ...prev, descricao: e.target.value }))}
-              className="min-h-[80px] text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 resize-none pr-10"
+              className="min-h-[80px] text-sm bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border resize-none pr-10"
             />
             <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5">
               <AudioRecorderButton
@@ -837,50 +837,50 @@ export function RegistroRapidoAprimorado({
 
         {/* Opções Avançadas */}
         {showAdvanced && (
-          <div className="space-y-4 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+          <div className="space-y-4 p-3 rounded-lg bg-zinc-50 dark:bg-muted/50 border border-zinc-200 dark:border-border">
             <div className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide mb-2">
               Organizar Registro
             </div>
 
             {/* Destinos */}
             <div className="grid grid-cols-3 gap-3">
-              <label className="flex items-center gap-2 p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-emerald-300 dark:hover:border-emerald-700 cursor-pointer transition-colors">
+              <label className="flex items-center gap-2 p-2 rounded-lg border border-zinc-200 dark:border-border hover:border-emerald-300 dark:hover:border-emerald-700 cursor-pointer transition-colors">
                 <Checkbox
                   checked={data.criarDemanda}
                   onCheckedChange={(checked) => setData(prev => ({ ...prev, criarDemanda: !!checked }))}
                 />
                 <div className="flex items-center gap-1.5">
                   <ListTodo className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="text-[11px] font-medium text-zinc-700 dark:text-zinc-300">Criar Demanda</span>
+                  <span className="text-[11px] font-medium text-zinc-700 dark:text-foreground/80">Criar Demanda</span>
                 </div>
               </label>
 
-              <label className="flex items-center gap-2 p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-emerald-300 dark:hover:border-emerald-700 cursor-pointer transition-colors">
+              <label className="flex items-center gap-2 p-2 rounded-lg border border-zinc-200 dark:border-border hover:border-emerald-300 dark:hover:border-emerald-700 cursor-pointer transition-colors">
                 <Checkbox
                   checked={data.salvarNoDrive}
                   onCheckedChange={(checked) => setData(prev => ({ ...prev, salvarNoDrive: !!checked }))}
                 />
                 <div className="flex items-center gap-1.5">
                   <FolderOpen className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="text-[11px] font-medium text-zinc-700 dark:text-zinc-300">Salvar no Drive</span>
+                  <span className="text-[11px] font-medium text-zinc-700 dark:text-foreground/80">Salvar no Drive</span>
                 </div>
               </label>
 
-              <label className="flex items-center gap-2 p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-emerald-300 dark:hover:border-emerald-700 cursor-pointer transition-colors">
+              <label className="flex items-center gap-2 p-2 rounded-lg border border-zinc-200 dark:border-border hover:border-emerald-300 dark:hover:border-emerald-700 cursor-pointer transition-colors">
                 <Checkbox
                   checked={data.agendarRetorno}
                   onCheckedChange={(checked) => setData(prev => ({ ...prev, agendarRetorno: !!checked }))}
                 />
                 <div className="flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-violet-500" />
-                  <span className="text-[11px] font-medium text-zinc-700 dark:text-zinc-300">Agendar Retorno</span>
+                  <span className="text-[11px] font-medium text-zinc-700 dark:text-foreground/80">Agendar Retorno</span>
                 </div>
               </label>
             </div>
 
             {/* Campos de Demanda */}
             {data.criarDemanda && (
-              <div className="space-y-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
+              <div className="space-y-3 pt-3 border-t border-zinc-200 dark:border-border">
                 <div className="grid grid-cols-3 gap-3">
                   {/* Atribuição */}
                   <div className="space-y-1">
@@ -888,7 +888,7 @@ export function RegistroRapidoAprimorado({
                     <select
                       value={data.atribuicao}
                       onChange={(e) => setData(prev => ({ ...prev, atribuicao: e.target.value }))}
-                      className="w-full h-8 px-2 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                      className="w-full h-8 px-2 text-xs rounded-md border border-zinc-200 dark:border-border bg-white dark:bg-muted"
                     >
                       <option value="">Selecione...</option>
                       {ATRIBUICOES.map((attr) => (
@@ -903,7 +903,7 @@ export function RegistroRapidoAprimorado({
                     <select
                       value={data.prioridade}
                       onChange={(e) => setData(prev => ({ ...prev, prioridade: e.target.value }))}
-                      className="w-full h-8 px-2 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                      className="w-full h-8 px-2 text-xs rounded-md border border-zinc-200 dark:border-border bg-white dark:bg-muted"
                     >
                       {PRIORIDADES.map((prio) => (
                         <option key={prio.value} value={prio.value}>{prio.label}</option>

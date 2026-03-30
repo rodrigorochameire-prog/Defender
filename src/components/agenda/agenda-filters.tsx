@@ -136,7 +136,7 @@ function FilterButton({
         "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap",
         isSelected
           ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-300 dark:ring-emerald-700"
-          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+          : "bg-zinc-100 dark:bg-muted text-muted-foreground hover:bg-zinc-200 dark:hover:bg-muted"
       )}
     >
       {Icon && <Icon className="w-3.5 h-3.5" />}
@@ -185,7 +185,7 @@ export function AgendaFilters({
     <div className="space-y-3">
       {/* Linha 1: Defensor */}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider w-16 flex-shrink-0">Defensor</span>
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider w-16 flex-shrink-0">Defensor</span>
         <div className="flex items-center gap-1.5 flex-wrap">
           {defensorOptions.map((option) => (
             <FilterButton
@@ -201,7 +201,7 @@ export function AgendaFilters({
 
       {/* Linha 2: Período */}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider w-16 flex-shrink-0">Período</span>
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider w-16 flex-shrink-0">Período</span>
         <div className="flex items-center gap-1.5 flex-wrap">
           {periodoOptions.map((option) => (
             <FilterButton
@@ -217,7 +217,7 @@ export function AgendaFilters({
 
       {/* Linha 3: Tipo de Evento */}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider w-16 flex-shrink-0">Tipo</span>
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider w-16 flex-shrink-0">Tipo</span>
         <div className="flex items-center gap-1.5 flex-wrap">
           {tipoOptions.map((option) => (
             <FilterButton
@@ -236,7 +236,7 @@ export function AgendaFilters({
         <div className="flex justify-end pt-1">
           <button
             onClick={handleClearAllFilters}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
           >
             <X className="w-3.5 h-3.5" />
             Limpar filtros

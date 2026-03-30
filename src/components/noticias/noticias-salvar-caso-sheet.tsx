@@ -51,7 +51,7 @@ export function NoticiaSalvarCasoSheet({ noticia, onClose }: NoticiaSalvarCasoSh
 
         {/* Search */}
         <div className="relative my-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por réu, número ou crime..."
             className="pl-9"
@@ -64,7 +64,7 @@ export function NoticiaSalvarCasoSheet({ noticia, onClose }: NoticiaSalvarCasoSh
         {/* Lista de processos */}
         <div className="space-y-2 overflow-y-auto max-h-[60vh]">
           {processos.length === 0 && debouncedBusca && (
-            <p className="text-sm text-zinc-400 text-center py-8">
+            <p className="text-sm text-muted-foreground text-center py-8">
               Nenhum processo encontrado
             </p>
           )}
@@ -78,13 +78,13 @@ export function NoticiaSalvarCasoSheet({ noticia, onClose }: NoticiaSalvarCasoSh
             return (
               <div
                 key={processo.id}
-                className="flex items-center justify-between gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-emerald-500/40 transition-colors"
+                className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border hover:border-emerald-500/40 transition-colors"
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {nomeDisplay}
                   </p>
-                  <p className="text-xs text-zinc-400 truncate">
+                  <p className="text-xs text-muted-foreground truncate">
                     {numeroDisplay}
                     {crimeDisplay ? ` · ${crimeDisplay}` : ""}
                   </p>

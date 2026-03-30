@@ -168,7 +168,7 @@ export function PlaudRecordingsList({
               {recordings.map((recording) => (
                 <div
                   key={recording.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-border hover:bg-zinc-50 dark:hover:bg-muted transition-colors"
                 >
                   <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
                     <Mic className="h-5 w-5 text-purple-600" />
@@ -227,7 +227,7 @@ export function PlaudRecordingsList({
             </div>
           ) : (
             <div className="text-center py-8">
-              <Mic className="h-12 w-12 mx-auto text-zinc-300 dark:text-zinc-600 mb-3" />
+              <Mic className="h-12 w-12 mx-auto text-zinc-300 dark:text-muted-foreground/50 mb-3" />
               <p className="text-zinc-500">Nenhuma gravação pendente</p>
               <p className="text-xs text-zinc-400 mt-1">
                 Novas gravações do Plaud aparecerão aqui automaticamente

@@ -166,7 +166,7 @@ function StatsCards({ configId }: { configId: number }) {
                 stat.color === "rose" && "bg-rose-100 dark:bg-rose-900/30",
                 stat.color === "emerald" && "bg-emerald-100 dark:bg-emerald-900/30",
                 stat.color === "violet" && "bg-violet-100 dark:bg-violet-900/30",
-                stat.color === "zinc" && "bg-zinc-100 dark:bg-zinc-800",
+                stat.color === "zinc" && "bg-zinc-100 dark:bg-muted",
               )}>
                 <Icon className={cn(
                   "w-5 h-5",
@@ -178,7 +178,7 @@ function StatsCards({ configId }: { configId: number }) {
                 )} />
               </div>
               <div>
-                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                <p className="text-2xl font-bold text-foreground">
                   {stat.value.toLocaleString()}
                 </p>
                 <p className="text-xs text-zinc-500">{stat.label}</p>
@@ -311,12 +311,12 @@ function RecentContacts({ configId }: { configId: number }) {
                 href={`/admin/whatsapp/chat?contactId=${contact.id}`}
                 className="block"
               >
-                <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer">
-                  <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-sm font-medium">
+                <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-50 dark:hover:bg-muted/50 transition-colors cursor-pointer">
+                  <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-muted flex items-center justify-center text-sm font-medium">
                     {contact.pushName?.[0]?.toUpperCase() || contact.phone?.slice(-2)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                    <p className="font-medium text-foreground truncate">
                       {contact.pushName || contact.name || formatPhone(contact.phone)}
                     </p>
                     <p className="text-xs text-zinc-500 truncate">
@@ -406,7 +406,7 @@ function UnlinkedContacts({ configId }: { configId: number }) {
                   {contact.pushName?.[0]?.toUpperCase() || "?"}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                  <p className="font-medium text-foreground truncate">
                     {contact.pushName || "Sem nome"}
                   </p>
                   <p className="text-xs text-zinc-500">
@@ -483,7 +483,7 @@ function InstanceConfig() {
       </CardHeader>
       <CardContent className="space-y-4">
         {showNewForm && (
-          <div className="p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 space-y-4">
+          <div className="p-4 rounded-lg border border-zinc-200 dark:border-border bg-zinc-50 dark:bg-card/50 space-y-4">
             <h4 className="font-medium">Adicionar Nova Instância</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
@@ -546,12 +546,12 @@ function InstanceConfig() {
             {configs.map((config) => (
               <div
                 key={config.id}
-                className="flex items-center justify-between p-4 rounded-lg border border-zinc-200 dark:border-zinc-700"
+                className="flex items-center justify-between p-4 rounded-lg border border-zinc-200 dark:border-border"
               >
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     "w-10 h-10 rounded-lg flex items-center justify-center",
-                    config.status === "connected" ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-zinc-100 dark:bg-zinc-800"
+                    config.status === "connected" ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-zinc-100 dark:bg-muted"
                   )}>
                     {config.status === "connected" ? (
                       <Wifi className="w-5 h-5 text-emerald-600" />
@@ -576,7 +576,7 @@ function InstanceConfig() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-zinc-400 hover:text-rose-600"
+                    className="text-muted-foreground hover:text-rose-600"
                     onClick={() => {
                       if (confirm("Tem certeza que deseja remover esta instância?")) {
                         deleteMutation.mutate({ id: config.id });
@@ -591,16 +591,16 @@ function InstanceConfig() {
           </div>
         ) : (
           <div className="text-center py-8">
-            <QrCode className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-600 mb-3" />
+            <QrCode className="w-12 h-12 mx-auto text-muted-foreground/30 dark:text-muted-foreground/50 mb-3" />
             <p className="text-zinc-500">Nenhuma instância configurada</p>
-            <p className="text-xs text-zinc-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Clique em &quot;Nova&quot; para começar
             </p>
           </div>
         )}
 
         {/* Instruções */}
-        <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+        <div className="pt-4 border-t border-zinc-200 dark:border-border">
           <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
             <HelpCircle className="w-4 h-4" />
             Como configurar
@@ -653,8 +653,8 @@ export default function WhatsAppPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-        <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="min-h-screen bg-muted dark:bg-background">
+        <div className="px-4 md:px-6 py-3 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
               <MessageCircle className="w-4 h-4 text-emerald-600" />
@@ -675,17 +675,17 @@ export default function WhatsAppPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-zinc-100 dark:bg-background">
       {/* Header */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center border border-emerald-200 dark:border-emerald-700">
               <MessageCircle className="w-4 h-4 text-emerald-600" />
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">WhatsApp</span>
-              <span className="text-xs text-zinc-400 dark:text-zinc-500">• Evolution API</span>
+              <span className="text-sm font-semibold text-foreground">WhatsApp</span>
+              <span className="text-xs text-muted-foreground">• Evolution API</span>
             </div>
           </div>
 
@@ -738,7 +738,7 @@ export default function WhatsAppPage() {
         ) : (
           /* Sem configuração */
           <div className="space-y-6">
-            <Card className="border-2 border-dashed border-zinc-300 dark:border-zinc-700">
+            <Card className="border-2 border-dashed border-zinc-300 dark:border-border">
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
                   <MessageCircle className="w-8 h-8 text-emerald-600" />

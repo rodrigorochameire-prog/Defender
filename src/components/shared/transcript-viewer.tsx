@@ -197,7 +197,7 @@ function formatDuration(seconds: number): string {
 const RELEVANCIA_COLORS: Record<string, string> = {
   alta: "text-red-600 dark:text-red-400",
   media: "text-amber-600 dark:text-amber-400",
-  baixa: "text-zinc-500 dark:text-zinc-400",
+  baixa: "text-muted-foreground",
 };
 
 const HIGHLIGHT_TYPE_COLORS: Record<string, string> = {
@@ -244,12 +244,12 @@ export function TranscriptViewer({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col p-0 gap-0">
         {/* Header */}
-        <DialogHeader className="px-5 pt-5 pb-3 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
+        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border shrink-0">
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-zinc-500" />
+            <FileText className="h-4 w-4 text-muted-foreground" />
             {title ?? "Transcrição de Áudio"}
             {assistidoNome && (
-              <span className="text-sm font-normal text-zinc-500">
+              <span className="text-sm font-normal text-muted-foreground">
                 — {assistidoNome}
               </span>
             )}
@@ -297,8 +297,8 @@ export function TranscriptViewer({
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer",
                 activeTab === t.key
-                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                  : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800"
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
               )}
             >
               {t.icon}
@@ -313,14 +313,14 @@ export function TranscriptViewer({
           {activeTab === "transcricao" && (
             <div className="flex flex-col gap-2 h-full">
               <div className="flex items-center justify-between shrink-0">
-                <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Transcrição Completa
                 </span>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleCopy(transcript)}
-                  className="h-6 px-2 text-xs text-zinc-500 hover:text-zinc-700"
+                  className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
                 >
                   {copied ? (
                     <Check className="h-3 w-3 mr-1 text-emerald-500" />
@@ -331,11 +331,11 @@ export function TranscriptViewer({
                 </Button>
               </div>
               <div className="flex-1 min-h-0">
-                <ScrollArea className="h-full rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900">
+                <ScrollArea className="h-full rounded-md border border-border bg-muted/50">
                   <div className="p-4">
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap font-mono">
+                    <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap font-mono">
                       {transcript || (
-                        <span className="text-zinc-400 italic font-sans">
+                        <span className="text-muted-foreground italic font-sans">
                           Nenhum texto transcrito.
                         </span>
                       )}
@@ -352,27 +352,27 @@ export function TranscriptViewer({
               <div className="space-y-4 pr-3">
                 {/* Depoente Info */}
                 {analysis.depoente && (
-                  <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
-                    <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                  <div className="rounded-lg border border-border p-4">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
                       <User className="h-3.5 w-3.5" />
                       Depoente
                     </h3>
                     <div className="space-y-1.5">
                       {analysis.depoente.nome && (
-                        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                        <p className="text-sm font-medium text-foreground">
                           {analysis.depoente.nome}
                           {analysis.depoente.apelido && (
-                            <span className="text-zinc-500 font-normal"> ({analysis.depoente.apelido})</span>
+                            <span className="text-muted-foreground font-normal"> ({analysis.depoente.apelido})</span>
                           )}
                         </p>
                       )}
                       {analysis.depoente.relacao_com_fatos && (
-                        <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                        <p className="text-xs text-muted-foreground">
                           {analysis.depoente.relacao_com_fatos}
                         </p>
                       )}
                       {analysis.depoente.credibilidade_notas && (
-                        <p className="text-xs text-zinc-500 dark:text-zinc-500 italic">
+                        <p className="text-xs text-muted-foreground italic">
                           Credibilidade: {analysis.depoente.credibilidade_notas}
                         </p>
                       )}
@@ -387,7 +387,7 @@ export function TranscriptViewer({
                       <Scale className="h-3.5 w-3.5" />
                       Resumo para Defesa
                     </h3>
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                    <p className="text-sm text-foreground/80 leading-relaxed">
                       {analysis.resumo_defesa}
                     </p>
                   </div>
@@ -405,13 +405,13 @@ export function TranscriptViewer({
                         <div key={i} className="flex gap-2 text-sm">
                           <span className="text-emerald-500 shrink-0 mt-0.5">+</span>
                           <div>
-                            <p className="text-zinc-700 dark:text-zinc-300">{p.ponto}</p>
+                            <p className="text-foreground/80">{p.ponto}</p>
                             <div className="flex items-center gap-2 mt-0.5">
                               {p.timestamp_ref && (
-                                <span className="text-[10px] text-zinc-400 font-mono">[{p.timestamp_ref}]</span>
+                                <span className="text-[10px] text-muted-foreground font-mono">[{p.timestamp_ref}]</span>
                               )}
                               {p.relevancia && (
-                                <span className={cn("text-[10px] font-medium", RELEVANCIA_COLORS[p.relevancia] ?? "text-zinc-500")}>
+                                <span className={cn("text-[10px] font-medium", RELEVANCIA_COLORS[p.relevancia] ?? "text-muted-foreground")}>
                                   {p.relevancia}
                                 </span>
                               )}
@@ -440,13 +440,13 @@ export function TranscriptViewer({
                         <div key={i} className="flex gap-2 text-sm">
                           <span className="text-red-500 shrink-0 mt-0.5">−</span>
                           <div>
-                            <p className="text-zinc-700 dark:text-zinc-300">{p.ponto}</p>
+                            <p className="text-foreground/80">{p.ponto}</p>
                             <div className="flex items-center gap-2 mt-0.5">
                               {p.timestamp_ref && (
-                                <span className="text-[10px] text-zinc-400 font-mono">[{p.timestamp_ref}]</span>
+                                <span className="text-[10px] text-muted-foreground font-mono">[{p.timestamp_ref}]</span>
                               )}
                               {p.relevancia && (
-                                <span className={cn("text-[10px] font-medium", RELEVANCIA_COLORS[p.relevancia] ?? "text-zinc-500")}>
+                                <span className={cn("text-[10px] font-medium", RELEVANCIA_COLORS[p.relevancia] ?? "text-muted-foreground")}>
                                   {p.relevancia}
                                 </span>
                               )}
@@ -468,11 +468,11 @@ export function TranscriptViewer({
                     <div className="space-y-3">
                       {analysis.contradicoes.map((c, i) => (
                         <div key={i} className="rounded-md border border-yellow-100 dark:border-yellow-900 bg-yellow-50/50 dark:bg-yellow-950/20 p-3 text-sm space-y-1">
-                          <p className="text-zinc-600 dark:text-zinc-400">
-                            <span className="font-medium text-zinc-700 dark:text-zinc-300">1.</span> {c.fato_1}
+                          <p className="text-muted-foreground">
+                            <span className="font-medium text-foreground/80">1.</span> {c.fato_1}
                           </p>
-                          <p className="text-zinc-600 dark:text-zinc-400">
-                            <span className="font-medium text-zinc-700 dark:text-zinc-300">2.</span> {c.fato_2}
+                          <p className="text-muted-foreground">
+                            <span className="font-medium text-foreground/80">2.</span> {c.fato_2}
                           </p>
                           <p className="text-xs text-yellow-700 dark:text-yellow-400 italic mt-1">
                             {c.analise}
@@ -492,7 +492,7 @@ export function TranscriptViewer({
                     </h3>
                     <ul className="space-y-1.5">
                       {analysis.providencias.map((p, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+                        <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
                           <span className="text-blue-500 shrink-0 mt-0.5">→</span>
                           {p}
                         </li>
@@ -510,22 +510,22 @@ export function TranscriptViewer({
               <div className="space-y-4 pr-3">
                 {/* Pessoas */}
                 {analysis.entidades.pessoas && analysis.entidades.pessoas.length > 0 && (
-                  <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
-                    <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                  <div className="rounded-lg border border-border p-4">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-1.5">
                       <User className="h-3.5 w-3.5" />
                       Pessoas ({analysis.entidades.pessoas.length})
                     </h3>
                     <div className="space-y-3">
                       {analysis.entidades.pessoas.map((p, i) => (
                         <div key={i} className="flex items-start gap-3 text-sm">
-                          <div className="w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
-                            <User className="h-3.5 w-3.5 text-zinc-500" />
+                          <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0">
+                            <User className="h-3.5 w-3.5 text-muted-foreground" />
                           </div>
                           <div>
-                            <p className="font-medium text-zinc-800 dark:text-zinc-200">
+                            <p className="font-medium text-foreground">
                               {p.nome}
                               {p.apelidos && p.apelidos.length > 0 && (
-                                <span className="text-zinc-500 font-normal"> ({p.apelidos.join(", ")})</span>
+                                <span className="text-muted-foreground font-normal"> ({p.apelidos.join(", ")})</span>
                               )}
                             </p>
                             {p.papel && (
@@ -534,7 +534,7 @@ export function TranscriptViewer({
                               </Badge>
                             )}
                             {p.caracteristicas && p.caracteristicas.length > 0 && (
-                              <p className="text-xs text-zinc-500 mt-0.5">
+                              <p className="text-xs text-muted-foreground mt-0.5">
                                 {p.caracteristicas.join(" · ")}
                               </p>
                             )}
@@ -547,15 +547,15 @@ export function TranscriptViewer({
 
                 {/* Locais */}
                 {analysis.entidades.locais && analysis.entidades.locais.length > 0 && (
-                  <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
-                    <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                  <div className="rounded-lg border border-border p-4">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-1.5">
                       <MapPin className="h-3.5 w-3.5" />
                       Locais ({analysis.entidades.locais.length})
                     </h3>
                     <div className="space-y-2">
                       {analysis.entidades.locais.map((l, i) => (
                         <div key={i} className="text-sm">
-                          <p className="font-medium text-zinc-800 dark:text-zinc-200">{l.nome}</p>
+                          <p className="font-medium text-foreground">{l.nome}</p>
                           <div className="flex items-center gap-2 mt-0.5">
                             {l.tipo && (
                               <Badge variant="outline" className="text-[9px] py-0 h-4">
@@ -563,7 +563,7 @@ export function TranscriptViewer({
                               </Badge>
                             )}
                             {l.descricao_ambiente && (
-                              <span className="text-xs text-zinc-500">{l.descricao_ambiente}</span>
+                              <span className="text-xs text-muted-foreground">{l.descricao_ambiente}</span>
                             )}
                           </div>
                         </div>
@@ -574,18 +574,18 @@ export function TranscriptViewer({
 
                 {/* Datas/Horários */}
                 {analysis.entidades.datas_horarios && analysis.entidades.datas_horarios.length > 0 && (
-                  <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
-                    <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                  <div className="rounded-lg border border-border p-4">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-1.5">
                       <Calendar className="h-3.5 w-3.5" />
                       Datas e Horários
                     </h3>
                     <div className="space-y-1.5">
                       {analysis.entidades.datas_horarios.map((d, i) => (
                         <div key={i} className="flex items-center gap-2 text-sm">
-                          <span className="font-mono text-xs text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
+                          <span className="font-mono text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                             {d.referencia}
                           </span>
-                          <span className="text-zinc-600 dark:text-zinc-400">{d.contexto}</span>
+                          <span className="text-muted-foreground">{d.contexto}</span>
                         </div>
                       ))}
                     </div>
@@ -594,16 +594,16 @@ export function TranscriptViewer({
 
                 {/* Objetos */}
                 {analysis.entidades.objetos && analysis.entidades.objetos.length > 0 && (
-                  <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
-                    <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                  <div className="rounded-lg border border-border p-4">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-1.5">
                       <Box className="h-3.5 w-3.5" />
                       Objetos
                     </h3>
                     <div className="space-y-1.5">
                       {analysis.entidades.objetos.map((o, i) => (
                         <div key={i} className="text-sm">
-                          <span className="font-medium text-zinc-800 dark:text-zinc-200">{o.descricao}</span>
-                          <span className="text-zinc-500"> — {o.contexto}</span>
+                          <span className="font-medium text-foreground">{o.descricao}</span>
+                          <span className="text-muted-foreground"> — {o.contexto}</span>
                         </div>
                       ))}
                     </div>
@@ -627,13 +627,13 @@ export function TranscriptViewer({
                     <div className="space-y-2">
                       {analysis.percepcao.viu_diretamente.map((item, i) => (
                         <div key={i} className="text-sm border-l-2 border-emerald-300 dark:border-emerald-700 pl-3">
-                          <p className="text-zinc-700 dark:text-zinc-300">{item.fato}</p>
+                          <p className="text-foreground/80">{item.fato}</p>
                           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                             {item.timestamp_ref && (
-                              <span className="text-[10px] text-zinc-400 font-mono">[{item.timestamp_ref}]</span>
+                              <span className="text-[10px] text-muted-foreground font-mono">[{item.timestamp_ref}]</span>
                             )}
                             {item.condicoes && (
-                              <span className="text-[10px] text-zinc-500">{item.condicoes}</span>
+                              <span className="text-[10px] text-muted-foreground">{item.condicoes}</span>
                             )}
                             {item.confiabilidade && (
                               <Badge variant="outline" className="text-[9px] py-0 h-4">
@@ -657,14 +657,14 @@ export function TranscriptViewer({
                     <div className="space-y-2">
                       {analysis.percepcao.ouviu_dizer_especifico.map((item, i) => (
                         <div key={i} className="text-sm border-l-2 border-amber-300 dark:border-amber-700 pl-3">
-                          <p className="text-zinc-700 dark:text-zinc-300">{item.fato}</p>
+                          <p className="text-foreground/80">{item.fato}</p>
                           {item.fonte && (
                             <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
                               Fonte: {item.fonte}
                             </p>
                           )}
                           {item.timestamp_ref && (
-                            <span className="text-[10px] text-zinc-400 font-mono">[{item.timestamp_ref}]</span>
+                            <span className="text-[10px] text-muted-foreground font-mono">[{item.timestamp_ref}]</span>
                           )}
                         </div>
                       ))}
@@ -682,9 +682,9 @@ export function TranscriptViewer({
                     <div className="space-y-2">
                       {analysis.percepcao.ouviu_dizer_boato.map((item, i) => (
                         <div key={i} className="text-sm border-l-2 border-orange-300 dark:border-orange-700 pl-3">
-                          <p className="text-zinc-700 dark:text-zinc-300">{item.fato}</p>
+                          <p className="text-foreground/80">{item.fato}</p>
                           {item.timestamp_ref && (
-                            <span className="text-[10px] text-zinc-400 font-mono">[{item.timestamp_ref}]</span>
+                            <span className="text-[10px] text-muted-foreground font-mono">[{item.timestamp_ref}]</span>
                           )}
                         </div>
                       ))}
@@ -694,8 +694,8 @@ export function TranscriptViewer({
 
                 {/* Condições de Percepção */}
                 {analysis.percepcao.condicoes_percepcao && (
-                  <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
-                    <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3">
+                  <div className="rounded-lg border border-border p-4">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                       Condições de Percepção
                     </h3>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2">
@@ -710,8 +710,8 @@ export function TranscriptViewer({
                         .filter((c) => c.value)
                         .map((c, i) => (
                           <div key={i} className="text-sm">
-                            <span className="text-zinc-500 text-xs">{c.label}:</span>
-                            <p className="text-zinc-700 dark:text-zinc-300 font-medium">{c.value}</p>
+                            <span className="text-muted-foreground text-xs">{c.label}:</span>
+                            <p className="text-foreground/80 font-medium">{c.value}</p>
                           </div>
                         ))}
                     </div>
@@ -728,7 +728,7 @@ export function TranscriptViewer({
                 {/* Highlights */}
                 {analysis.highlights && analysis.highlights.length > 0 && (
                   <div className="space-y-2">
-                    <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide flex items-center gap-1.5">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                       <Highlighter className="h-3.5 w-3.5" />
                       Trechos Relevantes ({analysis.highlights.length})
                     </h3>
@@ -740,7 +740,7 @@ export function TranscriptViewer({
                           HIGHLIGHT_TYPE_COLORS[h.tipo ?? "relevante"] ?? HIGHLIGHT_TYPE_COLORS.relevante
                         )}
                       >
-                        <p className="text-zinc-700 dark:text-zinc-300 italic">
+                        <p className="text-foreground/80 italic">
                           &ldquo;{h.texto}&rdquo;
                         </p>
                         <div className="flex items-center gap-2 mt-1.5 flex-wrap">
@@ -760,11 +760,11 @@ export function TranscriptViewer({
                             </Badge>
                           )}
                           {h.timestamp_ref && (
-                            <span className="text-[10px] text-zinc-400 font-mono">[{h.timestamp_ref}]</span>
+                            <span className="text-[10px] text-muted-foreground font-mono">[{h.timestamp_ref}]</span>
                           )}
                         </div>
                         {h.motivo && (
-                          <p className="text-xs text-zinc-500 mt-1">{h.motivo}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{h.motivo}</p>
                         )}
                       </div>
                     ))}

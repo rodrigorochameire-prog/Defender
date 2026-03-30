@@ -67,12 +67,12 @@ function TeseSection({ tese }: { tese: Record<string, unknown> }) {
       {/* Teses Subsidiárias */}
       {tesesSubsidiarias.length > 0 && (
         <div className="space-y-1">
-          <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Teses Subsidiárias
           </p>
           {tesesSubsidiarias.map((t, i) => (
-            <div key={i} className="flex items-start gap-2 text-sm text-zinc-700 dark:text-zinc-300">
-              <span className="text-zinc-400 shrink-0">{i + 1}.</span>
+            <div key={i} className="flex items-start gap-2 text-sm text-foreground/80">
+              <span className="text-muted-foreground shrink-0">{i + 1}.</span>
               <span>{t}</span>
             </div>
           ))}
@@ -92,15 +92,15 @@ function TeseSection({ tese }: { tese: Record<string, unknown> }) {
             {pontosFortes.map((p, i) => (
               <div
                 key={i}
-                className="text-xs text-zinc-700 dark:text-zinc-300 pl-5 py-1 border-l-2 border-emerald-200 dark:border-emerald-800"
+                className="text-xs text-foreground/80 pl-5 py-1 border-l-2 border-emerald-200 dark:border-emerald-800"
               >
                 {p.ponto}
                 {p.relevancia && (
                   <span className={cn(
                     "ml-1 text-[10px] px-1 py-0.5 rounded",
                     p.relevancia === "alta" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300" :
-                    p.relevancia === "media" ? "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400" :
-                    "bg-zinc-50 text-zinc-500 dark:bg-zinc-900 dark:text-zinc-500",
+                    p.relevancia === "media" ? "bg-muted text-muted-foreground/50" :
+                    "bg-muted/50 text-muted-foreground",
                   )}>
                     {p.relevancia}
                   </span>
@@ -121,15 +121,15 @@ function TeseSection({ tese }: { tese: Record<string, unknown> }) {
             {pontosFracos.map((p, i) => (
               <div
                 key={i}
-                className="text-xs text-zinc-700 dark:text-zinc-300 pl-5 py-1 border-l-2 border-red-200 dark:border-red-800"
+                className="text-xs text-foreground/80 pl-5 py-1 border-l-2 border-red-200 dark:border-red-800"
               >
                 {p.ponto}
                 {p.relevancia && (
                   <span className={cn(
                     "ml-1 text-[10px] px-1 py-0.5 rounded",
                     p.relevancia === "alta" ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300" :
-                    p.relevancia === "media" ? "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400" :
-                    "bg-zinc-50 text-zinc-500 dark:bg-zinc-900 dark:text-zinc-500",
+                    p.relevancia === "media" ? "bg-muted text-muted-foreground/50" :
+                    "bg-muted/50 text-muted-foreground",
                   )}>
                     {p.relevancia}
                   </span>
@@ -150,7 +150,7 @@ function TimelineSection({ items }: { items: Array<Record<string, unknown>> }) {
     <div className="space-y-1.5">
       <div className="flex items-center gap-1.5 mb-2">
         <Clock className="h-4 w-4 text-blue-500" />
-        <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+        <span className="text-xs font-semibold text-foreground/80">
           Timeline dos Fatos ({items.length})
         </span>
       </div>
@@ -169,24 +169,24 @@ function TimelineSection({ items }: { items: Array<Record<string, unknown>> }) {
                   "w-2 h-2 rounded-full mt-1.5 shrink-0",
                   importancia === "alta" ? "bg-red-500" :
                   importancia === "media" ? "bg-blue-500" :
-                  "bg-zinc-400",
+                  "bg-muted-foreground",
                 )} />
                 {i < items.length - 1 && (
-                  <div className="w-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
+                  <div className="w-px flex-1 bg-border" />
                 )}
               </div>
               {/* Content */}
               <div className="pb-3 min-w-0">
                 {dataRef && (
-                  <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
+                  <span className="text-[10px] font-mono text-muted-foreground">
                     {dataRef}
                   </span>
                 )}
-                <p className="text-xs text-zinc-800 dark:text-zinc-200">
+                <p className="text-xs text-foreground">
                   {fato}
                 </p>
                 {fontes.length > 0 && (
-                  <span className="text-[10px] text-zinc-400">
+                  <span className="text-[10px] text-muted-foreground">
                     {fontes.length} fonte{fontes.length !== 1 ? "s" : ""}
                   </span>
                 )}
@@ -206,7 +206,7 @@ function AtoresSection({ items }: { items: Array<Record<string, unknown>> }) {
     <div className="space-y-2">
       <div className="flex items-center gap-1.5 mb-2">
         <Users className="h-4 w-4 text-violet-500" />
-        <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+        <span className="text-xs font-semibold text-foreground/80">
           Mapa de Atores ({items.length})
         </span>
       </div>
@@ -220,10 +220,10 @@ function AtoresSection({ items }: { items: Array<Record<string, unknown>> }) {
           return (
             <div
               key={i}
-              className="p-2 rounded-md border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900"
+              className="p-2 rounded-md border border-border bg-card"
             >
               <div className="flex items-center gap-1.5">
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                <span className="text-sm font-medium text-foreground">
                   {nome}
                 </span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300">
@@ -231,14 +231,14 @@ function AtoresSection({ items }: { items: Array<Record<string, unknown>> }) {
                 </span>
               </div>
               {mencionadoPor.length > 0 && (
-                <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <p className="text-[10px] text-muted-foreground mt-0.5">
                   Citado por {mencionadoPor.length} depoente{mencionadoPor.length !== 1 ? "s" : ""}
                 </p>
               )}
               {relacoes.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1">
                   {relacoes.map((r, j) => (
-                    <span key={j} className="text-[10px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
+                    <span key={j} className="text-[10px] px-1 py-0.5 rounded bg-muted text-muted-foreground">
                       {(r.tipo as string) ?? "?"} → {(r.com as string) ?? "?"}
                     </span>
                   ))}
@@ -259,13 +259,13 @@ function ProvidenciasSection({ items }: { items: string[] }) {
     <div className="space-y-1.5">
       <div className="flex items-center gap-1.5 mb-2">
         <ClipboardList className="h-4 w-4 text-amber-500" />
-        <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+        <span className="text-xs font-semibold text-foreground/80">
           Providências Agregadas ({items.length})
         </span>
       </div>
       <ol className="space-y-1 list-decimal list-inside">
         {items.map((p, i) => (
-          <li key={i} className="text-xs text-zinc-700 dark:text-zinc-300">
+          <li key={i} className="text-xs text-foreground/80">
             {p}
           </li>
         ))}
@@ -309,7 +309,7 @@ export function IntelligenceCrossAnalysis({ assistidoId }: IntelligenceCrossAnal
   if (crossQuery.isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -318,12 +318,12 @@ export function IntelligenceCrossAnalysis({ assistidoId }: IntelligenceCrossAnal
   if (!crossQuery.data?.found || !crossQuery.data?.data) {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-3">
-        <Sparkles className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />
+        <Sparkles className="h-8 w-8 text-muted-foreground/50" />
         <div className="text-center">
-          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <p className="text-sm font-medium text-foreground/80">
             Análise cruzada não disponível
           </p>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-xs">
+          <p className="text-xs text-muted-foreground mt-1 max-w-xs">
             A análise cruzada compara depoimentos entre si para encontrar contradições, corroborações e lacunas.
             É gerada automaticamente quando 2+ depoimentos são analisados.
           </p>
@@ -355,7 +355,7 @@ export function IntelligenceCrossAnalysis({ assistidoId }: IntelligenceCrossAnal
       {/* Header with refresh button */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs text-muted-foreground">
             {data.analysisCount} depoimentos comparados
             {data.updatedAt && (
               <> · Atualizado em {new Date(data.updatedAt).toLocaleDateString("pt-BR")}</>
@@ -365,7 +365,7 @@ export function IntelligenceCrossAnalysis({ assistidoId }: IntelligenceCrossAnal
         <button
           onClick={handleRegenerate}
           disabled={regenerateMutation.isPending}
-          className="flex items-center gap-1 text-xs text-zinc-500 hover:text-emerald-600 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-emerald-600 transition-colors disabled:opacity-50"
         >
           {regenerateMutation.isPending ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -381,7 +381,7 @@ export function IntelligenceCrossAnalysis({ assistidoId }: IntelligenceCrossAnal
 
       {/* Contradiction Matrix */}
       <div>
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mb-3">
+        <h3 className="text-sm font-semibold text-foreground mb-3">
           Matriz de Cruzamento
         </h3>
         <ContradictionMatrix

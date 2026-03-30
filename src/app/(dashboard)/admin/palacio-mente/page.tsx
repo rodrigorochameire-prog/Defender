@@ -129,7 +129,7 @@ const TIPO_CORES: Record<string, string> = {
   amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
   rose: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
   cyan: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400",
-  zinc: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400",
+  zinc: "bg-zinc-100 text-zinc-700 dark:bg-muted dark:text-muted-foreground",
 };
 
 // Ícones para tipos de entidades do caso
@@ -267,19 +267,19 @@ export default function PalacioMentePage() {
   const casoSelecionado = casos?.find(c => c.id.toString() === selectedCasoId);
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-zinc-100 dark:bg-background">
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600">
               <Brain className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-foreground">
                 Palácio da Mente
               </h1>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-sm text-zinc-500 dark:text-muted-foreground">
                 Visualize e conecte as peças do quebra-cabeça
               </p>
             </div>
@@ -288,7 +288,7 @@ export default function PalacioMentePage() {
           <div className="flex items-center gap-3">
             {/* Seletor de Caso */}
             <Select value={selectedCasoId} onValueChange={setSelectedCasoId}>
-              <SelectTrigger className="w-[280px] bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+              <SelectTrigger className="w-[280px] bg-white dark:bg-muted border-zinc-200 dark:border-border">
                 <SelectValue placeholder="Selecione um caso..." />
               </SelectTrigger>
               <SelectContent>
@@ -333,7 +333,7 @@ export default function PalacioMentePage() {
                       value={novoDiagrama.titulo}
                       onChange={(e) => setNovoDiagrama(prev => ({ ...prev, titulo: e.target.value }))}
                       placeholder="Ex: Cronologia dos Fatos"
-                      className="bg-white dark:bg-zinc-800"
+                      className="bg-white dark:bg-muted"
                     />
                   </div>
 
@@ -345,7 +345,7 @@ export default function PalacioMentePage() {
                       value={novoDiagrama.descricao}
                       onChange={(e) => setNovoDiagrama(prev => ({ ...prev, descricao: e.target.value }))}
                       placeholder="Descreva o propósito deste diagrama..."
-                      className="bg-white dark:bg-zinc-800 min-h-[80px]"
+                      className="bg-white dark:bg-muted min-h-[80px]"
                     />
                   </div>
 
@@ -365,25 +365,25 @@ export default function PalacioMentePage() {
                               "flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-all",
                               isSelected
                                 ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-                                : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                                : "border-zinc-200 dark:border-border hover:border-zinc-300 dark:hover:border-zinc-600"
                             )}
                           >
                             <div className={cn(
                               "p-1.5 rounded-md",
                               isSelected
                                 ? "bg-purple-500 text-white"
-                                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                                : "bg-zinc-100 dark:bg-muted text-zinc-600 dark:text-muted-foreground"
                             )}>
                               <Icon className="h-4 w-4" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className={cn(
                                 "text-sm font-medium",
-                                isSelected ? "text-purple-700 dark:text-purple-300" : "text-zinc-700 dark:text-zinc-300"
+                                isSelected ? "text-purple-700 dark:text-purple-300" : "text-zinc-700 dark:text-foreground/80"
                               )}>
                                 {tipo.label}
                               </p>
-                              <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                              <p className="text-xs text-zinc-500 dark:text-muted-foreground truncate">
                                 {tipo.descricao}
                               </p>
                             </div>
@@ -427,13 +427,13 @@ export default function PalacioMentePage() {
         {!selectedCasoId ? (
           /* Estado vazio - Nenhum caso selecionado */
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
-            <div className="p-4 rounded-full bg-zinc-200 dark:bg-zinc-800 mb-4">
+            <div className="p-4 rounded-full bg-zinc-200 dark:bg-muted mb-4">
               <Brain className="h-12 w-12 text-zinc-400" />
             </div>
-            <h3 className="text-xl font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+            <h3 className="text-xl font-semibold text-zinc-700 dark:text-foreground/80 mb-2">
               Selecione um Caso
             </h3>
-            <p className="text-zinc-500 dark:text-zinc-400 text-center max-w-md">
+            <p className="text-zinc-500 dark:text-muted-foreground text-center max-w-md">
               Escolha um caso para visualizar ou criar diagramas de investigação no estilo Sherlock Holmes
             </p>
           </div>
@@ -449,13 +449,13 @@ export default function PalacioMentePage() {
                         <FolderOpen className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+                        <h3 className="font-semibold text-zinc-900 dark:text-foreground">
                           {casoSelecionado.titulo}
                         </h3>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge variant="outline">{casoSelecionado.atribuicao}</Badge>
                           <Badge className={TIPO_CORES.zinc}>{casoSelecionado.fase || "ativo"}</Badge>
-                          <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                          <span className="text-sm text-zinc-500 dark:text-muted-foreground">
                             {diagramas?.length || 0} diagrama(s)
                           </span>
                         </div>
@@ -465,19 +465,19 @@ export default function PalacioMentePage() {
                     {/* Estatísticas de Entidades */}
                     {entidadesCaso && (
                       <div className="flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
+                        <div className="flex items-center gap-1.5 text-zinc-600 dark:text-muted-foreground">
                           <Users className="h-4 w-4" />
                           <span>{entidadesCaso.personas.length} personas</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
+                        <div className="flex items-center gap-1.5 text-zinc-600 dark:text-muted-foreground">
                           <FileText className="h-4 w-4" />
                           <span>{entidadesCaso.fatos.length} fatos</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
+                        <div className="flex items-center gap-1.5 text-zinc-600 dark:text-muted-foreground">
                           <MessageSquare className="h-4 w-4" />
                           <span>{entidadesCaso.testemunhas.length} testemunhas</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
+                        <div className="flex items-center gap-1.5 text-zinc-600 dark:text-muted-foreground">
                           <Target className="h-4 w-4" />
                           <span>{entidadesCaso.teses.length} teses</span>
                         </div>
@@ -496,15 +496,15 @@ export default function PalacioMentePage() {
               </div>
             ) : !diagramas || diagramas.length === 0 ? (
               /* Estado vazio - Sem diagramas */
-              <Card className="border-dashed border-2 border-zinc-300 dark:border-zinc-700">
+              <Card className="border-dashed border-2 border-zinc-300 dark:border-border">
                 <CardContent className="flex flex-col items-center justify-center py-12">
-                  <div className="p-4 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
+                  <div className="p-4 rounded-full bg-zinc-100 dark:bg-muted mb-4">
                     <LayoutGrid className="h-10 w-10 text-zinc-400" />
                   </div>
-                  <h3 className="text-lg font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                  <h3 className="text-lg font-semibold text-zinc-700 dark:text-foreground/80 mb-2">
                     Nenhum diagrama ainda
                   </h3>
-                  <p className="text-zinc-500 dark:text-zinc-400 text-center max-w-md mb-4">
+                  <p className="text-zinc-500 dark:text-muted-foreground text-center max-w-md mb-4">
                     Crie seu primeiro diagrama para começar a visualizar as conexões do caso
                   </p>
                   <Button
@@ -630,13 +630,13 @@ export default function PalacioMentePage() {
 
                       <CardContent className="pt-0">
                         {diagrama.descricao && (
-                          <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-3">
+                          <p className="text-sm text-zinc-500 dark:text-muted-foreground line-clamp-2 mb-3">
                             {diagrama.descricao}
                           </p>
                         )}
 
                         {/* Preview do thumbnail ou placeholder */}
-                        <div className="aspect-video rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center mb-3 overflow-hidden">
+                        <div className="aspect-video rounded-lg bg-zinc-100 dark:bg-muted border border-zinc-200 dark:border-border flex items-center justify-center mb-3 overflow-hidden">
                           {diagrama.thumbnail ? (
                             <img
                               src={diagrama.thumbnail}
@@ -652,7 +652,7 @@ export default function PalacioMentePage() {
                         </div>
 
                         {/* Metadados */}
-                        <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                        <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             <span>
@@ -705,16 +705,16 @@ export default function PalacioMentePage() {
                     </DialogDescription>
                   </DialogHeader>
 
-                  <div className="flex-1 min-h-[70vh] bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+                  <div className="flex-1 min-h-[70vh] bg-white dark:bg-card rounded-lg border border-zinc-200 dark:border-border flex items-center justify-center">
                     {/* Placeholder para o editor Excalidraw */}
                     <div className="text-center">
                       <div className="p-4 rounded-full bg-purple-100 dark:bg-purple-900/30 inline-block mb-4">
                         <Sparkles className="h-12 w-12 text-purple-500" />
                       </div>
-                      <h3 className="text-lg font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                      <h3 className="text-lg font-semibold text-zinc-700 dark:text-foreground/80 mb-2">
                         Editor Excalidraw
                       </h3>
-                      <p className="text-zinc-500 dark:text-zinc-400 max-w-md mb-4">
+                      <p className="text-zinc-500 dark:text-muted-foreground max-w-md mb-4">
                         A integração com o editor Excalidraw será implementada em breve.
                         Por enquanto, você pode exportar os diagramas e editá-los em{" "}
                         <a
@@ -745,28 +745,28 @@ export default function PalacioMentePage() {
 
                       {/* Entidades disponíveis para vincular */}
                       {entidadesCaso && (
-                        <div className="mt-6 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg max-w-lg mx-auto">
-                          <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">
+                        <div className="mt-6 p-4 bg-zinc-50 dark:bg-muted rounded-lg max-w-lg mx-auto">
+                          <h4 className="text-sm font-medium text-zinc-700 dark:text-foreground/80 mb-3">
                             Entidades disponíveis para vincular:
                           </h4>
                           <div className="grid grid-cols-2 gap-2 text-left text-sm">
-                            <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                            <div className="flex items-center gap-2 text-zinc-600 dark:text-muted-foreground">
                               <Users className="h-4 w-4" />
                               <span>{entidadesCaso.personas.length} Personas</span>
                             </div>
-                            <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                            <div className="flex items-center gap-2 text-zinc-600 dark:text-muted-foreground">
                               <FileText className="h-4 w-4" />
                               <span>{entidadesCaso.fatos.length} Fatos</span>
                             </div>
-                            <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                            <div className="flex items-center gap-2 text-zinc-600 dark:text-muted-foreground">
                               <Scale className="h-4 w-4" />
                               <span>{entidadesCaso.documentos.length} Documentos</span>
                             </div>
-                            <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                            <div className="flex items-center gap-2 text-zinc-600 dark:text-muted-foreground">
                               <MessageSquare className="h-4 w-4" />
                               <span>{entidadesCaso.testemunhas.length} Testemunhas</span>
                             </div>
-                            <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                            <div className="flex items-center gap-2 text-zinc-600 dark:text-muted-foreground">
                               <Target className="h-4 w-4" />
                               <span>{entidadesCaso.teses.length} Teses</span>
                             </div>

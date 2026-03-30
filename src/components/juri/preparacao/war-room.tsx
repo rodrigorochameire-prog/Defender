@@ -194,9 +194,9 @@ function ColumnHeader({
   count: number;
 }) {
   return (
-    <div className="flex items-center gap-2 mb-3 pb-2 border-b border-stone-200 dark:border-zinc-800">
-      <span className="text-stone-400 dark:text-zinc-500">{icon}</span>
-      <span className="text-xs uppercase tracking-wider font-semibold text-stone-500 dark:text-zinc-500">
+    <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border">
+      <span className="text-muted-foreground">{icon}</span>
+      <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">
         {label}
       </span>
       <Badge variant="secondary" className="text-[10px] px-1.5 py-0 ml-auto">
@@ -226,36 +226,36 @@ function DetailPanel({
             {actor.tipo.replace("_", " ")}
           </Badge>
           {actor.papel && (
-            <span className="text-xs text-stone-500 dark:text-zinc-500">
+            <span className="text-xs text-muted-foreground">
               {actor.papel}
             </span>
           )}
         </div>
         {actor.resumo && (
-          <p className="text-sm text-stone-600 dark:text-zinc-400 mb-3">
+          <p className="text-sm text-muted-foreground mb-3">
             {actor.resumo}
           </p>
         )}
         {actor.depoimento && (
           <div className="mb-3">
-            <p className="text-xs font-semibold text-stone-500 dark:text-zinc-500 uppercase tracking-wider mb-1">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               Depoimento
             </p>
-            <p className="text-sm text-stone-600 dark:text-zinc-400 bg-stone-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-stone-200 dark:border-zinc-700 leading-relaxed">
+            <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg border border-border leading-relaxed">
               {actor.depoimento}
             </p>
           </div>
         )}
         {relatedFacts.length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-stone-500 dark:text-zinc-500 uppercase tracking-wider mb-1">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               Fatos relacionados ({relatedFacts.length})
             </p>
             <ul className="space-y-1">
               {relatedFacts.map((f) => (
                 <li
                   key={f.id}
-                  className="text-xs text-stone-500 dark:text-zinc-500 flex items-start gap-1.5"
+                  className="text-xs text-muted-foreground flex items-start gap-1.5"
                 >
                   <ChevronRight className="w-3 h-3 mt-0.5 shrink-0" />
                   <span>{f.descricao}</span>
@@ -283,12 +283,12 @@ function DetailPanel({
             {formatFactDate(fact.data)}
           </Badge>
         )}
-        <p className="text-sm text-stone-600 dark:text-zinc-400 mb-3">
+        <p className="text-sm text-muted-foreground mb-3">
           {fact.descricao}
         </p>
         {involvedActors.length > 0 && (
           <div className="mb-3">
-            <p className="text-xs font-semibold text-stone-500 dark:text-zinc-500 uppercase tracking-wider mb-1">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               Atores envolvidos ({involvedActors.length})
             </p>
             <div className="flex flex-wrap gap-1">
@@ -302,14 +302,14 @@ function DetailPanel({
         )}
         {relatedEvidence.length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-stone-500 dark:text-zinc-500 uppercase tracking-wider mb-1">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               Provas vinculadas ({relatedEvidence.length})
             </p>
             <ul className="space-y-1">
               {relatedEvidence.map((e) => (
                 <li
                   key={e.id}
-                  className="text-xs text-stone-500 dark:text-zinc-500 flex items-start gap-1.5"
+                  className="text-xs text-muted-foreground flex items-start gap-1.5"
                 >
                   <ChevronRight className="w-3 h-3 mt-0.5 shrink-0" />
                   <span>{e.descricao}</span>
@@ -335,20 +335,20 @@ function DetailPanel({
             </Badge>
           )}
           {evidence.origem && (
-            <span className="text-xs text-stone-500 dark:text-zinc-500">
+            <span className="text-xs text-muted-foreground">
               Origem: {evidence.origem}
             </span>
           )}
         </div>
-        <p className="text-sm text-stone-600 dark:text-zinc-400 mb-3">
+        <p className="text-sm text-muted-foreground mb-3">
           {evidence.descricao}
         </p>
         {relatedFact && (
           <div>
-            <p className="text-xs font-semibold text-stone-500 dark:text-zinc-500 uppercase tracking-wider mb-1">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               Fato relacionado
             </p>
-            <p className="text-xs text-stone-500 dark:text-zinc-500 flex items-start gap-1.5">
+            <p className="text-xs text-muted-foreground flex items-start gap-1.5">
               <ChevronRight className="w-3 h-3 mt-0.5 shrink-0" />
               <span>{relatedFact.descricao}</span>
             </p>
@@ -373,23 +373,23 @@ function DetailPanel({
           </Badge>
         </div>
         <div className="flex items-center gap-2 text-sm mb-3">
-          <span className="font-semibold text-stone-700 dark:text-zinc-300">
+          <span className="font-semibold text-foreground/80">
             {personaA?.nome ?? contradiction.personaA}
           </span>
-          <span className="text-stone-400 dark:text-zinc-600">vs</span>
-          <span className="font-semibold text-stone-700 dark:text-zinc-300">
+          <span className="text-muted-foreground/50">vs</span>
+          <span className="font-semibold text-foreground/80">
             {personaB?.nome ?? contradiction.personaB}
           </span>
         </div>
-        <p className="text-sm text-stone-600 dark:text-zinc-400 mb-3">
+        <p className="text-sm text-muted-foreground mb-3">
           {contradiction.descricao}
         </p>
         {relatedFact && (
           <div>
-            <p className="text-xs font-semibold text-stone-500 dark:text-zinc-500 uppercase tracking-wider mb-1">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               Fato em disputa
             </p>
-            <p className="text-xs text-stone-500 dark:text-zinc-500 flex items-start gap-1.5">
+            <p className="text-xs text-muted-foreground flex items-start gap-1.5">
               <ChevronRight className="w-3 h-3 mt-0.5 shrink-0" />
               <span>{relatedFact.descricao}</span>
             </p>
@@ -407,20 +407,20 @@ function DetailPanel({
   };
 
   return (
-    <div className="mt-4 p-4 rounded-lg border border-stone-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80">
+    <div className="mt-4 p-4 rounded-lg border border-border bg-card">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-sm font-semibold text-stone-700 dark:text-zinc-300">
+        <h4 className="text-sm font-semibold text-foreground/80">
           {titleMap[selected.kind]}
         </h4>
         <button
           onClick={onClose}
-          className="p-1 rounded-md hover:bg-stone-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+          className="p-1 rounded-md hover:bg-muted transition-colors cursor-pointer"
           aria-label="Fechar painel de detalhe"
         >
-          <X className="w-4 h-4 text-stone-400 dark:text-zinc-500" />
+          <X className="w-4 h-4 text-muted-foreground" />
         </button>
       </div>
-      <h3 className="text-base font-semibold text-stone-800 dark:text-zinc-200 mb-2">
+      <h3 className="text-base font-semibold text-foreground mb-2">
         {selected.kind === "actor" && selected.data.nome}
         {selected.kind === "fact" && selected.data.descricao}
         {selected.kind === "evidence" && selected.data.descricao}
@@ -473,10 +473,10 @@ function EmptyState() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-stone-400 dark:text-zinc-500 text-sm text-center py-16 border-2 border-dashed border-stone-200 dark:border-zinc-800 rounded-lg">
-          <Map className="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-zinc-700" />
+        <div className="text-muted-foreground text-sm text-center py-16 border-2 border-dashed border-border rounded-lg">
+          <Map className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
           <p className="font-medium">Vincule um caso para visualizar o mapa</p>
-          <p className="text-xs mt-2 text-stone-400 dark:text-zinc-600 max-w-sm mx-auto">
+          <p className="text-xs mt-2 text-muted-foreground/50 max-w-sm mx-auto">
             O mapa estrategico mostra atores, fatos e provas conectados
             visualmente, destacando contradicoes e relacoes entre depoimentos.
           </p>
@@ -657,7 +657,7 @@ export function WarRoom({ sessaoId, casoId }: WarRoomProps) {
                   if (!group || group.length === 0) return null;
                   return (
                     <div key={tipo}>
-                      <p className="text-[10px] uppercase tracking-wider font-semibold text-stone-400 dark:text-zinc-600 mb-1.5 ml-1">
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/50 mb-1.5 ml-1">
                         {actorGroupLabels[tipo]}
                       </p>
                       <div className="space-y-2">
@@ -681,7 +681,7 @@ export function WarRoom({ sessaoId, casoId }: WarRoomProps) {
                   );
                 })}
                 {atores.length === 0 && (
-                  <p className="text-xs text-stone-400 dark:text-zinc-600 text-center py-6">
+                  <p className="text-xs text-muted-foreground/50 text-center py-6">
                     Nenhum ator cadastrado
                   </p>
                 )}
@@ -690,7 +690,7 @@ export function WarRoom({ sessaoId, casoId }: WarRoomProps) {
           </div>
 
           {/* ===== Column 2: Fatos / Timeline ===== */}
-          <div className="border-x-0 md:border-x md:border-dashed border-stone-200 dark:border-zinc-800 md:px-4">
+          <div className="border-x-0 md:border-x md:border-dashed border-border md:px-4">
             <ColumnHeader
               icon={<Calendar className="w-4 h-4" />}
               label="Fatos / Timeline"
@@ -716,7 +716,7 @@ export function WarRoom({ sessaoId, casoId }: WarRoomProps) {
                   />
                 ))}
                 {sortedFacts.length === 0 && (
-                  <p className="text-xs text-stone-400 dark:text-zinc-600 text-center py-6">
+                  <p className="text-xs text-muted-foreground/50 text-center py-6">
                     Nenhum fato cadastrado
                   </p>
                 )}
@@ -749,7 +749,7 @@ export function WarRoom({ sessaoId, casoId }: WarRoomProps) {
                   />
                 ))}
                 {provas.length === 0 && (
-                  <p className="text-xs text-stone-400 dark:text-zinc-600 text-center py-6">
+                  <p className="text-xs text-muted-foreground/50 text-center py-6">
                     Nenhuma prova cadastrada
                   </p>
                 )}
@@ -760,7 +760,7 @@ export function WarRoom({ sessaoId, casoId }: WarRoomProps) {
 
         {/* ===== Contradictions Section ===== */}
         {contradicoes.length > 0 && (
-          <div className="mt-6 pt-4 border-t border-stone-200 dark:border-zinc-800">
+          <div className="mt-6 pt-4 border-t border-border">
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="w-4 h-4 text-red-500" />
               <h4 className="text-xs uppercase tracking-wider font-semibold text-red-600 dark:text-red-400">

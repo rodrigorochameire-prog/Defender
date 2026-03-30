@@ -132,7 +132,7 @@ export default function JuradosPage() {
             </CardTitle>
           </CardHeader>
           <DonutChart value={tendenciaAbsolutoria} color="#059669" label="Favorável à Defesa" />
-          <p className="text-xs text-stone-500 dark:text-zinc-400 text-center mt-3 max-w-[200px]">
+          <p className="text-xs text-stone-500 dark:text-muted-foreground text-center mt-3 max-w-[200px]">
             Baseado em {totalVotos} votos históricos
           </p>
         </Card>
@@ -148,7 +148,7 @@ export default function JuradosPage() {
             <DonutChart value={percHomens} color="#2563eb" label="Homens" size="sm" />
             <DonutChart value={percMulheres} color="#db2777" label="Mulheres" size="sm" />
           </DonutChartGroup>
-          <p className="text-xs text-stone-500 dark:text-zinc-400 text-center mt-3">
+          <p className="text-xs text-stone-500 dark:text-muted-foreground text-center mt-3">
             {homens} homens / {mulheres} mulheres
           </p>
         </Card>
@@ -161,7 +161,7 @@ export default function JuradosPage() {
             </CardTitle>
           </CardHeader>
           <DonutChart value={percConservador} color="#7c3aed" label="Risco Alto" />
-          <p className="text-xs text-stone-500 dark:text-zinc-400 text-center mt-3 max-w-[200px]">
+          <p className="text-xs text-stone-500 dark:text-muted-foreground text-center mt-3 max-w-[200px]">
             {perfilConservador} de {mockJurados.length} jurados
           </p>
         </Card>

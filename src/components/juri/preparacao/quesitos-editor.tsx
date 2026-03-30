@@ -139,7 +139,7 @@ const ORIGEM_CONFIG: Record<QuesitoOrigem, { label: string; className: string }>
   obrigatorio: {
     label: "Obrigatorio",
     className:
-      "border-stone-300 bg-stone-100 text-stone-600 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700",
+      "border-border bg-muted text-muted-foreground",
   },
   acusacao: {
     label: "Acusacao",
@@ -296,8 +296,8 @@ function QuesitoCard({
       <div className="flex items-start gap-3 p-4">
         {/* Drag handle + Number */}
         <div className="flex flex-col items-center gap-1 pt-0.5">
-          <GripVertical className="w-4 h-4 text-stone-300 dark:text-zinc-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab" />
-          <span className="text-2xl font-bold text-stone-300 dark:text-zinc-600 font-mono leading-none">
+          <GripVertical className="w-4 h-4 text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab" />
+          <span className="text-2xl font-bold text-muted-foreground/30 font-mono leading-none">
             {quesito.numero}
           </span>
         </div>
@@ -346,7 +346,7 @@ function QuesitoCard({
             </div>
           ) : (
             <p
-              className="text-sm text-stone-700 dark:text-zinc-300 leading-relaxed cursor-pointer"
+              className="text-sm text-foreground/80 leading-relaxed cursor-pointer"
               onClick={() => setIsEditing(true)}
               title="Clique para editar"
             >
@@ -385,7 +385,7 @@ function QuesitoCard({
             className={cn(
               "w-full flex items-center gap-2 px-4 py-2 text-xs transition-colors",
               "border-t border-border/40",
-              "text-stone-500 dark:text-zinc-500 hover:bg-stone-50 dark:hover:bg-zinc-800/50",
+              "text-muted-foreground hover:bg-muted/50",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             )}
           >
@@ -514,7 +514,7 @@ function AddQuesitForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
-          <label className="text-xs font-medium text-stone-600 dark:text-zinc-400">
+          <label className="text-xs font-medium text-muted-foreground">
             Tipo
           </label>
           <Select value={tipo} onValueChange={(v) => setTipo(v as QuesitoTipo)}>
@@ -531,7 +531,7 @@ function AddQuesitForm({
           </Select>
         </div>
         <div className="space-y-1">
-          <label className="text-xs font-medium text-stone-600 dark:text-zinc-400">
+          <label className="text-xs font-medium text-muted-foreground">
             Origem
           </label>
           <Select value={origem} onValueChange={(v) => setOrigem(v as QuesitoOrigem)}>
@@ -625,21 +625,21 @@ function DecisionTreeView({ quesitos }: { quesitos: Quesito[] }) {
       <div key={quesito.id} className="relative">
         {/* Connector line from parent */}
         {depth > 0 && (
-          <div className="absolute -top-3 left-5 w-px h-3 bg-stone-200 dark:bg-zinc-700" />
+          <div className="absolute -top-3 left-5 w-px h-3 bg-border" />
         )}
 
         <div
           className={cn(
             "rounded-lg border p-3 transition-all duration-200",
             isOnActivePath
-              ? "border-stone-300 dark:border-zinc-600 bg-card shadow-sm"
+              ? "border-stone-300 dark:border-border bg-card shadow-sm"
               : "border-border/40 bg-card/50 opacity-50"
           )}
           style={{ marginLeft: depth * 32 }}
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-lg font-bold font-mono text-stone-300 dark:text-zinc-600 shrink-0">
+              <span className="text-lg font-bold font-mono text-muted-foreground/30 shrink-0">
                 {quesito.numero}
               </span>
               {quesito.condicaoPai && (
@@ -654,7 +654,7 @@ function DecisionTreeView({ quesitos }: { quesitos: Quesito[] }) {
                   {quesito.condicaoPai === "sim" ? "SIM" : "NAO"}
                 </Badge>
               )}
-              <p className="text-sm text-stone-700 dark:text-zinc-300 truncate">
+              <p className="text-sm text-foreground/80 truncate">
                 {quesito.texto}
               </p>
             </div>
@@ -668,7 +668,7 @@ function DecisionTreeView({ quesitos }: { quesitos: Quesito[] }) {
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   answer === "sim"
                     ? "bg-emerald-500 text-white shadow-sm"
-                    : "bg-stone-100 dark:bg-zinc-800 text-stone-500 dark:text-zinc-500 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 hover:text-emerald-700 dark:hover:text-emerald-400"
+                    : "bg-muted text-muted-foreground hover:bg-emerald-100 dark:hover:bg-emerald-950/30 hover:text-emerald-700 dark:hover:text-emerald-400"
                 )}
               >
                 SIM
@@ -680,7 +680,7 @@ function DecisionTreeView({ quesitos }: { quesitos: Quesito[] }) {
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   answer === "nao"
                     ? "bg-red-500 text-white shadow-sm"
-                    : "bg-stone-100 dark:bg-zinc-800 text-stone-500 dark:text-zinc-500 hover:bg-red-100 dark:hover:bg-red-950/30 hover:text-red-700 dark:hover:text-red-400"
+                    : "bg-muted text-muted-foreground hover:bg-red-100 dark:hover:bg-red-950/30 hover:text-red-700 dark:hover:text-red-400"
                 )}
               >
                 NAO
@@ -723,8 +723,8 @@ function DecisionTreeView({ quesitos }: { quesitos: Quesito[] }) {
   if (quesitos.length === 0) {
     return (
       <div className="text-center py-12">
-        <TreePine className="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-zinc-700" />
-        <p className="text-sm text-stone-500 dark:text-zinc-500">
+        <TreePine className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
+        <p className="text-sm text-muted-foreground">
           Adicione quesitos no editor para visualizar a arvore de decisao.
         </p>
       </div>
@@ -800,8 +800,8 @@ function VotingSimulatorView({ quesitos }: { quesitos: Quesito[] }) {
   if (quesitos.length === 0) {
     return (
       <div className="text-center py-12">
-        <Vote className="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-zinc-700" />
-        <p className="text-sm text-stone-500 dark:text-zinc-500">
+        <Vote className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
+        <p className="text-sm text-muted-foreground">
           Adicione quesitos no editor para simular a votacao.
         </p>
       </div>
@@ -815,18 +815,18 @@ function VotingSimulatorView({ quesitos }: { quesitos: Quesito[] }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/40">
-              <th className="text-left py-2 px-3 text-xs font-semibold text-stone-500 dark:text-zinc-500 min-w-[200px]">
+              <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground min-w-[200px]">
                 Quesito
               </th>
               {Array.from({ length: 7 }, (_, i) => (
                 <th
                   key={i}
-                  className="text-center py-2 px-1 text-xs font-semibold text-stone-500 dark:text-zinc-500 w-12"
+                  className="text-center py-2 px-1 text-xs font-semibold text-muted-foreground w-12"
                 >
                   J{i + 1}
                 </th>
               ))}
-              <th className="text-center py-2 px-3 text-xs font-semibold text-stone-500 dark:text-zinc-500 w-24">
+              <th className="text-center py-2 px-3 text-xs font-semibold text-muted-foreground w-24">
                 Resultado
               </th>
             </tr>
@@ -837,14 +837,14 @@ function VotingSimulatorView({ quesitos }: { quesitos: Quesito[] }) {
               return (
                 <tr
                   key={q.id}
-                  className="border-b border-border/20 hover:bg-stone-50/50 dark:hover:bg-zinc-800/30 transition-colors"
+                  className="border-b border-border/20 hover:bg-muted/50 transition-colors"
                 >
                   <td className="py-2.5 px-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-base font-bold font-mono text-stone-300 dark:text-zinc-600 shrink-0">
+                      <span className="text-base font-bold font-mono text-muted-foreground/30 shrink-0">
                         {q.numero}
                       </span>
-                      <span className="text-xs text-stone-600 dark:text-zinc-400 line-clamp-2 leading-snug">
+                      <span className="text-xs text-muted-foreground line-clamp-2 leading-snug">
                         {q.texto}
                       </span>
                     </div>
@@ -862,7 +862,7 @@ function VotingSimulatorView({ quesitos }: { quesitos: Quesito[] }) {
                               ? "bg-emerald-500 text-white shadow-sm hover:bg-emerald-600"
                               : vote === "nao"
                                 ? "bg-red-500 text-white shadow-sm hover:bg-red-600"
-                                : "bg-stone-100 dark:bg-zinc-800 text-stone-400 dark:text-zinc-600 hover:bg-stone-200 dark:hover:bg-zinc-700"
+                                : "bg-muted text-muted-foreground/50 hover:bg-muted/80"
                           )}
                         >
                           {vote === "sim"
@@ -876,7 +876,7 @@ function VotingSimulatorView({ quesitos }: { quesitos: Quesito[] }) {
                   })}
                   <td className="text-center py-2.5 px-3">
                     {result.result === "pendente" ? (
-                      <span className="text-[10px] font-mono text-stone-400 dark:text-zinc-600">
+                      <span className="text-[10px] font-mono text-muted-foreground/50">
                         {result.sim}x{result.nao} / 7
                       </span>
                     ) : (
@@ -938,10 +938,10 @@ function VotingSimulatorView({ quesitos }: { quesitos: Quesito[] }) {
                 />
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-stone-800 dark:text-zinc-200">
+                <h4 className="text-sm font-semibold text-foreground">
                   Resultado Projetado: {outcome.label}
                 </h4>
-                <p className="text-xs text-stone-500 dark:text-zinc-500 mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {outcome.description}
                 </p>
               </div>
@@ -1084,11 +1084,11 @@ export function QuesitosEditor({ sessaoId, casoId }: QuesitosEditorProps) {
         </CardHeader>
         <CardContent>
           <div className="text-center py-16">
-            <ListChecks className="w-14 h-14 mx-auto mb-4 text-stone-300 dark:text-zinc-700" />
-            <p className="text-sm font-medium text-stone-500 dark:text-zinc-500">
+            <ListChecks className="w-14 h-14 mx-auto mb-4 text-muted-foreground/30" />
+            <p className="text-sm font-medium text-muted-foreground">
               Vincule um caso para gerenciar quesitos
             </p>
-            <p className="text-xs text-stone-400 dark:text-zinc-600 mt-1.5 max-w-sm mx-auto">
+            <p className="text-xs text-muted-foreground/50 mt-1.5 max-w-sm mx-auto">
               Os quesitos sao vinculados ao caso/processo. Selecione um caso na sessao para
               comecar a elaborar os quesitos da defesa.
             </p>
@@ -1113,7 +1113,7 @@ export function QuesitosEditor({ sessaoId, casoId }: QuesitosEditorProps) {
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="h-24 rounded-xl bg-stone-100 dark:bg-zinc-800 animate-pulse"
+                className="h-24 rounded-xl bg-muted animate-pulse"
               />
             ))}
           </div>
@@ -1160,17 +1160,17 @@ export function QuesitosEditor({ sessaoId, casoId }: QuesitosEditorProps) {
       <CardContent className="px-0 py-0">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="px-6 pt-4">
-            <TabsList className="w-full justify-start h-10 bg-stone-50 dark:bg-zinc-900/50 border border-border/40 p-1 rounded-lg">
+            <TabsList className="w-full justify-start h-10 bg-muted/50 border border-border/40 p-1 rounded-lg">
               <TabsTrigger
                 value="editor"
-                className="data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-sm flex gap-1.5 text-xs"
+                className="data-[state=active]:bg-card data-[state=active]:shadow-sm flex gap-1.5 text-xs"
               >
                 <Pencil className="w-3.5 h-3.5" />
                 Editor
               </TabsTrigger>
               <TabsTrigger
                 value="arvore"
-                className="data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-sm flex gap-1.5 text-xs"
+                className="data-[state=active]:bg-card data-[state=active]:shadow-sm flex gap-1.5 text-xs"
               >
                 <TreePine className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Arvore de Decisao</span>
@@ -1178,7 +1178,7 @@ export function QuesitosEditor({ sessaoId, casoId }: QuesitosEditorProps) {
               </TabsTrigger>
               <TabsTrigger
                 value="simulador"
-                className="data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-sm flex gap-1.5 text-xs"
+                className="data-[state=active]:bg-card data-[state=active]:shadow-sm flex gap-1.5 text-xs"
               >
                 <Vote className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Simulador de Votacao</span>
@@ -1193,12 +1193,12 @@ export function QuesitosEditor({ sessaoId, casoId }: QuesitosEditorProps) {
               <ScrollArea className="max-h-[500px]">
                 <div className="space-y-3 pr-2">
                   {quesitos.length === 0 ? (
-                    <div className="text-center py-10 border-2 border-dashed border-stone-200 dark:border-zinc-800 rounded-xl">
-                      <ListChecks className="w-10 h-10 mx-auto mb-2 text-stone-300 dark:text-zinc-700" />
-                      <p className="text-sm text-stone-500 dark:text-zinc-500">
+                    <div className="text-center py-10 border-2 border-dashed border-border rounded-xl">
+                      <ListChecks className="w-10 h-10 mx-auto mb-2 text-muted-foreground/30" />
+                      <p className="text-sm text-muted-foreground">
                         Nenhum quesito cadastrado
                       </p>
-                      <p className="text-xs text-stone-400 dark:text-zinc-600 mt-1">
+                      <p className="text-xs text-muted-foreground/50 mt-1">
                         Adicione manualmente ou use o gerador com IA
                       </p>
                     </div>
@@ -1242,7 +1242,7 @@ export function QuesitosEditor({ sessaoId, casoId }: QuesitosEditorProps) {
 
       {quesitos.length > 0 && (
         <CardFooter>
-          <div className="flex items-center justify-between text-xs text-stone-500 dark:text-zinc-500">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <ListChecks className="w-3.5 h-3.5" />
               {quesitos.length} quesito{quesitos.length !== 1 ? "s" : ""}

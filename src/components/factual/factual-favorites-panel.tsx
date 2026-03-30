@@ -62,13 +62,13 @@ export function FactualFavoritesPanel({
         side="right"
         className="w-full sm:max-w-md p-0 flex flex-col"
       >
-        <SheetHeader className="px-5 pt-5 pb-3 border-b border-zinc-200 dark:border-zinc-800">
+        <SheetHeader className="px-5 pt-5 pb-3 border-b border-border">
           <div className="flex items-center justify-between">
             <div>
               <SheetTitle className="text-base font-semibold">
                 Artigos Salvos
               </SheetTitle>
-              <SheetDescription className="text-xs text-zinc-500 mt-0.5">
+              <SheetDescription className="text-xs text-muted-foreground mt-0.5">
                 {favoritos.length}{" "}
                 {favoritos.length === 1 ? "artigo salvo" : "artigos salvos"}
               </SheetDescription>
@@ -90,31 +90,31 @@ export function FactualFavoritesPanel({
         <ScrollArea className="flex-1">
           {favoritos.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-              <div className="h-12 w-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-3">
+              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
                 <span className="text-2xl" role="img" aria-label="bookmark">
                   &#9733;
                 </span>
               </div>
-              <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <p className="text-sm font-medium text-foreground/80">
                 Nenhum artigo salvo
               </p>
-              <p className="text-xs text-zinc-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Clique na estrela de um artigo para salv&aacute;-lo aqui.
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <div className="divide-y divide-border">
               {favoritos.map((fav) => (
                 <div
                   key={fav.id}
                   className={cn(
                     "px-5 py-4 transition-colors",
-                    "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                    "hover:bg-muted/50"
                   )}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <h4
-                      className="text-sm font-semibold leading-snug text-zinc-900 dark:text-zinc-100 line-clamp-2"
+                      className="text-sm font-semibold leading-snug text-foreground line-clamp-2"
                       style={{
                         fontFamily:
                           "'Playfair Display', Georgia, 'Times New Roman', serif",
@@ -133,7 +133,7 @@ export function FactualFavoritesPanel({
                     </Button>
                   </div>
 
-                  <p className="mt-1.5 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400 line-clamp-3">
+                  <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground line-clamp-3">
                     {getSnippet(fav.resumo)}
                   </p>
 
@@ -148,7 +148,7 @@ export function FactualFavoritesPanel({
                       className={cn(
                         "inline-flex items-center gap-1 text-[10px] font-medium transition-colors",
                         "text-[#1a1a2e]/60 hover:text-[#1a1a2e]",
-                        "dark:text-zinc-500 dark:hover:text-amber-400"
+                        "dark:text-muted-foreground dark:hover:text-amber-400"
                       )}
                     >
                       {fav.fonteNome}

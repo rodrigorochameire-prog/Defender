@@ -95,8 +95,8 @@ export function Breadcrumbs() {
   if (breadcrumbs.length === 0) {
     return (
       <div className="flex items-center gap-1.5 text-sm">
-        <Home className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
-        <span className="font-semibold text-zinc-800 dark:text-zinc-100">Dashboard</span>
+        <Home className="w-4 h-4 text-muted-foreground" />
+        <span className="font-semibold text-foreground">Dashboard</span>
       </div>
     );
   }
@@ -106,20 +106,20 @@ export function Breadcrumbs() {
       {/* Home icon sempre presente */}
       <Link
         href="/admin"
-        className="flex items-center text-zinc-400 dark:text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors shrink-0"
+        className="flex items-center text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors shrink-0"
       >
         <Home className="w-4 h-4" />
       </Link>
 
       {breadcrumbs.map((item, index) => (
         <div key={item.href} className="flex items-center gap-1 min-w-0">
-          <ChevronRight className="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600 shrink-0" />
+          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
 
           {item.isLast ? (
             <span
               className={cn(
                 "font-semibold truncate max-w-[150px]",
-                item.isId ? "text-zinc-500 dark:text-zinc-300" : "text-zinc-800 dark:text-zinc-100"
+                item.isId ? "text-muted-foreground dark:text-foreground/80" : "text-foreground"
               )}
               title={item.label}
             >
@@ -130,7 +130,7 @@ export function Breadcrumbs() {
               href={item.href}
               className={cn(
                 "hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors truncate max-w-[120px]",
-                item.isId ? "text-zinc-400 dark:text-zinc-500" : "text-zinc-500 dark:text-zinc-400"
+                item.isId ? "text-muted-foreground" : "text-muted-foreground"
               )}
               title={item.label}
             >

@@ -39,7 +39,7 @@ const STATUS_STYLE = {
   agendada:   { icon: Calendar,     color: "bg-blue-500",    badge: "bg-blue-500/10 text-blue-600 ring-blue-500/20",    label: "Agendada" },
   realizada:  { icon: CheckCircle2, color: "bg-emerald-500", badge: "bg-emerald-500/10 text-emerald-600 ring-emerald-500/20", label: "Realizada" },
   adiada:     { icon: Clock,        color: "bg-amber-500",   badge: "bg-amber-500/10 text-amber-600 ring-amber-500/20",  label: "Adiada" },
-  cancelada:  { icon: XCircle,      color: "bg-zinc-400",    badge: "bg-zinc-400/10 text-zinc-500 ring-zinc-400/20",     label: "Cancelada" },
+  cancelada:  { icon: XCircle,      color: "bg-zinc-400",    badge: "bg-zinc-400/10 text-muted-foreground ring-zinc-400/20",     label: "Cancelada" },
 } as const;
 
 type StatusKey = keyof typeof STATUS_STYLE;
@@ -115,7 +115,7 @@ export function SessoesTab(_props: SessoesTabProps) {
       {/* ---------- search + filter bar ---------- */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input
             placeholder="Buscar reu, processo, defensor..."
             value={search}
@@ -140,9 +140,9 @@ export function SessoesTab(_props: SessoesTabProps) {
       {/* ---------- empty state ---------- */}
       {filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Gavel className="w-10 h-10 mb-3 text-zinc-300 dark:text-zinc-600" />
-          <p className="text-[13px] text-zinc-500">Nenhuma sessao encontrada</p>
-          <p className="text-[10px] text-zinc-400 mt-1">Ajuste os filtros ou cadastre uma nova sessao</p>
+          <Gavel className="w-10 h-10 mb-3 text-muted-foreground/30" />
+          <p className="text-[13px] text-muted-foreground">Nenhuma sessao encontrada</p>
+          <p className="text-[10px] text-muted-foreground mt-1">Ajuste os filtros ou cadastre uma nova sessao</p>
         </div>
       )}
 
@@ -160,7 +160,7 @@ export function SessoesTab(_props: SessoesTabProps) {
             <div
               key={sessao.id}
               onClick={() => router.push(`/admin/juri/${sessao.id}`)}
-              className="group relative flex items-center gap-3 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 hover:border-emerald-300/60 dark:hover:border-emerald-700/40 transition-all cursor-pointer overflow-hidden"
+              className="group relative flex items-center gap-3 rounded-xl border border-border bg-card hover:border-emerald-300/60 dark:hover:border-emerald-700/40 transition-all cursor-pointer overflow-hidden"
             >
               {/* left color bar */}
               <div className={cn("absolute left-0 inset-y-0 w-1 rounded-l-xl", cfg.color)} />
@@ -169,12 +169,12 @@ export function SessoesTab(_props: SessoesTabProps) {
               <div className="pl-4 pr-1 py-3 text-center w-16 shrink-0">
                 {dp ? (
                   <>
-                    <p className="text-[9px] uppercase font-medium text-zinc-400 leading-none">{dp.diaSemana}</p>
-                    <p className="text-lg font-bold text-zinc-800 dark:text-zinc-100 leading-tight">{dp.dia}</p>
-                    <p className="text-[9px] uppercase text-zinc-400 leading-none">{dp.mes}</p>
+                    <p className="text-[9px] uppercase font-medium text-muted-foreground leading-none">{dp.diaSemana}</p>
+                    <p className="text-lg font-bold text-foreground leading-tight">{dp.dia}</p>
+                    <p className="text-[9px] uppercase text-muted-foreground leading-none">{dp.mes}</p>
                   </>
                 ) : (
-                  <span className="text-[10px] text-zinc-400">--</span>
+                  <span className="text-[10px] text-muted-foreground">--</span>
                 )}
               </div>
 
@@ -183,7 +183,7 @@ export function SessoesTab(_props: SessoesTabProps) {
                 <Link
                   href={`/admin/assistidos?q=${encodeURIComponent(sessao.assistidoNome ?? "")}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="text-[13px] font-medium text-zinc-800 dark:text-zinc-100 hover:text-emerald-600 dark:hover:text-emerald-400 truncate block transition-colors"
+                  className="text-[13px] font-medium text-foreground hover:text-emerald-600 dark:hover:text-emerald-400 truncate block transition-colors"
                 >
                   {sessao.assistidoNome || "Reu nao informado"}
                 </Link>
@@ -194,21 +194,21 @@ export function SessoesTab(_props: SessoesTabProps) {
                       <Link
                         href={`/admin/processos?q=${encodeURIComponent(sessao.processo.numeroAutos)}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="text-[10px] font-mono text-zinc-500 hover:text-emerald-600 transition-colors truncate"
+                        className="text-[10px] font-mono text-muted-foreground hover:text-emerald-600 transition-colors truncate"
                       >
                         {sessao.processo.numeroAutos}
                       </Link>
                       <button
                         onClick={(e) => copyNumero(e, sessao.processo!.numeroAutos!)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-muted"
                         title="Copiar numero"
                       >
-                        <Copy className="w-3 h-3 text-zinc-400" />
+                        <Copy className="w-3 h-3 text-muted-foreground" />
                       </button>
                     </>
                   )}
                   {sessao.defensorNome && (
-                    <span className="flex items-center gap-0.5 text-[10px] text-zinc-400 ml-1">
+                    <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground ml-1">
                       <User className="w-3 h-3" />
                       {sessao.defensorNome.split(" ")[0]}
                     </span>

@@ -133,7 +133,7 @@ const GROUP_CONFIG: Record<Grupo, GroupConfig> = {
     label: "Outros",
     border: "border-l-zinc-500",
     bg: "bg-zinc-500/10",
-    text: "text-zinc-400",
+    text: "text-muted-foreground",
   },
 };
 
@@ -155,7 +155,7 @@ const RELEVANCIA_CONFIG: Record<Relevancia, RelevanciaConfig> = {
   },
   baixo: {
     dot: "bg-zinc-500",
-    badge: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30",
+    badge: "bg-zinc-500/20 text-muted-foreground border-zinc-500/30",
     label: "Baixo",
   },
 };
@@ -275,11 +275,11 @@ export function ProcessoTimeline({
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex gap-4">
-            <div className="w-3 h-3 rounded-full bg-zinc-700 animate-pulse mt-1.5 shrink-0" />
-            <div className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 space-y-3">
-              <div className="h-4 w-2/3 bg-zinc-800 rounded animate-pulse" />
-              <div className="h-3 w-full bg-zinc-800/60 rounded animate-pulse" />
-              <div className="h-3 w-1/2 bg-zinc-800/40 rounded animate-pulse" />
+            <div className="w-3 h-3 rounded-full bg-muted animate-pulse mt-1.5 shrink-0" />
+            <div className="flex-1 rounded-lg border border-border bg-card/50 p-4 space-y-3">
+              <div className="h-4 w-2/3 bg-muted rounded animate-pulse" />
+              <div className="h-3 w-full bg-muted/50 rounded animate-pulse" />
+              <div className="h-3 w-1/2 bg-muted/40 rounded animate-pulse" />
             </div>
           </div>
         ))}
@@ -291,11 +291,11 @@ export function ProcessoTimeline({
   if (!sections || sections.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <FileText className="w-12 h-12 text-zinc-700 mb-3" />
-        <p className="text-sm text-zinc-400">
+        <FileText className="w-12 h-12 text-muted-foreground/50 mb-3" />
+        <p className="text-sm text-muted-foreground">
           Nenhum documento classificado para este processo.
         </p>
-        <p className="text-xs text-zinc-500 mt-1">
+        <p className="text-xs text-muted-foreground/70 mt-1">
           Envie PDFs ao Drive e execute o classificador para gerar a timeline.
         </p>
       </div>
@@ -310,18 +310,18 @@ export function ProcessoTimeline({
           <div className="space-y-3">
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por titulo ou conteudo..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 bg-zinc-900/50 border-zinc-800"
+                className="pl-10 bg-card/50 border-border"
               />
             </div>
 
             {/* Relevancia filters */}
             <div className="flex items-center gap-2 flex-wrap">
-              <Filter className="w-3.5 h-3.5 text-zinc-500" />
+              <Filter className="w-3.5 h-3.5 text-muted-foreground" />
               {ALL_RELEVANCIAS.map((r) => {
                 const config = RELEVANCIA_CONFIG[r];
                 const isActive = activeRelevancias.has(r);
@@ -333,13 +333,13 @@ export function ProcessoTimeline({
                       "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-all duration-150 cursor-pointer",
                       isActive
                         ? config.badge
-                        : "bg-zinc-900 text-zinc-600 border-zinc-800 opacity-50"
+                        : "bg-card text-muted-foreground/50 border-border opacity-50"
                     )}
                   >
                     <span
                       className={cn(
                         "w-2 h-2 rounded-full",
-                        isActive ? config.dot : "bg-zinc-700"
+                        isActive ? config.dot : "bg-muted"
                       )}
                     />
                     {config.label}
@@ -349,19 +349,19 @@ export function ProcessoTimeline({
             </div>
 
             {/* Stats summary */}
-            <div className="flex items-center gap-4 text-xs text-zinc-500">
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <span>
                 {stats.total} {stats.total === 1 ? "secao" : "secoes"}
               </span>
               {stats.contradicoes > 0 && (
-                <span className="flex items-center gap-1 text-amber-400/80">
+                <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400/80">
                   <AlertTriangle className="w-3 h-3" />
                   {stats.contradicoes}{" "}
                   {stats.contradicoes === 1 ? "contradicao" : "contradicoes"}
                 </span>
               )}
               {stats.teses > 0 && (
-                <span className="flex items-center gap-1 text-emerald-400/80">
+                <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400/80">
                   <Lightbulb className="w-3 h-3" />
                   {stats.teses} {stats.teses === 1 ? "tese" : "teses"}
                 </span>
@@ -373,7 +373,7 @@ export function ProcessoTimeline({
         {/* ====== Timeline body ====== */}
         <div className="relative">
           {/* Vertical line */}
-          <div className="absolute left-[5px] top-0 bottom-0 w-[2px] bg-zinc-800" />
+          <div className="absolute left-[5px] top-0 bottom-0 w-[2px] bg-border" />
 
           <div className="space-y-3">
             {filtered.map((section) => {
@@ -404,7 +404,7 @@ export function ProcessoTimeline({
                     <TooltipTrigger asChild>
                       <div
                         className={cn(
-                          "relative z-10 mt-2 w-3 h-3 rounded-full shrink-0 ring-2 ring-zinc-950",
+                          "relative z-10 mt-2 w-3 h-3 rounded-full shrink-0 ring-2 ring-background",
                           relCfg.dot
                         )}
                       />
@@ -417,7 +417,7 @@ export function ProcessoTimeline({
                   {/* Card */}
                   <div
                     className={cn(
-                      "flex-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 border-l-4 transition-colors duration-150 hover:bg-zinc-900/80",
+                      "flex-1 rounded-lg border border-border bg-card/50 p-3 border-l-4 transition-colors duration-150 hover:bg-card/80",
                       groupCfg.border,
                       lowConfidence && "border-dashed"
                     )}
@@ -429,7 +429,7 @@ export function ProcessoTimeline({
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="text-sm font-medium text-zinc-200 truncate">
+                          <h4 className="text-sm font-medium text-foreground truncate">
                             {section.titulo}
                           </h4>
                           <Badge
@@ -445,7 +445,7 @@ export function ProcessoTimeline({
                           {lowConfidence && (
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Badge className="text-[10px] px-1.5 py-0 h-4 bg-zinc-800 text-zinc-500 border-zinc-700">
+                                <Badge className="text-[10px] px-1.5 py-0 h-4 bg-muted text-muted-foreground border-border">
                                   {section.confianca}%
                                 </Badge>
                               </TooltipTrigger>
@@ -468,7 +468,7 @@ export function ProcessoTimeline({
 
                     {/* Resumo (hidden in compact) */}
                     {!compact && section.resumo && (
-                      <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2 mb-2 ml-6">
+                      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-2 ml-6">
                         {section.resumo}
                       </p>
                     )}
@@ -476,11 +476,11 @@ export function ProcessoTimeline({
                     {/* Pessoas (hidden in compact) */}
                     {!compact && pessoas.length > 0 && (
                       <div className="flex items-center gap-1.5 flex-wrap mb-2 ml-6">
-                        <UserCircle className="w-3 h-3 text-zinc-600" />
+                        <UserCircle className="w-3 h-3 text-muted-foreground/50" />
                         {pessoas.map((p, idx) => (
                           <span
                             key={idx}
-                            className="text-[10px] text-zinc-500 bg-zinc-800/60 rounded px-1.5 py-0.5"
+                            className="text-[10px] text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5"
                           >
                             {p}
                           </span>
@@ -519,7 +519,7 @@ export function ProcessoTimeline({
                     )}
 
                     {/* Footer: file name, page range, Drive link */}
-                    <div className="flex items-center gap-2 text-[10px] text-zinc-600 ml-6 mt-1">
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground/50 ml-6 mt-1">
                       <FileText className="w-3 h-3" />
                       <span className="truncate max-w-[180px]">
                         {section.fileName}
@@ -534,7 +534,7 @@ export function ProcessoTimeline({
                           href={section.fileWebViewLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-0.5 text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-0.5 text-muted-foreground hover:text-foreground/80 transition-colors cursor-pointer"
                         >
                           <ExternalLink className="w-3 h-3" />
                           <span>Drive</span>
@@ -550,7 +550,7 @@ export function ProcessoTimeline({
 
         {/* ====== Footer (hidden in compact) ====== */}
         {!compact && (
-          <div className="flex items-center justify-between text-xs text-zinc-500 pt-2 border-t border-zinc-800/50">
+          <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/50">
             <span>
               {filtered.length} de {stats.total}{" "}
               {stats.total === 1 ? "secao" : "secoes"} (filtradas)
@@ -561,7 +561,7 @@ export function ProcessoTimeline({
                   variant="ghost"
                   size="xs"
                   onClick={scrollToContradicoes}
-                  className="text-amber-400/70 hover:text-amber-300 h-6 px-2"
+                  className="text-amber-600 dark:text-amber-400/70 hover:text-amber-700 dark:hover:text-amber-300 h-6 px-2"
                 >
                   <AlertTriangle className="w-3 h-3" />
                   Ver contradicoes
@@ -572,7 +572,7 @@ export function ProcessoTimeline({
                   variant="ghost"
                   size="xs"
                   onClick={scrollToTeses}
-                  className="text-emerald-400/70 hover:text-emerald-300 h-6 px-2"
+                  className="text-emerald-700 dark:text-emerald-400/70 hover:text-emerald-800 dark:hover:text-emerald-300 h-6 px-2"
                 >
                   <Lightbulb className="w-3 h-3" />
                   Ver teses

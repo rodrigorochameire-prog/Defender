@@ -25,13 +25,13 @@ export function CopyProcessButton({ processo }: CopyProcessButtonProps) {
   return (
     <button
       onClick={handleCopy}
-      className="ml-2 p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors group/copy"
+      className="ml-2 p-1 rounded hover:bg-muted transition-colors group/copy"
       title="Copiar número do processo"
     >
       {copied ? (
         <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
       ) : (
-        <Copy className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 group-hover/copy:text-zinc-600 dark:group-hover/copy:text-zinc-300" />
+        <Copy className="w-3.5 h-3.5 text-muted-foreground group-hover/copy:text-foreground/80" />
       )}
     </button>
   );

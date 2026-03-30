@@ -23,10 +23,10 @@ export default function AtendimentosPage() {
             <UserCheck className="w-5 h-5 sm:w-6 sm:h-6 text-purple-700 dark:text-purple-400" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               Atendimentos
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Gestão de atendimentos aos assistidos
             </p>
           </div>
@@ -46,7 +46,7 @@ export default function AtendimentosPage() {
         <Card className="border-l-2 border-l-rose-500">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-muted shadow-sm">
                 <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
               </div>
               <div>
@@ -60,7 +60,7 @@ export default function AtendimentosPage() {
         <Card className="border-l-2 border-l-blue-500">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-muted shadow-sm">
                 <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
               </div>
               <div>
@@ -74,7 +74,7 @@ export default function AtendimentosPage() {
         <Card className="border-l-2 border-l-violet-500">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-muted shadow-sm">
                 <Video className="w-4 h-4 sm:w-5 sm:h-5 text-violet-500" />
               </div>
               <div>
@@ -88,7 +88,7 @@ export default function AtendimentosPage() {
         <Card className="border-l-2 border-l-amber-500">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-muted shadow-sm">
                 <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
               </div>
               <div>
@@ -106,10 +106,10 @@ export default function AtendimentosPage() {
           <div className="mx-auto w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4">
             <UserCheck className="w-8 h-8 text-purple-500" />
           </div>
-          <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+          <h3 className="text-lg font-medium text-foreground/80 mb-2">
             Módulo de Atendimentos
           </h3>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto mb-4">
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
             Registre e acompanhe atendimentos presenciais, por videoconferência, telefone e visitas carcerárias.
           </p>
           <Link href="/admin/atendimentos/novo">

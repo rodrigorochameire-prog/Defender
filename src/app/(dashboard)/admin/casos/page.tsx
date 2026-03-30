@@ -118,11 +118,11 @@ const ATRIBUICAO_LABELS: Record<string, string> = {
 };
 
 const FASES_CASO: Record<string, { label: string; color: string }> = {
-  inquerito: { label: "Inquérito", color: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400" },
+  inquerito: { label: "Inquérito", color: "bg-muted text-muted-foreground" },
   instrucao: { label: "Instrução", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
   plenario: { label: "Plenário", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" },
   recurso: { label: "Recurso", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" },
-  execucao: { label: "Execução", color: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400" },
+  execucao: { label: "Execução", color: "bg-muted text-muted-foreground" },
 };
 
 // ==========================================
@@ -508,8 +508,8 @@ function CasoCard({ caso }: CasoCardProps) {
 
   return (
     <div className={cn(
-      "group relative bg-white dark:bg-zinc-900 rounded-lg overflow-hidden",
-      "border border-zinc-200 dark:border-zinc-800",
+      "group relative bg-card rounded-lg overflow-hidden",
+      "border border-border",
       "hover:shadow-lg hover:-translate-y-0.5",
       "transition-all duration-300",
       "border-l-[3px]",
@@ -534,7 +534,7 @@ function CasoCard({ caso }: CasoCardProps) {
           <DropdownMenuTrigger asChild>
             <button 
               onClick={(e) => e.stopPropagation()}
-              className="p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors opacity-0 group-hover:opacity-100"
+              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100"
             >
               <MoreHorizontal className="w-4 h-4" />
             </button>
@@ -558,10 +558,10 @@ function CasoCard({ caso }: CasoCardProps) {
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="flex items-center gap-2 text-zinc-500">
+            <DropdownMenuItem className="flex items-center gap-2 text-muted-foreground">
               <Copy className="w-4 h-4" /> Duplicar caso
             </DropdownMenuItem>
-            <DropdownMenuItem className="flex items-center gap-2 text-zinc-500">
+            <DropdownMenuItem className="flex items-center gap-2 text-muted-foreground">
               <Archive className="w-4 h-4" /> Arquivar
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -591,7 +591,7 @@ function CasoCard({ caso }: CasoCardProps) {
         </div>
 
         {/* Título */}
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2 mb-2 leading-snug group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors pr-8">
+        <h3 className="text-sm font-semibold text-foreground line-clamp-2 mb-2 leading-snug group-hover:text-foreground/80 transition-colors pr-8">
           {caso.titulo}
         </h3>
 
@@ -601,21 +601,21 @@ function CasoCard({ caso }: CasoCardProps) {
             {tags.slice(0, 3).map((tag, idx) => (
               <span 
                 key={idx}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
+                className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
               >
                 #{tag}
               </span>
             ))}
             {tags.length > 3 && (
-              <span className="text-[10px] text-zinc-400">+{tags.length - 3}</span>
+              <span className="text-[10px] text-muted-foreground">+{tags.length - 3}</span>
             )}
           </div>
         )}
 
         {/* Código e Data */}
-        <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 mb-3">
+        <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
           {caso.codigo ? (
-            <span className="font-mono text-[11px] bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded">
+            <span className="font-mono text-[11px] bg-muted px-2 py-0.5 rounded">
               {caso.codigo}
             </span>
           ) : (
@@ -628,14 +628,14 @@ function CasoCard({ caso }: CasoCardProps) {
         </div>
 
         {/* Barra de Progresso da Teoria */}
-        <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="pt-3 border-t border-border">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
               Teoria do Caso
             </span>
             <span className={cn(
               "text-[10px] font-bold",
-              teoriaCompleta ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400"
+              teoriaCompleta ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
             )}>
               {teoriaCount}/3
             </span>
@@ -647,7 +647,7 @@ function CasoCard({ caso }: CasoCardProps) {
                   "flex-1 h-1.5 rounded-full transition-colors cursor-help",
                   caso.hasTeoriaFatos 
                     ? "bg-blue-500" 
-                    : "bg-zinc-200 dark:bg-zinc-700"
+                    : "bg-muted"
                 )} />
               </TooltipTrigger>
               <TooltipContent>Fatos {caso.hasTeoriaFatos ? "✓" : "pendente"}</TooltipContent>
@@ -658,7 +658,7 @@ function CasoCard({ caso }: CasoCardProps) {
                   "flex-1 h-1.5 rounded-full transition-colors cursor-help",
                   caso.hasTeoriaProvas 
                     ? "bg-amber-500" 
-                    : "bg-zinc-200 dark:bg-zinc-700"
+                    : "bg-muted"
                 )} />
               </TooltipTrigger>
               <TooltipContent>Provas {caso.hasTeoriaProvas ? "✓" : "pendente"}</TooltipContent>
@@ -669,7 +669,7 @@ function CasoCard({ caso }: CasoCardProps) {
                   "flex-1 h-1.5 rounded-full transition-colors cursor-help",
                   caso.hasTeoriaDireito 
                     ? "bg-emerald-500" 
-                    : "bg-zinc-200 dark:bg-zinc-700"
+                    : "bg-muted"
                 )} />
               </TooltipTrigger>
               <TooltipContent>Direito {caso.hasTeoriaDireito ? "✓" : "pendente"}</TooltipContent>
@@ -678,7 +678,7 @@ function CasoCard({ caso }: CasoCardProps) {
 
           {/* Indicadores resumidos */}
           {hasExtras && (
-            <div className="flex items-center gap-4 mt-3 text-[11px] text-zinc-500 dark:text-zinc-400">
+            <div className="flex items-center gap-4 mt-3 text-[11px] text-muted-foreground">
               {assistidosCount > 0 && (
                 <span className="flex items-center gap-1">
                   <User className="w-3 h-3" />
@@ -714,9 +714,9 @@ function CasoCard({ caso }: CasoCardProps) {
           <CollapsibleTrigger asChild>
             <button className={cn(
               "w-full flex items-center justify-center gap-2 px-4 py-2 text-xs",
-              "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300",
-              "border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30",
-              "hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              "text-muted-foreground hover:text-foreground",
+              "border-t border-border bg-muted/50",
+              "hover:bg-muted transition-colors"
             )}>
               <ChevronDown className={cn(
                 "w-4 h-4 transition-transform duration-200",
@@ -726,12 +726,12 @@ function CasoCard({ caso }: CasoCardProps) {
             </button>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="px-4 py-3 space-y-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-900/50">
+            <div className="px-4 py-3 space-y-4 border-t border-border bg-muted/30">
               
               {/* Assistidos */}
               {caso.assistidos && caso.assistidos.length > 0 && (
                 <div>
-                  <h4 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-2">
+                  <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                     Assistidos
                   </h4>
                   <div className="flex flex-wrap gap-2">
@@ -740,10 +740,10 @@ function CasoCard({ caso }: CasoCardProps) {
                         key={assistido.id}
                         className={cn(
                           "flex items-center gap-2 px-2 py-1.5 rounded-lg",
-                          "bg-white dark:bg-zinc-800 border",
-                          assistido.preso 
-                            ? "border-red-200 dark:border-red-900/50" 
-                            : "border-zinc-200 dark:border-zinc-700"
+                          "bg-card border",
+                          assistido.preso
+                            ? "border-red-200 dark:border-red-900/50"
+                            : "border-border"
                         )}
                       >
                         <AssistidoAvatar
@@ -752,7 +752,7 @@ function CasoCard({ caso }: CasoCardProps) {
                           atribuicao={caso.atribuicao}
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate">
+                          <p className="text-xs font-medium text-foreground/80 truncate">
                             {assistido.nome}
                           </p>
                           {assistido.preso && (
@@ -771,19 +771,19 @@ function CasoCard({ caso }: CasoCardProps) {
               {/* Processos */}
               {caso.processos && caso.processos.length > 0 && (
                 <div>
-                  <h4 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-2">
+                  <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                     Processos
                   </h4>
                   <div className="space-y-1.5">
                     {caso.processos.map((processo) => (
                       <div 
                         key={processo.id}
-                        className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
+                        className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-card border border-border"
                       >
-                        <span className="font-mono text-[11px] text-zinc-700 dark:text-zinc-300">
+                        <span className="font-mono text-[11px] text-foreground/80">
                           {processo.numero}
                         </span>
-                        <span className="text-[10px] text-zinc-500">
+                        <span className="text-[10px] text-muted-foreground">
                           {processo.vara}
                         </span>
                       </div>
@@ -795,19 +795,19 @@ function CasoCard({ caso }: CasoCardProps) {
               {/* Próximas Audiências */}
               {caso.audiencias && caso.audiencias.length > 0 && (
                 <div>
-                  <h4 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-2">
+                  <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                     Próximas Audiências
                   </h4>
                   <div className="space-y-1.5">
                     {caso.audiencias.slice(0, 2).map((audiencia) => (
                       <div 
                         key={audiencia.id}
-                        className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
+                        className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-card border border-border"
                       >
-                        <span className="text-xs text-zinc-700 dark:text-zinc-300">
+                        <span className="text-xs text-foreground/80">
                           {audiencia.tipo}
                         </span>
-                        <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           {format(new Date(audiencia.data), "dd/MM/yy")}
                         </span>
@@ -845,10 +845,10 @@ function CasoCard({ caso }: CasoCardProps) {
               {/* Teoria Resumo */}
               {caso.teoriaResumo && (
                 <div>
-                  <h4 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-2">
+                  <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                     Tese Principal
                   </h4>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 italic bg-white dark:bg-zinc-800 p-2 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                  <p className="text-xs text-muted-foreground italic bg-card p-2 rounded-lg border border-border">
                     &ldquo;{caso.teoriaResumo}&rdquo;
                   </p>
                 </div>
@@ -860,8 +860,8 @@ function CasoCard({ caso }: CasoCardProps) {
 
       {/* Footer com ações rápidas */}
       <div className={cn(
-        "flex items-center justify-between px-4 py-2 border-t border-zinc-100 dark:border-zinc-800",
-        "bg-zinc-50/50 dark:bg-zinc-800/30"
+        "flex items-center justify-between px-4 py-2 border-t border-border",
+        "bg-muted/50"
       )}>
         <div className="flex items-center gap-3">
           {caso.linkDrive && (
@@ -871,7 +871,7 @@ function CasoCard({ caso }: CasoCardProps) {
                   href={caso.linkDrive} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                  className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <FolderOpen className="w-4 h-4" />
                 </a>
@@ -883,7 +883,7 @@ function CasoCard({ caso }: CasoCardProps) {
             <TooltipTrigger asChild>
               <Link 
                 href={`/admin/casos/${caso.id}/editar`}
-                className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Edit className="w-4 h-4" />
               </Link>
@@ -893,7 +893,7 @@ function CasoCard({ caso }: CasoCardProps) {
         </div>
         <Link 
           href={`/admin/casos/${caso.id}`}
-          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <span>Ver detalhes</span>
           <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -909,7 +909,7 @@ function CasoCard({ caso }: CasoCardProps) {
 
 function CasoCardSkeleton() {
   return (
-    <Card className="p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+    <Card className="p-4 bg-card border border-border">
       <div className="flex items-center gap-2 mb-3">
         <Skeleton className="h-4 w-16" />
         <Skeleton className="h-4 w-12" />
@@ -1001,12 +1001,12 @@ function FilterSectionCasos({
           onClick={() => setIsMainExpanded(!isMainExpanded)}
           className="flex items-center gap-3 cursor-pointer flex-1 group"
         >
-          <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-            <Filter className="w-3.5 h-3.5 text-zinc-500" />
+          <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+            <Filter className="w-3.5 h-3.5 text-muted-foreground" />
           </div>
           <div>
-            <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Filtros</h3>
-            <p className="text-[10px] text-zinc-400">
+            <h3 className="text-sm font-medium text-foreground/80">Filtros</h3>
+            <p className="text-[10px] text-muted-foreground">
               {totalFilters > 0 ? `${totalFilters} ativo${totalFilters > 1 ? 's' : ''}` : 'Nenhum filtro aplicado'}
             </p>
           </div>
@@ -1017,7 +1017,7 @@ function FilterSectionCasos({
               variant="ghost" 
               size="sm" 
               onClick={handleClearAll}
-              className="h-7 text-[10px] px-2 text-zinc-400 hover:text-zinc-600"
+              className="h-7 text-[10px] px-2 text-muted-foreground hover:text-foreground"
             >
               <XCircle className="w-3 h-3 mr-1" />
               Limpar
@@ -1025,12 +1025,12 @@ function FilterSectionCasos({
           )}
           <div 
             onClick={() => setIsMainExpanded(!isMainExpanded)}
-            className="p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-muted cursor-pointer"
           >
             {isMainExpanded ? (
-              <ChevronUp className="w-4 h-4 text-zinc-400" />
+              <ChevronUp className="w-4 h-4 text-muted-foreground" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-zinc-400" />
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
             )}
           </div>
         </div>
@@ -1038,15 +1038,15 @@ function FilterSectionCasos({
 
       {/* Seções de Filtro */}
       {isMainExpanded && (
-        <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="space-y-2 pt-2 border-t border-border">
           {/* Atribuição */}
           <div>
             <button
               onClick={() => toggleSection('atribuicoes')}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted/50 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wide">Atribuição</span>
+                <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Atribuição</span>
                 {selectedAtribuicao !== "all" && (
                   <span 
                     className="px-2 py-0.5 rounded text-[10px] font-medium text-white"
@@ -1056,7 +1056,7 @@ function FilterSectionCasos({
                   </span>
                 )}
               </div>
-              {expandedSections.atribuicoes ? <ChevronUp className="w-3.5 h-3.5 text-zinc-400" /> : <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />}
+              {expandedSections.atribuicoes ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
             </button>
             
             {expandedSections.atribuicoes && (
@@ -1070,8 +1070,8 @@ function FilterSectionCasos({
                       className={cn(
                         "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all",
                         isSelected
-                          ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100"
-                          : "bg-white dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300"
+                          ? "bg-muted text-foreground"
+                          : "bg-card text-muted-foreground border border-border hover:border-border"
                       )}
                     >
                       <div 
@@ -1090,10 +1090,10 @@ function FilterSectionCasos({
           <div>
             <button
               onClick={() => toggleSection('fase')}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted/50 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wide">Fase</span>
+                <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Fase</span>
                 {selectedFase !== "all" && (
                   <span 
                     className="px-2 py-0.5 rounded text-[10px] font-medium text-white"
@@ -1103,7 +1103,7 @@ function FilterSectionCasos({
                   </span>
                 )}
               </div>
-              {expandedSections.fase ? <ChevronUp className="w-3.5 h-3.5 text-zinc-400" /> : <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />}
+              {expandedSections.fase ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
             </button>
             
             {expandedSections.fase && (
@@ -1117,8 +1117,8 @@ function FilterSectionCasos({
                       className={cn(
                         "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all",
                         isSelected
-                          ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100"
-                          : "bg-white dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300"
+                          ? "bg-muted text-foreground"
+                          : "bg-card text-muted-foreground border border-border hover:border-border"
                       )}
                     >
                       <div 
@@ -1137,10 +1137,10 @@ function FilterSectionCasos({
           <div>
             <button
               onClick={() => toggleSection('status')}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted/50 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wide">Status</span>
+                <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Status</span>
                 {selectedStatus !== "all" && (
                   <span 
                     className="px-2 py-0.5 rounded text-[10px] font-medium text-white"
@@ -1150,7 +1150,7 @@ function FilterSectionCasos({
                   </span>
                 )}
               </div>
-              {expandedSections.status ? <ChevronUp className="w-3.5 h-3.5 text-zinc-400" /> : <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />}
+              {expandedSections.status ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
             </button>
             
             {expandedSections.status && (
@@ -1164,8 +1164,8 @@ function FilterSectionCasos({
                       className={cn(
                         "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all",
                         isSelected
-                          ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100"
-                          : "bg-white dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300"
+                          ? "bg-muted text-foreground"
+                          : "bg-card text-muted-foreground border border-border hover:border-border"
                       )}
                     >
                       <div 
@@ -1183,26 +1183,26 @@ function FilterSectionCasos({
       )}
 
       {/* Barra de Ações (Busca, View) */}
-      <div className="flex items-center justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex-wrap">
+      <div className="flex items-center justify-between gap-3 pt-3 border-t border-border flex-wrap">
         {/* Busca */}
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input
             placeholder="Buscar caso, código..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 h-8 text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
+            className="pl-9 h-8 text-xs bg-muted/50 border-border"
           />
         </div>
 
-        <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
+        <div className="inline-flex items-center gap-1 p-1 rounded-full bg-muted border border-border">
           <button
             onClick={() => setViewMode("grid")}
             className={cn(
               "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 cursor-pointer",
               viewMode === "grid"
-                ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
-                : "text-zinc-400 dark:text-zinc-500"
+                ? "bg-foreground text-background shadow-sm"
+                : "text-muted-foreground"
             )}
           >
             <LayoutGrid className="w-[15px] h-[15px]" />
@@ -1212,8 +1212,8 @@ function FilterSectionCasos({
             className={cn(
               "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 cursor-pointer",
               viewMode === "list"
-                ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
-                : "text-zinc-400 dark:text-zinc-500"
+                ? "bg-foreground text-background shadow-sm"
+                : "text-muted-foreground"
             )}
           >
             <List className="w-[15px] h-[15px]" />
@@ -1280,17 +1280,17 @@ export default function CasosPage() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      <div className="min-h-screen bg-background">
         {/* Header Padrão Defender */}
-        <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="px-4 md:px-6 py-4 bg-card border-b border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-                <Briefcase className="w-5 h-5 text-white dark:text-zinc-900" />
+              <div className="w-11 h-11 rounded-xl bg-foreground flex items-center justify-center shadow-lg">
+                <Briefcase className="w-5 h-5 text-background" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Casos</h1>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Gestão de casos com teoria integrada</p>
+                <h1 className="text-xl font-bold text-foreground tracking-tight">Casos</h1>
+                <p className="text-xs text-muted-foreground">Gestão de casos com teoria integrada</p>
               </div>
             </div>
             
@@ -1298,7 +1298,7 @@ export default function CasosPage() {
               <Link href="/admin/casos/novo">
                 <Button 
                   size="sm"
-                  className="h-7 px-2.5 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+                  className="h-7 px-2.5 bg-primary hover:bg-emerald-600 text-primary-foreground text-xs font-medium rounded-md transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5 mr-1" />
                   Novo
@@ -1321,18 +1321,18 @@ export default function CasosPage() {
           ].map((stat, idx) => (
             <div
               key={idx}
-              className="group relative text-left p-4 sm:p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-200"
+              className="group relative text-left p-4 sm:p-3 rounded-xl bg-card border border-border hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-200"
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="space-y-0.5">
-                  <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">{stat.label}</p>
+                  <p className="text-xs sm:text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{stat.label}</p>
                   <p className={cn(
                     "text-2xl sm:text-lg font-semibold",
-                    stat.highlight ? "text-rose-600 dark:text-rose-400" : "text-zinc-700 dark:text-zinc-300"
+                    stat.highlight ? "text-rose-600 dark:text-rose-400" : "text-foreground/80"
                   )}>{stat.value}</p>
                 </div>
-                <div className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-                  <stat.icon className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500 dark:text-zinc-400" />
+                <div className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-muted flex items-center justify-center border border-border">
+                  <stat.icon className="w-5 h-5 sm:w-4 sm:h-4 text-muted-foreground" />
                 </div>
               </div>
             </div>
@@ -1340,7 +1340,7 @@ export default function CasosPage() {
         </div>
 
         {/* Card de Filtros - Padrão Demandas */}
-        <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl p-5">
+        <Card className="border border-border bg-card rounded-xl p-5">
           <FilterSectionCasos
             selectedAtribuicao={filterAtribuicao}
             setSelectedAtribuicao={setFilterAtribuicao}
@@ -1356,10 +1356,10 @@ export default function CasosPage() {
         </Card>
 
         {/* Card de Listagem */}
-        <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden">
+        <Card className="border border-border bg-card rounded-xl overflow-hidden">
           {/* Header da listagem */}
-          <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <div className="px-4 py-3 border-b border-border bg-muted/50">
+            <span className="text-sm font-medium text-foreground/80">
               {casos.length} caso{casos.length !== 1 && 's'}
             </span>
           </div>

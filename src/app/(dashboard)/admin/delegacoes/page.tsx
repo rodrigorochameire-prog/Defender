@@ -102,7 +102,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   },
   cancelada: {
     label: "Cancelada",
-    color: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
+    color: "bg-muted text-muted-foreground",
     icon: <XCircle className="w-3.5 h-3.5" />,
   },
 };
@@ -154,7 +154,7 @@ function DelegacaoCard({
     : "";
 
   return (
-    <Card className="group relative overflow-hidden hover:shadow-lg transition-all duration-300 border-zinc-100 dark:border-zinc-800">
+    <Card className="group relative overflow-hidden hover:shadow-lg transition-all duration-300 border-border">
       {/* Barra colorida no topo */}
       <div
         className={cn(
@@ -173,7 +173,7 @@ function DelegacaoCard({
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             {delegacao.tipo && TIPO_CONFIG[delegacao.tipo] && (
-              <Badge variant="outline" className="gap-1 text-[10px] font-medium text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700">
+              <Badge variant="outline" className="gap-1 text-[10px] font-medium text-muted-foreground border-border">
                 {TIPO_CONFIG[delegacao.tipo].icon}
                 {TIPO_CONFIG[delegacao.tipo].label}
               </Badge>
@@ -195,13 +195,13 @@ function DelegacaoCard({
           if (!assistidoNome && !processoNumero && !demandaAto) return null;
 
           return (
-            <div className="mb-3 p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 space-y-1.5">
+            <div className="mb-3 p-2.5 rounded-lg bg-muted/50 space-y-1.5">
               {assistidoNome && (
                 <div className="flex items-center gap-2 text-sm">
                   <div className="w-5 h-5 rounded bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
                     <User className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  <span className="text-zinc-700 dark:text-zinc-300 font-medium truncate">
+                  <span className="text-foreground font-medium truncate">
                     {assistidoNome}
                   </span>
                 </div>
@@ -211,7 +211,7 @@ function DelegacaoCard({
                   <div className="w-5 h-5 rounded bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0">
                     <Briefcase className="w-3 h-3 text-violet-600 dark:text-violet-400" />
                   </div>
-                  <span className="text-zinc-600 dark:text-zinc-400 font-mono text-[11px] truncate">
+                  <span className="text-muted-foreground font-mono text-[11px] truncate">
                     {processoNumero}
                   </span>
                 </div>
@@ -221,7 +221,7 @@ function DelegacaoCard({
                   <div className="w-5 h-5 rounded bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
                     <FileText className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                   </div>
-                  <span className="text-zinc-600 dark:text-zinc-400 truncate">
+                  <span className="text-muted-foreground truncate">
                     {demandaAto}
                   </span>
                 </div>
@@ -236,7 +236,7 @@ function DelegacaoCard({
             <MessageSquare className="w-3 h-3" />
             Instruções
           </p>
-          <p className="text-sm text-zinc-700 dark:text-zinc-300 line-clamp-2">
+          <p className="text-sm text-foreground line-clamp-2">
             {delegacao.instrucoes}
           </p>
         </div>
@@ -246,14 +246,14 @@ function DelegacaoCard({
           <div className="flex items-center gap-2 text-sm mb-3">
             <Calendar className="w-3.5 h-3.5 text-zinc-400" />
             <span className="text-zinc-500">Prazo:</span>
-            <span className="text-zinc-700 dark:text-zinc-300 font-medium">
+            <span className="text-foreground font-medium">
               {format(new Date(delegacao.prazoSugerido + "T12:00:00"), "dd/MM/yyyy")}
             </span>
           </div>
         )}
 
         {/* Pessoa (De/Para) */}
-        <div className="flex items-center gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center gap-2 pt-3 border-t border-border">
           <Avatar className="h-7 w-7">
             <AvatarFallback
               className={cn(
@@ -270,7 +270,7 @@ function DelegacaoCard({
             <p className="text-[10px] text-zinc-500">
               {tipo === "recebida" ? "Delegado por" : "Delegado para"}
             </p>
-            <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">
+            <p className="text-sm font-medium text-foreground truncate">
               {pessoa?.name || "Usuário"}
             </p>
           </div>
@@ -474,15 +474,15 @@ export default function DelegacoesPage() {
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
       {/* Header Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-card border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
               <UserCheck className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Delegações</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Gerencie suas tarefas delegadas</p>
+              <h1 className="text-xl font-bold text-foreground tracking-tight">Delegações</h1>
+              <p className="text-xs text-muted-foreground">Gerencie suas tarefas delegadas</p>
             </div>
           </div>
 
@@ -494,7 +494,7 @@ export default function DelegacoesPage() {
                 refetchRecebidas();
                 refetchEnviadas();
               }}
-              className="gap-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+              className="gap-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-foreground"
             >
               <RefreshCw className="w-4 h-4" />
               Atualizar
@@ -517,53 +517,53 @@ export default function DelegacoesPage() {
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             {/* Pendentes */}
-            <div className="group relative p-3 md:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+            <div className="group relative p-3 md:p-4 rounded-xl bg-card border border-border hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
               <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
               <div className="flex items-start justify-between gap-2 md:gap-3">
                 <div className="flex-1 min-w-0 space-y-0.5 md:space-y-1">
-                  <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300">
+                  <p className="text-[10px] font-medium text-muted-foreground truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300">
                     Pendentes
                   </p>
-                  <p className="text-lg md:text-xl font-semibold text-zinc-700 dark:text-zinc-300">
+                  <p className="text-lg md:text-xl font-semibold text-foreground">
                     {stats.pendentes}
                   </p>
-                  <p className="text-[9px] md:text-[10px] text-zinc-400 dark:text-zinc-500">
-                    aguardando ação
+                  <p className="text-[9px] md:text-[10px] text-muted-foreground">
+aguardando ação
                   </p>
                 </div>
-                <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
-                  <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
+                <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 border border-border group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
+                  <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 text-muted-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
                 </div>
               </div>
             </div>
 
             {/* Em Andamento */}
-            <div className="group relative p-3 md:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+            <div className="group relative p-3 md:p-4 rounded-xl bg-card border border-border hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
               <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
               <div className="flex items-start justify-between gap-2 md:gap-3">
                 <div className="flex-1 min-w-0 space-y-0.5 md:space-y-1">
-                  <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300">
+                  <p className="text-[10px] font-medium text-muted-foreground truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300">
                     Em Andamento
                   </p>
-                  <p className="text-lg md:text-xl font-semibold text-zinc-700 dark:text-zinc-300">
+                  <p className="text-lg md:text-xl font-semibold text-foreground">
                     {stats.emAndamento}
                   </p>
-                  <p className="text-[9px] md:text-[10px] text-zinc-400 dark:text-zinc-500">
-                    sendo trabalhado
+                  <p className="text-[9px] md:text-[10px] text-muted-foreground">
+sendo trabalhado
                   </p>
                 </div>
-                <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
-                  <Play className="w-3.5 h-3.5 md:w-4 md:h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
+                <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 border border-border group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
+                  <Play className="w-3.5 h-3.5 md:w-4 md:h-4 text-muted-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
                 </div>
               </div>
             </div>
 
             {/* Concluídas */}
-            <div className="group relative p-3 md:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+            <div className="group relative p-3 md:p-4 rounded-xl bg-card border border-border hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
               <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
               <div className="flex items-start justify-between gap-2 md:gap-3">
                 <div className="flex-1 min-w-0 space-y-0.5 md:space-y-1">
-                  <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300">
+                  <p className="text-[10px] font-medium text-muted-foreground truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300">
                     Concluídas
                   </p>
                   <p className="text-lg md:text-xl font-semibold text-emerald-600 dark:text-emerald-400">
@@ -580,22 +580,22 @@ export default function DelegacoesPage() {
             </div>
 
             {/* Total */}
-            <div className="group relative p-3 md:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+            <div className="group relative p-3 md:p-4 rounded-xl bg-card border border-border hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
               <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
               <div className="flex items-start justify-between gap-2 md:gap-3">
                 <div className="flex-1 min-w-0 space-y-0.5 md:space-y-1">
-                  <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300">
+                  <p className="text-[10px] font-medium text-muted-foreground truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300">
                     Total
                   </p>
-                  <p className="text-lg md:text-xl font-semibold text-zinc-700 dark:text-zinc-300">
+                  <p className="text-lg md:text-xl font-semibold text-foreground">
                     {stats.total}
                   </p>
-                  <p className="text-[9px] md:text-[10px] text-zinc-400 dark:text-zinc-500">
-                    delegações
+                  <p className="text-[9px] md:text-[10px] text-muted-foreground">
+delegações
                   </p>
                 </div>
-                <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
-                  <FileText className="w-3.5 h-3.5 md:w-4 md:h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
+                <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 border border-border group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
+                  <FileText className="w-3.5 h-3.5 md:w-4 md:h-4 text-muted-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
                 </div>
               </div>
             </div>
@@ -603,10 +603,10 @@ export default function DelegacoesPage() {
         )}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
           <div className="flex items-center justify-between mb-6">
-            <TabsList className="bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
+            <TabsList className="bg-muted p-1 rounded-xl">
               <TabsTrigger
                 value="recebidas"
-                className="data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-700 rounded-lg px-4 gap-2"
+                className="data-[state=active]:bg-background rounded-lg px-4 gap-2"
               >
                 <Inbox className="w-4 h-4" />
                 Recebidas
@@ -618,7 +618,7 @@ export default function DelegacoesPage() {
               </TabsTrigger>
               <TabsTrigger
                 value="enviadas"
-                className="data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-700 rounded-lg px-4 gap-2"
+                className="data-[state=active]:bg-background rounded-lg px-4 gap-2"
               >
                 <SendHorizontal className="w-4 h-4" />
                 Enviadas
@@ -652,10 +652,10 @@ export default function DelegacoesPage() {
               </div>
             ) : delegacoes.length === 0 ? (
               <Card className="p-12 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
                   <Inbox className="w-8 h-8 text-zinc-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                <h3 className="text-lg font-semibold text-foreground mb-2">
                   Nenhuma delegação recebida
                 </h3>
                 <p className="text-sm text-zinc-500">
@@ -685,10 +685,10 @@ export default function DelegacoesPage() {
               </div>
             ) : delegacoes.length === 0 ? (
               <Card className="p-12 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
                   <SendHorizontal className="w-8 h-8 text-zinc-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                <h3 className="text-lg font-semibold text-foreground mb-2">
                   Nenhuma delegação enviada
                 </h3>
                 <p className="text-sm text-zinc-500">
@@ -774,7 +774,7 @@ export default function DelegacoesPage() {
                 if (!assistidoNome && !processoNumero && !demandaAto) return null;
 
                 return (
-                  <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 space-y-2">
+                  <div className="p-3 rounded-xl bg-muted/50 border border-border space-y-2">
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
                       Contexto
                     </p>
@@ -808,7 +808,7 @@ export default function DelegacoesPage() {
               {delegacaoDetalhes.tipo && TIPO_CONFIG[delegacaoDetalhes.tipo] && (
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-zinc-500">Tipo:</span>
-                  <Badge variant="outline" className="gap-1 text-zinc-600 dark:text-zinc-400">
+                  <Badge variant="outline" className="gap-1 text-muted-foreground">
                     {TIPO_CONFIG[delegacaoDetalhes.tipo].icon}
                     {TIPO_CONFIG[delegacaoDetalhes.tipo].label}
                   </Badge>
@@ -832,10 +832,10 @@ export default function DelegacoesPage() {
 
               {/* Instrucoes */}
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                <p className="text-sm font-semibold text-foreground">
                   Instrucoes
                 </p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg whitespace-pre-wrap">
+                <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg whitespace-pre-wrap">
                   {delegacaoDetalhes.instrucoes}
                 </p>
               </div>
@@ -843,10 +843,10 @@ export default function DelegacoesPage() {
               {/* Orientacoes (se houver) */}
               {delegacaoDetalhes.orientacoes && (
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                  <p className="text-sm font-semibold text-foreground">
                     Orientacoes / Referencias
                   </p>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800 whitespace-pre-wrap">
+                  <p className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800 whitespace-pre-wrap">
                     {delegacaoDetalhes.orientacoes}
                   </p>
                 </div>
@@ -855,10 +855,10 @@ export default function DelegacoesPage() {
               {/* Observações (se houver) */}
               {delegacaoDetalhes.observacoes && (
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                  <p className="text-sm font-semibold text-foreground">
                     Observações
                   </p>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                  <p className="text-sm text-muted-foreground bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
                     {delegacaoDetalhes.observacoes}
                   </p>
                 </div>
@@ -868,7 +868,7 @@ export default function DelegacoesPage() {
               {activeTab === "recebidas" &&
                 ["pendente", "aceita", "em_andamento"].includes(delegacaoDetalhes.status) && (
                   <div className="space-y-2">
-                    <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                    <p className="text-sm font-semibold text-foreground">
                       Adicionar observação
                     </p>
                     <Textarea

@@ -246,10 +246,10 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
       <Card
         className={cn(
-          "group bg-white dark:bg-zinc-950",
-          "border border-zinc-200 dark:border-zinc-800",
+          "group bg-white dark:bg-card",
+          "border border-zinc-200 dark:border-border",
           "transition-all duration-300",
-          "hover:shadow-md hover:border-zinc-300 dark:hover:border-zinc-700",
+          "hover:shadow-md hover:border-zinc-300 dark:hover:border-border",
           "border-l-[3px]",
           themeColors.border
         )}
@@ -276,7 +276,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 
                 {/* Código do Caso */}
                 {data.codigo && (
-                  <span className="text-xs sm:text-sm font-mono text-zinc-400 dark:text-zinc-500 hidden sm:inline">
+                  <span className="text-xs sm:text-sm font-mono text-muted-foreground hidden sm:inline">
                     {data.codigo}
                   </span>
                 )}
@@ -295,7 +295,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 )}
 
                 {hasAudienciaAmanha && !hasAudienciaHoje && (
-                  <Badge className="bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 text-xs sm:text-sm px-2 py-0.5">
+                  <Badge className="bg-zinc-200 text-zinc-600 dark:bg-muted dark:text-foreground/80 text-xs sm:text-sm px-2 py-0.5">
                     Amanhã
                   </Badge>
                 )}
@@ -328,16 +328,16 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
 
               {/* Título do Caso (Serifada) */}
               <Link href={`/admin/casos/${data.id}`}>
-                <h3 className="font-serif text-lg sm:text-xl font-medium text-zinc-900 dark:text-zinc-100 leading-snug hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer line-clamp-2">
+                <h3 className="font-serif text-lg sm:text-xl font-medium text-foreground leading-snug hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer line-clamp-2">
                   {data.titulo}
                 </h3>
               </Link>
 
               {/* Meta-dados: Localização e Data - Responsivo */}
-              <div className="flex items-center gap-3 sm:gap-5 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-medium flex-wrap">
+              <div className="flex items-center gap-3 sm:gap-5 text-xs sm:text-sm text-muted-foreground font-medium flex-wrap">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="flex items-center gap-1.5 sm:gap-2 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
+                    <span className="flex items-center gap-1.5 sm:gap-2 hover:text-foreground transition-colors">
                       <MapPin className="w-4 h-4 sm:w-4.5 sm:h-4.5 flex-shrink-0" />
                       <span className="truncate max-w-[120px] sm:max-w-[180px]">
                         {data.vara ? `${data.vara}` : data.comarca}
@@ -366,7 +366,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link href={`/admin/casos/${data.id}`}>
-                    <Button size="icon" variant="ghost" className="h-9 w-9 sm:h-10 sm:w-10 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
+                    <Button size="icon" variant="ghost" className="h-9 w-9 sm:h-10 sm:w-10 text-muted-foreground hover:text-foreground">
                       <Eye className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                     </Button>
                   </Link>
@@ -378,7 +378,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <a href={data.linkDrive} target="_blank" rel="noopener noreferrer">
-                      <Button size="icon" variant="ghost" className="h-9 w-9 sm:h-10 sm:w-10 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hidden sm:flex">
+                      <Button size="icon" variant="ghost" className="h-9 w-9 sm:h-10 sm:w-10 text-muted-foreground hover:text-foreground hidden sm:flex">
                         <FolderOpen className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                       </Button>
                     </a>
@@ -387,7 +387,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 </Tooltip>
               )}
 
-              <Button size="icon" variant="ghost" className="h-9 w-9 sm:h-10 sm:w-10 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
+              <Button size="icon" variant="ghost" className="h-9 w-9 sm:h-10 sm:w-10 text-muted-foreground hover:text-foreground">
                 <MoreHorizontal className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
               </Button>
             </div>
@@ -396,7 +396,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
           {/* ==========================================
               CAMADA B: CONEXÕES (Integrado) - Design Suíço
               ========================================== */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 sm:py-5 gap-4 sm:gap-5 border-t border-zinc-200/80 dark:border-zinc-700/50">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 sm:py-5 gap-4 sm:gap-5 border-t border-border">
             {/* Assistidos (Avatares Clean) */}
             <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
               <div className="flex -space-x-2 sm:-space-x-2.5">
@@ -405,16 +405,16 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                     <TooltipTrigger asChild>
                       <div className="relative">
                         <Avatar
-                          className="h-9 w-9 sm:h-11 sm:w-11 border-2 border-white dark:border-zinc-900 transition-transform hover:scale-110 hover:z-10"
+                          className="h-9 w-9 sm:h-11 sm:w-11 border-2 border-white dark:border-background transition-transform hover:scale-110 hover:z-10"
                         >
                           <AvatarImage src={assistido.foto || undefined} />
-                          <AvatarFallback className="text-xs sm:text-sm font-bold bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                          <AvatarFallback className="text-xs sm:text-sm font-bold bg-zinc-100 text-zinc-600 dark:bg-muted dark:text-foreground/80">
                             {assistido.nome.substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         {/* Indicador de status prisional sutil */}
                         {assistido.preso && (
-                          <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white dark:bg-zinc-950">
+                          <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white dark:bg-card">
                             <StatusPrisionalDot preso={true} size="xs" />
                           </span>
                         )}
@@ -431,14 +431,14 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                   </Tooltip>
                 ))}
                 {data.assistidos.length > 3 && (
-                  <div className="h-9 w-9 sm:h-11 sm:w-11 rounded-full border-2 border-white dark:border-zinc-900 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs sm:text-sm font-bold text-zinc-500">
+                  <div className="h-9 w-9 sm:h-11 sm:w-11 rounded-full border-2 border-white dark:border-background bg-zinc-100 dark:bg-muted flex items-center justify-center text-xs sm:text-sm font-bold text-zinc-500">
                     +{data.assistidos.length - 3}
                   </div>
                 )}
               </div>
               
               {data.assistidos.length === 1 && (
-                <span className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 font-medium truncate max-w-[140px] sm:max-w-none">
+                <span className="text-sm sm:text-base text-zinc-600 dark:text-muted-foreground font-medium truncate max-w-[140px] sm:max-w-none">
                   {data.assistidos[0].nome}
                 </span>
               )}
@@ -453,8 +453,8 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                       variant="outline"
                       className={cn(
                         "font-mono text-xs sm:text-sm cursor-pointer transition-colors flex-shrink-0 px-2.5 py-1",
-                        "border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400",
-                        "hover:border-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300",
+                        "border-zinc-300 dark:border-border text-zinc-600 dark:text-muted-foreground",
+                        "hover:border-zinc-400 hover:text-zinc-700 dark:hover:text-foreground/80",
                         copiedCNJ === processo.numeroAutos && "border-emerald-500 text-emerald-600"
                       )}
                       onClick={() => handleCopyCNJ(processo.numeroAutos)}
@@ -489,12 +489,12 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
           {/* Barra de Progresso do Caso */}
           <div className="space-y-2">
             {/* Labels só no desktop */}
-            <div className="hidden sm:flex justify-between text-xs uppercase font-semibold text-zinc-400 dark:text-zinc-500 tracking-wider">
+            <div className="hidden sm:flex justify-between text-xs uppercase font-semibold text-muted-foreground tracking-wider">
               {FASE_LABELS.map((label, idx) => (
                 <span 
                   key={label}
                   className={cn(
-                    (data.fase / 100) * (FASE_LABELS.length - 1) >= idx && "text-zinc-600 dark:text-zinc-300"
+                    (data.fase / 100) * (FASE_LABELS.length - 1) >= idx && "text-zinc-600 dark:text-foreground/80"
                   )}
                 >
                   {label}
@@ -502,13 +502,13 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
               ))}
             </div>
             {/* No mobile, mostra só a fase atual */}
-            <div className="flex sm:hidden items-center justify-between text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+            <div className="flex sm:hidden items-center justify-between text-xs sm:text-sm text-muted-foreground">
               <span className="font-medium">{data.faseNome}</span>
               <span className="font-mono">{data.fase}%</span>
             </div>
             <Progress 
               value={data.fase} 
-              className="h-1.5 sm:h-2 bg-zinc-100 dark:bg-zinc-800" 
+              className="h-1.5 sm:h-2 bg-zinc-100 dark:bg-muted" 
             />
           </div>
         </div>
@@ -518,19 +518,19 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
             Organização em containers com informações ricas
             ========================================== */}
         <CollapsibleContent>
-          <div className="px-5 sm:px-6 pb-5 sm:pb-6 space-y-4 sm:space-y-5 border-t border-zinc-200/80 dark:border-zinc-700/50 bg-gradient-to-b from-zinc-50/50 to-white dark:from-zinc-900/30 dark:to-zinc-950">
+          <div className="px-5 sm:px-6 pb-5 sm:pb-6 space-y-4 sm:space-y-5 border-t border-border bg-gradient-to-b from-zinc-50/50 to-white dark:from-muted/30 dark:to-card">
             
             {/* ========================================
                 SEÇÃO 1: ESTRATÉGIA DA DEFESA (Principal)
                 Design limpo com borda lateral como indicador
                 ======================================== */}
             {data.teoriaResumo && (
-              <div className="mt-4 sm:mt-5 pl-4 sm:pl-5 py-3 sm:py-4 border-l-2 border-zinc-300 dark:border-zinc-600">
-                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide flex items-center gap-2 mb-2">
+              <div className="mt-4 sm:mt-5 pl-4 sm:pl-5 py-3 sm:py-4 border-l-2 border-zinc-300 dark:border-border">
+                <h4 className="text-xs sm:text-sm uppercase font-semibold text-muted-foreground tracking-wide flex items-center gap-2 mb-2">
                   <Shield className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                   Estratégia da Defesa
                 </h4>
-                <p className="text-base sm:text-lg text-zinc-800 dark:text-zinc-100 leading-relaxed font-serif italic">
+                <p className="text-base sm:text-lg text-foreground leading-relaxed font-serif italic">
                   &ldquo;{data.teoriaResumo}&rdquo;
                 </p>
               </div>
@@ -540,12 +540,12 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 SEÇÃO 2: TESE DA ACUSAÇÃO (Oposição)
                 ======================================== */}
             {data.teseAcusacao && (
-              <div className="pl-4 sm:pl-5 py-3 sm:py-4 border-l-2 border-zinc-300 dark:border-zinc-600">
-                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide flex items-center gap-2 mb-2">
+              <div className="pl-4 sm:pl-5 py-3 sm:py-4 border-l-2 border-zinc-300 dark:border-border">
+                <h4 className="text-xs sm:text-sm uppercase font-semibold text-muted-foreground tracking-wide flex items-center gap-2 mb-2">
                   <Swords className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                   Tese da Acusação
                 </h4>
-                <p className="text-base sm:text-lg text-zinc-700 dark:text-zinc-200 leading-relaxed">
+                <p className="text-base sm:text-lg text-foreground leading-relaxed">
                   {data.teseAcusacao}
                 </p>
               </div>
@@ -555,12 +555,12 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 SEÇÃO 3: VERSÃO DO RÉU NO ATENDIMENTO
                 ======================================== */}
             {data.versaoReu && (
-              <div className="pl-4 sm:pl-5 py-3 sm:py-4 border-l-2 border-zinc-300 dark:border-zinc-600">
-                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide flex items-center gap-2 mb-2">
+              <div className="pl-4 sm:pl-5 py-3 sm:py-4 border-l-2 border-zinc-300 dark:border-border">
+                <h4 className="text-xs sm:text-sm uppercase font-semibold text-muted-foreground tracking-wide flex items-center gap-2 mb-2">
                   <User className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                   Versão do Réu
                 </h4>
-                <p className="text-base sm:text-lg text-zinc-700 dark:text-zinc-200 leading-relaxed">
+                <p className="text-base sm:text-lg text-foreground leading-relaxed">
                   {data.versaoReu}
                 </p>
               </div>
@@ -570,28 +570,28 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 SEÇÃO 4: TESTEMUNHAS - Grid estruturado
                 ======================================== */}
             {data.testemunhas && data.testemunhas.length > 0 && (
-              <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
-                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide flex items-center gap-2 mb-3">
+              <div className="pt-4 border-t border-border">
+                <h4 className="text-xs sm:text-sm uppercase font-semibold text-muted-foreground tracking-wide flex items-center gap-2 mb-3">
                   <Users className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                   Testemunhas
-                  <span className="font-mono text-zinc-400 dark:text-zinc-500">
+                  <span className="font-mono text-muted-foreground">
                     {data.testemunhas.filter(t => t.ouvida).length}/{data.testemunhas.length}
                   </span>
                 </h4>
                 
                 {/* Status em linha */}
                 <div className="flex flex-wrap gap-3 mb-4 text-sm">
-                  <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
+                  <span className="flex items-center gap-1.5 text-foreground/80">
                     <CircleDot className="w-3.5 h-3.5 text-zinc-500" />
                     {data.testemunhas.filter(t => t.ouvida).length} ouvidas
                   </span>
-                  <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
+                  <span className="flex items-center gap-1.5 text-foreground/80">
                     <Circle className="w-3.5 h-3.5 text-zinc-400" />
                     {data.testemunhas.filter(t => !t.ouvida).length} pendentes
                   </span>
                   {data.interrogatorioRealizado !== undefined && (
-                    <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
-                      <User className="w-3.5 h-3.5 text-zinc-500" />
+                    <span className="flex items-center gap-1.5 text-foreground/80">
+                      <User className="w-3.5 h-3.5 text-muted-foreground" />
                       {data.interrogatorioRealizado ? "Interrogado" : "Interrog. Pendente"}
                     </span>
                   )}
@@ -602,17 +602,17 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                   {data.testemunhas.slice(0, 5).map((testemunha) => (
                     <div
                       key={testemunha.id}
-                      className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors text-sm"
+                      className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-zinc-100 dark:hover:bg-muted/50 transition-colors text-sm"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         {testemunha.ouvida ? (
-                          <CircleDot className="w-3.5 h-3.5 flex-shrink-0 text-zinc-600 dark:text-zinc-400" />
+                          <CircleDot className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground" />
                         ) : (
-                          <Circle className="w-3.5 h-3.5 flex-shrink-0 text-zinc-400 dark:text-zinc-500" />
+                          <Circle className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground" />
                         )}
                         <span className={cn(
                           "font-medium truncate",
-                          testemunha.ouvida ? "text-zinc-700 dark:text-zinc-200" : "text-zinc-500 dark:text-zinc-400"
+                          testemunha.ouvida ? "text-foreground" : "text-muted-foreground"
                         )}>{testemunha.nome}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
@@ -640,7 +640,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 SEÇÃO 5: PROVAS E LAUDOS - Layout horizontal
                 ======================================== */}
             {((data.provas && data.provas.length > 0) || (data.laudos && data.laudos.length > 0)) && (
-              <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+              <div className="pt-4 border-t border-border">
                 <div className="flex flex-wrap gap-6 sm:gap-10">
                   {/* Provas */}
                   {data.provas && data.provas.length > 0 && (
@@ -648,7 +648,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                       <FileSearch className="w-5 h-5 text-zinc-400" />
                       <div>
                         <div className="flex items-baseline gap-1">
-                          <span className="text-2xl font-bold font-mono text-zinc-700 dark:text-zinc-200">
+                          <span className="text-2xl font-bold font-mono text-foreground">
                             {data.provas.filter(p => p.status === "juntada").length}
                           </span>
                           <span className="text-sm text-zinc-400">/{data.provas.length}</span>
@@ -664,7 +664,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                       <Microscope className="w-5 h-5 text-zinc-400" />
                       <div>
                         <div className="flex items-baseline gap-1">
-                          <span className="text-2xl font-bold font-mono text-zinc-700 dark:text-zinc-200">
+                          <span className="text-2xl font-bold font-mono text-foreground">
                             {data.laudos.length}
                           </span>
                           {data.laudos.filter(l => l.favoravel === true).length > 0 && (
@@ -685,12 +685,12 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 SEÇÃO 6: INVESTIGAÇÃO DEFENSIVA
                 ======================================== */}
             {data.investigacaoDefensiva && (
-              <div className="pl-4 sm:pl-5 py-3 sm:py-4 border-l-2 border-zinc-300 dark:border-zinc-600">
-                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide flex items-center gap-2 mb-2">
+              <div className="pl-4 sm:pl-5 py-3 sm:py-4 border-l-2 border-zinc-300 dark:border-border">
+                <h4 className="text-xs sm:text-sm uppercase font-semibold text-muted-foreground tracking-wide flex items-center gap-2 mb-2">
                   <FileSearch className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                   Investigação Defensiva
                 </h4>
-                <p className="text-base sm:text-lg text-zinc-700 dark:text-zinc-200 leading-relaxed">
+                <p className="text-base sm:text-lg text-foreground leading-relaxed">
                   {data.investigacaoDefensiva}
                 </p>
               </div>
@@ -700,14 +700,14 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 SEÇÃO 7: PRÓXIMA AUDIÊNCIA
                 ======================================== */}
             {data.proximaAudiencia && (
-              <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+              <div className="pt-4 border-t border-border">
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-zinc-400" />
                   <div>
                     <span className="text-xs uppercase tracking-wide text-zinc-500 block">Próxima Audiência</span>
-                    <p className="text-base sm:text-lg text-zinc-700 dark:text-zinc-200">
+                    <p className="text-base sm:text-lg text-foreground">
                       <span className="font-medium">{data.proximaAudiencia.tipo}</span>
-                      <span className="mx-2 text-zinc-300 dark:text-zinc-600">•</span>
+                      <span className="mx-2 text-zinc-300 dark:text-border">•</span>
                       <span className="font-mono">{format(data.proximaAudiencia.data, "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
                       {data.proximaAudiencia.local && (
                         <span className="hidden sm:inline text-zinc-500 ml-2">({data.proximaAudiencia.local})</span>
@@ -715,7 +715,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                     </p>
                   </div>
                   {hasAudienciaHoje && (
-                    <span className="ml-auto px-2 py-1 text-xs font-semibold uppercase bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 rounded">
+                    <span className="ml-auto px-2 py-1 text-xs font-semibold uppercase bg-zinc-200 dark:bg-muted text-zinc-700 dark:text-foreground rounded">
                       Hoje
                     </span>
                   )}
@@ -727,8 +727,8 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 SEÇÃO 8: TIMELINE DE ATOS PROCESSUAIS
                 ======================================== */}
             {data.atosProcessuais && data.atosProcessuais.length > 0 && (
-              <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
-                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide flex items-center gap-2 mb-4">
+              <div className="pt-4 border-t border-border">
+                <h4 className="text-xs sm:text-sm uppercase font-semibold text-muted-foreground tracking-wide flex items-center gap-2 mb-4">
                   <ScrollText className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                   Timeline Processual
                   <span className="font-mono text-zinc-400">({data.atosProcessuais.length})</span>
@@ -737,7 +737,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 {/* Timeline Visual */}
                 <div className="relative">
                   {/* Linha vertical */}
-                  <div className="absolute left-3 top-2 bottom-2 w-px bg-gradient-to-b from-emerald-400 via-zinc-300 to-zinc-200 dark:from-emerald-500 dark:via-zinc-600 dark:to-zinc-700" />
+                  <div className="absolute left-3 top-2 bottom-2 w-px bg-gradient-to-b from-emerald-400 via-zinc-300 to-zinc-200 dark:from-emerald-500 dark:via-border dark:to-border" />
                   
                   <div className="space-y-3">
                     {data.atosProcessuais.slice(0, 5).map((ato, idx) => {
@@ -761,12 +761,12 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                             isFirst 
                               ? "bg-emerald-500 border-emerald-400 text-white" 
                               : ato.importante 
-                                ? "bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600" 
-                                : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700"
+                                ? "bg-zinc-100 dark:bg-muted border-zinc-300 dark:border-border"
+                                : "bg-white dark:bg-background border-border"
                           )}>
                             <AtoIcon className={cn(
                               "w-3 h-3",
-                              isFirst ? "text-white" : "text-zinc-500 dark:text-zinc-400"
+                              isFirst ? "text-white" : "text-muted-foreground"
                             )} />
                           </div>
                           
@@ -775,7 +775,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                             <div className="flex items-start justify-between gap-2">
                               <p className={cn(
                                 "text-sm leading-snug",
-                                isFirst ? "font-medium text-zinc-800 dark:text-zinc-200" : "text-zinc-600 dark:text-zinc-400"
+                                isFirst ? "font-medium text-foreground" : "text-muted-foreground"
                               )}>
                                 {ato.descricao}
                               </p>
@@ -783,7 +783,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                                 "text-[10px] font-mono flex-shrink-0 px-1.5 py-0.5 rounded",
                                 isFirst 
                                   ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" 
-                                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                                  : "bg-zinc-100 dark:bg-muted text-muted-foreground"
                               )}>
                                 {format(ato.data, "dd/MM/yy", { locale: ptBR })}
                               </span>
@@ -816,8 +816,8 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 SEÇÃO 9: PRAZOS PENDENTES
                 ======================================== */}
             {data.demandasPendentes.length > 0 && (
-              <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
-                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide flex items-center gap-2 mb-3">
+              <div className="pt-4 border-t border-border">
+                <h4 className="text-xs sm:text-sm uppercase font-semibold text-muted-foreground tracking-wide flex items-center gap-2 mb-3">
                   <Clock className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                   Próximos Prazos
                   <span className="font-mono text-zinc-400">({data.demandasPendentes.length})</span>
@@ -829,15 +829,15 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                     return (
                       <div
                         key={demanda.id}
-                        className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors"
+                        className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-zinc-100 dark:hover:bg-muted/50 transition-colors"
                       >
                         <span className={cn(
                           "font-medium truncate max-w-[200px] sm:max-w-[280px] text-sm",
-                          isUrgente ? "text-zinc-800 dark:text-zinc-100" : "text-zinc-600 dark:text-zinc-300"
+                          isUrgente ? "text-foreground" : "text-foreground/80"
                         )}>{demanda.ato}</span>
                         <span className={cn(
                           "font-mono text-sm flex-shrink-0 ml-3",
-                          isUrgente ? "font-bold text-zinc-800 dark:text-zinc-100" : "text-zinc-500"
+                          isUrgente ? "font-bold text-foreground" : "text-muted-foreground"
                         )}>
                           {dias === 0 ? "HOJE" : dias === 1 ? "Amanhã" : format(demanda.prazo, "dd/MM", { locale: ptBR })}
                         </span>
@@ -855,7 +855,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                   <Badge 
                     key={idx} 
                     variant="outline" 
-                    className="text-xs sm:text-sm px-2 sm:px-2.5 py-0.5 border-dashed border-zinc-300 dark:border-zinc-600"
+                    className="text-xs sm:text-sm px-2 sm:px-2.5 py-0.5 border-dashed border-zinc-300 dark:border-border"
                   >
                     #{tag}
                   </Badge>
@@ -866,21 +866,21 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
             {/* Ações de Integração - Responsivo */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 pt-3">
               <Link href={`/admin/casos/${data.id}`} className="col-span-2 sm:col-span-1">
-                <Button variant="outline" className="w-full h-10 sm:h-11 text-xs sm:text-sm border-zinc-300 dark:border-zinc-600">
-                  <Target className="w-4 h-4 mr-2 text-zinc-500 dark:text-zinc-400" />
+                <Button variant="outline" className="w-full h-10 sm:h-11 text-xs sm:text-sm border-zinc-300 dark:border-border">
+                  <Target className="w-4 h-4 mr-2 text-muted-foreground" />
                   Ver Caso
                 </Button>
               </Link>
               {data.linkDrive && (
                 <a href={data.linkDrive} target="_blank" rel="noopener noreferrer" className="col-span-1">
-                  <Button variant="outline" className="w-full h-10 sm:h-11 text-xs sm:text-sm border-zinc-300 dark:border-zinc-600">
-                    <FolderOpen className="w-4 h-4 sm:mr-2 text-zinc-500 dark:text-zinc-400" />
+                  <Button variant="outline" className="w-full h-10 sm:h-11 text-xs sm:text-sm border-zinc-300 dark:border-border">
+                    <FolderOpen className="w-4 h-4 sm:mr-2 text-muted-foreground" />
                     <span className="hidden sm:inline">Drive</span>
                   </Button>
                 </a>
               )}
-              <Button variant="outline" className="col-span-1 h-10 sm:h-11 text-xs sm:text-sm border-zinc-300 dark:border-zinc-600">
-                <MessageCircle className="w-4 h-4 sm:mr-2 text-zinc-500 dark:text-zinc-400" />
+              <Button variant="outline" className="col-span-1 h-10 sm:h-11 text-xs sm:text-sm border-zinc-300 dark:border-border">
+                <MessageCircle className="w-4 h-4 sm:mr-2 text-muted-foreground" />
                 <span className="hidden sm:inline">Contato</span>
               </Button>
             </div>
@@ -889,8 +889,8 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
 
         {/* Trigger de Expansão */}
         <CollapsibleTrigger asChild>
-          <div className="flex justify-center py-2.5 sm:py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors border-t border-zinc-200/80 dark:border-zinc-700/50">
-            <div className="flex items-center gap-1.5 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-medium">
+          <div className="flex justify-center py-2.5 sm:py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-muted transition-colors border-t border-border">
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground font-medium">
               {isOpen ? (
                 <>
                   <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />

@@ -143,7 +143,7 @@ function CenarioCard({ cenario }: { cenario: Cenario }) {
               <p className={cn("text-xs font-medium", config.iconColor)}>
                 {config.label}
               </p>
-              <p className="text-sm font-semibold text-stone-800 dark:text-zinc-200 mt-0.5">
+              <p className="text-sm font-semibold text-foreground mt-0.5">
                 {cenario.resultado}
               </p>
             </div>
@@ -152,13 +152,13 @@ function CenarioCard({ cenario }: { cenario: Cenario }) {
             <p className={cn("text-2xl font-bold tabular-nums", config.probColor)}>
               {cenario.probabilidade}%
             </p>
-            <p className="text-[10px] text-stone-500 dark:text-zinc-500">
+            <p className="text-[10px] text-muted-foreground">
               probabilidade
             </p>
           </div>
         </div>
 
-        <p className="text-xs text-stone-600 dark:text-zinc-400 mt-3 leading-relaxed">
+        <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
           {cenario.descricao}
         </p>
 
@@ -179,7 +179,7 @@ function CenarioCard({ cenario }: { cenario: Cenario }) {
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <p className="mt-2 text-xs text-stone-500 dark:text-zinc-500 leading-relaxed pl-4 border-l-2 border-stone-200 dark:border-zinc-700">
+          <p className="mt-2 text-xs text-muted-foreground leading-relaxed pl-4 border-l-2 border-border">
             {cenario.justificativa}
           </p>
         </CollapsibleContent>
@@ -194,13 +194,13 @@ function TeseAnaliseCard({ tese }: { tese: TeseAnalise }) {
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className="rounded-xl border border-stone-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+      <div className="rounded-xl border border-border bg-card p-4">
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4 text-stone-400 dark:text-zinc-500 shrink-0" />
-              <h4 className="text-sm font-semibold text-stone-800 dark:text-zinc-200 truncate">
+              <Shield className="w-4 h-4 text-muted-foreground shrink-0" />
+              <h4 className="text-sm font-semibold text-foreground truncate">
                 {tese.titulo}
               </h4>
             </div>
@@ -208,7 +208,7 @@ function TeseAnaliseCard({ tese }: { tese: TeseAnalise }) {
           <div className="flex items-center gap-2 shrink-0">
             <Badge
               variant="default"
-              className="text-[10px] px-1.5 py-0 bg-stone-100 dark:bg-zinc-800 text-stone-600 dark:text-zinc-400"
+              className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground"
             >
               <Target className="w-3 h-3 mr-0.5" />
               #{tese.ordemRecomendada}
@@ -219,12 +219,12 @@ function TeseAnaliseCard({ tese }: { tese: TeseAnalise }) {
         {/* Confidence bar */}
         <div className="mt-3 space-y-1">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-stone-500 dark:text-zinc-500">Confianca</span>
+            <span className="text-muted-foreground">Confianca</span>
             <span className={cn("font-mono font-semibold", colors.text)}>
               {tese.confianca}%
             </span>
           </div>
-          <div className="h-2 w-full rounded-full bg-stone-100 dark:bg-zinc-800 overflow-hidden">
+          <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
             <div
               className={cn("h-full rounded-full transition-all duration-500", colors.bar)}
               style={{ width: `${tese.confianca}%` }}
@@ -235,7 +235,7 @@ function TeseAnaliseCard({ tese }: { tese: TeseAnalise }) {
         {/* Expand toggle */}
         <CollapsibleTrigger asChild>
           <button
-            className="mt-3 flex items-center gap-1 text-[11px] font-medium text-stone-500 dark:text-zinc-500 hover:text-stone-700 dark:hover:text-zinc-300 transition-colors"
+            className="mt-3 flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-stone-700 dark:hover:text-zinc-300 transition-colors"
           >
             {isOpen ? (
               <ChevronDown className="w-3.5 h-3.5" />
@@ -258,7 +258,7 @@ function TeseAnaliseCard({ tese }: { tese: TeseAnalise }) {
                 {tese.argumentosPromotoria.map((arg, i) => (
                   <li
                     key={i}
-                    className="text-xs text-stone-600 dark:text-zinc-400 leading-relaxed flex items-start gap-2"
+                    className="text-xs text-muted-foreground leading-relaxed flex items-start gap-2"
                   >
                     <span className="w-1 h-1 rounded-full bg-red-400 dark:bg-red-600 mt-1.5 shrink-0" />
                     {arg}
@@ -277,7 +277,7 @@ function TeseAnaliseCard({ tese }: { tese: TeseAnalise }) {
                 {tese.contraArgumentos.map((arg, i) => (
                   <li
                     key={i}
-                    className="text-xs text-stone-600 dark:text-zinc-400 leading-relaxed flex items-start gap-2"
+                    className="text-xs text-muted-foreground leading-relaxed flex items-start gap-2"
                   >
                     <span className="w-1 h-1 rounded-full bg-emerald-400 dark:bg-emerald-600 mt-1.5 shrink-0" />
                     {arg}
@@ -308,18 +308,18 @@ function TestemunhaResistenciaCard({
   };
 
   return (
-    <div className="rounded-xl border border-stone-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+    <div className="rounded-xl border border-border bg-card p-4">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <Users className="w-4 h-4 text-stone-400 dark:text-zinc-500 shrink-0" />
+          <Users className="w-4 h-4 text-muted-foreground shrink-0" />
           <div>
-            <h4 className="text-sm font-semibold text-stone-800 dark:text-zinc-200">
+            <h4 className="text-sm font-semibold text-foreground">
               {testemunha.nome}
             </h4>
             <Badge
               variant="default"
-              className="mt-0.5 text-[10px] px-1.5 py-0 bg-stone-100 dark:bg-zinc-800 text-stone-500 dark:text-zinc-500"
+              className="mt-0.5 text-[10px] px-1.5 py-0 bg-muted text-muted-foreground"
             >
               {testemunha.tipo}
             </Badge>
@@ -330,12 +330,12 @@ function TestemunhaResistenciaCard({
       {/* Resistance bar */}
       <div className="mt-3 space-y-1">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-stone-500 dark:text-zinc-500">Resistencia</span>
+          <span className="text-muted-foreground">Resistencia</span>
           <span className={cn("font-mono font-semibold", colors.text)}>
             {testemunha.resistencia}%
           </span>
         </div>
-        <div className="h-2 w-full rounded-full bg-stone-100 dark:bg-zinc-800 overflow-hidden">
+        <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
           <div
             className={cn("h-full rounded-full transition-all duration-500", colors.bar)}
             style={{ width: `${testemunha.resistencia}%` }}
@@ -354,7 +354,7 @@ function TestemunhaResistenciaCard({
             {testemunha.pontosVulneraveis.map((ponto, i) => (
               <li
                 key={i}
-                className="text-xs text-stone-600 dark:text-zinc-400 leading-relaxed flex items-start gap-2"
+                className="text-xs text-muted-foreground leading-relaxed flex items-start gap-2"
               >
                 <span className="w-1 h-1 rounded-full bg-amber-400 dark:bg-amber-600 mt-1.5 shrink-0" />
                 {ponto}
@@ -375,19 +375,19 @@ function TestemunhaResistenciaCard({
             {testemunha.perguntasCriticas.map((pergunta, i) => (
               <li
                 key={i}
-                className="text-xs text-stone-600 dark:text-zinc-400 leading-relaxed flex items-start gap-2 group"
+                className="text-xs text-muted-foreground leading-relaxed flex items-start gap-2 group"
               >
                 <span className="w-1 h-1 rounded-full bg-emerald-400 dark:bg-emerald-600 mt-1.5 shrink-0" />
                 <span className="flex-1">{pergunta}</span>
                 <button
                   onClick={() => handleCopy(pergunta, i)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 p-0.5 rounded hover:bg-stone-100 dark:hover:bg-zinc-800"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 p-0.5 rounded hover:bg-muted"
                   title="Copiar pergunta"
                 >
                   {copiedIdx === i ? (
                     <Check className="w-3 h-3 text-emerald-500" />
                   ) : (
-                    <Copy className="w-3 h-3 text-stone-400 dark:text-zinc-500" />
+                    <Copy className="w-3 h-3 text-muted-foreground" />
                   )}
                 </button>
               </li>
@@ -461,11 +461,11 @@ export function SimulacaoJulgamento({
         </CardHeader>
         <CardContent className="p-0">
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Brain className="w-12 h-12 text-stone-300 dark:text-zinc-700 mb-3" />
-            <p className="text-sm font-medium text-stone-500 dark:text-zinc-500">
+            <Brain className="w-12 h-12 text-muted-foreground/30 mb-3" />
+            <p className="text-sm font-medium text-muted-foreground">
               Vincule um caso para simular
             </p>
-            <p className="text-xs text-stone-400 dark:text-zinc-600 mt-1 max-w-xs">
+            <p className="text-xs text-muted-foreground/50 mt-1 max-w-xs">
               A simulacao precisa dos dados do caso (fatos, teses, testemunhas) para gerar cenarios.
             </p>
           </div>
@@ -489,7 +489,7 @@ export function SimulacaoJulgamento({
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="h-32 rounded-xl bg-stone-100 dark:bg-zinc-800 animate-pulse"
+                className="h-32 rounded-xl bg-muted animate-pulse"
               />
             ))}
           </div>
@@ -508,13 +508,13 @@ export function SimulacaoJulgamento({
               <Brain className="h-12 w-12 text-emerald-500" />
               <Loader2 className="h-5 w-5 text-emerald-500 animate-spin absolute -bottom-1 -right-1" />
             </div>
-            <h3 className="text-lg font-semibold text-stone-800 dark:text-zinc-200 mb-1">
+            <h3 className="text-lg font-semibold text-foreground mb-1">
               Simulando julgamento...
             </h3>
-            <p className="text-sm text-stone-500 dark:text-zinc-400 max-w-sm">
+            <p className="text-sm text-muted-foreground max-w-sm">
               Analisando cenarios, teses e testemunhas. Isso pode levar alguns segundos.
             </p>
-            <div className="mt-4 w-48 h-1.5 rounded-full bg-stone-200 dark:bg-zinc-700 overflow-hidden">
+            <div className="mt-4 w-48 h-1.5 rounded-full bg-muted overflow-hidden">
               <div className="h-full bg-emerald-500 rounded-full animate-[indeterminate_1.5s_ease-in-out_infinite] w-1/3" />
             </div>
           </div>
@@ -541,7 +541,7 @@ export function SimulacaoJulgamento({
             <p className="text-sm font-medium text-red-600 dark:text-red-400 mb-1">
               Erro ao simular julgamento
             </p>
-            <p className="text-xs text-stone-500 dark:text-zinc-500 max-w-sm mb-4">
+            <p className="text-xs text-muted-foreground max-w-sm mb-4">
               {simularMutation.error?.message || "Ocorreu um erro inesperado. Tente novamente."}
             </p>
             <button
@@ -572,11 +572,11 @@ export function SimulacaoJulgamento({
         </CardHeader>
         <CardContent className="p-0">
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Brain className="w-12 h-12 text-stone-300 dark:text-zinc-700 mb-3" />
-            <p className="text-sm font-medium text-stone-600 dark:text-zinc-400 mb-1">
+            <Brain className="w-12 h-12 text-muted-foreground/30 mb-3" />
+            <p className="text-sm font-medium text-muted-foreground mb-1">
               Nenhuma simulacao realizada
             </p>
-            <p className="text-xs text-stone-400 dark:text-zinc-600 max-w-sm mb-4">
+            <p className="text-xs text-muted-foreground/50 max-w-sm mb-4">
               Simule cenarios de julgamento com IA para antecipar resultados, avaliar teses e preparar contra-argumentos.
             </p>
             <button
@@ -616,7 +616,7 @@ export function SimulacaoJulgamento({
               Simulacao de Julgamento
             </CardTitle>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-stone-400 dark:text-zinc-500">
+              <span className="text-[10px] text-muted-foreground">
                 Gerado em{" "}
                 {new Date(generatedAt).toLocaleString("pt-BR", {
                   day: "2-digit",
@@ -632,7 +632,7 @@ export function SimulacaoJulgamento({
                 className={cn(
                   "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors",
                   "text-stone-600 hover:text-stone-800 bg-stone-100 hover:bg-stone-200",
-                  "dark:text-zinc-400 dark:hover:text-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700",
+                  "dark:text-muted-foreground dark:hover:text-foreground dark:bg-muted dark:hover:bg-muted/80",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                 )}
               >
@@ -651,8 +651,8 @@ export function SimulacaoJulgamento({
       {/* Cenarios */}
       {cenarios && cenarios.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-stone-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
-            <Scale className="w-4 h-4 text-stone-400 dark:text-zinc-500" />
+          <h3 className="text-sm font-semibold text-foreground/80 mb-3 flex items-center gap-2">
+            <Scale className="w-4 h-4 text-muted-foreground" />
             Cenarios
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -666,8 +666,8 @@ export function SimulacaoJulgamento({
       {/* Analise de Teses */}
       {tesesAnalise && tesesAnalise.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-stone-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
-            <Shield className="w-4 h-4 text-stone-400 dark:text-zinc-500" />
+          <h3 className="text-sm font-semibold text-foreground/80 mb-3 flex items-center gap-2">
+            <Shield className="w-4 h-4 text-muted-foreground" />
             Analise de Teses
           </h3>
           <div className="space-y-3">
@@ -683,8 +683,8 @@ export function SimulacaoJulgamento({
       {/* Resistencia de Testemunhas */}
       {testemunhasResistencia && testemunhasResistencia.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-stone-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
-            <Users className="w-4 h-4 text-stone-400 dark:text-zinc-500" />
+          <h3 className="text-sm font-semibold text-foreground/80 mb-3 flex items-center gap-2">
+            <Users className="w-4 h-4 text-muted-foreground" />
             Resistencia de Testemunhas
           </h3>
           <ScrollArea className="max-h-[600px]">

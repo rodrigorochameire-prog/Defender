@@ -167,12 +167,12 @@ export default function PautaTab({ ano }: PautaTabProps) {
     <>
       {/* Action buttons */}
       <div className="flex items-center gap-2 mb-3">
-        <button onClick={() => setShowImportModal(true)} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-zinc-500 dark:bg-zinc-300 text-white dark:text-zinc-900 hover:bg-zinc-400 dark:hover:bg-zinc-200 transition-all shadow-sm">
+        <button onClick={() => setShowImportModal(true)} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm">
           <FileText className="w-3.5 h-3.5" />
           Importar Pauta
         </button>
 
-        <button onClick={handleSync} disabled={syncing} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-50 transition-all">
+        <button onClick={handleSync} disabled={syncing} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-muted text-muted-foreground hover:bg-muted/80 disabled:opacity-50 transition-all">
           {syncing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
           Sync
         </button>
@@ -180,16 +180,16 @@ export default function PautaTab({ ano }: PautaTabProps) {
 
       {/* Parity Bar - Compact */}
       <div className="mb-3">
-        <div className="flex items-center gap-4 p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80">
+        <div className="flex items-center gap-4 p-3 rounded-xl bg-card border border-border">
           {/* Rodrigo */}
           <div className="flex items-center gap-2.5 flex-1">
             <div className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center text-white text-xs font-bold">R</div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">Dr. Rodrigo</span>
-                <span className="text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{totalRodrigo}</span>
+                <span className="text-xs font-semibold text-foreground">Dr. Rodrigo</span>
+                <span className="text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-400">{totalRodrigo}</span>
               </div>
-              <div className="h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                 <div className="h-full rounded-full bg-emerald-500 transition-all duration-500" style={{ width: `${(totalRodrigo / maxCount) * 100}%` }} />
               </div>
             </div>
@@ -199,11 +199,11 @@ export default function PautaTab({ ano }: PautaTabProps) {
           <div className="flex flex-col items-center shrink-0 px-3">
             <span className={cn(
               "text-base font-semibold tabular-nums",
-              balance === 0 ? "text-zinc-300 dark:text-zinc-600" : Math.abs(balance) <= 1 ? "text-zinc-400" : "text-amber-400/70"
+              balance === 0 ? "text-muted-foreground/50" : Math.abs(balance) <= 1 ? "text-muted-foreground" : "text-amber-600 dark:text-amber-400/70"
             )}>
               {balance === 0 ? "=" : balance > 0 ? `+${balance}` : balance}
             </span>
-            <span className="text-[9px] uppercase tracking-wider text-zinc-300 dark:text-zinc-600">
+            <span className="text-[9px] uppercase tracking-wider text-muted-foreground/50">
               {balance === 0 ? "Paridade" : "Diferença"}
             </span>
           </div>
@@ -213,9 +213,9 @@ export default function PautaTab({ ano }: PautaTabProps) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-bold tabular-nums text-violet-600 dark:text-violet-400">{totalJuliane}</span>
-                <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">Dra. Juliane</span>
+                <span className="text-xs font-semibold text-foreground">Dra. Juliane</span>
               </div>
-              <div className="h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                 <div className="h-full rounded-full bg-violet-500 transition-all duration-500 ml-auto" style={{ width: `${(totalJuliane / maxCount) * 100}%` }} />
               </div>
             </div>
@@ -228,14 +228,14 @@ export default function PautaTab({ ano }: PautaTabProps) {
 
       {/* Tabs */}
       <div className="pb-2">
-        <div className="flex items-center gap-0.5 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 w-fit">
+        <div className="flex items-center gap-0.5 p-1 rounded-xl bg-muted border border-border w-fit">
           <button
             onClick={() => setActiveTab("proximas")}
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
               activeTab === "proximas"
-                ? "bg-zinc-500 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
-                : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-background"
             )}
           >
             <Calendar className="w-3.5 h-3.5" />
@@ -243,7 +243,7 @@ export default function PautaTab({ ano }: PautaTabProps) {
             {proximas.length > 0 && (
               <span className={cn(
                 "text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full min-w-[18px] text-center",
-                activeTab === "proximas" ? "bg-white/20" : "bg-zinc-200 dark:bg-zinc-700"
+                activeTab === "proximas" ? "bg-white/20" : "bg-muted"
               )}>
                 {proximas.length}
               </span>
@@ -254,8 +254,8 @@ export default function PautaTab({ ano }: PautaTabProps) {
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
               activeTab === "historico"
-                ? "bg-zinc-500 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
-                : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-background"
             )}
           >
             <Archive className="w-3.5 h-3.5" />
@@ -263,7 +263,7 @@ export default function PautaTab({ ano }: PautaTabProps) {
             {historico.length > 0 && (
               <span className={cn(
                 "text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full min-w-[18px] text-center",
-                activeTab === "historico" ? "bg-white/20" : "bg-zinc-200 dark:bg-zinc-700"
+                activeTab === "historico" ? "bg-white/20" : "bg-muted"
               )}>
                 {historico.length}
               </span>
@@ -276,7 +276,7 @@ export default function PautaTab({ ano }: PautaTabProps) {
       <div className="pb-8 space-y-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : activeTab === "proximas" ? (
           proximas.length === 0 ? (
@@ -319,20 +319,20 @@ export default function PautaTab({ ano }: PautaTabProps) {
 function EmptyState({ ano, message, sub }: { ano: number; message: string; sub: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-3">
-        <Gavel className="w-5 h-5 text-zinc-400" />
+      <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center mb-3">
+        <Gavel className="w-5 h-5 text-muted-foreground" />
       </div>
-      <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">{message}</p>
-      <p className="text-xs text-zinc-400 mt-1">{sub}</p>
+      <p className="text-sm font-medium text-foreground/80">{message}</p>
+      <p className="text-xs text-muted-foreground mt-1">{sub}</p>
     </div>
   );
 }
 
 const STATUS_STYLE: Record<string, { icon: typeof Calendar; color: string; badge: string }> = {
-  agendada: { icon: Calendar, color: "text-zinc-500", badge: "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 ring-zinc-200/60 dark:ring-zinc-700/60" },
-  realizada: { icon: CheckCircle2, color: "text-zinc-500", badge: "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 ring-zinc-200/60 dark:ring-zinc-700/60" },
-  adiada: { icon: Clock, color: "text-zinc-400", badge: "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 ring-zinc-200/60 dark:ring-zinc-700/60" },
-  cancelada: { icon: XCircle, color: "text-zinc-400", badge: "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 ring-zinc-200/60 dark:ring-zinc-700/60" },
+  agendada: { icon: Calendar, color: "text-muted-foreground", badge: "bg-muted text-muted-foreground ring-border" },
+  realizada: { icon: CheckCircle2, color: "text-muted-foreground", badge: "bg-muted text-muted-foreground ring-border" },
+  adiada: { icon: Clock, color: "text-muted-foreground", badge: "bg-muted text-muted-foreground ring-border" },
+  cancelada: { icon: XCircle, color: "text-muted-foreground", badge: "bg-muted text-muted-foreground ring-border" },
 };
 
 function MonthSections({ sessoesPorMes, onAtribuir, onInativar, onReativar, isUpdating, variant }: {
@@ -354,13 +354,13 @@ function MonthSections({ sessoesPorMes, onAtribuir, onInativar, onReativar, isUp
         return (
           <div key={mesIdx} className="space-y-1.5">
             <div className="flex items-center gap-2 pt-1">
-              <h2 className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{mesNome}</h2>
-              <div className="flex-1 h-px bg-zinc-200/50 dark:bg-zinc-800/50" />
+              <h2 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{mesNome}</h2>
+              <div className="flex-1 h-px bg-border/50" />
               {variant === "active" && agendadas > 0 && (
                 <span className="text-[10px] font-semibold text-emerald-500 tabular-nums">{agendadas} ativa{agendadas !== 1 ? "s" : ""}</span>
               )}
               {variant === "muted" && (
-                <span className="text-[10px] font-semibold text-zinc-400 tabular-nums">{sessoes.length}</span>
+                <span className="text-[10px] font-semibold text-muted-foreground tabular-nums">{sessoes.length}</span>
               )}
             </div>
             <div className="space-y-1.5">
@@ -395,51 +395,51 @@ function getProximityStyle(diffDays: number, defensorNome: string | null) {
   if (defensorNome === "Dr. Rodrigo") {
     // Emerald — 100-90-80
     if (diffDays <= 7) return {
-      dateBg: "bg-emerald-500/10", dateText: "text-zinc-900 dark:text-zinc-100",
+      dateBg: "bg-emerald-500/10", dateText: "text-foreground",
       border: "border-emerald-300/40 dark:border-emerald-700/40", cardBg: "bg-emerald-50/40 dark:bg-emerald-950/10",
       bar: "bg-emerald-500",
       badge: diffDays === 0 ? "HOJE" : diffDays === 1 ? "AMANHÃ" : `${diffDays}d`,
       badgeStyle: "",
     };
     if (diffDays <= 30) return {
-      dateBg: "", dateText: "text-zinc-900/90 dark:text-zinc-100/85",
-      border: "border-zinc-200/60 dark:border-zinc-800/60", cardBg: "bg-white dark:bg-zinc-900",
+      dateBg: "", dateText: "text-foreground/85",
+      border: "border-border", cardBg: "bg-card",
       bar: "bg-emerald-500/90", badge: null, badgeStyle: "",
     };
-    return { dateBg: "", dateText: "text-zinc-900/80 dark:text-zinc-100/75", border: "border-zinc-200/40 dark:border-zinc-800/40", cardBg: "bg-white dark:bg-zinc-900", bar: "bg-emerald-500/80", badge: null, badgeStyle: "" };
+    return { dateBg: "", dateText: "text-foreground/75", border: "border-border/60", cardBg: "bg-card", bar: "bg-emerald-500/80", badge: null, badgeStyle: "" };
   }
 
   if (defensorNome === "Dra. Juliane") {
     // Violet — 100-90-80
     if (diffDays <= 7) return {
-      dateBg: "bg-violet-500/10", dateText: "text-zinc-900 dark:text-zinc-100",
+      dateBg: "bg-violet-500/10", dateText: "text-foreground",
       border: "border-violet-300/40 dark:border-violet-700/40", cardBg: "bg-violet-50/40 dark:bg-violet-950/10",
       bar: "bg-violet-500",
       badge: diffDays === 0 ? "HOJE" : diffDays === 1 ? "AMANHÃ" : `${diffDays}d`,
       badgeStyle: "",
     };
     if (diffDays <= 30) return {
-      dateBg: "", dateText: "text-zinc-900/90 dark:text-zinc-100/85",
-      border: "border-zinc-200/60 dark:border-zinc-800/60", cardBg: "bg-white dark:bg-zinc-900",
+      dateBg: "", dateText: "text-foreground/85",
+      border: "border-border", cardBg: "bg-card",
       bar: "bg-violet-500/90", badge: null, badgeStyle: "",
     };
-    return { dateBg: "", dateText: "text-zinc-900/80 dark:text-zinc-100/75", border: "border-zinc-200/40 dark:border-zinc-800/40", cardBg: "bg-white dark:bg-zinc-900", bar: "bg-violet-500/80", badge: null, badgeStyle: "" };
+    return { dateBg: "", dateText: "text-foreground/75", border: "border-border/60", cardBg: "bg-card", bar: "bg-violet-500/80", badge: null, badgeStyle: "" };
   }
 
   // Não atribuído — tons neutros
   if (diffDays <= 7) return {
-    dateBg: "bg-zinc-100/50 dark:bg-zinc-800/30", dateText: "text-zinc-600 dark:text-zinc-300",
-    border: "border-zinc-200/80 dark:border-zinc-800/60", cardBg: "bg-white dark:bg-zinc-900",
+    dateBg: "bg-muted/50", dateText: "text-foreground/80",
+    border: "border-border", cardBg: "bg-card",
     bar: "bg-zinc-400/60",
     badge: diffDays === 0 ? "HOJE" : diffDays === 1 ? "AMANHÃ" : `${diffDays}d`,
     badgeStyle: "",
   };
   if (diffDays <= 30) return {
-    dateBg: "", dateText: "text-zinc-500 dark:text-zinc-400",
-    border: "border-zinc-200/60 dark:border-zinc-800/40", cardBg: "bg-white dark:bg-zinc-900",
-    bar: "bg-zinc-300/50 dark:bg-zinc-500/40", badge: null, badgeStyle: "",
+    dateBg: "", dateText: "text-muted-foreground",
+    border: "border-border", cardBg: "bg-card",
+    bar: "bg-muted-foreground/30", badge: null, badgeStyle: "",
   };
-  return { dateBg: "", dateText: "text-zinc-400 dark:text-zinc-500", border: "border-zinc-200/50 dark:border-zinc-800/40", cardBg: "bg-white dark:bg-zinc-900", bar: "bg-zinc-200/40 dark:bg-zinc-700/30", badge: null, badgeStyle: "" };
+  return { dateBg: "", dateText: "text-muted-foreground", border: "border-border/60", cardBg: "bg-card", bar: "bg-muted-foreground/20", badge: null, badgeStyle: "" };
 }
 
 function SessionCard({ sessao, onAtribuir, onInativar, onReativar, isUpdating, muted }: {
@@ -469,18 +469,18 @@ function SessionCard({ sessao, onAtribuir, onInativar, onReativar, isUpdating, m
     <div className={cn(
       "flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all group relative",
       muted
-        ? "bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/50 dark:border-zinc-800/50"
+        ? "bg-card/50 border-border/50"
         : proximity
           ? cn(proximity.cardBg, proximity.border)
-          : "bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/80",
+          : "bg-card border-border",
       (isCancelled || isAdiada) && !muted && "opacity-60",
-      isUnassigned && !muted && !isCancelled && "ring-1 ring-zinc-300/30 dark:ring-zinc-600/20"
+      isUnassigned && !muted && !isCancelled && "ring-1 ring-border"
     )}>
       {/* Left color bar — same color as date number */}
       <div className={cn(
         "w-1 h-10 rounded-full shrink-0",
-        muted ? "bg-zinc-200 dark:bg-zinc-700"
-          : proximity?.bar || "bg-zinc-200 dark:bg-zinc-700"
+        muted ? "bg-muted-foreground/30"
+          : proximity?.bar || "bg-muted-foreground/30"
       )} />
 
       {/* Date block — bar and number share same color family */}
@@ -488,14 +488,14 @@ function SessionCard({ sessao, onAtribuir, onInativar, onReativar, isUpdating, m
         "flex flex-col items-center w-10 shrink-0 rounded-lg py-0.5",
         !muted && proximity?.dateBg
       )}>
-        <span className={cn("text-[9px] uppercase leading-none font-medium opacity-70", muted ? "text-zinc-400" : proximity?.dateText || "text-zinc-400")}>{diaSemana}</span>
+        <span className={cn("text-[9px] uppercase leading-none font-medium opacity-70", muted ? "text-muted-foreground" : proximity?.dateText || "text-muted-foreground")}>{diaSemana}</span>
         <span className={cn(
           "text-lg font-bold tabular-nums leading-tight",
-          muted ? "text-zinc-400" : proximity?.dateText || "text-zinc-800 dark:text-zinc-200"
+          muted ? "text-muted-foreground" : proximity?.dateText || "text-foreground"
         )}>
           {dia}
         </span>
-        <span className={cn("text-[9px] capitalize opacity-60", muted ? "text-zinc-400" : proximity?.dateText || "text-zinc-400")}>{mesAbrev}</span>
+        <span className={cn("text-[9px] capitalize opacity-60", muted ? "text-muted-foreground" : proximity?.dateText || "text-muted-foreground")}>{mesAbrev}</span>
       </div>
 
       {/* Info */}
@@ -506,14 +506,14 @@ function SessionCard({ sessao, onAtribuir, onInativar, onReativar, isUpdating, m
             onClick={(e) => e.stopPropagation()}
             className={cn(
               "text-[13px] font-semibold truncate hover:underline underline-offset-2 decoration-1",
-              muted || isCancelled ? "text-zinc-400 dark:text-zinc-500" : "text-zinc-900 dark:text-zinc-100",
+              muted || isCancelled ? "text-muted-foreground" : "text-foreground",
               isCancelled && "line-through"
             )}
           >
             {sessao.assistidoNome || "Réu não informado"}
           </Link>
           {proximity?.badge && (
-            <span className="text-[9px] font-medium text-zinc-400 dark:text-zinc-500 shrink-0">
+            <span className="text-[9px] font-medium text-muted-foreground shrink-0">
               {proximity.badge}
             </span>
           )}
@@ -524,7 +524,7 @@ function SessionCard({ sessao, onAtribuir, onInativar, onReativar, isUpdating, m
               <Link
                 href={`/admin/processos?q=${encodeURIComponent(sessao.processo.numeroAutos)}`}
                 onClick={(e) => e.stopPropagation()}
-                className="text-[10px] font-mono tabular-nums text-zinc-400 truncate hover:text-emerald-500 transition-colors"
+                className="text-[10px] font-mono tabular-nums text-muted-foreground truncate hover:text-emerald-500 transition-colors"
               >
                 {sessao.processo.numeroAutos}
               </Link>
@@ -535,7 +535,7 @@ function SessionCard({ sessao, onAtribuir, onInativar, onReativar, isUpdating, m
                   toast.success("Processo copiado");
                 }}
                 title="Copiar número"
-                className="text-zinc-300 dark:text-zinc-600 hover:text-emerald-500 opacity-0 group-hover/proc:opacity-100 transition-all"
+                className="text-muted-foreground/50 hover:text-emerald-500 opacity-0 group-hover/proc:opacity-100 transition-all"
               >
                 <Copy className="w-3 h-3" />
               </button>
@@ -552,7 +552,7 @@ function SessionCard({ sessao, onAtribuir, onInativar, onReativar, isUpdating, m
       <div className="flex items-center gap-1.5 shrink-0">
         {/* Defender toggle */}
         {!isCancelled && !isAdiada && (
-          <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/60 dark:border-zinc-700/40">
+          <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-muted border border-border">
             {DEFENSORES.map((def) => {
               const isActive = sessao.defensorNome === def.nome;
               // Switch opacity matches card proximity: 100-80-60
@@ -566,7 +566,7 @@ function SessionCard({ sessao, onAtribuir, onInativar, onReativar, isUpdating, m
                     "flex items-center gap-1 py-1 rounded-md text-[10px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
                     isActive
                       ? cn(switchBg, def.text, "shadow-sm px-2 font-bold")
-                      : "px-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700",
+                      : "px-1.5 text-muted-foreground hover:text-foreground hover:bg-background",
                     isUpdating && "opacity-50 pointer-events-none"
                   )}
                 >
@@ -584,7 +584,7 @@ function SessionCard({ sessao, onAtribuir, onInativar, onReativar, isUpdating, m
             onClick={() => onInativar(sessao.id as number)}
             disabled={isUpdating}
             title="Inativar sessão"
-            className="p-1.5 rounded-lg text-zinc-300 dark:text-zinc-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-50"
+            className="p-1.5 rounded-lg text-muted-foreground/50 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-50"
           >
             <Ban className="w-3.5 h-3.5" />
           </button>
@@ -594,7 +594,7 @@ function SessionCard({ sessao, onAtribuir, onInativar, onReativar, isUpdating, m
             onClick={() => onReativar(sessao.id as number)}
             disabled={isUpdating}
             title="Reativar sessão"
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all disabled:opacity-50"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all disabled:opacity-50"
           >
             <RefreshCw className="w-3.5 h-3.5" />
           </button>

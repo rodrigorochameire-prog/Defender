@@ -25,11 +25,11 @@ import { CoberturaModal } from "@/components/cowork/cobertura-modal";
 // ============================================
 
 function getStatus(dataInicio: string, dataFim: string | null, ativo: boolean): { label: string; color: string } {
-  if (!ativo) return { label: "Encerrada", color: "bg-zinc-100 dark:bg-zinc-800 text-zinc-500" };
+  if (!ativo) return { label: "Encerrada", color: "bg-zinc-100 dark:bg-muted text-zinc-500" };
   const hoje = new Date();
   const inicio = parseISO(dataInicio);
   if (isAfter(inicio, hoje)) return { label: "Futura", color: "bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400" };
-  if (dataFim && isBefore(parseISO(dataFim), hoje)) return { label: "Encerrada", color: "bg-zinc-100 dark:bg-zinc-800 text-zinc-500" };
+  if (dataFim && isBefore(parseISO(dataFim), hoje)) return { label: "Encerrada", color: "bg-zinc-100 dark:bg-muted text-zinc-500" };
   return { label: "Ativa", color: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" };
 }
 
@@ -46,7 +46,7 @@ function CoberturaCard({ cobertura, onEncerrar }: {
   const substitutoNome = cobertura.substitutoNome || "Desconhecido";
 
   return (
-    <Card className="bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/80 rounded-xl overflow-hidden hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-200">
+    <Card className="bg-white dark:bg-card border-zinc-200/80 dark:border-border/80 rounded-xl overflow-hidden hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-200">
       <div className="p-4">
         {/* Status + Tipo */}
         <div className="flex items-center justify-between mb-3">
@@ -60,17 +60,17 @@ function CoberturaCard({ cobertura, onEncerrar }: {
         <div className="flex items-center gap-3 mb-3">
           <div className="flex items-center gap-2 flex-1">
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-medium">
+              <AvatarFallback className="text-[10px] bg-zinc-100 dark:bg-muted text-zinc-600 dark:text-foreground/80 font-medium">
                 {getInitials(defensorNome)}
               </AvatarFallback>
             </Avatar>
             <div>
               <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Afastado</p>
-              <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{defensorNome}</p>
+              <p className="text-xs font-medium text-zinc-700 dark:text-foreground/80">{defensorNome}</p>
             </div>
           </div>
 
-          <ArrowRight className="w-4 h-4 text-zinc-300 dark:text-zinc-600 flex-shrink-0" />
+          <ArrowRight className="w-4 h-4 text-zinc-300 dark:text-muted-foreground/50 flex-shrink-0" />
 
           <div className="flex items-center gap-2 flex-1">
             <Avatar className="h-8 w-8">
@@ -80,13 +80,13 @@ function CoberturaCard({ cobertura, onEncerrar }: {
             </Avatar>
             <div>
               <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Cobrindo</p>
-              <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{substitutoNome}</p>
+              <p className="text-xs font-medium text-zinc-700 dark:text-foreground/80">{substitutoNome}</p>
             </div>
           </div>
         </div>
 
         {/* Período + Ação */}
-        <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-border">
           <div className="flex items-center gap-2 text-[10px] text-zinc-400">
             <Calendar className="w-3 h-3" />
             <span>
@@ -144,17 +144,17 @@ export default function CoberturasPage() {
   });
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-zinc-100 dark:bg-background">
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
               <ArrowLeftRight className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight font-serif">Coberturas</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Afastamentos e substituicoes</p>
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-foreground tracking-tight font-serif">Coberturas</h1>
+              <p className="text-xs text-zinc-500 dark:text-muted-foreground">Afastamentos e substituicoes</p>
             </div>
           </div>
 
@@ -214,8 +214,8 @@ export default function CoberturasPage() {
 
             {/* Vazio */}
             {(coberturas ?? []).length === 0 && (
-              <Card className="bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-8 text-center">
-                <ArrowLeftRight className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-600 mb-3" />
+              <Card className="bg-white dark:bg-card border-zinc-200/80 dark:border-border/80 rounded-xl p-8 text-center">
+                <ArrowLeftRight className="w-12 h-12 mx-auto text-zinc-300 dark:text-muted-foreground/50 mb-3" />
                 <p className="text-sm font-medium text-zinc-500">Nenhuma cobertura registrada</p>
                 <p className="text-xs text-zinc-400 mt-1">Registre afastamentos para gerenciar coberturas</p>
                 <Button

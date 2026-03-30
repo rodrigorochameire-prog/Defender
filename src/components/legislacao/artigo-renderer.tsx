@@ -120,8 +120,8 @@ function AlineaList({
   return (
     <div className="space-y-1">
       {alineas.map((alinea) => (
-        <p key={alinea.id} className="pl-14 text-sm text-zinc-700 dark:text-zinc-300">
-          <span className="font-medium text-zinc-500 dark:text-zinc-400">
+        <p key={alinea.id} className="pl-14 text-sm text-zinc-700 dark:text-foreground/80">
+          <span className="font-medium text-zinc-500 dark:text-muted-foreground">
             {alinea.numero})
           </span>{" "}
           {applyHighlights(alinea.texto, destaques, searchTerm)}
@@ -145,8 +145,8 @@ function IncisoList({
     <div className="space-y-1.5">
       {incisos.map((inciso) => (
         <div key={inciso.id}>
-          <p className="pl-10 text-sm text-zinc-700 dark:text-zinc-300">
-            <span className="font-semibold text-zinc-600 dark:text-zinc-400">
+          <p className="pl-10 text-sm text-zinc-700 dark:text-foreground/80">
+            <span className="font-semibold text-zinc-600 dark:text-muted-foreground">
               {inciso.numero}
             </span>{" "}
             - {applyHighlights(inciso.texto, destaques, searchTerm)}
@@ -178,8 +178,8 @@ function ParagrafoList({
     <div className="space-y-2">
       {paragrafos.map((par) => (
         <div key={par.id}>
-          <p className="pl-6 text-sm text-zinc-700 dark:text-zinc-300">
-            <span className="font-semibold text-zinc-600 dark:text-zinc-400">
+          <p className="pl-6 text-sm text-zinc-700 dark:text-foreground/80">
+            <span className="font-semibold text-zinc-600 dark:text-muted-foreground">
               {par.numero}
             </span>{" "}
             {applyHighlights(par.texto, destaques, searchTerm)}
@@ -232,17 +232,17 @@ export function ArtigoRenderer({
       className={cn(
         "group relative rounded-lg border bg-white p-4 transition-colors",
         "border-zinc-200 hover:border-zinc-300",
-        "dark:bg-zinc-900 dark:border-zinc-800 dark:hover:border-zinc-700"
+        "dark:bg-card dark:border-border dark:hover:border-border"
       )}
     >
       {/* Header: Art. number + favorite */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-baseline gap-2">
-          <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+          <span className="text-base font-bold text-emerald-700 dark:text-emerald-400">
             Art. {artigo.numero}.
           </span>
           {artigo.rubrica && (
-            <span className="text-sm italic text-zinc-500 dark:text-zinc-400">
+            <span className="text-sm italic text-zinc-500 dark:text-muted-foreground">
               {artigo.rubrica}
             </span>
           )}
@@ -262,7 +262,7 @@ export function ArtigoRenderer({
                     "h-4 w-4",
                     isFavorited
                       ? "fill-yellow-400 text-yellow-400"
-                      : "text-zinc-400 dark:text-zinc-500"
+                      : "text-muted-foreground"
                   )}
                 />
               </Button>
@@ -275,7 +275,7 @@ export function ArtigoRenderer({
       </div>
 
       {/* Caput */}
-      <p className="mt-2 text-sm leading-relaxed text-zinc-900 dark:text-zinc-100">
+      <p className="mt-2 text-sm leading-relaxed text-zinc-900 dark:text-foreground">
         {applyHighlights(artigo.caput, artigoDestaques, searchHighlight)}
       </p>
 

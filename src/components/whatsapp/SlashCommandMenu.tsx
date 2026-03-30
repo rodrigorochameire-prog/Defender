@@ -114,9 +114,9 @@ export function SlashCommandMenu({
     return (
       <div
         ref={menuRef}
-        className="rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-lg bg-white dark:bg-zinc-900 overflow-hidden"
+        className="rounded-lg border border-zinc-200 dark:border-border shadow-lg bg-white dark:bg-card overflow-hidden"
       >
-        <div className="py-3 text-center text-sm text-zinc-500 dark:text-zinc-400">
+        <div className="py-3 text-center text-sm text-zinc-500 dark:text-muted-foreground">
           Nenhum comando encontrado
         </div>
       </div>
@@ -126,9 +126,9 @@ export function SlashCommandMenu({
   return (
     <div
       ref={menuRef}
-      className="rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-lg bg-white dark:bg-zinc-900 overflow-hidden"
+      className="rounded-lg border border-zinc-200 dark:border-border shadow-lg bg-white dark:bg-card overflow-hidden"
     >
-      <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 border-b border-zinc-100 dark:border-zinc-800">
+      <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-muted-foreground border-b border-zinc-100 dark:border-border">
         Comandos
       </div>
       <ul className="py-1">
@@ -140,8 +140,8 @@ export function SlashCommandMenu({
               key={cmd.name}
               className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors ${
                 isSelected
-                  ? "bg-zinc-700 text-white"
-                  : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200"
+                  ? "bg-muted text-white"
+                  : "hover:bg-zinc-100 dark:hover:bg-muted text-zinc-800 dark:text-foreground"
               }`}
               onMouseEnter={() => setSelectedIndex(idx)}
               onClick={() => {
@@ -149,12 +149,12 @@ export function SlashCommandMenu({
                 onExecute(cmd.name, arg);
               }}
             >
-              <Icon className={`h-4 w-4 shrink-0 ${isSelected ? "text-white" : "text-zinc-500 dark:text-zinc-400"}`} />
+              <Icon className={`h-4 w-4 shrink-0 ${isSelected ? "text-white" : "text-zinc-500 dark:text-muted-foreground"}`} />
               <div className="flex-1 min-w-0">
                 <span className={`text-sm font-medium ${isSelected ? "text-white" : ""}`}>
                   /{cmd.name}
                 </span>
-                <span className={`ml-2 text-xs ${isSelected ? "text-zinc-200" : "text-zinc-500 dark:text-zinc-400"}`}>
+                <span className={`ml-2 text-xs ${isSelected ? "text-foreground" : "text-zinc-500 dark:text-muted-foreground"}`}>
                   {cmd.description}
                 </span>
               </div>

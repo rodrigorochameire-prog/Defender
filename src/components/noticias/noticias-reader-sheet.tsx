@@ -92,7 +92,7 @@ export function NoticiaReaderSheet({
                 {noticia.categoria}
               </Badge>
               {noticia.publicadoEm && (
-                <span className="text-sm text-zinc-400">
+                <span className="text-sm text-muted-foreground">
                   {formatDistanceToNow(new Date(noticia.publicadoEm), {
                     addSuffix: true,
                     locale: ptBR,
@@ -111,13 +111,13 @@ export function NoticiaReaderSheet({
                 <Star
                   className={cn(
                     "h-4 w-4",
-                    isFavorito ? "fill-amber-500 text-amber-500" : "text-zinc-400"
+                    isFavorito ? "fill-amber-500 text-amber-500" : "text-muted-foreground"
                   )}
                 />
               </Button>
               <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                 <a href={noticia.urlOriginal} target="_blank" rel="noopener noreferrer" title="Abrir original">
-                  <ExternalLink className="h-4 w-4 text-zinc-400" />
+                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
                 </a>
               </Button>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
@@ -126,7 +126,7 @@ export function NoticiaReaderSheet({
             </div>
           </div>
           <h2
-            className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mt-3 leading-snug"
+            className="text-lg font-bold text-zinc-900 dark:text-foreground mt-3 leading-snug"
             style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
           >
             {noticia.titulo}
@@ -137,35 +137,35 @@ export function NoticiaReaderSheet({
 
           {/* AI insights — compact collapsible */}
           {analise && (
-            <div className="border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
+            <div className="border border-zinc-200 dark:border-border rounded-xl overflow-hidden">
               <button
                 onClick={() => setIaExpanded(!iaExpanded)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-left"
+                className="w-full flex items-center justify-between px-4 py-3 bg-zinc-50 dark:bg-muted/50 hover:bg-zinc-100 dark:hover:bg-muted transition-colors text-left"
               >
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
-                  <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
+                  <span className="text-xs font-semibold text-zinc-700 dark:text-foreground/80 uppercase tracking-wide">
                     Análise IA
                   </span>
                   {!iaExpanded && analise.resumoExecutivo && (
-                    <span className="text-xs text-zinc-500 dark:text-zinc-400 font-normal ml-1 line-clamp-1 max-w-xs">
+                    <span className="text-xs text-zinc-500 dark:text-muted-foreground font-normal ml-1 line-clamp-1 max-w-xs">
                       — {analise.resumoExecutivo.substring(0, 80)}…
                     </span>
                   )}
                 </div>
                 {iaExpanded ? (
-                  <ChevronUp className="h-4 w-4 text-zinc-400 shrink-0" />
+                  <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
                 ) : (
-                  <ChevronDown className="h-4 w-4 text-zinc-400 shrink-0" />
+                  <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
                 )}
               </button>
 
               {iaExpanded && (
-                <div className="px-4 py-4 space-y-4 bg-white dark:bg-zinc-900">
+                <div className="px-4 py-4 space-y-4 bg-white dark:bg-background">
                   {/* Resumo executivo */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                      <p className="text-[11px] font-semibold text-zinc-400 dark:text-muted-foreground/50 uppercase tracking-wider">
                         Resumo
                       </p>
                       <Button
@@ -174,10 +174,10 @@ export function NoticiaReaderSheet({
                         className="h-5 w-5"
                         onClick={() => copyText(analise.resumoExecutivo, "Resumo")}
                       >
-                        <Copy className="h-3 w-3 text-zinc-400" />
+                        <Copy className="h-3 w-3 text-muted-foreground" />
                       </Button>
                     </div>
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                    <p className="text-sm text-zinc-700 dark:text-foreground/80 leading-relaxed">
                       {analise.resumoExecutivo}
                     </p>
                   </div>
@@ -188,7 +188,7 @@ export function NoticiaReaderSheet({
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-1.5">
                           <Zap className="h-3 w-3 text-amber-500" />
-                          <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                          <p className="text-[11px] font-semibold text-zinc-400 dark:text-muted-foreground/50 uppercase tracking-wider">
                             Impacto Prático
                           </p>
                         </div>
@@ -198,10 +198,10 @@ export function NoticiaReaderSheet({
                           className="h-5 w-5"
                           onClick={() => copyText(analise.impactoPratico, "Impacto")}
                         >
-                          <Copy className="h-3 w-3 text-zinc-400" />
+                          <Copy className="h-3 w-3 text-muted-foreground" />
                         </Button>
                       </div>
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                      <p className="text-sm text-zinc-700 dark:text-foreground/80 leading-relaxed">
                         {analise.impactoPratico}
                       </p>
                     </div>
@@ -213,7 +213,7 @@ export function NoticiaReaderSheet({
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-1.5">
                           <Scale className="h-3 w-3 text-blue-500" />
-                          <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                          <p className="text-[11px] font-semibold text-zinc-400 dark:text-muted-foreground/50 uppercase tracking-wider">
                             Ratio Decidendi
                           </p>
                         </div>
@@ -223,10 +223,10 @@ export function NoticiaReaderSheet({
                           className="h-5 w-5"
                           onClick={() => copyText(analise.ratioDecidendi!, "Ratio decidendi")}
                         >
-                          <Copy className="h-3 w-3 text-zinc-400" />
+                          <Copy className="h-3 w-3 text-muted-foreground" />
                         </Button>
                       </div>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400 italic leading-relaxed">
+                      <p className="text-sm text-zinc-600 dark:text-muted-foreground italic leading-relaxed">
                         &ldquo;{analise.ratioDecidendi}&rdquo;
                       </p>
                     </div>
@@ -235,14 +235,14 @@ export function NoticiaReaderSheet({
                   {/* Casos aplicáveis */}
                   {analise.casosAplicaveis.length > 0 && (
                     <div>
-                      <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2">
+                      <p className="text-[11px] font-semibold text-zinc-400 dark:text-muted-foreground/50 uppercase tracking-wider mb-2">
                         Casos Aplicáveis
                       </p>
                       <div className="flex gap-1.5 flex-wrap">
                         {analise.casosAplicaveis.map(caso => (
                           <span
                             key={caso}
-                            className="inline-flex items-center gap-1 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-full px-2.5 py-1"
+                            className="inline-flex items-center gap-1 text-xs bg-zinc-100 dark:bg-muted text-zinc-600 dark:text-foreground/80 rounded-full px-2.5 py-1"
                           >
                             <ShieldCheck className="h-3 w-3 text-emerald-500 shrink-0" />
                             {caso}
@@ -270,12 +270,12 @@ export function NoticiaReaderSheet({
               </div>
             ) : hasConteudo ? (
               <div
-                className="prose prose-sm dark:prose-invert max-w-none prose-zinc prose-a:text-emerald-600 dark:prose-a:text-emerald-400 prose-headings:text-zinc-800 dark:prose-headings:text-zinc-200 prose-p:leading-relaxed"
+                className="prose prose-sm dark:prose-invert max-w-none prose-zinc prose-a:text-emerald-600 dark:prose-a:text-emerald-400 prose-headings:text-zinc-800 dark:prose-headings:text-foreground prose-p:leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: conteudoEfetivo! }}
               />
             ) : noticia.resumo ? (
               <div className="space-y-4">
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                <p className="text-sm text-zinc-600 dark:text-muted-foreground leading-relaxed">
                   {noticia.resumo}
                 </p>
                 <a

@@ -94,11 +94,11 @@ export function SearchResults({
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-3 animate-pulse"
+            className="rounded-lg border border-border p-3 animate-pulse"
           >
-            <div className="h-3 w-3/4 rounded bg-zinc-200 dark:bg-zinc-700 mb-2" />
-            <div className="h-2 w-full rounded bg-zinc-100 dark:bg-zinc-800 mb-1" />
-            <div className="h-2 w-2/3 rounded bg-zinc-100 dark:bg-zinc-800" />
+            <div className="h-3 w-3/4 rounded bg-muted mb-2" />
+            <div className="h-2 w-full rounded bg-muted mb-1" />
+            <div className="h-2 w-2/3 rounded bg-muted" />
           </div>
         ))}
       </div>
@@ -108,10 +108,10 @@ export function SearchResults({
   // Empty state
   if (results.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-zinc-500 dark:text-zinc-400">
+      <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
         <Search className="h-8 w-8 mb-2 opacity-50" />
         <p className="text-sm">Nenhum resultado encontrado</p>
-        <p className="text-xs mt-1 text-zinc-400 dark:text-zinc-500">
+        <p className="text-xs mt-1 text-muted-foreground">
           Tente termos diferentes ou mais gerais
         </p>
       </div>
@@ -128,9 +128,9 @@ export function SearchResults({
             onClick={() => onSelectResult?.(result)}
             className={cn(
               "w-full text-left rounded-lg border p-3",
-              "border-zinc-200 dark:border-zinc-800",
-              "bg-white dark:bg-zinc-900/50",
-              "hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
+              "border-border",
+              "bg-card",
+              "hover:bg-muted/50",
               "hover:border-emerald-300 dark:hover:border-emerald-800",
               "transition-colors duration-150",
               "cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500",
@@ -140,8 +140,8 @@ export function SearchResults({
             {/* Header: file name + score */}
             <div className="flex items-center justify-between gap-2 mb-1.5">
               <div className="flex items-center gap-1.5 min-w-0">
-                <FileText className="h-3.5 w-3.5 shrink-0 text-zinc-400 group-hover:text-emerald-500 transition-colors" />
-                <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate">
+                <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-emerald-500 transition-colors" />
+                <span className="text-xs font-medium text-foreground/80 truncate">
                   {result.fileName || `Arquivo #${result.file_id}`}
                 </span>
               </div>
@@ -149,15 +149,15 @@ export function SearchResults({
             </div>
 
             {/* Chunk text with highlighting */}
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed line-clamp-3">
+            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
               {highlightText(truncateChunk(result.chunk_text, 300), query)}
             </p>
 
             {/* Footer: assistido info */}
             {result.assistidoNome && (
               <div className="flex items-center gap-1 mt-1.5">
-                <User className="h-3 w-3 text-zinc-400" />
-                <span className="text-[10px] text-zinc-500 dark:text-zinc-500">
+                <User className="h-3 w-3 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground">
                   {result.assistidoNome}
                 </span>
               </div>

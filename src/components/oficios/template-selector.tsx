@@ -36,19 +36,19 @@ export function TemplateSelector({ open, onClose, onSelect }: TemplateSelectorPr
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl bg-zinc-900 border-zinc-700 max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-2xl bg-card border-border max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-zinc-100">Selecionar Template de Oficio</DialogTitle>
+          <DialogTitle className="text-foreground">Selecionar Template de Oficio</DialogTitle>
         </DialogHeader>
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Buscar template..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-zinc-800/50 border-zinc-700 text-zinc-100"
+            className="pl-9 bg-muted/50 border-border text-foreground"
           />
         </div>
 
@@ -60,13 +60,13 @@ export function TemplateSelector({ open, onClose, onSelect }: TemplateSelectorPr
             </div>
           ) : !templates?.length ? (
             <div className="text-center py-12">
-              <FileText className="w-10 h-10 mx-auto text-zinc-600 mb-3" />
-              <p className="text-zinc-500 text-sm">
+              <FileText className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
+              <p className="text-muted-foreground text-sm">
                 {search
                   ? "Nenhum template encontrado"
                   : "Nenhum template de oficio cadastrado"}
               </p>
-              <p className="text-zinc-600 text-xs mt-1">
+              <p className="text-muted-foreground/50 text-xs mt-1">
                 Use Analisar meus oficios para gerar templates automaticamente
               </p>
             </div>
@@ -87,19 +87,19 @@ export function TemplateSelector({ open, onClose, onSelect }: TemplateSelectorPr
                       formatacao: tmpl.formatacao,
                     })
                   }
-                  className="w-full text-left p-3 rounded-lg border border-zinc-700/30 bg-zinc-800/30
-                    hover:bg-zinc-800/70 hover:border-emerald-500/30 transition-colors group"
+                  className="w-full text-left p-3 rounded-lg border border-border bg-muted/50
+                    hover:bg-muted hover:border-emerald-500/30 transition-colors group"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <FileText className="w-4 h-4 text-zinc-400 shrink-0" />
-                        <span className="font-medium text-zinc-100 truncate">
+                        <span className="font-medium text-foreground truncate">
                           {tmpl.titulo}
                         </span>
                       </div>
                       {tmpl.descricao && (
-                        <p className="text-xs text-zinc-500 line-clamp-2 ml-6">
+                        <p className="text-xs text-muted-foreground line-clamp-2 ml-6">
                           {tmpl.descricao}
                         </p>
                       )}
@@ -107,7 +107,7 @@ export function TemplateSelector({ open, onClose, onSelect }: TemplateSelectorPr
                         {tipoOficio && (
                           <Badge
                             variant="outline"
-                            className="text-[10px] text-zinc-400 border-zinc-600"
+                            className="text-[10px] text-muted-foreground border-border"
                           >
                             {tipoOficio}
                           </Badge>
@@ -115,19 +115,19 @@ export function TemplateSelector({ open, onClose, onSelect }: TemplateSelectorPr
                         {tmpl.area && (
                           <Badge
                             variant="outline"
-                            className="text-[10px] text-zinc-400 border-zinc-600"
+                            className="text-[10px] text-muted-foreground border-border"
                           >
                             {tmpl.area}
                           </Badge>
                         )}
                         {tmpl.totalUsos && tmpl.totalUsos > 0 && (
-                          <span className="text-[10px] text-zinc-600">
+                          <span className="text-[10px] text-muted-foreground/50">
                             {tmpl.totalUsos}x usado
                           </span>
                         )}
                       </div>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-zinc-600 group-hover:text-emerald-400 shrink-0 mt-1 transition-colors" />
+                    <ArrowRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-emerald-400 shrink-0 mt-1 transition-colors" />
                   </div>
                 </button>
               );
@@ -136,10 +136,10 @@ export function TemplateSelector({ open, onClose, onSelect }: TemplateSelectorPr
         </div>
 
         {/* Footer: criar template livre */}
-        <div className="pt-3 border-t border-zinc-800">
+        <div className="pt-3 border-t border-border">
           <Button
             variant="ghost"
-            className="w-full text-zinc-400 hover:text-zinc-100"
+            className="w-full text-muted-foreground hover:text-foreground"
             onClick={() =>
               onSelect({
                 id: 0,

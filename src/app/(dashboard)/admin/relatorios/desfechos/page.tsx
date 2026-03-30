@@ -31,7 +31,7 @@ export default function AnaliseDesfechosPage() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">
                 Análise de Desfechos
               </h1>
               <Badge className="bg-amber-500 text-white text-xs">
@@ -39,7 +39,7 @@ export default function AnaliseDesfechosPage() {
                 Premium
               </Badge>
             </div>
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">
+            <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
               Resultados e métricas de julgamentos
             </p>
           </div>
@@ -53,31 +53,31 @@ export default function AnaliseDesfechosPage() {
             <PieChart className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-600 dark:text-emerald-400" />
           </div>
           
-          <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
             Análise em Desenvolvimento
           </h2>
-          <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 max-w-lg mb-6">
+          <p className="text-sm sm:text-base text-muted-foreground max-w-lg mb-6">
             Visualização detalhada dos resultados de julgamentos, com estatísticas 
             de absolvições, condenações e desclassificações ao longo do tempo.
           </p>
 
           {/* Preview Features */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full max-w-2xl mb-8">
-            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-zinc-800/40 border border-emerald-100 dark:border-emerald-800/50">
+            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-muted/50 border border-emerald-100 dark:border-emerald-800/50">
               <CheckCircle2 className="w-6 h-6 text-emerald-600 mb-2 mx-auto" />
-              <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Absolvições</p>
+              <p className="text-xs font-medium text-foreground/80">Absolvições</p>
             </div>
-            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-zinc-800/40 border border-emerald-100 dark:border-emerald-800/50">
+            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-muted/50 border border-emerald-100 dark:border-emerald-800/50">
               <XCircle className="w-6 h-6 text-emerald-600 mb-2 mx-auto" />
-              <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Condenações</p>
+              <p className="text-xs font-medium text-foreground/80">Condenações</p>
             </div>
-            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-zinc-800/40 border border-emerald-100 dark:border-emerald-800/50">
+            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-muted/50 border border-emerald-100 dark:border-emerald-800/50">
               <BarChart3 className="w-6 h-6 text-emerald-600 mb-2 mx-auto" />
-              <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Por Período</p>
+              <p className="text-xs font-medium text-foreground/80">Por Período</p>
             </div>
-            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-zinc-800/40 border border-emerald-100 dark:border-emerald-800/50">
+            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-muted/50 border border-emerald-100 dark:border-emerald-800/50">
               <TrendingUp className="w-6 h-6 text-emerald-600 mb-2 mx-auto" />
-              <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Evolução</p>
+              <p className="text-xs font-medium text-foreground/80">Evolução</p>
             </div>
           </div>
 

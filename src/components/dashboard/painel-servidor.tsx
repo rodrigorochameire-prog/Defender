@@ -113,7 +113,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   },
   devolvida: {
     label: "Devolvida",
-    color: "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-400",
+    color: "bg-zinc-100 dark:bg-muted text-zinc-700 dark:text-muted-foreground",
   },
 };
 
@@ -124,11 +124,11 @@ const PRIORIDADE_CONFIG: Record<string, { label: string; color: string }> = {
   },
   NORMAL: {
     label: "Normal",
-    color: "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700",
+    color: "bg-zinc-100 dark:bg-muted text-zinc-600 dark:text-muted-foreground border-zinc-200 dark:border-border",
   },
   BAIXA: {
     label: "Baixa",
-    color: "bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-500 border-zinc-100 dark:border-zinc-700/50",
+    color: "bg-zinc-50 dark:bg-muted/50 text-muted-foreground border-zinc-100 dark:border-border",
   },
 };
 
@@ -412,17 +412,17 @@ export function PainelServidor({ user }: PainelServidorProps) {
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
               <Briefcase className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
+              <h1 className="text-xl font-bold text-foreground tracking-tight">
                 Ola, {firstName}!
               </h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-muted-foreground">
                 Seu painel de trabalho
                 {delegacoesPendentes.length > 0 &&
                   ` \u00B7 ${delegacoesPendentes.length} pedido${
@@ -437,12 +437,12 @@ export function PainelServidor({ user }: PainelServidorProps) {
       {/* Content */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* ===== 1. MEUS PEDIDOS ===== */}
-        <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
-          <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
+        <Card className="group/card relative bg-white dark:bg-card border border-border rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
+          <div className="p-3 border-b border-border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ClipboardList className="w-4 h-4 text-blue-500" />
-                <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                <h3 className="text-sm font-semibold text-foreground">
                   Meus Pedidos
                 </h3>
               </div>
@@ -478,7 +478,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
             ) : delegacoesAtivas.length === 0 ? (
               <div className="p-8 text-center">
                 <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-emerald-500" />
-                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <p className="text-sm font-medium text-foreground">
                   Nenhum pedido pendente
                 </p>
                 <p className="text-[10px] text-zinc-400 mt-0.5">
@@ -486,7 +486,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              <div className="divide-y divide-zinc-100 dark:divide-border">
                 {delegacoesAtivas.map((deleg: any) => {
                   const TipoIcon =
                     TIPO_ICONS[deleg.tipo || "delegacao_generica"] || Send;
@@ -512,15 +512,15 @@ export function PainelServidor({ user }: PainelServidorProps) {
                     <div
                       key={deleg.id}
                       className={cn(
-                        "px-3 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors",
+                        "px-3 py-3 hover:bg-zinc-50 dark:hover:bg-muted/50 transition-colors",
                         deleg.prioridade === "URGENTE" &&
                           "bg-red-50/50 dark:bg-red-950/20 border-l-4 border-red-500"
                       )}
                     >
                       <div className="flex items-start gap-3">
                         {/* Icon */}
-                        <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <TipoIcon className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                        <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <TipoIcon className="w-4 h-4 text-muted-foreground" />
                         </div>
 
                         {/* Content */}
@@ -545,7 +545,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                             )}
                           </div>
                           {/* Instrucoes */}
-                          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 line-clamp-2">
+                          <p className="text-sm font-medium text-foreground line-clamp-2">
                             {deleg.instrucoes || "Pedido de trabalho"}
                           </p>
                           {/* Meta info */}
@@ -628,7 +628,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
 
           {/* Link para ver todas */}
           {minhasDelegacoes.length > 0 && (
-            <div className="px-3 py-2 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="px-3 py-2 border-t border-border">
               <Link
                 href="/admin/delegacoes"
                 className="text-[10px] text-emerald-600 hover:text-emerald-700 font-medium"
@@ -640,11 +640,11 @@ export function PainelServidor({ user }: PainelServidorProps) {
         </Card>
 
         {/* ===== 2. REGISTRO RAPIDO SIMPLIFICADO ===== */}
-        <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
-          <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
+        <Card className="group/card relative bg-white dark:bg-card border border-border rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
+          <div className="p-3 border-b border-border">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-emerald-500" />
-              <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+              <h3 className="text-sm font-semibold text-foreground">
                 Registro Rapido
               </h3>
             </div>
@@ -664,7 +664,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                     variant="outline"
                     role="combobox"
                     aria-expanded={assistidoSearchOpen}
-                    className="w-full h-10 justify-between text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:border-emerald-300 dark:hover:border-emerald-700 focus:ring-emerald-500/20 transition-all duration-200"
+                    className="w-full h-10 justify-between text-sm bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border hover:bg-zinc-100 dark:hover:bg-muted hover:border-emerald-300 dark:hover:border-emerald-700 focus:ring-emerald-500/20 transition-all duration-200"
                   >
                     {registroRapido.assistidoId ? (
                       <span className="flex items-center gap-2 truncate">
@@ -795,7 +795,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                         "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors border",
                         isSelected
                           ? "bg-emerald-100 dark:bg-emerald-900/30 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400"
-                          : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-500"
+                          : "border-zinc-200 dark:border-border hover:border-zinc-300 dark:hover:border-border bg-white dark:bg-muted text-muted-foreground"
                       )}
                     >
                       <Icon
@@ -829,7 +829,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                         : null,
                     }))
                   }
-                  className="w-full h-8 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
+                  className="w-full h-8 text-xs rounded-md border border-zinc-200 dark:border-border bg-white dark:bg-muted text-foreground px-2 focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
                 >
                   <option value="">
                     {processosDoAssistido.length === 1
@@ -916,7 +916,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                   }))
                 }
                 rows={3}
-                className="w-full text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 resize-none focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
+                className="w-full text-sm bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border resize-none focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
               />
               {/* Ações pós-transcrição */}
               {transcript && (
@@ -969,15 +969,15 @@ export function PainelServidor({ user }: PainelServidorProps) {
         </Card>
 
         {/* ===== 3. HISTORICO DO DIA ===== */}
-        <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
-          <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
+        <Card className="group/card relative bg-white dark:bg-card border border-border rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
+          <div className="p-3 border-b border-border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-zinc-500" />
-                <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                <h3 className="text-sm font-semibold text-foreground">
                   Hoje
                 </h3>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-muted text-muted-foreground font-medium">
                   {registrosHoje.length} registro
                   {registrosHoje.length !== 1 ? "s" : ""}
                 </span>
@@ -994,7 +994,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
             </div>
           </div>
 
-          <div className="divide-y divide-zinc-100 dark:divide-zinc-800 max-h-[300px] overflow-y-auto">
+          <div className="divide-y divide-zinc-100 dark:divide-border max-h-[300px] overflow-y-auto">
             {loadingDemandas ? (
               <div className="p-4 space-y-2">
                 {[1, 2, 3].map((i) => (
@@ -1003,7 +1003,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
               </div>
             ) : registrosHoje.length === 0 ? (
               <div className="p-6 text-center">
-                <Calendar className="w-8 h-8 mx-auto mb-2 text-zinc-300 dark:text-zinc-600" />
+                <Calendar className="w-8 h-8 mx-auto mb-2 text-zinc-300 dark:text-muted-foreground/50" />
                 <p className="text-sm text-zinc-500">
                   Nenhum registro hoje ainda
                 </p>
@@ -1022,12 +1022,12 @@ export function PainelServidor({ user }: PainelServidorProps) {
                     href={`/admin/demandas/${demanda.id}`}
                     key={demanda.id}
                   >
-                    <div className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                    <div className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-muted/50 transition-colors">
                       <span className="text-[11px] font-mono text-zinc-400 w-10 flex-shrink-0">
                         {hora}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                        <p className="text-sm font-medium text-foreground truncate">
                           {demanda.assistido?.nome || "Sem assistido"}
                         </p>
                         <p className="text-[11px] text-zinc-400 truncate">
@@ -1036,7 +1036,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                       </div>
                       <Badge
                         variant="outline"
-                        className="text-[9px] border-zinc-200 dark:border-zinc-700 text-zinc-500"
+                        className="text-[9px] border-zinc-200 dark:border-border text-muted-foreground"
                       >
                         {demanda.status === "5_FILA"
                           ? "Fila"
@@ -1057,41 +1057,41 @@ export function PainelServidor({ user }: PainelServidorProps) {
         {/* ===== 4. ACESSO RAPIDO ===== */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <Link href="/admin/demandas">
-            <Card className="p-4 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-xl hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
+            <Card className="p-4 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-xl hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
               <div className="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                 <ClipboardList className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+              <p className="text-xs font-semibold text-foreground">
                 Demandas
               </p>
             </Card>
           </Link>
           <Link href="/admin/assistidos">
-            <Card className="p-4 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-xl hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer group">
+            <Card className="p-4 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-xl hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer group">
               <div className="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                 <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               </div>
-              <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+              <p className="text-xs font-semibold text-foreground">
                 Assistidos
               </p>
             </Card>
           </Link>
           <Link href="/admin/drive">
-            <Card className="p-4 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-xl hover:shadow-lg hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer group">
+            <Card className="p-4 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-xl hover:shadow-lg hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer group">
               <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                 <FileEdit className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               </div>
-              <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+              <p className="text-xs font-semibold text-foreground">
                 Drive
               </p>
             </Card>
           </Link>
           <Link href="/admin/agenda">
-            <Card className="p-4 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-xl hover:shadow-lg hover:border-violet-200 dark:hover:border-violet-800 transition-all cursor-pointer group">
+            <Card className="p-4 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-xl hover:shadow-lg hover:border-violet-200 dark:hover:border-violet-800 transition-all cursor-pointer group">
               <div className="w-9 h-9 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                 <Calendar className="w-4 h-4 text-violet-600 dark:text-violet-400" />
               </div>
-              <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+              <p className="text-xs font-semibold text-foreground">
                 Agenda
               </p>
             </Card>

@@ -439,7 +439,7 @@ export function ChecklistPreAudiencia({
                           key={item.id}
                           className={cn(
                             "flex items-start gap-3 p-2 rounded-lg transition-colors",
-                            isChecked ? "bg-green-50 dark:bg-green-950/20" : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
+                            isChecked ? "bg-green-50 dark:bg-green-950/20" : "hover:bg-zinc-50 dark:hover:bg-muted/50",
                             item.critical && !isChecked && "border-l-2 border-red-400"
                           )}
                         >

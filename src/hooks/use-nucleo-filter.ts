@@ -34,8 +34,8 @@ export const NUCLEOS_CONFIG: Record<Nucleo, {
   TODOS: {
     label: "Todos",
     description: "Visualizar todos os núcleos",
-    color: "text-zinc-600 dark:text-zinc-400",
-    bgColor: "bg-zinc-100 dark:bg-zinc-800",
+    color: "text-zinc-600 dark:text-muted-foreground",
+    bgColor: "bg-zinc-100 dark:bg-muted",
   },
 };
 

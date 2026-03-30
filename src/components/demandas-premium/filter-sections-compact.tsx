@@ -97,20 +97,20 @@ export function FilterSectionsCompact({
           onClick={() => setIsMainExpanded(!isMainExpanded)}
           className="flex items-center gap-3 cursor-pointer flex-1"
         >
-          <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200/80 dark:border-zinc-700/80 group-hover/main:border-emerald-300/50 dark:group-hover/main:border-emerald-700/50 transition-all">
-            <svg className="w-4 h-4 text-zinc-600 dark:text-zinc-400 group-hover/main:text-emerald-600 dark:group-hover/main:text-emerald-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center border border-border group-hover/main:border-emerald-300/50 dark:group-hover/main:border-emerald-700/50 transition-all">
+            <svg className="w-4 h-4 text-muted-foreground group-hover/main:text-emerald-600 dark:group-hover/main:text-emerald-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
           </div>
           <div className="text-left">
-            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100 group-hover/main:text-zinc-900 dark:group-hover/main:text-white transition-colors">Filtros</h3>
-            <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+            <h3 className="text-sm font-semibold text-foreground group-hover/main:text-foreground transition-colors">Filtros</h3>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
               {totalFilters > 0 ? (
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900 text-[10px] font-bold">
+                  <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-foreground text-background text-[10px] font-bold">
                     {totalFilters}
                   </span>
-                  <span className="text-zinc-500 dark:text-zinc-400">ativo{totalFilters > 1 ? 's' : ''}</span>
+                  <span className="text-muted-foreground">ativo{totalFilters > 1 ? 's' : ''}</span>
                 </span>
               ) : (
                 'Nenhum filtro aplicado'
@@ -124,7 +124,7 @@ export function FilterSectionsCompact({
               variant="ghost" 
               size="sm" 
               onClick={handleClearAll}
-              className="h-8 text-[11px] px-3 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="h-8 text-[11px] px-3 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
               <XCircle className="w-3 h-3 mr-1.5" />
               Limpar
@@ -132,12 +132,12 @@ export function FilterSectionsCompact({
           )}
           <div 
             onClick={() => setIsMainExpanded(!isMainExpanded)}
-            className="p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-muted transition-colors cursor-pointer"
           >
             {isMainExpanded ? (
-              <ChevronUp className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
+              <ChevronUp className="w-4 h-4 text-muted-foreground" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
             )}
           </div>
         </div>
@@ -145,7 +145,7 @@ export function FilterSectionsCompact({
 
       {/* Divisor */}
       {isMainExpanded && (
-        <div className="border-b border-zinc-100 dark:border-zinc-800 -mt-1" />
+        <div className="border-b border-border -mt-1" />
       )}
 
       {/* Filtros em Linhas Horizontais */}
@@ -157,17 +157,17 @@ export function FilterSectionsCompact({
               onClick={() => toggleSection('atribuicoes')}
               className={cn(
                 "w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 group/header",
-                isAtribuicaoTravada 
-                  ? "bg-zinc-50 dark:bg-zinc-800/40 cursor-default" 
-                  : "hover:bg-zinc-50 dark:hover:bg-zinc-800/40 cursor-pointer"
+                isAtribuicaoTravada
+                  ? "bg-muted/50 cursor-default"
+                  : "hover:bg-muted/50 cursor-pointer"
               )}
             >
               <div className="flex items-center gap-2.5">
-                <h4 className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
                   Atribuição
                 </h4>
                 {isAtribuicaoTravada ? (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900 text-[10px] font-medium">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-foreground text-background text-[10px] font-medium">
                     <Lock className="w-2.5 h-2.5" />
                     {atribuicaoGlobalLabel}
                   </span>
@@ -178,13 +178,13 @@ export function FilterSectionsCompact({
                 ) : null}
               </div>
               {isAtribuicaoTravada ? (
-                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium italic">
+                <span className="text-[10px] text-muted-foreground/50 font-medium italic">
                   via sidebar
                 </span>
               ) : expandedSections.atribuicoes ? (
-                <ChevronUp className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+                <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />
               ) : (
-                <ChevronDown className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
               )}
             </div>
             
@@ -202,11 +202,11 @@ export function FilterSectionsCompact({
                         className={cn(
                           "group/btn flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px] font-medium transition-all duration-150",
                           isSelected
-                            ? "bg-zinc-300 dark:bg-zinc-600 text-zinc-800 dark:text-zinc-100 shadow-sm"
-                            : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 hover:text-zinc-800 dark:hover:text-zinc-200"
+                            ? "bg-secondary text-foreground shadow-sm"
+                            : "bg-background text-muted-foreground border border-border hover:border-border hover:text-foreground"
                         )}
                       >
-                        <Icon className={cn("w-3.5 h-3.5 transition-colors", isSelected ? 'text-zinc-600 dark:text-zinc-300' : 'text-zinc-400 dark:text-zinc-500 group-hover/btn:text-zinc-600 dark:group-hover/btn:text-zinc-300')} />
+                        <Icon className={cn("w-3.5 h-3.5 transition-colors", isSelected ? 'text-foreground/80' : 'text-muted-foreground group-hover/btn:text-foreground/80')} />
                         <span>{atribuicao.label}</span>
                       </button>
                     );
@@ -219,10 +219,10 @@ export function FilterSectionsCompact({
           <div className="group">
             <button
               onClick={() => toggleSection('status')}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-all duration-200 group/header"
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-all duration-200 group/header"
             >
               <div className="flex items-center gap-2.5">
-                <h4 className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
                   Status
                 </h4>
                 {selectedStatusGroup && (
@@ -235,9 +235,9 @@ export function FilterSectionsCompact({
                 )}
               </div>
               {expandedSections.status ? (
-                <ChevronUp className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+                <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />
               ) : (
-                <ChevronDown className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
               )}
             </button>
             
@@ -253,8 +253,8 @@ export function FilterSectionsCompact({
                       className={cn(
                         "group/btn flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px] font-medium transition-all duration-150",
                         isSelected
-                          ? "bg-zinc-300 dark:bg-zinc-600 text-zinc-800 dark:text-zinc-100 shadow-sm"
-                          : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 hover:text-zinc-800 dark:hover:text-zinc-200"
+                          ? "bg-secondary text-foreground shadow-sm"
+                          : "bg-background text-muted-foreground border border-border hover:border-border hover:text-foreground"
                       )}
                     >
                       <div
@@ -273,10 +273,10 @@ export function FilterSectionsCompact({
           <div className="group">
             <button
               onClick={() => toggleSection('prisional')}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-all duration-200 group/header"
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-all duration-200 group/header"
             >
               <div className="flex items-center gap-2.5">
-                <h4 className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
                   Estado Prisional
                 </h4>
                 {selectedEstadoPrisional && (
@@ -289,9 +289,9 @@ export function FilterSectionsCompact({
                 )}
               </div>
               {expandedSections.prisional ? (
-                <ChevronUp className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+                <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />
               ) : (
-                <ChevronDown className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
               )}
             </button>
             
@@ -307,8 +307,8 @@ export function FilterSectionsCompact({
                       className={cn(
                         "group/btn flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px] font-medium transition-all duration-150",
                         isSelected
-                          ? "bg-zinc-300 dark:bg-zinc-600 text-zinc-800 dark:text-zinc-100 shadow-sm"
-                          : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 hover:text-zinc-800 dark:hover:text-zinc-200"
+                          ? "bg-secondary text-foreground shadow-sm"
+                          : "bg-background text-muted-foreground border border-border hover:border-border hover:text-foreground"
                       )}
                     >
                       <div 

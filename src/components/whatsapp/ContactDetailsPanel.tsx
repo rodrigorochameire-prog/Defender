@@ -211,9 +211,9 @@ export function ContactDetailsPanel({
 
   if (isLoading) {
     return (
-      <div className="w-80 border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col overflow-hidden transition-all duration-200">
+      <div className="w-80 border-l border-border bg-white dark:bg-card flex flex-col overflow-hidden transition-all duration-200">
         <div className="flex items-center justify-center flex-1">
-          <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       </div>
     );
@@ -221,16 +221,16 @@ export function ContactDetailsPanel({
 
   if (!contact) {
     return (
-      <div className="w-80 border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col overflow-hidden transition-all duration-200">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
-          <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+      <div className="w-80 border-l border-border bg-white dark:bg-card flex flex-col overflow-hidden transition-all duration-200">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <span className="text-sm font-semibold text-foreground">
             Detalhes do Contato
           </span>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <div className="flex items-center justify-center flex-1 text-zinc-500 dark:text-zinc-400 text-sm">
+        <div className="flex items-center justify-center flex-1 text-muted-foreground text-sm">
           Contato nao encontrado
         </div>
       </div>
@@ -244,12 +244,12 @@ export function ContactDetailsPanel({
   return (
     <div
       className={cn(
-        "w-80 border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col overflow-hidden transition-all duration-200"
+        "w-80 border-l border-border bg-white dark:bg-card flex flex-col overflow-hidden transition-all duration-200"
       )}
     >
       {/* ===== HEADER ===== */}
-      <div className="flex items-center justify-between px-4 py-3 bg-zinc-50/80 dark:bg-zinc-800/50 backdrop-blur-sm border-b border-zinc-200/50 dark:border-zinc-700/50 shrink-0">
-        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+      <div className="flex items-center justify-between px-4 py-3 bg-zinc-50/80 dark:bg-muted/50 backdrop-blur-sm border-b border-border shrink-0">
+        <span className="text-sm font-semibold text-foreground">
           Detalhes do Contato
         </span>
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
@@ -262,16 +262,16 @@ export function ContactDetailsPanel({
         <div className="px-4 py-5 space-y-6">
           {/* --- 2. Profile Section --- */}
           <div className="flex flex-col items-center gap-2">
-            <Avatar className="h-16 w-16 ring-2 ring-zinc-200 dark:ring-zinc-700 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900">
+            <Avatar className="h-16 w-16 ring-2 ring-zinc-200 dark:ring-border ring-offset-2 ring-offset-white dark:ring-offset-card">
               <AvatarImage src={contact.profilePicUrl ?? undefined} />
-              <AvatarFallback className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-lg">
+              <AvatarFallback className="bg-zinc-100 dark:bg-muted text-zinc-600 dark:text-foreground/80 text-lg">
                 {getInitials(contact.name || contact.pushName)}
               </AvatarFallback>
             </Avatar>
-            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 text-center">
+            <h3 className="text-base font-semibold text-foreground text-center">
               {displayName}
             </h3>
-            <span className="font-mono text-sm text-zinc-500 dark:text-zinc-400 text-center">
+            <span className="font-mono text-sm text-muted-foreground text-center">
               {displayPhone}
             </span>
             <TooltipProvider>
@@ -288,9 +288,9 @@ export function ContactDetailsPanel({
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <Phone className="h-4 w-4 mr-1.5 text-zinc-400" />
+                      <Phone className="h-4 w-4 mr-1.5 text-muted-foreground" />
                       Abrir no WhatsApp
-                      <ExternalLink className="h-3 w-3 ml-1.5 text-zinc-400" />
+                      <ExternalLink className="h-3 w-3 ml-1.5 text-muted-foreground" />
                     </a>
                   </Button>
                 </TooltipTrigger>
@@ -303,13 +303,13 @@ export function ContactDetailsPanel({
           <section>
             <div className="flex items-center gap-2 mb-3">
               <Users className="h-3.5 w-3.5 text-emerald-500" />
-              <span className="text-[10px] uppercase tracking-widest font-semibold text-zinc-400 dark:text-zinc-500">
+              <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
                 Interlocutor
               </span>
             </div>
-            <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 space-y-3">
+            <div className="bg-zinc-50 dark:bg-muted/50 rounded-lg p-3 space-y-3">
               <div>
-                <label className="text-xs text-zinc-500 dark:text-zinc-400 mb-1 block">
+                <label className="text-xs text-muted-foreground mb-1 block">
                   Tipo
                 </label>
                 <Select
@@ -329,7 +329,7 @@ export function ContactDetailsPanel({
                 </Select>
               </div>
               <div>
-                <label className="text-xs text-zinc-500 dark:text-zinc-400 mb-1 block">
+                <label className="text-xs text-muted-foreground mb-1 block">
                   Detalhe
                 </label>
                 <Input
@@ -346,12 +346,12 @@ export function ContactDetailsPanel({
           <section>
             <div className="flex items-center gap-2 mb-3">
               <LinkIcon className="h-3.5 w-3.5 text-emerald-500" />
-              <span className="text-[10px] uppercase tracking-widest font-semibold text-zinc-400 dark:text-zinc-500">
+              <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
                 Assistido Vinculado
               </span>
             </div>
             {assistido ? (
-              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3">
+              <div className="bg-zinc-50 dark:bg-muted/50 rounded-lg p-3">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={assistido.photoUrl ?? undefined} />
@@ -360,10 +360,10 @@ export function ContactDetailsPanel({
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {assistido.nome}
                     </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 font-mono">
+                    <p className="text-xs text-muted-foreground font-mono">
                       CPF: {formatCpf(assistido.cpf)}
                     </p>
                   </div>
@@ -381,8 +381,8 @@ export function ContactDetailsPanel({
                 </Button>
               </div>
             ) : (
-              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3">
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-2">
+              <div className="bg-zinc-50 dark:bg-muted/50 rounded-lg p-3">
+                <p className="text-sm text-muted-foreground mb-2">
                   Nenhum assistido vinculado
                 </p>
                 <Button variant="outline" size="sm" className="w-full" asChild>
@@ -400,7 +400,7 @@ export function ContactDetailsPanel({
             <section>
               <div className="flex items-center gap-2 mb-3">
                 <Scale className="h-3.5 w-3.5 text-emerald-500" />
-                <span className="text-[10px] uppercase tracking-widest font-semibold text-zinc-400 dark:text-zinc-500">
+                <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
                   Processos
                 </span>
               </div>
@@ -410,16 +410,16 @@ export function ContactDetailsPanel({
                     <Link
                       key={proc.id}
                       href={`/admin/processos/${proc.id}`}
-                      className="block rounded-lg border border-zinc-200 dark:border-zinc-800 p-3 hover:border-emerald-300 dark:hover:border-emerald-800 transition-colors cursor-pointer group"
+                      className="block rounded-lg border border-border p-3 hover:border-emerald-300 dark:hover:border-emerald-800 transition-colors cursor-pointer group"
                     >
                       <div className="flex items-start gap-2">
-                        <Scale className="h-4 w-4 text-zinc-400 mt-0.5 shrink-0" />
+                        <Scale className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="font-mono text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                          <p className="font-mono text-xs text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                             {proc.numeroAutos}
                           </p>
                           {proc.vara && (
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
+                            <p className="text-xs text-muted-foreground mt-0.5 truncate">
                               {proc.vara}
                             </p>
                           )}
@@ -432,14 +432,14 @@ export function ContactDetailsPanel({
                             </Badge>
                           )}
                         </div>
-                        <ExternalLink className="h-3 w-3 text-zinc-300 dark:text-zinc-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5" />
+                        <ExternalLink className="h-3 w-3 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5" />
                       </div>
                     </Link>
                   ))}
                 </div>
               ) : (
-                <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3">
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                <div className="bg-zinc-50 dark:bg-muted/50 rounded-lg p-3">
+                  <p className="text-sm text-muted-foreground">
                     Nenhum processo encontrado
                   </p>
                 </div>
@@ -451,25 +451,25 @@ export function ContactDetailsPanel({
           <section>
             <div className="flex items-center gap-2 mb-3">
               <MessageSquare className="h-3.5 w-3.5 text-emerald-500" />
-              <span className="text-[10px] uppercase tracking-widest font-semibold text-zinc-400 dark:text-zinc-500">
+              <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
                 Estatisticas
               </span>
             </div>
             <div className="grid grid-cols-3 gap-2">
-              <div className="text-center p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
-                <div className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <div className="text-center p-2 rounded-lg bg-zinc-50 dark:bg-muted/50">
+                <div className="text-lg font-semibold text-foreground">
                   {stats?.totalMessages ?? "--"}
                 </div>
-                <div className="text-[10px] text-zinc-400">Mensagens</div>
+                <div className="text-[10px] text-muted-foreground">Mensagens</div>
               </div>
-              <div className="text-center p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
-                <div className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <div className="text-center p-2 rounded-lg bg-zinc-50 dark:bg-muted/50">
+                <div className="text-lg font-semibold text-foreground">
                   {stats?.mediaMessages ?? "--"}
                 </div>
-                <div className="text-[10px] text-zinc-400">Arquivos</div>
+                <div className="text-[10px] text-muted-foreground">Arquivos</div>
               </div>
-              <div className="text-center p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
-                <div className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <div className="text-center p-2 rounded-lg bg-zinc-50 dark:bg-muted/50">
+                <div className="text-lg font-semibold text-foreground">
                   {stats?.firstMessageAt
                     ? format(new Date(stats.firstMessageAt), "dd/MM", {
                         locale: ptBR,
@@ -480,7 +480,7 @@ export function ContactDetailsPanel({
                         })
                       : "--"}
                 </div>
-                <div className="text-[10px] text-zinc-400">Desde</div>
+                <div className="text-[10px] text-muted-foreground">Desde</div>
               </div>
             </div>
           </section>
@@ -489,11 +489,11 @@ export function ContactDetailsPanel({
           <section>
             <div className="flex items-center gap-2 mb-3">
               <StickyNote className="h-3.5 w-3.5 text-emerald-500" />
-              <span className="text-[10px] uppercase tracking-widest font-semibold text-zinc-400 dark:text-zinc-500">
+              <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
                 Notas
               </span>
             </div>
-            <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3">
+            <div className="bg-zinc-50 dark:bg-muted/50 rounded-lg p-3">
               {editingNotes ? (
                 <div className="space-y-2">
                   <Textarea
@@ -532,11 +532,11 @@ export function ContactDetailsPanel({
                   }}
                 >
                   {contact.notes ? (
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors">
+                    <p className="text-sm text-foreground/80 whitespace-pre-wrap group-hover:text-foreground transition-colors">
                       {contact.notes}
                     </p>
                   ) : (
-                    <p className="text-sm text-zinc-400 dark:text-zinc-500 italic group-hover:text-zinc-500 dark:group-hover:text-zinc-400 transition-colors flex items-center gap-1.5">
+                    <p className="text-sm text-muted-foreground italic group-hover:text-muted-foreground transition-colors flex items-center gap-1.5">
                       <StickyNote className="h-3.5 w-3.5" />
                       Clique para adicionar notas...
                     </p>
@@ -550,11 +550,11 @@ export function ContactDetailsPanel({
           <section>
             <div className="flex items-center gap-2 mb-3">
               <Tag className="h-3.5 w-3.5 text-emerald-500" />
-              <span className="text-[10px] uppercase tracking-widest font-semibold text-zinc-400 dark:text-zinc-500">
+              <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
                 Tags
               </span>
             </div>
-            <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3">
+            <div className="bg-zinc-50 dark:bg-muted/50 rounded-lg p-3">
               {/* Existing tags */}
               {(contact.tags ?? []).length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-2">

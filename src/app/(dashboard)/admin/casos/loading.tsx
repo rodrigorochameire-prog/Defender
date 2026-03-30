@@ -3,9 +3,9 @@ import { Card } from "@/components/ui/card";
 
 export default function CasosLoading() {
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-card border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Skeleton className="w-11 h-11 rounded-xl" />
@@ -25,7 +25,7 @@ export default function CasosLoading() {
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="p-4 sm:p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
+              className="p-4 sm:p-3 rounded-xl bg-card border border-border"
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="space-y-2">
@@ -39,7 +39,7 @@ export default function CasosLoading() {
         </div>
 
         {/* Filter Card */}
-        <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl p-5">
+        <Card className="border border-border bg-card rounded-xl p-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Skeleton className="w-8 h-8 rounded-lg" />
@@ -53,9 +53,9 @@ export default function CasosLoading() {
         </Card>
 
         {/* Case Cards Grid */}
-        <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden">
+        <Card className="border border-border bg-card rounded-xl overflow-hidden">
           {/* List header */}
-          <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+          <div className="px-4 py-3 border-b border-border bg-muted/50">
             <Skeleton className="h-4 w-20" />
           </div>
 
@@ -65,7 +65,7 @@ export default function CasosLoading() {
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <Card
                   key={i}
-                  className="p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
+                  className="p-4 bg-card border border-border"
                 >
                   {/* Badge row */}
                   <div className="flex items-center gap-2 mb-3">

@@ -54,7 +54,7 @@ export function LoginForm() {
       <div className="space-y-1.5">
         <label
           htmlFor="email"
-          className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium"
+          className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium"
         >
           Email
         </label>
@@ -65,14 +65,14 @@ export function LoginForm() {
           placeholder="seu@email.com"
           autoComplete="email"
           disabled={isLoading}
-          className="h-10 text-sm bg-zinc-900 border-zinc-800/80 text-zinc-100 placeholder:text-zinc-600 focus:border-emerald-500/40 focus:ring-emerald-500/10 rounded-lg transition-colors"
+          className="h-10 text-sm bg-card border-border/80 text-foreground placeholder:text-muted-foreground/50 focus:border-emerald-500/40 focus:ring-emerald-500/10 rounded-lg transition-colors"
         />
       </div>
 
       <div className="space-y-1.5">
         <label
           htmlFor="password"
-          className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium"
+          className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium"
         >
           Senha
         </label>
@@ -83,7 +83,7 @@ export function LoginForm() {
           placeholder="••••••••"
           autoComplete="current-password"
           disabled={isLoading}
-          className="h-10 text-sm bg-zinc-900 border-zinc-800/80 text-zinc-100 placeholder:text-zinc-600 focus:border-emerald-500/40 focus:ring-emerald-500/10 rounded-lg transition-colors"
+          className="h-10 text-sm bg-card border-border/80 text-foreground placeholder:text-muted-foreground/50 focus:border-emerald-500/40 focus:ring-emerald-500/10 rounded-lg transition-colors"
         />
       </div>
 

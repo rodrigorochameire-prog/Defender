@@ -57,11 +57,11 @@ import { toast } from "sonner";
 // ==========================================
 
 const FASES_CASO: Record<string, { label: string; color: string }> = {
-  inquerito: { label: "Inquérito", color: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400" },
+  inquerito: { label: "Inquérito", color: "bg-muted text-muted-foreground" },
   instrucao: { label: "Instrução", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
   plenario: { label: "Plenário", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" },
   recurso: { label: "Recurso", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" },
-  execucao: { label: "Execução", color: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400" },
+  execucao: { label: "Execução", color: "bg-muted text-muted-foreground" },
 };
 
 const ATRIBUICAO_LABELS: Record<string, string> = {
@@ -309,7 +309,7 @@ function TimelineItem({ item }: { item: any }) {
     demanda: { icon: Clock, color: "text-amber-500 bg-amber-50 dark:bg-amber-900/20" },
     nota: { icon: FileText, color: "text-blue-500 bg-blue-50 dark:bg-blue-900/20" },
     documento: { icon: FileSearch, color: "text-violet-500 bg-violet-50 dark:bg-violet-900/20" },
-    movimentacao: { icon: Gavel, color: "text-zinc-500 bg-zinc-50 dark:bg-zinc-800" },
+    movimentacao: { icon: Gavel, color: "text-zinc-500 bg-muted" },
   };
   
   const config = iconConfig[item.type] || iconConfig.movimentacao;
@@ -324,19 +324,19 @@ function TimelineItem({ item }: { item: any }) {
         <Icon className={cn("w-3 h-3", config.color.split(" ")[0])} />
       </div>
       
-      <div className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+      <div className="p-3 rounded-lg border border-border bg-card">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <h4 className="font-medium text-sm text-zinc-900 dark:text-zinc-100">
+            <h4 className="font-medium text-sm text-foreground">
               {item.title}
             </h4>
             {item.description && (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                 {item.description}
               </p>
             )}
           </div>
-          <span className="text-xs font-mono text-zinc-400 flex-shrink-0">
+          <span className="text-xs font-mono text-muted-foreground flex-shrink-0">
             {item.date ? format(new Date(item.date), "dd/MM/yyyy") : "N/A"}
           </span>
         </div>
@@ -396,7 +396,7 @@ export default function CasoDetailPage() {
   if (!caso) {
     return (
       <div className="p-6 text-center">
-        <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+        <h1 className="text-xl font-bold text-foreground">
           Caso não encontrado
         </h1>
         <Link href="/admin/casos">
@@ -454,7 +454,7 @@ export default function CasoDetailPage() {
                   </Badge>
                 )}
                 {caso.codigo && (
-                  <span className="text-xs font-mono text-zinc-400">{caso.codigo}</span>
+                  <span className="text-xs font-mono text-muted-foreground">{caso.codigo}</span>
                 )}
                 {isReuPreso && (
                   <span className="flex items-center gap-1.5 text-xs text-rose-500">
@@ -496,14 +496,14 @@ export default function CasoDetailPage() {
                   <Tooltip key={assistido.id}>
                     <TooltipTrigger>
                       <div className="relative">
-                        <Avatar className="h-10 w-10 border-2 border-white dark:border-zinc-950">
+                        <Avatar className="h-10 w-10 border-2 border-background">
                           <AvatarImage src={assistido.photoUrl || undefined} />
-                          <AvatarFallback className="text-xs font-bold bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                          <AvatarFallback className="text-xs font-bold bg-muted text-muted-foreground">
                             {getInitials(assistido.nome)}
                           </AvatarFallback>
                         </Avatar>
                         {assistido.preso && (
-                          <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white dark:bg-zinc-950">
+                          <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-background">
                             <StatusPrisionalDot preso={true} size="sm" />
                           </span>
                         )}
@@ -520,7 +520,7 @@ export default function CasoDetailPage() {
                   </Tooltip>
                 ))}
                 {caso.assistidos.length > 5 && (
-                  <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-600 dark:text-zinc-300 border-2 border-white dark:border-zinc-950">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground border-2 border-background">
                     +{caso.assistidos.length - 5}
                   </div>
                 )}
@@ -557,11 +557,11 @@ export default function CasoDetailPage() {
             {/* Stats Cards - Design Defender */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {/* Assistidos */}
-              <div className="group relative bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 hover:shadow-md hover:border-rose-200 dark:hover:border-rose-900/50 transition-all duration-200">
+              <div className="group relative bg-card rounded-lg border border-border p-4 hover:shadow-md hover:border-rose-200 dark:hover:border-rose-900/50 transition-all duration-200">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Assistidos</span>
-                    <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mt-1 tracking-tight">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Assistidos</span>
+                    <p className="text-3xl font-bold text-foreground mt-1 tracking-tight">
                       {caso.assistidos?.length || 0}
                     </p>
                   </div>
@@ -570,7 +570,7 @@ export default function CasoDetailPage() {
                   </div>
                 </div>
                 {assistidosPresos > 0 && (
-                  <div className="mt-3 pt-2.5 border-t border-zinc-100 dark:border-zinc-800">
+                  <div className="mt-3 pt-2.5 border-t border-border">
                     <p className="text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1.5 font-medium">
                       <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
@@ -583,11 +583,11 @@ export default function CasoDetailPage() {
               </div>
               
               {/* Processos */}
-              <div className="group relative bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900/50 transition-all duration-200">
+              <div className="group relative bg-card rounded-lg border border-border p-4 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900/50 transition-all duration-200">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Processos</span>
-                    <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mt-1 tracking-tight">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Processos</span>
+                    <p className="text-3xl font-bold text-foreground mt-1 tracking-tight">
                       {caso.processos?.length || 0}
                     </p>
                   </div>
@@ -598,11 +598,11 @@ export default function CasoDetailPage() {
               </div>
               
               {/* Audiências */}
-              <div className="group relative bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-900/50 transition-all duration-200">
+              <div className="group relative bg-card rounded-lg border border-border p-4 hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-900/50 transition-all duration-200">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Audiências</span>
-                    <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mt-1 tracking-tight">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Audiências</span>
+                    <p className="text-3xl font-bold text-foreground mt-1 tracking-tight">
                       {caso.audiencias?.length || 0}
                     </p>
                   </div>
@@ -613,11 +613,11 @@ export default function CasoDetailPage() {
               </div>
               
               {/* Personas */}
-              <div className="group relative bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 hover:shadow-md hover:border-violet-200 dark:hover:border-violet-900/50 transition-all duration-200">
+              <div className="group relative bg-card rounded-lg border border-border p-4 hover:shadow-md hover:border-violet-200 dark:hover:border-violet-900/50 transition-all duration-200">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Personas</span>
-                    <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mt-1 tracking-tight">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Personas</span>
+                    <p className="text-3xl font-bold text-foreground mt-1 tracking-tight">
                       {personas.length}
                     </p>
                   </div>
@@ -630,9 +630,9 @@ export default function CasoDetailPage() {
 
             {/* Observações */}
             {caso.observacoes && (
-              <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-5">
-                <h3 className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-3">Observações</h3>
-                <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{caso.observacoes}</p>
+              <div className="bg-card rounded-lg border border-border p-5">
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Observações</h3>
+                <p className="text-sm text-foreground/80 leading-relaxed">{caso.observacoes}</p>
               </div>
             )}
 
@@ -695,33 +695,33 @@ export default function CasoDetailPage() {
                   <div className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-900/20">
                     <User className="w-4 h-4 text-rose-500" />
                   </div>
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground/80">
                     Assistidos
                   </h3>
-                  <span className="text-xs text-zinc-400 ml-1">({caso.assistidos.length})</span>
+                  <span className="text-xs text-muted-foreground ml-1">({caso.assistidos.length})</span>
                 </div>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {(caso.assistidos as any[]).map((assistido: { id: number; nome: string; photoUrl?: string | null; preso?: boolean; localPrisao?: string | null; statusPrisional?: string; vulgo?: string; dataPrisao?: string | null }) => (
                     <div 
                       key={assistido.id} 
                       className={cn(
-                        "group bg-white dark:bg-zinc-900 rounded-lg border overflow-hidden",
+                        "group bg-card rounded-lg border overflow-hidden",
                         "hover:shadow-md transition-all duration-200 cursor-pointer",
-                        assistido.preso 
-                          ? "border-l-[3px] border-l-red-500 border-zinc-200 dark:border-zinc-800" 
-                          : "border-zinc-200 dark:border-zinc-800"
+                        assistido.preso
+                          ? "border-l-[3px] border-l-red-500 border-border"
+                          : "border-border"
                       )}
                     >
                       <div className="p-4">
                         <div className="flex items-center gap-3">
-                          <Avatar className="h-11 w-11 border-2 border-zinc-100 dark:border-zinc-800">
+                          <Avatar className="h-11 w-11 border-2 border-border">
                             <AvatarImage src={assistido.photoUrl || undefined} />
-                            <AvatarFallback className="text-xs font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+                            <AvatarFallback className="text-xs font-bold bg-muted text-muted-foreground">
                               {getInitials(assistido.nome)}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">
+                            <h4 className="font-medium text-sm text-foreground truncate group-hover:text-foreground/80 transition-colors">
                               {assistido.nome}
                             </h4>
                             <PrisonerIndicator 
@@ -753,10 +753,10 @@ export default function CasoDetailPage() {
                   <div className="p-1.5 rounded-lg bg-violet-50 dark:bg-violet-900/20">
                     <Users className="w-4 h-4 text-violet-500" />
                   </div>
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground/80">
                     Outras Personas
                   </h3>
-                  <span className="text-xs text-zinc-400 ml-1">({personas.length})</span>
+                  <span className="text-xs text-muted-foreground ml-1">({personas.length})</span>
                 </div>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {personas.map((persona) => {
@@ -770,7 +770,7 @@ export default function CasoDetailPage() {
                       <div 
                         key={persona.id} 
                         className={cn(
-                          "group bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden",
+                          "group bg-card rounded-lg border border-border overflow-hidden",
                           "hover:shadow-md transition-all duration-200",
                           "border-l-[3px]",
                           tipoColors[persona.tipo?.toLowerCase()] || tipoColors.outro
@@ -779,10 +779,10 @@ export default function CasoDetailPage() {
                         <div className="p-4">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                              <h4 className="font-medium text-sm text-foreground truncate">
                                 {persona.nome}
                               </h4>
-                              <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400 mt-0.5 block">
+                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mt-0.5 block">
                                 {persona.tipo}
                               </span>
                             </div>
@@ -799,7 +799,7 @@ export default function CasoDetailPage() {
                             )}
                           </div>
                           {persona.observacoes && (
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-3 line-clamp-2 leading-relaxed">
+                            <p className="text-xs text-muted-foreground mt-3 line-clamp-2 leading-relaxed">
                               {persona.observacoes}
                             </p>
                           )}
@@ -813,40 +813,40 @@ export default function CasoDetailPage() {
 
             {/* Empty State */}
             {(!caso.assistidos || caso.assistidos.length === 0) && personas.length === 0 && (
-              <div className="text-center py-16 bg-zinc-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
-                  <Users className="w-6 h-6 text-zinc-400" />
+              <div className="text-center py-16 bg-muted/50 rounded-xl border border-dashed border-border">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-muted mb-4">
+                  <Users className="w-6 h-6 text-muted-foreground" />
                 </div>
-                <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Nenhum envolvido cadastrado</p>
-                <p className="text-xs text-zinc-400 mt-1">Adicione assistidos e testemunhas ao caso</p>
+                <p className="text-sm font-medium text-foreground/80">Nenhum envolvido cadastrado</p>
+                <p className="text-xs text-muted-foreground mt-1">Adicione assistidos e testemunhas ao caso</p>
               </div>
             )}
           </TabsContent>
 
           {/* Tab: Timeline */}
           <TabsContent value="timeline" className="mt-6">
-            <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
+            <div className="bg-card rounded-lg border border-border p-6">
               <div className="flex items-center gap-2 mb-6">
-                <div className="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                  <Activity className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+                <div className="p-1.5 rounded-lg bg-muted">
+                  <Activity className="w-4 h-4 text-muted-foreground" />
                 </div>
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground/80">
                   Linha do Tempo
                 </h3>
-                <span className="text-xs text-zinc-400 ml-1">({timeline.length})</span>
+                <span className="text-xs text-muted-foreground ml-1">({timeline.length})</span>
               </div>
               
               {timeline.length === 0 ? (
-                <div className="text-center py-16 bg-zinc-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
-                    <Activity className="w-6 h-6 text-zinc-400" />
+                <div className="text-center py-16 bg-muted/50 rounded-xl border border-dashed border-border">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-muted mb-4">
+                    <Activity className="w-6 h-6 text-muted-foreground" />
                   </div>
-                  <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Nenhum evento registrado</p>
-                  <p className="text-xs text-zinc-400 mt-1">Os eventos aparecerão aqui conforme o caso evolui</p>
+                  <p className="text-sm font-medium text-foreground/80">Nenhum evento registrado</p>
+                  <p className="text-xs text-muted-foreground mt-1">Os eventos aparecerão aqui conforme o caso evolui</p>
                 </div>
               ) : (
                 <div className="relative">
-                  <div className="absolute left-[15px] top-2 bottom-2 w-[2px] bg-gradient-to-b from-emerald-200 via-blue-200 to-zinc-200 dark:from-emerald-900 dark:via-blue-900 dark:to-zinc-800 rounded-full" />
+                  <div className="absolute left-[15px] top-2 bottom-2 w-[2px] bg-gradient-to-b from-emerald-200 via-blue-200 to-border dark:from-emerald-900 dark:via-blue-900 rounded-full" />
                   <div className="space-y-3">
                     {timeline.slice(0, 20).map((item) => (
                       <TimelineItem key={item.id} item={item} />
@@ -866,23 +866,23 @@ export default function CasoDetailPage() {
                     <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20">
                       <Scale className="w-4 h-4 text-blue-500" />
                     </div>
-                    <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground/80">
                       Processos Vinculados
                     </h3>
-                    <span className="text-xs text-zinc-400 ml-1">({caso.processos.length})</span>
+                    <span className="text-xs text-muted-foreground ml-1">({caso.processos.length})</span>
                   </div>
                   {(caso.processos as any[]).map((processo: { id: number; numeroAutos: string; vara: string | null; comarca: string | null; fase?: string; demandasAbertas?: number }) => (
-                    <div 
-                      key={processo.id} 
-                      className="group bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 border-l-[3px] border-l-blue-500 overflow-hidden hover:shadow-md transition-all duration-200"
+                    <div
+                      key={processo.id}
+                      className="group bg-card rounded-lg border border-border border-l-[3px] border-l-blue-500 overflow-hidden hover:shadow-md transition-all duration-200"
                     >
                       <div className="p-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <p className="font-mono text-sm font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                            <p className="font-mono text-sm font-semibold text-foreground tracking-tight">
                               {processo.numeroAutos}
                             </p>
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 flex items-center gap-1.5">
+                            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
                               <MapPin className="w-3 h-3" />
                               {processo.vara} • {processo.comarca}
                             </p>
@@ -899,7 +899,7 @@ export default function CasoDetailPage() {
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              className="gap-1.5 text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
                             >
                               Ver <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                             </Button>
@@ -910,12 +910,12 @@ export default function CasoDetailPage() {
                   ))}
                 </>
               ) : (
-                <div className="text-center py-16 bg-zinc-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
-                    <Scale className="w-6 h-6 text-zinc-400" />
+                <div className="text-center py-16 bg-muted/50 rounded-xl border border-dashed border-border">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-muted mb-4">
+                    <Scale className="w-6 h-6 text-muted-foreground" />
                   </div>
-                  <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Nenhum processo vinculado</p>
-                  <p className="text-xs text-zinc-400 mt-1 mb-4">Vincule processos para acompanhamento integrado</p>
+                  <p className="text-sm font-medium text-foreground/80">Nenhum processo vinculado</p>
+                  <p className="text-xs text-muted-foreground mt-1 mb-4">Vincule processos para acompanhamento integrado</p>
                   <Button variant="outline" size="sm" className="gap-2">
                     <Plus className="w-4 h-4" /> Vincular processo
                   </Button>
@@ -960,7 +960,7 @@ function FundamentosTab({ casoId }: { casoId: number }) {
     return (
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-20 bg-zinc-100 dark:bg-zinc-800 rounded-lg animate-pulse" />
+          <div key={i} className="h-20 bg-muted rounded-lg animate-pulse" />
         ))}
       </div>
     );
@@ -968,14 +968,14 @@ function FundamentosTab({ casoId }: { casoId: number }) {
 
   if (referencias.length === 0) {
     return (
-      <div className="text-center py-16 bg-zinc-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
-          <Library className="w-6 h-6 text-zinc-400" />
+      <div className="text-center py-16 bg-muted/50 rounded-xl border border-dashed border-border">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-muted mb-4">
+          <Library className="w-6 h-6 text-muted-foreground" />
         </div>
-        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
+        <p className="text-sm font-medium text-foreground/80">
           Nenhum fundamento vinculado
         </p>
-        <p className="text-xs text-zinc-400 mt-1 max-w-xs mx-auto">
+        <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">
           Vincule teses e artigos de lei através da{" "}
           <Link href="/admin/jurisprudencia" className="text-emerald-600 hover:underline">
             Biblioteca Jurídica
@@ -990,13 +990,13 @@ function FundamentosTab({ casoId }: { casoId: number }) {
     <div className="space-y-6">
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Teses</p>
-          <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">{teses.length}</p>
+        <div className="bg-card rounded-lg border border-border p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Teses</p>
+          <p className="text-2xl font-bold text-foreground mt-1">{teses.length}</p>
         </div>
-        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Legislação</p>
-          <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">{artigos.length}</p>
+        <div className="bg-card rounded-lg border border-border p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Legislação</p>
+          <p className="text-2xl font-bold text-foreground mt-1">{artigos.length}</p>
         </div>
       </div>
 
@@ -1007,10 +1007,10 @@ function FundamentosTab({ casoId }: { casoId: number }) {
             <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20">
               <Scale className="w-4 h-4 text-blue-500" />
             </div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground/80">
               Teses de Jurisprudência
             </h3>
-            <span className="text-xs text-zinc-400">({teses.length})</span>
+            <span className="text-xs text-muted-foreground">({teses.length})</span>
           </div>
           <div className="space-y-2">
             {teses.map((ref) => (
@@ -1033,10 +1033,10 @@ function FundamentosTab({ casoId }: { casoId: number }) {
             <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
               <BookOpen className="w-4 h-4 text-emerald-500" />
             </div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground/80">
               Legislação
             </h3>
-            <span className="text-xs text-zinc-400">({artigos.length})</span>
+            <span className="text-xs text-muted-foreground">({artigos.length})</span>
           </div>
           <div className="space-y-2">
             {artigos.map((ref) => (
@@ -1052,7 +1052,7 @@ function FundamentosTab({ casoId }: { casoId: number }) {
         </section>
       )}
 
-      <p className="text-xs text-zinc-400 text-center pt-2">
+      <p className="text-xs text-muted-foreground text-center pt-2">
         Adicione mais referências via{" "}
         <Link href="/admin/jurisprudencia" className="text-emerald-600 hover:underline">Jurisprudência</Link>
         {" "}ou{" "}
@@ -1090,7 +1090,7 @@ function ReferenciaCard({ referencia, corBorda, onRemover, linkHref }: Referenci
   return (
     <div
       className={cn(
-        "group bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 border-l-[3px] overflow-hidden hover:shadow-sm transition-all duration-200",
+        "group bg-card rounded-lg border border-border border-l-[3px] overflow-hidden hover:shadow-sm transition-all duration-200",
         corBorda
       )}
     >
@@ -1098,20 +1098,20 @@ function ReferenciaCard({ referencia, corBorda, onRemover, linkHref }: Referenci
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             {referencia.citacaoFormatada ? (
-              <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed line-clamp-3">
+              <p className="text-sm text-foreground/80 leading-relaxed line-clamp-3">
                 {referencia.citacaoFormatada}
               </p>
             ) : (
-              <p className="text-sm text-zinc-500 font-mono">
+              <p className="text-sm text-muted-foreground font-mono">
                 Ref: {referencia.referenciaId}
               </p>
             )}
             {referencia.observacao && (
-              <p className="text-xs text-zinc-400 mt-1.5 italic">
+              <p className="text-xs text-muted-foreground mt-1.5 italic">
                 &ldquo;{referencia.observacao}&rdquo;
               </p>
             )}
-            <p className="text-[10px] text-zinc-400 mt-2">
+            <p className="text-[10px] text-muted-foreground mt-2">
               {format(new Date(referencia.createdAt), "dd/MM/yyyy", { locale: ptBR })}
             </p>
           </div>
@@ -1125,7 +1125,7 @@ function ReferenciaCard({ referencia, corBorda, onRemover, linkHref }: Referenci
                     className="h-7 w-7 cursor-pointer"
                     onClick={copiar}
                   >
-                    <FileText className={cn("w-3.5 h-3.5", copied ? "text-emerald-500" : "text-zinc-400")} />
+                    <FileText className={cn("w-3.5 h-3.5", copied ? "text-emerald-500" : "text-muted-foreground")} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>{copied ? "Copiado!" : "Copiar citação"}</TooltipContent>
@@ -1135,7 +1135,7 @@ function ReferenciaCard({ referencia, corBorda, onRemover, linkHref }: Referenci
               <TooltipTrigger asChild>
                 <Link href={linkHref}>
                   <Button variant="ghost" size="icon" className="h-7 w-7 cursor-pointer">
-                    <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
+                    <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
                   </Button>
                 </Link>
               </TooltipTrigger>
@@ -1149,7 +1149,7 @@ function ReferenciaCard({ referencia, corBorda, onRemover, linkHref }: Referenci
                   className="h-7 w-7 cursor-pointer"
                   onClick={onRemover}
                 >
-                  <Trash2 className="w-3.5 h-3.5 text-zinc-400 hover:text-red-500 transition-colors" />
+                  <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-red-500 transition-colors" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Remover referência</TooltipContent>

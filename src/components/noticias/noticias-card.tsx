@@ -67,11 +67,11 @@ export function NoticiaCard({
       className={cn(
         "group relative cursor-pointer",
         "pl-4 pr-5 py-4 transition-colors",
-        "border-b border-zinc-100 dark:border-zinc-800",
+        "border-b border-border",
         "border-l-2",
         isSelected
-          ? "border-l-emerald-500 bg-zinc-50 dark:bg-zinc-800/50"
-          : "border-l-transparent hover:border-l-zinc-200 dark:hover:border-l-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/40"
+          ? "border-l-emerald-500 bg-muted/50"
+          : "border-l-transparent hover:border-l-border hover:bg-muted/50"
       )}
       onClick={onClick}
     >
@@ -83,19 +83,19 @@ export function NoticiaCard({
           style={{ backgroundColor: corFonte }}
         />
         {/* Nome da fonte */}
-        <span className="text-xs text-zinc-400 font-medium truncate max-w-[80px]">
+        <span className="text-xs text-muted-foreground font-medium truncate max-w-[80px]">
           {nomeFonte}
         </span>
-        <span className="text-zinc-200 dark:text-zinc-700 shrink-0">·</span>
+        <span className="text-muted-foreground/50 shrink-0">·</span>
         {/* Categoria */}
-        <span className="text-xs text-zinc-400 capitalize shrink-0">
+        <span className="text-xs text-muted-foreground capitalize shrink-0">
           {nomeCategoria}
         </span>
         {/* Tempo */}
         {noticia.publicadoEm && (
           <>
-            <span className="text-zinc-200 dark:text-zinc-700 shrink-0">·</span>
-            <span className="text-xs text-zinc-400 shrink-0">
+            <span className="text-muted-foreground/50 shrink-0">·</span>
+            <span className="text-xs text-muted-foreground shrink-0">
               {formatDistanceToNow(new Date(noticia.publicadoEm), { addSuffix: true, locale: ptBR })}
             </span>
           </>
@@ -124,33 +124,33 @@ export function NoticiaCard({
           >
             <Star className={cn(
               "h-3 w-3 transition-colors",
-              isFavorito ? "fill-amber-400 text-amber-400" : "text-zinc-300 hover:text-amber-400"
+              isFavorito ? "fill-amber-400 text-amber-400" : "text-muted-foreground/50 hover:text-amber-400"
             )} />
           </button>
           {/* Menu hover: tempo de leitura, paperclip, pasta, external */}
           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
             {tempoLeitura && (
-              <span className="flex items-center gap-0.5 text-[10px] text-zinc-400 mr-0.5">
+              <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground mr-0.5">
                 <Clock className="h-2.5 w-2.5" />
                 {tempoLeitura}m
               </span>
             )}
             <button
-              className="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-muted transition-colors"
               onClick={e => { e.stopPropagation(); onSalvarNoCaso(); }}
               title="Vincular a caso"
               aria-label="Vincular a caso"
             >
-              <Paperclip className="h-3 w-3 text-zinc-400" />
+              <Paperclip className="h-3 w-3 text-muted-foreground" />
             </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  className="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-muted transition-colors"
                   title="Salvar em pasta"
                   aria-label="Salvar em pasta"
                 >
-                  <FolderPlus className="h-3 w-3 text-zinc-400" />
+                  <FolderPlus className="h-3 w-3 text-muted-foreground" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
@@ -171,12 +171,12 @@ export function NoticiaCard({
               href={noticia.urlOriginal}
               target="_blank"
               rel="noopener noreferrer"
-              className="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-muted transition-colors"
               title="Abrir artigo original"
               aria-label="Abrir artigo original"
               onClick={e => e.stopPropagation()}
             >
-              <ExternalLink className="h-3 w-3 text-zinc-400" />
+              <ExternalLink className="h-3 w-3 text-muted-foreground" />
             </a>
           </div>
         </div>
@@ -187,8 +187,8 @@ export function NoticiaCard({
         className={cn(
           "text-base font-semibold leading-snug line-clamp-2 transition-colors",
           isSelected
-            ? "text-zinc-900 dark:text-zinc-100"
-            : "text-zinc-800 dark:text-zinc-200 group-hover:text-zinc-900 dark:group-hover:text-zinc-100"
+            ? "text-foreground"
+            : "text-foreground group-hover:text-foreground"
         )}
         style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
       >

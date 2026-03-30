@@ -104,10 +104,10 @@ export default function EscalaPage() {
       {/* HEADER */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-xl font-semibold text-foreground">
             Escala de Atribuições
           </h1>
-          <p className="text-sm text-zinc-500 mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             Defina a atribuição mensal de cada defensor
           </p>
         </div>
@@ -125,7 +125,7 @@ export default function EscalaPage() {
               onClick={salvarEscalas} 
               disabled={salvando}
               size="sm"
-              className="bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 gap-2"
+              className="bg-zinc-900 hover:bg-zinc-800 dark:bg-foreground dark:hover:bg-foreground/90 dark:text-background gap-2"
             >
               {salvando ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
               Salvar
@@ -143,8 +143,8 @@ export default function EscalaPage() {
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-medium transition-all",
               anoSelecionado === ano
-                ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-md"
-                : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                ? "bg-zinc-900 text-white dark:bg-foreground dark:text-background shadow-md"
+                : "bg-zinc-100 text-zinc-600 dark:bg-muted dark:text-muted-foreground hover:bg-zinc-200 dark:hover:bg-muted"
             )}
           >
             {ano}
@@ -153,7 +153,7 @@ export default function EscalaPage() {
       </div>
 
       {/* LEGENDA - Versão Discreta */}
-      <div className="flex items-center justify-center gap-8 mb-6 pb-6 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="flex items-center justify-center gap-8 mb-6 pb-6 border-b border-zinc-200 dark:border-border">
         <div className="flex items-center gap-2">
           <Gavel className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Júri + EP</span>
@@ -181,16 +181,16 @@ export default function EscalaPage() {
             <div
               key={key} 
               className={cn(
-                "group rounded-xl border bg-white dark:bg-zinc-900 p-3 transition-all",
+                "group rounded-xl border bg-white dark:bg-card p-3 transition-all",
                 isAtual 
-                  ? "border-zinc-900 dark:border-zinc-100 ring-2 ring-zinc-900/10 dark:ring-zinc-100/10" 
-                  : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700",
+                  ? "border-zinc-900 dark:border-foreground ring-2 ring-zinc-900/10 dark:ring-border/10"
+                  : "border-zinc-200 dark:border-border hover:border-zinc-300 dark:hover:border-muted",
                 foiAlterado && "border-amber-400 dark:border-amber-500 bg-amber-50/50 dark:bg-amber-950/20"
               )}
             >
               {/* Nome do mês */}
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                <span className="text-sm font-bold text-foreground">
                   {MESES_NOMES[mes - 1]}
                 </span>
                 {isAtual && (
@@ -202,7 +202,7 @@ export default function EscalaPage() {
               <div className="space-y-1.5 text-[11px]">
                 {/* Rodrigo */}
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 flex items-center justify-center font-bold text-white bg-zinc-800 dark:bg-zinc-600 rounded-md text-[10px]">
+                  <span className="w-5 h-5 flex items-center justify-center font-bold text-white bg-zinc-800 dark:bg-foreground dark:text-background rounded-md text-[10px]">
                     R
                   </span>
                   <RodrigoIcon className={cn("w-3.5 h-3.5", rodrigoAttr.cor)} />
@@ -213,7 +213,7 @@ export default function EscalaPage() {
 
                 {/* Juliane */}
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 flex items-center justify-center font-bold text-zinc-900 bg-white border border-zinc-600 dark:border-zinc-400 rounded-md text-[10px]">
+                  <span className="w-5 h-5 flex items-center justify-center font-bold text-zinc-900 bg-white border border-border rounded-md text-[10px]">
                     J
                   </span>
                   <JulianeIcon className={cn("w-3.5 h-3.5", julianeAttr.cor)} />
@@ -226,7 +226,7 @@ export default function EscalaPage() {
               {/* Botão alternar */}
               <button
                 onClick={() => alternarEscala(anoSelecionado, mes)}
-                className="w-full mt-3 flex items-center justify-center gap-1 py-1 rounded-md text-[10px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                className="w-full mt-3 flex items-center justify-center gap-1 py-1 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-muted transition-colors"
               >
                 <ArrowLeftRight className="w-3 h-3" />
                 Alternar
@@ -237,11 +237,11 @@ export default function EscalaPage() {
       </div>
 
       {/* RODAPÉ INFORMATIVO */}
-      <div className="mt-8 text-center text-xs text-zinc-400">
+      <div className="mt-8 text-center text-xs text-muted-foreground">
         <p>
-          <span className="font-semibold text-white bg-zinc-800 px-1 py-0.5 rounded mr-1">R</span> = Dr. Rodrigo
+          <span className="font-semibold text-white bg-zinc-800 dark:bg-foreground dark:text-background px-1 py-0.5 rounded mr-1">R</span> = Dr. Rodrigo
           <span className="mx-3">•</span>
-          <span className="font-semibold text-zinc-900 bg-white border border-zinc-700 px-1 py-0.5 rounded mr-1">J</span> = Dra. Juliane
+          <span className="font-semibold text-foreground bg-white dark:bg-background border border-border px-1 py-0.5 rounded mr-1">J</span> = Dra. Juliane
         </p>
       </div>
     </div>

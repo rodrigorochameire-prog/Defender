@@ -91,7 +91,7 @@ export function CitarEmCasoModal({
 
         <div className="space-y-4 pt-1">
           {/* Toggle caso / processo */}
-          <div className="flex gap-1 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 w-fit">
+          <div className="flex gap-1 p-1 rounded-lg bg-muted w-fit">
             {(["caso", "processo"] as Alvo[]).map((a) => (
               <button
                 key={a}
@@ -100,8 +100,8 @@ export function CitarEmCasoModal({
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer",
                   alvo === a
-                    ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {a === "caso" ? <Briefcase className="w-3.5 h-3.5" /> : <Scale className="w-3.5 h-3.5" />}
@@ -123,16 +123,16 @@ export function CitarEmCasoModal({
 
           {/* Lista de resultados */}
           {alvo === "caso" && casosData && casosData.length > 0 && (
-            <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+            <div className="border border-border rounded-lg overflow-hidden max-h-48 overflow-y-auto">
               {casosData.map((caso) => (
                 <button
                   key={caso.id}
                   onClick={() => setCasoId(caso.id)}
                   className={cn(
-                    "w-full text-left px-3 py-2 text-sm transition-colors border-b border-zinc-100 dark:border-zinc-800 last:border-0 cursor-pointer",
+                    "w-full text-left px-3 py-2 text-sm transition-colors border-b border-border last:border-0 cursor-pointer",
                     casoId === caso.id
                       ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700"
-                      : "hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                      : "hover:bg-muted text-foreground/80"
                   )}
                 >
                   <span className="font-medium">{caso.titulo}</span>
@@ -143,16 +143,16 @@ export function CitarEmCasoModal({
           )}
 
           {alvo === "processo" && processosData && processosData && processosData.length > 0 && (
-            <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+            <div className="border border-border rounded-lg overflow-hidden max-h-48 overflow-y-auto">
               {processosData.map((proc: { id: number; numeroAutos?: string | null; vara?: string | null }) => (
                 <button
                   key={proc.id}
                   onClick={() => setProcessoId(proc.id)}
                   className={cn(
-                    "w-full text-left px-3 py-2 text-sm transition-colors border-b border-zinc-100 dark:border-zinc-800 last:border-0 cursor-pointer",
+                    "w-full text-left px-3 py-2 text-sm transition-colors border-b border-border last:border-0 cursor-pointer",
                     processoId === proc.id
                       ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700"
-                      : "hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                      : "hover:bg-muted text-foreground/80"
                   )}
                 >
                   <span className="font-mono font-medium">{proc.numeroAutos}</span>

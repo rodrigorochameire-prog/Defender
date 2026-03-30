@@ -86,7 +86,7 @@ function CopyInviteButton({ token }: { token: string }) {
       variant="outline"
       size="sm"
       onClick={handleCopy}
-      className="gap-1 text-xs h-7 px-2 border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+      className="gap-1 text-xs h-7 px-2 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
     >
       {copied ? (
         <Check className="h-3 w-3 text-emerald-500" />
@@ -119,11 +119,11 @@ function AreaBadges({ areas }: { areas: string[] | null | undefined }) {
 
 function StatusBadge({ isPending }: { isPending: boolean }) {
   return isPending ? (
-    <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">
+    <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30 text-xs">
       Pendente
     </Badge>
   ) : (
-    <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
+    <Badge className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 text-xs">
       Ativo
     </Badge>
   );
@@ -137,7 +137,7 @@ function DemoBadge({ expiresAt }: { expiresAt: Date | string }) {
 
   if (diffDays <= 0) {
     return (
-      <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs gap-1">
+      <Badge className="bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30 text-xs gap-1">
         <Timer className="h-3 w-3" />
         Expirado
       </Badge>
@@ -145,7 +145,7 @@ function DemoBadge({ expiresAt }: { expiresAt: Date | string }) {
   }
 
   return (
-    <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs gap-1">
+    <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30 text-xs gap-1">
       <Timer className="h-3 w-3" />
       Demo · {diffDays}d restante{diffDays !== 1 ? "s" : ""}
     </Badge>
@@ -198,19 +198,19 @@ function UserRow({ user }: { user: User }) {
   const isPending = !!user.inviteToken;
 
   return (
-    <div className="flex items-start justify-between gap-3 px-4 py-3 border-b border-zinc-800/60 last:border-0 hover:bg-zinc-800/30 transition-colors">
+    <div className="flex items-start justify-between gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
       {/* Info principal */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
           {user.funcao && (
-            <span className="text-xs font-mono text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded">{user.funcao}</span>
+            <span className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{user.funcao}</span>
           )}
-          <span className="font-medium text-zinc-100 text-sm">{user.name}</span>
-          <span className="text-xs text-zinc-500">{getRoleLabel(user.role)}</span>
+          <span className="font-medium text-foreground text-sm">{user.name}</span>
+          <span className="text-xs text-muted-foreground">{getRoleLabel(user.role)}</span>
         </div>
 
         {user.email && (
-          <div className="flex items-center gap-1 mt-0.5 text-xs text-zinc-500">
+          <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
             <Mail className="h-3 w-3 shrink-0" />
             <span className="truncate">{user.email}</span>
           </div>
@@ -301,13 +301,13 @@ function GenerateDemoDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="bg-zinc-900 border-zinc-700 text-zinc-100 sm:max-w-md">
+      <DialogContent className="bg-card border-border text-card-foreground sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-zinc-100">
+          <DialogTitle className="flex items-center gap-2 text-foreground">
             <Timer className="h-5 w-5 text-emerald-500" />
             Gerar Link de Demonstracao
           </DialogTitle>
-          <DialogDescription className="text-zinc-400">
+          <DialogDescription className="text-muted-foreground">
             Crie um link temporario para um colega experimentar o OMBUDS.
           </DialogDescription>
         </DialogHeader>
@@ -316,28 +316,28 @@ function GenerateDemoDialog({
           <div className="space-y-4 py-2">
             {/* Nome */}
             <div className="space-y-2">
-              <Label className="text-zinc-300 text-sm">Nome do colega</Label>
+              <Label className="text-foreground/80 text-sm">Nome do colega</Label>
               <Input
                 placeholder="Ex: Dr. Fulano de Tal"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-600"
+                className="bg-muted border-border text-foreground placeholder:text-muted-foreground/50"
               />
             </div>
 
             {/* Comarca */}
             <div className="space-y-2">
-              <Label className="text-zinc-300 text-sm">Comarca</Label>
+              <Label className="text-foreground/80 text-sm">Comarca</Label>
               <Select value={comarca} onValueChange={setComarca}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100">
+                <SelectTrigger className="bg-muted border-border text-foreground">
                   <SelectValue placeholder="Selecione a comarca" />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700">
+                <SelectContent className="bg-card border-border">
                   {comarcasList?.map((c) => (
                     <SelectItem
                       key={c.id}
                       value={c.nome}
-                      className="text-zinc-100 focus:bg-zinc-700 focus:text-zinc-100"
+                      className="text-foreground focus:bg-muted focus:text-foreground"
                     >
                       {c.nome}
                     </SelectItem>
@@ -348,7 +348,7 @@ function GenerateDemoDialog({
 
             {/* Areas */}
             <div className="space-y-2">
-              <Label className="text-zinc-300 text-sm">Areas principais</Label>
+              <Label className="text-foreground/80 text-sm">Areas principais</Label>
               <div className="flex flex-wrap gap-2">
                 {AREA_OPTIONS.map((opt) => (
                   <label
@@ -356,14 +356,14 @@ function GenerateDemoDialog({
                     className={cn(
                       "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs cursor-pointer transition-colors",
                       areas.includes(opt.value)
-                        ? "bg-emerald-600/20 border-emerald-500/40 text-emerald-400"
-                        : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-zinc-200"
+                        ? "bg-emerald-600/20 border-emerald-500/40 text-emerald-700 dark:text-emerald-400"
+                        : "bg-muted border-border text-muted-foreground hover:text-foreground"
                     )}
                   >
                     <Checkbox
                       checked={areas.includes(opt.value)}
                       onCheckedChange={() => handleToggleArea(opt.value)}
-                      className="h-3 w-3 border-zinc-600 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                      className="h-3 w-3 border-border data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                     />
                     {opt.label}
                   </label>
@@ -373,14 +373,14 @@ function GenerateDemoDialog({
 
             {/* Dias de validade */}
             <div className="space-y-2">
-              <Label className="text-zinc-300 text-sm">Dias de validade</Label>
+              <Label className="text-foreground/80 text-sm">Dias de validade</Label>
               <Input
                 type="number"
                 min={1}
                 max={30}
                 value={dias}
                 onChange={(e) => setDias(Number(e.target.value))}
-                className="bg-zinc-800 border-zinc-700 text-zinc-100 w-24"
+                className="bg-muted border-border text-foreground w-24"
               />
             </div>
 
@@ -395,7 +395,7 @@ function GenerateDemoDialog({
             </DialogFooter>
 
             {generateMutation.isError && (
-              <p className="text-red-400 text-xs mt-2">
+              <p className="text-red-500 dark:text-red-400 text-xs mt-2">
                 {generateMutation.error?.message ?? "Erro ao gerar link"}
               </p>
             )}
@@ -404,16 +404,16 @@ function GenerateDemoDialog({
           <div className="space-y-4 py-2">
             {/* Link gerado */}
             <div className="space-y-2">
-              <Label className="text-zinc-300 text-sm">Link gerado</Label>
-              <div className="flex items-center gap-2 p-3 bg-zinc-800 border border-emerald-500/40 rounded-lg">
-                <code className="text-xs text-emerald-400 break-all flex-1">
+              <Label className="text-foreground/80 text-sm">Link gerado</Label>
+              <div className="flex items-center gap-2 p-3 bg-muted border border-emerald-500/40 rounded-lg">
+                <code className="text-xs text-emerald-700 dark:text-emerald-400 break-all flex-1">
                   {generatedLink}
                 </code>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleCopyLink}
-                  className="shrink-0 gap-1 text-xs h-7 px-2 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                  className="shrink-0 gap-1 text-xs h-7 px-2 border-emerald-500/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10"
                 >
                   {copied ? (
                     <Check className="h-3 w-3" />
@@ -427,11 +427,11 @@ function GenerateDemoDialog({
 
             {/* Info de expiracao */}
             {generatedExpires && (
-              <div className="flex items-center gap-2 text-xs text-zinc-400">
-                <Timer className="h-3.5 w-3.5 text-amber-400" />
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Timer className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" />
                 <span>
                   Expira em{" "}
-                  <span className="text-amber-400 font-medium">
+                  <span className="text-amber-600 dark:text-amber-400 font-medium">
                     {new Date(generatedExpires).toLocaleDateString("pt-BR", {
                       day: "2-digit",
                       month: "long",
@@ -446,7 +446,7 @@ function GenerateDemoDialog({
               <Button
                 variant="outline"
                 onClick={handleClose}
-                className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                className="border-border text-foreground/80 hover:bg-muted"
               >
                 Fechar
               </Button>
@@ -466,18 +466,18 @@ function LoadingSkeleton() {
   return (
     <div className="space-y-4">
       {Array.from({ length: 3 }).map((_, i) => (
-        <Card key={i} className="bg-zinc-900 border-zinc-800">
+        <Card key={i} className="bg-card border-border">
           <CardHeader className="pb-2">
-            <Skeleton className="h-5 w-40 bg-zinc-800" />
+            <Skeleton className="h-5 w-40" />
           </CardHeader>
           <CardContent className="p-0">
             {Array.from({ length: 3 }).map((_, j) => (
-              <div key={j} className="flex items-center justify-between px-4 py-3 border-b border-zinc-800/60 last:border-0">
+              <div key={j} className="flex items-center justify-between px-4 py-3 border-b border-border last:border-0">
                 <div className="space-y-1.5">
-                  <Skeleton className="h-4 w-36 bg-zinc-800" />
-                  <Skeleton className="h-3 w-48 bg-zinc-800" />
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-3 w-48" />
                 </div>
-                <Skeleton className="h-5 w-16 bg-zinc-800 rounded-full" />
+                <Skeleton className="h-5 w-16 rounded-full" />
               </div>
             ))}
           </CardContent>
@@ -566,10 +566,10 @@ export default function ConvitesPage() {
             <UserPlus className="h-5 w-5 text-emerald-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
               Convites -- 7a Regional
             </h1>
-            <p className="text-sm text-zinc-500 mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               Gestao de links de convite para defensores da regional
             </p>
           </div>
@@ -579,20 +579,20 @@ export default function ConvitesPage() {
         <div className="flex items-center gap-3">
           <Button
             onClick={() => setDemoDialogOpen(true)}
-            className="gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700"
+            className="gap-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground border border-border"
           >
             <Timer className="h-4 w-4 text-emerald-500" />
             Gerar Link Demo
           </Button>
           <div className="flex gap-3">
             <div className="text-center">
-              <p className="text-xl font-bold text-emerald-400">{totalAtivos}</p>
-              <p className="text-xs text-zinc-500">Ativos</p>
+              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{totalAtivos}</p>
+              <p className="text-xs text-muted-foreground">Ativos</p>
             </div>
-            <div className="w-px bg-zinc-700" />
+            <div className="w-px bg-border" />
             <div className="text-center">
-              <p className="text-xl font-bold text-amber-400">{totalPendentes}</p>
-              <p className="text-xs text-zinc-500">Pendentes</p>
+              <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{totalPendentes}</p>
+              <p className="text-xs text-muted-foreground">Pendentes</p>
             </div>
           </div>
         </div>
@@ -602,17 +602,17 @@ export default function ConvitesPage() {
       <div className="flex flex-wrap gap-3 items-center">
         {/* Busca */}
         <div className="relative flex-1 min-w-48 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por nome..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-zinc-900 border-zinc-700 text-zinc-100 placeholder:text-zinc-600 h-8 text-sm"
+            className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground/50 h-8 text-sm"
           />
         </div>
 
         {/* Status filter */}
-        <div className="flex gap-1 p-0.5 bg-zinc-900 rounded-lg border border-zinc-700">
+        <div className="flex gap-1 p-0.5 bg-card rounded-lg border border-border">
           {filterButtons.map((btn) => (
             <button
               key={btn.value}
@@ -621,7 +621,7 @@ export default function ConvitesPage() {
                 "px-3 py-1 text-xs rounded-md font-medium transition-colors",
                 filterStatus === btn.value
                   ? "bg-emerald-600 text-white"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               {btn.label}
@@ -638,8 +638,8 @@ export default function ConvitesPage() {
             className={cn(
               "flex items-center gap-1.5 px-3 py-1 text-xs rounded-full border transition-colors",
               activeComarca === null
-                ? "bg-emerald-600/20 border-emerald-500/40 text-emerald-400"
-                : "bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-zinc-200"
+                ? "bg-emerald-600/20 border-emerald-500/40 text-emerald-700 dark:text-emerald-400"
+                : "bg-card border-border text-muted-foreground hover:text-foreground"
             )}
           >
             <MapPin className="h-3 w-3" />
@@ -652,8 +652,8 @@ export default function ConvitesPage() {
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1 text-xs rounded-full border transition-colors",
                 activeComarca === c
-                  ? "bg-emerald-600/20 border-emerald-500/40 text-emerald-400"
-                  : "bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-zinc-200"
+                  ? "bg-emerald-600/20 border-emerald-500/40 text-emerald-700 dark:text-emerald-400"
+                  : "bg-card border-border text-muted-foreground hover:text-foreground"
               )}
             >
               <MapPin className="h-3 w-3" />
@@ -667,7 +667,7 @@ export default function ConvitesPage() {
       {isLoading ? (
         <LoadingSkeleton />
       ) : displayComarcas.length === 0 ? (
-        <div className="text-center py-16 text-zinc-500">
+        <div className="text-center py-16 text-muted-foreground">
           <UserPlus className="h-10 w-10 mx-auto mb-3 opacity-30" />
           <p>Nenhum usuario encontrado para os filtros aplicados.</p>
         </div>
@@ -679,17 +679,17 @@ export default function ConvitesPage() {
             const pendentes = users.filter((u: User) => !!u.inviteToken).length;
 
             return (
-              <Card key={comarca} className="bg-zinc-900 border-zinc-800">
+              <Card key={comarca} className="bg-card border-border">
                 <CardHeader className="pb-2 px-4 pt-3">
-                  <CardTitle className="flex items-center justify-between text-sm font-semibold text-zinc-200">
+                  <CardTitle className="flex items-center justify-between text-sm font-semibold text-card-foreground">
                     <span className="flex items-center gap-1.5">
                       <MapPin className="h-3.5 w-3.5 text-emerald-500" />
                       {comarca}
                     </span>
-                    <span className="text-xs font-normal text-zinc-500">
+                    <span className="text-xs font-normal text-muted-foreground">
                       {users.length} usuario{users.length !== 1 ? "s" : ""}
                       {pendentes > 0 && (
-                        <span className="ml-2 text-amber-400">
+                        <span className="ml-2 text-amber-600 dark:text-amber-400">
                           · {pendentes} pendente{pendentes !== 1 ? "s" : ""}
                         </span>
                       )}

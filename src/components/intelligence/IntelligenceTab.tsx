@@ -39,13 +39,13 @@ interface KpiCardProps {
 
 function KpiCard({ label, value, icon: Icon, color }: KpiCardProps) {
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800">
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border">
       <Icon className={cn("h-4 w-4 shrink-0", color)} />
       <div className="min-w-0">
-        <p className="text-lg font-bold tabular-nums text-zinc-900 dark:text-zinc-50 leading-none">
+        <p className="text-lg font-bold tabular-nums text-foreground leading-none">
           {value}
         </p>
-        <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+        <p className="text-[10px] text-muted-foreground mt-0.5">
           {label}
         </p>
       </div>
@@ -169,7 +169,7 @@ export function IntelligenceTab({
   if (analysisQuery.isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 text-zinc-400 animate-spin" />
+        <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
       </div>
     );
   }
@@ -192,15 +192,15 @@ export function IntelligenceTab({
           <Brain className="h-12 w-12 text-emerald-500" />
           <Loader2 className="h-5 w-5 text-emerald-500 animate-spin absolute -bottom-1 -right-1" />
         </div>
-        <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mb-1">
+        <h3 className="text-lg font-semibold text-foreground mb-1">
           Analisando caso...
         </h3>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-sm">
+        <p className="text-sm text-muted-foreground max-w-sm">
           Consolidando dados de{" "}
           {pending?.enrichedDocs || 0} documentos enriquecidos.
           Isso pode levar de 30s a 2min.
         </p>
-        <div className="mt-4 w-48 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
+        <div className="mt-4 w-48 h-1.5 rounded-full bg-muted overflow-hidden">
           <div className="h-full bg-emerald-500 rounded-full animate-[indeterminate_1.5s_ease-in-out_infinite] w-1/3" />
         </div>
       </div>
@@ -211,18 +211,18 @@ export function IntelligenceTab({
   if (!hasAnalysis) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-        <Brain className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mb-4" />
-        <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mb-1">
+        <Brain className="h-12 w-12 text-muted-foreground/50 mb-4" />
+        <h3 className="text-lg font-semibold text-foreground mb-1">
           {isFailed ? "Analise falhou" : "Nenhuma analise gerada"}
         </h3>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-sm mb-2">
+        <p className="text-sm text-muted-foreground max-w-sm mb-2">
           {isFailed
             ? "Ocorreu um erro ao gerar a analise. Tente novamente."
             : "Clique para analisar os documentos e gerar dados estruturados sobre este caso."}
         </p>
 
         {pending && (
-          <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4">
+          <p className="text-xs text-muted-foreground mb-4">
             {pending.totalDocs} arquivo{pending.totalDocs !== 1 ? "s" : ""} na
             pasta
             {pending.enrichedDocs > 0 && (
@@ -339,7 +339,7 @@ export function IntelligenceTab({
       )}
 
       {/* Sub-tabs */}
-      <div className="flex gap-0 border-b border-zinc-100 dark:border-zinc-800 overflow-x-auto">
+      <div className="flex gap-0 border-b border-border overflow-x-auto">
         {SUB_TABS.map((t) => {
           const Icon = t.icon;
           return (
@@ -350,7 +350,7 @@ export function IntelligenceTab({
                 "flex items-center gap-1 px-3 py-2 text-[11px] font-medium border-b-2 transition-colors whitespace-nowrap",
                 subTab === t.key
                   ? "border-emerald-500 text-emerald-700 dark:text-emerald-400"
-                  : "border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300",
+                  : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
               <Icon className="h-3 w-3" />
@@ -398,8 +398,8 @@ export function IntelligenceTab({
       </div>
 
       {/* Footer: meta info + reanalisar */}
-      <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800">
-        <div className="flex items-center gap-3 text-[10px] text-zinc-400 dark:text-zinc-500">
+      <div className="flex items-center justify-between pt-2 border-t border-border">
+        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
           <span>
             v{analysis.version || 1} &middot;{" "}
             {analysis.analyzedAt
@@ -437,8 +437,7 @@ export function IntelligenceTab({
             disabled={isGenerating}
             className={cn(
               "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors",
-              "text-zinc-600 hover:text-zinc-800 bg-zinc-100 hover:bg-zinc-200",
-              "dark:text-zinc-400 dark:hover:text-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700",
+              "text-muted-foreground hover:text-foreground bg-muted hover:bg-muted/80",
               "disabled:opacity-50 disabled:cursor-not-allowed",
             )}
           >

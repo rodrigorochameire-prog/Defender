@@ -218,7 +218,7 @@ export default function AdminAssinaturasPage() {
     <div className="space-y-6 p-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-zinc-100">Assinaturas</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Assinaturas</h1>
         <p className="text-sm text-zinc-500 mt-1">
           Gerencie planos, descontos e pagamentos dos defensores
         </p>
@@ -260,7 +260,7 @@ export default function AdminAssinaturasPage() {
 
       {/* Pending Payments Section */}
       {pendingPayments && pendingPayments.length > 0 && (
-        <Card className="bg-zinc-900/50 border-amber-800/40 border-2">
+        <Card className="bg-card/50 border-amber-800/40 border-2">
           <CardHeader className="pb-3">
             <CardTitle className="text-base text-amber-400 flex items-center gap-2">
               <Clock className="h-4 w-4" />
@@ -272,11 +272,11 @@ export default function AdminAssinaturasPage() {
               {pendingPayments.map((item) => (
                 <div
                   key={item.payment.id}
-                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 bg-zinc-800/30 rounded-lg"
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 bg-muted/50 rounded-lg"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-zinc-200 text-sm">{item.user.name}</span>
+                      <span className="font-medium text-foreground text-sm">{item.user.name}</span>
                       <span className="text-xs text-zinc-500">{item.user.comarca}</span>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-zinc-500 mt-0.5">
@@ -325,10 +325,10 @@ export default function AdminAssinaturasPage() {
       {/* Plan Descriptions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {(Object.entries(PLANO_INFO) as [Plano, typeof PLANO_INFO[Plano]][]).map(([key, info]) => (
-          <Card key={key} className="bg-zinc-900/50 border-zinc-800/50">
+          <Card key={key} className="bg-card/50 border-border/50">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-1">
-                <span className="font-medium text-zinc-200">{info.label}</span>
+                <span className="font-medium text-foreground">{info.label}</span>
                 <span className="text-emerald-400 font-semibold">
                   R$ {info.valor}
                   <span className="text-xs text-zinc-500">/mes</span>
@@ -348,12 +348,12 @@ export default function AdminAssinaturasPage() {
             placeholder="Buscar por nome ou email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-zinc-900/50 border-zinc-800 text-zinc-200"
+            className="pl-9 bg-card/50 border-border text-foreground"
           />
         </div>
 
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[160px] bg-zinc-900/50 border-zinc-800 text-zinc-200">
+          <SelectTrigger className="w-[160px] bg-card/50 border-border text-foreground">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -367,7 +367,7 @@ export default function AdminAssinaturasPage() {
         </Select>
 
         <Select value={filterComarca} onValueChange={setFilterComarca}>
-          <SelectTrigger className="w-[180px] bg-zinc-900/50 border-zinc-800 text-zinc-200">
+          <SelectTrigger className="w-[180px] bg-card/50 border-border text-foreground">
             <SelectValue placeholder="Comarca" />
           </SelectTrigger>
           <SelectContent>
@@ -387,10 +387,10 @@ export default function AdminAssinaturasPage() {
             const isExpanded = expandedComarcas.has(comarca) || expandedComarcas.has("all");
 
             return (
-              <Card key={comarca} className="bg-zinc-900/50 border-zinc-800/50 overflow-hidden">
+              <Card key={comarca} className="bg-card/50 border-border/50 overflow-hidden">
                 <button
                   onClick={() => toggleComarca(comarca)}
-                  className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/30 transition-colors"
+                  className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     {isExpanded ? (
@@ -398,15 +398,15 @@ export default function AdminAssinaturasPage() {
                     ) : (
                       <ChevronRight className="h-4 w-4 text-zinc-500" />
                     )}
-                    <span className="font-medium text-zinc-200">{comarca}</span>
-                    <Badge variant="outline" className="text-xs border-zinc-700 text-zinc-500">
+                    <span className="font-medium text-foreground">{comarca}</span>
+                    <Badge variant="outline" className="text-xs border-border text-zinc-500">
                       {rows.length}
                     </Badge>
                   </div>
                 </button>
 
                 {isExpanded && (
-                  <div className="border-t border-zinc-800/50">
+                  <div className="border-t border-border/50">
                     {rows.map((row) => (
                       <UserSubscriptionRow
                         key={row.user.id}
@@ -460,12 +460,12 @@ function StatsCard({
   };
 
   return (
-    <Card className="bg-zinc-900/50 border-zinc-800/50">
+    <Card className="bg-card/50 border-border/50">
       <CardContent className="p-4 flex items-center gap-3">
         <Icon className={cn("h-5 w-5", colorMap[color])} />
         <div>
           <p className="text-xs text-zinc-500">{label}</p>
-          <p className="text-lg font-semibold text-zinc-100">{value}</p>
+          <p className="text-lg font-semibold text-foreground">{value}</p>
         </div>
       </CardContent>
     </Card>
@@ -521,17 +521,17 @@ function UserSubscriptionRow({
   const valorComDesconto = PLANO_INFO[currentPlano].valor * (1 - descontoNum / 100);
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 px-4 py-3 border-b border-zinc-800/30 last:border-b-0 hover:bg-zinc-800/20 transition-colors">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 px-4 py-3 border-b border-border/30 last:border-b-0 hover:bg-muted/20 transition-colors">
       {/* User Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-zinc-200 truncate">{user.name}</span>
+          <span className="font-medium text-foreground truncate">{user.name}</span>
           {statusInfo ? (
             <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", statusInfo.color)}>
               {statusInfo.label}
             </Badge>
           ) : (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-zinc-700/30 text-zinc-500 border-zinc-600/30">
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted/50 text-muted-foreground border-border/30">
               Sem plano
             </Badge>
           )}
@@ -544,7 +544,7 @@ function UserSubscriptionRow({
           )}
         </div>
         {subscription?.dataVencimento && (
-          <p className="text-[10px] text-zinc-600 mt-0.5">
+          <p className="text-[10px] text-muted-foreground/50 mt-0.5">
             Vencimento: {new Date(subscription.dataVencimento + "T00:00:00").toLocaleDateString("pt-BR")}
             {subscription.dataUltimoPagamento && (
               <> | Ultimo pagamento: {new Date(subscription.dataUltimoPagamento + "T00:00:00").toLocaleDateString("pt-BR")}</>
@@ -571,7 +571,7 @@ function UserSubscriptionRow({
             }
             disabled={isLoading}
           >
-            <SelectTrigger className="w-[130px] h-8 text-xs bg-zinc-800/50 border-zinc-700 text-zinc-300">
+            <SelectTrigger className="w-[130px] h-8 text-xs bg-muted/50 border-border text-foreground/80">
               <SelectValue placeholder="Plano..." />
             </SelectTrigger>
             <SelectContent>
@@ -598,7 +598,7 @@ function UserSubscriptionRow({
                       onSetDesconto(user.id, val);
                     }
                   }}
-                  className="w-[70px] h-8 text-xs bg-zinc-800/50 border-zinc-700 text-zinc-300 pr-6"
+                  className="w-[70px] h-8 text-xs bg-muted/50 border-border text-foreground/80 pr-6"
                   disabled={isLoading}
                 />
                 <Percent className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-zinc-500" />
@@ -631,7 +631,7 @@ function UserSubscriptionRow({
             <Button
               size="sm"
               variant="outline"
-              className="h-8 text-xs border-zinc-700 text-zinc-400 hover:bg-zinc-800/50"
+              className="h-8 text-xs border-border text-zinc-400 hover:bg-muted/50"
               onClick={() => onSetPlano(user.id, "essencial", 0)}
               disabled={isLoading}
             >

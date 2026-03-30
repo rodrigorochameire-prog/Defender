@@ -198,7 +198,7 @@ function getPrazoInfo(prazoStr: string) {
   }
   return { 
     text: `${dias}d`, 
-    className: "text-zinc-600 bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400", 
+    className: "text-muted-foreground/50 bg-zinc-100 dark:bg-muted dark:text-muted-foreground", 
     urgent: false,
     dias 
   };

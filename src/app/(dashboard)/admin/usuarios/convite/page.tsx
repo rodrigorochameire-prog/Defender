@@ -121,27 +121,27 @@ Defensoria Pública de ${comarcaNome}
           Voltar para Usuários
         </Link>
 
-        <Card className="p-8 bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800">
+        <Card className="p-8 bg-card border-border">
           <div className="text-center space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto">
               <Check className="w-8 h-8 text-emerald-600" />
             </div>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+            <h1 className="text-2xl font-bold text-foreground">
               Convite Gerado!
             </h1>
             <p className="text-zinc-500">
-              O convite para <span className="font-medium text-zinc-700 dark:text-zinc-300">{formData.nome}</span> foi gerado com sucesso.
+              O convite para <span className="font-medium text-foreground">{formData.nome}</span> foi gerado com sucesso.
             </p>
           </div>
 
           <div className="mt-8 space-y-4">
-            <div className="p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+            <div className="p-4 bg-muted/50 rounded-lg">
               <Label className="text-xs text-zinc-500 mb-2 block">Link de Convite</Label>
               <div className="flex gap-2">
                 <Input
                   readOnly
                   value={linkConvite}
-                  className="font-mono text-xs bg-white dark:bg-zinc-900"
+                  className="font-mono text-xs bg-card"
                 />
                 <Button variant="outline" onClick={handleCopyLink}>
                   <Copy className="w-4 h-4" />
@@ -203,7 +203,7 @@ Defensoria Pública de ${comarcaNome}
       </Link>
 
       <div>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
             <UserPlus className="w-5 h-5 text-white" />
           </div>
@@ -215,8 +215,8 @@ Defensoria Pública de ${comarcaNome}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Card className="p-6 bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800">
-          <h2 className="font-semibold text-zinc-900 dark:text-zinc-50 flex items-center gap-2 mb-4">
+        <Card className="p-6 bg-card border-border">
+          <h2 className="font-semibold text-foreground flex items-center gap-2 mb-4">
             <Users className="w-4 h-4 text-emerald-500" />
             Dados do Defensor
           </h2>
@@ -288,8 +288,8 @@ Defensoria Pública de ${comarcaNome}
           </div>
         </Card>
 
-        <Card className="p-6 bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800">
-          <h2 className="font-semibold text-zinc-900 dark:text-zinc-50 flex items-center gap-2 mb-4">
+        <Card className="p-6 bg-card border-border">
+          <h2 className="font-semibold text-foreground flex items-center gap-2 mb-4">
             <Building2 className="w-4 h-4 text-blue-500" />
             Núcleo de Atuação <span className="text-rose-500">*</span>
           </h2>
@@ -306,7 +306,7 @@ Defensoria Pública de ${comarcaNome}
                     "p-4 rounded-lg border-2 transition-all text-left",
                     formData.nucleo === key
                       ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
-                      : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300"
+                      : "border-border hover:border-zinc-300"
                   )}
                 >
                   <div className={cn("w-3 h-3 rounded-full mb-2", config.bgColor)} />
@@ -317,14 +317,14 @@ Defensoria Pública de ${comarcaNome}
           </div>
         </Card>
 
-        <Card className="p-6 bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800">
-          <h2 className="font-semibold text-zinc-900 dark:text-zinc-50 flex items-center gap-2 mb-4">
+        <Card className="p-6 bg-card border-border">
+          <h2 className="font-semibold text-foreground flex items-center gap-2 mb-4">
             <Shield className="w-4 h-4 text-violet-500" />
             Permissões de Visualização
           </h2>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
               <div>
                 <p className="text-sm font-medium">Ver todos os Assistidos</p>
                 <p className="text-xs text-zinc-500">Pode visualizar assistidos de outros núcleos</p>
@@ -335,7 +335,7 @@ Defensoria Pública de ${comarcaNome}
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
               <div>
                 <p className="text-sm font-medium">Ver todos os Processos</p>
                 <p className="text-xs text-zinc-500">Pode visualizar processos de outros núcleos</p>
@@ -355,8 +355,8 @@ Defensoria Pública de ${comarcaNome}
           </div>
         </Card>
 
-        <Card className="p-6 bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800">
-          <h2 className="font-semibold text-zinc-900 dark:text-zinc-50 flex items-center gap-2 mb-4">
+        <Card className="p-6 bg-card border-border">
+          <h2 className="font-semibold text-foreground flex items-center gap-2 mb-4">
             <Mail className="w-4 h-4 text-amber-500" />
             Mensagem Personalizada (opcional)
           </h2>

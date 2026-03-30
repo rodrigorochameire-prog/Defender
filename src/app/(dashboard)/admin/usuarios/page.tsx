@@ -216,22 +216,22 @@ export default function UsuariosPage() {
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
       {/* Header - Padrão Processos */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-3 bg-card border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-              <Users className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center border border-border">
+              <Users className="w-4 h-4 text-muted-foreground" />
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Usuários</span>
-              <span className="text-xs text-zinc-400 dark:text-zinc-500">• {stats?.total ?? 0} cadastrados</span>
+              <span className="text-sm font-semibold text-foreground">Usuários</span>
+              <span className="text-xs text-muted-foreground">• {stats?.total ?? 0} cadastrados</span>
             </div>
           </div>
           
           <div className="flex items-center gap-1">
             <Button
               size="sm"
-              className="h-7 px-2.5 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+              className="h-7 px-2.5 bg-secondary hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
               onClick={() => setIsCreateModalOpen(true)}
             >
               <UserPlus className="w-3.5 h-3.5 mr-1" />
@@ -246,62 +246,62 @@ export default function UsuariosPage() {
       
       {/* Stats Cards - Mobile-first */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-card border border-border hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Total</p>
-              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.total ?? 0}</p>
+              <p className="text-xs sm:text-[10px] font-medium text-muted-foreground truncate uppercase tracking-wide">Total</p>
+              <p className="text-2xl sm:text-xl font-semibold text-foreground">{stats?.total ?? 0}</p>
             </div>
-            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-muted flex items-center justify-center border border-border">
               <Users className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500" />
             </div>
           </div>
         </div>
-        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-card border border-border hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Admins</p>
-              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.admins ?? 0}</p>
+              <p className="text-xs sm:text-[10px] font-medium text-muted-foreground truncate uppercase tracking-wide">Admins</p>
+              <p className="text-2xl sm:text-xl font-semibold text-foreground">{stats?.admins ?? 0}</p>
             </div>
-            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-muted flex items-center justify-center border border-border">
               <Crown className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500" />
             </div>
           </div>
         </div>
-        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-card border border-border hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Defensores</p>
-              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.defensores ?? 0}</p>
+              <p className="text-xs sm:text-[10px] font-medium text-muted-foreground truncate uppercase tracking-wide">Defensores</p>
+              <p className="text-2xl sm:text-xl font-semibold text-foreground">{stats?.defensores ?? 0}</p>
             </div>
-            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-muted flex items-center justify-center border border-border">
               <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500" />
             </div>
           </div>
         </div>
-        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-card border border-border hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Estagiários</p>
-              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.estagiarios ?? 0}</p>
+              <p className="text-xs sm:text-[10px] font-medium text-muted-foreground truncate uppercase tracking-wide">Estagiários</p>
+              <p className="text-2xl sm:text-xl font-semibold text-foreground">{stats?.estagiarios ?? 0}</p>
             </div>
-            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-muted flex items-center justify-center border border-border">
               <GraduationCap className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500" />
             </div>
           </div>
         </div>
-        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-card border border-border hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Servidores</p>
-              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.servidores ?? 0}</p>
+              <p className="text-xs sm:text-[10px] font-medium text-muted-foreground truncate uppercase tracking-wide">Servidores</p>
+              <p className="text-2xl sm:text-xl font-semibold text-foreground">{stats?.servidores ?? 0}</p>
             </div>
-            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-muted flex items-center justify-center border border-border">
               <Building className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500" />
             </div>
           </div>
@@ -309,7 +309,7 @@ export default function UsuariosPage() {
       </div>
 
       {/* Filters - Padrão Demandas */}
-      <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl p-4">
+      <Card className="border border-border bg-card rounded-xl p-4">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
@@ -317,11 +317,11 @@ export default function UsuariosPage() {
               placeholder="Buscar por nome, email ou OAB..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-9 text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
+              className="pl-10 h-9 text-sm bg-muted border-border"
             />
           </div>
           <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-full sm:w-48 h-9 bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+            <SelectTrigger className="w-full sm:w-48 h-9 bg-muted border-border">
               <SelectValue placeholder="Todos os cargos" />
             </SelectTrigger>
             <SelectContent>
@@ -336,15 +336,15 @@ export default function UsuariosPage() {
       </Card>
 
       {/* Users List - Padrão Demandas */}
-      <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl">
-        <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
-          <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Lista de Usuários</h3>
+      <Card className="border border-border bg-card rounded-xl">
+        <div className="px-5 py-4 border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground">Lista de Usuários</h3>
         </div>
         <div className="p-4">
           {isLoading ? (
             <div className="space-y-3">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center gap-4 p-4 rounded-lg border border-zinc-100 dark:border-zinc-800">
+                <div key={i} className="flex items-center gap-4 p-4 rounded-lg border border-border">
                   <Skeleton className="h-10 w-10 rounded-full" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-48" />
@@ -359,17 +359,17 @@ export default function UsuariosPage() {
               {users.map((user) => (
                 <div
                   key={user.id}
-                  className="group flex items-center gap-4 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all bg-zinc-50/50 dark:bg-zinc-800/30"
+                  className="group flex items-center gap-4 p-4 rounded-xl border border-border hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all bg-muted/50"
                 >
                   <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 text-sm font-medium">
+                    <AvatarFallback className="bg-muted text-muted-foreground text-sm font-medium">
                       {getInitials(user.name)}
                     </AvatarFallback>
                   </Avatar>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-zinc-800 dark:text-zinc-200 truncate">{user.name}</p>
+                      <p className="font-medium text-foreground truncate">{user.name}</p>
                       {user.emailVerified && (
                         <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
                       )}
@@ -442,10 +442,10 @@ export default function UsuariosPage() {
             </div>
           ) : (
             <div className="text-center py-16">
-              <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 mx-auto mb-4 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-2xl bg-muted mx-auto mb-4 flex items-center justify-center">
                 <Users className="w-8 h-8 text-zinc-400" />
               </div>
-              <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nenhum usuário encontrado</p>
+              <p className="text-sm font-medium text-foreground mb-1">Nenhum usuário encontrado</p>
               <p className="text-xs text-zinc-500">Ajuste os filtros ou adicione um novo usuário</p>
             </div>
           )}

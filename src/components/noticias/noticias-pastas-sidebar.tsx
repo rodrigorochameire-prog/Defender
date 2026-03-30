@@ -48,8 +48,8 @@ export function NoticiasPastasSidebar({ pastaAtiva, onSelectPasta }: Props) {
         className={cn(
           "group flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors select-none",
           ativo
-            ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-            : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+            ? "bg-muted text-foreground"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
         )}
         onClick={() => onSelectPasta(ativo ? null : pasta.id)}
       >
@@ -77,7 +77,7 @@ export function NoticiasPastasSidebar({ pastaAtiva, onSelectPasta }: Props) {
   }
 
   return (
-    <div className="w-36 shrink-0 flex flex-col pt-3 pb-4 min-h-0 border-r border-zinc-100 dark:border-zinc-800">
+    <div className="w-36 shrink-0 flex flex-col pt-3 pb-4 min-h-0 border-r border-border">
 
       {/* Lista de pastas */}
       <div className="flex-1 px-2 space-y-0.5 overflow-y-auto">
@@ -87,7 +87,7 @@ export function NoticiasPastasSidebar({ pastaAtiva, onSelectPasta }: Props) {
           <button
             onClick={() => seedPastas.mutate()}
             disabled={seedPastas.isPending}
-            className="text-[11px] text-zinc-400 hover:text-emerald-600 transition-colors px-2 py-1 cursor-pointer w-full text-left"
+            className="text-[11px] text-muted-foreground hover:text-emerald-600 transition-colors px-2 py-1 cursor-pointer w-full text-left"
           >
             {seedPastas.isPending ? "Criando..." : "Inicializar pastas"}
           </button>
@@ -97,7 +97,7 @@ export function NoticiasPastasSidebar({ pastaAtiva, onSelectPasta }: Props) {
 
         {/* Separador sutil entre fixas e livres */}
         {pastasFixas.length > 0 && pastasLivres.length > 0 && (
-          <div className="h-px bg-zinc-100 dark:bg-zinc-800 mx-1 my-2" />
+          <div className="h-px bg-border mx-1 my-2" />
         )}
 
         {/* Pastas livres */}
@@ -122,7 +122,7 @@ export function NoticiasPastasSidebar({ pastaAtiva, onSelectPasta }: Props) {
         ) : (
           <button
             onClick={() => setCriando(true)}
-            className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer w-full px-2 py-1 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+            className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer w-full px-2 py-1 rounded-md hover:bg-muted/50"
           >
             <Plus className="w-3 h-3 shrink-0" />
             Nova pasta

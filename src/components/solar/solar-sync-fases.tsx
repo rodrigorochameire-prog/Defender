@@ -78,7 +78,7 @@ const TIPO_BADGE_CONFIG: Record<
   nota: {
     label: "nota",
     className:
-      "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-400",
+      "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-border dark:bg-muted/50 dark:text-muted-foreground",
   },
   providencia: {
     label: "providencia",
@@ -188,11 +188,11 @@ function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <Icon className="h-10 w-10 text-zinc-300 dark:text-zinc-600 mb-3" />
-      <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+      <Icon className="h-10 w-10 text-muted-foreground/50 mb-3" />
+      <p className="text-sm font-medium text-muted-foreground">
         {title}
       </p>
-      <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 max-w-xs">
+      <p className="text-xs text-muted-foreground/50 mt-1 max-w-xs">
         {description}
       </p>
     </div>
@@ -470,13 +470,13 @@ export function SolarSyncFases() {
         {/* Header */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate">
+            <h2 className="text-sm font-semibold text-foreground truncate">
               Anotações Pendentes de Sync
             </h2>
             {totalAnotacoes > 0 && (
               <Badge
                 variant="outline"
-                className="text-[10px] font-medium px-1.5 py-0 tabular-nums shrink-0 border-zinc-300 dark:border-zinc-600"
+                className="text-[10px] font-medium px-1.5 py-0 tabular-nums shrink-0 border-border"
               >
                 {totalAssistidos} assistido{totalAssistidos !== 1 ? "s" : ""},{" "}
                 {totalAnotacoes} anotaç{totalAnotacoes !== 1 ? "ões" : "ão"}
@@ -490,7 +490,7 @@ export function SolarSyncFases() {
               variant="ghost"
               size="sm"
               onClick={toggleSelectAll}
-              className="h-7 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+              className="h-7 text-xs text-muted-foreground hover:text-foreground"
             >
               {selectedIds.size === allAnotacaoIds.size && allAnotacaoIds.size > 0
                 ? "Desmarcar todas"
@@ -502,13 +502,13 @@ export function SolarSyncFases() {
         {/* Loading */}
         {isLoading && (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-6 w-6 text-zinc-400 animate-spin" />
+            <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
           </div>
         )}
 
         {/* Empty state */}
         {!isLoading && grupos.length === 0 && (
-          <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <Card className="border-border shadow-sm">
             <CardContent className="p-0">
               <EmptyState
                 icon={StickyNote}
@@ -535,18 +535,18 @@ export function SolarSyncFases() {
               return (
                 <Card
                   key={grupo.assistidoId}
-                  className="border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden"
+                  className="border-border shadow-sm overflow-hidden"
                 >
                   {/* Group header */}
                   <button
                     type="button"
                     onClick={() => toggleExpanded(grupo.assistidoId)}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-muted/50 transition-colors"
                   >
                     {isExpanded ? (
-                      <ChevronDown className="h-4 w-4 text-zinc-400 shrink-0" />
+                      <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
                     ) : (
-                      <ChevronRight className="h-4 w-4 text-zinc-400 shrink-0" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                     )}
 
                     <div
@@ -565,13 +565,13 @@ export function SolarSyncFases() {
                       />
                     </div>
 
-                    <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">
+                    <span className="text-sm font-medium text-foreground/80 truncate">
                       {grupo.assistidoNome}
                     </span>
 
                     <Badge
                       variant="outline"
-                      className="text-[10px] font-medium px-1.5 py-0 tabular-nums shrink-0 border-zinc-300 dark:border-zinc-600"
+                      className="text-[10px] font-medium px-1.5 py-0 tabular-nums shrink-0 border-border"
                     >
                       {grupo.anotacoes.length}
                     </Badge>
@@ -579,7 +579,7 @@ export function SolarSyncFases() {
 
                   {/* Annotation list */}
                   {isExpanded && (
-                    <div className="border-t border-zinc-100 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800">
+                    <div className="border-t border-border divide-y divide-border">
                       {grupo.anotacoes.map((anotacao) => (
                         <div
                           key={anotacao.id}
@@ -605,18 +605,18 @@ export function SolarSyncFases() {
                               <TipoBadge tipo={anotacao.tipo} />
 
                               {anotacao.processo?.numeroAutos && (
-                                <span className="font-mono text-xs text-zinc-500 dark:text-zinc-400">
+                                <span className="font-mono text-xs text-muted-foreground">
                                   {anotacao.processo.numeroAutos}
                                 </span>
                               )}
 
-                              <span className="text-[10px] text-zinc-400 dark:text-zinc-500 tabular-nums ml-auto shrink-0">
+                              <span className="text-[10px] text-muted-foreground/50 tabular-nums ml-auto shrink-0">
                                 {formatDateSafe(anotacao.createdAt)}
                               </span>
                             </div>
 
                             {/* Content (truncated 2 lines) */}
-                            <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+                            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                               {anotacao.conteudo}
                             </p>
                           </div>
@@ -673,7 +673,7 @@ export function SolarSyncFases() {
                 setSelectedIds(new Set());
                 setDryRunResult(null);
               }}
-              className="h-7 text-xs text-zinc-500"
+              className="h-7 text-xs text-muted-foreground"
             >
               Limpar
             </Button>
@@ -696,7 +696,7 @@ export function SolarSyncFases() {
                   <span className="text-base font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
                     {dryRunResult.fases_criadas}
                   </span>
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <span className="text-xs text-muted-foreground">
                     {dryRunResult.fases_criadas === 1
                       ? "será criada"
                       : "serão criadas"}
@@ -707,7 +707,7 @@ export function SolarSyncFases() {
                     <span className="text-base font-semibold tabular-nums text-amber-600 dark:text-amber-400">
                       {dryRunResult.fases_skipped}
                     </span>
-                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <span className="text-xs text-muted-foreground">
                       {dryRunResult.fases_skipped === 1
                         ? "será ignorada"
                         : "serão ignoradas"}
@@ -719,7 +719,7 @@ export function SolarSyncFases() {
                     <span className="text-base font-semibold tabular-nums text-rose-600 dark:text-rose-400">
                       {dryRunResult.fases_falhadas}
                     </span>
-                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <span className="text-xs text-muted-foreground">
                       {dryRunResult.fases_falhadas === 1
                         ? "falhará"
                         : "falharão"}
@@ -737,11 +737,11 @@ export function SolarSyncFases() {
                       className="flex items-center gap-2 text-xs"
                     >
                       <SyncStatusBadge status={detalhe.status} />
-                      <span className="text-zinc-600 dark:text-zinc-400 tabular-nums font-mono">
+                      <span className="text-muted-foreground tabular-nums font-mono">
                         #{detalhe.anotacao_id}
                       </span>
                       {detalhe.reason && (
-                        <span className="text-zinc-400 dark:text-zinc-500 truncate">
+                        <span className="text-muted-foreground/50 truncate">
                           {detalhe.reason}
                         </span>
                       )}
@@ -792,13 +792,13 @@ export function SolarSyncFases() {
 
       {/* ─── Right Panel: Anotacao Rapida ───────────────────────────────── */}
       <div>
-        <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm sticky top-4">
+        <Card className="border-border shadow-sm sticky top-4">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-foreground/80 flex items-center gap-2">
               <Send className="h-4 w-4" />
               Anotação Rápida
             </CardTitle>
-            <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
+            <p className="text-xs text-muted-foreground/50 mt-1">
               Envie uma anotação diretamente ao histórico de um atendimento no
               Solar.
             </p>
@@ -808,7 +808,7 @@ export function SolarSyncFases() {
             <div className="space-y-1.5">
               <label
                 htmlFor="atendimento-id"
-                className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
+                className="text-xs font-medium text-muted-foreground"
               >
                 Atendimento ID
               </label>
@@ -825,7 +825,7 @@ export function SolarSyncFases() {
             <div className="space-y-1.5">
               <label
                 htmlFor="texto-nota"
-                className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
+                className="text-xs font-medium text-muted-foreground"
               >
                 Texto
               </label>
@@ -839,7 +839,7 @@ export function SolarSyncFases() {
                 rows={5}
                 className="flex min-h-[80px] w-full rounded-lg border-2 border-input bg-background px-4 py-2 text-sm shadow-sm transition-all duration-200 placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring disabled:cursor-not-allowed disabled:opacity-50 hover:border-border/80 resize-none"
               />
-              <p className="text-right text-[10px] text-zinc-400 dark:text-zinc-500 tabular-nums">
+              <p className="text-right text-[10px] text-muted-foreground/50 tabular-nums">
                 {textoNota.length}/{MAX_TEXTO_CHARS}
               </p>
             </div>

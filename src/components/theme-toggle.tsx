@@ -16,7 +16,7 @@ const themeConfig = {
     icon: Moon,
     iconClass: "h-4 w-4 text-blue-300",
     buttonClass:
-      "bg-zinc-800 hover:bg-zinc-700 border-zinc-700 hover:border-emerald-500/50",
+      "bg-muted hover:bg-muted border-border hover:border-emerald-500/50",
     ariaLabel: "Modo noturno",
   },
 } as const;

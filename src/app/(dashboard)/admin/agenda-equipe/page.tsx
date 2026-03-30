@@ -58,23 +58,23 @@ function EventoCard({ evento }: { evento: EventoUnificado }) {
     <div className={cn(
       "p-2.5 rounded-lg border-l-2 text-left transition-all duration-200",
       colorMap[evento.cor] || "border-l-zinc-300",
-      "bg-white dark:bg-zinc-900/50 hover:shadow-sm"
+      "bg-white dark:bg-card/50 hover:shadow-sm"
     )}>
       <div className="flex items-center gap-1.5">
-        <Icon className="w-3 h-3 text-zinc-400" />
+        <Icon className="w-3 h-3 text-muted-foreground" />
         {evento.hora && (
-          <span className="text-[10px] font-semibold text-zinc-400 uppercase">{evento.hora}</span>
+          <span className="text-[10px] font-semibold text-muted-foreground uppercase">{evento.hora}</span>
         )}
         <Badge variant="outline" className="text-[9px] h-4 px-1">
           {evento.tipo === "audiencia" ? "Audiencia" : "Prazo"}
         </Badge>
       </div>
-      <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 mt-1 line-clamp-2">{evento.titulo}</p>
+      <p className="text-xs font-medium text-foreground/80 mt-1 line-clamp-2">{evento.titulo}</p>
       {evento.processo && (
-        <p className="text-[10px] text-zinc-400 mt-0.5 font-mono truncate">{evento.processo}</p>
+        <p className="text-[10px] text-muted-foreground mt-0.5 font-mono truncate">{evento.processo}</p>
       )}
       {evento.assistido && (
-        <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">{evento.assistido}</p>
+        <p className="text-[10px] text-muted-foreground mt-0.5">{evento.assistido}</p>
       )}
     </div>
   );
@@ -85,19 +85,19 @@ function MembroColuna({ nome, iniciais, eventos }: { nome: string; iniciais: str
     <div className="flex-1 min-w-[200px]">
       <div className="flex items-center gap-2 mb-3 px-1">
         <Avatar className="h-7 w-7">
-          <AvatarFallback className="text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-medium">
+          <AvatarFallback className="text-[10px] bg-zinc-100 dark:bg-muted text-muted-foreground font-medium">
             {iniciais}
           </AvatarFallback>
         </Avatar>
         <div>
-          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{nome}</span>
-          <span className="text-[10px] text-zinc-400 ml-1.5">{eventos.length} evento{eventos.length !== 1 ? "s" : ""}</span>
+          <span className="text-sm font-medium text-foreground/80">{nome}</span>
+          <span className="text-[10px] text-muted-foreground ml-1.5">{eventos.length} evento{eventos.length !== 1 ? "s" : ""}</span>
         </div>
       </div>
       <div className="space-y-2">
         {eventos.length === 0 ? (
-          <div className="p-4 text-center rounded-lg bg-zinc-50 dark:bg-zinc-800/30 border border-dashed border-zinc-200 dark:border-zinc-700">
-            <p className="text-[10px] text-zinc-400">Sem eventos</p>
+          <div className="p-4 text-center rounded-lg bg-zinc-50 dark:bg-muted/50 border border-dashed border-zinc-200 dark:border-border">
+            <p className="text-[10px] text-muted-foreground">Sem eventos</p>
           </div>
         ) : (
           eventos.map(ev => <EventoCard key={ev.id} evento={ev} />)
@@ -197,24 +197,24 @@ export default function AgendaEquipePage() {
   }, [todosEventos]);
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-muted dark:bg-[#0f0f11]">
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <CalendarDays className="w-5 h-5 text-white dark:text-zinc-900" />
+            <div className="w-11 h-11 rounded-xl bg-foreground dark:bg-white flex items-center justify-center shadow-lg">
+              <CalendarDays className="w-5 h-5 text-background dark:text-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight font-serif">Agenda da Equipe</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <h1 className="text-xl font-bold text-foreground tracking-tight font-serif">Agenda da Equipe</h1>
+              <p className="text-xs text-muted-foreground">
                 {format(dataAtual, "EEEE, dd 'de' MMMM", { locale: ptBR })}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
+            <div className="flex bg-zinc-100 dark:bg-muted rounded-lg p-0.5">
               {(["dia", "lista"] as VisaoAgenda[]).map((v) => (
                 <button
                   key={v}
@@ -222,8 +222,8 @@ export default function AgendaEquipePage() {
                   className={cn(
                     "px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all cursor-pointer",
                     visao === v
-                      ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
-                      : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                      ? "bg-white dark:bg-muted text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   {v}
@@ -239,7 +239,7 @@ export default function AgendaEquipePage() {
         <div className="flex items-center gap-3 mb-4">
           <button
             onClick={() => setDataAtual(prev => addDays(prev, -1))}
-            className="p-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer"
+            className="p-1.5 rounded-lg bg-white dark:bg-card border border-zinc-200 dark:border-border text-muted-foreground hover:text-foreground hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -249,19 +249,19 @@ export default function AgendaEquipePage() {
               "px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
               isToday(dataAtual)
                 ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                : "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-emerald-200"
+                : "bg-white dark:bg-card border border-zinc-200 dark:border-border text-muted-foreground hover:border-emerald-200"
             )}
           >
             Hoje
           </button>
           <button
             onClick={() => setDataAtual(prev => addDays(prev, 1))}
-            className="p-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer"
+            className="p-1.5 rounded-lg bg-white dark:bg-card border border-zinc-200 dark:border-border text-muted-foreground hover:text-foreground hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
           {/* Stats ribbon */}
-          <div className="ml-auto flex items-center gap-4 text-[10px] text-zinc-400">
+          <div className="ml-auto flex items-center gap-4 text-[10px] text-muted-foreground">
             <span><Gavel className="w-3 h-3 inline mr-1" />{(audiencias ?? []).length} audiencias</span>
             <span><Clock className="w-3 h-3 inline mr-1" />{(prazos ?? []).length} prazos</span>
           </div>
@@ -270,18 +270,18 @@ export default function AgendaEquipePage() {
         {/* Loading */}
         {isLoading && (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
           </div>
         )}
 
         {/* Visão Dia - Colunas por membro */}
         {!isLoading && visao === "dia" && (
-          <Card className="bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-4">
+          <Card className="bg-white dark:bg-card border-zinc-200/80 dark:border-border/80 rounded-xl p-4">
             {membrosComEventos.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <CalendarX className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mb-3" />
-                <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Nenhum evento para {isToday(dataAtual) ? "hoje" : format(dataAtual, "dd/MM")}</p>
-                <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Navegue para outro dia ou mude para a visao Lista</p>
+                <CalendarX className="w-10 h-10 text-zinc-300 dark:text-muted-foreground/50 mb-3" />
+                <p className="text-sm font-medium text-muted-foreground">Nenhum evento para {isToday(dataAtual) ? "hoje" : format(dataAtual, "dd/MM")}</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Navegue para outro dia ou mude para a visao Lista</p>
               </div>
             ) : (
               <div className="flex gap-4 overflow-x-auto">
@@ -303,27 +303,27 @@ export default function AgendaEquipePage() {
           <div className="space-y-2">
             {eventosLista.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <CalendarX className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mb-3" />
-                <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Nenhum evento proximo</p>
+                <CalendarX className="w-10 h-10 text-zinc-300 dark:text-muted-foreground/50 mb-3" />
+                <p className="text-sm font-medium text-muted-foreground">Nenhum evento proximo</p>
               </div>
             ) : (
               eventosLista.map(ev => {
                 const membro = membrosAtivos.find(m => m.id === ev.membroId);
                 return (
-                  <Card key={ev.id} className="bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 flex items-center gap-3 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all">
+                  <Card key={ev.id} className="bg-white dark:bg-card border-zinc-200/80 dark:border-border/80 rounded-xl p-3 flex items-center gap-3 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all">
                     <div className="flex items-center gap-2 min-w-[100px]">
                       <Avatar className="h-6 w-6">
-                        <AvatarFallback className="text-[9px] bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
+                        <AvatarFallback className="text-[9px] bg-zinc-100 dark:bg-muted text-muted-foreground">
                           {membro?.iniciais || "?"}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-[10px] text-zinc-500 truncate">{membro?.nome || "—"}</span>
+                      <span className="text-[10px] text-muted-foreground truncate">{membro?.nome || "—"}</span>
                     </div>
-                    <span className="text-[10px] font-mono text-zinc-400 min-w-[60px]">
+                    <span className="text-[10px] font-mono text-muted-foreground min-w-[60px]">
                       {format(ev.data, "dd/MM")}
                       {ev.hora && ` ${ev.hora}`}
                     </span>
-                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex-1 truncate">{ev.titulo}</p>
+                    <p className="text-sm font-medium text-foreground/80 flex-1 truncate">{ev.titulo}</p>
                     <Badge variant="outline" className="text-[9px] h-5 flex-shrink-0">
                       {ev.tipo === "audiencia" ? "Audiencia" : "Prazo"}
                     </Badge>

@@ -76,9 +76,9 @@ export default function ProvasJuriPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-background">
       {/* SUB-HEADER - Padrão Defender */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-3 bg-card border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Link href="/admin/juri">
@@ -90,8 +90,8 @@ export default function ProvasJuriPage() {
               <Highlighter className="w-4 h-4 text-sky-600 dark:text-sky-400" />
             </div>
             <div>
-              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Matriz de Provas</h1>
-              <p className="text-[10px] text-zinc-500">Comparador fase policial vs judicial</p>
+              <h1 className="text-sm font-semibold text-foreground">Matriz de Provas</h1>
+              <p className="text-[10px] text-muted-foreground">Comparador fase policial vs judicial</p>
             </div>
           </div>
           <Badge variant="outline" className="text-[10px] border-sky-300 text-sky-700">

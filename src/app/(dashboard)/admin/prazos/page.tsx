@@ -105,9 +105,9 @@ const ATRIBUICAO_CONFIG: Record<string, {
     shortLabel: "Curad.",
     color: "#71717a",
     bgLight: "bg-zinc-100",
-    bgDark: "dark:bg-zinc-800",
+    bgDark: "dark:bg-muted",
     textLight: "text-zinc-700",
-    textDark: "dark:text-zinc-400",
+    textDark: "dark:text-muted-foreground",
     icon: FileText,
   },
 };
@@ -117,7 +117,7 @@ const ATRIBUICAO_CONFIG: Record<string, {
 // ==========================================
 
 function getPrazoInfo(prazoStr: string) {
-  if (!prazoStr) return { text: "-", dias: 0, className: "text-zinc-500 bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400", icon: Calendar, urgent: false };
+  if (!prazoStr) return { text: "-", dias: 0, className: "text-muted-foreground bg-zinc-100 dark:bg-muted", icon: Calendar, urgent: false };
 
   // Parse DD/MM/YYYY or YYYY-MM-DD
   let prazoDate: Date;
@@ -129,7 +129,7 @@ function getPrazoInfo(prazoStr: string) {
     prazoDate = new Date(prazoStr + "T12:00:00");
   }
 
-  if (isNaN(prazoDate.getTime())) return { text: prazoStr, dias: 0, className: "text-zinc-500 bg-zinc-100", icon: Calendar, urgent: false };
+  if (isNaN(prazoDate.getTime())) return { text: prazoStr, dias: 0, className: "text-muted-foreground bg-zinc-100", icon: Calendar, urgent: false };
 
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
@@ -151,7 +151,7 @@ function getPrazoInfo(prazoStr: string) {
   if (dias <= 7) {
     return { text: `${dias}d`, dias, className: "text-sky-600 bg-sky-50 dark:bg-sky-900/20 dark:text-sky-400", icon: Calendar, urgent: false };
   }
-  return { text: format(prazoDate, "dd/MM", { locale: ptBR }), dias, className: "text-zinc-500 bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400", icon: Calendar, urgent: false };
+  return { text: format(prazoDate, "dd/MM", { locale: ptBR }), dias, className: "text-muted-foreground bg-zinc-100 dark:bg-muted", icon: Calendar, urgent: false };
 }
 
 // ==========================================
@@ -236,16 +236,16 @@ export default function PrazosPage() {
   }), [prazos]);
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-muted dark:bg-[#0f0f11]">
       {/* Header Padrao Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-            <Clock className="w-5 h-5 text-white dark:text-zinc-900" />
+          <div className="w-11 h-11 rounded-xl bg-foreground dark:bg-white flex items-center justify-center shadow-lg">
+            <Clock className="w-5 h-5 text-background dark:text-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Prazos</h1>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <h1 className="text-xl font-bold text-foreground tracking-tight">Prazos</h1>
+            <p className="text-xs text-muted-foreground">
               {isLoading ? "Carregando..." : `${filteredPrazos.length} prazos ${areaFilter !== "all" ? `em ${ATRIBUICAO_CONFIG[areaFilter]?.shortLabel || areaFilter}` : ""}`}
             </p>
           </div>
@@ -260,8 +260,8 @@ export default function PrazosPage() {
             className={cn(
               "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
               areaFilter === "all"
-                ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm"
-                : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700"
+                ? "bg-foreground dark:bg-white text-background dark:text-foreground shadow-sm"
+                : "text-muted-foreground hover:bg-muted bg-white dark:bg-card border border-zinc-200 dark:border-border"
             )}
           >
             <Clock className="w-3.5 h-3.5" />
@@ -282,7 +282,7 @@ export default function PrazosPage() {
                   "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
                   isActive
                     ? "text-white shadow-sm ring-1 ring-black/10"
-                    : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700"
+                    : "text-muted-foreground hover:bg-muted bg-white dark:bg-card border border-zinc-200 dark:border-border"
                 )}
                 style={isActive ? { backgroundColor: config.color } : undefined}
               >
@@ -309,18 +309,18 @@ export default function PrazosPage() {
             <div
               key={stat.label}
               className={cn(
-                "group relative p-3 md:p-4 rounded-xl bg-white dark:bg-zinc-900 border transition-all duration-300 cursor-pointer hover:shadow-lg",
+                "group relative p-3 md:p-4 rounded-xl bg-white dark:bg-card border transition-all duration-300 cursor-pointer hover:shadow-lg",
                 stat.urgent
                   ? "border-rose-200 dark:border-rose-800/50 hover:border-rose-300"
-                  : "border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50"
+                  : "border-zinc-100 dark:border-border hover:border-emerald-200/50"
               )}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="space-y-0.5">
-                  <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-wide">{stat.label}</p>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{stat.label}</p>
                   <p className={cn(
                     "text-lg md:text-xl font-semibold",
-                    stat.urgent ? "text-rose-600 dark:text-rose-400" : "text-zinc-700 dark:text-zinc-300"
+                    stat.urgent ? "text-rose-600 dark:text-rose-400" : "text-foreground/80"
                   )}>
                     {stat.value}
                   </p>
@@ -329,9 +329,9 @@ export default function PrazosPage() {
                   "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 border",
                   stat.urgent
                     ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800"
-                    : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
+                    : "bg-zinc-100 dark:bg-muted border-zinc-200 dark:border-border"
                 )}>
-                  <stat.icon className={cn("w-4 h-4", stat.urgent ? "text-rose-600 dark:text-rose-400" : "text-zinc-500 dark:text-zinc-400")} />
+                  <stat.icon className={cn("w-4 h-4", stat.urgent ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground")} />
                 </div>
               </div>
             </div>
@@ -341,12 +341,12 @@ export default function PrazosPage() {
         {/* Search + Period Filter */}
         <div className="flex items-center gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por assistido, processo ou ato..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-10 rounded-xl bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700"
+              className="pl-10 h-10 rounded-xl bg-white dark:bg-card border-zinc-200 dark:border-border"
             />
           </div>
           <Select value={periodoFilter} onValueChange={setPeriodoFilter}>
@@ -366,7 +366,7 @@ export default function PrazosPage() {
         {/* Loading */}
         {isLoading && (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
+            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
           </div>
         )}
 
@@ -384,7 +384,7 @@ export default function PrazosPage() {
                   key={prazo.id}
                   className={cn(
                     "relative overflow-hidden transition-all duration-200 hover:shadow-md group",
-                    "border-zinc-100 dark:border-zinc-800",
+                    "border-zinc-100 dark:border-border",
                     prazoInfo.urgent && "ring-1 ring-rose-200/50 dark:ring-rose-900/30"
                   )}
                 >
@@ -421,23 +421,23 @@ export default function PrazosPage() {
 
                         {/* Ato + Assistido */}
                         <div className="space-y-0.5">
-                          <h3 className="font-semibold text-sm text-zinc-800 dark:text-zinc-200">{prazo.ato}</h3>
+                          <h3 className="font-semibold text-sm text-foreground">{prazo.ato}</h3>
                           <div className="flex items-center gap-2">
-                            <p className="text-sm text-zinc-600 dark:text-zinc-400">{prazo.assistido}</p>
+                            <p className="text-sm text-muted-foreground">{prazo.assistido}</p>
                             {prazo.assistidoId && (
                               <Link href={`/admin/assistidos/${prazo.assistidoId}`} className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                <ExternalLink className="w-3 h-3 text-zinc-400 hover:text-emerald-500" />
+                                <ExternalLink className="w-3 h-3 text-muted-foreground hover:text-emerald-500" />
                               </Link>
                             )}
                           </div>
-                          <p className="text-[11px] font-mono text-zinc-500 dark:text-zinc-500">{prazo.processo}</p>
+                          <p className="text-[11px] font-mono text-muted-foreground">{prazo.processo}</p>
                         </div>
 
                         {/* Providencias */}
                         {prazo.providencias && (
-                          <div className="p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
-                            <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
-                              <span className="font-semibold text-zinc-700 dark:text-zinc-300">Prov:</span> {prazo.providencias}
+                          <div className="p-2 rounded-lg bg-zinc-50 dark:bg-muted/50 border border-zinc-100 dark:border-border">
+                            <p className="text-[11px] text-muted-foreground">
+                              <span className="font-semibold text-foreground/80">Prov:</span> {prazo.providencias}
                             </p>
                           </div>
                         )}
@@ -446,8 +446,8 @@ export default function PrazosPage() {
                       {/* Prazo date */}
                       <div className="flex flex-col items-end gap-2 flex-shrink-0">
                         <div className="text-right">
-                          <p className="text-[10px] text-zinc-400 uppercase tracking-wide">Prazo</p>
-                          <p className="text-sm font-mono font-semibold text-zinc-700 dark:text-zinc-300">{prazo.prazo}</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Prazo</p>
+                          <p className="text-sm font-mono font-semibold text-foreground/80">{prazo.prazo}</p>
                         </div>
                         <Link href={`/admin/demandas`}>
                           <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 rounded-lg">
@@ -467,10 +467,10 @@ export default function PrazosPage() {
                 <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mx-auto mb-4">
                   <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                 </div>
-                <h3 className="text-lg font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                <h3 className="text-lg font-semibold text-foreground/80 mb-2">
                   Nenhum prazo encontrado
                 </h3>
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-muted-foreground">
                   {searchTerm || areaFilter !== "all" ? "Ajuste os filtros para ver mais resultados." : "Todos os prazos estão em dia!"}
                 </p>
               </Card>
@@ -481,7 +481,7 @@ export default function PrazosPage() {
         {/* Footer */}
         {!isLoading && filteredPrazos.length > 0 && (
           <div className="text-center py-2">
-            <span className="text-[10px] text-zinc-400">
+            <span className="text-[10px] text-muted-foreground">
               {filteredPrazos.length} prazo{filteredPrazos.length !== 1 && "s"} · {filteredPrazos.filter((p: any) => p.reuPreso).length} réu preso
             </span>
           </div>

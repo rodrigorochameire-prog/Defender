@@ -89,19 +89,19 @@ interface JuradosMonitorProps {
 // HELPERS
 // ============================================
 function getScoreColor(score: number, isDark: boolean) {
-  if (score >= 3) return isDark ? "text-emerald-400" : "text-emerald-600";
-  if (score >= 1) return isDark ? "text-teal-400" : "text-teal-600";
-  if (score === 0) return isDark ? "text-zinc-400" : "text-zinc-500";
-  if (score >= -2) return isDark ? "text-amber-400" : "text-amber-600";
-  return isDark ? "text-rose-400" : "text-rose-600";
+  if (score >= 3) return "text-emerald-600 dark:text-emerald-400";
+  if (score >= 1) return "text-teal-600 dark:text-teal-400";
+  if (score === 0) return "text-muted-foreground";
+  if (score >= -2) return "text-amber-600 dark:text-amber-400";
+  return "text-rose-600 dark:text-rose-400";
 }
 
 function getScoreBgColor(score: number, isDark: boolean) {
-  if (score >= 3) return isDark ? "bg-emerald-500/20 border-emerald-500/40" : "bg-emerald-100 border-emerald-300";
-  if (score >= 1) return isDark ? "bg-teal-500/20 border-teal-500/40" : "bg-teal-100 border-teal-300";
-  if (score === 0) return isDark ? "bg-zinc-800 border-zinc-700" : "bg-zinc-100 border-zinc-300";
-  if (score >= -2) return isDark ? "bg-amber-500/20 border-amber-500/40" : "bg-amber-100 border-amber-300";
-  return isDark ? "bg-rose-500/20 border-rose-500/40" : "bg-rose-100 border-rose-300";
+  if (score >= 3) return "bg-emerald-100 border-emerald-300 dark:bg-emerald-500/20 dark:border-emerald-500/40";
+  if (score >= 1) return "bg-teal-100 border-teal-300 dark:bg-teal-500/20 dark:border-teal-500/40";
+  if (score === 0) return "bg-muted border-border";
+  if (score >= -2) return "bg-amber-100 border-amber-300 dark:bg-amber-500/20 dark:border-amber-500/40";
+  return "bg-rose-100 border-rose-300 dark:bg-rose-500/20 dark:border-rose-500/40";
 }
 
 function getScoreLabel(score: number) {
@@ -134,7 +134,7 @@ function getPerfilConfig(perfil: string | undefined) {
     empatico: { label: "Empático", color: "text-pink-600", bgColor: "bg-pink-100 dark:bg-pink-900/30" },
     racional: { label: "Racional", color: "text-blue-600", bgColor: "bg-blue-100 dark:bg-blue-900/30" },
     conservador: { label: "Conservador", color: "text-orange-600", bgColor: "bg-orange-100 dark:bg-orange-900/30" },
-    neutro: { label: "Indefinido", color: "text-zinc-600", bgColor: "bg-zinc-100 dark:bg-zinc-800" },
+    neutro: { label: "Indefinido", color: "text-muted-foreground", bgColor: "bg-muted" },
   };
   return configs[perfil || "neutro"] || configs.neutro;
 }
@@ -165,14 +165,14 @@ function JuradoCard({
     <div
       className={cn(
         "relative rounded-xl border p-3 transition-all hover:shadow-lg cursor-pointer group",
-        isDarkMode ? "bg-zinc-900/80 border-zinc-800 hover:border-zinc-700" : "bg-white border-zinc-200 hover:border-zinc-300"
+        "bg-card border-border hover:border-border/80"
       )}
       onClick={onViewDetails}
     >
       {/* Indicador de cadeira */}
       <div className={cn(
         "absolute -top-2 -left-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
-        isDarkMode ? "bg-zinc-800 text-zinc-300 border border-zinc-700" : "bg-zinc-100 text-zinc-700 border border-zinc-300"
+        "bg-muted text-foreground border border-border"
       )}>
         {jurado.cadeira}
       </div>
@@ -191,7 +191,7 @@ function JuradoCard({
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className={cn("text-sm font-medium truncate max-w-[100px]", isDarkMode ? "text-zinc-200" : "text-zinc-800")}>
+            <p className={cn("text-sm font-medium truncate max-w-[100px]", "text-foreground")}>
               {jurado.nome.split(" ")[0]}
             </p>
             <div className={cn("flex items-center gap-1 text-[10px]", atencaoConfig.color)}>
@@ -211,7 +211,7 @@ function JuradoCard({
 
       {/* Barra de Score Visual */}
       <div className="mb-3">
-        <div className={cn("h-2 rounded-full overflow-hidden", isDarkMode ? "bg-zinc-800" : "bg-zinc-200")}>
+        <div className={cn("h-2 rounded-full overflow-hidden", "bg-muted")}>
           <div 
             className={cn(
               "h-full rounded-full transition-all duration-500",
@@ -239,13 +239,13 @@ function JuradoCard({
 
       {/* Contadores */}
       <div className="flex items-center justify-between text-[10px]">
-        <div className={cn("flex items-center gap-1", isDarkMode ? "text-zinc-500" : "text-zinc-400")}>
+        <div className={cn("flex items-center gap-1", "text-muted-foreground")}>
           <MessageSquare className="w-3 h-3" />
           <span>{jurado.anotacoes.length} notas</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="text-emerald-500">{jurado.reacoes.filter(r => r.tipo === "positiva").length}+</span>
-          <span className={isDarkMode ? "text-zinc-600" : "text-zinc-400"}>/</span>
+          <span className="text-muted-foreground/50">/</span>
           <span className="text-rose-500">{jurado.reacoes.filter(r => r.tipo === "negativa").length}-</span>
         </div>
       </div>
@@ -254,7 +254,7 @@ function JuradoCard({
       <div className={cn(
         "absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 p-2 rounded-b-xl transition-opacity",
         "opacity-0 group-hover:opacity-100",
-        isDarkMode ? "bg-zinc-900/95" : "bg-white/95"
+        "bg-card/95"
       )}>
         <Button
           size="sm"
@@ -281,7 +281,7 @@ function JuradoCard({
         <Button
           size="sm"
           variant="ghost"
-          className={cn("h-7 w-7 p-0", isDarkMode ? "text-zinc-400 hover:text-zinc-300" : "text-zinc-500 hover:text-zinc-700")}
+          className={cn("h-7 w-7 p-0", "text-muted-foreground hover:text-foreground")}
           onClick={(e) => {
             e.stopPropagation();
             onViewDetails();
@@ -333,22 +333,19 @@ function ConselhoResumo({
   return (
     <div className={cn(
       "rounded-xl border p-4",
-      isDarkMode ? "bg-zinc-900/80 border-zinc-800" : "bg-white border-zinc-200"
+      "bg-card border-border"
     )}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className={cn(
-            "p-2 rounded-lg",
-            isDarkMode ? "bg-amber-500/20" : "bg-amber-100"
-          )}>
-            <PieChart className={cn("w-5 h-5", isDarkMode ? "text-amber-400" : "text-amber-600")} />
+          <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-500/20">
+            <PieChart className="w-5 h-5 text-amber-600 dark:text-amber-400" />
           </div>
           <div>
-            <h3 className={cn("font-semibold", isDarkMode ? "text-zinc-200" : "text-zinc-800")}>
+            <h3 className="font-semibold text-foreground">
               Painel do Conselho
             </h3>
-            <p className={cn("text-xs", isDarkMode ? "text-zinc-500" : "text-zinc-500")}>
+            <p className="text-xs text-muted-foreground">
               {jurados.length} jurados ativos
             </p>
           </div>
@@ -364,13 +361,10 @@ function ConselhoResumo({
         <div className={cn("text-5xl font-bold mb-1", projecaoColor)}>
           {projecaoAbsolvicao}%
         </div>
-        <p className={cn("text-sm", isDarkMode ? "text-zinc-400" : "text-zinc-600")}>
+        <p className="text-sm text-muted-foreground">
           Projeção de Absolvição
         </p>
-        <div className={cn(
-          "mt-2 h-3 rounded-full overflow-hidden",
-          isDarkMode ? "bg-zinc-800" : "bg-zinc-200"
-        )}>
+        <div className="mt-2 h-3 rounded-full overflow-hidden bg-muted">
           <div
             className={cn("h-full rounded-full bg-gradient-to-r transition-all duration-700", projecaoGradient)}
             style={{ width: `${projecaoAbsolvicao}%` }}
@@ -396,10 +390,10 @@ function ConselhoResumo({
         </div>
         <div className={cn(
           "text-center p-2 rounded-lg",
-          isDarkMode ? "bg-zinc-800 border border-zinc-700" : "bg-zinc-100 border border-zinc-200"
+          "bg-muted border border-border"
         )}>
-          <div className={cn("text-xl font-bold", isDarkMode ? "text-zinc-400" : "text-zinc-500")}>{neutros}</div>
-          <div className={cn("text-[9px]", isDarkMode ? "text-zinc-500" : "text-zinc-600")}>Neutros</div>
+          <div className="text-xl font-bold text-muted-foreground">{neutros}</div>
+          <div className="text-[9px] text-muted-foreground">Neutros</div>
         </div>
         <div className={cn(
           "text-center p-2 rounded-lg",
@@ -413,15 +407,15 @@ function ConselhoResumo({
       {/* Score Total */}
       <div className={cn(
         "flex items-center justify-between p-3 rounded-lg",
-        isDarkMode ? "bg-zinc-800/50" : "bg-zinc-50"
+        "bg-muted/50"
       )}>
         <div className="flex items-center gap-2">
-          <Activity className={cn("w-4 h-4", isDarkMode ? "text-zinc-500" : "text-zinc-400")} />
-          <span className={cn("text-sm", isDarkMode ? "text-zinc-400" : "text-zinc-600")}>Score Total</span>
+          <Activity className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Score Total</span>
         </div>
         <div className={cn(
           "text-xl font-bold",
-          totalScore > 0 ? "text-emerald-500" : totalScore < 0 ? "text-rose-500" : isDarkMode ? "text-zinc-400" : "text-zinc-600"
+          totalScore > 0 ? "text-emerald-500" : totalScore < 0 ? "text-rose-500" : "text-muted-foreground"
         )}>
           {totalScore > 0 ? "+" : ""}{totalScore}
         </div>
@@ -463,7 +457,7 @@ function JuradoDetailModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className={cn(
         "max-w-lg",
-        isDarkMode ? "bg-zinc-900 border-zinc-800" : "bg-white"
+        "bg-card border-border"
       )}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
@@ -495,7 +489,7 @@ function JuradoDetailModal({
           )}>
             <div className="flex items-center justify-between">
               <div>
-                <p className={cn("text-sm", isDarkMode ? "text-zinc-400" : "text-zinc-600")}>Score Atual</p>
+                <p className="text-sm text-muted-foreground">Score Atual</p>
                 <p className={cn("text-3xl font-bold", getScoreColor(jurado.score, isDarkMode))}>
                   {jurado.score > 0 ? "+" : ""}{jurado.score}
                 </p>
@@ -509,12 +503,12 @@ function JuradoDetailModal({
 
           {/* Histórico de Reações */}
           <div>
-            <h4 className={cn("text-sm font-medium mb-2", isDarkMode ? "text-zinc-300" : "text-zinc-700")}>
+            <h4 className="text-sm font-medium mb-2 text-foreground/80">
               Histórico de Reações ({jurado.reacoes.length})
             </h4>
             <div className="max-h-32 overflow-y-auto space-y-1">
               {jurado.reacoes.length === 0 ? (
-                <p className={cn("text-sm", isDarkMode ? "text-zinc-500" : "text-zinc-400")}>
+                <p className="text-sm text-muted-foreground">
                   Nenhuma reação registrada
                 </p>
               ) : (
@@ -523,7 +517,7 @@ function JuradoDetailModal({
                     key={reacao.id}
                     className={cn(
                       "flex items-center gap-2 p-2 rounded-lg text-xs",
-                      isDarkMode ? "bg-zinc-800" : "bg-zinc-50"
+                      "bg-muted"
                     )}
                   >
                     {reacao.tipo === "positiva" ? (
@@ -533,11 +527,11 @@ function JuradoDetailModal({
                     ) : (
                       <Minus className="w-3 h-3 text-zinc-400" />
                     )}
-                    <span className={isDarkMode ? "text-zinc-400" : "text-zinc-500"}>{reacao.fase}</span>
-                    <span className={isDarkMode ? "text-zinc-600" : "text-zinc-400"}>•</span>
-                    <span className={isDarkMode ? "text-zinc-500" : "text-zinc-400"}>{reacao.momento}</span>
+                    <span className="text-muted-foreground">{reacao.fase}</span>
+                    <span className="text-muted-foreground/50">•</span>
+                    <span className="text-muted-foreground">{reacao.momento}</span>
                     {reacao.descricao && (
-                      <span className={isDarkMode ? "text-zinc-300" : "text-zinc-600"}>{reacao.descricao}</span>
+                      <span className="text-foreground/80">{reacao.descricao}</span>
                     )}
                   </div>
                 ))
@@ -547,12 +541,12 @@ function JuradoDetailModal({
 
           {/* Anotações */}
           <div>
-            <h4 className={cn("text-sm font-medium mb-2", isDarkMode ? "text-zinc-300" : "text-zinc-700")}>
+            <h4 className="text-sm font-medium mb-2 text-foreground/80">
               Anotações ({jurado.anotacoes.length})
             </h4>
             <div className="max-h-32 overflow-y-auto space-y-1 mb-2">
               {jurado.anotacoes.length === 0 ? (
-                <p className={cn("text-sm", isDarkMode ? "text-zinc-500" : "text-zinc-400")}>
+                <p className="text-sm text-muted-foreground">
                   Nenhuma anotação
                 </p>
               ) : (
@@ -561,11 +555,11 @@ function JuradoDetailModal({
                     key={anotacao.id}
                     className={cn(
                       "p-2 rounded-lg text-xs",
-                      isDarkMode ? "bg-zinc-800" : "bg-zinc-50"
+                      "bg-muted"
                     )}
                   >
-                    <p className={isDarkMode ? "text-zinc-300" : "text-zinc-700"}>{anotacao.texto}</p>
-                    <div className={cn("flex items-center gap-2 mt-1", isDarkMode ? "text-zinc-500" : "text-zinc-400")}>
+                    <p className="text-foreground/80">{anotacao.texto}</p>
+                    <div className="flex items-center gap-2 mt-1 text-muted-foreground">
                       <Clock className="w-2.5 h-2.5" />
                       <span>{anotacao.fase} • {anotacao.momento}</span>
                     </div>
@@ -582,7 +576,7 @@ function JuradoDetailModal({
                 onChange={(e) => setNovaAnotacao(e.target.value)}
                 className={cn(
                   "min-h-[60px] text-sm",
-                  isDarkMode ? "bg-zinc-800 border-zinc-700" : "bg-zinc-50"
+                  "bg-muted border-border"
                 )}
               />
             </div>
@@ -632,16 +626,16 @@ export function JuradosMonitor({
       {/* Grid de Jurados */}
       <div className={cn(
         "rounded-xl border p-4",
-        isDarkMode ? "bg-zinc-900/50 border-zinc-800" : "bg-white border-zinc-200"
+        "bg-card border-border"
       )}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Users className={cn("w-5 h-5", isDarkMode ? "text-zinc-400" : "text-zinc-600")} />
-            <h3 className={cn("font-semibold", isDarkMode ? "text-zinc-200" : "text-zinc-800")}>
+            <Users className="w-5 h-5 text-muted-foreground" />
+            <h3 className="font-semibold text-foreground">
               Monitoramento Individual
             </h3>
           </div>
-          <Badge variant="outline" className={isDarkMode ? "border-zinc-700" : ""}>
+          <Badge variant="outline" className="border-border">
             <Activity className="w-3 h-3 mr-1" />
             Tempo Real
           </Badge>

@@ -120,9 +120,9 @@ const CATEGORY_CONFIG: Record<ChecklistCategory, CategoryConfig> = {
   comunicacao: {
     label: "Comunicacao e Logistica",
     icon: <MessageSquare className="w-4 h-4" />,
-    color: "text-stone-600 dark:text-zinc-400",
-    bgColor: "bg-stone-50 dark:bg-zinc-900/50",
-    borderColor: "border-stone-200 dark:border-zinc-800",
+    color: "text-muted-foreground",
+    bgColor: "bg-muted/50",
+    borderColor: "border-border",
   },
 };
 
@@ -207,7 +207,7 @@ function getUrgencyConfig(daysUntil: number | null) {
     return {
       label: "Data não definida",
       variant: "default" as const,
-      className: "border-stone-300 bg-stone-100 text-stone-600 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700",
+      className: "border-border bg-muted text-muted-foreground",
       pulse: false,
     };
   }
@@ -269,7 +269,7 @@ function ChecklistItemRow({
       htmlFor={`checklist-${item.id}`}
       className={cn(
         "flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all duration-150",
-        "hover:bg-stone-50 dark:hover:bg-zinc-800/50",
+        "hover:bg-muted/50",
         checked && "opacity-60"
       )}
     >
@@ -285,8 +285,8 @@ function ChecklistItemRow({
             className={cn(
               "text-sm font-medium transition-all",
               checked
-                ? "line-through text-stone-400 dark:text-zinc-600"
-                : "text-stone-700 dark:text-zinc-300"
+                ? "line-through text-muted-foreground/50"
+                : "text-foreground/80"
             )}
           >
             {item.label}
@@ -306,8 +306,8 @@ function ChecklistItemRow({
             className={cn(
               "text-xs mt-0.5 leading-relaxed",
               checked
-                ? "text-stone-300 dark:text-zinc-700"
-                : "text-stone-500 dark:text-zinc-500"
+                ? "text-muted-foreground/30"
+                : "text-muted-foreground"
             )}
           >
             {item.description}
@@ -341,7 +341,7 @@ function CategorySection({
         <button
           className={cn(
             "w-full flex items-center justify-between p-3 rounded-lg transition-all duration-150",
-            "hover:bg-stone-50 dark:hover:bg-zinc-800/50",
+            "hover:bg-muted/50",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             config.bgColor,
             "border",
@@ -358,7 +358,7 @@ function CategorySection({
             >
               {config.label}
             </span>
-            <span className="text-xs text-stone-400 dark:text-zinc-500 font-mono">
+            <span className="text-xs text-muted-foreground font-mono">
               {done}/{total}
             </span>
           </div>
@@ -369,9 +369,9 @@ function CategorySection({
               </Badge>
             )}
             {isOpen ? (
-              <ChevronDown className="w-4 h-4 text-stone-400 dark:text-zinc-500" />
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
             ) : (
-              <ChevronRight className="w-4 h-4 text-stone-400 dark:text-zinc-500" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
             )}
           </div>
         </button>
@@ -445,7 +445,7 @@ function StaticFallbackChecklist({
           </Badge>
         </div>
         <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between text-xs text-stone-500 dark:text-zinc-500">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>Progresso geral</span>
             <span className="font-mono font-semibold">{percentage}%</span>
           </div>
@@ -479,7 +479,7 @@ function StaticFallbackChecklist({
             })}
           </div>
         </ScrollArea>
-        <div className="mt-4 pt-3 border-t border-stone-100 dark:border-zinc-800 flex items-center justify-between text-xs text-stone-500 dark:text-zinc-500">
+        <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
           <span>
             {done}/{total} concluídos ({percentage}%)
           </span>
@@ -668,10 +668,10 @@ export function ChecklistPreparacaoJuri({
           <div className="space-y-4">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="space-y-2">
-                <div className="h-10 rounded-lg bg-stone-100 dark:bg-zinc-800 animate-pulse" />
+                <div className="h-10 rounded-lg bg-muted animate-pulse" />
                 <div className="ml-4 space-y-1">
-                  <div className="h-8 rounded bg-stone-50 dark:bg-zinc-900 animate-pulse" />
-                  <div className="h-8 rounded bg-stone-50 dark:bg-zinc-900 animate-pulse w-3/4" />
+                  <div className="h-8 rounded bg-muted/50 animate-pulse" />
+                  <div className="h-8 rounded bg-muted/50 animate-pulse w-3/4" />
                 </div>
               </div>
             ))}
@@ -709,10 +709,10 @@ export function ChecklistPreparacaoJuri({
           {/* Overall progress */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-stone-500 dark:text-zinc-500">
+              <span className="text-muted-foreground">
                 Progresso geral
               </span>
-              <span className="font-mono font-semibold text-stone-700 dark:text-zinc-300">
+              <span className="font-mono font-semibold text-foreground/80">
                 {percentage}%
               </span>
             </div>
@@ -722,7 +722,7 @@ export function ChecklistPreparacaoJuri({
           {/* Critical items progress */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-stone-500 dark:text-zinc-500 flex items-center gap-1">
+              <span className="text-muted-foreground flex items-center gap-1">
                 <Flame className="w-3 h-3 text-red-500" />
                 Itens críticos
               </span>
@@ -778,7 +778,7 @@ export function ChecklistPreparacaoJuri({
         </ScrollArea>
 
         {/* Footer stats */}
-        <div className="mt-4 pt-3 border-t border-stone-100 dark:border-zinc-800 flex items-center justify-between text-xs text-stone-500 dark:text-zinc-500">
+        <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <CheckSquare className="w-3.5 h-3.5" />
             {done}/{total} concluídos ({percentage}%)

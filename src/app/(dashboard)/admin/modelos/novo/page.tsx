@@ -310,7 +310,7 @@ export default function NovoModeloPage() {
   return (
     <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+      <div className="border-b border-zinc-200 dark:border-border bg-white dark:bg-card">
         <div className="px-6 py-4">
           <Breadcrumbs
             items={[
@@ -327,11 +327,11 @@ export default function NovoModeloPage() {
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
               </Link>
-              <div className="p-2.5 bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-900/30 dark:to-emerald-800/20 rounded-xl border border-emerald-200 dark:border-emerald-700">
+              <div className="p-2.5 bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-900/30 dark:to-emerald-800/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
                 <FileStack className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+                <h1 className="text-xl font-semibold text-zinc-900 dark:text-foreground">
                   Novo Modelo
                 </h1>
                 <p className="text-sm text-zinc-500">
@@ -413,7 +413,7 @@ export default function NovoModeloPage() {
                             "flex flex-col items-start p-3 rounded-lg border-2 text-left transition-all",
                             categoria === opt.value
                               ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
-                              : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                              : "border-zinc-200 dark:border-border hover:border-zinc-300 dark:hover:border-zinc-600"
                           )}
                         >
                           <Icon className={cn(
@@ -468,7 +468,7 @@ export default function NovoModeloPage() {
               </CardHeader>
               <CardContent>
                 {showPreview ? (
-                  <div className="prose prose-zinc dark:prose-invert max-w-none p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg min-h-[400px]">
+                  <div className="prose prose-zinc dark:prose-invert max-w-none p-4 bg-zinc-50 dark:bg-muted/50 rounded-lg min-h-[400px]">
                     {conteudo.split("\n").map((line, i) => (
                       <p key={i}>
                         {line.replace(/\{\{(\w+)\}\}/g, (_, varName) => (
@@ -518,7 +518,7 @@ OAB/BA {{OAB_DEFENSOR}}`}
                         <Badge
                           key={varName}
                           variant="secondary"
-                          className="text-xs bg-white dark:bg-zinc-800"
+                          className="text-xs bg-white dark:bg-muted"
                         >
                           {varName}
                         </Badge>
@@ -557,7 +557,7 @@ OAB/BA {{OAB_DEFENSOR}}`}
                     {variaveis.map((v, index) => (
                       <div
                         key={index}
-                        className="flex items-start gap-3 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg"
+                        className="flex items-start gap-3 p-3 bg-zinc-50 dark:bg-muted/50 rounded-lg"
                       >
                         <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3">
                           <div>
@@ -731,19 +731,19 @@ function VariableButton({ nome, label, onClick, onCopy, copied }: VariableButton
       <button
         type="button"
         onClick={onClick}
-        className="flex-1 flex items-center gap-2 px-2 py-1.5 text-left rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+        className="flex-1 flex items-center gap-2 px-2 py-1.5 text-left rounded-md hover:bg-zinc-100 dark:hover:bg-muted transition-colors"
       >
-        <code className="text-xs font-mono text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
+        <code className="text-xs font-mono text-zinc-500 bg-zinc-100 dark:bg-muted px-1.5 py-0.5 rounded">
           {nome}
         </code>
-        <span className="text-xs text-zinc-600 dark:text-zinc-400 truncate">
+        <span className="text-xs text-zinc-600 dark:text-muted-foreground truncate">
           {label}
         </span>
       </button>
       <button
         type="button"
         onClick={onCopy}
-        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-zinc-100 dark:hover:bg-muted transition-all"
       >
         {copied ? (
           <Check className="w-3 h-3 text-emerald-500" />

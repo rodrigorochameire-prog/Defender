@@ -38,7 +38,7 @@ export default async function SetPasswordPage() {
               className="object-contain drop-shadow-[0_0_12px_rgba(16,185,129,0.2)]"
             />
           </div>
-          <h1 className="font-serif text-xl font-semibold text-zinc-100 tracking-tight">
+          <h1 className="font-serif text-xl font-semibold text-foreground tracking-tight">
             OMBUDS
           </h1>
           <p className="text-[10px] font-light tracking-[0.2em] uppercase text-zinc-500 mt-1">
@@ -47,11 +47,11 @@ export default async function SetPasswordPage() {
         </div>
 
         {/* Separador sutil */}
-        <div className="w-8 h-px bg-zinc-800 mx-auto mb-6" />
+        <div className="w-8 h-px bg-border mx-auto mb-6" />
 
         {/* Mensagem de boas-vindas */}
         <div className="text-center mb-6">
-          <p className="text-sm text-zinc-300">
+          <p className="text-sm text-foreground/80">
             Bem-vindo ao OMBUDS!
           </p>
           <p className="text-xs text-zinc-500 mt-1">
@@ -63,7 +63,7 @@ export default async function SetPasswordPage() {
         <SetPasswordForm />
 
         {/* Footer institucional */}
-        <div className="mt-10 pt-5 border-t border-zinc-800/50">
+        <div className="mt-10 pt-5 border-t border-border/50">
           <p className="text-center text-[10px] text-zinc-700 tracking-wide">
             Defensoria Publica do Estado da Bahia
           </p>

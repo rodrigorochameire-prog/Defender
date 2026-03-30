@@ -62,7 +62,7 @@ const SEVERIDADE_BADGE: Record<string, string> = {
   media:
     "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400",
   baixa:
-    "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
+    "bg-muted text-muted-foreground",
 };
 
 interface IntelligenceFactsProps {
@@ -82,7 +82,7 @@ export function IntelligenceFacts({
 
   if (filteredFacts.length === 0) {
     return (
-      <div className="flex items-center gap-2 text-sm text-zinc-400 dark:text-zinc-500 py-8 justify-center">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
         <FileText className="h-4 w-4" />
         <span>Nenhum fato identificado.</span>
       </div>
@@ -124,26 +124,26 @@ export function IntelligenceFacts({
 
         return (
           <div key={tipo}>
-            <h4 className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
+            <h4 className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
               <span
                 className={cn("w-2 h-2 rounded-full shrink-0", config.dotColor)}
               />
               {config.label}
-              <span className="text-zinc-400">({group.length})</span>
+              <span className="text-muted-foreground">({group.length})</span>
             </h4>
             <div className="space-y-1.5">
               {group.map((fact) => (
                 <div
                   key={fact.id}
-                  className="py-2 px-3 rounded-lg bg-zinc-50/50 dark:bg-zinc-800/30 border border-zinc-100 dark:border-zinc-800"
+                  className="py-2 px-3 rounded-lg bg-muted/50 border border-border"
                 >
                   <div className="flex items-start gap-2">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                      <p className="text-sm font-medium text-foreground">
                         {fact.titulo}
                       </p>
                       {fact.descricao && (
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 line-clamp-2">
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                           {fact.descricao}
                         </p>
                       )}
@@ -160,7 +160,7 @@ export function IntelligenceFacts({
                         </span>
                       )}
                       {fact.confidence != null && fact.confidence > 0 && (
-                        <span className="text-[10px] text-zinc-400 tabular-nums">
+                        <span className="text-[10px] text-muted-foreground tabular-nums">
                           {Math.round(fact.confidence * 100)}%
                         </span>
                       )}
@@ -171,7 +171,7 @@ export function IntelligenceFacts({
                       {fact.tags.map((tag, i) => (
                         <span
                           key={i}
-                          className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
+                          className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
                         >
                           {tag}
                         </span>

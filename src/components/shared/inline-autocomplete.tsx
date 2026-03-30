@@ -112,7 +112,7 @@ export function InlineAutocomplete({
     return (
       <div ref={containerRef} className="relative">
         <div className="flex items-center gap-1">
-          <Search className="w-3 h-3 text-zinc-400 flex-shrink-0" />
+          <Search className="w-3 h-3 text-muted-foreground flex-shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -125,39 +125,39 @@ export function InlineAutocomplete({
               onQueryChange?.(q);
             }}
             onKeyDown={handleKeyDown}
-            className="w-full text-[11px] px-1.5 py-0.5 rounded border border-emerald-400 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
+            className="w-full text-[11px] px-1.5 py-0.5 rounded border border-emerald-400 bg-white dark:bg-muted text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
             placeholder={placeholder}
           />
           <button
             onClick={() => { setIsEditing(false); setShowResults(false); setQuery(""); }}
-            className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700"
+            className="p-0.5 rounded hover:bg-muted"
           >
-            <X className="w-3 h-3 text-zinc-400" />
+            <X className="w-3 h-3 text-muted-foreground" />
           </button>
         </div>
 
         {showResults && query.length >= 2 && (
-          <div className="absolute left-0 top-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl z-[60] min-w-[220px] max-h-48 overflow-y-auto py-1">
+          <div className="absolute left-0 top-full mt-1 bg-white dark:bg-card border border-border rounded-lg shadow-xl z-[60] min-w-[220px] max-h-48 overflow-y-auto py-1">
             {isLoading ? (
-              <div className="px-3 py-2 text-[11px] text-zinc-400">Buscando...</div>
+              <div className="px-3 py-2 text-[11px] text-muted-foreground">Buscando...</div>
             ) : results.length === 0 ? (
-              <div className="px-3 py-2 text-[11px] text-zinc-400">Nenhum resultado</div>
+              <div className="px-3 py-2 text-[11px] text-muted-foreground">Nenhum resultado</div>
             ) : (
               results.map((r, idx) => (
                 <button
                   key={r.id}
                   onClick={() => handleSelect(r)}
-                  className={`w-full px-3 py-1.5 text-left text-[11px] flex items-center gap-2 text-zinc-700 dark:text-zinc-300 transition-colors ${
+                  className={`w-full px-3 py-1.5 text-left text-[11px] flex items-center gap-2 text-foreground/80 transition-colors ${
                     idx === selectedIndex
                       ? "bg-emerald-50 dark:bg-emerald-950/30"
                       : "hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                   }`}
                 >
-                  <IconComp className="w-3 h-3 text-zinc-400 flex-shrink-0" />
+                  <IconComp className="w-3 h-3 text-muted-foreground flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <span className="font-medium truncate block">{r.label}</span>
                     {r.sublabel && (
-                      <span className="text-[10px] text-zinc-400 truncate block">{r.sublabel}</span>
+                      <span className="text-[10px] text-muted-foreground truncate block">{r.sublabel}</span>
                     )}
                   </div>
                   {valueId === r.id && (
@@ -167,7 +167,7 @@ export function InlineAutocomplete({
               ))
             )}
             {onTextChange && query.length >= 2 && (
-              <div className="border-t border-zinc-100 dark:border-zinc-800 mt-1 pt-1">
+              <div className="border-t border-border mt-1 pt-1">
                 <button
                   onClick={() => {
                     onTextChange(query);
@@ -175,7 +175,7 @@ export function InlineAutocomplete({
                     setShowResults(false);
                     setQuery("");
                   }}
-                  className="w-full px-3 py-1.5 text-left text-[10px] text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                  className="w-full px-3 py-1.5 text-left text-[10px] text-muted-foreground hover:bg-muted"
                 >
                   Manter como texto: &quot;{query}&quot;
                 </button>
@@ -195,9 +195,9 @@ export function InlineAutocomplete({
       className={className || "cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1.5 py-0.5 -mx-1.5 transition-colors truncate flex items-center gap-1"}
     >
       {value ? (
-        <span className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate">{value}</span>
+        <span className="text-[11px] text-foreground/80 truncate">{value}</span>
       ) : (
-        <span className="text-[11px] text-zinc-400 dark:text-zinc-500 italic">{placeholder}</span>
+        <span className="text-[11px] text-muted-foreground italic">{placeholder}</span>
       )}
     </div>
   );

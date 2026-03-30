@@ -115,23 +115,23 @@ export function NoticiaReaderPanel({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-zinc-900">
+    <div className="flex flex-col h-full bg-background">
       {/* Acento de cor da fonte no topo */}
       <div className="h-[3px] w-full shrink-0" style={{ backgroundColor: corFonte }} />
 
       {/* Header */}
-      <div className="px-6 pt-5 pb-4 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+      <div className="px-6 pt-5 pb-4 border-b border-border shrink-0">
         {/* Linha 1: meta + ações */}
         <div className="flex items-center justify-between gap-4 mb-3">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: corFonte }} />
-            <span className="text-xs text-zinc-500 font-medium">{nomeFonte}</span>
-            <span className="text-zinc-200 dark:text-zinc-700">·</span>
-            <span className="text-xs text-zinc-400 capitalize">{nomeCategoria}</span>
+            <span className="text-xs text-muted-foreground font-medium">{nomeFonte}</span>
+            <span className="text-muted-foreground/50">·</span>
+            <span className="text-xs text-muted-foreground capitalize">{nomeCategoria}</span>
             {noticia.publicadoEm && (
               <>
-                <span className="text-zinc-200 dark:text-zinc-700">·</span>
-                <span className="text-xs text-zinc-400">
+                <span className="text-muted-foreground/50">·</span>
+                <span className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(noticia.publicadoEm), { addSuffix: true, locale: ptBR })}
                 </span>
               </>
@@ -145,17 +145,17 @@ export function NoticiaReaderPanel({
               onClick={onPrevious} disabled={!hasPrevious}
               title="Anterior (K)" aria-label="Notícia anterior"
             >
-              <ChevronLeft className="h-4 w-4 text-zinc-400" />
+              <ChevronLeft className="h-4 w-4 text-muted-foreground" />
             </Button>
             <Button
               variant="ghost" size="icon" className="h-8 w-8"
               onClick={onNext} disabled={!hasNext}
               title="Próxima (J)" aria-label="Próxima notícia"
             >
-              <ChevronRight className="h-4 w-4 text-zinc-400" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Button>
 
-            <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-1" />
+            <div className="w-px h-4 bg-border mx-1" />
 
             <Button
               variant="ghost" size="icon" className="h-8 w-8"
@@ -163,22 +163,22 @@ export function NoticiaReaderPanel({
               title={isFavorito ? "Remover dos salvos (S)" : "Salvar (S)"}
               aria-label={isFavorito ? "Remover dos salvos" : "Salvar notícia"}
             >
-              <Star className={cn("h-4 w-4", isFavorito ? "fill-amber-500 text-amber-500" : "text-zinc-400")} />
+              <Star className={cn("h-4 w-4", isFavorito ? "fill-amber-500 text-amber-500" : "text-muted-foreground")} />
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
               <a href={noticia.urlOriginal} target="_blank" rel="noopener noreferrer" title="Abrir original">
-                <ExternalLink className="h-4 w-4 text-zinc-400" />
+                <ExternalLink className="h-4 w-4 text-muted-foreground" />
               </a>
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose} title="Fechar (Esc)" aria-label="Fechar reader">
-              <X className="h-4 w-4 text-zinc-400" />
+              <X className="h-4 w-4 text-muted-foreground" />
             </Button>
           </div>
         </div>
 
         {/* Linha 2: título completo */}
         <h2
-          className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 leading-snug"
+          className="text-xl font-semibold text-foreground leading-snug"
           style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
         >
           {decodeHtmlEntities(noticia.titulo)}
@@ -191,42 +191,42 @@ export function NoticiaReaderPanel({
 
           {/* Caixa Resumo IA */}
           {analise && (
-            <div className="border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
+            <div className="border border-border rounded-xl overflow-hidden">
               <button
                 onClick={() => setIaExpanded(!iaExpanded)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-left"
+                className="w-full flex items-center justify-between px-4 py-3 bg-muted/50 hover:bg-muted transition-colors text-left"
               >
                 <div className="flex items-center gap-2">
-                  <Sparkles className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-                  <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+                  <Sparkles className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Análise IA
                   </span>
                   {!iaExpanded && analise.resumoExecutivo && (
-                    <span className="text-xs text-zinc-400 font-normal line-clamp-1 max-w-[300px]">
+                    <span className="text-xs text-muted-foreground font-normal line-clamp-1 max-w-[300px]">
                       — {analise.resumoExecutivo.substring(0, 80)}…
                     </span>
                   )}
                 </div>
                 {iaExpanded
-                  ? <ChevronUp className="h-4 w-4 text-zinc-400 shrink-0" />
-                  : <ChevronDown className="h-4 w-4 text-zinc-400 shrink-0" />
+                  ? <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
+                  : <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
                 }
               </button>
 
               {iaExpanded && (
-                <div className="px-5 py-5 space-y-5 bg-white dark:bg-zinc-900">
+                <div className="px-5 py-5 space-y-5 bg-background">
 
                   {/* Síntese */}
                   {analise.resumoExecutivo && (
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Síntese</p>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Síntese</p>
                         <Button variant="ghost" size="icon" className="h-5 w-5"
                           onClick={() => copyText(analise.resumoExecutivo, "Síntese")}>
-                          <Copy className="h-3 w-3 text-zinc-400" />
+                          <Copy className="h-3 w-3 text-muted-foreground" />
                         </Button>
                       </div>
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                      <p className="text-sm text-foreground/80 leading-relaxed">
                         {analise.resumoExecutivo}
                       </p>
                     </div>
@@ -234,19 +234,19 @@ export function NoticiaReaderPanel({
 
                   {/* Impacto prático */}
                   {analise.impactoPratico && (
-                    <div className="flex items-start gap-2.5 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3">
+                    <div className="flex items-start gap-2.5 bg-muted/50 border border-border rounded-xl px-4 py-3">
                       <Zap className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
                           Impacto prático
                         </p>
-                        <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                        <p className="text-sm text-foreground/80 leading-relaxed">
                           {analise.impactoPratico}
                         </p>
                       </div>
                       <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0"
                         onClick={() => copyText(analise.impactoPratico, "Impacto")}>
-                        <Copy className="h-3 w-3 text-zinc-400" />
+                        <Copy className="h-3 w-3 text-muted-foreground" />
                       </Button>
                     </div>
                   )}
@@ -257,14 +257,14 @@ export function NoticiaReaderPanel({
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-1.5">
                           <Scale className="h-3 w-3 text-blue-500" />
-                          <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Ratio decidendi</p>
+                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Ratio decidendi</p>
                         </div>
                         <Button variant="ghost" size="icon" className="h-5 w-5"
                           onClick={() => copyText(analise.ratioDecidendi!, "Ratio")}>
-                          <Copy className="h-3 w-3 text-zinc-400" />
+                          <Copy className="h-3 w-3 text-muted-foreground" />
                         </Button>
                       </div>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400 italic leading-relaxed">
+                      <p className="text-sm text-muted-foreground italic leading-relaxed">
                         &ldquo;{analise.ratioDecidendi}&rdquo;
                       </p>
                     </div>
@@ -273,13 +273,13 @@ export function NoticiaReaderPanel({
                   {/* Casos aplicáveis */}
                   {analise.casosAplicaveis.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                         Casos aplicáveis
                       </p>
                       <div className="flex gap-1.5 flex-wrap">
                         {analise.casosAplicaveis.map(caso => (
                           <span key={caso}
-                            className="inline-flex items-center gap-1 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-full px-2.5 py-1">
+                            className="inline-flex items-center gap-1 text-xs bg-muted text-foreground/80 rounded-full px-2.5 py-1">
                             <ShieldCheck className="h-3 w-3 text-emerald-500 shrink-0" />
                             {caso}
                           </span>
@@ -294,11 +294,11 @@ export function NoticiaReaderPanel({
 
           {/* Separador artigo */}
           <div className="flex items-center gap-4">
-            <div className="flex-1 h-px bg-zinc-100 dark:bg-zinc-800" />
-            <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest whitespace-nowrap">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest whitespace-nowrap">
               Artigo completo
             </span>
-            <div className="flex-1 h-px bg-zinc-100 dark:bg-zinc-800" />
+            <div className="flex-1 h-px bg-border" />
           </div>
 
           {/* Conteúdo do artigo — tipografia editorial */}
@@ -315,23 +315,23 @@ export function NoticiaReaderPanel({
                   "prose prose-base dark:prose-invert max-w-none",
                   "prose-zinc",
                   // Tipografia editorial: serif no corpo
-                  "[&_p]:font-[family-name:var(--font-serif)] [&_p]:text-[17px] [&_p]:leading-[1.85] [&_p]:text-zinc-700 dark:[&_p]:text-zinc-300",
+                  "[&_p]:font-[family-name:var(--font-serif)] [&_p]:text-[17px] [&_p]:leading-[1.85] [&_p]:text-foreground/80",
                   "[&_li]:font-[family-name:var(--font-serif)] [&_li]:text-[17px] [&_li]:leading-[1.85]",
                   // Títulos sem-serif, bold
-                  "prose-headings:font-sans prose-headings:font-bold prose-headings:text-zinc-900 dark:prose-headings:text-zinc-100 prose-headings:tracking-tight",
+                  "prose-headings:font-sans prose-headings:font-bold prose-headings:text-foreground prose-headings:tracking-tight",
                   // Links
                   "prose-a:text-emerald-600 dark:prose-a:text-emerald-400 prose-a:no-underline hover:prose-a:underline",
                   // Blockquote
-                  "prose-blockquote:border-l-emerald-400 prose-blockquote:text-zinc-600 dark:prose-blockquote:text-zinc-400",
+                  "prose-blockquote:border-l-emerald-400 prose-blockquote:text-muted-foreground",
                   // Strong
-                  "prose-strong:text-zinc-900 dark:prose-strong:text-zinc-100 prose-strong:font-semibold",
+                  "prose-strong:text-foreground prose-strong:font-semibold",
                 )}
                 dangerouslySetInnerHTML={{ __html: conteudoEfetivo! }}
               />
             ) : noticia.resumo ? (
               <div className="space-y-5">
                 <p
-                  className="font-[family-name:var(--font-serif)] text-[17px] leading-[1.85] text-zinc-700 dark:text-zinc-300"
+                  className="font-[family-name:var(--font-serif)] text-[17px] leading-[1.85] text-foreground/80"
                 >
                   {noticia.resumo}
                 </p>
@@ -361,16 +361,16 @@ export function NoticiaReaderPanel({
       </div>
 
       {/* Footer */}
-      <div className="border-t border-zinc-100 dark:border-zinc-800 px-6 py-3 flex items-center gap-2 shrink-0">
+      <div className="border-t border-border px-6 py-3 flex items-center gap-2 shrink-0">
         <Button
-          variant="ghost" size="sm" className="text-xs text-zinc-500 gap-1.5"
+          variant="ghost" size="sm" className="text-xs text-muted-foreground gap-1.5"
           onClick={() => enriquecerComIA.mutate({ noticiaId: noticia.id })}
           disabled={enriquecerComIA.isPending}
         >
           <RefreshCw className={cn("h-3.5 w-3.5", enriquecerComIA.isPending && "animate-spin")} />
           Re-analisar IA
         </Button>
-        <span className="text-[10px] text-zinc-400 dark:text-zinc-500 ml-auto">
+        <span className="text-[10px] text-muted-foreground ml-auto">
           J próxima · K anterior · S salvar · Esc fechar
         </span>
       </div>

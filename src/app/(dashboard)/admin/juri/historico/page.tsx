@@ -77,18 +77,18 @@ export default function HistoricoJuriPage() {
   }, [sessoes, busca, filtroResultado]);
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-            <History className="w-5 h-5 text-white dark:text-zinc-900" />
+            <History className="w-5 h-5 text-white dark:text-foreground" />
           </div>
           <div>
-            <h1 className="font-serif text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+            <h1 className="font-serif text-2xl font-semibold text-foreground">
               Histórico de Plenários
             </h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-muted-foreground">
               Sessões realizadas e resultados
             </p>
           </div>
@@ -103,10 +103,10 @@ export default function HistoricoJuriPage() {
           </div>
         ) : (
           <div className="flex flex-wrap gap-3">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-800/80">
-              <Gavel className="w-4 h-4 text-zinc-400" />
-              <span className="text-xs text-zinc-500">Total</span>
-              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{stats.total}</span>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
+              <Gavel className="w-4 h-4 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">Total</span>
+              <span className="text-sm font-semibold text-foreground">{stats.total}</span>
             </div>
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-800/30">
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
@@ -124,10 +124,10 @@ export default function HistoricoJuriPage() {
               <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">{stats.desclassificacoes}</span>
             </div>
             {stats.total > 0 && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-800/80">
-                <TrendingUp className="w-4 h-4 text-zinc-400" />
-                <span className="text-xs text-zinc-500">Taxa absolvição</span>
-                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
+                <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Taxa absolvição</span>
+                <span className="text-sm font-semibold text-foreground">
                   {Math.round((stats.absolvicoes / stats.total) * 100)}%
                 </span>
               </div>
@@ -138,7 +138,7 @@ export default function HistoricoJuriPage() {
         {/* Filtros */}
         <div className="flex items-center gap-3">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por réu ou nº processo..."
               className="pl-10 h-9"
@@ -180,7 +180,7 @@ export default function HistoricoJuriPage() {
 
               return (
                 <Link key={sessao.id} href={`/admin/juri/${sessao.id}`}>
-                  <div className="group p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 hover:shadow-md transition-all duration-200 cursor-pointer">
+                  <div className="group p-4 rounded-xl bg-card border border-border hover:border-emerald-200/50 dark:hover:border-emerald-800/30 hover:shadow-md transition-all duration-200 cursor-pointer">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
@@ -188,20 +188,20 @@ export default function HistoricoJuriPage() {
                             <Icon className="w-3 h-3" />
                             {res.label}
                           </Badge>
-                          <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                          <span className="text-xs text-muted-foreground">
                             {sessao.dataSessao
                               ? new Date(sessao.dataSessao).toLocaleDateString("pt-BR")
                               : "—"}
                           </span>
                         </div>
-                        <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                        <p className="font-semibold text-sm text-foreground truncate">
                           {sessao.assistidoNome || "Réu não identificado"}
                         </p>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400 font-mono">
+                        <p className="text-xs text-muted-foreground font-mono">
                           {sessao.processo?.numeroAutos || "Processo S/N"}
                         </p>
                       </div>
-                      <span className="text-xs text-zinc-400 group-hover:text-emerald-500 transition-colors">
+                      <span className="text-xs text-muted-foreground group-hover:text-emerald-500 transition-colors">
                         Ver detalhes →
                       </span>
                     </div>
@@ -212,15 +212,15 @@ export default function HistoricoJuriPage() {
           </div>
         ) : (
           <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
-              <History className="w-8 h-8 text-zinc-300 dark:text-zinc-600" />
+            <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+              <History className="w-8 h-8 text-muted-foreground/50" />
             </div>
-            <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+            <h3 className="font-semibold text-foreground mb-1">
               {busca || filtroResultado !== "all"
                 ? "Nenhum resultado encontrado"
                 : "Nenhuma sessão realizada"}
             </h3>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-muted-foreground">
               {busca || filtroResultado !== "all"
                 ? "Tente ajustar os filtros de busca"
                 : "As sessões realizadas aparecerão aqui"}

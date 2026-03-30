@@ -114,7 +114,7 @@ export function StatusBar({ collapsed = false }: StatusBarProps) {
         {/* Indicador de próximo evento */}
         {evento && (
           <span title={`${evento.titulo} - ${evento.quando}`}>
-            <Calendar className="w-4 h-4 text-zinc-500" />
+            <Calendar className="w-4 h-4 text-muted-foreground" />
           </span>
         )}
       </div>
@@ -125,7 +125,7 @@ export function StatusBar({ collapsed = false }: StatusBarProps) {
   return (
     <div className="px-3 py-2 space-y-1.5">
       {/* Linha divisória sutil */}
-      <div className="h-px bg-gradient-to-r from-transparent via-black/[0.06] dark:via-zinc-700/50 to-transparent" />
+      <div className="h-px bg-gradient-to-r from-transparent via-black/[0.06] dark:via-border to-transparent" />
 
       {/* Banner offline */}
       {!isOnline && (
@@ -149,14 +149,14 @@ export function StatusBar({ collapsed = false }: StatusBarProps) {
         ) : (
           <WifiOff className="w-3 h-3 text-amber-400 shrink-0" />
         )}
-        <span className="text-zinc-500">
+        <span className="text-muted-foreground">
           {isOnline ? "Conectado" : "Offline"}
         </span>
         {lastSync && (
           <>
-            <span className="text-zinc-300 dark:text-zinc-600">·</span>
-            <RefreshCw className="w-2.5 h-2.5 text-zinc-400 dark:text-zinc-600 shrink-0" />
-            <span className="text-zinc-400 dark:text-zinc-600 truncate">
+            <span className="text-zinc-300 dark:text-muted-foreground/50">·</span>
+            <RefreshCw className="w-2.5 h-2.5 text-muted-foreground dark:text-muted-foreground/50 shrink-0" />
+            <span className="text-muted-foreground dark:text-muted-foreground/50 truncate">
               {formatDistanceToNow(lastSync, { addSuffix: true, locale: ptBR })}
             </span>
           </>
@@ -170,10 +170,10 @@ export function StatusBar({ collapsed = false }: StatusBarProps) {
             <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-medium text-zinc-700 dark:text-zinc-300 truncate">
+            <p className="text-[11px] font-medium text-zinc-700 dark:text-foreground/80 truncate">
               {evento.titulo}
             </p>
-            <p className="text-[10px] text-zinc-500 flex items-center gap-1">
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1">
               <Clock className="w-2.5 h-2.5 text-emerald-500 dark:text-emerald-400" />
               {evento.quando}
             </p>
@@ -183,9 +183,9 @@ export function StatusBar({ collapsed = false }: StatusBarProps) {
 
       {/* Mensagem quando não há eventos */}
       {!evento && (
-        <div className="flex items-center gap-2 p-1.5 rounded-xl bg-black/[0.03] dark:bg-zinc-800/30 border border-black/[0.04] dark:border-zinc-700/20">
-          <CheckCircle2 className="w-4 h-4 text-zinc-400 dark:text-zinc-600" />
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+        <div className="flex items-center gap-2 p-1.5 rounded-xl bg-black/[0.03] dark:bg-muted/50 border border-black/[0.04] dark:border-border">
+          <CheckCircle2 className="w-4 h-4 text-muted-foreground dark:text-muted-foreground/50" />
+          <span className="text-[10px] text-muted-foreground dark:text-muted-foreground">
             Sem eventos próximos
           </span>
         </div>

@@ -169,7 +169,7 @@ export function PlaudConfigCard({ className }: PlaudConfigCardProps) {
           {config ? (
             <>
               {/* Status do dispositivo */}
-              <div className="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg">
+              <div className="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-card rounded-lg">
                 <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
                   <Smartphone className="h-5 w-5 text-purple-600" />
                 </div>
@@ -187,11 +187,11 @@ export function PlaudConfigCard({ className }: PlaudConfigCardProps) {
               {/* Estatísticas */}
               {stats && (
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg text-center">
+                  <div className="p-3 bg-zinc-50 dark:bg-card rounded-lg text-center">
                     <p className="text-2xl font-bold">{stats.total}</p>
                     <p className="text-xs text-zinc-500">Gravações</p>
                   </div>
-                  <div className="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg text-center">
+                  <div className="p-3 bg-zinc-50 dark:bg-card rounded-lg text-center">
                     <p className="text-2xl font-bold">{stats.linked}</p>
                     <p className="text-xs text-zinc-500">Vinculadas</p>
                   </div>
@@ -260,7 +260,7 @@ export function PlaudConfigCard({ className }: PlaudConfigCardProps) {
                 <Input
                   value={webhookUrl}
                   readOnly
-                  className="text-xs bg-white dark:bg-zinc-800"
+                  className="text-xs bg-white dark:bg-muted"
                 />
                 <Button variant="outline" size="icon" onClick={copyWebhookUrl}>
                   <Copy className="h-4 w-4" />

@@ -319,7 +319,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
   if (error || !data) {
     return (
-      <div className="p-6 text-center text-zinc-500">
+      <div className="p-6 text-center text-muted-foreground">
         <p className="text-sm">Assistido não encontrado.</p>
         <button onClick={() => router.back()} className="mt-2 text-xs text-emerald-600 hover:underline">
           Voltar
@@ -373,10 +373,10 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   return (
     <div className="flex flex-col h-full">
       {/* ── Header: Identity ── */}
-      <div className="px-6 lg:px-8 pt-6 pb-6 border-b border-zinc-200/80 dark:border-zinc-800/60">
+      <div className="px-6 lg:px-8 pt-6 pb-6 border-b border-border">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:-translate-x-0.5 mb-5 transition-all uppercase tracking-wider font-medium"
+          className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground hover:-translate-x-0.5 mb-5 transition-all uppercase tracking-wider font-medium"
         >
           <ArrowLeft className="h-3 w-3" /> Voltar
         </button>
@@ -402,18 +402,18 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           <div className="flex-1 min-w-0">
             {/* Name + Edit */}
             <div className="flex items-center gap-3">
-              <h1 className="font-serif text-2xl font-semibold leading-tight text-zinc-900 dark:text-zinc-50 truncate">
+              <h1 className="font-serif text-2xl font-semibold leading-tight text-foreground truncate">
                 {data.nome}
               </h1>
               <Link href={`/admin/assistidos/${data.id}/editar`}>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-emerald-600">
                   <Pencil className="h-4 w-4" />
                 </Button>
               </Link>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-emerald-600"
                 onClick={() => setFichaSheetOpen(true)}
                 title="Ficha completa"
               >
@@ -439,15 +439,15 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                 </span>
               )}
               {data.statusPrisional && !isPreso && (
-                <span className="text-xs px-2 py-0.5 rounded-md font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">
+                <span className="text-xs px-2 py-0.5 rounded-md font-medium bg-muted text-muted-foreground">
                   {statusLabel[data.statusPrisional] ?? data.statusPrisional.toLowerCase()}
                 </span>
               )}
               {data.cpf && (
-                <span className="text-xs text-zinc-400 font-mono tabular-nums">{data.cpf}</span>
+                <span className="text-xs text-muted-foreground font-mono tabular-nums">{data.cpf}</span>
               )}
               {data.telefone && (
-                <a href={`tel:${data.telefone}`} className="text-xs text-zinc-400 hover:text-emerald-600 transition-colors">
+                <a href={`tel:${data.telefone}`} className="text-xs text-muted-foreground hover:text-emerald-600 transition-colors">
                   {data.telefone}
                 </a>
               )}
@@ -461,9 +461,9 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                 { icon: Calendar, value: data.audiencias.length, label: "audiências" },
                 { icon: HardDrive, value: data.driveFiles.length, label: "arquivos" },
               ].map(({ icon: Icon, value, label }) => (
-                <div key={label} className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-                  <Icon className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
-                  <span className="font-bold text-zinc-900 dark:text-zinc-100">{value}</span>
+                <div key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Icon className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-bold text-foreground">{value}</span>
                   <span className="hidden sm:inline">{label}</span>
                 </div>
               ))}
@@ -472,8 +472,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         </div>
 
         {/* ── Actions bar ── */}
-        <div className="mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-700/30">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2.5">
+        <div className="mt-6 pt-5 border-t border-border">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">
             Ações IA
           </p>
           <div className="flex items-center gap-2 flex-wrap">
@@ -499,7 +499,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 gap-1.5 px-3 text-zinc-500 hover:text-amber-600 transition-colors text-xs"
+                className="h-8 gap-1.5 px-3 text-muted-foreground hover:text-amber-600 transition-colors text-xs"
                 title="Análise profunda com Claude Sonnet"
                 disabled={analiseProfunda.isPending}
                 onClick={() => {
@@ -515,12 +515,12 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               </Button>
             )}
 
-            <div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700/50" />
+            <div className="w-px h-5 bg-border" />
 
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 gap-1.5 px-3 text-zinc-500 hover:text-violet-600 transition-colors text-xs"
+              className="h-8 gap-1.5 px-3 text-muted-foreground hover:text-violet-600 transition-colors text-xs"
               title="Exportar briefing para pasta do Drive"
               disabled={exportarParaCowork.isPending}
               onClick={() => exportarParaCowork.mutate({ assistidoId: Number(id), tipo: "assistido" })}
@@ -534,7 +534,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 gap-1.5 px-3 text-zinc-500 hover:text-emerald-600 transition-colors text-xs"
+                className="h-8 gap-1.5 px-3 text-muted-foreground hover:text-emerald-600 transition-colors text-xs"
                 title="Importar análise IA gerada pelo Cowork"
                 disabled={importarAnaliseCowork.isPending}
                 onClick={() => importarAnaliseCowork.mutate({ assistidoId: Number(id) })}
@@ -581,7 +581,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
       />
 
       {/* ── Tabs ── */}
-      <div className="flex items-center gap-1 border-b border-zinc-200/80 dark:border-zinc-800/60 px-6 lg:px-8 overflow-x-auto">
+      <div className="flex items-center gap-1 border-b border-border px-6 lg:px-8 overflow-x-auto">
         {tabs.map((t) => {
           const TabIcon = t.icon;
           return (
@@ -592,8 +592,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               className={cn(
                 "flex items-center gap-2 px-4 py-3.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap shrink-0",
                 tab === t.key
-                  ? "border-emerald-500 text-zinc-900 dark:text-zinc-50 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-t-lg"
-                  : "border-transparent text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  ? "border-emerald-500 text-foreground bg-emerald-50/50 dark:bg-emerald-900/10 rounded-t-lg"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
               )}
             >
               <TabIcon className="h-4 w-4" />
@@ -607,7 +607,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                     ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
                     : tab === t.key
                     ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                    : "bg-muted text-muted-foreground"
                 )}>
                   {t.count}
                 </span>
@@ -623,8 +623,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               className={cn(
                 "px-3 py-3.5 text-sm font-medium border-b-2 transition-all flex items-center gap-1 shrink-0",
                 overflowTabs.some(t => t.key === tab)
-                  ? "border-emerald-500 text-zinc-900 dark:text-zinc-50 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-t-lg"
-                  : "border-transparent text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  ? "border-emerald-500 text-foreground bg-emerald-50/50 dark:bg-emerald-900/10 rounded-t-lg"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
               )}
             >
               <MoreHorizontal className="h-4 w-4" />
@@ -645,16 +645,16 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         {tab === "processos" && (
           <div className="space-y-2">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Processos</h2>
+              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Processos</h2>
               <Link href={`/admin/processos/novo?assistidoId=${data.id}`}>
-                <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px] text-zinc-500 hover:text-emerald-600">
+                <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px] text-muted-foreground hover:text-emerald-600">
                   <Plus className="h-3.5 w-3.5" />
                   Novo Processo
                 </Button>
               </Link>
             </div>
             {data.processos.length === 0 ? (
-              <p className="text-sm text-zinc-400 text-center py-8">Nenhum processo vinculado</p>
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhum processo vinculado</p>
             ) : (
               data.processos.map((p) => (
                 <div
@@ -665,7 +665,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                     setItemSheetType("processo");
                     setItemSheetOpen(true);
                   }}
-                  className="group flex gap-3 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 hover:border-emerald-300 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 cursor-pointer transition-all overflow-hidden"
+                  className="group flex gap-3 border border-border rounded-lg p-3 hover:border-emerald-300 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 cursor-pointer transition-all overflow-hidden"
                 >
                   {/* Left accent */}
                   <div className={cn(
@@ -673,24 +673,24 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                     p.papel === "REU" ? "bg-rose-400"
                       : p.papel === "CORREU" ? "bg-amber-400"
                       : p.papel === "VITIMA" ? "bg-blue-400"
-                      : "bg-zinc-300 dark:bg-zinc-600"
+                      : "bg-muted-foreground/30"
                   )} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 truncate">{p.numeroAutos ?? "Sem número"}</span>
+                      <span className="text-[11px] font-mono text-foreground/80 truncate">{p.numeroAutos ?? "Sem número"}</span>
                       <div className="flex items-center gap-1 shrink-0">
                         <span className={cn(
                           "text-[9px] px-1.5 py-0.5 rounded-full font-semibold",
                           p.papel === "REU" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400"
                             : p.papel === "CORREU" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
                             : p.papel === "VITIMA" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
-                            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                            : "bg-muted text-muted-foreground"
                         )}>
                           {p.papel?.toLowerCase() ?? "réu"}
                         </span>
                         <Button
                           variant="ghost" size="sm"
-                          className="h-5 w-5 p-0 text-zinc-400 hover:text-violet-600 transition-colors"
+                          className="h-5 w-5 p-0 text-muted-foreground hover:text-violet-600 transition-colors"
                           title="Exportar briefing deste processo para Cowork"
                           disabled={exportingProcessoId === p.id}
                           onClick={(e) => {
@@ -706,7 +706,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                         </Button>
                         <Button
                           variant="ghost" size="sm"
-                          className="h-5 w-5 p-0 text-zinc-400 hover:text-emerald-600 transition-colors"
+                          className="h-5 w-5 p-0 text-muted-foreground hover:text-emerald-600 transition-colors"
                           title="Importar análise IA deste processo do Cowork"
                           disabled={importingProcessoId === p.id}
                           onClick={(e) => {
@@ -722,7 +722,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                         </Button>
                         <Button
                           variant="ghost" size="sm"
-                          className="h-5 w-5 p-0 text-zinc-400 hover:text-amber-500 transition-colors"
+                          className="h-5 w-5 p-0 text-muted-foreground hover:text-amber-500 transition-colors"
                           title="Análise profunda (Sonnet) — teses, quesitos, estratégia"
                           disabled={sonnetProcessoId === p.id}
                           onClick={(e) => {
@@ -738,8 +738,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                         </Button>
                       </div>
                     </div>
-                    {p.assunto && <p className="text-[11px] font-medium text-zinc-600 dark:text-zinc-300 mt-0.5 truncate">{p.assunto}</p>}
-                    {p.vara && <p className="text-[10px] text-zinc-400 mt-0.5 truncate">{p.vara}</p>}
+                    {p.assunto && <p className="text-[11px] font-medium text-foreground/80 mt-0.5 truncate">{p.assunto}</p>}
+                    {p.vara && <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{p.vara}</p>}
                   </div>
                 </div>
               ))
@@ -750,16 +750,16 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         {tab === "demandas" && (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Demandas</h2>
+              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Demandas</h2>
               <Link href={`/admin/demandas/nova?assistidoId=${data.id}`}>
-                <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px] text-zinc-500 hover:text-emerald-600">
+                <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px] text-muted-foreground hover:text-emerald-600">
                   <Plus className="h-3.5 w-3.5" />
                   Nova Demanda
                 </Button>
               </Link>
             </div>
             {data.demandas.length === 0 ? (
-              <p className="text-sm text-zinc-400 text-center py-8">Nenhuma demanda vinculada</p>
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhuma demanda vinculada</p>
             ) : (
               data.demandas.map((d) => {
                 const isUrgente = d.status === "2_ATENDER";
@@ -777,23 +777,23 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                     }}
                     className="w-full text-left"
                   >
-                    <div className="flex gap-3 border border-zinc-100 dark:border-zinc-700 rounded-lg px-3 py-2.5 hover:border-emerald-300 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 cursor-pointer transition-all overflow-hidden">
+                    <div className="flex gap-3 border border-border rounded-lg px-3 py-2.5 hover:border-emerald-300 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 cursor-pointer transition-all overflow-hidden">
                       {/* Left accent */}
                       <div className={cn(
                         "w-0.5 rounded-full shrink-0 self-stretch",
                         isUrgente ? "bg-rose-400"
                           : prazoVencido ? "bg-rose-300"
                           : isConcluido ? "bg-emerald-400"
-                          : "bg-zinc-200 dark:bg-zinc-600"
+                          : "bg-muted-foreground/30"
                       )} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-[11px] font-medium text-zinc-700 dark:text-zinc-300 truncate">{d.ato ?? d.tipoAto ?? "Demanda"}</p>
+                          <p className="text-[11px] font-medium text-foreground/80 truncate">{d.ato ?? d.tipoAto ?? "Demanda"}</p>
                           <span className={cn(
                             "text-[9px] px-1.5 py-0.5 rounded-full font-semibold shrink-0",
                             isUrgente ? "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400"
                               : isConcluido ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                              : d.status === "5_FILA" ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                              : d.status === "5_FILA" ? "bg-muted text-muted-foreground"
                               : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
                           )}>
                             {d.status?.replace(/^\d+_/, "") ?? "—"}
@@ -801,7 +801,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                           {d.processoId && (
                             <Button
                               variant="ghost" size="sm"
-                              className="h-5 w-5 p-0 text-zinc-400 hover:text-amber-500 transition-colors"
+                              className="h-5 w-5 p-0 text-muted-foreground hover:text-amber-500 transition-colors"
                               title="Análise profunda (Sonnet) — teses, quesitos, estratégia"
                               disabled={sonnetProcessoId === d.processoId}
                               onClick={(e) => {
@@ -821,13 +821,13 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                           {d.prazo && (
                             <span className={cn(
                               "text-[9px] font-mono tabular-nums",
-                              prazoVencido ? "text-rose-500 dark:text-rose-400" : "text-zinc-400"
+                              prazoVencido ? "text-rose-500 dark:text-rose-400" : "text-muted-foreground"
                             )}>
                               {format(new Date(d.prazo), "dd/MM/yy", { locale: ptBR })}
                             </span>
                           )}
                           {d.defensorNome && (
-                            <span className="text-[9px] text-zinc-400 truncate">{d.defensorNome}</span>
+                            <span className="text-[9px] text-muted-foreground truncate">{d.defensorNome}</span>
                           )}
                         </div>
                       </div>
@@ -851,25 +851,25 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         {tab === "audiencias" && (
           <div className="space-y-2">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Audiências</h2>
+              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Audiências</h2>
               <Link href={`/admin/agenda?assistidoId=${data.id}`}>
-                <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px] text-zinc-500 hover:text-emerald-600">
+                <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px] text-muted-foreground hover:text-emerald-600">
                   <Plus className="h-3.5 w-3.5" />
                   Agendar
                 </Button>
               </Link>
             </div>
             {data.audiencias.length === 0 ? (
-              <p className="text-sm text-zinc-400 text-center py-8">Nenhuma audiência registrada</p>
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhuma audiência registrada</p>
             ) : (
               data.audiencias.map((a) => (
-                <div key={a.id} className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors">
+                <div key={a.id} className="border border-border rounded-lg p-3 hover:border-muted-foreground/30 transition-colors">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-medium text-zinc-700 dark:text-zinc-300 flex-1 truncate">{a.tipo ?? "Audiência"}</span>
+                    <span className="text-[11px] font-medium text-foreground/80 flex-1 truncate">{a.tipo ?? "Audiência"}</span>
                     <span className={cn(
                       "text-[10px] px-1.5 py-0.5 rounded-full shrink-0",
                       a.dataAudiencia && new Date(a.dataAudiencia) < new Date()
-                        ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                        ? "bg-muted text-muted-foreground"
                         : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
                     )}>
                       {a.dataAudiencia && new Date(a.dataAudiencia) < new Date() ? "Realizada" : "Futura"}
@@ -877,7 +877,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 w-6 p-0 text-zinc-400 hover:text-violet-600 shrink-0 transition-colors"
+                      className="h-6 w-6 p-0 text-muted-foreground hover:text-violet-600 shrink-0 transition-colors"
                       title="Exportar briefing desta audiência para Cowork"
                       disabled={exportingAudienciaId === a.id}
                       onClick={() => {
@@ -892,7 +892,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 w-6 p-0 text-zinc-400 hover:text-emerald-600 shrink-0 transition-colors"
+                      className="h-6 w-6 p-0 text-muted-foreground hover:text-emerald-600 shrink-0 transition-colors"
                       title="Importar análise IA desta audiência do Cowork"
                       disabled={importingAudienciaId === a.id}
                       onClick={() => {
@@ -911,7 +911,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0 text-zinc-400 hover:text-amber-500 shrink-0 transition-colors"
+                        className="h-6 w-6 p-0 text-muted-foreground hover:text-amber-500 shrink-0 transition-colors"
                         title="Análise profunda (Sonnet) — teses, quesitos, estratégia"
                         disabled={sonnetProcessoId === a.processoId}
                         onClick={() => {
@@ -927,11 +927,11 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                     )}
                   </div>
                   {a.dataAudiencia && (
-                    <p className="text-[11px] text-zinc-400 mt-0.5">
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
                       {format(new Date(a.dataAudiencia), "dd/MM/yyyy 'às' HH'h'mm", { locale: ptBR })}
                     </p>
                   )}
-                  {a.local && <p className="text-[11px] text-zinc-400">{a.local}</p>}
+                  {a.local && <p className="text-[11px] text-muted-foreground">{a.local}</p>}
                 </div>
               ))
             )}
@@ -967,7 +967,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           <div className="space-y-3">
             {/* Header */}
             <div className="flex items-center justify-between">
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-muted-foreground">
                 {oficiosData?.total ?? 0} oficio(s) vinculado(s)
               </p>
               <Button
@@ -983,9 +983,9 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             {/* Lista */}
             {!oficiosData?.items?.length ? (
               <div className="text-center py-12">
-                <FileText className="w-8 h-8 mx-auto text-zinc-600 mb-2" />
-                <p className="text-sm text-zinc-500">Nenhum oficio vinculado</p>
-                <p className="text-xs text-zinc-600 mt-1">
+                <FileText className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">Nenhum oficio vinculado</p>
+                <p className="text-xs text-muted-foreground/50 mt-1">
                   Crie um novo oficio para este assistido
                 </p>
               </div>
@@ -1000,14 +1000,14 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                 const statusColor = statusKey === "rascunho" ? "text-yellow-400 border-yellow-500/20" :
                   statusKey === "revisao" ? "text-blue-400 border-blue-500/20" :
                   statusKey === "enviado" ? "text-emerald-400 border-emerald-500/20" :
-                  "text-zinc-400 border-zinc-500/20";
+                  "text-muted-foreground border-border";
 
                 return (
                   <Link
                     key={oficio.id}
                     href={`/admin/oficios/${oficio.id}`}
-                    className="block p-3 rounded-lg border border-zinc-700/30 bg-zinc-800/30
-                      hover:bg-zinc-800/60 hover:border-emerald-500/20 transition-colors"
+                    className="block p-3 rounded-lg border border-border bg-muted/50
+                      hover:bg-muted hover:border-emerald-500/20 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -1016,7 +1016,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                             {statusLabel}
                           </Badge>
                           {meta.tipoOficio && (
-                            <Badge variant="outline" className="text-[9px] text-zinc-400 border-zinc-600">
+                            <Badge variant="outline" className="text-[9px] text-muted-foreground border-border">
                               {meta.tipoOficio}
                             </Badge>
                           )}
@@ -1024,10 +1024,10 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                             <Sparkles className="w-3 h-3 text-violet-400" />
                           )}
                         </div>
-                        <h4 className="text-sm font-medium text-zinc-200 truncate">
+                        <h4 className="text-sm font-medium text-foreground truncate">
                           {oficio.titulo}
                         </h4>
-                        <div className="flex items-center gap-3 mt-1 text-[10px] text-zinc-600">
+                        <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground/50">
                           {oficio.processoNumero && (
                             <span className="font-mono">{oficio.processoNumero}</span>
                           )}

@@ -67,7 +67,7 @@ const STATUS_CONFIG: Record<SyncStatus, { label: string; color: string; icon: ty
   pending: { label: "Pendente", color: "bg-amber-100 text-amber-700 border-amber-200", icon: Upload },
   no_cpf: { label: "Sem CPF", color: "bg-red-100 text-red-700 border-red-200", icon: XCircle },
   error: { label: "Erro", color: "bg-red-100 text-red-700 border-red-200", icon: AlertTriangle },
-  unchecked: { label: "Verificar", color: "bg-zinc-100 text-zinc-600 border-zinc-200", icon: HelpCircle },
+  unchecked: { label: "Verificar", color: "bg-muted text-muted-foreground border-border", icon: HelpCircle },
 };
 
 const ATRIBUICAO_LABELS: Record<string, string> = {
@@ -301,7 +301,7 @@ export function AssistidosSyncTab() {
                   <span className="text-xs w-20 truncate text-muted-foreground">
                     {a.label}
                   </span>
-                  <div className="flex-1 h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                  <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                     <div
                       className={cn(
                         "h-full rounded-full transition-all",

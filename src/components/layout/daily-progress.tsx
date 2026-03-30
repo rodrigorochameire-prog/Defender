@@ -103,8 +103,8 @@ export function DailyProgress() {
   if (!mounted) {
     return (
       <div className="flex items-center gap-3">
-        <div className="h-6 w-24 bg-zinc-700/30 rounded animate-pulse" />
-        <div className="h-6 w-24 bg-zinc-700/30 rounded animate-pulse" />
+        <div className="h-6 w-24 bg-muted/50 rounded animate-pulse" />
+        <div className="h-6 w-24 bg-muted/50 rounded animate-pulse" />
       </div>
     );
   }
@@ -129,13 +129,13 @@ export function DailyProgress() {
         {/* Progresso de Demandas */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-zinc-800/50 border border-zinc-700/30 hover:bg-zinc-700/50 transition-colors cursor-default">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-muted/50 border border-border hover:bg-muted transition-colors cursor-default">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-semibold text-zinc-200">
+                <span className="text-[11px] font-semibold text-foreground">
                   {demandas.concluidas}/{demandas.total}
                 </span>
-                <div className="w-12 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
+                <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
                   <div
                     className={cn(
                       "h-full rounded-full transition-all duration-500",
@@ -149,11 +149,11 @@ export function DailyProgress() {
           </TooltipTrigger>
           <TooltipContent
             side="bottom"
-            className="bg-zinc-900 border-zinc-700 text-zinc-200"
+            className="bg-card border-border text-foreground"
           >
             <div className="text-xs">
               <p className="font-semibold">Demandas Hoje</p>
-              <p className="text-zinc-400">
+              <p className="text-muted-foreground">
                 {demandas.concluidas} de {demandas.total} concluídas (
                 {demandas.percentual}%)
               </p>
@@ -164,13 +164,13 @@ export function DailyProgress() {
         {/* Progresso de Eventos */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-zinc-800/50 border border-zinc-700/30 hover:bg-zinc-700/50 transition-colors cursor-default">
+            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-muted/50 border border-border hover:bg-muted transition-colors cursor-default">
               <Calendar className="w-3.5 h-3.5 text-blue-400" />
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-semibold text-zinc-200">
+                <span className="text-[11px] font-semibold text-foreground">
                   {eventos.realizados}/{eventos.total}
                 </span>
-                <div className="w-12 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
+                <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
                   <div
                     className={cn(
                       "h-full rounded-full transition-all duration-500",
@@ -184,11 +184,11 @@ export function DailyProgress() {
           </TooltipTrigger>
           <TooltipContent
             side="bottom"
-            className="bg-zinc-900 border-zinc-700 text-zinc-200"
+            className="bg-card border-border text-foreground"
           >
             <div className="text-xs">
               <p className="font-semibold">Eventos Hoje</p>
-              <p className="text-zinc-400">
+              <p className="text-muted-foreground">
                 {eventos.realizados} de {eventos.total} realizados (
                 {eventos.percentual}%)
               </p>
@@ -201,15 +201,15 @@ export function DailyProgress() {
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-900/30 border border-emerald-700/30">
-                <Sparkles className="w-3 h-3 text-emerald-400" />
-                <span className="text-[10px] font-semibold text-emerald-400">
+                <Sparkles className="w-3 h-3 text-emerald-700 dark:text-emerald-400" />
+                <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
                   Ótimo dia!
                 </span>
               </div>
             </TooltipTrigger>
             <TooltipContent
               side="bottom"
-              className="bg-zinc-900 border-zinc-700 text-zinc-200"
+              className="bg-card border-border text-foreground"
             >
               <p className="text-xs">Progresso geral: {progressoGeral}%</p>
             </TooltipContent>

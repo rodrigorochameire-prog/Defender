@@ -223,9 +223,9 @@ export function CoworkActionButton({
         disabled={loading}
         title={config.label}
         className={cn(
-          "inline-flex items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700/50 p-2.5 transition-all",
-          "text-zinc-500 dark:text-zinc-400",
-          "hover:border-zinc-300 dark:hover:border-zinc-600 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
+          "inline-flex items-center justify-center rounded-lg border border-border p-2.5 transition-all",
+          "text-muted-foreground",
+          "hover:border-border hover:text-foreground hover:bg-muted/50",
           loading && "opacity-60",
           className,
         )}
@@ -240,22 +240,22 @@ export function CoworkActionButton({
       onClick={handleClick}
       disabled={loading}
       className={cn(
-        "group flex items-center gap-3 rounded-xl border border-zinc-200/80 dark:border-zinc-700/40 px-4 py-3 transition-all text-left w-full",
-        "hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30",
+        "group flex items-center gap-3 rounded-xl border border-border px-4 py-3 transition-all text-left w-full",
+        "hover:border-border hover:bg-muted/50",
         loading && "opacity-60 pointer-events-none",
         className,
       )}
     >
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 shrink-0">
+      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted shrink-0">
         {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         ) : (
-          <Icon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+          <Icon className="h-4 w-4 text-muted-foreground" />
         )}
       </div>
       <div className="min-w-0">
-        <p className="text-[13px] font-medium text-zinc-700 dark:text-zinc-200 leading-tight">{config.label}</p>
-        <p className="text-[11px] text-zinc-400 dark:text-zinc-500 leading-tight mt-0.5">
+        <p className="text-[13px] font-medium text-foreground leading-tight">{config.label}</p>
+        <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
           {config.description}
         </p>
       </div>

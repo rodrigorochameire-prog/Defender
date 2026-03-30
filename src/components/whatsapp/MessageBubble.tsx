@@ -167,16 +167,16 @@ function MediaDocument({
       href={url || undefined}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-2.5 p-2.5 bg-zinc-100/80 dark:bg-zinc-800/50 rounded-xl mb-1.5 hover:bg-zinc-200/80 dark:hover:bg-zinc-700/50 transition-colors cursor-pointer"
+      className="flex items-center gap-2.5 p-2.5 bg-muted/80 rounded-xl mb-1.5 hover:bg-muted transition-colors cursor-pointer"
     >
-      <div className="h-10 w-10 rounded-lg bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center shrink-0">
-        <FileText className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+      <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+        <FileText className="h-5 w-5 text-muted-foreground" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate text-zinc-900 dark:text-zinc-100">
+        <p className="text-sm font-medium truncate text-foreground">
           {filename || "Documento"}
         </p>
-        <p className="text-[11px] text-zinc-400">{mimeType || "document"}</p>
+        <p className="text-[11px] text-muted-foreground">{mimeType || "document"}</p>
       </div>
     </a>
   );
@@ -316,7 +316,7 @@ export function MessageBubble({
               "h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all duration-200",
               isSelected
                 ? "bg-emerald-500 border-emerald-500 animate-scale-in"
-                : "border-zinc-300 dark:border-zinc-600",
+                : "border-border",
             )}
           >
             {isSelected && <Check className="h-3 w-3 text-white" />}
@@ -427,7 +427,7 @@ export function MessageBubble({
           {/* Timestamp only (for media-only messages or edge cases) */}
           {(!hasContent || (hasQuote && !replyText)) && !fallbackTypeLabel && (
             <div className="flex items-center justify-end gap-1 mt-0.5">
-              <span className="text-[10px] text-zinc-400 tabular-nums">{time}</span>
+              <span className="text-[10px] text-muted-foreground tabular-nums">{time}</span>
               {isOutbound && <StatusIcon status={msg.status} />}
             </div>
           )}

@@ -15,7 +15,7 @@ export default function LegislacaoPage() {
   return (
     <div className="flex flex-col h-screen bg-zinc-50/50 dark:bg-zinc-950">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
+      <div className="border-b border-zinc-200 dark:border-border bg-white dark:bg-card shrink-0">
         <div className="px-6 py-4">
           <Breadcrumbs
             items={[{ label: "Dashboard", href: "/admin" }, { label: "Legislação" }]}
@@ -26,7 +26,7 @@ export default function LegislacaoPage() {
                 <Scale className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+                <h1 className="text-xl font-semibold text-foreground">
                   Legislação
                 </h1>
                 <p className="text-sm text-zinc-500">

@@ -54,10 +54,10 @@ export default function NovoAtendimentoPage() {
             <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-pink-700 dark:text-pink-400" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">
               Novo Atendimento
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">
+            <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
               Registre um novo acolhimento
             </p>
           </div>

@@ -11,10 +11,10 @@ export default function OfflinePage() {
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-xl font-semibold text-foreground">
             Sem conexão
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-muted-foreground">
             Você está offline. Verifique sua conexão com a internet e tente
             novamente.
           </p>
@@ -28,7 +28,7 @@ export default function OfflinePage() {
           Tentar novamente
         </button>
 
-        <p className="text-xs text-zinc-400 dark:text-zinc-600">
+        <p className="text-xs text-muted-foreground/50">
           Páginas visitadas anteriormente podem estar disponíveis no cache.
         </p>
       </div>

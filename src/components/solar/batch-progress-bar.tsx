@@ -45,7 +45,7 @@ export function BatchProgressBar({
   return (
     <div
       className={cn(
-        "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-3",
+        "bg-card border border-border rounded-lg px-4 py-3",
         "transition-all duration-300",
         isActive && !isComplete && "animate-pulse",
       )}
@@ -68,7 +68,7 @@ export function BatchProgressBar({
 
           {/* Label */}
           {label && (
-            <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate">
+            <span className="text-xs font-medium text-foreground/80 truncate">
               {label}
             </span>
           )}
@@ -76,7 +76,7 @@ export function BatchProgressBar({
 
         {/* Counter */}
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
+          <span className="text-xs text-muted-foreground tabular-nums">
             {completed}/{total} concluído{completed !== 1 ? "s" : ""}
           </span>
           {hasFailures && (

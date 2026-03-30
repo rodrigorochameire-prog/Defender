@@ -71,12 +71,12 @@ const CATEGORIA_COLORS: Record<CategoriaDigilenciaKey, string> = {
 
 // Cores de status
 const STATUS_BADGE_COLORS: Record<StatusDiligenciaKey, string> = {
-  NAO_INICIADA: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+  NAO_INICIADA: "bg-muted text-muted-foreground",
   EM_ANDAMENTO: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
   AGUARDANDO: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
   CONCLUIDA: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
   INFRUTIFERA: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  CANCELADA: "bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400",
+  CANCELADA: "bg-muted text-muted-foreground",
 };
 
 interface DiligenciaCardProps {
@@ -165,21 +165,21 @@ export function DiligenciaCard({
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {categoria.label}
                 </span>
                 {diligencia.prazo && (
-                  <span className="text-[10px] text-zinc-400 flex items-center gap-1">
+                  <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
                     {new Date(diligencia.prazo).toLocaleDateString("pt-BR")}
                   </span>
                 )}
               </div>
-              <h3 className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">
+              <h3 className="font-medium text-sm text-foreground truncate">
                 {diligencia.titulo}
               </h3>
               {diligencia.descricao && !compact && (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                   {diligencia.descricao}
                 </p>
               )}
@@ -200,7 +200,7 @@ export function DiligenciaCard({
                   >
                     {status.emoji} {status.label}
                   </Badge>
-                  <ChevronDown className="w-3 h-3 text-zinc-400" />
+                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
@@ -210,7 +210,7 @@ export function DiligenciaCard({
                     onClick={() => handleStatusChange(opt.value as StatusDiligenciaKey)}
                     className={cn(
                       "text-xs",
-                      diligencia.status === opt.value && "bg-zinc-100 dark:bg-zinc-800"
+                      diligencia.status === opt.value && "bg-muted"
                     )}
                   >
                     {opt.label}
@@ -256,14 +256,14 @@ export function DiligenciaCard({
         {/* Meta info */}
         <div className="flex items-center gap-3 mt-3 flex-wrap">
           {executor && (
-            <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
               <User className="w-3 h-3" />
               {executor.label}
               {diligencia.executorNome && `: ${diligencia.executorNome}`}
             </span>
           )}
           {checklistProgress && (
-            <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" />
               {checklistProgress.concluidos}/{checklistProgress.total}
             </span>
@@ -273,11 +273,11 @@ export function DiligenciaCard({
 
       {/* Expanded content */}
       {expanded && (
-        <div className="px-4 pb-4 space-y-4 border-t border-zinc-200 dark:border-zinc-800 pt-4">
+        <div className="px-4 pb-4 space-y-4 border-t border-border pt-4">
           {/* Checklist */}
           {diligencia.checklist && diligencia.checklist.length > 0 && (
             <div>
-              <h4 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-2">
+              <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                 Checklist
               </h4>
               <div className="space-y-2">
@@ -294,7 +294,7 @@ export function DiligenciaCard({
                     <span
                       className={cn(
                         "flex-1",
-                        item.concluido && "line-through text-zinc-400"
+                        item.concluido && "line-through text-muted-foreground"
                       )}
                     >
                       {item.texto}
@@ -307,7 +307,7 @@ export function DiligenciaCard({
 
           {/* Notas */}
           <div>
-            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-2">
+            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
               Notas e Resultado
             </h4>
             {editingNotas ? (
@@ -339,8 +339,8 @@ export function DiligenciaCard({
                 className={cn(
                   "text-sm",
                   diligencia.notas
-                    ? "text-zinc-700 dark:text-zinc-300"
-                    : "text-zinc-400 italic cursor-pointer hover:text-zinc-600"
+                    ? "text-foreground/80"
+                    : "text-muted-foreground italic cursor-pointer hover:text-foreground"
                 )}
                 onClick={() => setEditingNotas(true)}
               >
@@ -353,11 +353,11 @@ export function DiligenciaCard({
           {(diligencia.status === "CONCLUIDA" ||
             diligencia.status === "INFRUTIFERA") &&
             diligencia.resultado && (
-              <div className="p-3 rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                <h4 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-1">
+              <div className="p-3 rounded-lg bg-muted">
+                <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                   Resultado
                 </h4>
-                <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                <p className="text-sm text-foreground/80">
                   {diligencia.resultado}
                 </p>
               </div>

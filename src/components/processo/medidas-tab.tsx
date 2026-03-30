@@ -81,11 +81,11 @@ const STATUS_CONFIG: Record<StatusKey, { label: string; className: string }> = {
   },
   REVOGADA: {
     label: "Revogada",
-    className: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
+    className: "bg-zinc-100 text-zinc-500 dark:bg-muted dark:text-muted-foreground",
   },
   EXTINTA: {
     label: "Extinta",
-    className: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
+    className: "bg-zinc-100 text-zinc-500 dark:bg-muted dark:text-muted-foreground",
   },
   PROGRESSAO: {
     label: "Progressao",
@@ -211,11 +211,11 @@ export function MedidasTab({ processoId, assistidos }: MedidasTabProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <Scale className="h-4 w-4 text-zinc-400" />
-          <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+          <span className="text-xs font-semibold text-zinc-600 dark:text-muted-foreground uppercase tracking-wide">
             Medidas Socioeducativas
           </span>
           {medidas.length > 0 && (
-            <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded-full">
+            <span className="text-[10px] bg-zinc-100 dark:bg-muted text-zinc-500 px-1.5 py-0.5 rounded-full">
               {medidas.length}
             </span>
           )}
@@ -226,7 +226,7 @@ export function MedidasTab({ processoId, assistidos }: MedidasTabProps) {
             <Button
               size="sm"
               variant="outline"
-              className="h-7 text-[11px] gap-1 border-zinc-200 dark:border-zinc-700"
+              className="h-7 text-[11px] gap-1 border-zinc-200 dark:border-border"
             >
               <Plus className="h-3 w-3" />
               Nova Medida
@@ -379,10 +379,10 @@ export function MedidasTab({ processoId, assistidos }: MedidasTabProps) {
               <div
                 key={medida.id}
                 className={cn(
-                  "border rounded-lg p-3 bg-white dark:bg-zinc-900",
+                  "border rounded-lg p-3 bg-white dark:bg-card",
                   reavaliacaoVencida
                     ? "border-red-300 dark:border-red-800"
-                    : "border-zinc-200 dark:border-zinc-800"
+                    : "border-zinc-200 dark:border-border"
                 )}
               >
                 {/* Reavaliacao vencida alert */}
@@ -396,7 +396,7 @@ export function MedidasTab({ processoId, assistidos }: MedidasTabProps) {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-200">
+                      <span className="text-[11px] font-semibold text-zinc-800 dark:text-foreground">
                         {TIPO_LABELS[medida.tipo] ?? medida.tipo}
                       </span>
                       <StatusBadge status={medida.status} />
@@ -404,30 +404,30 @@ export function MedidasTab({ processoId, assistidos }: MedidasTabProps) {
 
                     <div className="flex flex-wrap gap-2 mt-1">
                       {medida.prazoMeses && (
-                        <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                        <p className="text-[10px] text-zinc-500 dark:text-muted-foreground">
                           Prazo: {medida.prazoMeses} meses
                         </p>
                       )}
                       {medida.prazoMaximoMeses && (
-                        <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                        <p className="text-[10px] text-zinc-500 dark:text-muted-foreground">
                           (max: {medida.prazoMaximoMeses}m)
                         </p>
                       )}
                       {medida.horasServico && (
-                        <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                        <p className="text-[10px] text-zinc-500 dark:text-muted-foreground">
                           {medida.horasServico}h servico
                         </p>
                       )}
                     </div>
 
                     {medida.unidadeExecucao && (
-                      <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                      <p className="text-[10px] text-zinc-500 dark:text-muted-foreground mt-0.5">
                         Unidade: {medida.unidadeExecucao}
                       </p>
                     )}
 
                     {medida.dataProximaReavaliacao && !reavaliacaoVencida && (
-                      <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                      <p className="text-[10px] text-zinc-500 dark:text-muted-foreground mt-0.5">
                         Proxima reavaliacao: {medida.dataProximaReavaliacao}
                       </p>
                     )}
@@ -437,7 +437,7 @@ export function MedidasTab({ processoId, assistidos }: MedidasTabProps) {
                         {(medida.condicoes as string[]).map((c, i) => (
                           <span
                             key={i}
-                            className="text-[9px] px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 rounded-full"
+                            className="text-[9px] px-1.5 py-0.5 bg-zinc-100 dark:bg-muted text-zinc-500 rounded-full"
                           >
                             {c}
                           </span>
@@ -464,7 +464,7 @@ export function MedidasTab({ processoId, assistidos }: MedidasTabProps) {
                             disabled={updateStatusMutation.isPending}
                             className={cn(
                               "text-[9px] px-2 py-0.5 rounded-full border font-medium transition-colors disabled:opacity-50",
-                              "border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:border-zinc-400 hover:text-zinc-700"
+                              "border-zinc-200 dark:border-border text-zinc-500 hover:border-zinc-400 hover:text-zinc-700"
                             )}
                             title={`Avancar para: ${cfg.label}`}
                           >

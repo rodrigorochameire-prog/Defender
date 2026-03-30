@@ -74,16 +74,16 @@ function TheorySection({
   return (
     <Card className={cn(
       "overflow-hidden transition-all duration-200",
-      "bg-white dark:bg-zinc-950",
-      "border border-zinc-200/80 dark:border-zinc-700/60",
-      "hover:border-zinc-300 dark:hover:border-zinc-600",
+      "bg-card",
+      "border border-border",
+      "hover:border-border",
       `border-l-[4px] ${borderColor}`
     )}>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
           <div className={cn(
             "flex items-center justify-between p-5 cursor-pointer",
-            "hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors"
+            "hover:bg-muted/50 transition-colors"
           )}>
             <div className="flex items-center gap-3.5">
               <div className={cn(
@@ -93,31 +93,31 @@ function TheorySection({
                 {icon}
               </div>
               <div>
-                <h3 className="font-semibold text-base sm:text-lg text-zinc-900 dark:text-zinc-100">
+                <h3 className="font-semibold text-base sm:text-lg text-foreground">
                   {title}
                 </h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="text-sm text-muted-foreground">
                   {hint}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2.5">
               {hasContent && (
-                <Badge variant="outline" className="text-xs px-2 py-0.5 rounded-md bg-zinc-50 dark:bg-zinc-900">
+                <Badge variant="outline" className="text-xs px-2 py-0.5 rounded-md bg-muted">
                   Preenchido
                 </Badge>
               )}
               {isOpen ? (
-                <ChevronDown className="w-5 h-5 text-zinc-400" />
+                <ChevronDown className="w-5 h-5 text-muted-foreground" />
               ) : (
-                <ChevronRight className="w-5 h-5 text-zinc-400" />
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
               )}
             </div>
           </div>
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div className="px-5 pb-5 border-t border-zinc-100 dark:border-zinc-800/50 pt-4">
+          <div className="px-5 pb-5 border-t border-border pt-4">
             {isEditing ? (
               <div className="space-y-4">
                 <Textarea
@@ -125,8 +125,8 @@ function TheorySection({
                   onChange={(e) => onChangeValue(e.target.value)}
                   placeholder={placeholder}
                   className="min-h-[180px] resize-none font-serif text-base leading-relaxed
-                    bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700
-                    focus:border-zinc-400 dark:focus:border-zinc-600"
+                    bg-background border-border
+                    focus:border-ring"
                 />
                 <div className="flex items-center justify-end gap-3">
                   <Button
@@ -134,7 +134,7 @@ function TheorySection({
                     size="default"
                     onClick={onCancel}
                     disabled={isSaving}
-                    className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    className="text-muted-foreground hover:text-foreground"
                   >
                     <X className="w-4 h-4 mr-2" />
                     Cancelar
@@ -154,16 +154,16 @@ function TheorySection({
               <div className="space-y-4">
                 {hasContent ? (
                   <div className="prose prose-base dark:prose-invert max-w-none">
-                    <p className="whitespace-pre-wrap font-serif text-base text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                    <p className="whitespace-pre-wrap font-serif text-base text-foreground/80 leading-relaxed">
                       {content}
                     </p>
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                      <Lightbulb className="w-6 h-6 text-zinc-400" />
+                    <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                      <Lightbulb className="w-6 h-6 text-muted-foreground" />
                     </div>
-                    <p className="text-base text-zinc-500 dark:text-zinc-400">
+                    <p className="text-base text-muted-foreground">
                       {placeholder}
                     </p>
                   </div>
@@ -174,9 +174,9 @@ function TheorySection({
                     variant="ghost"
                     size="default"
                     onClick={onEdit}
-                    className="w-full text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300
-                      border border-dashed border-zinc-200 dark:border-zinc-700
-                      hover:border-zinc-300 dark:hover:border-zinc-600 h-11"
+                    className="w-full text-muted-foreground hover:text-foreground
+                      border border-dashed border-border
+                      hover:border-border h-11"
                   >
                     <Edit3 className="w-4 h-4 mr-2" />
                     {hasContent ? "Editar" : "Adicionar conteúdo"}
@@ -234,14 +234,14 @@ export function TeoriaDoCaso({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-200/80 dark:from-zinc-800 dark:to-zinc-700/50">
-            <Scale className="w-6 h-6 text-zinc-700 dark:text-zinc-300" />
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-muted to-muted/80">
+            <Scale className="w-6 h-6 text-foreground/80" />
           </div>
           <div>
-            <h2 className="font-semibold text-lg text-zinc-900 dark:text-zinc-100">
+            <h2 className="font-semibold text-lg text-foreground">
               Estratégia da Defesa
             </h2>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-muted-foreground">
               O tripé da defesa: Fatos, Provas e Direito
             </p>
           </div>
@@ -253,9 +253,9 @@ export function TeoriaDoCaso({
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg
-              text-xs font-medium text-zinc-600 dark:text-zinc-400
-              bg-zinc-100 dark:bg-zinc-800 
-              hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+              text-xs font-medium text-muted-foreground
+              bg-muted
+              hover:bg-muted/80 transition-colors"
           >
             <FolderOpen className="w-4 h-4" />
             Pasta no Drive
@@ -328,12 +328,12 @@ export function TeoriaDoCaso({
       </div>
 
       {/* Dica de conexões */}
-      <div className="flex items-start gap-3.5 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-700/60">
-        <div className="p-1.5 rounded-lg bg-zinc-200/60 dark:bg-zinc-700/50">
-          <Lightbulb className="w-4 h-4 text-zinc-600 dark:text-zinc-400 flex-shrink-0" />
+      <div className="flex items-start gap-3.5 p-4 rounded-xl bg-muted/50 border border-border">
+        <div className="p-1.5 rounded-lg bg-muted">
+          <Lightbulb className="w-4 h-4 text-muted-foreground flex-shrink-0" />
         </div>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          <strong className="text-zinc-700 dark:text-zinc-300">Dica:</strong> Use tags no título do caso (ex: #NulidadeBusca, #LegitimaDefesa) para conectar casos com teses similares e encontrar petições de sucesso.
+        <p className="text-sm text-muted-foreground">
+          <strong className="text-foreground/80">Dica:</strong> Use tags no título do caso (ex: #NulidadeBusca, #LegitimaDefesa) para conectar casos com teses similares e encontrar petições de sucesso.
         </p>
       </div>
     </div>

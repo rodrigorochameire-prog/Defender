@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-100 dark:bg-[#0f0f11] p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-muted dark:bg-[#0f0f11] p-4 relative overflow-hidden">
       {/* Ambient glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-500/[0.03] rounded-full blur-[120px] pointer-events-none" />
 
@@ -34,22 +34,22 @@ export default function NotFound() {
 
         {/* Título */}
         <div className="space-y-2">
-          <h1 className="text-6xl font-bold text-zinc-900 dark:text-zinc-100">404</h1>
-          <h2 className="font-serif text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-6xl font-bold text-foreground">404</h1>
+          <h2 className="font-serif text-xl font-semibold text-foreground">
             Página não encontrada
           </h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-muted-foreground">
             A página que você procura não existe ou foi movida.
           </p>
         </div>
 
         {/* Divider */}
-        <div className="w-8 h-px bg-zinc-300 dark:bg-zinc-700 mx-auto" />
+        <div className="w-8 h-px bg-border mx-auto" />
 
         {/* Botões */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button
-            className="gap-2 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-emerald-500 dark:hover:text-white transition-colors duration-200"
+            className="gap-2 bg-foreground hover:bg-emerald-600 text-background dark:hover:bg-emerald-500 dark:hover:text-white transition-colors duration-200"
             asChild
           >
             <Link href="/">
@@ -59,7 +59,7 @@ export default function NotFound() {
           </Button>
           <Button
             variant="outline"
-            className="gap-2 border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors duration-200"
+            className="gap-2 border-border text-foreground/80 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors duration-200"
             asChild
           >
             <Link href="javascript:history.back()">
@@ -70,7 +70,7 @@ export default function NotFound() {
         </div>
 
         {/* Footer */}
-        <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-600 pt-4">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground/50 pt-4">
           OMBUDS — Ecossistema de Defesa Criminal
         </p>
       </div>

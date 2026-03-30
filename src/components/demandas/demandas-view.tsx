@@ -54,8 +54,8 @@ const STATUS_CONFIG: Record<string, {
   },
   "monitorar": { 
     label: "MONITORAR", 
-    rowColor: "bg-zinc-50 dark:bg-zinc-900/50 border-l-4 border-l-zinc-400",
-    badgeColor: "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700", 
+    rowColor: "bg-zinc-50 dark:bg-muted/50 border-l-4 border-l-zinc-400",
+    badgeColor: "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-muted dark:text-muted-foreground dark:border-border",
     icon: Clock,
     order: 4
   },
@@ -68,8 +68,8 @@ const STATUS_CONFIG: Record<string, {
   },
   "concluido": { 
     label: "CONCLUÍDO", 
-    rowColor: "bg-stone-100 dark:bg-zinc-900 border-l-4 border-l-stone-300", 
-    badgeColor: "bg-stone-100 text-stone-500 border-stone-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700", 
+    rowColor: "bg-stone-100 dark:bg-muted border-l-4 border-l-stone-300",
+    badgeColor: "bg-stone-100 text-stone-500 border-stone-200 dark:bg-muted dark:text-muted-foreground dark:border-border",
     icon: CheckCircle2,
     order: 6
   },
@@ -220,7 +220,7 @@ function DemandasLista({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; o
             <div className="col-span-1 flex justify-end">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-stone-900 dark:hover:text-zinc-100">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-stone-900 dark:hover:text-foreground">
                     <MoreHorizontal className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -263,7 +263,7 @@ function DemandasGrid({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; on
               item.status === "a_fazer" && "border-l-yellow-500",
               item.status === "monitorar" && "border-l-blue-500",
               item.status === "fila" && "border-l-purple-500",
-              item.status === "concluido" && "border-l-zinc-300 dark:border-l-zinc-600 opacity-75"
+              item.status === "concluido" && "border-l-zinc-300 dark:border-l-border opacity-75"
             )}
           >
             {/* Header */}
@@ -349,7 +349,7 @@ function DemandasKanban({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; 
               status === "a_fazer" && "border-b-yellow-500 bg-yellow-50 dark:bg-yellow-950/20",
               status === "monitorar" && "border-b-blue-500 bg-blue-50 dark:bg-blue-950/20",
               status === "fila" && "border-b-purple-500 bg-purple-50 dark:bg-purple-950/20",
-              status === "concluido" && "border-b-stone-300 bg-stone-100 dark:bg-zinc-900"
+              status === "concluido" && "border-b-stone-300 bg-stone-100 dark:bg-muted"
             )}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

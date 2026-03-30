@@ -412,7 +412,7 @@ function ChecklistTaticoSection({
               <span
                 className={[
                   "shrink-0 mt-0.5",
-                  "h-4 w-4 rounded border-2 border-zinc-300 dark:border-zinc-600",
+                  "h-4 w-4 rounded border-2 border-zinc-300 dark:border-border",
                   "inline-block",
                 ].join(" ")}
                 aria-hidden="true"

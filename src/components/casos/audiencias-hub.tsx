@@ -202,9 +202,9 @@ function AudienciaCard({
     <Card 
       className={cn(
         "group cursor-pointer transition-all duration-200",
-        "bg-white dark:bg-zinc-950",
-        "border border-zinc-200 dark:border-zinc-800",
-        "hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-md",
+        "bg-card",
+        "border border-border",
+        "hover:border-border hover:shadow-md",
         audiencia.assistidoPreso ? "border-l-[3px] border-l-rose-500" : "border-l-[3px] border-l-emerald-500"
       )}
       onClick={onClick}
@@ -213,11 +213,11 @@ function AudienciaCard({
         {/* Topo: Data e Status */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-zinc-500 dark:text-zinc-400">
+            <span className="font-mono text-xs text-muted-foreground">
               {format(audiencia.dataAudiencia, "dd/MM/yyyy")}
             </span>
             {audiencia.horario && (
-              <span className="text-xs text-zinc-400">
+              <span className="text-xs text-muted-foreground">
                 {audiencia.horario}
               </span>
             )}
@@ -243,7 +243,7 @@ function AudienciaCard({
             );
           })()}
           {audiencia.sala && (
-            <span className="text-xs text-zinc-500">
+            <span className="text-xs text-muted-foreground">
               Sala {audiencia.sala}
             </span>
           )}
@@ -262,7 +262,7 @@ function AudienciaCard({
                 audiencia.assistidoPreso ? "ring-rose-500" : "ring-emerald-500"
               )}
             />
-            <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+            <span className="text-sm font-medium text-foreground truncate">
               {audiencia.assistidoNome}
             </span>
             <PrisonerIndicator preso={audiencia.assistidoPreso ?? false} size="xs" />
@@ -271,7 +271,7 @@ function AudienciaCard({
 
         {/* Processo */}
         {audiencia.numeroAutos && !compact && (
-          <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
             <Scale className="w-3 h-3" />
             <span className="truncate">{audiencia.numeroAutos}</span>
           </div>
@@ -279,8 +279,8 @@ function AudienciaCard({
 
         {/* Resumo da Defesa */}
         {audiencia.resumoDefesa && !compact && (
-          <div className="mt-2 pt-2 border-t border-dashed border-zinc-100 dark:border-zinc-800">
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 italic">
+          <div className="mt-2 pt-2 border-t border-dashed border-border">
+            <p className="text-xs text-muted-foreground line-clamp-2 italic">
               &ldquo;{audiencia.resumoDefesa}&rdquo;
             </p>
           </div>
@@ -308,13 +308,13 @@ function ListView({
       <div className="hidden md:block">
         <Table>
           <TableHeader>
-            <TableRow className="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
-              <TableHead className="w-[100px] text-xs uppercase text-zinc-500 font-semibold tracking-wider">Data</TableHead>
-              <TableHead className="text-xs uppercase text-zinc-500 font-semibold tracking-wider">Tipo</TableHead>
-              <TableHead className="text-xs uppercase text-zinc-500 font-semibold tracking-wider">Assistido</TableHead>
-              <TableHead className="text-xs uppercase text-zinc-500 font-semibold tracking-wider">Processo</TableHead>
-              <TableHead className="text-xs uppercase text-zinc-500 font-semibold tracking-wider">Local</TableHead>
-              <TableHead className="w-[100px] text-xs uppercase text-zinc-500 font-semibold tracking-wider">Status</TableHead>
+            <TableRow className="bg-muted/50 border-b border-border">
+              <TableHead className="w-[100px] text-xs uppercase text-muted-foreground font-semibold tracking-wider">Data</TableHead>
+              <TableHead className="text-xs uppercase text-muted-foreground font-semibold tracking-wider">Tipo</TableHead>
+              <TableHead className="text-xs uppercase text-muted-foreground font-semibold tracking-wider">Assistido</TableHead>
+              <TableHead className="text-xs uppercase text-muted-foreground font-semibold tracking-wider">Processo</TableHead>
+              <TableHead className="text-xs uppercase text-muted-foreground font-semibold tracking-wider">Local</TableHead>
+              <TableHead className="w-[100px] text-xs uppercase text-muted-foreground font-semibold tracking-wider">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -326,18 +326,18 @@ function ListView({
                 <TableRow 
                   key={audiencia.id}
                   className={cn(
-                    "cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors",
+                    "cursor-pointer hover:bg-muted/50 transition-colors",
                     audiencia.assistidoPreso && "border-l-[3px] border-l-rose-500"
                   )}
                   onClick={() => onAudienciaClick?.(audiencia)}
                 >
                   <TableCell className="py-3">
                     <div className="flex flex-col gap-0.5">
-                      <span className="font-mono text-xs text-zinc-900 dark:text-zinc-100 font-medium">
+                      <span className="font-mono text-xs text-foreground font-medium">
                         {format(audiencia.dataAudiencia, "dd/MM/yy")}
                       </span>
                       {audiencia.horario && (
-                        <span className="text-xs text-zinc-500 font-mono">{audiencia.horario}</span>
+                        <span className="text-xs text-muted-foreground font-mono">{audiencia.horario}</span>
                       )}
                       <DateIndicator date={audiencia.dataAudiencia} />
                     </div>
@@ -374,7 +374,7 @@ function ListView({
                           )}
                         />
                         <div className="min-w-0">
-                          <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate block max-w-[140px] font-medium">
+                          <span className="text-sm text-foreground/80 truncate block max-w-[140px] font-medium">
                             {audiencia.assistidoNome}
                           </span>
                           <PrisonerIndicator preso={audiencia.assistidoPreso ?? false} size="xs" />
@@ -383,22 +383,22 @@ function ListView({
                     )}
                   </TableCell>
                   <TableCell>
-                    <span className="font-mono text-xs text-zinc-500 truncate max-w-[160px] block">
+                    <span className="font-mono text-xs text-muted-foreground truncate max-w-[160px] block">
                       {audiencia.numeroAutos}
                     </span>
                     {audiencia.vara && (
-                      <span className="text-xs text-zinc-400">{audiencia.vara}</span>
+                      <span className="text-xs text-muted-foreground">{audiencia.vara}</span>
                     )}
                   </TableCell>
                   <TableCell>
                     {audiencia.local && (
-                      <div className="flex items-center gap-1 text-xs text-zinc-500">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <MapPin className="w-3 h-3 flex-shrink-0" />
                         <span className="truncate max-w-[100px]">{audiencia.local}</span>
                       </div>
                     )}
                     {audiencia.sala && (
-                      <span className="text-xs text-zinc-400">Sala {audiencia.sala}</span>
+                      <span className="text-xs text-muted-foreground">Sala {audiencia.sala}</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -414,7 +414,7 @@ function ListView({
       </div>
 
       {/* Mobile Cards */}
-      <div className="md:hidden divide-y divide-zinc-100 dark:divide-zinc-800">
+      <div className="md:hidden divide-y divide-border">
         {audiencias.map((audiencia) => {
           const tipoConfig = TIPOS_AUDIENCIA[audiencia.tipo as keyof typeof TIPOS_AUDIENCIA] || TIPOS_AUDIENCIA.OUTRA;
           const statusConfig = STATUS_AUDIENCIA[audiencia.status] || STATUS_AUDIENCIA.A_DESIGNAR;
@@ -423,7 +423,7 @@ function ListView({
             <div
               key={audiencia.id}
               className={cn(
-                "p-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors",
+                "p-3 cursor-pointer hover:bg-muted/50 transition-colors",
                 audiencia.assistidoPreso && "border-l-[3px] border-l-rose-500"
               )}
               onClick={() => onAudienciaClick?.(audiencia)}
@@ -432,11 +432,11 @@ function ListView({
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div className="flex flex-col">
-                    <span className="font-mono text-xs text-zinc-900 dark:text-zinc-100 font-medium">
+                    <span className="font-mono text-xs text-foreground font-medium">
                       {format(audiencia.dataAudiencia, "dd/MM")}
                     </span>
                     {audiencia.horario && (
-                      <span className="text-xs text-zinc-500">{audiencia.horario}</span>
+                      <span className="text-xs text-muted-foreground">{audiencia.horario}</span>
                     )}
                   </div>
                   <DateIndicator date={audiencia.dataAudiencia} />
@@ -471,10 +471,10 @@ function ListView({
                     )}
                   />
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm text-zinc-900 dark:text-zinc-100 font-medium block truncate">
+                    <span className="text-sm text-foreground font-medium block truncate">
                       {audiencia.assistidoNome}
                     </span>
-                    <span className="font-mono text-xs text-zinc-500 truncate block">
+                    <span className="font-mono text-xs text-muted-foreground truncate block">
                       {audiencia.numeroAutos}
                     </span>
                   </div>
@@ -484,7 +484,7 @@ function ListView({
 
               {/* Bottom: Location */}
               {(audiencia.local || audiencia.sala) && (
-                <div className="flex items-center gap-1 text-xs text-zinc-500">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <MapPin className="w-3 h-3" />
                   <span className="truncate">
                     {audiencia.local}{audiencia.sala && ` • Sala ${audiencia.sala}`}
@@ -531,8 +531,8 @@ function KanbanView({
           >
             {/* Column Header */}
             <div className="flex items-center gap-2 mb-3 px-1">
-              <Icon className="w-4 h-4 text-zinc-500" />
-              <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <Icon className="w-4 h-4 text-muted-foreground" />
+              <h3 className="text-sm font-medium text-foreground/80">
                 {column.title}
               </h3>
               <Badge variant="secondary" className="text-xs px-1.5 py-0 ml-auto">
@@ -543,11 +543,11 @@ function KanbanView({
             {/* Column Content */}
             <div className={cn(
               "space-y-2 min-h-[200px] p-2 rounded-lg",
-              "bg-zinc-50 dark:bg-zinc-900/30",
-              "border border-dashed border-zinc-200 dark:border-zinc-800"
+              "bg-muted/50",
+              "border border-dashed border-border"
             )}>
               {items.length === 0 ? (
-                <div className="flex items-center justify-center h-[100px] text-xs text-zinc-400">
+                <div className="flex items-center justify-center h-[100px] text-xs text-muted-foreground">
                   Nenhuma audiência
                 </div>
               ) : (
@@ -653,7 +653,7 @@ function CalendarView({
             key={day}
             className={cn(
               "text-center font-medium text-xs sm:text-xs py-2 uppercase tracking-wider",
-              i === 0 || i === 6 ? "text-zinc-400" : "text-zinc-600 dark:text-zinc-400"
+              i === 0 || i === 6 ? "text-muted-foreground" : "text-muted-foreground"
             )}
           >
             {day}
@@ -662,7 +662,7 @@ function CalendarView({
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-px bg-zinc-200 dark:bg-zinc-800 rounded-lg overflow-hidden">
+      <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden">
         {calendarDays.map((date, index) => {
           const dayAudiencias = getAudienciasForDate(date);
           const isCurrentMonth = isSameMonth(date, currentDate);
@@ -673,10 +673,10 @@ function CalendarView({
             <div
               key={index}
               className={cn(
-                "min-h-[70px] sm:min-h-[90px] p-1 sm:p-1.5 bg-white dark:bg-zinc-950 transition-colors",
+                "min-h-[70px] sm:min-h-[90px] p-1 sm:p-1.5 bg-card transition-colors",
                 isCurrentMonth
-                  ? "hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                  : "bg-zinc-50 dark:bg-zinc-900/50",
+                  ? "hover:bg-muted"
+                  : "bg-muted/50",
                 isCurrentDay && "ring-2 ring-inset ring-blue-500"
               )}
             >
@@ -686,7 +686,7 @@ function CalendarView({
                   className={cn(
                     "text-xs sm:text-sm font-medium w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full",
                     isCurrentDay && "bg-blue-600 text-white",
-                    !isCurrentMonth && "text-zinc-400"
+                    !isCurrentMonth && "text-muted-foreground"
                   )}
                 >
                   {date.getDate()}
@@ -715,7 +715,7 @@ function CalendarView({
                   );
                 })}
                 {dayAudiencias.length > 2 && (
-                  <div className="text-[8px] sm:text-xs text-zinc-400 px-1">
+                  <div className="text-[8px] sm:text-xs text-muted-foreground px-1">
                     +{dayAudiencias.length - 2} mais
                   </div>
                 )}
@@ -730,7 +730,7 @@ function CalendarView({
         {Object.entries(TIPOS_AUDIENCIA).slice(0, 5).map(([key, config]) => (
           <div key={key} className="flex items-center gap-1">
             <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full", config.dotColor)} />
-            <span className="text-[9px] sm:text-xs text-zinc-500">{config.label}</span>
+            <span className="text-[9px] sm:text-xs text-muted-foreground">{config.label}</span>
           </div>
         ))}
       </div>
@@ -776,7 +776,7 @@ function AudienciaSidePeek({
   return (
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="w-[450px] sm:max-w-[450px] overflow-y-auto">
-        <SheetHeader className="pb-4 border-b border-zinc-100 dark:border-zinc-800">
+        <SheetHeader className="pb-4 border-b border-border">
           <div className="flex items-center gap-3">
             <AssistidoAvatar
               nome={audiencia.assistidoNome || ""}
@@ -808,26 +808,26 @@ function AudienciaSidePeek({
           {/* Info Grid */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs uppercase text-zinc-500 font-medium">Data</label>
-              <p className="font-mono text-sm text-zinc-900 dark:text-zinc-100">
+              <label className="text-xs uppercase text-muted-foreground font-medium">Data</label>
+              <p className="font-mono text-sm text-foreground">
                 {format(audiencia.dataAudiencia, "dd/MM/yyyy")}
               </p>
             </div>
             <div>
-              <label className="text-xs uppercase text-zinc-500 font-medium">Horário</label>
-              <p className="text-sm text-zinc-900 dark:text-zinc-100">
+              <label className="text-xs uppercase text-muted-foreground font-medium">Horário</label>
+              <p className="text-sm text-foreground">
                 {audiencia.horario || "-"}
               </p>
             </div>
             <div>
-              <label className="text-xs uppercase text-zinc-500 font-medium">Local</label>
-              <p className="text-sm text-zinc-700 dark:text-zinc-300">
+              <label className="text-xs uppercase text-muted-foreground font-medium">Local</label>
+              <p className="text-sm text-foreground/80">
                 {audiencia.local || "-"}
               </p>
             </div>
             <div>
-              <label className="text-xs uppercase text-zinc-500 font-medium">Sala</label>
-              <p className="text-sm text-zinc-700 dark:text-zinc-300">
+              <label className="text-xs uppercase text-muted-foreground font-medium">Sala</label>
+              <p className="text-sm text-foreground/80">
                 {audiencia.sala || "-"}
               </p>
             </div>
@@ -835,13 +835,13 @@ function AudienciaSidePeek({
 
           {/* Processo */}
           {audiencia.numeroAutos && (
-            <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
-              <label className="text-xs uppercase text-zinc-500 font-medium">Processo</label>
-              <p className="font-mono text-sm text-zinc-900 dark:text-zinc-100 mt-1">
+            <div className="p-3 rounded-lg bg-muted/50 border border-border">
+              <label className="text-xs uppercase text-muted-foreground font-medium">Processo</label>
+              <p className="font-mono text-sm text-foreground mt-1">
                 {audiencia.numeroAutos}
               </p>
               {audiencia.vara && (
-                <p className="text-xs text-zinc-500 mt-0.5">{audiencia.vara} - {audiencia.comarca}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{audiencia.vara} - {audiencia.comarca}</p>
               )}
             </div>
           )}
@@ -860,29 +860,29 @@ function AudienciaSidePeek({
 
           {/* Participantes */}
           <div>
-            <label className="text-xs uppercase text-zinc-500 font-medium mb-2 block">
+            <label className="text-xs uppercase text-muted-foreground font-medium mb-2 block">
               Participantes
             </label>
             <div className="space-y-2">
               {audiencia.juiz && (
                 <div className="flex items-center gap-2 text-sm">
-                  <User className="w-4 h-4 text-zinc-400" />
-                  <span className="text-zinc-500">Juiz:</span>
-                  <span className="text-zinc-700 dark:text-zinc-300">{audiencia.juiz}</span>
+                  <User className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Juiz:</span>
+                  <span className="text-foreground/80">{audiencia.juiz}</span>
                 </div>
               )}
               {audiencia.promotor && (
                 <div className="flex items-center gap-2 text-sm">
-                  <User className="w-4 h-4 text-zinc-400" />
-                  <span className="text-zinc-500">Promotor:</span>
-                  <span className="text-zinc-700 dark:text-zinc-300">{audiencia.promotor}</span>
+                  <User className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Promotor:</span>
+                  <span className="text-foreground/80">{audiencia.promotor}</span>
                 </div>
               )}
               {audiencia.defensorNome && (
                 <div className="flex items-center gap-2 text-sm">
-                  <User className="w-4 h-4 text-zinc-400" />
-                  <span className="text-zinc-500">Defensor:</span>
-                  <span className="text-zinc-700 dark:text-zinc-300">{audiencia.defensorNome}</span>
+                  <User className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Defensor:</span>
+                  <span className="text-foreground/80">{audiencia.defensorNome}</span>
                 </div>
               )}
             </div>
@@ -890,7 +890,7 @@ function AudienciaSidePeek({
 
           {/* Anotações / Ata */}
           <div>
-            <label className="text-xs uppercase text-zinc-500 font-medium mb-2 block">
+            <label className="text-xs uppercase text-muted-foreground font-medium mb-2 block">
               Anotações da Audiência
             </label>
             <Textarea
@@ -900,7 +900,7 @@ function AudienciaSidePeek({
               className="min-h-[120px] text-sm"
             />
             <div className="flex items-center justify-between mt-2">
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-muted-foreground">
                 As anotações são versionadas para auditoria.
               </p>
               <Button 
@@ -915,8 +915,8 @@ function AudienciaSidePeek({
           </div>
 
           {/* Ações */}
-          <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
-            <label className="text-xs uppercase text-zinc-500 font-medium mb-2 block">
+          <div className="pt-4 border-t border-border">
+            <label className="text-xs uppercase text-muted-foreground font-medium mb-2 block">
               Gerar Tarefa
             </label>
             <div className="flex flex-wrap gap-2">
@@ -1035,10 +1035,10 @@ export function AudienciasHub({
               <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-700 dark:text-blue-400" />
             </div>
             <div>
-              <h2 className="font-semibold text-lg sm:text-xl text-zinc-900 dark:text-zinc-100">
+              <h2 className="font-semibold text-lg sm:text-xl text-foreground">
                 Agenda de Audiências
               </h2>
-              <div className="flex items-center gap-2 sm:gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center gap-2 sm:gap-3 text-xs text-muted-foreground">
                 <span>{filteredAudiencias.length} audiências</span>
                 {stats.hoje > 0 && (
                   <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-xs px-1.5 py-0">
@@ -1055,7 +1055,7 @@ export function AudienciasHub({
           </div>
 
           {/* View Toggle - Swiss Style */}
-          <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
+          <div className="flex items-center gap-1 bg-muted p-1 rounded-lg">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -1065,8 +1065,8 @@ export function AudienciasHub({
                   className={cn(
                     "h-8 px-3 text-xs font-medium rounded-md transition-all",
                     viewMode === "lista" 
-                      ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
-                      : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                      ? "bg-background shadow-sm text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   <List className="w-4 h-4 mr-1.5" />
@@ -1084,8 +1084,8 @@ export function AudienciasHub({
                   className={cn(
                     "h-8 px-3 text-xs font-medium rounded-md transition-all",
                     viewMode === "calendario" 
-                      ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
-                      : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                      ? "bg-background shadow-sm text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   <CalendarDays className="w-4 h-4 mr-1.5" />
@@ -1103,8 +1103,8 @@ export function AudienciasHub({
                   className={cn(
                     "h-8 px-3 text-xs font-medium rounded-md transition-all",
                     viewMode === "kanban" 
-                      ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
-                      : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                      ? "bg-background shadow-sm text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   <Columns3 className="w-4 h-4 mr-1.5" />
@@ -1119,12 +1119,12 @@ export function AudienciasHub({
         {/* Filters - Responsive */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por assistido, processo ou caso..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white dark:bg-zinc-950 h-9 text-sm"
+              className="pl-10 bg-background h-9 text-sm"
             />
           </div>
 
@@ -1160,7 +1160,7 @@ export function AudienciasHub({
         </div>
 
         {/* Content - Card Container */}
-        <Card className="border-zinc-200 dark:border-zinc-800 overflow-hidden">
+        <Card className="border-border overflow-hidden">
           {viewMode === "lista" && (
             <ListView 
               audiencias={filteredAudiencias} 
@@ -1186,8 +1186,8 @@ export function AudienciasHub({
         {/* Empty State */}
         {filteredAudiencias.length === 0 && (
           <div className="text-center py-12">
-            <CalendarIcon className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-600 mb-4" />
-            <p className="text-zinc-500 dark:text-zinc-400">
+            <CalendarIcon className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+            <p className="text-muted-foreground">
               Nenhuma audiência encontrada com os filtros selecionados.
             </p>
           </div>

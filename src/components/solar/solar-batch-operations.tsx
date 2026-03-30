@@ -201,7 +201,7 @@ function KpiSummaryRow({ items }: { items: KpiItem[] }) {
           >
             {item.value}
           </span>
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          <span className="text-xs text-muted-foreground">
             {item.label}
           </span>
         </div>
@@ -225,11 +225,11 @@ function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <Icon className="h-10 w-10 text-zinc-300 dark:text-zinc-600 mb-3" />
-      <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+      <Icon className="h-10 w-10 text-muted-foreground/50 mb-3" />
+      <p className="text-sm font-medium text-muted-foreground">
         {title}
       </p>
-      <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 max-w-xs">
+      <p className="text-xs text-muted-foreground/50 mt-1 max-w-xs">
         {description}
       </p>
     </div>
@@ -508,7 +508,7 @@ export function SolarBatchOperations() {
         {/* Search + KPIs */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full sm:max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar por número ou assistido..."
               value={searchProcessosInput}
@@ -521,7 +521,7 @@ export function SolarBatchOperations() {
               {
                 label: "Total",
                 value: processosKpis.total,
-                color: "text-zinc-700 dark:text-zinc-300",
+                color: "text-foreground/80",
               },
               {
                 label: "Sincronizados",
@@ -567,7 +567,7 @@ export function SolarBatchOperations() {
               variant="ghost"
               size="sm"
               onClick={() => setSelectedProcessos(new Set())}
-              className="h-7 text-xs text-zinc-500"
+              className="h-7 text-xs text-muted-foreground"
             >
               Limpar
             </Button>
@@ -586,11 +586,11 @@ export function SolarBatchOperations() {
         )}
 
         {/* Table */}
-        <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <Card className="border-border shadow-sm">
           <CardContent className="p-0">
             {isLoadingProcessos ? (
               <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-6 w-6 text-zinc-400 animate-spin" />
+                <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
               </div>
             ) : processos.length === 0 ? (
               <EmptyState
@@ -638,22 +638,22 @@ export function SolarBatchOperations() {
                         />
                       </TableCell>
                       <TableCell>
-                        <span className="font-mono text-xs text-zinc-700 dark:text-zinc-300">
+                        <span className="font-mono text-xs text-foreground/80">
                           {p.numeroAutos ?? "---"}
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                        <span className="text-sm text-foreground/80">
                           {p.assistidoNome ?? "---"}
                         </span>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         <div className="flex flex-col">
-                          <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                          <span className="text-xs text-muted-foreground">
                             {p.comarca ?? "---"}
                           </span>
                           {p.vara && (
-                            <span className="text-[11px] text-zinc-400 dark:text-zinc-500">
+                            <span className="text-[11px] text-muted-foreground/50">
                               {p.vara}
                             </span>
                           )}
@@ -695,9 +695,9 @@ export function SolarBatchOperations() {
         </Card>
 
         {/* ── Search by defensor name ──────────────────────────────────── */}
-        <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <Card className="border-border shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-foreground/80 flex items-center gap-2">
               <Search className="h-4 w-4" />
               Buscar processos por nome do defensor
             </CardTitle>
@@ -732,10 +732,10 @@ export function SolarBatchOperations() {
 
             {/* Results */}
             {nomeBuscaResults !== null && (
-              <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+              <div className="rounded-lg border border-border overflow-hidden">
                 {nomeBuscaResults.length === 0 ? (
                   <div className="px-4 py-6 text-center">
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                    <p className="text-sm text-muted-foreground">
                       Nenhum processo encontrado para esse nome.
                     </p>
                   </div>
@@ -751,12 +751,12 @@ export function SolarBatchOperations() {
                       {nomeBuscaResults.map((r, i) => (
                         <TableRow key={`${r.numero_processo}-${i}`}>
                           <TableCell>
-                            <span className="font-mono text-xs text-zinc-700 dark:text-zinc-300">
+                            <span className="font-mono text-xs text-foreground/80">
                               {r.numero_processo}
                             </span>
                           </TableCell>
                           <TableCell>
-                            <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                            <span className="text-sm text-muted-foreground">
                               {r.descricao ?? "---"}
                             </span>
                           </TableCell>
@@ -804,7 +804,7 @@ export function SolarBatchOperations() {
 
             {/* Search */}
             <div className="relative w-full sm:max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Buscar por nome ou CPF..."
                 value={searchAssistidosInput}
@@ -820,7 +820,7 @@ export function SolarBatchOperations() {
               {
                 label: "Total",
                 value: assistidosKpis.total,
-                color: "text-zinc-700 dark:text-zinc-300",
+                color: "text-foreground/80",
               },
               {
                 label: "Exportados",
@@ -866,7 +866,7 @@ export function SolarBatchOperations() {
               variant="ghost"
               size="sm"
               onClick={() => setSelectedAssistidos(new Set())}
-              className="h-7 text-xs text-zinc-500"
+              className="h-7 text-xs text-muted-foreground"
             >
               Limpar
             </Button>
@@ -899,7 +899,7 @@ export function SolarBatchOperations() {
                   key={r.assistidoId}
                   className="flex items-center gap-2 flex-wrap"
                 >
-                  <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                  <span className="text-xs font-medium text-foreground/80">
                     {r.nome ?? `ID ${r.assistidoId}`}:
                   </span>
                   {r.campos_enriquecidos?.map((campo) => (
@@ -918,11 +918,11 @@ export function SolarBatchOperations() {
         )}
 
         {/* Table */}
-        <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <Card className="border-border shadow-sm">
           <CardContent className="p-0">
             {isLoadingAssistidos ? (
               <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-6 w-6 text-zinc-400 animate-spin" />
+                <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
               </div>
             ) : assistidos.length === 0 ? (
               <EmptyState
@@ -980,17 +980,17 @@ export function SolarBatchOperations() {
                           />
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                          <span className="text-sm text-foreground/80">
                             {a.nome ?? "---"}
                           </span>
                         </TableCell>
                         <TableCell>
-                          <span className="font-mono text-xs text-zinc-600 dark:text-zinc-400 tabular-nums">
+                          <span className="font-mono text-xs text-muted-foreground tabular-nums">
                             {maskCpf(a.cpf)}
                           </span>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
-                          <span className="font-mono text-xs text-zinc-500 dark:text-zinc-500">
+                          <span className="font-mono text-xs text-muted-foreground">
                             {a.sigadId ?? "---"}
                           </span>
                         </TableCell>
@@ -998,7 +998,7 @@ export function SolarBatchOperations() {
                           <AssistidoStatusBadge status={a.solarStatus} />
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
-                          <span className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
+                          <span className="text-xs text-muted-foreground tabular-nums">
                             {formatDateSafe(a.solarExportadoEm)}
                           </span>
                         </TableCell>

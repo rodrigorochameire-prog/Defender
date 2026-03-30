@@ -23,7 +23,7 @@ const TABS: { key: Tab; label: string; icon: typeof Gavel }[] = [
 function TabSpinner() {
   return (
     <div className="flex items-center justify-center py-20">
-      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
     </div>
   );
 }
@@ -52,21 +52,21 @@ export default function JuriPage() {
   }, [statsData, proximasSessoes, pendentes]);
 
   return (
-    <div className="w-full min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="w-full min-h-screen bg-background">
       {/* Header */}
-      <div className="px-4 sm:px-6 md:px-8 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 space-y-3">
+      <div className="px-4 sm:px-6 md:px-8 py-4 bg-card border-b border-border space-y-3">
         {/* Row 1: Title + Stats + Cockpit button */}
         <div className="flex items-center gap-4">
           {/* Title */}
           <div className="flex items-center gap-3 shrink-0">
             <div className="w-10 h-10 rounded-xl bg-zinc-800 dark:bg-zinc-200 flex items-center justify-center">
-              <Gavel className="w-5 h-5 text-white dark:text-zinc-900" />
+              <Gavel className="w-5 h-5 text-white dark:text-foreground" />
             </div>
             <div>
-              <h1 className="font-serif text-xl font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">
+              <h1 className="font-serif text-xl font-semibold text-foreground tracking-tight">
                 Tribunal do Júri
               </h1>
-              <p className="text-[11px] text-zinc-400 dark:text-zinc-500 -mt-0.5">
+              <p className="text-[11px] text-muted-foreground -mt-0.5">
                 Gestão de sessões e julgamentos
               </p>
             </div>
@@ -76,20 +76,20 @@ export default function JuriPage() {
           <div className="flex-1" />
 
           {/* Stats inline */}
-          <div className="hidden md:flex items-center gap-1 p-1 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-700/40">
+          <div className="hidden md:flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border">
             <StatChip icon={Calendar} value={stats.agendadas} label="Agendadas" />
             <StatChip icon={CheckCircle2} value={stats.realizadas} label="Realizadas" color="emerald" />
             {stats.pendentesCount > 0 && (
               <StatChip icon={ClipboardList} value={stats.pendentesCount} label="Pendentes" color="amber" />
             )}
-            <div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700 mx-0.5" />
+            <div className="w-px h-5 bg-border mx-0.5" />
             <div className={cn(
               "flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold",
               stats.proximaDias !== null && stats.proximaDias <= 3
                 ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20"
                 : stats.proximaDias !== null && stats.proximaDias <= 7
                   ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20"
-                  : "text-zinc-500 dark:text-zinc-400"
+                  : "text-muted-foreground"
             )}>
               <Zap className="w-3 h-3" />
               <span className="tabular-nums">
@@ -118,7 +118,7 @@ export default function JuriPage() {
         {/* Row 2: Tabs + contextual controls */}
         <div className="flex items-center justify-between">
           {/* Tabs */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
+          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-muted border border-border">
             {TABS.map((tab) => {
               const isActive = activeTab === tab.key;
               const Icon = tab.icon;
@@ -130,7 +130,7 @@ export default function JuriPage() {
                     "flex items-center gap-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
                     isActive
                       ? "px-3 py-1.5 bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
-                      : "px-2.5 py-1.5 text-zinc-400 dark:text-zinc-500"
+                      : "px-2.5 py-1.5 text-muted-foreground"
                   )}
                 >
                   <Icon className="w-[15px] h-[15px]" />
@@ -142,13 +142,13 @@ export default function JuriPage() {
 
           {/* Year selector (Pauta tab) */}
           {activeTab === "pauta" && (
-            <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
-              <button onClick={() => setAno(ano - 1)} className="p-1.5 rounded-full hover:bg-white dark:hover:bg-zinc-700 transition-colors">
-                <ChevronLeft className="w-3.5 h-3.5 text-zinc-500" />
+            <div className="inline-flex items-center gap-1 p-1 rounded-full bg-muted border border-border">
+              <button onClick={() => setAno(ano - 1)} className="p-1.5 rounded-full hover:bg-muted transition-colors">
+                <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
-              <span className="px-3 text-sm font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">{ano}</span>
-              <button onClick={() => setAno(ano + 1)} className="p-1.5 rounded-full hover:bg-white dark:hover:bg-zinc-700 transition-colors">
-                <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
+              <span className="px-3 text-sm font-semibold tabular-nums text-foreground">{ano}</span>
+              <button onClick={() => setAno(ano + 1)} className="p-1.5 rounded-full hover:bg-muted transition-colors">
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
             </div>
           )}
@@ -181,16 +181,16 @@ function StatChip({ icon: Icon, value, label, color }: {
       "flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors",
       color === "emerald" ? "text-emerald-600/60 dark:text-emerald-400/50"
         : color === "amber" ? "text-amber-600/60 dark:text-amber-400/50"
-        : "text-zinc-500 dark:text-zinc-400"
+        : "text-muted-foreground"
     )}>
       <Icon className={cn(
         "w-3 h-3",
-        color === "emerald" ? "text-emerald-400/60"
-          : color === "amber" ? "text-amber-400/60"
-          : "text-zinc-400/70"
+        color === "emerald" ? "text-emerald-700 dark:text-emerald-400/60"
+          : color === "amber" ? "text-amber-600 dark:text-amber-400/60"
+          : "text-muted-foreground"
       )} />
       <span className="tabular-nums">{value}</span>
-      <span className="text-[9px] font-medium text-zinc-400/70 hidden lg:inline">{label}</span>
+      <span className="text-[9px] font-medium text-muted-foreground hidden lg:inline">{label}</span>
     </div>
   );
 }

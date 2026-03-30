@@ -29,15 +29,15 @@ export interface PremiumStatsCardProps {
 
 const variants = {
   default: {
-    iconBg: "bg-zinc-100 dark:bg-zinc-800",
-    iconColor: "text-zinc-600 dark:text-zinc-400",
-    valueColor: "text-zinc-900 dark:text-zinc-50",
-    hoverAccent: "group-hover:border-zinc-300 dark:group-hover:border-zinc-700",
+    iconBg: "bg-muted",
+    iconColor: "text-muted-foreground",
+    valueColor: "text-foreground",
+    hoverAccent: "group-hover:border-border",
   },
   primary: {
     iconBg: "bg-emerald-100 dark:bg-emerald-950/40",
     iconColor: "text-emerald-600 dark:text-emerald-400",
-    valueColor: "text-zinc-900 dark:text-zinc-50 group-hover:text-emerald-600 dark:group-hover:text-emerald-400",
+    valueColor: "text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400",
     hoverAccent: "group-hover:border-emerald-300 dark:group-hover:border-emerald-800",
   },
   success: {
@@ -83,8 +83,8 @@ export function PremiumStatsCard({
       className={cn(
         // Base - padding maior em mobile
         "p-5 sm:p-4 md:p-5 rounded-2xl md:rounded-2xl",
-        "bg-white dark:bg-zinc-900",
-        "border border-zinc-200/80 dark:border-zinc-800/80",
+        "bg-card",
+        "border border-border",
         // Hover effects - combina clean + efeitos
         "transition-all duration-300 ease-out",
         "hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-black/20",
@@ -102,7 +102,7 @@ export function PremiumStatsCard({
         {/* Content */}
         <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-1">
           {/* Label - maior em mobile */}
-          <p className="text-sm sm:text-xs md:text-sm font-semibold text-zinc-600 dark:text-zinc-400 truncate">
+          <p className="text-sm sm:text-xs md:text-sm font-semibold text-muted-foreground truncate">
             {label}
           </p>
           
@@ -116,7 +116,7 @@ export function PremiumStatsCard({
           
           {/* Subtitle - maior em mobile */}
           {subtitle && (
-            <p className="text-xs sm:text-[10px] md:text-xs text-zinc-500 dark:text-zinc-500 font-medium">
+            <p className="text-xs sm:text-[10px] md:text-xs text-muted-foreground font-medium">
               {subtitle}
             </p>
           )}

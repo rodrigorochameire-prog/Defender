@@ -216,7 +216,7 @@ export function AudioRecorderButton({
           "border border-rose-400 text-rose-500 animate-pulse bg-rose-50 dark:bg-rose-950/30",
         !isRecording &&
           !isProcessing &&
-          "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300",
+          "text-muted-foreground hover:text-foreground",
         compact && "h-7 w-7 p-0",
         className
       )}

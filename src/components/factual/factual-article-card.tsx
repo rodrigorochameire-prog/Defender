@@ -43,8 +43,8 @@ export function FactualArticleCard({
     <article
       className={cn(
         "group relative rounded-lg border transition-colors duration-200",
-        "border-zinc-200 bg-white hover:border-zinc-300",
-        "dark:border-zinc-800 dark:bg-zinc-900/50 dark:hover:border-zinc-700",
+        "border-border bg-card hover:border-muted-foreground/30",
+        "",
         destaque && "border-l-4 border-l-[#1a1a2e] dark:border-l-amber-500"
       )}
     >
@@ -54,7 +54,7 @@ export function FactualArticleCard({
           <h3
             className={cn(
               "leading-snug font-semibold",
-              "text-zinc-900 dark:text-zinc-100",
+              "text-foreground",
               destaque
                 ? "text-xl sm:text-2xl"
                 : "text-base sm:text-lg"
@@ -75,7 +75,7 @@ export function FactualArticleCard({
               "shrink-0 h-8 w-8 p-0",
               isFavorito
                 ? "text-amber-500 hover:text-amber-600"
-                : "text-zinc-400 hover:text-amber-500"
+                : "text-muted-foreground hover:text-amber-500"
             )}
             aria-label={isFavorito ? "Remover dos salvos" : "Salvar artigo"}
           >
@@ -91,7 +91,7 @@ export function FactualArticleCard({
           <p
             className={cn(
               "leading-relaxed",
-              "text-zinc-700 dark:text-zinc-300",
+              "text-foreground/80",
               destaque ? "text-base" : "text-sm"
             )}
           >
@@ -115,7 +115,7 @@ export function FactualArticleCard({
                       key={i}
                       className={cn(
                         "leading-relaxed",
-                        "text-zinc-700 dark:text-zinc-300",
+                        "text-foreground/80",
                         destaque ? "text-base" : "text-sm"
                       )}
                     >
@@ -129,7 +129,7 @@ export function FactualArticleCard({
         </div>
 
         {/* Footer: source + expand toggle */}
-        <div className="mt-4 flex items-center justify-between gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="mt-4 flex items-center justify-between gap-2 pt-3 border-t border-border">
           <a
             href={fonteUrl}
             target="_blank"
@@ -137,7 +137,7 @@ export function FactualArticleCard({
             className={cn(
               "inline-flex items-center gap-1.5 text-xs font-medium transition-colors",
               "text-[#1a1a2e]/70 hover:text-[#1a1a2e]",
-              "dark:text-zinc-400 dark:hover:text-amber-400"
+              "dark:text-muted-foreground dark:hover:text-amber-400"
             )}
           >
             <span>Ler na fonte</span>
@@ -151,7 +151,7 @@ export function FactualArticleCard({
               variant="ghost"
               size="sm"
               onClick={() => setExpanded((prev) => !prev)}
-              className="h-7 gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+              className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
             >
               {expanded ? (
                 <>

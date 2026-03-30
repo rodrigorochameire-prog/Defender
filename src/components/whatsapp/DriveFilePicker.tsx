@@ -80,7 +80,7 @@ function getFileIcon(mimeType: string, name: string) {
   ) {
     return <FileText className="h-5 w-5 text-red-500" />;
   }
-  return <FileQuestion className="h-5 w-5 text-zinc-400" />;
+  return <FileQuestion className="h-5 w-5 text-muted-foreground" />;
 }
 
 function getMediaType(mimeType: string): "image" | "audio" | "video" | "document" {
@@ -225,7 +225,7 @@ export function DriveFilePicker({
 
         {/* Breadcrumb navigation */}
         {folderStack.length > 0 && (
-          <div className="flex items-center gap-1 text-xs text-zinc-500 overflow-x-auto">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground overflow-x-auto">
             <Button
               variant="ghost"
               size="sm"
@@ -237,12 +237,12 @@ export function DriveFilePicker({
             </Button>
             {folderStack.map((f, i) => (
               <span key={f.id} className="flex items-center gap-1">
-                <ChevronRight className="h-3 w-3 text-zinc-400" />
+                <ChevronRight className="h-3 w-3 text-muted-foreground" />
                 <button
                   className={cn(
                     "hover:underline",
                     i === folderStack.length - 1
-                      ? "font-medium text-zinc-700 dark:text-zinc-300"
+                      ? "font-medium text-zinc-700 dark:text-foreground/80"
                       : "text-zinc-500"
                   )}
                   onClick={() => setFolderStack((prev) => prev.slice(0, i + 1))}
@@ -259,10 +259,10 @@ export function DriveFilePicker({
           {!currentFolderId ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Folder className="h-10 w-10 text-zinc-300 mb-3" />
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted-foreground">
                 Contato não vinculado a um assistido com pasta no Drive.
               </p>
-              <p className="text-xs text-zinc-400 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Vincule o contato a um assistido para acessar arquivos.
               </p>
             </div>
@@ -282,11 +282,11 @@ export function DriveFilePicker({
               {/* Back button when inside subfolders */}
               {folderStack.length > 0 && (
                 <button
-                  className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-left"
+                  className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-muted transition-colors text-left"
                   onClick={navigateBack}
                 >
-                  <ArrowLeft className="h-5 w-5 text-zinc-400" />
-                  <span className="text-sm text-zinc-500">..</span>
+                  <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">..</span>
                 </button>
               )}
 
@@ -294,15 +294,15 @@ export function DriveFilePicker({
               {folders.map((folder) => (
                 <button
                   key={folder.id}
-                  className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-left"
+                  className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-muted transition-colors text-left"
                   onClick={() => navigateInto(folder)}
                   disabled={sending}
                 >
                   {getFileIcon(folder.mimeType, folder.name)}
-                  <span className="flex-1 text-sm font-medium truncate text-zinc-900 dark:text-zinc-100">
+                  <span className="flex-1 text-sm font-medium truncate text-zinc-900 dark:text-foreground">
                     {folder.name}
                   </span>
-                  <ChevronRight className="h-4 w-4 text-zinc-400" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </button>
               ))}
 
@@ -310,14 +310,14 @@ export function DriveFilePicker({
               {files.map((file) => (
                 <div
                   key={file.id}
-                  className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors group"
+                  className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-muted transition-colors group"
                 >
                   {getFileIcon(file.mimeType, file.name)}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate text-zinc-900 dark:text-zinc-100">
+                    <p className="text-sm font-medium truncate text-zinc-900 dark:text-foreground">
                       {file.name}
                     </p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-muted-foreground">
                       {formatFileSize(file.size)}
                     </p>
                   </div>
@@ -344,7 +344,7 @@ export function DriveFilePicker({
         </ScrollArea>
 
         {/* Size warning */}
-        <p className="text-xs text-zinc-400 px-1">
+        <p className="text-xs text-muted-foreground px-1">
           Limite: 16MB por arquivo via WhatsApp
         </p>
       </DialogContent>

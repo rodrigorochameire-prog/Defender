@@ -75,11 +75,11 @@ const STATUS_CONFIG: Record<StatusKey, { label: string; className: string }> = {
   },
   REVOGADO: {
     label: "Revogado",
-    className: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
+    className: "bg-zinc-100 text-zinc-500 dark:bg-muted dark:text-muted-foreground",
   },
   REJEITADO: {
     label: "Rejeitado",
-    className: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
+    className: "bg-zinc-100 text-zinc-500 dark:bg-muted dark:text-muted-foreground",
   },
 };
 
@@ -97,7 +97,7 @@ const STATUS_TRANSITIONS: Record<StatusKey, StatusKey[]> = {
 function StatusBadge({ status }: { status: string }) {
   const config = STATUS_CONFIG[status as StatusKey] ?? {
     label: status,
-    className: "bg-zinc-100 text-zinc-500",
+    className: "bg-zinc-100 text-zinc-500 dark:bg-muted dark:text-muted-foreground",
   };
   return (
     <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", config.className)}>
@@ -161,7 +161,7 @@ export function InstitutosTab({ processoId, assistidos }: InstitutosTabProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12 text-zinc-400">
+      <div className="flex items-center justify-center py-12 text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
         <span className="text-xs">Carregando institutos...</span>
       </div>
@@ -173,12 +173,12 @@ export function InstitutosTab({ processoId, assistidos }: InstitutosTabProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Library className="h-4 w-4 text-zinc-400" />
-          <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+          <Library className="h-4 w-4 text-muted-foreground" />
+          <span className="text-xs font-semibold text-zinc-600 dark:text-muted-foreground uppercase tracking-wide">
             Institutos Processuais
           </span>
           {institutos.length > 0 && (
-            <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded-full">
+            <span className="text-[10px] bg-zinc-100 dark:bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">
               {institutos.length}
             </span>
           )}
@@ -189,7 +189,7 @@ export function InstitutosTab({ processoId, assistidos }: InstitutosTabProps) {
             <Button
               size="sm"
               variant="outline"
-              className="h-7 text-[11px] gap-1 border-zinc-200 dark:border-zinc-700"
+              className="h-7 text-[11px] gap-1 border-zinc-200 dark:border-border"
             >
               <Plus className="h-3 w-3" />
               Novo Instituto
@@ -289,10 +289,10 @@ export function InstitutosTab({ processoId, assistidos }: InstitutosTabProps) {
 
       {/* Lista */}
       {institutos.length === 0 ? (
-        <div className="text-center py-10 text-zinc-400">
+        <div className="text-center py-10 text-muted-foreground">
           <Library className="h-8 w-8 mx-auto mb-2 opacity-30" />
           <p className="text-xs">Nenhum instituto registrado</p>
-          <p className="text-[10px] mt-0.5 text-zinc-300">
+          <p className="text-[10px] mt-0.5 text-muted-foreground/70">
             Registre acordos como ANPP, Transação Penal ou Sursis Processual
           </p>
         </div>
@@ -303,19 +303,19 @@ export function InstitutosTab({ processoId, assistidos }: InstitutosTabProps) {
             return (
               <div
                 key={instituto.id}
-                className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 bg-white dark:bg-zinc-900"
+                className="border border-border rounded-lg p-3 bg-card"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-200">
+                      <span className="text-[11px] font-semibold text-zinc-800 dark:text-foreground">
                         {TIPO_LABELS[instituto.tipo] ?? instituto.tipo}
                       </span>
                       <StatusBadge status={instituto.status} />
                     </div>
 
                     {instituto.prazoMeses && (
-                      <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                      <p className="text-[10px] text-zinc-500 dark:text-muted-foreground mt-0.5">
                         Prazo: {instituto.prazoMeses} meses
                       </p>
                     )}
@@ -325,7 +325,7 @@ export function InstitutosTab({ processoId, assistidos }: InstitutosTabProps) {
                         {(instituto.condicoes as string[]).map((c, i) => (
                           <span
                             key={i}
-                            className="text-[9px] px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 rounded-full"
+                            className="text-[9px] px-1.5 py-0.5 bg-secondary text-muted-foreground rounded-full"
                           >
                             {c}
                           </span>
@@ -334,7 +334,7 @@ export function InstitutosTab({ processoId, assistidos }: InstitutosTabProps) {
                     )}
 
                     {instituto.observacoes && (
-                      <p className="text-[10px] text-zinc-400 mt-1 italic">{instituto.observacoes}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1 italic">{instituto.observacoes}</p>
                     )}
                   </div>
 
@@ -352,7 +352,7 @@ export function InstitutosTab({ processoId, assistidos }: InstitutosTabProps) {
                             disabled={updateStatusMutation.isPending}
                             className={cn(
                               "text-[9px] px-2 py-0.5 rounded-full border font-medium transition-colors disabled:opacity-50",
-                              "border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:border-zinc-400 hover:text-zinc-700"
+                              "border-border text-muted-foreground hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-foreground"
                             )}
                             title={`Avançar para: ${cfg.label}`}
                           >

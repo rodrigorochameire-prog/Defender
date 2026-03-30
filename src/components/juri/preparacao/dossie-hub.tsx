@@ -64,7 +64,7 @@ interface Personagem {
 
 function SkeletonCard() {
   return (
-    <Card className="border-l-4 border-l-stone-200 dark:border-l-zinc-700">
+    <Card className="border-l-4 border-l-border">
       <CardHeader className="pb-4">
         <div className="flex items-center gap-3">
           <Skeleton className="h-6 w-40" />
@@ -79,7 +79,7 @@ function SkeletonCard() {
           ))}
         </div>
         <Skeleton className="h-3 w-full rounded-full" />
-        <div className="space-y-2 pt-3 border-t border-stone-100 dark:border-zinc-800">
+        <div className="space-y-2 pt-3 border-t border-border">
           <Skeleton className="h-10 rounded-lg" />
           <Skeleton className="h-10 rounded-lg" />
           <Skeleton className="h-10 rounded-lg" />
@@ -151,7 +151,7 @@ function AddPersonagemCard({
   return (
     <Card
       className={cn(
-        "border-l-4 border-dashed border-stone-200 dark:border-zinc-700",
+        "border-l-4 border-dashed border-border",
         c.accentBorder
       )}
     >
@@ -360,10 +360,10 @@ export function DossieHub({ sessaoId, casoId }: DossieHubProps) {
               <AlertCircle className="w-6 h-6 text-red-500 dark:text-red-400" />
             </div>
             <div>
-              <p className="text-sm font-medium text-stone-700 dark:text-zinc-300">
+              <p className="text-sm font-medium text-foreground/80">
                 Erro ao carregar personagens
               </p>
-              <p className="text-xs text-stone-500 dark:text-zinc-500 mt-1 max-w-sm">
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm">
                 {(error as any)?.message ??
                   "Nao foi possivel conectar ao servidor. O router de preparacao pode nao estar disponivel ainda."}
               </p>
@@ -417,7 +417,7 @@ export function DossieHub({ sessaoId, casoId }: DossieHubProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* ---- LEFT: Juiz column ---- */}
           <div className="space-y-4">
-            <h4 className="text-xs font-semibold text-stone-500 dark:text-zinc-500 uppercase tracking-wider flex items-center gap-1.5 px-1">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 px-1">
               <Gavel className="w-3.5 h-3.5 text-amber-500" />
               Juiz(a) Presidente
             </h4>
@@ -442,7 +442,7 @@ export function DossieHub({ sessaoId, casoId }: DossieHubProps) {
 
           {/* ---- RIGHT: Promotor column ---- */}
           <div className="space-y-4">
-            <h4 className="text-xs font-semibold text-stone-500 dark:text-zinc-500 uppercase tracking-wider flex items-center gap-1.5 px-1">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 px-1">
               <Scale className="w-3.5 h-3.5 text-red-500" />
               Promotor(a) de Justica
             </h4>

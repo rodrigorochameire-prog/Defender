@@ -44,7 +44,7 @@ export function MidiasHub({ assistidoId, processingFiles, onTranscribe, onViewTr
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12 text-zinc-400">
+      <div className="flex items-center justify-center py-12 text-muted-foreground">
         <Loader2 className="h-5 w-5 animate-spin mr-2" />
         <span className="text-sm">Carregando midias...</span>
       </div>
@@ -53,7 +53,7 @@ export function MidiasHub({ assistidoId, processingFiles, onTranscribe, onViewTr
 
   if (!data || (data.processos.length === 0 && data.ungrouped.length === 0)) {
     return (
-      <div className="text-center py-12 text-zinc-400">
+      <div className="text-center py-12 text-muted-foreground">
         <Music className="h-8 w-8 mx-auto mb-2 opacity-30" />
         <p className="text-sm">Nenhuma midia encontrada</p>
         <p className="text-xs mt-1">Audios e videos do Drive aparecerao aqui</p>
@@ -64,7 +64,7 @@ export function MidiasHub({ assistidoId, processingFiles, onTranscribe, onViewTr
   return (
     <div className="space-y-4">
       {/* Stats bar */}
-      <div className="flex items-center gap-3 text-xs text-zinc-500">
+      <div className="flex items-center gap-3 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
           <Music className="h-3 w-3" />
           {data.stats.total} arquivo{data.stats.total !== 1 ? "s" : ""}
@@ -154,28 +154,28 @@ function ProcessoGroup({
   const [expanded, setExpanded] = useState(true);
 
   return (
-    <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden">
+    <div className="border border-zinc-200 dark:border-border rounded-lg overflow-hidden">
       {/* Group header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-2 px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-left"
+        className="w-full flex items-center gap-2 px-3 py-2 bg-zinc-50 dark:bg-muted/50 hover:bg-zinc-100 dark:hover:bg-muted transition-colors text-left"
       >
         {expanded ? (
-          <ChevronDown className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         ) : (
-          <ChevronRight className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         )}
-        <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate flex-1">
+        <span className="text-xs font-medium text-foreground/80 truncate flex-1">
           {processoId > 0 ? `Processo ${numeroAutos}` : numeroAutos}
         </span>
-        <span className="text-[10px] text-zinc-400 shrink-0">
+        <span className="text-[10px] text-muted-foreground shrink-0">
           {files.length} midia{files.length !== 1 ? "s" : ""}
         </span>
       </button>
 
       {/* Files */}
       {expanded && (
-        <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+        <div className="divide-y divide-zinc-100 dark:divide-border">
           {files.map((file) => (
             <MediaCard
               key={file.id}
@@ -241,7 +241,7 @@ function MediaCard({
             <FileText className="h-3.5 w-3.5 text-violet-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[12px] font-medium text-zinc-700 dark:text-zinc-300 truncate">
+            <p className="text-[12px] font-medium text-foreground/80 truncate">
               {file.name}
             </p>
             <div className="flex items-center gap-1 mt-0.5">
@@ -250,7 +250,7 @@ function MediaCard({
                 <Badge variant="outline" className="text-[9px] h-4 text-emerald-600 border-emerald-200">transcrito</Badge>
               )}
               {file.summary && (
-                <span className="text-[10px] text-zinc-400 truncate ml-1">
+                <span className="text-[10px] text-muted-foreground truncate ml-1">
                   {file.summary.slice(0, 60)}...
                 </span>
               )}
@@ -306,7 +306,7 @@ function MediaCard({
 
         {/* File info */}
         <div className="flex-1 min-w-0">
-          <p className="text-[12px] font-medium text-zinc-700 dark:text-zinc-300 truncate">
+          <p className="text-[12px] font-medium text-foreground/80 truncate">
             {file.name}
           </p>
           <div className="flex items-center gap-1 mt-0.5 flex-wrap">
@@ -413,7 +413,7 @@ function MediaCard({
       {/* Inline transcript preview */}
       {showTranscript && file.transcript_plain && (
         <div className="pl-10 space-y-1.5">
-          <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-4 leading-relaxed">
+          <p className="text-[11px] text-muted-foreground line-clamp-4 leading-relaxed">
             {file.transcript_plain.slice(0, 500)}
             {file.transcript_plain.length > 500 && "..."}
           </p>

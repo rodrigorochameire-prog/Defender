@@ -39,7 +39,7 @@ const TIPO_CONFIG: Record<
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   pendente: {
     label: "Pendente",
-    className: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+    className: "bg-muted text-muted-foreground",
   },
   localizada: {
     label: "Localizada",
@@ -68,7 +68,7 @@ export function IntelligencePersonas({
 }: IntelligencePersonasProps) {
   if (personas.length === 0) {
     return (
-      <div className="flex items-center gap-2 text-sm text-zinc-400 dark:text-zinc-500 py-8 justify-center">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
         <Users className="h-4 w-4" />
         <span>Nenhuma pessoa identificada.</span>
       </div>
@@ -110,10 +110,10 @@ export function IntelligencePersonas({
 
         return (
           <div key={tipo}>
-            <h4 className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
+            <h4 className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
               <Icon className={cn("h-3.5 w-3.5", config.color)} />
               {config.label}
-              <span className="text-zinc-400">({group.length})</span>
+              <span className="text-muted-foreground">({group.length})</span>
             </h4>
             <div className="space-y-1">
               {group.map((persona) => {
@@ -124,9 +124,9 @@ export function IntelligencePersonas({
                 return (
                   <div
                     key={persona.id}
-                    className="flex items-center gap-2 py-1.5 px-3 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                    className="flex items-center gap-2 py-1.5 px-3 rounded-lg hover:bg-muted/50 transition-colors"
                   >
-                    <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 min-w-0 truncate">
+                    <span className="text-sm font-medium text-foreground flex-1 min-w-0 truncate">
                       {persona.nome}
                     </span>
 
@@ -142,7 +142,7 @@ export function IntelligencePersonas({
                     )}
 
                     {persona.confidence != null && persona.confidence > 0 && (
-                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 tabular-nums shrink-0">
+                      <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
                         {Math.round(persona.confidence * 100)}%
                       </span>
                     )}
@@ -157,7 +157,7 @@ export function IntelligencePersonas({
               .map((p) => (
                 <p
                   key={`obs-${p.id}`}
-                  className="text-xs text-zinc-400 dark:text-zinc-500 italic pl-3 mt-1"
+                  className="text-xs text-muted-foreground italic pl-3 mt-1"
                 >
                   {p.nome}: {p.observacoes}
                 </p>

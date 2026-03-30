@@ -72,7 +72,7 @@ function StatCard({
     <div
       className={cn(
         "relative rounded-lg border p-4",
-        "bg-white dark:bg-zinc-900",
+        "bg-card",
         accentBorder,
         "shadow-sm",
       )}
@@ -85,10 +85,10 @@ function StatCard({
       >
         <Icon className={cn("h-4 w-4", accentText)} />
       </div>
-      <p className="text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-50">
+      <p className="text-2xl font-bold tabular-nums text-foreground">
         {value}
       </p>
-      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{label}</p>
+      <p className="text-xs text-muted-foreground mt-1">{label}</p>
     </div>
   );
 }
@@ -108,10 +108,10 @@ function SystemRow({ name, level, details }: SystemRowProps) {
     <div className="flex items-start gap-3 py-3">
       <StatusDot level={level} />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+        <p className="text-sm font-medium text-foreground">
           {name}
         </p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+        <p className="text-xs text-muted-foreground mt-0.5">
           {details.join(" · ")}
         </p>
       </div>
@@ -145,7 +145,7 @@ export function SolarLogs() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 text-zinc-400 animate-spin" />
+        <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
       </div>
     );
   }
@@ -234,7 +234,7 @@ export function SolarLogs() {
     <div className="space-y-6">
       {/* ── KPI Cards ──────────────────────────────────────────────────── */}
       <div>
-        <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
+        <h2 className="text-sm font-semibold text-foreground/80 mb-3">
           Estatísticas da Integração
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -274,22 +274,22 @@ export function SolarLogs() {
             label="Assistidos no SIGAD"
             value={stats?.assistidosNoSigad ?? 0}
             icon={Database}
-            accentBg="bg-zinc-100 dark:bg-zinc-800"
-            accentText="text-zinc-600 dark:text-zinc-400"
-            accentBorder="border-zinc-200 dark:border-zinc-700"
+            accentBg="bg-muted"
+            accentText="text-muted-foreground"
+            accentBorder="border-border"
           />
         </div>
       </div>
 
       {/* ── System Status Detail ───────────────────────────────────────── */}
-      <Card className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-sm">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+          <CardTitle className="text-sm font-semibold text-foreground/80">
             Status Detalhado dos Sistemas
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <div className="divide-y divide-border">
             {systems.map((sys) => (
               <SystemRow key={sys.name} {...sys} />
             ))}
@@ -298,15 +298,15 @@ export function SolarLogs() {
       </Card>
 
       {/* ── Info Notice ─────────────────────────────────────────────────── */}
-      <Card className="border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/50 shadow-none">
+      <Card className="border-dashed border-border bg-muted/50 shadow-none">
         <CardContent className="flex items-start gap-3 py-4">
-          <Info className="h-4 w-4 text-zinc-400 dark:text-zinc-500 mt-0.5 shrink-0" />
+          <Info className="h-4 w-4 text-muted-foreground/50 mt-0.5 shrink-0" />
           <div className="space-y-1">
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-muted-foreground">
               Logs de operação serão persistidos em versão futura com tabela
               dedicada.
             </p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-muted-foreground">
               Estatísticas calculadas em tempo real a partir das tabelas
               existentes.
             </p>

@@ -34,10 +34,10 @@ export default function SessaoJuriPage() {
     return (
       <PageLayout>
         <div className="text-center py-20">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="text-lg font-semibold text-foreground">
             Sessão não encontrada
           </h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             A sessão #{sessaoId} não existe ou foi removida.
           </p>
           <Link href="/admin/juri">

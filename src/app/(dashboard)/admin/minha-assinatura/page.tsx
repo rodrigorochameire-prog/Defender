@@ -93,7 +93,7 @@ export default function MinhaAssinaturaPage() {
   if (subLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -102,14 +102,14 @@ export default function MinhaAssinaturaPage() {
     return (
       <div className="p-6 space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold text-zinc-100">Minha Assinatura</h1>
-          <p className="text-sm text-zinc-500 mt-1">Gerencie seu plano e pagamentos</p>
+          <h1 className="text-2xl font-semibold text-foreground">Minha Assinatura</h1>
+          <p className="text-sm text-muted-foreground mt-1">Gerencie seu plano e pagamentos</p>
         </div>
-        <Card className="bg-zinc-900/50 border-zinc-800/50">
+        <Card className="bg-card/50 border-border/50">
           <CardContent className="p-8 text-center">
-            <CreditCard className="h-12 w-12 text-zinc-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-zinc-300 mb-2">Nenhum plano atribuido</h3>
-            <p className="text-sm text-zinc-500">
+            <CreditCard className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground/80 mb-2">Nenhum plano atribuido</h3>
+            <p className="text-sm text-muted-foreground">
               Entre em contato com o administrador para atribuir um plano a sua conta.
             </p>
           </CardContent>
@@ -164,28 +164,28 @@ export default function MinhaAssinaturaPage() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-zinc-100">Minha Assinatura</h1>
-        <p className="text-sm text-zinc-500 mt-1">Gerencie seu plano e pagamentos</p>
+        <h1 className="text-2xl font-semibold text-foreground">Minha Assinatura</h1>
+        <p className="text-sm text-muted-foreground mt-1">Gerencie seu plano e pagamentos</p>
       </div>
 
       {/* Plan + Status Card */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="bg-zinc-900/50 border-zinc-800/50">
+        <Card className="bg-card/50 border-border/50">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base text-zinc-300 flex items-center gap-2">
+            <CardTitle className="text-base text-foreground/80 flex items-center gap-2">
               <CreditCard className="h-4 w-4 text-emerald-400" />
               Plano {planoInfo.label}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-zinc-500">{planoInfo.desc}</p>
+            <p className="text-sm text-muted-foreground">{planoInfo.desc}</p>
 
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-2xl font-bold text-emerald-400">
                   R$ {valorFinal.toFixed(2).replace(".", ",")}
                 </span>
-                <span className="text-sm text-zinc-500">/mes</span>
+                <span className="text-sm text-muted-foreground">/mes</span>
                 {desconto > 0 && (
                   <span className="ml-2 text-xs text-emerald-600">
                     ({desconto}% desconto)
@@ -199,14 +199,14 @@ export default function MinhaAssinaturaPage() {
             </div>
 
             {subscription.dataVencimento && (
-              <div className="text-sm text-zinc-500">
-                <span className="text-zinc-400">Proximo vencimento:</span>{" "}
+              <div className="text-sm text-muted-foreground">
+                <span className="text-muted-foreground">Proximo vencimento:</span>{" "}
                 {new Date(subscription.dataVencimento + "T00:00:00").toLocaleDateString("pt-BR")}
               </div>
             )}
             {subscription.dataUltimoPagamento && (
-              <div className="text-sm text-zinc-500">
-                <span className="text-zinc-400">Ultimo pagamento:</span>{" "}
+              <div className="text-sm text-muted-foreground">
+                <span className="text-muted-foreground">Ultimo pagamento:</span>{" "}
                 {new Date(subscription.dataUltimoPagamento + "T00:00:00").toLocaleDateString("pt-BR")}
               </div>
             )}
@@ -214,9 +214,9 @@ export default function MinhaAssinaturaPage() {
         </Card>
 
         {/* PIX Payment Card */}
-        <Card className="bg-zinc-900/50 border-emerald-800/40 border-2">
+        <Card className="bg-card/50 border-emerald-800/40 border-2">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base text-zinc-300 flex items-center gap-2">
+            <CardTitle className="text-base text-foreground/80 flex items-center gap-2">
               <QrCode className="h-4 w-4 text-emerald-400" />
               Pagamento via PIX
             </CardTitle>
@@ -225,13 +225,13 @@ export default function MinhaAssinaturaPage() {
             {/* PIX Info */}
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-zinc-500">Chave PIX (Celular):</span>
+                <span className="text-muted-foreground">Chave PIX (Celular):</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-zinc-200">{PIX_CONFIG.key}</span>
+                  <span className="font-mono text-foreground">{PIX_CONFIG.key}</span>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-400"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-emerald-400"
                     onClick={handleCopyPixKey}
                   >
                     {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -239,11 +239,11 @@ export default function MinhaAssinaturaPage() {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-zinc-500">Titular:</span>
-                <span className="text-zinc-200">{PIX_CONFIG.merchantName}</span>
+                <span className="text-muted-foreground">Titular:</span>
+                <span className="text-foreground">{PIX_CONFIG.merchantName}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-zinc-500">Valor:</span>
+                <span className="text-muted-foreground">Valor:</span>
                 <span className="text-emerald-400 font-semibold">
                   R$ {valorFinal.toFixed(2).replace(".", ",")}
                 </span>
@@ -263,7 +263,7 @@ export default function MinhaAssinaturaPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="text-xs border-zinc-700 text-zinc-400 hover:text-emerald-400 hover:border-emerald-800"
+                className="text-xs border-border text-muted-foreground hover:text-emerald-400 hover:border-emerald-800"
                 onClick={handleCopyBrCode}
               >
                 {copiedBrCode ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
@@ -293,43 +293,43 @@ export default function MinhaAssinaturaPage() {
       </div>
 
       {/* Payment History */}
-      <Card className="bg-zinc-900/50 border-zinc-800/50">
+      <Card className="bg-card/50 border-border/50">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base text-zinc-300">Historico de Pagamentos</CardTitle>
+          <CardTitle className="text-base text-foreground/80">Historico de Pagamentos</CardTitle>
         </CardHeader>
         <CardContent>
           {paymentsLoading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : !paymentHistory || paymentHistory.length === 0 ? (
-            <p className="text-sm text-zinc-500 text-center py-8">
+            <p className="text-sm text-muted-foreground text-center py-8">
               Nenhum pagamento registrado.
             </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-800/50">
-                    <th className="text-left py-2 px-3 text-xs text-zinc-500 font-medium">Data</th>
-                    <th className="text-left py-2 px-3 text-xs text-zinc-500 font-medium">Referencia</th>
-                    <th className="text-left py-2 px-3 text-xs text-zinc-500 font-medium">Valor</th>
-                    <th className="text-left py-2 px-3 text-xs text-zinc-500 font-medium">Status</th>
-                    <th className="text-left py-2 px-3 text-xs text-zinc-500 font-medium">Nota</th>
+                  <tr className="border-b border-border/50">
+                    <th className="text-left py-2 px-3 text-xs text-muted-foreground font-medium">Data</th>
+                    <th className="text-left py-2 px-3 text-xs text-muted-foreground font-medium">Referencia</th>
+                    <th className="text-left py-2 px-3 text-xs text-muted-foreground font-medium">Valor</th>
+                    <th className="text-left py-2 px-3 text-xs text-muted-foreground font-medium">Status</th>
+                    <th className="text-left py-2 px-3 text-xs text-muted-foreground font-medium">Nota</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paymentHistory.map((p) => {
                     const pStatus = PAYMENT_STATUS_MAP[p.status] || { label: p.status, color: "bg-zinc-500/15 text-zinc-400" };
                     return (
-                      <tr key={p.id} className="border-b border-zinc-800/30 hover:bg-zinc-800/20 transition-colors">
-                        <td className="py-2.5 px-3 text-zinc-300">
+                      <tr key={p.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
+                        <td className="py-2.5 px-3 text-foreground/80">
                           {p.createdAt ? new Date(p.createdAt).toLocaleDateString("pt-BR") : "-"}
                         </td>
-                        <td className="py-2.5 px-3 text-zinc-400 font-mono text-xs">
+                        <td className="py-2.5 px-3 text-muted-foreground font-mono text-xs">
                           {p.referenciaMes || "-"}
                         </td>
-                        <td className="py-2.5 px-3 text-zinc-300">
+                        <td className="py-2.5 px-3 text-foreground/80">
                           R$ {parseFloat(p.valor).toFixed(2).replace(".", ",")}
                         </td>
                         <td className="py-2.5 px-3">
@@ -337,7 +337,7 @@ export default function MinhaAssinaturaPage() {
                             {pStatus.label}
                           </Badge>
                         </td>
-                        <td className="py-2.5 px-3 text-zinc-500 text-xs max-w-[200px] truncate">
+                        <td className="py-2.5 px-3 text-muted-foreground text-xs max-w-[200px] truncate">
                           {p.nota || "-"}
                         </td>
                       </tr>
@@ -352,28 +352,28 @@ export default function MinhaAssinaturaPage() {
 
       {/* Report Payment Dialog */}
       <Dialog open={showPayDialog} onOpenChange={setShowPayDialog}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
+        <DialogContent className="bg-card border-border text-foreground">
           <DialogHeader>
             <DialogTitle>Confirmar Pagamento</DialogTitle>
-            <DialogDescription className="text-zinc-400">
+            <DialogDescription className="text-muted-foreground">
               Informe que voce ja realizou o pagamento PIX. O administrador ira confirmar.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="bg-zinc-800/50 rounded-lg p-3 text-sm space-y-1">
+            <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-1">
               <div className="flex justify-between">
-                <span className="text-zinc-500">Valor:</span>
+                <span className="text-muted-foreground">Valor:</span>
                 <span className="text-emerald-400 font-semibold">
                   R$ {valorFinal.toFixed(2).replace(".", ",")}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">Referencia:</span>
-                <span className="text-zinc-300 font-mono">{currentRefMes}</span>
+                <span className="text-muted-foreground">Referencia:</span>
+                <span className="text-foreground/80 font-mono">{currentRefMes}</span>
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="nota" className="text-zinc-400 text-sm">
+              <Label htmlFor="nota" className="text-muted-foreground text-sm">
                 Nota ou referencia (opcional)
               </Label>
               <Input
@@ -381,7 +381,7 @@ export default function MinhaAssinaturaPage() {
                 placeholder="Ex: Comprovante enviado por WhatsApp..."
                 value={nota}
                 onChange={(e) => setNota(e.target.value)}
-                className="bg-zinc-800/50 border-zinc-700 text-zinc-200"
+                className="bg-muted/50 border-border text-foreground"
               />
             </div>
           </div>
@@ -389,7 +389,7 @@ export default function MinhaAssinaturaPage() {
             <Button
               variant="outline"
               onClick={() => setShowPayDialog(false)}
-              className="border-zinc-700 text-zinc-400"
+              className="border-border text-muted-foreground"
             >
               Cancelar
             </Button>

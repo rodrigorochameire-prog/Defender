@@ -38,21 +38,21 @@ export default async function ConvitePage({
                 className="object-contain drop-shadow-[0_0_12px_rgba(16,185,129,0.2)]"
               />
             </div>
-            <h1 className="font-serif text-xl font-semibold text-zinc-100 tracking-tight">
+            <h1 className="font-serif text-xl font-semibold text-foreground tracking-tight">
               OMBUDS
             </h1>
-            <p className="text-[10px] font-light tracking-[0.2em] uppercase text-zinc-500 mt-1">
+            <p className="text-[10px] font-light tracking-[0.2em] uppercase text-muted-foreground mt-1">
               Gestao para Defesa Criminal
             </p>
           </div>
 
-          <div className="w-8 h-px bg-zinc-800 mx-auto mb-6" />
+          <div className="w-8 h-px bg-border mx-auto mb-6" />
 
           <div className="text-center">
             <p className="text-sm text-red-400">
               Link invalido ou ja utilizado.
             </p>
-            <p className="text-xs text-zinc-500 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               Se voce ja ativou sua conta, faca login normalmente.
             </p>
             <a
@@ -63,8 +63,8 @@ export default async function ConvitePage({
             </a>
           </div>
 
-          <div className="mt-10 pt-5 border-t border-zinc-800/50">
-            <p className="text-center text-[10px] text-zinc-700 tracking-wide">
+          <div className="mt-10 pt-5 border-t border-border/50">
+            <p className="text-center text-[10px] text-muted-foreground/50 tracking-wide">
               Defensoria Publica do Estado da Bahia
             </p>
           </div>
@@ -96,29 +96,29 @@ export default async function ConvitePage({
               className="object-contain drop-shadow-[0_0_12px_rgba(16,185,129,0.2)]"
             />
           </div>
-          <h1 className="font-serif text-xl font-semibold text-zinc-100 tracking-tight">
+          <h1 className="font-serif text-xl font-semibold text-foreground tracking-tight">
             OMBUDS
           </h1>
-          <p className="text-[10px] font-light tracking-[0.2em] uppercase text-zinc-500 mt-1">
+          <p className="text-[10px] font-light tracking-[0.2em] uppercase text-muted-foreground mt-1">
             Gestao para Defesa Criminal
           </p>
         </div>
 
-        <div className="w-8 h-px bg-zinc-800 mx-auto mb-6" />
+        <div className="w-8 h-px bg-border mx-auto mb-6" />
 
         {/* Boas-vindas + Info do usuario */}
         <div className="text-center mb-6">
-          <p className="text-sm text-zinc-300">
+          <p className="text-sm text-foreground/80">
             Bem-vindo ao OMBUDS!
           </p>
-          <p className="text-base font-semibold text-zinc-100 mt-2">
+          <p className="text-base font-semibold text-foreground mt-2">
             {user.name}
           </p>
 
           {/* Comarca badge */}
           {comarca && (
             <div className="mt-3 flex justify-center">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-zinc-800 text-zinc-300 border border-zinc-700/50">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-muted text-foreground/80 border border-border/50">
                 {comarca.nome}
               </span>
             </div>
@@ -139,14 +139,14 @@ export default async function ConvitePage({
           )}
         </div>
 
-        <div className="w-8 h-px bg-zinc-800 mx-auto mb-6" />
+        <div className="w-8 h-px bg-border mx-auto mb-6" />
 
         {/* Formulario */}
         <ActivateForm token={token} userEmail={user.email} />
 
         {/* Footer institucional */}
-        <div className="mt-10 pt-5 border-t border-zinc-800/50">
-          <p className="text-center text-[10px] text-zinc-700 tracking-wide">
+        <div className="mt-10 pt-5 border-t border-border/50">
+          <p className="text-center text-[10px] text-muted-foreground/50 tracking-wide">
             Defensoria Publica do Estado da Bahia
           </p>
         </div>
@@ -172,5 +172,5 @@ function getAreaStyle(area: string): string {
   if (lower.includes("fazenda") || lower.includes("publica") || lower.includes("pública")) {
     return "bg-purple-500/10 text-purple-400 border-purple-500/20";
   }
-  return "bg-zinc-500/10 text-zinc-400 border-zinc-500/20";
+  return "bg-muted/50 text-muted-foreground border-border/50";
 }

@@ -315,7 +315,7 @@ export function PerfilMagistrado({
                   rows={3}
                 />
               ) : (
-                <p className="text-sm text-muted-foreground bg-zinc-50 dark:bg-zinc-800 p-3 rounded-lg">
+                <p className="text-sm text-muted-foreground bg-zinc-50 dark:bg-muted p-3 rounded-lg">
                   {formData.estiloAtuacao || "Nenhuma informacao registrada"}
                 </p>
               )}
@@ -419,7 +419,7 @@ export function PerfilMagistrado({
           <TabsContent value="estatisticas" className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <Card className="p-4 text-center">
-                <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-200">
+                <p className="text-2xl font-bold text-zinc-800 dark:text-foreground">
                   {estatisticas.total}
                 </p>
                 <p className="text-xs text-muted-foreground">Total de Sessoes</p>
@@ -466,7 +466,7 @@ export function PerfilMagistrado({
             </Card>
 
             {/* Indicador visual */}
-            <div className="flex items-center justify-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
+            <div className="flex items-center justify-center gap-4 p-4 bg-zinc-50 dark:bg-muted rounded-lg">
               {taxaFavoravel >= 60 ? (
                 <>
                   <TrendingUp className="h-8 w-8 text-green-500" />

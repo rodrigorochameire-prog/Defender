@@ -119,7 +119,7 @@ function ContactCard({
             {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                <h3 className="font-medium text-foreground truncate">
                   {contact.pushName || contact.name || "Sem nome"}
                 </h3>
                 {contact.assistidoId && (
@@ -129,7 +129,7 @@ function ContactCard({
                   </Badge>
                 )}
               </div>
-              <p className="text-sm text-zinc-500 flex items-center gap-1 mt-0.5">
+              <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
                 <Phone className="w-3 h-3" />
                 {formatPhone(contact.phone)}
               </p>
@@ -197,7 +197,7 @@ function ContactCard({
           <div className="space-y-4">
             {/* Busca */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar assistido por nome ou CPF..."
                 value={searchAssistido}
@@ -209,7 +209,7 @@ function ContactCard({
             {/* Sugestões */}
             {suggestedAssistidos.length > 0 && !searchAssistido && (
               <div className="space-y-2">
-                <p className="text-xs text-zinc-500 flex items-center gap-1">
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" />
                   Sugestão baseada no telefone:
                 </p>
@@ -227,10 +227,10 @@ function ContactCard({
                         {assistido.nome?.[0]?.toUpperCase() || "?"}
                       </div>
                       <div>
-                        <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                        <p className="font-medium text-foreground">
                           {assistido.nome}
                         </p>
-                        <p className="text-xs text-zinc-500">
+                        <p className="text-xs text-muted-foreground">
                           {assistido.telefone && formatPhone(assistido.telefone)}
                         </p>
                       </div>
@@ -250,7 +250,7 @@ function ContactCard({
                   ))}
                 </div>
               ) : assistidos.length === 0 ? (
-                <div className="text-center py-8 text-zinc-500">
+                <div className="text-center py-8 text-muted-foreground">
                   <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
                   <p>Nenhum assistido encontrado</p>
                 </div>
@@ -258,21 +258,21 @@ function ContactCard({
                 assistidos.map((assistido: any) => (
                   <button
                     key={assistido.id}
-                    className="w-full p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors text-left"
+                    className="w-full p-3 rounded-lg border border-zinc-200 dark:border-border hover:bg-zinc-50 dark:hover:bg-muted/50 transition-colors text-left"
                     onClick={() => {
                       onLink(assistido.id);
                       setShowLinkDialog(false);
                     }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-muted flex items-center justify-center">
                         {assistido.nome?.[0]?.toUpperCase() || "?"}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                        <p className="font-medium text-foreground truncate">
                           {assistido.nome}
                         </p>
-                        <p className="text-xs text-zinc-500">
+                        <p className="text-xs text-muted-foreground">
                           {assistido.cpf || assistido.telefone && formatPhone(assistido.telefone)}
                         </p>
                       </div>
@@ -365,9 +365,9 @@ function VincularContent({ configId }: { configId: number }) {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-muted dark:bg-background">
       {/* Header */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/admin/whatsapp">
@@ -379,7 +379,7 @@ function VincularContent({ configId }: { configId: number }) {
               <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                 <Link2 className="w-4 h-4 text-emerald-600" />
               </div>
-              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              <span className="text-sm font-semibold text-foreground">
                 Vincular Contatos a Assistidos
               </span>
             </div>
@@ -401,15 +401,15 @@ function VincularContent({ configId }: { configId: number }) {
         <div className="grid grid-cols-3 gap-4">
           <Card className="p-4">
             <p className="text-2xl font-bold">{stats.total}</p>
-            <p className="text-xs text-zinc-500">Total de Contatos</p>
+            <p className="text-xs text-muted-foreground">Total de Contatos</p>
           </Card>
           <Card className="p-4 border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10">
             <p className="text-2xl font-bold text-emerald-600">{stats.linked}</p>
-            <p className="text-xs text-zinc-500">Vinculados</p>
+            <p className="text-xs text-muted-foreground">Vinculados</p>
           </Card>
           <Card className="p-4 border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10">
             <p className="text-2xl font-bold text-amber-600">{stats.unlinked}</p>
-            <p className="text-xs text-zinc-500">Não Vinculados</p>
+            <p className="text-xs text-muted-foreground">Não Vinculados</p>
           </Card>
         </div>
 
@@ -417,7 +417,7 @@ function VincularContent({ configId }: { configId: number }) {
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Busca */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Buscar contato por nome ou telefone..."
               value={searchQuery}
@@ -427,7 +427,7 @@ function VincularContent({ configId }: { configId: number }) {
           </div>
 
           {/* Filtro de vinculação */}
-          <div className="flex gap-1 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+          <div className="flex gap-1 p-1 bg-zinc-100 dark:bg-muted rounded-lg">
             <Button
               variant={filter === "all" ? "secondary" : "ghost"}
               size="sm"
@@ -464,9 +464,9 @@ function VincularContent({ configId }: { configId: number }) {
         ) : filteredContacts.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
-              <Users className="w-16 h-16 mx-auto mb-4 text-zinc-300" />
+              <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
               <h3 className="text-lg font-semibold mb-2">Nenhum contato encontrado</h3>
-              <p className="text-zinc-500">
+              <p className="text-muted-foreground">
                 {filter === "unlinked"
                   ? "Todos os contatos já estão vinculados!"
                   : "Ajuste os filtros ou sincronize novos contatos."}
@@ -499,7 +499,7 @@ export default function VincularContatosPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11] flex items-center justify-center">
+      <div className="min-h-screen bg-muted dark:bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
       </div>
     );
@@ -509,12 +509,12 @@ export default function VincularContatosPage() {
 
   if (!configId) {
     return (
-      <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11] flex items-center justify-center">
+      <div className="min-h-screen bg-muted dark:bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
-            <MessageCircle className="w-12 h-12 mx-auto mb-4 text-zinc-400" />
+            <MessageCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
             <h2 className="text-lg font-semibold mb-2">WhatsApp não configurado</h2>
-            <p className="text-zinc-500 mb-4">
+            <p className="text-muted-foreground mb-4">
               Configure uma instância da Evolution API primeiro.
             </p>
             <Link href="/admin/whatsapp">

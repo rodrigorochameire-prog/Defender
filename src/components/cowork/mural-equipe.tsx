@@ -175,23 +175,23 @@ export function MuralEquipe({ className }: MuralEquipeProps) {
   return (
     <div
       className={cn(
-        "bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl flex flex-col",
+        "bg-white dark:bg-card border border-zinc-100 dark:border-border rounded-xl flex flex-col",
         className
       )}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-100 dark:border-border">
         <Pin className="h-4 w-4 text-amber-500" />
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-foreground">
           Mural da Equipe
         </h3>
-        <span className="ml-auto text-xs text-zinc-400">
+        <span className="ml-auto text-xs text-muted-foreground">
           {notas.length} {notas.length === 1 ? "nota" : "notas"}
         </span>
       </div>
 
       {/* Input area */}
-      <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
+      <div className="px-4 py-3 border-b border-zinc-100 dark:border-border">
         <div className="flex gap-2 items-end">
           <Textarea
             ref={textareaRef}
@@ -200,7 +200,7 @@ export function MuralEquipe({ className }: MuralEquipeProps) {
             onChange={(e) => setNovaMensagem(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={2}
-            className="resize-none bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-sm min-h-[60px]"
+            className="resize-none bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border text-sm min-h-[60px]"
           />
           <Button
             size="icon"
@@ -215,22 +215,22 @@ export function MuralEquipe({ className }: MuralEquipeProps) {
             )}
           </Button>
         </div>
-        <p className="text-[10px] text-zinc-400 mt-1">
+        <p className="text-[10px] text-muted-foreground mt-1">
           Ctrl+Enter para enviar
         </p>
       </div>
 
       {/* Notes feed */}
       <ScrollArea className="flex-1 max-h-[400px]">
-        <div className="divide-y divide-zinc-50 dark:divide-zinc-800/50">
+        <div className="divide-y divide-zinc-50 dark:divide-border">
           {isLoading && (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           )}
 
           {!isLoading && notas.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-8 text-zinc-400">
+            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
               <MessageSquare className="h-8 w-8 mb-2 opacity-50" />
               <p className="text-sm">Nenhuma nota no mural</p>
               <p className="text-xs mt-1">Seja o primeiro a compartilhar algo!</p>
@@ -252,7 +252,7 @@ export function MuralEquipe({ className }: MuralEquipeProps) {
                 <div className="flex gap-3">
                   {/* Avatar */}
                   <Avatar className="h-8 w-8 shrink-0">
-                    <AvatarFallback className="bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-600 text-zinc-600 dark:text-zinc-300 text-[10px] font-medium">
+                    <AvatarFallback className="bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-600 text-zinc-600 dark:text-foreground/80 text-[10px] font-medium">
                       {iniciais(nota.autor?.name || "?")}
                     </AvatarFallback>
                   </Avatar>
@@ -263,10 +263,10 @@ export function MuralEquipe({ className }: MuralEquipeProps) {
                       {nota.fixado && (
                         <Pin className="h-3 w-3 text-amber-500 shrink-0" />
                       )}
-                      <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                      <span className="text-sm font-medium text-zinc-900 dark:text-foreground truncate">
                         {nota.autor?.name || "Desconhecido"}
                       </span>
-                      <span className="text-xs text-zinc-400 shrink-0">
+                      <span className="text-xs text-muted-foreground shrink-0">
                         {tempoRelativo(nota.createdAt)}
                       </span>
 
@@ -350,7 +350,7 @@ export function MuralEquipe({ className }: MuralEquipeProps) {
                           value={editandoTexto}
                           onChange={(e) => setEditandoTexto(e.target.value)}
                           rows={2}
-                          className="resize-none bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-sm"
+                          className="resize-none bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border text-sm"
                           autoFocus
                         />
                         <div className="flex gap-2">
@@ -376,7 +376,7 @@ export function MuralEquipe({ className }: MuralEquipeProps) {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-0.5 whitespace-pre-wrap break-words">
+                      <p className="text-sm text-zinc-600 dark:text-muted-foreground mt-0.5 whitespace-pre-wrap break-words">
                         {nota.mensagem}
                       </p>
                     )}

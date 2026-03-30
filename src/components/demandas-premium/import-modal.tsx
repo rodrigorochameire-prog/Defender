@@ -222,7 +222,7 @@ export function ImportModal({ isOpen, onClose, onImport }: ImportModalProps) {
                       <SelectItem key={key} value={key}>
                         <div className="flex flex-col items-start">
                           <span className="font-semibold text-xs md:text-sm">{config.name}</span>
-                          <span className="text-[10px] md:text-xs text-zinc-500">{config.description}</span>
+                          <span className="text-[10px] md:text-xs text-muted-foreground">{config.description}</span>
                         </div>
                       </SelectItem>
                     ))}
@@ -272,7 +272,7 @@ export function ImportModal({ isOpen, onClose, onImport }: ImportModalProps) {
               </div>
 
               {/* File Upload Area */}
-              <div className="border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-lg p-4 md:p-8 hover:border-emerald-500 dark:hover:border-emerald-500 transition-colors">
+              <div className="border-2 border-dashed border-border rounded-lg p-4 md:p-8 hover:border-emerald-500 dark:hover:border-emerald-500 transition-colors">
                 <div className="text-center space-y-2 md:space-y-4">
                   <div className="flex justify-center">
                     <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/30 flex items-center justify-center">
@@ -280,10 +280,10 @@ export function ImportModal({ isOpen, onClose, onImport }: ImportModalProps) {
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs md:text-sm font-semibold text-zinc-900 dark:text-zinc-50 mb-1 truncate px-2">
+                    <p className="text-xs md:text-sm font-semibold text-foreground mb-1 truncate px-2">
                       {file ? file.name : "Selecione um arquivo"}
                     </p>
-                    <p className="text-[10px] md:text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="text-[10px] md:text-xs text-muted-foreground">
                       ou arraste e solte aqui
                     </p>
                   </div>
@@ -331,46 +331,46 @@ export function ImportModal({ isOpen, onClose, onImport }: ImportModalProps) {
           {etapa === "revisar" && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <p className="text-sm font-medium text-foreground/80">
                   {parsedRows.length} demandas identificadas — revise antes de importar
                 </p>
                 <button
                   onClick={() => { setEtapa("upload"); setExpandedProv(new Set()); }}
-                  className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   ← Voltar
                 </button>
               </div>
 
-              <div className="max-h-[350px] overflow-auto border border-zinc-200 dark:border-zinc-700 rounded-lg">
+              <div className="max-h-[350px] overflow-auto border border-border rounded-lg">
                 <table className="w-full text-xs">
-                  <thead className="bg-zinc-50 dark:bg-zinc-800/50 sticky top-0 border-b border-zinc-200 dark:border-zinc-700">
+                  <thead className="bg-muted/50 sticky top-0 border-b border-border">
                     <tr>
-                      <th className="w-8 px-2 py-1.5 text-center text-zinc-500 font-medium">#</th>
-                      <th className="px-2 py-1.5 text-left text-zinc-500 font-medium min-w-[140px]">Assistido</th>
-                      <th className="px-2 py-1.5 text-left text-zinc-500 font-medium min-w-[120px]">Processo</th>
-                      <th className="px-2 py-1.5 text-left text-zinc-500 font-medium min-w-[120px]">Ato</th>
-                      <th className="px-2 py-1.5 text-left text-zinc-500 font-medium w-20">Prazo</th>
-                      <th className="px-2 py-1.5 text-left text-zinc-500 font-medium w-20">Status</th>
-                      <th className="px-2 py-1.5 text-center text-zinc-500 font-medium w-8">
+                      <th className="w-8 px-2 py-1.5 text-center text-muted-foreground font-medium">#</th>
+                      <th className="px-2 py-1.5 text-left text-muted-foreground font-medium min-w-[140px]">Assistido</th>
+                      <th className="px-2 py-1.5 text-left text-muted-foreground font-medium min-w-[120px]">Processo</th>
+                      <th className="px-2 py-1.5 text-left text-muted-foreground font-medium min-w-[120px]">Ato</th>
+                      <th className="px-2 py-1.5 text-left text-muted-foreground font-medium w-20">Prazo</th>
+                      <th className="px-2 py-1.5 text-left text-muted-foreground font-medium w-20">Status</th>
+                      <th className="px-2 py-1.5 text-center text-muted-foreground font-medium w-8">
                         <FileText className="h-3 w-3 inline" />
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  <tbody className="divide-y divide-border">
                     {parsedRows.map((row, i) => (
                       <React.Fragment key={i}>
-                        <tr className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30">
-                          <td className="px-2 py-1.5 text-center text-zinc-400 font-mono text-[10px]">{i + 1}</td>
-                          <td className="px-2 py-1.5 text-zinc-800 dark:text-zinc-200 font-medium truncate max-w-[140px]">
+                        <tr className="hover:bg-muted/50">
+                          <td className="px-2 py-1.5 text-center text-muted-foreground font-mono text-[10px]">{i + 1}</td>
+                          <td className="px-2 py-1.5 text-foreground font-medium truncate max-w-[140px]">
                             {row.assistido || "—"}
                           </td>
-                          <td className="px-2 py-1.5 font-mono text-zinc-500 text-[10px] truncate">
+                          <td className="px-2 py-1.5 font-mono text-muted-foreground text-[10px] truncate">
                             {row.processos?.[0]?.numero || "—"}
                           </td>
-                          <td className="px-2 py-1.5 text-zinc-600 dark:text-zinc-400 truncate">{row.ato || "—"}</td>
-                          <td className="px-2 py-1.5 text-zinc-500 text-[10px]">{row.prazo || "—"}</td>
-                          <td className="px-2 py-1.5 text-zinc-500 text-[10px]">{row.status || "—"}</td>
+                          <td className="px-2 py-1.5 text-muted-foreground truncate">{row.ato || "—"}</td>
+                          <td className="px-2 py-1.5 text-muted-foreground text-[10px]">{row.prazo || "—"}</td>
+                          <td className="px-2 py-1.5 text-muted-foreground text-[10px]">{row.status || "—"}</td>
                           <td className="px-2 py-1.5 text-center">
                             <button
                               onClick={() => setExpandedProv((prev) => {
@@ -383,7 +383,7 @@ export function ImportModal({ isOpen, onClose, onImport }: ImportModalProps) {
                               className={`rounded p-0.5 transition-colors ${
                                 row.providencias?.trim()
                                   ? "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
-                                  : "text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400"
+                                  : "text-muted-foreground/50 hover:text-muted-foreground"
                               }`}
                             >
                               <FileText className="h-3.5 w-3.5" />
@@ -392,9 +392,9 @@ export function ImportModal({ isOpen, onClose, onImport }: ImportModalProps) {
                         </tr>
                         {expandedProv.has(i) && (
                           <tr>
-                            <td colSpan={7} className="px-3 pb-2 pt-0 bg-zinc-50/70 dark:bg-zinc-800/30">
+                            <td colSpan={7} className="px-3 pb-2 pt-0 bg-muted/50">
                               <div className="flex items-start gap-2">
-                                <FileText className="h-3 w-3 text-zinc-400 mt-1.5 flex-shrink-0" />
+                                <FileText className="h-3 w-3 text-muted-foreground mt-1.5 flex-shrink-0" />
                                 <textarea
                                   autoFocus
                                   rows={2}
@@ -414,7 +414,7 @@ export function ImportModal({ isOpen, onClose, onImport }: ImportModalProps) {
                                     }
                                   }}
                                   placeholder="Providências para esta demanda..."
-                                  className="flex-1 text-xs bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 outline-none resize-none w-full"
+                                  className="flex-1 text-xs bg-background border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 outline-none resize-none w-full"
                                 />
                               </div>
                             </td>

@@ -85,8 +85,8 @@ export function OficioCard({ oficio, onDuplicate, onArchive }: OficioCardProps) 
 
   return (
     <div
-      className={`group relative rounded-xl border border-zinc-200 dark:border-zinc-700/30 bg-white dark:bg-zinc-900/50 p-4
-        hover:bg-zinc-50 dark:hover:bg-zinc-800/70 transition-colors duration-150 border-l-4 ${urgenciaColor}`}
+      className={`group relative rounded-xl border border-border bg-card p-4
+        hover:bg-muted/50 transition-colors duration-150 border-l-4 ${urgenciaColor}`}
     >
       <div className="flex items-start justify-between gap-3">
         {/* Left: Content */}
@@ -96,7 +96,7 @@ export function OficioCard({ oficio, onDuplicate, onArchive }: OficioCardProps) 
               <StatusIcon className="w-3 h-3 mr-1" />
               {statusCfg.label}
             </Badge>
-            <Badge variant="outline" className="text-xs text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-600">
+            <Badge variant="outline" className="text-xs text-muted-foreground border-border">
               {tipoLabel}
             </Badge>
             {oficio.geradoPorIA && (
@@ -108,12 +108,12 @@ export function OficioCard({ oficio, onDuplicate, onArchive }: OficioCardProps) 
             href={`/admin/oficios/${oficio.id}`}
             className="block"
           >
-            <h3 className="font-medium text-zinc-900 dark:text-zinc-100 truncate hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer">
+            <h3 className="font-medium text-foreground truncate hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer">
               {oficio.titulo}
             </h3>
           </Link>
 
-          <div className="flex items-center gap-3 mt-1.5 text-xs text-zinc-500">
+          <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
             {oficio.assistidoNome && (
               <span className="truncate max-w-[200px]">{oficio.assistidoNome}</span>
             )}
@@ -130,7 +130,7 @@ export function OficioCard({ oficio, onDuplicate, onArchive }: OficioCardProps) 
             )}
           </div>
 
-          <div className="flex items-center gap-2 mt-2 text-xs text-zinc-400 dark:text-zinc-600">
+          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground/50">
             <Clock className="w-3 h-3" />
             {formatDistanceToNow(new Date(oficio.updatedAt), {
               addSuffix: true,
@@ -138,7 +138,7 @@ export function OficioCard({ oficio, onDuplicate, onArchive }: OficioCardProps) 
             })}
             {oficio.modeloTitulo && (
               <>
-                <span className="text-zinc-300 dark:text-zinc-700">|</span>
+                <span className="text-muted-foreground/50">|</span>
                 <FileText className="w-3 h-3" />
                 <span className="truncate max-w-[150px]">{oficio.modeloTitulo}</span>
               </>
@@ -152,7 +152,7 @@ export function OficioCard({ oficio, onDuplicate, onArchive }: OficioCardProps) 
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400"
+              className="h-7 w-7 text-muted-foreground hover:text-emerald-500 dark:hover:text-emerald-400"
               asChild
             >
               <a href={oficio.googleDocUrl} target="_blank" rel="noopener noreferrer">
@@ -163,7 +163,7 @@ export function OficioCard({ oficio, onDuplicate, onArchive }: OficioCardProps) 
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400">
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground">
                 <MoreVertical className="w-3.5 h-3.5" />
               </Button>
             </DropdownMenuTrigger>

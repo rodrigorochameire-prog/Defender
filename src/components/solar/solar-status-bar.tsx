@@ -48,7 +48,7 @@ const STATUS_TEXT: Record<StatusLevel, string> = {
   online: "text-emerald-600 dark:text-emerald-400",
   warning: "text-amber-600 dark:text-amber-400",
   offline: "text-red-600 dark:text-red-400",
-  unknown: "text-zinc-500 dark:text-zinc-400",
+  unknown: "text-muted-foreground",
 };
 
 function formatSessionAge(seconds: number | null | undefined): string {
@@ -130,7 +130,7 @@ export function SolarStatusBar({ onRefresh, isRefreshing, vencidas = 0 }: SolarS
   }
 
   return (
-    <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+    <div className="px-4 md:px-6 py-4 bg-card border-b border-border">
       <div className="flex items-center justify-between gap-4">
         {/* Left: Title + Status */}
         <div className="flex items-center gap-4 min-w-0">
@@ -142,7 +142,7 @@ export function SolarStatusBar({ onRefresh, isRefreshing, vencidas = 0 }: SolarS
           {/* Title + indicators */}
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
+              <h1 className="text-lg font-bold text-foreground tracking-tight">
                 Solar
               </h1>
               {vencidas > 0 && (
@@ -155,7 +155,7 @@ export function SolarStatusBar({ onRefresh, isRefreshing, vencidas = 0 }: SolarS
             {/* Status indicators row */}
             <div className="flex items-center gap-4 mt-0.5">
               {isLoading ? (
-                <span className="text-xs text-zinc-400 flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground flex items-center gap-1.5">
                   <RefreshCw className="h-3 w-3 animate-spin" />
                   Verificando conexão...
                 </span>
@@ -170,7 +170,7 @@ export function SolarStatusBar({ onRefresh, isRefreshing, vencidas = 0 }: SolarS
                       {ind.label}
                     </span>
                     {ind.detail && ind.detail !== ind.label.toLowerCase() && (
-                      <span className="text-zinc-400 dark:text-zinc-500 hidden sm:inline">
+                      <span className="text-muted-foreground/50 hidden sm:inline">
                         ({ind.detail})
                       </span>
                     )}

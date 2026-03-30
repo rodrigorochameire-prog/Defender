@@ -82,21 +82,21 @@ export function LocalDoFatoPanel({ processoId, localDoFatoEndereco, localDoFatoL
   if (!editando) {
     return (
       <div className="flex items-start gap-2 group">
-        <MapPin className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${temCoordenadas ? "text-emerald-500" : "text-zinc-300 dark:text-zinc-600"}`} />
+        <MapPin className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${temCoordenadas ? "text-emerald-500" : "text-muted-foreground/50"}`} />
         <div className="flex-1 min-w-0">
           {temCoordenadas ? (
             <div>
-              <p className="text-[11px] text-zinc-600 dark:text-zinc-400 truncate">
+              <p className="text-[11px] text-muted-foreground truncate">
                 {localDoFatoEndereco ?? `${localDoFatoLat}, ${localDoFatoLng}`}
               </p>
-              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">
+              <p className="text-[10px] text-muted-foreground font-mono">
                 {localDoFatoLat}, {localDoFatoLng}
               </p>
             </div>
           ) : (
             <button
               onClick={() => setEditando(true)}
-              className="text-[11px] text-zinc-400 dark:text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+              className="text-[11px] text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
             >
               Adicionar local do fato...
             </button>
@@ -105,7 +105,7 @@ export function LocalDoFatoPanel({ processoId, localDoFatoEndereco, localDoFatoL
         {temCoordenadas && (
           <button
             onClick={() => setEditando(true)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer"
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-muted-foreground hover:text-foreground cursor-pointer"
           >
             <Pencil className="h-3 w-3" />
           </button>
@@ -115,8 +115,8 @@ export function LocalDoFatoPanel({ processoId, localDoFatoEndereco, localDoFatoL
   }
 
   return (
-    <div className="space-y-2 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+    <div className="space-y-2 p-3 rounded-lg border border-border bg-muted/50">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         Local do Fato
       </p>
       <div className="flex gap-2">
@@ -130,7 +130,7 @@ export function LocalDoFatoPanel({ processoId, localDoFatoEndereco, localDoFatoL
         <button
           onClick={handleGeocodificar}
           disabled={isGeocodificando}
-          className="flex items-center justify-center w-8 h-8 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-500 hover:text-emerald-600 hover:border-emerald-300 dark:hover:border-emerald-700 transition-all cursor-pointer shrink-0 disabled:opacity-50"
+          className="flex items-center justify-center w-8 h-8 rounded-md border border-border bg-card text-muted-foreground hover:text-emerald-600 hover:border-emerald-300 dark:hover:border-emerald-700 transition-all cursor-pointer shrink-0 disabled:opacity-50"
           title="Geocodificar via OpenStreetMap"
         >
           {isGeocodificando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
@@ -170,7 +170,7 @@ export function LocalDoFatoPanel({ processoId, localDoFatoEndereco, localDoFatoL
         </Button>
         <button
           onClick={handleCancelar}
-          className="flex items-center gap-1 h-7 px-2 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-pointer"
+          className="flex items-center gap-1 h-7 px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
         >
           <X className="h-3 w-3" />
           Cancelar

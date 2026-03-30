@@ -195,9 +195,9 @@ export default function JurisprudenciaPage() {
   }, [stats?.porTribunal]);
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950">
+    <div className="min-h-screen bg-zinc-50/50 dark:bg-background">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+      <div className="border-b border-zinc-200 dark:border-border bg-white dark:bg-card">
         <div className="px-6 py-4">
           <Breadcrumbs
             items={[
@@ -212,10 +212,10 @@ export default function JurisprudenciaPage() {
                 <BookOpen className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+                <h1 className="text-xl font-semibold text-foreground">
                   Banco de Jurisprudência
                 </h1>
-                <p className="text-sm text-zinc-500 hidden sm:block">
+                <p className="text-sm text-muted-foreground hidden sm:block">
                   Julgados do STF, STJ e TJBA com busca inteligente por IA
                 </p>
               </div>
@@ -255,7 +255,7 @@ export default function JurisprudenciaPage() {
       <div className="p-6 space-y-6">
         {/* Stats */}
         {/* Stats Ribbon */}
-        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-card rounded-xl border border-zinc-200/80 dark:border-border/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
           {[
             { icon: BookOpen, value: stats?.totalJulgados || 0, label: "julgados" },
             { icon: Building2, value: porTribunalObj["STF"] || 0, label: "STF" },
@@ -266,11 +266,11 @@ export default function JurisprudenciaPage() {
             const Icon = stat.icon;
             return (
               <Fragment key={index}>
-                {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
-                <div className="flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800">
-                  <Icon className="w-3.5 h-3.5 flex-shrink-0 text-zinc-400 dark:text-zinc-500" />
-                  <span className="font-bold tabular-nums text-zinc-800 dark:text-zinc-100">{stat.value}</span>
-                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.label}</span>
+                {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-border/60 flex-shrink-0" />}
+                <div className="flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-zinc-50 dark:hover:bg-muted">
+                  <Icon className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground" />
+                  <span className="font-bold tabular-nums text-zinc-800 dark:text-foreground">{stat.value}</span>
+                  <span className="text-zinc-500 dark:text-muted-foreground font-medium">{stat.label}</span>
                 </div>
               </Fragment>
             );
@@ -469,7 +469,7 @@ function JulgadoCard({
   const StatusIcon = status.icon;
 
   return (
-    <div className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 hover:shadow-md transition-all">
+    <div className="group bg-white dark:bg-card border border-zinc-200 dark:border-border rounded-xl p-4 hover:shadow-md transition-all">
       <div className="flex items-start gap-4">
         {/* Ícone do tribunal */}
         <div className={cn("p-2.5 rounded-lg shrink-0", config.color)}>
@@ -486,7 +486,7 @@ function JulgadoCard({
                   {config.label}
                 </Badge>
                 {julgado.numeroProcesso && (
-                  <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  <span className="text-sm font-medium text-foreground">
                     {julgado.numeroProcesso}
                   </span>
                 )}
@@ -579,7 +579,7 @@ function JulgadoCard({
 
           {/* Ementa/Resumo */}
           <div className="mt-3">
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-3">
+            <p className="text-sm text-muted-foreground line-clamp-3">
               {julgado.ementaResumo || julgado.ementa || "Sem ementa disponível"}
             </p>
           </div>
@@ -592,7 +592,7 @@ function JulgadoCard({
           {/* Citação para copiar */}
           {julgado.citacaoFormatada && (
             <div className="mt-3 flex items-center gap-2">
-              <code className="text-xs bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded flex-1 truncate">
+              <code className="text-xs bg-zinc-100 dark:bg-muted px-2 py-1 rounded flex-1 truncate">
                 {julgado.citacaoFormatada}
               </code>
               <Button
@@ -671,8 +671,8 @@ function AIChatPanel({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
-      <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+    <div className="bg-white dark:bg-card border border-zinc-200 dark:border-border rounded-xl overflow-hidden">
+      <div className="p-4 border-b border-zinc-200 dark:border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-amber-500" />
           <h3 className="font-semibold">Assistente de Jurisprudência</h3>
@@ -700,7 +700,7 @@ function AIChatPanel({ onClose }: { onClose: () => void }) {
                   "p-3 rounded-lg",
                   msg.role === "user"
                     ? "bg-amber-50 dark:bg-amber-950/20 ml-8"
-                    : "bg-zinc-50 dark:bg-zinc-800 mr-8"
+                    : "bg-zinc-50 dark:bg-muted mr-8"
                 )}
               >
                 <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
@@ -712,7 +712,7 @@ function AIChatPanel({ onClose }: { onClose: () => void }) {
                     {msg.precedentes.map((p, j) => (
                       <div
                         key={j}
-                        className="bg-white dark:bg-zinc-900 p-2 rounded border border-zinc-200 dark:border-zinc-700"
+                        className="bg-white dark:bg-card p-2 rounded border border-zinc-200 dark:border-border"
                       >
                         <div className="flex items-center justify-between">
                           <code className="text-xs">{p.citacao}</code>
@@ -744,7 +744,7 @@ function AIChatPanel({ onClose }: { onClose: () => void }) {
         )}
       </ScrollArea>
 
-      <div className="p-4 border-t border-zinc-200 dark:border-zinc-800">
+      <div className="p-4 border-t border-zinc-200 dark:border-border">
         <div className="flex gap-2">
           <Textarea
             placeholder="Ex: Qual o entendimento do STJ sobre busca domiciliar sem mandado?"
@@ -810,7 +810,7 @@ function TemasSection() {
       {temas.map((tema) => (
         <div
           key={tema.id}
-          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 hover:shadow-md transition-all cursor-pointer"
+          className="bg-white dark:bg-card border border-zinc-200 dark:border-border rounded-xl p-4 hover:shadow-md transition-all cursor-pointer"
         >
           <div className="flex items-start justify-between">
             <div
@@ -821,7 +821,7 @@ function TemasSection() {
               {tema.totalJulgados || 0} julgados
             </Badge>
           </div>
-          <h3 className="mt-3 font-semibold text-zinc-900 dark:text-zinc-100">
+          <h3 className="mt-3 font-semibold text-foreground">
             {tema.nome}
           </h3>
           {tema.descricao && (
@@ -829,7 +829,7 @@ function TemasSection() {
               {tema.descricao}
             </p>
           )}
-          <div className="mt-3 flex items-center text-xs text-zinc-400">
+          <div className="mt-3 flex items-center text-xs text-muted-foreground">
             <ChevronRight className="w-4 h-4" />
             Ver julgados
           </div>
@@ -874,7 +874,7 @@ function SyncSection({
       {folders.map((folder) => (
         <div
           key={folder.id}
-          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4"
+          className="bg-white dark:bg-card border border-zinc-200 dark:border-border rounded-xl p-4"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -882,7 +882,7 @@ function SyncSection({
                 <FolderSync className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <h3 className="font-medium text-zinc-900 dark:text-zinc-100">
+                <h3 className="font-medium text-foreground">
                   {folder.folderName || "Pasta do Drive"}
                 </h3>
                 <p className="text-sm text-zinc-500">

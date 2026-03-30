@@ -70,13 +70,13 @@ function CopyProcessButton({ processo }: { processo: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+      className="p-1 rounded hover:bg-muted transition-colors"
       title="Copiar número do processo"
     >
       {copied ? (
         <Check className="w-3 h-3 text-emerald-600" />
       ) : (
-        <Copy className="w-3 h-3 text-zinc-400 hover:text-zinc-600" />
+        <Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" />
       )}
     </button>
   );
@@ -310,7 +310,7 @@ export default function DashboardVarasCriminaisPage() {
   return (
     <div className="space-y-6 p-6">
       {/* HEADER - VERSÃO SIMPLIFICADA */}
-      <div className="bg-gradient-to-r from-zinc-50 via-white to-zinc-50 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-900/80 border-b border-zinc-200 dark:border-zinc-800 -mx-6 -mt-6 px-6 py-5 mb-6">
+      <div className="bg-gradient-to-r from-muted via-card to-muted border-b border-border -mx-6 -mt-6 px-6 py-5 mb-6">
         <ProfissionalSwitch variant="full" showEscalaLink={false} />
         
         {/* MENSAGEM DE PRIVACIDADE */}
@@ -339,17 +339,17 @@ export default function DashboardVarasCriminaisPage() {
 
           return (
             <Link key={index} href={stat.href}>
-              <Card className="p-4 hover:shadow-lg transition-all cursor-pointer group border-zinc-200 dark:border-zinc-800">
+              <Card className="p-4 hover:shadow-lg transition-all cursor-pointer group border-border">
                 <div className="flex items-start justify-between">
                   <div className={`w-10 h-10 rounded-lg ${colorClasses[stat.color]} flex items-center justify-center`}>
                     <Icon className="w-5 h-5 text-white" />
                   </div>
-                  <ArrowRight className="w-4 h-4 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
                 <div className="mt-3">
-                  <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{stat.value}</p>
-                  <p className="text-xs text-zinc-500">{stat.title}</p>
-                  <p className="text-xs text-zinc-400 mt-0.5">{stat.subtitle}</p>
+                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground">{stat.title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{stat.subtitle}</p>
                 </div>
               </Card>
             </Link>
@@ -362,12 +362,12 @@ export default function DashboardVarasCriminaisPage() {
         {/* COLUNA ESQUERDA - Demandas */}
         <div className="lg:col-span-2 space-y-6">
           {/* MINHAS DEMANDAS */}
-          <Card className="border-zinc-200 dark:border-zinc-800">
-            <div className="p-4 border-b border-zinc-200 dark:border-zinc-700">
+          <Card className="border-border">
+            <div className="p-4 border-b border-border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <ListTodo className="w-4 h-4 text-zinc-500" />
-                  <h2 className="font-bold text-zinc-900 dark:text-zinc-50">Minhas Demandas</h2>
+                  <ListTodo className="w-4 h-4 text-muted-foreground" />
+                  <h2 className="font-bold text-foreground">Minhas Demandas</h2>
                   <Badge variant="secondary" className="text-xs">
                     {totalMinhasDemandas}
                   </Badge>
@@ -381,7 +381,7 @@ export default function DashboardVarasCriminaisPage() {
               </div>
             </div>
 
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <div className="divide-y divide-border">
               {loadingDemandas ? (
                 Array(3).fill(0).map((_, i) => (
                   <div key={i} className="p-4">
@@ -391,11 +391,11 @@ export default function DashboardVarasCriminaisPage() {
                 ))
               ) : minhasDemandas.length === 0 ? (
                 <div className="p-8 text-center">
-                  <ListTodo className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
-                  <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                  <ListTodo className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-muted-foreground">
                     Nenhuma demanda pendente
                   </p>
-                  <p className="text-xs text-zinc-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Adicione demandas para vê-las aqui
                   </p>
                   <Button size="sm" className="mt-4" onClick={() => setIsCreateModalOpen(true)}>
@@ -409,20 +409,20 @@ export default function DashboardVarasCriminaisPage() {
                   
                   return (
                     <Link key={demanda.id} href={`/admin/demandas/${demanda.id}`}>
-                      <div className="p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer group">
+                      <div className="p-4 hover:bg-muted/50 transition-colors cursor-pointer group">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               {isUrgente && (
                                 <Flame className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
                               )}
-                              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                              <p className="text-sm font-medium text-foreground truncate">
                                 {demanda.titulo || demanda.descricao?.substring(0, 50) || "Sem título"}
                               </p>
                             </div>
                             {demanda.processo?.numero && (
                               <div className="flex items-center gap-1 mt-1">
-                                <span className="text-xs text-zinc-400 font-mono truncate">
+                                <span className="text-xs text-muted-foreground font-mono truncate">
                                   {demanda.processo.numero}
                                 </span>
                                 <CopyProcessButton processo={demanda.processo.numero} />
@@ -439,7 +439,7 @@ export default function DashboardVarasCriminaisPage() {
                               profissionalAtualId={profissionalAtivoId}
                               trigger={
                                 <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100">
-                                  <Share2 className="w-3.5 h-3.5 text-zinc-400" />
+                                  <Share2 className="w-3.5 h-3.5 text-muted-foreground" />
                                 </Button>
                               }
                             />
@@ -449,7 +449,7 @@ export default function DashboardVarasCriminaisPage() {
                               className={`text-[10px] ${
                                 prazo.cor === "red" ? "border-red-300 text-red-600 bg-red-50" :
                                 prazo.cor === "yellow" ? "border-yellow-300 text-yellow-600 bg-yellow-50" :
-                                "border-zinc-200 text-zinc-500"
+                                "border-border text-muted-foreground"
                               }`}
                             >
                               <Clock className="w-2.5 h-2.5 mr-1" />
@@ -467,12 +467,12 @@ export default function DashboardVarasCriminaisPage() {
 
           {/* DEMANDAS COMPARTILHADAS COMIGO */}
           {totalCompartilhadas > 0 && (
-            <Card className="border-zinc-200 dark:border-zinc-800">
-              <div className="p-4 border-b border-zinc-200 dark:border-zinc-700">
+            <Card className="border-border">
+              <div className="p-4 border-b border-border">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Share2 className="w-4 h-4 text-blue-500" />
-                    <h2 className="font-bold text-zinc-900 dark:text-zinc-50">Compartilhadas Comigo</h2>
+                    <h2 className="font-bold text-foreground">Compartilhadas Comigo</h2>
                     <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
                       {totalCompartilhadas}
                     </Badge>
@@ -480,20 +480,20 @@ export default function DashboardVarasCriminaisPage() {
                 </div>
               </div>
 
-              <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              <div className="divide-y divide-border">
                 {demandasCompartilhadas.slice(0, 3).map((demanda: any) => {
                   const prazo = formatarPrazo(demanda.prazo);
                   
                   return (
                     <Link key={demanda.id} href={`/admin/demandas/${demanda.id}`}>
-                      <div className="p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer">
+                      <div className="p-4 hover:bg-muted/50 transition-colors cursor-pointer">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <Badge className="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
                                 De: {colegoConfig?.nomeCurto || "Colega"}
                               </Badge>
-                              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                              <p className="text-sm font-medium text-foreground truncate">
                                 {demanda.titulo || "Sem título"}
                               </p>
                             </div>
@@ -504,7 +504,7 @@ export default function DashboardVarasCriminaisPage() {
                             className={`text-[10px] ${
                               prazo.cor === "red" ? "border-red-300 text-red-600" :
                               prazo.cor === "yellow" ? "border-yellow-300 text-yellow-600" :
-                              "border-zinc-200 text-zinc-500"
+                              "border-border text-muted-foreground"
                             }`}
                           >
                             {prazo.texto}
@@ -522,8 +522,8 @@ export default function DashboardVarasCriminaisPage() {
         {/* COLUNA DIREITA - Audiências e Estatísticas */}
         <div className="space-y-6">
           {/* GRÁFICO DE DEMANDAS */}
-          <Card className="border-zinc-200 dark:border-zinc-800 p-4">
-            <h3 className="font-bold text-zinc-900 dark:text-zinc-50 mb-4">Visão Geral</h3>
+          <Card className="border-border p-4">
+            <h3 className="font-bold text-foreground mb-4">Visão Geral</h3>
             <div className="h-[180px] flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={180}>
                 <PieChart>
@@ -548,19 +548,19 @@ export default function DashboardVarasCriminaisPage() {
               {dadosDonut.map((item, index) => (
                 <div key={index} className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-xs text-zinc-500">{item.name}</span>
+                  <span className="text-xs text-muted-foreground">{item.name}</span>
                 </div>
               ))}
             </div>
           </Card>
 
           {/* PRÓXIMAS AUDIÊNCIAS */}
-          <Card className="border-zinc-200 dark:border-zinc-800">
-            <div className="p-4 border-b border-zinc-200 dark:border-zinc-700">
+          <Card className="border-border">
+            <div className="p-4 border-b border-border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-amber-500" />
-                  <h3 className="font-bold text-zinc-900 dark:text-zinc-50">Minhas Audiências</h3>
+                  <Calendar className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <h3 className="font-bold text-foreground">Minhas Audiências</h3>
                 </div>
                 <Link href="/admin/audiencias">
                   <Button variant="ghost" size="sm" className="text-xs">
@@ -570,7 +570,7 @@ export default function DashboardVarasCriminaisPage() {
               </div>
             </div>
 
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <div className="divide-y divide-border">
               {loadingAudiencias ? (
                 Array(3).fill(0).map((_, i) => (
                   <div key={i} className="p-3">
@@ -580,8 +580,8 @@ export default function DashboardVarasCriminaisPage() {
                 ))
               ) : minhasAudiencias.length === 0 ? (
                 <div className="p-6 text-center">
-                  <Calendar className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-                  <p className="text-xs text-zinc-400">Nenhuma audiência agendada</p>
+                  <Calendar className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+                  <p className="text-xs text-muted-foreground">Nenhuma audiência agendada</p>
                 </div>
               ) : (
                 minhasAudiencias.slice(0, 4).map((audiencia: any) => {
@@ -594,15 +594,15 @@ export default function DashboardVarasCriminaisPage() {
                       <div className="flex items-center gap-2 mb-1">
                         {isHoje && <Badge className="text-[10px] bg-red-100 text-red-700">Hoje</Badge>}
                         {isAmanha && <Badge className="text-[10px] bg-amber-100 text-amber-700">Amanhã</Badge>}
-                        <span className="text-xs text-zinc-500">
+                        <span className="text-xs text-muted-foreground">
                           {data ? format(data, "dd/MM • HH:mm", { locale: ptBR }) : "-"}
                         </span>
                       </div>
-                      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                      <p className="text-sm font-medium text-foreground truncate">
                         {audiencia.tipo || audiencia.descricao || "Audiência"}
                       </p>
                       {audiencia.local && (
-                        <p className="text-xs text-zinc-400 truncate">{audiencia.local}</p>
+                        <p className="text-xs text-muted-foreground truncate">{audiencia.local}</p>
                       )}
                     </div>
                   );
@@ -612,38 +612,38 @@ export default function DashboardVarasCriminaisPage() {
           </Card>
 
           {/* DADOS COMPARTILHADOS - CARD INFORMATIVO */}
-          <Card className="border-zinc-200 dark:border-zinc-800 p-4 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30">
+          <Card className="border-border p-4 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30">
             <div className="flex items-center gap-2 mb-3">
-              <Shield className="w-5 h-5 text-violet-600" />
-              <h3 className="font-bold text-zinc-900 dark:text-zinc-50">Dados Integrados</h3>
+              <Shield className="w-5 h-5 text-violet-700 dark:text-violet-400" />
+              <h3 className="font-bold text-foreground">Dados Integrados</h3>
             </div>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-4">
+            <p className="text-xs text-muted-foreground mb-4">
               Assistidos, casos e processos são compartilhados entre toda a equipe para inteligência de defesa.
             </p>
             <div className="space-y-2">
               <Link href="/admin/assistidos">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-white/50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 transition-colors cursor-pointer">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-card/50 hover:bg-card transition-colors cursor-pointer">
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-violet-600" />
-                    <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Assistidos</span>
+                    <span className="text-sm font-medium text-foreground/80">Assistidos</span>
                   </div>
                   <Badge variant="outline" className="text-xs">{totalAssistidos}</Badge>
                 </div>
               </Link>
               <Link href="/admin/casos">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-white/50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 transition-colors cursor-pointer">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-card/50 hover:bg-card transition-colors cursor-pointer">
                   <div className="flex items-center gap-2">
                     <FolderOpen className="w-4 h-4 text-violet-600" />
-                    <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Casos</span>
+                    <span className="text-sm font-medium text-foreground/80">Casos</span>
                   </div>
                   <Badge variant="outline" className="text-xs">{totalCasos}</Badge>
                 </div>
               </Link>
               <Link href="/admin/processos">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-white/50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 transition-colors cursor-pointer">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-card/50 hover:bg-card transition-colors cursor-pointer">
                   <div className="flex items-center gap-2">
                     <Scale className="w-4 h-4 text-violet-600" />
-                    <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Processos</span>
+                    <span className="text-sm font-medium text-foreground/80">Processos</span>
                   </div>
                   <Badge variant="outline" className="text-xs">{totalProcessos}</Badge>
                 </div>

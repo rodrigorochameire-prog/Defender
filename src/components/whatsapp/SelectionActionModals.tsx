@@ -342,8 +342,8 @@ export function SelectionActionModals({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-3">
-            <pre className="text-xs whitespace-pre-wrap text-zinc-700 dark:text-zinc-300 font-mono leading-relaxed">
+          <div className="flex-1 overflow-y-auto rounded-lg border border-zinc-200 dark:border-border bg-zinc-50 dark:bg-background p-3">
+            <pre className="text-xs whitespace-pre-wrap text-zinc-700 dark:text-foreground/80 font-mono leading-relaxed">
               {previewContent}
             </pre>
           </div>
@@ -354,7 +354,7 @@ export function SelectionActionModals({
               checked={importante}
               onCheckedChange={(checked) => setImportante(checked === true)}
             />
-            <label htmlFor="importante" className="text-sm text-zinc-600 dark:text-zinc-400 cursor-pointer">
+            <label htmlFor="importante" className="text-sm text-zinc-600 dark:text-muted-foreground cursor-pointer">
               Marcar como importante
             </label>
           </div>
@@ -405,11 +405,11 @@ export function SelectionActionModals({
             {mediaMessages.map((msg) => (
               <div
                 key={msg.id}
-                className="flex items-center gap-3 p-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
+                className="flex items-center gap-3 p-2 rounded-lg bg-zinc-50 dark:bg-card border border-zinc-200 dark:border-border"
               >
                 {getMediaIcon(msg.type)}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate text-zinc-900 dark:text-zinc-100">
+                  <p className="text-sm font-medium truncate text-zinc-900 dark:text-foreground">
                     {msg.mediaFilename || `${msg.type}_${format(new Date(msg.createdAt), "HHmm")}`}
                   </p>
                   <p className="text-xs text-zinc-500">
@@ -423,7 +423,7 @@ export function SelectionActionModals({
             ))}
           </div>
 
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900 rounded-md px-3 py-2">
+          <p className="text-xs text-zinc-500 dark:text-muted-foreground bg-zinc-100 dark:bg-card rounded-md px-3 py-2">
             Destino: <strong>{assistidoName}</strong> / 05 - Outros
           </p>
 
@@ -512,13 +512,13 @@ export function SelectionActionModals({
               {summaryStructured && (
                 <div className="grid gap-3">
                   {summaryStructured.fatos.length > 0 && (
-                    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-3">
+                    <div className="rounded-lg border border-zinc-200 dark:border-border p-3">
                       <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
                         Fatos Relatados
                       </h4>
                       <ul className="space-y-1">
                         {summaryStructured.fatos.map((f, i) => (
-                          <li key={i} className="text-sm text-zinc-700 dark:text-zinc-300 flex items-start gap-2">
+                          <li key={i} className="text-sm text-zinc-700 dark:text-foreground/80 flex items-start gap-2">
                             <span className="text-emerald-500 mt-0.5">•</span>
                             {f}
                           </li>
@@ -528,13 +528,13 @@ export function SelectionActionModals({
                   )}
 
                   {summaryStructured.pedidos.length > 0 && (
-                    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-3">
+                    <div className="rounded-lg border border-zinc-200 dark:border-border p-3">
                       <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
                         Pedidos / Demandas
                       </h4>
                       <ul className="space-y-1">
                         {summaryStructured.pedidos.map((p, i) => (
-                          <li key={i} className="text-sm text-zinc-700 dark:text-zinc-300 flex items-start gap-2">
+                          <li key={i} className="text-sm text-zinc-700 dark:text-foreground/80 flex items-start gap-2">
                             <span className="text-blue-500 mt-0.5">•</span>
                             {p}
                           </li>
@@ -544,13 +544,13 @@ export function SelectionActionModals({
                   )}
 
                   {summaryStructured.providencias.length > 0 && (
-                    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-3">
+                    <div className="rounded-lg border border-zinc-200 dark:border-border p-3">
                       <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
                         Providências Necessárias
                       </h4>
                       <ul className="space-y-1">
                         {summaryStructured.providencias.map((p, i) => (
-                          <li key={i} className="text-sm text-zinc-700 dark:text-zinc-300 flex items-start gap-2">
+                          <li key={i} className="text-sm text-zinc-700 dark:text-foreground/80 flex items-start gap-2">
                             <span className="text-orange-500 mt-0.5">•</span>
                             {p}
                           </li>
@@ -679,7 +679,7 @@ export function SelectionActionModals({
                         className="text-sm"
                       />
                     ) : (
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300">{editValues.endereco}</p>
+                      <p className="text-sm text-zinc-700 dark:text-foreground/80">{editValues.endereco}</p>
                     )}
                   </ExtractedField>
                 )}
@@ -737,7 +737,7 @@ export function SelectionActionModals({
                         className="text-sm min-h-[100px]"
                       />
                     ) : (
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed">
+                      <p className="text-sm text-zinc-700 dark:text-foreground/80 whitespace-pre-wrap leading-relaxed">
                         {editValues.relato_fatos}
                       </p>
                     )}
@@ -797,7 +797,7 @@ export function SelectionActionModals({
                           <Badge variant="secondary" className="text-[10px] font-mono shrink-0 mt-0.5">
                             {d.data}
                           </Badge>
-                          <span className="text-zinc-700 dark:text-zinc-300">{d.descricao}</span>
+                          <span className="text-zinc-700 dark:text-foreground/80">{d.descricao}</span>
                         </div>
                       ))}
                     </div>
@@ -920,7 +920,7 @@ function ExtractedField({
       className={`rounded-lg border p-3 transition-colors ${
         selected
           ? "border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20"
-          : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/50"
+          : "border-zinc-200 dark:border-border bg-zinc-50/50 dark:bg-background/50"
       }`}
     >
       <div className="flex items-center gap-2 mb-2">

@@ -27,7 +27,7 @@ export function InstrucaoStatus({ processoId }: InstrucaoStatusProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-6 text-zinc-400">
+      <div className="flex items-center justify-center py-6 text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
         <span className="text-xs">Carregando status...</span>
       </div>
@@ -42,17 +42,17 @@ export function InstrucaoStatus({ processoId }: InstrucaoStatusProps) {
   const progressPercent = t.total > 0 ? Math.round((t.ouvidas.length / t.total) * 100) : 0;
 
   return (
-    <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden">
+    <div className="border border-border rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-700">
+      <div className="px-4 py-2.5 bg-muted/50 border-b border-border">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+          <h3 className="text-xs font-semibold text-foreground/80 flex items-center gap-1.5">
             <Users className="h-3.5 w-3.5" />
             Status da Instrucao
           </h3>
           {t.total > 0 && (
             <div className="flex items-center gap-2">
-              <div className="w-24 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
+              <div className="w-24 h-1.5 rounded-full bg-muted overflow-hidden">
                 <div
                   className={cn(
                     "h-full rounded-full transition-all duration-500",
@@ -65,7 +65,7 @@ export function InstrucaoStatus({ processoId }: InstrucaoStatusProps) {
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
-              <span className="text-[10px] font-mono text-zinc-500 tabular-nums">
+              <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
                 {t.ouvidas.length}/{t.total}
               </span>
             </div>
@@ -112,7 +112,7 @@ export function InstrucaoStatus({ processoId }: InstrucaoStatusProps) {
         {t.naoLocalizadas.length > 0 && (
           <StatusSection
             icon={MapPin}
-            iconColor="text-zinc-400"
+            iconColor="text-muted-foreground"
             label="Nao localizadas"
             items={t.naoLocalizadas.map(x => ({ name: x.nome, badge: x.tipo }))}
           />
@@ -130,7 +130,7 @@ export function InstrucaoStatus({ processoId }: InstrucaoStatusProps) {
 
         {/* Audiências summary */}
         {a.total > 0 && (
-          <div className="flex items-center gap-3 text-[11px] text-zinc-500 pt-1 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center gap-3 text-[11px] text-muted-foreground pt-1 border-t border-border">
             <span className="flex items-center gap-1">
               <CalendarDays className="h-3 w-3" />
               {a.realizadas} audiencia{a.realizadas !== 1 ? "s" : ""} realizada{a.realizadas !== 1 ? "s" : ""}
@@ -150,14 +150,14 @@ export function InstrucaoStatus({ processoId }: InstrucaoStatusProps) {
 
         {/* Intercorrencias */}
         {intercorrencias.length > 0 && (
-          <div className="space-y-1.5 pt-1 border-t border-zinc-100 dark:border-zinc-800">
-            <p className="text-[10px] font-medium text-zinc-500 flex items-center gap-1">
+          <div className="space-y-1.5 pt-1 border-t border-border">
+            <p className="text-[10px] font-medium text-muted-foreground flex items-center gap-1">
               <AlertTriangle className="h-3 w-3 text-amber-500" />
               Intercorrencias ({intercorrencias.length})
             </p>
             {intercorrencias.map((ic, idx) => (
               <div key={idx} className="flex items-start gap-2 text-[11px]">
-                <span className="text-zinc-400 shrink-0 tabular-nums">
+                <span className="text-muted-foreground shrink-0 tabular-nums">
                   {new Date(ic.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
                 </span>
                 <Badge
@@ -171,7 +171,7 @@ export function InstrucaoStatus({ processoId }: InstrucaoStatusProps) {
                 >
                   {ic.tipo}
                 </Badge>
-                <span className="text-zinc-500 dark:text-zinc-400 line-clamp-1">
+                <span className="text-muted-foreground line-clamp-1">
                   {ic.descricao}
                 </span>
               </div>
@@ -210,7 +210,7 @@ function StatusSection({
   const TIPO_COLORS: Record<string, string> = {
     DEFESA: "text-emerald-600 border-emerald-200",
     ACUSACAO: "text-red-600 border-red-200",
-    COMUM: "text-zinc-500 border-zinc-200",
+    COMUM: "text-muted-foreground border-border",
     INFORMANTE: "text-blue-600 border-blue-200",
     PERITO: "text-purple-600 border-purple-200",
     VITIMA: "text-amber-600 border-amber-200",
@@ -218,19 +218,19 @@ function StatusSection({
 
   return (
     <div className="space-y-1">
-      <p className="text-[10px] font-medium text-zinc-500 flex items-center gap-1">
+      <p className="text-[10px] font-medium text-muted-foreground flex items-center gap-1">
         <Icon className={cn("h-3 w-3", iconColor)} />
         {label} ({items.length})
       </p>
       <div className="flex flex-wrap gap-1.5 ml-4">
         {items.map((item, idx) => (
           <div key={idx} className="flex items-center gap-1">
-            <span className="text-[11px] text-zinc-700 dark:text-zinc-300">
+            <span className="text-[11px] text-foreground/80">
               {item.name}
             </span>
             <Badge
               variant="outline"
-              className={cn("text-[9px] h-4", TIPO_COLORS[item.badge] || "text-zinc-400 border-zinc-200")}
+              className={cn("text-[9px] h-4", TIPO_COLORS[item.badge] || "text-muted-foreground border-border")}
             >
               {TIPO_LABELS[item.badge] || item.badge}
             </Badge>
@@ -241,7 +241,7 @@ function StatusSection({
                   "text-[9px] h-4",
                   item.statusBadge === "intimada"
                     ? "text-cyan-600 border-cyan-200"
-                    : "text-zinc-400 border-zinc-200",
+                    : "text-muted-foreground border-border",
                 )}
               >
                 {item.statusBadge}

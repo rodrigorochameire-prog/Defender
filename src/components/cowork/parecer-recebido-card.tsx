@@ -91,7 +91,7 @@ function ParecerItem({ parecer, onRespondido }: ParecerItemProps) {
         "border rounded-xl transition-all duration-200",
         expanded
           ? "border-violet-200 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-900/10"
-          : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hover:border-violet-200 dark:hover:border-violet-800"
+          : "border-zinc-200 dark:border-border bg-zinc-50 dark:bg-muted/50 hover:border-violet-200 dark:hover:border-violet-800"
       )}
     >
       <button
@@ -107,27 +107,27 @@ function ParecerItem({ parecer, onRespondido }: ParecerItemProps) {
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap mb-1">
-              <span className="text-[10px] font-semibold text-zinc-700 dark:text-zinc-300">
+              <span className="text-[10px] font-semibold text-zinc-700 dark:text-foreground/80">
                 {parecer.outraPessoa?.name || "Colega"}
               </span>
               <UrgenciaBadge urgencia={parecer.urgencia} />
               {dataFormatada && (
-                <span className="text-[9px] text-zinc-400 ml-auto">{dataFormatada}</span>
+                <span className="text-[9px] text-muted-foreground ml-auto">{dataFormatada}</span>
               )}
             </div>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+            <p className="text-xs text-zinc-600 dark:text-muted-foreground line-clamp-2 leading-relaxed">
               {parecer.pergunta}
             </p>
             {(parecer.assistido || parecer.processo) && (
               <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                 {parecer.assistido && (
-                  <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400">
+                  <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-muted text-muted-foreground">
                     <User className="w-2.5 h-2.5" />
                     {parecer.assistido.nome}
                   </span>
                 )}
                 {parecer.processo && (
-                  <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 font-mono">
+                  <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-muted text-muted-foreground font-mono">
                     <FileText className="w-2.5 h-2.5" />
                     {parecer.processo.numeroAutos}
                   </span>
@@ -140,7 +140,7 @@ function ParecerItem({ parecer, onRespondido }: ParecerItemProps) {
             {expanded ? (
               <ChevronUp className="w-3.5 h-3.5 text-violet-500" />
             ) : (
-              <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
             )}
           </div>
         </div>
@@ -148,11 +148,11 @@ function ParecerItem({ parecer, onRespondido }: ParecerItemProps) {
 
       {expanded && (
         <div className="px-3 pb-3 border-t border-violet-100 dark:border-violet-800/50 pt-3">
-          <div className="mb-3 p-2.5 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700">
-            <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-wide mb-1">
+          <div className="mb-3 p-2.5 rounded-lg bg-white dark:bg-muted border border-zinc-100 dark:border-border">
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">
               Pergunta completa
             </p>
-            <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap">
+            <p className="text-xs text-zinc-700 dark:text-foreground/80 leading-relaxed whitespace-pre-wrap">
               {parecer.pergunta}
             </p>
           </div>
@@ -160,11 +160,11 @@ function ParecerItem({ parecer, onRespondido }: ParecerItemProps) {
             placeholder="Digite sua resposta..."
             value={resposta}
             onChange={(e) => setResposta(e.target.value)}
-            className="min-h-[80px] resize-none text-xs rounded-xl bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus:ring-violet-500/30 mb-2"
+            className="min-h-[80px] resize-none text-xs rounded-xl bg-white dark:bg-muted border-zinc-200 dark:border-border focus:ring-violet-500/30 mb-2"
             disabled={responder.isPending}
           />
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[9px] text-zinc-400">
+            <span className="text-[9px] text-muted-foreground">
               {resposta.length > 0 ? `${resposta.length} caracteres` : "Seja claro e objetivo"}
             </span>
             <Button
@@ -203,7 +203,7 @@ export function ParecerRecebidoCard({ className }: { className?: string }) {
     return (
       <div className={cn("space-y-2", className)}>
         {[1, 2].map((i) => (
-          <div key={i} className="h-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
+          <div key={i} className="h-16 rounded-xl bg-zinc-100 dark:bg-muted animate-pulse" />
         ))}
       </div>
     );

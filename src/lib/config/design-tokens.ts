@@ -50,9 +50,9 @@ export const SPACE = {
 // ============================================
 
 export const TAB_STYLE = {
-  bar: "flex items-center gap-6 border-b border-zinc-200 dark:border-zinc-800 px-6",
-  item: "py-3 text-sm font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 border-b-2 border-transparent transition-colors cursor-pointer",
-  active: "text-zinc-900 dark:text-zinc-100 border-emerald-500",
+  bar: "flex items-center gap-6 border-b border-border px-6",
+  item: "py-3 text-sm font-medium text-muted-foreground hover:text-foreground/80 border-b-2 border-transparent transition-colors cursor-pointer",
+  active: "text-foreground border-emerald-500",
 } as const;
 
 // ============================================
@@ -61,8 +61,8 @@ export const TAB_STYLE = {
 
 export const PILL_STYLE = {
   bar: "flex items-center gap-1.5 mb-4",
-  item: "px-3 py-1 text-xs rounded-full text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer",
-  active: "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100",
+  item: "px-3 py-1 text-xs rounded-full text-muted-foreground hover:bg-muted/50 transition-colors cursor-pointer",
+  active: "bg-muted text-foreground",
 } as const;
 
 // ============================================
@@ -71,7 +71,7 @@ export const PILL_STYLE = {
 
 export const CARD_STYLE = {
   /** Card padrão com borda */
-  base: "rounded-lg border border-zinc-200 dark:border-zinc-800 p-4",
+  base: "rounded-lg border border-border p-4",
   /** Card com borda lateral colorida (urgência, nulidades) */
   highlight: "rounded-lg border-l-4 p-4",
 } as const;
@@ -86,7 +86,7 @@ export const COLORS = {
   warning: { border: "border-amber-200 dark:border-amber-800", bg: "bg-amber-50/50 dark:bg-amber-950/10", text: "text-amber-600 dark:text-amber-400" },
   info:    { border: "border-blue-200 dark:border-blue-800", bg: "bg-blue-50/50 dark:bg-blue-950/10", text: "text-blue-600 dark:text-blue-400" },
   violet:  { border: "border-violet-200 dark:border-violet-800", bg: "bg-violet-50/50 dark:bg-violet-950/10", text: "text-violet-600 dark:text-violet-400" },
-  neutral: { border: "border-zinc-200 dark:border-zinc-800", bg: "bg-zinc-50 dark:bg-zinc-900", text: "text-zinc-600 dark:text-zinc-400" },
+  neutral: { border: "border-border", bg: "bg-zinc-50 dark:bg-card", text: "text-zinc-600 dark:text-muted-foreground" },
 } as const;
 
 // ============================================

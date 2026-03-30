@@ -85,31 +85,31 @@ function ContradictionRow({
       className={cn(
         "rounded-lg border transition-colors",
         config.border,
-        expanded ? config.bg : "bg-white dark:bg-zinc-900",
+        expanded ? config.bg : "bg-card",
       )}
     >
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-start gap-2 p-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-lg transition-colors"
+        className="w-full flex items-start gap-2 p-3 text-left hover:bg-muted/50 rounded-lg transition-colors"
       >
         <div className="mt-0.5 shrink-0">
           {expanded ? (
-            <ChevronDown className="h-4 w-4 text-zinc-400" />
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
           ) : (
-            <ChevronRight className="h-4 w-4 text-zinc-400" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           )}
         </div>
         <Icon className={cn("h-4 w-4 mt-0.5 shrink-0", `text-${item.tipo === "contradicao" ? "red" : item.tipo === "corroboracao" ? "emerald" : "amber"}-500`)} />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50 line-clamp-2">
+          <p className="text-sm font-medium text-foreground line-clamp-2">
             {item.fato}
           </p>
           <div className="flex items-center gap-2 mt-1">
             <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-full", config.badge)}>
               {config.label}
             </span>
-            <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
+            <span className="text-[10px] text-muted-foreground">
               {item.depoimentos.length} depoente{item.depoimentos.length !== 1 ? "s" : ""}
             </span>
           </div>
@@ -124,21 +124,21 @@ function ContradictionRow({
             {item.depoimentos.map((dep, i) => (
               <div
                 key={i}
-                className="flex items-start gap-2 p-2 rounded-md bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
+                className="flex items-start gap-2 p-2 rounded-md bg-card border border-border"
               >
                 <div className={cn("w-1.5 h-1.5 rounded-full mt-1.5 shrink-0", config.dot)} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                    <span className="text-xs font-semibold text-foreground/80">
                       {dep.depoente || "Depoente"}
                     </span>
                     {dep.timestampRef && (
-                      <span className="text-[10px] text-zinc-400 font-mono">
+                      <span className="text-[10px] text-muted-foreground font-mono">
                         [{dep.timestampRef}]
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {dep.afirmacao}
                   </p>
                   {onFileClick && (
@@ -159,11 +159,11 @@ function ContradictionRow({
           </div>
 
           {/* Análise */}
-          <div className="ml-6 p-2 rounded-md bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700">
-            <p className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">
+          <div className="ml-6 p-2 rounded-md bg-muted/50 border border-border">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               Análise
             </p>
-            <p className="text-xs text-zinc-700 dark:text-zinc-300">
+            <p className="text-xs text-foreground/80">
               {item.analise}
             </p>
           </div>
@@ -197,11 +197,11 @@ export function ContradictionMatrix({ items, onFileClick }: ContradictionMatrixP
   if (items.length === 0) {
     return (
       <div className="text-center py-8">
-        <HelpCircle className="h-8 w-8 text-zinc-300 dark:text-zinc-600 mx-auto mb-2" />
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <HelpCircle className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
+        <p className="text-sm text-muted-foreground">
           Nenhuma análise cruzada disponível
         </p>
-        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           São necessários pelo menos 2 depoimentos analisados
         </p>
       </div>
@@ -218,7 +218,7 @@ export function ContradictionMatrix({ items, onFileClick }: ContradictionMatrixP
             "text-xs px-2.5 py-1 rounded-full border transition-colors",
             filter === "all"
               ? "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-50 dark:text-zinc-900 dark:border-zinc-50"
-              : "border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800",
+              : "border-border text-muted-foreground/50 hover:bg-muted/50",
           )}
         >
           Todos ({items.length})

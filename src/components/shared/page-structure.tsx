@@ -63,17 +63,17 @@ export function PageSubHeader({
 }: PageSubHeaderProps) {
   return (
     <div className={cn(
-      "px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800",
+      "px-4 md:px-6 py-3 bg-card border-b border-border",
       className
     )}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           {icon && (
-            <div className="w-7 h-7 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+            <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center border border-border">
               {icon}
             </div>
           )}
-          <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+          <span className="text-xs text-muted-foreground font-medium">
             {subtitle}
           </span>
         </div>

@@ -58,7 +58,7 @@ function ActionButton({
           }}
           className={cn(
             "flex items-center justify-center w-[30px] h-[30px] rounded-md",
-            "bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors duration-150",
+            "bg-zinc-100 dark:bg-muted hover:bg-zinc-200 dark:hover:bg-muted/80 transition-colors duration-150",
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
             className,
           )}
@@ -95,7 +95,7 @@ export function MessageActionBar({
         className={cn(
           "absolute top-1 right-1 z-20",
           "flex items-center gap-0.5 p-1",
-          "bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg",
+          "bg-white dark:bg-card border border-zinc-200 dark:border-border rounded-lg shadow-lg",
           "opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150 pointer-events-none group-hover/msg:pointer-events-auto",
         )}
         onClick={(e) => e.stopPropagation()}
@@ -122,13 +122,13 @@ export function MessageActionBar({
           <Star
             className={cn(
               "w-[15px] h-[15px] transition-colors duration-150",
-              isFavorite ? "text-amber-400 fill-amber-400" : "text-zinc-400",
+              isFavorite ? "text-amber-400 fill-amber-400" : "text-muted-foreground",
             )}
           />
         </ActionButton>
 
         {/* Divider */}
-        <div className="w-px h-5 bg-zinc-300 dark:bg-zinc-600 mx-0.5" />
+        <div className="w-px h-5 bg-zinc-300 dark:bg-border mx-0.5" />
 
         {/* More dropdown */}
         <DropdownMenu>
@@ -140,12 +140,12 @@ export function MessageActionBar({
                   onClick={(e) => e.stopPropagation()}
                   className={cn(
                     "flex items-center justify-center w-[30px] h-[30px] rounded-md",
-                    "bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors duration-150",
+                    "bg-zinc-100 dark:bg-muted hover:bg-zinc-200 dark:hover:bg-muted/80 transition-colors duration-150",
                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
                   )}
                   aria-label="Mais opções"
                 >
-                  <MoreHorizontal className="w-[15px] h-[15px] text-zinc-400" />
+                  <MoreHorizontal className="w-[15px] h-[15px] text-muted-foreground" />
                 </button>
               </DropdownMenuTrigger>
             </TooltipTrigger>
@@ -160,7 +160,7 @@ export function MessageActionBar({
                 onCopy();
               }}
             >
-              <Copy className="h-4 w-4 mr-2 text-zinc-400" />
+              <Copy className="h-4 w-4 mr-2 text-muted-foreground" />
               Copiar texto
             </DropdownMenuItem>
             <DropdownMenuItem
@@ -169,7 +169,7 @@ export function MessageActionBar({
                 onReply();
               }}
             >
-              <Reply className="h-4 w-4 mr-2 text-zinc-400" />
+              <Reply className="h-4 w-4 mr-2 text-muted-foreground" />
               Responder citando
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -179,7 +179,7 @@ export function MessageActionBar({
                 onShowDetails();
               }}
             >
-              <Info className="h-4 w-4 mr-2 text-zinc-400" />
+              <Info className="h-4 w-4 mr-2 text-muted-foreground" />
               Detalhes
             </DropdownMenuItem>
           </DropdownMenuContent>

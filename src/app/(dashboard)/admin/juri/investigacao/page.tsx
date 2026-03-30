@@ -141,9 +141,9 @@ export default function InvestigacaoPage() {
   const contextName = processoDetails?.numeroAutos || assistidoDetails?.nome || "Selecione um caso";
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-background">
       {/* SUB-HEADER */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-3 bg-card border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Link href="/admin/juri">
@@ -155,10 +155,10 @@ export default function InvestigacaoPage() {
               <Radar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+              <h1 className="text-sm font-semibold text-foreground">
                 Central de Investigação
               </h1>
-              <p className="text-[10px] text-zinc-500">
+              <p className="text-[10px] text-muted-foreground">
                 Diligências investigativas e OSINT
               </p>
             </div>

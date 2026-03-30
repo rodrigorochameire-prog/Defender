@@ -83,11 +83,11 @@ export default function ImportarWhatsAppPage() {
           </div>
           <div className="space-y-1">
             <p className="font-medium">2. Executar o script de extração</p>
-            <pre className="bg-zinc-950 text-zinc-100 rounded-md p-3 text-xs overflow-x-auto">
+            <pre className="bg-zinc-950 text-foreground rounded-md p-3 text-xs overflow-x-auto">
               python3 scripts/extract_whatsapp_ios.py
             </pre>
             <p className="text-zinc-500">
-              O arquivo <code className="text-xs bg-zinc-100 dark:bg-zinc-800 px-1 rounded">whatsapp-ombuds-export.json</code> será gerado na sua Área de Trabalho.
+              O arquivo <code className="text-xs bg-zinc-100 dark:bg-muted px-1 rounded">whatsapp-ombuds-export.json</code> será gerado na sua Área de Trabalho.
             </p>
           </div>
           <div className="space-y-1">
@@ -103,7 +103,7 @@ export default function ImportarWhatsAppPage() {
             className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
               isDragActive
                 ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20"
-                : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
+                : "border-zinc-200 dark:border-border hover:border-zinc-300 dark:hover:border-border"
             }`}
           >
             <input {...getInputProps()} />
@@ -117,11 +117,11 @@ export default function ImportarWhatsAppPage() {
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2">
-                <Upload className="h-10 w-10 text-zinc-300 dark:text-zinc-600" />
+                <Upload className="h-10 w-10 text-muted-foreground/50" />
                 <p className="text-sm font-medium">
                   {isDragActive ? "Solte o arquivo aqui" : "Arraste o JSON ou clique para selecionar"}
                 </p>
-                <p className="text-xs text-zinc-400">whatsapp-ombuds-export.json</p>
+                <p className="text-xs text-muted-foreground">whatsapp-ombuds-export.json</p>
               </div>
             )}
           </div>
@@ -137,7 +137,7 @@ export default function ImportarWhatsAppPage() {
           )}
 
           {!configId && configs !== undefined && (
-            <p className="text-xs text-zinc-400 text-center">
+            <p className="text-xs text-muted-foreground text-center">
               Nenhuma instância WhatsApp configurada
             </p>
           )}
@@ -158,19 +158,19 @@ export default function ImportarWhatsAppPage() {
               <p className="font-medium">Importação concluída</p>
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3">
+              <div className="bg-zinc-50 dark:bg-card rounded-lg p-3">
                 <p className="text-2xl font-bold">{result.messagesImported}</p>
                 <p className="text-zinc-500 text-xs">mensagens importadas</p>
               </div>
-              <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3">
+              <div className="bg-zinc-50 dark:bg-card rounded-lg p-3">
                 <p className="text-2xl font-bold">{result.contactsCreated}</p>
                 <p className="text-zinc-500 text-xs">contatos criados</p>
               </div>
-              <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3">
+              <div className="bg-zinc-50 dark:bg-card rounded-lg p-3">
                 <p className="text-2xl font-bold">{result.contactsUpdated}</p>
                 <p className="text-zinc-500 text-xs">contatos atualizados</p>
               </div>
-              <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3">
+              <div className="bg-zinc-50 dark:bg-card rounded-lg p-3">
                 <p className="text-2xl font-bold">{result.messagesSkipped}</p>
                 <p className="text-zinc-500 text-xs">duplicatas ignoradas</p>
               </div>

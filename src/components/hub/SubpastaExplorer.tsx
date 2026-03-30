@@ -58,7 +58,7 @@ function FileNode({
     <div>
       <div
         className={cn(
-          "flex items-center gap-1.5 py-1 px-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer group",
+          "flex items-center gap-1.5 py-1 px-2 rounded hover:bg-zinc-100 dark:hover:bg-muted cursor-pointer group",
           { "cursor-default": !isFolder && !file.webViewLink && !onFileClick }
         )}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
@@ -71,7 +71,7 @@ function FileNode({
         {isFolder ? (
           <>
             {hasChildren ? (
-              expanded ? <ChevronDown className="h-3 w-3 text-zinc-400 shrink-0" /> : <ChevronRight className="h-3 w-3 text-zinc-400 shrink-0" />
+              expanded ? <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" /> : <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
             ) : (
               <span className="w-3 shrink-0" />
             )}
@@ -84,10 +84,10 @@ function FileNode({
         ) : (
           <>
             <span className="w-3 shrink-0" />
-            <FileText className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+            <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           </>
         )}
-        <span className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate flex-1">{file.name}</span>
+        <span className="text-[11px] text-zinc-700 dark:text-foreground/80 truncate flex-1">{file.name}</span>
         {!isFolder && file.webViewLink && (
           <ExternalLink className="h-3 w-3 text-zinc-300 group-hover:text-emerald-500 shrink-0 transition-colors" />
         )}
@@ -115,7 +115,7 @@ export function SubpastaExplorer({ files, onFileClick }: { files: DriveFile[]; o
 
   if (files.length === 0) {
     return (
-      <div className="text-center py-8 text-zinc-400">
+      <div className="text-center py-8 text-muted-foreground">
         <Folder className="h-8 w-8 mx-auto mb-2 opacity-30" />
         <p className="text-[11px]">Nenhum arquivo no Drive</p>
       </div>
@@ -123,7 +123,7 @@ export function SubpastaExplorer({ files, onFileClick }: { files: DriveFile[]; o
   }
 
   return (
-    <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden">
+    <div className="border border-zinc-200 dark:border-border rounded-lg overflow-hidden">
       {roots.map((f) => (
         <FileNode
           key={f.id}

@@ -235,7 +235,7 @@ export default function ModeloDetalhesPage() {
       <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 flex items-center justify-center">
         <div className="text-center">
           <FileStack className="w-16 h-16 mx-auto text-zinc-300 mb-4" />
-          <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="text-xl font-semibold text-zinc-900 dark:text-foreground">
             Modelo não encontrado
           </h2>
           <p className="text-zinc-500 mt-2">
@@ -256,7 +256,7 @@ export default function ModeloDetalhesPage() {
   return (
     <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+      <div className="border-b border-zinc-200 dark:border-border bg-white dark:bg-card">
         <div className="px-6 py-4">
           <Breadcrumbs
             items={[
@@ -277,7 +277,7 @@ export default function ModeloDetalhesPage() {
                 <Icon className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+                <h1 className="text-xl font-semibold text-zinc-900 dark:text-foreground">
                   {modelo.titulo}
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
@@ -440,7 +440,7 @@ export default function ModeloDetalhesPage() {
                   {modelo.descricao && (
                     <Card>
                       <CardContent className="pt-6">
-                        <p className="text-zinc-600 dark:text-zinc-400">
+                        <p className="text-zinc-600 dark:text-muted-foreground">
                           {modelo.descricao}
                         </p>
                       </CardContent>
@@ -465,7 +465,7 @@ export default function ModeloDetalhesPage() {
                       </Button>
                     </CardHeader>
                     <CardContent>
-                      <div className="prose prose-zinc dark:prose-invert max-w-none p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg font-mono text-sm whitespace-pre-wrap">
+                      <div className="prose prose-zinc dark:prose-invert max-w-none p-4 bg-zinc-50 dark:bg-muted/50 rounded-lg font-mono text-sm whitespace-pre-wrap">
                         {modelo.conteudo.split(/(\{\{[^}]+\}\})/).map((part, i) => {
                           if (part.match(/\{\{[^}]+\}\}/)) {
                             return (
@@ -506,9 +506,9 @@ export default function ModeloDetalhesPage() {
                       {variaveis.map((v, i) => (
                         <div
                           key={i}
-                          className="flex items-center gap-4 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg"
+                          className="flex items-center gap-4 p-3 bg-zinc-50 dark:bg-muted/50 rounded-lg"
                         >
-                          <code className="px-2 py-1 bg-white dark:bg-zinc-700 rounded font-mono text-sm">
+                          <code className="px-2 py-1 bg-white dark:bg-secondary rounded font-mono text-sm">
                             {`{{${v.nome}}}`}
                           </code>
                           <div className="flex-1">
@@ -551,7 +551,7 @@ export default function ModeloDetalhesPage() {
                       {documentosGerados.map((doc) => (
                         <div
                           key={doc.id}
-                          className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg"
+                          className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-muted/50 rounded-lg"
                         >
                           <div className="flex items-center gap-3">
                             <FileText className="w-5 h-5 text-zinc-400" />
@@ -593,7 +593,7 @@ export default function ModeloDetalhesPage() {
           </Tabs>
 
           {/* Meta info */}
-          <div className="mt-6 flex items-center justify-between text-xs text-zinc-500 border-t border-zinc-200 dark:border-zinc-800 pt-4">
+          <div className="mt-6 flex items-center justify-between text-xs text-zinc-500 border-t border-zinc-200 dark:border-border pt-4">
             <div className="flex items-center gap-4">
               <span>
                 Criado em {format(new Date(modelo.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}

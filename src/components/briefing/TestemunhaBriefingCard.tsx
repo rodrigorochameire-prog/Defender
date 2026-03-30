@@ -94,15 +94,15 @@ export function TestemunhaBriefingCard({
         : testemunha.credibilidade_score >= 4
           ? "text-amber-600"
           : "text-rose-600"
-      : "text-zinc-500";
+      : "text-muted-foreground";
 
   return (
     <Card className={cn("border-2", className)}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-              <User className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-muted flex items-center justify-center">
+              <User className="w-5 h-5 text-muted-foreground/50 dark:text-muted-foreground" />
             </div>
             <div>
               <CardTitle className="text-lg">{testemunha.nome}</CardTitle>
@@ -128,7 +128,7 @@ export function TestemunhaBriefingCard({
                   {testemunha.credibilidade_score}/10
                 </span>
               </div>
-              <p className="text-xs text-zinc-500 max-w-[150px] truncate">
+              <p className="text-xs text-muted-foreground max-w-[150px] truncate">
                 {testemunha.credibilidade_justificativa}
               </p>
             </div>
@@ -155,8 +155,8 @@ export function TestemunhaBriefingCard({
               </span>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="mt-2 p-3 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                <p className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
+              <div className="mt-2 p-3 bg-zinc-50 dark:bg-card rounded-lg border border-zinc-200 dark:border-border">
+                <p className="text-sm text-zinc-700 dark:text-foreground/80 whitespace-pre-wrap">
                   {testemunha.versao_delegacia}
                 </p>
               </div>
@@ -182,8 +182,8 @@ export function TestemunhaBriefingCard({
               </span>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="mt-2 p-3 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                <p className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
+              <div className="mt-2 p-3 bg-zinc-50 dark:bg-card rounded-lg border border-zinc-200 dark:border-border">
+                <p className="text-sm text-zinc-700 dark:text-foreground/80 whitespace-pre-wrap">
                   {testemunha.versao_juizo}
                 </p>
               </div>
@@ -232,13 +232,13 @@ export function TestemunhaBriefingCard({
             open={openSections.pontos}
             onOpenChange={() => toggleSection("pontos")}
           >
-            <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+            <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 rounded-lg bg-zinc-100 dark:bg-muted hover:bg-zinc-200 dark:hover:bg-muted transition-colors">
               {openSections.pontos ? (
-                <ChevronDown className="w-4 h-4 text-zinc-600" />
+                <ChevronDown className="w-4 h-4 text-muted-foreground/50" />
               ) : (
-                <ChevronRight className="w-4 h-4 text-zinc-600" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
               )}
-              <span className="font-medium text-sm text-zinc-800 dark:text-zinc-200">
+              <span className="font-medium text-sm text-zinc-800 dark:text-foreground">
                 Análise de Pontos
               </span>
               <Badge variant="secondary" className="ml-auto">
@@ -331,7 +331,7 @@ export function TestemunhaBriefingCard({
                           "p-3 rounded-lg border transition-colors group",
                           isSelected
                             ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700"
-                            : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-emerald-300 dark:hover:border-emerald-700"
+                            : "bg-white dark:bg-card border-zinc-200 dark:border-border hover:border-emerald-300 dark:hover:border-emerald-700"
                         )}
                       >
                         <div className="flex items-start gap-3">
@@ -345,7 +345,7 @@ export function TestemunhaBriefingCard({
                             />
                           )}
                           <div className="flex-1">
-                            <p className="text-sm text-zinc-800 dark:text-zinc-200">
+                            <p className="text-sm text-zinc-800 dark:text-foreground">
                               <span className="font-medium text-emerald-600 mr-1">
                                 {idx + 1}.
                               </span>
@@ -379,7 +379,7 @@ export function TestemunhaBriefingCard({
           !testemunha.versao_juizo &&
           testemunha.contradicoes.length === 0 &&
           testemunha.perguntas_sugeridas.length === 0 && (
-            <div className="text-center py-6 text-zinc-500">
+            <div className="text-center py-6 text-muted-foreground">
               <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">
                 Nenhum depoimento encontrado para esta testemunha

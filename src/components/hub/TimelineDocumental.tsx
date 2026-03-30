@@ -36,7 +36,7 @@ export function TimelineDocumental({ files }: { files: DriveFile[] }) {
 
   if (onlyFiles.length === 0) {
     return (
-      <div className="text-center py-8 text-zinc-400">
+      <div className="text-center py-8 text-muted-foreground">
         <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
         <p className="text-[11px]">Nenhum documento na timeline</p>
       </div>
@@ -49,22 +49,22 @@ export function TimelineDocumental({ files }: { files: DriveFile[] }) {
     <div className="max-h-96 overflow-y-auto space-y-4">
       {Array.from(grouped.entries()).map(([month, monthFiles]) => (
         <div key={month}>
-          <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide px-1 mb-1.5">
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-1.5">
             {month}
           </p>
           <div className="space-y-0.5">
             {monthFiles.map((f) => (
               <div
                 key={f.id}
-                className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-zinc-50 dark:hover:bg-zinc-800 group cursor-pointer"
+                className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-zinc-50 dark:hover:bg-muted group cursor-pointer"
                 onClick={() => f.webViewLink && window.open(f.webViewLink, "_blank")}
               >
-                <FileText className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-                <span className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate flex-1">
+                <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <span className="text-[11px] text-zinc-700 dark:text-foreground/80 truncate flex-1">
                   {f.name}
                 </span>
                 {f.lastModifiedTime && (
-                  <span className="text-[10px] text-zinc-400 shrink-0">
+                  <span className="text-[10px] text-muted-foreground shrink-0">
                     {format(toDate(f.lastModifiedTime), "dd/MM HH'h'mm", { locale: ptBR })}
                   </span>
                 )}

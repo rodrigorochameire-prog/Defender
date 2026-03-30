@@ -271,15 +271,15 @@ export function DiligenciasPainel({
         <TabsContent value="painel" className="mt-6 space-y-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Card className="border-zinc-200 dark:border-zinc-800">
+            <Card className="border-border">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                    <Circle className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+                  <div className="p-2 rounded-lg bg-muted">
+                    <Circle className="w-4 h-4 text-muted-foreground" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{stats?.total ?? 0}</p>
-                    <p className="text-xs text-zinc-500">Total</p>
+                    <p className="text-xs text-muted-foreground">Total</p>
                   </div>
                 </div>
               </CardContent>
@@ -294,7 +294,7 @@ export function DiligenciasPainel({
                     <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                       {stats?.emAndamento ?? 0}
                     </p>
-                    <p className="text-xs text-zinc-500">Em andamento</p>
+                    <p className="text-xs text-muted-foreground">Em andamento</p>
                   </div>
                 </div>
               </CardContent>
@@ -309,20 +309,20 @@ export function DiligenciasPainel({
                     <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                       {stats?.concluidas ?? 0}
                     </p>
-                    <p className="text-xs text-zinc-500">Concluídas</p>
+                    <p className="text-xs text-muted-foreground">Concluídas</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-zinc-200 dark:border-zinc-800">
+            <Card className="border-border">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                    <AlertCircle className="w-4 h-4 text-zinc-500" />
+                  <div className="p-2 rounded-lg bg-muted">
+                    <AlertCircle className="w-4 h-4 text-muted-foreground" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{stats?.pendentes ?? 0}</p>
-                    <p className="text-xs text-zinc-500">Pendentes</p>
+                    <p className="text-xs text-muted-foreground">Pendentes</p>
                   </div>
                 </div>
               </CardContent>
@@ -332,7 +332,7 @@ export function DiligenciasPainel({
           {/* Filters */}
           <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -386,12 +386,12 @@ export function DiligenciasPainel({
 
           {/* Diligências Grid/List */}
           {diligencias.length === 0 ? (
-            <div className="text-center py-16 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800">
-              <Radar className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-700 mb-4" />
-              <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+            <div className="text-center py-16 bg-muted/50 rounded-xl border border-dashed border-border">
+              <Radar className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+              <h3 className="text-lg font-medium text-foreground/80 mb-2">
                 Nenhuma diligência encontrada
               </h3>
-              <p className="text-sm text-zinc-500 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Comece criando sua primeira diligência de investigação
               </p>
               <Button onClick={() => setIsModalOpen(true)} className="gap-2">
@@ -410,7 +410,7 @@ export function DiligenciasPainel({
                   return (
                     <Card
                       key={categoria}
-                      className="border-zinc-200 dark:border-zinc-800"
+                      className="border-border"
                     >
                       <CardHeader className="pb-3">
                         <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -471,7 +471,7 @@ export function DiligenciasPainel({
                 <Globe className="w-5 h-5 text-emerald-600" />
                 Radar OSINT
               </CardTitle>
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted-foreground">
                 Pesquise em fontes abertas para coletar informações
               </p>
             </CardHeader>

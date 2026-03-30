@@ -27,7 +27,7 @@ export function FactualSection({ nome, children }: FactualSectionProps) {
         <div
           className={cn(
             "flex-1 h-px",
-            "bg-[#1a1a2e]/20 dark:bg-zinc-700"
+            "bg-[#1a1a2e]/20 dark:bg-border"
           )}
         />
       </div>

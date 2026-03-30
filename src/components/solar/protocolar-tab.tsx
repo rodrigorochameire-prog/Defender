@@ -104,7 +104,7 @@ function matchStatusBadge(status: string) {
       );
     default:
       return (
-        <Badge className="bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 border-0 text-[10px]">
+        <Badge className="bg-muted text-muted-foreground border-0 text-[10px]">
           <AlertTriangle className="h-3 w-3 mr-0.5" /> Manual
         </Badge>
       );
@@ -235,10 +235,10 @@ export function ProtocolarTab() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="text-lg font-semibold text-foreground">
             Protocolar
           </h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-muted-foreground">
             PDFs da pasta Protocolar prontos para enviar ao Solar
           </p>
         </div>
@@ -259,14 +259,14 @@ export function ProtocolarTab() {
           className={cn(
             "cursor-pointer transition-all border",
             filterMatch === "todos"
-              ? "border-zinc-400 dark:border-zinc-500 bg-zinc-50 dark:bg-zinc-800/50"
-              : "hover:border-zinc-300 dark:hover:border-zinc-700"
+              ? "border-foreground/30 bg-muted/50"
+              : "hover:border-border"
           )}
           onClick={() => setFilterMatch("todos")}
         >
           <CardContent className="p-3">
-            <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{contadores.total}</div>
-            <div className="text-xs text-zinc-500">Total PDFs</div>
+            <div className="text-2xl font-bold text-foreground">{contadores.total}</div>
+            <div className="text-xs text-muted-foreground">Total PDFs</div>
           </CardContent>
         </Card>
         <Card
@@ -274,13 +274,13 @@ export function ProtocolarTab() {
             "cursor-pointer transition-all border",
             filterMatch === "vinculados"
               ? "border-emerald-400 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20"
-              : "hover:border-zinc-300 dark:hover:border-zinc-700"
+              : "hover:border-border"
           )}
           onClick={() => setFilterMatch("vinculados")}
         >
           <CardContent className="p-3">
             <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{contadores.vinculados}</div>
-            <div className="text-xs text-zinc-500">Vinculados</div>
+            <div className="text-xs text-muted-foreground">Vinculados</div>
           </CardContent>
         </Card>
         <Card
@@ -288,13 +288,13 @@ export function ProtocolarTab() {
             "cursor-pointer transition-all border",
             filterMatch === "parciais"
               ? "border-blue-400 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20"
-              : "hover:border-zinc-300 dark:hover:border-zinc-700"
+              : "hover:border-border"
           )}
           onClick={() => setFilterMatch("parciais")}
         >
           <CardContent className="p-3">
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{contadores.parciais}</div>
-            <div className="text-xs text-zinc-500">Parciais</div>
+            <div className="text-xs text-muted-foreground">Parciais</div>
           </CardContent>
         </Card>
         <Card
@@ -302,13 +302,13 @@ export function ProtocolarTab() {
             "cursor-pointer transition-all border",
             filterMatch === "manuais"
               ? "border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20"
-              : "hover:border-zinc-300 dark:hover:border-zinc-700"
+              : "hover:border-border"
           )}
           onClick={() => setFilterMatch("manuais")}
         >
           <CardContent className="p-3">
             <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{contadores.manuais}</div>
-            <div className="text-xs text-zinc-500">Manuais</div>
+            <div className="text-xs text-muted-foreground">Manuais</div>
           </CardContent>
         </Card>
       </div>
@@ -318,13 +318,13 @@ export function ProtocolarTab() {
         <CardContent className="p-0">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
-              <span className="ml-2 text-sm text-zinc-500">Carregando arquivos do Drive...</span>
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-sm text-muted-foreground">Carregando arquivos do Drive...</span>
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <FolderOpen className="h-10 w-10 text-zinc-300 dark:text-zinc-600 mb-3" />
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <FolderOpen className="h-10 w-10 text-muted-foreground/50 mb-3" />
+              <p className="text-sm text-muted-foreground">
                 {items.length === 0
                   ? "Nenhum PDF encontrado na pasta Protocolar"
                   : "Nenhum item com este filtro"
@@ -357,7 +357,7 @@ export function ProtocolarTab() {
                       key={item.id}
                       className={cn(
                         "group",
-                        selectedIds.has(item.id) && "bg-zinc-50 dark:bg-zinc-800/30"
+                        selectedIds.has(item.id) && "bg-muted/50"
                       )}
                     >
                       <TableCell>
@@ -375,7 +375,7 @@ export function ProtocolarTab() {
                             <p className="text-sm font-medium truncate max-w-[200px]" title={item.nome}>
                               {item.nome}
                             </p>
-                            <p className="text-[10px] text-zinc-400">
+                            <p className="text-[10px] text-muted-foreground">
                               {formatBytes(item.tamanho)}
                               {item.docxCorrespondente && (
                                 <span className="ml-1.5 text-blue-500">
@@ -389,14 +389,14 @@ export function ProtocolarTab() {
 
                       {/* Tipo */}
                       <TableCell>
-                        <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                        <span className="text-xs text-muted-foreground">
                           {item.atoDetectado || "—"}
                         </span>
                       </TableCell>
 
                       {/* Processo */}
                       <TableCell>
-                        <span className="text-xs font-mono text-zinc-600 dark:text-zinc-400">
+                        <span className="text-xs font-mono text-muted-foreground">
                           {item.processoDetectado || "—"}
                         </span>
                       </TableCell>
@@ -405,17 +405,17 @@ export function ProtocolarTab() {
                       <TableCell>
                         {item.demandaMatch ? (
                           <div className="text-xs">
-                            <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                            <span className="font-medium text-foreground/80">
                               #{item.demandaMatch.id}
                             </span>
                             {item.demandaMatch.assistidoNome && (
-                              <p className="text-[10px] text-zinc-400 truncate max-w-[120px]">
+                              <p className="text-[10px] text-muted-foreground truncate max-w-[120px]">
                                 {item.demandaMatch.assistidoNome}
                               </p>
                             )}
                           </div>
                         ) : (
-                          <span className="text-xs text-zinc-400">—</span>
+                          <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </TableCell>
 
@@ -423,13 +423,13 @@ export function ProtocolarTab() {
                       <TableCell>
                         {item.subpastaDestino ? (
                           <div className="flex items-center gap-1">
-                            <FolderOpen className="h-3 w-3 text-zinc-400" />
-                            <span className="text-[10px] text-zinc-500 truncate max-w-[100px]" title={item.subpastaDestino}>
+                            <FolderOpen className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-[10px] text-muted-foreground truncate max-w-[100px]" title={item.subpastaDestino}>
                               {item.subpastaDestino}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-xs text-zinc-400">—</span>
+                          <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </TableCell>
 
@@ -488,7 +488,7 @@ export function ProtocolarTab() {
 
       {/* Info footer */}
       {protocolarData && protocolarData.total > 0 && (
-        <p className="text-xs text-zinc-400 text-center">
+        <p className="text-xs text-muted-foreground text-center">
           {protocolarData.total} PDF(s) encontrado(s) na pasta Protocolar
           {protocolarData.totalDrive && protocolarData.totalDrive > protocolarData.total && (
             <span> ({protocolarData.totalDrive} arquivos total incl. DOCX)</span>

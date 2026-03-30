@@ -7,9 +7,9 @@ export const dynamic = "force-dynamic";
 
 export default function RegisterPage() {
   return (
-    <div className="min-h-screen flex bg-zinc-950">
+    <div className="min-h-screen flex bg-background">
       {/* Lado esquerdo - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 items-center justify-center p-12">
+      <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-card via-card to-background items-center justify-center p-12">
         {/* Pattern sutil de fundo */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0" style={{
@@ -64,7 +64,7 @@ export default function RegisterPage() {
       </div>
       
       {/* Lado direito - Formulário */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-zinc-950">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-background">
         <div className="w-full max-w-md">
           {/* Logo mobile */}
           <div className="lg:hidden text-center mb-10">
@@ -90,7 +90,7 @@ export default function RegisterPage() {
           </div>
 
           {/* Card de Registro */}
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8">
+          <div className="bg-card/50 border border-border rounded-2xl p-8">
             <RegisterForm />
 
             {/* Link para Login */}
@@ -106,7 +106,7 @@ export default function RegisterPage() {
           </div>
 
           {/* Footer */}
-          <p className="text-center text-xs text-zinc-600 mt-8">
+          <p className="text-center text-xs text-muted-foreground/50 mt-8">
             © 2026 OMBUDS | Gestão para Defesa Criminal
           </p>
         </div>

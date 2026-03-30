@@ -28,11 +28,11 @@ export function IntelligenceDiagram({
           className,
         )}
       >
-        <Network className="h-10 w-10 text-zinc-300 dark:text-zinc-600 mb-3" />
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">
+        <Network className="h-10 w-10 text-muted-foreground/50 mb-3" />
+        <p className="text-sm text-muted-foreground mb-1">
           Diagrama de Relacionamentos
         </p>
-        <p className="text-xs text-zinc-400 dark:text-zinc-500 max-w-xs">
+        <p className="text-xs text-muted-foreground max-w-xs">
           Gere uma analise primeiro para criar o caso e visualizar o diagrama de
           relacionamentos no Palacio da Mente.
         </p>
@@ -43,7 +43,7 @@ export function IntelligenceDiagram({
   return (
     <div className={cn("space-y-4", className)}>
       <div className="flex items-center justify-between">
-        <h4 className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+        <h4 className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           <Network className="h-3.5 w-3.5 text-violet-500" />
           Diagrama de Investigacao
         </h4>
@@ -56,9 +56,9 @@ export function IntelligenceDiagram({
         </Link>
       </div>
 
-      <div className="rounded-xl border-2 border-dashed border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/50 p-8 flex flex-col items-center justify-center min-h-[200px]">
-        <Network className="h-8 w-8 text-zinc-300 dark:text-zinc-600 mb-3" />
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3 text-center max-w-sm">
+      <div className="rounded-xl border-2 border-dashed border-border bg-muted/50 p-8 flex flex-col items-center justify-center min-h-[200px]">
+        <Network className="h-8 w-8 text-muted-foreground/50 mb-3" />
+        <p className="text-sm text-muted-foreground mb-3 text-center max-w-sm">
           O diagrama de relacionamentos sera gerado automaticamente com as
           pessoas e fatos identificados na analise.
         </p>

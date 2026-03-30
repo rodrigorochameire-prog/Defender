@@ -112,9 +112,9 @@ export function SemanticSearchBar({
             placeholder={placeholder}
             className={cn(
               "pl-9 pr-8 h-9",
-              "bg-white dark:bg-zinc-900/80",
-              "border-zinc-200 dark:border-zinc-800",
-              "placeholder:text-zinc-400 dark:placeholder:text-zinc-600",
+              "bg-background",
+              "border-border",
+              "placeholder:text-muted-foreground/50",
               "focus:border-emerald-400 dark:focus:border-emerald-700",
               "focus:ring-1 focus:ring-emerald-400/20 dark:focus:ring-emerald-700/20",
               "text-sm transition-colors",
@@ -126,7 +126,7 @@ export function SemanticSearchBar({
             <button
               type="button"
               onClick={handleClear}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted transition-colors cursor-pointer"
               aria-label="Limpar busca"
             >
               <X className="h-3.5 w-3.5 text-zinc-400" />
@@ -140,17 +140,17 @@ export function SemanticSearchBar({
         sideOffset={4}
         className={cn(
           "w-[var(--radix-popover-trigger-width)] min-w-[360px] max-w-[480px] p-0",
-          "bg-white dark:bg-zinc-950",
-          "border-zinc-200 dark:border-zinc-800",
+          "bg-background",
+          "border-border",
           "shadow-lg",
         )}
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
           <div className="flex items-center gap-1.5">
             <Search className="h-3.5 w-3.5 text-emerald-500" />
-            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            <span className="text-xs font-medium text-muted-foreground">
               Busca semantica
             </span>
           </div>

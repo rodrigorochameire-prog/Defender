@@ -144,18 +144,18 @@ function TreeNode({
         onClick={() => onToggle(currentPath)}
         className={cn(
           "flex w-full items-center gap-1 rounded-md px-2 py-1.5 text-left text-xs transition-colors",
-          "hover:bg-zinc-100 dark:hover:bg-zinc-800",
-          "text-zinc-700 dark:text-zinc-300"
+          "hover:bg-zinc-100 dark:hover:bg-muted",
+          "text-zinc-700 dark:text-foreground/80"
         )}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
       >
         {isExpanded ? (
-          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         ) : (
-          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         )}
         <span className="truncate font-medium">{node.nome}</span>
-        <span className="ml-auto shrink-0 rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+        <span className="ml-auto shrink-0 rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground dark:bg-muted">
           {articleCount}
         </span>
       </button>
@@ -176,7 +176,7 @@ function TreeNode({
                     "flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs transition-colors",
                     isSelected
                       ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
-                      : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                      : "text-zinc-600 hover:bg-zinc-100 dark:text-muted-foreground dark:hover:bg-muted"
                   )}
                   style={{ paddingLeft: `${(depth + 1) * 16 + 8}px` }}
                 >
@@ -185,12 +185,12 @@ function TreeNode({
                       "h-3 w-3 shrink-0",
                       isSelected
                         ? "text-emerald-500"
-                        : "text-zinc-400 dark:text-zinc-500"
+                        : "text-muted-foreground dark:text-muted-foreground"
                     )}
                   />
                   <span className="truncate">Art. {artigo.numero}</span>
                   {artigo.rubrica && (
-                    <span className="ml-1 truncate text-[10px] text-zinc-400 dark:text-zinc-500">
+                    <span className="ml-1 truncate text-[10px] text-muted-foreground">
                       {artigo.rubrica}
                     </span>
                   )}
@@ -418,7 +418,7 @@ export function LegislacaoTree({
       {/* ===== Left Sidebar (Tree) ===== */}
       <div
         className={cn(
-          "flex flex-col border-r border-zinc-200 dark:border-zinc-800 shrink-0 transition-[width] duration-300 ease-in-out overflow-hidden",
+          "flex flex-col border-r border-zinc-200 dark:border-border shrink-0 transition-[width] duration-300 ease-in-out overflow-hidden",
           // Mobile: full width when no article, hidden when article selected
           // Desktop: shrinks slightly when article is open (focus effect)
           selectedArtigo
@@ -427,31 +427,31 @@ export function LegislacaoTree({
         )}
       >
         {/* Search inline */}
-        <div className="border-b border-zinc-200 dark:border-zinc-800 p-2">
+        <div className="border-b border-zinc-200 dark:border-border p-2">
           {/* Mobile header: law selector button + search */}
           {onOpenLawSelector && (
             <div className="flex items-center gap-2 mb-2 lg:hidden">
               <button
                 type="button"
                 onClick={onOpenLawSelector}
-                className="flex items-center gap-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-xs text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 rounded-md border border-zinc-200 dark:border-border px-2 py-1 text-xs text-zinc-600 dark:text-muted-foreground hover:bg-zinc-50 dark:hover:bg-muted transition-colors cursor-pointer"
               >
                 <span className="font-medium text-[11px]">Leis</span>
                 <ChevronRight className="h-3 w-3" />
               </button>
-              <span className="text-[10px] text-zinc-400">
+              <span className="text-[10px] text-muted-foreground">
                 {LEGISLACOES.find((l) => l.id === selectedLeiId)?.nomeAbreviado ?? ""}
               </span>
             </div>
           )}
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <input
               type="text"
               placeholder="Artigo ou texto..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 pl-8 pr-7 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:focus:ring-emerald-400"
+              className="w-full rounded-md border border-zinc-200 dark:border-border bg-zinc-50 dark:bg-card pl-8 pr-7 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:focus:ring-emerald-400"
             />
             {searchQuery && (
               <button
@@ -462,7 +462,7 @@ export function LegislacaoTree({
                 }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer"
               >
-                <X className="h-3 w-3 text-zinc-400 hover:text-zinc-600" />
+                <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
               </button>
             )}
           </div>
@@ -470,7 +470,7 @@ export function LegislacaoTree({
             <button
               type="button"
               onClick={onOpenGlobalSearch}
-              className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+              className="text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
             >
               Buscar em todas as leis →
             </button>
@@ -479,7 +479,7 @@ export function LegislacaoTree({
                 type="button"
                 onClick={handleCollapseAll}
                 title="Colapsar tudo"
-                className="flex items-center gap-0.5 text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer transition-colors"
+                className="flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground/80 cursor-pointer transition-colors"
               >
                 <ChevronsDownUp className="h-3 w-3" />
                 Colapsar
@@ -493,12 +493,12 @@ export function LegislacaoTree({
           <div className="p-2">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             ) : isFiltering ? (
               /* Filtered results list */
               searchResults.length === 0 ? (
-                <p className="text-center text-xs text-zinc-400 py-4">
+                <p className="text-center text-xs text-muted-foreground py-4">
                   Nenhum artigo encontrado
                 </p>
               ) : (
@@ -512,13 +512,13 @@ export function LegislacaoTree({
                         "flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-xs transition-colors cursor-pointer",
                         selectedArtigoId === artigo.id
                           ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
-                          : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                          : "hover:bg-zinc-100 dark:hover:bg-muted text-zinc-600 dark:text-muted-foreground"
                       )}
                     >
-                      <FileText className="h-3 w-3 shrink-0 text-zinc-400" />
+                      <FileText className="h-3 w-3 shrink-0 text-muted-foreground" />
                       <span className="font-medium">Art. {artigo.numero}</span>
                       {artigo.rubrica && (
-                        <span className="truncate text-[10px] text-zinc-400">
+                        <span className="truncate text-[10px] text-muted-foreground">
                           {artigo.rubrica}
                         </span>
                       )}
@@ -543,11 +543,11 @@ export function LegislacaoTree({
                 ))}
               </div>
             ) : !loading && lei ? (
-              <p className="py-8 text-center text-xs text-zinc-400">
+              <p className="py-8 text-center text-xs text-muted-foreground">
                 Nenhuma estrutura encontrada
               </p>
             ) : !loading ? (
-              <p className="py-8 text-center text-xs text-zinc-400">
+              <p className="py-8 text-center text-xs text-muted-foreground">
                 Lei não encontrada
               </p>
             ) : null}
@@ -556,7 +556,7 @@ export function LegislacaoTree({
 
         {/* Article count footer */}
         {lei && (
-          <div className="border-t border-zinc-200 px-3 py-2 text-[10px] text-zinc-400 dark:border-zinc-800">
+          <div className="border-t border-zinc-200 dark:border-border px-3 py-2 text-[10px] text-muted-foreground">
             {allArtigos.length} artigos
           </div>
         )}
@@ -573,26 +573,26 @@ export function LegislacaoTree({
         {selectedArtigo && leiMeta ? (
           <>
             {/* Breadcrumb + mobile back button */}
-            <div className="flex items-center gap-1 border-b border-zinc-200 px-3 py-2 dark:border-zinc-800 md:px-4">
+            <div className="flex items-center gap-1 border-b border-zinc-200 px-3 py-2 dark:border-border md:px-4">
               {/* Mobile back button */}
               <button
                 type="button"
                 onClick={() => setSelectedArtigoId(null)}
-                className="mr-1 flex shrink-0 items-center gap-1 rounded-md p-1 text-xs text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 transition-colors cursor-pointer md:hidden"
+                className="mr-1 flex shrink-0 items-center gap-1 rounded-md p-1 text-xs text-muted-foreground hover:bg-zinc-100 hover:text-foreground dark:hover:bg-muted dark:hover:text-foreground transition-colors cursor-pointer md:hidden"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
               </button>
               {breadcrumb.map((segment, i) => (
                 <span key={i} className="flex items-center gap-1">
                   {i > 0 && (
-                    <ChevronRight className="h-3 w-3 text-zinc-300 dark:text-zinc-600" />
+                    <ChevronRight className="h-3 w-3 text-muted-foreground/30 dark:text-muted-foreground/50" />
                   )}
                   <span
                     className={cn(
                       "text-xs",
                       i === breadcrumb.length - 1
-                        ? "font-medium text-emerald-600 dark:text-emerald-400"
-                        : "text-zinc-500 dark:text-zinc-400"
+                        ? "font-medium text-emerald-700 dark:text-emerald-400"
+                        : "text-zinc-500 dark:text-muted-foreground"
                     )}
                   >
                     {segment}
@@ -613,7 +613,7 @@ export function LegislacaoTree({
             </ScrollArea>
 
             {/* Prev / Next navigation */}
-            <div className="flex items-center justify-between border-t border-zinc-200 px-4 py-2 dark:border-zinc-800">
+            <div className="flex items-center justify-between border-t border-zinc-200 px-4 py-2 dark:border-border">
               <Button
                 variant="ghost"
                 size="sm"
@@ -624,7 +624,7 @@ export function LegislacaoTree({
                 <ArrowLeft className="h-3.5 w-3.5" />
                 Anterior
               </Button>
-              <span className="text-[10px] text-zinc-400">
+              <span className="text-[10px] text-muted-foreground">
                 {selectedIndex + 1} / {allArtigos.length}
               </span>
               <Button
@@ -641,13 +641,13 @@ export function LegislacaoTree({
           </>
         ) : (
           /* Empty state */
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 text-zinc-400">
-            <BookOpen className="h-12 w-12 text-zinc-300 dark:text-zinc-700" />
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted-foreground">
+            <BookOpen className="h-12 w-12 text-muted-foreground/50" />
             <div className="text-center">
-              <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              <p className="text-sm font-medium text-muted-foreground">
                 Selecione um artigo
               </p>
-              <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Navegue pela estrutura da lei no painel lateral
               </p>
             </div>

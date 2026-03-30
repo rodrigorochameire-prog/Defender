@@ -41,39 +41,39 @@ const ATRIBUICAO_COLORS: Record<string, {
   hoverBg: string;
   indicator: string;
 }> = {
-  all: { 
-    border: "border-l-zinc-300", 
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
-    hoverBg: "hover:bg-zinc-100 dark:hover:bg-zinc-800",
+  all: {
+    border: "border-l-zinc-300",
+    bg: "bg-zinc-100 dark:bg-muted",
+    text: "text-zinc-600 dark:text-muted-foreground",
+    hoverBg: "hover:bg-zinc-100 dark:hover:bg-muted",
     indicator: "bg-zinc-500"
   },
-  JURI: { 
-    border: "border-l-zinc-400", 
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
-    indicator: "bg-zinc-500"
-  },
-  VVD: { 
+  JURI: {
     border: "border-l-zinc-400",
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    bg: "bg-zinc-100 dark:bg-muted",
+    text: "text-zinc-600 dark:text-muted-foreground",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-muted/80",
     indicator: "bg-zinc-500"
   },
-  EXECUCAO: { 
+  VVD: {
     border: "border-l-zinc-400",
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    bg: "bg-zinc-100 dark:bg-muted",
+    text: "text-zinc-600 dark:text-muted-foreground",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-muted/80",
     indicator: "bg-zinc-500"
   },
-  CRIMINAL: { 
+  EXECUCAO: {
     border: "border-l-zinc-400",
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    bg: "bg-zinc-100 dark:bg-muted",
+    text: "text-zinc-600 dark:text-muted-foreground",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-muted/80",
+    indicator: "bg-zinc-500"
+  },
+  CRIMINAL: {
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-muted",
+    text: "text-zinc-600 dark:text-muted-foreground",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-muted/80",
     indicator: "bg-zinc-500"
   },
 };
@@ -270,10 +270,10 @@ export default function AudienciasPage() {
                 <Calendar className={cn("w-5 h-5 sm:w-6 sm:h-6", atribuicaoColors.text)} />
               </div>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
                   Agenda de Audiências
                 </h1>
-                <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Gestão centralizada de audiências e prazos
                 </p>
               </div>
@@ -282,7 +282,7 @@ export default function AudienciasPage() {
 
           {/* Seletor de Atribuição */}
           <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
-            <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-zinc-200 dark:border-zinc-800 pb-px">
+            <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-zinc-200 dark:border-border pb-px">
               {ATRIBUICAO_OPTIONS.map((option) => {
                 const isActive = areaFilter === option.value;
                 const optionColors = ATRIBUICAO_COLORS[option.value] || ATRIBUICAO_COLORS.all;
@@ -297,18 +297,18 @@ export default function AudienciasPage() {
                     className={cn(
                       "relative px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 flex-shrink-0 rounded-t-md",
                       isActive 
-                        ? cn("text-zinc-900 dark:text-zinc-100", optionColors.bg)
-                        : cn("text-zinc-500 dark:text-zinc-400", optionColors.hoverBg)
+                        ? cn("text-foreground", optionColors.bg)
+                        : cn("text-muted-foreground", optionColors.hoverBg)
                     )}
                   >
-                    <span className={cn(isActive ? optionColors.text : "text-zinc-400")}>{ATRIBUICAO_ICONS[option.value]}</span>
+                    <span className={cn(isActive ? optionColors.text : "text-muted-foreground")}>{ATRIBUICAO_ICONS[option.value]}</span>
                     <span className="hidden sm:inline">{option.label}</span>
                     <span className="sm:hidden">{option.shortLabel}</span>
                     <span className={cn(
                       "ml-0.5 px-1.5 py-0.5 text-xs font-semibold rounded-full",
                       isActive 
                         ? cn(optionColors.text, "bg-white/60 dark:bg-black/20")
-                        : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
+                        : "text-muted-foreground bg-zinc-100 dark:bg-muted"
                     )}>
                       {option.value === "all" ? audiencias.length : "-"}
                     </span>
@@ -333,22 +333,22 @@ export default function AudienciasPage() {
           )}>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-muted shadow-sm">
                   <AlertCircle className={cn(
                     "w-4 h-4 sm:w-5 sm:h-5",
-                    stats.hoje > 0 ? "text-rose-500" : "text-zinc-400"
+                    stats.hoje > 0 ? "text-rose-500" : "text-muted-foreground"
                   )} />
                 </div>
                 <div>
                   <p className={cn(
                     "text-xl sm:text-2xl font-bold",
-                    stats.hoje > 0 ? "text-rose-700 dark:text-rose-400" : "text-zinc-700 dark:text-zinc-300"
+                    stats.hoje > 0 ? "text-rose-700 dark:text-rose-400" : "text-foreground/80"
                   )}>
                     {stats.hoje}
                   </p>
                   <p className={cn(
                     "text-xs sm:text-xs",
-                    stats.hoje > 0 ? "text-rose-600 dark:text-rose-400" : "text-zinc-500"
+                    stats.hoje > 0 ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground"
                   )}>
                     Hoje
                   </p>
@@ -363,22 +363,22 @@ export default function AudienciasPage() {
           )}>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-muted shadow-sm">
                   <Clock className={cn(
                     "w-4 h-4 sm:w-5 sm:h-5",
-                    stats.amanha > 0 ? "text-amber-500" : "text-zinc-400"
+                    stats.amanha > 0 ? "text-amber-500" : "text-muted-foreground"
                   )} />
                 </div>
                 <div>
                   <p className={cn(
                     "text-xl sm:text-2xl font-bold",
-                    stats.amanha > 0 ? "text-amber-700 dark:text-amber-400" : "text-zinc-700 dark:text-zinc-300"
+                    stats.amanha > 0 ? "text-amber-700 dark:text-amber-400" : "text-foreground/80"
                   )}>
                     {stats.amanha}
                   </p>
                   <p className={cn(
                     "text-xs sm:text-xs",
-                    stats.amanha > 0 ? "text-amber-600 dark:text-amber-400" : "text-zinc-500"
+                    stats.amanha > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"
                   )}>
                     Amanhã
                   </p>
@@ -393,22 +393,22 @@ export default function AudienciasPage() {
           )}>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-muted shadow-sm">
                   <CheckCircle2 className={cn(
                     "w-4 h-4 sm:w-5 sm:h-5",
-                    stats.aguardandoAta > 0 ? "text-orange-500" : "text-zinc-400"
+                    stats.aguardandoAta > 0 ? "text-orange-500" : "text-muted-foreground"
                   )} />
                 </div>
                 <div>
                   <p className={cn(
                     "text-xl sm:text-2xl font-bold",
-                    stats.aguardandoAta > 0 ? "text-orange-700 dark:text-orange-400" : "text-zinc-700 dark:text-zinc-300"
+                    stats.aguardandoAta > 0 ? "text-orange-700 dark:text-orange-400" : "text-foreground/80"
                   )}>
                     {stats.aguardandoAta}
                   </p>
                   <p className={cn(
                     "text-xs sm:text-xs",
-                    stats.aguardandoAta > 0 ? "text-orange-600 dark:text-orange-400" : "text-zinc-500"
+                    stats.aguardandoAta > 0 ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground"
                   )}>
                     Aguard. Ata
                   </p>
@@ -423,22 +423,22 @@ export default function AudienciasPage() {
           )}>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-muted shadow-sm">
                   <Lock className={cn(
                     "w-4 h-4 sm:w-5 sm:h-5",
-                    stats.reuPreso > 0 ? "text-rose-500" : "text-zinc-400"
+                    stats.reuPreso > 0 ? "text-rose-500" : "text-muted-foreground"
                   )} />
                 </div>
                 <div>
                   <p className={cn(
                     "text-xl sm:text-2xl font-bold",
-                    stats.reuPreso > 0 ? "text-rose-700 dark:text-rose-400" : "text-zinc-700 dark:text-zinc-300"
+                    stats.reuPreso > 0 ? "text-rose-700 dark:text-rose-400" : "text-foreground/80"
                   )}>
                     {stats.reuPreso}
                   </p>
                   <p className={cn(
                     "text-xs sm:text-xs",
-                    stats.reuPreso > 0 ? "text-rose-600 dark:text-rose-400" : "text-zinc-500"
+                    stats.reuPreso > 0 ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground"
                   )}>
                     Réu Preso
                   </p>

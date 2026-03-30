@@ -56,7 +56,7 @@ import { toast } from "sonner";
 
 // Status badges
 const STATUS_CONFIG = {
-  RASCUNHO: { label: "Rascunho", className: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400" },
+  RASCUNHO: { label: "Rascunho", className: "bg-zinc-100 text-zinc-700 dark:bg-muted dark:text-muted-foreground" },
   PRONTO: { label: "Pronto", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" },
   APRESENTADO: { label: "Apresentado", className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
   ARQUIVADO: { label: "Arquivado", className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" },
@@ -154,19 +154,19 @@ export default function Simulador3DPage() {
   const casoSelecionado = casos?.find(c => c.id.toString() === selectedCasoId);
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-zinc-100 dark:bg-background">
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600">
               <Box className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-foreground">
                 Simulador 3D
               </h1>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-sm text-zinc-500 dark:text-muted-foreground">
                 Reconstituição visual com Spline
               </p>
             </div>
@@ -175,7 +175,7 @@ export default function Simulador3DPage() {
           <div className="flex items-center gap-3">
             {/* Seletor de Caso */}
             <Select value={selectedCasoId} onValueChange={setSelectedCasoId}>
-              <SelectTrigger className="w-[280px] bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+              <SelectTrigger className="w-[280px] bg-white dark:bg-muted border-zinc-200 dark:border-border">
                 <SelectValue placeholder="Selecione um caso..." />
               </SelectTrigger>
               <SelectContent>
@@ -222,7 +222,7 @@ export default function Simulador3DPage() {
                       value={novaSimulacao.titulo}
                       onChange={(e) => setNovaSimulacao(prev => ({ ...prev, titulo: e.target.value }))}
                       placeholder="Ex: Reconstituição - Versão Defesa"
-                      className="bg-white dark:bg-zinc-800"
+                      className="bg-white dark:bg-muted"
                     />
                   </div>
 
@@ -233,7 +233,7 @@ export default function Simulador3DPage() {
                       value={novaSimulacao.descricao}
                       onChange={(e) => setNovaSimulacao(prev => ({ ...prev, descricao: e.target.value }))}
                       placeholder="Descreva o objetivo desta simulação..."
-                      className="bg-white dark:bg-zinc-800 min-h-[80px]"
+                      className="bg-white dark:bg-muted min-h-[80px]"
                     />
                   </div>
 
@@ -289,13 +289,13 @@ export default function Simulador3DPage() {
         {!selectedCasoId ? (
           /* Estado vazio - Nenhum caso selecionado */
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
-            <div className="p-4 rounded-full bg-zinc-200 dark:bg-zinc-800 mb-4">
+            <div className="p-4 rounded-full bg-zinc-200 dark:bg-muted mb-4">
               <Box className="h-12 w-12 text-zinc-400" />
             </div>
-            <h3 className="text-xl font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+            <h3 className="text-xl font-semibold text-zinc-700 dark:text-foreground/80 mb-2">
               Selecione um Caso
             </h3>
-            <p className="text-zinc-500 dark:text-zinc-400 text-center max-w-md mb-6">
+            <p className="text-zinc-500 dark:text-muted-foreground text-center max-w-md mb-6">
               Escolha um caso para criar simulações 3D de reconstituição
             </p>
 
@@ -313,8 +313,8 @@ export default function Simulador3DPage() {
                     <div className="w-10 h-10 rounded-full bg-cyan-100 dark:bg-cyan-900/50 flex items-center justify-center mx-auto mb-2">
                       <span className="text-cyan-600 font-bold">1</span>
                     </div>
-                    <h4 className="font-medium text-zinc-700 dark:text-zinc-300">Crie no Spline</h4>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                    <h4 className="font-medium text-zinc-700 dark:text-foreground/80">Crie no Spline</h4>
+                    <p className="text-xs text-zinc-500 dark:text-muted-foreground mt-1">
                       Use o editor visual gratuito em spline.design
                     </p>
                   </div>
@@ -322,8 +322,8 @@ export default function Simulador3DPage() {
                     <div className="w-10 h-10 rounded-full bg-cyan-100 dark:bg-cyan-900/50 flex items-center justify-center mx-auto mb-2">
                       <span className="text-cyan-600 font-bold">2</span>
                     </div>
-                    <h4 className="font-medium text-zinc-700 dark:text-zinc-300">Vincule ao Caso</h4>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                    <h4 className="font-medium text-zinc-700 dark:text-foreground/80">Vincule ao Caso</h4>
+                    <p className="text-xs text-zinc-500 dark:text-muted-foreground mt-1">
                       Cole o link de compartilhamento aqui
                     </p>
                   </div>
@@ -331,8 +331,8 @@ export default function Simulador3DPage() {
                     <div className="w-10 h-10 rounded-full bg-cyan-100 dark:bg-cyan-900/50 flex items-center justify-center mx-auto mb-2">
                       <span className="text-cyan-600 font-bold">3</span>
                     </div>
-                    <h4 className="font-medium text-zinc-700 dark:text-zinc-300">Apresente</h4>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                    <h4 className="font-medium text-zinc-700 dark:text-foreground/80">Apresente</h4>
+                    <p className="text-xs text-zinc-500 dark:text-muted-foreground mt-1">
                       Abra direto no plenário do Júri
                     </p>
                   </div>
@@ -361,12 +361,12 @@ export default function Simulador3DPage() {
                         <FolderOpen className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+                        <h3 className="font-semibold text-zinc-900 dark:text-foreground">
                           {casoSelecionado.titulo}
                         </h3>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge variant="outline">{casoSelecionado.atribuicao}</Badge>
-                          <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                          <span className="text-sm text-zinc-500 dark:text-muted-foreground">
                             {simulacoes?.length || 0} simulação(ões)
                           </span>
                         </div>
@@ -390,15 +390,15 @@ export default function Simulador3DPage() {
                 <span className="ml-2 text-zinc-500">Carregando...</span>
               </div>
             ) : !simulacoes || simulacoes.length === 0 ? (
-              <Card className="border-dashed border-2 border-zinc-300 dark:border-zinc-700">
+              <Card className="border-dashed border-2 border-zinc-300 dark:border-border">
                 <CardContent className="flex flex-col items-center justify-center py-12">
-                  <div className="p-4 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
+                  <div className="p-4 rounded-full bg-zinc-100 dark:bg-muted mb-4">
                     <Box className="h-10 w-10 text-zinc-400" />
                   </div>
-                  <h3 className="text-lg font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                  <h3 className="text-lg font-semibold text-zinc-700 dark:text-foreground/80 mb-2">
                     Nenhuma simulação ainda
                   </h3>
-                  <p className="text-zinc-500 dark:text-zinc-400 text-center max-w-md mb-4">
+                  <p className="text-zinc-500 dark:text-muted-foreground text-center max-w-md mb-4">
                     Crie sua primeira simulação 3D para este caso
                   </p>
                   <Button
@@ -485,14 +485,14 @@ export default function Simulador3DPage() {
 
                       <CardContent className="pt-0">
                         {simulacao.descricao && (
-                          <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-3">
+                          <p className="text-sm text-zinc-500 dark:text-muted-foreground line-clamp-2 mb-3">
                             {simulacao.descricao}
                           </p>
                         )}
 
                         {/* Preview ou placeholder */}
                         <div
-                          className="aspect-video rounded-lg bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center mb-3 overflow-hidden cursor-pointer"
+                          className="aspect-video rounded-lg bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-muted dark:to-card border border-zinc-200 dark:border-border flex items-center justify-center mb-3 overflow-hidden cursor-pointer"
                           onClick={() => splineUrl && window.open(splineUrl, '_blank')}
                         >
                           {splineUrl ? (
@@ -539,7 +539,7 @@ export default function Simulador3DPage() {
                         )}
 
                         {/* Metadados */}
-                        <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                        <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             <span>
@@ -564,13 +564,13 @@ export default function Simulador3DPage() {
             )}
 
             {/* Dicas */}
-            <Card className="mt-6 bg-zinc-50 dark:bg-zinc-900/50">
+            <Card className="mt-6 bg-zinc-50 dark:bg-card/50">
               <CardContent className="p-4">
-                <h4 className="font-medium text-zinc-700 dark:text-zinc-300 mb-2 flex items-center gap-2">
+                <h4 className="font-medium text-zinc-700 dark:text-foreground/80 mb-2 flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-cyan-500" />
                   Dicas para criar no Spline
                 </h4>
-                <ul className="text-sm text-zinc-500 dark:text-zinc-400 space-y-1">
+                <ul className="text-sm text-zinc-500 dark:text-muted-foreground space-y-1">
                   <li>• Use formas básicas (cubos, esferas) para representar pessoas</li>
                   <li>• Adicione setas para indicar movimento e direção</li>
                   <li>• Use cores diferentes para acusação (vermelho) e defesa (verde)</li>

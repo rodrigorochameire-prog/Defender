@@ -150,21 +150,21 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter,
         {sidebarOpen && categoria !== "salvos" && categoria !== "recentes" && (
           <div className="w-36 shrink-0 space-y-1 pt-3 px-2">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-6 bg-zinc-100 dark:bg-zinc-800 rounded animate-pulse" />
+              <div key={i} className="h-6 bg-muted rounded animate-pulse" />
             ))}
           </div>
         )}
         {/* Cards placeholder */}
         <div className="flex-1">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 animate-pulse">
+            <div key={i} className="px-4 py-3 border-b border-border animate-pulse">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700 shrink-0" />
-                <div className="h-3 w-16 bg-zinc-100 dark:bg-zinc-800 rounded" />
-                <div className="h-3 w-24 bg-zinc-100 dark:bg-zinc-800 rounded ml-auto" />
+                <div className="w-1.5 h-1.5 rounded-full bg-border shrink-0" />
+                <div className="h-3 w-16 bg-muted rounded" />
+                <div className="h-3 w-24 bg-muted rounded ml-auto" />
               </div>
-              <div className="h-4 w-full bg-zinc-100 dark:bg-zinc-800 rounded mb-1.5" />
-              <div className={`h-4 bg-zinc-100 dark:bg-zinc-800 rounded ${i % 3 === 0 ? 'w-2/3' : 'w-4/5'}`} />
+              <div className="h-4 w-full bg-muted rounded mb-1.5" />
+              <div className={`h-4 bg-muted rounded ${i % 3 === 0 ? 'w-2/3' : 'w-4/5'}`} />
             </div>
           ))}
         </div>
@@ -184,7 +184,7 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter,
 
         {/* Empty state */}
         {noticias.length === 0 && !isLoading && (
-          <div className="text-center py-24 text-zinc-400">
+          <div className="text-center py-24 text-muted-foreground">
             <p className="text-base font-medium mb-1">Nenhuma notícia encontrada</p>
             <p className="text-sm">
               {categoria === "salvos"
@@ -206,11 +206,11 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter,
                 <div key={label}>
                   {/* Separador de grupo */}
                   <div className="flex items-center gap-2 px-5 py-2.5 sticky top-0 z-10 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-sm">
-                    <span className="text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 shrink-0">
+                    <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground shrink-0">
                       {label}
                     </span>
-                    <span className="text-xs text-zinc-300 dark:text-zinc-700 shrink-0">{items.length}</span>
-                    <div className="flex-1 h-px bg-zinc-100 dark:bg-zinc-800" />
+                    <span className="text-xs text-muted-foreground/50 shrink-0">{items.length}</span>
+                    <div className="flex-1 h-px bg-muted" />
                   </div>
                   {/* Cards do grupo */}
                   {items.map(noticia => (
@@ -238,7 +238,7 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter,
             <button
               onClick={() => { if (feedQuery.data?.nextCursor) setCursor(feedQuery.data.nextCursor); }}
               disabled={feedQuery.isFetching}
-              className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors disabled:opacity-50"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
             >
               {feedQuery.isFetching ? "Carregando..." : "Carregar mais"}
             </button>

@@ -159,7 +159,7 @@ export default function WhatsAppChatPage() {
   if (loadingConfigs) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -168,10 +168,10 @@ export default function WhatsAppChatPage() {
   if (!configs || configs.length === 0) {
     return (
       <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center gap-4">
-        <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-          <MessageSquare className="h-8 w-8 text-zinc-400" />
+        <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-muted flex items-center justify-center">
+          <MessageSquare className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="text-lg font-semibold text-foreground">
           Nenhuma instância configurada
         </h2>
         <p className="text-sm text-zinc-500">
@@ -407,7 +407,7 @@ export default function WhatsAppChatPage() {
                         ? "text-red-600 dark:text-red-400"
                         : hoursWaiting > 4
                           ? "text-amber-600 dark:text-amber-400"
-                          : "text-zinc-500 dark:text-zinc-400";
+                          : "text-zinc-500 dark:text-muted-foreground";
 
                     const displayName =
                       contact.name ||
@@ -429,19 +429,19 @@ export default function WhatsAppChatPage() {
                         onClick={() => handleSelectContact(contact.id)}
                         className={cn(
                           "flex items-center gap-2 px-3 py-1.5 cursor-pointer transition-colors",
-                          "hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
-                          "border-b border-zinc-100 dark:border-zinc-800/30 last:border-b-0",
-                          selectedContactId === contact.id && "bg-zinc-100 dark:bg-zinc-800"
+                          "hover:bg-zinc-50 dark:hover:bg-muted/50",
+                          "border-b border-zinc-100 dark:border-border/30 last:border-b-0",
+                          selectedContactId === contact.id && "bg-zinc-100 dark:bg-muted"
                         )}
                       >
                         <Avatar className="h-7 w-7 shrink-0">
                           <AvatarImage src={contact.profilePicUrl || undefined} />
-                          <AvatarFallback className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-[10px] font-medium">
+                          <AvatarFallback className="bg-zinc-100 dark:bg-muted text-muted-foreground text-[10px] font-medium">
                             {initials}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <span className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate block">
+                          <span className="text-xs font-medium text-foreground truncate block">
                             {displayName}
                           </span>
                         </div>

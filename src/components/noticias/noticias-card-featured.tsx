@@ -37,7 +37,7 @@ export function NoticiaCardFeatured({
 
   return (
     <div
-      className="group relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-500/40 hover:shadow-lg transition-all cursor-pointer"
+      className="group relative bg-card border border-border rounded-xl overflow-hidden hover:border-emerald-500/40 hover:shadow-lg transition-all cursor-pointer"
       onClick={onClick}
     >
       {/* Barra colorida */}
@@ -62,7 +62,7 @@ export function NoticiaCardFeatured({
               Análise IA disponível
             </span>
           )}
-          <span className="text-sm text-zinc-400 ml-auto">
+          <span className="text-sm text-muted-foreground ml-auto">
             {noticia.publicadoEm
               ? formatDistanceToNow(new Date(noticia.publicadoEm), { addSuffix: true, locale: ptBR })
               : ""}
@@ -71,7 +71,7 @@ export function NoticiaCardFeatured({
 
         {/* Título grande */}
         <h2
-          className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-3 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors leading-snug"
+          className="text-2xl font-bold text-foreground mb-3 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors leading-snug"
           style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
         >
           {noticia.titulo}
@@ -79,11 +79,11 @@ export function NoticiaCardFeatured({
 
         {/* Resumo — IA ou original */}
         {analise?.resumoExecutivo ? (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4 line-clamp-3">
+          <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-3">
             {analise.resumoExecutivo}
           </p>
         ) : noticia.resumo ? (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4 leading-relaxed line-clamp-3">
+          <p className="text-sm text-muted-foreground mb-4 leading-relaxed line-clamp-3">
             {noticia.resumo}
           </p>
         ) : null}
@@ -94,7 +94,7 @@ export function NoticiaCardFeatured({
             {tags.slice(0, 5).map(tag => (
               <span
                 key={tag}
-                className="text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 rounded px-2 py-0.5"
+                className="text-xs bg-muted text-muted-foreground rounded px-2 py-0.5"
               >
                 {tag}
               </span>
@@ -104,7 +104,7 @@ export function NoticiaCardFeatured({
 
         {/* Ações */}
         <div
-          className="flex items-center gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex-wrap"
+          className="flex items-center gap-2 pt-3 border-t border-border flex-wrap"
           onClick={e => e.stopPropagation()}
         >
           <Button
@@ -116,13 +116,13 @@ export function NoticiaCardFeatured({
             <Star
               className={cn(
                 "h-4 w-4 mr-1.5",
-                isFavorito ? "fill-amber-500 text-amber-500" : "text-zinc-400"
+                isFavorito ? "fill-amber-500 text-amber-500" : "text-muted-foreground"
               )}
             />
             {isFavorito ? "Salvo" : "Salvar"}
           </Button>
           <Button variant="outline" size="sm" onClick={onSalvarNoCaso}>
-            <Paperclip className="h-4 w-4 mr-1.5 text-zinc-400" />
+            <Paperclip className="h-4 w-4 mr-1.5 text-muted-foreground" />
             Vincular Caso
           </Button>
           <Button
