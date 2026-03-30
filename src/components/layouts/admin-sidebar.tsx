@@ -1654,7 +1654,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
           "glass-sidebar",
           "md:z-40",
           "transition-all duration-300 ease-out",
-          theme === "medium" && "dark"
+          theme === "light" && "dark"
         )}
       >
         {/* Header */}
@@ -1817,7 +1817,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
       </Sidebar>
 
       {/* Main Content */}
-      <SidebarInset className={cn("flex flex-col min-h-screen", theme === "dark" ? "bg-zinc-950" : theme === "medium" ? "bg-zinc-50" : "bg-white")}>
+      <SidebarInset className={cn("flex flex-col min-h-screen", theme === "dark" ? "bg-zinc-950" : "bg-zinc-50")}>
         {/* Header - Light clean com accent emerald */}
         <header className={cn(
           "relative overflow-hidden",

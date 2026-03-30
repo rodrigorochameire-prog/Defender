@@ -91,10 +91,8 @@ const themeScript = `
       document.documentElement.classList.remove('light', 'medium', 'dark');
       if (theme === 'dark') {
         document.documentElement.classList.add('dark');
-      } else if (theme === 'medium') {
-        document.documentElement.classList.add('medium');
       } else {
-        document.documentElement.classList.add('light');
+        document.documentElement.classList.add('medium');
       }
       if (fontSize === 'large') {
         document.documentElement.classList.add('font-large');

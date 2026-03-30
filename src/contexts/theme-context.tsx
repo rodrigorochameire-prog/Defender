@@ -2,9 +2,9 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 
-export type Theme = "light" | "medium" | "dark";
+export type Theme = "light" | "dark";
 
-const THEME_ORDER: Theme[] = ["light", "medium", "dark"];
+const THEME_ORDER: Theme[] = ["light", "dark"];
 
 interface ThemeContextType {
   theme: Theme;
@@ -24,8 +24,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Initialize theme from localStorage - default to light
   useEffect(() => {
     const stored = localStorage.getItem("theme") as Theme | null;
-    const validThemes: Theme[] = ["light", "medium", "dark"];
-    const initialTheme = stored && validThemes.includes(stored) ? stored : "light";
+    const validThemes: Theme[] = ["light", "dark"];
+    // Migrate old "medium" preference to new "light" (which uses medium styling)
+    const initialTheme = stored === "dark" ? "dark" : "light";
     setThemeState(initialTheme);
     setMounted(true);
   }, []);
@@ -36,9 +37,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     const root = window.document.documentElement;
     root.classList.remove("light", "medium", "dark");
-    root.classList.add(theme);
-    // Keep 'dark' class for Tailwind dark: variants in dark AND medium (sidebar only uses custom CSS)
-    // For medium: pages stay light-ish, only sidebar goes dark via .medium selectors
+    // "light" mode uses "medium" CSS class (dark sidebar + light pages)
+    root.classList.add(theme === "light" ? "medium" : "dark");
     localStorage.setItem("theme", theme);
   }, [theme, mounted]);
 
@@ -53,7 +53,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const isDarkSidebar = theme === "medium" || theme === "dark";
+  const isDarkSidebar = true; // Both modes have dark sidebar
 
   const value = useMemo(
     () => ({ theme, resolvedTheme: theme, isDarkSidebar, setTheme, toggleTheme }),

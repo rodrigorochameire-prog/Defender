@@ -163,7 +163,7 @@ export function DriveContentArea() {
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
       {/* ─── Filters Row + Transcrever Todos ─── */}
-      <div className="px-3 pt-2 pb-1 shrink-0 flex items-center gap-2 flex-wrap">
+      <div className="px-4 pt-3 pb-2 shrink-0 flex items-center gap-2 flex-wrap">
         <div className="flex-1 min-w-0">
           <DriveFilters />
         </div>
@@ -189,7 +189,7 @@ export function DriveContentArea() {
       </div>
 
       {/* ─── File List / Grid / Compact ─── */}
-      <div className="flex-1 overflow-y-auto p-3">
+      <div className="flex-1 overflow-y-auto p-4">
         {ctx.viewMode === "list" ? (
           <DriveFileList files={filteredFiles as any[]} isLoading={isLoading} />
         ) : ctx.viewMode === "grid" ? (

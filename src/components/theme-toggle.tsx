@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Sun, SunMoon } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/theme-context";
 
@@ -11,13 +11,6 @@ const themeConfig = {
     buttonClass:
       "bg-zinc-100 hover:bg-zinc-200 border-zinc-200 hover:border-emerald-500/50",
     ariaLabel: "Modo claro",
-  },
-  medium: {
-    icon: SunMoon,
-    iconClass: "h-4 w-4 text-zinc-400",
-    buttonClass:
-      "bg-zinc-700 hover:bg-zinc-600 border-zinc-600 hover:border-emerald-500/50",
-    ariaLabel: "Modo médio",
   },
   dark: {
     icon: Moon,

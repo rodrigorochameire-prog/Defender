@@ -74,29 +74,7 @@ function getFavorites(): FavoriteItem[] {
   }
 }
 
-// --- Color helpers ---
-
-function getAttrActiveBgLight(color: string) {
-  switch (color) {
-    case "emerald": return "bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300";
-    case "rose": return "bg-rose-100/80 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300";
-    case "amber": return "bg-amber-100/80 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300";
-    case "sky": return "bg-sky-100/80 dark:bg-sky-500/15 text-sky-700 dark:text-sky-300";
-    case "orange": return "bg-orange-100/80 dark:bg-orange-500/15 text-orange-700 dark:text-orange-300";
-    default: return "bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300";
-  }
-}
-
-function getAttrActiveIconColor(color: string) {
-  switch (color) {
-    case "emerald": return "text-emerald-600 dark:text-emerald-400";
-    case "rose": return "text-rose-600 dark:text-rose-400";
-    case "amber": return "text-amber-600 dark:text-amber-400";
-    case "sky": return "text-sky-600 dark:text-sky-400";
-    case "orange": return "text-orange-600 dark:text-orange-400";
-    default: return "text-emerald-600 dark:text-emerald-400";
-  }
-}
+// --- Color helpers (simplified: only dot color is semantic) ---
 
 function getAttrLeftBarColor(color: string) {
   switch (color) {
@@ -106,39 +84,6 @@ function getAttrLeftBarColor(color: string) {
     case "sky": return "bg-sky-500";
     case "orange": return "bg-orange-500";
     default: return "bg-emerald-500";
-  }
-}
-
-function getAttrSubItemActive(color: string) {
-  switch (color) {
-    case "emerald": return "bg-emerald-500/15 text-emerald-400 font-medium";
-    case "rose": return "bg-rose-500/15 text-rose-400 font-medium";
-    case "amber": return "bg-amber-500/15 text-amber-400 font-medium";
-    case "sky": return "bg-sky-500/15 text-sky-400 font-medium";
-    case "orange": return "bg-orange-500/15 text-orange-400 font-medium";
-    default: return "bg-zinc-700/40 text-zinc-200 font-medium";
-  }
-}
-
-function getAttrSubItemConnector(color: string) {
-  switch (color) {
-    case "emerald": return "bg-emerald-500/50";
-    case "rose": return "bg-rose-500/50";
-    case "amber": return "bg-amber-500/50";
-    case "sky": return "bg-sky-500/50";
-    case "orange": return "bg-orange-500/50";
-    default: return "bg-zinc-700/50";
-  }
-}
-
-function getAttrActiveDot(color: string) {
-  switch (color) {
-    case "emerald": return "bg-emerald-400";
-    case "rose": return "bg-rose-400";
-    case "amber": return "bg-amber-400";
-    case "sky": return "bg-sky-400";
-    case "orange": return "bg-orange-400";
-    default: return "bg-zinc-400";
   }
 }
 
@@ -198,14 +143,14 @@ function AtribuicaoSubfolders({
     return (
       <div className="flex items-center gap-2 py-1.5 pl-7 text-zinc-500">
         <Loader2 className="h-3 w-3 animate-spin" />
-        <span className="text-[11px]">Carregando...</span>
+        <span className="text-xs">Carregando...</span>
       </div>
     );
   }
 
   if (subfolders.length === 0) {
     return (
-      <div className="py-1.5 pl-7 text-zinc-600 text-[11px]">
+      <div className="py-1.5 pl-7 text-zinc-600 text-xs">
         Nenhuma subpasta
       </div>
     );
@@ -271,27 +216,21 @@ function AtribuicaoSubfolders({
                   localStorage.setItem(RECENTS_KEY, JSON.stringify(updated));
                 }}
                 className={cn(
-                  "flex items-center gap-1.5 w-full text-left px-2 py-1 transition-all duration-200 rounded-md group/subitem relative",
+                  "flex items-center gap-1.5 w-full text-left px-2 py-1 transition-all duration-200 rounded-md group/subitem relative cursor-pointer",
                   isActive
-                    ? getAttrSubItemActive(color)
+                    ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium"
                     : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700/40"
                 )}
               >
                 <div className={cn(
                   "absolute left-[-10px] w-1.5 h-px transition-all duration-200",
-                  isActive ? getAttrSubItemConnector(color) : "bg-zinc-700/50"
+                  isActive ? "bg-zinc-400 dark:bg-zinc-500" : "bg-zinc-200 dark:bg-zinc-700/50"
                 )} />
                 <FolderOpen className={cn(
                   "h-3 w-3 shrink-0 transition-all duration-200",
-                  isActive ? "" : "text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-700 dark:group-hover/subitem:text-zinc-300"
+                  isActive ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-700 dark:group-hover/subitem:text-zinc-300"
                 )} />
-                <span className="truncate text-[11px]">{folder.name}</span>
-                {isRecent && !isActive && (
-                  <span className={cn("h-1 w-1 rounded-full shrink-0 ml-auto", getAttrActiveDot(color))} />
-                )}
-                {isActive && (
-                  <div className={cn("absolute right-1.5 w-1 h-1 rounded-full", getAttrActiveDot(color))} />
-                )}
+                <span className="truncate text-xs">{folder.name}</span>
               </button>
             );
           })
@@ -362,7 +301,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
         {/* --- ATRIBUICOES --- */}
         <button
           onClick={() => toggleSection("atribuicoes")}
-          className="w-full text-[9px] font-bold text-zinc-400 uppercase tracking-wider px-2 pb-1.5 flex items-center gap-1 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+          className="w-full text-[10px] font-medium text-zinc-400 uppercase tracking-wider px-2 pb-1.5 flex items-center gap-1 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
         >
           <HardDrive className="h-2.5 w-2.5" />
           Atribuicoes
@@ -390,9 +329,9 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                       if (!isExpanded) toggleExpand(attr.key);
                     }}
                     className={cn(
-                      "w-full h-7 transition-all duration-200 rounded-md flex items-center px-2 group/item relative",
+                      "w-full h-7 transition-all duration-200 rounded-md flex items-center px-2 group/item relative cursor-pointer",
                       isActive
-                        ? cn(getAttrActiveBgLight(attr.color), "font-semibold")
+                        ? "bg-zinc-100 dark:bg-zinc-800/80 text-zinc-900 dark:text-zinc-100 font-semibold"
                         : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/40"
                     )}
                   >
@@ -401,9 +340,9 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                     )}
                     <Icon className={cn(
                       "h-3 w-3 mr-1.5 transition-all duration-200 shrink-0",
-                      isActive ? getAttrActiveIconColor(attr.color) : "text-zinc-400 dark:text-zinc-500 group-hover/item:text-zinc-600 dark:group-hover/item:text-zinc-300"
+                      isActive ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-400 dark:text-zinc-500 group-hover/item:text-zinc-600 dark:group-hover/item:text-zinc-300"
                     )} strokeWidth={isActive ? 2.2 : 1.8} />
-                    <span className="text-[11px] font-medium truncate">{attr.label}</span>
+                    <span className="text-xs font-medium truncate">{attr.label}</span>
                     {!synced && (
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -453,7 +392,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
         {/* --- ESPECIAIS --- */}
         <button
           onClick={() => toggleSection("especiais")}
-          className="w-full text-[9px] font-bold text-zinc-400 uppercase tracking-wider px-2 pb-1.5 flex items-center gap-1 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+          className="w-full text-[10px] font-medium text-zinc-400 uppercase tracking-wider px-2 pb-1.5 flex items-center gap-1 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
         >
           Especiais
           <ChevronDown className={cn(
@@ -479,7 +418,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                 className={cn(
                   "w-full h-7 transition-all duration-200 rounded-md flex items-center px-2 group/item relative",
                   isActive
-                    ? "bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-semibold"
+                    ? "bg-zinc-100 dark:bg-zinc-800/80 text-zinc-900 dark:text-zinc-100 font-semibold"
                     : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/40"
                 )}
               >
@@ -488,9 +427,9 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                 )}
                 <Icon className={cn(
                   "h-3 w-3 mr-1.5 transition-all duration-200 shrink-0",
-                  isActive ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500 group-hover/item:text-zinc-600 dark:group-hover/item:text-zinc-300"
+                  isActive ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-400 dark:text-zinc-500 group-hover/item:text-zinc-600 dark:group-hover/item:text-zinc-300"
                 )} strokeWidth={isActive ? 2.2 : 1.8} />
-                <span className="text-[11px] font-medium truncate">{sf.label}</span>
+                <span className="text-xs font-medium truncate">{sf.label}</span>
                 {sf.key === "DISTRIBUICAO" && (
                   <Badge
                     variant="outline"
@@ -510,7 +449,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
         {/* --- ACESSO RAPIDO --- */}
         <button
           onClick={() => toggleSection("acesso-rapido")}
-          className="w-full text-[9px] font-bold text-zinc-400 uppercase tracking-wider px-2 pb-1.5 flex items-center gap-1 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+          className="w-full text-[10px] font-medium text-zinc-400 uppercase tracking-wider px-2 pb-1.5 flex items-center gap-1 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
         >
           <Clock className="h-2.5 w-2.5" />
           Recentes
@@ -541,7 +480,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                 >
                   <div className="absolute left-[-10px] w-1.5 h-px bg-zinc-200 dark:bg-zinc-700/50" />
                   <FolderOpen className="h-3 w-3 shrink-0 text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-700 dark:group-hover/subitem:text-zinc-300" />
-                  <span className="truncate text-[11px]">{item.name}</span>
+                  <span className="truncate text-xs">{item.name}</span>
                 </button>
               ))}
             </div>
@@ -549,7 +488,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 
           {favorites.length > 0 && (
             <>
-              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider px-4 pt-1.5 pb-0.5 flex items-center gap-1">
+              <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider px-4 pt-1.5 pb-0.5 flex items-center gap-1">
                 <Star className="h-2.5 w-2.5 text-amber-500/60" />
                 Favoritos
               </p>
@@ -563,7 +502,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                   >
                     <div className="absolute left-[-10px] w-1.5 h-px bg-zinc-200 dark:bg-zinc-700/50" />
                     <Star className="h-3 w-3 shrink-0 text-amber-500/60 group-hover/subitem:text-amber-400" />
-                    <span className="truncate text-[11px]">{item.name}</span>
+                    <span className="truncate text-xs">{item.name}</span>
                   </button>
                 ))}
               </div>
@@ -649,7 +588,7 @@ function SidebarSearch() {
           onChange={(e) => handleChange(e.target.value)}
           placeholder="Buscar..."
           className={cn(
-            "peer w-full h-6 pl-6 pr-6 rounded-md text-[11px]",
+            "peer w-full h-6 pl-6 pr-6 rounded-md text-xs",
             "bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/60 dark:border-zinc-700/40",
             "text-zinc-700 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500",
             "focus:outline-none focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-500/30",
@@ -693,7 +632,7 @@ export function DriveSidebar() {
           {!collapsed && (
             <div className="flex items-center gap-1">
               <HardDrive className="h-3 w-3 text-emerald-500 dark:text-emerald-400" />
-              <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 tracking-tight">
+              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 tracking-tight">
                 Drive
               </span>
               <SidebarSyncDot />

@@ -181,74 +181,56 @@ export function AssistidoOverviewPanel({
   const processosExtras = data.processos.length - processosVisiveis.length;
 
   return (
-    <div className="border-b border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20">
-      {/* Toggle row */}
-      <div className="px-6 lg:px-8 pt-3 pb-1.5 flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500">
-          Visão Geral
-        </span>
-        <button
-          onClick={() => setCollapsed((c) => !c)}
-          aria-expanded={!collapsed}
-          aria-controls="assistido-overview-content"
-          className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
-        >
-          {collapsed ? (
-            <>
-              Expandir <ChevronDown className="h-3.5 w-3.5" />
-            </>
-          ) : (
-            <>
-              Recolher <ChevronUp className="h-3.5 w-3.5" />
-            </>
-          )}
-        </button>
-      </div>
-
+    <div className="border-b border-zinc-200/80 dark:border-zinc-800/60 bg-zinc-50/50 dark:bg-zinc-900/20">
       {!collapsed && (
-        <div id="assistido-overview-content" className="px-6 lg:px-8 pb-4">
+        <div id="assistido-overview-content" className="px-6 lg:px-8 pt-5 pb-5">
           {/* ── Hero cards: Audiência + Demanda (2 cols) ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {/* Card 1: Próxima Audiência */}
             <div
               className={cn(
-                "rounded-xl border p-4 transition-all",
+                "rounded-xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md duration-200",
                 proximaAudiencia
-                  ? "bg-white dark:bg-zinc-800/40 border-emerald-200 dark:border-emerald-700/40 hover:border-emerald-300 dark:hover:border-emerald-600/50"
+                  ? "bg-white dark:bg-zinc-800/50 border-emerald-200 dark:border-emerald-700/40"
                   : "bg-amber-50/50 dark:bg-amber-950/10 border-amber-200/80 dark:border-amber-800/30",
               )}
             >
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2.5 mb-3">
                 <div className={cn(
-                  "h-8 w-8 rounded-lg flex items-center justify-center",
+                  "h-9 w-9 rounded-xl flex items-center justify-center",
                   proximaAudiencia
                     ? "bg-emerald-100 dark:bg-emerald-900/30"
                     : "bg-amber-100 dark:bg-amber-900/30"
                 )}>
                   <Calendar
                     className={cn(
-                      "h-4 w-4",
+                      "h-4.5 w-4.5",
                       proximaAudiencia
                         ? "text-emerald-600 dark:text-emerald-400"
                         : "text-amber-600 dark:text-amber-400",
                     )}
                   />
                 </div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                <span className={cn(
+                  "text-xs font-semibold uppercase tracking-wider",
+                  proximaAudiencia
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-amber-600 dark:text-amber-400"
+                )}>
                   Próxima Audiência
                 </span>
               </div>
 
               {proximaAudiencia ? (
-                <div className="space-y-1">
-                  <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                <div className="space-y-1.5">
+                  <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
                     {format(new Date(proximaAudiencia.dataAudiencia!), "dd 'de' MMM · HH'h'mm", {
                       locale: ptBR,
                     })}
                   </p>
                   {diasAteAudiencia !== null && (
                     <p className={cn(
-                      "text-xs font-medium",
+                      "text-sm font-medium",
                       diasAteAudiencia <= 3 ? "text-rose-600 dark:text-rose-400"
                         : diasAteAudiencia <= 7 ? "text-amber-600 dark:text-amber-400"
                         : "text-zinc-500"
@@ -289,17 +271,17 @@ export function AssistidoOverviewPanel({
             {/* Card 2: Demanda Crítica */}
             <div
               className={cn(
-                "rounded-xl border p-4 transition-all",
+                "rounded-xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md duration-200",
                 isDemandaUrgente
                   ? "bg-rose-50/50 dark:bg-rose-950/10 border-rose-200 dark:border-rose-800/30"
                   : isDemandaVencer
                   ? "bg-amber-50/50 dark:bg-amber-950/10 border-amber-200/80 dark:border-amber-800/30"
-                  : "bg-white dark:bg-zinc-800/40 border-zinc-200 dark:border-zinc-700/40",
+                  : "bg-white dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/40",
               )}
             >
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2.5 mb-3">
                 <div className={cn(
-                  "h-8 w-8 rounded-lg flex items-center justify-center",
+                  "h-9 w-9 rounded-xl flex items-center justify-center",
                   isDemandaUrgente
                     ? "bg-rose-100 dark:bg-rose-900/30"
                     : isDemandaVencer
@@ -308,7 +290,7 @@ export function AssistidoOverviewPanel({
                 )}>
                   <AlertCircle
                     className={cn(
-                      "h-4 w-4",
+                      "h-4.5 w-4.5",
                       isDemandaUrgente
                         ? "text-rose-600 dark:text-rose-400"
                         : isDemandaVencer
@@ -317,7 +299,14 @@ export function AssistidoOverviewPanel({
                     )}
                   />
                 </div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                <span className={cn(
+                  "text-xs font-semibold uppercase tracking-wider",
+                  isDemandaUrgente
+                    ? "text-rose-600 dark:text-rose-400"
+                    : isDemandaVencer
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-zinc-500 dark:text-zinc-400"
+                )}>
                   Demanda Crítica
                 </span>
                 {demandaCritica && (
@@ -378,10 +367,10 @@ export function AssistidoOverviewPanel({
           </div>
 
           {/* ── Secondary row: Dados Rápidos + Processos ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-5">
             {/* Card 3: Dados Rápidos (only if meaningful) */}
             {(data.telefone || data.cpf || isPreso) && (
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-700/40 bg-white dark:bg-zinc-800/40 p-4">
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-700/40 bg-white dark:bg-zinc-800/50 p-5 transition-all hover:shadow-sm duration-200">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                     Dados Rápidos
@@ -435,7 +424,7 @@ export function AssistidoOverviewPanel({
             {/* Card 4: Processos */}
             {data.processos.length > 0 && (
               <div className={cn(
-                "rounded-xl border border-zinc-200 dark:border-zinc-700/40 bg-white dark:bg-zinc-800/40 p-4",
+                "rounded-xl border border-zinc-200 dark:border-zinc-700/40 bg-white dark:bg-zinc-800/50 p-5 transition-all hover:shadow-sm duration-200",
                 !data.telefone && !data.cpf && !isPreso && "sm:col-span-2"
               )}>
                 <div className="flex items-center gap-2 mb-3">
@@ -455,7 +444,7 @@ export function AssistidoOverviewPanel({
                       onClick={() => onProcessoClick(p.id)}
                       className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700/40 transition-colors group"
                     >
-                      <span className="text-xs font-mono text-zinc-600 dark:text-zinc-400 shrink-0">
+                      <span className="text-sm font-mono text-zinc-600 dark:text-zinc-400 shrink-0">
                         {p.numeroAutos ?? "Sem número"}
                       </span>
                       {p.assunto && (

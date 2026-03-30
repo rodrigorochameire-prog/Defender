@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, Lock, User, Loader2, FileText, Plus, Sparkles, Pencil, Clock, Send, Scale, Calendar, FolderOpen, PanelRight, ChevronDown, Bot, Download, Zap } from "lucide-react";
+import { ArrowLeft, Lock, User, Loader2, ClipboardList, Plus, Sparkles, Pencil, Clock, Send, Gavel, Calendar, HardDrive, ContactRound, ChevronDown, ArrowUpFromLine, ArrowDownToLine, Brain, MoreHorizontal } from "lucide-react";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -342,21 +342,22 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     MONITORADO: "monitorado",
   };
 
-  const tabs: { key: Tab; label: string; count?: number; urgency?: "red" | "amber" }[] = [
-    { key: "processos", label: "Processos", count: data.processos.length },
+  const tabs: { key: Tab; label: string; icon: React.ElementType; count?: number; urgency?: "red" | "amber" }[] = [
+    { key: "processos", label: "Processos", icon: Gavel, count: data.processos.length },
     {
       key: "demandas",
       label: "Demandas",
+      icon: ClipboardList,
       count: data.demandas.length,
       urgency: data.demandas.some(d =>
         d.status === "URGENTE" || (d.prazo && new Date(d.prazo) < new Date())
       ) ? "red" : data.demandas.some(d => d.status === "2_ATENDER") ? "amber" : undefined
     },
-    { key: "audiencias", label: "Audiências", count: data.audiencias.length },
-    { key: "drive", label: "Drive", count: data.driveFiles.length },
-    { key: "midias", label: "Mídias", count: mediaFiles.length },
-    { key: "oficios", label: "Ofícios", count: oficiosData?.total ?? 0 },
-    { key: "inteligencia", label: "Inteligência" },
+    { key: "audiencias", label: "Audiências", icon: Calendar, count: data.audiencias.length },
+    { key: "drive", label: "Drive", icon: HardDrive, count: data.driveFiles.length },
+    { key: "midias", label: "Mídias", icon: Clock, count: mediaFiles.length },
+    { key: "oficios", label: "Ofícios", icon: Send, count: oficiosData?.total ?? 0 },
+    { key: "inteligencia", label: "Inteligência", icon: Brain },
   ];
 
   const overflowTabs: { key: Tab; label: string }[] = [
@@ -372,23 +373,24 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   return (
     <div className="flex flex-col h-full">
       {/* ── Header: Identity ── */}
-      <div className="px-6 lg:px-8 pt-5 pb-5 border-b border-zinc-200/80 dark:border-zinc-800">
+      <div className="px-6 lg:px-8 pt-6 pb-6 border-b border-zinc-200/80 dark:border-zinc-800/60">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 mb-4 transition-colors uppercase tracking-wider font-medium"
+          className="flex items-center gap-1.5 text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:-translate-x-0.5 mb-5 transition-all uppercase tracking-wider font-medium"
         >
           <ArrowLeft className="h-3 w-3" /> Voltar
         </button>
 
-        <div className="flex items-start gap-5">
+        <div className="flex items-start gap-6">
           {/* Avatar */}
           {(() => {
             const colors = getAtribuicaoColors((data as any).atribuicaoPrimaria);
             const initials = data.nome.split(" ").filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
             return (
               <div
+                onClick={() => setFichaSheetOpen(true)}
                 className={cn(
-                  "h-16 w-16 rounded-2xl flex items-center justify-center shrink-0 shadow-lg text-white font-bold text-xl",
+                  "h-16 w-16 rounded-2xl flex items-center justify-center shrink-0 shadow-lg text-white font-bold text-xl cursor-pointer hover:scale-105 transition-transform",
                   colors.bgSolid || "bg-emerald-500"
                 )}
               >
@@ -400,7 +402,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           <div className="flex-1 min-w-0">
             {/* Name + Edit */}
             <div className="flex items-center gap-3">
-              <h1 className="font-serif text-2xl font-semibold text-zinc-900 dark:text-zinc-50 truncate">
+              <h1 className="font-serif text-2xl font-semibold leading-tight text-zinc-900 dark:text-zinc-50 truncate">
                 {data.nome}
               </h1>
               <Link href={`/admin/assistidos/${data.id}/editar`}>
@@ -415,10 +417,10 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                 onClick={() => setFichaSheetOpen(true)}
                 title="Ficha completa"
               >
-                <PanelRight className="h-4 w-4" />
+                <ContactRound className="h-4 w-4" />
               </Button>
               {isPreso && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 border-l-2 border-rose-500">
                   <Lock className="h-3.5 w-3.5" />
                   Preso
                 </span>
@@ -426,10 +428,10 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             </div>
 
             {/* Metadata line */}
-            <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+            <div className="flex items-center gap-3 mt-2 flex-wrap">
               {(data as any).atribuicaoPrimaria && (
                 <span className={cn(
-                  "text-xs px-2 py-0.5 rounded-md font-medium",
+                  "text-sm px-2.5 py-0.5 rounded-md font-medium",
                   getAtribuicaoColors((data as any).atribuicaoPrimaria).bg,
                   getAtribuicaoColors((data as any).atribuicaoPrimaria).text
                 )}>
@@ -452,16 +454,16 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             </div>
 
             {/* Stats line */}
-            <div className="flex items-center gap-4 mt-3">
+            <div className="flex items-center gap-5 mt-4">
               {[
-                { icon: Scale, value: data.processos.length, label: "processos" },
-                { icon: FileText, value: data.demandas.length, label: "demandas" },
+                { icon: Gavel, value: data.processos.length, label: "processos" },
+                { icon: ClipboardList, value: data.demandas.length, label: "demandas" },
                 { icon: Calendar, value: data.audiencias.length, label: "audiências" },
-                { icon: FolderOpen, value: data.driveFiles.length, label: "arquivos" },
+                { icon: HardDrive, value: data.driveFiles.length, label: "arquivos" },
               ].map(({ icon: Icon, value, label }) => (
                 <div key={label} className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-                  <Icon className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
-                  <span className="font-semibold text-zinc-700 dark:text-zinc-300">{value}</span>
+                  <Icon className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
+                  <span className="font-bold text-zinc-900 dark:text-zinc-100">{value}</span>
                   <span className="hidden sm:inline">{label}</span>
                 </div>
               ))}
@@ -470,83 +472,91 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         </div>
 
         {/* ── Actions bar ── */}
-        <div className="flex items-center gap-2 mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
-          {data.processos?.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 px-3 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition-colors text-xs font-medium"
-              title="Análise completa Cowork — gera relatório, extrai dados, importa tudo"
-              disabled={coworkAnalise.isPending}
-              onClick={() => {
-                const proc = data.processos[0];
-                coworkAnalise.mutate({ processoId: proc.id, assistidoId: Number(id) });
-              }}
-            >
-              {coworkAnalise.isPending
-                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                : <Sparkles className="h-3.5 w-3.5" />}
-              Cowork
-            </Button>
-          )}
-          {data.processos?.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 gap-1.5 px-3 text-zinc-500 hover:text-amber-600 transition-colors text-xs"
-              title="Análise profunda com Claude Sonnet"
-              disabled={analiseProfunda.isPending}
-              onClick={() => {
-                const proc = data.processos[0];
-                setSonnetProcessoId(proc.id);
-                analiseProfunda.mutate({ processoId: proc.id, assistidoId: Number(id) });
-              }}
-            >
-              {analiseProfunda.isPending
-                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                : <Zap className="h-3.5 w-3.5" />}
-              Sonnet
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 gap-1.5 px-3 text-zinc-500 hover:text-violet-600 transition-colors text-xs"
-            title="Exportar briefing para pasta do Drive"
-            disabled={exportarParaCowork.isPending}
-            onClick={() => exportarParaCowork.mutate({ assistidoId: Number(id), tipo: "assistido" })}
-          >
-            {exportarParaCowork.isPending
-              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              : <Bot className="h-3.5 w-3.5" />}
-            Exportar
-          </Button>
-          {data.driveFolderId && (
+        <div className="mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-700/30">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2.5">
+            Ações IA
+          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            {data.processos?.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 px-3 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition-colors text-xs font-medium"
+                title="Análise completa Cowork — gera relatório, extrai dados, importa tudo"
+                disabled={coworkAnalise.isPending}
+                onClick={() => {
+                  const proc = data.processos[0];
+                  coworkAnalise.mutate({ processoId: proc.id, assistidoId: Number(id) });
+                }}
+              >
+                {coworkAnalise.isPending
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <Sparkles className="h-3.5 w-3.5" />}
+                Cowork
+              </Button>
+            )}
+            {data.processos?.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 px-3 text-zinc-500 hover:text-amber-600 transition-colors text-xs"
+                title="Análise profunda com Claude Sonnet"
+                disabled={analiseProfunda.isPending}
+                onClick={() => {
+                  const proc = data.processos[0];
+                  setSonnetProcessoId(proc.id);
+                  analiseProfunda.mutate({ processoId: proc.id, assistidoId: Number(id) });
+                }}
+              >
+                {analiseProfunda.isPending
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <Brain className="h-3.5 w-3.5" />}
+                Sonnet
+              </Button>
+            )}
+
+            <div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700/50" />
+
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 gap-1.5 px-3 text-zinc-500 hover:text-emerald-600 transition-colors text-xs"
-              title="Importar análise IA gerada pelo Cowork"
-              disabled={importarAnaliseCowork.isPending}
-              onClick={() => importarAnaliseCowork.mutate({ assistidoId: Number(id) })}
+              className="h-8 gap-1.5 px-3 text-zinc-500 hover:text-violet-600 transition-colors text-xs"
+              title="Exportar briefing para pasta do Drive"
+              disabled={exportarParaCowork.isPending}
+              onClick={() => exportarParaCowork.mutate({ assistidoId: Number(id), tipo: "assistido" })}
             >
-              {importarAnaliseCowork.isPending
+              {exportarParaCowork.isPending
                 ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                : <Download className="h-3.5 w-3.5" />}
-              Importar
+                : <ArrowUpFromLine className="h-3.5 w-3.5" />}
+              Exportar
             </Button>
-          )}
-          <div className="ml-auto">
-            <CoworkActionGroup
-              assistidoNome={data.nome}
-              numeroAutos={data.processos?.[0]?.numeroAutos ?? ""}
-              classeProcessual={(data.processos?.[0] as any)?.classeProcessual ?? ""}
-              vara={data.processos?.[0]?.vara ?? ""}
-              atribuicao={(data as any).atribuicaoPrimaria ?? ""}
-              drivePath=""
-              actions={["analise-autos", "gerar-peca", "feedback-estagiario"]}
-              size="sm"
-            />
+            {data.driveFolderId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 px-3 text-zinc-500 hover:text-emerald-600 transition-colors text-xs"
+                title="Importar análise IA gerada pelo Cowork"
+                disabled={importarAnaliseCowork.isPending}
+                onClick={() => importarAnaliseCowork.mutate({ assistidoId: Number(id) })}
+              >
+                {importarAnaliseCowork.isPending
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <ArrowDownToLine className="h-3.5 w-3.5" />}
+                Importar
+              </Button>
+            )}
+            <div className="ml-auto">
+              <CoworkActionGroup
+                assistidoNome={data.nome}
+                numeroAutos={data.processos?.[0]?.numeroAutos ?? ""}
+                classeProcessual={(data.processos?.[0] as any)?.classeProcessual ?? ""}
+                vara={data.processos?.[0]?.vara ?? ""}
+                atribuicao={(data as any).atribuicaoPrimaria ?? ""}
+                drivePath=""
+                actions={["analise-autos", "gerar-peca", "feedback-estagiario"]}
+                size="sm"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -572,49 +582,53 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
       />
 
       {/* ── Tabs ── */}
-      <div className="flex items-center gap-1 border-b border-zinc-200/80 dark:border-zinc-800 px-6 lg:px-8 overflow-x-auto">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => handleSetTab(t.key)}
-            className={cn(
-              "px-3.5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap shrink-0",
-              tab === t.key
-                ? "border-emerald-500 text-zinc-900 dark:text-zinc-50"
-                : "border-transparent text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
-            )}
-          >
-            {t.label}
-            {t.count !== undefined && t.count > 0 && (
-              <span className={cn(
-                "ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full font-medium",
-                t.urgency === "red"
-                  ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"
-                  : t.urgency === "amber"
-                  ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
-                  : tab === t.key
-                  ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
-              )}>
-                {t.count}
-              </span>
-            )}
-          </button>
-        ))}
+      <div className="flex items-center gap-1 border-b border-zinc-200/80 dark:border-zinc-800/60 px-6 lg:px-8 overflow-x-auto">
+        {tabs.map((t) => {
+          const TabIcon = t.icon;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => handleSetTab(t.key)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-3.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap shrink-0",
+                tab === t.key
+                  ? "border-emerald-500 text-zinc-900 dark:text-zinc-50 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-t-lg"
+                  : "border-transparent text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+              )}
+            >
+              <TabIcon className="h-4 w-4" />
+              {t.label}
+              {t.count !== undefined && t.count > 0 && (
+                <span className={cn(
+                  "text-[10px] min-w-[22px] text-center px-1.5 py-0.5 rounded-full font-medium",
+                  t.urgency === "red"
+                    ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"
+                    : t.urgency === "amber"
+                    ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+                    : tab === t.key
+                    ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                )}>
+                  {t.count}
+                </span>
+              )}
+            </button>
+          );
+        })}
         {/* Overflow: Timeline e Radar */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
               className={cn(
-                "px-3 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 shrink-0",
+                "px-3 py-3.5 text-sm font-medium border-b-2 transition-all flex items-center gap-1 shrink-0",
                 overflowTabs.some(t => t.key === tab)
-                  ? "border-emerald-500 text-zinc-900 dark:text-zinc-50"
+                  ? "border-emerald-500 text-zinc-900 dark:text-zinc-50 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-t-lg"
                   : "border-transparent text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
               )}
             >
-              Mais <ChevronDown className="h-3.5 w-3.5" />
+              <MoreHorizontal className="h-4 w-4" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -628,7 +642,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto px-6 lg:px-8 py-6">
         {tab === "processos" && (
           <div className="space-y-2">
             <div className="flex items-center justify-between mb-2">

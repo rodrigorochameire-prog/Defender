@@ -101,7 +101,7 @@ function SyncHealthDot() {
       </TooltipTrigger>
       <TooltipContent side="bottom">
         <div className="space-y-0.5">
-          <p className="font-medium text-[11px]">{config.label}</p>
+          <p className="font-medium text-xs">{config.label}</p>
           <p className="text-zinc-400 text-[10px]">{timeSinceSync}</p>
           {health.issues.length > 0 && (
             <ul className="text-zinc-400 text-[10px] space-y-0.5">
@@ -343,7 +343,7 @@ function InlineBreadcrumbs({ fileCount }: { fileCount?: number }) {
           <button
             onClick={() => ctx.setSelectedAtribuicao(ctx.selectedAtribuicao)}
             className={cn(
-              "flex items-center gap-1 text-[12px] font-medium transition-colors shrink-0",
+              "flex items-center gap-1 text-xs font-medium transition-colors shrink-0",
               ctx.breadcrumbPath.length === 0
                 ? "text-zinc-800 dark:text-zinc-200 cursor-default"
                 : "text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 cursor-pointer"
@@ -368,7 +368,7 @@ function InlineBreadcrumbs({ fileCount }: { fileCount?: number }) {
         if (showEllipsis) {
           return (
             <div key={segment.id} className="flex items-center gap-0.5 shrink-0">
-              <span className="text-[12px] text-zinc-400 dark:text-zinc-600 px-0.5">...</span>
+              <span className="text-xs text-zinc-400 dark:text-zinc-600 px-0.5">...</span>
               <ChevronRight className="h-3 w-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
             </div>
           );
@@ -381,7 +381,7 @@ function InlineBreadcrumbs({ fileCount }: { fileCount?: number }) {
             <button
               onClick={() => { if (!isLast) ctx.navigateToBreadcrumb(index); }}
               className={cn(
-                "text-[12px] transition-colors duration-150 max-w-[160px] truncate",
+                "text-xs transition-colors duration-150 max-w-[160px] truncate",
                 isLast
                   ? "text-zinc-800 dark:text-zinc-200 font-medium cursor-default"
                   : "text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 cursor-pointer"
@@ -575,14 +575,14 @@ function AddMenu() {
             className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-left transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <FolderPlus className="h-3.5 w-3.5 text-zinc-500" />
-            <span className="text-[11px] text-zinc-700 dark:text-zinc-300">Nova pasta</span>
+            <span className="text-xs text-zinc-700 dark:text-zinc-300">Nova pasta</span>
           </button>
           <button
             onClick={handleUpload}
             className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-left transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
           >
             <Upload className="h-3.5 w-3.5 text-zinc-500" />
-            <span className="text-[11px] text-zinc-700 dark:text-zinc-300">Upload</span>
+            <span className="text-xs text-zinc-700 dark:text-zinc-300">Upload</span>
           </button>
         </div>
 
@@ -590,7 +590,7 @@ function AddMenu() {
         {sortedCategories.length > 0 ? (
           <div className="py-1">
             <div className="px-2.5 py-1">
-              <span className="text-[9px] font-semibold uppercase tracking-wider text-zinc-400">Templates</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Templates</span>
             </div>
             {sortedCategories.map((cat) => {
               const config = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.outros;
@@ -607,7 +607,7 @@ function AddMenu() {
                   className="w-full flex items-center gap-2 px-2.5 py-1.5 text-left transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/30 disabled:opacity-50"
                 >
                   <CatIcon className="h-3 w-3 text-emerald-600/60 shrink-0" />
-                  <span className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate flex-1">{t.name}</span>
+                  <span className="text-xs text-zinc-700 dark:text-zinc-300 truncate flex-1">{t.name}</span>
                   {generateMutation.isPending && generateMutation.variables?.templateId === t.id && (
                     <Loader2 className="h-3 w-3 animate-spin text-emerald-500 shrink-0" />
                   )}
@@ -693,7 +693,7 @@ export function DriveTopBar({ fileCount }: { fileCount?: number }) {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex items-center gap-1.5 h-10 px-3 border-b border-zinc-200/60 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shrink-0">
+      <div className="flex items-center gap-1.5 h-10 px-4 border-b border-zinc-200/50 dark:border-zinc-800/50 shrink-0">
         {/* Mobile hamburger spacer */}
         <div className="w-8 lg:hidden" />
 
@@ -744,7 +744,7 @@ export function DriveTopBar({ fileCount }: { fileCount?: number }) {
             >
               <Activity className={cn("h-3.5 w-3.5", activeCount > 0 && "animate-pulse")} />
               {activeCount > 0 && (
-                <span className="text-[9px] font-medium">{activeCount}</span>
+                <span className="text-[10px] font-medium">{activeCount}</span>
               )}
             </button>
           </ProcessingQueuePanel>

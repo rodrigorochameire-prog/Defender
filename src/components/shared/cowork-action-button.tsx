@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Brain, FileText, Scale, Shield, MessageSquare, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { buildDelegatePrompt } from "@/lib/skills/delegate";
 import type { SkillDelegate } from "@/lib/skills/types";
 
@@ -11,9 +11,8 @@ import type { SkillDelegate } from "@/lib/skills/types";
 const COWORK_ACTIONS = {
   "analise-autos": {
     label: "Analisar Autos",
+    description: "Análise estratégica completa",
     icon: Brain,
-    color: "text-violet-600 dark:text-violet-400",
-    bgHover: "hover:bg-violet-50 dark:hover:bg-violet-950/20",
     delegate: {
       target: "cowork" as const,
       promptTemplate: `Você é um assistente jurídico da Defensoria Pública de Camaçari.
@@ -37,9 +36,8 @@ Salve os arquivos na pasta: {{drivePath}}`,
   },
   "preparar-audiencia": {
     label: "Preparar Audiência",
+    description: "Perguntas, contradições e briefing",
     icon: Scale,
-    color: "text-blue-600 dark:text-blue-400",
-    bgHover: "hover:bg-blue-50 dark:hover:bg-blue-950/20",
     delegate: {
       target: "cowork" as const,
       promptTemplate: `Você é um assistente jurídico da Defensoria Pública de Camaçari.
@@ -62,9 +60,8 @@ Salve na pasta: {{drivePath}}`,
   },
   "gerar-peca": {
     label: "Gerar Peça",
+    description: "Peça processual institucional",
     icon: FileText,
-    color: "text-emerald-600 dark:text-emerald-400",
-    bgHover: "hover:bg-emerald-50 dark:hover:bg-emerald-950/20",
     delegate: {
       target: "cowork" as const,
       promptTemplate: `Você é um assistente jurídico da Defensoria Pública de Camaçari.
@@ -83,9 +80,8 @@ Depois copie para a pasta Protocolar com nome padronizado.`,
   },
   "analise-juri": {
     label: "Análise de Júri",
+    description: "Dossiê estratégico completo",
     icon: Shield,
-    color: "text-amber-600 dark:text-amber-400",
-    bgHover: "hover:bg-amber-50 dark:hover:bg-amber-950/20",
     delegate: {
       target: "cowork" as const,
       promptTemplate: `Você é um assistente jurídico da Defensoria Pública de Camaçari.
@@ -106,10 +102,9 @@ Salve na pasta: {{drivePath}}`,
     } satisfies SkillDelegate,
   },
   "feedback-estagiario": {
-    label: "Feedback para Estagiário",
+    label: "Feedback Estágio",
+    description: "Revisão educativa do trabalho",
     icon: MessageSquare,
-    color: "text-cyan-600 dark:text-cyan-400",
-    bgHover: "hover:bg-cyan-50 dark:hover:bg-cyan-950/20",
     delegate: {
       target: "cowork" as const,
       promptTemplate: `Você é o Defensor Público Rodrigo Rocha Meire, orientando um estagiário.
@@ -133,15 +128,15 @@ Pasta: {{drivePath}}`,
 
 type CoworkActionType = keyof typeof COWORK_ACTIONS;
 
+// ─── Single action button ───────────────────────────────────────────────────
+
 interface CoworkActionButtonProps {
   action: CoworkActionType;
   params: Record<string, string>;
   processoId?: number;
   context?: string;
-  variant?: "default" | "outline" | "ghost";
-  size?: "default" | "sm" | "lg" | "icon";
+  compact?: boolean;
   className?: string;
-  showLabel?: boolean;
 }
 
 export function CoworkActionButton({
@@ -149,10 +144,8 @@ export function CoworkActionButton({
   params,
   processoId,
   context = "",
-  variant = "outline",
-  size = "sm",
+  compact = false,
   className = "",
-  showLabel = true,
 }: CoworkActionButtonProps) {
   const [loading, setLoading] = useState(false);
   const config = COWORK_ACTIONS[action];
@@ -161,8 +154,6 @@ export function CoworkActionButton({
   async function handleClick() {
     setLoading(true);
     try {
-      // Strategy 1: Worker API (runs claude -p locally, zero cost)
-      // Only works on localhost (developer machine)
       if (processoId && window.location.hostname === "localhost") {
         try {
           const res = await fetch("/api/cowork/analyze", {
@@ -183,10 +174,7 @@ export function CoworkActionButton({
         }
       }
 
-      // Strategy 2+3: Copy to clipboard + open Cowork/Manus
       const prompt = buildDelegatePrompt(config.delegate, params, context);
-
-      // Build instruction header
       const pastaAssistido = params.assistidoNome
         ? `Processos - ${params.atribuicao === "JURI_CAMACARI" ? "Júri" : params.atribuicao === "VVD_CAMACARI" ? "VVD" : "Criminal"} / ${params.assistidoNome}`
         : "";
@@ -228,26 +216,55 @@ export function CoworkActionButton({
     }
   }
 
+  if (compact) {
+    return (
+      <button
+        onClick={handleClick}
+        disabled={loading}
+        title={config.label}
+        className={cn(
+          "inline-flex items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700/50 p-2.5 transition-all",
+          "text-zinc-500 dark:text-zinc-400",
+          "hover:border-zinc-300 dark:hover:border-zinc-600 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
+          loading && "opacity-60",
+          className,
+        )}
+      >
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
+      </button>
+    );
+  }
+
   return (
-    <Button
-      variant={variant}
-      size={size}
+    <button
       onClick={handleClick}
       disabled={loading}
-      className={`gap-1.5 ${config.color} ${config.bgHover} ${className}`}
-      title={config.label}
-    >
-      {loading ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <Icon className="h-4 w-4" />
+      className={cn(
+        "group flex items-center gap-3 rounded-xl border border-zinc-200/80 dark:border-zinc-700/40 px-4 py-3 transition-all text-left w-full",
+        "hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30",
+        loading && "opacity-60 pointer-events-none",
+        className,
       )}
-      {showLabel && <span>{config.label}</span>}
-    </Button>
+    >
+      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 shrink-0">
+        {loading ? (
+          <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+        ) : (
+          <Icon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+        )}
+      </div>
+      <div className="min-w-0">
+        <p className="text-[13px] font-medium text-zinc-700 dark:text-zinc-200 leading-tight">{config.label}</p>
+        <p className="text-[11px] text-zinc-400 dark:text-zinc-500 leading-tight mt-0.5">
+          {config.description}
+        </p>
+      </div>
+    </button>
   );
 }
 
-// Convenience: group of action buttons for a case
+// ─── Action group ───────────────────────────────────────────────────────────
+
 interface CoworkActionGroupProps {
   assistidoNome: string;
   numeroAutos: string;
@@ -257,7 +274,7 @@ interface CoworkActionGroupProps {
   atribuicao?: string;
   drivePath?: string;
   actions?: CoworkActionType[];
-  size?: "sm" | "default";
+  compact?: boolean;
 }
 
 export function CoworkActionGroup({
@@ -269,7 +286,7 @@ export function CoworkActionGroup({
   atribuicao = "",
   drivePath = "",
   actions = ["analise-autos", "gerar-peca", "preparar-audiencia"],
-  size = "sm",
+  compact = false,
 }: CoworkActionGroupProps) {
   const params = {
     assistidoNome,
@@ -283,14 +300,18 @@ export function CoworkActionGroup({
   };
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className={cn(
+      compact
+        ? "flex items-center gap-2"
+        : "grid grid-cols-1 sm:grid-cols-3 gap-2"
+    )}>
       {actions.map((action) => (
         <CoworkActionButton
           key={action}
           action={action}
           params={params}
           processoId={processoId}
-          size={size}
+          compact={compact}
         />
       ))}
     </div>
