@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, Lock, User, Loader2, ClipboardList, Plus, Sparkles, Pencil, Clock, Send, Gavel, Calendar, HardDrive, ContactRound, ChevronDown, ArrowUpFromLine, ArrowDownToLine, Brain, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, Lock, User, Loader2, ClipboardList, Plus, Sparkles, Pencil, Clock, Send, Gavel, Calendar, HardDrive, ContactRound, ChevronDown, ArrowUpFromLine, ArrowDownToLine, Brain, MoreHorizontal, Bot, Download, Zap, FileText } from "lucide-react";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -554,7 +554,6 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                 atribuicao={(data as any).atribuicaoPrimaria ?? ""}
                 drivePath=""
                 actions={["analise-autos", "gerar-peca", "feedback-estagiario"]}
-                size="sm"
               />
             </div>
           </div>
