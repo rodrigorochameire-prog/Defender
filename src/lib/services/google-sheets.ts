@@ -395,43 +395,64 @@ async function ensureSheet(title: string): Promise<number> {
 
 type RGBColor = { red: number; green: number; blue: number };
 
-/** Cores dos status (semáforo: vermelho→amarelo→lilás→cinza→azul→verde) */
+/**
+ * Cores dos status — paleta suave com gradação lógica dentro de cada grupo.
+ * Grupo 2: amarelo-claro (iniciais) → laranja-suave (avançados)
+ * Grupo 4: lilás-pastel com gradação por pessoa
+ * Grupo 7: verde-pastel com gradação por finalidade
+ */
 const STATUS_COLORS: Record<string, RGBColor> = {
-  "1 - Urgente":            { red: 0.918, green: 0.341, blue: 0.341 },
-  "2 - Relatório":          { red: 1.0,   green: 0.851, blue: 0.4 },
-  "2 - Analisar":           { red: 1.0,   green: 0.851, blue: 0.4 },
-  "2 - Atender":            { red: 1.0,   green: 0.788, blue: 0.322 },
-  "2 - Buscar":             { red: 1.0,   green: 0.851, blue: 0.4 },
-  "2 - Diligenciar":        { red: 1.0,   green: 0.851, blue: 0.4 },
-  "2 - Investigar":         { red: 0.988, green: 0.733, blue: 0.278 },
-  "2 - Elaborar":           { red: 1.0,   green: 0.788, blue: 0.322 },
-  "2 - Elaborando":         { red: 0.988, green: 0.733, blue: 0.278 },
-  "2 - Revisar":            { red: 0.988, green: 0.733, blue: 0.278 },
-  "2 - Revisando":          { red: 0.957, green: 0.671, blue: 0.227 },
-  "3 - Protocolar":         { red: 0.957, green: 0.608, blue: 0.188 },
-  "4 - Amanda":             { red: 0.796, green: 0.718, blue: 0.961 },
-  "4 - Estágio - Taissa":   { red: 0.835, green: 0.773, blue: 0.969 },
-  "4 - Emilly":             { red: 0.757, green: 0.659, blue: 0.949 },
-  "4 - Monitorar":          { red: 0.875, green: 0.827, blue: 0.976 },
-  "5 - Fila":               { red: 0.851, green: 0.851, blue: 0.851 },
-  "6 - Documentos":         { red: 0.710, green: 0.847, blue: 0.910 },
-  "6 - Testemunhas":        { red: 0.753, green: 0.882, blue: 0.949 },
-  "7 - Protocolado":        { red: 0.467, green: 0.788, blue: 0.467 },
-  "7 - Sigad":              { red: 0.353, green: 0.702, blue: 0.353 },
-  "7 - Ciência":            { red: 0.533, green: 0.827, blue: 0.533 },
-  "7 - Resolvido":          { red: 0.443, green: 0.761, blue: 0.443 },
-  "7 - Constituiu advogado":{ red: 0.443, green: 0.761, blue: 0.443 },
-  "7 - Sem atuação":        { red: 0.600, green: 0.851, blue: 0.600 },
+  // ── 1 · Urgente — rosé suave (não vermelho agressivo) ──
+  "1 - Urgente":            { red: 0.945, green: 0.525, blue: 0.525 },
+
+  // ── 2 · Andamento — gradação amarelo-claro → laranja-suave ──
+  //    Iniciais (triagem): mais claro
+  "2 - Analisar":           { red: 1.0,   green: 0.925, blue: 0.620 },
+  "2 - Buscar":             { red: 1.0,   green: 0.910, blue: 0.580 },
+  "2 - Diligenciar":        { red: 1.0,   green: 0.898, blue: 0.545 },
+  "2 - Relatório":          { red: 1.0,   green: 0.898, blue: 0.545 },
+  "2 - Investigar":         { red: 1.0,   green: 0.875, blue: 0.500 },
+  //    Em trabalho: tom intermediário
+  "2 - Atender":            { red: 1.0,   green: 0.855, blue: 0.465 },
+  "2 - Elaborar":           { red: 1.0,   green: 0.835, blue: 0.430 },
+  "2 - Elaborando":         { red: 0.996, green: 0.812, blue: 0.400 },
+  //    Revisão/protocolo: mais quente (próximo de finalizar)
+  "2 - Revisar":            { red: 0.992, green: 0.788, blue: 0.375 },
+  "2 - Revisando":          { red: 0.988, green: 0.765, blue: 0.350 },
+  "3 - Protocolar":         { red: 0.984, green: 0.737, blue: 0.325 },
+
+  // ── 4 · Monitorar — lilás-pastel suave ──
+  "4 - Monitorar":          { red: 0.910, green: 0.878, blue: 0.980 },
+  "4 - Estágio - Taissa":   { red: 0.882, green: 0.843, blue: 0.973 },
+  "4 - Amanda":             { red: 0.855, green: 0.808, blue: 0.965 },
+  "4 - Emilly":             { red: 0.827, green: 0.773, blue: 0.957 },
+
+  // ── 5 · Fila — cinza neutro claro ──
+  "5 - Fila":               { red: 0.902, green: 0.902, blue: 0.902 },
+
+  // ── 6 · Preparação — azul-pastel suave ──
+  "6 - Documentos":         { red: 0.800, green: 0.898, blue: 0.945 },
+  "6 - Testemunhas":        { red: 0.830, green: 0.918, blue: 0.960 },
+
+  // ── 7 · Concluído — verde-pastel com gradação ──
+  //    Mais suave (ciência/sem atuação): tom claro
+  "7 - Ciência":            { red: 0.690, green: 0.890, blue: 0.690 },
+  "7 - Sem atuação":        { red: 0.720, green: 0.902, blue: 0.720 },
+  "7 - Constituiu advogado":{ red: 0.700, green: 0.895, blue: 0.700 },
+  //    Mais definido (protocolado/resolvido): tom médio
+  "7 - Protocolado":        { red: 0.620, green: 0.860, blue: 0.620 },
+  "7 - Sigad":              { red: 0.580, green: 0.840, blue: 0.580 },
+  "7 - Resolvido":          { red: 0.545, green: 0.820, blue: 0.545 },
 };
 
-/** Cores dos atos por categoria */
-const _GREEN_DARK:  RGBColor = { red: 0.467, green: 0.749, blue: 0.467 };
-const _GREEN_MED:   RGBColor = { red: 0.573, green: 0.816, blue: 0.573 };
-const _GREEN_LIGHT: RGBColor = { red: 0.718, green: 0.882, blue: 0.718 };
-const _YELLOW:      RGBColor = { red: 1.0,   green: 0.851, blue: 0.400 };
-const _ORANGE:      RGBColor = { red: 0.988, green: 0.733, blue: 0.278 };
-const _BLUE_LIGHT:  RGBColor = { red: 0.710, green: 0.847, blue: 0.910 };
-const _GRAY:        RGBColor = { red: 0.851, green: 0.851, blue: 0.851 };
+/** Cores dos atos por categoria — paleta suavizada */
+const _GREEN_DARK:  RGBColor = { red: 0.580, green: 0.830, blue: 0.580 }; // peças urgentes
+const _GREEN_MED:   RGBColor = { red: 0.660, green: 0.870, blue: 0.660 }; // recursos
+const _GREEN_LIGHT: RGBColor = { red: 0.780, green: 0.920, blue: 0.780 }; // intermediários
+const _YELLOW:      RGBColor = { red: 1.0,   green: 0.910, blue: 0.580 }; // liberdade/prisão (suave)
+const _ORANGE:      RGBColor = { red: 0.996, green: 0.835, blue: 0.465 }; // HC/MS (quente suave)
+const _BLUE_LIGHT:  RGBColor = { red: 0.800, green: 0.898, blue: 0.945 }; // ciências
+const _GRAY:        RGBColor = { red: 0.902, green: 0.902, blue: 0.902 }; // outros
 
 const ATO_COLORS: Record<string, RGBColor> = {
   // Peças urgentes
