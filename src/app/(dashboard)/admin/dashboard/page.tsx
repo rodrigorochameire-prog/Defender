@@ -821,7 +821,7 @@ export default function DashboardJuriPage() {
                   >
                     {atendimentoRapido.assistidoId ? (
                       <span className="flex items-center gap-2 truncate">
-                        <span className={cn("w-2.5 h-2.5 rounded-full flex-shrink-0", getAtribuicaoColors(assistidoSelecionado?.atribuicaoPrimaria).dot)} />
+                        <span className={cn("w-[3px] h-4 rounded-full flex-shrink-0", getAtribuicaoColors(assistidoSelecionado?.atribuicaoPrimaria).dot)} />
                         <span className={cn("truncate font-medium", getAtribuicaoColors(assistidoSelecionado?.atribuicaoPrimaria).text)}>{atendimentoRapido.assistidoNome}</span>
                       </span>
                     ) : (
@@ -858,13 +858,20 @@ export default function DashboardJuriPage() {
                           key={opt.value}
                           onClick={() => setAtribuicaoFilter(opt.value)}
                           className={cn(
-                            "flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium whitespace-nowrap transition-all duration-150 cursor-pointer",
+                            "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium whitespace-nowrap transition-all duration-200 cursor-pointer",
                             isActive
-                              ? "bg-foreground text-background shadow-sm"
-                              : "bg-muted text-muted-foreground hover:bg-secondary hover:text-foreground/80"
+                              ? opt.value === "all"
+                                ? "bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900 shadow-sm"
+                                : cn(colors.bg, colors.text, "ring-1 ring-current/15")
+                              : "text-muted-foreground hover:text-foreground/80 hover:bg-muted"
                           )}
                         >
-                          {opt.value !== "all" && <span className={cn("w-1.5 h-1.5 rounded-full", isActive ? colors.dot : "bg-muted-foreground")} />}
+                          {opt.value !== "all" && (
+                            <span className={cn(
+                              "w-1 h-1 rounded-full transition-colors duration-200",
+                              isActive ? colors.dot : "bg-muted-foreground/40"
+                            )} />
+                          )}
                           {opt.shortLabel}
                         </button>
                       );
@@ -910,32 +917,41 @@ export default function DashboardJuriPage() {
                               setAssistidoSearchQuery("");
                             }}
                             className={cn(
-                              "flex items-center gap-2.5 py-1.5 px-2 rounded-md cursor-pointer transition-colors duration-150",
-                              isSelected && "bg-emerald-50 dark:bg-emerald-950/30"
+                              "flex items-center gap-0 py-0 px-0 rounded-md cursor-pointer transition-all duration-200 overflow-hidden group/item",
+                              isSelected
+                                ? "bg-emerald-50 dark:bg-emerald-950/30"
+                                : cn("hover:bg-muted/50")
                             )}
                           >
-                            <span className={cn("w-2 h-2 rounded-full flex-shrink-0 ring-2 ring-background", atribColors.dot)} />
-                            <div className="flex-1 min-w-0 flex items-center gap-2">
-                              <p className="text-sm font-medium truncate text-foreground">{assistido.nome}</p>
-                              {assistido.vulgo && (
-                                <span className="text-[10px] text-muted-foreground truncate">({assistido.vulgo})</span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1.5 flex-shrink-0">
-                              {assistido.situacaoPrisional === "PRESO" && (
-                                <span className="flex items-center gap-0.5 text-[9px] font-medium text-rose-600 dark:text-rose-400">
-                                  <Lock className="w-2.5 h-2.5" />
+                            {/* Barra lateral colorida sutil */}
+                            <span className={cn(
+                              "w-[3px] self-stretch flex-shrink-0 rounded-l-md transition-opacity duration-200",
+                              atribColors.dot,
+                              isSelected ? "opacity-100" : "opacity-40 group-hover/item:opacity-70"
+                            )} />
+                            <div className="flex items-center gap-2.5 flex-1 min-w-0 py-2 pl-2.5 pr-2">
+                              <div className="flex-1 min-w-0 flex items-center gap-2">
+                                <p className="text-[13px] font-medium truncate text-foreground">{assistido.nome}</p>
+                                {assistido.vulgo && (
+                                  <span className="text-[10px] text-muted-foreground/70 truncate italic">({assistido.vulgo})</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                                {assistido.situacaoPrisional === "PRESO" && (
+                                  <span className="flex items-center gap-0.5 text-[9px] font-medium text-rose-500/80 dark:text-rose-400/80">
+                                    <Lock className="w-2.5 h-2.5" />
+                                  </span>
+                                )}
+                                <span className={cn(
+                                  "text-[9px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 transition-colors duration-200",
+                                  atribColors.bg, atribColors.textMuted
+                                )}>
+                                  {atribColors.shortLabel}
                                 </span>
-                              )}
-                              <span className={cn(
-                                "text-[9px] px-1.5 py-0.5 rounded font-medium flex-shrink-0",
-                                "bg-muted text-muted-foreground"
-                              )}>
-                                {atribColors.shortLabel}
-                              </span>
-                              {isSelected && (
-                                <Check className="w-3.5 h-3.5 text-emerald-500" />
-                              )}
+                                {isSelected && (
+                                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                                )}
+                              </div>
                             </div>
                           </CommandItem>
                           );
