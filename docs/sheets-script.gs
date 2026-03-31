@@ -22,38 +22,38 @@ const SECRET_TOKEN = "a71a4680f5b946eb018d5e2e219ec2b6f5c1c900006e98ffe460cedcbf
 
 // ==========================================
 // ESTRUTURA DA PLANILHA (colunas 1-indexed)
-// Corresponde ao layout atual do usuário:
-//   A=Status, B=Prisão, C=Data, D=Assistido,
-//   E=Tipo,   F=Autos,  G=Ato, H=Prazo,
-//   I=Providências, J=__ombuds_id__ (oculto, tracking)
+// Corresponde ao layout criado pelo servidor (google-sheets.ts):
+//   A=__id__ (oculto), B=Status, C=Prisão, D=Data,
+//   E=Assistido, F=Autos, G=Ato, H=Prazo,
+//   I=Providências, J=Delegado Para
 // ==========================================
 
-const COL_STATUS       = 1;  // A
-const COL_REU_PRESO    = 2;  // B — Prisão
-const COL_DATA_ENTRADA = 3;  // C — Data
-const COL_ASSISTIDO    = 4;  // D — Assistido (nome)
-const COL_TIPO         = 5;  // E — Tipo (não sincronizado)
+const COL_OMBUDS_ID    = 1;  // A — __id__ (chave interna, oculto)
+const COL_STATUS       = 2;  // B
+const COL_REU_PRESO    = 3;  // C — Prisão
+const COL_DATA_ENTRADA = 4;  // D — Data
+const COL_ASSISTIDO    = 5;  // E — Assistido (nome)
 const COL_AUTOS        = 6;  // F — Nº Autos
 const COL_ATO          = 7;  // G — Ato
 const COL_PRAZO        = 8;  // H — Prazo
 const COL_PROVIDENCIAS = 9;  // I — Providências
-const COL_OMBUDS_ID    = 10; // J — __ombuds_id__ (chave interna, oculto)
+const COL_DELEGADO     = 10; // J — Delegado Para
 
 /**
  * Mapeamento: número de coluna → nome do campo na API
  * null = ignorar (não sincronizar via webhook de atualização)
  */
 const COLUNAS = {
+  [COL_OMBUDS_ID]:    null,          // A — tracking: não dispara webhook
   [COL_STATUS]:       "status",
   [COL_REU_PRESO]:    "reuPreso",
   [COL_DATA_ENTRADA]: "dataEntrada",
   [COL_ASSISTIDO]:    "assistido",
-  [COL_TIPO]:         null,          // E — Tipo: não sincronizado
   [COL_AUTOS]:        "autos",
   [COL_ATO]:          "ato",
   [COL_PRAZO]:        "prazo",
   [COL_PROVIDENCIAS]: "providencias",
-  [COL_OMBUDS_ID]:    null,          // J — tracking: não dispara webhook
+  [COL_DELEGADO]:     null,          // J — delegadoPara: não sincronizado (futuro)
 };
 
 // ==========================================
