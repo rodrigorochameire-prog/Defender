@@ -265,7 +265,7 @@ export function StatusPipelineSelector({
     return createPortal(
       <div
         ref={ref}
-        className="fixed w-[260px] bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-xl shadow-xl z-[9999] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
+        className="fixed w-[260px] max-w-[calc(100vw-2rem)] bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-xl shadow-xl z-[9999] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
         style={{ top: pos.top, right: pos.right }}
       >
         {stepperContent}

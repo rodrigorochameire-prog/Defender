@@ -198,7 +198,7 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
           <Badge variant="outline" className="text-zinc-600 dark:text-muted-foreground font-medium">
             {filteredItems.length} {filteredItems.length === 1 ? "pendente" : "pendentes"}
           </Badge>
-          <span className="text-xs text-zinc-400 hidden sm:block">
+          <span className="text-xs text-muted-foreground hidden sm:block">
             ↑↓ navegar · A aprovar · D descartar
           </span>
         </div>
@@ -210,7 +210,7 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
             }
           }}
           disabled={descartarAntigos.isPending}
-          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-red-500 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-50"
           title="Descartar itens pendentes com mais de 60 dias"
         >
           <Trash2 className="h-3.5 w-3.5" />
@@ -227,10 +227,10 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
               <div key={cat}>
                 {/* Cabeçalho do grupo */}
                 <div className="flex items-center gap-3 mb-2 px-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
+                  <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                     {label}
                   </span>
-                  <span className="text-[11px] text-zinc-300 dark:text-muted-foreground/50">{items.length}</span>
+                  <span className="text-[11px] text-muted-foreground/50">{items.length}</span>
                   <div className="flex-1 h-px bg-zinc-100 dark:bg-muted" />
                   <button
                     onClick={() => handleAprovarGrupo(items)}
@@ -271,11 +271,11 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
                         {/* Meta */}
                         <div className="flex items-center gap-1.5 mb-1">
                           <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: corFonte }} />
-                          <span className="text-[11px] text-zinc-400 font-medium">{nomeFonte}</span>
+                          <span className="text-[11px] text-muted-foreground font-medium">{nomeFonte}</span>
                           {item.publicadoEm && (
                             <>
-                              <span className="text-zinc-200 dark:text-muted-foreground/50">·</span>
-                              <span className="text-[11px] text-zinc-400">
+                              <span className="text-muted-foreground/50">·</span>
+                              <span className="text-[11px] text-muted-foreground">
                                 {formatDistanceToNow(new Date(item.publicadoEm), { addSuffix: true, locale: ptBR })}
                               </span>
                             </>
@@ -325,7 +325,7 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
                           {onOpenReader && (
                             <button
                               onClick={e => { e.stopPropagation(); onOpenReader(item as Parameters<typeof onOpenReader>[0]); onClose(); }}
-                              className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-600 transition-colors ml-auto px-2 py-1 rounded-md hover:bg-zinc-100 dark:hover:bg-muted"
+                              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors ml-auto px-2 py-1 rounded-md hover:bg-muted"
                             >
                               <ExternalLink className="h-3 w-3" />
                               Ver completo

@@ -428,7 +428,7 @@ export function ControleGravacoes({ audienciaId, processoId }: ControleGravacoes
 
               <CardContent className="space-y-4">
                 {/* Player simulado */}
-                <Card className="bg-zinc-100 dark:bg-zinc-800">
+                <Card className="bg-muted">
                   <CardContent className="py-4">
                     <div className="flex items-center gap-4">
                       <Button

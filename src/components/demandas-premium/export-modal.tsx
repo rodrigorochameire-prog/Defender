@@ -727,10 +727,10 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold text-zinc-500">Campos ({selectedFields.length})</p>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={selectDefaultFields} className="h-6 text-xs px-2">
+                  <Button variant="ghost" size="sm" onClick={selectDefaultFields} className="h-8 text-xs px-2">
                     Padrão
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={selectAllFields} className="h-6 text-xs px-2">
+                  <Button variant="ghost" size="sm" onClick={selectAllFields} className="h-8 text-xs px-2">
                     Todos
                   </Button>
                 </div>

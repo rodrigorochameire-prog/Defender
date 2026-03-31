@@ -165,7 +165,7 @@ export function NoticiaReaderSheet({
                   {/* Resumo executivo */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <p className="text-[11px] font-semibold text-zinc-400 dark:text-muted-foreground/50 uppercase tracking-wider">
+                      <p className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
                         Resumo
                       </p>
                       <Button
@@ -188,7 +188,7 @@ export function NoticiaReaderSheet({
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-1.5">
                           <Zap className="h-3 w-3 text-amber-500" />
-                          <p className="text-[11px] font-semibold text-zinc-400 dark:text-muted-foreground/50 uppercase tracking-wider">
+                          <p className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
                             Impacto Prático
                           </p>
                         </div>
@@ -213,7 +213,7 @@ export function NoticiaReaderSheet({
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-1.5">
                           <Scale className="h-3 w-3 text-blue-500" />
-                          <p className="text-[11px] font-semibold text-zinc-400 dark:text-muted-foreground/50 uppercase tracking-wider">
+                          <p className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
                             Ratio Decidendi
                           </p>
                         </div>
@@ -235,7 +235,7 @@ export function NoticiaReaderSheet({
                   {/* Casos aplicáveis */}
                   {analise.casosAplicaveis.length > 0 && (
                     <div>
-                      <p className="text-[11px] font-semibold text-zinc-400 dark:text-muted-foreground/50 uppercase tracking-wider mb-2">
+                      <p className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider mb-2">
                         Casos Aplicáveis
                       </p>
                       <div className="flex gap-1.5 flex-wrap">

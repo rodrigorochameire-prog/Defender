@@ -336,72 +336,9 @@ export function HistoricoChart({ demandas }: HistoricoChartProps) {
 
         {/* Chart */}
         <div className="bg-zinc-50/50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800/60 rounded-xl md:rounded-2xl p-3 md:p-6">
-          <ResponsiveContainer width="100%" height={280} className="md:hidden">
-            <LineChart data={dadosAtuais.dados}>
-              <CartesianGrid 
-                strokeDasharray="3 3" 
-                stroke="#e4e4e7" 
-                className="dark:stroke-zinc-800" 
-                opacity={0.5}
-                vertical={false} 
-              />
-              <XAxis
-                dataKey="periodo"
-                stroke="#a1a1aa"
-                tick={{ fill: "#71717a", fontSize: 9, fontWeight: 500 }}
-                tickLine={false}
-                axisLine={{ stroke: "#e4e4e7", strokeWidth: 1 }}
-                className="dark:stroke-zinc-800"
-                interval="preserveStartEnd"
-              />
-              <YAxis
-                stroke="#a1a1aa"
-                tick={{ fill: "#71717a", fontSize: 9, fontWeight: 500 }}
-                tickLine={false}
-                axisLine={{ stroke: "#e4e4e7", strokeWidth: 1 }}
-                className="dark:stroke-zinc-800"
-                width={30}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend
-                wrapperStyle={{
-                  paddingTop: "12px",
-                  fontSize: "9px",
-                  fontWeight: "600",
-                }}
-                iconType="circle"
-                iconSize={6}
-              />
-              <Line
-                type="monotone"
-                dataKey="novas"
-                stroke="#06b6d4"
-                strokeWidth={2}
-                name="Novas"
-                dot={{ r: 2, fill: "#06b6d4", strokeWidth: 0 }}
-                activeDot={{ r: 4, fill: "#06b6d4", strokeWidth: 2, stroke: "#fff" }}
-              />
-              <Line
-                type="monotone"
-                dataKey="concluidas"
-                stroke="#10b981"
-                strokeWidth={2}
-                name="Concluídas"
-                dot={{ r: 2, fill: "#10b981", strokeWidth: 0 }}
-                activeDot={{ r: 4, fill: "#10b981", strokeWidth: 2, stroke: "#fff" }}
-              />
-              <Line
-                type="monotone"
-                dataKey="emAndamento"
-                stroke="#f59e0b"
-                strokeWidth={2}
-                name="Em Andamento"
-                dot={{ r: 2, fill: "#f59e0b", strokeWidth: 0 }}
-                activeDot={{ r: 4, fill: "#f59e0b", strokeWidth: 2, stroke: "#fff" }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-          <ResponsiveContainer width="100%" height={340} className="hidden md:block">
+          <div className="overflow-x-auto">
+          <div className="min-w-[500px]">
+          <ResponsiveContainer width="100%" height={340}>
             <LineChart data={dadosAtuais.dados}>
               <CartesianGrid 
                 strokeDasharray="3 3" 
@@ -464,6 +401,8 @@ export function HistoricoChart({ demandas }: HistoricoChartProps) {
               />
             </LineChart>
           </ResponsiveContainer>
+          </div>
+          </div>
         </div>
       </div>
     </Card>

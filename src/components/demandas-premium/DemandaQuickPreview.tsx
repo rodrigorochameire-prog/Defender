@@ -312,7 +312,7 @@ function StageSubstatusPopover({
   return (
     <div
       ref={ref}
-      className="fixed z-[9999] rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-700/80 shadow-xl shadow-black/10 dark:shadow-black/40 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
+      className="fixed z-[9999] max-w-[calc(100vw-2rem)] rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-700/80 shadow-xl shadow-black/10 dark:shadow-black/40 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
       style={{ top, left, width: popoverWidth }}
     >
       {/* Header with stage color accent */}

@@ -1055,6 +1055,27 @@ function PlenarioCockpitContent() {
     }
   }, [corpoAtual, isLoaded]);
 
+  // Sincronizar dark mode do cockpit com <html> para que CSS variables
+  // e portals do Radix (Select, Dialog) respeitem o tema
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDarkMode) {
+      root.classList.remove("medium", "light");
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+      // Restaura o tema padrão do app (medium = sidebar escura + páginas claras)
+      const savedTheme = localStorage.getItem("theme");
+      root.classList.add(savedTheme === "dark" ? "dark" : "medium");
+    }
+    return () => {
+      // Ao sair do cockpit, restaurar tema global
+      root.classList.remove("dark", "medium", "light");
+      const savedTheme = localStorage.getItem("theme");
+      root.classList.add(savedTheme === "dark" ? "dark" : "medium");
+    };
+  }, [isDarkMode]);
+
   // Salvar estado da sessão automaticamente
   useEffect(() => {
     if (!isLoaded) return;

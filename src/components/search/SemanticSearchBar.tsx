@@ -139,7 +139,7 @@ export function SemanticSearchBar({
         align="start"
         sideOffset={4}
         className={cn(
-          "w-[var(--radix-popover-trigger-width)] min-w-[360px] max-w-[480px] p-0",
+          "w-[var(--radix-popover-trigger-width)] min-w-[280px] sm:min-w-[360px] max-w-[480px] p-0",
           "bg-background",
           "border-border",
           "shadow-lg",

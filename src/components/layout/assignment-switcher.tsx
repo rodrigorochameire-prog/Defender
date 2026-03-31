@@ -145,7 +145,7 @@ export function AssignmentSwitcher({ collapsed = false }: { collapsed?: boolean 
         align="start"
         className={cn(
           "w-80 p-2",
-          "bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl",
+          "bg-white/95 dark:bg-background/95 backdrop-blur-xl",
           "border border-zinc-200/80 dark:border-border",
           "shadow-2xl shadow-zinc-900/10 dark:shadow-black/30",
           "rounded-2xl"
@@ -249,8 +249,8 @@ export function AssignmentSwitcher({ collapsed = false }: { collapsed?: boolean 
 
         <DropdownMenuSeparator className="my-2" />
 
-        <div className="px-3 py-2.5 text-[11px] text-zinc-400 dark:text-muted-foreground leading-relaxed bg-zinc-50 dark:bg-muted/50 rounded-xl mx-1">
-          <span className="font-semibold text-zinc-500 dark:text-muted-foreground">Dica:</span> Cada atribuição tem ferramentas e visualizações específicas para sua área de atuação.
+        <div className="px-3 py-2.5 text-[11px] text-muted-foreground leading-relaxed bg-muted/50 rounded-xl mx-1">
+          <span className="font-semibold text-muted-foreground">Dica:</span> Cada atribuição tem ferramentas e visualizações específicas para sua área de atuação.
         </div>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -1038,7 +1038,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-6 w-6 p-0 text-zinc-400 hover:text-red-500"
+                              className="h-8 w-8 p-0 text-zinc-400 hover:text-red-500"
                               onClick={() => handleRemove(demanda.id)}
                             >
                               <Trash2 className="w-3 h-3" />

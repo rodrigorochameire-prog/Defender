@@ -117,7 +117,7 @@ export function NoticiasPastasSidebar({ pastaAtiva, onSelectPasta }: Props) {
             }}
             onBlur={() => { if (!nomePasta.trim()) setCriando(false); }}
             placeholder="Nome da pasta"
-            className="h-6 text-[11px] px-2"
+            className="h-8 text-[11px] px-2"
           />
         ) : (
           <button

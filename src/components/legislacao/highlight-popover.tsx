@@ -84,7 +84,7 @@ export function HighlightPopover({
         <button
           key={cor.id}
           className={cn(
-            "h-6 w-6 rounded-full border border-zinc-300 dark:border-border transition-transform",
+            "h-8 w-8 rounded-full border border-zinc-300 dark:border-border transition-transform",
             "hover:scale-110 hover:ring-2",
             cor.bg,
             cor.ring
