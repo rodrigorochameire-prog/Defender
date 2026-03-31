@@ -5,37 +5,93 @@
     "juri": {
       "nome": "Tribunal do Júri",
       "arquivo": "juri.skill",
-      "referencias": ["analise_para_juri.md", "analise_estrategica_juri.md"],
+      "referencias": [
+        "absolvicao_sumaria_alibe.md",
+        "alegacoes_finais_juri.md",
+        "analise_dos_jurados.md",
+        "analise_estrategica_juri.md",
+        "analise_juri_estruturada_2.md",
+        "analise_juri_estruturada.md",
+        "analise_para_juri.md",
+        "analise_preparar_juri_422.md",
+        "apelacao_pos_juri.md",
+        "diligencias_422_cpp.md",
+        "fabrica_ideias_defensivas.md",
+        "slides_do_juri.md"
+      ],
       "descricao": "Análise estratégica completa para plenário do júri"
     },
     "criminal-comum": {
       "nome": "Criminal Comum",
       "arquivo": "criminal-comum.skill",
-      "referencias": [],
+      "referencias": [
+        "alegacoes_finais_aprimorado.md",
+        "alegacoes_finais_criminal.md",
+        "apelacao_criminal.md",
+        "habeas_corpus_excesso_prazal.md",
+        "habeas_corpus.md",
+        "insanidade_incidente_quesitos.md",
+        "peticao_intermediaria.md",
+        "recurso_em_sentido_estrito.md",
+        "requerimento_relaxamento_revogacao.md",
+        "resposta_acusacao_basica.md",
+        "resposta_acusacao_criminal.md",
+        "sintese_processual.md"
+      ],
       "descricao": "Análise de processos criminais comuns (não júri)"
     },
     "vvd": {
       "nome": "Violência Doméstica",
       "arquivo": "vvd.skill",
-      "referencias": [],
+      "referencias": [
+        "rq_atualizacao_endereco_vvd.md",
+        "vvd_alegacoes_finais.md",
+        "vvd_analise_audiencia_justificacao.md",
+        "vvd_analise_para_audiencia.md",
+        "vvd_analise_para_ra.md",
+        "vvd_apelacao_aprimorado.md",
+        "vvd_apelacao.md",
+        "vvd_contrarrazoes_apelacao.md",
+        "vvd_contrarrazoes_embargos_declaracao.md",
+        "vvd_contrarrazoes_rese.md",
+        "vvd_cota_juntada_audios.md",
+        "vvd_ra.md",
+        "vvd_requerimento_revogacao_mpu.md"
+      ],
       "descricao": "Análise de processos de violência doméstica (Maria da Penha)"
     },
     "execucao-penal": {
       "nome": "Execução Penal",
       "arquivo": "execucao-penal.skill",
-      "referencias": [],
+      "referencias": [
+        "analisar_falta_intimacao_ep.md",
+        "analise_varredura_conformidade_ep.md",
+        "ep_extincao_prescricao_executoria.md",
+        "ep_impugnacao_reconversao_nao_localizado.md",
+        "ep_requerimento_ausencia_comarca.md"
+      ],
       "descricao": "Análise de processos de execução penal (progressão, livramento, etc.)"
     },
     "analise-audiencias": {
       "nome": "Análise de Audiências",
       "arquivo": "analise-audiencias.skill",
-      "referencias": [],
+      "referencias": [
+        "analise_audiencia_criminal.md",
+        "analise_audiencia_sumariante.md",
+        "analise_audiencia_trafico.md",
+        "analise_auto_prisao_flagrante.md",
+        "analise_para_ra.md",
+        "relatorio_audiencia_justificacao.md",
+        "tripla_saida.md"
+      ],
       "descricao": "Preparação e análise para audiências (perguntas, contradições, estratégia)"
     },
     "dpe-ba-pecas": {
       "nome": "Peças Processuais DPE-BA",
       "arquivo": "dpe-ba-pecas.skill",
-      "referencias": [],
+      "referencias": [
+        "tipos_de_pecas.md"
+      ],
       "descricao": "Geração de peças processuais com formatação institucional DPE-BA"
     },
     "citacao-depoimentos": {
@@ -47,7 +103,11 @@
     "institucional": {
       "nome": "Institucional",
       "arquivo": "institucional.skill",
-      "referencias": [],
+      "referencias": [
+        "declaracao_uniao_estavel.md",
+        "manifestacao_apf_plantao.md",
+        "oficios.md"
+      ],
       "descricao": "Documentos e análises institucionais da Defensoria"
     }
   },
