@@ -69,11 +69,14 @@ const COLUNAS = {
  */
 function onEditTrigger(e) {
   try {
+    // Guard: ignora eventos sem range (edições por script, macro, ou colagem em massa)
+    if (!e || !e.range) return;
+
     const range = e.range;
     const row = range.getRow();
 
-    // Ignora cabeçalho (linha 1)
-    if (row <= 1) return;
+    // Ignora cabeçalho (linhas 1-3: título, separador, headers)
+    if (row <= 3) return;
 
     const sheet = range.getSheet();
     const col   = range.getColumn();
@@ -274,7 +277,7 @@ function sincronizarLinhasSemId() {
 
     const sheetName = sheet.getName();
 
-    for (let row = 2; row <= lastRow; row++) {
+    for (let row = 4; row <= lastRow; row++) { // Row 1=title, 2=separator, 3=headers
       const ombudsId = sheet.getRange(row, COL_OMBUDS_ID).getValue();
       if (ombudsId && ombudsId !== "") continue; // já tem ID
 
