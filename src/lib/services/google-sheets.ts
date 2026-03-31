@@ -114,7 +114,7 @@ const SHEET_TITLE_TEXT: Record<string, string> = {
 // Mapeamento atribuição DB → nome da aba na planilha
 export const ATRIBUICAO_TO_SHEET: Record<string, string> = {
   JURI_CAMACARI: "Júri",
-  VVD_CAMACARI: "Violência Doméstic",  // Nome real da aba (sem 'a' final)
+  VVD_CAMACARI: "Violência Doméstica",
   EXECUCAO_PENAL: "EP",
   SUBSTITUICAO: "Substituição criminal",
   SUBSTITUICAO_CIVEL: "Substituição criminal",

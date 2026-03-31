@@ -93,7 +93,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       "Júri": ["JURI_CAMACARI", "GRUPO_JURI"],
       "EP": ["EXECUCAO_PENAL"],
       "Substituição criminal": ["SUBSTITUICAO"],
-      "Violência Doméstic": ["VVD_CAMACARI"],
+      "Violência Doméstica": ["VVD_CAMACARI"],
       "Curadoria": ["SUBSTITUICAO_CIVEL"],
     };
     const atribuicoes = atribuicaoMap[sheetName] || [sheetName];
