@@ -511,11 +511,30 @@ async function formatSheet(sheetId: number, title: string, dataRowCount = 500): 
         fields: "hiddenByUser",
       },
     },
-    // Não congela (padrão VVD)
+    // Congela as 3 primeiras linhas (título + separador + header)
     {
       updateSheetProperties: {
-        properties: { sheetId, gridProperties: { frozenRowCount: 0 } },
+        properties: { sheetId, gridProperties: { frozenRowCount: DATA_START_ROW - 1 } },
         fields: "gridProperties.frozenRowCount",
+      },
+    },
+    // Limpar filtro existente antes de criar novo (evita erro de duplicata)
+    {
+      clearBasicFilter: { sheetId },
+    },
+    // BasicFilter cobrindo header + todas as linhas de dados (até 2000)
+    // Permite ordenar/filtrar pelo menu do header
+    {
+      setBasicFilter: {
+        filter: {
+          range: {
+            sheetId,
+            startRowIndex: DATA_START_ROW - 2, // header row (0-indexed)
+            endRowIndex: DATA_START_ROW - 1 + 2000, // cobrir até 2000 linhas de dados
+            startColumnIndex: 0,
+            endColumnIndex: HEADERS.length,
+          },
+        },
       },
     },
     // Dropdown: Status (col B = index 1)
