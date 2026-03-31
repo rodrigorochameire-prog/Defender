@@ -809,6 +809,16 @@ export const demandasRouter = router({
 
       for (const row of input.rows) {
         try {
+          // Validar que assistido não é uma data serializada (bug Apps Script)
+          const nomeAssistido = String(row.assistido ?? "").trim();
+          const nomePareceDada = /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s/.test(nomeAssistido) ||
+            /^\d{4}-\d{2}-\d{2}T/.test(nomeAssistido);
+          if (nomePareceDada) {
+            results.errors.push(`${nomeAssistido}: nome do assistido parece ser uma data — ignorando`);
+            results.skipped++;
+            continue;
+          }
+
           // 1. Buscar ou criar assistido
           // Se assistidoMatchId disponível (PJe Import v2), buscar por ID direto
           let assistido;

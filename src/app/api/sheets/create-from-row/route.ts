@@ -66,9 +66,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const { assistidoNome, numeroAutos, ato, sheetName, defensorEmail } = body;
 
-  if (!assistidoNome?.trim() || !numeroAutos?.trim() || !ato?.trim()) {
+  // Converter para string caso Apps Script envie um objeto Date
+  const nomeStr = String(assistidoNome ?? "").trim();
+
+  // Detectar se o "nome" é na verdade uma data serializada (ex: "Mon Mar 23 2026 00:00:00 GMT-0300")
+  const pareceData = /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s/.test(nomeStr) ||
+    /^\d{4}-\d{2}-\d{2}/.test(nomeStr) ||
+    /^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(nomeStr);
+
+  if (!nomeStr || pareceData || !numeroAutos?.trim() || !ato?.trim()) {
     return NextResponse.json(
-      { error: "Campos obrigatórios: assistidoNome, numeroAutos, ato" },
+      { error: pareceData
+          ? "assistidoNome contém uma data em vez de nome — verifique o mapeamento de colunas no Apps Script"
+          : "Campos obrigatórios: assistidoNome, numeroAutos, ato" },
       { status: 400 }
     );
   }
@@ -106,7 +116,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       .from(assistidos)
       .where(
         and(
-          ilike(assistidos.nome, assistidoNome.trim()),
+          ilike(assistidos.nome, nomeStr),
           isNull(assistidos.deletedAt)
         )
       )
@@ -117,7 +127,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     } else {
       const [newAssistido] = await db
         .insert(assistidos)
-        .values({ nome: assistidoNome.trim(), defensorId })
+        .values({ nome: nomeStr, defensorId })
         .returning({ id: assistidos.id });
       assistidoId = newAssistido.id;
     }
@@ -175,7 +185,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       .returning({ id: demandas.id });
 
     console.log(
-      `[Sheets Create] Nova demanda ${newDemanda.id} criada — ${assistidoNome} / ${numeroAutos}`
+      `[Sheets Create] Nova demanda ${newDemanda.id} criada — ${nomeStr} / ${numeroAutos}`
     );
 
     return NextResponse.json({ ok: true, demandaId: newDemanda.id });
