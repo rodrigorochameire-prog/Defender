@@ -402,57 +402,57 @@ type RGBColor = { red: number; green: number; blue: number };
  * Grupo 7: verde-pastel com gradação por finalidade
  */
 const STATUS_COLORS: Record<string, RGBColor> = {
-  // ── 1 · Urgente — rosé suave (não vermelho agressivo) ──
-  "1 - Urgente":            { red: 0.945, green: 0.525, blue: 0.525 },
+  // ── 1 · Urgente — rosa-claro (pastel, não agressivo) ──
+  "1 - Urgente":            { red: 0.976, green: 0.800, blue: 0.800 },
 
-  // ── 2 · Andamento — gradação amarelo-claro → laranja-suave ──
-  //    Iniciais (triagem): mais claro
-  "2 - Analisar":           { red: 1.0,   green: 0.925, blue: 0.620 },
-  "2 - Buscar":             { red: 1.0,   green: 0.910, blue: 0.580 },
-  "2 - Diligenciar":        { red: 1.0,   green: 0.898, blue: 0.545 },
-  "2 - Relatório":          { red: 1.0,   green: 0.898, blue: 0.545 },
-  "2 - Investigar":         { red: 1.0,   green: 0.875, blue: 0.500 },
+  // ── 2 · Andamento — gradação creme-claro → pêssego-suave ──
+  //    Iniciais (triagem): quase branco com toque amarelo
+  "2 - Analisar":           { red: 1.0,   green: 0.965, blue: 0.850 },
+  "2 - Buscar":             { red: 1.0,   green: 0.955, blue: 0.830 },
+  "2 - Diligenciar":        { red: 1.0,   green: 0.945, blue: 0.810 },
+  "2 - Relatório":          { red: 1.0,   green: 0.945, blue: 0.810 },
+  "2 - Investigar":         { red: 1.0,   green: 0.935, blue: 0.785 },
   //    Em trabalho: tom intermediário
-  "2 - Atender":            { red: 1.0,   green: 0.855, blue: 0.465 },
-  "2 - Elaborar":           { red: 1.0,   green: 0.835, blue: 0.430 },
-  "2 - Elaborando":         { red: 0.996, green: 0.812, blue: 0.400 },
-  //    Revisão/protocolo: mais quente (próximo de finalizar)
-  "2 - Revisar":            { red: 0.992, green: 0.788, blue: 0.375 },
-  "2 - Revisando":          { red: 0.988, green: 0.765, blue: 0.350 },
-  "3 - Protocolar":         { red: 0.984, green: 0.737, blue: 0.325 },
+  "2 - Atender":            { red: 1.0,   green: 0.920, blue: 0.760 },
+  "2 - Elaborar":           { red: 1.0,   green: 0.905, blue: 0.730 },
+  "2 - Elaborando":         { red: 1.0,   green: 0.890, blue: 0.700 },
+  //    Revisão/protocolo: pêssego (mais quente, mas ainda suave)
+  "2 - Revisar":            { red: 1.0,   green: 0.875, blue: 0.675 },
+  "2 - Revisando":          { red: 1.0,   green: 0.860, blue: 0.650 },
+  "3 - Protocolar":         { red: 0.996, green: 0.840, blue: 0.620 },
 
-  // ── 4 · Monitorar — lilás-pastel suave ──
-  "4 - Monitorar":          { red: 0.910, green: 0.878, blue: 0.980 },
-  "4 - Estágio - Taissa":   { red: 0.882, green: 0.843, blue: 0.973 },
-  "4 - Amanda":             { red: 0.855, green: 0.808, blue: 0.965 },
-  "4 - Emilly":             { red: 0.827, green: 0.773, blue: 0.957 },
+  // ── 4 · Monitorar — lavanda-pastel muito suave ──
+  "4 - Monitorar":          { red: 0.940, green: 0.920, blue: 0.988 },
+  "4 - Estágio - Taissa":   { red: 0.925, green: 0.900, blue: 0.982 },
+  "4 - Amanda":             { red: 0.910, green: 0.878, blue: 0.975 },
+  "4 - Emilly":             { red: 0.893, green: 0.855, blue: 0.968 },
 
-  // ── 5 · Fila — cinza neutro claro ──
-  "5 - Fila":               { red: 0.902, green: 0.902, blue: 0.902 },
+  // ── 5 · Fila — cinza muito claro ──
+  "5 - Fila":               { red: 0.935, green: 0.935, blue: 0.935 },
 
-  // ── 6 · Preparação — azul-pastel suave ──
-  "6 - Documentos":         { red: 0.800, green: 0.898, blue: 0.945 },
-  "6 - Testemunhas":        { red: 0.830, green: 0.918, blue: 0.960 },
+  // ── 6 · Preparação — azul-gelo pastel ──
+  "6 - Documentos":         { red: 0.878, green: 0.937, blue: 0.965 },
+  "6 - Testemunhas":        { red: 0.898, green: 0.949, blue: 0.975 },
 
-  // ── 7 · Concluído — verde-pastel com gradação ──
-  //    Mais suave (ciência/sem atuação): tom claro
-  "7 - Ciência":            { red: 0.690, green: 0.890, blue: 0.690 },
-  "7 - Sem atuação":        { red: 0.720, green: 0.902, blue: 0.720 },
-  "7 - Constituiu advogado":{ red: 0.700, green: 0.895, blue: 0.700 },
-  //    Mais definido (protocolado/resolvido): tom médio
-  "7 - Protocolado":        { red: 0.620, green: 0.860, blue: 0.620 },
-  "7 - Sigad":              { red: 0.580, green: 0.840, blue: 0.580 },
-  "7 - Resolvido":          { red: 0.545, green: 0.820, blue: 0.545 },
+  // ── 7 · Concluído — menta-pastel com gradação ──
+  //    Mais suave (ciência/sem atuação): quase branco-esverdeado
+  "7 - Ciência":            { red: 0.840, green: 0.940, blue: 0.840 },
+  "7 - Sem atuação":        { red: 0.860, green: 0.945, blue: 0.860 },
+  "7 - Constituiu advogado":{ red: 0.850, green: 0.942, blue: 0.850 },
+  //    Mais definido (protocolado/resolvido): menta mais presente
+  "7 - Protocolado":        { red: 0.790, green: 0.920, blue: 0.790 },
+  "7 - Sigad":              { red: 0.760, green: 0.905, blue: 0.760 },
+  "7 - Resolvido":          { red: 0.730, green: 0.890, blue: 0.730 },
 };
 
-/** Cores dos atos por categoria — paleta suavizada */
-const _GREEN_DARK:  RGBColor = { red: 0.580, green: 0.830, blue: 0.580 }; // peças urgentes
-const _GREEN_MED:   RGBColor = { red: 0.660, green: 0.870, blue: 0.660 }; // recursos
-const _GREEN_LIGHT: RGBColor = { red: 0.780, green: 0.920, blue: 0.780 }; // intermediários
-const _YELLOW:      RGBColor = { red: 1.0,   green: 0.910, blue: 0.580 }; // liberdade/prisão (suave)
-const _ORANGE:      RGBColor = { red: 0.996, green: 0.835, blue: 0.465 }; // HC/MS (quente suave)
-const _BLUE_LIGHT:  RGBColor = { red: 0.800, green: 0.898, blue: 0.945 }; // ciências
-const _GRAY:        RGBColor = { red: 0.902, green: 0.902, blue: 0.902 }; // outros
+/** Cores dos atos por categoria — paleta pastel muito suave */
+const _GREEN_DARK:  RGBColor = { red: 0.760, green: 0.905, blue: 0.760 }; // peças urgentes
+const _GREEN_MED:   RGBColor = { red: 0.820, green: 0.930, blue: 0.820 }; // recursos
+const _GREEN_LIGHT: RGBColor = { red: 0.875, green: 0.950, blue: 0.875 }; // intermediários
+const _YELLOW:      RGBColor = { red: 1.0,   green: 0.945, blue: 0.810 }; // liberdade/prisão
+const _ORANGE:      RGBColor = { red: 1.0,   green: 0.910, blue: 0.740 }; // HC/MS
+const _BLUE_LIGHT:  RGBColor = { red: 0.878, green: 0.937, blue: 0.965 }; // ciências
+const _GRAY:        RGBColor = { red: 0.935, green: 0.935, blue: 0.935 }; // outros
 
 const ATO_COLORS: Record<string, RGBColor> = {
   // Peças urgentes
