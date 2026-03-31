@@ -125,7 +125,7 @@ export const ATRIBUICAO_TO_SHEET: Record<string, string> = {
  * Abas manuais: têm layout diferente (Status na col A, sem __id__).
  * formatSheet() NÃO deve ocultar col A nem aplicar formato automático.
  */
-const MANUAL_SHEETS = new Set(["Violência Doméstic"]);
+const MANUAL_SHEETS = new Set<string>(); // Nenhuma aba manual — todas sincronizadas
 
 // ==========================================
 // TIPOS
