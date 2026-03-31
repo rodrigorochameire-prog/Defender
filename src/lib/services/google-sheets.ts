@@ -346,7 +346,7 @@ function colToLetter(col: number): string {
 /**
  * Retorna a lista de abas da planilha
  */
-async function getSheets(): Promise<Array<{ sheetId: number; title: string }>> {
+export async function getSheets(): Promise<Array<{ sheetId: number; title: string }>> {
   const data = await sheetsGet("?fields=sheets.properties") as {
     sheets: Array<{ properties: { sheetId: number; title: string } }>;
   };
@@ -476,13 +476,14 @@ const ATO_COLORS: Record<string, RGBColor> = {
 /**
  * Aplica formatação padrão VVD: oculta coluna A, dropdowns Status/Ato, cores condicionais.
  * Idempotente — seguro chamar em abas já formatadas.
- * @param dataRowCount Número de linhas de dados (para range dos dropdowns). Default=500.
+ * @param dataRowCount Número de linhas de dados (para range dos dropdowns/filtros). Mínimo 2000.
  */
-async function formatSheet(sheetId: number, title: string, dataRowCount = 500): Promise<void> {
+export async function formatSheet(sheetId: number, title: string, dataRowCount = 2000): Promise<void> {
   // Abas manuais (ex: VVD) têm layout próprio — não aplicar formatação automática
   if (MANUAL_SHEETS.has(title)) return;
 
-  const endRow = DATA_START_ROW - 1 + dataRowCount; // index 0-based: row 3 + N dados
+  // Garantir cobertura mínima de 2000 linhas para dropdowns, filtros e cores
+  const endRow = DATA_START_ROW - 1 + Math.max(dataRowCount, 2000); // index 0-based: row 3 + N dados
 
   // Primeiro: remover formatação condicional existente (evitar duplicatas)
   const clearRequests: unknown[] = [];
