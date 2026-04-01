@@ -1,11 +1,17 @@
 "use client";
 
-import { Calendar } from "lucide-react";
+import { Calendar, ArrowLeft, Pencil, User } from "lucide-react";
 import Link from "next/link";
-import { CoworkActionGroup } from "@/components/shared/cowork-action-button";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { AnaliseButton } from "@/app/(dashboard)/admin/assistidos/[id]/_components/analise-button";
+import { PromptorioModal } from "@/app/(dashboard)/admin/assistidos/[id]/_components/promptorio-modal";
+import { Button } from "@/components/ui/button";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { ChevronDown } from "lucide-react";
+import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 
 interface Assistido {
   id: number;
@@ -42,109 +48,131 @@ export function ProcessoHeader({
   proximaAudiencia,
   classeProcessual,
 }: ProcessoHeaderProps) {
+  const router = useRouter();
+  const [promptorioOpen, setPromptorioOpen] = useState(false);
+
   const diasAteAudiencia = proximaAudiencia
     ? differenceInDays(new Date(proximaAudiencia.data), new Date())
     : null;
 
-  const atribuicaoLabel: Record<string, string> = {
-    JURI_CAMACARI: "Tribunal do Júri",
-    VVD_CAMACARI: "Violência Doméstica",
-    EXECUCAO_PENAL: "Execução Penal",
-    SUBSTITUICAO: "Substituição Criminal",
-  };
+  const colors = getAtribuicaoColors(atribuicao) as Record<string, string>;
+  const attrLabel = colors.shortLabel || colors.label || atribuicao;
 
   return (
-    <div className="px-6 lg:px-8 pt-7 pb-6 border-b border-zinc-200/80 dark:border-zinc-800/60">
-      {/* Número do processo */}
-      <h1
-        className="text-2xl font-bold font-mono tracking-tight text-zinc-800 dark:text-zinc-100 select-all hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer transition-colors"
-        title="Clique para selecionar"
-      >
-        {numeroAutos}
-      </h1>
-      <div className="flex items-center gap-2 mt-2">
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">
-          {atribuicaoLabel[atribuicao] ?? atribuicao}
-        </span>
-        {vara && (
-          <>
-            <span className="text-zinc-300 dark:text-zinc-600">·</span>
-            <span className="text-sm text-zinc-400 dark:text-zinc-500">{vara}</span>
-          </>
-        )}
-        {comarca && (
-          <>
-            <span className="text-zinc-300 dark:text-zinc-600">·</span>
-            <span className="text-sm text-zinc-400 dark:text-zinc-500">{comarca}</span>
-          </>
-        )}
-      </div>
+    <>
+      {/* Header card — elevated, same pattern as assistido */}
+      <div className="relative mx-4 lg:mx-6 mt-4 px-5 pt-5 pb-4 rounded-xl bg-white dark:bg-zinc-900 shadow-md dark:shadow-zinc-950/50 ring-1 ring-zinc-100 dark:ring-zinc-800/50 overflow-hidden">
+        {/* Accent */}
+        <div className="absolute inset-0 bg-gradient-to-r from-zinc-200/80 via-zinc-100/30 to-transparent dark:from-zinc-700/40 dark:via-transparent dark:to-transparent pointer-events-none" />
+        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-black dark:bg-white rounded-l-xl z-10" />
 
-      {/* Assistidos */}
-      <div className="flex flex-wrap gap-2.5 mt-5">
-        {assistidos.map((a) => {
-          const preso = PRESOS.includes(a.statusPrisional ?? "");
-          return (
-            <Link key={a.id} href={`/admin/assistidos/${a.id}`}>
-              <div className={cn(
-                "flex items-center gap-2.5 px-4 py-2.5 rounded-xl border transition-all cursor-pointer",
-                preso
-                  ? "border-rose-200 dark:border-rose-800/50 bg-rose-50/30 dark:bg-rose-950/10 hover:border-rose-300"
-                  : "border-zinc-200 dark:border-zinc-700/50 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-sm"
+        {/* Row 1: Back + Número + Meta + Actions */}
+        <div className="relative flex items-center gap-4">
+          <button
+            onClick={() => router.back()}
+            className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+
+          <div className="flex-1 min-w-0">
+            {/* Line 1: Número + Atribuição + Classe */}
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1
+                className="font-mono text-lg font-bold tracking-tight text-foreground select-all hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer transition-colors"
+                title="Clique para selecionar"
+              >
+                {numeroAutos}
+              </h1>
+              <Link href={`/admin/processos/${id}/editar`}>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground/30 hover:text-emerald-600">
+                  <Pencil className="h-3 w-3" />
+                </Button>
+              </Link>
+              <span className="w-px h-4 bg-zinc-200/70 dark:bg-zinc-700/70" />
+              <span className={cn(
+                "text-[11px] px-2 py-0.5 rounded-md font-medium",
+                colors.bg, colors.text
               )}>
-                <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{a.nome}</span>
-                {preso && (
-                  <span className="text-[10px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/30 px-2 py-0.5 rounded-md">
-                    PRESO
-                  </span>
-                )}
-              </div>
-            </Link>
-          );
-        })}
-      </div>
+                {attrLabel}
+              </span>
+              {classeProcessual && (
+                <span className="text-xs text-muted-foreground">{classeProcessual}</span>
+              )}
+            </div>
 
-      {/* Próxima audiência */}
-      {proximaAudiencia && diasAteAudiencia !== null && (
-        <div className={cn(
-          "flex items-center gap-3 px-4 py-3 rounded-xl mt-5 border",
-          diasAteAudiencia < 3
-            ? "bg-rose-50/50 dark:bg-rose-950/10 text-rose-700 dark:text-rose-300 border-rose-200/80 dark:border-rose-800/30"
-            : diasAteAudiencia < 7
-            ? "bg-amber-50/50 dark:bg-amber-950/10 text-amber-700 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/30"
-            : "bg-zinc-50 dark:bg-zinc-800/40 text-zinc-600 dark:text-zinc-400 border-zinc-200/80 dark:border-zinc-700/40"
-        )}>
-          <Calendar className="h-4 w-4 shrink-0" />
-          <span className="text-sm font-semibold">{proximaAudiencia.tipo}</span>
-          <span className="text-sm">
-            {format(new Date(proximaAudiencia.data), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
-          </span>
-          <span className="text-xs opacity-70">
-            ({diasAteAudiencia === 0 ? "hoje" : diasAteAudiencia === 1 ? "amanhã" : `em ${diasAteAudiencia} dias`})
-          </span>
+            {/* Line 2: Vara + Comarca + Assistidos */}
+            <div className="flex items-center gap-2 mt-1 text-xs flex-wrap">
+              {vara && <span className="text-muted-foreground">{vara}</span>}
+              {vara && comarca && <span className="w-px h-3 bg-zinc-200 dark:bg-zinc-700" />}
+              {comarca && <span className="text-muted-foreground">{comarca}</span>}
+              <span className="w-px h-3 bg-zinc-200 dark:bg-zinc-700" />
+              {assistidos.map((a) => {
+                const preso = PRESOS.includes(a.statusPrisional ?? "");
+                return (
+                  <Link key={a.id} href={`/admin/assistidos/${a.id}`} className="inline-flex items-center gap-1 text-muted-foreground hover:text-emerald-600 transition-colors">
+                    <User className="w-3 h-3" />
+                    <span className="font-medium">{a.nome}</span>
+                    {preso && (
+                      <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" title="Preso" />
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            <AnaliseButton
+              assistidoId={assistidos[0]?.id}
+              processoId={id}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200 rounded-xl"
+              onClick={() => setPromptorioOpen(true)}
+            >
+              Promptório
+              <ChevronDown className="w-3 h-3" />
+            </Button>
+          </div>
         </div>
-      )}
 
-      {/* Actions */}
-      <div className="mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-700/30">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2.5">
-          Ações IA
-        </p>
-        <CoworkActionGroup
-          assistidoNome={assistidos[0]?.nome ?? ""}
-          numeroAutos={numeroAutos}
-          processoId={id}
-          classeProcessual={classeProcessual ?? ""}
-          vara={vara ?? ""}
-          atribuicao={atribuicao}
-          drivePath=""
-          actions={
-            atribuicao === "JURI_CAMACARI"
-              ? ["analise-autos", "gerar-peca", "preparar-audiencia"]
-              : ["analise-autos", "gerar-peca", "preparar-audiencia"]
-          }
-        />
+        {/* Próxima audiência — inline compact */}
+        {proximaAudiencia && diasAteAudiencia !== null && (
+          <div className={cn(
+            "relative flex items-center gap-2 mt-3 ml-8 text-xs",
+            diasAteAudiencia < 3
+              ? "text-rose-600 dark:text-rose-400"
+              : diasAteAudiencia < 7
+              ? "text-amber-600 dark:text-amber-400"
+              : "text-muted-foreground"
+          )}>
+            <Calendar className="h-3 w-3 shrink-0" />
+            <span className="font-semibold">{proximaAudiencia.tipo}</span>
+            <span>
+              {format(new Date(proximaAudiencia.data), "dd 'de' MMM 'às' HH:mm", { locale: ptBR })}
+            </span>
+            <span className="opacity-60">
+              ({diasAteAudiencia === 0 ? "hoje" : diasAteAudiencia === 1 ? "amanhã" : `em ${diasAteAudiencia} dias`})
+            </span>
+          </div>
+        )}
       </div>
-    </div>
+
+      {/* Promptório Modal */}
+      <PromptorioModal
+        open={promptorioOpen}
+        onOpenChange={setPromptorioOpen}
+        assistidoNome={assistidos[0]?.nome ?? ""}
+        processoNumero={numeroAutos}
+        classeProcessual={classeProcessual ?? undefined}
+        vara={vara ?? undefined}
+        atribuicao={atribuicao}
+        comarca={comarca ?? undefined}
+      />
+    </>
   );
 }
