@@ -156,7 +156,8 @@ export const VALID_SHEET_LABELS = new Set([
   "4 - Amanda", "4 - Estágio - Taissa", "4 - Emilly", "4 - Monitorar",
   "5 - Fila",
   "6 - Documentos", "6 - Testemunhas",
-  "7 - Protocolado", "7 - Sigad", "7 - Ciência", "7 - Resolvido",
+  "7 - Protocolado", "7 - Peticionamento intermediário", "7 - Sigad",
+  "7 - Ciência", "7 - Constituiu advogado", "7 - Sem atuação", "7 - Resolvido",
 ]);
 
 // Mapeamento DB status → label padrão da planilha
@@ -167,7 +168,7 @@ const STATUS_TO_LABEL: Record<string, string> = {
   "5_FILA": "5 - Fila",
   "7_PROTOCOLADO": "7 - Protocolado",
   "7_CIENCIA": "7 - Ciência",
-  "7_SEM_ATUACAO": "5 - Fila",
+  "7_SEM_ATUACAO": "7 - Sem atuação",
   CONCLUIDO: "7 - Resolvido",
   ARQUIVADO: "7 - Resolvido",
 };
