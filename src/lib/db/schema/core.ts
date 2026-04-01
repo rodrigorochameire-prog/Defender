@@ -534,3 +534,25 @@ export const chatHistory = pgTable("chat_history", {
 
 export type ChatHistoryEntry = typeof chatHistory.$inferSelect;
 export type InsertChatHistory = typeof chatHistory.$inferInsert;
+
+// ==========================================
+// ANALYSIS JOBS (Worker Queue)
+// ==========================================
+
+export const analysisJobs = pgTable("analysis_jobs", {
+  id: serial("id").primaryKey(),
+  processoId: integer("processo_id").notNull().references(() => processos.id),
+  skill: varchar("skill", { length: 50 }).notNull(),
+  prompt: text("prompt").notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  error: text("error"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+}, (table) => ({
+  statusIdx: index("analysis_jobs_status_idx").on(table.status),
+  processoIdx: index("analysis_jobs_processo_idx").on(table.processoId),
+}));
+
+export type AnalysisJob = typeof analysisJobs.$inferSelect;
+export type InsertAnalysisJob = typeof analysisJobs.$inferInsert;
