@@ -184,6 +184,8 @@ export const processos = pgTable("processos", {
   linkDrive: text("link_drive"),
   driveFolderId: text("drive_folder_id"),
   casoId: integer("caso_id"),
+  tipoProcesso: varchar("tipo_processo", { length: 30 }).default("AP"),
+  isReferencia: boolean("is_referencia").default(false),
   analysisStatus: varchar("analysis_status", { length: 20 }),
   analysisData: jsonb("analysis_data").$type<Record<string, any>>(),
   analyzedAt: timestamp("analyzed_at"),
