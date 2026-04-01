@@ -526,31 +526,75 @@ Cada bloco é uma seção colapsável. O conteúdo é **estratégico e contextua
 
 4. **Ação imediata, não exploração** — Os dois botões (Analisar + Promptório) são ações, não menus. O resultado da análise é apresentado pronto para uso, não como dado bruto para interpretar.
 
+### Layout geral da página
+
+Tudo dentro de um card único (`bg-white dark:bg-zinc-900 border rounded-2xl`). Estrutura vertical:
+1. Header (identidade + ações)
+2. Filtro de caso (processo referência)
+3. Drive bar (colapsável)
+4. Summary cards (2 colunas)
+5. Tabs + conteúdo
+
 ### Header do assistido
 
-- Ícone invertido (bg-white em dark, bg-zinc-900 em light) — padrão Defender
-- Nome em `font-serif text-xl font-semibold` — peso visual adequado
-- Metadados em linha: número dos autos (font-mono), vara, badges de status
-- Badges compactos: `Preso` (rose pill), `Júri` (emerald pill) — scan rápido
-- Botões de ação alinhados à direita, separados do conteúdo informativo
-- **Analisar**: emerald sólido, ícone Sparkles, peso visual dominante
-- **Promptório**: zinc outline, discreto, sem competir com Analisar
+- Avatar `48px rounded-xl bg-zinc-900 dark:bg-white` com iniciais — padrão Defender invertido
+- **Preso**: dot vermelho `12px` no canto superior direito do avatar (como notificação). Sem badge textual.
+- Nome em `font-serif text-xl font-semibold`
+- Metadados em linha: chip de atribuição (emerald) + separador + CPF mono + separador + vara
+- Stats bar abaixo: N processos, N demandas, N audiências, N arquivos — `text-xs text-zinc-400`
+- **Analisar**: `bg-zinc-900 dark:bg-emerald-600 text-white rounded-xl` com dot emerald. Peso visual dominante.
+- **Promptório**: outline neutro, discreto
+- Padding generoso: `32px horizontal, 28px top`
+
+### Filtro de caso (processo referência) — NOVO
+
+Substitui o antigo card de "Processos" no overview. Aparece abaixo do header, acima do Drive.
+
+- Pills horizontais, cada uma representando um caso (processo referência + associados)
+- Cada pill mostra:
+  - **Dot colorido** (emerald, amber, rose) — âncora visual rápida
+  - **Tipo**: "Ação Penal" em `text-[10px] uppercase text-zinc-400`
+  - **Descrição do caso**: "Homicídio qualificado — Sessão do Júri" em `text-sm font-medium`
+  - **Número + associados**: `font-mono text-[10px] text-zinc-400` — "8003969-75... · 3 associados"
+- Active: `border-zinc-900 dark:border-zinc-400` (destaque por borda, sem cor)
+- Inactive: `border-zinc-200 dark:border-zinc-800`
+- Ao selecionar um caso, **tudo abaixo filtra**: audiências, demandas, Drive, análise
+- Quando só 1 caso: filtro não aparece
+- Padding: `20px 36px`
+
+### Drive bar — colapsável, primário
+
+- Integrada no card principal, entre o filtro de caso e o summary
+- Linha única: ícone pasta + dot sync (verde/amber/vermelho) + "N arquivos · sync Xmin" + arquivo recente
+- Botão "Abrir" à direita + chevron de expandir
+- Expandida: lista de arquivos, fila de processamento, ações
+- `border-top: 1px solid border/50` — sutil
+- Hover: `bg-zinc-50 dark:bg-zinc-800/30`
+
+### Summary cards — 2 colunas, neutros
+
+- Grid 2 colunas (era 4 cards, depois 3, agora 2): **Próxima Audiência** + **Demanda Crítica**
+- Card neutro: `bg-zinc-50 dark:bg-zinc-800/40 border-zinc-200 dark:border-zinc-800 rounded-xl`
+- **Cor apenas no ícone e label**: ícone com background colorido sutil (amber: `bg-amber-50 text-amber-700`, rose: `bg-rose-50 text-rose-700`). Sem borda colorida, sem tint no card, sem linha lateral/inferior.
+- Label do card na cor semântica: amber para audiência, rose para demanda
+- Valor principal: `text-lg font-semibold`
+- Texto secundário: `text-sm text-zinc-500`
+- Padding: `22px 20px`
+- Hover: lift sutil `translateY(-1px)` + shadow
 
 ### Sistema de tabs
 
-- Tabs integrados no header card (não flutuantes) — unidade visual
-- Active tab: `text-emerald-500 border-b-2 border-emerald-500`
-- Contadores em pills: `bg-zinc-800 text-zinc-500` inativo, `bg-emerald-500/15 text-emerald-400` ativo
-- Ordem por frequência de uso: Visão Geral → Processos → Análise → Investigação Defensiva → Demandas → Audiências
-- Scroll horizontal em mobile (`overflow-x-auto`)
+- Tabs neutros (sem emerald no ativo)
+- Active: `text-zinc-900 dark:text-zinc-100 border-b-2 border-zinc-900 dark:border-zinc-100 font-medium`
+- Inactive: `text-zinc-400`
+- Contadores em pills: ativo `bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900`, inativo `bg-zinc-100 dark:bg-zinc-800 text-zinc-400`
+- Ordem: Processos → Análise → Demandas → Audiências → Drive → Mídias → Ofícios → Investigação
+- Scroll horizontal em mobile
+- Font: `text-sm`, padding `14px 16px`
 
 ### Seletor de caso (dentro da aba Análise)
 
-- Pills horizontais com número do processo + foco do caso
-- Active: `border-emerald-500 bg-emerald-500/8 text-emerald-500`
-- Inactive: `border-zinc-800 bg-zinc-900 text-zinc-500`
-- Abaixo: linha de processos associados em `text-xs text-zinc-600`
-- Quando só 1 caso: seletor não aparece (sem UI desnecessária)
+Reutiliza o mesmo filtro de caso do topo. Na aba Análise, os blocos de conteúdo mudam conforme o caso selecionado. Não precisa de seletor duplicado.
 
 ### Blocos de análise
 
