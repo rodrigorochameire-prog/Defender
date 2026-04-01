@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, Lock, User, ClipboardList, Plus, Sparkles, Pencil, Clock, Send, Gavel, Calendar, HardDrive, ContactRound, ChevronDown, Brain, MoreHorizontal, FileText } from "lucide-react";
+import { ArrowLeft, User, ClipboardList, Plus, Sparkles, Pencil, Clock, Send, Gavel, Calendar, HardDrive, ContactRound, ChevronDown, Brain, MoreHorizontal, FileText } from "lucide-react";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,6 +34,7 @@ import {
 import { AnaliseButton } from "./_components/analise-button";
 import { PromptorioModal } from "./_components/promptorio-modal";
 import { AnaliseTab } from "./_components/analise-tab";
+import { CaseFilter } from "./_components/case-filter";
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
@@ -74,6 +75,9 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
   // Promptório modal state
   const [promptorioOpen, setPromptorioOpen] = useState(false);
+
+  // Case filter state
+  const [selectedCaseId, setSelectedCaseId] = useState<number | null>(null);
 
   const utils = trpc.useUtils();
 
@@ -333,14 +337,19 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             const colors = getAtribuicaoColors((data as any).atribuicaoPrimaria);
             const initials = data.nome.split(" ").filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
             return (
-              <div
-                onClick={() => setFichaSheetOpen(true)}
-                className={cn(
-                  "h-16 w-16 rounded-2xl flex items-center justify-center shrink-0 shadow-lg text-white font-bold text-xl cursor-pointer hover:scale-105 transition-transform",
-                  colors.bgSolid || "bg-emerald-500"
+              <div className="relative shrink-0">
+                <div
+                  onClick={() => setFichaSheetOpen(true)}
+                  className={cn(
+                    "h-16 w-16 rounded-2xl flex items-center justify-center shadow-lg text-white font-bold text-xl cursor-pointer hover:scale-105 transition-transform",
+                    colors.bgSolid || "bg-emerald-500"
+                  )}
+                >
+                  {initials || <User className="h-7 w-7" />}
+                </div>
+                {isPreso && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-red-500 border-2 border-white dark:border-zinc-900" />
                 )}
-              >
-                {initials || <User className="h-7 w-7" />}
               </div>
             );
           })()}
@@ -365,12 +374,6 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               >
                 <ContactRound className="h-4 w-4" />
               </Button>
-              {isPreso && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 border-l-2 border-rose-500">
-                  <Lock className="h-3.5 w-3.5" />
-                  Preso
-                </span>
-              )}
             </div>
 
             {/* Metadata line */}
@@ -426,7 +429,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200"
+            className="gap-1.5 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200 rounded-xl"
             onClick={() => setPromptorioOpen(true)}
           >
             Promptório
@@ -434,6 +437,26 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           </Button>
         </div>
       </div>
+
+      {/* Case Filter */}
+      {data.processos.length > 1 && (
+        <CaseFilter
+          cases={data.processos.map((p, i) => ({
+            id: p.id,
+            foco: p.assunto,
+            processoReferencia: {
+              id: p.id,
+              numeroAutos: p.numeroAutos,
+              classeProcessual: p.classeProcessual,
+              atribuicao: p.atribuicao,
+            },
+            associadosCount: 0,
+            color: i === 0 ? "emerald" : i === 1 ? "amber" : "rose",
+          }))}
+          selectedCaseId={selectedCaseId}
+          onSelectCase={setSelectedCaseId}
+        />
+      )}
 
       {/* Drive Status Bar */}
       <DriveStatusBar assistidoId={Number(id)} />
@@ -467,7 +490,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               className={cn(
                 "flex items-center gap-2 px-4 py-3.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap shrink-0",
                 tab === t.key
-                  ? "border-emerald-500 text-foreground bg-emerald-50/50 dark:bg-emerald-900/10 rounded-t-lg"
+                  ? "border-zinc-900 dark:border-zinc-100 text-foreground font-medium"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               )}
             >
@@ -481,7 +504,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                     : t.urgency === "amber"
                     ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
                     : tab === t.key
-                    ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                    ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
                     : "bg-muted text-muted-foreground"
                 )}>
                   {t.count}
@@ -498,7 +521,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               className={cn(
                 "px-3 py-3.5 text-sm font-medium border-b-2 transition-all flex items-center gap-1 shrink-0",
                 overflowTabs.some(t => t.key === tab)
-                  ? "border-emerald-500 text-foreground bg-emerald-50/50 dark:bg-emerald-900/10 rounded-t-lg"
+                  ? "border-zinc-900 dark:border-zinc-100 text-foreground font-medium"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               )}
             >
