@@ -234,6 +234,40 @@ function StatusView({ files, assistidoId, processoId }: { files: DriveFileData[]
 
 // ─── File Detail Sheet ───────────────────────────────────────────────
 
+const FILE_ICON_MAP: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
+  "audio/": { icon: Music, color: "text-cyan-500", bg: "bg-cyan-50 dark:bg-cyan-950/30" },
+  "video/": { icon: Video, color: "text-violet-500", bg: "bg-violet-50 dark:bg-violet-950/30" },
+  "application/pdf": { icon: FileText, color: "text-rose-500", bg: "bg-rose-50 dark:bg-rose-950/30" },
+  "text/markdown": { icon: FileText, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/30" },
+  "image/": { icon: FileText, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-950/30" },
+};
+
+function getFileIcon(mimeType: string | null) {
+  if (!mimeType) return { icon: FileText, color: "text-zinc-400", bg: "bg-zinc-100 dark:bg-zinc-800" };
+  for (const [prefix, config] of Object.entries(FILE_ICON_MAP)) {
+    if (mimeType.startsWith(prefix)) return config;
+  }
+  return { icon: FileText, color: "text-zinc-400", bg: "bg-zinc-100 dark:bg-zinc-800" };
+}
+
+function formatFileType(mimeType: string | null): string {
+  if (!mimeType) return "Arquivo";
+  const map: Record<string, string> = {
+    "application/pdf": "PDF",
+    "text/markdown": "Markdown",
+    "video/mp4": "Vídeo MP4",
+    "audio/mpeg": "Áudio MP3",
+    "audio/ogg": "Áudio OGG",
+    "audio/wav": "Áudio WAV",
+    "image/jpeg": "Imagem JPEG",
+    "image/png": "Imagem PNG",
+    "application/vnd.google-apps.document": "Google Docs",
+    "application/vnd.google-apps.spreadsheet": "Google Sheets",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "Word",
+  };
+  return map[mimeType] || mimeType.split("/").pop()?.toUpperCase() || "Arquivo";
+}
+
 function FileDetailSheet({
   file,
   onClose,
@@ -245,7 +279,6 @@ function FileDetailSheet({
 
   const isAudio = file.mimeType?.startsWith("audio/");
   const isVideo = file.mimeType?.startsWith("video/");
-  const isAudioVideo = isAudio || isVideo;
 
   // Extract transcript data from enrichmentData
   const enrichData = file.enrichmentData as Record<string, unknown> | null | undefined;
@@ -269,134 +302,184 @@ function FileDetailSheet({
   const duration = enrichData?.duration as number | undefined;
   const hasTranscript = !!transcript;
 
-  const statusConfig: Record<string, { label: string; class: string }> = {
-    completed: { label: "Enriquecido", class: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-    processing: { label: "Processando", class: "bg-blue-100 text-blue-700 border-blue-200" },
-    failed: { label: "Falhou", class: "bg-rose-100 text-rose-700 border-rose-200" },
-    pending: { label: "Pendente", class: "bg-zinc-100 text-zinc-600 border-zinc-200" },
-    skipped: { label: "Ignorado", class: "bg-zinc-100 text-zinc-400 border-zinc-200" },
+  const statusConfig: Record<string, { label: string; dot: string }> = {
+    completed: { label: "Enriquecido", dot: "bg-emerald-500" },
+    processing: { label: "Processando", dot: "bg-blue-500 animate-pulse" },
+    failed: { label: "Falhou", dot: "bg-rose-500" },
+    pending: { label: "Pendente", dot: "bg-zinc-300" },
+    skipped: { label: "Ignorado", dot: "bg-zinc-300" },
   };
   const status = file.enrichmentStatus ? (statusConfig[file.enrichmentStatus] ?? statusConfig.pending) : null;
+  const fileIcon = getFileIcon(file.mimeType);
+  const FileIcon = fileIcon.icon;
 
   return (
     <>
       <Sheet open onOpenChange={(open) => !open && onClose()}>
         <SheetContent
           side="right"
-          className="w-full sm:max-w-md bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 p-0"
+          className="w-full sm:max-w-[420px] bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 p-0"
         >
           <SheetTitle className="sr-only">{file.name}</SheetTitle>
           <div className="flex flex-col h-full">
-            {/* Header */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
-              <div className="h-9 w-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
-                {isAudio ? (
-                  <Music className="h-4 w-4 text-cyan-500" />
-                ) : isVideo ? (
-                  <Video className="h-4 w-4 text-violet-500" />
-                ) : (
-                  <FileText className="h-4 w-4 text-zinc-400" />
-                )}
+
+            {/* ── Header ── */}
+            <div className="px-5 pt-5 pb-4 border-b border-zinc-100 dark:border-zinc-800/60 shrink-0">
+              <div className="flex items-start gap-3.5">
+                <div className={cn("h-11 w-11 rounded-xl flex items-center justify-center shrink-0", fileIcon.bg)}>
+                  <FileIcon className={cn("h-5 w-5", fileIcon.color)} />
+                </div>
+                <div className="flex-1 min-w-0 pt-0.5">
+                  <p className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 leading-tight break-words">
+                    {file.name}
+                  </p>
+                  <p className="text-[11px] text-zinc-400 mt-1">
+                    {formatFileType(file.mimeType)}
+                    {file.lastModifiedTime && (
+                      <> · {format(
+                        file.lastModifiedTime instanceof Date ? file.lastModifiedTime : new Date(file.lastModifiedTime),
+                        "dd MMM yyyy",
+                        { locale: ptBR }
+                      )}</>
+                    )}
+                  </p>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="h-7 w-7 rounded-lg flex items-center justify-center text-zinc-300 hover:text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors mt-0.5"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{file.name}</p>
-                {file.documentType && (
-                  <p className="text-[11px] text-zinc-500">{file.documentType}</p>
-                )}
-              </div>
-              <button
-                onClick={onClose}
-                className="h-7 w-7 rounded-md flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
+
+              {/* Status row */}
+              {(status || file.categoria || file.documentType) && (
+                <div className="flex items-center gap-2 mt-3 flex-wrap">
+                  {status && (
+                    <span className="inline-flex items-center gap-1.5 text-[10px] text-zinc-500">
+                      <span className={cn("h-1.5 w-1.5 rounded-full", status.dot)} />
+                      {status.label}
+                    </span>
+                  )}
+                  {file.documentType && (
+                    <Badge variant="secondary" className="text-[10px] h-5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-normal">
+                      {file.documentType}
+                    </Badge>
+                  )}
+                  {file.categoria && (
+                    <Badge variant="secondary" className="text-[10px] h-5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-normal">
+                      {file.categoria}
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {/* Status + Category badges */}
-              <div className="flex flex-wrap gap-1.5">
-                {status && (
-                  <Badge variant="outline" className={cn("text-[10px] font-medium", status.class)}>
-                    {status.label}
-                  </Badge>
-                )}
-                {file.categoria && (
-                  <Badge variant="outline" className="text-[10px] bg-violet-50 text-violet-600 border-violet-200">
-                    {file.categoria}
-                  </Badge>
+            {/* ── Content ── */}
+            <div className="flex-1 overflow-y-auto">
+
+              {/* Actions — primary */}
+              <div className="px-5 py-3 flex gap-2 border-b border-zinc-100 dark:border-zinc-800/60">
+                {file.webViewLink && (
+                  <a href={file.webViewLink} target="_blank" rel="noopener noreferrer" className="flex-1">
+                    <Button
+                      size="sm"
+                      className="w-full h-8 text-[11px] font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
+                    >
+                      <ExternalLink className="h-3 w-3 mr-1.5" />
+                      Abrir no Drive
+                    </Button>
+                  </a>
                 )}
                 {hasTranscript && (
-                  <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1">
-                    <FileAudio className="h-2.5 w-2.5" />
-                    Transcrito
-                  </Badge>
-                )}
-                {analysis?.resumo_defesa && (
-                  <Badge variant="outline" className="text-[10px] bg-violet-50 text-violet-700 border-violet-200 flex items-center gap-1">
-                    <Brain className="h-2.5 w-2.5" />
-                    Analisado
-                  </Badge>
-                )}
-              </div>
-
-              {/* Metadata */}
-              <div className="space-y-2 rounded-lg border border-zinc-100 dark:border-zinc-800 p-3">
-                {file.mimeType && (
-                  <div className="flex justify-between text-[11px]">
-                    <span className="text-zinc-400">Tipo</span>
-                    <span className="text-zinc-600 dark:text-zinc-400 font-mono truncate ml-2">{file.mimeType}</span>
-                  </div>
-                )}
-                {file.lastModifiedTime && (
-                  <div className="flex justify-between text-[11px]">
-                    <span className="text-zinc-400">Modificado</span>
-                    <span className="text-zinc-600 dark:text-zinc-400 flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {format(file.lastModifiedTime instanceof Date ? file.lastModifiedTime : new Date(file.lastModifiedTime), "dd/MM/yyyy", { locale: ptBR })}
-                    </span>
-                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 h-8 text-[11px] font-medium border-zinc-200 dark:border-zinc-700"
+                    onClick={() => setTranscriptOpen(true)}
+                  >
+                    <FileAudio className="h-3 w-3 mr-1.5" />
+                    Transcrição
+                  </Button>
                 )}
               </div>
 
-              {/* Resumo IA */}
+              {/* AI Analysis — Resumo Defesa */}
               {analysis?.resumo_defesa && (
-                <div className="rounded-lg border border-violet-100 dark:border-violet-900 bg-violet-50/50 dark:bg-violet-950/20 p-3">
-                  <p className="text-[10px] font-semibold text-violet-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
+                  <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <Brain className="h-3 w-3" />
-                    Resumo Defesa
+                    Análise IA
                   </p>
-                  <p className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed line-clamp-4">
+                  <p className="text-[12px] text-zinc-700 dark:text-zinc-300 leading-relaxed">
                     {analysis.resumo_defesa}
                   </p>
                 </div>
               )}
 
-              {/* Actions */}
-              <div className="space-y-2">
-                {hasTranscript && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full h-8 text-xs text-violet-600 border-violet-200 hover:bg-violet-50"
-                    onClick={() => setTranscriptOpen(true)}
-                  >
-                    <FileAudio className="h-3.5 w-3.5 mr-1.5" />
-                    Ver Transcrição
-                  </Button>
-                )}
-                {file.webViewLink && (
-                  <a href={file.webViewLink} target="_blank" rel="noopener noreferrer" className="block">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full h-8 text-xs text-zinc-600 border-zinc-200 hover:bg-zinc-50"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                      Abrir no Drive
-                    </Button>
-                  </a>
-                )}
+              {/* Capabilities badges */}
+              {(hasTranscript || analysis?.resumo_defesa || (isAudio || isVideo)) && (
+                <div className="px-5 py-3 border-b border-zinc-100 dark:border-zinc-800/60">
+                  <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+                    Enriquecimento
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {hasTranscript && (
+                      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400">
+                        <FileAudio className="h-2.5 w-2.5" />
+                        Transcrito
+                      </span>
+                    )}
+                    {analysis?.resumo_defesa && (
+                      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400">
+                        <Brain className="h-2.5 w-2.5" />
+                        Analisado
+                      </span>
+                    )}
+                    {duration && (
+                      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
+                        <Clock className="h-2.5 w-2.5" />
+                        {Math.floor(duration / 60)}min {Math.floor(duration % 60)}s
+                      </span>
+                    )}
+                    {speakers && speakers.length > 0 && (
+                      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
+                        {speakers.length} falante{speakers.length > 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Metadata — clean key-value */}
+              <div className="px-5 py-4">
+                <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+                  Detalhes
+                </p>
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-zinc-400">Formato</span>
+                    <span className="text-[11px] text-zinc-600 dark:text-zinc-300 font-medium">{formatFileType(file.mimeType)}</span>
+                  </div>
+                  {file.lastModifiedTime && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-zinc-400">Modificado</span>
+                      <span className="text-[11px] text-zinc-600 dark:text-zinc-300 font-medium">
+                        {format(
+                          file.lastModifiedTime instanceof Date ? file.lastModifiedTime : new Date(file.lastModifiedTime),
+                          "dd 'de' MMMM 'de' yyyy",
+                          { locale: ptBR }
+                        )}
+                      </span>
+                    </div>
+                  )}
+                  {file.mimeType && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-zinc-400">MIME</span>
+                      <span className="text-[11px] text-zinc-500 font-mono">{file.mimeType}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

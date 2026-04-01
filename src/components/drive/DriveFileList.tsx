@@ -148,6 +148,7 @@ function FileRow({ file }: { file: DriveFile }) {
 
   const handleClick = () => {
     if (file.isFolder) ctx.navigateToFolder(file.driveFileId, file.name);
+    else if (file.webViewLink) window.open(file.webViewLink, "_blank");
     else ctx.openDetailPanel(file.id);
   };
 
