@@ -323,9 +323,11 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   return (
     <div className="flex flex-col h-full">
       {/* ── Header: Identity (compact) ── */}
-      <div className="mx-4 lg:mx-6 mt-4 px-5 pt-5 pb-4 rounded-xl bg-white dark:bg-zinc-900 shadow-md dark:shadow-zinc-950/50 ring-1 ring-zinc-100 dark:ring-zinc-800/50">
+      <div className="relative mx-4 lg:mx-6 mt-4 px-5 pt-5 pb-4 rounded-xl bg-white dark:bg-zinc-900 shadow-md dark:shadow-zinc-950/50 ring-1 ring-zinc-100 dark:ring-zinc-800/50 overflow-hidden">
+        {/* Subtle accent gradient from avatar color */}
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-50/40 via-transparent to-transparent dark:from-emerald-950/20 pointer-events-none" />
         {/* Row 1: Back + Avatar + Name + Actions */}
-        <div className="flex items-center gap-4">
+        <div className="relative flex items-center gap-4">
           <button
             onClick={() => router.back()}
             className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
