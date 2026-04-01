@@ -13,8 +13,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "~/lib/db";
-import { processos, assistidos, analysisJobs } from "~/lib/db/schema/core";
+import { db } from "@/lib/db";
+import { processos, assistidos, analysisJobs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 // Instruções por skill
