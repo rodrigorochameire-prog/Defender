@@ -447,8 +447,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             processoReferencia: {
               id: p.id,
               numeroAutos: p.numeroAutos,
-              classeProcessual: p.classeProcessual,
-              atribuicao: p.atribuicao,
+              classeProcessual: p.assunto ?? undefined,
+              atribuicao: p.fase ?? "Criminal",
             },
             associadosCount: 0,
             color: i === 0 ? "emerald" : i === 1 ? "amber" : "rose",
