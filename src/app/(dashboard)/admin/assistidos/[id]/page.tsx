@@ -324,9 +324,9 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     <div className="flex flex-col h-full">
       {/* ── Header: Identity (compact) ── */}
       <div className="relative mx-4 lg:mx-6 mt-4 px-5 pt-5 pb-4 rounded-xl bg-white dark:bg-zinc-900 shadow-md dark:shadow-zinc-950/50 ring-1 ring-zinc-100 dark:ring-zinc-800/50 overflow-hidden">
-        {/* Accent: left border + subtle gradient */}
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-zinc-800 dark:bg-zinc-400 rounded-l-xl" />
-        <div className="absolute inset-0 bg-gradient-to-r from-zinc-100/80 via-zinc-50/30 to-transparent dark:from-zinc-800/30 dark:via-transparent dark:to-transparent pointer-events-none" />
+        {/* Accent: left border + gradient */}
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-zinc-900 dark:bg-zinc-300 rounded-l-xl" />
+        <div className="absolute inset-0 bg-gradient-to-r from-zinc-200/60 via-zinc-100/20 to-transparent dark:from-zinc-700/30 dark:via-transparent dark:to-transparent pointer-events-none" />
         {/* Row 1: Back + Avatar + Name + Actions */}
         <div className="relative flex items-center gap-4">
           <button
@@ -336,17 +336,22 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             <ArrowLeft className="h-4 w-4" />
           </button>
 
-          {/* Avatar */}
+          {/* Avatar — cor baseada na atribuição: única = cor da atribuição, múltiplas = preto */}
           {(() => {
-            const colors = getAtribuicaoColors((data as any).atribuicaoPrimaria);
             const initials = data.nome.split(" ").filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+            // Check if assistido has processos with multiple distinct atribuições
+            const atribuicoes = new Set(data.processos.map(() => (data as any).atribuicaoPrimaria).filter(Boolean));
+            const hasMultiple = atribuicoes.size > 1 || data.processos.length > 1;
+            const avatarBg = hasMultiple
+              ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
+              : `${getAtribuicaoColors((data as any).atribuicaoPrimaria).bgSolid || "bg-zinc-900"} text-white`;
             return (
               <div className="relative shrink-0">
                 <div
                   onClick={() => setFichaSheetOpen(true)}
                   className={cn(
-                    "h-12 w-12 rounded-xl flex items-center justify-center text-white font-bold text-base cursor-pointer hover:scale-105 transition-transform",
-                    colors.bgSolid || "bg-emerald-500"
+                    "h-12 w-12 rounded-xl flex items-center justify-center font-bold text-base cursor-pointer hover:scale-105 transition-transform",
+                    avatarBg
                   )}
                 >
                   {initials || <User className="h-5 w-5" />}
