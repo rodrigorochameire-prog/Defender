@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, Lock, User, Loader2, ClipboardList, Plus, Sparkles, Pencil, Clock, Send, Gavel, Calendar, HardDrive, ContactRound, ChevronDown, ArrowUpFromLine, ArrowDownToLine, Brain, MoreHorizontal, Bot, Download, Zap, FileText } from "lucide-react";
+import { ArrowLeft, Lock, User, ClipboardList, Plus, Sparkles, Pencil, Clock, Send, Gavel, Calendar, HardDrive, ContactRound, ChevronDown, Brain, MoreHorizontal, FileText } from "lucide-react";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,11 +31,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CoworkActionGroup } from "@/components/shared/cowork-action-button";
+import { AnaliseButton } from "./_components/analise-button";
+import { PromptorioModal } from "./_components/promptorio-modal";
+import { AnaliseTab } from "./_components/analise-tab";
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
-type Tab = "processos" | "demandas" | "drive" | "audiencias" | "midias" | "timeline" | "oficios" | "inteligencia" | "radar";
+type Tab = "processos" | "demandas" | "drive" | "audiencias" | "midias" | "timeline" | "oficios" | "analise" | "investigacao" | "radar";
 
 interface TranscriptionData {
   transcript: string;
@@ -70,69 +72,12 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   // AI Analysis state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  // Promptório modal state
+  const [promptorioOpen, setPromptorioOpen] = useState(false);
+
   const utils = trpc.useUtils();
 
-  // Cowork import
-  const importarAnaliseCowork = trpc.briefing.importarAnaliseCowork.useMutation({
-    onSuccess: (result) => {
-      toast.success("Análise IA importada com sucesso", {
-        description: result.campos_atualizados.length > 0
-          ? `Campos: ${result.campos_atualizados.join(", ")}`
-          : "analysisData atualizado",
-      });
-      void utils.intelligence.getForAssistido.invalidate({ assistidoId: Number(id) });
-    },
-    onError: (err) => {
-      toast.error("Erro ao importar análise", { description: err.message });
-    },
-  });
 
-  // Análise profunda (Sonnet)
-  const [sonnetProcessoId, setSonnetProcessoId] = useState<number | null>(null);
-  const analiseProfunda = trpc.briefing.analiseProfunda.useMutation({
-    onSuccess: (result) => {
-      toast.success("Análise profunda concluída", {
-        description: result.tese,
-      });
-      setSonnetProcessoId(null);
-      void utils.intelligence.getForAssistido.invalidate({ assistidoId: Number(id) });
-    },
-    onError: (err) => {
-      toast.error("Erro na análise profunda", { description: err.message });
-      setSonnetProcessoId(null);
-    },
-  });
-
-  // Cowork Análise completa ($0 — worker local)
-  const coworkAnalise = trpc.briefing.coworkAnalise.useMutation({
-    onSuccess: (result) => {
-      toast.success("Tarefa Cowork criada", {
-        description: result.message,
-        duration: 8000,
-      });
-    },
-    onError: (err) => {
-      toast.error("Erro ao criar tarefa Cowork", { description: err.message });
-    },
-  });
-
-  // Cowork export
-  const [exportingAudienciaId, setExportingAudienciaId] = useState<number | null>(null);
-  const [exportingProcessoId, setExportingProcessoId] = useState<number | null>(null);
-  const [importingProcessoId, setImportingProcessoId] = useState<number | null>(null);
-  const [importingAudienciaId, setImportingAudienciaId] = useState<number | null>(null);
-  const exportarParaCowork = trpc.briefing.exportarParaCowork.useMutation({
-    onSuccess: (result) => {
-      toast.success(`Briefing exportado para o Drive`, {
-        description: result.fileName,
-        action: result.fileUrl ? { label: "Abrir", onClick: () => window.open(result.fileUrl, "_blank") } : undefined,
-      });
-    },
-    onError: (err) => {
-      toast.error("Erro ao exportar briefing", { description: err.message });
-    },
-    onSettled: () => setExportingAudienciaId(null),
-  });
 
   // Transcription state
   const [transcriptions, setTranscriptions] = useState<Map<string, TranscriptionData>>(new Map());
@@ -344,6 +289,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
   const tabs: { key: Tab; label: string; icon: React.ElementType; count?: number; urgency?: "red" | "amber" }[] = [
     { key: "processos", label: "Processos", icon: Gavel, count: data.processos.length },
+    { key: "analise", label: "Análise", icon: Sparkles },
     {
       key: "demandas",
       label: "Demandas",
@@ -357,7 +303,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     { key: "drive", label: "Drive", icon: HardDrive, count: data.driveFiles.length },
     { key: "midias", label: "Mídias", icon: Clock, count: mediaFiles.length },
     { key: "oficios", label: "Ofícios", icon: Send, count: oficiosData?.total ?? 0 },
-    { key: "inteligencia", label: "Inteligência", icon: Brain },
+    { key: "investigacao", label: "Investigação Defensiva", icon: Brain },
   ];
 
   const overflowTabs: { key: Tab; label: string }[] = [
@@ -471,92 +417,21 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
 
-        {/* ── Actions bar ── */}
-        <div className="mt-6 pt-5 border-t border-border">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">
-            Ações IA
-          </p>
-          <div className="flex items-center gap-2 flex-wrap">
-            {data.processos?.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1.5 px-3 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition-colors text-xs font-medium"
-                title="Análise completa Cowork — gera relatório, extrai dados, importa tudo"
-                disabled={coworkAnalise.isPending}
-                onClick={() => {
-                  const proc = data.processos[0];
-                  coworkAnalise.mutate({ processoId: proc.id, assistidoId: Number(id) });
-                }}
-              >
-                {coworkAnalise.isPending
-                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  : <Sparkles className="h-3.5 w-3.5" />}
-                Cowork
-              </Button>
-            )}
-            {data.processos?.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 gap-1.5 px-3 text-muted-foreground hover:text-amber-600 transition-colors text-xs"
-                title="Análise profunda com Claude Sonnet"
-                disabled={analiseProfunda.isPending}
-                onClick={() => {
-                  const proc = data.processos[0];
-                  setSonnetProcessoId(proc.id);
-                  analiseProfunda.mutate({ processoId: proc.id, assistidoId: Number(id) });
-                }}
-              >
-                {analiseProfunda.isPending
-                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  : <Brain className="h-3.5 w-3.5" />}
-                Sonnet
-              </Button>
-            )}
-
-            <div className="w-px h-5 bg-border" />
-
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 gap-1.5 px-3 text-muted-foreground hover:text-violet-600 transition-colors text-xs"
-              title="Exportar briefing para pasta do Drive"
-              disabled={exportarParaCowork.isPending}
-              onClick={() => exportarParaCowork.mutate({ assistidoId: Number(id), tipo: "assistido" })}
-            >
-              {exportarParaCowork.isPending
-                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                : <ArrowUpFromLine className="h-3.5 w-3.5" />}
-              Exportar
-            </Button>
-            {data.driveFolderId && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 gap-1.5 px-3 text-muted-foreground hover:text-emerald-600 transition-colors text-xs"
-                title="Importar análise IA gerada pelo Cowork"
-                disabled={importarAnaliseCowork.isPending}
-                onClick={() => importarAnaliseCowork.mutate({ assistidoId: Number(id) })}
-              >
-                {importarAnaliseCowork.isPending
-                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  : <ArrowDownToLine className="h-3.5 w-3.5" />}
-                Importar
-              </Button>
-            )}
-            <div className="ml-auto">
-              <CoworkActionGroup
-                assistidoNome={data.nome}
-                numeroAutos={data.processos?.[0]?.numeroAutos ?? ""}
-                classeProcessual={(data.processos?.[0] as any)?.classeProcessual ?? ""}
-                vara={data.processos?.[0]?.vara ?? ""}
-                atribuicao={(data as any).atribuicaoPrimaria ?? ""}
-                drivePath=""
-                actions={["analise-autos", "gerar-peca", "feedback-estagiario"]}
-              />
-            </div>
-          </div>
+        {/* Ações */}
+        <div className="flex items-center gap-2 mt-5">
+          <AnaliseButton
+            assistidoId={Number(id)}
+            processoId={data.processos?.[0]?.id}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-zinc-400 border-zinc-700 hover:bg-zinc-800 hover:text-zinc-200"
+            onClick={() => setPromptorioOpen(true)}
+          >
+            Promptório
+            <ChevronDown className="w-3 h-3" />
+          </Button>
         </div>
       </div>
 
@@ -678,65 +553,15 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[11px] font-mono text-foreground/80 truncate">{p.numeroAutos ?? "Sem número"}</span>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <span className={cn(
-                          "text-[9px] px-1.5 py-0.5 rounded-full font-semibold",
-                          p.papel === "REU" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400"
-                            : p.papel === "CORREU" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
-                            : p.papel === "VITIMA" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
-                            : "bg-muted text-muted-foreground"
-                        )}>
-                          {p.papel?.toLowerCase() ?? "réu"}
-                        </span>
-                        <Button
-                          variant="ghost" size="sm"
-                          className="h-5 w-5 p-0 text-muted-foreground hover:text-violet-600 transition-colors"
-                          title="Exportar briefing deste processo para Cowork"
-                          disabled={exportingProcessoId === p.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setExportingProcessoId(p.id);
-                            exportarParaCowork.mutate(
-                              { assistidoId: Number(id), processoId: p.id, tipo: "processo" },
-                              { onSettled: () => setExportingProcessoId(null) }
-                            );
-                          }}
-                        >
-                          {exportingProcessoId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bot className="h-3 w-3" />}
-                        </Button>
-                        <Button
-                          variant="ghost" size="sm"
-                          className="h-5 w-5 p-0 text-muted-foreground hover:text-emerald-600 transition-colors"
-                          title="Importar análise IA deste processo do Cowork"
-                          disabled={importingProcessoId === p.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setImportingProcessoId(p.id);
-                            importarAnaliseCowork.mutate(
-                              { assistidoId: Number(id), processoId: p.id },
-                              { onSettled: () => setImportingProcessoId(null) }
-                            );
-                          }}
-                        >
-                          {importingProcessoId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
-                        </Button>
-                        <Button
-                          variant="ghost" size="sm"
-                          className="h-5 w-5 p-0 text-muted-foreground hover:text-amber-500 transition-colors"
-                          title="Análise profunda (Sonnet) — teses, quesitos, estratégia"
-                          disabled={sonnetProcessoId === p.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSonnetProcessoId(p.id);
-                            analiseProfunda.mutate(
-                              { processoId: p.id, assistidoId: Number(id) },
-                              { onSettled: () => setSonnetProcessoId(null) }
-                            );
-                          }}
-                        >
-                          {sonnetProcessoId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
-                        </Button>
-                      </div>
+                      <span className={cn(
+                        "text-[9px] px-1.5 py-0.5 rounded-full font-semibold shrink-0",
+                        p.papel === "REU" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400"
+                          : p.papel === "CORREU" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+                          : p.papel === "VITIMA" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                          : "bg-muted text-muted-foreground"
+                      )}>
+                        {p.papel?.toLowerCase() ?? "réu"}
+                      </span>
                     </div>
                     {p.assunto && <p className="text-[11px] font-medium text-foreground/80 mt-0.5 truncate">{p.assunto}</p>}
                     {p.vara && <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{p.vara}</p>}
@@ -798,24 +623,6 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                           )}>
                             {d.status?.replace(/^\d+_/, "") ?? "—"}
                           </span>
-                          {d.processoId && (
-                            <Button
-                              variant="ghost" size="sm"
-                              className="h-5 w-5 p-0 text-muted-foreground hover:text-amber-500 transition-colors"
-                              title="Análise profunda (Sonnet) — teses, quesitos, estratégia"
-                              disabled={sonnetProcessoId === d.processoId}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSonnetProcessoId(d.processoId!);
-                                analiseProfunda.mutate(
-                                  { processoId: d.processoId!, assistidoId: Number(id) },
-                                  { onSettled: () => setSonnetProcessoId(null) }
-                                );
-                              }}
-                            >
-                              {sonnetProcessoId === d.processoId ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
-                            </Button>
-                          )}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           {d.prazo && (
@@ -874,57 +681,6 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                     )}>
                       {a.dataAudiencia && new Date(a.dataAudiencia) < new Date() ? "Realizada" : "Futura"}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 text-muted-foreground hover:text-violet-600 shrink-0 transition-colors"
-                      title="Exportar briefing desta audiência para Cowork"
-                      disabled={exportingAudienciaId === a.id}
-                      onClick={() => {
-                        setExportingAudienciaId(a.id);
-                        exportarParaCowork.mutate({ assistidoId: Number(id), audienciaId: a.id, tipo: "audiencia" });
-                      }}
-                    >
-                      {exportingAudienciaId === a.id
-                        ? <Loader2 className="h-3 w-3 animate-spin" />
-                        : <Bot className="h-3 w-3" />}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 text-muted-foreground hover:text-emerald-600 shrink-0 transition-colors"
-                      title="Importar análise IA desta audiência do Cowork"
-                      disabled={importingAudienciaId === a.id}
-                      onClick={() => {
-                        setImportingAudienciaId(a.id);
-                        importarAnaliseCowork.mutate(
-                          { assistidoId: Number(id), audienciaId: a.id, processoId: a.processoId ?? undefined },
-                          { onSettled: () => setImportingAudienciaId(null) }
-                        );
-                      }}
-                    >
-                      {importingAudienciaId === a.id
-                        ? <Loader2 className="h-3 w-3 animate-spin" />
-                        : <Download className="h-3 w-3" />}
-                    </Button>
-                    {a.processoId && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 text-muted-foreground hover:text-amber-500 shrink-0 transition-colors"
-                        title="Análise profunda (Sonnet) — teses, quesitos, estratégia"
-                        disabled={sonnetProcessoId === a.processoId}
-                        onClick={() => {
-                          setSonnetProcessoId(a.processoId!);
-                          analiseProfunda.mutate(
-                            { processoId: a.processoId!, assistidoId: Number(id) },
-                            { onSettled: () => setSonnetProcessoId(null) }
-                          );
-                        }}
-                      >
-                        {sonnetProcessoId === a.processoId ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
-                      </Button>
-                    )}
                   </div>
                   {a.dataAudiencia && (
                     <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -1047,7 +803,10 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             )}
           </div>
         )}
-        {tab === "inteligencia" && (
+        {tab === "analise" && (
+          <AnaliseTab assistidoId={Number(id)} />
+        )}
+        {tab === "investigacao" && (
           <div className="space-y-4">
             <IntelligenceTab
               assistidoId={Number(id)}
@@ -1122,6 +881,18 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             ? data.audiencias.filter((a) => a.processoId === selectedProcessoId)
             : []
         }
+      />
+
+      {/* Promptório Modal */}
+      <PromptorioModal
+        open={promptorioOpen}
+        onOpenChange={setPromptorioOpen}
+        assistidoNome={data.nome}
+        processoNumero={data.processos?.[0]?.numeroAutos ?? undefined}
+        classeProcessual={(data.processos?.[0] as any)?.classeProcessual ?? undefined}
+        vara={data.processos?.[0]?.vara ?? undefined}
+        atribuicao={(data as any).atribuicaoPrimaria ?? undefined}
+        comarca={(data.processos?.[0] as any)?.comarca ?? undefined}
       />
 
       {/* Ficha Sheet lateral */}
