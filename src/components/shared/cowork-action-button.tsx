@@ -154,23 +154,23 @@ export function CoworkActionButton({
   async function handleClick() {
     setLoading(true);
     try {
-      if (processoId && window.location.hostname === "localhost") {
+      if (processoId) {
         try {
-          const res = await fetch("/api/cowork/analyze", {
+          const res = await fetch("/api/analyze", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ processoId, skill: action }),
           });
           const data = await res.json();
           if (data.success) {
-            toast.success(`${config.label}: análise disparada`, {
+            toast.success(`Análise enfileirada`, {
               description: `${data.assistido} — resultado aparecerá automaticamente`,
               duration: 8000,
             });
             return;
           }
         } catch {
-          // Worker failed, fallback
+          // API failed, fallback to clipboard
         }
       }
 
