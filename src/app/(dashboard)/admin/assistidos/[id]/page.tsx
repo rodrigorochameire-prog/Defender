@@ -359,7 +359,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           <div className="flex-1 min-w-0">
             {/* Line 1: Name + badge + status + edit */}
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="font-serif text-base font-semibold leading-tight text-foreground truncate">
+              <h1 className="font-serif text-lg font-semibold tracking-tight text-foreground truncate">
                 {data.nome}
               </h1>
               <Link href={`/admin/assistidos/${data.id}/editar`}>
@@ -367,10 +367,10 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                   <Pencil className="h-3 w-3" />
                 </Button>
               </Link>
-              <span className="w-px h-3.5 bg-zinc-200 dark:bg-zinc-700" />
+              <span className="w-px h-4 bg-zinc-200/70 dark:bg-zinc-700/70" />
               {(data as any).atribuicaoPrimaria && (
                 <span className={cn(
-                  "text-[10px] px-2 py-0.5 rounded-md font-medium",
+                  "text-[11px] px-2 py-0.5 rounded-md font-medium",
                   getAtribuicaoColors((data as any).atribuicaoPrimaria).bg,
                   getAtribuicaoColors((data as any).atribuicaoPrimaria).text
                 )}>
@@ -378,7 +378,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                 </span>
               )}
               {data.statusPrisional && !isPreso && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-md font-medium bg-muted text-muted-foreground">
+                <span className="text-[11px] px-1.5 py-0.5 rounded-md font-medium bg-muted text-muted-foreground">
                   {statusLabel[data.statusPrisional] ?? data.statusPrisional.toLowerCase()}
                 </span>
               )}
