@@ -355,33 +355,22 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             );
           })()}
 
-          {/* Name + Meta */}
+          {/* Name + Meta — style C+A: name+chip same line, meta below, with breathing room */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2.5">
-              <h1 className="font-serif text-xl font-semibold leading-tight text-foreground truncate">
+            {/* Line 1: Name + badge + status + edit */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="font-serif text-base font-semibold leading-tight text-foreground truncate">
                 {data.nome}
               </h1>
               <Link href={`/admin/assistidos/${data.id}/editar`}>
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-emerald-600">
-                  <Pencil className="h-3.5 w-3.5" />
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground/30 hover:text-emerald-600">
+                  <Pencil className="h-3 w-3" />
                 </Button>
               </Link>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-emerald-600"
-                onClick={() => setFichaSheetOpen(true)}
-                title="Ficha completa"
-              >
-                <ContactRound className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-
-            {/* Meta: badge + status + CPF + contatos — single line */}
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs">
+              <span className="w-px h-3.5 bg-zinc-200 dark:bg-zinc-700" />
               {(data as any).atribuicaoPrimaria && (
                 <span className={cn(
-                  "px-2 py-0.5 rounded-md font-medium",
+                  "text-[10px] px-2 py-0.5 rounded-md font-medium",
                   getAtribuicaoColors((data as any).atribuicaoPrimaria).bg,
                   getAtribuicaoColors((data as any).atribuicaoPrimaria).text
                 )}>
@@ -389,11 +378,14 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                 </span>
               )}
               {data.statusPrisional && !isPreso && (
-                <span className="px-2 py-0.5 rounded-md font-medium bg-muted text-muted-foreground">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-md font-medium bg-muted text-muted-foreground">
                   {statusLabel[data.statusPrisional] ?? data.statusPrisional.toLowerCase()}
                 </span>
               )}
-              <span className="w-px h-3 bg-zinc-200 dark:bg-zinc-700" />
+            </div>
+
+            {/* Line 2: CPF + WhatsApp contacts */}
+            <div className="flex items-center gap-2 mt-1 text-xs">
               {data.cpf && (
                 <span className="text-muted-foreground font-mono tabular-nums">{data.cpf}</span>
               )}
@@ -446,20 +438,16 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
 
-        {/* Row 2: Stats — compact */}
-        <div className="flex items-center gap-5 mt-3 ml-[4.5rem]">
-          {[
-            { icon: Gavel, value: data.processos.length, label: "proc" },
-            { icon: ClipboardList, value: data.demandas.length, label: "dem" },
-            { icon: Calendar, value: data.audiencias.length, label: "aud" },
-            { icon: HardDrive, value: data.driveFiles.length, label: "arq" },
-          ].map(({ icon: Icon, value, label }) => (
-            <div key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Icon className="w-3 h-3 text-muted-foreground/40" />
-              <span className="font-bold text-foreground">{value}</span>
-              <span className="hidden sm:inline">{label}</span>
-            </div>
-          ))}
+      </div>
+
+      {/* Context Bar: Case Filter + Stats + Drive hint */}
+      <div className="flex items-center gap-3 px-6 lg:px-8 py-2.5 border-b border-border/40 bg-zinc-50/50 dark:bg-zinc-900/50 overflow-x-auto">
+        {/* Stats — compact inline */}
+        <div className="flex items-center gap-4 text-xs text-muted-foreground shrink-0">
+          <span><span className="font-semibold text-foreground">{data.processos.length}</span> proc</span>
+          <span><span className="font-semibold text-foreground">{data.demandas.length}</span> dem</span>
+          <span><span className="font-semibold text-foreground">{data.audiencias.length}</span> aud</span>
+          <span><span className="font-semibold text-foreground">{data.driveFiles.length}</span> arq</span>
         </div>
       </div>
 
