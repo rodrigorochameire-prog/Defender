@@ -456,14 +456,11 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           ].map(({ icon: Icon, value, label }) => (
             <div key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Icon className="w-3 h-3 text-muted-foreground/40" />
-                  <span className="font-bold text-foreground">{value}</span>
-                  <span className="hidden sm:inline">{label}</span>
-                </div>
-              ))}
+              <span className="font-bold text-foreground">{value}</span>
+              <span className="hidden sm:inline">{label}</span>
             </div>
-          </div>
+          ))}
         </div>
-
       </div>
 
       {/* Case Filter — processo referência */}
