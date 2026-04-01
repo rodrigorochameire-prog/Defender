@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { Accordion } from "@/components/ui/accordion";
 import {
   BlocoCaso,
@@ -10,6 +10,7 @@ import {
   BlocoPreparacao,
   type AnalysisBlocksData,
 } from "./analise-blocks";
+import { trpc } from "@/lib/trpc/client";
 
 // ─── Mock Data (Adenilson case) ────────────────────────────────────────────
 
@@ -573,33 +574,60 @@ interface AnaliseTabProps {
 }
 
 export function AnaliseTab({ assistidoId }: AnaliseTabProps) {
-  // For now, use mock data. When tRPC router exists, replace with real fetch:
-  // const { data: analysisData } = trpc.casos.getAnalysis.useQuery({ assistidoId });
-  const realData = null;
+  // Fetch real analysis data
+  const { data: casosData, isLoading } = trpc.analise.getCasosDoAssistido.useQuery(
+    { assistidoId },
+    { enabled: !!assistidoId }
+  );
+
+  // Get analysis for selected case (use first case if none selected)
+  const selectedCaso = casosData?.casos?.[0];
+  const { data: analiseData } = trpc.analise.getAnaliseDoCaso.useQuery(
+    { casoId: selectedCaso?.caso?.id ?? 0 },
+    { enabled: !!selectedCaso?.caso?.id }
+  );
+
+  // Use real analysisData from the caso JSONB field, fall back to mock in dev
+  const realData = (analiseData?.analysisData as AnalysisBlocksData | null) ?? null;
 
   const USE_MOCK =
     process.env.NODE_ENV === "development" && !realData;
 
-  const analysis: AnalysisBlocksData | null = USE_MOCK
-    ? MOCK_ANALYSIS
-    : realData;
+  const analysis: AnalysisBlocksData | null = realData ?? (USE_MOCK ? MOCK_ANALYSIS : null);
 
-  const metadata: AnalysisMetadata | null = USE_MOCK
-    ? MOCK_METADATA
-    : null;
+  const metadata: AnalysisMetadata | null = analiseData?.analyzedAt
+    ? {
+        analisadoEm: analiseData.analyzedAt.toISOString?.() ?? String(analiseData.analyzedAt),
+        skill: "analise",
+        versaoSchema: String(analiseData.analysisVersion ?? "1.0"),
+        documentosAnalisados: [],
+        modeloUtilizado: "claude -p (local)",
+      }
+    : USE_MOCK
+      ? MOCK_METADATA
+      : null;
+
+  // ── Loading state ────────────────────────────────────────────────────────
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
+        ))}
+      </div>
+    );
+  }
 
   // ── Empty state ──────────────────────────────────────────────────────────
   if (!analysis) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
-          <Search className="w-5 h-5 text-zinc-500" />
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
+          <Sparkles className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
         </div>
-        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-          Nenhuma analise disponivel
-        </p>
-        <p className="text-xs text-zinc-500 mt-1 text-center max-w-xs">
-          Clique em Analisar para gerar uma analise estrategica completa
+        <p className="text-sm font-medium text-foreground mb-1">Nenhuma análise disponível</p>
+        <p className="text-xs text-muted-foreground max-w-xs">
+          Clique em <span className="font-medium text-foreground">Analisar</span> para gerar uma análise estratégica completa do caso com teses, provas e depoimentos.
         </p>
       </div>
     );
