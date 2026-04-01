@@ -88,8 +88,8 @@ export function CaseFilter({ cases, selectedCaseId, onSelectCase }: CaseFilterPr
             className={cn(
               "flex items-center gap-3.5 px-4 py-3.5 rounded-xl border text-left transition-all duration-150 shrink-0",
               selected
-                ? cn("bg-white dark:bg-zinc-800/60 shadow-sm", colors.activeBorder)
-                : "border-zinc-200/80 dark:border-zinc-800/60 bg-zinc-50/50 dark:bg-zinc-900/50 hover:bg-white dark:hover:bg-zinc-800/40 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-sm"
+                ? "bg-white dark:bg-zinc-800/60 border-zinc-300 dark:border-zinc-600 shadow-sm"
+                : "border-zinc-200/60 dark:border-zinc-800/60 bg-zinc-50/30 dark:bg-zinc-900/30 hover:bg-white dark:hover:bg-zinc-800/40 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-sm"
             )}
           >
             {/* Icon with colored background */}
