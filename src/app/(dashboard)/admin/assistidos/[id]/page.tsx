@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, User, ClipboardList, Plus, Sparkles, Pencil, Clock, Send, Gavel, Calendar, HardDrive, ContactRound, ChevronDown, Brain, MoreHorizontal, FileText } from "lucide-react";
+import { ArrowLeft, User, ClipboardList, Plus, Sparkles, Pencil, Clock, Send, Gavel, Calendar, HardDrive, ContactRound, ChevronDown, Brain, MoreHorizontal, FileText, FolderOpen } from "lucide-react";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,7 +15,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { IntelligenceTab } from "@/components/intelligence/IntelligenceTab";
-import { DriveStatusBar } from "@/components/drive/DriveStatusBar";
+// DriveStatusBar absorbed into header card
 import { DriveTabEnhanced } from "@/components/drive/DriveTabEnhanced";
 import { MarkdownViewerModal } from "@/components/drive/MarkdownViewerModal";
 import { useRealtimeFileStatus } from "@/hooks/use-realtime-file-status";
@@ -34,7 +34,7 @@ import {
 import { AnaliseButton } from "./_components/analise-button";
 import { PromptorioModal } from "./_components/promptorio-modal";
 import { AnaliseTab } from "./_components/analise-tab";
-import { CaseFilter } from "./_components/case-filter";
+// CaseFilter absorbed into header card
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
@@ -77,7 +77,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   const [promptorioOpen, setPromptorioOpen] = useState(false);
 
   // Case filter state
-  const [selectedCaseId, setSelectedCaseId] = useState<number | null>(null);
+  // Case selection managed inline in header
 
   const utils = trpc.useUtils();
 
@@ -439,45 +439,48 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
 
-      </div>
 
-      {/* Context Bar: Case Filter + Stats + Drive hint */}
-      <div className="flex items-center gap-3 px-6 lg:px-8 py-2.5 border-b border-border/40 bg-zinc-50/50 dark:bg-zinc-900/50 overflow-x-auto">
-        {/* Stats — compact inline */}
-        <div className="flex items-center gap-4 text-xs text-muted-foreground shrink-0">
-          <span><span className="font-semibold text-foreground">{data.processos.length}</span> proc</span>
-          <span><span className="font-semibold text-foreground">{data.demandas.length}</span> dem</span>
-          <span><span className="font-semibold text-foreground">{data.audiencias.length}</span> aud</span>
-          <span><span className="font-semibold text-foreground">{data.driveFiles.length}</span> arq</span>
+        {/* Row 2: Stats + Case + Drive — inside header card */}
+        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-white/5 flex-wrap">
+          {/* Stats */}
+          <div className="flex items-center gap-3 text-[11px] text-zinc-500 shrink-0">
+            <span><span className="font-semibold text-zinc-400">{data.processos.length}</span> proc</span>
+            <span><span className="font-semibold text-zinc-400">{data.demandas.length}</span> dem</span>
+            <span><span className="font-semibold text-zinc-400">{data.audiencias.length}</span> aud</span>
+          </div>
+
+          {/* Case pill — inline */}
+          {data.processos.length > 0 && (() => {
+            const p = data.processos[0];
+            const attrColors = getAtribuicaoColors((data as any).atribuicaoPrimaria) as Record<string, string>;
+            const label = attrColors.shortLabel || attrColors.label || (data as any).atribuicaoPrimaria;
+            return (
+              <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8 text-[11px]">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                <span className="text-zinc-300 font-medium">{label}</span>
+                <span className="text-zinc-600 font-mono">{p.numeroAutos}</span>
+              </div>
+            );
+          })()}
+
+          {/* Drive — inline */}
+          <div className="flex items-center gap-2 ml-auto text-[11px] text-zinc-500">
+            <FolderOpen className="w-3 h-3 text-zinc-600" />
+            <span className="font-semibold text-zinc-400">{data.driveFiles.length}</span>
+            <span>arq</span>
+            {(data as any).driveFolderId && (
+              <a
+                href={`https://drive.google.com/drive/folders/${(data as any).driveFolderId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-1.5 py-0.5 rounded bg-white/5 text-zinc-500 hover:text-zinc-300 transition-colors"
+              >
+                Abrir
+              </a>
+            )}
+          </div>
         </div>
       </div>
-
-      {/* Case Filter — processo referência */}
-      {data.processos.length > 0 && (
-        <CaseFilter
-          cases={data.processos.map((p, i) => {
-            const attrLabel = getAtribuicaoColors((data as any).atribuicaoPrimaria).label || (data as any).atribuicaoPrimaria || "Criminal";
-            const shortLabel = getAtribuicaoColors((data as any).atribuicaoPrimaria).shortLabel;
-            return {
-              id: p.id,
-              foco: p.assunto || attrLabel,
-              processoReferencia: {
-                id: p.id,
-                numeroAutos: p.numeroAutos,
-                classeProcessual: p.assunto || undefined,
-                atribuicao: shortLabel || attrLabel,
-              },
-              associadosCount: 0,
-              color: i === 0 ? "emerald" : i === 1 ? "amber" : "rose",
-            };
-          })}
-          selectedCaseId={selectedCaseId}
-          onSelectCase={setSelectedCaseId}
-        />
-      )}
-
-      {/* Drive Status Bar */}
-      <DriveStatusBar assistidoId={Number(id)} />
 
       {/* Overview Panel */}
       <AssistidoOverviewPanel
