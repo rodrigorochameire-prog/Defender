@@ -323,7 +323,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   return (
     <div className="flex flex-col h-full">
       {/* ── Header: Identity (compact) ── */}
-      <div className="px-6 lg:px-8 pt-5 pb-4 border-b border-border/60 bg-zinc-100/70 dark:bg-zinc-800/40">
+      <div className="mx-4 lg:mx-6 mt-4 px-5 pt-5 pb-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
         {/* Row 1: Back + Avatar + Name + Actions */}
         <div className="flex items-center gap-4">
           <button
