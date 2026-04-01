@@ -278,7 +278,7 @@ function BlockShell({
 }) {
   return (
     <AccordionItem value={value} className="border-none mb-3">
-      <AccordionTrigger className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3.5 hover:no-underline hover:border-zinc-700 transition-all duration-200 data-[state=open]:rounded-b-none data-[state=open]:border-b-zinc-800/50">
+      <AccordionTrigger className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3.5 hover:no-underline hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 data-[state=open]:rounded-b-none data-[state=open]:border-b-zinc-200/50 dark:data-[state=open]:border-b-zinc-800/50">
         <div className="flex items-center gap-3 flex-1">
           <div
             className={cn(
@@ -288,15 +288,15 @@ function BlockShell({
           >
             <Icon className={cn("w-3.5 h-3.5", iconColor)} />
           </div>
-          <span className="text-sm font-medium text-zinc-100">{title}</span>
+          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{title}</span>
           {count != null && (
-            <span className="text-[10px] text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
               {count}
             </span>
           )}
         </div>
       </AccordionTrigger>
-      <AccordionContent className="bg-zinc-900 border border-t-0 border-zinc-800 rounded-b-xl px-4">
+      <AccordionContent className="bg-white dark:bg-zinc-900 border border-t-0 border-zinc-200 dark:border-zinc-800 rounded-b-xl px-4">
         {children}
       </AccordionContent>
     </AccordionItem>
@@ -318,11 +318,11 @@ function SubRow({
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="w-full bg-[#0f0f11] rounded-lg p-3 mb-2 cursor-pointer flex justify-between items-center hover:bg-zinc-800/50 transition-colors">
-        <span className="text-sm text-zinc-300">{label}</span>
+      <CollapsibleTrigger className="w-full bg-zinc-50 dark:bg-zinc-50 dark:bg-[#0f0f11] rounded-lg p-3 mb-2 cursor-pointer flex justify-between items-center hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors">
+        <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
         <div className="flex items-center gap-2">
           {count != null && (
-            <span className="text-[10px] text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
               {count}
             </span>
           )}
@@ -345,34 +345,34 @@ function SubRow({
 function tipoBadgeClass(tipo: Depoente["tipo"]): string {
   switch (tipo) {
     case "ACUSACAO":
-      return "bg-red-500/10 text-red-400";
+      return "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400";
     case "DEFESA":
-      return "bg-emerald-500/10 text-emerald-400";
+      return "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
     case "VITIMA":
-      return "bg-amber-500/10 text-amber-400";
+      return "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400";
     case "PERITO":
-      return "bg-blue-500/10 text-blue-400";
+      return "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400";
     case "INFORMANTE":
-      return "bg-zinc-500/10 text-zinc-400";
+      return "bg-zinc-100 dark:bg-zinc-500/10 text-zinc-600 dark:text-zinc-400";
     default:
-      return "bg-zinc-500/10 text-zinc-400";
+      return "bg-zinc-100 dark:bg-zinc-500/10 text-zinc-600 dark:text-zinc-400";
   }
 }
 
 function statusBadgeClass(status: Depoente["statusIntimacao"]): string {
   switch (status) {
     case "INTIMADO":
-      return "bg-emerald-500/[0.08] text-emerald-400 border border-emerald-500/20";
+      return "bg-emerald-50 dark:bg-emerald-500/[0.08] text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20";
     case "PENDENTE":
     case "NAO_INTIMADO":
-      return "bg-amber-500/[0.08] text-amber-400 border border-amber-500/20";
+      return "bg-amber-50 dark:bg-amber-500/[0.08] text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20";
     case "NAO_LOCALIZADO":
     case "FALECIDO":
-      return "bg-red-500/[0.08] text-red-400 border border-red-500/20";
+      return "bg-red-50 dark:bg-red-500/[0.08] text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20";
     case "DESISTIDO":
-      return "bg-zinc-500/[0.08] text-zinc-400 border border-zinc-500/20";
+      return "bg-zinc-100 dark:bg-zinc-500/[0.08] text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-500/20";
     default:
-      return "bg-zinc-500/[0.08] text-zinc-400 border border-zinc-500/20";
+      return "bg-zinc-100 dark:bg-zinc-500/[0.08] text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-500/20";
   }
 }
 
@@ -383,11 +383,11 @@ function statusLabel(status: Depoente["statusIntimacao"]): string {
 function urgenciaBadgeClass(urgencia: "alta" | "media" | "baixa"): string {
   switch (urgencia) {
     case "alta":
-      return "bg-red-500/10 text-red-400 border border-red-500/20";
+      return "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20";
     case "media":
-      return "bg-amber-500/10 text-amber-400 border border-amber-500/20";
+      return "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20";
     case "baixa":
-      return "bg-zinc-500/10 text-zinc-400 border border-zinc-500/20";
+      return "bg-zinc-100 dark:bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-500/20";
   }
 }
 
@@ -416,14 +416,14 @@ export function BlocoCaso({ data }: { data: CasoData }) {
       title="O Caso"
     >
       {data.resumoFato && (
-        <p className="text-sm text-zinc-400 leading-relaxed mb-4">
+        <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
           {data.resumoFato}
         </p>
       )}
 
       {data.narrativaDenuncia && (
         <SubRow label="Versao da acusacao">
-          <p className="text-sm text-zinc-400 leading-relaxed">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
             {data.narrativaDenuncia}
           </p>
         </SubRow>
@@ -431,7 +431,7 @@ export function BlocoCaso({ data }: { data: CasoData }) {
 
       {data.narrativaDefensiva && (
         <SubRow label="Versao da defesa">
-          <p className="text-sm text-zinc-400 leading-relaxed">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
             {data.narrativaDefensiva}
           </p>
         </SubRow>
@@ -446,7 +446,7 @@ export function BlocoCaso({ data }: { data: CasoData }) {
             {data.cronologia.map((item, i) => (
               <div
                 key={i}
-                className="bg-zinc-800/40 rounded-lg p-3 flex flex-col gap-1"
+                className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3 flex flex-col gap-1"
               >
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-mono">
@@ -456,7 +456,7 @@ export function BlocoCaso({ data }: { data: CasoData }) {
                     via {item.fonte}
                   </span>
                 </div>
-                <p className="text-sm text-zinc-300">{item.evento}</p>
+                <p className="text-sm text-zinc-700 dark:text-zinc-300">{item.evento}</p>
                 {item.relevancia && (
                   <p className="text-xs text-zinc-500">{item.relevancia}</p>
                 )}
@@ -473,10 +473,10 @@ export function BlocoCaso({ data }: { data: CasoData }) {
         >
           <div className="space-y-2">
             {data.fatosRelacionados.map((f, i) => (
-              <div key={i} className="bg-zinc-800/40 rounded-lg p-3">
-                <p className="text-sm text-zinc-300">{f.descricao}</p>
+              <div key={i} className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3">
+                <p className="text-sm text-zinc-700 dark:text-zinc-300">{f.descricao}</p>
                 <p className="text-xs text-zinc-500 mt-1">
-                  <strong className="text-zinc-200">Conexao:</strong>{" "}
+                  <strong className="text-zinc-800 dark:text-zinc-200">Conexao:</strong>{" "}
                   {f.conexaoComCaso}
                 </p>
                 <p className="text-[10px] text-zinc-600 mt-0.5">
@@ -497,10 +497,10 @@ function DeponenteCard({ dep }: { dep: Depoente }) {
   const [showPerguntas, setShowPerguntas] = useState(false);
 
   return (
-    <div className="bg-[#0f0f11] border border-zinc-800 rounded-xl p-3.5 mb-2">
+    <div className="bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5 mb-2">
       {/* Header */}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-sm font-medium text-zinc-200">{dep.nome}</span>
+        <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{dep.nome}</span>
         <span
           className={cn(
             "text-[10px] px-1.5 py-0.5 rounded",
@@ -529,7 +529,7 @@ function DeponenteCard({ dep }: { dep: Depoente }) {
         <div className="mt-2">
           {dep.contradicoes.map((c, i) => (
             <p key={i} className="text-xs text-zinc-500">
-              Contradicao: <span className="text-amber-400">{c}</span>
+              Contradicao: <span className="text-amber-600 dark:text-amber-400">{c}</span>
             </p>
           ))}
         </div>
@@ -573,7 +573,7 @@ function DeponenteCard({ dep }: { dep: Depoente }) {
           {showPerguntas && (
             <ol className="mt-1.5 space-y-1 pl-4 list-decimal">
               {dep.perguntasSugeridas.map((p, i) => (
-                <li key={i} className="text-xs text-zinc-400">
+                <li key={i} className="text-xs text-zinc-600 dark:text-zinc-400">
                   {p}
                 </li>
               ))}
@@ -609,11 +609,11 @@ export function BlocoPessoas({ data }: { data: PessoasData }) {
       {(data.perfilReu || data.perfilVitima) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           {data.perfilReu && (
-            <div className="bg-[#0f0f11] rounded-lg p-3">
+            <div className="bg-zinc-50 dark:bg-[#0f0f11] rounded-lg p-3">
               <span className="text-[10px] uppercase tracking-wider text-zinc-500">
                 Reu
               </span>
-              <p className="text-sm font-medium text-zinc-200 mt-1">
+              <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mt-1">
                 {data.perfilReu.historico}
               </p>
               {data.perfilReu.contextoSocial && (
@@ -623,24 +623,24 @@ export function BlocoPessoas({ data }: { data: PessoasData }) {
               )}
               {data.perfilReu.condicoesAtenuantes?.length > 0 && (
                 <p className="text-xs text-zinc-500 mt-1">
-                  <strong className="text-zinc-200">Atenuantes:</strong>{" "}
+                  <strong className="text-zinc-800 dark:text-zinc-200">Atenuantes:</strong>{" "}
                   {data.perfilReu.condicoesAtenuantes.join(", ")}
                 </p>
               )}
               {data.perfilReu.versaoDosFatos && (
                 <p className="text-xs text-zinc-500 leading-relaxed mt-1">
-                  <strong className="text-zinc-200">Versao:</strong>{" "}
+                  <strong className="text-zinc-800 dark:text-zinc-200">Versao:</strong>{" "}
                   {data.perfilReu.versaoDosFatos}
                 </p>
               )}
             </div>
           )}
           {data.perfilVitima && (
-            <div className="bg-[#0f0f11] rounded-lg p-3">
+            <div className="bg-zinc-50 dark:bg-[#0f0f11] rounded-lg p-3">
               <span className="text-[10px] uppercase tracking-wider text-zinc-500">
                 Vitima
               </span>
-              <p className="text-sm font-medium text-zinc-200 mt-1">
+              <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mt-1">
                 {data.perfilVitima.relacaoComReu}
               </p>
               {data.perfilVitima.historico && (
@@ -650,7 +650,7 @@ export function BlocoPessoas({ data }: { data: PessoasData }) {
               )}
               {data.perfilVitima.comportamentoRelatado && (
                 <p className="text-xs text-zinc-500 mt-1">
-                  <strong className="text-zinc-200">Comportamento:</strong>{" "}
+                  <strong className="text-zinc-800 dark:text-zinc-200">Comportamento:</strong>{" "}
                   {data.perfilVitima.comportamentoRelatado}
                 </p>
               )}
@@ -678,9 +678,9 @@ export function BlocoPessoas({ data }: { data: PessoasData }) {
         <SubRow label="Informantes" count={data.informantes.length}>
           <div className="space-y-2">
             {data.informantes.map((info, i) => (
-              <div key={i} className="bg-zinc-800/40 rounded-lg p-3">
+              <div key={i} className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium text-zinc-300">
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                     {info.fonte}
                   </span>
                   <span className="text-[10px] text-zinc-600">
@@ -695,7 +695,7 @@ export function BlocoPessoas({ data }: { data: PessoasData }) {
                     {info.informacoesRelevantes.map((ir, j) => (
                       <li
                         key={j}
-                        className="text-xs text-zinc-400 pl-2 border-l border-zinc-700"
+                        className="text-xs text-zinc-600 dark:text-zinc-400 pl-2 border-l border-zinc-300 dark:border-zinc-700"
                       >
                         {ir}
                       </li>
@@ -768,22 +768,22 @@ export function BlocoProvas({ data }: { data: ProvasData }) {
                   <div
                     key={i}
                     className={cn(
-                      "bg-zinc-800/40 rounded-lg p-3 border-l-2",
+                      "bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3 border-l-2",
                       el.contestavel
                         ? "border-l-emerald-500"
                         : "border-l-red-500"
                     )}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-zinc-300">{el.tipo}</span>
+                      <span className="text-sm text-zinc-700 dark:text-zinc-300">{el.tipo}</span>
                       <span
                         className={cn(
                           "text-[10px] px-1.5 py-0.5 rounded",
                           el.peso === "alto"
-                            ? "bg-red-500/10 text-red-400"
+                            ? "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400"
                             : el.peso === "medio"
-                            ? "bg-amber-500/10 text-amber-400"
-                            : "bg-zinc-500/10 text-zinc-400"
+                            ? "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                            : "bg-zinc-100 dark:bg-zinc-500/10 text-zinc-600 dark:text-zinc-400"
                         )}
                       >
                         peso {el.peso}
@@ -810,13 +810,13 @@ export function BlocoProvas({ data }: { data: ProvasData }) {
                   <div
                     key={i}
                     className={cn(
-                      "bg-zinc-800/40 rounded-lg p-3 border-l-2",
+                      "bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3 border-l-2",
                       el.favoravel
                         ? "border-l-emerald-500"
                         : "border-l-red-500"
                     )}
                   >
-                    <span className="text-sm text-zinc-300">{el.tipo}</span>
+                    <span className="text-sm text-zinc-700 dark:text-zinc-300">{el.tipo}</span>
                     <p className="text-xs text-zinc-500 mt-1">{el.descricao}</p>
                   </div>
                 ))}
@@ -836,8 +836,8 @@ export function BlocoProvas({ data }: { data: ProvasData }) {
               className={cn(
                 "text-xs px-3 py-1.5 rounded-full transition-colors",
                 activeTab === t.key
-                  ? "bg-zinc-700 text-zinc-100"
-                  : "bg-zinc-800/50 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
+                  ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
+                  : "bg-zinc-100 dark:bg-zinc-800/50 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800"
               )}
             >
               {t.label}{" "}
@@ -853,20 +853,20 @@ export function BlocoProvas({ data }: { data: ProvasData }) {
           {data.provasPericiais.map((p, i) => (
             <div
               key={i}
-              className="bg-[#0f0f11] border border-zinc-800 rounded-xl p-3.5 border-l-2 border-l-emerald-500"
+              className="bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5 border-l-2 border-l-emerald-500"
             >
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-zinc-200">
+                <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
                   {p.tipo}
                 </span>
                 <span className="text-[10px] text-zinc-600">{p.perito}</span>
               </div>
               <p className="text-xs text-zinc-500 mt-1">
-                <strong className="text-zinc-200">Conclusao:</strong>{" "}
+                <strong className="text-zinc-800 dark:text-zinc-200">Conclusao:</strong>{" "}
                 {p.conclusao}
               </p>
               {p.pontoCritico && (
-                <p className="text-xs text-amber-400/80 mt-1">
+                <p className="text-xs text-amber-600 dark:text-amber-400/80 mt-1">
                   Ponto critico: {p.pontoCritico}
                 </p>
               )}
@@ -887,11 +887,11 @@ export function BlocoProvas({ data }: { data: ProvasData }) {
             <div
               key={i}
               className={cn(
-                "bg-[#0f0f11] border border-zinc-800 rounded-xl p-3.5 border-l-2",
+                "bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5 border-l-2",
                 d.favoravel ? "border-l-emerald-500" : "border-l-red-500"
               )}
             >
-              <span className="text-sm font-medium text-zinc-200">
+              <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
                 {d.documento}
               </span>
               <p className="text-xs text-zinc-500 mt-1">{d.conteudo}</p>
@@ -910,10 +910,10 @@ export function BlocoProvas({ data }: { data: ProvasData }) {
             {data.informativosInvestigacao.map((info, i) => (
               <div
                 key={i}
-                className="bg-[#0f0f11] border border-zinc-800 rounded-xl p-3.5"
+                className="bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-zinc-200">
+                  <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
                     {info.fonte}
                   </span>
                   <span className="text-[10px] font-mono text-zinc-600">
@@ -926,7 +926,7 @@ export function BlocoProvas({ data }: { data: ProvasData }) {
                     {info.informacoesRelevantes.map((ir, j) => (
                       <li
                         key={j}
-                        className="text-xs text-zinc-400 pl-2 border-l border-zinc-700"
+                        className="text-xs text-zinc-600 dark:text-zinc-400 pl-2 border-l border-zinc-300 dark:border-zinc-700"
                       >
                         {ir}
                       </li>
@@ -951,10 +951,10 @@ export function BlocoProvas({ data }: { data: ProvasData }) {
             {data.possibilidadesProbatorias.map((pp, i) => (
               <div
                 key={i}
-                className="bg-zinc-800/40 rounded-lg p-3 border-l-2 border-l-amber-500"
+                className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3 border-l-2 border-l-amber-500"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-zinc-300">
+                  <span className="text-sm text-zinc-700 dark:text-zinc-300">
                     {pp.diligencia}
                   </span>
                   <span
@@ -967,7 +967,7 @@ export function BlocoProvas({ data }: { data: ProvasData }) {
                   </span>
                 </div>
                 <p className="text-xs text-zinc-500 mt-1">
-                  <strong className="text-zinc-200">Objetivo:</strong>{" "}
+                  <strong className="text-zinc-800 dark:text-zinc-200">Objetivo:</strong>{" "}
                   {pp.objetivo}
                 </p>
                 <p className="text-xs text-zinc-600 mt-0.5">
@@ -1010,18 +1010,18 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
           <span className="text-[10px] uppercase tracking-wider text-emerald-500 font-semibold">
             Tese principal
           </span>
-          <p className="text-base font-medium text-zinc-100 mt-1">
+          <p className="text-base font-medium text-zinc-900 dark:text-zinc-100 mt-1">
             {data.tesePrincipal.tese}
           </p>
           {data.tesePrincipal.fundamentoFatico && (
             <p className="text-xs text-zinc-500 leading-relaxed mt-2">
-              <strong className="text-zinc-200">Fatico:</strong>{" "}
+              <strong className="text-zinc-800 dark:text-zinc-200">Fatico:</strong>{" "}
               {data.tesePrincipal.fundamentoFatico}
             </p>
           )}
           {data.tesePrincipal.fundamentoJuridico && (
             <p className="text-xs text-zinc-500 leading-relaxed mt-1">
-              <strong className="text-zinc-200">Juridico:</strong>{" "}
+              <strong className="text-zinc-800 dark:text-zinc-200">Juridico:</strong>{" "}
               {data.tesePrincipal.fundamentoJuridico}
             </p>
           )}
@@ -1053,9 +1053,9 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
             {data.pontosFortes.defesa.map((pf, i) => (
               <div
                 key={i}
-                className="bg-zinc-800/40 rounded-lg p-3 border-l-2 border-l-emerald-500"
+                className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3 border-l-2 border-l-emerald-500"
               >
-                <p className="text-sm text-zinc-300">{pf.ponto}</p>
+                <p className="text-sm text-zinc-700 dark:text-zinc-300">{pf.ponto}</p>
                 {pf.elementos?.length > 0 && (
                   <p className="text-xs text-zinc-500 mt-1">
                     Elementos: {pf.elementos.join(", ")}
@@ -1076,9 +1076,9 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
             {data.pontosFracos.defesa.map((pf, i) => (
               <div
                 key={i}
-                className="bg-zinc-800/40 rounded-lg p-3 border-l-2 border-l-red-500"
+                className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3 border-l-2 border-l-red-500"
               >
-                <p className="text-sm text-zinc-300">{pf.ponto}</p>
+                <p className="text-sm text-zinc-700 dark:text-zinc-300">{pf.ponto}</p>
                 {pf.mitigacao && (
                   <p className="text-xs text-emerald-400/70 mt-1">
                     Mitigacao: {pf.mitigacao}
@@ -1099,9 +1099,9 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
             {data.pontosFortes.acusacao.map((pf, i) => (
               <div
                 key={i}
-                className="bg-zinc-800/40 rounded-lg p-3 border-l-2 border-l-red-500"
+                className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3 border-l-2 border-l-red-500"
               >
-                <p className="text-sm text-zinc-300">{pf.ponto}</p>
+                <p className="text-sm text-zinc-700 dark:text-zinc-300">{pf.ponto}</p>
                 {pf.elementos?.length > 0 && (
                   <p className="text-xs text-zinc-500 mt-1">
                     Elementos: {pf.elementos.join(", ")}
@@ -1122,9 +1122,9 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
             {data.pontosFracos.acusacao.map((pf, i) => (
               <div
                 key={i}
-                className="bg-zinc-800/40 rounded-lg p-3 border-l-2 border-l-emerald-500"
+                className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3 border-l-2 border-l-emerald-500"
               >
-                <p className="text-sm text-zinc-300">{pf.ponto}</p>
+                <p className="text-sm text-zinc-700 dark:text-zinc-300">{pf.ponto}</p>
                 {pf.comoExplorar && (
                   <p className="text-xs text-emerald-400/70 mt-1">
                     Como explorar: {pf.comoExplorar}
@@ -1144,8 +1144,8 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
         >
           <div className="space-y-2">
             {data.tesesSubsidiarias.map((ts, i) => (
-              <div key={i} className="bg-zinc-800/40 rounded-lg p-3">
-                <p className="text-sm font-medium text-zinc-300">{ts.tese}</p>
+              <div key={i} className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3">
+                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{ts.tese}</p>
                 <p className="text-xs text-zinc-500 mt-1">{ts.fundamento}</p>
                 <p className="text-xs text-zinc-600 mt-0.5">
                   Quando usar: {ts.quandoUsar}
@@ -1161,9 +1161,9 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
         <SubRow label="Nulidades" count={data.nulidades.length}>
           <div className="space-y-2">
             {data.nulidades.map((n, i) => (
-              <div key={i} className="bg-zinc-800/40 rounded-lg p-3">
+              <div key={i} className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-zinc-300">{n.tipo}</span>
+                  <span className="text-sm text-zinc-700 dark:text-zinc-300">{n.tipo}</span>
                   <span
                     className={cn(
                       "text-[10px] px-1.5 py-0.5 rounded",
@@ -1188,16 +1188,16 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
         <SubRow label="Qualificadoras" count={data.qualificadoras.length}>
           <div className="space-y-2">
             {data.qualificadoras.map((q, i) => (
-              <div key={i} className="bg-zinc-800/40 rounded-lg p-3">
+              <div key={i} className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-zinc-300">{q.tipo}</span>
+                  <span className="text-sm text-zinc-700 dark:text-zinc-300">{q.tipo}</span>
                   {q.imputada && (
-                    <span className="text-[10px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded">
                       IMPUTADA
                     </span>
                   )}
                   {q.contestavel && (
-                    <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded">
                       CONTESTAVEL
                     </span>
                   )}
@@ -1218,12 +1218,12 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
             {data.matrizGuerra.map((m, i) => (
               <div
                 key={i}
-                className="bg-[#0f0f11] border border-zinc-800 rounded-xl p-3.5"
+                className="bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5"
               >
-                <p className="text-sm font-medium text-zinc-200">{m.fato}</p>
+                <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{m.fato}</p>
                 <div className="grid grid-cols-2 gap-3 mt-2">
                   <div>
-                    <span className="text-[10px] uppercase tracking-wider text-red-400/60">
+                    <span className="text-[10px] uppercase tracking-wider text-red-500 dark:text-red-400/60">
                       Acusacao
                     </span>
                     <p className="text-xs text-zinc-500 mt-0.5">
@@ -1231,7 +1231,7 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
                     </p>
                   </div>
                   <div>
-                    <span className="text-[10px] uppercase tracking-wider text-emerald-400/60">
+                    <span className="text-[10px] uppercase tracking-wider text-emerald-500 dark:text-emerald-400/60">
                       Defesa
                     </span>
                     <p className="text-xs text-zinc-500 mt-0.5">
@@ -1249,11 +1249,11 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
                 )}
                 {m.contradicoes?.length > 0 && (
                   <div className="mt-1">
-                    <span className="text-[10px] text-amber-400/60">
+                    <span className="text-[10px] text-amber-500 dark:text-amber-400/60">
                       Contradicoes:
                     </span>
                     {m.contradicoes.map((c, j) => (
-                      <p key={j} className="text-xs text-amber-400/70">
+                      <p key={j} className="text-xs text-amber-600 dark:text-amber-400/70">
                         {c}
                       </p>
                     ))}
@@ -1293,7 +1293,7 @@ export function BlocoPreparacao({ data }: { data: PreparacaoData }) {
           <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
             Orientacao ao assistido
           </span>
-          <p className="text-sm text-zinc-400 leading-relaxed mt-1">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mt-1">
             {data.orientacaoAoAssistido}
           </p>
         </div>
@@ -1304,13 +1304,13 @@ export function BlocoPreparacao({ data }: { data: PreparacaoData }) {
         <SubRow label="Quesitos" count={data.quesitos.length}>
           <ol className="space-y-2 list-none">
             {data.quesitos.map((q, i) => (
-              <li key={i} className="bg-zinc-800/40 rounded-lg p-3">
+              <li key={i} className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3">
                 <div className="flex gap-2">
                   <span className="text-sm font-mono text-zinc-500 shrink-0">
                     {i + 1}.
                   </span>
                   <div>
-                    <p className="text-sm text-zinc-300">{q.texto}</p>
+                    <p className="text-sm text-zinc-700 dark:text-zinc-300">{q.texto}</p>
                     <p className="text-xs text-emerald-400/70 mt-1">
                       Estrategia: {q.estrategia}
                     </p>
@@ -1330,11 +1330,11 @@ export function BlocoPreparacao({ data }: { data: PreparacaoData }) {
         >
           <div className="space-y-2">
             {data.informacoesAtendimento.map((at, i) => (
-              <div key={i} className="bg-zinc-800/40 rounded-lg p-3">
+              <div key={i} className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3">
                 <span className="text-[10px] font-mono text-zinc-600">
                   {at.data}
                 </span>
-                <p className="text-sm text-zinc-400 mt-1">{at.conteudo}</p>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">{at.conteudo}</p>
                 {at.relevanciaParaCaso && (
                   <p className="text-xs text-emerald-400/70 mt-1">
                     {at.relevanciaParaCaso}
@@ -1355,10 +1355,10 @@ export function BlocoPreparacao({ data }: { data: PreparacaoData }) {
           {data.pontosCriticos.map((pc, i) => (
             <div
               key={i}
-              className="bg-red-500/5 border border-red-500/15 rounded-lg p-3"
+              className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/15 rounded-lg p-3"
             >
-              <p className="text-sm font-medium text-zinc-200">{pc.ponto}</p>
-              <p className="text-xs text-red-400/80 mt-1">
+              <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{pc.ponto}</p>
+              <p className="text-xs text-red-600 dark:text-red-400/80 mt-1">
                 Risco: {pc.risco}
               </p>
               <p className="text-xs text-zinc-500 mt-0.5">

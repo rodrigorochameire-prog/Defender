@@ -124,7 +124,7 @@ export function AnaliseButton({
     return (
       <Button
         disabled
-        className="bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 gap-2"
+        className="bg-emerald-50 dark:bg-emerald-600/20 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 gap-2"
       >
         <CheckCircle2 className="w-4 h-4" />
         Concluído
@@ -137,7 +137,7 @@ export function AnaliseButton({
       <div className="flex items-center gap-3">
         <Button
           disabled
-          className="bg-zinc-800 border border-zinc-700 text-zinc-400 gap-2"
+          className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 gap-2"
         >
           <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />
           Analisando...

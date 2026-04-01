@@ -159,7 +159,7 @@ export function PromptorioModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-zinc-900 border-zinc-800 rounded-xl">
+      <DialogContent className="max-w-md bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl">
         <DialogHeader>
           <DialogTitle className="font-sans text-base font-semibold">
             Promptório
@@ -176,7 +176,7 @@ export function PromptorioModal({
               TIPO DE INSTRUÇÃO
             </label>
             <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-              <SelectTrigger className="bg-[#0f0f11] border-zinc-800">
+              <SelectTrigger className="bg-zinc-50 dark:bg-[#0f0f11] border-zinc-200 dark:border-zinc-800">
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
@@ -199,7 +199,7 @@ export function PromptorioModal({
               value={instrucaoAdicional}
               onChange={(e) => setInstrucaoAdicional(e.target.value)}
               placeholder="Ex: Foque nas contradições entre os depoimentos..."
-              className="bg-[#0f0f11] border-zinc-800 min-h-[72px]"
+              className="bg-zinc-50 dark:bg-[#0f0f11] border-zinc-200 dark:border-zinc-800 min-h-[72px]"
             />
           </div>
         </div>
@@ -208,7 +208,7 @@ export function PromptorioModal({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="bg-transparent border-zinc-700"
+            className="bg-transparent border-zinc-300 dark:border-zinc-700"
           >
             Cancelar
           </Button>
