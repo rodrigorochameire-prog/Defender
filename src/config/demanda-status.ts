@@ -204,6 +204,7 @@ export const DEMANDA_STATUS: Record<string, StatusConfig> = {
   testemunhas: { label: "Testemunhas", group: "diligencias", icon: Users },
   investigar:  { label: "Investigar",  group: "diligencias", icon: Eye },
   buscar:      { label: "Buscar",      group: "diligencias", icon: Search },
+  diligenciar: { label: "Diligenciar", group: "diligencias", icon: FileText },
   oficiar:     { label: "Oficiar",     group: "diligencias", icon: Mail },
 
   // === SAÍDA (2) ===
@@ -241,7 +242,13 @@ export function mapDbStatusToGroup(dbStatus: string | null | undefined, substatu
   }
   // Se tem substatus, usa o substatus para determinar grupo
   if (substatus) {
-    const normalized = substatus.toLowerCase().replace(/\s+/g, "_");
+    // Remove prefixo numérico ("2 - Analisar" → "Analisar", "6 - Documentos" → "Documentos")
+    const withoutPrefix = substatus.replace(/^\d+\s*-\s*/, "");
+    // Normaliza: lowercase, espaços→underscore, remove acentos
+    const normalized = withoutPrefix
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "_");
     const config = DEMANDA_STATUS[normalized];
     if (config) return config.group;
   }
@@ -350,6 +357,7 @@ export const STATUS_OPTIONS_BY_COLUMN: Record<KanbanColumn, Array<{ value: strin
     { value: "testemunhas", label: "Testemunhas", group: "diligencias" },
     { value: "investigar", label: "Investigar", group: "diligencias" },
     { value: "buscar", label: "Buscar", group: "diligencias" },
+    { value: "diligenciar", label: "Diligenciar", group: "diligencias" },
     { value: "oficiar", label: "Oficiar", group: "diligencias" },
     // Saída
     { value: "protocolar", label: "Protocolar", group: "saida" },
@@ -399,6 +407,7 @@ export const UI_STATUS_TO_DB: Record<string, string> = {
   "elaborar": "2_ATENDER",
   "elaborando": "2_ATENDER",
   "buscar": "2_ATENDER",
+  "diligenciar": "2_ATENDER",
   "revisar": "2_ATENDER",
   "revisando": "2_ATENDER",
   "relatorio": "2_ATENDER",
