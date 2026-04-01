@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { FileText } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -24,13 +25,40 @@ interface CaseFilterProps {
   onSelectCase: (caseId: number) => void;
 }
 
-// ─── Dot color map ───────────────────────────────────────────────────────────
+// ─── Color config ───────────────────────────────────────────────────────────
 
-const DOT_COLORS: Record<string, string> = {
-  emerald: "bg-emerald-500",
-  amber: "bg-amber-500",
-  rose: "bg-rose-500",
-  blue: "bg-blue-500",
+const COLOR_CONFIG: Record<string, { dot: string; iconBg: string; iconText: string; activeBorder: string }> = {
+  emerald: {
+    dot: "bg-emerald-500",
+    iconBg: "bg-emerald-50 dark:bg-emerald-900/20",
+    iconText: "text-emerald-600 dark:text-emerald-400",
+    activeBorder: "border-emerald-300 dark:border-emerald-700",
+  },
+  amber: {
+    dot: "bg-amber-500",
+    iconBg: "bg-amber-50 dark:bg-amber-900/20",
+    iconText: "text-amber-600 dark:text-amber-400",
+    activeBorder: "border-amber-300 dark:border-amber-700",
+  },
+  rose: {
+    dot: "bg-rose-500",
+    iconBg: "bg-rose-50 dark:bg-rose-900/20",
+    iconText: "text-rose-600 dark:text-rose-400",
+    activeBorder: "border-rose-300 dark:border-rose-700",
+  },
+  blue: {
+    dot: "bg-blue-500",
+    iconBg: "bg-blue-50 dark:bg-blue-900/20",
+    iconText: "text-blue-600 dark:text-blue-400",
+    activeBorder: "border-blue-300 dark:border-blue-700",
+  },
+};
+
+const DEFAULT_CONFIG = {
+  dot: "bg-zinc-400",
+  iconBg: "bg-zinc-100 dark:bg-zinc-800",
+  iconText: "text-zinc-500 dark:text-zinc-400",
+  activeBorder: "border-zinc-400 dark:border-zinc-500",
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -43,53 +71,56 @@ export function CaseFilter({ cases, selectedCaseId, onSelectCase }: CaseFilterPr
     }
   }, [selectedCaseId, cases, onSelectCase]);
 
-  // Render nothing if 0 or 1 case
   if (cases.length === 0) return null;
 
   return (
-    <div className="px-6 lg:px-8 py-5 flex gap-3 overflow-x-auto">
+    <div className="px-6 lg:px-8 py-4 flex gap-3 overflow-x-auto">
       {cases.map((c) => {
         const selected = c.id === selectedCaseId;
         const ref = c.processoReferencia;
         const description = c.foco || ref?.classeProcessual || "Caso";
+        const colors = COLOR_CONFIG[c.color] ?? DEFAULT_CONFIG;
 
         return (
           <button
             key={c.id}
             onClick={() => onSelectCase(c.id)}
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all duration-150 shrink-0",
+              "flex items-center gap-3.5 px-4 py-3.5 rounded-xl border text-left transition-all duration-150 shrink-0",
               selected
-                ? "border-zinc-900 dark:border-zinc-400 bg-zinc-50 dark:bg-zinc-800/50"
-                : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/30"
+                ? cn("bg-white dark:bg-zinc-800/60 shadow-sm", colors.activeBorder)
+                : "border-zinc-200/80 dark:border-zinc-800/60 bg-zinc-50/50 dark:bg-zinc-900/50 hover:bg-white dark:hover:bg-zinc-800/40 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-sm"
             )}
           >
-            {/* Dot */}
-            <div
-              className={cn(
-                "w-2 h-2 rounded-full shrink-0",
-                DOT_COLORS[c.color] ?? "bg-zinc-400"
-              )}
-            />
+            {/* Icon with colored background */}
+            <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", colors.iconBg)}>
+              <FileText className={cn("w-4 h-4", colors.iconText)} />
+            </div>
 
             {/* Text content */}
             <div className="flex flex-col gap-0.5">
               {/* Type label */}
               {ref?.atribuicao && (
-                <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-medium">
+                <span className={cn(
+                  "text-[10px] uppercase tracking-wider font-semibold",
+                  selected ? colors.iconText : "text-zinc-400 dark:text-zinc-500"
+                )}>
                   {ref.atribuicao.replace(/_/g, " ")}
                 </span>
               )}
 
               {/* Description */}
-              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200">
+              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                 {description}
               </span>
 
               {/* Number line */}
               {ref?.numeroAutos && (
                 <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">
-                  {ref.numeroAutos} · {c.associadosCount} associado{c.associadosCount !== 1 ? "s" : ""}
+                  {ref.numeroAutos}
+                  {c.associadosCount > 0 && (
+                    <> · {c.associadosCount} associado{c.associadosCount !== 1 ? "s" : ""}</>
+                  )}
                 </span>
               )}
             </div>
