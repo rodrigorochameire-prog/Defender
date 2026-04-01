@@ -59,11 +59,21 @@ export function AnalysisPanel({ data, analysisStatus, analyzedAt }: AnalysisPane
           <h3 className="font-semibold text-sm">Análise Estratégica</h3>
         </div>
         <div className="flex items-center gap-2">
-          {analysisStatus === "completed" && (
-            <Badge variant="outline" className="text-xs border-emerald-200 text-emerald-600 gap-1">
-              <CheckCircle2 className="h-3 w-3" /> Concluída
-            </Badge>
-          )}
+          {(() => {
+            const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+              queued: { label: "Na fila...", className: "bg-amber-100 text-amber-700" },
+              running: { label: "Analisando...", className: "bg-blue-100 text-blue-700 animate-pulse" },
+              completed: { label: "Concluída", className: "bg-emerald-100 text-emerald-700" },
+              failed: { label: "Erro", className: "bg-red-100 text-red-700" },
+            };
+            const config = analysisStatus ? STATUS_CONFIG[analysisStatus] : null;
+            if (!config) return null;
+            return (
+              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${config.className}`}>
+                {config.label}
+              </span>
+            );
+          })()}
           {data.versaoModelo && (
             <span className="text-[10px] text-muted-foreground font-mono">{data.versaoModelo}</span>
           )}
