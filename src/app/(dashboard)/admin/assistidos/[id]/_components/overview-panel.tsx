@@ -130,18 +130,18 @@ export function AssistidoOverviewPanel({
       </button>
 
       {!collapsed && (
-        <div className="grid sm:grid-cols-2 gap-4 px-6 lg:px-8 py-5">
+        <div className="grid sm:grid-cols-2 gap-3 px-6 lg:px-8 py-3">
           {/* ── Audiência card ── */}
           <div
             className={cn(
               "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm",
-              "rounded-xl p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer",
+              "rounded-xl p-4 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer",
             )}
           >
-            <div className="flex items-center gap-2.5 mb-3">
+            <div className="flex items-center gap-2.5 mb-2">
               <div
                 className={cn(
-                  "w-9 h-9 rounded-lg flex items-center justify-center",
+                  "w-8 h-8 rounded-lg flex items-center justify-center",
                   proximaAudiencia
                     ? "bg-amber-50 dark:bg-amber-900/20"
                     : "bg-zinc-100 dark:bg-zinc-700/40",
@@ -149,7 +149,7 @@ export function AssistidoOverviewPanel({
               >
                 <Calendar
                   className={cn(
-                    "w-4 h-4",
+                    "w-3.5 h-3.5",
                     proximaAudiencia
                       ? "text-amber-700 dark:text-amber-400"
                       : "text-muted-foreground/50",
@@ -158,7 +158,7 @@ export function AssistidoOverviewPanel({
               </div>
               <span
                 className={cn(
-                  "text-[10px] uppercase tracking-wider font-semibold",
+                  "text-[9px] uppercase tracking-wider font-semibold",
                   proximaAudiencia
                     ? "text-amber-800 dark:text-amber-400"
                     : "text-muted-foreground",
@@ -170,14 +170,14 @@ export function AssistidoOverviewPanel({
 
             {proximaAudiencia ? (
               <div className="space-y-1">
-                <p className="text-lg font-semibold text-foreground">
+                <p className="text-base font-semibold text-foreground">
                   {format(
                     new Date(proximaAudiencia.dataAudiencia!),
                     "dd 'de' MMM · HH'h'mm",
                     { locale: ptBR },
                   )}
                 </p>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
                   {diasAteAudiencia !== null && (
                     <span
                       className={cn(
@@ -226,13 +226,13 @@ export function AssistidoOverviewPanel({
             }
             className={cn(
               "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm",
-              "rounded-xl p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer",
+              "rounded-xl p-4 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer",
             )}
           >
-            <div className="flex items-center gap-2.5 mb-3">
+            <div className="flex items-center gap-2.5 mb-2">
               <div
                 className={cn(
-                  "w-9 h-9 rounded-lg flex items-center justify-center",
+                  "w-8 h-8 rounded-lg flex items-center justify-center",
                   demandaCritica
                     ? "bg-rose-50 dark:bg-rose-900/20"
                     : "bg-zinc-100 dark:bg-zinc-700/40",
@@ -240,7 +240,7 @@ export function AssistidoOverviewPanel({
               >
                 <AlertCircle
                   className={cn(
-                    "w-4 h-4",
+                    "w-3.5 h-3.5",
                     demandaCritica
                       ? "text-rose-700 dark:text-rose-400"
                       : "text-muted-foreground/50",
@@ -249,7 +249,7 @@ export function AssistidoOverviewPanel({
               </div>
               <span
                 className={cn(
-                  "text-[10px] uppercase tracking-wider font-semibold",
+                  "text-[9px] uppercase tracking-wider font-semibold",
                   demandaCritica
                     ? "text-rose-800 dark:text-rose-400"
                     : "text-muted-foreground",
@@ -261,16 +261,21 @@ export function AssistidoOverviewPanel({
 
             {demandaCritica ? (
               <div className="space-y-1">
-                <p className="text-lg font-semibold text-foreground">
+                <p className="text-base font-semibold text-foreground">
                   {demandaCritica.ato ?? demandaCritica.tipoAto ?? "Demanda"}
                 </p>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
                   {demandaCritica.prazo && (
                     <span>
                       Prazo:{" "}
                       {format(new Date(demandaCritica.prazo), "dd 'de' MMM", {
                         locale: ptBR,
                       })}
+                    </span>
+                  )}
+                  {demandaCritica.prazo && new Date(demandaCritica.prazo) < now && (
+                    <span className="text-rose-600 dark:text-rose-400 font-medium">
+                      · vencido há {Math.abs(differenceInDays(new Date(demandaCritica.prazo), now))} dias
                     </span>
                   )}
                   <span className="text-emerald-700 dark:text-emerald-400 font-medium hover:underline">
