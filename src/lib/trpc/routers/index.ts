@@ -73,6 +73,7 @@ import { atosInfracionaisRouter } from "./atos-infracionais";
 import { medidasSocioeducativasRouter } from "./medidas-socioeducativas";
 import { subscriptionsRouter } from "./subscriptions";
 import { googleIntegrationRouter } from "./google-integration";
+import { analiseRouter } from "./analise";
 
 
 export const appRouter = router({
@@ -343,6 +344,11 @@ export const appRouter = router({
   // GOOGLE INTEGRATION (DRIVE + SHEETS)
   // ==========================================
   googleIntegration: googleIntegrationRouter,
+
+  // ==========================================
+  // ANALISE (CLAUDE CODE TASKS + CASOS)
+  // ==========================================
+  analise: analiseRouter,
 });
 
 export type AppRouter = typeof appRouter;
