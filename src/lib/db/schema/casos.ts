@@ -35,6 +35,18 @@ export const casos = pgTable("casos", {
   casoConexoId: integer("caso_conexo_id"),
   observacoes: text("observacoes"),
   linkDrive: text("link_drive"),
+
+  // Novos campos — reorganização assistido (spec 2026-03-31)
+  assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "cascade" }),
+  processoReferenciaId: integer("processo_referencia_id").references(() => processos.id),
+  driveFolderId: text("drive_folder_id"),
+  foco: text("foco"),
+  narrativaDenuncia: text("narrativa_denuncia"),
+  analysisData: jsonb("analysis_data").$type<Record<string, unknown>>(),
+  analysisStatus: varchar("analysis_status", { length: 20 }),
+  analyzedAt: timestamp("analyzed_at"),
+  analysisVersion: integer("analysis_version").default(0),
+
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -44,6 +56,8 @@ export const casos = pgTable("casos", {
   index("casos_status_idx").on(table.status),
   index("casos_defensor_id_idx").on(table.defensorId),
   index("casos_deleted_at_idx").on(table.deletedAt),
+  index("casos_assistido_id_idx").on(table.assistidoId),
+  index("casos_analysis_status_idx").on(table.analysisStatus),
 ]);
 
 export type Caso = typeof casos.$inferSelect;
@@ -409,3 +423,36 @@ export const analisesCowork = pgTable("analises_cowork", {
 
 export type AnaliseCowork = typeof analisesCowork.$inferSelect;
 export type InsertAnaliseCowork = typeof analisesCowork.$inferInsert;
+
+// ==========================================
+// CLAUDE CODE TASKS (Bridge Vercel ↔ Mac Mini)
+// ==========================================
+
+export const claudeCodeTasks = pgTable("claude_code_tasks", {
+  id: serial("id").primaryKey(),
+  assistidoId: integer("assistido_id")
+    .notNull()
+    .references(() => assistidos.id),
+  processoId: integer("processo_id").references(() => processos.id),
+  casoId: integer("caso_id").references(() => casos.id),
+  skill: text("skill").notNull(),
+  prompt: text("prompt").notNull(),
+  instrucaoAdicional: text("instrucao_adicional"),
+  status: text("status").notNull().default("pending"),
+  etapa: text("etapa"),
+  resultado: jsonb("resultado").$type<Record<string, unknown>>(),
+  erro: text("erro"),
+  createdBy: integer("created_by")
+    .notNull()
+    .references(() => users.id),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("claude_code_tasks_status_idx").on(table.status),
+  index("claude_code_tasks_assistido_id_idx").on(table.assistidoId),
+  index("claude_code_tasks_caso_id_idx").on(table.casoId),
+]);
+
+export type ClaudeCodeTask = typeof claudeCodeTasks.$inferSelect;
+export type InsertClaudeCodeTask = typeof claudeCodeTasks.$inferInsert;
