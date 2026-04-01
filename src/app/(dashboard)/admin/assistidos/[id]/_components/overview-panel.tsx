@@ -115,11 +115,11 @@ export function AssistidoOverviewPanel({
   );
 
   return (
-    <div className="relative border-b border-border/40">
+    <div className="relative">
       {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed((prev) => !prev)}
-        className="absolute top-3 right-4 p-1 rounded-md text-muted-foreground/50 hover:text-muted-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors z-10"
+        className="absolute top-1.5 right-1 p-1 rounded-md text-muted-foreground/30 hover:text-muted-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors z-10"
         aria-label={collapsed ? "Expandir painel" : "Recolher painel"}
       >
         {collapsed ? (
@@ -130,7 +130,7 @@ export function AssistidoOverviewPanel({
       </button>
 
       {!collapsed && (
-        <div className="grid sm:grid-cols-2 gap-3 px-6 lg:px-8 py-2">
+        <div className="grid sm:grid-cols-2 gap-2.5">
           {/* ── Audiência card ── */}
           <div
             className={cn(
@@ -138,10 +138,10 @@ export function AssistidoOverviewPanel({
               "rounded-lg p-3.5 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all duration-200 cursor-pointer",
             )}
           >
-            <div className="flex items-center gap-2.5 mb-2">
+            <div className="flex items-center gap-2 mb-1.5">
               <div
                 className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center",
+                  "w-7 h-7 rounded-md flex items-center justify-center",
                   proximaAudiencia
                     ? "bg-amber-50 dark:bg-amber-900/20"
                     : "bg-zinc-100 dark:bg-zinc-700/40",
@@ -149,7 +149,7 @@ export function AssistidoOverviewPanel({
               >
                 <Calendar
                   className={cn(
-                    "w-3.5 h-3.5",
+                    "w-3 h-3",
                     proximaAudiencia
                       ? "text-amber-700 dark:text-amber-400"
                       : "text-muted-foreground/50",
@@ -170,7 +170,7 @@ export function AssistidoOverviewPanel({
 
             {proximaAudiencia ? (
               <div className="space-y-1">
-                <p className="text-base font-semibold text-foreground">
+                <p className="text-sm font-semibold text-foreground">
                   {format(
                     new Date(proximaAudiencia.dataAudiencia!),
                     "dd 'de' MMM · HH'h'mm",
@@ -229,10 +229,10 @@ export function AssistidoOverviewPanel({
               "rounded-lg p-3.5 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all duration-200 cursor-pointer",
             )}
           >
-            <div className="flex items-center gap-2.5 mb-2">
+            <div className="flex items-center gap-2 mb-1.5">
               <div
                 className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center",
+                  "w-7 h-7 rounded-md flex items-center justify-center",
                   demandaCritica
                     ? "bg-rose-50 dark:bg-rose-900/20"
                     : "bg-zinc-100 dark:bg-zinc-700/40",
@@ -240,7 +240,7 @@ export function AssistidoOverviewPanel({
               >
                 <AlertCircle
                   className={cn(
-                    "w-3.5 h-3.5",
+                    "w-3 h-3",
                     demandaCritica
                       ? "text-rose-700 dark:text-rose-400"
                       : "text-muted-foreground/50",
@@ -261,7 +261,7 @@ export function AssistidoOverviewPanel({
 
             {demandaCritica ? (
               <div className="space-y-1">
-                <p className="text-base font-semibold text-foreground">
+                <p className="text-sm font-semibold text-foreground">
                   {demandaCritica.ato ?? demandaCritica.tipoAto ?? "Demanda"}
                 </p>
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">

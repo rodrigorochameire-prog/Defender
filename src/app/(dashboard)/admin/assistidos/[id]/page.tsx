@@ -322,8 +322,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
   return (
     <div className="flex flex-col h-full">
-      {/* ── Header: Identity (compact) ── */}
-      <div className="mx-4 lg:mx-6 mt-4 px-5 pt-5 pb-3 rounded-xl bg-gradient-to-br from-[#1c1c20] to-[#111113] shadow-lg shadow-black/10 overflow-hidden">
+      {/* ── Header: Identity ── */}
+      <div className="mx-4 lg:mx-6 mt-3 px-5 pt-4 pb-3 rounded-xl bg-gradient-to-br from-[#1c1c20] to-[#111113] shadow-lg shadow-black/10">
         {/* Row 1: Back + Avatar + Name + Actions */}
         <div className="flex items-center gap-4">
           <button
@@ -482,25 +482,27 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         </div>
       </div>
 
-      {/* Overview Panel */}
-      <AssistidoOverviewPanel
-        data={data}
-        onProcessoClick={(processoId) => {
-          setSelectedProcessoId(processoId);
-          setSelectedDemandaId(null);
-          setItemSheetType("processo");
-          setItemSheetOpen(true);
-        }}
-        onDemandaClick={(demandaId) => {
-          setSelectedDemandaId(demandaId);
-          setSelectedProcessoId(null);
-          setItemSheetType("demanda");
-          setItemSheetOpen(true);
-        }}
-      />
+      {/* Overview Panel — flush, minimal gap */}
+      <div className="mx-4 lg:mx-6 mt-2">
+        <AssistidoOverviewPanel
+          data={data}
+          onProcessoClick={(processoId) => {
+            setSelectedProcessoId(processoId);
+            setSelectedDemandaId(null);
+            setItemSheetType("processo");
+            setItemSheetOpen(true);
+          }}
+          onDemandaClick={(demandaId) => {
+            setSelectedDemandaId(demandaId);
+            setSelectedProcessoId(null);
+            setItemSheetType("demanda");
+            setItemSheetOpen(true);
+          }}
+        />
+      </div>
 
       {/* ── Tabs ── */}
-      <div className="flex items-center gap-1 border-b border-border px-6 lg:px-8 overflow-x-auto">
+      <div className="flex items-center gap-0.5 border-b border-border/60 mx-4 lg:mx-6 mt-2 overflow-x-auto">
         {tabs.map((t) => {
           const TabIcon = t.icon;
           return (
@@ -509,13 +511,13 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               type="button"
               onClick={() => handleSetTab(t.key)}
               className={cn(
-                "flex items-center gap-2 px-4 py-3.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap shrink-0",
+                "flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 transition-all whitespace-nowrap shrink-0",
                 tab === t.key
                   ? "border-zinc-900 dark:border-zinc-100 text-foreground font-medium"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               )}
             >
-              <TabIcon className="h-4 w-4" />
+              <TabIcon className="h-3.5 w-3.5" />
               {t.label}
               {t.count !== undefined && t.count > 0 && (
                 <span className={cn(
@@ -560,7 +562,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1 overflow-y-auto px-6 lg:px-8 py-6">
+      <div className="flex-1 overflow-y-auto mx-4 lg:mx-6 py-4">
         {tab === "processos" && (
           <div className="space-y-2">
             <div className="flex justify-end mb-2">
