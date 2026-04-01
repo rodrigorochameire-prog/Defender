@@ -323,7 +323,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   return (
     <div className="flex flex-col h-full">
       {/* ── Header: Identity (compact) ── */}
-      <div className="mx-4 lg:mx-6 mt-4 px-5 pt-5 pb-4 rounded-xl bg-gradient-to-br from-[#1c1c20] to-[#111113] shadow-lg shadow-black/10 overflow-hidden">
+      <div className="mx-4 lg:mx-6 mt-4 px-5 pt-5 pb-3 rounded-xl bg-gradient-to-br from-[#1c1c20] to-[#111113] shadow-lg shadow-black/10 overflow-hidden">
         {/* Row 1: Back + Avatar + Name + Actions */}
         <div className="flex items-center gap-4">
           <button
@@ -433,7 +433,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               className="gap-1.5 text-zinc-400 border-zinc-600 bg-white/5 hover:bg-white/10 hover:text-zinc-200 rounded-xl"
               onClick={() => setPromptorioOpen(true)}
             >
-              Promptório
+              <span className="hidden sm:inline">Promptório</span>
               <ChevronDown className="w-3 h-3" />
             </Button>
           </div>
@@ -563,8 +563,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
       <div className="flex-1 overflow-y-auto px-6 lg:px-8 py-6">
         {tab === "processos" && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Processos</h2>
+            <div className="flex justify-end mb-2">
               <Link href={`/admin/processos/novo?assistidoId=${data.id}`}>
                 <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px] text-muted-foreground hover:text-emerald-600">
                   <Plus className="h-3.5 w-3.5" />
@@ -584,7 +583,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                     setItemSheetType("processo");
                     setItemSheetOpen(true);
                   }}
-                  className="group flex gap-3 border border-border rounded-lg p-3 hover:border-emerald-300 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 cursor-pointer transition-all overflow-hidden"
+                  className="group flex gap-3 border border-zinc-100 dark:border-zinc-800/50 rounded-lg p-3 hover:border-emerald-300 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 cursor-pointer transition-all overflow-hidden"
                 >
                   {/* Left accent */}
                   <div className={cn(

@@ -130,12 +130,12 @@ export function AssistidoOverviewPanel({
       </button>
 
       {!collapsed && (
-        <div className="grid sm:grid-cols-2 gap-3 px-6 lg:px-8 py-3">
+        <div className="grid sm:grid-cols-2 gap-3 px-6 lg:px-8 py-2">
           {/* ── Audiência card ── */}
           <div
             className={cn(
-              "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm",
-              "rounded-xl p-4 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer",
+              "bg-zinc-50/80 dark:bg-zinc-800/30 border border-zinc-100 dark:border-zinc-800/50",
+              "rounded-lg p-3.5 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all duration-200 cursor-pointer",
             )}
           >
             <div className="flex items-center gap-2.5 mb-2">
@@ -225,8 +225,8 @@ export function AssistidoOverviewPanel({
                 : undefined
             }
             className={cn(
-              "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm",
-              "rounded-xl p-4 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer",
+              "bg-zinc-50/80 dark:bg-zinc-800/30 border border-zinc-100 dark:border-zinc-800/50",
+              "rounded-lg p-3.5 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all duration-200 cursor-pointer",
             )}
           >
             <div className="flex items-center gap-2.5 mb-2">
