@@ -134,7 +134,7 @@ export function AssistidoOverviewPanel({
           {/* ── Audiência card ── */}
           <div
             className={cn(
-              "bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800/80",
+              "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm",
               "rounded-xl p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer",
             )}
           >
@@ -225,7 +225,7 @@ export function AssistidoOverviewPanel({
                 : undefined
             }
             className={cn(
-              "bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800/80",
+              "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm",
               "rounded-xl p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer",
             )}
           >

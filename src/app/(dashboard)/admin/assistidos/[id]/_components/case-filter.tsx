@@ -44,7 +44,7 @@ export function CaseFilter({ cases, selectedCaseId, onSelectCase }: CaseFilterPr
   }, [selectedCaseId, cases, onSelectCase]);
 
   // Render nothing if 0 or 1 case
-  if (cases.length <= 1) return null;
+  if (cases.length === 0) return null;
 
   return (
     <div className="px-6 lg:px-8 py-5 flex gap-3 overflow-x-auto">

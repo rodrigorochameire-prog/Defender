@@ -384,7 +384,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                   getAtribuicaoColors((data as any).atribuicaoPrimaria).bg,
                   getAtribuicaoColors((data as any).atribuicaoPrimaria).text
                 )}>
-                  {(data as any).atribuicaoPrimaria}
+                  {getAtribuicaoColors((data as any).atribuicaoPrimaria).shortLabel || getAtribuicaoColors((data as any).atribuicaoPrimaria).label || (data as any).atribuicaoPrimaria}
                 </span>
               )}
               {data.statusPrisional && !isPreso && (
@@ -438,8 +438,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         </div>
       </div>
 
-      {/* Case Filter */}
-      {data.processos.length > 1 && (
+      {/* Case Filter — processo referência */}
+      {data.processos.length > 0 && (
         <CaseFilter
           cases={data.processos.map((p, i) => ({
             id: p.id,
@@ -448,7 +448,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               id: p.id,
               numeroAutos: p.numeroAutos,
               classeProcessual: p.assunto ?? undefined,
-              atribuicao: p.fase ?? "Criminal",
+              atribuicao: getAtribuicaoColors((data as any).atribuicaoPrimaria).shortLabel || (data as any).atribuicaoPrimaria || "Criminal",
             },
             associadosCount: 0,
             color: i === 0 ? "emerald" : i === 1 ? "amber" : "rose",
