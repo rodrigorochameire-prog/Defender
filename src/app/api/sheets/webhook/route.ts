@@ -46,12 +46,15 @@ const SHEETS_LABEL_TO_STATUS: Record<string, { status: string; substatus: string
   "4 - EMILLY":             { status: "4_MONITORAR",   substatus: "4 - Emilly" },
   "4 - MONITORAR":          { status: "4_MONITORAR",   substatus: null },
   "5 - FILA":               { status: "5_FILA",        substatus: null },
-  "6 - DOCUMENTOS":         { status: "4_MONITORAR",   substatus: "6 - Documentos" },
-  "6 - TESTEMUNHAS":        { status: "4_MONITORAR",   substatus: "6 - Testemunhas" },
+  "6 - DOCUMENTOS":         { status: "2_ATENDER",     substatus: "6 - Documentos" },
+  "6 - TESTEMUNHAS":        { status: "2_ATENDER",     substatus: "6 - Testemunhas" },
   "7 - PROTOCOLADO":        { status: "7_PROTOCOLADO", substatus: null },
-  "7 - SIGAD":              { status: "7_CIENCIA",     substatus: "7 - Sigad" },
+  "7 - SIGAD":              { status: "7_PROTOCOLADO", substatus: "7 - Sigad" },
   "7 - CIÊNCIA":            { status: "7_CIENCIA",     substatus: null },
-  "7 - RESOLVIDO":          { status: "CONCLUIDO",     substatus: null },
+  "7 - RESOLVIDO":          { status: "CONCLUIDO",     substatus: "7 - Resolvido" },
+  "7 - CONSTITUIU ADVOGADO":{ status: "CONCLUIDO",     substatus: "7 - Constituiu advogado" },
+  "7 - SEM ATUAÇÃO":        { status: "7_SEM_ATUACAO", substatus: null },
+  "7 - PETICIONAMENTO INTERMEDIÁRIO": { status: "7_PROTOCOLADO", substatus: "7 - Peticionamento intermediário" },
 };
 
 function getWebhookSecret(): string {
