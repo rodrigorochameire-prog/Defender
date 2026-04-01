@@ -139,7 +139,17 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
         classeProcessual={(data as any).classeProcessual}
       />
 
-      {/* 5 main tabs */}
+      {/* Context bar */}
+      <div className="flex items-center gap-4 px-6 lg:px-8 py-2.5 border-b border-border/40 bg-zinc-50/50 dark:bg-zinc-900/50 text-xs text-muted-foreground">
+        <span><span className="font-semibold text-foreground">{data.demandas?.length ?? 0}</span> demandas</span>
+        <span><span className="font-semibold text-foreground">{data.audiencias?.length ?? 0}</span> audiências</span>
+        <span><span className="font-semibold text-foreground">{data.driveFiles?.length ?? 0}</span> arquivos</span>
+        {data.processosVinculados?.length > 0 && (
+          <span><span className="font-semibold text-foreground">{data.processosVinculados.length}</span> vinculados</span>
+        )}
+      </div>
+
+      {/* Tabs */}
       <ProcessoTabs
         active={tab}
         onChange={setTab}

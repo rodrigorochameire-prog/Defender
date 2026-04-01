@@ -51,8 +51,8 @@ export function ProcessoTabs({ active, onChange, counts }: ProcessoTabsProps) {
           className={cn(
             "flex items-center gap-2 px-4 py-3.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap shrink-0",
             active === tab.key
-              ? "text-zinc-900 dark:text-zinc-50 border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-t-lg"
-              : "text-zinc-400 border-transparent hover:text-zinc-700 dark:hover:text-zinc-300"
+              ? "border-zinc-900 dark:border-zinc-100 text-zinc-900 dark:text-zinc-50 font-medium"
+              : "border-transparent text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
           )}
         >
           <tab.icon className="h-4 w-4" />
@@ -61,7 +61,7 @@ export function ProcessoTabs({ active, onChange, counts }: ProcessoTabsProps) {
             <span className={cn(
               "text-[10px] min-w-[22px] text-center px-1.5 py-0.5 rounded-full font-medium",
               active === tab.key
-                ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
                 : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
             )}>
               {counts[tab.key]}
