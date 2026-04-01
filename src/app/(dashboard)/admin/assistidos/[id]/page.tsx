@@ -303,7 +303,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     { key: "drive", label: "Drive", icon: HardDrive, count: data.driveFiles.length },
     { key: "midias", label: "Mídias", icon: Clock, count: mediaFiles.length },
     { key: "oficios", label: "Ofícios", icon: Send, count: oficiosData?.total ?? 0 },
-    { key: "investigacao", label: "Investigação Defensiva", icon: Brain },
+    { key: "investigacao", label: "Investigação", icon: Brain },
   ];
 
   const overflowTabs: { key: Tab; label: string }[] = [
@@ -426,7 +426,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 text-zinc-400 border-zinc-700 hover:bg-zinc-800 hover:text-zinc-200"
+            className="gap-1.5 text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200"
             onClick={() => setPromptorioOpen(true)}
           >
             Promptório

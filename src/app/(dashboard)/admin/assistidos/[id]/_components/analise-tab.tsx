@@ -592,10 +592,10 @@ export function AnaliseTab({ assistidoId }: AnaliseTabProps) {
   if (!analysis) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center mb-4">
+        <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
           <Search className="w-5 h-5 text-zinc-500" />
         </div>
-        <p className="text-sm font-medium text-zinc-400">
+        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
           Nenhuma analise disponivel
         </p>
         <p className="text-xs text-zinc-500 mt-1 text-center max-w-xs">
