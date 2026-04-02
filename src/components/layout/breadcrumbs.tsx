@@ -101,7 +101,9 @@ export function Breadcrumbs() {
     );
   }
 
-  // Only show home + last item (page already has its own header with title)
+  // When only 1 breadcrumb (listing page like /admin/demandas),
+  // just show home icon — the page header already shows the title
+  const isListingPage = breadcrumbs.length === 1 && !breadcrumbs[0].isId;
   const lastItem = breadcrumbs[breadcrumbs.length - 1];
   const parentItem = breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 2] : null;
 
@@ -115,7 +117,11 @@ export function Breadcrumbs() {
         <Home className="w-3.5 h-3.5" />
       </Link>
 
-      {parentItem && (
+      {/* Listing pages: just home icon, no text (page header shows the title) */}
+      {isListingPage && null}
+
+      {/* Detail pages: show parent > current */}
+      {!isListingPage && parentItem && (
         <>
           <ChevronRight className="w-3 h-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
           <Link
@@ -128,7 +134,7 @@ export function Breadcrumbs() {
         </>
       )}
 
-      {lastItem && (
+      {!isListingPage && lastItem && (
         <>
           <ChevronRight className="w-3 h-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
           <span
