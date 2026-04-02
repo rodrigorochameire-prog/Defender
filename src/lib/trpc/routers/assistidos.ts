@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { assistidos, processos, demandas, audiencias, documentos, movimentacoes, anotacoes, driveFiles, assistidosProcessos, users, comarcas } from "@/lib/db/schema";
+import { assistidos, processos, demandas, audiencias, documentos, movimentacoes, anotacoes, driveFiles, assistidosProcessos, users, comarcas, casos } from "@/lib/db/schema";
 import { getAssistidosVisibilityFilter, getComarcaId } from "@/lib/trpc/comarca-scope";
 import { eq, ilike, or, desc, sql, and, isNull, inArray, asc, getTableColumns, type SQL } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -410,12 +410,98 @@ export const assistidosRouter = router({
         if (!check[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
       }
 
+      // Group processes by caso
+      // First get casoIds from the assistido's processes
+      const assistidoProcessoRows = await db
+        .select({
+          processoId: assistidosProcessos.processoId,
+          ativo: assistidosProcessos.ativo,
+          papel: assistidosProcessos.papel,
+        })
+        .from(assistidosProcessos)
+        .where(eq(assistidosProcessos.assistidoId, input.id));
+
+      // Get the processo details to find casoIds
+      const assistidoProcessoIds = assistidoProcessoRows.map((r) => r.processoId);
+      const processosComCaso = assistidoProcessoIds.length > 0
+        ? await db
+            .select({ id: processos.id, casoId: processos.casoId })
+            .from(processos)
+            .where(and(
+              inArray(processos.id, assistidoProcessoIds),
+              isNull(processos.deletedAt),
+            ))
+        : [];
+
+      const casoIds = [...new Set(processosComCaso.map((p) => p.casoId).filter((id): id is number => id !== null))];
+
+      let casosAgrupados: {
+        id: number;
+        titulo: string;
+        processos: {
+          id: number;
+          numeroAutos: string | null;
+          tipoProcesso: string | null;
+          isReferencia: boolean | null;
+          ativo: boolean;
+          papel: string;
+          isDoProprio: boolean;
+        }[];
+      }[] = [];
+
+      if (casoIds.length > 0) {
+        const casoRows = await db
+          .select({ id: casos.id, titulo: casos.titulo })
+          .from(casos)
+          .where(inArray(casos.id, casoIds));
+
+        const todosProcessosCaso = await db
+          .select({
+            id: processos.id,
+            casoId: processos.casoId,
+            numeroAutos: processos.numeroAutos,
+            tipoProcesso: processos.tipoProcesso,
+            isReferencia: processos.isReferencia,
+          })
+          .from(processos)
+          .where(
+            and(
+              inArray(processos.casoId, casoIds),
+              isNull(processos.deletedAt),
+            ),
+          );
+
+        const vinculacaoMap = new Map(
+          assistidoProcessoRows.map((v) => [v.processoId, v])
+        );
+
+        casosAgrupados = casoRows.map((c) => ({
+          id: c.id,
+          titulo: c.titulo,
+          processos: todosProcessosCaso
+            .filter((p) => p.casoId === c.id)
+            .map((p) => {
+              const v = vinculacaoMap.get(p.id);
+              return {
+                id: p.id,
+                numeroAutos: p.numeroAutos,
+                tipoProcesso: p.tipoProcesso,
+                isReferencia: p.isReferencia,
+                ativo: v?.ativo ?? false,
+                papel: v?.papel ?? "",
+                isDoProprio: !!v,
+              };
+            }),
+        }));
+      }
+
       return {
         ...baseRows[0],
         processos: processosRows,
         audiencias: audienciasRows,
         demandas: demandasRows,
         driveFiles: driveFilesRows,
+        casosAgrupados,
       };
     }),
 
