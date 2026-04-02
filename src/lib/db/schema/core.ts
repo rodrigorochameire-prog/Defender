@@ -318,18 +318,24 @@ export const processos = pgTable("processos", {
       papel: string; // "vitima" | "testemunha_acusacao" | "testemunha_defesa" | "policial_condutor" | "perito" | "informante" | "defendido"
       resumo: string;
 
-      // === FASES DO DEPOIMENTO ===
-      fasePolicial?: string;
-      faseJudicial?: string;
-      fasePlenario?: string; // se for júri
+      // === DEPOIMENTOS POR FASE ===
+      // Cada fase é um "momento" em que a pessoa foi ouvida
+      fasesDepoimento?: Array<{
+        fase: "delegacia" | "juizo_instrucao" | "juizo_justificacao" | "plenario" | "reconhecimento" | "acareacao";
+        data?: string;
+        local?: string; // "DEAM Camaçari" | "Vara VVD Camaçari" | "Plenário do Júri"
+        autoridade?: string; // "Del. Francisca Luciene" | "Juiz André Gomma"
+        modalidade?: "presencial" | "videoconferencia" | "hibrida";
+        duracaoAproximada?: string; // "15 minutos"
+        resumo: string; // o que disse nesta fase
+        citacoes?: string[]; // trechos literais desta fase
+      }>;
+      // Atalhos (compatibilidade — preenchidos a partir de fasesDepoimento)
+      fasePolicial?: string; // resumo consolidado delegacia
+      faseJudicial?: string; // resumo consolidado juízo
+      fasePlenario?: string; // resumo consolidado plenário
       dataDelegacia?: string;
       dataJuizo?: string;
-      localDelegacia?: string; // "DEAM Camaçari" | "18ª DT" | etc.
-      localJuizo?: string; // "Vara VVD Camaçari" | "2ª Vara Criminal"
-      autoridadeDelegacia?: string; // "Del. Francisca Luciene" — quem presidiu
-      autoridadeJuizo?: string; // "Juiz André Gomma" — quem presidiu
-      modalidadeJuizo?: string; // "presencial" | "videoconferência"
-      duracaoAproximada?: string; // "15 minutos" (se disponível na mídia)
 
       // === CITAÇÕES LITERAIS ===
       citacoes?: string[];
