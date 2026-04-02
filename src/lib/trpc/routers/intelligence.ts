@@ -18,8 +18,9 @@ import {
   casePersonas,
   driveFiles,
   crossAnalyses,
+  assistidosProcessos,
 } from "@/lib/db/schema";
-import { eq, and, sql, desc, count } from "drizzle-orm";
+import { eq, and, sql, desc, count, isNotNull, inArray } from "drizzle-orm";
 import { enrichmentClient } from "@/lib/services/enrichment-client";
 
 // ─────────────────────────────────────────────────────────────
@@ -40,7 +41,6 @@ export const intelligenceRouter = router({
           analysisData: assistidos.analysisData,
           analyzedAt: assistidos.analyzedAt,
           analysisVersion: assistidos.analysisVersion,
-          casoId: assistidos.casoId,
         })
         .from(assistidos)
         .where(eq(assistidos.id, input.assistidoId))
@@ -50,21 +50,32 @@ export const intelligenceRouter = router({
         return { found: false, analysis: null, facts: [], personas: [] };
       }
 
-      // Fetch case_facts and case_personas for this assistido
+      // Derive casoIds via assistidos_processos → processos.casoId
+      const linkedCasoIds = await db
+        .selectDistinct({ casoId: processos.casoId })
+        .from(assistidosProcessos)
+        .innerJoin(processos, eq(processos.id, assistidosProcessos.processoId))
+        .where(and(
+          eq(assistidosProcessos.assistidoId, input.assistidoId),
+          isNotNull(processos.casoId),
+        ));
+
+      // Fetch case_facts and case_personas for linked casos
       let facts: (typeof caseFacts.$inferSelect)[] = [];
       let personas: (typeof casePersonas.$inferSelect)[] = [];
 
-      if (assistido.casoId) {
+      const casoIds = linkedCasoIds.map(r => r.casoId).filter((id): id is number => id !== null);
+      if (casoIds.length > 0) {
         facts = await db
           .select()
           .from(caseFacts)
-          .where(eq(caseFacts.casoId, assistido.casoId))
+          .where(inArray(caseFacts.casoId, casoIds))
           .orderBy(caseFacts.dataFato);
 
         personas = await db
           .select()
           .from(casePersonas)
-          .where(eq(casePersonas.casoId, assistido.casoId));
+          .where(inArray(casePersonas.casoId, casoIds));
       }
 
       return {

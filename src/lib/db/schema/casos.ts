@@ -38,7 +38,6 @@ export const casos = pgTable("casos", {
 
   // Novos campos — reorganização assistido (spec 2026-03-31)
   assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "cascade" }),
-  processoReferenciaId: integer("processo_referencia_id").references(() => processos.id),
   driveFolderId: text("drive_folder_id"),
   foco: text("foco"),
   narrativaDenuncia: text("narrativa_denuncia"),

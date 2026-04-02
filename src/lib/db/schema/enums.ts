@@ -273,6 +273,9 @@ export const papelProcessoEnum = pgEnum("papel_processo", [
   "DENUNCIANTE",
   "QUERELANTE",
   "ASSISTENTE",
+  "REQUERIDO",
+  "EXECUTADO",
+  "REEDUCANDO",
 ]);
 
 export const extractionStatusEnum = pgEnum("extraction_status", [

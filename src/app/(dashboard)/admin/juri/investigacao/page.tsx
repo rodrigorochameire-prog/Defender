@@ -396,7 +396,7 @@ export default function InvestigacaoPage() {
             <DiligenciasPanel
               processoId={selectedProcessoId || undefined}
               assistidoId={selectedAssistidoId || undefined}
-              casoId={processoDetails?.casoId || assistidoDetails?.casoId || undefined}
+              casoId={processoDetails?.casoId || undefined}
               area={processoDetails?.area || undefined}
             />
           </>

@@ -100,7 +100,6 @@ export const assistidos = pgTable("assistidos", {
   photoUrl: text("photo_url"),
   observacoes: text("observacoes"),
   defensorId: integer("defensor_id").references(() => users.id),
-  casoId: integer("caso_id"),
   atribuicaoPrimaria: atribuicaoEnum("atribuicao_primaria").default("SUBSTITUICAO"),
   driveFolderId: text("drive_folder_id"),
   sigadId: varchar("sigad_id", { length: 20 }),
@@ -144,8 +143,7 @@ export const assistidos = pgTable("assistidos", {
   index("assistidos_status_prisional_idx").on(table.statusPrisional),
   index("assistidos_defensor_id_idx").on(table.defensorId),
   index("assistidos_deleted_at_idx").on(table.deletedAt),
-  index("assistidos_caso_id_idx").on(table.casoId),
-  index("assistidos_atribuicao_primaria_idx").on(table.atribuicaoPrimaria),
+index("assistidos_atribuicao_primaria_idx").on(table.atribuicaoPrimaria),
   index("assistidos_analysis_status_idx").on(table.analysisStatus),
   index("assistidos_comarca_id_idx").on(table.comarcaId),
 ]);
@@ -377,6 +375,7 @@ export const assistidosProcessos = pgTable("assistidos_processos", {
   papel: papelProcessoEnum("papel").default("REU").notNull(),
   isPrincipal: boolean("is_principal").default(true),
   observacoes: text("observacoes"),
+  ativo: boolean("ativo").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [

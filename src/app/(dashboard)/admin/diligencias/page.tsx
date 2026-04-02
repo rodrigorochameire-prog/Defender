@@ -380,7 +380,7 @@ export default function DiligenciasPage() {
             <DiligenciasPanel
               processoId={selectedProcessoId || undefined}
               assistidoId={selectedAssistidoId || undefined}
-              casoId={processoDetails?.casoId || assistidoDetails?.casoId || undefined}
+              casoId={processoDetails?.casoId || undefined}
               area={processoDetails?.area || undefined}
             />
           </>

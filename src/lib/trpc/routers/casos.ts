@@ -16,7 +16,8 @@ import {
   juriScriptItems,
   documentos,
   movimentacoes,
-  anotacoes
+  anotacoes,
+  assistidosProcessos,
 } from "@/lib/db/schema";
 import { eq, and, isNull, sql, desc, ilike, inArray, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -224,9 +225,9 @@ export const casosRouter = router({
         });
       }
 
-      // Buscar assistidos vinculados
+      // Buscar assistidos vinculados via assistidos_processos → processos.casoId
       const assistidosVinculados = await db
-        .select({
+        .selectDistinct({
           id: assistidos.id,
           nome: assistidos.nome,
           photoUrl: assistidos.photoUrl,
@@ -234,8 +235,10 @@ export const casosRouter = router({
           localPrisao: assistidos.localPrisao,
         })
         .from(assistidos)
+        .innerJoin(assistidosProcessos, eq(assistidosProcessos.assistidoId, assistidos.id))
+        .innerJoin(processos, eq(processos.id, assistidosProcessos.processoId))
         .where(and(
-          eq(assistidos.casoId, input.id),
+          eq(processos.casoId, input.id),
           isNull(assistidos.deletedAt)
         ));
 
@@ -661,57 +664,6 @@ export const casosRouter = router({
         .returning();
 
       return tag;
-    }),
-
-  // ==========================================
-  // VINCULAR ASSISTIDO AO CASO
-  // ==========================================
-  vincularAssistido: protectedProcedure
-    .input(z.object({
-      casoId: z.number(),
-      assistidoId: z.number(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      const [caso] = await db
-        .select({ id: casos.id })
-        .from(casos)
-        .where(and(eq(casos.id, input.casoId), isNull(casos.deletedAt)))
-        .limit(1);
-
-      if (!caso) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Caso não encontrado",
-        });
-      }
-
-      const [assistido] = await db
-        .select({ id: assistidos.id })
-        .from(assistidos)
-        .where(eq(assistidos.id, input.assistidoId))
-        .limit(1);
-
-      if (!assistido) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Assistido não encontrado",
-        });
-      }
-
-      const [updated] = await db
-        .update(assistidos)
-        .set({ casoId: input.casoId })
-        .where(eq(assistidos.id, input.assistidoId))
-        .returning();
-
-      if (!updated) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Assistido não encontrado",
-        });
-      }
-
-      return updated;
     }),
 
   // ==========================================

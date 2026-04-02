@@ -879,7 +879,6 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           <div className="space-y-4">
             <IntelligenceTab
               assistidoId={Number(id)}
-              casoId={data.casoId}
             />
           </div>
         )}

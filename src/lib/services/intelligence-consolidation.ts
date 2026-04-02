@@ -9,6 +9,7 @@
 import { db } from "@/lib/db";
 import {
   assistidos,
+  assistidosProcessos,
   processos,
   documentos,
   atendimentos,
@@ -86,20 +87,32 @@ export function deduplicatePersonas(
 }
 
 /**
- * Ensure assistido has a caso — create one if missing.
+ * Ensure assistido has a caso — find one via processos or create if missing.
  * Returns the casoId.
  */
 export async function ensureCaso(
   assistidoId: number,
   userId: string,
 ): Promise<number> {
+  // Derive casoId from linked processos
+  const [existing] = await db
+    .selectDistinct({ casoId: processos.casoId })
+    .from(assistidosProcessos)
+    .innerJoin(processos, eq(processos.id, assistidosProcessos.processoId))
+    .where(and(
+      eq(assistidosProcessos.assistidoId, assistidoId),
+      isNotNull(processos.casoId),
+    ))
+    .limit(1);
+
+  if (existing?.casoId) return existing.casoId;
+
+  // Get assistido name for the caso title
   const [assistido] = await db
-    .select({ casoId: assistidos.casoId, nome: assistidos.nome })
+    .select({ nome: assistidos.nome })
     .from(assistidos)
     .where(eq(assistidos.id, assistidoId))
     .limit(1);
-
-  if (assistido?.casoId) return assistido.casoId;
 
   // Create a caso for this assistido
   const [newCaso] = await db
@@ -108,14 +121,9 @@ export async function ensureCaso(
       titulo: `Caso — ${assistido?.nome || "Assistido #" + assistidoId}`,
       status: "ativo",
       defensorId: parseInt(userId),
+      assistidoId: assistidoId,
     })
     .returning({ id: casos.id });
-
-  // Link assistido to caso
-  await db
-    .update(assistidos)
-    .set({ casoId: newCaso.id })
-    .where(eq(assistidos.id, assistidoId));
 
   return newCaso.id;
 }
