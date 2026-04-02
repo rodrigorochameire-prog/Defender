@@ -10,8 +10,10 @@ import { AnaliseTeses } from "./analise-teses";
 import { AnaliseMapa } from "./analise-mapa";
 import { AnaliseProvas } from "./analise-provas";
 import { AnaliseImputacoes } from "./analise-imputacoes";
+import { AnaliseAudiencia } from "./analise-audiencia";
+import { AnaliseCenarios } from "./analise-cenarios";
 
-export type AnaliseSubTab = "resumo" | "partes" | "depoimentos" | "timeline" | "teses" | "provas" | "imputacoes" | "mapa";
+export type AnaliseSubTab = "resumo" | "partes" | "depoimentos" | "timeline" | "teses" | "provas" | "imputacoes" | "audiencia" | "cenarios" | "mapa";
 
 const SUB_TABS: { key: AnaliseSubTab; label: string }[] = [
   { key: "resumo", label: "Resumo" },
@@ -20,7 +22,9 @@ const SUB_TABS: { key: AnaliseSubTab; label: string }[] = [
   { key: "timeline", label: "Timeline" },
   { key: "teses", label: "Teses & Nulidades" },
   { key: "provas", label: "Provas" },
-  { key: "imputacoes", label: "Acusação" },
+  { key: "imputacoes", label: "Acusacao" },
+  { key: "audiencia", label: "Audiencia" },
+  { key: "cenarios", label: "Cenarios" },
   { key: "mapa", label: "Mapa" },
 ];
 
@@ -54,6 +58,12 @@ interface AnaliseHubProps {
   laudos?: any[];
   imputacoes?: any[];
   acusacaoRadiografia?: any;
+  // Audiencia fields
+  requerimentosOrais?: string[];
+  protocoloDia?: string[];
+  // Cenarios fields
+  cenarios?: any[];
+  providencias?: any;
   // Attribution-specific
   ritoBifasico?: any;
   preparacaoPlenario?: any;
@@ -68,14 +78,19 @@ interface AnaliseHubProps {
 export function AnaliseHub(props: AnaliseHubProps) {
   const [subTab, setSubTab] = useState<AnaliseSubTab>("resumo");
 
-  // Filter tabs: only show provas/imputacoes if data exists
+  // Filter tabs: only show conditional tabs if data exists
   const hasProvas = (props.inventarioProvas?.length ?? 0) > 0 || (props.mapaDocumental?.length ?? 0) > 0 || (props.laudos?.length ?? 0) > 0;
   const hasImputacoes = (props.imputacoes?.length ?? 0) > 0 || props.acusacaoRadiografia
     || props.ritoBifasico || props.cadeiaCustodia || props.calculoPena || props.mpu || props.contextoRelacional;
+  const hasAudiencia = (props.perguntasEstrategicas?.length ?? 0) > 0 || !!props.orientacaoAssistido
+    || (props.requerimentosOrais?.length ?? 0) > 0 || (props.protocoloDia?.length ?? 0) > 0;
+  const hasCenarios = (props.cenarios?.length ?? 0) > 0 || props.providencias;
 
   const visibleTabs = SUB_TABS.filter(tab => {
     if (tab.key === "provas" && !hasProvas) return false;
     if (tab.key === "imputacoes" && !hasImputacoes) return false;
+    if (tab.key === "audiencia" && !hasAudiencia) return false;
+    if (tab.key === "cenarios" && !hasCenarios) return false;
     return true;
   });
 
@@ -148,6 +163,20 @@ export function AnaliseHub(props: AnaliseHubProps) {
           cronogramaBeneficios={props.cronogramaBeneficios}
           mpu={props.mpu}
           contextoRelacional={props.contextoRelacional}
+        />
+      )}
+      {subTab === "audiencia" && (
+        <AnaliseAudiencia
+          perguntasEstrategicas={props.perguntasEstrategicas}
+          orientacaoAssistido={props.orientacaoAssistido}
+          requerimentosOrais={props.requerimentosOrais}
+          protocoloDia={props.protocoloDia}
+        />
+      )}
+      {subTab === "cenarios" && (
+        <AnaliseCenarios
+          cenarios={props.cenarios}
+          providencias={props.providencias}
         />
       )}
       {subTab === "mapa" && <AnaliseMapa locais={props.locais} />}

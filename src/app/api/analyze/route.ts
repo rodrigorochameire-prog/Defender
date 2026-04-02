@@ -467,13 +467,95 @@ ATENÇÃO: Extrair TODAS as informações disponíveis nos autos. Endereços COM
 }
 \`\`\`
 
-### TIER 6 — CONDICIONAL POR ATRIBUIÇÃO
-
-#### Se atribuição = Tribunal do Júri → popular OBRIGATORIAMENTE:
+### TIER 5.5 — CRIMINAL COMUM (condicional: popular APENAS se for caso criminal comum)
 
 \`\`\`json
 {
-  "perspectivaPlenaria": "Texto sobre perspectiva do caso em plenário",
+  "trafico": {
+    "natureza": "tráfico|associação|tráfico privilegiado",
+    "droga": "tipo e quantidade apreendida",
+    "localApreensao": "...",
+    "circunstancias": "...",
+    "privilegio": { "aplicavel": false, "fundamentacao": "art. 33, §4º, Lei 11.343/06", "reducao": "1/6 a 2/3" },
+    "cautelarDiversa": { "aplicavel": false, "fundamentacao": "..." }
+  },
+  "desarmamento": {
+    "tipo": "porte ilegal|posse irregular|disparo|comércio ilegal",
+    "arma": "descrição da arma",
+    "registro": false,
+    "apreensao": "...",
+    "pericia": "...",
+    "observacoes": "..."
+  },
+  "roubo": {
+    "tipo": "simples|majorado|latrocínio",
+    "majorantes": ["emprego de arma", "concurso de agentes", "..."],
+    "violencia": "própria|imprópria",
+    "res": "descrição da coisa subtraída",
+    "restituicao": false,
+    "observacoes": "..."
+  },
+  "furto": {
+    "tipo": "simples|qualificado|privilegiado",
+    "qualificadoras": ["..."],
+    "insignificancia": { "aplicavel": false, "valorRes": "R$ ...", "fundamentacao": "..." },
+    "restituicao": false,
+    "observacoes": "..."
+  },
+  "ameaca": {
+    "tipo": "simples|qualificada",
+    "meioEmpregado": "...",
+    "contexto": "...",
+    "palavraVitima": "...",
+    "observacoes": "..."
+  }
+}
+\`\`\`
+
+### TIER 5.6 — ANPP CONHECIMENTO (condicional: popular APENAS se ANPP for cabível)
+
+\`\`\`json
+{
+  "anppConhecimento": {
+    "cabimento": true,
+    "fundamentacao": "art. 28-A, CPP",
+    "penaMinimaCominada": "...",
+    "requisitosObjetivos": { "penaMinima": true, "naoReincidente": true, "naoViolenciaDomestica": true },
+    "requisitosSubjetivos": { "necessarioSuficiente": true, "antecedentes": "..." },
+    "condicoesPropostas": ["prestação de serviço à comunidade", "prestação pecuniária", "..."],
+    "prazoMinimo": "6 meses",
+    "prazoMaximo": "...",
+    "ceapa": { "aplicavel": false, "fundamentacao": "..." },
+    "estrategiaDefesa": "...",
+    "observacoes": "..."
+  }
+}
+\`\`\`
+
+### TIER 6 — JÚRI (condicional: popular APENAS se atribuição = JURI)
+
+\`\`\`json
+{
+  "homicidio": {
+    "qualificadoras": [{ "inciso": "I|II|III|IV|V|VI|VII", "descricao": "...", "fundamentacao": "...", "estrategiaExclusao": "..." }],
+    "privilegio": { "aplicavel": false, "tipo": "violenta emoção|relevante valor moral|domínio de emoção", "fundamentacao": "..." },
+    "vitima": { "nome": "...", "idade": 0, "relacaoComDefendido": "..." },
+    "armaFogo": { "utilizada": false, "tipo": "...", "periciada": true, "resultado": "..." },
+    "concurso": { "coautoria": false, "participacao": false, "individualizacao": "..." }
+  },
+
+  "provaForense": {
+    "necroscopico": { "existe": false, "perito": "...", "causaMortis": "...", "instrumento": "...", "pontosFracos": ["..."] },
+    "laudoLocal": { "existe": false, "perito": "...", "conclusao": "...", "pontosFracos": ["..."] },
+    "balistica": { "existe": false, "resultado": "...", "compatibilidade": "...", "pontosFracos": ["..."] },
+    "toxicologia": { "existe": false, "resultado": "...", "observacoes": "..." }
+  },
+
+  "investigacaoDefensiva": {
+    "diligencias": [{ "tipo": "...", "descricao": "...", "status": "a fazer|em andamento|concluída", "resultado": "..." }],
+    "testemunhasDefesa": [{ "nome": "...", "contribuicao": "...", "localizada": true }],
+    "observacoes": "..."
+  },
 
   "ritoBifasico": {
     "fase": "sumário|plenário",
@@ -490,14 +572,63 @@ ATENÇÃO: Extrair TODAS as informações disponíveis nos autos. Endereços COM
     "jurados": { "perfil": "...", "orientacoes": "..." },
     "retorica": "linha retórica para sustentação oral",
     "observacoes": "..."
+  },
+
+  "perspectivaPlenaria": "Texto sobre perspectiva do caso em plenário",
+
+  "liberdadeJuri": {
+    "situacaoAtual": "preso|solto|monitorado",
+    "pedidosPendentes": [{ "tipo": "revogação preventiva|HC|relaxamento", "status": "...", "fundamentacao": "..." }],
+    "observacoes": "..."
   }
 }
 \`\`\`
 
-#### Se atribuição = Violência Doméstica → popular OBRIGATORIAMENTE:
+### TIER 7 — VVD (condicional: popular APENAS se atribuição = VVD)
 
 \`\`\`json
 {
+  "vvdCrimes": {
+    "lesaoCorporal": { "presente": false, "circunstancias": "..." },
+    "ameaca": { "presente": false, "circunstancias": "..." },
+    "injuria": { "presente": false, "circunstancias": "..." },
+    "difamacao": { "presente": false, "circunstancias": "..." },
+    "calunia": { "presente": false, "circunstancias": "..." },
+    "constrangimentoIlegal": { "presente": false, "circunstancias": "..." },
+    "sequestro": { "presente": false, "circunstancias": "..." },
+    "violacaoDomicilio": { "presente": false, "circunstancias": "..." },
+    "danoPatrimonial": { "presente": false, "circunstancias": "..." },
+    "perseguicao": { "presente": false, "circunstancias": "..." },
+    "violenciaPsicologica": { "presente": false, "circunstancias": "..." },
+    "descumprimentoMPU": { "presente": false, "circunstancias": "..." },
+    "estupro": { "presente": false, "circunstancias": "..." },
+    "feminicidioTentado": { "presente": false, "circunstancias": "..." },
+    "carcerePrivado": { "presente": false, "circunstancias": "..." },
+    "divulgacaoIntima": { "presente": false, "circunstancias": "..." },
+    "stalking": { "presente": false, "circunstancias": "..." }
+  },
+
+  "versoesNarrativas": {
+    "versaoDefendido": "...",
+    "versoesOfendida": { "delegacia": "...", "juizo": "...", "mpu": "..." },
+    "concordanciaEntreVersoes": "alta|media|baixa",
+    "pontosConvergentes": ["..."],
+    "pontosDivergentes": ["..."]
+  },
+
+  "avaliacaoProbatoriaVvd": {
+    "palavraOfendida": { "consistencia": "alta|media|baixa", "detalhes": "..." },
+    "provasMateriaisVvd": [{ "tipo": "foto|laudo|BO|mensagem|áudio|vídeo", "descricao": "...", "impacto": "..." }],
+    "questoesRecorrentesVvd": ["retratação", "reconciliação", "dependência econômica", "..."],
+    "sinteseProba": "..."
+  },
+
+  "historicoVvd": {
+    "episodiosAnteriores": [{ "data": "...", "descricao": "...", "bo": "...", "resultado": "..." }],
+    "mpusAnteriores": [{ "data": "...", "medidas": ["..."], "resultado": "vigente|revogada|descumprida" }],
+    "cicloViolencia": "tensão|explosão|lua-de-mel|reconciliação"
+  },
+
   "mpu": {
     "medidasVigentes": [{ "medida": "...", "status": "vigente|revogada|descumprida", "dataConcessao": "..." }],
     "descumprimentos": [{ "descricao": "...", "data": "...", "providencia": "..." }],
@@ -516,10 +647,71 @@ ATENÇÃO: Extrair TODAS as informações disponíveis nos autos. Endereços COM
 }
 \`\`\`
 
-#### Se atribuição = Execução Penal → popular OBRIGATORIAMENTE:
+### TIER 8 — EP (condicional: popular APENAS se atribuição = EXECUCAO_PENAL)
 
 \`\`\`json
 {
+  "execucaoPenal": {
+    "guia": { "numero": "...", "vara": "...", "transitoJulgado": "...", "penaTotal": "...", "regime": "fechado|semiaberto|aberto" },
+    "condenacoes": [{ "processo": "...", "crime": "...", "pena": "...", "regime": "...", "transitoEm": "..." }],
+    "unificacao": { "realizada": false, "penaUnificada": "...", "observacoes": "..." }
+  },
+
+  "ppl": {
+    "progressao": { "fracao": "2/5|3/5|1/2|...", "dataPrevisao": "...", "requisitos": { "objetivo": true, "subjetivo": true, "exameCriminologico": false }, "observacoes": "..." },
+    "livramento": { "fracao": "1/3|1/2|2/3", "dataPrevisao": "...", "requisitos": { "objetivo": true, "subjetivo": true }, "observacoes": "..." },
+    "saidaTemporaria": { "dataPrevista": "...", "requisitos": { "regime": "semiaberto", "comportamento": "bom", "cumprido1_6": true }, "observacoes": "..." },
+    "indulto": { "decreto": "...", "requisitos": ["..."], "aplicavel": false, "observacoes": "..." },
+    "comutacao": { "decreto": "...", "requisitos": ["..."], "aplicavel": false, "observacoes": "..." }
+  },
+
+  "prd": {
+    "psc": { "horasTotal": 0, "horasCumpridas": 0, "entidade": "...", "frequencia": "...", "observacoes": "..." },
+    "pecuniaria": { "valor": "...", "parcelas": 0, "pago": false, "observacoes": "..." },
+    "reconversao": { "risco": false, "motivo": "...", "fundamentacaoDefesa": "...", "observacoes": "..." }
+  },
+
+  "anppEP": {
+    "condicoes": ["..."],
+    "ceapa": { "entidade": "...", "frequencia": "...", "cumprimento": "regular|irregular" },
+    "readequacao": { "necessaria": false, "motivo": "...", "novasCondicoes": ["..."] },
+    "rescisao": { "risco": false, "motivo": "...", "defesa": "..." },
+    "extincao": { "requisitos": { "prazoCumprido": true, "condicoesAtendidas": true }, "dataPrevista": "..." }
+  },
+
+  "detracaoDetalhada": {
+    "periodos": [{ "inicio": "...", "fim": "...", "dias": 0, "tipo": "prisão provisória|prisão domiciliar|monitoração" }],
+    "totalDias": 0,
+    "aplicada": false,
+    "observacoes": "..."
+  },
+
+  "remicao": {
+    "trabalho": { "dias": 0, "proporcao": "3:1", "entidade": "...", "comprovacao": "..." },
+    "estudo": { "horas": 0, "proporcao": "12h:1d", "instituicao": "...", "comprovacao": "..." },
+    "leitura": { "obras": 0, "proporcao": "1 obra:4d", "comprovacao": "..." },
+    "totalDiasRemidos": 0,
+    "homologada": false,
+    "observacoes": "..."
+  },
+
+  "comportamentoCarcerario": {
+    "atestado": { "data": "...", "classificacao": "bom|ótimo|regular|mau", "emitidoPor": "..." },
+    "faltasDisciplinares": [{ "data": "...", "tipo": "leve|media|grave", "descricao": "...", "reabilitada": false }],
+    "observacoes": "..."
+  },
+
+  "prescricaoExecutoria": {
+    "penaAplicada": "...",
+    "prazoPrescricional": "...",
+    "marco": "transito em julgado",
+    "causasSuspensivas": ["fuga|..."],
+    "causasInterruptivas": ["inicio cumprimento|reincidência|..."],
+    "dataLimitePrescricao": "...",
+    "prescrita": false,
+    "observacoes": "..."
+  },
+
   "cronogramaBeneficios": {
     "beneficios": [{ "nome": "progressão|livramento|saída temporária|remição", "dataPrevisao": "2026-06-01", "fracao": "2/5", "status": "a requerer|requerido|deferido|indeferido", "observacoes": "..." }],
     "detracao": { "diasDescontados": 0, "fundamentacao": "..." },
@@ -541,7 +733,9 @@ ATENÇÃO: Extrair TODAS as informações disponíveis nos autos. Endereços COM
 
 ## REGRAS DE GERAÇÃO
 1. TODOS os campos dos Tiers 1-5 são OBRIGATÓRIOS — se não houver dado, usar array vazio [] ou null
-2. Campos do Tier 6 são obrigatórios APENAS para a atribuição correspondente
+2. Tier 5.5 (Criminal Comum): popular se for caso criminal comum (tráfico, roubo, furto, etc.)
+3. Tier 5.6 (ANPP): popular se ANPP for cabível no caso
+4. Tiers 6-8 são obrigatórios APENAS para a atribuição correspondente (6=Júri, 7=VVD, 8=EP)
 3. Use camelCase EXATO conforme acima — a interface não reconhece snake_case no nível raiz
 4. Arrays de pessoas, depoimentos e cronologia devem ter o MÁXIMO de entradas possível
 5. Citações em depoimentos devem ser trechos LITERAIS dos autos (entre aspas)
