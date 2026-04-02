@@ -926,15 +926,130 @@ export const processos = pgTable("processos", {
     // TIER 7 — ATRIBUIÇÃO: VVD
     // ==========================================
 
-    // MPU / Medidas Protetivas de Urgência (ad.mpu)
+    // MPU / Medidas Protetivas de Urgência — COMPLETO (ad.mpu)
     mpu?: {
-      medidasVigentes?: Array<{ medida: string; status: string; dataConcessao?: string }>;
-      descumprimentos?: Array<{
-        descricao: string;
-        data?: string;
-        providencia?: string; // "prisão preventiva decretada" | "advertência"
-        processoDescumprimento?: string; // nº do processo de descumprimento (art. 24-A)
+      // Processo de MPU
+      processoMpu?: string; // nº dos autos da MPU (pode ser diferente da AP)
+      dataRequerimento?: string; // quando a vítima/MP pediu
+      requeridoPor?: "ofendida" | "mp" | "delegacia" | "de_oficio";
+      dataConcessao?: string; // quando o juiz concedeu
+      juizConcessor?: string;
+      fundamentacaoDecisao?: string; // resumo da decisão de concessão
+
+      // Medidas solicitadas vs. concedidas (comparação)
+      medidasSolicitadas?: string[]; // o que foi pedido
+      medidasIndeferidas?: Array<{ medida: string; motivo?: string }>;
+
+      // Cada medida vigente — DETALHADA
+      medidasVigentes?: Array<{
+        medida: string; // nome da medida
+        tipoLegal: // art. 22 Lei 11.340/06
+          | "afastamento_lar" // art. 22, II
+          | "proibicao_aproximacao" // art. 22, III, a
+          | "proibicao_contato" // art. 22, III, b
+          | "proibicao_frequentar" // art. 22, III, c
+          | "restricao_visitas" // art. 22, IV
+          | "alimentos_provisionais" // art. 22, V
+          | "suspensao_arma" // art. 22, I
+          | "monitoracao_eletronica" // art. 319, IX CPP
+          | "comparecimento_periodico" // art. 319, I
+          | "grupo_reflexivo" // art. 22, VI-VII (Lei 13.984/2020)
+          | "proibicao_ausentar_comarca" // art. 319, IV
+          | "recolhimento_noturno" // art. 319, V
+          | "outra";
+        fundamentoLegal?: string; // "art. 22, III, a, Lei 11.340/06"
+        dataConcessao?: string;
+        status: "vigente" | "revogada" | "modulada" | "substituida" | "vencida";
+        // Parâmetros específicos (variam por medida)
+        distanciaMetros?: number; // para proibição de aproximação
+        localProtegido?: string; // "residência da ofendida" | "escola dos filhos" | "local de trabalho"
+        horarioRecolhimento?: string; // "22h às 6h"
+        raioMonitoracao?: number; // metros da monitoração eletrônica
+        zonaExclusao?: string[]; // endereços da zona de exclusão
+        valorAlimentos?: string; // "R$ 1.500" — para alimentos provisionais
+        periodicidadeComparecimento?: string; // "mensal" | "quinzenal"
+        // Exceções concedidas
+        excecoes?: string[]; // "permitido contato para tratar de filhos via WhatsApp" | "pode frequentar escola dos filhos em horário diferente"
+        // Impacto prático no defendido
+        impactoPratico?: string; // "expulso da própria residência" | "não pode ver os filhos" | "impedido de trabalhar na região"
+        observacoes?: string;
       }>;
+
+      // Histórico de modificações
+      modificacoes?: Array<{
+        data: string;
+        tipo: "concessao" | "revogacao" | "modulacao" | "ampliacao" | "reducao" | "substituicao";
+        quemPediu: "defesa" | "mp" | "ofendida" | "de_oficio";
+        medidaAfetada?: string;
+        decisao?: string; // "deferido" | "indeferido" | "parcialmente deferido"
+        fundamentacao?: string;
+      }>;
+
+      // Descumprimentos
+      descumprimentos?: Array<{
+        data: string;
+        medidaDescumprida?: string; // qual medida
+        descricao: string; // o que aconteceu
+        fonte?: string; // "BO" | "relatório Ronda Maria da Penha" | "petição da ofendida"
+        comprovado?: boolean;
+        providencia?: string; // "prisão preventiva" | "advertência" | "agravamento de medida"
+        processoDescumprimento?: string; // nº do processo art. 24-A
+        observacoes?: string;
+      }>;
+
+      // Audiência de justificação (art. 19, §1°)
+      audienciaJustificacao?: {
+        designada?: boolean;
+        data?: string;
+        realizada?: boolean;
+        resultado?: string; // "medidas mantidas" | "revogadas" | "moduladas"
+        ofeendidaPresente?: boolean;
+        defendidoPresente?: boolean;
+        ofeendidaManifestacao?: string; // o que disse na audiência
+        observacoes?: string;
+      };
+
+      // Retratação da ofendida (art. 16)
+      retratacao?: {
+        manifestouDesejo?: boolean; // ofendida manifestou desejo de retirar medidas?
+        dataManifestacao?: string;
+        audienciaArt16Realizada?: boolean; // juiz designou audiência do art. 16?
+        dataAudiencia?: string;
+        resultadoAudiencia?: string; // "ratificou pedido" | "manteve representação" | "retratou-se"
+        observacoes?: string;
+      };
+
+      // Avaliação de risco
+      avaliacaoRisco?: {
+        nivel?: "extremo" | "alto" | "medio" | "baixo";
+        fatoresRisco?: string[]; // "ameaça de morte", "acesso a arma", "histórico de violência", "dependência química"
+        fatoresProtecao?: string[]; // "rede familiar", "emprego estável", "acompanhamento CREAS"
+        formularioRiscoAplicado?: boolean; // formulário de avaliação de risco (Res. CNJ 284/2019)
+        recomendacoes?: string[];
+        observacoes?: string;
+      };
+
+      // Desvio de finalidade (quando MPU é usada para fins patrimoniais/possessórios)
+      desvioFinalidade?: {
+        identificado?: boolean;
+        indicios?: string[]; // "pedido coincide com separação" | "foco no imóvel, não na segurança"
+        disputaPatrimonial?: boolean;
+        disputaGuarda?: boolean;
+        imovelEmDisputa?: string; // endereço
+        quemResidiaPrimeiro?: string; // defendido ou ofendida
+        observacoes?: string;
+      };
+
+      // Prazo e provisoriedade
+      prazoMedidas?: {
+        temPrazo?: boolean; // medidas têm prazo definido?
+        prazoFixado?: string; // "120 dias" | "indeterminado"
+        dataVencimento?: string;
+        renovada?: boolean;
+        quantasRenovacoes?: number;
+        fundamentoRenovacao?: string;
+      };
+
       observacoes?: string;
     };
 
