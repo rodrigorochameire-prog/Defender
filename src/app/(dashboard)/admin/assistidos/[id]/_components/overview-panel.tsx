@@ -134,7 +134,7 @@ export function AssistidoOverviewPanel({
           {/* ── Audiência card ── */}
           <div
             className={cn(
-              "bg-zinc-50/80 dark:bg-zinc-800/30 border border-zinc-100 dark:border-zinc-800/50",
+              "bg-white dark:bg-zinc-800/30 border border-zinc-200/80 dark:border-zinc-800/50",
               "rounded-lg p-3.5 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all duration-200 cursor-pointer",
             )}
           >
@@ -143,7 +143,7 @@ export function AssistidoOverviewPanel({
                 className={cn(
                   "w-7 h-7 rounded-md flex items-center justify-center",
                   proximaAudiencia
-                    ? "bg-amber-50 dark:bg-amber-900/20"
+                    ? "bg-amber-100 dark:bg-amber-900/20"
                     : "bg-zinc-100 dark:bg-zinc-700/40",
                 )}
               >
@@ -151,7 +151,7 @@ export function AssistidoOverviewPanel({
                   className={cn(
                     "w-3 h-3",
                     proximaAudiencia
-                      ? "text-amber-700 dark:text-amber-400"
+                      ? "text-amber-800 dark:text-amber-400"
                       : "text-muted-foreground/50",
                   )}
                 />
@@ -160,7 +160,7 @@ export function AssistidoOverviewPanel({
                 className={cn(
                   "text-[9px] uppercase tracking-wider font-semibold",
                   proximaAudiencia
-                    ? "text-amber-800 dark:text-amber-400"
+                    ? "text-zinc-900 dark:text-amber-400"
                     : "text-muted-foreground",
                 )}
               >
@@ -225,7 +225,7 @@ export function AssistidoOverviewPanel({
                 : undefined
             }
             className={cn(
-              "bg-zinc-50/80 dark:bg-zinc-800/30 border border-zinc-100 dark:border-zinc-800/50",
+              "bg-white dark:bg-zinc-800/30 border border-zinc-200/80 dark:border-zinc-800/50",
               "rounded-lg p-3.5 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all duration-200 cursor-pointer",
             )}
           >
@@ -234,7 +234,7 @@ export function AssistidoOverviewPanel({
                 className={cn(
                   "w-7 h-7 rounded-md flex items-center justify-center",
                   demandaCritica
-                    ? "bg-rose-50 dark:bg-rose-900/20"
+                    ? "bg-rose-100 dark:bg-rose-900/20"
                     : "bg-zinc-100 dark:bg-zinc-700/40",
                 )}
               >
@@ -242,7 +242,7 @@ export function AssistidoOverviewPanel({
                   className={cn(
                     "w-3 h-3",
                     demandaCritica
-                      ? "text-rose-700 dark:text-rose-400"
+                      ? "text-rose-800 dark:text-rose-400"
                       : "text-muted-foreground/50",
                   )}
                 />
@@ -251,7 +251,7 @@ export function AssistidoOverviewPanel({
                 className={cn(
                   "text-[9px] uppercase tracking-wider font-semibold",
                   demandaCritica
-                    ? "text-rose-800 dark:text-rose-400"
+                    ? "text-zinc-900 dark:text-rose-400"
                     : "text-muted-foreground",
                 )}
               >

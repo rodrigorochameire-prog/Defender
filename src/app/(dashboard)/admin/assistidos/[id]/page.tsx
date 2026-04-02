@@ -341,7 +341,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             const hasMultiple = atribuicoes.size > 1 || data.processos.length > 1;
             const avatarBg = hasMultiple
               ? "bg-white text-zinc-900"
-              : `${getAtribuicaoColors((data as any).atribuicaoPrimaria).bgSolid || "bg-emerald-500"} text-white`;
+              : `${getAtribuicaoColors((data as any).atribuicaoPrimaria).bgSolid || "bg-emerald-500"} text-zinc-900`;
             return (
               <div className="relative shrink-0">
                 <div
@@ -502,7 +502,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
       </div>
 
       {/* ── Tabs ── */}
-      <div className="flex items-center gap-0.5 border-b border-border/60 mx-4 lg:mx-6 mt-2 overflow-x-auto">
+      <div className="flex items-center gap-0.5 border-b border-zinc-200 dark:border-zinc-800 mx-4 lg:mx-6 mt-2 overflow-x-auto bg-zinc-50/50 dark:bg-zinc-900/30 rounded-t-lg px-1">
         {tabs.map((t) => {
           const TabIcon = t.icon;
           return (
@@ -585,7 +585,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                     setItemSheetType("processo");
                     setItemSheetOpen(true);
                   }}
-                  className="group flex gap-3 border border-zinc-100 dark:border-zinc-800/50 rounded-lg p-3 hover:border-emerald-300 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 cursor-pointer transition-all overflow-hidden"
+                  className="group flex gap-3 border border-zinc-200/80 dark:border-zinc-800/50 rounded-lg p-3 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 cursor-pointer transition-all overflow-hidden"
                 >
                   {/* Left accent */}
                   <div className={cn(
