@@ -101,44 +101,44 @@ export function Breadcrumbs() {
     );
   }
 
+  // Only show home + last item (page already has its own header with title)
+  const lastItem = breadcrumbs[breadcrumbs.length - 1];
+  const parentItem = breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 2] : null;
+
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm overflow-hidden">
-      {/* Home icon sempre presente */}
+    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs overflow-hidden">
       <Link
         href="/admin"
-        className="flex items-center text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors shrink-0"
+        className="flex items-center text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors shrink-0"
+        title="Dashboard"
       >
-        <Home className="w-4 h-4" />
+        <Home className="w-3.5 h-3.5" />
       </Link>
 
-      {breadcrumbs.map((item, index) => (
-        <div key={item.href} className="flex items-center gap-1 min-w-0">
-          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
+      {parentItem && (
+        <>
+          <ChevronRight className="w-3 h-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
+          <Link
+            href={parentItem.href}
+            className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors truncate max-w-[100px]"
+            title={parentItem.label}
+          >
+            {parentItem.label}
+          </Link>
+        </>
+      )}
 
-          {item.isLast ? (
-            <span
-              className={cn(
-                "font-semibold truncate max-w-[150px]",
-                item.isId ? "text-muted-foreground dark:text-foreground/80" : "text-foreground"
-              )}
-              title={item.label}
-            >
-              {item.label}
-            </span>
-          ) : (
-            <Link
-              href={item.href}
-              className={cn(
-                "hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors truncate max-w-[120px]",
-                item.isId ? "text-muted-foreground" : "text-muted-foreground"
-              )}
-              title={item.label}
-            >
-              {item.label}
-            </Link>
-          )}
-        </div>
-      ))}
+      {lastItem && (
+        <>
+          <ChevronRight className="w-3 h-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
+          <span
+            className="font-semibold text-zinc-900 dark:text-zinc-100 truncate max-w-[140px]"
+            title={lastItem.label}
+          >
+            {lastItem.label}
+          </span>
+        </>
+      )}
     </nav>
   );
 }
