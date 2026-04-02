@@ -455,7 +455,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         </div>
 
         {/* Divider */}
-        <div className="h-[1.5px] bg-white/[0.15] my-3 rounded-full" />
+        <div className="h-[2px] bg-white/20 my-3" />
 
         {/* Row 3: Case pill + Stats + Drive */}
         <div className="flex items-center gap-3 flex-wrap">

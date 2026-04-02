@@ -288,9 +288,9 @@ function BlockShell({
           >
             <Icon className={cn("w-3.5 h-3.5", iconColor)} />
           </div>
-          <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{title}</span>
+          <span className="text-[13px] font-bold uppercase tracking-wide text-zinc-900 dark:text-zinc-100">{title}</span>
           {count != null && (
-            <span className="text-[10px] text-zinc-500 dark:text-zinc-400 bg-zinc-200 dark:bg-zinc-700 px-2 py-0.5 rounded-full">
+            <span className="text-[9px] font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-200 dark:bg-zinc-700 px-2 py-0.5 rounded-full">
               {count}
             </span>
           )}
@@ -319,7 +319,7 @@ function SubRow({
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger className="w-full bg-zinc-100 dark:bg-[#0f0f11] rounded-lg p-2.5 mb-1.5 cursor-pointer flex justify-between items-center hover:bg-zinc-200/70 dark:hover:bg-zinc-800/50 transition-colors">
-        <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
+        <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{label}</span>
         <div className="flex items-center gap-2">
           {count != null && (
             <span className="text-[10px] text-zinc-500 dark:text-zinc-400 bg-zinc-200 dark:bg-zinc-700 px-2 py-0.5 rounded-full">
