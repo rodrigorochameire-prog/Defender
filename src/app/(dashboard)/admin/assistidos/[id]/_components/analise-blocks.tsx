@@ -278,7 +278,7 @@ function BlockShell({
 }) {
   return (
     <AccordionItem value={value} className="border-none mb-3">
-      <AccordionTrigger className="bg-zinc-50 dark:bg-[#0f0f11] border-l-[3px] border-l-zinc-800 dark:border-l-zinc-400 border border-zinc-300 dark:border-zinc-700 rounded-xl px-4 py-3 hover:no-underline hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-all duration-200 data-[state=open]:rounded-b-none data-[state=open]:border-b-zinc-200 dark:data-[state=open]:border-b-zinc-700">
+      <AccordionTrigger className="bg-zinc-50 dark:bg-[#0f0f11] border-l-[3px] border-l-zinc-900 dark:border-l-zinc-400 border border-zinc-900 dark:border-zinc-700 rounded-xl px-4 py-3 hover:no-underline hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-all duration-200 data-[state=open]:rounded-b-none data-[state=open]:border-b-zinc-900/50 dark:data-[state=open]:border-b-zinc-700">
         <div className="flex items-center gap-3 flex-1">
           <div
             className={cn(
@@ -296,7 +296,7 @@ function BlockShell({
           )}
         </div>
       </AccordionTrigger>
-      <AccordionContent className="bg-white dark:bg-zinc-900 border border-t-0 border-zinc-300 dark:border-zinc-700 border-l-[3px] border-l-zinc-800 dark:border-l-zinc-400 rounded-b-xl px-4">
+      <AccordionContent className="bg-white dark:bg-zinc-900 border border-t-0 border-zinc-900 dark:border-zinc-700 border-l-[3px] border-l-zinc-900 dark:border-l-zinc-400 rounded-b-xl px-4">
         {children}
       </AccordionContent>
     </AccordionItem>
