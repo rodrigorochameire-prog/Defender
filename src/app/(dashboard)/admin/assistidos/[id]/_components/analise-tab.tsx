@@ -645,7 +645,7 @@ export function AnaliseTab({ assistidoId }: AnaliseTabProps) {
 
       <Accordion
         type="multiple"
-        defaultValue={["caso", "pessoas", "estrategia"]}
+        defaultValue={[]}
       >
         {analysis.caso && <BlocoCaso data={analysis.caso} />}
         {analysis.pessoas && <BlocoPessoas data={analysis.pessoas} />}

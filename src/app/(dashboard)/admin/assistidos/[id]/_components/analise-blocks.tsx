@@ -414,6 +414,10 @@ export function BlocoCaso({ data }: { data: CasoData }) {
       iconBg="bg-zinc-800 dark:bg-zinc-700"
       iconColor="text-white dark:text-zinc-300"
       title="O Caso"
+      count={[
+        data.cronologia?.length ? `${data.cronologia.length} eventos` : null,
+        data.fatosRelacionados?.length ? `${data.fatosRelacionados.length} fatos` : null,
+      ].filter(Boolean).join(" · ") || "Resumo do fato"}
     >
       {data.resumoFato && (
         <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
@@ -753,6 +757,11 @@ export function BlocoProvas({ data }: { data: ProvasData }) {
       iconBg="bg-zinc-800 dark:bg-zinc-700"
       iconColor="text-white dark:text-zinc-300"
       title="Provas"
+      count={[
+        data.provasPericiais?.length ? `${data.provasPericiais.length} periciais` : null,
+        data.provasDocumentais?.length ? `${data.provasDocumentais.length} documentais` : null,
+        data.possibilidadesProbatorias?.length ? `${data.possibilidadesProbatorias.length} a produzir` : null,
+      ].filter(Boolean).join(" · ") || undefined}
     >
       {/* Elements overview */}
       {(data.elementosInquisitoriais?.length > 0 ||
@@ -1003,6 +1012,10 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
       iconBg="bg-zinc-800 dark:bg-zinc-700"
       iconColor="text-white dark:text-zinc-300"
       title="Estrategia"
+      count={[
+        data.tesePrincipal ? data.tesePrincipal.tese : null,
+        data.nulidades?.length ? `${data.nulidades.length} nulidades` : null,
+      ].filter(Boolean).join(" · ") || undefined}
     >
       {/* Tese principal */}
       {data.tesePrincipal && (
@@ -1286,6 +1299,11 @@ export function BlocoPreparacao({ data }: { data: PreparacaoData }) {
       iconBg="bg-zinc-800 dark:bg-zinc-700"
       iconColor="text-white dark:text-zinc-300"
       title="Preparacao"
+      count={[
+        data.quesitos?.length ? `${data.quesitos.length} quesitos` : null,
+        data.pontosCriticos?.length ? `${data.pontosCriticos.length} alertas` : null,
+        data.informacoesAtendimento?.length ? `${data.informacoesAtendimento.length} atendimentos` : null,
+      ].filter(Boolean).join(" · ") || "Orientação"}
     >
       {/* Orientacao */}
       {data.orientacaoAoAssistido && (
