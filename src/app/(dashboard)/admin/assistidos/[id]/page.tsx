@@ -482,8 +482,11 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         </div>
       </div>
 
-      {/* Overview Panel — flush, minimal gap */}
-      <div className="mx-4 lg:mx-6 mt-2">
+      {/* Content container — unified card for summary + tabs + content */}
+      <div className="mx-4 lg:mx-6 mt-2 bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/60 dark:border-zinc-800/40 overflow-hidden flex-1 flex flex-col min-h-0">
+
+      {/* Overview Panel */}
+      <div className="px-4 pt-3 pb-1">
         <AssistidoOverviewPanel
           data={data}
           onProcessoClick={(processoId) => {
@@ -502,7 +505,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
       </div>
 
       {/* ── Tabs ── */}
-      <div className="flex items-center gap-1 mx-4 lg:mx-6 mt-3 mb-1 overflow-x-auto rounded-lg bg-zinc-100 dark:bg-zinc-800/50 p-1">
+      <div className="flex items-center gap-1 mx-3 mt-1 mb-0 overflow-x-auto rounded-lg bg-zinc-100/80 dark:bg-zinc-800/50 p-1">
         {tabs.map((t) => {
           const TabIcon = t.icon;
           const isActive = tab === t.key;
@@ -563,7 +566,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1 overflow-y-auto mx-4 lg:mx-6 py-4">
+      <div className="flex-1 overflow-y-auto px-4 py-3">
         {tab === "processos" && (
           <div className="space-y-2">
             <div className="flex justify-end mb-2">
@@ -866,6 +869,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           </div>
         )}
       </div>
+
+      </div>{/* end content container */}
 
       {/* Transcript Viewer Dialog */}
       {transcriptViewerFile && currentViewerData && (
