@@ -393,7 +393,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 text-white/60 border-white/15 bg-white/[0.07] hover:bg-white/15 hover:text-white rounded-lg"
+              className="gap-1.5 text-white/80 border-white/20 bg-white/10 hover:bg-white/20 hover:text-white rounded-lg"
               onClick={() => setPromptorioOpen(true)}
             >
               <span className="hidden sm:inline">Promptório</span>
@@ -455,43 +455,46 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           )}
         </div>
 
-        {/* Divider */}
-        <div className="h-[2px] bg-white/20 my-3" />
-
-        {/* Row 3: Case pill + Stats + Drive */}
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Case pill — white */}
+        {/* Row 3: Case + Stats + Drive — inverted bar (white bg, black border) */}
+        <div className="flex items-center gap-3 flex-wrap mt-3 px-3.5 py-2.5 rounded-lg bg-white border border-zinc-900/80">
+          {/* Case pill */}
           {data.processos.length > 0 && (() => {
             const p = data.processos[0];
             const attrColors = getAtribuicaoColors((data as any).atribuicaoPrimaria) as Record<string, string>;
             const label = attrColors.shortLabel || attrColors.label || (data as any).atribuicaoPrimaria;
             return (
-              <div className="flex items-center gap-[7px] px-3 py-[5px] rounded-[7px] bg-white/95 text-[11px] shadow-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-zinc-900 shrink-0" />
-                <span className="text-zinc-900 font-semibold">{label}</span>
-                <span className="text-zinc-500 font-mono text-[10px]">{p.numeroAutos}</span>
+              <div className="flex items-center gap-2 text-[11px]">
+                <span className="w-2 h-2 rounded-full bg-zinc-900 shrink-0" />
+                <span className="text-zinc-900 font-bold">{label}</span>
+                <span className="text-zinc-400 font-mono text-[10px]">{p.numeroAutos}</span>
               </div>
             );
           })()}
 
+          {/* Separator */}
+          <span className="w-px h-3.5 bg-zinc-200" />
+
           {/* Stats */}
-          <div className="flex items-center gap-3.5 text-[11px] text-white/35">
-            <span><span className="font-semibold text-white/70">{data.processos.length}</span> proc</span>
-            <span><span className="font-semibold text-white/70">{data.demandas.length}</span> dem</span>
-            <span><span className="font-semibold text-white/70">{data.audiencias.length}</span> aud</span>
+          <div className="flex items-center gap-3 text-[11px] text-zinc-400">
+            <span><span className="font-semibold text-zinc-700">{data.processos.length}</span> proc</span>
+            <span><span className="font-semibold text-zinc-700">{data.demandas.length}</span> dem</span>
+            <span><span className="font-semibold text-zinc-700">{data.audiencias.length}</span> aud</span>
           </div>
 
+          {/* Separator */}
+          <span className="w-px h-3.5 bg-zinc-200" />
+
           {/* Drive — right aligned */}
-          <div className="flex items-center gap-1.5 ml-auto text-[10px] text-white/35">
-            <FolderOpen className="w-3 h-3" />
-            <span className="font-semibold text-white/60">{data.driveFiles.length}</span>
+          <div className="flex items-center gap-1.5 ml-auto text-[10px] text-zinc-400">
+            <FolderOpen className="w-3 h-3 text-zinc-400" />
+            <span className="font-semibold text-zinc-700">{data.driveFiles.length}</span>
             <span>arq</span>
             {(data as any).driveFolderId && (
               <a
                 href={`https://drive.google.com/drive/folders/${(data as any).driveFolderId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-1.5 py-0.5 rounded border border-white/[0.08] text-white/40 hover:text-white transition-colors text-[10px]"
+                className="px-1.5 py-0.5 rounded border border-zinc-300 text-zinc-500 hover:text-zinc-900 hover:border-zinc-400 transition-colors text-[10px]"
               >
                 Abrir
               </a>
