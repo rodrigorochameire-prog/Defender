@@ -900,6 +900,220 @@ export const processos = pgTable("processos", {
     };
 
     // ==========================================
+    // TIER 5.5 — CRIMINAL COMUM: POR TIPO PENAL
+    // ==========================================
+
+    // ---- TRÁFICO DE DROGAS (Lei 11.343/06) ----
+    trafico?: {
+      // Droga apreendida
+      tipoDroga?: string; // "cocaína" | "maconha" | "crack" | "ecstasy" | "LSD" | "múltiplas"
+      quantidade?: string; // "26 papelotes de cocaína" | "500g de maconha"
+      quantidadeGramas?: number;
+      embalagens?: string; // "papelotes" | "tijolos" | "porções" | "pinos"
+      quantidadeEmbalagens?: number;
+      localApreensao?: string; // "via pública" | "residência" | "veículo" | "pessoa do flagranteado"
+      proximidadeEscola?: boolean; // art. 40, III — causa de aumento
+      // Laudo
+      laudoConstatacaoProvisoria?: boolean; // existe?
+      laudoDefinitivo?: boolean; // foi juntado?
+      laudoConteudo?: string; // resultado do laudo
+      // Tipificação
+      artigoImputado?: "art33" | "art33_§4" | "art34" | "art35" | "art28"; // tráfico | privilegiado | maquinário | associação | uso
+      // Tráfico vs. Uso (a grande questão)
+      teseUsoPessoal?: boolean; // defesa alega que era para uso
+      elementosUso?: string[]; // "quantidade pequena" | "sem petrechos de venda" | "primário" | "sem dinheiro trocado"
+      elementosTrafico?: string[]; // "quantidade grande" | "embalagens fracionadas" | "dinheiro trocado" | "balança"
+      // Art. 33, §4° — traficante ocasional (redução 1/6 a 2/3)
+      § 4Aplicavel?: boolean;
+      requisitos§4?: {
+        primario?: boolean;
+        bonsAntecedentes?: boolean;
+        naoIntegranteOrganizacao?: boolean;
+        naoSeDedicaAtividadeCriminosa?: boolean;
+      };
+      // Circunstâncias da apreensão
+      flagranteOrigem?: "denuncia_anonima" | "patrulhamento" | "mandado" | "cumprimento_busca" | "blitz" | "outra";
+      buscaPessoalFundada?: boolean; // fundada suspeita? (art. 244 CPP)
+      motivoBuscaPessoal?: string;
+      cadeiaCustodiaDroga?: string; // regular? irregularidades?
+      // Regime e benefícios
+      equiparadoHediondo?: boolean; // tráfico = equiparado a hediondo
+      fiancaVedada?: boolean;
+      regimeInicialFechado?: boolean; // STF declarou inconstitucional a obrigatoriedade
+      substituicaoPRD?: boolean; // vedação legal, mas STF flexibilizou
+      observacoes?: string;
+    };
+
+    // ---- DESARMAMENTO (Lei 10.826/03) ----
+    desarmamento?: {
+      // Arma
+      tipoArma?: string; // "revólver calibre .38" | "pistola 9mm" | "espingarda" | "simulacro"
+      marca?: string;
+      calibre?: string;
+      usoPermitido?: boolean; // uso permitido vs. uso restrito
+      numeracaoRaspada?: boolean; // art. 16, §1°, IV — causa de aumento
+      numeracao?: string;
+      // Munição
+      municaoApreendida?: boolean;
+      quantidadeMunicao?: number;
+      calibreMunicao?: string;
+      // Tipificação
+      artigoImputado?:
+        | "art12" // Posse irregular (uso permitido) — detenção 1-3 anos
+        | "art14" // Porte ilegal (uso permitido) — reclusão 2-4 anos
+        | "art16" // Posse/porte (uso restrito) — reclusão 3-6 anos
+        | "art17" // Comércio ilegal — reclusão 6-12 anos
+        | "art18"; // Tráfico internacional — reclusão 8-16 anos
+      posseVsPorte?: "posse" | "porte"; // posse = dentro de casa | porte = fora
+      // Perícia
+      laudoPericial?: boolean; // arma periciada?
+      armaAptaDisparo?: boolean; // FUNDAMENTAL — se arma é inapta, tese de atipicidade
+      resultadoPericia?: string;
+      // Registro/Autorização
+      possuiRegistro?: boolean;
+      possuiCAC?: boolean; // Caçador/Atirador/Colecionador
+      exercicioFuncao?: boolean; // portava no exercício de função?
+      // Teses específicas
+      teseAtipicidade?: boolean; // arma inapta = fato atípico
+      teseInsignificancia?: boolean; // munição desacompanhada de arma
+      tesePosse?: boolean; // era posse (dentro de casa), não porte
+      observacoes?: string;
+    };
+
+    // ---- ROUBO (art. 157 CP) ----
+    roubo?: {
+      // Tipificação
+      tipo?: "simples" | "majorado" | "latrocinio";
+      // Causas de aumento (§2°)
+      majorantes?: Array<{
+        inciso: string; // "I" | "II" | "III" | "IV" | "V" | "VI" | "VII"
+        descricao: string; // "emprego de arma de fogo" | "concurso de 2+ pessoas" | "restrição de liberdade"
+        comprovada?: boolean;
+        teseDefensiva?: string; // "arma não apreendida" | "simulacro"
+      }>;
+      // Arma no roubo
+      empregoArma?: boolean;
+      tipoArma?: "arma_fogo_real" | "arma_branca" | "simulacro" | "dedo_na_cintura" | "nao_apreendida";
+      armaApreendida?: boolean;
+      armaPericiada?: boolean;
+      // Res furtiva (bens subtraídos)
+      resFurtiva?: Array<{
+        bem: string; // "celular iPhone 14" | "R$ 500,00" | "bolsa"
+        valorEstimado?: string;
+        restituido?: boolean;
+      }>;
+      valorTotal?: string;
+      bensRestituidos?: boolean;
+      // Reconhecimento (problema recorrente em roubo)
+      reconhecimentoPessoal?: {
+        realizado?: boolean;
+        fase?: "delegacia" | "juizo";
+        procedimento?: string; // "foto única" | "álbum fotográfico" | "presencial com alinhamento"
+        regular226CPP?: boolean; // seguiu art. 226 CPP?
+        irregularidades?: string[]; // "foto única WhatsApp" | "sem alinhamento" | "sugestão policial"
+        teseIlegalidade?: boolean; // HC 598.886/SC STJ
+      };
+      // Câmeras
+      camerasSeguranca?: boolean;
+      imagensUteis?: boolean;
+      conteudoImagens?: string;
+      // Concurso
+      concurso?: boolean;
+      coautores?: string[];
+      delacao?: boolean;
+      // Continuidade delitiva
+      continuidadeDelitiva?: boolean; // art. 71 CP
+      quantosFatos?: number;
+      observacoes?: string;
+    };
+
+    // ---- FURTO (art. 155 CP) ----
+    furto?: {
+      tipo?: "simples" | "qualificado" | "privilegiado";
+      qualificadoras?: string[]; // "rompimento de obstáculo" | "escalada" | "destreza" | "chave falsa" | "concurso"
+      resFurtiva?: Array<{ bem: string; valor?: string; restituido?: boolean }>;
+      valorTotal?: string;
+      principioInsignificancia?: boolean; // tese do furto famélico / bagatela
+      criteriosInsignificancia?: { // STF: MARI
+        minimaOfensividade?: boolean;
+        ausenciaPericulosidade?: boolean;
+        reduzidoGrauReprovabilidade?: boolean;
+        inexpressividadeLesao?: boolean;
+      };
+      observacoes?: string;
+    };
+
+    // ---- RECEPTAÇÃO (art. 180 CP) ----
+    receptacao?: {
+      tipo?: "simples" | "qualificada" | "culposa";
+      bemReceptado?: string;
+      origemConhecida?: boolean; // sabia que era produto de crime?
+      prova?: string; // como prova-se a ciência?
+      observacoes?: string;
+    };
+
+    // ---- AMEAÇA (art. 147 CP) ----
+    ameaca?: {
+      meio?: "verbal" | "escrita" | "gesto" | "whatsapp" | "audio" | "video";
+      conteudo?: string; // o que foi dito/escrito
+      provaDocumental?: boolean; // print, áudio, vídeo
+      contexto?: string; // "durante briga" | "após separação"
+      teseAtipicidade?: boolean; // ameaça vaga, genérica, inverossímil
+      observacoes?: string;
+    };
+
+    // ==========================================
+    // TIER 5.6 — ANPP NA FASE DE CONHECIMENTO
+    // ==========================================
+
+    // ANPP proposto/cabível durante a investigação ou ação penal
+    anppConhecimento?: {
+      // Cabimento (art. 28-A CPP)
+      cabivel?: boolean;
+      motivoCabimentoOuNao?: string;
+      requisitos?: {
+        penaMinimaMenor4Anos?: boolean;
+        naoArquivamento?: boolean;
+        naoReincidente?: boolean;
+        naoBeneficiadoAntes?: boolean; // nos últimos 5 anos
+        circunstanciasFavoraveis?: boolean;
+      };
+
+      // Propositura
+      oferecidoPeloMP?: boolean;
+      dataOferecimento?: string;
+      motivoNaoOferecimento?: string; // se não foi oferecido quando cabível
+      defesaRequereuAoJuiz?: boolean; // art. 28-A, §14 — remessa ao PGJ
+
+      // Negociação
+      condicoesPropostas?: Array<{
+        tipo: "reparacao_dano" | "psc" | "pecuniaria" | "comparecimento" | "outra";
+        descricao: string;
+        prazo?: string;
+        valor?: string;
+      }>;
+      defendidoAceitou?: boolean;
+      motivoRecusa?: string;
+      defensorPresente?: boolean; // §4° — obrigatório
+
+      // Homologação
+      homologado?: boolean;
+      dataHomologacao?: string;
+      juizHomologador?: string;
+      audienciaVoluntariedade?: boolean; // §4° — juiz verificou voluntariedade?
+
+      // Se não oferecido quando cabível — tese defensiva
+      teseNaoOferecimento?: {
+        cabivelMasNaoOferecido?: boolean;
+        requerimentoAoJuiz?: boolean; // art. 28-A, §14
+        remessaPGJ?: boolean;
+        resultado?: string;
+      };
+
+      observacoes?: string;
+    };
+
+    // ==========================================
     // TIER 6 — ATRIBUIÇÃO: JÚRI
     // ==========================================
 
