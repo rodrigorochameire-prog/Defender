@@ -254,24 +254,93 @@ export const processos = pgTable("processos", {
     // TIER 2 — PARTES, DEPOIMENTOS, CRONOLOGIA
     // ==========================================
 
-    // Pessoas envolvidas (ad.pessoas)
+    // Pessoas envolvidas — INTELIGÊNCIA COMPLETA (ad.pessoas)
     pessoas?: Array<{
       nome: string;
-      papel: string;
-      descricao?: string;
-      qualificacao?: string;
-      contato?: string;
+      papel: string; // "defendido" | "vitima" | "testemunha_acusacao" | "testemunha_defesa" | "perito" | "delegado" | "policial_condutor" | "familiar" | "outro"
+      cpf?: string;
+      rg?: string;
+      dataNascimento?: string;
+      idade?: number;
+      nacionalidade?: string;
+      naturalidade?: string;
+      profissao?: string;
+      escolaridade?: string;
+      estadoCivil?: string;
+      filiacao?: string; // "Filho de X e Y"
+      // Endereço (fundamental para mapa de inteligência)
+      endereco?: string; // endereço completo
+      bairro?: string;
+      cidade?: string;
+      uf?: string;
+      cep?: string;
+      coordenadas?: { lat: number; lng: number };
+      // Contato
+      telefones?: string[];
+      email?: string;
+      // Vínculos e relações
+      vinculoComDefendido?: string; // "ex-companheira", "vizinho", "colega de trabalho"
+      vinculoComVitima?: string;
+      vinculoComOutros?: Array<{ pessoa: string; vinculo: string }>;
+      // Antecedentes e passagens
+      antecedentes?: string; // "Primário" ou "Reincidente — art. X"
+      passagensPoliciais?: Array<{ tipo: string; data?: string; delegacia?: string; resultado?: string }>;
+      processosRelacionados?: Array<{ numero: string; crime?: string; status?: string; relacao?: string }>;
+      // Status processual
+      preso?: boolean;
+      unidadePrisional?: string;
+      monitoracaoEletronica?: boolean;
+      medidasCautelares?: string[];
+      // Audiência e intimação
+      intimadoProximaAudiencia?: boolean;
+      statusIntimacao?: "intimado" | "nao_intimado" | "frustrada" | "nao_localizado" | "por_edital" | "dispensado";
+      detalheIntimacao?: string; // "Mandado devolvido: não localizado no endereço"
+      dataCertidaoIntimacao?: string;
+      enderecoTentadoIntimacao?: string; // endereço onde o oficial foi
+      // Depoimentos prestados
+      depoeNaDelegacia?: boolean;
+      depoeEmJuizo?: boolean;
+      dataDelegacia?: string;
+      dataJuizo?: string;
+      faltouAudiencia?: boolean;
+      motivoFalta?: string; // "não localizado", "não compareceu", "mudou de endereço"
+      multaAplicada?: boolean;
+      valorMulta?: string;
+      // Avaliação estratégica
+      favoravelDefesa?: boolean | null;
+      perguntasSugeridas?: string[];
       observacoes?: string;
     }>;
 
-    // Depoimentos com citações reais (ad.depoimentos)
+    // Depoimentos com citações reais e análise cruzada (ad.depoimentos)
     depoimentos?: Array<{
       nome: string;
       papel: string;
       resumo: string;
+      // Fases (fundamental para análise comparativa)
+      fasePolicial?: string; // resumo do depoimento na delegacia
+      faseJudicial?: string; // resumo do depoimento em juízo
+      dataDelegacia?: string;
+      dataJuizo?: string;
+      quemPerguntou?: string; // "MP" | "Defesa" | "Juiz" — para citações
+      // Citações literais dos autos (em itálico no dossiê)
       citacoes?: string[];
-      contradicoes?: string[];
+      trechosRelevantes?: string[];
+      // Contradições identificadas
+      contradicoes?: Array<{
+        delegacia?: string;
+        juizo?: string;
+        contradicao?: string;
+        impacto?: string; // "favorável defesa" | "desfavorável"
+      }>;
+      // Análise de credibilidade
       credibilidade?: "alta" | "media" | "baixa";
+      motivoCredibilidade?: string; // "relato consistente" ou "contradições com X"
+      impactoAcusacao?: string; // trecho mais danoso para a defesa
+      impactoDefesa?: string; // trecho mais favorável à defesa
+      // Avaliação
+      favoravelDefesa?: boolean | null;
+      perguntasSugeridas?: string[];
       observacoes?: string;
     }>;
 
@@ -279,17 +348,113 @@ export const processos = pgTable("processos", {
     cronologia?: Array<{
       data: string;
       evento: string;
-      fonte?: string;
+      tipo?: "fato" | "flagrante" | "processual" | "decisao" | "audiencia" | "pericia" | "favoravel_defesa" | "desfavoravel" | "neutro";
+      fonte?: string; // "BO", "Depoimento de X", "Decisão judicial", "Laudo"
       relevancia?: "alta" | "media" | "baixa";
+      localEvento?: string; // endereço do fato
       observacoes?: string;
     }>;
 
-    // Locais relevantes (ad.locais)
+    // Locais relevantes — INTELIGÊNCIA GEOGRÁFICA (ad.locais)
     locais?: Array<{
-      nome: string;
-      descricao?: string;
-      relevancia?: string;
+      tipo: "FATO" | "RESIDENCIA_DEFENDIDO" | "RESIDENCIA_VITIMA" | "RESIDENCIA_TESTEMUNHA" | "DELEGACIA" | "FORUM" | "CAMERA" | "ROTA" | "LOCAL_TRABALHO" | "OUTRO";
+      descricao: string; // "Residência do defendido" | "Local do fato"
+      endereco: string; // ENDEREÇO COMPLETO — fundamental
+      bairro?: string;
+      cidade?: string;
+      uf?: string;
+      cep?: string;
       coordenadas?: { lat: number; lng: number };
+      pessoaRelacionada?: string; // "Jhonatan Alexander"
+      relevancia?: string;
+      observacoes?: string;
+    }>;
+
+    // Processos relacionados — INTELIGÊNCIA CRUZADA (ad.processosRelacionados)
+    processosRelacionados?: Array<{
+      numero: string;
+      classe?: string; // "APF", "IP", "AP", "MPU", "HC", "Execução"
+      vara?: string;
+      comarca?: string;
+      crime?: string;
+      partes?: string; // "Jhonatan vs. Isabelle"
+      status?: string; // "em andamento", "arquivado", "transitado"
+      relacaoComPrincipal?: string; // "flagrante originário", "medida protetiva", "inquérito"
+      decisoesRelevantes?: string[];
+      observacoes?: string;
+    }>;
+
+    // Audiências — INTELIGÊNCIA PROCESSUAL (ad.audiencias)
+    audiencias?: Array<{
+      data: string;
+      tipo: string; // "custódia" | "instrução" | "justificação" | "plenário" | "una"
+      modalidade?: string; // "presencial" | "virtual" | "híbrida"
+      realizada: boolean;
+      juiz?: string;
+      promotor?: string;
+      defensor?: string;
+      // Quem foi ouvido
+      ouvidos?: Array<{ nome: string; forma?: "presencial" | "virtual" }>;
+      // Quem faltou
+      ausentes?: Array<{
+        nome: string;
+        motivo?: string; // "não intimado", "não localizado", "não compareceu sem justificativa"
+        consequencia?: string; // "multa R$ 2.315", "condução coercitiva", "redesignação"
+      }>;
+      resultado?: string; // "frustrada — testemunhas ausentes", "concluída", "redesignada"
+      proximaData?: string;
+      observacoes?: string;
+    }>;
+
+    // Decisões judiciais relevantes (ad.decisoesJudiciais)
+    decisoesJudiciais?: Array<{
+      data: string;
+      tipo: string; // "custódia" | "recebimento_denuncia" | "pronúncia" | "sentença" | "despacho" | "MPU" | "revogação"
+      juiz?: string;
+      resumo: string;
+      fundamentacao?: string; // trechos da decisão
+      dispositivoRelevante?: string; // o que decidiu
+      impactoDefesa?: string; // como afeta a estratégia
+      recorrivel?: boolean;
+      prazoRecurso?: string;
+      observacoes?: string;
+    }>;
+
+    // Passagens e antecedentes cruzados (ad.inteligenciaAntecedentes)
+    inteligenciaAntecedentes?: {
+      defendido?: {
+        primario: boolean;
+        certidaoData?: string;
+        processosCriminais?: Array<{ numero: string; crime: string; status: string; comarca?: string }>;
+        passagensPoliciais?: Array<{ tipo: string; data?: string; delegacia?: string }>;
+        mandadosPendentes?: boolean;
+        observacoes?: string;
+      };
+      vitima?: {
+        processosCriminais?: Array<{ numero: string; crime: string; status: string; papel?: string }>;
+        passagensPoliciais?: Array<{ tipo: string; data?: string; delegacia?: string }>;
+        boletinsOcorrencia?: Array<{ numero: string; data?: string; natureza?: string; papel?: string }>;
+        observacoes?: string;
+      };
+      outrosEnvolvidos?: Array<{
+        nome: string;
+        papel: string;
+        processosCriminais?: Array<{ numero: string; crime: string; status: string }>;
+        passagensPoliciais?: Array<{ tipo: string; data?: string }>;
+        observacoes?: string;
+      }>;
+    }>;
+
+    // Certidões e diligências de intimação (ad.diligenciasIntimacao)
+    diligenciasIntimacao?: Array<{
+      destinatario: string;
+      tipo: "mandado" | "AR" | "edital" | "whatsapp" | "email" | "telefone";
+      data: string;
+      resultado: "positivo" | "negativo" | "parcial";
+      detalhe: string; // "Compareci ao endereço X, não localizado" / "Intimado pessoalmente"
+      enderecoTentado?: string;
+      oficialJustica?: string;
+      observacoes?: string;
     }>;
 
     // ==========================================

@@ -221,25 +221,123 @@ A interface OMBUDS lê esses campos diretamente — nomes errados = dados invis�
 }
 \`\`\`
 
-### TIER 2 — PARTES, DEPOIMENTOS, CRONOLOGIA (obrigatório)
+### TIER 2 — PARTES, DEPOIMENTOS, CRONOLOGIA, INTELIGÊNCIA (obrigatório)
+
+ATENÇÃO: Extrair TODAS as informações disponíveis nos autos. Endereços COMPLETOS são fundamentais para mapa de inteligência.
 
 \`\`\`json
 {
   "pessoas": [
-    { "nome": "...", "papel": "defendido|vitima|testemunha_acusacao|testemunha_defesa|perito|delegado|promotor|juiz", "descricao": "...", "qualificacao": "...", "contato": "...", "observacoes": "..." }
+    {
+      "nome": "Nome Completo",
+      "papel": "defendido|vitima|testemunha_acusacao|testemunha_defesa|perito|delegado|policial_condutor|familiar|outro",
+      "cpf": "000.000.000-00",
+      "dataNascimento": "1990-01-15",
+      "idade": 35,
+      "nacionalidade": "Brasileira",
+      "profissao": "...",
+      "escolaridade": "...",
+      "filiacao": "Filho de X e Y",
+      "endereco": "Rua X, 123, Bairro Y, Cidade/UF, CEP 00000-000",
+      "bairro": "...",
+      "cidade": "...",
+      "uf": "BA",
+      "telefones": ["(71) 99999-0000"],
+      "vinculoComDefendido": "ex-companheira|vizinho|colega|desconhecido",
+      "vinculoComVitima": "...",
+      "vinculoComOutros": [{ "pessoa": "Nome", "vinculo": "amigo|parente|colega" }],
+      "antecedentes": "Primário|Reincidente (art. X)",
+      "passagensPoliciais": [{ "tipo": "BO|TCO|APF|IP", "data": "2024-01-01", "delegacia": "DEAM", "resultado": "arquivado" }],
+      "processosRelacionados": [{ "numero": "0000000-00.0000.0.00.0000", "crime": "...", "status": "em andamento", "relacao": "mesmo fato" }],
+      "preso": false,
+      "monitoracaoEletronica": false,
+      "medidasCautelares": ["tornozeleira", "recolhimento noturno"],
+      "intimadoProximaAudiencia": true,
+      "statusIntimacao": "intimado|nao_intimado|frustrada|nao_localizado|por_edital|dispensado",
+      "detalheIntimacao": "Mandado cumprido em 15/03/2026|Devolvido: não localizado no endereço|Citação por edital publicada em...",
+      "enderecoTentadoIntimacao": "Rua onde o oficial foi",
+      "depoeNaDelegacia": true,
+      "depoeEmJuizo": false,
+      "faltouAudiencia": true,
+      "motivoFalta": "não localizado|não compareceu|mudou de endereço|endereço insuficiente",
+      "multaAplicada": false,
+      "favoravelDefesa": true,
+      "perguntasSugeridas": ["Pergunta 1?", "Pergunta 2?"],
+      "observacoes": "..."
+    }
   ],
 
   "depoimentos": [
-    { "nome": "...", "papel": "...", "resumo": "resumo detalhado", "citacoes": ["trecho literal entre aspas"], "contradicoes": ["contradição com outro depoimento"], "credibilidade": "alta|media|baixa", "observacoes": "..." }
+    {
+      "nome": "Nome do depoente",
+      "papel": "vitima|testemunha_acusacao|policial|defendido",
+      "resumo": "Resumo completo do depoimento",
+      "fasePolicial": "Resumo do que disse na delegacia — com citações",
+      "faseJudicial": "Resumo do que disse em juízo — com citações",
+      "dataDelegacia": "2024-12-18",
+      "dataJuizo": "2026-01-22",
+      "citacoes": ["trecho literal entre aspas, exatamente como consta nos autos"],
+      "trechosRelevantes": ["trecho que impacta a tese da defesa"],
+      "contradicoes": [{ "delegacia": "disse X", "juizo": "disse Y", "contradicao": "versões incompatíveis sobre Z", "impacto": "favorável defesa" }],
+      "credibilidade": "alta|media|baixa",
+      "motivoCredibilidade": "relato consistente|contradições com outros depoimentos|interesse no resultado",
+      "impactoAcusacao": "trecho mais danoso para a defesa",
+      "impactoDefesa": "trecho mais favorável à defesa",
+      "favoravelDefesa": true,
+      "perguntasSugeridas": ["Pergunta estratégica 1?"]
+    }
   ],
 
   "cronologia": [
-    { "data": "2025-01-15", "evento": "...", "fonte": "documento ou depoimento", "relevancia": "alta|media|baixa", "observacoes": "..." }
+    { "data": "2024-12-18", "evento": "Prisão em flagrante", "tipo": "flagrante|fato|processual|decisao|audiencia|pericia|favoravel_defesa|desfavoravel|neutro", "fonte": "BO 880757/2024", "localEvento": "Rua dos Bandeirantes, 29, Nova Vitória, Camaçari/BA", "relevancia": "alta" }
   ],
 
   "locais": [
-    { "nome": "...", "descricao": "...", "relevancia": "..." }
-  ]
+    {
+      "tipo": "FATO|RESIDENCIA_DEFENDIDO|RESIDENCIA_VITIMA|RESIDENCIA_TESTEMUNHA|DELEGACIA|FORUM|CAMERA|ROTA|LOCAL_TRABALHO|OUTRO",
+      "descricao": "Local do fato",
+      "endereco": "Rua dos Bandeirantes, 29, Nova Vitória, Camaçari/BA, CEP 42802-467",
+      "bairro": "Nova Vitória",
+      "cidade": "Camaçari",
+      "uf": "BA",
+      "cep": "42802-467",
+      "pessoaRelacionada": "Nome da pessoa que mora/frequenta o local"
+    }
+  ],
+
+  "processosRelacionados": [
+    { "numero": "0000000-00.0000.0.00.0000", "classe": "APF|IP|AP|MPU|HC|Execução", "vara": "...", "crime": "...", "status": "em andamento|arquivado|transitado", "relacaoComPrincipal": "flagrante originário|medida protetiva|inquérito|conexo", "decisoesRelevantes": ["resumo da decisão relevante"] }
+  ],
+
+  "audiencias": [
+    {
+      "data": "2026-01-22",
+      "tipo": "custódia|instrução|justificação|plenário|una",
+      "modalidade": "presencial|virtual|híbrida",
+      "realizada": false,
+      "juiz": "André Gomma",
+      "promotor": "Nataly Santos",
+      "defensor": "Juliane Andrade",
+      "ouvidos": [{ "nome": "Isabelle", "forma": "virtual" }],
+      "ausentes": [{ "nome": "Lucas Rugda", "motivo": "não compareceu sem justificativa", "consequencia": "multa R$ 2.315" }],
+      "resultado": "frustrada — testemunhas ausentes",
+      "proximaData": "2026-04-14"
+    }
+  ],
+
+  "decisoesJudiciais": [
+    { "data": "2024-12-19", "tipo": "custódia", "juiz": "Louise Diamantino", "resumo": "Homologou flagrante, concedeu liberdade com monitoração eletrônica", "fundamentacao": "Penas não alcançam 4 anos, primário", "impactoDefesa": "Fundamentação usou §9° mas denúncia é §13 — inconsistência explorável" }
+  ],
+
+  "diligenciasIntimacao": [
+    { "destinatario": "Lucas Martins", "tipo": "mandado", "data": "2026-03-20", "resultado": "negativo", "detalhe": "Mandado devolvido — destinatário não encontrado no endereço", "enderecoTentado": "Rua X, 123, Camaçari/BA", "oficialJustica": "Paulo Norberto" }
+  ],
+
+  "inteligenciaAntecedentes": {
+    "defendido": { "primario": true, "certidaoData": "2024-12-19", "processosCriminais": [], "passagensPoliciais": [] },
+    "vitima": { "processosCriminais": [], "boletinsOcorrencia": [{ "numero": "880757/2024", "data": "2024-12-18", "natureza": "Lesão corporal VD", "papel": "vítima" }] },
+    "outrosEnvolvidos": [{ "nome": "Robert", "papel": "testemunha", "processosCriminais": [{ "numero": "...", "crime": "homicídio", "status": "investigado" }] }]
+  }
 }
 \`\`\`
 
