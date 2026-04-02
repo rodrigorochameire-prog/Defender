@@ -523,7 +523,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
       </div>
 
       {/* ── Tabs ── */}
-      <div className="flex items-center gap-0.5 mx-3 mt-1 mb-0 overflow-x-auto rounded-lg bg-zinc-900 dark:bg-zinc-800 p-1">
+      <div className="flex items-center gap-0.5 mx-3 mt-1 mb-0 overflow-x-auto rounded-lg bg-zinc-100 dark:bg-zinc-800 p-1">
         {tabs.map((t) => {
           const TabIcon = t.icon;
           const isActive = tab === t.key;
@@ -535,8 +535,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0",
                 isActive
-                  ? "bg-white dark:bg-zinc-100 text-zinc-900 shadow-sm"
-                  : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-200 dark:hover:text-zinc-300 hover:bg-white/10 dark:hover:bg-white/5"
+                  ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm"
+                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-white/5"
               )}
             >
               <TabIcon className="h-3 w-3" />
@@ -545,12 +545,12 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                 <span className={cn(
                   "text-[9px] min-w-[18px] text-center px-1 py-px rounded-full font-medium",
                   t.urgency === "red"
-                    ? "bg-rose-500/20 text-rose-300"
+                    ? "bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300"
                     : t.urgency === "amber"
-                    ? "bg-amber-500/20 text-amber-300"
+                    ? "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-300"
                     : isActive
-                    ? "bg-zinc-200 text-zinc-700"
-                    : "bg-white/10 text-zinc-500"
+                    ? "bg-white/20 text-white/70 dark:bg-zinc-700 dark:text-zinc-300"
+                    : "bg-zinc-200/60 dark:bg-white/10 text-zinc-400 dark:text-zinc-500"
                 )}>
                   {t.count}
                 </span>
@@ -566,8 +566,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               className={cn(
                 "px-2 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1 shrink-0",
                 overflowTabs.some(t => t.key === tab)
-                  ? "bg-white text-zinc-900 shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-200 hover:bg-white/10"
+                  ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm"
+                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-white/5"
               )}
             >
               <MoreHorizontal className="h-3.5 w-3.5" />
