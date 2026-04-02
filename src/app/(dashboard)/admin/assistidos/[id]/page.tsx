@@ -455,8 +455,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           )}
         </div>
 
-        {/* Row 3: Case + Stats + Drive — inverted bar (white bg, black border) */}
-        <div className="flex items-center gap-3 flex-wrap mt-3 px-3.5 py-2.5 rounded-lg bg-white border border-zinc-900/80">
+        {/* Row 3: Case + Stats + Drive — glass bar (translucent, no border) */}
+        <div className="flex items-center gap-3 flex-wrap mt-3 px-3.5 py-2.5 rounded-lg bg-white/[0.12]">
           {/* Case pill */}
           {data.processos.length > 0 && (() => {
             const p = data.processos[0];
@@ -464,37 +464,37 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             const label = attrColors.shortLabel || attrColors.label || (data as any).atribuicaoPrimaria;
             return (
               <div className="flex items-center gap-2 text-[11px]">
-                <span className="w-2 h-2 rounded-full bg-zinc-900 shrink-0" />
-                <span className="text-zinc-900 font-bold">{label}</span>
-                <span className="text-zinc-400 font-mono text-[10px]">{p.numeroAutos}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-white/60 shrink-0" />
+                <span className="text-white/90 font-bold">{label}</span>
+                <span className="text-white/40 font-mono text-[10px]">{p.numeroAutos}</span>
               </div>
             );
           })()}
 
           {/* Separator */}
-          <span className="w-px h-3.5 bg-zinc-200" />
+          <span className="w-px h-3 bg-white/10" />
 
           {/* Stats */}
-          <div className="flex items-center gap-3 text-[11px] text-zinc-400">
-            <span><span className="font-semibold text-zinc-700">{data.processos.length}</span> proc</span>
-            <span><span className="font-semibold text-zinc-700">{data.demandas.length}</span> dem</span>
-            <span><span className="font-semibold text-zinc-700">{data.audiencias.length}</span> aud</span>
+          <div className="flex items-center gap-3 text-[11px] text-white/30">
+            <span><span className="font-semibold text-white/60">{data.processos.length}</span> proc</span>
+            <span><span className="font-semibold text-white/60">{data.demandas.length}</span> dem</span>
+            <span><span className="font-semibold text-white/60">{data.audiencias.length}</span> aud</span>
           </div>
 
           {/* Separator */}
-          <span className="w-px h-3.5 bg-zinc-200" />
+          <span className="w-px h-3 bg-white/10" />
 
           {/* Drive — right aligned */}
-          <div className="flex items-center gap-1.5 ml-auto text-[10px] text-zinc-400">
-            <FolderOpen className="w-3 h-3 text-zinc-400" />
-            <span className="font-semibold text-zinc-700">{data.driveFiles.length}</span>
+          <div className="flex items-center gap-1.5 ml-auto text-[10px] text-white/30">
+            <FolderOpen className="w-3 h-3" />
+            <span className="font-semibold text-white/60">{data.driveFiles.length}</span>
             <span>arq</span>
             {(data as any).driveFolderId && (
               <a
                 href={`https://drive.google.com/drive/folders/${(data as any).driveFolderId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-1.5 py-0.5 rounded border border-zinc-300 text-zinc-500 hover:text-zinc-900 hover:border-zinc-400 transition-colors text-[10px]"
+                className="px-1.5 py-0.5 rounded border border-white/10 text-white/50 hover:text-white hover:border-white/20 transition-colors text-[10px]"
               >
                 Abrir
               </a>
