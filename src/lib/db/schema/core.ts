@@ -186,11 +186,127 @@ export const processos = pgTable("processos", {
   casoId: integer("caso_id"),
   analysisStatus: varchar("analysis_status", { length: 20 }),
   analysisData: jsonb("analysis_data").$type<{
+    // ==========================================
+    // TIER 1 — RESUMO & CONTROLE (always populated)
+    // ==========================================
     resumo?: string;
+    crimePrincipal?: string;
+    estrategia?: string;
     achadosChave?: string[];
     recomendacoes?: string[];
     inconsistencias?: string[];
+
+    // KPIs / Painel de Controle (ad.painelControle ?? ad.kpis)
+    painelControle?: {
+      crimePrincipal?: string;
+      totalPessoas?: number;
+      totalAcusacoes?: number;
+      totalDocumentosAnalisados?: number;
+      totalEventos?: number;
+      totalNulidades?: number;
+      totalRelacoes?: number;
+      faseProcessual?: string;
+      reuPreso?: boolean;
+      proximaAudiencia?: string;
+    };
+    kpis?: {
+      crimePrincipal?: string;
+      totalPessoas?: number;
+      totalAcusacoes?: number;
+      totalDocumentosAnalisados?: number;
+      totalEventos?: number;
+      totalNulidades?: number;
+      totalRelacoes?: number;
+    };
+
+    // Alertas operacionais (ad.alertasOperacionais ?? ad.alertas)
+    alertasOperacionais?: Array<{
+      tipo: string;
+      mensagem: string;
+      severidade?: "critica" | "alta" | "media" | "baixa";
+      prazo?: string;
+    }>;
+    alertas?: Array<{
+      tipo: string;
+      mensagem: string;
+      severidade?: "critica" | "alta" | "media" | "baixa";
+    }>;
+
+    checklistTatico?: string[];
+
+    // Radar Liberdade (gauges for defense strategy)
+    radarLiberdade?: {
+      absolvicao?: number;
+      desclassificacao?: number;
+      atenuantes?: number;
+      nulidade?: number;
+      prescricao?: number;
+      [key: string]: number | undefined;
+    };
+
+    // Saneamento processual
+    saneamento?: {
+      pendencias?: Array<{ item: string; status: string; prazo?: string }>;
+      observacoes?: string;
+    };
+
+    // ==========================================
+    // TIER 2 — PARTES, DEPOIMENTOS, CRONOLOGIA
+    // ==========================================
+
+    // Pessoas envolvidas (ad.pessoas)
+    pessoas?: Array<{
+      nome: string;
+      papel: string;
+      descricao?: string;
+      qualificacao?: string;
+      contato?: string;
+      observacoes?: string;
+    }>;
+
+    // Depoimentos com citações reais (ad.depoimentos)
+    depoimentos?: Array<{
+      nome: string;
+      papel: string;
+      resumo: string;
+      citacoes?: string[];
+      contradicoes?: string[];
+      credibilidade?: "alta" | "media" | "baixa";
+      observacoes?: string;
+    }>;
+
+    // Cronologia dos fatos (ad.cronologia)
+    cronologia?: Array<{
+      data: string;
+      evento: string;
+      fonte?: string;
+      relevancia?: "alta" | "media" | "baixa";
+      observacoes?: string;
+    }>;
+
+    // Locais relevantes (ad.locais)
+    locais?: Array<{
+      nome: string;
+      descricao?: string;
+      relevancia?: string;
+      coordenadas?: { lat: number; lng: number };
+    }>;
+
+    // ==========================================
+    // TIER 3 — TESES & ESTRATÉGIA
+    // ==========================================
+
+    // Teses completas com ranking (ad.tesesCompleto — preferred)
+    tesesCompleto?: {
+      principal?: { nome: string; fundamentacao: string; viabilidade: number; observacoes?: string };
+      subsidiarias?: Array<{ nome: string; fundamentacao: string; viabilidade: number; observacoes?: string }>;
+      desclassificacao?: { para: string; fundamentacao: string; viabilidade: number };
+    };
+
+    // Teses simples (ad.teses — fallback)
     teses?: string[];
+
+    // Nulidades detectadas (ad.nulidades)
     nulidades?: Array<{
       tipo: string;
       descricao: string;
@@ -198,17 +314,194 @@ export const processos = pgTable("processos", {
       fundamentacao: string;
       documentoRef?: string;
     }>;
-    kpis?: {
-      totalPessoas: number;
-      totalAcusacoes: number;
-      totalDocumentosAnalisados: number;
-      totalEventos: number;
-      totalNulidades: number;
-      totalRelacoes: number;
+
+    // Matriz de Guerra (ad.matrizGuerra)
+    matrizGuerra?: Array<{
+      argumento: string;
+      tipo: "acusacao" | "defesa";
+      forca: number;
+      resposta?: string;
+      fonte?: string;
+    }>;
+
+    // Orientação ao assistido (ad.orientacaoAssistido)
+    orientacaoAssistido?: string;
+
+    // Perspectiva plenária — Júri (ad.perspectivaPlenaria)
+    perspectivaPlenaria?: string;
+
+    // Perguntas estratégicas por testemunha (ad.perguntasEstrategicas)
+    perguntasEstrategicas?: Array<{
+      testemunha: string;
+      papel?: string;
+      perguntas: string[];
+      objetivo?: string;
+    }>;
+
+    // ==========================================
+    // TIER 4 — PROVAS & DOCUMENTOS (v7)
+    // ==========================================
+
+    // Inventário de provas (ad.inventarioProvas)
+    inventarioProvas?: Array<{
+      tipo: string;
+      descricao: string;
+      origem?: string;
+      favoravel?: boolean;
+      observacoes?: string;
+      documentoRef?: string;
+    }>;
+
+    // Mapa documental (ad.mapaDocumental)
+    mapaDocumental?: Array<{
+      documento: string;
+      tipo?: string;
+      paginas?: string;
+      conteudoRelevante?: string;
+      observacoes?: string;
+    }>;
+
+    // Laudos periciais (ad.laudos)
+    laudos?: Array<{
+      tipo: string;
+      perito?: string;
+      conclusao?: string;
+      pontosFracos?: string[];
+      observacoes?: string;
+    }>;
+
+    // ==========================================
+    // TIER 5 — IMPUTAÇÕES & DOSIMETRIA
+    // ==========================================
+
+    // Imputações detalhadas (ad.imputacoes)
+    imputacoes?: Array<{
+      crime: string;
+      artigo?: string;
+      qualificadoras?: string[];
+      agravantes?: string[];
+      atenuantes?: string[];
+      penaMinima?: string;
+      penaMaxima?: string;
+      observacoes?: string;
+    }>;
+
+    // Radiografia da acusação (ad.acusacaoRadiografia)
+    acusacaoRadiografia?: {
+      orgaoAcusador?: string;
+      tese?: string;
+      provasIndicadas?: string[];
+      fragilidades?: string[];
+      observacoes?: string;
     };
+
+    // Cálculo de pena / dosimetria (ad.calculoPena)
+    calculoPena?: {
+      penaBase?: string;
+      circunstanciasJudiciais?: Array<{ circunstancia: string; valoracao: string }>;
+      agravantesAtenuantes?: Array<{ tipo: string; descricao: string; efeito: string }>;
+      causasAumentoDiminuicao?: Array<{ tipo: string; descricao: string; fracao: string }>;
+      penaProvisoria?: string;
+      penaDefinitiva?: string;
+      regime?: string;
+      substituicao?: string;
+      observacoes?: string;
+    };
+
+    // Cadeia de custódia (ad.cadeiaCustodia)
+    cadeiaCustodia?: {
+      itens?: Array<{
+        evidencia: string;
+        etapas?: Array<{ fase: string; responsavel?: string; data?: string; local?: string }>;
+        irregularidades?: string[];
+        impacto?: string;
+      }>;
+      observacoes?: string;
+    };
+
+    // Licitude da prova (ad.licitudeProva)
+    licitudeProva?: {
+      provasIlicitas?: Array<{
+        prova: string;
+        motivo: string;
+        fundamentacao: string;
+        provasDerivadas?: string[];
+      }>;
+      observacoes?: string;
+    };
+
+    // ==========================================
+    // TIER 6 — ATRIBUIÇÃO: JÚRI
+    // ==========================================
+
+    // Rito bifásico — Júri (ad.ritoBifasico)
+    ritoBifasico?: {
+      fase?: string;
+      pronuncDesclassific?: string;
+      materialidade?: { status: string; observacoes?: string };
+      autoria?: { status: string; observacoes?: string };
+      qualificadoras?: Array<{ nome: string; fundamentacao: string; estrategia?: string }>;
+      observacoes?: string;
+    };
+
+    // Preparação para plenário (ad.preparacaoPlenario)
+    preparacaoPlenario?: {
+      tesesPlenario?: Array<{ tese: string; argumento: string; prova?: string }>;
+      quesitos?: Array<{ quesito: string; resposta_esperada?: string; estrategia?: string }>;
+      jurados?: { perfil?: string; orientacoes?: string };
+      retorica?: string;
+      observacoes?: string;
+    };
+
+    // ==========================================
+    // TIER 7 — ATRIBUIÇÃO: VVD
+    // ==========================================
+
+    // MPU / Medidas Protetivas de Urgência (ad.mpu)
+    mpu?: {
+      medidasVigentes?: Array<{ medida: string; status: string; dataConcessao?: string }>;
+      descumprimentos?: Array<{ descricao: string; data?: string; providencia?: string }>;
+      observacoes?: string;
+    };
+
+    // Contexto relacional (ad.contextoRelacional)
+    contextoRelacional?: {
+      tipoRelacao?: string;
+      tempoRelacao?: string;
+      filhos?: number;
+      dependenciaEconomica?: boolean;
+      cicloViolencia?: string;
+      historico?: string;
+      observacoes?: string;
+    };
+
+    // ==========================================
+    // TIER 8 — ATRIBUIÇÃO: EXECUÇÃO PENAL
+    // ==========================================
+
+    // Cronograma de benefícios (ad.cronogramaBeneficios)
+    cronogramaBeneficios?: {
+      beneficios?: Array<{
+        nome: string;
+        dataPrevisao?: string;
+        fracao?: string;
+        status?: string;
+        observacoes?: string;
+      }>;
+      detracao?: { diasDescontados?: number; fundamentacao?: string };
+      remicao?: { diasRemidos?: number; fundamentacao?: string };
+      observacoes?: string;
+    };
+
+    // ==========================================
+    // META
+    // ==========================================
     documentosProcessados?: number;
     documentosTotal?: number;
     versaoModelo?: string;
+
+    // Payload wrapper (used by cowork worker for nested data)
+    payload?: Record<string, any>;
   }>(),
   analyzedAt: timestamp("analyzed_at"),
   analysisVersion: integer("analysis_version").default(0),

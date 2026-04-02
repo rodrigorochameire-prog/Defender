@@ -165,11 +165,251 @@ ${citacoes ? citacoes.substring(0, 1000) : "Marcar [VERIFICAR PRECEDENTE] quando
 3. Salvar _analise_ia.json na pasta do assistido
 4. Gravar resumo no banco via SQL:
    UPDATE processos SET
-     analysis_data = '<JSON com kpis, teses, fragilidades, providencias>',
+     analysis_data = '<JSON estruturado conforme schema abaixo>',
      analysis_status = 'completed',
      analyzed_at = NOW(),
      analysis_version = COALESCE(analysis_version, 0) + 1
    WHERE id = ${processo.id};
+
+## SCHEMA JSON OBRIGATÓRIO PARA analysis_data
+
+O JSON gravado em analysis_data DEVE usar EXATAMENTE estes nomes de campo (camelCase).
+A interface OMBUDS lê esses campos diretamente — nomes errados = dados invisíveis.
+
+### TIER 1 — SEMPRE POPULAR (obrigatório para todas as atribuições)
+
+\`\`\`json
+{
+  "resumo": "Síntese executiva do caso em 3-5 parágrafos",
+  "crimePrincipal": "Ex: Homicídio qualificado (art. 121, §2º, I e IV, CP)",
+  "estrategia": "Estratégia geral de defesa em 2-3 parágrafos",
+  "achadosChave": ["achado 1", "achado 2", "..."],
+  "recomendacoes": ["recomendação 1", "recomendação 2", "..."],
+  "inconsistencias": ["inconsistência 1", "inconsistência 2", "..."],
+
+  "painelControle": {
+    "crimePrincipal": "tipo penal principal",
+    "totalPessoas": 0,
+    "totalAcusacoes": 0,
+    "totalDocumentosAnalisados": 0,
+    "totalEventos": 0,
+    "totalNulidades": 0,
+    "totalRelacoes": 0,
+    "faseProcessual": "instrução|pronúncia|plenário|recurso|execução",
+    "reuPreso": false,
+    "proximaAudiencia": "2026-05-15 ou null"
+  },
+
+  "alertasOperacionais": [
+    { "tipo": "PRAZO|PRISAO|PRESCRICAO|AUDIENCIA", "mensagem": "...", "severidade": "critica|alta|media|baixa", "prazo": "2026-05-01 ou null" }
+  ],
+
+  "checklistTatico": ["item 1 a fazer", "item 2 a fazer", "..."],
+
+  "radarLiberdade": {
+    "absolvicao": 0.0,
+    "desclassificacao": 0.0,
+    "atenuantes": 0.0,
+    "nulidade": 0.0,
+    "prescricao": 0.0
+  },
+
+  "saneamento": {
+    "pendencias": [{ "item": "...", "status": "pendente|resolvido", "prazo": "..." }],
+    "observacoes": "..."
+  }
+}
+\`\`\`
+
+### TIER 2 — PARTES, DEPOIMENTOS, CRONOLOGIA (obrigatório)
+
+\`\`\`json
+{
+  "pessoas": [
+    { "nome": "...", "papel": "defendido|vitima|testemunha_acusacao|testemunha_defesa|perito|delegado|promotor|juiz", "descricao": "...", "qualificacao": "...", "contato": "...", "observacoes": "..." }
+  ],
+
+  "depoimentos": [
+    { "nome": "...", "papel": "...", "resumo": "resumo detalhado", "citacoes": ["trecho literal entre aspas"], "contradicoes": ["contradição com outro depoimento"], "credibilidade": "alta|media|baixa", "observacoes": "..." }
+  ],
+
+  "cronologia": [
+    { "data": "2025-01-15", "evento": "...", "fonte": "documento ou depoimento", "relevancia": "alta|media|baixa", "observacoes": "..." }
+  ],
+
+  "locais": [
+    { "nome": "...", "descricao": "...", "relevancia": "..." }
+  ]
+}
+\`\`\`
+
+### TIER 3 — TESES & ESTRATÉGIA (obrigatório)
+
+\`\`\`json
+{
+  "tesesCompleto": {
+    "principal": { "nome": "...", "fundamentacao": "...", "viabilidade": 8, "observacoes": "..." },
+    "subsidiarias": [
+      { "nome": "...", "fundamentacao": "...", "viabilidade": 6, "observacoes": "..." }
+    ],
+    "desclassificacao": { "para": "tipo penal menos grave", "fundamentacao": "...", "viabilidade": 5 }
+  },
+
+  "nulidades": [
+    { "tipo": "absoluta|relativa", "descricao": "...", "severidade": "alta|media|baixa", "fundamentacao": "art. 564, CPP...", "documentoRef": "fls. 45" }
+  ],
+
+  "matrizGuerra": [
+    { "argumento": "...", "tipo": "acusacao|defesa", "forca": 7, "resposta": "contra-argumento", "fonte": "..." }
+  ],
+
+  "orientacaoAssistido": "Texto completo de orientação ao defendido para atendimento/audiência",
+
+  "perguntasEstrategicas": [
+    { "testemunha": "Nome", "papel": "acusacao|defesa", "perguntas": ["pergunta 1", "pergunta 2"], "objetivo": "..." }
+  ]
+}
+\`\`\`
+
+### TIER 4 — PROVAS & DOCUMENTOS (obrigatório)
+
+\`\`\`json
+{
+  "inventarioProvas": [
+    { "tipo": "documental|testemunhal|pericial|material", "descricao": "...", "origem": "...", "favoravel": true, "observacoes": "...", "documentoRef": "fls. 123" }
+  ],
+
+  "mapaDocumental": [
+    { "documento": "nome do documento", "tipo": "...", "paginas": "fls. 1-15", "conteudoRelevante": "...", "observacoes": "..." }
+  ],
+
+  "laudos": [
+    { "tipo": "necropsia|toxicológico|balístico|...", "perito": "nome", "conclusao": "...", "pontosFracos": ["..."], "observacoes": "..." }
+  ]
+}
+\`\`\`
+
+### TIER 5 — IMPUTAÇÕES & DOSIMETRIA (obrigatório)
+
+\`\`\`json
+{
+  "imputacoes": [
+    { "crime": "...", "artigo": "art. 121, §2º, I, CP", "qualificadoras": ["..."], "agravantes": ["..."], "atenuantes": ["..."], "penaMinima": "12 anos", "penaMaxima": "30 anos", "observacoes": "..." }
+  ],
+
+  "acusacaoRadiografia": {
+    "orgaoAcusador": "MP-BA",
+    "tese": "tese acusatória resumida",
+    "provasIndicadas": ["..."],
+    "fragilidades": ["..."],
+    "observacoes": "..."
+  },
+
+  "calculoPena": {
+    "penaBase": "...",
+    "circunstanciasJudiciais": [{ "circunstancia": "...", "valoracao": "..." }],
+    "agravantesAtenuantes": [{ "tipo": "agravante|atenuante", "descricao": "...", "efeito": "..." }],
+    "causasAumentoDiminuicao": [{ "tipo": "aumento|diminuição", "descricao": "...", "fracao": "1/3" }],
+    "penaProvisoria": "...",
+    "penaDefinitiva": "...",
+    "regime": "fechado|semiaberto|aberto",
+    "substituicao": "...",
+    "observacoes": "..."
+  },
+
+  "cadeiaCustodia": {
+    "itens": [{ "evidencia": "...", "etapas": [{ "fase": "...", "responsavel": "...", "data": "...", "local": "..." }], "irregularidades": ["..."], "impacto": "..." }],
+    "observacoes": "..."
+  },
+
+  "licitudeProva": {
+    "provasIlicitas": [{ "prova": "...", "motivo": "...", "fundamentacao": "...", "provasDerivadas": ["..."] }],
+    "observacoes": "..."
+  }
+}
+\`\`\`
+
+### TIER 6 — CONDICIONAL POR ATRIBUIÇÃO
+
+#### Se atribuição = Tribunal do Júri → popular OBRIGATORIAMENTE:
+
+\`\`\`json
+{
+  "perspectivaPlenaria": "Texto sobre perspectiva do caso em plenário",
+
+  "ritoBifasico": {
+    "fase": "sumário|plenário",
+    "pronuncDesclassific": "pronúncia|desclassificação|impronúncia|absolvição sumária",
+    "materialidade": { "status": "comprovada|contestada|insuficiente", "observacoes": "..." },
+    "autoria": { "status": "comprovada|contestada|insuficiente", "observacoes": "..." },
+    "qualificadoras": [{ "nome": "...", "fundamentacao": "...", "estrategia": "..." }],
+    "observacoes": "..."
+  },
+
+  "preparacaoPlenario": {
+    "tesesPlenario": [{ "tese": "...", "argumento": "...", "prova": "..." }],
+    "quesitos": [{ "quesito": "...", "resposta_esperada": "sim|não", "estrategia": "..." }],
+    "jurados": { "perfil": "...", "orientacoes": "..." },
+    "retorica": "linha retórica para sustentação oral",
+    "observacoes": "..."
+  }
+}
+\`\`\`
+
+#### Se atribuição = Violência Doméstica → popular OBRIGATORIAMENTE:
+
+\`\`\`json
+{
+  "mpu": {
+    "medidasVigentes": [{ "medida": "...", "status": "vigente|revogada|descumprida", "dataConcessao": "..." }],
+    "descumprimentos": [{ "descricao": "...", "data": "...", "providencia": "..." }],
+    "observacoes": "..."
+  },
+
+  "contextoRelacional": {
+    "tipoRelacao": "cônjuge|companheiro|ex-companheiro|namoro|familiar",
+    "tempoRelacao": "...",
+    "filhos": 0,
+    "dependenciaEconomica": false,
+    "cicloViolencia": "fase atual do ciclo",
+    "historico": "...",
+    "observacoes": "..."
+  }
+}
+\`\`\`
+
+#### Se atribuição = Execução Penal → popular OBRIGATORIAMENTE:
+
+\`\`\`json
+{
+  "cronogramaBeneficios": {
+    "beneficios": [{ "nome": "progressão|livramento|saída temporária|remição", "dataPrevisao": "2026-06-01", "fracao": "2/5", "status": "a requerer|requerido|deferido|indeferido", "observacoes": "..." }],
+    "detracao": { "diasDescontados": 0, "fundamentacao": "..." },
+    "remicao": { "diasRemidos": 0, "fundamentacao": "..." },
+    "observacoes": "..."
+  }
+}
+\`\`\`
+
+### META (sempre incluir)
+
+\`\`\`json
+{
+  "documentosProcessados": 15,
+  "documentosTotal": 15,
+  "versaoModelo": "claude-sonnet-4-20250514"
+}
+\`\`\`
+
+## REGRAS DE GERAÇÃO
+1. TODOS os campos dos Tiers 1-5 são OBRIGATÓRIOS — se não houver dado, usar array vazio [] ou null
+2. Campos do Tier 6 são obrigatórios APENAS para a atribuição correspondente
+3. Use camelCase EXATO conforme acima — a interface não reconhece snake_case no nível raiz
+4. Arrays de pessoas, depoimentos e cronologia devem ter o MÁXIMO de entradas possível
+5. Citações em depoimentos devem ser trechos LITERAIS dos autos (entre aspas)
+6. Viabilidade em teses é de 0 a 10
+7. Força em matrizGuerra é de 0 a 10
+8. radarLiberdade usa valores de 0.0 a 1.0
 
 ## CHECKLIST (verificar antes de entregar)
 Dashboard KPIs, índice, contatos, prazos, qualificação, cronologia 10+ eventos,
