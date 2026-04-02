@@ -339,7 +339,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             // Check if assistido has processos with multiple distinct atribuições
             const atribuicoes = new Set(data.processos.map(() => (data as any).atribuicaoPrimaria).filter(Boolean));
             const hasMultiple = atribuicoes.size > 1 || data.processos.length > 1;
-            const avatarBg = "bg-white text-zinc-900";
+            const avatarBg = "bg-zinc-100 text-zinc-800";
             return (
               <div className="relative shrink-0">
                 <div

@@ -169,14 +169,14 @@ export function AnaliseButton({
       onClick={handleClick}
       disabled={disabled || criarTask.isPending}
       className={cn(
-        "text-white gap-2 shadow-sm hover:shadow-md transition-all duration-200",
+        "text-white gap-1.5 shadow-sm hover:shadow-md transition-all duration-200 text-xs h-8 px-3",
         colors.bg, colors.hover, colors.shadow
       )}
     >
       {criarTask.isPending ? (
         <Loader2 className="w-4 h-4 animate-spin" />
       ) : (
-        <Sparkles className="w-4 h-4" />
+        <Sparkles className="w-3.5 h-3.5" />
       )}
       Analisar
     </Button>
