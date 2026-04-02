@@ -610,7 +610,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                     setItemSheetType("processo");
                     setItemSheetOpen(true);
                   }}
-                  className="group flex gap-3 border border-zinc-200/80 dark:border-zinc-800/50 rounded-lg p-3 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 cursor-pointer transition-all overflow-hidden"
+                  className="group flex gap-3 bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06] rounded-lg p-3 hover:bg-zinc-100 dark:hover:bg-white/[0.07] cursor-pointer transition-all overflow-hidden"
                 >
                   {/* Left accent */}
                   <div className={cn(
@@ -644,8 +644,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
         {tab === "demandas" && (
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Demandas</h2>
+            <div className="flex justify-end mb-2">
               <Link href={`/admin/demandas/nova?assistidoId=${data.id}`}>
                 <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px] text-muted-foreground hover:text-emerald-600">
                   <Plus className="h-3.5 w-3.5" />
@@ -672,7 +671,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                     }}
                     className="w-full text-left"
                   >
-                    <div className="flex gap-3 border border-border rounded-lg px-3 py-2.5 hover:border-emerald-300 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 cursor-pointer transition-all overflow-hidden">
+                    <div className="flex gap-3 bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06] rounded-lg px-3 py-2.5 hover:bg-zinc-100 dark:hover:bg-white/[0.07] cursor-pointer transition-all overflow-hidden">
                       {/* Left accent */}
                       <div className={cn(
                         "w-0.5 rounded-full shrink-0 self-stretch",
