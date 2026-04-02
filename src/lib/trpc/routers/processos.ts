@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { processos, assistidos, assistidosProcessos, audiencias, movimentacoes, demandas, calendarEvents, driveFiles, users, testemunhas } from "@/lib/db/schema";
+import { processos, assistidos, assistidosProcessos, audiencias, movimentacoes, demandas, calendarEvents, driveFiles, users, testemunhas, casos } from "@/lib/db/schema";
 import { eq, ilike, or, desc, asc, sql, and, isNull, isNotNull, ne, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { TRPCError } from "@trpc/server";
@@ -159,6 +159,8 @@ export const processosRouter = router({
               cpf: assistidos.cpf,
               papel: assistidosProcessos.papel,
               isPrincipal: assistidosProcessos.isPrincipal,
+              ativo: assistidosProcessos.ativo,
+              observacoes: assistidosProcessos.observacoes,
               statusPrisional: assistidos.statusPrisional,
             })
             .from(assistidosProcessos)
@@ -235,24 +237,67 @@ export const processosRouter = router({
 
       const base = baseRows[0]!;
 
-      // Processos vinculados (mesmo casoId, exceto o atual)
-      const processosVinculados = base.casoId
-        ? await db
-            .select({
-              id: processos.id,
-              numeroAutos: processos.numeroAutos,
-              vara: processos.vara,
-              assunto: processos.assunto,
-            })
-            .from(processos)
-            .where(
-              and(
-                eq(processos.casoId, base.casoId),
-                ne(processos.id, input.id),
-                isNull(processos.deletedAt),
-              ),
-            )
-        : [];
+      // Case info + sibling processes
+      let casoInfo: { id: number; titulo: string } | null = null;
+      let processosVinculados: {
+        id: number;
+        numeroAutos: string | null;
+        tipoProcesso: string | null;
+        isReferencia: boolean | null;
+        classeProcessual: string | null;
+        assistidosNomes: string[];
+      }[] = [];
+
+      if (base.casoId) {
+        const casoRows = await db
+          .select({ id: casos.id, titulo: casos.titulo })
+          .from(casos)
+          .where(eq(casos.id, base.casoId))
+          .limit(1);
+        casoInfo = casoRows[0] ?? null;
+
+        const siblings = await db
+          .select({
+            id: processos.id,
+            numeroAutos: processos.numeroAutos,
+            tipoProcesso: processos.tipoProcesso,
+            isReferencia: processos.isReferencia,
+            classeProcessual: processos.classeProcessual,
+          })
+          .from(processos)
+          .where(
+            and(
+              eq(processos.casoId, base.casoId),
+              ne(processos.id, input.id),
+              isNull(processos.deletedAt),
+            ),
+          );
+
+        const siblingIds = siblings.map((s) => s.id);
+        const siblingAssistidos = siblingIds.length > 0
+          ? await db
+              .select({
+                processoId: assistidosProcessos.processoId,
+                nome: assistidos.nome,
+              })
+              .from(assistidosProcessos)
+              .innerJoin(assistidos, eq(assistidosProcessos.assistidoId, assistidos.id))
+              .where(
+                and(
+                  inArray(assistidosProcessos.processoId, siblingIds),
+                  eq(assistidosProcessos.ativo, true),
+                  isNull(assistidos.deletedAt),
+                ),
+              )
+          : [];
+
+        processosVinculados = siblings.map((s) => ({
+          ...s,
+          assistidosNomes: siblingAssistidos
+            .filter((sa) => sa.processoId === s.id)
+            .map((sa) => sa.nome),
+        }));
+      }
 
       return {
         ...base,
@@ -260,6 +305,7 @@ export const processosRouter = router({
         audiencias: audienciasRows,
         demandas: demandasRows,
         driveFiles: driveFilesRows,
+        casoInfo,
         processosVinculados,
       };
     }),
