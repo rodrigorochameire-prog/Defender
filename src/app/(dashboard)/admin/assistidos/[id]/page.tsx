@@ -358,9 +358,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             );
           })()}
 
-          {/* Name + Meta — style C+A: name+chip same line, meta below, with breathing room */}
+          {/* Name + Badge + Status */}
           <div className="flex-1 min-w-0">
-            {/* Line 1: Name + badge + status + edit */}
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="font-serif text-lg font-semibold tracking-tight text-zinc-50 truncate">
                 {data.nome}
@@ -372,49 +371,14 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               </Link>
               <span className="w-px h-4 bg-zinc-700" />
               {(data as any).atribuicaoPrimaria && (
-                <span className="text-[11px] px-2 py-0.5 rounded-md font-medium bg-white/15 text-white/80 border border-white/10">
+                <span className="text-[10px] px-2 py-0.5 rounded-[5px] font-medium bg-emerald-600 text-white">
                   {getAtribuicaoColors((data as any).atribuicaoPrimaria).shortLabel || getAtribuicaoColors((data as any).atribuicaoPrimaria).label || (data as any).atribuicaoPrimaria}
                 </span>
               )}
               {data.statusPrisional && !isPreso && (
-                <span className="text-[11px] px-1.5 py-0.5 rounded-md font-medium bg-white/10 text-white/60">
+                <span className="text-[10px] text-white/50">
                   {statusLabel[data.statusPrisional] ?? data.statusPrisional.toLowerCase()}
                 </span>
-              )}
-            </div>
-
-            {/* Line 2: CPF + WhatsApp contacts */}
-            <div className="flex items-center gap-2 mt-1 text-xs">
-              {data.cpf && (
-                <span className="text-zinc-300 font-mono tabular-nums">{data.cpf}</span>
-              )}
-              {data.telefone && (
-                <>
-                  <span className="w-px h-3 bg-zinc-600" />
-                  <a
-                    href={`https://wa.me/55${data.telefone.replace(/\D/g, "")}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-zinc-300 hover:text-white transition-colors"
-                  >
-                    <svg className="w-3 h-3 text-white/60" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                    {data.telefone}
-                  </a>
-                </>
-              )}
-              {data.telefoneContato && (
-                <>
-                  <span className="w-px h-3 bg-zinc-600" />
-                  <a
-                    href={`https://wa.me/55${data.telefoneContato.replace(/\D/g, "")}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-zinc-400 hover:text-white transition-colors"
-                  >
-                    <svg className="w-3 h-3 text-white/40" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                    {data.nomeContato ? `${data.nomeContato}${data.parentescoContato ? ` (${data.parentescoContato})` : ""}` : data.telefoneContato}
-                  </a>
-                </>
               )}
             </div>
           </div>
@@ -437,41 +401,78 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
 
+        {/* Row 2: CPF + WhatsApp contacts */}
+        <div className="flex items-center gap-2 mt-1 text-[11px]">
+          {data.cpf && (
+            <span className="text-white/70 font-mono tracking-wide">{data.cpf}</span>
+          )}
+          {data.telefone && (
+            <>
+              <span className="w-px h-2.5 bg-white/10" />
+              <a
+                href={`https://wa.me/55${data.telefone.replace(/\D/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-white/50 hover:text-white/90 transition-colors"
+              >
+                <svg className="w-[11px] h-[11px] text-white/40" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                {data.telefone}
+              </a>
+            </>
+          )}
+          {data.telefoneContato && (
+            <>
+              <span className="w-px h-2.5 bg-white/10" />
+              <a
+                href={`https://wa.me/55${data.telefoneContato.replace(/\D/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-white/50 hover:text-white/90 transition-colors"
+              >
+                <svg className="w-[11px] h-[11px] text-white/40" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                {data.nomeContato ? `${data.nomeContato}${data.parentescoContato ? ` (${data.parentescoContato})` : ""}` : data.telefoneContato}
+              </a>
+            </>
+          )}
+        </div>
 
-        {/* Row 2: Stats + Case + Drive — inside header card */}
-        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-white/5 flex-wrap">
-          {/* Stats */}
-          <div className="flex items-center gap-3 text-[11px] text-zinc-400 shrink-0">
-            <span><span className="font-semibold text-white/80">{data.processos.length}</span> proc</span>
-            <span><span className="font-semibold text-white/80">{data.demandas.length}</span> dem</span>
-            <span><span className="font-semibold text-white/80">{data.audiencias.length}</span> aud</span>
-          </div>
+        {/* Divider */}
+        <div className="h-px bg-white/[0.08] my-3" />
 
-          {/* Case pill — inline */}
+        {/* Row 3: Case pill + Stats + Drive */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Case pill — white */}
           {data.processos.length > 0 && (() => {
             const p = data.processos[0];
             const attrColors = getAtribuicaoColors((data as any).atribuicaoPrimaria) as Record<string, string>;
             const label = attrColors.shortLabel || attrColors.label || (data as any).atribuicaoPrimaria;
             return (
-              <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-white/10 border border-white/10 text-[11px]">
-                <span className="w-1.5 h-1.5 rounded-full bg-white/60 shrink-0" />
-                <span className="text-white/80 font-medium">{label}</span>
-                <span className="text-white/40 font-mono">{p.numeroAutos}</span>
+              <div className="flex items-center gap-[7px] px-3 py-[5px] rounded-[7px] bg-white/95 text-[11px] shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-zinc-900 shrink-0" />
+                <span className="text-zinc-900 font-semibold">{label}</span>
+                <span className="text-zinc-500 font-mono text-[10px]">{p.numeroAutos}</span>
               </div>
             );
           })()}
 
-          {/* Drive — inline */}
-          <div className="flex items-center gap-2 ml-auto text-[11px] text-zinc-400">
-            <FolderOpen className="w-3 h-3 text-white/40" />
-            <span className="font-semibold text-white/80">{data.driveFiles.length}</span>
+          {/* Stats */}
+          <div className="flex items-center gap-3.5 text-[11px] text-white/35">
+            <span><span className="font-semibold text-white/70">{data.processos.length}</span> proc</span>
+            <span><span className="font-semibold text-white/70">{data.demandas.length}</span> dem</span>
+            <span><span className="font-semibold text-white/70">{data.audiencias.length}</span> aud</span>
+          </div>
+
+          {/* Drive — right aligned */}
+          <div className="flex items-center gap-1.5 ml-auto text-[10px] text-white/35">
+            <FolderOpen className="w-3 h-3" />
+            <span className="font-semibold text-white/60">{data.driveFiles.length}</span>
             <span>arq</span>
             {(data as any).driveFolderId && (
               <a
                 href={`https://drive.google.com/drive/folders/${(data as any).driveFolderId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-1.5 py-0.5 rounded bg-white/10 text-white/50 hover:text-white transition-colors"
+                className="px-1.5 py-0.5 rounded border border-white/[0.08] text-white/40 hover:text-white transition-colors text-[10px]"
               >
                 Abrir
               </a>

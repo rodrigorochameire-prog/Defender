@@ -144,16 +144,16 @@ export function AssistidoOverviewPanel({
                 className={cn(
                   "w-7 h-7 rounded-md flex items-center justify-center",
                   proximaAudiencia
-                    ? "bg-amber-100 dark:bg-amber-900/20"
-                    : "bg-zinc-100 dark:bg-zinc-700/40",
+                    ? "bg-zinc-800 dark:bg-zinc-700"
+                    : "bg-zinc-200 dark:bg-zinc-700",
                 )}
               >
                 <Calendar
                   className={cn(
                     "w-3 h-3",
                     proximaAudiencia
-                      ? "text-amber-800 dark:text-amber-400"
-                      : "text-muted-foreground/50",
+                      ? "text-white"
+                      : "text-zinc-400",
                   )}
                 />
               </div>
@@ -236,16 +236,16 @@ export function AssistidoOverviewPanel({
                 className={cn(
                   "w-7 h-7 rounded-md flex items-center justify-center",
                   demandaCritica
-                    ? "bg-rose-100 dark:bg-rose-900/20"
-                    : "bg-zinc-100 dark:bg-zinc-700/40",
+                    ? "bg-zinc-800 dark:bg-zinc-700"
+                    : "bg-zinc-200 dark:bg-zinc-700",
                 )}
               >
                 <AlertCircle
                   className={cn(
                     "w-3 h-3",
                     demandaCritica
-                      ? "text-rose-800 dark:text-rose-400"
-                      : "text-muted-foreground/50",
+                      ? "text-white"
+                      : "text-zinc-400",
                   )}
                 />
               </div>

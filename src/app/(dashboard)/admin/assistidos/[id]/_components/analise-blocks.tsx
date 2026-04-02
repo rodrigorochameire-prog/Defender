@@ -411,8 +411,8 @@ export function BlocoCaso({ data }: { data: CasoData }) {
     <BlockShell
       value="caso"
       icon={FileText}
-      iconBg="bg-zinc-200 dark:bg-zinc-700"
-      iconColor="text-zinc-700 dark:text-zinc-300"
+      iconBg="bg-zinc-800 dark:bg-zinc-700"
+      iconColor="text-white dark:text-zinc-300"
       title="O Caso"
     >
       {data.resumoFato && (
@@ -600,8 +600,8 @@ export function BlocoPessoas({ data }: { data: PessoasData }) {
     <BlockShell
       value="pessoas"
       icon={Users}
-      iconBg="bg-zinc-200 dark:bg-zinc-700"
-      iconColor="text-zinc-700 dark:text-zinc-300"
+      iconBg="bg-zinc-800 dark:bg-zinc-700"
+      iconColor="text-white dark:text-zinc-300"
       title="Pessoas"
       count={deponenteCount > 0 ? `${deponenteCount} depoentes` : undefined}
     >
@@ -750,8 +750,8 @@ export function BlocoProvas({ data }: { data: ProvasData }) {
     <BlockShell
       value="provas"
       icon={Search}
-      iconBg="bg-zinc-200 dark:bg-zinc-700"
-      iconColor="text-zinc-700 dark:text-zinc-300"
+      iconBg="bg-zinc-800 dark:bg-zinc-700"
+      iconColor="text-white dark:text-zinc-300"
       title="Provas"
     >
       {/* Elements overview */}
@@ -1000,8 +1000,8 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
     <BlockShell
       value="estrategia"
       icon={BookOpen}
-      iconBg="bg-zinc-200 dark:bg-zinc-700"
-      iconColor="text-zinc-700 dark:text-zinc-300"
+      iconBg="bg-zinc-800 dark:bg-zinc-700"
+      iconColor="text-white dark:text-zinc-300"
       title="Estrategia"
     >
       {/* Tese principal */}
@@ -1283,8 +1283,8 @@ export function BlocoPreparacao({ data }: { data: PreparacaoData }) {
     <BlockShell
       value="preparacao"
       icon={AlertTriangle}
-      iconBg="bg-zinc-200 dark:bg-zinc-700"
-      iconColor="text-zinc-700 dark:text-zinc-300"
+      iconBg="bg-zinc-800 dark:bg-zinc-700"
+      iconColor="text-white dark:text-zinc-300"
       title="Preparacao"
     >
       {/* Orientacao */}
