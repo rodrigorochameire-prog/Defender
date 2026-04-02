@@ -323,12 +323,12 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   return (
     <div className="flex flex-col h-full">
       {/* ── Header: Identity ── */}
-      <div className="mx-4 lg:mx-6 mt-3 px-5 pt-4 pb-3 rounded-xl bg-gradient-to-br from-[#1c1c20] to-[#111113] shadow-lg shadow-black/10">
+      <div className="mx-4 lg:mx-6 mt-3 px-5 pt-4 pb-3 rounded-xl bg-gradient-to-br from-[#222228] to-[#18181b] shadow-lg shadow-black/10 ring-1 ring-white/[0.04]">
         {/* Row 1: Back + Avatar + Name + Actions */}
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.back()}
-            className="text-zinc-500 hover:text-zinc-300 transition-colors shrink-0"
+            className="text-white/30 hover:text-white/70 transition-colors shrink-0"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
@@ -352,7 +352,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                   {initials || <User className="h-5 w-5" />}
                 </div>
                 {isPreso && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-red-500 border-2 border-[#1c1c20]" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-red-500 border-2 border-[#222228]" />
                 )}
               </div>
             );
@@ -361,7 +361,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           {/* Name + Badge + Status */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="font-serif text-lg font-semibold tracking-tight text-zinc-50 truncate">
+              <h1 className="font-serif text-lg font-semibold tracking-tight text-white truncate">
                 {data.nome}
               </h1>
               <Link href={`/admin/assistidos/${data.id}/editar`}>
@@ -369,7 +369,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                   <Pencil className="h-3 w-3" />
                 </Button>
               </Link>
-              <span className="w-px h-4 bg-zinc-700" />
+              <span className="w-px h-4 bg-white/15" />
               {(data as any).atribuicaoPrimaria && (
                 <span className="text-[10px] px-2 py-0.5 rounded-[5px] font-medium bg-emerald-600 text-white">
                   {getAtribuicaoColors((data as any).atribuicaoPrimaria).shortLabel || getAtribuicaoColors((data as any).atribuicaoPrimaria).label || (data as any).atribuicaoPrimaria}
@@ -392,7 +392,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 text-zinc-400 border-zinc-600 bg-white/5 hover:bg-white/10 hover:text-zinc-200 rounded-xl"
+              className="gap-1.5 text-white/60 border-white/15 bg-white/[0.07] hover:bg-white/15 hover:text-white rounded-lg"
               onClick={() => setPromptorioOpen(true)}
             >
               <span className="hidden sm:inline">Promptório</span>
@@ -404,7 +404,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         {/* Row 2: CPF + WhatsApp contacts */}
         <div className="flex items-center gap-2 mt-1 text-[11px]">
           {data.cpf && (
-            <span className="text-white/70 font-mono tracking-wide">{data.cpf}</span>
+            <span className="text-white/80 font-mono tracking-wide">{data.cpf}</span>
           )}
           {data.telefone && (
             <>
@@ -437,7 +437,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         </div>
 
         {/* Divider */}
-        <div className="h-px bg-white/[0.08] my-3" />
+        <div className="h-px bg-white/[0.12] my-3" />
 
         {/* Row 3: Case pill + Stats + Drive */}
         <div className="flex items-center gap-3 flex-wrap">
