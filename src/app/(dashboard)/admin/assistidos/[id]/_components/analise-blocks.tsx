@@ -278,7 +278,7 @@ function BlockShell({
 }) {
   return (
     <AccordionItem value={value} className="border-none mb-3">
-      <AccordionTrigger className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3.5 hover:no-underline hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 data-[state=open]:rounded-b-none data-[state=open]:border-b-zinc-200/50 dark:data-[state=open]:border-b-zinc-800/50">
+      <AccordionTrigger className="bg-zinc-900 dark:bg-zinc-900 text-white border border-zinc-800 dark:border-zinc-800 rounded-xl px-4 py-3 hover:no-underline hover:bg-zinc-800 dark:hover:bg-zinc-800 transition-all duration-200 data-[state=open]:rounded-b-none data-[state=open]:border-b-zinc-700/50">
         <div className="flex items-center gap-3 flex-1">
           <div
             className={cn(
@@ -288,15 +288,15 @@ function BlockShell({
           >
             <Icon className={cn("w-3.5 h-3.5", iconColor)} />
           </div>
-          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{title}</span>
+          <span className="text-sm font-medium text-zinc-100">{title}</span>
           {count != null && (
-            <span className="text-[10px] text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] text-zinc-400 bg-zinc-700 px-2 py-0.5 rounded-full">
               {count}
             </span>
           )}
         </div>
       </AccordionTrigger>
-      <AccordionContent className="bg-white dark:bg-zinc-900 border border-t-0 border-zinc-200 dark:border-zinc-800 rounded-b-xl px-4">
+      <AccordionContent className="bg-white dark:bg-zinc-900 border border-t-0 border-zinc-200 dark:border-zinc-800 rounded-b-xl px-4 shadow-sm">
         {children}
       </AccordionContent>
     </AccordionItem>
@@ -318,11 +318,11 @@ function SubRow({
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="w-full bg-zinc-50 dark:bg-zinc-50 dark:bg-[#0f0f11] rounded-lg p-3 mb-2 cursor-pointer flex justify-between items-center hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors">
+      <CollapsibleTrigger className="w-full bg-zinc-100 dark:bg-[#0f0f11] rounded-lg p-2.5 mb-1.5 cursor-pointer flex justify-between items-center hover:bg-zinc-200/70 dark:hover:bg-zinc-800/50 transition-colors">
         <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
         <div className="flex items-center gap-2">
           {count != null && (
-            <span className="text-[10px] text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] text-zinc-400 bg-zinc-700 px-2 py-0.5 rounded-full">
               {count}
             </span>
           )}
