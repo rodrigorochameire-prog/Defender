@@ -278,7 +278,7 @@ function BlockShell({
 }) {
   return (
     <AccordionItem value={value} className="border-none mb-3">
-      <AccordionTrigger className="bg-zinc-900 dark:bg-zinc-900 text-white border border-zinc-800 dark:border-zinc-800 rounded-xl px-4 py-3 hover:no-underline hover:bg-zinc-800 dark:hover:bg-zinc-800 transition-all duration-200 data-[state=open]:rounded-b-none data-[state=open]:border-b-zinc-700/50">
+      <AccordionTrigger className="bg-zinc-700/90 dark:bg-zinc-800 text-white border border-zinc-600/50 dark:border-zinc-700 rounded-xl px-4 py-3 hover:no-underline hover:bg-zinc-600/90 dark:hover:bg-zinc-700 transition-all duration-200 data-[state=open]:rounded-b-none data-[state=open]:border-b-zinc-500/30">
         <div className="flex items-center gap-3 flex-1">
           <div
             className={cn(
@@ -290,7 +290,7 @@ function BlockShell({
           </div>
           <span className="text-sm font-medium text-zinc-100">{title}</span>
           {count != null && (
-            <span className="text-[10px] text-zinc-400 bg-zinc-700 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] text-zinc-300 bg-zinc-600/60 px-2 py-0.5 rounded-full">
               {count}
             </span>
           )}
@@ -322,7 +322,7 @@ function SubRow({
         <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
         <div className="flex items-center gap-2">
           {count != null && (
-            <span className="text-[10px] text-zinc-400 bg-zinc-700 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] text-zinc-300 bg-zinc-600/60 px-2 py-0.5 rounded-full">
               {count}
             </span>
           )}
