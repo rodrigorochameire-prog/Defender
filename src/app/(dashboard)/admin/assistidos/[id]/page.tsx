@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, User, ClipboardList, Plus, Sparkles, Pencil, Clock, Send, Gavel, Calendar, HardDrive, ContactRound, ChevronDown, Brain, MoreHorizontal, FileText, FolderOpen } from "lucide-react";
+import { ArrowLeft, User, ClipboardList, Plus, Sparkles, Pencil, Clock, Send, Calendar, HardDrive, ContactRound, ChevronDown, Brain, MoreHorizontal, FileText, FolderOpen } from "lucide-react";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,11 +34,12 @@ import {
 import { AnaliseButton } from "./_components/analise-button";
 import { PromptorioModal } from "./_components/promptorio-modal";
 import { AnaliseTab } from "./_components/analise-tab";
+import { CasoBar } from "@/components/processo/caso-bar";
 // CaseFilter absorbed into header card
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
-type Tab = "processos" | "demandas" | "drive" | "audiencias" | "midias" | "timeline" | "oficios" | "analise" | "investigacao" | "radar";
+type Tab = "demandas" | "drive" | "audiencias" | "midias" | "timeline" | "oficios" | "analise" | "investigacao" | "radar";
 
 interface TranscriptionData {
   transcript: string;
@@ -52,8 +53,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   const { id } = use(params);
   const router = useRouter();
   const [tab, setTab] = useState<Tab>(() => {
-    if (typeof window === "undefined") return "processos";
-    return (localStorage.getItem(`assistido-tab-${id}`) as Tab) ?? "processos";
+    if (typeof window === "undefined") return "demandas";
+    return (localStorage.getItem(`assistido-tab-${id}`) as Tab) ?? "demandas";
   });
 
   const handleSetTab = (t: Tab) => {
@@ -292,7 +293,6 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   };
 
   const tabs: { key: Tab; label: string; icon: React.ElementType; count?: number; urgency?: "red" | "amber" }[] = [
-    { key: "processos", label: "Processos", icon: Gavel, count: data.processos.length },
     { key: "analise", label: "Análise", icon: Sparkles },
     {
       key: "demandas",
@@ -455,52 +455,36 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           )}
         </div>
 
-        {/* Row 3: Case + Stats + Drive — glass bar (translucent, no border) */}
-        <div className="flex items-center gap-3 flex-wrap mt-3 px-3.5 py-2.5 rounded-lg bg-white/[0.12]">
-          {/* Case pill */}
-          {data.processos.length > 0 && (() => {
-            const p = data.processos[0];
-            const attrColors = getAtribuicaoColors((data as any).atribuicaoPrimaria) as Record<string, string>;
-            const label = attrColors.shortLabel || attrColors.label || (data as any).atribuicaoPrimaria;
-            return (
-              <div className="flex items-center gap-2 text-[11px]">
-                <span className="w-1.5 h-1.5 rounded-full bg-white/60 shrink-0" />
-                <span className="text-white/90 font-bold">{label}</span>
-                <span className="text-white/40 font-mono text-[10px]">{p.numeroAutos}</span>
-              </div>
-            );
-          })()}
-
-          {/* Separator */}
-          <span className="w-px h-3 bg-white/10" />
-
-          {/* Stats */}
-          <div className="flex items-center gap-3 text-[11px] text-white/30">
-            <span><span className="font-semibold text-white/60">{data.processos.length}</span> proc</span>
-            <span><span className="font-semibold text-white/60">{data.demandas.length}</span> dem</span>
-            <span><span className="font-semibold text-white/60">{data.audiencias.length}</span> aud</span>
+        {/* Case grouping — one bar per caso */}
+        {(data as any).casosAgrupados?.length > 0 ? (
+          (data as any).casosAgrupados.map((caso: any) => (
+            <CasoBar
+              key={caso.id}
+              casoTitulo={caso.titulo}
+              currentProcessoId={-1}
+              processos={caso.processos.map((p: any) => ({
+                id: p.id,
+                numeroAutos: p.numeroAutos,
+                tipoProcesso: p.tipoProcesso,
+                isReferencia: p.isReferencia,
+                ativo: p.isDoProprio ? p.ativo : null,
+              }))}
+              stats={{
+                demandas: data.demandas.length,
+                audiencias: data.audiencias.length,
+                arquivos: data.driveFiles.length,
+              }}
+            />
+          ))
+        ) : (
+          <div className="flex items-center gap-3 flex-wrap mt-3 px-3.5 py-2.5 rounded-lg bg-white/[0.12]">
+            <div className="flex items-center gap-3 text-[11px] text-white/30">
+              <span><span className="font-semibold text-white/60">{data.processos.length}</span> proc</span>
+              <span><span className="font-semibold text-white/60">{data.demandas.length}</span> dem</span>
+              <span><span className="font-semibold text-white/60">{data.audiencias.length}</span> aud</span>
+            </div>
           </div>
-
-          {/* Separator */}
-          <span className="w-px h-3 bg-white/10" />
-
-          {/* Drive — right aligned */}
-          <div className="flex items-center gap-1.5 ml-auto text-[10px] text-white/30">
-            <FolderOpen className="w-3 h-3" />
-            <span className="font-semibold text-white/60">{data.driveFiles.length}</span>
-            <span>arq</span>
-            {(data as any).driveFolderId && (
-              <a
-                href={`https://drive.google.com/drive/folders/${(data as any).driveFolderId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-1.5 py-0.5 rounded border border-white/10 text-white/50 hover:text-white hover:border-white/20 transition-colors text-[10px]"
-              >
-                Abrir
-              </a>
-            )}
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Content container — unified card for summary + tabs + content */}
@@ -588,60 +572,6 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto px-4 py-3">
-        {tab === "processos" && (
-          <div className="space-y-2">
-            <div className="flex justify-end mb-2">
-              <Link href={`/admin/processos/novo?assistidoId=${data.id}`}>
-                <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px] text-muted-foreground hover:text-emerald-600">
-                  <Plus className="h-3.5 w-3.5" />
-                  Novo Processo
-                </Button>
-              </Link>
-            </div>
-            {data.processos.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhum processo vinculado</p>
-            ) : (
-              data.processos.map((p) => (
-                <div
-                  key={p.id}
-                  onClick={() => {
-                    setSelectedProcessoId(p.id);
-                    setSelectedDemandaId(null);
-                    setItemSheetType("processo");
-                    setItemSheetOpen(true);
-                  }}
-                  className="group flex gap-3 bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06] rounded-lg p-3 hover:bg-zinc-100 dark:hover:bg-white/[0.07] cursor-pointer transition-all overflow-hidden"
-                >
-                  {/* Left accent */}
-                  <div className={cn(
-                    "w-0.5 rounded-full shrink-0 self-stretch",
-                    p.papel === "REU" ? "bg-rose-400"
-                      : p.papel === "CORREU" ? "bg-amber-400"
-                      : p.papel === "VITIMA" ? "bg-blue-400"
-                      : "bg-muted-foreground/30"
-                  )} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-mono text-foreground/80 truncate">{p.numeroAutos ?? "Sem número"}</span>
-                      <span className={cn(
-                        "text-[9px] px-1.5 py-0.5 rounded-full font-semibold shrink-0",
-                        p.papel === "REU" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400"
-                          : p.papel === "CORREU" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
-                          : p.papel === "VITIMA" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
-                          : "bg-muted text-muted-foreground"
-                      )}>
-                        {p.papel?.toLowerCase() ?? "réu"}
-                      </span>
-                    </div>
-                    {p.assunto && <p className="text-[11px] font-medium text-foreground/80 mt-0.5 truncate">{p.assunto}</p>}
-                    {p.vara && <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{p.vara}</p>}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-
         {tab === "demandas" && (
           <div className="space-y-1.5">
             <div className="flex justify-end mb-2">
