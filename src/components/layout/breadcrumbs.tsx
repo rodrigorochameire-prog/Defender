@@ -2,9 +2,26 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, Home } from "lucide-react";
+import { ChevronRight, Home, ClipboardList, Calendar, Users, Scale, FolderOpen, FileText, Settings, BarChart3, MessageSquare, Gavel, Heart, Shield, Newspaper, Map, Brain, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
+
+const ROUTE_ICONS: Record<string, LucideIcon> = {
+  demandas: ClipboardList,
+  agenda: Calendar,
+  assistidos: Users,
+  processos: Scale,
+  drive: FolderOpen,
+  modelos: FileText,
+  settings: Settings,
+  relatorios: BarChart3,
+  whatsapp: MessageSquare,
+  juri: Gavel,
+  vvd: Heart,
+  custodia: Shield,
+  diligencias: Brain,
+  equipe: Users,
+};
 
 // Mapeamento de rotas para labels amigáveis
 const ROUTE_LABELS: Record<string, string> = {
@@ -117,22 +134,42 @@ export function Breadcrumbs() {
         <Home className="w-3.5 h-3.5" />
       </Link>
 
-      {/* Listing pages: just home icon, no text (page header shows the title) */}
-      {isListingPage && null}
+      {/* Listing pages: home > icon only (page header already shows title) */}
+      {isListingPage && lastItem && (() => {
+        const segment = pathname.split("/").filter(Boolean).pop() ?? "";
+        const RouteIcon = ROUTE_ICONS[segment];
+        return (
+          <>
+            <ChevronRight className="w-3 h-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
+            {RouteIcon ? (
+              <RouteIcon className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100" title={lastItem.label} />
+            ) : (
+              <span className="font-semibold text-zinc-900 dark:text-zinc-100 truncate max-w-[140px]" title={lastItem.label}>
+                {lastItem.label}
+              </span>
+            )}
+          </>
+        );
+      })()}
 
       {/* Detail pages: show parent > current */}
-      {!isListingPage && parentItem && (
-        <>
-          <ChevronRight className="w-3 h-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
-          <Link
-            href={parentItem.href}
-            className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors truncate max-w-[100px]"
-            title={parentItem.label}
-          >
-            {parentItem.label}
-          </Link>
-        </>
-      )}
+      {!isListingPage && parentItem && (() => {
+        const segment = pathname.split("/").filter(Boolean).find(s => ROUTE_ICONS[s]);
+        const RouteIcon = segment ? ROUTE_ICONS[segment] : null;
+        return (
+          <>
+            <ChevronRight className="w-3 h-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
+            <Link
+              href={parentItem.href}
+              className="inline-flex items-center gap-1 text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
+              title={parentItem.label}
+            >
+              {RouteIcon && <RouteIcon className="w-3 h-3" />}
+              <span className="truncate max-w-[100px]">{parentItem.label}</span>
+            </Link>
+          </>
+        );
+      })()}
 
       {!isListingPage && lastItem && (
         <>
