@@ -250,6 +250,90 @@ export const processos = pgTable("processos", {
       observacoes?: string;
     };
 
+    // Prioridade geral do caso
+    prioridadeGeral?: "urgente" | "atencao" | "rotina"; // urgente=preso/prazo, atenção=audiência próxima
+    ultimaAtualizacao?: string; // ISO date da última análise
+
+    // ==========================================
+    // TIER 1.5 — DINÂMICA DO FATO
+    // ==========================================
+
+    // Reconstrução do fato (visão 360°)
+    dinamicaFato?: {
+      dataHora?: string; // "18/12/2024 às 12h" — data + HORA
+      local?: string; // endereço completo
+      condicoesAmbientais?: string; // "dia claro, residência, porta aberta" | "noite, rua deserta, pouca iluminação"
+      meioInstrumento?: string; // "mãos (tapas/socos)" | "arma branca (faca)" | "arma de fogo (revólver .38)"
+      sequenciaAcoes?: string; // narrativa cronológica do fato em si
+      motivacaoAlegada?: string; // "ciúmes" | "dívida" | "discussão sobre filhos"
+      resultadoFatico?: string; // "lesão leve orelha direita" | "morte" | "ameaça sem contato físico"
+    };
+
+    // Lesões (da vítima e/ou do defendido)
+    lesoes?: Array<{
+      pessoa: string; // "Isabelle" | "Jhonatan"
+      descricao: string; // "Lesão na orelha direita, escoriações nos braços"
+      localizacaoCorpo?: string; // "orelha direita" | "abdômen" | "face"
+      gravidade?: "leve" | "grave" | "gravissima" | "morte";
+      laudoExiste?: boolean;
+      laudoConteudo?: string; // resumo do laudo
+      atendimentoMedico?: boolean;
+      hospital?: string;
+      observacoes?: string;
+    }>;
+
+    // Versão estruturada do defendido (além do depoimento)
+    versaoDefendido?: {
+      narrativa?: string; // a versão dele em 1-2 parágrafos
+      confissaoExtrajudicial?: boolean;
+      confissaoDetalhes?: string; // "Confirmou ter agredido" — o que exatamente disse
+      confissaoQualificada?: boolean; // alegou excludente? legítima defesa?
+      silencioExercido?: boolean; // exerceu direito ao silêncio em alguma fase?
+      emQueFase?: string; // "delegacia" | "juízo"
+      observacoes?: string;
+    };
+
+    // Condição socioeconômica do defendido
+    condicaoSocioeconomica?: {
+      renda?: string; // "1 salário mínimo" | "desempregado" | "informal"
+      dependentes?: number;
+      nomeDependentes?: string; // "filha menor de 3 anos"
+      beneficiosSociais?: string[]; // "Bolsa Família", "BPC"
+      moradiaFixa?: boolean;
+      tipoMoradia?: string; // "própria" | "alugada" | "de favor"
+      observacoes?: string;
+    };
+
+    // Saúde do defendido
+    saudeDefendido?: {
+      deficiencia?: string;
+      doencaCronica?: string;
+      dependenciaQuimica?: string; // "álcool" | "cocaína" | "crack"
+      tratamentoPsiquiatrico?: boolean;
+      laudoPsiquiatrico?: boolean;
+      medicamentos?: string[];
+      observacoes?: string;
+    };
+
+    // Documentos pessoais juntados
+    documentosPessoais?: Array<{
+      tipo: string; // "CTPS" | "comprovante residência" | "certidão nascimento filho" | "atestado trabalho"
+      juntadoEm?: string;
+      juntadoPor?: string; // "Adv. Aline" | "DPE Juliane"
+      observacoes?: string;
+    }>;
+
+    // Representação/desistência (VVD art. 16, crimes condicionados)
+    representacao?: {
+      tipo?: "incondicionada" | "condicionada" | "queixa_crime";
+      representou?: boolean;
+      dataRepresentacao?: string;
+      retratou?: boolean; // pediu desistência?
+      dataRetratacao?: string;
+      audienciaRetratacao?: boolean; // houve audiência do art. 16?
+      observacoes?: string;
+    };
+
     // ==========================================
     // TIER 2 — PARTES, DEPOIMENTOS, CRONOLOGIA
     // ==========================================
@@ -341,6 +425,12 @@ export const processos = pgTable("processos", {
       citacoes?: string[];
       trechosRelevantes?: string[];
       quemPerguntou?: string; // "MP" | "Defesa" | "Juiz"
+
+      // === CONTEXTO FORMAL DO DEPOIMENTO ===
+      ouvitoSobCompromisso?: boolean; // art. 203 CPP — informante sem compromisso tem peso menor
+      qualidadeDepoente?: "testemunha_compromissada" | "informante" | "ofendido" | "perito" | "acusado";
+      comportamentoDuranteDepoimento?: string; // "chorou", "hesitou", "olhou para o réu", "pareceu seguro", "evitou detalhes"
+      assistidoPorAdvogado?: boolean; // se tinha advogado presente (relevante para interrogatório)
 
       // === VARIÁVEIS DE INTELIGÊNCIA — responder para cada depoente ===
 
@@ -543,6 +633,135 @@ export const processos = pgTable("processos", {
     }>;
 
     // ==========================================
+    // TIER 2.5 — PROVAS DIGITAIS & TECNOLÓGICAS
+    // ==========================================
+
+    // Câmeras de vigilância
+    camerasVigilancia?: Array<{
+      local?: string;
+      existem?: boolean;
+      requisitadas?: boolean;
+      dataRequisicao?: string;
+      conteudo?: string; // "Câmera registrou movimentação às 12h15" | "Sem imagens do momento do fato"
+      preservada?: boolean; // mídia foi preservada ou já foi sobrescrita?
+      observacoes?: string;
+    }>;
+
+    // Perícia de celular / digital
+    periciaDigital?: Array<{
+      dispositivo?: string; // "iPhone do réu" | "Samsung da vítima"
+      apreendido?: boolean;
+      periciado?: boolean;
+      conteudoRelevante?: string; // "Mensagens ameaçadoras" | "Fotos do local" | "Geolocalização"
+      printsMensagens?: boolean;
+      whatsapp?: boolean;
+      localizacao?: boolean;
+      observacoes?: string;
+    }>;
+
+    // Interceptação telefônica
+    interceptacaoTelefonica?: {
+      houve?: boolean;
+      autorizacaoJudicial?: string; // número da decisão
+      periodo?: string; // "01/01 a 31/03/2025"
+      ramais?: string[];
+      conteudoRelevante?: string;
+      transcricaoNosAutos?: boolean;
+      observacoes?: string;
+    };
+
+    // Provas produzidas pela defesa (investigação defensiva)
+    provasDefesa?: Array<{
+      tipo?: string; // "documento" | "testemunha" | "laudo particular" | "foto" | "áudio" | "vídeo"
+      descricao: string;
+      juntadaEm?: string;
+      impacto?: string;
+      observacoes?: string;
+    }>;
+
+    // ==========================================
+    // TIER 2.6 — ANDAMENTO PROCESSUAL DETALHADO
+    // ==========================================
+
+    // Recursos interpostos
+    recursosInterpostos?: Array<{
+      tipo: string; // "Apelação" | "RESE" | "HC" | "Agravo" | "Embargos" | "REsp" | "HC STJ"
+      numero?: string;
+      dataInterposicao?: string;
+      dataIntimacaoDecisao?: string; // quando foi intimado da decisão recorrida
+      prazoLegal?: string; // "5 dias" | "15 dias"
+      vencimento?: string; // data limite
+      status?: "pendente" | "admitido" | "provido" | "desprovido" | "prejudicado";
+      teseRecursal?: string;
+      relator?: string;
+      observacoes?: string;
+    }>;
+
+    // Pedidos pendentes de decisão
+    pedidosPendentes?: Array<{
+      tipo: string; // "revogação tornozeleira" | "progressão" | "liberdade provisória" | "produção de prova"
+      dataPeticao?: string;
+      fundamentacao?: string;
+      status: "aguardando_decisao" | "aguardando_MP" | "aguardando_diligencia" | "deferido" | "indeferido";
+      diasPendente?: number;
+      observacoes?: string;
+    }>;
+
+    // Prazos recursais em aberto
+    prazosRecursais?: Array<{
+      decisao: string; // "Sentença condenatória" | "Pronúncia"
+      dataIntimacao?: string;
+      prazo: string; // "5 dias"
+      vencimento: string;
+      recursoAdequado?: string; // "Apelação" | "RESE"
+      interposto?: boolean;
+      observacoes?: string;
+    }>;
+
+    // ==========================================
+    // TIER 2.7 — INTELIGÊNCIA AVANÇADA
+    // ==========================================
+
+    // Precedentes aplicáveis já pesquisados
+    precedentesAplicaveis?: Array<{
+      tribunal: string; // "STJ" | "STF" | "TJ-BA"
+      numero: string; // "HC 598.886/SC"
+      tese: string; // resumo da tese fixada
+      aplicabilidade: string; // como se aplica ao caso
+      verificado?: boolean; // [VERIFICAR PRECEDENTE] se false
+    }>;
+
+    // Argumentos esperados do MP
+    argumentosMpEsperados?: Array<{
+      argumento: string;
+      contraArgumento?: string; // como a defesa deve responder
+      probabilidade?: "alta" | "media" | "baixa";
+    }>;
+
+    // Pontos sensíveis — temas a evitar
+    pontosSensiveis?: Array<{
+      tema: string;
+      porque: string; // "se perguntar X, abre porta para Y"
+      alternativa?: string; // abordagem segura
+    }>;
+
+    // Lacunas de investigação defensiva
+    lacunasInvestigacao?: Array<{
+      oqueFalta: string; // "ouvir vizinhos" | "obter câmeras" | "perícia de celular"
+      prioridade: "alta" | "media" | "baixa";
+      comoObter?: string;
+    }>;
+
+    // Testemunhas não arroladas (potenciais)
+    testemunhasNaoArroladas?: Array<{
+      nome?: string;
+      relacao: string; // "vizinho mencionado no depoimento de X"
+      potencial: string; // "pode confirmar que defendido estava em outro local"
+      risco?: string; // "pode reforçar versão da vítima"
+      fonteIdentificacao: string; // "mencionado na fls. 45 do IP"
+    }>;
+
+    // ==========================================
     // TIER 3 — TESES & ESTRATÉGIA
     // ==========================================
 
@@ -710,7 +929,12 @@ export const processos = pgTable("processos", {
     // MPU / Medidas Protetivas de Urgência (ad.mpu)
     mpu?: {
       medidasVigentes?: Array<{ medida: string; status: string; dataConcessao?: string }>;
-      descumprimentos?: Array<{ descricao: string; data?: string; providencia?: string }>;
+      descumprimentos?: Array<{
+        descricao: string;
+        data?: string;
+        providencia?: string; // "prisão preventiva decretada" | "advertência"
+        processoDescumprimento?: string; // nº do processo de descumprimento (art. 24-A)
+      }>;
       observacoes?: string;
     };
 
@@ -719,9 +943,29 @@ export const processos = pgTable("processos", {
       tipoRelacao?: string;
       tempoRelacao?: string;
       filhos?: number;
+      nomeFilhos?: string[];
+      idadeFilhos?: number[];
+      guardaRegulamentada?: boolean;
+      visitasRegulamentadas?: boolean;
+      pensaoAlimenticia?: boolean;
       dependenciaEconomica?: boolean;
       cicloViolencia?: string;
       historico?: string;
+      disputasParalelas?: string; // "guarda", "partilha de bens", "pensão"
+      observacoes?: string;
+    };
+
+    // Rede de apoio e acompanhamento (VVD)
+    redeApoio?: {
+      creas?: boolean;
+      cram?: boolean;
+      caps?: boolean;
+      delegaciaMulher?: boolean;
+      abrigo?: boolean;
+      patrulhaMariaPenha?: boolean;
+      equipeMultidisciplinar?: boolean;
+      grupoReflexivo?: boolean; // defendido encaminhado para grupo reflexivo?
+      grupoReflexivoStatus?: string; // "encaminhado" | "frequentando" | "concluído" | "não compareceu"
       observacoes?: string;
     };
 
@@ -732,14 +976,67 @@ export const processos = pgTable("processos", {
     // Cronograma de benefícios (ad.cronogramaBeneficios)
     cronogramaBeneficios?: {
       beneficios?: Array<{
-        nome: string;
+        nome: string; // "progressão" | "livramento condicional" | "indulto" | "saída temporária"
         dataPrevisao?: string;
-        fracao?: string;
-        status?: string;
+        fracao?: string; // "1/6" | "2/5" | "3/5"
+        requisitosObjetivos?: boolean;
+        requisitosSubjetivos?: string; // "bom comportamento" | "pendente de exame"
+        status?: "preenchido" | "pendente" | "requerido" | "indeferido";
         observacoes?: string;
       }>;
-      detracao?: { diasDescontados?: number; fundamentacao?: string };
-      remicao?: { diasRemidos?: number; fundamentacao?: string };
+      observacoes?: string;
+    };
+
+    // Detração detalhada (EP)
+    detracaoDetalhada?: {
+      periodos?: Array<{
+        tipo: "prisao_provisoria" | "prisao_definitiva" | "monitoracao_eletronica" | "domiciliar";
+        dataInicio: string;
+        dataFim?: string; // null = vigente
+        dias?: number;
+        fundamentacao?: string;
+      }>;
+      totalDias?: number;
+      observacoes?: string;
+    };
+
+    // Remição por trabalho/estudo (art. 126 LEP)
+    remicao?: {
+      trabalho?: {
+        local?: string;
+        jornadaDiaria?: string;
+        diasTrabalhados?: number;
+        diasRemidos?: number; // 3 dias trabalho = 1 dia remido
+        atestadoJuntado?: boolean;
+      };
+      estudo?: {
+        instituicao?: string;
+        cargaHoraria?: string;
+        horasEstudadas?: number;
+        diasRemidos?: number; // 12 horas estudo = 1 dia remido
+        certificadoJuntado?: boolean;
+      };
+      leitura?: {
+        obrasLidas?: number;
+        diasRemidos?: number; // 1 obra = 4 dias
+        resenhasJuntadas?: boolean;
+      };
+      totalDiasRemidos?: number;
+      observacoes?: string;
+    };
+
+    // Comportamento carcerário (EP)
+    comportamentoCarcerario?: {
+      atestadoComportamento?: boolean;
+      classificacao?: "bom" | "regular" | "mau";
+      faltasDisciplinares?: Array<{
+        tipo: "leve" | "media" | "grave";
+        data?: string;
+        descricao?: string;
+        sanção?: string;
+        reabilitada?: boolean;
+      }>;
+      dataUltimoAtestado?: string;
       observacoes?: string;
     };
 
