@@ -77,7 +77,6 @@ const MAIN_NAV: AssignmentMenuItem[] = [
 const CADASTROS_NAV: AssignmentMenuItem[] = [
   { label: "Assistidos", path: "/admin/assistidos", icon: "Users", requiredRoles: ["admin", "defensor", "servidor", "estagiario", "triagem"] },
   { label: "Processos", path: "/admin/processos", icon: "Scale" },
-  { label: "Casos", path: "/admin/casos", icon: "Briefcase" },
   { label: "Solar", path: "/admin/intimacoes", icon: "Sun" },
   { label: "Mapa", path: "/admin/cadastro/mapa", icon: "Map" },
 ];

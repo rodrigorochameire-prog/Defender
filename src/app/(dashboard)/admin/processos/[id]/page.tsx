@@ -137,17 +137,16 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
         comarca={data.comarca}
         proximaAudiencia={proximaAudiencia}
         classeProcessual={(data as any).classeProcessual}
+        counts={{
+          demandas: data.demandas?.length ?? 0,
+          audiencias: data.audiencias?.length ?? 0,
+          arquivos: data.driveFiles?.length ?? 0,
+          vinculados: data.processosVinculados?.length ?? 0,
+        }}
       />
 
-      {/* Context bar */}
-      <div className="flex items-center gap-4 px-6 lg:px-8 py-2.5 border-b border-border/40 bg-zinc-50/50 dark:bg-zinc-900/50 text-xs text-muted-foreground">
-        <span><span className="font-semibold text-foreground">{data.demandas?.length ?? 0}</span> demandas</span>
-        <span><span className="font-semibold text-foreground">{data.audiencias?.length ?? 0}</span> audiências</span>
-        <span><span className="font-semibold text-foreground">{data.driveFiles?.length ?? 0}</span> arquivos</span>
-        {data.processosVinculados?.length > 0 && (
-          <span><span className="font-semibold text-foreground">{data.processosVinculados.length}</span> vinculados</span>
-        )}
-      </div>
+      {/* Content container — unified card for tabs + content */}
+      <div className="mx-4 lg:mx-6 mt-2 bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/60 dark:border-zinc-800/40 overflow-hidden flex-1 flex flex-col min-h-0">
 
       {/* Tabs */}
       <ProcessoTabs
@@ -362,6 +361,7 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
             />
           </div>
         )}
+      </div>
       </div>
     </div>
   );

@@ -43,32 +43,35 @@ export function ProcessoTabs({ active, onChange, counts }: ProcessoTabsProps) {
   ];
 
   return (
-    <div className="flex items-center gap-1 border-b border-zinc-200/80 dark:border-zinc-800/60 px-6 lg:px-8 overflow-x-auto">
-      {TABS.map((tab) => (
-        <button
-          key={tab.key}
-          onClick={() => onChange(tab.key)}
-          className={cn(
-            "flex items-center gap-2 px-4 py-3.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap shrink-0",
-            active === tab.key
-              ? "border-zinc-900 dark:border-zinc-100 text-zinc-900 dark:text-zinc-50 font-medium"
-              : "border-transparent text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
-          )}
-        >
-          <tab.icon className="h-4 w-4" />
-          <span>{tab.label}</span>
-          {counts?.[tab.key] !== undefined && counts[tab.key]! > 0 && (
-            <span className={cn(
-              "text-[10px] min-w-[22px] text-center px-1.5 py-0.5 rounded-full font-medium",
-              active === tab.key
-                ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
-                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
-            )}>
-              {counts[tab.key]}
-            </span>
-          )}
-        </button>
-      ))}
+    <div className="flex items-center gap-0.5 mx-3 mt-3 mb-0 overflow-x-auto rounded-lg bg-zinc-100 dark:bg-zinc-800 p-1">
+      {TABS.map((tab) => {
+        const isActive = active === tab.key;
+        return (
+          <button
+            key={tab.key}
+            onClick={() => onChange(tab.key)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0",
+              isActive
+                ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm"
+                : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-white/5"
+            )}
+          >
+            <tab.icon className="h-3 w-3" />
+            <span>{tab.label}</span>
+            {counts?.[tab.key] !== undefined && counts[tab.key]! > 0 && (
+              <span className={cn(
+                "text-[9px] min-w-[18px] text-center px-1 py-px rounded-full font-medium",
+                isActive
+                  ? "bg-white/20 text-white/70 dark:bg-zinc-700 dark:text-zinc-300"
+                  : "bg-zinc-200/60 dark:bg-white/10 text-zinc-400 dark:text-zinc-500"
+              )}>
+                {counts[tab.key]}
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
