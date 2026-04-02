@@ -1299,6 +1299,269 @@ export const processos = pgTable("processos", {
     };
 
     // ==========================================
+    // TIER 7.5 — VVD: TIPOS PENAIS, VERSÕES E AVALIAÇÃO PROBATÓRIA
+    // ==========================================
+
+    // ---- CRIMES VVD POR TIPO ----
+    vvdCrimes?: Array<{
+      // Tipificação
+      crime: string; // nome do crime
+      artigo: string; // dispositivo legal
+      tipoVd:
+        | "lesao_corporal_§9" // art. 129, §9° CP — VD simples (detenção 3m-3a)
+        | "lesao_corporal_§13" // art. 129, §13 CP — razões cond. sexo feminino (reclusão 1-4a, Lei 14.188/2021)
+        | "lesao_corporal_grave" // art. 129, §1° — grave
+        | "lesao_corporal_gravissima" // art. 129, §2° — gravíssima
+        | "ameaca" // art. 147 CP
+        | "violencia_psicologica" // art. 147-B CP (Lei 14.188/2021)
+        | "perseguicao_stalking" // art. 147-A CP (Lei 14.132/2021)
+        | "descumprimento_mpu" // art. 24-A Lei 11.340/06
+        | "injuria" // art. 140 CP
+        | "injuria_preconceito" // art. 140, §3° (razões cond. sexo feminino — Lei 14.532/2023)
+        | "difamacao" // art. 139 CP
+        | "calúnia" // art. 138 CP
+        | "dano" // art. 163 CP
+        | "violacao_domicilio" // art. 150 CP
+        | "constrangimento_ilegal" // art. 146 CP
+        | "carcere_privado" // art. 148 CP
+        | "estupro_marital" // art. 213 CP
+        | "divulgacao_intimidade" // art. 218-C CP (pornografia de vingança)
+        | "feminicidio_tentado" // art. 121, §2°-A CP
+        | "outro";
+
+      // Pena
+      penaAbstrata?: string; // "detenção 3m-3a" | "reclusão 1-4a"
+      acaoPublica?: "incondicionada" | "condicionada" | "privada"; // na VD: lesão sempre incondicionada (Súmula 542 STJ)
+
+      // Circunstâncias específicas por tipo
+      circunstancias?: {
+        // LESÃO CORPORAL
+        naturezaLesao?: "leve" | "grave" | "gravissima";
+        lesaoDescrita?: string; // "escoriações no braço" | "fratura nasal" | "perda de dente"
+        laudoLesao?: boolean;
+        laudoConteudo?: string;
+        meioEmpregado?: string; // "mãos" | "objeto contundente" | "faca" | "arremesso contra parede"
+        incapacidade?: string; // "sem incapacidade" | "incapacidade > 30 dias" | "incapacidade permanente"
+        defesaLesao?: string; // "lesão pré-existente" | "autolesão" | "lesão acidental" | "legítima defesa"
+
+        // AMEAÇA (art. 147)
+        tipoAmeaca?: "morte" | "mal_grave" | "vaga_generica";
+        meioAmeaca?: "verbal_presencial" | "telefone" | "whatsapp" | "audio" | "video" | "bilhete" | "gesto" | "redes_sociais";
+        conteudoLiteral?: string; // "vou te matar" — literal
+        provaDocumental?: boolean; // print, áudio, vídeo gravado
+        testemunhaPresencial?: boolean;
+        contextoAmeaca?: string; // "durante discussão" | "após separação" | "sem provocação"
+        gravidade?: "seria_iminente" | "futura" | "condicional" | "vaga";
+        defesaAmeaca?: string; // "não houve ameaça, foi desabafo" | "contexto de briga mútua" | "inverossímil"
+
+        // VIOLÊNCIA PSICOLÓGICA (art. 147-B — Lei 14.188/2021)
+        condutasPsicologicas?: string[]; // "controle financeiro" | "isolamento social" | "humilhação reiterada" | "vigilância constante" | "manipulação" | "gaslighting"
+        reiteracao?: boolean; // é conduta reiterada? (elemento do tipo)
+        laudoPsicologico?: boolean; // laudo de psicólogo/psiquiatra atestando dano
+        danoEmocional?: string; // "ansiedade" | "depressão" | "síndrome do pânico" | "TEPT"
+        defesaPsicologica?: string; // "conflito bilateral" | "ausência de dolo específico" | "fato isolado sem reiteração"
+
+        // PERSEGUIÇÃO / STALKING (art. 147-A — Lei 14.132/2021)
+        condutasPerseguicao?: string[]; // "seguir" | "vigiar" | "mensagens insistentes" | "aparecer no trabalho" | "monitorar redes sociais"
+        frequencia?: string; // "diária" | "várias vezes por semana" | "episódica"
+        duracaoPerseguicao?: string; // "2 semanas" | "3 meses"
+        plataformasDigitais?: string[]; // "WhatsApp" | "Instagram" | "GPS no carro"
+        restricaoLiberdade?: boolean; // vítima mudou rotina por medo?
+        perturbacaoTranquilidade?: boolean;
+        defesaPerseguicao?: string; // "contato legítimo sobre filhos" | "tentativa de reconciliação" | "fato isolado"
+
+        // DESCUMPRIMENTO DE MPU (art. 24-A Lei 11.340/06)
+        medidaDescumprida?: string; // qual medida
+        comoDescumpriu?: string; // "foi ao endereço da ofendida" | "enviou mensagem" | "apareceu na escola"
+        intencional?: boolean; // dolo? ou inadvertência?
+        defesaDescumprimento?: string; // "encontro acidental" | "filhos em comum" | "não tinha ciência da medida"
+
+        // INJÚRIA (art. 140 — qualificada pelo §3° se por razão de sexo)
+        palavrasProferidas?: string[]; // "vagabunda" | "puta" | "inútil"
+        meioInjuria?: "verbal" | "escrita" | "whatsapp" | "redes_sociais" | "publicamente";
+        provaInjuria?: boolean; // print, testemunha
+        qualificadaPorSexo?: boolean; // §3° — razões da condição de sexo feminino
+
+        // DIVULGAÇÃO DE CENA ÍNTIMA (art. 218-C — pornografia de vingança)
+        tipoCena?: "foto" | "video" | "montagem";
+        meiosDivulgacao?: string[]; // "WhatsApp" | "Instagram" | "sites pornô" | "grupo"
+        consentimentoOriginal?: boolean; // vítima consentiu com o registro original?
+        consentimentoDivulgacao?: boolean; // consentiu com a divulgação? (sempre não)
+        extensaoDivulgacao?: string; // "grupo restrito" | "redes públicas" | "viralizado"
+      };
+
+      observacoes?: string;
+    }>;
+
+    // ---- VERSÕES E NARRATIVAS (fundamental para VVD) ----
+    versoesNarrativas?: {
+      // Versão do assistido/defendido
+      versaoDefendido?: {
+        naDelegacia?: string; // o que disse no interrogatório policial
+        noAtendimentoDPE?: string; // o que disse ao defensor (SIGILO — não vai para os autos)
+        emJuizo?: string; // se já foi interrogado em juízo
+        consistenciaInterna?: "alta" | "media" | "baixa"; // a versão dele é coerente?
+        mudouVersao?: boolean; // mudou entre delegacia e juízo?
+        oQueMudou?: string;
+        pontosFortesVersao?: string[];
+        pontosFracosVersao?: string[];
+        orientacaoDefensor?: string; // o que o defensor orientou (manter? ajustar? silenciar?)
+      };
+
+      // Versão(ões) da suposta vítima/ofendida
+      versoesOfendida?: Array<{
+        fase: "bo" | "delegacia" | "mpu" | "juizo_instrucao" | "juizo_justificacao" | "audiencia_art16";
+        data?: string;
+        resumo: string;
+        citacoesLiterais?: string[];
+        // Análise de cada versão
+        acrescimoEmRelacaoAnterior?: string[]; // o que acrescentou que não disse antes
+        omissaoEmRelacaoAnterior?: string[]; // o que omitiu que havia dito antes
+        contradicaoComAnterior?: string[]; // o que contradiz versões anteriores
+        contradicaoComProva?: string[]; // contradiz laudo, câmera, documento
+        tonalidadeEmocional?: string; // "choro intenso" | "relato frio" | "hesitante" | "assertiva"
+        espontaneidadeOuInducao?: string; // "espontâneo" | "respondendo a perguntas dirigidas"
+      }>;
+
+      // Versões de cada depoente (referência cruzada com depoimentos[])
+      concordanciaEntreVersoes?: Array<{
+        ponto: string; // "quem iniciou a agressão" | "presença de arma" | "horário"
+        versaoDefendido?: string;
+        versaoOfendida?: string;
+        versaoTestemunha1?: string;
+        versaoTestemunha2?: string;
+        versaoProva?: string; // o que o laudo/câmera mostra
+        conclusao?: "convergente" | "divergente" | "parcialmente_divergente";
+        impactoDefesa?: string;
+      }>;
+
+      observacoes?: string;
+    };
+
+    // ---- AVALIAÇÃO PROBATÓRIA VVD ----
+    avaliacaoProbatoriaVvd?: {
+      // Palavra da ofendida
+      palavraOfendida?: {
+        unica?: boolean; // caso repousa APENAS na palavra da ofendida?
+        corroborada?: boolean; // há corroboração?
+        corroboradaPor?: string[]; // "testemunha X" | "laudo" | "câmera" | "print WhatsApp"
+        ambivalente?: boolean; // postura contraditória?
+        detalhesAmbivalencia?: string; // "desistiu no mesmo dia" | "retratou" | "segurança 10/10"
+        credibilidadeAvaliada?: "alta" | "media" | "baixa";
+        motivoCridibilidade?: string;
+      };
+
+      // Provas materiais específicas VVD
+      provasMateriaisVvd?: {
+        laudoLesao?: { existe: boolean; resultado?: string; favoravel?: "acusacao" | "defesa" | "inconclusivo" };
+        laudoPsicologico?: { existe: boolean; resultado?: string; profissional?: string };
+        printsWhatsapp?: { existem: boolean; conteudo?: string; autenticados?: boolean };
+        audios?: { existem: boolean; conteudo?: string; periciados?: boolean };
+        videos?: { existem: boolean; conteudo?: string; fonte?: string };
+        fotos?: { existem: boolean; descricao?: string; de_quem?: string };
+        boletimOcorrencia?: { existe: boolean; numero?: string; data?: string; inconsistencias?: string };
+        registroHospitalar?: { existe: boolean; hospital?: string; data?: string; descricao?: string };
+        // Provas digitais
+        geolocalizacao?: { existe: boolean; conteudo?: string };
+        registrosChamadas?: { existem: boolean; conteudo?: string };
+      };
+
+      // Contexto probatório frequente em VVD
+      questoesRecorrentesVvd?: {
+        // A vítima quer a condenação ou não?
+        vitimaQuerCondenacao?: boolean;
+        vitimaVoltouComReu?: boolean; // reconciliaram?
+        vitimaTemInteressePatrimonial?: boolean; // disputa de bens/imóvel?
+        vitimaTemInteresseGuarda?: boolean; // disputa de filhos?
+
+        // Conflito bilateral?
+        conflitoBilateral?: boolean; // ambas as partes se agrediram?
+        indíciosAgressaoMutua?: string[];
+        // Legítima defesa?
+        tesesLegitimaDefesa?: boolean;
+        elementosLegitimaDefesa?: string[];
+
+        // Retorsão / vingança
+        hipoteseRetorsao?: boolean; // a denúncia pode ser retorsão por outra situação?
+        indiciosRetorsao?: string[]; // "BO registrado após briga sobre pensão" | "timing suspecto"
+
+        // Pressão/influência sobre a vítima
+        pressaoParaDesistir?: boolean; // defendido pressionou?
+        pressaoParaDenunciar?: boolean; // família/terceiro pressionou?
+        quemPressiona?: string;
+
+        // Ciclo de violência (Lenore Walker)
+        faseAtualCiclo?: "tensao" | "explosao" | "lua_de_mel" | "indeterminada";
+        primeiraOcorrencia?: boolean; // é o primeiro BO?
+        boletinsAnteriores?: number;
+        processosAnteriores?: number;
+        mpusAnteriores?: number;
+        padraoPrimario?: boolean; // sempre o mesmo tipo de violência?
+        escalada?: boolean; // violência tem escalado?
+      };
+
+      // Síntese da avaliação probatória
+      sinteseProba?: {
+        forcaAcusacao?: "forte" | "moderada" | "fragil";
+        motivoForcaAcusacao?: string;
+        forcaDefesa?: "forte" | "moderada" | "fragil";
+        motivoForcaDefesa?: string;
+        provaChave?: string; // qual é a prova que define o caso?
+        provaAusente?: string; // qual prova faltante poderia mudar o resultado?
+        probabilidadeCondenacao?: "alta" | "media" | "baixa";
+        observacoes?: string;
+      };
+
+      observacoes?: string;
+    };
+
+    // ---- PROCESSOS CONEXOS E HISTÓRICO VVD ----
+    historicoVvd?: {
+      // Processos do MESMO casal
+      processosEntreMesmasPartes?: Array<{
+        numero: string;
+        tipo: "mpu" | "ap" | "ip" | "bo" | "cautelar";
+        data?: string;
+        crime?: string;
+        resultado?: string; // "arquivado" | "condenado" | "absolvido" | "em andamento"
+        quemDenunciou?: "ofendida" | "defendido" | "terceiro"; // às vezes o defendido é vítima em outro processo
+        observacoes?: string;
+      }>;
+
+      // Processos do defendido com OUTRAS mulheres
+      processosComOutrasMulheres?: Array<{
+        numero?: string;
+        ofendida?: string;
+        crime?: string;
+        resultado?: string;
+        observacoes?: string;
+      }>;
+
+      // Processos da ofendida contra OUTROS homens (ou como ré)
+      processosOfendidaComOutros?: Array<{
+        numero?: string;
+        papel?: "vitima" | "re" | "autora";
+        outraParte?: string;
+        crime?: string;
+        resultado?: string;
+        observacoes?: string;
+      }>;
+
+      // BOs anteriores (mesmo casal)
+      boletinsAnteriores?: Array<{
+        numero?: string;
+        data?: string;
+        natureza?: string; // "ameaça" | "lesão" | "vias de fato"
+        quemRegistrou?: "ofendida" | "defendido" | "terceiro";
+        resultado?: string; // "arquivado" | "gerou IP" | "gerou AP"
+        observacoes?: string;
+      }>;
+
+      padraoDeProceso?: string; // "ofendida denuncia, reconcilia, desiste, denuncia novamente"
+      observacoes?: string;
+    };
+
+    // ==========================================
     // TIER 8 — ATRIBUIÇÃO: EXECUÇÃO PENAL (por modalidade)
     // ==========================================
 
