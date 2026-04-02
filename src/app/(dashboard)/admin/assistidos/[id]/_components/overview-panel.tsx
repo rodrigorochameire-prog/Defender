@@ -134,8 +134,9 @@ export function AssistidoOverviewPanel({
           {/* ── Audiência card ── */}
           <div
             className={cn(
-              "bg-white dark:bg-zinc-800/30 border border-zinc-200/80 dark:border-zinc-800/50",
-              "rounded-lg p-3.5 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all duration-200 cursor-pointer",
+              "bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-300 dark:border-zinc-700 border-l-[3px]",
+              proximaAudiencia ? "border-l-amber-500" : "border-l-zinc-400 dark:border-l-zinc-600",
+              "rounded-lg p-3.5 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-all duration-200 cursor-pointer",
             )}
           >
             <div className="flex items-center gap-2 mb-1.5">
@@ -225,8 +226,9 @@ export function AssistidoOverviewPanel({
                 : undefined
             }
             className={cn(
-              "bg-white dark:bg-zinc-800/30 border border-zinc-200/80 dark:border-zinc-800/50",
-              "rounded-lg p-3.5 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all duration-200 cursor-pointer",
+              "bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-300 dark:border-zinc-700 border-l-[3px]",
+              demandaCritica ? "border-l-rose-500" : "border-l-zinc-400 dark:border-l-zinc-600",
+              "rounded-lg p-3.5 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-all duration-200 cursor-pointer",
             )}
           >
             <div className="flex items-center gap-2 mb-1.5">
