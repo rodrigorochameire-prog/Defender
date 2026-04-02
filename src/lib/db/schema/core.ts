@@ -1114,13 +1114,285 @@ export const processos = pgTable("processos", {
     };
 
     // ==========================================
-    // TIER 6 — ATRIBUIÇÃO: JÚRI
+    // TIER 6 — ATRIBUIÇÃO: JÚRI (COMPLETO)
     // ==========================================
 
-    // Rito bifásico — Júri (ad.ritoBifasico)
+    // ---- TIPIFICAÇÃO DO HOMICÍDIO ----
+    homicidio?: {
+      tipo?: "simples" | "qualificado" | "privilegiado" | "culposo" | "tentado" | "tentado_qualificado";
+      consumado?: boolean;
+      // Qualificadoras (art. 121, §2°) — cada uma com análise probatória
+      qualificadoras?: Array<{
+        inciso: "I_torpe" | "II_futl" | "III_cruel" | "IV_recurso_impossivel_defesa" | "V_conexao" | "VI_feminicidio" | "VII_contra_autoridade" | "VIII_menor_14";
+        descricao: string; // "motivo torpe — vingança por dívida de drogas"
+        indicadoresProva?: string[]; // o que nos autos sustenta essa qualificadora
+        fragilidadesProva?: string[]; // o que a defesa pode explorar
+        manifestamenteImprocedente?: boolean; // pode pedir afastamento na pronúncia?
+        fundamentoAfastamento?: string; // argumento jurídico para afastar
+        incluídaNaPronúncia?: boolean; // juiz incluiu na pronúncia?
+        estrategiaPlenario?: string; // como enfrentar no plenário
+      }>;
+      // Privilégio (art. 121, §1°)
+      privilegio?: {
+        alegado?: boolean;
+        violentaEmocao?: boolean;
+        logoEmSeguida?: boolean; // imediatamente após provocação?
+        injustaProvocacao?: boolean;
+        descricaoProvocacao?: string;
+        compatibilidadeComQualificadoras?: string; // "incompatível com torpe" | "compatível com recurso"
+        observacoes?: string;
+      };
+      // Vítima
+      vitima?: {
+        nome?: string;
+        idade?: number;
+        profissao?: string;
+        relacaoComReu?: string; // "desconhecido" | "amigo" | "rival" | "parente" | "companheira"
+        antecedentesVitima?: string; // passagens policiais, processos — relevante para legítima defesa
+        comportamentoPreFato?: string; // "ameaçou o réu" | "estava armado" | "provocou"
+        causaMortis?: string; // do laudo necroscópico
+        observacoes?: string;
+      };
+      // Arma de fogo (majorante Lei 13.964/2019)
+      armaFogo?: {
+        utilizada?: boolean;
+        tipo?: string; // "revólver .38" | "pistola 9mm" | "espingarda"
+        apreendida?: boolean;
+        periciada?: boolean;
+        aptaDisparo?: boolean;
+        registrada?: boolean;
+        origem?: string; // "arma do réu" | "arma da vítima" | "origem desconhecida"
+        majoranteIncidivel?: boolean; // aumento de 2/3 se arma de fogo de uso restrito/ilegal
+        observacoes?: string;
+      };
+      // Concurso de agentes
+      concurso?: {
+        houve?: boolean;
+        coautores?: Array<{ nome: string; papel?: string; situacao?: string }>;
+        participacaoDoDefendido?: string; // "autor direto" | "partícipe" | "autor intelectual"
+        participacaoMenorImportancia?: boolean; // art. 29, §1° — diminuição 1/6 a 1/3
+        comunicabilidadeQualificadoras?: string; // elementar vs. circunstância
+        observacoes?: string;
+      };
+      observacoes?: string;
+    };
+
+    // ---- PROVA FORENSE (Laudos específicos do Júri) ----
+    provaForense?: {
+      // Laudo necroscópico
+      necroscopico?: {
+        existe?: boolean;
+        perito?: string;
+        dataExame?: string;
+        causaMortis?: string; // "ferimento por arma de fogo" | "trauma crânio-encefálico"
+        instrumentoCausador?: string; // "projétil de arma de fogo" | "instrumento contundente"
+        numeroLesoes?: number;
+        localizacaoLesoes?: string[]; // "região torácica anterior" | "face" | "costas"
+        lesoesDefensivas?: boolean; // vítima tentou se defender? (relevante para LD)
+        compatibilidadeVersaoDefesa?: string; // "compatível com legítima defesa" | "incompatível"
+        distanciaDisparo?: string; // "encostado" | "curta distância" | "longa distância"
+        direcaoDisparo?: string; // "frente para trás" | "costas" | "cima para baixo"
+        morteInstantanea?: boolean; // relevante para crueldade
+        observacoes?: string;
+      };
+      // Laudo de local
+      laudoLocal?: {
+        existe?: boolean;
+        perito?: string;
+        localDescrito?: string;
+        sinaisLuta?: boolean; // vestígios de confronto?
+        manchasSangue?: string; // "ausentes" | "compatíveis com a dinâmica descrita"
+        posicaoCorpo?: string;
+        objetos?: string[]; // "faca encontrada" | "cápsulas deflagradas"
+        capsulasEncontradas?: number;
+        projetisEncontrados?: number;
+        compatibilidadeComVersoes?: string;
+        inconclusivo?: boolean;
+        observacoes?: string;
+      };
+      // Balística
+      balistica?: {
+        existe?: boolean;
+        armaPericiada?: boolean;
+        aptaDisparo?: boolean;
+        calibre?: string;
+        confrontoPositivo?: boolean; // projetil veio da arma apreendida?
+        numeroCapsulas?: number;
+        numeroDisparos?: number;
+        observacoes?: string;
+      };
+      // Toxicologia (do réu e/ou vítima)
+      toxicologia?: {
+        existe?: boolean;
+        deQuem?: "reu" | "vitima" | "ambos";
+        resultado?: string; // "positivo para álcool" | "negativo" | "positivo para cocaína"
+        relevanciaParaDefesa?: string; // "vítima embriagada = agressora" | "réu sob efeito = inimputável?"
+        observacoes?: string;
+      };
+      observacoes?: string;
+    };
+
+    // ---- INVESTIGAÇÃO DEFENSIVA / OSINT ----
+    investigacaoDefensiva?: {
+      realizada?: boolean;
+      // Câmeras de segurança (buscadas pela defesa)
+      cameras?: Array<{
+        local?: string;
+        proprietario?: string;
+        requisitada?: boolean;
+        dataRequisicao?: string;
+        conteudo?: string;
+        preservada?: boolean;
+        utilParaDefesa?: boolean;
+      }>;
+      // Telefonia (ERBs, registros de chamadas)
+      telefonia?: {
+        requisitada?: boolean;
+        conteudo?: string; // "réu estava em outro bairro no horário do fato"
+        erbsAnalisadas?: boolean;
+        observacoes?: string;
+      };
+      // Redes sociais / mensagens
+      redesSociais?: {
+        analisadas?: boolean;
+        conteudo?: string; // "vítima postou ameaças ao réu 2 dias antes"
+        prints?: boolean;
+        preservadas?: boolean; // ata notarial?
+        observacoes?: string;
+      };
+      // Testemunhas não ouvidas no IP
+      testemunhasDescobertasDefesa?: Array<{
+        nome?: string;
+        relacao?: string;
+        oquePodeProvar?: string;
+        arrolada?: boolean;
+      }>;
+      // Antecedentes da vítima (investigação defensiva)
+      antecedentesVitima?: {
+        pesquisados?: boolean;
+        processosCriminais?: Array<{ numero?: string; crime?: string; resultado?: string }>;
+        passagensPoliciais?: string[];
+        reputacao?: string; // "pessoa violenta conhecida no bairro"
+        relevanciaParaDefesa?: string; // "vítima era traficante armado"
+        observacoes?: string;
+      };
+      observacoes?: string;
+    };
+
+    // ---- RITO BIFÁSICO (pronúncia/impronúncia) ----
     ritoBifasico?: {
-      fase?: string;
-      pronuncDesclassific?: string;
+      faseAtual?: "pre_pronuncia" | "pos_pronuncia" | "pre_plenario" | "plenario" | "pos_plenario";
+      // Pronúncia
+      pronuncia?: {
+        proferida?: boolean;
+        data?: string;
+        juiz?: string;
+        qualificadorasIncluidas?: string[];
+        qualificadorasAfastadas?: string[];
+        fundamentacao?: string; // resumo
+        recursoInterposto?: boolean; // RESE contra pronúncia?
+        resultadoRecurso?: string;
+        observacoes?: string;
+      };
+      // Impronúncia / Absolvição sumária / Desclassificação
+      decisaoAlternativa?: {
+        tipo?: "impronuncia" | "absolvicao_sumaria" | "desclassificacao";
+        para?: string; // se desclassificação: para qual crime?
+        fundamentacao?: string;
+        recursoMP?: boolean;
+        observacoes?: string;
+      };
+      // Standard probatório por fase
+      standardProbatorio?: {
+        materialidadeComprovada?: boolean;
+        indiciosSuficientesAutoria?: boolean; // standard da pronúncia (in dubio pro societate — CRITICÁVEL)
+        // STF RE 1.308.721: in dubio pro societate NÃO é princípio constitucional
+        argumentoAntiInDubio?: boolean; // defesa questiona o standard?
+        observacoes?: string;
+      };
+      observacoes?: string;
+    };
+
+    // ---- PREPARAÇÃO PARA PLENÁRIO ----
+    preparacaoPlenario?: {
+      // Quesitação (art. 483 CPP)
+      quesitacao?: {
+        quesitosPropostos?: Array<{
+          numero: number;
+          texto: string;
+          fase: "materialidade" | "autoria" | "absolvicao" | "qualificadora" | "privilegio" | "causa_diminuicao" | "causa_aumento";
+          respostaEsperadaDefesa: "sim" | "nao";
+          estrategia?: string; // "se jurados responderem NÃO → absolvição"
+        }>;
+        tesesCompativeis?: string[]; // teses que podem coexistir
+        tesesIncompativeis?: Array<{ tese1: string; tese2: string; motivo: string }>;
+        ordemVotacao?: string; // sequência estratégica
+        observacoes?: string;
+      };
+      // Sustentação oral
+      sustentacaoOral?: {
+        gancho?: string; // frase de abertura impactante
+        argumentosPrincipais?: string[]; // 3-4 argumentos-chave
+        frasesEfeito?: string[]; // frases memorizáveis
+        vedacoesArt478?: string[]; // lembretes do que NÃO dizer
+        linguagemSimples?: boolean; // jurados são leigos
+        estrategiaReplica?: string;
+        estrategiaTreplica?: string; // último discurso — argumentos guardados
+        observacoes?: string;
+      };
+      // Perfil dos jurados
+      jurados?: {
+        listaDisponivel?: boolean;
+        perfis?: Array<{
+          nome?: string;
+          profissao?: string;
+          idade?: number;
+          historicoJulgamentos?: string;
+          perfilFavoravel?: boolean;
+          motivoAvaliacao?: string;
+          causaRecusa?: string; // art. 468 CPP
+        }>;
+        estrategiaRecusa?: string; // quem recusar e por quê
+        observacoes?: string;
+      };
+      // Preparação do réu para plenário
+      preparacaoReu?: {
+        orientacaoComportamento?: string; // postura, vestimenta, olhar
+        orientacaoInterrogatorio?: string; // o que falar, o que evitar
+        apoioFamiliarPresente?: boolean; // família na plateia?
+        observacoes?: string;
+      };
+      // Nulidades potenciais do plenário
+      nulidadesPlenario?: Array<{
+        tipo: string; // "excesso de linguagem na pronúncia lida" | "menção à prisão" | "testemunha não intimada"
+        momento: string; // "antes" | "durante" | "após"
+        consequencia: string; // "nulidade absoluta" | "dissolução do conselho"
+        observacoes?: string;
+      }>;
+      observacoes?: string;
+    };
+
+    // Perspectiva plenária (ad.perspectivaPlenaria) — texto livre
+    perspectivaPlenaria?: string;
+
+    // ---- STATUS DE LIBERDADE NO JÚRI ----
+    liberdadeJuri?: {
+      preso?: boolean;
+      tempoPreso?: string; // "2 anos 3 meses"
+      diasPreso?: number;
+      unidade?: string;
+      fundamentoPrisao?: string; // "preventiva — garantia da ordem pública"
+      hcImpetrado?: boolean;
+      resultadoHc?: string;
+      excecaoPrazo?: boolean; // excesso de prazo?
+      diasDesdeUltimoAto?: number;
+      argumentoLiberdade?: string; // melhor argumento para soltar
+      observacoes?: string;
+    };
+
+    // ==========================================
+    // TIER 6.1 — ATRIBUIÇÃO: JÚRI (mantido para compatibilidade)
+    // ==========================================
       materialidade?: { status: string; observacoes?: string };
       autoria?: { status: string; observacoes?: string };
       qualificadoras?: Array<{ nome: string; fundamentacao: string; estrategia?: string }>;
