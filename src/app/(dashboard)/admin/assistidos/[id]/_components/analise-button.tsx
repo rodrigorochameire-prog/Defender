@@ -3,15 +3,28 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Sparkles, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
+const ATRIB_COLORS: Record<string, { bg: string; hover: string; shadow: string }> = {
+  JURI_CAMACARI: { bg: "bg-emerald-600", hover: "hover:bg-emerald-700", shadow: "hover:shadow-emerald-500/20" },
+  JURI: { bg: "bg-emerald-600", hover: "hover:bg-emerald-700", shadow: "hover:shadow-emerald-500/20" },
+  VVD_CAMACARI: { bg: "bg-amber-500", hover: "hover:bg-amber-600", shadow: "hover:shadow-amber-500/20" },
+  VVD: { bg: "bg-amber-500", hover: "hover:bg-amber-600", shadow: "hover:shadow-amber-500/20" },
+  EXECUCAO_PENAL: { bg: "bg-sky-600", hover: "hover:bg-sky-700", shadow: "hover:shadow-sky-500/20" },
+  EXECUCAO: { bg: "bg-sky-600", hover: "hover:bg-sky-700", shadow: "hover:shadow-sky-500/20" },
+  SUBSTITUICAO: { bg: "bg-zinc-700", hover: "hover:bg-zinc-800", shadow: "hover:shadow-zinc-500/20" },
+};
+const DEFAULT_COLOR = { bg: "bg-emerald-600", hover: "hover:bg-emerald-700", shadow: "hover:shadow-emerald-500/20" };
+
 interface AnaliseButtonProps {
   assistidoId: number;
   processoId?: number;
   casoId?: number;
+  atribuicao?: string;
   disabled?: boolean;
   onComplete?: () => void;
 }
@@ -22,9 +35,11 @@ export function AnaliseButton({
   assistidoId,
   processoId,
   casoId,
+  atribuicao,
   disabled,
   onComplete,
 }: AnaliseButtonProps) {
+  const colors = (atribuicao && ATRIB_COLORS[atribuicao]) || DEFAULT_COLOR;
   const [state, setState] = useState<ButtonState>("idle");
   const [etapa, setEtapa] = useState("");
   const channelRef = useRef<RealtimeChannel | null>(null);
@@ -153,7 +168,10 @@ export function AnaliseButton({
     <Button
       onClick={handleClick}
       disabled={disabled || criarTask.isPending}
-      className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shadow-sm hover:shadow-md hover:shadow-emerald-500/20 transition-all duration-200"
+      className={cn(
+        "text-white gap-2 shadow-sm hover:shadow-md transition-all duration-200",
+        colors.bg, colors.hover, colors.shadow
+      )}
     >
       {criarTask.isPending ? (
         <Loader2 className="w-4 h-4 animate-spin" />

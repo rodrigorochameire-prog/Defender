@@ -121,6 +121,7 @@ export function ProcessoHeader({
             <AnaliseButton
               assistidoId={assistidos[0]?.id}
               processoId={id}
+              atribuicao={atribuicao}
             />
             <Button
               variant="outline"

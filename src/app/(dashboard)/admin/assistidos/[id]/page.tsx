@@ -388,6 +388,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             <AnaliseButton
               assistidoId={Number(id)}
               processoId={data.processos?.[0]?.id}
+              atribuicao={(data as any).atribuicaoPrimaria}
             />
             <Button
               variant="outline"
