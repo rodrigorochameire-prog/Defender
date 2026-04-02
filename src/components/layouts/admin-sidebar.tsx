@@ -1820,27 +1820,22 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
       <SidebarInset className={cn("flex flex-col min-h-screen", theme === "dark" ? "bg-zinc-950" : "bg-zinc-50")}>
         {/* Header - Light clean com accent emerald */}
         <header className={cn(
-          "relative overflow-hidden",
-          "flex h-14 shrink-0 items-center",
+          "flex h-12 shrink-0 items-center",
           "sticky top-0 z-30",
-          "bg-white/75 dark:bg-zinc-900/80",
-          "backdrop-blur-xl",
-          "border-b border-zinc-200/70 dark:border-zinc-800"
+          "bg-gradient-to-r from-[#1c1c20] to-[#18181b]",
+          "border-b border-white/[0.06]"
         )}>
-          {/* Accent emerald no topo */}
-          <div className="absolute inset-x-0 top-0 h-0.5 bg-emerald-500" />
-
           {/* Conteúdo - Esquerda: Toggle + Breadcrumbs */}
           <div className="flex items-center gap-3 px-3 flex-1 min-w-0">
-            <SidebarTrigger className="h-7 w-7 rounded-md text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-200 shrink-0" />
+            <SidebarTrigger className="h-7 w-7 rounded-md text-white/30 hover:text-white/70 hover:bg-white/[0.06] transition-all duration-200 shrink-0" />
 
             {/* Separador */}
-            <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700 shrink-0" />
+            <div className="h-4 w-px bg-white/10 shrink-0" />
 
             {/* Breadcrumbs navegáveis */}
             <Breadcrumbs />
 
-            {/* Slot para conteúdo injetado por páginas (ex: filtros G/R/J da Agenda) */}
+            {/* Slot para conteúdo injetado por páginas */}
             <div id="header-slot" className="flex items-center" />
           </div>
 
@@ -1848,20 +1843,20 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
           <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3">
             {/* Indicador ativo */}
             <div className="hidden md:flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-sm shadow-emerald-500/50" />
-              <span className="text-[10px] text-zinc-500 dark:text-zinc-500 font-medium">Online</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[10px] text-white/40 font-medium">Online</span>
             </div>
 
             {/* Separador */}
-            <div className="hidden md:block h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
+            <div className="hidden md:block h-4 w-px bg-white/10" />
 
             {/* Data */}
-            <div className="hidden lg:flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+            <div className="hidden lg:flex items-center gap-1.5 text-[11px] text-white/35">
               <span className="capitalize">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'short' })}</span>
             </div>
 
             {/* Separador */}
-            <div className="hidden lg:block h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
+            <div className="hidden lg:block h-4 w-px bg-white/10" />
 
             {/* Badge de conflitos de sync */}
             <ConflictBadge />
@@ -1874,7 +1869,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
               <button
                 onClick={() => chatPanelActions.toggle()}
                 title="Assistente OMBUDS"
-                className="inline-flex items-center justify-center h-9 w-9 rounded-md text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
+                className="inline-flex items-center justify-center h-8 w-8 rounded-md text-white/40 hover:text-white/80 hover:bg-white/[0.06] transition-colors"
               >
                 <MessageSquare className="h-4 w-4" />
               </button>
