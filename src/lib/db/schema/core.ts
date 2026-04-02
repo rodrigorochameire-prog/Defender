@@ -1179,12 +1179,34 @@ export const processos = pgTable("processos", {
         observacoes?: string;
       };
 
-      // Indulto / Comutação
+      // Indulto / Comutação — verificação contra decretos vigentes
       indultoComutacao?: {
-        decreto?: string; // "Decreto 11.846/2023"
-        preencheRequisitos?: boolean;
+        // Verificação automática contra decretos (2019-2025)
+        decretosVerificados?: Array<{
+          decreto: string; // "Decreto 12.790/2025" | "Decreto 12.338/2024" | etc.
+          dataDecreto?: string;
+          governo?: string;
+          aplicavel: boolean;
+          tipoAplicavel?: "indulto_pleno" | "comutacao" | "nenhum";
+          // Requisitos verificados
+          fracaoExigida?: string; // "1/4" | "1/3" | "1/2"
+          fracaoCumprida?: boolean;
+          crimeExcluido?: boolean; // crime do condenado está na lista de exclusão?
+          motivoExclusao?: string; // "hediondo" | "tráfico" | "violência doméstica"
+          categoriaEspecial?: string; // "idoso 60+" | "mãe com filho menor" | "doença grave"
+          categoriaAplicavel?: boolean;
+          faltaDisciplinar12meses?: boolean; // impede indulto?
+          // Resultado da verificação
+          recomendacao: "REQUERER" | "NAO_APLICAVEL" | "VERIFICAR_REQUISITOS";
+          fundamentacao?: string; // "Preenche art. 1°, II — primário, cumprido 1/4, crime não excluído"
+          observacoes?: string;
+        }>;
+        // Status do pedido efetivo
+        decretoUtilizado?: string; // qual decreto foi usado no requerimento
         requerido?: boolean;
+        dataRequerimento?: string;
         resultado?: "deferido" | "indeferido" | "pendente";
+        fundamentoIndeferimento?: string;
         observacoes?: string;
       };
 
