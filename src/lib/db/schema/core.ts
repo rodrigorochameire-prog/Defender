@@ -312,35 +312,114 @@ export const processos = pgTable("processos", {
       observacoes?: string;
     }>;
 
-    // Depoimentos com citações reais e análise cruzada (ad.depoimentos)
+    // Depoimentos — ANÁLISE COMPLETA POR VARIÁVEIS DE INTELIGÊNCIA (ad.depoimentos)
     depoimentos?: Array<{
       nome: string;
-      papel: string;
+      papel: string; // "vitima" | "testemunha_acusacao" | "testemunha_defesa" | "policial_condutor" | "perito" | "informante" | "defendido"
       resumo: string;
-      // Fases (fundamental para análise comparativa)
-      fasePolicial?: string; // resumo do depoimento na delegacia
-      faseJudicial?: string; // resumo do depoimento em juízo
+
+      // === FASES DO DEPOIMENTO ===
+      fasePolicial?: string;
+      faseJudicial?: string;
+      fasePlenario?: string; // se for júri
       dataDelegacia?: string;
       dataJuizo?: string;
-      quemPerguntou?: string; // "MP" | "Defesa" | "Juiz" — para citações
-      // Citações literais dos autos (em itálico no dossiê)
+      localDelegacia?: string; // "DEAM Camaçari" | "18ª DT" | etc.
+      localJuizo?: string; // "Vara VVD Camaçari" | "2ª Vara Criminal"
+      autoridadeDelegacia?: string; // "Del. Francisca Luciene" — quem presidiu
+      autoridadeJuizo?: string; // "Juiz André Gomma" — quem presidiu
+      modalidadeJuizo?: string; // "presencial" | "videoconferência"
+      duracaoAproximada?: string; // "15 minutos" (se disponível na mídia)
+
+      // === CITAÇÕES LITERAIS ===
       citacoes?: string[];
       trechosRelevantes?: string[];
-      // Contradições identificadas
+      quemPerguntou?: string; // "MP" | "Defesa" | "Juiz"
+
+      // === VARIÁVEIS DE INTELIGÊNCIA — responder para cada depoente ===
+
+      // 1. Presença e percepção direta
+      presenciouFato?: boolean; // Viu/ouviu o fato diretamente?
+      presenciouDetalhes?: string; // O que exatamente viu/ouviu? De onde? A que distância?
+      chegouApos?: boolean; // Chegou depois do fato? Viu apenas o resultado?
+      fonteInformacao?: string; // Se não presenciou: quem contou? É hearsay?
+
+      // 2. Identificação e reconhecimento
+      identificouAlguem?: boolean; // Identificou alguma pessoa envolvida?
+      comoIdentificou?: string; // "já conhecia" | "pela vestimenta" | "reconhecimento fotográfico" | "in loco"
+      fezReconhecimentoDelegacia?: boolean; // Fez reconhecimento formal na delegacia?
+      reconhecimentoRegular?: boolean; // Seguiu art. 226 CPP? (alinhamento, pessoa entre similares)
+      irregularidadesReconhecimento?: string; // "foto única", "sem alinhamento", "sugestão do policial"
+      reconhecimentoJudicial?: boolean; // Fez reconhecimento em juízo?
+
+      // 3. Interesse e viés
+      interesseNoCaso?: boolean; // Tem interesse pessoal no resultado?
+      qualInteresse?: string; // "inimizade com réu", "relação com vítima", "policial que prendeu"
+      vinculoComVitima?: string; // parentesco, amizade, relação afetiva
+      vinculoComDefendido?: string;
+      motivacaoParaDepor?: string; // "espontâneo", "conduzido pela polícia", "intimado"
+      possibilidadeVies?: "alto" | "medio" | "baixo";
+      descricaoVies?: string;
+
+      // 4. Sinais de distorção, mentira ou inconsistência
+      sinaisDistorcao?: boolean;
+      tiposDistorcao?: Array<
+        "contradicao_interna" | // Contradiz a si mesmo no mesmo depoimento
+        "contradicao_entre_fases" | // Delegacia vs. juízo
+        "contradicao_com_outros" | // Contradiz outro depoente
+        "contradicao_com_prova" | // Contradiz laudo/documento/câmera
+        "acrescimo_posterior" | // Acrescentou fatos que não mencionou antes
+        "omissao_relevante" | // Omitiu fato que deveria saber
+        "detalhamento_excessivo" | // Nível de detalhe incompatível com o contexto
+        "vagueza_suspeita" | // Vago em pontos-chave
+        "linguagem_ensaiada" | // Repete frases do BO ou de outro depoente
+        "memoria_seletiva" | // Lembra detalhes irrelevantes mas esquece centrais
+        "emocao_incompativel" | // Reação emocional não condiz com o relato
+        "tempo_reacao" // Tempo entre fato e BO sugere preparação
+      >;
+      detalhesDistorcao?: string; // Explicação livre das inconsistências
+
+      // 5. Memória e confiabilidade cognitiva
+      tempoEntreFatoDepoimento?: string; // "2 horas", "3 dias", "6 meses"
+      condicoesPercepcao?: string; // "escuro", "a 50 metros", "sob efeito de álcool", "situação de pânico"
+      confiabilidadeMemoria?: "alta" | "media" | "baixa";
+      motivoConfiabilidade?: string; // "depoimento imediato, condições favoráveis" ou "6 meses depois, à noite, sob estresse"
+
+      // 6. Indícios observados pelo depoente
+      indiciosRelatados?: string[]; // O que viu que seria indício? Arma, sangue, fuga, grito
+      indicioProduzido?: boolean; // Ele próprio produziu/encontrou algum indício?
+      preservouLocal?: boolean; // Preservou ou alterou o local?
+
+      // 7. Conduta do depoente no fato
+      participouDoFato?: boolean; // Interveio, separou, chamou polícia, fugiu?
+      descricaoConduta?: string;
+      sofrerAmecaça?: boolean; // Foi ameaçado para depor ou para não depor?
+      detalheAmeaca?: string;
+
+      // === CONTRADIÇÕES ESTRUTURADAS ===
       contradicoes?: Array<{
         delegacia?: string;
         juizo?: string;
-        contradicao?: string;
-        impacto?: string; // "favorável defesa" | "desfavorável"
+        comOutroDepoente?: string; // "contradiz X que disse Y"
+        comProva?: string; // "contradiz laudo que atesta Z"
+        contradicao: string;
+        impacto?: "favoravel_defesa" | "desfavoravel" | "neutro";
+        gravidade?: "critica" | "relevante" | "menor";
       }>;
-      // Análise de credibilidade
+
+      // === ANÁLISE DE CREDIBILIDADE (síntese) ===
       credibilidade?: "alta" | "media" | "baixa";
-      motivoCredibilidade?: string; // "relato consistente" ou "contradições com X"
-      impactoAcusacao?: string; // trecho mais danoso para a defesa
-      impactoDefesa?: string; // trecho mais favorável à defesa
-      // Avaliação
+      motivoCredibilidade?: string;
+      impactoAcusacao?: string;
+      impactoDefesa?: string;
+      notaCredibilidade?: number; // 1-10
+
+      // === AVALIAÇÃO ESTRATÉGICA ===
       favoravelDefesa?: boolean | null;
+      deveSerOuvido?: boolean; // Vale a pena ouvir/reinquirir?
+      riscoOuvir?: string; // "pode reforçar versão acusatória"
       perguntasSugeridas?: string[];
+      objetivoPorPergunta?: string[]; // alinhado 1:1 com perguntasSugeridas
       observacoes?: string;
     }>;
 

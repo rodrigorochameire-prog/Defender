@@ -270,15 +270,55 @@ ATENÇÃO: Extrair TODAS as informações disponíveis nos autos. Endereços COM
   "depoimentos": [
     {
       "nome": "Nome do depoente",
-      "papel": "vitima|testemunha_acusacao|policial|defendido",
+      "papel": "vitima|testemunha_acusacao|testemunha_defesa|policial_condutor|perito|informante|defendido",
       "resumo": "Resumo completo do depoimento",
-      "fasePolicial": "Resumo do que disse na delegacia — com citações",
-      "faseJudicial": "Resumo do que disse em juízo — com citações",
+
+      "fasePolicial": "Resumo detalhado do que disse na delegacia — com citações literais",
+      "faseJudicial": "Resumo detalhado do que disse em juízo — com citações literais",
       "dataDelegacia": "2024-12-18",
       "dataJuizo": "2026-01-22",
-      "citacoes": ["trecho literal entre aspas, exatamente como consta nos autos"],
+      "localDelegacia": "DEAM Camaçari|18ª DT|Central de Flagrantes",
+      "localJuizo": "Vara VVD Camaçari|2ª Vara Criminal",
+      "autoridadeDelegacia": "Del. Francisca Luciene — quem presidiu o ato",
+      "autoridadeJuizo": "Juiz André Gomma — quem presidiu",
+      "modalidadeJuizo": "presencial|videoconferência",
+
+      "citacoes": ["trecho literal entre aspas, EXATAMENTE como consta nos autos"],
       "trechosRelevantes": ["trecho que impacta a tese da defesa"],
-      "contradicoes": [{ "delegacia": "disse X", "juizo": "disse Y", "contradicao": "versões incompatíveis sobre Z", "impacto": "favorável defesa" }],
+
+      "presenciouFato": true,
+      "presenciouDetalhes": "Viu a agressão a 5 metros de distância, estava na sala ao lado",
+      "chegouApos": false,
+      "fonteInformacao": "Se NÃO presenciou: quem contou? É hearsay?",
+
+      "identificouAlguem": true,
+      "comoIdentificou": "já conhecia|pela vestimenta|reconhecimento fotográfico|in loco",
+      "fezReconhecimentoDelegacia": false,
+      "reconhecimentoRegular": false,
+      "irregularidadesReconhecimento": "foto única sem alinhamento|sugestão do policial|sem defensor presente",
+
+      "interesseNoCaso": false,
+      "qualInteresse": "inimizade com réu|relação afetiva com vítima|policial que efetuou prisão",
+      "vinculoComVitima": "amiga|vizinha|mãe|desconhecida",
+      "vinculoComDefendido": "ex-companheiro|empregador|desconhecido",
+      "possibilidadeVies": "alto|medio|baixo",
+      "descricaoVies": "Relação próxima com vítima pode influenciar versão",
+
+      "sinaisDistorcao": false,
+      "tiposDistorcao": ["contradicao_interna|contradicao_entre_fases|contradicao_com_outros|contradicao_com_prova|acrescimo_posterior|omissao_relevante|detalhamento_excessivo|vagueza_suspeita|linguagem_ensaiada|memoria_seletiva|emocao_incompativel|tempo_reacao"],
+      "detalhesDistorcao": "Na delegacia disse que não viu, em juízo passou a afirmar que presenciou tudo",
+
+      "tempoEntreFatoDepoimento": "2 horas|3 dias|6 meses",
+      "condicoesPercepcao": "iluminação boa|escuro|a 50 metros|sob efeito de álcool|pânico",
+      "confiabilidadeMemoria": "alta|media|baixa",
+      "motivoConfiabilidade": "Depoimento 2 horas após o fato, condições favoráveis de percepção",
+
+      "indiciosRelatados": ["Viu faca na mão do réu", "Ouviu gritos de socorro"],
+      "participouDoFato": false,
+      "descricaoConduta": "Chamou a polícia imediatamente",
+      "sofrerAmeaca": false,
+
+      "contradicoes": [{ "delegacia": "disse X", "juizo": "disse Y", "comOutroDepoente": "contradiz fulano que disse Z", "comProva": "contradiz laudo que atesta W", "contradicao": "versões incompatíveis", "impacto": "favoravel_defesa|desfavoravel|neutro", "gravidade": "critica|relevante|menor" }],
       "credibilidade": "alta|media|baixa",
       "motivoCredibilidade": "relato consistente|contradições com outros depoimentos|interesse no resultado",
       "impactoAcusacao": "trecho mais danoso para a defesa",
