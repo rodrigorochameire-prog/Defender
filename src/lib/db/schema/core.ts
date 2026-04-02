@@ -1085,29 +1085,328 @@ export const processos = pgTable("processos", {
     };
 
     // ==========================================
-    // TIER 8 — ATRIBUIÇÃO: EXECUÇÃO PENAL
+    // TIER 8 — ATRIBUIÇÃO: EXECUÇÃO PENAL (por modalidade)
     // ==========================================
 
-    // Cronograma de benefícios (ad.cronogramaBeneficios)
-    cronogramaBeneficios?: {
-      beneficios?: Array<{
-        nome: string; // "progressão" | "livramento condicional" | "indulto" | "saída temporária"
-        dataPrevisao?: string;
-        fracao?: string; // "1/6" | "2/5" | "3/5"
-        requisitosObjetivos?: boolean;
-        requisitosSubjetivos?: string; // "bom comportamento" | "pendente de exame"
-        status?: "preenchido" | "pendente" | "requerido" | "indeferido";
-        observacoes?: string;
-      }>;
+    // Dados base da execução (comum a todas as modalidades)
+    execucaoPenal?: {
+      // Identificação
+      processoExecucao?: string; // nº SEEU
+      processoConhecimento?: string; // nº da AP originária
+      guiaRecolhimento?: string; // nº da guia
+      dataTransitoJulgado?: string;
+      dataDistribuicaoExecucao?: string;
+
+      // Pena aplicada
+      penaTotal?: string; // "2 anos de reclusão" | "6 meses de detenção"
+      penaDias?: number; // em dias (para cálculos)
+      regime?: "fechado" | "semiaberto" | "aberto";
+      crimeCondenado?: string;
+      artigoCondenado?: string;
+      tipoExecucao:
+        | "ppl_fechado" // Pena Privativa de Liberdade — fechado
+        | "ppl_semiaberto" // PPL — semiaberto
+        | "ppl_aberto" // PPL — aberto (regime aberto / domiciliar)
+        | "prd_psc" // Pena Restritiva de Direitos — Prestação de Serviços à Comunidade
+        | "prd_limitacao_fds" // PRD — Limitação de fim de semana
+        | "prd_interdicao" // PRD — Interdição temporária de direitos
+        | "prd_pecuniaria" // PRD — Prestação pecuniária
+        | "sursis" // Suspensão condicional da pena (art. 77 CP)
+        | "anpp" // Acordo de Não Persecução Penal
+        | "transacao_penal" // Transação penal (Lei 9.099)
+        | "suspensao_condicional_processo" // Sursis processual (art. 89 Lei 9.099)
+        | "medida_seguranca" // Medida de segurança
+        | "outro";
+
+      // Situação atual do reeducando
+      situacaoAtual?: "cumprindo" | "foragido" | "nao_localizado" | "preso" | "regime_aberto" | "livramento" | "extinta";
+      localCumprimento?: string; // "CEAPA" | "Penitenciária Lemos Brito" | "domiciliar"
+      enderecoDeclarado?: string; // endereço na guia/autos
+
       observacoes?: string;
     };
 
-    // Detração detalhada (EP)
+    // ==========================================
+    // PPL — Pena Privativa de Liberdade
+    // ==========================================
+    ppl?: {
+      regimeAtual?: "fechado" | "semiaberto" | "aberto" | "domiciliar";
+      unidadePrisional?: string;
+      dataInicioExecucao?: string; // quando começou a cumprir efetivamente
+
+      // Audiência admonitória (regime aberto)
+      admonitoira?: {
+        realizada?: boolean;
+        data?: string;
+        compareceu?: boolean;
+        condicoesFicadas?: string[]; // "comparecer mensalmente" | "não sair da comarca"
+        observacoes?: string;
+      };
+
+      // Progressão de regime
+      progressao?: {
+        fracao?: string; // "1/6" | "2/5" | "3/5" — depende do crime e reincidência
+        dataPreenchimentoObjetivo?: string;
+        requisitosSubjetivos?: {
+          bomComportamento?: boolean;
+          atestadoJuntado?: boolean;
+          exameCriminologico?: boolean; // se exigido
+          laudoFavoravel?: boolean;
+        };
+        requerido?: boolean;
+        dataRequerimento?: string;
+        resultado?: "deferido" | "indeferido" | "pendente";
+        fundamentoIndeferimento?: string;
+        observacoes?: string;
+      };
+
+      // Livramento condicional (art. 83 CP)
+      livramentoCondicional?: {
+        fracao?: string; // "1/3" | "1/2" | "2/3"
+        dataPreenchimentoObjetivo?: string;
+        condicoesFixadas?: string[];
+        requerido?: boolean;
+        resultado?: "deferido" | "indeferido" | "pendente";
+        observacoes?: string;
+      };
+
+      // Saída temporária (art. 122 LEP)
+      saidaTemporaria?: {
+        autorizada?: boolean;
+        quantasSaidas?: number;
+        proximaData?: string;
+        ocorrencias?: string[]; // "não retornou no prazo" | "todas regulares"
+        observacoes?: string;
+      };
+
+      // Indulto / Comutação
+      indultoComutacao?: {
+        decreto?: string; // "Decreto 11.846/2023"
+        preencheRequisitos?: boolean;
+        requerido?: boolean;
+        resultado?: "deferido" | "indeferido" | "pendente";
+        observacoes?: string;
+      };
+
+      observacoes?: string;
+    };
+
+    // ==========================================
+    // PRD — Pena Restritiva de Direitos
+    // ==========================================
+    prd?: {
+      tipoPrd?:
+        | "psc" // Prestação de serviços à comunidade
+        | "limitacao_fds" // Limitação de fim de semana
+        | "interdicao" // Interdição temporária de direitos
+        | "pecuniaria" // Prestação pecuniária
+        | "perda_bens"; // Perda de bens e valores
+
+      // PSC — Prestação de Serviços à Comunidade
+      psc?: {
+        entidade?: string; // "CEAPA" | nome da entidade
+        localEntidade?: string; // endereço
+        cargaHorariaSemanal?: number; // horas por semana
+        periodoTotal?: string; // "8 meses"
+        periodoTotalMeses?: number;
+        horasCumpridas?: number;
+        horasFaltantes?: number;
+        mesesCumpridos?: number;
+        ultimoComparecimentoCeapa?: string; // data
+        relatoriosApresentados?: Array<{ periodo: string; data?: string; movimento?: string }>;
+        // Status
+        iniciouCumprimento?: boolean;
+        dataInicio?: string;
+        regular?: boolean;
+        motivoIrregularidade?: string; // "não comparece desde set/2025"
+        observacoes?: string;
+      };
+
+      // Prestação pecuniária
+      pecuniaria?: {
+        valor?: string; // "R$ 1.420,00"
+        parcelamento?: string; // "5x de R$ 284,00"
+        parcelasTotas?: number;
+        parcelasPagas?: number;
+        quitada?: boolean;
+        beneficiario?: string; // "instituição com fins sociais"
+        prazo?: string; // "30 dias após homologação"
+        observacoes?: string;
+      };
+
+      // Limitação de fim de semana
+      limitacaoFds?: {
+        local?: string;
+        horario?: string;
+        periodoTotal?: string;
+        cumprido?: boolean;
+        observacoes?: string;
+      };
+
+      // Reconversão (art. 44, §4° e §5° CP)
+      reconversao?: {
+        risco?: boolean; // há risco de reconversão?
+        motivoRisco?: string; // "não compareceu à CEAPA" | "descumprimento condições"
+        mpPediuReconversao?: boolean;
+        dataPedidoMP?: string;
+        defesaApresentada?: boolean;
+        resultado?: "reconvertida" | "mantida" | "pendente";
+        observacoes?: string;
+      };
+
+      observacoes?: string;
+    };
+
+    // ==========================================
+    // ANPP — Acordo de Não Persecução Penal
+    // ==========================================
+    anpp?: {
+      processoOrigem?: string; // nº do IP/AP
+      processoExecucao?: string; // nº da execução SEEU
+      dataHomologacao?: string;
+      juizHomologador?: string;
+      promotorProponente?: string;
+
+      // Condições pactuadas
+      condicoes?: Array<{
+        clausula?: string; // "Cláusula nº 3" | "Cláusula nº 4"
+        tipo: "psc" | "pecuniaria" | "reparacao_dano" | "comparecimento" | "outra";
+        descricao: string; // "PSC 8 meses, 6h/semana" | "R$ 1.420,00 em 5x"
+        prazo?: string;
+        status: "cumprida" | "cumprindo" | "descumprida" | "pendente_inicio" | "readequada";
+        cumprimentoDetalhes?: string; // "relatórios mai/jun 2025 apresentados"
+      }>;
+
+      // Período do acordo
+      periodoAcordo?: string; // "8 meses" | "1 ano"
+      dataInicio?: string;
+      dataFimPrevisto?: string;
+      prazoSuspensaoPrescricional?: boolean; // art. 28-A, §2° — prescrição suspensa
+
+      // Acompanhamento
+      ceapa?: {
+        encaminhado?: boolean;
+        dataEncaminhamento?: string;
+        comparecendo?: boolean;
+        ultimoComparecimento?: string;
+        relatoriosApresentados?: Array<{ periodo: string; data?: string }>;
+        descumprimentoInformado?: boolean; // CEAPA informou descumprimento?
+        oficioDescumprimento?: string; // "Ofício VC nº 133/2026"
+      };
+
+      // Readequação (alteração das condições — caso Michael Douglas)
+      readequacao?: {
+        requerida?: boolean;
+        motivo?: string; // "emprego formal incompatível com PSC"
+        fatoSuperveniente?: string;
+        novasCondicoesSugeridas?: string;
+        oitivaMP?: boolean; // MP foi ouvido?
+        resultado?: "deferida" | "indeferida" | "pendente";
+        observacoes?: string;
+      };
+
+      // Rescisão
+      rescisao?: {
+        risco?: boolean;
+        motivoRisco?: string;
+        mpPediuRescisao?: boolean;
+        resultado?: "rescindido" | "mantido" | "pendente";
+        consequencia?: string; // "oferecimento de denúncia"
+        observacoes?: string;
+      };
+
+      // Extinção da punibilidade (art. 28-A, §13°)
+      extincao?: {
+        cumprimentoIntegral?: boolean;
+        requerida?: boolean;
+        deferida?: boolean;
+        dataExtincao?: string;
+        observacoes?: string;
+      };
+
+      observacoes?: string;
+    };
+
+    // ==========================================
+    // SURSIS — Suspensão Condicional da Pena (art. 77 CP)
+    // ==========================================
+    sursisPena?: {
+      periodoProva?: string; // "2 a 4 anos"
+      dataInicio?: string;
+      dataFim?: string;
+      condicoes?: Array<{
+        tipo: string; // "comparecimento mensal" | "proibição frequentar" | "PSC 1° ano"
+        descricao: string;
+        cumprida?: boolean;
+      }>;
+      audienciaAdmonitoria?: { realizada?: boolean; data?: string };
+      revogacaoObrigatoria?: boolean; // art. 81 CP (condenação irrecorrível, etc.)
+      revogacaoFacultativa?: boolean; // art. 81, §1° CP
+      motivoRevogacao?: string;
+      observacoes?: string;
+    };
+
+    // ==========================================
+    // SUSPENSÃO CONDICIONAL DO PROCESSO (art. 89 Lei 9.099)
+    // ==========================================
+    surpisProcessual?: {
+      periodoProva?: string; // "2 a 4 anos"
+      dataInicio?: string;
+      dataFim?: string;
+      condicoes?: Array<{
+        tipo: string;
+        descricao: string;
+        cumprida?: boolean;
+      }>;
+      revogada?: boolean;
+      motivoRevogacao?: string;
+      extincaoPunibilidade?: boolean;
+      dataExtincao?: string;
+      observacoes?: string;
+    };
+
+    // ==========================================
+    // TRANSAÇÃO PENAL (art. 76 Lei 9.099)
+    // ==========================================
+    transacaoPenal?: {
+      dataHomologacao?: string;
+      medidasAplicadas?: Array<{
+        tipo: string; // "pecuniária" | "PSC" | "restritiva"
+        descricao: string;
+        valor?: string;
+        prazo?: string;
+        status: "cumprida" | "cumprindo" | "descumprida";
+      }>;
+      descumprimento?: boolean;
+      consequencia?: string; // "oferecimento de denúncia" | "reconversão"
+      observacoes?: string;
+    };
+
+    // ==========================================
+    // MEDIDA DE SEGURANÇA
+    // ==========================================
+    medidaSeguranca?: {
+      tipo?: "internacao" | "tratamento_ambulatorial";
+      local?: string; // hospital/CAPS
+      prazoMinimo?: string; // "1 a 3 anos"
+      laudoPsiquiatrico?: boolean;
+      cessacaoPericulosidade?: boolean;
+      ultimaPericia?: string;
+      proximaPericia?: string;
+      desinternacaoCondicional?: boolean;
+      observacoes?: string;
+    };
+
+    // ==========================================
+    // CAMPOS COMUNS EP (aplicáveis a qualquer modalidade)
+    // ==========================================
+
+    // Detração detalhada
     detracaoDetalhada?: {
       periodos?: Array<{
         tipo: "prisao_provisoria" | "prisao_definitiva" | "monitoracao_eletronica" | "domiciliar";
         dataInicio: string;
-        dataFim?: string; // null = vigente
+        dataFim?: string;
         dias?: number;
         fundamentacao?: string;
       }>;
@@ -1115,32 +1414,16 @@ export const processos = pgTable("processos", {
       observacoes?: string;
     };
 
-    // Remição por trabalho/estudo (art. 126 LEP)
+    // Remição (art. 126 LEP)
     remicao?: {
-      trabalho?: {
-        local?: string;
-        jornadaDiaria?: string;
-        diasTrabalhados?: number;
-        diasRemidos?: number; // 3 dias trabalho = 1 dia remido
-        atestadoJuntado?: boolean;
-      };
-      estudo?: {
-        instituicao?: string;
-        cargaHoraria?: string;
-        horasEstudadas?: number;
-        diasRemidos?: number; // 12 horas estudo = 1 dia remido
-        certificadoJuntado?: boolean;
-      };
-      leitura?: {
-        obrasLidas?: number;
-        diasRemidos?: number; // 1 obra = 4 dias
-        resenhasJuntadas?: boolean;
-      };
+      trabalho?: { local?: string; diasTrabalhados?: number; diasRemidos?: number; atestadoJuntado?: boolean };
+      estudo?: { instituicao?: string; horasEstudadas?: number; diasRemidos?: number; certificadoJuntado?: boolean };
+      leitura?: { obrasLidas?: number; diasRemidos?: number; resenhasJuntadas?: boolean };
       totalDiasRemidos?: number;
       observacoes?: string;
     };
 
-    // Comportamento carcerário (EP)
+    // Comportamento carcerário
     comportamentoCarcerario?: {
       atestadoComportamento?: boolean;
       classificacao?: "bom" | "regular" | "mau";
@@ -1148,10 +1431,35 @@ export const processos = pgTable("processos", {
         tipo: "leve" | "media" | "grave";
         data?: string;
         descricao?: string;
-        sanção?: string;
+        sancao?: string;
         reabilitada?: boolean;
       }>;
       dataUltimoAtestado?: string;
+      observacoes?: string;
+    };
+
+    // Cronograma de benefícios (consolidado)
+    cronogramaBeneficios?: {
+      beneficios?: Array<{
+        nome: string;
+        dataPrevisao?: string;
+        fracao?: string;
+        requisitosObjetivos?: boolean;
+        requisitosSubjetivos?: string;
+        status?: "preenchido" | "pendente" | "requerido" | "indeferido";
+        observacoes?: string;
+      }>;
+      observacoes?: string;
+    };
+
+    // Prescrição executória (art. 109-110 CP)
+    prescricaoExecutoria?: {
+      penaBase?: string; // pena para cálculo
+      prazo?: string; // "4 anos" | "8 anos"
+      termoInicial?: string; // data do trânsito para a acusação
+      causasInterruptivas?: Array<{ tipo: string; data: string }>;
+      dataConsumacao?: string; // quando prescreve
+      prescrita?: boolean;
       observacoes?: string;
     };
 
