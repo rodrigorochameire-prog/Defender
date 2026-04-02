@@ -412,7 +412,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           )}
           {/* Separador */}
           {data.cpf && (data.telefone || data.telefoneContato) && (
-            <span className="w-px h-3 bg-white/15" />
+            <span className="w-[1.5px] h-3.5 bg-white/20 rounded-full" />
           )}
           {/* Telefone assistido + WhatsApp */}
           {data.telefone && (
@@ -432,7 +432,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           )}
           {/* Separador */}
           {data.telefoneContato && (data.telefone || data.cpf) && (
-            <span className="w-px h-3 bg-white/15" />
+            <span className="w-[1.5px] h-3.5 bg-white/20 rounded-full" />
           )}
           {/* Contato familiar + WhatsApp */}
           {data.telefoneContato && (
