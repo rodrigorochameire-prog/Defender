@@ -3,11 +3,14 @@
 import { Sparkles } from "lucide-react";
 import { Accordion } from "@/components/ui/accordion";
 import {
-  BlocoCaso,
-  BlocoPessoas,
-  BlocoProvas,
-  BlocoEstrategia,
-  BlocoPreparacao,
+  BlocoResumo,
+  BlocoPainelDepoentes,
+  BlocoDepoimentosComparados,
+  BlocoPerguntasEstrategicas,
+  BlocoTeses,
+  BlocoOrientacao,
+  BlocoCronologia,
+  BlocoMapa,
   type AnalysisBlocksData,
 } from "./analise-blocks";
 import { trpc } from "@/lib/trpc/client";
@@ -15,6 +18,16 @@ import { trpc } from "@/lib/trpc/client";
 // ─── Mock Data (Adenilson case) ────────────────────────────────────────────
 
 const MOCK_ANALYSIS: AnalysisBlocksData = {
+  alertasOperacionais: [
+    { tipo: "risco", texto: "Testemunha Jose Carlos ainda nao intimada — risco para audiencia de 15/04" },
+    { tipo: "atencao", texto: "Laudo cadaverico contesta trajetoria informada pela defesa" },
+    { tipo: "positivo", texto: "BO de ameacas previas documenta temor do reu" },
+  ],
+  checklistTatico: [
+    "Requerer intimacao urgente de Jose Carlos",
+    "Solicitar contralaudo de balistica",
+    "Preparar reu para interrogatorio sobre sequencia dos fatos",
+  ],
   caso: {
     resumoFato:
       "Adenilson Souza dos Santos e identificado como autor de homicidio qualificado ocorrido em 15/09/2024, na localidade de Alto do Cruzeiro, Camacari/BA. A vitima, Carlos Eduardo Lima, foi atingida por dois disparos de arma de fogo (regiao toracica e abdominal) apos suposta discussao em via publica. O reu foi preso em flagrante no local, portando arma calibre .38, registrada em nome de terceiro. Ha relatos de ameacas previas da vitima contra o reu e historico de conflito entre as familias.",
@@ -645,17 +658,16 @@ export function AnaliseTab({ assistidoId }: AnaliseTabProps) {
 
       <Accordion
         type="multiple"
-        defaultValue={[]}
+        defaultValue={["resumo"]}
       >
-        {analysis.caso && <BlocoCaso data={analysis.caso} />}
-        {analysis.pessoas && <BlocoPessoas data={analysis.pessoas} />}
-        {analysis.provas && <BlocoProvas data={analysis.provas} />}
-        {analysis.estrategia && (
-          <BlocoEstrategia data={analysis.estrategia} />
-        )}
-        {analysis.operacional && (
-          <BlocoPreparacao data={analysis.operacional} />
-        )}
+        <BlocoResumo data={analysis} />
+        <BlocoPainelDepoentes data={analysis} />
+        <BlocoDepoimentosComparados data={analysis} />
+        <BlocoPerguntasEstrategicas data={analysis} />
+        <BlocoTeses data={analysis} />
+        <BlocoOrientacao data={analysis} />
+        <BlocoCronologia data={analysis} />
+        <BlocoMapa data={analysis} />
       </Accordion>
 
       {/* Metadata footer */}

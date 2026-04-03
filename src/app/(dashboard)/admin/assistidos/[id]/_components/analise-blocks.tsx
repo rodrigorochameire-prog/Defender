@@ -4,11 +4,20 @@ import { useState } from "react";
 import {
   FileText,
   Users,
-  Search,
-  BookOpen,
-  AlertTriangle,
+  GitCompareArrows,
+  MessageCircleQuestion,
+  Shield,
+  UserCheck,
+  Clock,
+  MapPin,
   ChevronRight,
   ChevronDown,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Info,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -248,6 +257,29 @@ interface PreparacaoData {
   pontosCriticos: PontoCritico[];
 }
 
+// ─── v3 rich fields ───────────────────────────────────────────────────────
+
+interface PainelDepoente {
+  nome: string;
+  papel: string;
+  delegacia?: { presente: boolean; data?: string };
+  juizo?: { presente: boolean; data?: string };
+  plenario?: string;
+  statusIntimacao: "intimado" | "em_curso" | "frustrada" | "sem_diligencia" | "dispensado";
+}
+
+interface DepoimentoComparado {
+  ponto: string;
+  delegacia: string;
+  juizo: string;
+  convergencia: boolean;
+}
+
+interface AlertaOperacional {
+  tipo: "risco" | "atencao" | "info" | "positivo";
+  texto: string;
+}
+
 // Export the full analysis shape
 export interface AnalysisBlocksData {
   caso: CasoData;
@@ -255,6 +287,11 @@ export interface AnalysisBlocksData {
   provas: ProvasData;
   estrategia: EstrategiaData;
   operacional: PreparacaoData;
+  // v3 rich fields (optional)
+  painelDepoentes?: PainelDepoente[];
+  depoimentosComparados?: DepoimentoComparado[];
+  alertasOperacionais?: AlertaOperacional[];
+  checklistTatico?: string[];
 }
 
 // ─── Shared Block Shell ────────────────────────────────────────────────────
@@ -262,16 +299,12 @@ export interface AnalysisBlocksData {
 function BlockShell({
   value,
   icon: Icon,
-  iconBg,
-  iconColor,
   title,
   count,
   children,
 }: {
   value: string;
   icon: React.ElementType;
-  iconBg: string;
-  iconColor: string;
   title: string;
   count?: number | string;
   children: React.ReactNode;
@@ -280,13 +313,8 @@ function BlockShell({
     <AccordionItem value={value} className="border-none mb-3">
       <AccordionTrigger className="bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06] rounded-xl px-4 py-3 hover:no-underline hover:bg-zinc-100 dark:hover:bg-white/[0.07] transition-all duration-200 data-[state=open]:rounded-b-none data-[state=open]:border-b-zinc-200/50 dark:data-[state=open]:border-b-white/[0.04]">
         <div className="flex items-center gap-3 flex-1">
-          <div
-            className={cn(
-              "w-7 h-7 rounded-lg flex items-center justify-center",
-              iconBg
-            )}
-          >
-            <Icon className={cn("w-3.5 h-3.5", iconColor)} />
+          <div className="w-7 h-7 rounded-lg bg-zinc-800 dark:bg-zinc-700 flex items-center justify-center shrink-0">
+            <Icon className="w-3.5 h-3.5 text-white dark:text-zinc-300" />
           </div>
           <span className="text-[13px] font-bold uppercase tracking-wide text-zinc-900 dark:text-zinc-100">{title}</span>
           {count != null && (
@@ -296,14 +324,24 @@ function BlockShell({
           )}
         </div>
       </AccordionTrigger>
-      <AccordionContent className="bg-white dark:bg-zinc-900/80 border border-t-0 border-zinc-200/80 dark:border-white/[0.06] rounded-b-xl px-4">
+      <AccordionContent className="bg-white dark:bg-zinc-900/80 border border-t-0 border-zinc-200/80 dark:border-white/[0.06] rounded-b-xl px-4 pb-4">
         {children}
       </AccordionContent>
     </AccordionItem>
   );
 }
 
-// ─── Collapsible Sub-Row ───────────────────────────────────────────────────
+// ─── Empty State ──────────────────────────────────────────────────────────
+
+function EmptyState({ label }: { label: string }) {
+  return (
+    <p className="text-xs text-muted-foreground py-4 text-center">
+      Analise este caso para gerar {label}.
+    </p>
+  );
+}
+
+// ─── Collapsible Sub-Row ──────────────────────────────────────────────────
 
 function SubRow({
   label,
@@ -340,7 +378,7 @@ function SubRow({
   );
 }
 
-// ─── Helper: tipo badge colors ─────────────────────────────────────────────
+// ─── Helper: badge classes ────────────────────────────────────────────────
 
 function tipoBadgeClass(tipo: Depoente["tipo"]): string {
   switch (tipo) {
@@ -380,8 +418,8 @@ function statusLabel(status: Depoente["statusIntimacao"]): string {
   return status.replace(/_/g, " ");
 }
 
-function urgenciaBadgeClass(urgencia: "alta" | "media" | "baixa"): string {
-  switch (urgencia) {
+function severidadeBadgeClass(sev: "alta" | "media" | "baixa"): string {
+  switch (sev) {
     case "alta":
       return "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20";
     case "media":
@@ -391,658 +429,400 @@ function urgenciaBadgeClass(urgencia: "alta" | "media" | "baixa"): string {
   }
 }
 
-function severidadeBadgeClass(sev: "alta" | "media" | "baixa"): string {
-  return urgenciaBadgeClass(sev);
+function v3StatusIcon(status: PainelDepoente["statusIntimacao"]) {
+  switch (status) {
+    case "intimado":
+      return <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />;
+    case "em_curso":
+      return <Clock className="w-3.5 h-3.5 text-amber-500" />;
+    case "frustrada":
+      return <XCircle className="w-3.5 h-3.5 text-red-500" />;
+    case "sem_diligencia":
+      return <AlertTriangle className="w-3.5 h-3.5 text-zinc-500" />;
+    case "dispensado":
+      return <XCircle className="w-3.5 h-3.5 text-zinc-400" />;
+    default:
+      return <AlertTriangle className="w-3.5 h-3.5 text-zinc-500" />;
+  }
 }
 
-// ─── Block 1: O Caso ───────────────────────────────────────────────────────
+function alertaColor(tipo: AlertaOperacional["tipo"]) {
+  switch (tipo) {
+    case "risco":
+      return "border-l-red-500 bg-red-50/50 dark:bg-red-500/5";
+    case "atencao":
+      return "border-l-amber-500 bg-amber-50/50 dark:bg-amber-500/5";
+    case "info":
+      return "border-l-blue-500 bg-blue-50/50 dark:bg-blue-500/5";
+    case "positivo":
+      return "border-l-emerald-500 bg-emerald-50/50 dark:bg-emerald-500/5";
+  }
+}
 
-export function BlocoCaso({ data }: { data: CasoData }) {
+function alertaIcon(tipo: AlertaOperacional["tipo"]) {
+  switch (tipo) {
+    case "risco":
+      return <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />;
+    case "atencao":
+      return <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />;
+    case "info":
+      return <Info className="w-3.5 h-3.5 text-blue-500 shrink-0" />;
+    case "positivo":
+      return <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />;
+  }
+}
+
+// ─── Block 1: Resumo Executivo ────────────────────────────────────────────
+
+export function BlocoResumo({ data }: { data: AnalysisBlocksData }) {
   const hasContent =
-    data.resumoFato ||
-    data.narrativaDenuncia ||
-    data.narrativaDefensiva ||
-    data.cronologia?.length > 0 ||
-    data.fatosRelacionados?.length > 0;
+    data.caso?.resumoFato ||
+    data.caso?.narrativaDefensiva ||
+    data.alertasOperacionais?.length ||
+    data.checklistTatico?.length;
 
-  if (!hasContent) return null;
+  if (!hasContent) return (
+    <BlockShell value="resumo" icon={FileText} title="Resumo Executivo">
+      <EmptyState label="o resumo executivo" />
+    </BlockShell>
+  );
 
   return (
     <BlockShell
-      value="caso"
+      value="resumo"
       icon={FileText}
-      iconBg="bg-zinc-800 dark:bg-zinc-700"
-      iconColor="text-white dark:text-zinc-300"
-      title="O Caso"
-      count={[
-        data.cronologia?.length ? `${data.cronologia.length} eventos` : null,
-        data.fatosRelacionados?.length ? `${data.fatosRelacionados.length} fatos` : null,
-      ].filter(Boolean).join(" · ") || "Resumo do fato"}
+      title="Resumo Executivo"
+      count={data.alertasOperacionais?.length ? `${data.alertasOperacionais.length} alertas` : undefined}
     >
-      {data.resumoFato && (
+      {/* Resumo do fato */}
+      {data.caso?.resumoFato && (
         <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
-          {data.resumoFato}
+          {data.caso.resumoFato}
         </p>
       )}
 
-      {data.narrativaDenuncia && (
-        <SubRow label="Versao da acusacao">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            {data.narrativaDenuncia}
+      {/* Narrativa defensiva - highlighted quote */}
+      {data.caso?.narrativaDefensiva && (
+        <div className="border-l-2 border-emerald-500/40 pl-4 mb-4">
+          <span className="text-[10px] uppercase tracking-wider text-emerald-500 font-semibold">
+            Narrativa defensiva
+          </span>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mt-1 italic">
+            {data.caso.narrativaDefensiva}
           </p>
-        </SubRow>
+        </div>
       )}
 
-      {data.narrativaDefensiva && (
-        <SubRow label="Versao da defesa">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            {data.narrativaDefensiva}
-          </p>
-        </SubRow>
+      {/* Alertas operacionais */}
+      {data.alertasOperacionais && data.alertasOperacionais.length > 0 && (
+        <div className="space-y-2 mb-4">
+          <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
+            Alertas operacionais
+          </span>
+          {data.alertasOperacionais.map((alerta, i) => (
+            <div
+              key={i}
+              className={cn(
+                "border-l-2 rounded-lg p-3 flex items-start gap-2",
+                alertaColor(alerta.tipo)
+              )}
+            >
+              {alertaIcon(alerta.tipo)}
+              <p className="text-xs text-zinc-700 dark:text-zinc-300">{alerta.texto}</p>
+            </div>
+          ))}
+        </div>
       )}
 
-      {data.cronologia?.length > 0 && (
-        <SubRow
-          label="Cronologia"
-          count={`${data.cronologia.length} eventos`}
-        >
-          <div className="space-y-2">
-            {data.cronologia.map((item, i) => (
-              <div
-                key={i}
-                className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3 flex flex-col gap-1"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-mono">
-                    {item.data}
-                  </span>
-                  <span className="text-[10px] text-zinc-600">
-                    via {item.fonte}
-                  </span>
-                </div>
-                <p className="text-sm text-zinc-700 dark:text-zinc-300">{item.evento}</p>
-                {item.relevancia && (
-                  <p className="text-xs text-zinc-500">{item.relevancia}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </SubRow>
-      )}
-
-      {data.fatosRelacionados?.length > 0 && (
-        <SubRow
-          label="Fatos relacionados"
-          count={data.fatosRelacionados.length}
-        >
-          <div className="space-y-2">
-            {data.fatosRelacionados.map((f, i) => (
-              <div key={i} className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3">
-                <p className="text-sm text-zinc-700 dark:text-zinc-300">{f.descricao}</p>
-                <p className="text-xs text-zinc-500 mt-1">
-                  <strong className="text-zinc-800 dark:text-zinc-200">Conexao:</strong>{" "}
-                  {f.conexaoComCaso}
-                </p>
-                <p className="text-[10px] text-zinc-600 mt-0.5">
-                  Fonte: {f.fonte}
-                </p>
-              </div>
-            ))}
-          </div>
-        </SubRow>
+      {/* Checklist tatico */}
+      {data.checklistTatico && data.checklistTatico.length > 0 && (
+        <div className="space-y-1.5">
+          <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
+            Checklist tatico
+          </span>
+          {data.checklistTatico.map((item, i) => (
+            <div key={i} className="flex items-start gap-2 py-1">
+              <Square className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-zinc-700 dark:text-zinc-300">{item}</p>
+            </div>
+          ))}
+        </div>
       )}
     </BlockShell>
   );
 }
 
-// ─── Block 2: Pessoas ──────────────────────────────────────────────────────
+// ─── Block 2: Painel de Depoentes ─────────────────────────────────────────
 
-function DeponenteCard({ dep }: { dep: Depoente }) {
-  const [showPerguntas, setShowPerguntas] = useState(false);
+export function BlocoPainelDepoentes({ data }: { data: AnalysisBlocksData }) {
+  const hasV3 = data.painelDepoentes && data.painelDepoentes.length > 0;
+  const hasV2 = data.pessoas?.depoentes && data.pessoas.depoentes.length > 0;
+
+  if (!hasV3 && !hasV2) return (
+    <BlockShell value="depoentes" icon={Users} title="Painel de Depoentes">
+      <EmptyState label="o painel de depoentes" />
+    </BlockShell>
+  );
+
+  const count = hasV3 ? data.painelDepoentes!.length : data.pessoas.depoentes.length;
 
   return (
-    <div className="bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5 mb-2">
-      {/* Header */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{dep.nome}</span>
-        <span
-          className={cn(
-            "text-[10px] px-1.5 py-0.5 rounded",
-            tipoBadgeClass(dep.tipo)
-          )}
-        >
-          {dep.tipo}
-        </span>
-        <span
-          className={cn(
-            "text-[10px] px-1.5 py-0.5 rounded",
-            statusBadgeClass(dep.statusIntimacao)
-          )}
-        >
-          {statusLabel(dep.statusIntimacao)}
-        </span>
-      </div>
-
-      {/* Perfil */}
-      {dep.perfil && (
-        <p className="text-xs text-zinc-500 mt-1.5">{dep.perfil}</p>
-      )}
-
-      {/* Contradicoes */}
-      {dep.contradicoes?.length > 0 && (
-        <div className="mt-2">
-          {dep.contradicoes.map((c, i) => (
-            <p key={i} className="text-xs text-zinc-500">
-              Contradicao: <span className="text-amber-600 dark:text-amber-400">{c}</span>
-            </p>
+    <BlockShell
+      value="depoentes"
+      icon={Users}
+      title="Painel de Depoentes"
+      count={`${count} depoentes`}
+    >
+      {hasV3 ? (
+        /* v3: rich table */
+        <div className="space-y-2">
+          {data.painelDepoentes!.map((dep, i) => (
+            <div
+              key={i}
+              className="bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5 flex items-center gap-4"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{dep.nome}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400">
+                    {dep.papel}
+                  </span>
+                </div>
+                <div className="flex items-center gap-4 mt-1.5 text-[10px] text-zinc-500">
+                  <span>
+                    Delegacia: {dep.delegacia?.presente ? (
+                      <span className="text-emerald-500">{dep.delegacia.data || "Sim"}</span>
+                    ) : (
+                      <span className="text-zinc-400">-</span>
+                    )}
+                  </span>
+                  <span>
+                    Juizo: {dep.juizo?.presente ? (
+                      <span className="text-emerald-500">{dep.juizo.data || "Sim"}</span>
+                    ) : (
+                      <span className="text-zinc-400">-</span>
+                    )}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {v3StatusIcon(dep.statusIntimacao)}
+                <span className="text-[10px] text-zinc-500 capitalize">{dep.statusIntimacao.replace(/_/g, " ")}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        /* v2 fallback: simpler cards */
+        <div className="space-y-2">
+          {data.pessoas.depoentes.map((dep, i) => (
+            <div
+              key={i}
+              className="bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5 flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2 flex-wrap min-w-0">
+                <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{dep.nome}</span>
+                <span
+                  className={cn(
+                    "text-[10px] px-1.5 py-0.5 rounded",
+                    tipoBadgeClass(dep.tipo)
+                  )}
+                >
+                  {dep.tipo}
+                </span>
+              </div>
+              <span
+                className={cn(
+                  "text-[10px] px-1.5 py-0.5 rounded shrink-0",
+                  statusBadgeClass(dep.statusIntimacao)
+                )}
+              >
+                {statusLabel(dep.statusIntimacao)}
+              </span>
+            </div>
           ))}
         </div>
       )}
+    </BlockShell>
+  );
+}
 
-      {/* Credibilidade */}
-      {dep.credibilidade && (
-        <p className="text-xs text-zinc-600 mt-1">
-          Credibilidade: {dep.credibilidade}
-        </p>
-      )}
+// ─── Block 3: Depoimentos Comparados ──────────────────────────────────────
 
-      {/* Pontos fortes/fracos */}
-      {dep.pontosFortes?.length > 0 && (
-        <p className="text-xs text-zinc-600 mt-1">
-          <strong className="text-emerald-500/70">Fortes:</strong>{" "}
-          {dep.pontosFortes.join(" / ")}
-        </p>
-      )}
-      {dep.pontosFracos?.length > 0 && (
-        <p className="text-xs text-zinc-600 mt-0.5">
-          <strong className="text-red-400/70">Fracos:</strong>{" "}
-          {dep.pontosFracos.join(" / ")}
-        </p>
-      )}
+export function BlocoDepoimentosComparados({ data }: { data: AnalysisBlocksData }) {
+  const hasV3 = data.depoimentosComparados && data.depoimentosComparados.length > 0;
+  const v2Depoentes = data.pessoas?.depoentes?.filter(
+    (d) => d.versaoDelegacia && d.versaoJuizo
+  ) ?? [];
+  const hasV2 = v2Depoentes.length > 0;
 
-      {/* Perguntas sugeridas */}
-      {dep.perguntasSugeridas?.length > 0 && (
-        <div className="mt-2">
-          <button
-            onClick={() => setShowPerguntas(!showPerguntas)}
-            className="text-xs text-emerald-500 hover:text-emerald-400 transition-colors flex items-center gap-1"
-          >
-            {showPerguntas ? (
-              <ChevronDown className="w-3 h-3" />
-            ) : (
-              <ChevronRight className="w-3 h-3" />
-            )}
-            {dep.perguntasSugeridas.length} perguntas sugeridas
-          </button>
-          {showPerguntas && (
-            <ol className="mt-1.5 space-y-1 pl-4 list-decimal">
-              {dep.perguntasSugeridas.map((p, i) => (
-                <li key={i} className="text-xs text-zinc-600 dark:text-zinc-400">
+  if (!hasV3 && !hasV2) return (
+    <BlockShell value="comparados" icon={GitCompareArrows} title="Depoimentos Comparados">
+      <EmptyState label="a comparacao de depoimentos" />
+    </BlockShell>
+  );
+
+  return (
+    <BlockShell
+      value="comparados"
+      icon={GitCompareArrows}
+      title="Depoimentos Comparados"
+      count={hasV3 ? `${data.depoimentosComparados!.length} pontos` : `${v2Depoentes.length} depoentes`}
+    >
+      {hasV3 ? (
+        /* v3: comparison table */
+        <div className="space-y-2">
+          {data.depoimentosComparados!.map((comp, i) => (
+            <div
+              key={i}
+              className="bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{comp.ponto}</span>
+                {comp.convergencia ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                ) : (
+                  <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-zinc-500">Delegacia</span>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">{comp.delegacia}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-zinc-500">Juizo</span>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">{comp.juizo}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        /* v2 fallback: side by side per depoente */
+        <div className="space-y-2">
+          {v2Depoentes.map((dep, i) => (
+            <SubRow key={i} label={dep.nome}>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-zinc-500">Delegacia</span>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">{dep.versaoDelegacia}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-zinc-500">Juizo</span>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">{dep.versaoJuizo}</p>
+                </div>
+              </div>
+              {dep.contradicoes?.length > 0 && (
+                <div className="mt-2 bg-red-50/50 dark:bg-red-500/5 border border-red-200/50 dark:border-red-500/10 rounded-lg p-2.5">
+                  <span className="text-[10px] uppercase tracking-wider text-red-500 font-semibold">Contradicoes</span>
+                  {dep.contradicoes.map((c, j) => (
+                    <p key={j} className="text-xs text-red-600 dark:text-red-400/80 mt-0.5">{c}</p>
+                  ))}
+                </div>
+              )}
+            </SubRow>
+          ))}
+        </div>
+      )}
+    </BlockShell>
+  );
+}
+
+// ─── Block 4: Perguntas Estrategicas ──────────────────────────────────────
+
+export function BlocoPerguntasEstrategicas({ data }: { data: AnalysisBlocksData }) {
+  const depoentesComPerguntas = data.pessoas?.depoentes?.filter(
+    (d) => d.perguntasSugeridas?.length > 0
+  ) ?? [];
+
+  if (depoentesComPerguntas.length === 0) return (
+    <BlockShell value="perguntas" icon={MessageCircleQuestion} title="Perguntas Estrategicas">
+      <EmptyState label="as perguntas estrategicas" />
+    </BlockShell>
+  );
+
+  const totalPerguntas = depoentesComPerguntas.reduce(
+    (sum, d) => sum + d.perguntasSugeridas.length,
+    0
+  );
+
+  return (
+    <BlockShell
+      value="perguntas"
+      icon={MessageCircleQuestion}
+      title="Perguntas Estrategicas"
+      count={`${totalPerguntas} perguntas`}
+    >
+      <div className="space-y-2">
+        {depoentesComPerguntas.map((dep, i) => (
+          <SubRow key={i} label={dep.nome} count={dep.perguntasSugeridas.length}>
+            <ol className="space-y-1.5 pl-4 list-decimal">
+              {dep.perguntasSugeridas.map((p, j) => (
+                <li key={j} className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
                   {p}
                 </li>
               ))}
             </ol>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-export function BlocoPessoas({ data }: { data: PessoasData }) {
-  const hasContent =
-    data.perfilReu ||
-    data.perfilVitima ||
-    data.depoentes?.length > 0 ||
-    data.informantes?.length > 0;
-
-  if (!hasContent) return null;
-
-  const deponenteCount = data.depoentes?.length ?? 0;
-
-  return (
-    <BlockShell
-      value="pessoas"
-      icon={Users}
-      iconBg="bg-zinc-800 dark:bg-zinc-700"
-      iconColor="text-white dark:text-zinc-300"
-      title="Pessoas"
-      count={deponenteCount > 0 ? `${deponenteCount} depoentes` : undefined}
-    >
-      {/* Perfil cards */}
-      {(data.perfilReu || data.perfilVitima) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-          {data.perfilReu && (
-            <div className="bg-zinc-50 dark:bg-[#0f0f11] rounded-lg p-3">
-              <span className="text-[10px] uppercase tracking-wider text-zinc-500">
-                Reu
-              </span>
-              <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mt-1">
-                {data.perfilReu.historico}
-              </p>
-              {data.perfilReu.contextoSocial && (
-                <p className="text-xs text-zinc-500 leading-relaxed mt-1">
-                  {data.perfilReu.contextoSocial}
-                </p>
-              )}
-              {data.perfilReu.condicoesAtenuantes?.length > 0 && (
-                <p className="text-xs text-zinc-500 mt-1">
-                  <strong className="text-zinc-800 dark:text-zinc-200">Atenuantes:</strong>{" "}
-                  {data.perfilReu.condicoesAtenuantes.join(", ")}
-                </p>
-              )}
-              {data.perfilReu.versaoDosFatos && (
-                <p className="text-xs text-zinc-500 leading-relaxed mt-1">
-                  <strong className="text-zinc-800 dark:text-zinc-200">Versao:</strong>{" "}
-                  {data.perfilReu.versaoDosFatos}
-                </p>
-              )}
-            </div>
-          )}
-          {data.perfilVitima && (
-            <div className="bg-zinc-50 dark:bg-[#0f0f11] rounded-lg p-3">
-              <span className="text-[10px] uppercase tracking-wider text-zinc-500">
-                Vitima
-              </span>
-              <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mt-1">
-                {data.perfilVitima.relacaoComReu}
-              </p>
-              {data.perfilVitima.historico && (
-                <p className="text-xs text-zinc-500 leading-relaxed mt-1">
-                  {data.perfilVitima.historico}
-                </p>
-              )}
-              {data.perfilVitima.comportamentoRelatado && (
-                <p className="text-xs text-zinc-500 mt-1">
-                  <strong className="text-zinc-800 dark:text-zinc-200">Comportamento:</strong>{" "}
-                  {data.perfilVitima.comportamentoRelatado}
-                </p>
-              )}
-              {data.perfilVitima.credibilidade && (
-                <p className="text-xs text-zinc-600 mt-1">
-                  Credibilidade: {data.perfilVitima.credibilidade}
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Depoentes */}
-      {data.depoentes?.length > 0 && (
-        <div className="mb-3">
-          {data.depoentes.map((dep, i) => (
-            <DeponenteCard key={i} dep={dep} />
-          ))}
-        </div>
-      )}
-
-      {/* Informantes */}
-      {data.informantes?.length > 0 && (
-        <SubRow label="Informantes" count={data.informantes.length}>
-          <div className="space-y-2">
-            {data.informantes.map((info, i) => (
-              <div key={i} className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    {info.fonte}
-                  </span>
-                  <span className="text-[10px] text-zinc-600">
-                    Confiabilidade: {info.confiabilidade}
-                  </span>
-                </div>
-                <p className="text-xs text-zinc-500 leading-relaxed">
-                  {info.conteudo}
-                </p>
-                {info.informacoesRelevantes?.length > 0 && (
-                  <ul className="mt-1.5 space-y-0.5">
-                    {info.informacoesRelevantes.map((ir, j) => (
-                      <li
-                        key={j}
-                        className="text-xs text-zinc-600 dark:text-zinc-400 pl-2 border-l border-zinc-300 dark:border-zinc-700"
-                      >
-                        {ir}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-          </div>
-        </SubRow>
-      )}
+          </SubRow>
+        ))}
+      </div>
     </BlockShell>
   );
 }
 
-// ─── Block 3: Provas ───────────────────────────────────────────────────────
+// ─── Block 5: Teses ───────────────────────────────────────────────────────
 
-export function BlocoProvas({ data }: { data: ProvasData }) {
-  const [activeTab, setActiveTab] = useState<
-    "periciais" | "documentais" | "informativos"
-  >("periciais");
-
+export function BlocoTeses({ data }: { data: AnalysisBlocksData }) {
+  const est = data.estrategia;
   const hasContent =
-    data.provasPericiais?.length > 0 ||
-    data.provasDocumentais?.length > 0 ||
-    data.informativosInvestigacao?.length > 0 ||
-    data.elementosInquisitoriais?.length > 0 ||
-    data.elementosProbatorios?.length > 0 ||
-    data.possibilidadesProbatorias?.length > 0;
+    est?.tesePrincipal ||
+    est?.tesesSubsidiarias?.length > 0 ||
+    est?.nulidades?.length > 0 ||
+    est?.matrizGuerra?.length > 0;
 
-  if (!hasContent) return null;
-
-  const tabs = [
-    {
-      key: "periciais" as const,
-      label: "Periciais",
-      count: data.provasPericiais?.length ?? 0,
-    },
-    {
-      key: "documentais" as const,
-      label: "Documentais",
-      count: data.provasDocumentais?.length ?? 0,
-    },
-    {
-      key: "informativos" as const,
-      label: "Informativos",
-      count: data.informativosInvestigacao?.length ?? 0,
-    },
-  ].filter((t) => t.count > 0);
-
-  return (
-    <BlockShell
-      value="provas"
-      icon={Search}
-      iconBg="bg-zinc-800 dark:bg-zinc-700"
-      iconColor="text-white dark:text-zinc-300"
-      title="Provas"
-      count={[
-        data.provasPericiais?.length ? `${data.provasPericiais.length} periciais` : null,
-        data.provasDocumentais?.length ? `${data.provasDocumentais.length} documentais` : null,
-        data.possibilidadesProbatorias?.length ? `${data.possibilidadesProbatorias.length} a produzir` : null,
-      ].filter(Boolean).join(" · ") || undefined}
-    >
-      {/* Elements overview */}
-      {(data.elementosInquisitoriais?.length > 0 ||
-        data.elementosProbatorios?.length > 0) && (
-        <div className="mb-4">
-          {data.elementosInquisitoriais?.length > 0 && (
-            <SubRow
-              label="Elementos inquisitoriais"
-              count={data.elementosInquisitoriais.length}
-            >
-              <div className="space-y-2">
-                {data.elementosInquisitoriais.map((el, i) => (
-                  <div
-                    key={i}
-                    className={cn(
-                      "bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3 border-l-2",
-                      el.contestavel
-                        ? "border-l-emerald-500"
-                        : "border-l-red-500"
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-zinc-700 dark:text-zinc-300">{el.tipo}</span>
-                      <span
-                        className={cn(
-                          "text-[10px] px-1.5 py-0.5 rounded",
-                          el.peso === "alto"
-                            ? "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400"
-                            : el.peso === "medio"
-                            ? "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                            : "bg-zinc-100 dark:bg-zinc-500/10 text-zinc-600 dark:text-zinc-400"
-                        )}
-                      >
-                        peso {el.peso}
-                      </span>
-                    </div>
-                    <p className="text-xs text-zinc-500 mt-1">{el.descricao}</p>
-                    {el.contestavel && el.argumento && (
-                      <p className="text-xs text-emerald-400/70 mt-1">
-                        Contestacao: {el.argumento}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </SubRow>
-          )}
-          {data.elementosProbatorios?.length > 0 && (
-            <SubRow
-              label="Elementos probatorios"
-              count={data.elementosProbatorios.length}
-            >
-              <div className="space-y-2">
-                {data.elementosProbatorios.map((el, i) => (
-                  <div
-                    key={i}
-                    className={cn(
-                      "bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3 border-l-2",
-                      el.favoravel
-                        ? "border-l-emerald-500"
-                        : "border-l-red-500"
-                    )}
-                  >
-                    <span className="text-sm text-zinc-700 dark:text-zinc-300">{el.tipo}</span>
-                    <p className="text-xs text-zinc-500 mt-1">{el.descricao}</p>
-                  </div>
-                ))}
-              </div>
-            </SubRow>
-          )}
-        </div>
-      )}
-
-      {/* Sub-tabs */}
-      {tabs.length > 0 && (
-        <div className="flex gap-2 mb-3">
-          {tabs.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setActiveTab(t.key)}
-              className={cn(
-                "text-xs px-3 py-1.5 rounded-full transition-colors",
-                activeTab === t.key
-                  ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
-                  : "bg-zinc-100 dark:bg-zinc-800/50 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800"
-              )}
-            >
-              {t.label}{" "}
-              <span className="text-zinc-500 ml-0.5">{t.count}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Periciais */}
-      {activeTab === "periciais" && data.provasPericiais?.length > 0 && (
-        <div className="space-y-2 mb-3">
-          {data.provasPericiais.map((p, i) => (
-            <div
-              key={i}
-              className="bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5 border-l-2 border-l-emerald-500"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                  {p.tipo}
-                </span>
-                <span className="text-[10px] text-zinc-600">{p.perito}</span>
-              </div>
-              <p className="text-xs text-zinc-500 mt-1">
-                <strong className="text-zinc-800 dark:text-zinc-200">Conclusao:</strong>{" "}
-                {p.conclusao}
-              </p>
-              {p.pontoCritico && (
-                <p className="text-xs text-amber-600 dark:text-amber-400/80 mt-1">
-                  Ponto critico: {p.pontoCritico}
-                </p>
-              )}
-              {p.contestacao && (
-                <p className="text-xs text-emerald-400/70 mt-1">
-                  Contestacao: {p.contestacao}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Documentais */}
-      {activeTab === "documentais" && data.provasDocumentais?.length > 0 && (
-        <div className="space-y-2 mb-3">
-          {data.provasDocumentais.map((d, i) => (
-            <div
-              key={i}
-              className={cn(
-                "bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5 border-l-2",
-                d.favoravel ? "border-l-emerald-500" : "border-l-red-500"
-              )}
-            >
-              <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                {d.documento}
-              </span>
-              <p className="text-xs text-zinc-500 mt-1">{d.conteudo}</p>
-              <p className="text-xs text-zinc-600 mt-1">
-                Relevancia: {d.relevancia}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Informativos */}
-      {activeTab === "informativos" &&
-        data.informativosInvestigacao?.length > 0 && (
-          <div className="space-y-2 mb-3">
-            {data.informativosInvestigacao.map((info, i) => (
-              <div
-                key={i}
-                className="bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                    {info.fonte}
-                  </span>
-                  <span className="text-[10px] font-mono text-zinc-600">
-                    {info.dataApuracao}
-                  </span>
-                </div>
-                <p className="text-xs text-zinc-500 mt-1">{info.conteudo}</p>
-                {info.informacoesRelevantes?.length > 0 && (
-                  <ul className="mt-1.5 space-y-0.5">
-                    {info.informacoesRelevantes.map((ir, j) => (
-                      <li
-                        key={j}
-                        className="text-xs text-zinc-600 dark:text-zinc-400 pl-2 border-l border-zinc-300 dark:border-zinc-700"
-                      >
-                        {ir}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <p className="text-[10px] text-zinc-600 mt-1">
-                  Credibilidade: {info.credibilidade}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-
-      {/* O que falta produzir */}
-      {data.possibilidadesProbatorias?.length > 0 && (
-        <SubRow
-          label="O que falta produzir"
-          count={data.possibilidadesProbatorias.length}
-        >
-          <div className="space-y-2">
-            {data.possibilidadesProbatorias.map((pp, i) => (
-              <div
-                key={i}
-                className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3 border-l-2 border-l-amber-500"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                    {pp.diligencia}
-                  </span>
-                  <span
-                    className={cn(
-                      "text-[10px] px-1.5 py-0.5 rounded",
-                      urgenciaBadgeClass(pp.urgencia)
-                    )}
-                  >
-                    {pp.urgencia.toUpperCase()}
-                  </span>
-                </div>
-                <p className="text-xs text-zinc-500 mt-1">
-                  <strong className="text-zinc-800 dark:text-zinc-200">Objetivo:</strong>{" "}
-                  {pp.objetivo}
-                </p>
-                <p className="text-xs text-zinc-600 mt-0.5">
-                  Fundamento: {pp.fundamento}
-                </p>
-              </div>
-            ))}
-          </div>
-        </SubRow>
-      )}
+  if (!hasContent) return (
+    <BlockShell value="teses" icon={Shield} title="Teses">
+      <EmptyState label="as teses de defesa" />
     </BlockShell>
   );
-}
-
-// ─── Block 4: Estrategia ──────────────────────────────────────────────────
-
-export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
-  const hasContent =
-    data.tesePrincipal ||
-    data.tesesSubsidiarias?.length > 0 ||
-    data.nulidades?.length > 0 ||
-    data.qualificadoras?.length > 0 ||
-    data.pontosFortes ||
-    data.pontosFracos ||
-    data.matrizGuerra?.length > 0;
-
-  if (!hasContent) return null;
 
   return (
     <BlockShell
-      value="estrategia"
-      icon={BookOpen}
-      iconBg="bg-zinc-800 dark:bg-zinc-700"
-      iconColor="text-white dark:text-zinc-300"
-      title="Estrategia"
+      value="teses"
+      icon={Shield}
+      title="Teses"
       count={[
-        data.tesePrincipal ? data.tesePrincipal.tese : null,
-        data.nulidades?.length ? `${data.nulidades.length} nulidades` : null,
+        est.tesePrincipal ? est.tesePrincipal.tese : null,
+        est.nulidades?.length ? `${est.nulidades.length} nulidades` : null,
       ].filter(Boolean).join(" · ") || undefined}
     >
       {/* Tese principal */}
-      {data.tesePrincipal && (
+      {est.tesePrincipal && (
         <div className="bg-gradient-to-br from-emerald-500/5 to-emerald-500/[0.02] border border-emerald-500/15 rounded-xl p-4 mb-4">
           <span className="text-[10px] uppercase tracking-wider text-emerald-500 font-semibold">
             Tese principal
           </span>
           <p className="text-base font-medium text-zinc-900 dark:text-zinc-100 mt-1">
-            {data.tesePrincipal.tese}
+            {est.tesePrincipal.tese}
           </p>
-          {data.tesePrincipal.fundamentoFatico && (
+          {est.tesePrincipal.fundamentoFatico && (
             <p className="text-xs text-zinc-500 leading-relaxed mt-2">
               <strong className="text-zinc-800 dark:text-zinc-200">Fatico:</strong>{" "}
-              {data.tesePrincipal.fundamentoFatico}
+              {est.tesePrincipal.fundamentoFatico}
             </p>
           )}
-          {data.tesePrincipal.fundamentoJuridico && (
+          {est.tesePrincipal.fundamentoJuridico && (
             <p className="text-xs text-zinc-500 leading-relaxed mt-1">
               <strong className="text-zinc-800 dark:text-zinc-200">Juridico:</strong>{" "}
-              {data.tesePrincipal.fundamentoJuridico}
+              {est.tesePrincipal.fundamentoJuridico}
             </p>
           )}
-          {data.tesePrincipal.elementosQueCorroboram?.length > 0 && (
+          {est.tesePrincipal.elementosQueCorroboram?.length > 0 && (
             <div className="mt-2">
               <span className="text-[10px] text-zinc-600">Corrobora:</span>
               <ul className="mt-0.5 space-y-0.5">
-                {data.tesePrincipal.elementosQueCorroboram.map((el, i) => (
+                {est.tesePrincipal.elementosQueCorroboram.map((el, i) => (
                   <li
                     key={i}
                     className="text-xs text-emerald-400/70 pl-2 border-l border-emerald-500/20"
@@ -1056,107 +836,11 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
         </div>
       )}
 
-      {/* Pontos fortes/fracos — 4 subsections */}
-      {data.pontosFortes?.defesa?.length > 0 && (
-        <SubRow
-          label="Pontos fortes da defesa"
-          count={data.pontosFortes.defesa.length}
-        >
-          <div className="space-y-2">
-            {data.pontosFortes.defesa.map((pf, i) => (
-              <div
-                key={i}
-                className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3 border-l-2 border-l-emerald-500"
-              >
-                <p className="text-sm text-zinc-700 dark:text-zinc-300">{pf.ponto}</p>
-                {pf.elementos?.length > 0 && (
-                  <p className="text-xs text-zinc-500 mt-1">
-                    Elementos: {pf.elementos.join(", ")}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </SubRow>
-      )}
-
-      {data.pontosFracos?.defesa?.length > 0 && (
-        <SubRow
-          label="Pontos fracos da defesa"
-          count={data.pontosFracos.defesa.length}
-        >
-          <div className="space-y-2">
-            {data.pontosFracos.defesa.map((pf, i) => (
-              <div
-                key={i}
-                className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3 border-l-2 border-l-red-500"
-              >
-                <p className="text-sm text-zinc-700 dark:text-zinc-300">{pf.ponto}</p>
-                {pf.mitigacao && (
-                  <p className="text-xs text-emerald-400/70 mt-1">
-                    Mitigacao: {pf.mitigacao}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </SubRow>
-      )}
-
-      {data.pontosFortes?.acusacao?.length > 0 && (
-        <SubRow
-          label="Pontos fortes da acusacao"
-          count={data.pontosFortes.acusacao.length}
-        >
-          <div className="space-y-2">
-            {data.pontosFortes.acusacao.map((pf, i) => (
-              <div
-                key={i}
-                className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3 border-l-2 border-l-red-500"
-              >
-                <p className="text-sm text-zinc-700 dark:text-zinc-300">{pf.ponto}</p>
-                {pf.elementos?.length > 0 && (
-                  <p className="text-xs text-zinc-500 mt-1">
-                    Elementos: {pf.elementos.join(", ")}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </SubRow>
-      )}
-
-      {data.pontosFracos?.acusacao?.length > 0 && (
-        <SubRow
-          label="Pontos fracos da acusacao"
-          count={data.pontosFracos.acusacao.length}
-        >
-          <div className="space-y-2">
-            {data.pontosFracos.acusacao.map((pf, i) => (
-              <div
-                key={i}
-                className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3 border-l-2 border-l-emerald-500"
-              >
-                <p className="text-sm text-zinc-700 dark:text-zinc-300">{pf.ponto}</p>
-                {pf.comoExplorar && (
-                  <p className="text-xs text-emerald-400/70 mt-1">
-                    Como explorar: {pf.comoExplorar}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </SubRow>
-      )}
-
       {/* Teses subsidiarias */}
-      {data.tesesSubsidiarias?.length > 0 && (
-        <SubRow
-          label="Teses subsidiarias"
-          count={data.tesesSubsidiarias.length}
-        >
+      {est.tesesSubsidiarias?.length > 0 && (
+        <SubRow label="Teses subsidiarias" count={est.tesesSubsidiarias.length}>
           <div className="space-y-2">
-            {data.tesesSubsidiarias.map((ts, i) => (
+            {est.tesesSubsidiarias.map((ts, i) => (
               <div key={i} className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3">
                 <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{ts.tese}</p>
                 <p className="text-xs text-zinc-500 mt-1">{ts.fundamento}</p>
@@ -1170,10 +854,10 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
       )}
 
       {/* Nulidades */}
-      {data.nulidades?.length > 0 && (
-        <SubRow label="Nulidades" count={data.nulidades.length}>
+      {est.nulidades?.length > 0 && (
+        <SubRow label="Nulidades" count={est.nulidades.length}>
           <div className="space-y-2">
-            {data.nulidades.map((n, i) => (
+            {est.nulidades.map((n, i) => (
               <div key={i} className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-zinc-700 dark:text-zinc-300">{n.tipo}</span>
@@ -1196,39 +880,11 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
         </SubRow>
       )}
 
-      {/* Qualificadoras */}
-      {data.qualificadoras?.length > 0 && (
-        <SubRow label="Qualificadoras" count={data.qualificadoras.length}>
-          <div className="space-y-2">
-            {data.qualificadoras.map((q, i) => (
-              <div key={i} className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-zinc-700 dark:text-zinc-300">{q.tipo}</span>
-                  {q.imputada && (
-                    <span className="text-[10px] bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded">
-                      IMPUTADA
-                    </span>
-                  )}
-                  {q.contestavel && (
-                    <span className="text-[10px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded">
-                      CONTESTAVEL
-                    </span>
-                  )}
-                </div>
-                {q.argumento && (
-                  <p className="text-xs text-zinc-500 mt-1">{q.argumento}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </SubRow>
-      )}
-
       {/* Matriz de guerra */}
-      {data.matrizGuerra?.length > 0 && (
-        <SubRow label="Matriz de guerra" count={data.matrizGuerra.length}>
+      {est.matrizGuerra?.length > 0 && (
+        <SubRow label="Matriz de guerra" count={est.matrizGuerra.length}>
           <div className="space-y-3">
-            {data.matrizGuerra.map((m, i) => (
+            {est.matrizGuerra.map((m, i) => (
               <div
                 key={i}
                 className="bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5"
@@ -1239,36 +895,26 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
                     <span className="text-[10px] uppercase tracking-wider text-red-500 dark:text-red-400/60">
                       Acusacao
                     </span>
-                    <p className="text-xs text-zinc-500 mt-0.5">
-                      {m.versaoAcusacao}
-                    </p>
+                    <p className="text-xs text-zinc-500 mt-0.5">{m.versaoAcusacao}</p>
                   </div>
                   <div>
                     <span className="text-[10px] uppercase tracking-wider text-emerald-500 dark:text-emerald-400/60">
                       Defesa
                     </span>
-                    <p className="text-xs text-zinc-500 mt-0.5">
-                      {m.versaoDefesa}
-                    </p>
+                    <p className="text-xs text-zinc-500 mt-0.5">{m.versaoDefesa}</p>
                   </div>
                 </div>
                 {m.elementosDeProva?.length > 0 && (
                   <div className="mt-2">
                     <span className="text-[10px] text-zinc-600">Provas:</span>
-                    <p className="text-xs text-zinc-500">
-                      {m.elementosDeProva.join(", ")}
-                    </p>
+                    <p className="text-xs text-zinc-500">{m.elementosDeProva.join(", ")}</p>
                   </div>
                 )}
                 {m.contradicoes?.length > 0 && (
                   <div className="mt-1">
-                    <span className="text-[10px] text-amber-500 dark:text-amber-400/60">
-                      Contradicoes:
-                    </span>
+                    <span className="text-[10px] text-amber-500 dark:text-amber-400/60">Contradicoes:</span>
                     {m.contradicoes.map((c, j) => (
-                      <p key={j} className="text-xs text-amber-600 dark:text-amber-400/70">
-                        {c}
-                      </p>
+                      <p key={j} className="text-xs text-amber-600 dark:text-amber-400/70">{c}</p>
                     ))}
                   </div>
                 )}
@@ -1281,96 +927,41 @@ export function BlocoEstrategia({ data }: { data: EstrategiaData }) {
   );
 }
 
-// ─── Block 5: Preparacao ───────────────────────────────────────────────────
+// ─── Block 6: Orientacao ──────────────────────────────────────────────────
 
-export function BlocoPreparacao({ data }: { data: PreparacaoData }) {
-  const hasContent =
-    data.orientacaoAoAssistido ||
-    data.quesitos?.length > 0 ||
-    data.informacoesAtendimento?.length > 0 ||
-    data.pontosCriticos?.length > 0;
+export function BlocoOrientacao({ data }: { data: AnalysisBlocksData }) {
+  const op = data.operacional;
+  const hasContent = op?.orientacaoAoAssistido || op?.pontosCriticos?.length > 0;
 
-  if (!hasContent) return null;
+  if (!hasContent) return (
+    <BlockShell value="orientacao" icon={UserCheck} title="Orientacao ao Assistido">
+      <EmptyState label="a orientacao ao assistido" />
+    </BlockShell>
+  );
 
   return (
     <BlockShell
-      value="preparacao"
-      icon={AlertTriangle}
-      iconBg="bg-zinc-800 dark:bg-zinc-700"
-      iconColor="text-white dark:text-zinc-300"
-      title="Preparacao"
-      count={[
-        data.quesitos?.length ? `${data.quesitos.length} quesitos` : null,
-        data.pontosCriticos?.length ? `${data.pontosCriticos.length} alertas` : null,
-        data.informacoesAtendimento?.length ? `${data.informacoesAtendimento.length} atendimentos` : null,
-      ].filter(Boolean).join(" · ") || "Orientação"}
+      value="orientacao"
+      icon={UserCheck}
+      title="Orientacao ao Assistido"
+      count={op.pontosCriticos?.length ? `${op.pontosCriticos.length} pontos criticos` : undefined}
     >
-      {/* Orientacao */}
-      {data.orientacaoAoAssistido && (
+      {/* Orientacao text */}
+      {op.orientacaoAoAssistido && (
         <div className="mb-4">
-          <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
-            Orientacao ao assistido
-          </span>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mt-1">
-            {data.orientacaoAoAssistido}
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            {op.orientacaoAoAssistido}
           </p>
         </div>
       )}
 
-      {/* Quesitos */}
-      {data.quesitos?.length > 0 && (
-        <SubRow label="Quesitos" count={data.quesitos.length}>
-          <ol className="space-y-2 list-none">
-            {data.quesitos.map((q, i) => (
-              <li key={i} className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3">
-                <div className="flex gap-2">
-                  <span className="text-sm font-mono text-zinc-500 shrink-0">
-                    {i + 1}.
-                  </span>
-                  <div>
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300">{q.texto}</p>
-                    <p className="text-xs text-emerald-400/70 mt-1">
-                      Estrategia: {q.estrategia}
-                    </p>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </SubRow>
-      )}
-
-      {/* Atendimentos */}
-      {data.informacoesAtendimento?.length > 0 && (
-        <SubRow
-          label="Informacoes dos atendimentos"
-          count={data.informacoesAtendimento.length}
-        >
-          <div className="space-y-2">
-            {data.informacoesAtendimento.map((at, i) => (
-              <div key={i} className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3">
-                <span className="text-[10px] font-mono text-zinc-600">
-                  {at.data}
-                </span>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">{at.conteudo}</p>
-                {at.relevanciaParaCaso && (
-                  <p className="text-xs text-emerald-400/70 mt-1">
-                    {at.relevanciaParaCaso}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </SubRow>
-      )}
-
       {/* Pontos criticos */}
-      {data.pontosCriticos?.length > 0 && (
+      {op.pontosCriticos?.length > 0 && (
         <div className="space-y-2">
           <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
             Pontos criticos
           </span>
-          {data.pontosCriticos.map((pc, i) => (
+          {op.pontosCriticos.map((pc, i) => (
             <div
               key={i}
               className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/15 rounded-lg p-3"
@@ -1386,6 +977,67 @@ export function BlocoPreparacao({ data }: { data: PreparacaoData }) {
           ))}
         </div>
       )}
+    </BlockShell>
+  );
+}
+
+// ─── Block 7: Cronologia ──────────────────────────────────────────────────
+
+export function BlocoCronologia({ data }: { data: AnalysisBlocksData }) {
+  const cronologia = data.caso?.cronologia;
+  const hasContent = cronologia && cronologia.length > 0;
+
+  if (!hasContent) return (
+    <BlockShell value="cronologia" icon={Clock} title="Cronologia">
+      <EmptyState label="a cronologia dos fatos" />
+    </BlockShell>
+  );
+
+  return (
+    <BlockShell
+      value="cronologia"
+      icon={Clock}
+      title="Cronologia"
+      count={`${cronologia.length} eventos`}
+    >
+      <div className="relative ml-3">
+        {/* Vertical line */}
+        <div className="absolute left-0 top-2 bottom-2 w-px bg-zinc-200 dark:bg-zinc-700" />
+        <div className="space-y-4">
+          {cronologia.map((item, i) => (
+            <div key={i} className="relative pl-5">
+              {/* Dot */}
+              <div className="absolute left-[-3px] top-1.5 w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-500" />
+              <div>
+                <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-mono font-bold">
+                  {item.data}
+                </span>
+                <p className="text-sm text-zinc-700 dark:text-zinc-300 mt-0.5">{item.evento}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  {item.fonte && (
+                    <span className="text-[10px] text-zinc-500">via {item.fonte}</span>
+                  )}
+                  {item.relevancia && (
+                    <span className="text-[10px] text-zinc-400">{item.relevancia}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </BlockShell>
+  );
+}
+
+// ─── Block 8: Mapa Investigativo ──────────────────────────────────────────
+
+export function BlocoMapa({ data }: { data: AnalysisBlocksData }) {
+  return (
+    <BlockShell value="mapa" icon={MapPin} title="Mapa Investigativo">
+      <p className="text-xs text-muted-foreground py-4 text-center">
+        Mapa investigativo sera disponibilizado em breve.
+      </p>
     </BlockShell>
   );
 }
