@@ -62,8 +62,8 @@ Processos - {Área}/
 
 | Variável | Arquivo |
 |----------|---------|
-| `PJE_CPF` | `.env.local` |
-| `PJE_SENHA` | `.env.local` |
+| `PJE_CPF` | `enrichment-engine/.env` |
+| `PJE_SENHA` | `enrichment-engine/.env` |
 | `GOOGLE_CLIENT_ID` | `.env.local` |
 | `GOOGLE_CLIENT_SECRET` | `.env.local` |
 | `GOOGLE_REFRESH_TOKEN` | `.env.local` |
