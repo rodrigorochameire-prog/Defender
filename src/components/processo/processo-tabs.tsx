@@ -1,17 +1,13 @@
 "use client";
 
-import { Brain, ListTodo, Calendar, FolderOpen, Link2, Scale, Library, Baby, Shield } from "lucide-react";
+import { Brain, Scale, Library, Baby, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks/use-permissions";
 
-export type MainTab = "analise" | "demandas" | "agenda" | "documentos" | "vinculados" | "delitos" | "institutos" | "atos_infracionais" | "medidas";
+export type MainTab = "analise" | "delitos" | "institutos" | "atos_infracionais" | "medidas";
 
 const BASE_TABS: { key: MainTab; label: string; icon: React.ElementType }[] = [
   { key: "analise", label: "Análise", icon: Brain },
-  { key: "demandas", label: "Demandas", icon: ListTodo },
-  { key: "agenda", label: "Agenda", icon: Calendar },
-  { key: "documentos", label: "Documentos", icon: FolderOpen },
-  { key: "vinculados", label: "Vinculados", icon: Link2 },
 ];
 
 const CRIMINAL_TABS: { key: MainTab; label: string; icon: React.ElementType }[] = [
@@ -27,10 +23,9 @@ const INFANCIA_TABS: { key: MainTab; label: string; icon: React.ElementType }[] 
 interface ProcessoTabsProps {
   active: MainTab;
   onChange: (tab: MainTab) => void;
-  counts?: Partial<Record<MainTab, number>>;
 }
 
-export function ProcessoTabs({ active, onChange, counts }: ProcessoTabsProps) {
+export function ProcessoTabs({ active, onChange }: ProcessoTabsProps) {
   const { hasArea } = usePermissions();
 
   const isCriminalArea = hasArea("CRIMINAL") || hasArea("JURI") || hasArea("EXECUCAO_PENAL") || hasArea("VIOLENCIA_DOMESTICA");
@@ -59,16 +54,6 @@ export function ProcessoTabs({ active, onChange, counts }: ProcessoTabsProps) {
           >
             <tab.icon className="h-3 w-3" />
             <span>{tab.label}</span>
-            {counts?.[tab.key] !== undefined && counts[tab.key]! > 0 && (
-              <span className={cn(
-                "text-[9px] min-w-[18px] text-center px-1 py-px rounded-full font-medium",
-                isActive
-                  ? "bg-white/20 text-white/70 dark:bg-zinc-700 dark:text-zinc-300"
-                  : "bg-zinc-200/60 dark:bg-white/10 text-zinc-400 dark:text-zinc-500"
-              )}>
-                {counts[tab.key]}
-              </span>
-            )}
           </button>
         );
       })}

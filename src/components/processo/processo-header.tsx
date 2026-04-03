@@ -12,6 +12,7 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
+import { CasoBar } from "./caso-bar";
 
 interface Assistido {
   id: number;
@@ -34,12 +35,14 @@ interface ProcessoHeaderProps {
   comarca: string | null;
   proximaAudiencia: Audiencia | null;
   classeProcessual: string | null;
-  counts?: {
-    demandas: number;
-    audiencias: number;
-    arquivos: number;
-    vinculados: number;
-  };
+  casoInfo?: { id: number; titulo: string } | null;
+  processosVinculados?: {
+    id: number;
+    numeroAutos: string | null;
+    tipoProcesso: string | null;
+    isReferencia: boolean | null;
+    assistidosNomes: string[];
+  }[];
 }
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA", "DOMICILIAR", "MONITORADO"];
@@ -53,7 +56,8 @@ export function ProcessoHeader({
   comarca,
   proximaAudiencia,
   classeProcessual,
-  counts,
+  casoInfo,
+  processosVinculados,
 }: ProcessoHeaderProps) {
   const router = useRouter();
   const [promptorioOpen, setPromptorioOpen] = useState(false);
@@ -163,18 +167,13 @@ export function ProcessoHeader({
           </div>
         )}
 
-        {/* Stats — glass bar */}
-        {counts && (
-          <div className="flex items-center gap-3 flex-wrap mt-3 px-3.5 py-2.5 rounded-lg bg-white/[0.12]">
-            <div className="flex items-center gap-3 text-[11px] text-white/30">
-              <span><span className="font-semibold text-white/60">{counts.demandas}</span> dem</span>
-              <span><span className="font-semibold text-white/60">{counts.audiencias}</span> aud</span>
-              <span><span className="font-semibold text-white/60">{counts.arquivos}</span> arq</span>
-              {counts.vinculados > 0 && (
-                <span><span className="font-semibold text-white/60">{counts.vinculados}</span> vinc</span>
-              )}
-            </div>
-          </div>
+        {/* CasoBar — linked processes */}
+        {casoInfo && processosVinculados && processosVinculados.length > 0 && (
+          <CasoBar
+            casoTitulo={casoInfo.titulo}
+            currentProcessoId={id}
+            processos={processosVinculados}
+          />
         )}
       </div>
 
