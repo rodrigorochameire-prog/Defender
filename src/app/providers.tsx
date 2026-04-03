@@ -10,6 +10,7 @@ import { AssignmentProvider } from "@/contexts/assignment-context";
 import { ProfissionalProvider } from "@/contexts/profissional-context";
 import { ProcessingQueueProvider } from "@/contexts/processing-queue";
 import { Toaster } from "sonner";
+import { FeedbackFAB } from "@/components/shared/feedback-fab";
 
 function getBaseUrl() {
   if (typeof window !== "undefined") return "";
@@ -113,6 +114,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
               <Suspense fallback={<LoadingSpinner />}>
                 {children}
               </Suspense>
+              <FeedbackFAB />
               <Toaster
                 richColors
                 position="top-right"

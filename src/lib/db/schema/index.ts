@@ -42,6 +42,7 @@ export * from "./atos-infracionais";
 export * from "./medidas-socioeducativas";
 export * from "./subscriptions";
 export * from "./google-tokens";
+export * from "./feedback";
 
 // Cross-domain relations (core + casos relations that reference other domains)
 export * from "./relations";

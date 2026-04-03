@@ -74,6 +74,7 @@ import { medidasSocioeducativasRouter } from "./medidas-socioeducativas";
 import { subscriptionsRouter } from "./subscriptions";
 import { googleIntegrationRouter } from "./google-integration";
 import { analiseRouter } from "./analise";
+import { feedbacksRouter } from "./feedbacks";
 
 
 export const appRouter = router({
@@ -349,6 +350,11 @@ export const appRouter = router({
   // ANALISE (CLAUDE CODE TASKS + CASOS)
   // ==========================================
   analise: analiseRouter,
+
+  // ==========================================
+  // FEEDBACKS (BUG REPORTS, SUGESTOES, DUVIDAS)
+  // ==========================================
+  feedbacks: feedbacksRouter,
 });
 
 export type AppRouter = typeof appRouter;

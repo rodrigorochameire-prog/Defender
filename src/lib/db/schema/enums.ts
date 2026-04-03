@@ -540,3 +540,17 @@ export const syncOrigemEnum = pgEnum("sync_origem", [
   "MOVE",
   "CONFLITO_RESOLVIDO",
 ]);
+
+// Feedback do usuário
+export const feedbackTipoEnum = pgEnum("feedback_tipo", [
+  "bug",
+  "sugestao",
+  "duvida",
+]);
+
+export const feedbackStatusEnum = pgEnum("feedback_status", [
+  "novo",
+  "visto",
+  "enviado_jira",
+  "descartado",
+]);
