@@ -65,9 +65,12 @@ async def buscar_processos(
 ) -> list[dict]:
     url = f"{BASE_URL}/api_publica_{tribunal}/_search"
     body = _build_query(query, campo, limite)
-    async with httpx.AsyncClient(timeout=15) as client:
-        resp = await client.post(url, json=body, headers=HEADERS)
-        resp.raise_for_status()
+    async with httpx.AsyncClient(timeout=30) as client:
+        try:
+            resp = await client.post(url, json=body, headers=HEADERS)
+            resp.raise_for_status()
+        except (httpx.TimeoutException, httpx.HTTPStatusError):
+            return []
     data = resp.json()
     hits = data.get("hits", {}).get("hits", [])
     return [_parse_hit(h) for h in hits]

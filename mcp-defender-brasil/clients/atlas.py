@@ -13,9 +13,12 @@ async def buscar_violencia(
 ) -> list[dict]:
     serie_id = SERIES.get(serie, SERIES["homicidios"])
     url = f"{BASE_URL}/valores-series-por-regioes/{serie_id}/4/{cod_ibge}"
-    async with httpx.AsyncClient(timeout=10) as client:
-        resp = await client.get(url)
-        resp.raise_for_status()
+    async with httpx.AsyncClient(timeout=20) as client:
+        try:
+            resp = await client.get(url)
+            resp.raise_for_status()
+        except (httpx.TimeoutException, httpx.HTTPStatusError):
+            return []
     data = resp.json()
     return [
         {
