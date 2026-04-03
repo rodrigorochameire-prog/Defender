@@ -47,8 +47,39 @@ import { Button } from "@/components/ui/button";
 import { TranscriptViewer, type AnalysisData } from "@/components/shared/transcript-viewer";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { LIST_ITEM, GLASS } from "@/lib/config/design-tokens";
+import { File } from "lucide-react";
 
 type ViewMode = "tree" | "timeline" | "status" | "processo";
+
+const TYPE_FILTERS = [
+  { key: "all", label: "Todos" },
+  { key: "autos", label: "Autos" },
+  { key: "laudo", label: "Laudos" },
+  { key: "certidao", label: "Certidões" },
+  { key: "audio", label: "Áudios" },
+  { key: "video", label: "Vídeos" },
+] as const;
+
+function getFileIcon(file: DriveFileData) {
+  if (file.isFolder) return FolderOpen;
+  if (file.mimeType?.startsWith("audio/")) return Music;
+  if (file.mimeType?.startsWith("video/")) return Video;
+  if (file.documentType?.toLowerCase().includes("auto") || file.categoria?.toLowerCase().includes("auto")) return Scale;
+  if (file.mimeType?.includes("pdf") || file.mimeType?.includes("document")) return FileText;
+  return File;
+}
+
+function matchesTypeFilter(file: DriveFileData, typeFilter: string): boolean {
+  if (typeFilter === "all") return true;
+  if (typeFilter === "audio") return !!file.mimeType?.startsWith("audio/");
+  if (typeFilter === "video") return !!file.mimeType?.startsWith("video/");
+  const searchKey = typeFilter.toLowerCase();
+  return (
+    !!file.documentType?.toLowerCase().includes(searchKey) ||
+    !!file.categoria?.toLowerCase().includes(searchKey)
+  );
+}
 
 interface DriveFileData {
   id: number;
@@ -170,7 +201,7 @@ function StatusView({ files, assistidoId, processoId }: { files: DriveFileData[]
       )}
 
       {/* File list */}
-      <div className="space-y-0.5 max-h-[400px] overflow-y-auto">
+      <div className="space-y-1 max-h-[400px] overflow-y-auto">
         {filteredFiles.length === 0 ? (
           <div className="text-center py-8 text-zinc-400">
             <FileText className="h-6 w-6 mx-auto mb-2 opacity-30" />
@@ -182,25 +213,29 @@ function StatusView({ files, assistidoId, processoId }: { files: DriveFileData[]
           filteredFiles.map((f) => {
             const status = f.enrichmentStatus || "pending";
             const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
-            const Icon = config.icon;
+            const FileIcon = getFileIcon(f);
             return (
               <div
                 key={f.id}
-                className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-zinc-50 dark:hover:bg-zinc-800 group"
+                className={cn(
+                  GLASS.cardHover,
+                  "flex items-center gap-2 px-3 py-2 group",
+                )}
               >
-                <Icon
-                  className={cn(
-                    "h-3 w-3 shrink-0",
-                    config.color,
-                    status === "processing" && "animate-spin",
-                  )}
-                />
+                <FileIcon className="w-[13px] h-[13px] text-zinc-500 dark:text-zinc-400 shrink-0" />
                 <span
-                  className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate flex-1 cursor-pointer group-hover:text-emerald-600"
+                  className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate flex-1 cursor-pointer"
                   onClick={() => f.webViewLink && window.open(f.webViewLink, "_blank")}
                 >
                   {f.name}
                 </span>
+                <config.icon
+                  className={cn(
+                    "h-2.5 w-2.5 shrink-0",
+                    config.color,
+                    status === "processing" && "animate-spin",
+                  )}
+                />
                 {f.documentType && (
                   <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 shrink-0">
                     {f.documentType}
@@ -221,7 +256,7 @@ function StatusView({ files, assistidoId, processoId }: { files: DriveFileData[]
                   </button>
                 )}
                 {f.webViewLink && (
-                  <ExternalLink className="h-3 w-3 text-zinc-300 group-hover:text-emerald-500 shrink-0 transition-colors" />
+                  <ExternalLink className="h-3 w-3 text-zinc-300 group-hover:text-zinc-500 shrink-0 transition-colors" />
                 )}
               </div>
             );
@@ -419,6 +454,63 @@ function FileDetailSheet({
   );
 }
 
+function PreviewContent({ file, onOpenDetail }: { file: DriveFileData; onOpenDetail: (f: DriveFileData) => void }) {
+  const enrichData = file.enrichmentData as Record<string, unknown> | null | undefined;
+  const enrichText = (() => {
+    if (!enrichData) return null;
+    if (typeof file.enrichmentData === "string") return file.enrichmentData;
+    if (typeof enrichData?.resumo === "string") return enrichData.resumo as string;
+    return JSON.stringify(file.enrichmentData, null, 2);
+  })();
+
+  return (
+    <div className="space-y-3 mt-4">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+        {file.mimeType && <span>{file.mimeType}</span>}
+        {file.lastModifiedTime && (
+          <span>· {format(
+            file.lastModifiedTime instanceof Date
+              ? file.lastModifiedTime
+              : new Date(file.lastModifiedTime),
+            "dd/MM/yy",
+            { locale: ptBR },
+          )}</span>
+        )}
+        {file.enrichmentStatus && (
+          <span>· {STATUS_CONFIG[file.enrichmentStatus]?.label ?? file.enrichmentStatus}</span>
+        )}
+      </div>
+      {enrichText && (
+        <div className={cn(GLASS.card, "p-3")}>
+          <p className="text-[9px] uppercase tracking-wider font-semibold text-zinc-500 mb-2">Conteudo Extraido</p>
+          <div className="text-xs text-foreground/80 whitespace-pre-wrap max-h-[60vh] overflow-y-auto leading-relaxed">
+            {enrichText}
+          </div>
+        </div>
+      )}
+      <div className="flex gap-2">
+        {file.webViewLink && (
+          <a href={file.webViewLink} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+              <ExternalLink className="w-3 h-3" />
+              Abrir no Drive
+            </Button>
+          </a>
+        )}
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 text-xs"
+          onClick={() => onOpenDetail(file)}
+        >
+          <FileText className="w-3 h-3" />
+          Ver Detalhes
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function DriveTabEnhanced({
   files,
   assistidoId,
@@ -429,6 +521,8 @@ export function DriveTabEnhanced({
   const [view, setView] = useState<ViewMode>("tree");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFile, setSelectedFile] = useState<DriveFileData | null>(null);
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [previewFile, setPreviewFile] = useState<DriveFileData | null>(null);
 
   // --- Fluxo de vinculação de pasta ---
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -463,23 +557,29 @@ export function DriveTabEnhanced({
     onError: (err) => toast.error(err.message),
   });
 
-  // Filter files by search
+  // Filter files by search and type
   const filteredFiles = useMemo(() => {
-    if (!searchQuery.trim()) return files;
-    const q = searchQuery.toLowerCase();
-    return files.filter(
-      (f) =>
-        f.name.toLowerCase().includes(q) ||
-        f.documentType?.toLowerCase().includes(q) ||
-        f.categoria?.toLowerCase().includes(q),
-    );
-  }, [files, searchQuery]);
+    let result = files;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (f) =>
+          f.name.toLowerCase().includes(q) ||
+          f.documentType?.toLowerCase().includes(q) ||
+          f.categoria?.toLowerCase().includes(q),
+      );
+    }
+    if (typeFilter !== "all") {
+      result = result.filter((f) => f.isFolder || matchesTypeFilter(f, typeFilter));
+    }
+    return result;
+  }, [files, searchQuery, typeFilter]);
 
   return (
     <div className="space-y-3">
       {/* Fluxo de vinculação quando sem pasta vinculada */}
       {showLinkFlow && (
-        <div className="p-4 border rounded-lg bg-zinc-50 mb-4">
+        <div className={cn(GLASS.card, "p-4 mb-4")}>
           {loadingSuggestion ? (
             <div className="flex items-center gap-2 text-sm text-zinc-500">
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -488,7 +588,7 @@ export function DriveTabEnhanced({
           ) : suggestion ? (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-medium text-zinc-700">
-                <FolderOpen className="w-4 h-4 text-emerald-600" />
+                <FolderOpen className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                 Pasta sugerida encontrada
               </div>
               <p className="text-sm text-zinc-600">
@@ -578,7 +678,7 @@ export function DriveTabEnhanced({
                 className={cn(
                   "flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium transition-colors",
                   view === m.key
-                    ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400"
+                    ? "bg-zinc-800 dark:bg-white text-white dark:text-zinc-900"
                     : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800",
                 )}
               >
@@ -593,7 +693,7 @@ export function DriveTabEnhanced({
               className={cn(
                 "flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium transition-colors",
                 view === "processo"
-                  ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400"
+                  ? "bg-zinc-800 dark:bg-white text-white dark:text-zinc-900"
                   : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800",
               )}
             >
@@ -611,7 +711,7 @@ export function DriveTabEnhanced({
             placeholder="Buscar arquivos..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-[11px] pl-7 pr-2 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            className="w-full text-[11px] pl-7 pr-2 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500"
           />
           {searchQuery && (
             <button
@@ -651,6 +751,24 @@ export function DriveTabEnhanced({
         )}
       </div>
 
+      {/* Type filter pills */}
+      <div className="flex items-center gap-1 flex-wrap">
+        {TYPE_FILTERS.map((tf) => (
+          <button
+            key={tf.key}
+            onClick={() => setTypeFilter(tf.key)}
+            className={cn(
+              "text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors",
+              typeFilter === tf.key
+                ? "bg-zinc-800 dark:bg-white text-white dark:text-zinc-900"
+                : "bg-zinc-100/60 dark:bg-white/[0.04] text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 border border-zinc-200/80 dark:border-white/[0.06]",
+            )}
+          >
+            {tf.label}
+          </button>
+        ))}
+      </div>
+
       {/* Link para o Drive quando vinculado */}
       {driveFolderId && (
         <div className="flex items-center justify-between mb-2 pb-2 border-b">
@@ -665,7 +783,7 @@ export function DriveTabEnhanced({
                   href={rootFolder.webViewLink}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-xs text-emerald-600 hover:underline flex items-center gap-1"
+                  className="text-xs text-zinc-600 dark:text-zinc-400 hover:underline flex items-center gap-1"
                 >
                   Abrir no Drive <ExternalLink className="w-3 h-3" />
                 </a>
@@ -709,6 +827,19 @@ export function DriveTabEnhanced({
           onClose={() => setSelectedFile(null)}
         />
       )}
+
+      {/* Quick Preview Sheet */}
+      <Sheet open={!!previewFile} onOpenChange={(open) => !open && setPreviewFile(null)}>
+        <SheetContent className="w-[400px] sm:w-[540px]">
+          <SheetTitle className="text-sm font-semibold truncate">{previewFile?.name}</SheetTitle>
+          {previewFile != null && (
+            <PreviewContent
+              file={previewFile}
+              onOpenDetail={(f) => { setSelectedFile(f); setPreviewFile(null); }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
