@@ -74,6 +74,57 @@ export const CARD_STYLE = {
   base: "rounded-lg border border-border p-4",
   /** Card com borda lateral colorida (urgência, nulidades) */
   highlight: "rounded-lg border-l-4 p-4",
+  /** Card glass translúcido (v3) */
+  glass: "bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06] rounded-lg p-3.5",
+} as const;
+
+// ============================================
+// HEADER (v3 — gradient escuro)
+// ============================================
+
+export const HEADER_STYLE = {
+  container: "rounded-xl bg-gradient-to-br from-[#292930] to-[#202025] shadow-lg shadow-black/10 ring-1 ring-white/[0.04]",
+  text: "text-white font-serif text-lg font-semibold tracking-tight",
+  label: "text-white/30 text-[9px] uppercase tracking-wider",
+  value: "text-white/80 font-mono tracking-wide",
+  separator: "w-[1.5px] h-3.5 bg-white/15 rounded-full",
+  bottomRow: "bg-white/[0.08] rounded-lg px-3.5 py-2.5",
+  stat: "text-white/60 font-semibold",
+  statLabel: "text-white/30",
+} as const;
+
+// ============================================
+// GLASS (v3 — cards translúcidos)
+// ============================================
+
+export const GLASS = {
+  card: "bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06] rounded-lg",
+  hover: "hover:bg-zinc-100 dark:hover:bg-white/[0.07] transition-all duration-200",
+  cardHover: "bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06] rounded-lg hover:bg-zinc-100 dark:hover:bg-white/[0.07] transition-all duration-200 cursor-pointer",
+} as const;
+
+// ============================================
+// LIST ITEM (v3 — itens de lista glass)
+// ============================================
+
+export const LIST_ITEM = {
+  container: "bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06] rounded-lg px-3 py-2.5 hover:bg-zinc-100 dark:hover:bg-white/[0.07] cursor-pointer transition-all",
+  icon: "w-[13px] h-[13px] text-zinc-500 dark:text-zinc-400 shrink-0",
+  title: "text-[11px] font-medium text-foreground/80",
+  meta: "text-[9px] text-muted-foreground",
+} as const;
+
+// ============================================
+// ABAS v3 (pill rounded, bg invertido)
+// ============================================
+
+export const TAB_STYLE_V3 = {
+  bar: "flex items-center gap-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 p-1",
+  item: "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-white/5",
+  active: "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm",
+  badge: "text-[9px] min-w-[18px] text-center px-1 py-px rounded-full font-medium",
+  badgeActive: "bg-white/20 text-white/70 dark:bg-zinc-700 dark:text-zinc-300",
+  badgeInactive: "bg-zinc-200/60 dark:bg-white/10 text-zinc-400 dark:text-zinc-500",
 } as const;
 
 // ============================================
