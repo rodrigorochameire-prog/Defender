@@ -7,6 +7,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { TRPCError } from "@trpc/server";
 import { getComarcaId, getParceirosIds } from "@/lib/trpc/comarca-scope";
 import { getDefensoresVisiveis } from "@/lib/trpc/defensor-scope";
+import { classifyTipoProcesso, isReferenceTipo } from "@/lib/utils/processo-classification";
 
 export const processosRouter = router({
   // Listar todos os processos
@@ -343,11 +344,15 @@ export const processosRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
       }
 
+      const tipo = classifyTipoProcesso(input.classeProcessual ?? null);
+
       const [novoProcesso] = await db
         .insert(processos)
         .values({
           ...input,
           comarcaId: getComarcaId(ctx.user),
+          tipoProcesso: tipo,
+          isReferencia: isReferenceTipo(tipo),
         })
         .returning();
 
