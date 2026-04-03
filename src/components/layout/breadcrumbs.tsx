@@ -142,7 +142,7 @@ export function Breadcrumbs() {
           <>
             <ChevronRight className="w-3 h-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
             {RouteIcon ? (
-              <RouteIcon className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100" title={lastItem.label} />
+              <span title={lastItem.label}><RouteIcon className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100" /></span>
             ) : (
               <span className="font-semibold text-zinc-900 dark:text-zinc-100 truncate max-w-[140px]" title={lastItem.label}>
                 {lastItem.label}
