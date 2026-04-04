@@ -754,7 +754,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             assistidoId={Number(id)}
             processoIdAtivo={data.processos?.[0]?.id}
             assistidoNome={data.nome}
-            processos={data.processos.map(p => ({ id: p.id, numeroAutos: p.numeroAutos }))}
+            processos={data.processos.map(p => ({ id: p.id, numeroAutos: p.numeroAutos ?? "" }))}
           />
         )}
 

@@ -19,6 +19,7 @@ const TIPO_CONFIG: Record<string, { icon: LucideIcon; color: string; label: stri
   email:           { icon: Mail,          color: "text-neutral-600 dark:text-neutral-400",        label: "Email" },
   visita_carceraria:{ icon: Shield,       color: "text-neutral-600 dark:text-neutral-400",        label: "Visita Carcerária" },
   plaud:           { icon: Mic,           color: "text-violet-500",                               label: "Plaud" },
+  atendimento:     { icon: User,          color: "text-neutral-600 dark:text-neutral-400",        label: "Atendimento" },
 };
 
 // ─── Status badge ────────────────────────────────────────────────────────────

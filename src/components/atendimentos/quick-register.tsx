@@ -73,7 +73,7 @@ export function QuickRegister({
 
     createMutation.mutate({
       assistidoId,
-      processoId: processoId ? Number(processoId) : undefined,
+      processoId: processoId && processoId !== "none" ? Number(processoId) : undefined,
       tipo,
       assunto: assunto.trim(),
       interlocutor,
@@ -130,23 +130,23 @@ export function QuickRegister({
           value={processoId}
           onValueChange={setProcessoId}
         >
-          <SelectTrigger className={cn(selectTriggerClass, "w-[140px] shrink-0")}>
+          <SelectTrigger className={cn(selectTriggerClass, "w-auto shrink-0")}>
             <SelectValue placeholder="Processo">
               {processoId
                 ? (() => {
                     const proc = processos.find((p) => String(p.id) === processoId);
                     return proc
-                      ? proc.numeroAutos.slice(-15)
+                      ? proc.numeroAutos || "Processo"
                       : "Processo";
                   })()
                 : "Processo"}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Nenhum</SelectItem>
+            <SelectItem value="none">Nenhum</SelectItem>
             {processos.map((proc) => (
               <SelectItem key={proc.id} value={String(proc.id)}>
-                {proc.numeroAutos.slice(-15)}
+                {proc.numeroAutos || "Processo"}
               </SelectItem>
             ))}
           </SelectContent>
