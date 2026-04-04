@@ -44,6 +44,7 @@ export * from "./subscriptions";
 export * from "./google-tokens";
 export * from "./feedback";
 export * from "./defensoria";
+export * from "./instancia-superior";
 
 // Cross-domain relations (core + casos relations that reference other domains)
 export * from "./relations";
