@@ -120,26 +120,26 @@ export function BancoObjecoes({ isDarkMode, mode }: BancoObjecoesProps) {
   if (mode === "visualizar") {
     if (!objecaoAtiva) {
       return (
-        <div className={cn("flex flex-col items-center justify-center gap-3 py-16 rounded-xl border border-zinc-200/80 bg-white dark:border-zinc-800/80 dark:bg-zinc-900")}>
-          <Shield className="h-10 w-10 text-zinc-300 dark:text-zinc-600" />
-          <p className="text-sm text-zinc-400 dark:text-zinc-500">Sem objecao ativa</p>
-          <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Aguardando selecao do estagiario</p>
+        <div className={cn("flex flex-col items-center justify-center gap-3 py-16 rounded-xl border border-neutral-200/80 bg-white dark:border-neutral-800/80 dark:bg-neutral-900")}>
+          <Shield className="h-10 w-10 text-neutral-300 dark:text-neutral-600" />
+          <p className="text-sm text-neutral-400 dark:text-neutral-500">Sem objecao ativa</p>
+          <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Aguardando selecao do estagiario</p>
         </div>
       );
     }
 
     const s = CAT_STYLE[objecaoAtiva.categoria];
     return (
-      <div className={cn("rounded-xl border-2 border-emerald-500 bg-white p-6 dark:bg-zinc-900 animate-pulse-once")}>
+      <div className={cn("rounded-xl border-2 border-emerald-500 bg-white p-6 dark:bg-neutral-900 animate-pulse-once")}>
         <div className="mb-4 flex items-center justify-between">
           <Badge className={cn(s.bg, s.text, s.border, "text-xs")}>{objecaoAtiva.categoria}</Badge>
-          <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Objecao Ativa</span>
+          <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Objecao Ativa</span>
         </div>
-        <h3 className="mb-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">{objecaoAtiva.titulo}</h3>
-        <p className="mb-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{objecaoAtiva.fundamentacao}</p>
+        <h3 className="mb-2 text-lg font-semibold text-neutral-900 dark:text-neutral-100">{objecaoAtiva.titulo}</h3>
+        <p className="mb-4 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{objecaoAtiva.fundamentacao}</p>
         <div className="flex items-center gap-2">
-          <Gavel className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
-          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{objecaoAtiva.artigo}</span>
+          <Gavel className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
+          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{objecaoAtiva.artigo}</span>
         </div>
       </div>
     );
@@ -147,15 +147,15 @@ export function BancoObjecoes({ isDarkMode, mode }: BancoObjecoesProps) {
 
   // --- Mode: selecionar (intern view) ---
   return (
-    <div className={cn("flex flex-col gap-3 rounded-xl border border-zinc-200/80 bg-white p-4 dark:border-zinc-800/80 dark:bg-zinc-900")}>
+    <div className={cn("flex flex-col gap-3 rounded-xl border border-neutral-200/80 bg-white p-4 dark:border-neutral-800/80 dark:bg-neutral-900")}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Gavel className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
-          <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Banco de Objecoes</span>
+          <Gavel className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+          <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Banco de Objecoes</span>
         </div>
         {objecaoAtiva && (
-          <Button variant="ghost" size="sm" onClick={handleLimpar} className="h-7 gap-1 px-2 text-xs text-zinc-500 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-400">
+          <Button variant="ghost" size="sm" onClick={handleLimpar} className="h-7 gap-1 px-2 text-xs text-neutral-500 hover:text-rose-600 dark:text-neutral-400 dark:hover:text-rose-400">
             <X className="h-3 w-3" />
             Limpar ativa
           </Button>
@@ -164,7 +164,7 @@ export function BancoObjecoes({ isDarkMode, mode }: BancoObjecoesProps) {
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
+        <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
         <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar objecao ou artigo..." className="h-8 pl-8 text-xs" />
       </div>
 
@@ -178,7 +178,7 @@ export function BancoObjecoes({ isDarkMode, mode }: BancoObjecoesProps) {
               onClick={() => setCategoriaAtiva(cat.id)}
               className={cn(
                 "flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-all duration-200 cursor-pointer",
-                categoriaAtiva === cat.id ? "bg-emerald-600 text-white" : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                categoriaAtiva === cat.id ? "bg-emerald-600 text-white" : "text-neutral-500 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
               )}
             >
               <Icon className="h-3 w-3" />
@@ -191,7 +191,7 @@ export function BancoObjecoes({ isDarkMode, mode }: BancoObjecoesProps) {
       {/* Objections list */}
       <div className="flex max-h-[400px] flex-col gap-2 overflow-y-auto">
         {filtradas.length === 0 && (
-          <p className="py-6 text-center text-xs text-zinc-400 dark:text-zinc-500">Nenhuma objecao encontrada</p>
+          <p className="py-6 text-center text-xs text-neutral-400 dark:text-neutral-500">Nenhuma objecao encontrada</p>
         )}
         {filtradas.map((obj) => {
           const isAtiva = objecaoAtiva?.id === obj.id;
@@ -204,7 +204,7 @@ export function BancoObjecoes({ isDarkMode, mode }: BancoObjecoesProps) {
                 "group relative flex flex-col gap-1.5 rounded-lg border p-3 text-left transition-all duration-200 cursor-pointer",
                 isAtiva
                   ? "border-emerald-500 bg-emerald-50/50 ring-1 ring-emerald-500/30 dark:border-emerald-500 dark:bg-emerald-950/20 dark:ring-emerald-500/20"
-                  : "border-zinc-200/80 bg-white hover:border-zinc-300 hover:shadow-sm dark:border-zinc-800/80 dark:bg-zinc-900 dark:hover:border-zinc-700"
+                  : "border-neutral-200/80 bg-white hover:border-neutral-300 hover:shadow-sm dark:border-neutral-800/80 dark:bg-neutral-900 dark:hover:border-neutral-700"
               )}
             >
               {isAtiva && (
@@ -216,12 +216,12 @@ export function BancoObjecoes({ isDarkMode, mode }: BancoObjecoesProps) {
               <div className="flex items-center gap-2">
                 <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", s.dot)} />
                 <Badge className={cn(s.bg, s.text, s.border, "text-[10px] px-1.5 py-0")}>{obj.categoria}</Badge>
-                <span className="text-[10px] text-zinc-400 dark:text-zinc-500">{obj.artigo}</span>
+                <span className="text-[10px] text-neutral-400 dark:text-neutral-500">{obj.artigo}</span>
               </div>
-              <p className={cn("text-xs font-medium leading-snug", isAtiva ? "text-emerald-800 dark:text-emerald-300" : "text-zinc-900 dark:text-zinc-100")}>
+              <p className={cn("text-xs font-medium leading-snug", isAtiva ? "text-emerald-800 dark:text-emerald-300" : "text-neutral-900 dark:text-neutral-100")}>
                 {obj.titulo}
               </p>
-              <p className="line-clamp-2 text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">{obj.fundamentacao}</p>
+              <p className="line-clamp-2 text-[11px] leading-relaxed text-neutral-500 dark:text-neutral-400">{obj.fundamentacao}</p>
             </button>
           );
         })}

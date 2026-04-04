@@ -149,8 +149,8 @@ export function HistoricoChart({ demandas }: HistoricoChartProps) {
   // Retorna placeholder se não houver dados (após todos os hooks)
   if (!demandas || demandas.length === 0) {
     return (
-      <div className="w-full h-full min-h-[350px] flex items-center justify-center bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+      <div className="w-full h-full min-h-[350px] flex items-center justify-center bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800">
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">
           Sem dados para exibir
         </p>
       </div>
@@ -176,33 +176,33 @@ export function HistoricoChart({ demandas }: HistoricoChartProps) {
     const crescimento = inverterTendencia ? variacao < 0 : variacao > 0;
 
     return (
-      <div className="group bg-white dark:bg-zinc-900 rounded-lg border border-zinc-100 dark:border-zinc-800 p-3 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all duration-200">
+      <div className="group bg-white dark:bg-neutral-900 rounded-lg border border-neutral-100 dark:border-neutral-800 p-3 hover:border-neutral-200 dark:hover:border-neutral-700 transition-all duration-200">
         <div className="flex items-center gap-1.5 mb-2">
-          <Icon className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
-          <span className="text-[9px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">
+          <Icon className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500" />
+          <span className="text-[9px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">
             {titulo}
           </span>
         </div>
         
         <div className="mb-1">
-          <span className="text-lg font-semibold text-zinc-700 dark:text-zinc-300 tracking-tight">
+          <span className="text-lg font-semibold text-neutral-700 dark:text-neutral-300 tracking-tight">
             {typeof valor === 'number' && sufixo === '%' ? valor.toFixed(1) : valor}
           </span>
-          <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500 ml-0.5">
+          <span className="text-xs font-medium text-neutral-400 dark:text-neutral-500 ml-0.5">
             {sufixo}
           </span>
         </div>
 
         <div className="flex items-center gap-1">
           {crescimento ? (
-            <TrendingUp className="w-2.5 h-2.5 text-zinc-400" />
+            <TrendingUp className="w-2.5 h-2.5 text-neutral-400" />
           ) : (
-            <TrendingDown className="w-2.5 h-2.5 text-zinc-400" />
+            <TrendingDown className="w-2.5 h-2.5 text-neutral-400" />
           )}
           <span className={`text-[9px] font-medium ${crescimento ? 'text-emerald-600 dark:text-emerald-500' : 'text-rose-600 dark:text-rose-500'}`}>
             {Math.abs(variacao).toFixed(1)}%
           </span>
-          <span className="text-[9px] text-zinc-400 dark:text-zinc-500">
+          <span className="text-[9px] text-neutral-400 dark:text-neutral-500">
             vs anterior
           </span>
         </div>
@@ -213,8 +213,8 @@ export function HistoricoChart({ demandas }: HistoricoChartProps) {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl p-3">
-          <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 mb-2 pb-2 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-xl p-3">
+          <p className="text-xs font-bold text-neutral-900 dark:text-neutral-100 mb-2 pb-2 border-b border-neutral-100 dark:border-neutral-800">
             {periodoSelecionado === "mes" ? `Dia ${label}` : label}
           </p>
           {payload.map((entry: any, index: number) => (
@@ -224,11 +224,11 @@ export function HistoricoChart({ demandas }: HistoricoChartProps) {
                   className="w-2 h-2 rounded-full" 
                   style={{ backgroundColor: entry.color }}
                 />
-                <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                <span className="text-xs text-neutral-600 dark:text-neutral-400">
                   {entry.name}
                 </span>
               </div>
-              <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+              <span className="text-xs font-bold text-neutral-900 dark:text-neutral-100">
                 {entry.value}
               </span>
             </div>
@@ -240,27 +240,27 @@ export function HistoricoChart({ demandas }: HistoricoChartProps) {
   };
 
   return (
-    <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden rounded-xl">
+    <Card className="border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden rounded-xl">
       {/* Header */}
-      <div className="px-4 md:px-5 py-3 border-b border-zinc-100 dark:border-zinc-800">
+      <div className="px-4 md:px-5 py-3 border-b border-neutral-100 dark:border-neutral-800">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+            <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
               Histórico de Demandas
             </h3>
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+            <p className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-0.5">
               {dadosAtuais.label}
             </p>
           </div>
           
           {/* Seletor de Período */}
-          <div className="inline-flex gap-0.5 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5 w-full sm:w-auto">
+          <div className="inline-flex gap-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg p-0.5 w-full sm:w-auto">
             <button
               onClick={() => setPeriodoSelecionado("mes")}
               className={`h-7 px-3 text-[10px] font-medium rounded-md transition-all flex-1 sm:flex-initial ${
                 periodoSelecionado === "mes"
-                  ? "bg-zinc-600 dark:bg-zinc-400 text-white dark:text-zinc-900 shadow-sm"
-                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  ? "bg-neutral-600 dark:bg-neutral-400 text-white dark:text-neutral-900 shadow-sm"
+                  : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
               }`}
             >
               Mês
@@ -269,8 +269,8 @@ export function HistoricoChart({ demandas }: HistoricoChartProps) {
               onClick={() => setPeriodoSelecionado("ano")}
               className={`h-7 px-3 text-[10px] font-medium rounded-md transition-all flex-1 sm:flex-initial ${
                 periodoSelecionado === "ano"
-                  ? "bg-zinc-600 dark:bg-zinc-400 text-white dark:text-zinc-900 shadow-sm"
-                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  ? "bg-neutral-600 dark:bg-neutral-400 text-white dark:text-neutral-900 shadow-sm"
+                  : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
               }`}
             >
               Ano
@@ -279,8 +279,8 @@ export function HistoricoChart({ demandas }: HistoricoChartProps) {
               onClick={() => setPeriodoSelecionado("geral")}
               className={`h-7 px-3 text-[10px] font-medium rounded-md transition-all flex-1 sm:flex-initial ${
                 periodoSelecionado === "geral"
-                  ? "bg-zinc-600 dark:bg-zinc-400 text-white dark:text-zinc-900 shadow-sm"
-                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  ? "bg-neutral-600 dark:bg-neutral-400 text-white dark:text-neutral-900 shadow-sm"
+                  : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
               }`}
             >
               Geral
@@ -335,7 +335,7 @@ export function HistoricoChart({ demandas }: HistoricoChartProps) {
         </div>
 
         {/* Chart */}
-        <div className="bg-zinc-50/50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800/60 rounded-xl md:rounded-2xl p-3 md:p-6">
+        <div className="bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-100 dark:border-neutral-800/60 rounded-xl md:rounded-2xl p-3 md:p-6">
           <div className="overflow-x-auto">
           <div className="min-w-[500px]">
           <ResponsiveContainer width="100%" height={340}>
@@ -343,7 +343,7 @@ export function HistoricoChart({ demandas }: HistoricoChartProps) {
               <CartesianGrid 
                 strokeDasharray="3 3" 
                 stroke="#e4e4e7" 
-                className="dark:stroke-zinc-800" 
+                className="dark:stroke-neutral-800" 
                 opacity={0.5}
                 vertical={false} 
               />
@@ -353,14 +353,14 @@ export function HistoricoChart({ demandas }: HistoricoChartProps) {
                 tick={{ fill: "#71717a", fontSize: 11, fontWeight: 500 }}
                 tickLine={false}
                 axisLine={{ stroke: "#e4e4e7", strokeWidth: 1 }}
-                className="dark:stroke-zinc-800"
+                className="dark:stroke-neutral-800"
               />
               <YAxis
                 stroke="#a1a1aa"
                 tick={{ fill: "#71717a", fontSize: 11, fontWeight: 500 }}
                 tickLine={false}
                 axisLine={{ stroke: "#e4e4e7", strokeWidth: 1 }}
-                className="dark:stroke-zinc-800"
+                className="dark:stroke-neutral-800"
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend

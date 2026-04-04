@@ -68,7 +68,7 @@ function NotaCard({
 
   return (
     <Card className={cn(
-      "bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/80 rounded-xl overflow-hidden transition-all duration-200",
+      "bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/80 rounded-xl overflow-hidden transition-all duration-200",
       "hover:border-emerald-200/50 dark:hover:border-emerald-800/30",
       nota.fixado && "ring-1 ring-amber-200 dark:ring-amber-800/50"
     )}>
@@ -77,26 +77,26 @@ function NotaCard({
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2.5">
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-medium">
+              <AvatarFallback className="text-[10px] bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 font-medium">
                 {iniciais}
               </AvatarFallback>
             </Avatar>
             <div>
-              <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{autorNome}</span>
+              <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">{autorNome}</span>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[10px] text-zinc-400">{formatTimeAgo(nota.createdAt)}</span>
+                <span className="text-[10px] text-neutral-400">{formatTimeAgo(nota.createdAt)}</span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-1">
             <button
               onClick={() => onPin(nota.id, !nota.fixado)}
-              className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
               title={nota.fixado ? "Desfixar" : "Fixar"}
             >
               {nota.fixado
                 ? <PinOff className="w-3.5 h-3.5 text-amber-500" />
-                : <Pin className="w-3.5 h-3.5 text-zinc-400 hover:text-amber-500" />
+                : <Pin className="w-3.5 h-3.5 text-neutral-400 hover:text-amber-500" />
               }
             </button>
             {isOwner && (
@@ -105,14 +105,14 @@ function NotaCard({
                 className="p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors cursor-pointer"
                 title="Excluir"
               >
-                <Trash2 className="w-3.5 h-3.5 text-zinc-400 hover:text-rose-500" />
+                <Trash2 className="w-3.5 h-3.5 text-neutral-400 hover:text-rose-500" />
               </button>
             )}
           </div>
         </div>
 
         {/* Content */}
-        <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap">
+        <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">
           {nota.mensagem}
         </p>
       </div>
@@ -167,17 +167,17 @@ export default function MuralPage() {
   const currentUserId = notas?.[0]?.autor?.id;
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <MessageSquare className="w-5 h-5 text-white dark:text-zinc-900" />
+            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
+              <MessageSquare className="w-5 h-5 text-white dark:text-neutral-900" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight font-serif">Mural da Equipe</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Notas, avisos e comunicados</p>
+              <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight font-serif">Mural da Equipe</h1>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">Notas, avisos e comunicados</p>
             </div>
           </div>
         </div>
@@ -185,18 +185,18 @@ export default function MuralPage() {
 
       <div className="p-4 md:p-6 space-y-4 max-w-3xl mx-auto">
         {/* Novo Post */}
-        <Card className="bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-4">
+        <Card className="bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-4">
           <div className="flex gap-2">
             <Textarea
               placeholder="O que deseja compartilhar com a equipe?"
               value={novoPost}
               onChange={(e) => setNovoPost(e.target.value)}
               rows={2}
-              className="flex-1 text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 resize-none focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700"
+              className="flex-1 text-sm bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 resize-none focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700"
             />
             <Button
               size="sm"
-              className="h-auto px-3 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-emerald-500 text-white cursor-pointer"
+              className="h-auto px-3 bg-neutral-900 hover:bg-emerald-600 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-emerald-500 text-white cursor-pointer"
               disabled={!novoPost.trim() || criarNota.isPending}
               onClick={() => {
                 if (novoPost.trim()) {
@@ -215,23 +215,23 @@ export default function MuralPage() {
         {/* Loading */}
         {isLoading && (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+            <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
           </div>
         )}
 
         {/* Empty state */}
         {!isLoading && (notas ?? []).length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <StickyNote className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mb-3" />
-            <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Nenhuma nota no mural</p>
-            <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Seja o primeiro a publicar algo para a equipe</p>
+            <StickyNote className="w-10 h-10 text-neutral-300 dark:text-neutral-600 mb-3" />
+            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Nenhuma nota no mural</p>
+            <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">Seja o primeiro a publicar algo para a equipe</p>
           </div>
         )}
 
         {/* Fixados */}
         {pinnedNotas.length > 0 && (
           <div>
-            <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider mb-2">Fixados</p>
+            <p className="text-[10px] font-medium text-neutral-400 uppercase tracking-wider mb-2">Fixados</p>
             <div className="space-y-3">
               {pinnedNotas.map(nota => (
                 <NotaCard
@@ -249,7 +249,7 @@ export default function MuralPage() {
         {/* Recentes */}
         {recentNotas.length > 0 && (
           <div>
-            <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider mb-2">Recentes</p>
+            <p className="text-[10px] font-medium text-neutral-400 uppercase tracking-wider mb-2">Recentes</p>
             <div className="space-y-3">
               {recentNotas.map(nota => (
                 <NotaCard

@@ -34,10 +34,10 @@ export function PreparacaoHub({ sessaoId, sessao }: PreparacaoHubProps) {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="w-full justify-start h-12 bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 p-1 rounded-xl shadow-sm">
+        <TabsList className="w-full justify-start h-12 bg-white dark:bg-neutral-900 border border-stone-200 dark:border-neutral-800 p-1 rounded-xl shadow-sm">
           <TabsTrigger
             value="checklist"
-            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary flex gap-2"
+            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-neutral-800 data-[state=active]:text-primary flex gap-2"
           >
             <CheckSquare className="w-4 h-4" />
             <span className="hidden sm:inline">Checklist</span>
@@ -45,7 +45,7 @@ export function PreparacaoHub({ sessaoId, sessao }: PreparacaoHubProps) {
           </TabsTrigger>
           <TabsTrigger
             value="personagens"
-            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary flex gap-2"
+            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-neutral-800 data-[state=active]:text-primary flex gap-2"
           >
             <Users className="w-4 h-4" />
             <span className="hidden sm:inline">Personagens</span>
@@ -53,7 +53,7 @@ export function PreparacaoHub({ sessaoId, sessao }: PreparacaoHubProps) {
           </TabsTrigger>
           <TabsTrigger
             value="mapa"
-            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary flex gap-2"
+            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-neutral-800 data-[state=active]:text-primary flex gap-2"
           >
             <Map className="w-4 h-4" />
             <span className="hidden sm:inline">Mapa do Caso</span>
@@ -61,7 +61,7 @@ export function PreparacaoHub({ sessaoId, sessao }: PreparacaoHubProps) {
           </TabsTrigger>
           <TabsTrigger
             value="quesitos"
-            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary flex gap-2"
+            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-neutral-800 data-[state=active]:text-primary flex gap-2"
           >
             <ListChecks className="w-4 h-4" />
             <span className="hidden sm:inline">Quesitos</span>
@@ -69,7 +69,7 @@ export function PreparacaoHub({ sessaoId, sessao }: PreparacaoHubProps) {
           </TabsTrigger>
           <TabsTrigger
             value="simulacao"
-            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary flex gap-2"
+            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-neutral-800 data-[state=active]:text-primary flex gap-2"
           >
             <Brain className="w-4 h-4" />
             <span className="hidden sm:inline">Simulacao</span>

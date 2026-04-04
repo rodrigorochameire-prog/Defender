@@ -78,7 +78,7 @@ const SECTION_TYPE_CONFIG: Record<
   alegacoes_defesa: { label: "Alegações (Defesa)", color: "#059669", bgColor: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", icon: BookMarked },
   laudo_necroscopico: { label: "Laudo Necroscópico", color: "#db2777", bgColor: "bg-pink-600/10 text-pink-600 border-pink-600/20", icon: Microscope },
   laudo_local: { label: "Laudo de Local", color: "#c026d3", bgColor: "bg-fuchsia-500/10 text-fuchsia-500 border-fuchsia-500/20", icon: MapPin },
-  outros: { label: "Outros", color: "#71717a", bgColor: "bg-zinc-500/10 text-zinc-500 border-zinc-500/20", icon: HelpCircle },
+  outros: { label: "Outros", color: "#71717a", bgColor: "bg-neutral-500/10 text-neutral-500 border-neutral-500/20", icon: HelpCircle },
 };
 
 function getSectionConfig(tipo: string) {
@@ -258,7 +258,7 @@ export default function SistematizacaoPage({ params }: { params: Promise<{ id: s
   if (processoLoading || sectionsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
       </div>
     );
   }
@@ -284,11 +284,11 @@ export default function SistematizacaoPage({ params }: { params: Promise<{ id: s
           Voltar
         </Button>
         <div className="flex-1">
-          <h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+          <h1 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-violet-500" />
             Sistematização Processual
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
             {processo?.numero || `Processo #${processoId}`}
             {processo?.assistido && ` — ${processo.assistido.nome}`}
           </p>
@@ -306,7 +306,7 @@ export default function SistematizacaoPage({ params }: { params: Promise<{ id: s
       {/* Search + Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="relative flex-1 max-w-sm">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
           <Input
             placeholder="Buscar peças..."
             value={searchQuery}
@@ -314,7 +314,7 @@ export default function SistematizacaoPage({ params }: { params: Promise<{ id: s
             className="pl-9 h-9 text-sm"
           />
         </div>
-        <div className="flex gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1">
+        <div className="flex gap-1 bg-neutral-100 dark:bg-neutral-800 rounded-lg p-1">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             return (
@@ -324,8 +324,8 @@ export default function SistematizacaoPage({ params }: { params: Promise<{ id: s
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
                   activeTab === tab.key
-                    ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    ? "bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 shadow-sm"
+                    : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -404,14 +404,14 @@ function StatCard({
   color: "zinc" | "emerald" | "red" | "amber";
 }) {
   const colorMap = {
-    zinc: "text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50",
+    zinc: "text-neutral-500 bg-neutral-50 dark:bg-neutral-800/50",
     emerald: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20",
     red: "text-red-500 bg-red-50 dark:bg-red-900/20",
     amber: "text-amber-500 bg-amber-50 dark:bg-amber-900/20",
   };
 
   return (
-    <div className={cn("rounded-xl p-4 border border-zinc-200 dark:border-zinc-700", colorMap[color])}>
+    <div className={cn("rounded-xl p-4 border border-neutral-200 dark:border-neutral-700", colorMap[color])}>
       <div className="flex items-center gap-2 mb-1">
         <Icon className="w-4 h-4" />
         <span className="text-[11px] font-medium uppercase tracking-wider opacity-80">{label}</span>
@@ -447,11 +447,11 @@ function ByTypeView({
         const approvedCount = items.filter((s) => s.reviewStatus === "approved").length;
 
         return (
-          <div key={tipo} className="border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
+          <div key={tipo} className="border border-neutral-200 dark:border-neutral-700 rounded-xl overflow-hidden">
             {/* Type header */}
             <button
               onClick={() => setExpandedType(isExpanded ? null : tipo)}
-              className="w-full flex items-center gap-3 px-4 py-3 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
             >
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center"
@@ -460,10 +460,10 @@ function ByTypeView({
                 <Icon className="w-4 h-4" style={{ color: config.color }} />
               </div>
               <div className="flex-1 text-left">
-                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
                   {config.label}
                 </p>
-                <p className="text-[11px] text-zinc-400">
+                <p className="text-[11px] text-neutral-400">
                   {items.length} {items.length === 1 ? "peça" : "peças"}
                   {approvedCount > 0 && (
                     <span className="text-emerald-500 ml-2">
@@ -473,14 +473,14 @@ function ByTypeView({
                 </p>
               </div>
               <ChevronRight className={cn(
-                "w-4 h-4 text-zinc-400 transition-transform",
+                "w-4 h-4 text-neutral-400 transition-transform",
                 isExpanded && "rotate-90"
               )} />
             </button>
 
             {/* Expanded items */}
             {isExpanded && (
-              <div className="border-t border-zinc-100 dark:border-zinc-800">
+              <div className="border-t border-neutral-100 dark:border-neutral-800">
                 {items.map((section) => (
                   <SectionRow key={section.id} section={section} processoId={processoId} onCompare={onCompare} />
                 ))}
@@ -500,20 +500,20 @@ function SectionRow({ section, processoId, onCompare }: { section: any; processo
   const [showFicha, setShowFicha] = useState(false);
 
   return (
-    <div className="border-b border-zinc-100 dark:border-zinc-800 last:border-b-0">
-      <div className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors">
+    <div className="border-b border-neutral-100 dark:border-neutral-800 last:border-b-0">
+      <div className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors">
         {statusBadge}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+          <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">
             {section.titulo}
           </p>
           {section.resumo && (
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-2 mt-0.5">
+            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 line-clamp-2 mt-0.5">
               {section.resumo}
             </p>
           )}
           <div className="flex items-center gap-3 mt-1">
-            <span className="text-[10px] text-zinc-400 font-mono">
+            <span className="text-[10px] text-neutral-400 font-mono">
               pg {section.paginaInicio}-{section.paginaFim}
             </span>
             {section.confianca != null && (
@@ -526,7 +526,7 @@ function SectionRow({ section, processoId, onCompare }: { section: any; processo
                 {section.confianca}% confiança
               </span>
             )}
-            <span className="text-[10px] text-zinc-400">
+            <span className="text-[10px] text-neutral-400">
               {section.fileName}
             </span>
           </div>
@@ -573,7 +573,7 @@ function SectionRow({ section, processoId, onCompare }: { section: any; processo
                   <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 flex-shrink-0 min-w-[100px]">
                     {displayKey}:
                   </span>
-                  <span className="text-[10px] text-zinc-700 dark:text-zinc-300">
+                  <span className="text-[10px] text-neutral-700 dark:text-neutral-300">
                     {Array.isArray(value)
                       ? (value as string[]).join(", ")
                       : typeof value === "object" && value !== null
@@ -630,14 +630,14 @@ function CronologiaView({
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1">
+        <div className="flex gap-1 bg-neutral-100 dark:bg-neutral-800 rounded-lg p-1">
           <button
             onClick={() => setTimelineMode("cronologico")}
             className={cn(
               "px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5",
               timelineMode === "cronologico"
-                ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
-                : "text-zinc-500 hover:text-zinc-700"
+                ? "bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 shadow-sm"
+                : "text-neutral-500 hover:text-neutral-700"
             )}
           >
             <Calendar className="w-3.5 h-3.5" />
@@ -648,8 +648,8 @@ function CronologiaView({
             className={cn(
               "px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5",
               timelineMode === "por_pessoa"
-                ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
-                : "text-zinc-500 hover:text-zinc-700"
+                ? "bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 shadow-sm"
+                : "text-neutral-500 hover:text-neutral-700"
             )}
           >
             <Users className="w-3.5 h-3.5" />
@@ -670,8 +670,8 @@ function CronologiaView({
               className={cn(
                 "px-2.5 py-1 rounded-full text-[10px] font-medium transition-all border",
                 faseFilter === "todos"
-                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-transparent"
-                  : "bg-transparent text-zinc-500 border-zinc-300 dark:border-zinc-600 hover:border-zinc-400"
+                  ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 border-transparent"
+                  : "bg-transparent text-neutral-500 border-neutral-300 dark:border-neutral-600 hover:border-neutral-400"
               )}
             >
               Todos
@@ -684,7 +684,7 @@ function CronologiaView({
                   "px-2.5 py-1 rounded-full text-[10px] font-medium transition-all border",
                   faseFilter === key
                     ? cn(color, "border-transparent")
-                    : "bg-transparent text-zinc-500 border-zinc-300 dark:border-zinc-600 hover:border-zinc-400"
+                    : "bg-transparent text-neutral-500 border-neutral-300 dark:border-neutral-600 hover:border-neutral-400"
                 )}
               >
                 {label}
@@ -697,7 +697,7 @@ function CronologiaView({
       {/* Cronológico mode */}
       {timelineMode === "cronologico" && (
         <div className="relative">
-          <div className="absolute left-6 top-0 bottom-0 w-px bg-zinc-200 dark:bg-zinc-700" />
+          <div className="absolute left-6 top-0 bottom-0 w-px bg-neutral-200 dark:bg-neutral-700" />
           <div className="space-y-0">
             {filteredCronologia.map((event, idx) => {
               const config = getSectionConfig(event.section.tipo);
@@ -709,12 +709,12 @@ function CronologiaView({
               return (
                 <div key={`${event.section.id}-${idx}`} className="relative flex items-start gap-4 py-3 pl-2">
                   <div
-                    className="relative z-10 w-9 h-9 rounded-full flex items-center justify-center border-2 border-white dark:border-zinc-900 shadow-sm"
+                    className="relative z-10 w-9 h-9 rounded-full flex items-center justify-center border-2 border-white dark:border-neutral-900 shadow-sm"
                     style={{ backgroundColor: `${config.color}20` }}
                   >
                     <Icon className="w-4 h-4" style={{ color: config.color }} />
                   </div>
-                  <div className="flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 hover:shadow-sm transition-shadow">
+                  <div className="flex-1 min-w-0 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl p-3 hover:shadow-sm transition-shadow">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <Badge variant="outline" className="text-[9px] font-mono">
                         {event.date}
@@ -728,16 +728,16 @@ function CronologiaView({
                         </span>
                       )}
                     </div>
-                    <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                    <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
                       {event.section.titulo}
                     </p>
                     {event.descricao && (
-                      <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5">
+                      <p className="text-[11px] text-neutral-600 dark:text-neutral-400 mt-0.5">
                         {event.descricao}
                       </p>
                     )}
                     {event.section.resumo && !event.descricao && (
-                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">
+                      <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-2">
                         {event.section.resumo}
                       </p>
                     )}
@@ -763,7 +763,7 @@ function CronologiaView({
                         ))}
                       </div>
                     )}
-                    <span className="text-[9px] text-zinc-400 mt-1 block">
+                    <span className="text-[9px] text-neutral-400 mt-1 block">
                       {event.section.fileName} · pg {event.section.paginaInicio}-{event.section.paginaFim}
                       {event.fonte && ` · Fonte: ${event.fonte}`}
                     </span>
@@ -804,16 +804,16 @@ function CronologiaView({
               const hasMultiplePhases = new Set(sorted.map(s => s.metadata?.fase).filter(Boolean)).size > 1;
 
               return (
-                <div key={personName} className="border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
-                  <div className="px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 flex items-center gap-3">
+                <div key={personName} className="border border-neutral-200 dark:border-neutral-700 rounded-xl overflow-hidden">
+                  <div className="px-4 py-3 bg-neutral-50 dark:bg-neutral-800/50 flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                       <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 capitalize">
+                      <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 capitalize">
                         {personName}
                       </p>
-                      <p className="text-[10px] text-zinc-500">
+                      <p className="text-[10px] text-neutral-500">
                         {personRole?.papel && <span className="capitalize">{personRole.papel}</span>}
                         {personRole?.descricao && ` — ${personRole.descricao}`}
                         {" · "}{sorted.length} {sorted.length === 1 ? "aparição" : "aparições"}
@@ -823,7 +823,7 @@ function CronologiaView({
                       </p>
                     </div>
                   </div>
-                  <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
                     {sorted.map((section) => {
                       const config = getSectionConfig(section.tipo);
                       const fase = section.metadata?.fase;
@@ -831,7 +831,7 @@ function CronologiaView({
                       const contradicoes = section.metadata?.contradicoes || [];
 
                       return (
-                        <div key={section.id} className="px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors">
+                        <div key={section.id} className="px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
                             {faseLabel && (
                               <span className={cn("text-[9px] font-medium px-1.5 py-0.5 rounded-full", faseLabel.color)}>
@@ -842,16 +842,16 @@ function CronologiaView({
                               {config.label}
                             </span>
                             {section.confianca != null && (
-                              <span className="text-[9px] font-mono text-zinc-400">
+                              <span className="text-[9px] font-mono text-neutral-400">
                                 {section.confianca}%
                               </span>
                             )}
                           </div>
-                          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                          <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
                             {section.titulo}
                           </p>
                           {section.resumo && (
-                            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 line-clamp-2">
+                            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-2">
                               {section.resumo}
                             </p>
                           )}
@@ -865,7 +865,7 @@ function CronologiaView({
                               ))}
                             </div>
                           )}
-                          <span className="text-[9px] text-zinc-400 mt-1 block">
+                          <span className="text-[9px] text-neutral-400 mt-1 block">
                             {section.fileName} · pg {section.paginaInicio}-{section.paginaFim}
                           </span>
                         </div>
@@ -902,8 +902,8 @@ function ContradicoesView({
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/10 flex items-center justify-center mx-auto mb-4">
           <AlertTriangle className="w-7 h-7 text-amber-400" />
         </div>
-        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Nenhuma contradição identificada</p>
-        <p className="text-xs text-zinc-400 mt-1 max-w-sm mx-auto">
+        <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">Nenhuma contradição identificada</p>
+        <p className="text-xs text-neutral-400 mt-1 max-w-sm mx-auto">
           A análise comparativa será gerada automaticamente quando houver seções aprovadas suficientes
           (depoimentos, laudos, etc.)
         </p>
@@ -925,7 +925,7 @@ function ContradicoesView({
         >
           <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm text-zinc-800 dark:text-zinc-200">{item}</p>
+            <p className="text-sm text-neutral-800 dark:text-neutral-200">{item}</p>
           </div>
         </div>
       ))}
@@ -937,9 +937,9 @@ function ContradicoesView({
         >
           <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{fact.descricao}</p>
+            <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{fact.descricao}</p>
             {fact.fonte && (
-              <span className="text-[10px] text-zinc-500 mt-1 block">Fonte: {fact.fonte}</span>
+              <span className="text-[10px] text-neutral-500 mt-1 block">Fonte: {fact.fonte}</span>
             )}
             {fact.confianca && (
               <Badge variant="outline" className="mt-1 text-[9px]">
@@ -971,8 +971,8 @@ function TesesView({
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/20 dark:to-violet-800/10 flex items-center justify-center mx-auto mb-4">
           <Sparkles className="w-7 h-7 text-violet-400" />
         </div>
-        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Nenhuma tese sugerida</p>
-        <p className="text-xs text-zinc-400 mt-1 max-w-sm mx-auto">
+        <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">Nenhuma tese sugerida</p>
+        <p className="text-xs text-neutral-400 mt-1 max-w-sm mx-auto">
           As teses de defesa são sugeridas pela IA após consolidar a análise de todas as peças aprovadas
         </p>
       </div>
@@ -987,7 +987,7 @@ function TesesView({
           className="flex items-start gap-3 p-4 border border-violet-200 dark:border-violet-800/40 bg-violet-50/50 dark:bg-violet-900/10 rounded-xl"
         >
           <Sparkles className="w-5 h-5 text-violet-500 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-zinc-800 dark:text-zinc-200">{rec}</p>
+          <p className="text-sm text-neutral-800 dark:text-neutral-200">{rec}</p>
         </div>
       ))}
 
@@ -1015,14 +1015,14 @@ function TesesView({
                 {fact.tipo === "nulidade" ? "Nulidade" : "Tese"}
               </Badge>
               {fact.confianca && (
-                <span className="text-[9px] font-mono text-zinc-500">
+                <span className="text-[9px] font-mono text-neutral-500">
                   {fact.confianca}% confiança
                 </span>
               )}
             </div>
-            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mt-1">{fact.descricao}</p>
+            <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 mt-1">{fact.descricao}</p>
             {fact.fonte && (
-              <span className="text-[10px] text-zinc-500 mt-1 block">Fonte: {fact.fonte}</span>
+              <span className="text-[10px] text-neutral-500 mt-1 block">Fonte: {fact.fonte}</span>
             )}
           </div>
         </div>
@@ -1055,8 +1055,8 @@ function getStatusBadge(status: string) {
       );
     default:
       return (
-        <div className="w-6 h-6 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
-          <Clock className="w-3.5 h-3.5 text-zinc-400" />
+        <div className="w-6 h-6 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center flex-shrink-0">
+          <Clock className="w-3.5 h-3.5 text-neutral-400" />
         </div>
       );
   }
@@ -1065,10 +1065,10 @@ function getStatusBadge(status: string) {
 function EmptyState({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-3">
-        <FileText className="w-6 h-6 text-zinc-400" />
+      <div className="w-14 h-14 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-3">
+        <FileText className="w-6 h-6 text-neutral-400" />
       </div>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">{message}</p>
+      <p className="text-sm text-neutral-500 dark:text-neutral-400">{message}</p>
     </div>
   );
 }

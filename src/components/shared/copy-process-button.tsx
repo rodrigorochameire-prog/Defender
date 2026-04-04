@@ -26,13 +26,13 @@ export function CopyProcessButton({ processo }: CopyProcessButtonProps) {
     <Button
       variant="ghost"
       size="sm"
-      className="h-5 w-5 p-0 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex-shrink-0"
+      className="h-5 w-5 p-0 hover:bg-neutral-100 dark:hover:bg-neutral-700 flex-shrink-0"
       onClick={handleCopy}
     >
       {copied ? (
         <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
       ) : (
-        <Copy className="h-3 w-3 text-zinc-400 dark:text-zinc-500" />
+        <Copy className="h-3 w-3 text-neutral-400 dark:text-neutral-500" />
       )}
     </Button>
   );

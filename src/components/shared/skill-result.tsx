@@ -14,7 +14,7 @@ interface SkillResultProps {
 
 export function SkillResult({ skillName, type, route, delegateUrl }: SkillResultProps) {
   return (
-    <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 p-2.5 space-y-1.5 mt-1">
+    <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 p-2.5 space-y-1.5 mt-1">
       <div className="flex items-center gap-2">
         <Badge variant="default" className="text-xs">{skillName}</Badge>
       </div>

@@ -87,7 +87,7 @@ export function PremiumStatsCard({
         "border border-border",
         // Hover effects - combina clean + efeitos
         "transition-all duration-300 ease-out",
-        "hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-black/20",
+        "hover:shadow-xl hover:shadow-neutral-200/50 dark:hover:shadow-black/20",
         "hover:-translate-y-0.5",
         styles.hoverAccent,
         // Cursor

@@ -32,11 +32,11 @@ export default function RegisterPage() {
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight">
             OMBUDS
           </h1>
-          <p className="text-xs font-light tracking-[0.25em] uppercase text-zinc-500 mb-8">
+          <p className="text-xs font-light tracking-[0.25em] uppercase text-neutral-500 mb-8">
             Gestão para Defesa Criminal
           </p>
           
-          <p className="text-zinc-400 text-lg leading-relaxed">
+          <p className="text-neutral-400 text-lg leading-relaxed">
             Crie sua conta para ter acesso completo ao sistema de gestão da Defensoria.
           </p>
           
@@ -45,19 +45,19 @@ export default function RegisterPage() {
               <div className="w-8 h-8 rounded-lg bg-teal-500/20 flex items-center justify-center">
                 <span className="text-teal-400 text-sm font-bold">1</span>
               </div>
-              <span className="text-zinc-400 text-sm">Crie sua conta com email</span>
+              <span className="text-neutral-400 text-sm">Crie sua conta com email</span>
             </div>
             <div className="flex items-center gap-3 text-left">
               <div className="w-8 h-8 rounded-lg bg-teal-500/20 flex items-center justify-center">
                 <span className="text-teal-400 text-sm font-bold">2</span>
               </div>
-              <span className="text-zinc-400 text-sm">Aguarde aprovação do administrador</span>
+              <span className="text-neutral-400 text-sm">Aguarde aprovação do administrador</span>
             </div>
             <div className="flex items-center gap-3 text-left">
               <div className="w-8 h-8 rounded-lg bg-teal-500/20 flex items-center justify-center">
                 <span className="text-teal-400 text-sm font-bold">3</span>
               </div>
-              <span className="text-zinc-400 text-sm">Acesse o sistema completo</span>
+              <span className="text-neutral-400 text-sm">Acesse o sistema completo</span>
             </div>
           </div>
         </div>
@@ -74,7 +74,7 @@ export default function RegisterPage() {
               </div>
             </div>
             <h1 className="text-2xl font-bold text-white tracking-tight">OMBUDS</h1>
-            <p className="text-[10px] font-light tracking-[0.2em] uppercase text-zinc-500 mt-1">
+            <p className="text-[10px] font-light tracking-[0.2em] uppercase text-neutral-500 mt-1">
               Gestão para Defesa Criminal
             </p>
           </div>
@@ -84,7 +84,7 @@ export default function RegisterPage() {
             <h2 className="text-2xl font-semibold text-white mb-2">
               Criar Conta
             </h2>
-            <p className="text-zinc-500 text-sm">
+            <p className="text-neutral-500 text-sm">
               Preencha os dados abaixo para solicitar acesso
             </p>
           </div>
@@ -94,7 +94,7 @@ export default function RegisterPage() {
             <RegisterForm />
 
             {/* Link para Login */}
-            <div className="mt-6 text-center text-sm text-zinc-500">
+            <div className="mt-6 text-center text-sm text-neutral-500">
               Já tem uma conta?{" "}
               <Link
                 href="/login"

@@ -40,8 +40,8 @@ export function RadarAssistidoCard({ assistidoId }: RadarAssistidoCardProps) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
-          <span className="ml-2 text-sm text-zinc-500">Carregando radar...</span>
+          <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
+          <span className="ml-2 text-sm text-neutral-500">Carregando radar...</span>
         </CardContent>
       </Card>
     );
@@ -57,7 +57,7 @@ export function RadarAssistidoCard({ assistidoId }: RadarAssistidoCardProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-6 text-zinc-400">
+          <div className="text-center py-6 text-neutral-400">
             <Radio className="h-8 w-8 mx-auto mb-2 opacity-30" />
             <p className="text-sm">Nenhuma menção encontrada no radar criminal</p>
             <p className="text-xs mt-1">O sistema monitora notícias policiais automaticamente</p>
@@ -102,7 +102,7 @@ export function RadarAssistidoCard({ assistidoId }: RadarAssistidoCardProps) {
             </span>
           )}
           {dismissed.length > 0 && (
-            <span className="text-xs text-zinc-400 flex items-center gap-1">
+            <span className="text-xs text-neutral-400 flex items-center gap-1">
               <XCircle className="h-3 w-3" /> {dismissed.length} descartado{dismissed.length !== 1 ? "s" : ""}
             </span>
           )}
@@ -112,12 +112,12 @@ export function RadarAssistidoCard({ assistidoId }: RadarAssistidoCardProps) {
         {matches
           .filter((m) => m.status !== "descartado")
           .map((match) => (
-            <div key={match.id} className="border border-zinc-100 dark:border-zinc-800 rounded-lg overflow-hidden">
+            <div key={match.id} className="border border-neutral-100 dark:border-neutral-800 rounded-lg overflow-hidden">
               {/* Thumbnail + info */}
               <div className="flex gap-0">
                 {/* Thumbnail se disponível */}
                 {match.noticiaImagemUrl && (
-                  <div className="w-20 h-20 shrink-0 overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                  <div className="w-20 h-20 shrink-0 overflow-hidden bg-neutral-100 dark:bg-neutral-800">
                     <img
                       src={match.noticiaImagemUrl}
                       alt=""
@@ -136,7 +136,7 @@ export function RadarAssistidoCard({ assistidoId }: RadarAssistidoCardProps) {
                           ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                           : match.scoreConfianca >= 50
                           ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                          : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                          : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
                       )}
                     >
                       {match.scoreConfianca}%
@@ -167,11 +167,11 @@ export function RadarAssistidoCard({ assistidoId }: RadarAssistidoCardProps) {
 
                   {/* Resumo */}
                   {match.noticiaResumo && (
-                    <p className="text-xs text-zinc-500 line-clamp-2 mt-0.5">{match.noticiaResumo}</p>
+                    <p className="text-xs text-neutral-500 line-clamp-2 mt-0.5">{match.noticiaResumo}</p>
                   )}
 
                   {/* Meta */}
-                  <div className="flex items-center gap-2 text-[10px] text-zinc-400 flex-wrap">
+                  <div className="flex items-center gap-2 text-[10px] text-neutral-400 flex-wrap">
                     {match.noticiaFonte && <span>{match.noticiaFonte}</span>}
                     {match.noticiaBairro && (
                       <>
@@ -188,16 +188,16 @@ export function RadarAssistidoCard({ assistidoId }: RadarAssistidoCardProps) {
                   </div>
 
                   {/* Nome na notícia */}
-                  <div className="text-[10px] text-zinc-400">
+                  <div className="text-[10px] text-neutral-400">
                     Mencionado como:{" "}
-                    <span className="font-medium text-zinc-600 dark:text-zinc-300">{match.nomeEncontrado}</span>
+                    <span className="font-medium text-neutral-600 dark:text-neutral-300">{match.nomeEncontrado}</span>
                   </div>
                 </div>
               </div>
 
               {/* Actions — só se possível */}
               {match.status === "possivel" && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-100 dark:border-zinc-800">
+                <div className="flex items-center gap-2 px-3 py-2 bg-neutral-50 dark:bg-neutral-900/50 border-t border-neutral-100 dark:border-neutral-800">
                   <Button
                     size="sm"
                     variant="outline"
@@ -210,7 +210,7 @@ export function RadarAssistidoCard({ assistidoId }: RadarAssistidoCardProps) {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-7 text-xs text-zinc-400 hover:text-red-500 cursor-pointer"
+                    className="h-7 text-xs text-neutral-400 hover:text-red-500 cursor-pointer"
                     onClick={() => dismissMutation.mutate({ id: match.id })}
                     disabled={dismissMutation.isPending}
                   >
@@ -221,7 +221,7 @@ export function RadarAssistidoCard({ assistidoId }: RadarAssistidoCardProps) {
                       href={match.noticiaUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="ml-auto text-xs text-zinc-400 hover:text-zinc-600 flex items-center gap-1"
+                      className="ml-auto text-xs text-neutral-400 hover:text-neutral-600 flex items-center gap-1"
                     >
                       <ExternalLink className="h-3 w-3" /> Fonte
                     </a>
@@ -231,7 +231,7 @@ export function RadarAssistidoCard({ assistidoId }: RadarAssistidoCardProps) {
 
               {/* Link para notícia confirmada */}
               {(match.status === "confirmado_manual" || match.status === "auto_confirmado") && match.noticiaUrl && (
-                <div className="flex items-center px-3 py-2 bg-emerald-50/50 dark:bg-emerald-900/10 border-t border-zinc-100 dark:border-zinc-800">
+                <div className="flex items-center px-3 py-2 bg-emerald-50/50 dark:bg-emerald-900/10 border-t border-neutral-100 dark:border-neutral-800">
                   <a
                     href={match.noticiaUrl}
                     target="_blank"

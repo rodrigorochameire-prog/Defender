@@ -42,7 +42,7 @@ const DATE_OPTIONS = [
 const ENRICHMENT_OPTIONS = [
   { value: "completed", label: "Extraido", dotClass: "bg-emerald-500" },
   { value: "processing", label: "Processando", dotClass: "bg-amber-500" },
-  { value: "pending", label: "Pendente", dotClass: "bg-zinc-500" },
+  { value: "pending", label: "Pendente", dotClass: "bg-neutral-500" },
   { value: "failed", label: "Falhou", dotClass: "bg-red-500" },
 ] as const;
 
@@ -105,7 +105,7 @@ export function DriveFilters() {
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <Filter className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
+      <Filter className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500 shrink-0" />
 
       {/* Type Filter */}
       <Popover>
@@ -114,8 +114,8 @@ export function DriveFilters() {
             variant="ghost"
             size="sm"
             className={cn(
-              "h-7 px-2.5 text-xs rounded-lg border border-zinc-200 dark:border-zinc-700/50",
-              "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50",
+              "h-7 px-2.5 text-xs rounded-lg border border-neutral-200 dark:border-neutral-700/50",
+              "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800/50",
               filters.type && "border-emerald-300 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
             )}
           >
@@ -125,7 +125,7 @@ export function DriveFilters() {
         </PopoverTrigger>
         <PopoverContent
           align="start"
-          className="w-44 p-1 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700"
+          className="w-44 p-1 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700"
         >
           {TYPE_OPTIONS.map((opt) => {
             const Icon = opt.icon;
@@ -140,7 +140,7 @@ export function DriveFilters() {
                   "flex items-center gap-2 w-full px-3 py-1.5 text-sm rounded-md transition-colors duration-150",
                   isActive
                     ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -158,8 +158,8 @@ export function DriveFilters() {
             variant="ghost"
             size="sm"
             className={cn(
-              "h-7 px-2.5 text-xs rounded-lg border border-zinc-200 dark:border-zinc-700/50",
-              "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50",
+              "h-7 px-2.5 text-xs rounded-lg border border-neutral-200 dark:border-neutral-700/50",
+              "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800/50",
               filters.dateRange && "border-emerald-300 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
             )}
           >
@@ -170,7 +170,7 @@ export function DriveFilters() {
         </PopoverTrigger>
         <PopoverContent
           align="start"
-          className="w-40 p-1 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700"
+          className="w-40 p-1 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700"
         >
           {DATE_OPTIONS.map((opt) => {
             const isActive = filters.dateRange === opt.value;
@@ -182,7 +182,7 @@ export function DriveFilters() {
                   "flex items-center gap-2 w-full px-3 py-1.5 text-sm rounded-md transition-colors duration-150",
                   isActive
                     ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 )}
               >
                 {isActive && (
@@ -202,8 +202,8 @@ export function DriveFilters() {
             variant="ghost"
             size="sm"
             className={cn(
-              "h-7 px-2.5 text-xs rounded-lg border border-zinc-200 dark:border-zinc-700/50",
-              "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50",
+              "h-7 px-2.5 text-xs rounded-lg border border-neutral-200 dark:border-neutral-700/50",
+              "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800/50",
               filters.enrichmentStatus &&
                 "border-emerald-300 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
             )}
@@ -215,7 +215,7 @@ export function DriveFilters() {
         </PopoverTrigger>
         <PopoverContent
           align="start"
-          className="w-44 p-1 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700"
+          className="w-44 p-1 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700"
         >
           {ENRICHMENT_OPTIONS.map((opt) => {
             const isActive = filters.enrichmentStatus === opt.value;
@@ -231,7 +231,7 @@ export function DriveFilters() {
                   "flex items-center gap-2 w-full px-3 py-1.5 text-sm rounded-md transition-colors duration-150",
                   isActive
                     ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 )}
               >
                 <span
@@ -257,7 +257,7 @@ export function DriveFilters() {
       {hasActiveFilters && (
         <button
           onClick={clearAll}
-          className="text-[11px] text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors underline underline-offset-2"
+          className="text-[11px] text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 transition-colors underline underline-offset-2"
         >
           Limpar filtros
         </button>

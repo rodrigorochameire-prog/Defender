@@ -861,7 +861,7 @@ export default function DashboardJuriPage() {
                             "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium whitespace-nowrap transition-all duration-200 cursor-pointer",
                             isActive
                               ? opt.value === "all"
-                                ? "bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900 shadow-sm"
+                                ? "bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 shadow-sm"
                                 : cn(colors.bg, colors.text, "ring-1 ring-current/15")
                               : "text-muted-foreground hover:text-foreground/80 hover:bg-muted"
                           )}

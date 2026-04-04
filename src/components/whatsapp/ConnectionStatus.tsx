@@ -241,7 +241,7 @@ export function ConnectionStatus({ configId }: ConnectionStatusProps) {
                 {qrCodeData.pairingCode && (
                   <div className="w-full text-center">
                     <p className="text-xs text-muted-foreground mb-1">Ou use o codigo de vinculacao:</p>
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-100 dark:bg-muted font-mono text-xl font-bold tracking-[0.3em] text-zinc-900 dark:text-foreground">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-neutral-100 dark:bg-muted font-mono text-xl font-bold tracking-[0.3em] text-neutral-900 dark:text-foreground">
                       {qrCodeData.pairingCode}
                     </div>
                     <p className="text-[10px] text-muted-foreground mt-1">

@@ -225,7 +225,7 @@ const categoriasAnotacoes = [
   { id: "frase_impacto", label: "Frase de Impacto", icon: <Quote className="w-3 h-3" />, color: "text-purple-600" },
   { id: "jurado_reacao", label: "Reação Jurado", icon: <Users className="w-3 h-3" />, color: "text-blue-600" },
   { id: "testemunha", label: "Testemunha", icon: <Mic className="w-3 h-3" />, color: "text-indigo-600" },
-  { id: "geral", label: "Geral", icon: <PenLine className="w-3 h-3" />, color: "text-zinc-600" },
+  { id: "geral", label: "Geral", icon: <PenLine className="w-3 h-3" />, color: "text-neutral-600" },
 ];
 
 // ============================================
@@ -259,7 +259,7 @@ function getPerfilColor(perfil: string | undefined) {
     impulsivo: "bg-amber-100 text-amber-700 border-amber-200",
     conservador: "bg-slate-100 text-slate-700 border-slate-200",
   };
-  return cores[perfil || ""] || "bg-zinc-100 text-zinc-700 border-zinc-200";
+  return cores[perfil || ""] || "bg-neutral-100 text-neutral-700 border-neutral-200";
 }
 
 function getTendenciaColor(taxa: number) {
@@ -294,7 +294,7 @@ function JuradoCardExpandivel({
     return (
       <div className="p-2 rounded-lg border border-dashed opacity-50 flex items-center gap-2">
         <Avatar className="h-7 w-7 grayscale">
-          <AvatarFallback className="text-[10px] bg-zinc-200 text-zinc-500">
+          <AvatarFallback className="text-[10px] bg-neutral-200 text-neutral-500">
             {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
           </AvatarFallback>
         </Avatar>
@@ -341,8 +341,8 @@ function JuradoCardExpandivel({
         isSelecionado
           ? "border-violet-400 bg-violet-50 dark:bg-violet-950/30 ring-2 ring-violet-300"
           : isDarkMode
-            ? "border-zinc-800 bg-zinc-900 hover:border-zinc-700"
-            : "border-zinc-200 bg-white hover:border-zinc-300"
+            ? "border-neutral-800 bg-neutral-900 hover:border-neutral-700"
+            : "border-neutral-200 bg-white hover:border-neutral-300"
       )}
     >
       {/* Header clicável para selecionar */}
@@ -354,14 +354,14 @@ function JuradoCardExpandivel({
           {/* Avatar neutro (a menos que tenha foto) */}
           <Avatar className="h-8 w-8">
             {jurado.foto && <AvatarImage src={jurado.foto} />}
-            <AvatarFallback className="text-[10px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+            <AvatarFallback className="text-[10px] font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
               {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1">
               {/* Nome sem link direto - evita cliques acidentais */}
-              <p className={cn("text-[11px] font-semibold truncate", isDarkMode ? "text-zinc-200" : "text-zinc-800")}>
+              <p className={cn("text-[11px] font-semibold truncate", isDarkMode ? "text-neutral-200" : "text-neutral-800")}>
                 {jurado.nome.split(" ").slice(0, 2).join(" ")}
               </p>
               {/* Badge Titular/Suplente */}
@@ -370,7 +370,7 @@ function JuradoCardExpandivel({
                   "text-[8px] font-semibold px-1 py-0.5 rounded uppercase",
                   jurado.tipoJurado === "titular" 
                     ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
-                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                    : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400"
                 )}>
                   {jurado.tipoJurado === "titular" ? "T" : "S"}
                 </span>
@@ -380,7 +380,7 @@ function JuradoCardExpandivel({
               </span>
             </div>
             <div className="flex items-center gap-1 mt-0.5">
-              <span className="text-[9px] text-zinc-500">{jurado.profissao}</span>
+              <span className="text-[9px] text-neutral-500">{jurado.profissao}</span>
               <span className={cn("text-[9px] px-1 py-0.5 rounded border", getPerfilColor(jurado.perfilDominante))}>
                 {getPerfilLabel(jurado.perfilDominante)}
               </span>
@@ -393,9 +393,9 @@ function JuradoCardExpandivel({
                 <Link
                   href={`/admin/juri/jurados/${jurado.id}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="p-1.5 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                  className="p-1.5 rounded bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700"
                 >
-                  <Eye className="w-3 h-3 text-zinc-500" />
+                  <Eye className="w-3 h-3 text-neutral-500" />
                 </Link>
               </TooltipTrigger>
               <TooltipContent side="top" className="text-[10px]">Ver perfil completo</TooltipContent>
@@ -405,7 +405,7 @@ function JuradoCardExpandivel({
                 e.stopPropagation();
                 setExpanded(!expanded);
               }}
-              className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800"
             >
               {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
@@ -417,47 +417,47 @@ function JuradoCardExpandivel({
       {expanded && (
         <div className={cn(
           "px-2 pb-2 border-t text-[10px]",
-          isDarkMode ? "border-zinc-800" : "border-zinc-100"
+          isDarkMode ? "border-neutral-800" : "border-neutral-100"
         )}>
           {/* Dados básicos */}
           <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2">
             <div className="flex items-center gap-1">
-              <Calendar className="w-3 h-3 text-zinc-400" />
-              <span className="text-zinc-500">Idade:</span>
-              <span className={isDarkMode ? "text-zinc-300" : "text-zinc-700"}>{jurado.idade} anos</span>
+              <Calendar className="w-3 h-3 text-neutral-400" />
+              <span className="text-neutral-500">Idade:</span>
+              <span className={isDarkMode ? "text-neutral-300" : "text-neutral-700"}>{jurado.idade} anos</span>
             </div>
             <div className="flex items-center gap-1">
-              <Briefcase className="w-3 h-3 text-zinc-400" />
-              <span className="text-zinc-500">Bairro:</span>
-              <span className={isDarkMode ? "text-zinc-300" : "text-zinc-700"}>{jurado.bairro}</span>
+              <Briefcase className="w-3 h-3 text-neutral-400" />
+              <span className="text-neutral-500">Bairro:</span>
+              <span className={isDarkMode ? "text-neutral-300" : "text-neutral-700"}>{jurado.bairro}</span>
             </div>
             <div className="flex items-center gap-1">
-              <Heart className="w-3 h-3 text-zinc-400" />
-              <span className="text-zinc-500">Estado:</span>
-              <span className={isDarkMode ? "text-zinc-300" : "text-zinc-700"}>{jurado.estadoCivil || "-"}</span>
+              <Heart className="w-3 h-3 text-neutral-400" />
+              <span className="text-neutral-500">Estado:</span>
+              <span className={isDarkMode ? "text-neutral-300" : "text-neutral-700"}>{jurado.estadoCivil || "-"}</span>
             </div>
             <div className="flex items-center gap-1">
-              <GraduationCap className="w-3 h-3 text-zinc-400" />
-              <span className="text-zinc-500">Escolar:</span>
-              <span className={isDarkMode ? "text-zinc-300" : "text-zinc-700"}>{jurado.escolaridade || "-"}</span>
+              <GraduationCap className="w-3 h-3 text-neutral-400" />
+              <span className="text-neutral-500">Escolar:</span>
+              <span className={isDarkMode ? "text-neutral-300" : "text-neutral-700"}>{jurado.escolaridade || "-"}</span>
             </div>
             <div className="flex items-center gap-1">
-              <Church className="w-3 h-3 text-zinc-400" />
-              <span className="text-zinc-500">Religião:</span>
-              <span className={isDarkMode ? "text-zinc-300" : "text-zinc-700"}>{jurado.religiao || "-"}</span>
+              <Church className="w-3 h-3 text-neutral-400" />
+              <span className="text-neutral-500">Religião:</span>
+              <span className={isDarkMode ? "text-neutral-300" : "text-neutral-700"}>{jurado.religiao || "-"}</span>
             </div>
             <div className="flex items-center gap-1">
-              <History className="w-3 h-3 text-zinc-400" />
-              <span className="text-zinc-500">Sessões:</span>
-              <span className={isDarkMode ? "text-zinc-300" : "text-zinc-700"}>{jurado.participacoes}</span>
+              <History className="w-3 h-3 text-neutral-400" />
+              <span className="text-neutral-500">Sessões:</span>
+              <span className={isDarkMode ? "text-neutral-300" : "text-neutral-700"}>{jurado.participacoes}</span>
             </div>
           </div>
 
           {/* Último voto */}
           {jurado.ultimoVoto && (
             <div className="mt-2 flex items-center gap-1">
-              <Vote className="w-3 h-3 text-zinc-400" />
-              <span className="text-zinc-500">Último voto:</span>
+              <Vote className="w-3 h-3 text-neutral-400" />
+              <span className="text-neutral-500">Último voto:</span>
               <Badge variant="outline" className={cn(
                 "text-[9px] px-1",
                 jurado.ultimoVoto === "absolvicao" ? "text-emerald-600 border-emerald-300" : "text-rose-600 border-rose-300"
@@ -474,7 +474,7 @@ function JuradoCardExpandivel({
                 <Info className="w-3 h-3 text-violet-500" />
                 <span className="text-violet-600 font-medium">Perfil:</span>
               </div>
-              <p className={cn("text-[9px] p-1.5 rounded", isDarkMode ? "bg-zinc-800 text-zinc-400" : "bg-zinc-50 text-zinc-600")}>
+              <p className={cn("text-[9px] p-1.5 rounded", isDarkMode ? "bg-neutral-800 text-neutral-400" : "bg-neutral-50 text-neutral-600")}>
                 {jurado.observacoesPerfil}
               </p>
             </div>
@@ -487,7 +487,7 @@ function JuradoCardExpandivel({
                 <Eye className="w-3 h-3 text-blue-500" />
                 <span className="text-blue-600 font-medium">Comportamento:</span>
               </div>
-              <p className={cn("text-[9px] p-1.5 rounded", isDarkMode ? "bg-zinc-800 text-zinc-400" : "bg-zinc-50 text-zinc-600")}>
+              <p className={cn("text-[9px] p-1.5 rounded", isDarkMode ? "bg-neutral-800 text-neutral-400" : "bg-neutral-50 text-neutral-600")}>
                 {jurado.comportamentoNotado}
               </p>
             </div>
@@ -502,7 +502,7 @@ function JuradoCardExpandivel({
               </div>
               <div className="space-y-0.5">
                 {jurado.notasComportamentais.map((nota, i) => (
-                  <p key={i} className={cn("text-[9px] px-1.5 py-0.5 rounded", isDarkMode ? "bg-zinc-800 text-zinc-400" : "bg-amber-50 text-amber-700")}>
+                  <p key={i} className={cn("text-[9px] px-1.5 py-0.5 rounded", isDarkMode ? "bg-neutral-800 text-neutral-400" : "bg-amber-50 text-amber-700")}>
                     • {nota}
                   </p>
                 ))}
@@ -511,7 +511,7 @@ function JuradoCardExpandivel({
           )}
 
           {/* Botões de ação */}
-          <div className="flex items-center gap-1 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center gap-1 mt-3 pt-2 border-t border-neutral-100 dark:border-neutral-800">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -600,13 +600,13 @@ function CadeiraVisual({
           juradoSelecionado
             ? "border-violet-400 bg-violet-50 dark:bg-violet-950/30 hover:border-violet-500 hover:scale-105"
             : isDarkMode
-              ? "border-zinc-700 bg-zinc-900/30 hover:border-zinc-600 hover:bg-zinc-800/50"
-              : "border-zinc-300 bg-zinc-50/50 hover:border-zinc-400 hover:bg-white"
+              ? "border-neutral-700 bg-neutral-900/30 hover:border-neutral-600 hover:bg-neutral-800/50"
+              : "border-neutral-300 bg-neutral-50/50 hover:border-neutral-400 hover:bg-white"
         )}
       >
         <div className={cn(
           "absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-lg",
-          isDarkMode ? "bg-zinc-800 text-zinc-400 border border-zinc-700" : "bg-white text-zinc-500 border border-zinc-200"
+          isDarkMode ? "bg-neutral-800 text-neutral-400 border border-neutral-700" : "bg-white text-neutral-500 border border-neutral-200"
         )}>
           {cadeiraNum}
         </div>
@@ -619,8 +619,8 @@ function CadeiraVisual({
           </>
         ) : (
           <>
-            <Plus className={cn("w-6 h-6 mb-1", isDarkMode ? "text-zinc-600" : "text-zinc-400")} />
-            <span className={cn("text-xs font-medium", isDarkMode ? "text-zinc-600" : "text-zinc-400")}>
+            <Plus className={cn("w-6 h-6 mb-1", isDarkMode ? "text-neutral-600" : "text-neutral-400")} />
+            <span className={cn("text-xs font-medium", isDarkMode ? "text-neutral-600" : "text-neutral-400")}>
               Clique para adicionar
             </span>
           </>
@@ -641,8 +641,8 @@ function CadeiraVisual({
       className={cn(
         "relative rounded-xl p-4 min-h-[140px] transition-all group",
         isDarkMode 
-          ? "bg-zinc-900/60 border border-zinc-700/50 hover:border-zinc-600" 
-          : "bg-white border border-zinc-200 shadow-sm hover:shadow-md hover:border-zinc-300"
+          ? "bg-neutral-900/60 border border-neutral-700/50 hover:border-neutral-600" 
+          : "bg-white border border-neutral-200 shadow-sm hover:shadow-md hover:border-neutral-300"
       )}
     >
       {/* Indicador de tendência - Dot no canto superior esquerdo */}
@@ -656,8 +656,8 @@ function CadeiraVisual({
       <div className={cn(
         "absolute -top-2 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full flex items-center justify-center text-[10px] font-semibold",
         isDarkMode 
-          ? "bg-zinc-800 text-zinc-400 border border-zinc-700" 
-          : "bg-white text-zinc-500 border border-zinc-200 shadow-sm"
+          ? "bg-neutral-800 text-neutral-400 border border-neutral-700" 
+          : "bg-white text-neutral-500 border border-neutral-200 shadow-sm"
       )}>
         {cadeiraNum}
       </div>
@@ -671,7 +671,7 @@ function CadeiraVisual({
               href={`/admin/juri/jurados/${jurado.id}`}
               className={cn(
                 "w-5 h-5 rounded-full flex items-center justify-center transition-all",
-                "bg-zinc-200 dark:bg-zinc-700 text-zinc-500 hover:bg-violet-100 hover:text-violet-600 dark:hover:bg-violet-900/50"
+                "bg-neutral-200 dark:bg-neutral-700 text-neutral-500 hover:bg-violet-100 hover:text-violet-600 dark:hover:bg-violet-900/50"
               )}
             >
               <ExternalLink className="w-2.5 h-2.5" />
@@ -686,7 +686,7 @@ function CadeiraVisual({
               onClick={onRemove}
               className={cn(
                 "w-5 h-5 rounded-full flex items-center justify-center transition-all",
-                "bg-zinc-200 dark:bg-zinc-700 text-zinc-500 hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-900/50"
+                "bg-neutral-200 dark:bg-neutral-700 text-neutral-500 hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-900/50"
               )}
             >
               <X className="w-3 h-3" />
@@ -703,7 +703,7 @@ function CadeiraVisual({
             {jurado.foto ? (
               <AvatarImage src={jurado.foto} alt={jurado.nome} />
             ) : null}
-            <AvatarFallback className="text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">
+            <AvatarFallback className="text-sm font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
               {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
             </AvatarFallback>
           </Avatar>
@@ -711,7 +711,7 @@ function CadeiraVisual({
             onClick={() => fileInputRef.current?.click()}
             className={cn(
               "absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-all",
-              "bg-zinc-600 text-white hover:bg-zinc-500"
+              "bg-neutral-600 text-white hover:bg-neutral-500"
             )}
           >
             <Camera className="w-2 h-2" />
@@ -732,12 +732,12 @@ function CadeiraVisual({
           href={`/admin/juri/jurados/${jurado.id}`}
           className={cn(
             "text-sm font-medium mt-2 text-center hover:underline transition-colors",
-            isDarkMode ? "text-zinc-200 hover:text-violet-400" : "text-zinc-700 hover:text-violet-600"
+            isDarkMode ? "text-neutral-200 hover:text-violet-400" : "text-neutral-700 hover:text-violet-600"
           )}
         >
           {jurado.nome.split(" ").slice(0, 2).join(" ")}
         </Link>
-        <p className={cn("text-[10px]", isDarkMode ? "text-zinc-500" : "text-zinc-400")}>
+        <p className={cn("text-[10px]", isDarkMode ? "text-neutral-500" : "text-neutral-400")}>
           {jurado.profissao}
         </p>
 
@@ -745,13 +745,13 @@ function CadeiraVisual({
         <div className="flex items-center gap-2 mt-2">
           <span className={cn(
             "text-[9px] px-1.5 py-0.5 rounded font-medium",
-            isDarkMode ? "bg-zinc-800 text-zinc-400" : "bg-zinc-100 text-zinc-500"
+            isDarkMode ? "bg-neutral-800 text-neutral-400" : "bg-neutral-100 text-neutral-500"
           )}>
             {getPerfilLabel(jurado.perfilDominante)}
           </span>
           {/* Barra de tendência minimalista */}
           <div className="flex items-center gap-1">
-            <div className="w-8 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
+            <div className="w-8 h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden">
               <div 
                 className={cn(
                   "h-full rounded-full transition-all",
@@ -761,7 +761,7 @@ function CadeiraVisual({
                 style={{ width: `${jurado.taxaAbsolvicao}%` }}
               />
             </div>
-            <span className={cn("text-[9px] font-medium tabular-nums", isDarkMode ? "text-zinc-500" : "text-zinc-400")}>
+            <span className={cn("text-[9px] font-medium tabular-nums", isDarkMode ? "text-neutral-500" : "text-neutral-400")}>
               {jurado.taxaAbsolvicao}%
             </span>
           </div>
@@ -770,7 +770,7 @@ function CadeiraVisual({
         {/* Observações rápidas - Discretas */}
         {jurado.observacoesRapidas.length > 0 && (
           <div className="mt-2 w-full">
-            <p className={cn("text-[9px] leading-relaxed line-clamp-2", isDarkMode ? "text-zinc-500" : "text-zinc-500")}>
+            <p className={cn("text-[9px] leading-relaxed line-clamp-2", isDarkMode ? "text-neutral-500" : "text-neutral-500")}>
               {jurado.observacoesRapidas.slice(-1)[0]}
             </p>
           </div>
@@ -783,7 +783,7 @@ function CadeiraVisual({
               value={novaObs}
               onChange={(e) => setNovaObs(e.target.value)}
               placeholder="Comportamento observado..."
-              className={cn("h-7 text-[10px] flex-1 rounded", isDarkMode ? "bg-zinc-800 border-zinc-700" : "bg-zinc-50 border-zinc-200")}
+              className={cn("h-7 text-[10px] flex-1 rounded", isDarkMode ? "bg-neutral-800 border-neutral-700" : "bg-neutral-50 border-neutral-200")}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && novaObs.trim()) {
                   onAddObservacao(novaObs.trim());
@@ -801,8 +801,8 @@ function CadeiraVisual({
             className={cn(
               "mt-2 text-[9px] py-1 w-full rounded transition-colors",
               isDarkMode 
-                ? "text-zinc-600 hover:text-zinc-400 hover:bg-zinc-800" 
-                : "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50"
+                ? "text-neutral-600 hover:text-neutral-400 hover:bg-neutral-800" 
+                : "text-neutral-400 hover:text-neutral-600 hover:bg-neutral-50"
             )}
           >
             + nota
@@ -1361,31 +1361,31 @@ function PlenarioCockpitContent() {
 
   // Classes condicionais — `dark` class enables all Tailwind `dark:` variants
   const containerClass = isDarkMode
-    ? "dark min-h-screen bg-[#0f0f11] text-zinc-100"
-    : "min-h-screen bg-zinc-100 text-zinc-900";
+    ? "dark min-h-screen bg-[#0f0f11] text-neutral-100"
+    : "min-h-screen bg-neutral-100 text-neutral-900";
 
   const cardClass = isDarkMode
-    ? "rounded-xl border border-zinc-800/80 bg-zinc-900"
-    : "rounded-xl border border-zinc-200/80 bg-white";
+    ? "rounded-xl border border-neutral-800/80 bg-neutral-900"
+    : "rounded-xl border border-neutral-200/80 bg-white";
 
   return (
     <TooltipProvider>
       <div className={containerClass}>
         {/* Header - Padrão Defender */}
-        <div className="sticky top-0 z-20 px-4 md:px-6 py-3 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border-b border-zinc-200/80 dark:border-zinc-800/80">
+        <div className="sticky top-0 z-20 px-4 md:px-6 py-3 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm border-b border-neutral-200/80 dark:border-neutral-800/80">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <Link href="/admin/juri">
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600">
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-neutral-400 hover:text-emerald-600">
                   <ArrowLeft className="w-3.5 h-3.5" />
                 </Button>
               </Link>
-              <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-                <Zap className="w-4 h-4 text-white dark:text-zinc-900" />
+              <div className="w-9 h-9 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
+                <Zap className="w-4 h-4 text-white dark:text-neutral-900" />
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Plenário Live</span>
-                <span className="text-xs text-zinc-400 dark:text-zinc-500">• {juradosAtivos.length}/7 jurados</span>
+                <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Plenário Live</span>
+                <span className="text-xs text-neutral-400 dark:text-neutral-500">• {juradosAtivos.length}/7 jurados</span>
               </div>
             </div>
 
@@ -1405,17 +1405,17 @@ function PlenarioCockpitContent() {
                 </Tooltip>
               )}
 
-              <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700 hidden sm:block" />
+              <div className="w-px h-6 bg-neutral-200 dark:bg-neutral-700 hidden sm:block" />
 
               {/* Mode Toggle */}
-              <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
+              <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 rounded-lg p-0.5">
                 <button
                   onClick={() => { setCockpitMode("registro"); setActiveTab("avaliacao"); }}
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200",
                     cockpitMode === "registro"
-                      ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
-                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                      ? "bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 shadow-sm"
+                      : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
                   )}
                 >
                   <NotebookPen className="w-3.5 h-3.5" />
@@ -1426,8 +1426,8 @@ function PlenarioCockpitContent() {
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200",
                     cockpitMode === "estrategia"
-                      ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
-                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                      ? "bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 shadow-sm"
+                      : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
                   )}
                 >
                   <Crosshair className="w-3.5 h-3.5" />
@@ -1435,7 +1435,7 @@ function PlenarioCockpitContent() {
                 </button>
               </div>
 
-              <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700" />
+              <div className="w-px h-6 bg-neutral-200 dark:bg-neutral-700" />
 
               {/* Encerrar Sessão */}
               <EncerrarSessaoButton
@@ -1450,7 +1450,7 @@ function PlenarioCockpitContent() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsDarkMode(!isDarkMode)}
-                className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
+                className="h-7 w-7 p-0 text-neutral-400 hover:text-emerald-600"
                 title={isDarkMode ? "Modo Claro" : "Modo Escuro"}
               >
                 {isDarkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
@@ -1474,10 +1474,10 @@ function PlenarioCockpitContent() {
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="flex items-center gap-4">
                 <Select value={faseAtual} onValueChange={setFaseAtual}>
-                  <SelectTrigger className={cn("w-[180px] h-9", isDarkMode ? "bg-zinc-800 border-zinc-700" : "")}>
+                  <SelectTrigger className={cn("w-[180px] h-9", isDarkMode ? "bg-neutral-800 border-neutral-700" : "")}>
                     <SelectValue placeholder="Fase" />
                   </SelectTrigger>
-                  <SelectContent className={isDarkMode ? "bg-zinc-900 border-zinc-800" : ""}>
+                  <SelectContent className={isDarkMode ? "bg-neutral-900 border-neutral-800" : ""}>
                     {phases.map((fase) => (
                       <SelectItem key={fase.id} value={fase.id}>
                         {fase.label}
@@ -1520,7 +1520,7 @@ function PlenarioCockpitContent() {
                 <Button
                   variant="outline"
                   onClick={() => setTimeLeft(totalTime)}
-                  className={isDarkMode ? "border-zinc-700" : ""}
+                  className={isDarkMode ? "border-neutral-700" : ""}
                 >
                   <Timer className="h-4 w-4 mr-2" />
                   Reset
@@ -1529,7 +1529,7 @@ function PlenarioCockpitContent() {
             </div>
 
             <div className="mt-3">
-              <Progress value={progress} className={cn("h-2", isDarkMode ? "bg-zinc-800" : "bg-zinc-200")} />
+              <Progress value={progress} className={cn("h-2", isDarkMode ? "bg-neutral-800" : "bg-neutral-200")} />
             </div>
           </div>
 
@@ -1560,7 +1560,7 @@ function PlenarioCockpitContent() {
           )}
 
           {/* Tabs */}
-          <div className="flex items-center gap-1 border-b border-zinc-200/80 dark:border-zinc-800/80 pb-2 overflow-x-auto scrollbar-thin">
+          <div className="flex items-center gap-1 border-b border-neutral-200/80 dark:border-neutral-800/80 pb-2 overflow-x-auto scrollbar-thin">
             {cockpitMode === "registro" ? (
               <>
                 {([
@@ -1579,10 +1579,10 @@ function PlenarioCockpitContent() {
                       activeTab === tab.id
                         ? (tab.id === "avaliacao"
                             ? "bg-emerald-600 dark:bg-emerald-500 text-white hover:bg-emerald-700 dark:hover:bg-emerald-400"
-                            : "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200")
+                            : "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200")
                         : (tab.id === "avaliacao"
                             ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800"
-                            : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100")
+                            : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100")
                     )}
                   >
                     <tab.icon className="w-4 h-4 mr-1.5" />
@@ -1610,10 +1610,10 @@ function PlenarioCockpitContent() {
                       (activeTab === tab.id || (tab.id === "estrategia" && !["feed", "roteiro", "quesitos", "objecoes", "alertas"].includes(activeTab)))
                         ? (tab.id === "feed"
                             ? "bg-rose-600 dark:bg-rose-500 text-white hover:bg-rose-700 dark:hover:bg-rose-400"
-                            : "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200")
+                            : "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200")
                         : (tab.id === "feed"
                             ? "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950/50 border border-rose-200 dark:border-rose-800"
-                            : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100")
+                            : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100")
                     )}
                   >
                     <tab.icon className="w-4 h-4 mr-1.5" />
@@ -1676,8 +1676,8 @@ function PlenarioCockpitContent() {
                   <div className={cn(
                     "relative rounded-3xl overflow-hidden",
                     isDarkMode 
-                      ? "bg-gradient-to-b from-zinc-800/30 to-zinc-900/50" 
-                      : "bg-gradient-to-b from-zinc-50 to-zinc-100/80"
+                      ? "bg-gradient-to-b from-neutral-800/30 to-neutral-900/50" 
+                      : "bg-gradient-to-b from-neutral-50 to-neutral-100/80"
                   )}>
                     {/* Padrão decorativo sutil */}
                     <div className="absolute inset-0 opacity-[0.02]" style={{
@@ -1688,14 +1688,14 @@ function PlenarioCockpitContent() {
                     {/* Header do Plenário - Juiz Presidente */}
                     <div className={cn(
                       "relative px-8 py-5 border-b",
-                      isDarkMode ? "border-zinc-800/50" : "border-zinc-200/50"
+                      isDarkMode ? "border-neutral-800/50" : "border-neutral-200/50"
                     )}>
                       <div className="flex items-center justify-center">
                         <div className={cn(
                           "flex items-center gap-3 px-6 py-2.5 rounded-2xl",
                           isDarkMode 
-                            ? "bg-zinc-900/80 ring-1 ring-zinc-800" 
-                            : "bg-white ring-1 ring-zinc-200 shadow-sm"
+                            ? "bg-neutral-900/80 ring-1 ring-neutral-800" 
+                            : "bg-white ring-1 ring-neutral-200 shadow-sm"
                         )}>
                           <div className={cn(
                             "w-8 h-8 rounded-xl flex items-center justify-center",
@@ -1704,10 +1704,10 @@ function PlenarioCockpitContent() {
                             <Gavel className="w-4 h-4 text-violet-600" />
                           </div>
                           <div>
-                            <p className={cn("text-sm font-semibold", isDarkMode ? "text-zinc-100" : "text-zinc-800")}>
+                            <p className={cn("text-sm font-semibold", isDarkMode ? "text-neutral-100" : "text-neutral-800")}>
                               Juiz Presidente
                             </p>
-                            <p className="text-[10px] text-zinc-500">Magistrado do Tribunal</p>
+                            <p className="text-[10px] text-neutral-500">Magistrado do Tribunal</p>
                           </div>
                         </div>
                       </div>
@@ -1723,22 +1723,22 @@ function PlenarioCockpitContent() {
                       <div className="relative">
                         {/* Label da fileira */}
                         <div className="flex items-center justify-center gap-3 mb-5">
-                          <div className={cn("h-px flex-1 max-w-16", isDarkMode ? "bg-zinc-800" : "bg-zinc-200")} />
+                          <div className={cn("h-px flex-1 max-w-16", isDarkMode ? "bg-neutral-800" : "bg-neutral-200")} />
                           <span className={cn(
                             "text-[10px] uppercase tracking-widest font-medium px-3",
-                            isDarkMode ? "text-zinc-600" : "text-zinc-400"
+                            isDarkMode ? "text-neutral-600" : "text-neutral-400"
                           )}>
                             Fileira de Trás
                           </span>
-                          <div className={cn("h-px flex-1 max-w-16", isDarkMode ? "bg-zinc-800" : "bg-zinc-200")} />
+                          <div className={cn("h-px flex-1 max-w-16", isDarkMode ? "bg-neutral-800" : "bg-neutral-200")} />
                         </div>
                         
                         {/* Bancada visual */}
                         <div className={cn(
                           "relative rounded-2xl p-4",
                           isDarkMode 
-                            ? "bg-zinc-900/40 ring-1 ring-zinc-800/50" 
-                            : "bg-white/60 ring-1 ring-zinc-200/50 shadow-sm"
+                            ? "bg-neutral-900/40 ring-1 ring-neutral-800/50" 
+                            : "bg-white/60 ring-1 ring-neutral-200/50 shadow-sm"
                         )}>
                           <div className="grid grid-cols-4 gap-4">
                             {[4, 5, 6, 7].map((cadeira) => (
@@ -1768,7 +1768,7 @@ function PlenarioCockpitContent() {
                       <div className="flex justify-center py-1">
                         <div className={cn(
                           "w-px h-3",
-                          isDarkMode ? "bg-zinc-700" : "bg-zinc-300"
+                          isDarkMode ? "bg-neutral-700" : "bg-neutral-300"
                         )} />
                       </div>
 
@@ -1776,22 +1776,22 @@ function PlenarioCockpitContent() {
                       <div className="relative">
                         {/* Label da fileira */}
                         <div className="flex items-center justify-center gap-3 mb-5">
-                          <div className={cn("h-px flex-1 max-w-16", isDarkMode ? "bg-zinc-800" : "bg-zinc-200")} />
+                          <div className={cn("h-px flex-1 max-w-16", isDarkMode ? "bg-neutral-800" : "bg-neutral-200")} />
                           <span className={cn(
                             "text-[10px] uppercase tracking-widest font-medium px-3",
-                            isDarkMode ? "text-zinc-600" : "text-zinc-400"
+                            isDarkMode ? "text-neutral-600" : "text-neutral-400"
                           )}>
                             Fileira da Frente
                           </span>
-                          <div className={cn("h-px flex-1 max-w-16", isDarkMode ? "bg-zinc-800" : "bg-zinc-200")} />
+                          <div className={cn("h-px flex-1 max-w-16", isDarkMode ? "bg-neutral-800" : "bg-neutral-200")} />
                         </div>
                         
                         {/* Bancada visual - ligeiramente maior para destaque */}
                         <div className={cn(
                           "relative rounded-2xl p-5 max-w-4xl mx-auto",
                           isDarkMode 
-                            ? "bg-zinc-900/60 ring-1 ring-zinc-700/50" 
-                            : "bg-white/80 ring-1 ring-zinc-200/80 shadow-md"
+                            ? "bg-neutral-900/60 ring-1 ring-neutral-700/50" 
+                            : "bg-white/80 ring-1 ring-neutral-200/80 shadow-md"
                         )}>
                           <div className="grid grid-cols-3 gap-5">
                             {[1, 2, 3].map((cadeira) => (
@@ -1821,20 +1821,20 @@ function PlenarioCockpitContent() {
                     {/* Footer do Plenário - Legenda elegante */}
                     <div className={cn(
                       "px-8 py-4 border-t",
-                      isDarkMode ? "border-zinc-800/50 bg-zinc-900/30" : "border-zinc-200/50 bg-white/40"
+                      isDarkMode ? "border-neutral-800/50 bg-neutral-900/30" : "border-neutral-200/50 bg-white/40"
                     )}>
                       <div className="flex items-center justify-center gap-8">
                         <div className="flex items-center gap-2">
                           <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-900" />
-                          <span className="text-[11px] text-zinc-500">Favorável (&ge;60%)</span>
+                          <span className="text-[11px] text-neutral-500">Favorável (&ge;60%)</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-amber-200 dark:ring-amber-900" />
-                          <span className="text-[11px] text-zinc-500">Neutro (40-60%)</span>
+                          <span className="text-[11px] text-neutral-500">Neutro (40-60%)</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-rose-200 dark:ring-rose-900" />
-                          <span className="text-[11px] text-zinc-500">Desfavorável (&le;40%)</span>
+                          <span className="text-[11px] text-neutral-500">Desfavorável (&le;40%)</span>
                         </div>
                       </div>
                     </div>
@@ -1846,8 +1846,8 @@ function PlenarioCockpitContent() {
                     juradosAtivos.length === 7 
                       ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30" 
                       : isDarkMode 
-                        ? "bg-zinc-800 text-zinc-400 ring-1 ring-zinc-700" 
-                        : "bg-white text-zinc-600 ring-1 ring-zinc-200 shadow-md"
+                        ? "bg-neutral-800 text-neutral-400 ring-1 ring-neutral-700" 
+                        : "bg-white text-neutral-600 ring-1 ring-neutral-200 shadow-md"
                   )}>
                     <Users className="w-3 h-3" />
                     <span>{juradosAtivos.length}/7 Jurados</span>
@@ -1867,19 +1867,19 @@ function PlenarioCockpitContent() {
                       {nomePeriodo}
                     </span>
                   </h3>
-                  <p className="text-[10px] text-zinc-500 mt-0.5">
+                  <p className="text-[10px] text-neutral-500 mt-0.5">
                     Clique para selecionar • {juradosDisponiveis.length} disponíveis
                   </p>
                 </div>
 
                 {/* Busca */}
                 <div className="relative mb-3">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
                   <Input
                     placeholder="Buscar..."
                     value={searchJurado}
                     onChange={(e) => setSearchJurado(e.target.value)}
-                    className={cn("pl-8 h-8 text-xs", isDarkMode ? "bg-zinc-800 border-zinc-700" : "")}
+                    className={cn("pl-8 h-8 text-xs", isDarkMode ? "bg-neutral-800 border-neutral-700" : "")}
                   />
                 </div>
 
@@ -1931,10 +1931,10 @@ function PlenarioCockpitContent() {
                           <Activity className="w-5 h-5 text-violet-500" />
                         </div>
                         <div>
-                          <h3 className={cn("text-base font-semibold", isDarkMode ? "text-zinc-100" : "text-zinc-800")}>
+                          <h3 className={cn("text-base font-semibold", isDarkMode ? "text-neutral-100" : "text-neutral-800")}>
                             Monitoramento de Comportamentos
                           </h3>
-                          <p className="text-xs text-zinc-500 mt-0.5">
+                          <p className="text-xs text-neutral-500 mt-0.5">
                             Registre comportamentos com contexto para análise estratégica
                           </p>
                         </div>
@@ -1982,26 +1982,26 @@ function PlenarioCockpitContent() {
                           className={cn(
                             "rounded-2xl overflow-hidden transition-all duration-200",
                             isDarkMode 
-                              ? "bg-zinc-900/60 ring-1 ring-zinc-800 hover:ring-zinc-700" 
-                              : "bg-white ring-1 ring-zinc-200/80 hover:ring-zinc-300 hover:shadow-lg hover:shadow-zinc-100"
+                              ? "bg-neutral-900/60 ring-1 ring-neutral-800 hover:ring-neutral-700" 
+                              : "bg-white ring-1 ring-neutral-200/80 hover:ring-neutral-300 hover:shadow-lg hover:shadow-neutral-100"
                           )}
                         >
                           {/* Header do Card - Mais espaçoso */}
-                          <div className={cn("p-5", isDarkMode ? "border-b border-zinc-800/50" : "border-b border-zinc-100")}>
+                          <div className={cn("p-5", isDarkMode ? "border-b border-neutral-800/50" : "border-b border-neutral-100")}>
                             <div className="flex items-start gap-4">
                               {/* Avatar com indicador de cadeira */}
                               <div className="relative flex-shrink-0">
-                                <Avatar className="h-14 w-14 ring-2 ring-offset-2 ring-zinc-100 dark:ring-zinc-800 dark:ring-offset-zinc-900">
+                                <Avatar className="h-14 w-14 ring-2 ring-offset-2 ring-neutral-100 dark:ring-neutral-800 dark:ring-offset-neutral-900">
                                   {jurado.foto && <AvatarImage src={jurado.foto} />}
-                                  <AvatarFallback className="text-base font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">
+                                  <AvatarFallback className="text-base font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
                                     {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className={cn(
                                   "absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ring-2",
                                   isDarkMode 
-                                    ? "bg-zinc-800 text-zinc-300 ring-zinc-900" 
-                                    : "bg-white text-zinc-600 ring-white shadow-sm"
+                                    ? "bg-neutral-800 text-neutral-300 ring-neutral-900" 
+                                    : "bg-white text-neutral-600 ring-white shadow-sm"
                                 )}>
                                   {jurado.cadeira}
                                 </div>
@@ -2011,10 +2011,10 @@ function PlenarioCockpitContent() {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between gap-3">
                                   <div>
-                                    <p className={cn("text-sm font-semibold", isDarkMode ? "text-zinc-100" : "text-zinc-800")}>
+                                    <p className={cn("text-sm font-semibold", isDarkMode ? "text-neutral-100" : "text-neutral-800")}>
                                       {jurado.nome.split(" ").slice(0, 2).join(" ")}
                                     </p>
-                                    <p className={cn("text-xs mt-0.5", isDarkMode ? "text-zinc-500" : "text-zinc-400")}>
+                                    <p className={cn("text-xs mt-0.5", isDarkMode ? "text-neutral-500" : "text-neutral-400")}>
                                       {jurado.profissao} • {jurado.idade} anos
                                     </p>
                                   </div>
@@ -2038,7 +2038,7 @@ function PlenarioCockpitContent() {
                                 {/* Mini stats de comportamentos */}
                                 {totalComportamentos > 0 && (
                                   <div className="flex items-center gap-3 mt-3">
-                                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
+                                    <div className="flex items-center gap-1.5 text-[10px] text-neutral-500">
                                       <FileText className="w-3 h-3" />
                                       <span>{totalComportamentos} registros</span>
                                     </div>
@@ -2062,7 +2062,7 @@ function PlenarioCockpitContent() {
 
                           {/* Timeline de Comportamentos - Mais elegante */}
                           {jurado.comportamentos && jurado.comportamentos.length > 0 && (
-                            <div className={cn("px-5 py-4 max-h-36 overflow-y-auto", isDarkMode ? "bg-zinc-950/30" : "bg-zinc-50/50")}>
+                            <div className={cn("px-5 py-4 max-h-36 overflow-y-auto", isDarkMode ? "bg-neutral-950/30" : "bg-neutral-50/50")}>
                               <div className="space-y-3">
                                 {jurado.comportamentos.slice(-3).map((comp) => (
                                   <div key={comp.id} className="flex items-start gap-3">
@@ -2071,13 +2071,13 @@ function PlenarioCockpitContent() {
                                       comp.interpretacao === "favoravel" ? "bg-emerald-500 ring-emerald-200 dark:ring-emerald-800" :
                                       comp.interpretacao === "desfavoravel" ? "bg-rose-500 ring-rose-200 dark:ring-rose-800" :
                                       comp.interpretacao === "neutro" ? "bg-amber-500 ring-amber-200 dark:ring-amber-800" : 
-                                      "bg-zinc-400 ring-zinc-200 dark:ring-zinc-700"
+                                      "bg-neutral-400 ring-neutral-200 dark:ring-neutral-700"
                                     )} />
                                     <div className="flex-1 min-w-0">
-                                      <p className={cn("text-xs leading-relaxed", isDarkMode ? "text-zinc-300" : "text-zinc-600")}>
+                                      <p className={cn("text-xs leading-relaxed", isDarkMode ? "text-neutral-300" : "text-neutral-600")}>
                                         {comp.descricao}
                                       </p>
-                                      <p className="text-[10px] text-zinc-400 mt-1 flex items-center gap-1.5">
+                                      <p className="text-[10px] text-neutral-400 mt-1 flex items-center gap-1.5">
                                         <Clock className="w-2.5 h-2.5" />
                                         {comp.fase} • {comp.momento}
                                       </p>
@@ -2097,11 +2097,11 @@ function PlenarioCockpitContent() {
                             >
                               <SelectTrigger className={cn(
                                 "h-9 text-xs",
-                                isDarkMode ? "bg-zinc-800/50 border-zinc-700/50" : "bg-zinc-50 border-zinc-200"
+                                isDarkMode ? "bg-neutral-800/50 border-neutral-700/50" : "bg-neutral-50 border-neutral-200"
                               )}>
                                 <SelectValue placeholder="Selecione o momento..." />
                               </SelectTrigger>
-                              <SelectContent className={isDarkMode ? "bg-zinc-900 border-zinc-800" : ""}>
+                              <SelectContent className={isDarkMode ? "bg-neutral-900 border-neutral-800" : ""}>
                                 {MOMENTOS_SUGERIDOS.map((momento) => (
                                   <SelectItem key={momento} value={momento} className="text-xs">
                                     {momento}
@@ -2131,8 +2131,8 @@ function PlenarioCockpitContent() {
                                       isSelected 
                                         ? "bg-violet-500 text-white ring-2 ring-violet-300 dark:ring-violet-700"
                                         : isDarkMode 
-                                          ? "bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200" 
-                                          : "bg-zinc-100/80 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700"
+                                          ? "bg-neutral-800/50 text-neutral-400 hover:bg-neutral-700 hover:text-neutral-200" 
+                                          : "bg-neutral-100/80 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
                                     )}
                                   >
                                     <IconComponent className="w-3 h-3" />
@@ -2149,7 +2149,7 @@ function PlenarioCockpitContent() {
                               placeholder="Descreva o comportamento observado..."
                               className={cn(
                                 "h-9 text-xs",
-                                isDarkMode ? "bg-zinc-800/50 border-zinc-700/50" : "bg-zinc-50 border-zinc-200"
+                                isDarkMode ? "bg-neutral-800/50 border-neutral-700/50" : "bg-neutral-50 border-neutral-200"
                               )}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
@@ -2181,8 +2181,8 @@ function PlenarioCockpitContent() {
                                                   ? "bg-rose-500 text-white"
                                                   : "bg-amber-500 text-white"
                                               : isDarkMode 
-                                                ? "bg-zinc-800 text-zinc-400 hover:bg-zinc-700" 
-                                                : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
+                                                ? "bg-neutral-800 text-neutral-400 hover:bg-neutral-700" 
+                                                : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200"
                                           )}
                                         >
                                           <Icon className="w-3.5 h-3.5" />
@@ -2217,8 +2217,8 @@ function PlenarioCockpitContent() {
                         <Zap className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Análise de Padrões</h4>
-                        <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                        <h4 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Análise de Padrões</h4>
+                        <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
                           {favoraveis >= 4 ? (
                             <>Conselho majoritariamente favorável ({favoraveis}/7). Reforce argumentos emocionais e de contexto social para consolidar posição.</>
                           ) : favoraveis <= 2 ? (
@@ -2347,10 +2347,10 @@ function PlenarioCockpitContent() {
                       <Sparkles className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className={cn("text-lg font-semibold", isDarkMode ? "text-zinc-100" : "text-zinc-800")}>
+                      <h3 className={cn("text-lg font-semibold", isDarkMode ? "text-neutral-100" : "text-neutral-800")}>
                         Relatório de Análise Comportamental
                       </h3>
-                      <p className="text-sm text-zinc-500 mt-0.5">
+                      <p className="text-sm text-neutral-500 mt-0.5">
                         Análise consolidada dos comportamentos observados durante a sessão
                       </p>
                     </div>
@@ -2365,7 +2365,7 @@ function PlenarioCockpitContent() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Timeline Consolidada */}
                 <div className={cn("lg:col-span-2 p-6", cardClass)}>
-                  <h4 className={cn("text-sm font-semibold mb-4 flex items-center gap-2", isDarkMode ? "text-zinc-200" : "text-zinc-700")}>
+                  <h4 className={cn("text-sm font-semibold mb-4 flex items-center gap-2", isDarkMode ? "text-neutral-200" : "text-neutral-700")}>
                     <Clock className="w-4 h-4 text-violet-500" />
                     Timeline de Comportamentos
                   </h4>
@@ -2384,11 +2384,11 @@ function PlenarioCockpitContent() {
                     if (todosComportamentos.length === 0) {
                       return (
                         <div className="text-center py-12">
-                          <Activity className={cn("w-12 h-12 mx-auto mb-3", isDarkMode ? "text-zinc-700" : "text-zinc-300")} />
-                          <p className={cn("text-sm", isDarkMode ? "text-zinc-500" : "text-zinc-400")}>
+                          <Activity className={cn("w-12 h-12 mx-auto mb-3", isDarkMode ? "text-neutral-700" : "text-neutral-300")} />
+                          <p className={cn("text-sm", isDarkMode ? "text-neutral-500" : "text-neutral-400")}>
                             Nenhum comportamento registrado ainda
                           </p>
-                          <p className="text-xs text-zinc-400 mt-1">
+                          <p className="text-xs text-neutral-400 mt-1">
                             Os comportamentos aparecerão aqui conforme forem registrados
                           </p>
                         </div>
@@ -2405,7 +2405,7 @@ function PlenarioCockpitContent() {
                               {index < todosComportamentos.length - 1 && (
                                 <div className={cn(
                                   "absolute left-[19px] top-10 bottom-0 w-px",
-                                  isDarkMode ? "bg-zinc-800" : "bg-zinc-200"
+                                  isDarkMode ? "bg-neutral-800" : "bg-neutral-200"
                                 )} />
                               )}
                               
@@ -2429,24 +2429,24 @@ function PlenarioCockpitContent() {
                               {/* Conteúdo */}
                               <div className={cn(
                                 "flex-1 p-4 rounded-xl",
-                                isDarkMode ? "bg-zinc-900/50" : "bg-zinc-50"
+                                isDarkMode ? "bg-neutral-900/50" : "bg-neutral-50"
                               )}>
                                 <div className="flex items-start justify-between gap-2 mb-2">
                                   <div className="flex items-center gap-2">
                                     <Badge variant="outline" className="text-[10px]">
                                       Cadeira {comp.juradoCadeira}
                                     </Badge>
-                                    <span className={cn("text-sm font-medium", isDarkMode ? "text-zinc-200" : "text-zinc-700")}>
+                                    <span className={cn("text-sm font-medium", isDarkMode ? "text-neutral-200" : "text-neutral-700")}>
                                       {comp.juradoNome.split(" ").slice(0, 2).join(" ")}
                                     </span>
                                   </div>
-                                  <span className="text-[10px] text-zinc-400">{hora}</span>
+                                  <span className="text-[10px] text-neutral-400">{hora}</span>
                                 </div>
-                                <p className={cn("text-sm", isDarkMode ? "text-zinc-300" : "text-zinc-600")}>
+                                <p className={cn("text-sm", isDarkMode ? "text-neutral-300" : "text-neutral-600")}>
                                   {comp.descricao}
                                 </p>
                                 <div className="flex items-center gap-2 mt-2">
-                                  <span className="text-[10px] text-zinc-400">
+                                  <span className="text-[10px] text-neutral-400">
                                     {comp.fase} • {comp.momento}
                                   </span>
                                   <Badge variant="outline" className="text-[9px]">
@@ -2464,7 +2464,7 @@ function PlenarioCockpitContent() {
 
                 {/* Análise por Jurado */}
                 <div className={cn("p-6", cardClass)}>
-                  <h4 className={cn("text-sm font-semibold mb-4 flex items-center gap-2", isDarkMode ? "text-zinc-200" : "text-zinc-700")}>
+                  <h4 className={cn("text-sm font-semibold mb-4 flex items-center gap-2", isDarkMode ? "text-neutral-200" : "text-neutral-700")}>
                     <BarChart3 className="w-4 h-4 text-violet-500" />
                     Análise por Jurado
                   </h4>
@@ -2482,20 +2482,20 @@ function PlenarioCockpitContent() {
                       return (
                         <div key={jurado.id} className={cn(
                           "p-4 rounded-xl",
-                          isDarkMode ? "bg-zinc-900/50" : "bg-zinc-50"
+                          isDarkMode ? "bg-neutral-900/50" : "bg-neutral-50"
                         )}>
                           <div className="flex items-center gap-3 mb-3">
                             <Avatar className="h-9 w-9">
                               {jurado.foto && <AvatarImage src={jurado.foto} />}
-                              <AvatarFallback className="text-xs font-medium bg-zinc-200 dark:bg-zinc-700">
+                              <AvatarFallback className="text-xs font-medium bg-neutral-200 dark:bg-neutral-700">
                                 {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
-                              <p className={cn("text-sm font-medium", isDarkMode ? "text-zinc-200" : "text-zinc-700")}>
+                              <p className={cn("text-sm font-medium", isDarkMode ? "text-neutral-200" : "text-neutral-700")}>
                                 {jurado.nome.split(" ").slice(0, 2).join(" ")}
                               </p>
-                              <p className="text-[10px] text-zinc-400">Cadeira {jurado.cadeira} • {total} registros</p>
+                              <p className="text-[10px] text-neutral-400">Cadeira {jurado.cadeira} • {total} registros</p>
                             </div>
                             <div className={cn(
                               "w-3 h-3 rounded-full",
@@ -2527,7 +2527,7 @@ function PlenarioCockpitContent() {
                             </div>
                           )}
                           
-                          <div className="flex justify-between mt-2 text-[10px] text-zinc-400">
+                          <div className="flex justify-between mt-2 text-[10px] text-neutral-400">
                             <span className="text-emerald-500">{favoraveis} fav</span>
                             <span className="text-amber-500">{neutros} neu</span>
                             <span className="text-rose-500">{desfavoraveis} des</span>
@@ -2546,7 +2546,7 @@ function PlenarioCockpitContent() {
                     <Sparkles className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h4 className={cn("text-base font-semibold mb-2", isDarkMode ? "text-zinc-100" : "text-zinc-800")}>
+                    <h4 className={cn("text-base font-semibold mb-2", isDarkMode ? "text-neutral-100" : "text-neutral-800")}>
                       Análise Estratégica por IA
                     </h4>
                     
@@ -2576,7 +2576,7 @@ function PlenarioCockpitContent() {
 
                       if (totalComportamentos < 3) {
                         return (
-                          <p className={cn("text-sm leading-relaxed", isDarkMode ? "text-zinc-400" : "text-zinc-500")}>
+                          <p className={cn("text-sm leading-relaxed", isDarkMode ? "text-neutral-400" : "text-neutral-500")}>
                             Continue registrando comportamentos para obter uma análise estratégica completa. 
                             Recomenda-se pelo menos 3 observações para insights significativos.
                           </p>
@@ -2585,7 +2585,7 @@ function PlenarioCockpitContent() {
 
                       return (
                         <div className="space-y-4">
-                          <p className={cn("text-sm leading-relaxed", isDarkMode ? "text-zinc-300" : "text-zinc-600")}>
+                          <p className={cn("text-sm leading-relaxed", isDarkMode ? "text-neutral-300" : "text-neutral-600")}>
                             {totalFavoraveis > totalDesfavoraveis ? (
                               <>
                                 <strong className="text-emerald-500">Tendência Favorável:</strong> O conselho apresenta 
@@ -2621,10 +2621,10 @@ function PlenarioCockpitContent() {
                                 ? "border-l-rose-500 bg-rose-50 dark:bg-rose-950/20"
                                 : "border-l-amber-500 bg-amber-50 dark:bg-amber-950/20"
                           )}>
-                            <p className={cn("text-xs font-semibold mb-1", isDarkMode ? "text-zinc-200" : "text-zinc-700")}>
+                            <p className={cn("text-xs font-semibold mb-1", isDarkMode ? "text-neutral-200" : "text-neutral-700")}>
                               Recomendação Estratégica:
                             </p>
-                            <p className={cn("text-xs", isDarkMode ? "text-zinc-400" : "text-zinc-600")}>
+                            <p className={cn("text-xs", isDarkMode ? "text-neutral-400" : "text-neutral-600")}>
                               {totalFavoraveis > totalDesfavoraveis ? (
                                 "Mantenha a narrativa emocional e reforce os pontos que geraram reações positivas. Evite mudanças bruscas de estratégia."
                               ) : totalDesfavoraveis > totalFavoraveis ? (
@@ -2654,7 +2654,7 @@ function PlenarioCockpitContent() {
 
         {/* Modal de Seleção de Jurado */}
         <Dialog open={modalCadeira !== null} onOpenChange={() => setModalCadeira(null)}>
-          <DialogContent className={cn("max-w-md", isDarkMode ? "bg-zinc-900 border-zinc-800" : "")}>
+          <DialogContent className={cn("max-w-md", isDarkMode ? "bg-neutral-900 border-neutral-800" : "")}>
             <DialogHeader>
               <DialogTitle>Selecionar Jurado - Cadeira {modalCadeira}</DialogTitle>
             </DialogHeader>
@@ -2669,7 +2669,7 @@ function PlenarioCockpitContent() {
                     }}
                     className={cn(
                       "w-full p-3 rounded-lg border text-left transition-all hover:shadow-md",
-                      isDarkMode ? "border-zinc-800 hover:bg-zinc-800" : "border-zinc-200 hover:bg-zinc-50"
+                      isDarkMode ? "border-neutral-800 hover:bg-neutral-800" : "border-neutral-200 hover:bg-neutral-50"
                     )}
                   >
                     <div className="flex items-center gap-3">
@@ -2688,14 +2688,14 @@ function PlenarioCockpitContent() {
                             {jurado.taxaAbsolvicao}%
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-zinc-500 mt-0.5">
+                        <div className="flex items-center gap-2 text-xs text-neutral-500 mt-0.5">
                           <span>{jurado.profissao}</span>
                           <span>•</span>
                           <span className={cn("px-1.5 py-0.5 rounded border text-[10px]", getPerfilColor(jurado.perfilDominante))}>
                             {getPerfilLabel(jurado.perfilDominante)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-[10px] text-zinc-400 mt-1">
+                        <div className="flex items-center gap-2 text-[10px] text-neutral-400 mt-1">
                           <span>{jurado.idade} anos</span>
                           <span>•</span>
                           <span>{jurado.bairro}</span>

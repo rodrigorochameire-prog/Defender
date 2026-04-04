@@ -116,7 +116,7 @@ Defensoria Pública de ${comarcaNome}
   if (conviteEnviado) {
     return (
       <div className="max-w-2xl mx-auto p-6 space-y-6">
-        <Link href="/admin/usuarios" className="flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-700">
+        <Link href="/admin/usuarios" className="flex items-center gap-2 text-sm text-neutral-500 hover:text-neutral-700">
           <ArrowLeft className="w-4 h-4" />
           Voltar para Usuários
         </Link>
@@ -129,14 +129,14 @@ Defensoria Pública de ${comarcaNome}
             <h1 className="text-2xl font-bold text-foreground">
               Convite Gerado!
             </h1>
-            <p className="text-zinc-500">
+            <p className="text-neutral-500">
               O convite para <span className="font-medium text-foreground">{formData.nome}</span> foi gerado com sucesso.
             </p>
           </div>
 
           <div className="mt-8 space-y-4">
             <div className="p-4 bg-muted/50 rounded-lg">
-              <Label className="text-xs text-zinc-500 mb-2 block">Link de Convite</Label>
+              <Label className="text-xs text-neutral-500 mb-2 block">Link de Convite</Label>
               <div className="flex gap-2">
                 <Input
                   readOnly
@@ -197,7 +197,7 @@ Defensoria Pública de ${comarcaNome}
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6">
-      <Link href="/admin/usuarios" className="flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-700">
+      <Link href="/admin/usuarios" className="flex items-center gap-2 text-sm text-neutral-500 hover:text-neutral-700">
         <ArrowLeft className="w-4 h-4" />
         Voltar para Usuários
       </Link>
@@ -209,7 +209,7 @@ Defensoria Pública de ${comarcaNome}
           </div>
           Convidar Defensor
         </h1>
-        <p className="text-sm text-zinc-500 mt-1">
+        <p className="text-sm text-neutral-500 mt-1">
           Convide um novo defensor para acessar a plataforma com configurações personalizadas
         </p>
       </div>
@@ -306,12 +306,12 @@ Defensoria Pública de ${comarcaNome}
                     "p-4 rounded-lg border-2 transition-all text-left",
                     formData.nucleo === key
                       ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
-                      : "border-border hover:border-zinc-300"
+                      : "border-border hover:border-neutral-300"
                   )}
                 >
                   <div className={cn("w-3 h-3 rounded-full mb-2", config.bgColor)} />
                   <p className="font-medium text-sm">{config.label}</p>
-                  <p className="text-xs text-zinc-500">{config.description}</p>
+                  <p className="text-xs text-neutral-500">{config.description}</p>
                 </button>
               ))}
           </div>
@@ -327,7 +327,7 @@ Defensoria Pública de ${comarcaNome}
             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
               <div>
                 <p className="text-sm font-medium">Ver todos os Assistidos</p>
-                <p className="text-xs text-zinc-500">Pode visualizar assistidos de outros núcleos</p>
+                <p className="text-xs text-neutral-500">Pode visualizar assistidos de outros núcleos</p>
               </div>
               <Switch
                 checked={formData.podeVerTodosAssistidos}
@@ -338,7 +338,7 @@ Defensoria Pública de ${comarcaNome}
             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
               <div>
                 <p className="text-sm font-medium">Ver todos os Processos</p>
-                <p className="text-xs text-zinc-500">Pode visualizar processos de outros núcleos</p>
+                <p className="text-xs text-neutral-500">Pode visualizar processos de outros núcleos</p>
               </div>
               <Switch
                 checked={formData.podeVerTodosProcessos}

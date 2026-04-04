@@ -81,8 +81,8 @@ export function SaveToProcessModal({
         <div className="space-y-4">
           {/* Message preview */}
           {messageText && (
-            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-3">
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-3 whitespace-pre-wrap">
+            <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-3">
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-3 whitespace-pre-wrap">
                 {messageText}
               </p>
             </div>
@@ -95,7 +95,7 @@ export function SaveToProcessModal({
               {(["anotacao", "documento", "evidencia"] as const).map((t) => (
                 <label
                   key={t}
-                  className="flex items-center gap-1.5 cursor-pointer text-sm text-zinc-700 dark:text-zinc-300"
+                  className="flex items-center gap-1.5 cursor-pointer text-sm text-neutral-700 dark:text-neutral-300"
                 >
                   <input
                     type="radio"
@@ -114,7 +114,7 @@ export function SaveToProcessModal({
           {/* Observação */}
           <div className="space-y-1.5">
             <Label htmlFor="observacao" className="text-sm font-medium">
-              Observação <span className="text-zinc-400 font-normal">(opcional)</span>
+              Observação <span className="text-neutral-400 font-normal">(opcional)</span>
             </Label>
             <Textarea
               id="observacao"
@@ -244,7 +244,7 @@ export function CreateNoteModal({
           </div>
 
           {!processoId && !assistidoId && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900 rounded-md px-3 py-2">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-900 rounded-md px-3 py-2">
               A anotação será salva sem vínculo a processo ou assistido.
             </p>
           )}
@@ -332,15 +332,15 @@ export function SaveToDriveModal({
 
         <div className="space-y-4">
           {/* File info */}
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-            <div className="h-10 w-10 rounded-lg bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center shrink-0">
-              <FileText className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+            <div className="h-10 w-10 rounded-lg bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center shrink-0">
+              <FileText className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate text-zinc-900 dark:text-zinc-100">
+              <p className="text-sm font-medium truncate text-neutral-900 dark:text-neutral-100">
                 {mediaFilename || "arquivo de mídia"}
               </p>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-neutral-400">
                 {messageIds.length} arquivo{messageIds.length !== 1 ? "s" : ""}
               </p>
             </div>
@@ -349,7 +349,7 @@ export function SaveToDriveModal({
           {/* Rename */}
           <div className="space-y-1.5">
             <Label htmlFor="rename" className="text-sm font-medium">
-              Nome do arquivo <span className="text-zinc-400 font-normal">(opcional)</span>
+              Nome do arquivo <span className="text-neutral-400 font-normal">(opcional)</span>
             </Label>
             <Input
               id="rename"
@@ -360,7 +360,7 @@ export function SaveToDriveModal({
             />
           </div>
 
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900 rounded-md px-3 py-2">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-900 rounded-md px-3 py-2">
             Destino: pasta do assistido / 05 - Outros
           </p>
         </div>

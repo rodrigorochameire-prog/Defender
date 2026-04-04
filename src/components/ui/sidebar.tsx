@@ -164,7 +164,7 @@ function Sidebar({
       <div
         data-slot="sidebar"
         className={cn(
-          "bg-[#1f1f23] text-zinc-100 flex h-full w-[var(--sidebar-width)] flex-col",
+          "bg-[#1f1f23] text-neutral-100 flex h-full w-[var(--sidebar-width)] flex-col",
           className
         )}
         {...props}
@@ -181,7 +181,7 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className={cn("bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl text-zinc-700 dark:text-zinc-100 w-[var(--sidebar-width)] max-w-[85vw] p-0 [&>button]:hidden border-zinc-200/40 dark:border-zinc-700/40", className)}
+          className={cn("bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl text-neutral-700 dark:text-neutral-100 w-[var(--sidebar-width)] max-w-[85vw] p-0 [&>button]:hidden border-neutral-200/40 dark:border-neutral-700/40", className)}
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -201,7 +201,7 @@ function Sidebar({
 
   return (
     <div
-      className="group peer text-zinc-600 dark:text-zinc-100 hidden md:block"
+      className="group peer text-neutral-600 dark:text-neutral-100 hidden md:block"
       data-state={state}
       data-collapsible={state === "collapsed" ? collapsible : ""}
       data-variant={variant}
@@ -242,7 +242,7 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className="bg-transparent flex h-full w-full flex-col group-data-[variant=floating]:rounded-2xl group-data-[variant=floating]:border group-data-[variant=floating]:border-white/60 group-data-[variant=floating]:dark:border-zinc-700/40 group-data-[variant=floating]:shadow-lg group-data-[variant=floating]:shadow-black/[0.04] group-data-[variant=floating]:dark:shadow-black/25 overflow-hidden"
+          className="bg-transparent flex h-full w-full flex-col group-data-[variant=floating]:rounded-2xl group-data-[variant=floating]:border group-data-[variant=floating]:border-white/60 group-data-[variant=floating]:dark:border-neutral-700/40 group-data-[variant=floating]:shadow-lg group-data-[variant=floating]:shadow-black/[0.04] group-data-[variant=floating]:dark:shadow-black/25 overflow-hidden"
         >
           {children}
         </div>

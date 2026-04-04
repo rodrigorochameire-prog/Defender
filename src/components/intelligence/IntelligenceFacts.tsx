@@ -48,7 +48,7 @@ const TIPO_CONFIG: Record<
   evento: {
     label: "Evento",
     icon: CircleDot,
-    dotColor: "bg-zinc-400",
+    dotColor: "bg-neutral-400",
   },
   prova: {
     label: "Prova",
@@ -118,7 +118,7 @@ export function IntelligenceFacts({
         const config = TIPO_CONFIG[tipo] || {
           label: tipo,
           icon: CircleDot,
-          dotColor: "bg-zinc-400",
+          dotColor: "bg-neutral-400",
         };
         const Icon = config.icon;
 

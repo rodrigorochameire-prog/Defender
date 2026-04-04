@@ -233,10 +233,10 @@ function StatCard({
     <button
       onClick={onClick}
       className={cn(
-        "group relative text-left p-3 md:p-4 rounded-xl bg-white dark:bg-zinc-900 border transition-all duration-300",
+        "group relative text-left p-3 md:p-4 rounded-xl bg-white dark:bg-neutral-900 border transition-all duration-300",
         isActive 
           ? "border-emerald-300 dark:border-emerald-700 ring-2 ring-emerald-200/50 dark:ring-emerald-800/30 shadow-md shadow-emerald-500/10" 
-          : "border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30",
+          : "border-neutral-100 dark:border-neutral-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30",
         onClick && "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03] dark:hover:shadow-emerald-500/[0.05]"
       )}
     >
@@ -251,7 +251,7 @@ function StatCard({
             "text-[10px] font-medium truncate uppercase tracking-wide transition-colors duration-300",
             isActive 
               ? "text-emerald-600 dark:text-emerald-400"
-              : "text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70"
+              : "text-neutral-400 dark:text-neutral-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70"
           )}>
             {label}
           </p>
@@ -259,12 +259,12 @@ function StatCard({
             "text-lg md:text-xl font-semibold",
             isActive 
               ? "text-emerald-700 dark:text-emerald-300"
-              : "text-zinc-700 dark:text-zinc-300"
+              : "text-neutral-700 dark:text-neutral-300"
           )}>
             {value}
           </p>
           {sublabel && (
-            <p className="text-[9px] md:text-[10px] text-zinc-400 dark:text-zinc-500">
+            <p className="text-[9px] md:text-[10px] text-neutral-400 dark:text-neutral-500">
               {sublabel}
             </p>
           )}
@@ -274,13 +274,13 @@ function StatCard({
             "w-8 h-8 md:w-9 md:h-9 rounded-lg flex items-center justify-center flex-shrink-0 border transition-all duration-300",
             isActive
               ? "bg-emerald-100 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800"
-              : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20"
+              : "bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20"
           )}>
             <Icon className={cn(
               "w-3.5 h-3.5 md:w-4 md:h-4 transition-colors duration-300",
               isActive
                 ? "text-emerald-600 dark:text-emerald-400"
-                : "text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400"
+                : "text-neutral-500 dark:text-neutral-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400"
             )} />
           </div>
         )}
@@ -313,7 +313,7 @@ function EventoDetalhado({
   return (
     <div 
       onClick={() => onClick(evento)}
-      className="group relative flex items-stretch gap-3 p-4 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all cursor-pointer hover:shadow-md"
+      className="group relative flex items-stretch gap-3 p-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-100 dark:border-neutral-800 hover:border-neutral-200 dark:hover:border-neutral-700 transition-all cursor-pointer hover:shadow-md"
     >
       {/* Barra lateral colorida */}
       <div 
@@ -323,16 +323,16 @@ function EventoDetalhado({
       
       {/* Horário */}
       <div className="flex flex-col items-center justify-center w-14 flex-shrink-0">
-        <span className="text-lg font-bold text-zinc-800 dark:text-zinc-200">{evento.horarioInicio}</span>
+        <span className="text-lg font-bold text-neutral-800 dark:text-neutral-200">{evento.horarioInicio}</span>
         {evento.horarioFim && (
-          <span className="text-[10px] text-zinc-400">até {evento.horarioFim}</span>
+          <span className="text-[10px] text-neutral-400">até {evento.horarioFim}</span>
         )}
       </div>
       
       {/* Conteúdo principal */}
       <div className="flex-1 min-w-0 space-y-1.5">
         <div className="flex items-start justify-between gap-2">
-          <h4 className="font-semibold text-sm text-zinc-800 dark:text-zinc-200 line-clamp-1">
+          <h4 className="font-semibold text-sm text-neutral-800 dark:text-neutral-200 line-clamp-1">
             {evento.titulo}
           </h4>
           <Badge 
@@ -347,12 +347,12 @@ function EventoDetalhado({
         </div>
         
         {evento.descricao && (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-1">
             {evento.descricao}
           </p>
         )}
         
-        <div className="flex items-center gap-3 text-[10px] text-zinc-400">
+        <div className="flex items-center gap-3 text-[10px] text-neutral-400">
           {evento.local && (
             <span className="flex items-center gap-1">
               <MapPin className="w-3 h-3" />
@@ -393,7 +393,7 @@ function EventoDetalhado({
             onClick={(e) => { e.stopPropagation(); onExportCowork(evento); }}
             disabled={isExportingCowork}
             title="Exportar briefing para Cowork"
-            className="text-zinc-400 hover:text-violet-600 transition-colors disabled:opacity-40"
+            className="text-neutral-400 hover:text-violet-600 transition-colors disabled:opacity-40"
           >
             {isExportingCowork ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bot className="w-3.5 h-3.5" />}
           </button>
@@ -432,16 +432,16 @@ function SemanaView({
               "p-2 rounded-lg border min-h-[120px] transition-all",
               isHoje 
                 ? "bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800" 
-                : "bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800"
+                : "bg-white dark:bg-neutral-900 border-neutral-100 dark:border-neutral-800"
             )}
           >
             <div className="text-center mb-2">
-              <p className="text-[10px] uppercase text-zinc-400 dark:text-zinc-500">
+              <p className="text-[10px] uppercase text-neutral-400 dark:text-neutral-500">
                 {format(dia, "EEE", { locale: ptBR })}
               </p>
               <p className={cn(
                 "text-lg font-bold",
-                isHoje ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-700 dark:text-zinc-300"
+                isHoje ? "text-emerald-600 dark:text-emerald-400" : "text-neutral-700 dark:text-neutral-300"
               )}>
                 {format(dia, "dd")}
               </p>
@@ -455,17 +455,17 @@ function SemanaView({
                   <div 
                     key={evento.id}
                     onClick={() => onEventClick(evento)}
-                    className="flex items-center gap-1.5 p-1.5 rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    className="flex items-center gap-1.5 p-1.5 rounded-md cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                   >
                     <div 
                       className="w-1 h-4 rounded-full flex-shrink-0"
                       style={{ backgroundColor: solidColor }}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-medium text-zinc-700 dark:text-zinc-300 truncate">
+                      <p className="text-[10px] font-medium text-neutral-700 dark:text-neutral-300 truncate">
                         {evento.horarioInicio}
                       </p>
-                      <p className="text-[9px] text-zinc-500 truncate">
+                      <p className="text-[9px] text-neutral-500 truncate">
                         {evento.titulo.slice(0, 20)}
                       </p>
                     </div>
@@ -473,7 +473,7 @@ function SemanaView({
                 );
               })}
               {eventosDoDia.length > 3 && (
-                <p className="text-[9px] text-center text-zinc-400">
+                <p className="text-[9px] text-center text-neutral-400">
                   +{eventosDoDia.length - 3} mais
                 </p>
               )}
@@ -1253,7 +1253,7 @@ export default function AgendaPage() {
             "flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] transition-colors cursor-pointer shrink-0 whitespace-nowrap",
             selectedPeriodo === s.periodo
               ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
-              : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
+              : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
           )}
         >
           <span className="font-bold tabular-nums">{s.value}</span>
@@ -1286,7 +1286,7 @@ export default function AgendaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* G/R/J avatars — portal no header breadcrumb */}
       {headerSlot && createPortal(
         <TooltipProvider delayDuration={200}>
@@ -1299,8 +1299,8 @@ export default function AgendaPage() {
                     className={cn(
                       "w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold transition-all duration-200 cursor-pointer shrink-0",
                       selectedDefensor === av.id
-                        ? "bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900 ring-2 ring-zinc-400 dark:ring-zinc-500 ring-offset-1 ring-offset-white dark:ring-offset-zinc-900 scale-110"
-                        : "bg-zinc-300 dark:bg-zinc-600 text-zinc-600 dark:text-zinc-300 opacity-60 hover:opacity-100 hover:scale-105"
+                        ? "bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 ring-2 ring-neutral-400 dark:ring-neutral-500 ring-offset-1 ring-offset-white dark:ring-offset-neutral-900 scale-110"
+                        : "bg-neutral-300 dark:bg-neutral-600 text-neutral-600 dark:text-neutral-300 opacity-60 hover:opacity-100 hover:scale-105"
                     )}
                   >
                     {av.label}
@@ -1316,26 +1316,26 @@ export default function AgendaPage() {
         headerSlot
       )}
       {/* Header — Title + actions */}
-      <div className="px-5 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
+      <div className="px-5 py-2.5 bg-white dark:bg-neutral-900 border-b border-neutral-200/80 dark:border-neutral-800/80">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2.5 shrink-0">
-            <div className="w-9 h-9 rounded-[10px] bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center">
-              <CalendarIcon className="w-[18px] h-[18px] text-white dark:text-zinc-900" />
+            <div className="w-9 h-9 rounded-[10px] bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center">
+              <CalendarIcon className="w-[18px] h-[18px] text-white dark:text-neutral-900" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="font-serif text-[17px] font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">Agenda</h1>
-              <p className="text-[10px] text-zinc-400">Audiências, prazos e compromissos</p>
+              <h1 className="font-serif text-[17px] font-semibold text-neutral-900 dark:text-neutral-100 tracking-tight leading-tight">Agenda</h1>
+              <p className="text-[10px] text-neutral-400">Audiências, prazos e compromissos</p>
             </div>
           </div>
 
           <div className="flex-1 min-w-2" />
 
           {/* Search + Filter + View + More — grouped pill */}
-          <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-zinc-200/60 dark:bg-zinc-800 border border-zinc-300/70 dark:border-zinc-700/60 shrink-0">
+          <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-neutral-200/60 dark:bg-neutral-800 border border-neutral-300/70 dark:border-neutral-700/60 shrink-0">
             {/* Search */}
             {isSearchOpen ? (
               <div className="relative animate-in slide-in-from-right-2 duration-200">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
                 <Input
                   ref={searchInputRef}
                   autoFocus
@@ -1344,16 +1344,16 @@ export default function AgendaPage() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onBlur={() => { if (!searchTerm) setIsSearchOpen(false); }}
                   onKeyDown={(e) => { if (e.key === "Escape") { setSearchTerm(""); setIsSearchOpen(false); } }}
-                  className="pl-8 pr-7 h-7 w-40 text-xs bg-white dark:bg-zinc-700 border-0 rounded-full"
+                  className="pl-8 pr-7 h-7 w-40 text-xs bg-white dark:bg-neutral-700 border-0 rounded-full"
                 />
-                <button onClick={() => { setSearchTerm(""); setIsSearchOpen(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 cursor-pointer">
+                <button onClick={() => { setSearchTerm(""); setIsSearchOpen(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 cursor-pointer">
                   <XCircle className="w-3 h-3" />
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => { setIsSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
-                className={cn("w-7 h-7 flex items-center justify-center rounded-full transition-colors cursor-pointer", searchTerm ? "bg-white dark:bg-zinc-700 text-emerald-600 shadow-sm" : "text-zinc-400 hover:text-zinc-600 hover:bg-white dark:hover:bg-zinc-700")}
+                className={cn("w-7 h-7 flex items-center justify-center rounded-full transition-colors cursor-pointer", searchTerm ? "bg-white dark:bg-neutral-700 text-emerald-600 shadow-sm" : "text-neutral-400 hover:text-neutral-600 hover:bg-white dark:hover:bg-neutral-700")}
                 title="Buscar"
               >
                 <Search className="w-3.5 h-3.5" />
@@ -1362,7 +1362,7 @@ export default function AgendaPage() {
             {/* Filter dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className={cn("relative w-7 h-7 flex items-center justify-center rounded-full transition-colors cursor-pointer", (selectedTipo || selectedDefensor) ? "bg-white dark:bg-zinc-700 text-emerald-600 shadow-sm" : "text-zinc-400 hover:text-zinc-600 hover:bg-white dark:hover:bg-zinc-700")} title="Filtros">
+                <button className={cn("relative w-7 h-7 flex items-center justify-center rounded-full transition-colors cursor-pointer", (selectedTipo || selectedDefensor) ? "bg-white dark:bg-neutral-700 text-emerald-600 shadow-sm" : "text-neutral-400 hover:text-neutral-600 hover:bg-white dark:hover:bg-neutral-700")} title="Filtros">
                   <Filter className="w-3.5 h-3.5" />
                   {(selectedTipo || selectedDefensor) && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500" />}
                 </button>
@@ -1370,23 +1370,23 @@ export default function AgendaPage() {
               <DropdownMenuContent align="end" className="w-52 p-2">
                 <div className="space-y-2">
                   <div>
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Defensor</span>
+                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Defensor</span>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {[{ value: "def-1", label: "Dr. Rodrigo" }, { value: "def-2", label: "Dra. Juliane" }].map((d) => (
-                        <button key={d.value} onClick={() => setSelectedDefensor(selectedDefensor === d.value ? null : d.value)} className={cn("px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer", selectedDefensor === d.value ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700")}>{d.label}</button>
+                        <button key={d.value} onClick={() => setSelectedDefensor(selectedDefensor === d.value ? null : d.value)} className={cn("px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer", selectedDefensor === d.value ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700")}>{d.label}</button>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Tipo</span>
+                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Tipo</span>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {[{ value: "audiencia", label: "Audiência" }, { value: "reuniao", label: "Reunião" }, { value: "prazo", label: "Prazo" }, { value: "compromisso", label: "Compromisso" }, { value: "diligencia", label: "Diligência" }].map((t) => (
-                        <button key={t.value} onClick={() => setSelectedTipo(selectedTipo === t.value ? null : t.value)} className={cn("px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer", selectedTipo === t.value ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700")}>{t.label}</button>
+                        <button key={t.value} onClick={() => setSelectedTipo(selectedTipo === t.value ? null : t.value)} className={cn("px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer", selectedTipo === t.value ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700")}>{t.label}</button>
                       ))}
                     </div>
                   </div>
                   {(selectedTipo || selectedDefensor) && (
-                    <button onClick={() => { setSelectedTipo(null); setSelectedDefensor(null); }} className="w-full text-center text-[11px] text-zinc-400 hover:text-rose-500 py-1 cursor-pointer transition-colors">Limpar filtros</button>
+                    <button onClick={() => { setSelectedTipo(null); setSelectedDefensor(null); }} className="w-full text-center text-[11px] text-neutral-400 hover:text-rose-500 py-1 cursor-pointer transition-colors">Limpar filtros</button>
                   )}
                 </div>
               </DropdownMenuContent>
@@ -1394,7 +1394,7 @@ export default function AgendaPage() {
             {/* Overflow */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="w-7 h-7 flex items-center justify-center rounded-full text-zinc-400 hover:text-zinc-600 hover:bg-white dark:hover:bg-zinc-700 transition-colors cursor-pointer">
+                <button className="w-7 h-7 flex items-center justify-center rounded-full text-neutral-400 hover:text-neutral-600 hover:bg-white dark:hover:bg-neutral-700 transition-colors cursor-pointer">
                   <MoreHorizontal className="w-3.5 h-3.5" />
                 </button>
               </DropdownMenuTrigger>
@@ -1416,7 +1416,7 @@ export default function AgendaPage() {
           {/* New event */}
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-1.5 h-8 px-3.5 rounded-lg bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold transition-colors cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 h-8 px-3.5 rounded-lg bg-neutral-900 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold transition-colors cursor-pointer shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Novo</span>
@@ -1425,12 +1425,12 @@ export default function AgendaPage() {
       </div>
 
       {/* Filter bar — Atribuição pills + view mode (separate from header) */}
-      <div className="mx-3 sm:mx-5 md:mx-8 my-3 px-3 py-2.5 flex items-center gap-2 overflow-x-auto scrollbar-none bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80">
+      <div className="mx-3 sm:mx-5 md:mx-8 my-3 px-3 py-2.5 flex items-center gap-2 overflow-x-auto scrollbar-none bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80">
         {/* Mobile: dropdown */}
         <div className="flex sm:hidden shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className={cn("flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer", areaFilters.has("all") ? "border-zinc-200 dark:border-zinc-700 text-zinc-500" : "border-emerald-300 text-emerald-700 bg-emerald-50")}>
+              <button className={cn("flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer", areaFilters.has("all") ? "border-neutral-200 dark:border-neutral-700 text-neutral-500" : "border-emerald-300 text-emerald-700 bg-emerald-50")}>
                 <Filter className="w-3.5 h-3.5" />
                 {areaFilters.has("all") ? "Todos" : `${areaFilters.size}`}
                 <ChevronDown className="w-3 h-3 opacity-50" />
@@ -1444,7 +1444,7 @@ export default function AgendaPage() {
                   <DropdownMenuItem key={key} onClick={(e) => { e.preventDefault(); handleAreaFilterToggle(key); }} className="flex items-center gap-2 px-2.5 py-2 cursor-pointer">
                     <span className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 [&>svg]:w-3 [&>svg]:h-3" style={{ backgroundColor: isActive ? `${color}18` : "transparent", color }}>{config.icon}</span>
                     <span className="flex-1 text-xs font-medium">{config.shortLabel}</span>
-                    <span className="text-[10px] font-mono tabular-nums text-zinc-400">{countByArea[key] || 0}</span>
+                    <span className="text-[10px] font-mono tabular-nums text-neutral-400">{countByArea[key] || 0}</span>
                     {isActive && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
                   </DropdownMenuItem>
                 );
@@ -1453,14 +1453,14 @@ export default function AgendaPage() {
           </DropdownMenu>
         </div>
         {/* Desktop: Atribuição pills */}
-        <div className="hidden sm:inline-flex items-center gap-0 p-[3px] rounded-full bg-zinc-200/60 dark:bg-zinc-800 border border-zinc-300/70 dark:border-zinc-700/60">
+        <div className="hidden sm:inline-flex items-center gap-0 p-[3px] rounded-full bg-neutral-200/60 dark:bg-neutral-800 border border-neutral-300/70 dark:border-neutral-700/60">
           {Object.entries(ATRIBUICAO_CONFIG).map(([key, config]) => (
             <FilterPill key={key} label={config.shortLabel} isActive={areaFilters.has(key)} config={config} onClick={() => handleAreaFilterToggle(key)} />
           ))}
         </div>
         <div className="flex-1 min-w-2" />
         {/* View mode switches */}
-        <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-zinc-200/60 dark:bg-zinc-800 border border-zinc-300/70 dark:border-zinc-700/60 shrink-0">
+        <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-neutral-200/60 dark:bg-neutral-800 border border-neutral-300/70 dark:border-neutral-700/60 shrink-0">
           {([
             { key: "calendar", icon: Grid3x3, label: "Mês" },
             { key: "week", icon: CalendarDays, label: "Semana" },
@@ -1470,7 +1470,7 @@ export default function AgendaPage() {
               key={v.key}
               onClick={() => { setViewMode(v.key); setSelectedPeriodo(null); }}
               title={v.label}
-              className={cn("flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer w-7 h-7", viewMode === v.key ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 hover:bg-white dark:hover:bg-zinc-700")}
+              className={cn("flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer w-7 h-7", viewMode === v.key ? "bg-neutral-700 dark:bg-neutral-300 text-white dark:text-neutral-900 shadow-sm" : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 hover:bg-white dark:hover:bg-neutral-700")}
             >
               <v.icon className="w-3.5 h-3.5" />
             </button>
@@ -1499,14 +1499,14 @@ export default function AgendaPage() {
                 )}
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200">
+                <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200">
                   {selectedPeriodo === "hoje" ? "Hoje" : "Amanhã"} - {format(
                     selectedPeriodo === "hoje" ? new Date() : addDays(new Date(), 1),
                     "EEEE, dd 'de' MMMM",
                     { locale: ptBR }
                   )}
                 </h3>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-neutral-500">
                   {eventosOrdenados.length} evento{eventosOrdenados.length !== 1 ? 's' : ''} programado{eventosOrdenados.length !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -1515,7 +1515,7 @@ export default function AgendaPage() {
               variant="ghost"
               size="sm"
               onClick={() => setSelectedPeriodo(null)}
-              className="text-xs text-zinc-500 hover:text-zinc-700"
+              className="text-xs text-neutral-500 hover:text-neutral-700"
             >
               <XCircle className="w-4 h-4 mr-1" />
               Limpar seleção
@@ -1525,11 +1525,11 @@ export default function AgendaPage() {
           {/* Lista detalhada de eventos */}
           <div className="space-y-3">
             {eventosOrdenados.length === 0 ? (
-              <Card className="p-8 text-center border-zinc-200 dark:border-zinc-800">
-                <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 mx-auto mb-3 flex items-center justify-center">
-                  <CalendarIcon className="w-6 h-6 text-zinc-400" />
+              <Card className="p-8 text-center border-neutral-200 dark:border-neutral-800">
+                <div className="w-12 h-12 rounded-xl bg-neutral-100 dark:bg-neutral-800 mx-auto mb-3 flex items-center justify-center">
+                  <CalendarIcon className="w-6 h-6 text-neutral-400" />
                 </div>
-                <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
                   Nenhum evento para {selectedPeriodo === "hoje" ? "hoje" : "amanhã"}
                 </p>
               </Card>
@@ -1574,10 +1574,10 @@ export default function AgendaPage() {
                 <CalendarRange className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200">
+                <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200">
                   Próximos 7 dias
                 </h3>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-neutral-500">
                   {stats.semana} evento{stats.semana !== 1 ? 's' : ''} na semana
                 </p>
               </div>
@@ -1586,7 +1586,7 @@ export default function AgendaPage() {
               variant="ghost"
               size="sm"
               onClick={() => setSelectedPeriodo(null)}
-              className="text-xs text-zinc-500 hover:text-zinc-700"
+              className="text-xs text-neutral-500 hover:text-neutral-700"
             >
               <XCircle className="w-4 h-4 mr-1" />
               Limpar seleção
@@ -1639,12 +1639,12 @@ export default function AgendaPage() {
               headerRight={calendarHeaderRight}
             />
           ) : (
-            <Card className="border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+            <Card className="border border-neutral-200 dark:border-neutral-800 overflow-hidden">
               {/* Header da Lista */}
-              <div className="px-4 py-3 bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
+              <div className="px-4 py-3 bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-200 dark:border-neutral-800">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                       {eventosOrdenados.length} evento{eventosOrdenados.length !== 1 && 's'}
                     </p>
                     {!showPastEventsInList && (
@@ -1660,12 +1660,12 @@ export default function AgendaPage() {
                         "px-2.5 py-1.5 rounded-md text-xs font-medium transition-all",
                         showPastEventsInList
                           ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                          : "text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-600"
+                          : "text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-600"
                       )}
                     >
                       {showPastEventsInList ? "Ocultando Passados" : "Ver Passados"}
                     </button>
-                    <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-1" />
+                    <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 mx-1" />
                     {["data", "prioridade"].map((sort) => (
                       <button
                         key={sort}
@@ -1673,8 +1673,8 @@ export default function AgendaPage() {
                         className={cn(
                           "px-3 py-1.5 rounded-md text-xs font-medium transition-all",
                           sortBy === sort
-                            ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                            : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                            ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
+                            : "text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                         )}
                       >
                         {sort === "data" ? "Por Data" : "Por Prioridade"}
@@ -1688,13 +1688,13 @@ export default function AgendaPage() {
               <div className="max-h-[600px] overflow-y-auto">
                 {eventosOrdenados.length === 0 ? (
                   <div className="text-center py-16 px-4">
-                    <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 mx-auto mb-4 flex items-center justify-center">
-                      <CalendarIcon className="w-8 h-8 text-zinc-400" />
+                    <div className="w-16 h-16 rounded-2xl bg-neutral-100 dark:bg-neutral-800 mx-auto mb-4 flex items-center justify-center">
+                      <CalendarIcon className="w-8 h-8 text-neutral-400" />
                     </div>
-                    <p className="text-base font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    <p className="text-base font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                       Nenhum evento encontrado
                     </p>
-                    <p className="text-sm text-zinc-500">
+                    <p className="text-sm text-neutral-500">
                       Ajuste os filtros ou crie um novo evento
                     </p>
                   </div>
@@ -1731,7 +1731,7 @@ export default function AgendaPage() {
                               ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800/50"
                               : isAmanha
                                 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50"
-                                : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
+                                : "bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700"
                           )}>
                             <div className={cn(
                               "w-10 h-10 rounded-lg flex flex-col items-center justify-center",
@@ -1739,17 +1739,17 @@ export default function AgendaPage() {
                                 ? "bg-rose-500 text-white"
                                 : isAmanha
                                   ? "bg-amber-500 text-white"
-                                  : "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700"
+                                  : "bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700"
                             )}>
                               <span className={cn(
                                 "text-[10px] font-semibold uppercase leading-none",
-                                !isHoje && !isAmanha && "text-zinc-400"
+                                !isHoje && !isAmanha && "text-neutral-400"
                               )}>
                                 {format(dataObj, "MMM", { locale: ptBR })}
                               </span>
                               <span className={cn(
                                 "text-lg font-bold leading-none",
-                                !isHoje && !isAmanha && "text-zinc-700 dark:text-zinc-300"
+                                !isHoje && !isAmanha && "text-neutral-700 dark:text-neutral-300"
                               )}>
                                 {format(dataObj, "dd")}
                               </span>
@@ -1761,18 +1761,18 @@ export default function AgendaPage() {
                                   ? "text-rose-700 dark:text-rose-400"
                                   : isAmanha
                                     ? "text-amber-700 dark:text-amber-400"
-                                    : "text-zinc-700 dark:text-zinc-300"
+                                    : "text-neutral-700 dark:text-neutral-300"
                               )}>
                                 {dataLabel}
                               </p>
-                              <p className="text-xs text-zinc-500">
+                              <p className="text-xs text-neutral-500">
                                 {eventosDodia.length} evento{eventosDodia.length !== 1 && 's'}
                               </p>
                             </div>
                           </div>
 
                           {/* Eventos do Dia */}
-                          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                          <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
                             {eventosDodia.map((evento) => (
                               <EventoCard
                                 key={evento.id}

@@ -120,7 +120,7 @@ export function MentionTextarea({
         className={cn("min-h-[140px]", className)}
       />
       {activeMatch && filteredSuggestions.length > 0 && (
-        <div className="rounded-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-zinc-950 p-2">
+        <div className="rounded-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-neutral-950 p-2">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-400 mb-2">
             Sugestões
           </p>

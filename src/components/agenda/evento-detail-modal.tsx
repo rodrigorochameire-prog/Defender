@@ -155,8 +155,8 @@ export function EventoDetailModal({
         return {
           icon: Clock,
           label: status,
-          color: "text-zinc-600 dark:text-zinc-400",
-          bg: "bg-zinc-50 dark:bg-zinc-950/30",
+          color: "text-neutral-600 dark:text-neutral-400",
+          bg: "bg-neutral-50 dark:bg-neutral-950/30",
         };
     }
   };
@@ -179,7 +179,7 @@ export function EventoDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-900 p-0">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-neutral-900 p-0">
         {/* Hidden title and description for accessibility */}
         <DialogTitle className="sr-only">Detalhes do Evento: {evento.titulo}</DialogTitle>
         <DialogDescription className="sr-only">
@@ -218,7 +218,7 @@ export function EventoDetailModal({
         )}
 
         {/* Header com actions */}
-        <div className="sticky top-0 z-10 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-3 py-2.5 sm:px-6 sm:py-4">
+        <div className="sticky top-0 z-10 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 px-3 py-2.5 sm:px-6 sm:py-4">
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center flex-wrap gap-0.5">
               {/* Editar */}
@@ -276,7 +276,7 @@ export function EventoDetailModal({
                 <Trash2 className="w-4 h-4" />
               </Button>
 
-              <div className="hidden sm:block w-px h-6 bg-zinc-200 dark:bg-zinc-700 mx-1" />
+              <div className="hidden sm:block w-px h-6 bg-neutral-200 dark:bg-neutral-700 mx-1" />
 
               {/* Ações de status rápido */}
               {onStatusChange && !isEventoCancelado(evento.status) && evento.status !== "concluido" && (
@@ -301,7 +301,7 @@ export function EventoDetailModal({
                       onStatusChange(evento.id, "cancelado");
                       toast.success("Evento marcado como cancelado!");
                     }}
-                    className="h-8 text-xs text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    className="h-8 text-xs text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                     title="Marcar como cancelado"
                   >
                     <XCircle className="w-3.5 h-3.5 sm:mr-1" />
@@ -342,7 +342,7 @@ export function EventoDetailModal({
               <div
                 className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 mt-1 ${
                   isEventoCancelado(evento.status)
-                    ? "bg-zinc-100 dark:bg-zinc-800"
+                    ? "bg-neutral-100 dark:bg-neutral-800"
                     : config.bgColor
                 }`}
               >
@@ -358,15 +358,15 @@ export function EventoDetailModal({
               <div className="flex-1 min-w-0">
                 <h1 className={`text-xl sm:text-2xl font-normal break-words ${
                   isEventoCancelado(evento.status)
-                    ? "text-zinc-400 dark:text-zinc-500 line-through"
-                    : "text-zinc-900 dark:text-zinc-50"
+                    ? "text-neutral-400 dark:text-neutral-500 line-through"
+                    : "text-neutral-900 dark:text-neutral-50"
                 }`}>
                   {evento.titulo}
                 </h1>
                 <p className={`text-sm mt-1 ${
                   isEventoCancelado(evento.status)
-                    ? "text-zinc-400 dark:text-zinc-500 line-through"
-                    : "text-zinc-600 dark:text-zinc-400"
+                    ? "text-neutral-400 dark:text-neutral-500 line-through"
+                    : "text-neutral-600 dark:text-neutral-400"
                 }`}>
                   {formatDate(evento.data)} · {evento.horarioInicio}
                   {evento.horarioFim && ` – ${evento.horarioFim}`}
@@ -377,7 +377,7 @@ export function EventoDetailModal({
 
           {/* Criar ata da reunião */}
           {evento.tipo === "audiencia" && evento.status !== "concluido" && (
-            <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors">
+            <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg p-4 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 cursor-pointer transition-colors">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -385,21 +385,21 @@ export function EventoDetailModal({
                     <p className="font-medium text-blue-600 dark:text-blue-400">
                       Criar ata da reunião
                     </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
                       Inicie um novo documento para fazer anotações
                     </p>
                   </div>
                 </div>
-                <MoreVertical className="w-4 h-4 text-zinc-400" />
+                <MoreVertical className="w-4 h-4 text-neutral-400" />
               </div>
             </div>
           )}
 
           {/* Informações da Audiência */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300">
-              <FileText className="w-4 h-4 text-zinc-500" />
-              <h2 className="font-bold text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            <div className="flex items-center gap-2 text-neutral-700 dark:text-neutral-300">
+              <FileText className="w-4 h-4 text-neutral-500" />
+              <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                 Informações da Audiência
               </h2>
             </div>
@@ -408,26 +408,26 @@ export function EventoDetailModal({
               {/* Órgão Julgador */}
               {evento.local && (
                 <div>
-                  <p className="font-bold text-zinc-900 dark:text-zinc-50 mb-1">
+                  <p className="font-bold text-neutral-900 dark:text-neutral-50 mb-1">
                     Órgão Julgador:
                   </p>
-                  <p className="text-zinc-700 dark:text-zinc-300">{evento.local}</p>
+                  <p className="text-neutral-700 dark:text-neutral-300">{evento.local}</p>
                 </div>
               )}
 
               {/* Tipo de Audiência */}
               <div>
-                <p className="font-bold text-zinc-900 dark:text-zinc-50 mb-1">
+                <p className="font-bold text-neutral-900 dark:text-neutral-50 mb-1">
                   Tipo de Audiência:
                 </p>
-                <p className="text-zinc-700 dark:text-zinc-300">{config.label}</p>
+                <p className="text-neutral-700 dark:text-neutral-300">{config.label}</p>
               </div>
 
               {/* Processo */}
               {evento.processo && (
                 <div>
-                  <p className="font-bold text-zinc-900 dark:text-zinc-50 mb-1">Processo:</p>
-                  <p className="text-zinc-700 dark:text-zinc-300 font-mono">
+                  <p className="font-bold text-neutral-900 dark:text-neutral-50 mb-1">Processo:</p>
+                  <p className="text-neutral-700 dark:text-neutral-300 font-mono">
                     {evento.processo}
                   </p>
                 </div>
@@ -436,22 +436,22 @@ export function EventoDetailModal({
               {/* Classe Processual */}
               {evento.classeJudicial && (
                 <div>
-                  <p className="font-bold text-zinc-900 dark:text-zinc-50 mb-1">
+                  <p className="font-bold text-neutral-900 dark:text-neutral-50 mb-1">
                     Classe Processual:
                   </p>
-                  <p className="text-zinc-700 dark:text-zinc-300">{evento.classeJudicial}</p>
+                  <p className="text-neutral-700 dark:text-neutral-300">{evento.classeJudicial}</p>
                 </div>
               )}
 
               {/* Atribuição */}
               {evento.atribuicao && (
                 <div>
-                  <p className="font-bold text-zinc-900 dark:text-zinc-50 mb-1">Atribuição:</p>
+                  <p className="font-bold text-neutral-900 dark:text-neutral-50 mb-1">Atribuição:</p>
                   <div className="flex items-center gap-2">
                     <AtribuicaoIcon
-                      className={`w-4 h-4 ${atribuicaoConfig[evento.atribuicao]?.color || "text-zinc-600"}`}
+                      className={`w-4 h-4 ${atribuicaoConfig[evento.atribuicao]?.color || "text-neutral-600"}`}
                     />
-                    <p className="text-zinc-700 dark:text-zinc-300">{evento.atribuicao}</p>
+                    <p className="text-neutral-700 dark:text-neutral-300">{evento.atribuicao}</p>
                   </div>
                 </div>
               )}
@@ -459,21 +459,21 @@ export function EventoDetailModal({
               {/* Parte(s) Assistida(s) */}
               {evento.assistido && (
                 <div>
-                  <p className="font-bold text-zinc-900 dark:text-zinc-50 mb-1 flex items-center gap-2">
+                  <p className="font-bold text-neutral-900 dark:text-neutral-50 mb-1 flex items-center gap-2">
                     <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     Parte(s) Assistida(s):
                   </p>
-                  <p className="text-zinc-700 dark:text-zinc-300">{evento.assistido}</p>
+                  <p className="text-neutral-700 dark:text-neutral-300">{evento.assistido}</p>
                 </div>
               )}
 
               {/* Data e Horário */}
               <div>
-                <p className="font-bold text-zinc-900 dark:text-zinc-50 mb-1 flex items-center gap-2">
+                <p className="font-bold text-neutral-900 dark:text-neutral-50 mb-1 flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-red-600 dark:text-red-400" />
                   Data e Horário:
                 </p>
-                <p className="text-zinc-700 dark:text-zinc-300">
+                <p className="text-neutral-700 dark:text-neutral-300">
                   {new Date(evento.data).toLocaleDateString("pt-BR")} {evento.horarioInicio}
                   {evento.horarioFim && ` - ${evento.horarioFim}`}
                 </p>
@@ -481,7 +481,7 @@ export function EventoDetailModal({
 
               {/* Status */}
               <div>
-                <p className="font-bold text-zinc-900 dark:text-zinc-50 mb-1 flex items-center gap-2">
+                <p className="font-bold text-neutral-900 dark:text-neutral-50 mb-1 flex items-center gap-2">
                   <StatusIcon className={`w-4 h-4 ${statusConfig.color}`} />
                   Status:
                 </p>
@@ -491,7 +491,7 @@ export function EventoDetailModal({
               {/* Prioridade */}
               {evento.prioridade && (
                 <div>
-                  <p className="font-bold text-zinc-900 dark:text-zinc-50 mb-1">Prioridade:</p>
+                  <p className="font-bold text-neutral-900 dark:text-neutral-50 mb-1">Prioridade:</p>
                   <Badge
                     variant="secondary"
                     className={
@@ -501,7 +501,7 @@ export function EventoDetailModal({
                         ? "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300"
                         : evento.prioridade === "media"
                         ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                        : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                        : "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
                     }
                   >
                     {evento.prioridade.charAt(0).toUpperCase() + evento.prioridade.slice(1)}
@@ -512,8 +512,8 @@ export function EventoDetailModal({
               {/* Responsável */}
               {evento.responsavel && (
                 <div>
-                  <p className="font-bold text-zinc-900 dark:text-zinc-50 mb-1">Responsável:</p>
-                  <p className="text-zinc-700 dark:text-zinc-300">
+                  <p className="font-bold text-neutral-900 dark:text-neutral-50 mb-1">Responsável:</p>
+                  <p className="text-neutral-700 dark:text-neutral-300">
                     {evento.responsavel === "def-1" ? "Dr. Rodrigo" : "Dra. Juliane"}
                   </p>
                 </div>
@@ -522,7 +522,7 @@ export function EventoDetailModal({
               {/* Tags */}
               {evento.tags && evento.tags.length > 0 && (
                 <div>
-                  <p className="font-bold text-zinc-900 dark:text-zinc-50 mb-2">Tags:</p>
+                  <p className="font-bold text-neutral-900 dark:text-neutral-50 mb-2">Tags:</p>
                   <div className="flex flex-wrap gap-2">
                     {evento.tags.map((tag: string, index: number) => (
                       <Badge
@@ -541,11 +541,11 @@ export function EventoDetailModal({
               {/* Participantes */}
               {evento.participantes && evento.participantes.length > 0 && (
                 <div>
-                  <p className="font-bold text-zinc-900 dark:text-zinc-50 mb-2">Participantes:</p>
+                  <p className="font-bold text-neutral-900 dark:text-neutral-50 mb-2">Participantes:</p>
                   <div className="space-y-1">
                     {evento.participantes.map((participante: string, index: number) => (
-                      <div key={index} className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300">
-                        <Users className="w-3.5 h-3.5 text-zinc-500" />
+                      <div key={index} className="flex items-center gap-2 text-neutral-700 dark:text-neutral-300">
+                        <Users className="w-3.5 h-3.5 text-neutral-500" />
                         <span className="text-sm">{participante}</span>
                       </div>
                     ))}
@@ -556,7 +556,7 @@ export function EventoDetailModal({
               {/* Lembretes */}
               {evento.lembretes && evento.lembretes.length > 0 && (
                 <div>
-                  <p className="font-bold text-zinc-900 dark:text-zinc-50 mb-2">Lembretes:</p>
+                  <p className="font-bold text-neutral-900 dark:text-neutral-50 mb-2">Lembretes:</p>
                   <div className="flex flex-wrap gap-2">
                     {evento.lembretes.map((lembrete: string, index: number) => {
                       const labels: Record<string, string> = {
@@ -588,12 +588,12 @@ export function EventoDetailModal({
           </div>
 
           {/* Divisor */}
-          <div className="border-t border-zinc-200 dark:border-zinc-800" />
+          <div className="border-t border-neutral-200 dark:border-neutral-800" />
 
           {/* Observação */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300">
-              <MessageSquare className="w-4 h-4 text-zinc-500" />
+            <div className="flex items-center gap-2 text-neutral-700 dark:text-neutral-300">
+              <MessageSquare className="w-4 h-4 text-neutral-500" />
               <h3 className="font-bold text-sm">Observação:</h3>
             </div>
             
@@ -602,7 +602,7 @@ export function EventoDetailModal({
                 <Textarea
                   value={observacao}
                   onChange={(e) => setObservacao(e.target.value)}
-                  className="min-h-[100px] bg-white dark:bg-zinc-900"
+                  className="min-h-[100px] bg-white dark:bg-neutral-900"
                   placeholder="Adicione observações sobre este evento..."
                 />
                 <div className="flex gap-2">
@@ -624,9 +624,9 @@ export function EventoDetailModal({
             ) : (
               <div
                 onClick={() => setIsEditingObs(true)}
-                className="pl-4 sm:pl-6 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded p-2 -ml-2 transition-colors"
+                className="pl-4 sm:pl-6 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50 rounded p-2 -ml-2 transition-colors"
               >
-                <p className="text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
+                <p className="text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">
                   {evento.observacoes ||
                     "Relatório detalhado da audiência será incluído posteriormente neste evento."}
                 </p>
@@ -637,7 +637,7 @@ export function EventoDetailModal({
           {/* Descrição adicional */}
           {evento.descricao && (
             <div className="pl-4 sm:pl-6">
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap">
+              <p className="text-sm text-neutral-600 dark:text-neutral-400 whitespace-pre-wrap">
                 {evento.descricao}
               </p>
             </div>
@@ -646,18 +646,18 @@ export function EventoDetailModal({
           {/* Documentos */}
           {evento.documentos && evento.documentos.length > 0 && (
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300">
-                <Paperclip className="w-4 h-4 text-zinc-500" />
+              <div className="flex items-center gap-2 text-neutral-700 dark:text-neutral-300">
+                <Paperclip className="w-4 h-4 text-neutral-500" />
                 <h3 className="font-bold text-sm">Documentos Anexados:</h3>
               </div>
               <div className="pl-4 sm:pl-6 space-y-2">
                 {evento.documentos.map((doc: string, index: number) => (
                   <div
                     key={index}
-                    className="flex items-center gap-2 p-2 rounded hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer"
+                    className="flex items-center gap-2 p-2 rounded hover:bg-neutral-50 dark:hover:bg-neutral-800/50 cursor-pointer"
                   >
                     <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    <span className="text-sm text-zinc-700 dark:text-zinc-300">{doc}</span>
+                    <span className="text-sm text-neutral-700 dark:text-neutral-300">{doc}</span>
                   </div>
                 ))}
               </div>
@@ -665,7 +665,7 @@ export function EventoDetailModal({
           )}
 
           {/* Data de inclusão */}
-          <div className="pl-4 sm:pl-6 text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="pl-4 sm:pl-6 text-xs text-neutral-500 dark:text-neutral-400">
             Criado em {new Date(evento.dataInclusao).toLocaleString("pt-BR")}
           </div>
         </div>

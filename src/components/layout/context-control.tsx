@@ -138,11 +138,11 @@ function getDefensorDisplayData(config: ProfissionalConfig): { id: string; nome:
   const inicial = getDisplayInitial(config.nomeCurto || config.nome);
 
   // Cores distintas baseadas no ID (match do estilo original)
-  let cor = "bg-zinc-600 text-white";
-  if (config.id === 1) cor = "bg-zinc-800 text-white";
-  else if (config.id === 2) cor = "bg-white border-2 border-zinc-600 text-zinc-900";
-  else if (config.id === 3) cor = "bg-zinc-700 text-white";
-  else if (config.id === 4) cor = "bg-zinc-500 text-white";
+  let cor = "bg-neutral-600 text-white";
+  if (config.id === 1) cor = "bg-neutral-800 text-white";
+  else if (config.id === 2) cor = "bg-white border-2 border-neutral-600 text-neutral-900";
+  else if (config.id === 3) cor = "bg-neutral-700 text-white";
+  else if (config.id === 4) cor = "bg-neutral-500 text-white";
 
   return {
     id: String(config.id),
@@ -202,7 +202,7 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
       nome: "Visao Geral",
       nomeCurto: "Visao Geral",
       inicial: "G",
-      cor: "bg-zinc-300 text-zinc-700",
+      cor: "bg-neutral-300 text-neutral-700",
       grupo: "todos",
     });
     return items;

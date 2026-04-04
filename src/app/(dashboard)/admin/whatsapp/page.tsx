@@ -166,7 +166,7 @@ function StatsCards({ configId }: { configId: number }) {
                 stat.color === "rose" && "bg-rose-100 dark:bg-rose-900/30",
                 stat.color === "emerald" && "bg-emerald-100 dark:bg-emerald-900/30",
                 stat.color === "violet" && "bg-violet-100 dark:bg-violet-900/30",
-                stat.color === "zinc" && "bg-zinc-100 dark:bg-muted",
+                stat.color === "zinc" && "bg-neutral-100 dark:bg-muted",
               )}>
                 <Icon className={cn(
                   "w-5 h-5",
@@ -174,14 +174,14 @@ function StatsCards({ configId }: { configId: number }) {
                   stat.color === "rose" && "text-rose-600",
                   stat.color === "emerald" && "text-emerald-600",
                   stat.color === "violet" && "text-violet-600",
-                  stat.color === "zinc" && "text-zinc-500",
+                  stat.color === "zinc" && "text-neutral-500",
                 )} />
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">
                   {stat.value.toLocaleString()}
                 </p>
-                <p className="text-xs text-zinc-500">{stat.label}</p>
+                <p className="text-xs text-neutral-500">{stat.label}</p>
               </div>
             </div>
           </Card>
@@ -236,7 +236,7 @@ function QuickActions({ configId }: { configId: number }) {
             <Download className="w-4 h-4 mr-2" />
           )}
           Sincronizar Contatos
-          {syncMutation.isPending && <span className="ml-auto text-xs text-zinc-500">Sincronizando...</span>}
+          {syncMutation.isPending && <span className="ml-auto text-xs text-neutral-500">Sincronizando...</span>}
         </Button>
 
         <Link href="/admin/whatsapp/vincular" className="block">
@@ -298,7 +298,7 @@ function RecentContacts({ configId }: { configId: number }) {
       </CardHeader>
       <CardContent>
         {contacts.length === 0 ? (
-          <div className="text-center py-8 text-zinc-500">
+          <div className="text-center py-8 text-neutral-500">
             <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
             <p>Nenhum contato ainda</p>
             <p className="text-xs mt-1">Sincronize os contatos do WhatsApp</p>
@@ -311,15 +311,15 @@ function RecentContacts({ configId }: { configId: number }) {
                 href={`/admin/whatsapp/chat?contactId=${contact.id}`}
                 className="block"
               >
-                <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-50 dark:hover:bg-muted/50 transition-colors cursor-pointer">
-                  <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-muted flex items-center justify-center text-sm font-medium">
+                <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-neutral-50 dark:hover:bg-muted/50 transition-colors cursor-pointer">
+                  <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-muted flex items-center justify-center text-sm font-medium">
                     {contact.pushName?.[0]?.toUpperCase() || contact.phone?.slice(-2)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-foreground truncate">
                       {contact.pushName || contact.name || formatPhone(contact.phone)}
                     </p>
-                    <p className="text-xs text-zinc-500 truncate">
+                    <p className="text-xs text-neutral-500 truncate">
                       {contact.assistido ? (
                         <span className="flex items-center gap-1">
                           <Link2 className="w-3 h-3" />
@@ -391,7 +391,7 @@ function UnlinkedContacts({ configId }: { configId: number }) {
       </CardHeader>
       <CardContent>
         {unlinkedContacts.length === 0 ? (
-          <div className="text-center py-8 text-zinc-500">
+          <div className="text-center py-8 text-neutral-500">
             <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-emerald-500 opacity-50" />
             <p>Todos os contatos estão vinculados!</p>
           </div>
@@ -409,7 +409,7 @@ function UnlinkedContacts({ configId }: { configId: number }) {
                   <p className="font-medium text-foreground truncate">
                     {contact.pushName || "Sem nome"}
                   </p>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-neutral-500">
                     {formatPhone(contact.phone)}
                   </p>
                 </div>
@@ -483,7 +483,7 @@ function InstanceConfig() {
       </CardHeader>
       <CardContent className="space-y-4">
         {showNewForm && (
-          <div className="p-4 rounded-lg border border-zinc-200 dark:border-border bg-zinc-50 dark:bg-card/50 space-y-4">
+          <div className="p-4 rounded-lg border border-neutral-200 dark:border-border bg-neutral-50 dark:bg-card/50 space-y-4">
             <h4 className="font-medium">Adicionar Nova Instância</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
@@ -546,22 +546,22 @@ function InstanceConfig() {
             {configs.map((config) => (
               <div
                 key={config.id}
-                className="flex items-center justify-between p-4 rounded-lg border border-zinc-200 dark:border-border"
+                className="flex items-center justify-between p-4 rounded-lg border border-neutral-200 dark:border-border"
               >
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     "w-10 h-10 rounded-lg flex items-center justify-center",
-                    config.status === "connected" ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-zinc-100 dark:bg-muted"
+                    config.status === "connected" ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-neutral-100 dark:bg-muted"
                   )}>
                     {config.status === "connected" ? (
                       <Wifi className="w-5 h-5 text-emerald-600" />
                     ) : (
-                      <WifiOff className="w-5 h-5 text-zinc-500" />
+                      <WifiOff className="w-5 h-5 text-neutral-500" />
                     )}
                   </div>
                   <div>
                     <p className="font-medium">{config.instanceName}</p>
-                    <p className="text-xs text-zinc-500">{config.apiUrl}</p>
+                    <p className="text-xs text-neutral-500">{config.apiUrl}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -569,7 +569,7 @@ function InstanceConfig() {
                     "text-xs",
                     config.status === "connected"
                       ? "bg-emerald-100 text-emerald-700"
-                      : "bg-zinc-100 text-zinc-700"
+                      : "bg-neutral-100 text-neutral-700"
                   )}>
                     {config.status === "connected" ? "Conectado" : "Desconectado"}
                   </Badge>
@@ -592,7 +592,7 @@ function InstanceConfig() {
         ) : (
           <div className="text-center py-8">
             <QrCode className="w-12 h-12 mx-auto text-muted-foreground/30 dark:text-muted-foreground/50 mb-3" />
-            <p className="text-zinc-500">Nenhuma instância configurada</p>
+            <p className="text-neutral-500">Nenhuma instância configurada</p>
             <p className="text-xs text-muted-foreground mt-1">
               Clique em &quot;Nova&quot; para começar
             </p>
@@ -600,12 +600,12 @@ function InstanceConfig() {
         )}
 
         {/* Instruções */}
-        <div className="pt-4 border-t border-zinc-200 dark:border-border">
+        <div className="pt-4 border-t border-neutral-200 dark:border-border">
           <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
             <HelpCircle className="w-4 h-4" />
             Como configurar
           </h4>
-          <ol className="text-xs text-zinc-500 space-y-2 list-decimal list-inside">
+          <ol className="text-xs text-neutral-500 space-y-2 list-decimal list-inside">
             <li>Instale a Evolution API em um servidor (Docker ou VPS)</li>
             <li>Configure a API Key de autenticação</li>
             <li>Adicione a instância aqui com a URL e API Key</li>
@@ -654,7 +654,7 @@ export default function WhatsAppPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-muted dark:bg-background">
-        <div className="px-4 md:px-6 py-3 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
+        <div className="px-4 md:px-6 py-3 bg-white dark:bg-card border-b border-neutral-200 dark:border-border">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
               <MessageCircle className="w-4 h-4 text-emerald-600" />
@@ -675,9 +675,9 @@ export default function WhatsAppPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-background">
+    <div className="min-h-screen bg-neutral-100 dark:bg-background">
       {/* Header */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-card border-b border-neutral-200 dark:border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center border border-emerald-200 dark:border-emerald-700">
@@ -738,13 +738,13 @@ export default function WhatsAppPage() {
         ) : (
           /* Sem configuração */
           <div className="space-y-6">
-            <Card className="border-2 border-dashed border-zinc-300 dark:border-border">
+            <Card className="border-2 border-dashed border-neutral-300 dark:border-border">
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
                   <MessageCircle className="w-8 h-8 text-emerald-600" />
                 </div>
                 <h2 className="text-xl font-semibold mb-2">Configure o WhatsApp</h2>
-                <p className="text-zinc-500 text-center max-w-md mb-6">
+                <p className="text-neutral-500 text-center max-w-md mb-6">
                   Conecte sua instância da Evolution API para começar a enviar e receber mensagens
                   dos assistidos pelo WhatsApp.
                 </p>

@@ -76,11 +76,11 @@ function getAtribuicaoForFolder(folderId: string) {
 function SkeletonRow() {
   return (
     <div className="flex items-center gap-2.5 px-3 h-11 animate-pulse">
-      <div className="w-3.5 h-3.5 rounded bg-zinc-200/50 dark:bg-zinc-700/50" />
-      <div className="w-7 h-7 rounded-md bg-zinc-200/50 dark:bg-zinc-700/50" />
+      <div className="w-3.5 h-3.5 rounded bg-neutral-200/50 dark:bg-neutral-700/50" />
+      <div className="w-7 h-7 rounded-md bg-neutral-200/50 dark:bg-neutral-700/50" />
       <div className="flex-1 space-y-1">
-        <div className="h-3 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-1/3" />
-        <div className="h-2.5 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-1/4" />
+        <div className="h-3 bg-neutral-200/50 dark:bg-neutral-700/50 rounded w-1/3" />
+        <div className="h-2.5 bg-neutral-200/50 dark:bg-neutral-700/50 rounded w-1/4" />
       </div>
     </div>
   );
@@ -110,7 +110,7 @@ function SortHeader({
       onClick={() => onSort(sortKey)}
       className={cn(
         "flex items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors duration-150",
-        isActive ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-400",
+        isActive ? "text-neutral-700 dark:text-neutral-300" : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-400",
         className
       )}
     >
@@ -174,9 +174,9 @@ function FileRow({ file }: { file: DriveFile }) {
       onClick={handleClick}
       className={cn(
         "group flex items-center gap-2.5 px-3 h-10 cursor-pointer transition-colors duration-150",
-        "border-b border-zinc-100/80 dark:border-zinc-800/40 last:border-0",
-        "hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
-        file.isFolder && "bg-zinc-50/30 dark:bg-zinc-800/20",
+        "border-b border-neutral-100/80 dark:border-neutral-800/40 last:border-0",
+        "hover:bg-neutral-50 dark:hover:bg-neutral-800/50",
+        file.isFolder && "bg-neutral-50/30 dark:bg-neutral-800/20",
         isSelected && "bg-emerald-50/80 dark:bg-emerald-500/8 border-emerald-100 dark:border-emerald-500/10",
       )}
     >
@@ -185,7 +185,7 @@ function FileRow({ file }: { file: DriveFile }) {
         <Checkbox
           checked={isSelected}
           onCheckedChange={() => ctx.toggleFileSelection(file.id)}
-          className="h-3.5 w-3.5 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+          className="h-3.5 w-3.5 border-neutral-300 dark:border-neutral-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
         />
       </div>
 
@@ -193,37 +193,37 @@ function FileRow({ file }: { file: DriveFile }) {
       <div className="relative shrink-0">
         <div className={cn(
           "w-7 h-7 rounded-md flex items-center justify-center",
-          file.isFolder ? "bg-emerald-50 dark:bg-emerald-500/10" : "bg-zinc-100 dark:bg-zinc-800",
+          file.isFolder ? "bg-emerald-50 dark:bg-emerald-500/10" : "bg-neutral-100 dark:bg-neutral-800",
         )}>
           <Icon className={cn(
             "w-3.5 h-3.5",
-            file.isFolder ? "text-emerald-600 dark:text-emerald-500" : "text-zinc-400",
+            file.isFolder ? "text-emerald-600 dark:text-emerald-500" : "text-neutral-400",
           )} />
         </div>
         {atribuicao && (
-          <span className={cn("absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full ring-1 ring-white dark:ring-zinc-900", atribuicao.dotClass)} />
+          <span className={cn("absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full ring-1 ring-white dark:ring-neutral-900", atribuicao.dotClass)} />
         )}
       </div>
 
       {/* Name */}
       <div className="flex-1 min-w-0">
-        <p className="text-[12px] text-zinc-800 dark:text-zinc-200 truncate leading-tight" title={file.name}>
+        <p className="text-[12px] text-neutral-800 dark:text-neutral-200 truncate leading-tight" title={file.name}>
           {file.name}
         </p>
       </div>
 
       {/* Type */}
-      <span className={cn(COL.type, "text-[11px] text-zinc-400 dark:text-zinc-500 truncate")}>
+      <span className={cn(COL.type, "text-[11px] text-neutral-400 dark:text-neutral-500 truncate")}>
         {typeLabel}
       </span>
 
       {/* Size */}
-      <span className={cn(COL.size, "text-[11px] text-zinc-400 dark:text-zinc-500 truncate tabular-nums")}>
+      <span className={cn(COL.size, "text-[11px] text-neutral-400 dark:text-neutral-500 truncate tabular-nums")}>
         {!file.isFolder && file.fileSize ? formatFileSize(file.fileSize) : "—"}
       </span>
 
       {/* Date */}
-      <span className={cn(COL.date, "text-[11px] text-zinc-400 dark:text-zinc-500 truncate")}>
+      <span className={cn(COL.date, "text-[11px] text-neutral-400 dark:text-neutral-500 truncate")}>
         {dateStr || "—"}
       </span>
 
@@ -234,7 +234,7 @@ function FileRow({ file }: { file: DriveFile }) {
             {enrichment.label}
           </span>
         ) : (
-          <span className="text-[11px] text-zinc-300 dark:text-zinc-700">—</span>
+          <span className="text-[11px] text-neutral-300 dark:text-neutral-700">—</span>
         )}
       </div>
 
@@ -243,8 +243,8 @@ function FileRow({ file }: { file: DriveFile }) {
         {!file.isFolder ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="h-6 w-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all">
-                <MoreVertical className="h-3.5 w-3.5 text-zinc-400" />
+              <button className="h-6 w-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all">
+                <MoreVertical className="h-3.5 w-3.5 text-neutral-400" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
@@ -334,9 +334,9 @@ export function DriveFileList({ files, isLoading }: DriveFileListProps) {
   if (isLoading) {
     return (
       <div>
-        <div className="flex items-center gap-2.5 px-3 py-1.5 border-b border-zinc-200/60 dark:border-zinc-800/40">
+        <div className="flex items-center gap-2.5 px-3 py-1.5 border-b border-neutral-200/60 dark:border-neutral-800/40">
           <div className="w-3.5" /><div className="w-7" />
-          <div className="flex-1 h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-16" />
+          <div className="flex-1 h-3 bg-neutral-200 dark:bg-neutral-800 rounded w-16" />
         </div>
         {Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} />)}
       </div>
@@ -346,9 +346,9 @@ export function DriveFileList({ files, isLoading }: DriveFileListProps) {
   if (sortedFiles.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <FolderOpen className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mb-2" />
-        <p className="text-[12px] text-zinc-500 font-medium">Nenhum arquivo nesta pasta</p>
-        <p className="text-[11px] text-zinc-400 mt-0.5">Sincronize ou faca upload</p>
+        <FolderOpen className="w-10 h-10 text-neutral-300 dark:text-neutral-600 mb-2" />
+        <p className="text-[12px] text-neutral-500 font-medium">Nenhum arquivo nesta pasta</p>
+        <p className="text-[11px] text-neutral-400 mt-0.5">Sincronize ou faca upload</p>
       </div>
     );
   }
@@ -356,12 +356,12 @@ export function DriveFileList({ files, isLoading }: DriveFileListProps) {
   return (
     <div>
       {/* Table Header */}
-      <div className="flex items-center gap-2.5 px-3 py-1.5 border-b border-zinc-200/60 dark:border-zinc-800/40 bg-zinc-50/50 dark:bg-zinc-900/30 sticky top-0 z-10">
+      <div className="flex items-center gap-2.5 px-3 py-1.5 border-b border-neutral-200/60 dark:border-neutral-800/40 bg-neutral-50/50 dark:bg-neutral-900/30 sticky top-0 z-10">
         <div onClick={(e) => e.stopPropagation()} className="shrink-0">
           <Checkbox
             checked={allSelected}
             onCheckedChange={handleSelectAll}
-            className="h-3.5 w-3.5 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+            className="h-3.5 w-3.5 border-neutral-300 dark:border-neutral-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
           />
         </div>
         <div className="w-7" />

@@ -46,7 +46,7 @@ import { trpc } from "@/lib/trpc/client";
 function CollapsibleSection({
   title,
   icon: Icon,
-  borderColor = "border-zinc-300",
+  borderColor = "border-neutral-300",
   defaultOpen = true,
   children,
 }: {
@@ -59,19 +59,19 @@ function CollapsibleSection({
   const [open, setOpen] = React.useState(defaultOpen);
 
   return (
-    <div className={cn("border-b border-zinc-100 dark:border-zinc-800 border-l-2", borderColor)}>
+    <div className={cn("border-b border-neutral-100 dark:border-neutral-800 border-l-2", borderColor)}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-neutral-50/60 dark:hover:bg-neutral-800/30 transition-colors"
       >
-        <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium flex items-center gap-1.5">
+        <span className="text-[10px] text-neutral-400 uppercase tracking-wider font-medium flex items-center gap-1.5">
           <Icon className="w-3 h-3" />
           {title}
         </span>
         <ChevronDown
           className={cn(
-            "w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600 transition-transform duration-200",
+            "w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 transition-transform duration-200",
             !open && "-rotate-90",
           )}
         />
@@ -96,13 +96,13 @@ function CompletudeBar({ assistido }: { assistido: AssistidoUI }) {
 
   return (
     <div className="mt-3 flex items-center gap-2">
-      <div className="flex-1 h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+      <div className="flex-1 h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
         <div
           className={cn("h-full rounded-full transition-all duration-500", color)}
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="text-[10px] text-zinc-400 tabular-nums font-medium">{pct}%</span>
+      <span className="text-[10px] text-neutral-400 tabular-nums font-medium">{pct}%</span>
     </div>
   );
 }
@@ -248,20 +248,20 @@ export function AssistidoQuickPreview({
     <Sheet open={!!assistido} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l border-zinc-200 dark:border-zinc-800 shadow-2xl"
+        className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l border-neutral-200 dark:border-neutral-800 shadow-2xl"
         style={{ borderLeft: `3px solid ${primaryColor}` }}
       >
         {/* ─── Sticky Header ─── */}
-        <SheetHeader className="px-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm sticky top-0 z-10">
+        <SheetHeader className="px-4 py-2.5 border-b border-neutral-100 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <SheetTitle className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 tracking-wider uppercase">
+              <SheetTitle className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 tracking-wider uppercase">
                 {currentIndex !== undefined && totalCount
                   ? `${currentIndex + 1} / ${totalCount}`
                   : "Assistido"}
               </SheetTitle>
-              <span className="text-[10px] text-zinc-300 dark:text-zinc-600">|</span>
-              <span className="text-[10px] text-zinc-300 dark:text-zinc-600">
+              <span className="text-[10px] text-neutral-300 dark:text-neutral-600">|</span>
+              <span className="text-[10px] text-neutral-300 dark:text-neutral-600">
                 &uarr;&darr; navegar
               </span>
             </div>
@@ -269,7 +269,7 @@ export function AssistidoQuickPreview({
               {onPrev && (
                 <button
                   onClick={onPrev}
-                  className="h-7 w-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
+                  className="h-7 w-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
                   title="Anterior (↑)"
                 >
                   <ChevronUp className="w-4 h-4" />
@@ -278,7 +278,7 @@ export function AssistidoQuickPreview({
               {onNext && (
                 <button
                   onClick={onNext}
-                  className="h-7 w-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
+                  className="h-7 w-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
                   title="Proximo (↓)"
                 >
                   <ChevronDown className="w-4 h-4" />
@@ -291,7 +291,7 @@ export function AssistidoQuickPreview({
         {/* ─── Scrollable Body ─── */}
         <div className="flex-1 overflow-y-auto">
           {/* 1. Hero Section */}
-          <div className="relative px-5 py-5 border-b border-zinc-100 dark:border-zinc-800 overflow-hidden">
+          <div className="relative px-5 py-5 border-b border-neutral-100 dark:border-neutral-800 overflow-hidden">
             <div
               className="absolute inset-0 opacity-[0.04] pointer-events-none"
               style={{
@@ -308,11 +308,11 @@ export function AssistidoQuickPreview({
                 showStatusDot
               />
               <div className="flex-1 min-w-0">
-                <h2 className="font-serif text-xl font-semibold text-zinc-900 dark:text-zinc-50 leading-tight">
+                <h2 className="font-serif text-xl font-semibold text-neutral-900 dark:text-neutral-50 leading-tight">
                   {assistido.nome}
                 </h2>
                 {assistido.vulgo && (
-                  <p className="text-xs text-zinc-400 italic mt-0.5">
+                  <p className="text-xs text-neutral-400 italic mt-0.5">
                     &ldquo;{assistido.vulgo}&rdquo;
                   </p>
                 )}
@@ -353,7 +353,7 @@ export function AssistidoQuickPreview({
                     return (
                       <span
                         key={idx}
-                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400"
                       >
                         <div
                           className="w-1.5 h-1.5 rounded-full"
@@ -363,7 +363,7 @@ export function AssistidoQuickPreview({
                       </span>
                     );
                   })}
-                  {idade && <span className="text-[10px] text-zinc-400">{idade}a</span>}
+                  {idade && <span className="text-[10px] text-neutral-400">{idade}a</span>}
                   {isPreso && tempoPreso && (
                     <span className="text-[10px] text-rose-400 font-mono tabular-nums">
                       {tempoPreso}
@@ -373,8 +373,8 @@ export function AssistidoQuickPreview({
                 {/* Contato rapido inline */}
                 {telefoneDisplay && (
                   <div className="flex items-center gap-2 mt-2">
-                    <Phone className="w-3 h-3 text-zinc-400" />
-                    <span className="text-xs text-zinc-500">{telefoneDisplay}</span>
+                    <Phone className="w-3 h-3 text-neutral-400" />
+                    <span className="text-xs text-neutral-500">{telefoneDisplay}</span>
                     {whatsappUrl && (
                       <a
                         href={whatsappUrl}
@@ -394,7 +394,7 @@ export function AssistidoQuickPreview({
 
           {/* 2. Alertas urgentes */}
           {(isPreso || audienciaHoje || prazoVencido) && (
-            <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 border-l-2 border-l-rose-400 space-y-2">
+            <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800 border-l-2 border-l-rose-400 space-y-2">
               {isPreso && (
                 <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/30">
                   <Lock className="w-4 h-4 text-rose-500 shrink-0" />
@@ -445,7 +445,7 @@ export function AssistidoQuickPreview({
           )}
 
           {/* 3. Stats + Quick Actions Row */}
-          <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 border-l-2 border-l-emerald-400">
+          <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800 border-l-2 border-l-emerald-400">
             <div className="grid grid-cols-4 gap-2">
               {[
                 {
@@ -485,13 +485,13 @@ export function AssistidoQuickPreview({
                   <Wrapper
                     key={stat.label}
                     {...(wrapperProps as any)}
-                    className="flex flex-col items-center gap-0.5 p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 transition-all cursor-pointer group"
+                    className="flex flex-col items-center gap-0.5 p-2 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 transition-all cursor-pointer group"
                   >
-                    <StatIcon className="w-3.5 h-3.5 text-zinc-400 group-hover:text-emerald-500 transition-colors" />
-                    <span className="text-base font-bold text-zinc-800 dark:text-zinc-100 tabular-nums">
+                    <StatIcon className="w-3.5 h-3.5 text-neutral-400 group-hover:text-emerald-500 transition-colors" />
+                    <span className="text-base font-bold text-neutral-800 dark:text-neutral-100 tabular-nums">
                       {stat.value}
                     </span>
-                    <span className="text-[10px] text-zinc-400">{stat.label}</span>
+                    <span className="text-[10px] text-neutral-400">{stat.label}</span>
                   </Wrapper>
                 );
               })}
@@ -502,12 +502,12 @@ export function AssistidoQuickPreview({
           {(assistido.proximaAudiencia ||
             assistido.proximoPrazo ||
             assistido.ultimoEvento) && (
-            <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 border-l-2 border-l-violet-400">
-              <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
+            <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800 border-l-2 border-l-violet-400">
+              <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
                 <Clock className="w-3 h-3" />
                 Timeline
               </p>
-              <div className="relative pl-4 space-y-3 border-l-2 border-zinc-200 dark:border-zinc-700">
+              <div className="relative pl-4 space-y-3 border-l-2 border-neutral-200 dark:border-neutral-700">
                 {/* Proxima audiencia */}
                 {assistido.proximaAudiencia && (
                   <div className="relative">
@@ -543,7 +543,7 @@ export function AssistidoQuickPreview({
                           {format(parseISO(assistido.proximaAudiencia), "HH:mm")}
                         </span>
                       </p>
-                      <p className="text-[10px] text-zinc-500">
+                      <p className="text-[10px] text-neutral-500">
                         {assistido.tipoProximaAudiencia || "Audiencia"}{" "}
                         {diasAteAudiencia !== null && diasAteAudiencia > 0
                           ? `em ${diasAteAudiencia}d`
@@ -575,7 +575,7 @@ export function AssistidoQuickPreview({
                         {prazoInfo?.text ||
                           format(parseISO(assistido.proximoPrazo), "dd/MM/yyyy")}
                       </p>
-                      <p className="text-[10px] text-zinc-500">
+                      <p className="text-[10px] text-neutral-500">
                         {assistido.atoProximoPrazo || "Prazo"}
                       </p>
                     </div>
@@ -584,16 +584,16 @@ export function AssistidoQuickPreview({
                 {/* Ultimo evento */}
                 {assistido.ultimoEvento && (
                   <div className="relative">
-                    <div className="absolute -left-[9px] top-0.5 w-4 h-4 rounded-full bg-zinc-400 flex items-center justify-center">
+                    <div className="absolute -left-[9px] top-0.5 w-4 h-4 rounded-full bg-neutral-400 flex items-center justify-center">
                       <CircleDot className="w-2 h-2 text-white" />
                     </div>
                     <div className="ml-3">
-                      <p className="text-xs text-zinc-500">
+                      <p className="text-xs text-neutral-500">
                         {assistido.ultimoEvento.data
                           ? format(parseISO(assistido.ultimoEvento.data), "dd/MM/yyyy")
                           : ""}
                       </p>
-                      <p className="text-[10px] text-zinc-400">
+                      <p className="text-[10px] text-neutral-400">
                         {assistido.ultimoEvento.titulo}
                       </p>
                     </div>
@@ -601,11 +601,11 @@ export function AssistidoQuickPreview({
                 )}
                 {/* Cadastro */}
                 <div className="relative">
-                  <div className="absolute -left-[9px] top-0.5 w-4 h-4 rounded-full bg-zinc-300 dark:bg-zinc-600 flex items-center justify-center">
+                  <div className="absolute -left-[9px] top-0.5 w-4 h-4 rounded-full bg-neutral-300 dark:bg-neutral-600 flex items-center justify-center">
                     <User className="w-2 h-2 text-white" />
                   </div>
                   <div className="ml-3">
-                    <p className="text-[10px] text-zinc-400">
+                    <p className="text-[10px] text-neutral-400">
                       Cadastro: {format(new Date(assistido.createdAt), "dd/MM/yyyy")}
                     </p>
                   </div>
@@ -616,19 +616,19 @@ export function AssistidoQuickPreview({
 
           {/* 5. Crime / Processo */}
           {(assistido.crimePrincipal || assistido.numeroProcesso) && (
-            <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 border-l-2 border-l-sky-400">
-              <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
+            <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800 border-l-2 border-l-sky-400">
+              <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
                 <Scale className="w-3 h-3" />
                 Crime / Processo
               </p>
               {assistido.crimePrincipal && (
-                <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                   {assistido.crimePrincipal}
                 </p>
               )}
               {assistido.numeroProcesso && (
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
-                  <span className="font-mono tabular-nums text-xs text-zinc-600 dark:text-zinc-400 flex-1">
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/50">
+                  <span className="font-mono tabular-nums text-xs text-neutral-600 dark:text-neutral-400 flex-1">
                     {assistido.numeroProcesso}
                   </span>
                   <button
@@ -636,16 +636,16 @@ export function AssistidoQuickPreview({
                       navigator.clipboard.writeText(assistido.numeroProcesso!);
                       toast.success("Copiado!");
                     }}
-                    className="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
                   >
-                    <Copy className="w-3 h-3 text-zinc-400" />
+                    <Copy className="w-3 h-3 text-neutral-400" />
                   </button>
                 </div>
               )}
               {assistido.faseProcessual && (
-                <p className="text-[10px] text-zinc-400 mt-2">
+                <p className="text-[10px] text-neutral-400 mt-2">
                   Fase:{" "}
-                  <span className="text-zinc-600 dark:text-zinc-300 font-medium">
+                  <span className="text-neutral-600 dark:text-neutral-300 font-medium">
                     {faseConfig[assistido.faseProcessual]?.label ||
                       assistido.faseProcessual}
                   </span>
@@ -658,7 +658,7 @@ export function AssistidoQuickPreview({
           <CollapsibleSection
             title="Dados Pessoais"
             icon={User}
-            borderColor="border-l-zinc-400"
+            borderColor="border-l-neutral-400"
             defaultOpen
           >
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
@@ -677,10 +677,10 @@ export function AssistidoQuickPreview({
                 .filter((item) => item.value)
                 .map((item) => (
                   <div key={item.label}>
-                    <p className="text-[10px] text-zinc-400">{item.label}</p>
+                    <p className="text-[10px] text-neutral-400">{item.label}</p>
                     <p
                       className={cn(
-                        "text-xs font-medium text-zinc-700 dark:text-zinc-300",
+                        "text-xs font-medium text-neutral-700 dark:text-neutral-300",
                         item.mono && "font-mono tabular-nums",
                       )}
                     >
@@ -690,8 +690,8 @@ export function AssistidoQuickPreview({
                 ))}
               {assistido.endereco && (
                 <div className="col-span-2">
-                  <p className="text-[10px] text-zinc-400">Endereco</p>
-                  <p className="text-xs text-zinc-700 dark:text-zinc-300">
+                  <p className="text-[10px] text-neutral-400">Endereco</p>
+                  <p className="text-xs text-neutral-700 dark:text-neutral-300">
                     {assistido.endereco}
                   </p>
                 </div>
@@ -712,7 +712,7 @@ export function AssistidoQuickPreview({
                         "w-1.5 h-1.5 rounded-full flex-shrink-0",
                         d.status === "CONCLUIDO" || d.status === "ARQUIVADO" ? "bg-emerald-400" : "bg-amber-400"
                       )} />
-                      <span className="text-xs text-zinc-700 dark:text-zinc-300 truncate flex-1">
+                      <span className="text-xs text-neutral-700 dark:text-neutral-300 truncate flex-1">
                         {d.ato || d.tipoAto || "Demanda"}
                       </span>
                       {prazoD && (
@@ -737,7 +737,7 @@ export function AssistidoQuickPreview({
           <CollapsibleSection title="Drive" icon={HardDrive} defaultOpen={false}>
             {assistido.driveFolderId ? (
               <div className="flex items-center justify-between">
-                <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                <span className="text-xs text-neutral-600 dark:text-neutral-400">
                   {assistido.driveFilesCount ?? 0} arquivo{(assistido.driveFilesCount ?? 0) !== 1 ? "s" : ""}
                 </span>
                 <Link
@@ -748,7 +748,7 @@ export function AssistidoQuickPreview({
                 </Link>
               </div>
             ) : (
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 italic">Pasta não vinculada</p>
+              <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">Pasta não vinculada</p>
             )}
           </CollapsibleSection>
 
@@ -770,18 +770,18 @@ export function AssistidoQuickPreview({
                     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSaveNotes();
                   }}
                   rows={4}
-                  className="w-full text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed bg-white dark:bg-zinc-800 rounded-lg p-3 border border-emerald-300 dark:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 resize-y"
+                  className="w-full text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed bg-white dark:bg-neutral-800 rounded-lg p-3 border border-emerald-300 dark:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 resize-y"
                   placeholder="Adicionar observacoes..."
                 />
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-zinc-400">
+                  <span className="text-[10px] text-neutral-400">
                     Ctrl+Enter salvar / Esc cancelar
                   </span>
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={handleCancelEditNotes}
                       disabled={savingNotes}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                     >
                       <X className="w-3 h-3" />
                       Cancelar
@@ -800,16 +800,16 @@ export function AssistidoQuickPreview({
             ) : (
               <div>
                 {assistido.observacoes ? (
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 border border-zinc-100 dark:border-zinc-800">
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed whitespace-pre-wrap bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-3 border border-neutral-100 dark:border-neutral-800">
                     {assistido.observacoes}
                   </p>
                 ) : (
-                  <p className="text-xs text-zinc-400 italic">Sem observacoes</p>
+                  <p className="text-xs text-neutral-400 italic">Sem observacoes</p>
                 )}
                 {onUpdateNotes && (
                   <button
                     onClick={handleStartEditNotes}
-                    className="mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-zinc-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
+                    className="mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-neutral-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
                   >
                     <Pencil className="w-3 h-3" />
                     Editar
@@ -821,7 +821,7 @@ export function AssistidoQuickPreview({
 
           {/* 8. Drive */}
           <div className="px-4 py-3 border-l-2 border-l-emerald-300">
-            <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
+            <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
               <HardDrive className="w-3 h-3" />
               Google Drive
             </p>
@@ -847,9 +847,9 @@ export function AssistidoQuickPreview({
                 <ExternalLink className="w-4 h-4 text-emerald-400 opacity-60 group-hover:opacity-100 transition-opacity" />
               </a>
             ) : (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
-                <Link2Off className="w-5 h-5 text-zinc-300 dark:text-zinc-600" />
-                <p className="text-xs text-zinc-400 dark:text-zinc-500">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-800">
+                <Link2Off className="w-5 h-5 text-neutral-300 dark:text-neutral-600" />
+                <p className="text-xs text-neutral-400 dark:text-neutral-500">
                   Sem pasta vinculada
                 </p>
               </div>
@@ -858,10 +858,10 @@ export function AssistidoQuickPreview({
         </div>
 
         {/* ─── Sticky Footer ─── */}
-        <div className="px-4 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm">
+        <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-900/80 backdrop-blur-sm">
           <div className="flex items-center gap-2">
             <Link href={`/admin/assistidos/${assistido.id}`} className="flex-1">
-              <Button className="w-full h-9 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-all shadow-sm hover:shadow-md">
+              <Button className="w-full h-9 bg-neutral-900 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-all shadow-sm hover:shadow-md">
                 Abrir Perfil
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
@@ -869,7 +869,7 @@ export function AssistidoQuickPreview({
             <Link href={`/admin/assistidos/${assistido.id}?edit=true`}>
               <Button
                 variant="outline"
-                className="h-9 rounded-xl border-zinc-200 dark:border-zinc-700 hover:border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all text-sm gap-1.5"
+                className="h-9 rounded-xl border-neutral-200 dark:border-neutral-700 hover:border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all text-sm gap-1.5"
                 title="Editar"
               >
                 <Pencil className="w-3.5 h-3.5" />
@@ -880,7 +880,7 @@ export function AssistidoQuickPreview({
               <Button
                 variant="outline"
                 size="icon"
-                className="h-9 w-9 rounded-xl border-zinc-200 dark:border-zinc-700 hover:border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all"
+                className="h-9 w-9 rounded-xl border-neutral-200 dark:border-neutral-700 hover:border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all"
                 title="Processos"
               >
                 <Scale className="w-4 h-4" />
@@ -890,7 +890,7 @@ export function AssistidoQuickPreview({
               <Button
                 variant="outline"
                 size="icon"
-                className="h-9 w-9 rounded-xl border-zinc-200 dark:border-zinc-700 hover:border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all"
+                className="h-9 w-9 rounded-xl border-neutral-200 dark:border-neutral-700 hover:border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all"
                 title="Nova Demanda"
               >
                 <Plus className="w-4 h-4" />

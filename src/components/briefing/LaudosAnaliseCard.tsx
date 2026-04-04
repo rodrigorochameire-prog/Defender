@@ -48,9 +48,9 @@ const tipoLaudoColors: Record<string, string> = {
   lesoes_corporais: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
   toxicologico: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
   local: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
-  balistico: "bg-zinc-100 text-zinc-800 dark:bg-muted dark:text-foreground/80",
+  balistico: "bg-neutral-100 text-neutral-800 dark:bg-muted dark:text-foreground/80",
   dna: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
-  outro: "bg-zinc-100 text-zinc-800 dark:bg-muted dark:text-foreground/80",
+  outro: "bg-neutral-100 text-neutral-800 dark:bg-muted dark:text-foreground/80",
 };
 
 export function LaudosAnaliseCard({ laudo, className }: LaudosAnaliseCardProps) {
@@ -133,7 +133,7 @@ export function LaudosAnaliseCard({ laudo, className }: LaudosAnaliseCardProps) 
           open={openSections.resumo}
           onOpenChange={() => toggleSection("resumo")}
         >
-          <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 rounded-lg bg-zinc-100 dark:bg-muted hover:bg-zinc-200 dark:hover:bg-muted transition-colors">
+          <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 rounded-lg bg-neutral-100 dark:bg-muted hover:bg-neutral-200 dark:hover:bg-muted transition-colors">
             {openSections.resumo ? (
               <ChevronDown className="w-4 h-4" />
             ) : (
@@ -143,12 +143,12 @@ export function LaudosAnaliseCard({ laudo, className }: LaudosAnaliseCardProps) 
             <span className="font-medium text-sm">Resumo do Laudo</span>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="mt-2 p-3 bg-zinc-50 dark:bg-card rounded-lg border border-zinc-200 dark:border-border">
-              <p className="text-sm text-zinc-700 dark:text-foreground/80 whitespace-pre-wrap">
+            <div className="mt-2 p-3 bg-neutral-50 dark:bg-card rounded-lg border border-neutral-200 dark:border-border">
+              <p className="text-sm text-neutral-700 dark:text-foreground/80 whitespace-pre-wrap">
                 {laudo.resumo}
               </p>
               {laudo.conclusoes_principais.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-border">
+                <div className="mt-3 pt-3 border-t border-neutral-200 dark:border-border">
                   <p className="text-xs font-medium text-muted-foreground mb-2">
                     Conclusões Principais:
                   </p>
@@ -156,7 +156,7 @@ export function LaudosAnaliseCard({ laudo, className }: LaudosAnaliseCardProps) 
                     {laudo.conclusoes_principais.map((conclusao, idx) => (
                       <li
                         key={idx}
-                        className="text-sm text-zinc-700 dark:text-foreground/80 flex items-start gap-2"
+                        className="text-sm text-neutral-700 dark:text-foreground/80 flex items-start gap-2"
                       >
                         <span className="text-emerald-500 mt-1">•</span>
                         {conclusao}
@@ -313,13 +313,13 @@ export function LaudosAnaliseCard({ laudo, className }: LaudosAnaliseCardProps) 
                     return (
                       <div
                         key={idx}
-                        className="p-3 bg-white dark:bg-card rounded-lg border border-zinc-200 dark:border-border hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors group"
+                        className="p-3 bg-white dark:bg-card rounded-lg border border-neutral-200 dark:border-border hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors group"
                       >
                         <div className="flex items-start gap-3">
                           <span className="font-medium text-emerald-600 text-sm">
                             {idx + 1}.
                           </span>
-                          <p className="flex-1 text-sm text-zinc-800 dark:text-foreground">
+                          <p className="flex-1 text-sm text-neutral-800 dark:text-foreground">
                             {pergunta}
                           </p>
                           <Button
@@ -384,7 +384,7 @@ export function LaudosAnaliseCard({ laudo, className }: LaudosAnaliseCardProps) 
             open={openSections.quesitos}
             onOpenChange={() => toggleSection("quesitos")}
           >
-            <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 rounded-lg bg-zinc-100 dark:bg-muted hover:bg-zinc-200 dark:hover:bg-muted transition-colors">
+            <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 rounded-lg bg-neutral-100 dark:bg-muted hover:bg-neutral-200 dark:hover:bg-muted transition-colors">
               {openSections.quesitos ? (
                 <ChevronDown className="w-4 h-4" />
               ) : (
@@ -400,9 +400,9 @@ export function LaudosAnaliseCard({ laudo, className }: LaudosAnaliseCardProps) 
                 {laudo.quesitos_complementares.map((quesito, idx) => (
                   <div
                     key={idx}
-                    className="p-3 bg-zinc-50 dark:bg-card rounded-lg border border-zinc-200 dark:border-border"
+                    className="p-3 bg-neutral-50 dark:bg-card rounded-lg border border-neutral-200 dark:border-border"
                   >
-                    <p className="text-sm text-zinc-700 dark:text-foreground/80">
+                    <p className="text-sm text-neutral-700 dark:text-foreground/80">
                       <span className="font-medium mr-1">{idx + 1}.</span>
                       {quesito}
                     </p>

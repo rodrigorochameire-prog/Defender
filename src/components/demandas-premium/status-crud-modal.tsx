@@ -82,10 +82,10 @@ export function StatusCrudModal({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border-2 border-zinc-200 dark:border-zinc-700 z-[10001] overflow-hidden"
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border-2 border-neutral-200 dark:border-neutral-700 z-[10001] overflow-hidden"
           >
             {/* Header */}
-            <div className="p-5 border-b-2 border-zinc-200 dark:border-zinc-700 bg-gradient-to-br from-emerald-50 to-zinc-50 dark:from-emerald-950/20 dark:to-zinc-900">
+            <div className="p-5 border-b-2 border-neutral-200 dark:border-neutral-700 bg-gradient-to-br from-emerald-50 to-neutral-50 dark:from-emerald-950/20 dark:to-neutral-900">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {mode === "add" ? (
@@ -98,10 +98,10 @@ export function StatusCrudModal({
                     </div>
                   )}
                   <div>
-                    <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                    <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
                       {mode === "add" ? "Adicionar Novo Status" : "Editar Status"}
                     </h2>
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
+                    <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5">
                       {mode === "add"
                         ? "Crie um novo status personalizado"
                         : "Modifique as informações do status"}
@@ -110,9 +110,9 @@ export function StatusCrudModal({
                 </div>
                 <button
                   onClick={handleClose}
-                  className="w-8 h-8 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 flex items-center justify-center transition-colors"
+                  className="w-8 h-8 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-800 flex items-center justify-center transition-colors"
                 >
-                  <X className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+                  <X className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
                 </button>
               </div>
             </div>
@@ -121,7 +121,7 @@ export function StatusCrudModal({
             <div className="p-5 space-y-5 max-h-[60vh] overflow-y-auto">
               {/* Nome do Status */}
               <div>
-                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
                   Nome do Status *
                 </label>
                 <input
@@ -129,13 +129,13 @@ export function StatusCrudModal({
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
                   placeholder="Ex: Em análise, Aguardando..."
-                  className="w-full px-4 py-2.5 rounded-lg border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors"
+                  className="w-full px-4 py-2.5 rounded-lg border-2 border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors"
                 />
               </div>
 
               {/* Grupo */}
               <div>
-                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
                   Categoria *
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -153,7 +153,7 @@ export function StatusCrudModal({
                           ${
                             isSelected
                               ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30"
-                              : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                              : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600"
                           }
                         `}
                       >
@@ -162,7 +162,7 @@ export function StatusCrudModal({
                             className="w-3 h-3 rounded-full flex-shrink-0"
                             style={{ backgroundColor: group.color }}
                           />
-                          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                          <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
                             {group.label}
                           </span>
                         </div>
@@ -174,11 +174,11 @@ export function StatusCrudModal({
 
               {/* Ícone (Preview simples - a funcionalidade completa seria mais complexa) */}
               <div>
-                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
                   Ícone
                 </label>
-                <div className="px-4 py-3 rounded-lg border-2 border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                <div className="px-4 py-3 rounded-lg border-2 border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50">
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400">
                     O ícone será atribuído automaticamente com base no nome do status
                   </p>
                 </div>
@@ -186,10 +186,10 @@ export function StatusCrudModal({
             </div>
 
             {/* Footer */}
-            <div className="p-5 border-t-2 border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/30 flex gap-3 justify-end">
+            <div className="p-5 border-t-2 border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/30 flex gap-3 justify-end">
               <button
                 onClick={handleClose}
-                className="px-4 py-2 rounded-lg font-medium text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                className="px-4 py-2 rounded-lg font-medium text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
               >
                 Cancelar
               </button>

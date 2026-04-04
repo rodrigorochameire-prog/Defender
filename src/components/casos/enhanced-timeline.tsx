@@ -52,7 +52,7 @@ export function EnhancedTimeline({ events }: { events: TimelineEvent[] }) {
           
           {/* Ícone Central */}
           <div className={cn(
-            "flex items-center justify-center w-10 h-10 rounded-full border-4 border-white dark:border-zinc-950 shadow shrink-0 z-10",
+            "flex items-center justify-center w-10 h-10 rounded-full border-4 border-white dark:border-neutral-950 shadow shrink-0 z-10",
             "md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2",
             event.status === 'alert' ? "bg-red-100 dark:bg-red-950" : 
             event.status === 'completed' ? "bg-emerald-100 dark:bg-emerald-950" :

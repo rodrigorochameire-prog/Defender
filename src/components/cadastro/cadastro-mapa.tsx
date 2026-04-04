@@ -478,7 +478,7 @@ export function CadastroMapa() {
                   />
                 )}
                 <span className="text-foreground/80">{label}</span>
-                <span className="text-zinc-400 font-normal">{count}</span>
+                <span className="text-neutral-400 font-normal">{count}</span>
               </button>
             );
           })}
@@ -493,7 +493,7 @@ export function CadastroMapa() {
               onCheckedChange={setShowHeatmap}
               className="cursor-pointer h-4 w-7"
             />
-            <Label htmlFor="heatmap-toggle" className="text-xs text-zinc-500 cursor-pointer">
+            <Label htmlFor="heatmap-toggle" className="text-xs text-neutral-500 cursor-pointer">
               Heatmap
             </Label>
           </div>
@@ -515,7 +515,7 @@ export function CadastroMapa() {
           <div className="h-full w-full flex items-center justify-center bg-muted/50">
             <div className="flex flex-col items-center gap-3 text-center max-w-xs">
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-muted">
-                <MapPin className="h-6 w-6 text-zinc-400" />
+                <MapPin className="h-6 w-6 text-neutral-400" />
               </div>
               <div>
                 <h3 className="text-sm font-medium text-foreground">

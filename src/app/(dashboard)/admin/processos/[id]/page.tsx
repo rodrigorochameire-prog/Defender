@@ -92,7 +92,7 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
 
   if (error || !data) {
     return (
-      <div className="p-6 text-center text-zinc-500">
+      <div className="p-6 text-center text-neutral-500">
         <p className="text-sm">Processo nao encontrado.</p>
         <button onClick={() => router.back()} className="mt-2 text-xs text-emerald-600 hover:underline">
           &larr; Voltar
@@ -133,7 +133,7 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
       />
 
       {/* Content container — unified card for tabs + content */}
-      <div className="mx-4 lg:mx-6 mt-2 bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/60 dark:border-zinc-800/40 overflow-hidden flex-1 flex flex-col min-h-0">
+      <div className="mx-4 lg:mx-6 mt-2 bg-white dark:bg-neutral-900/50 rounded-xl border border-neutral-200/60 dark:border-neutral-800/40 overflow-hidden flex-1 flex flex-col min-h-0">
 
       {/* Tabs */}
       <ProcessoTabs active={tab} onChange={setTab} />

@@ -21,17 +21,17 @@ export function PageHeaderCompact({
   actions 
 }: PageHeaderCompactProps) {
   return (
-    <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+    <div className="px-4 md:px-6 py-3 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
       <div className="flex items-center justify-between">
         {/* Ícone + Título */}
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-            <Icon className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+          <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center border border-neutral-200 dark:border-neutral-700">
+            <Icon className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{title}</span>
+            <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{title}</span>
             {subtitle && (
-              <span className="text-xs text-zinc-400 dark:text-zinc-500">• {subtitle}</span>
+              <span className="text-xs text-neutral-400 dark:text-neutral-500">• {subtitle}</span>
             )}
           </div>
         </div>

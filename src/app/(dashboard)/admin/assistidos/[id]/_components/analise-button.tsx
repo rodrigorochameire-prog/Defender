@@ -16,7 +16,7 @@ const ATRIB_COLORS: Record<string, { bg: string; hover: string; shadow: string }
   VVD: { bg: "bg-amber-500", hover: "hover:bg-amber-600", shadow: "hover:shadow-amber-500/20" },
   EXECUCAO_PENAL: { bg: "bg-sky-600", hover: "hover:bg-sky-700", shadow: "hover:shadow-sky-500/20" },
   EXECUCAO: { bg: "bg-sky-600", hover: "hover:bg-sky-700", shadow: "hover:shadow-sky-500/20" },
-  SUBSTITUICAO: { bg: "bg-zinc-700", hover: "hover:bg-zinc-800", shadow: "hover:shadow-zinc-500/20" },
+  SUBSTITUICAO: { bg: "bg-neutral-700", hover: "hover:bg-neutral-800", shadow: "hover:shadow-neutral-500/20" },
 };
 const DEFAULT_COLOR = { bg: "bg-emerald-600", hover: "hover:bg-emerald-700", shadow: "hover:shadow-emerald-500/20" };
 
@@ -152,7 +152,7 @@ export function AnaliseButton({
       <div className="flex items-center gap-3">
         <Button
           disabled
-          className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 gap-2"
+          className="bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 gap-2"
         >
           <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />
           Analisando...

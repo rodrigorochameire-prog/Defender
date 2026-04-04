@@ -114,7 +114,7 @@ function AIBadge() {
 
 function FieldLabel({ children, ai }: { children: React.ReactNode; ai?: boolean }) {
   return (
-    <Label className="text-xs font-medium text-zinc-700 dark:text-zinc-300 flex items-center">
+    <Label className="text-xs font-medium text-neutral-700 dark:text-neutral-300 flex items-center">
       {children}
       {ai && <AIBadge />}
     </Label>
@@ -142,7 +142,7 @@ function StepIndicator({ current }: { current: Step }) {
               <div
                 className={cn(
                   "w-8 sm:w-12 h-px mx-1",
-                  isDone ? "bg-emerald-500" : "bg-zinc-300 dark:bg-zinc-700"
+                  isDone ? "bg-emerald-500" : "bg-neutral-300 dark:bg-neutral-700"
                 )}
               />
             )}
@@ -154,7 +154,7 @@ function StepIndicator({ current }: { current: Step }) {
                     ? "bg-emerald-600 text-white"
                     : isDone
                     ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400"
-                    : "bg-zinc-200 dark:bg-zinc-800 text-zinc-500"
+                    : "bg-neutral-200 dark:bg-neutral-800 text-neutral-500"
                 )}
               >
                 {isDone ? <Check className="w-3.5 h-3.5" /> : s.num}
@@ -163,8 +163,8 @@ function StepIndicator({ current }: { current: Step }) {
                 className={cn(
                   "text-xs font-medium hidden sm:inline",
                   isActive
-                    ? "text-zinc-900 dark:text-zinc-100"
-                    : "text-zinc-500 dark:text-zinc-400"
+                    ? "text-neutral-900 dark:text-neutral-100"
+                    : "text-neutral-500 dark:text-neutral-400"
                 )}
               >
                 {s.label}
@@ -213,7 +213,7 @@ function DropzoneCard({
   );
 
   const statusIcon = () => {
-    if (!doc) return <Upload className="w-6 h-6 text-zinc-400" />;
+    if (!doc) return <Upload className="w-6 h-6 text-neutral-400" />;
     switch (doc.status) {
       case "uploading":
       case "processing":
@@ -223,7 +223,7 @@ function DropzoneCard({
       case "error":
         return <AlertCircle className="w-6 h-6 text-rose-500" />;
       default:
-        return <FileText className="w-6 h-6 text-zinc-400" />;
+        return <FileText className="w-6 h-6 text-neutral-400" />;
     }
   };
 
@@ -255,7 +255,7 @@ function DropzoneCard({
           ? "border-emerald-300 dark:border-emerald-800/50 bg-emerald-50/30 dark:bg-emerald-950/10"
           : doc?.status === "error"
           ? "border-rose-300 dark:border-rose-800/50 bg-rose-50/30 dark:bg-rose-950/10"
-          : "border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600"
+          : "border-neutral-300 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-600"
       )}
       onDragOver={(e) => {
         e.preventDefault();
@@ -274,8 +274,8 @@ function DropzoneCard({
       />
       <div className="flex flex-col items-center gap-2">
         {statusIcon()}
-        <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{label}</p>
-        <p className="text-[11px] text-zinc-500 truncate max-w-full">{statusText()}</p>
+        <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">{label}</p>
+        <p className="text-[11px] text-neutral-500 truncate max-w-full">{statusText()}</p>
         {doc?.status === "done" && (
           <Badge className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[9px] border-0">
             Dados extraidos
@@ -406,8 +406,8 @@ function UploadStep({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Upload de Documentos</h2>
-        <p className="text-sm text-zinc-500 mt-1">
+        <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Upload de Documentos</h2>
+        <p className="text-sm text-neutral-500 mt-1">
           Envie documentos da sessao para extracaoo automatica de dados. Aceita PDF, JPG, PNG.
         </p>
       </div>
@@ -494,15 +494,15 @@ function ReviewStep({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Revisar Dados</h2>
-        <p className="text-sm text-zinc-500 mt-1">
+        <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Revisar Dados</h2>
+        <p className="text-sm text-neutral-500 mt-1">
           Verifique e complete os dados extraidos. Campos com{" "}
           <AIBadge /> foram pre-preenchidos pela IA.
         </p>
       </div>
 
       <Tabs defaultValue="quesitos" className="w-full">
-        <TabsList className="w-full bg-zinc-100 dark:bg-zinc-800 p-1 h-auto flex-wrap">
+        <TabsList className="w-full bg-neutral-100 dark:bg-neutral-800 p-1 h-auto flex-wrap">
           <TabsTrigger value="quesitos" className="text-xs flex-1">Quesitos</TabsTrigger>
           <TabsTrigger value="dosimetria" className="text-xs flex-1">Dosimetria</TabsTrigger>
           <TabsTrigger value="contexto" className="text-xs flex-1">Contexto</TabsTrigger>
@@ -512,23 +512,23 @@ function ReviewStep({
 
         {/* QUESITOS TAB */}
         <TabsContent value="quesitos">
-          <Card className="border-zinc-100 dark:border-zinc-800">
+          <Card className="border-neutral-100 dark:border-neutral-800">
             <CardContent className="pt-4 space-y-3">
               {quesitosData.length === 0 ? (
-                <p className="text-sm text-zinc-500 py-4 text-center">
+                <p className="text-sm text-neutral-500 py-4 text-center">
                   Nenhum quesito encontrado. Os quesitos serao carregados dos documentos processados ou do cadastro da sessao.
                 </p>
               ) : (
                 quesitosData.map((q, i) => (
                   <div
                     key={q.quesitoId || i}
-                    className="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700"
+                    className="flex items-start gap-3 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700"
                   >
-                    <div className="w-7 h-7 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-xs font-bold text-zinc-600 dark:text-zinc-400 shrink-0">
+                    <div className="w-7 h-7 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-xs font-bold text-neutral-600 dark:text-neutral-400 shrink-0">
                       {q.numero}
                     </div>
                     <div className="flex-1 min-w-0 space-y-2">
-                      <p className="text-sm text-zinc-800 dark:text-zinc-200">{q.texto}</p>
+                      <p className="text-sm text-neutral-800 dark:text-neutral-200">{q.texto}</p>
                       {q.tipo && (
                         <Badge variant="outline" className="text-[9px]">
                           {q.tipo}
@@ -568,7 +568,7 @@ function ReviewStep({
 
         {/* DOSIMETRIA TAB */}
         <TabsContent value="dosimetria">
-          <Card className="border-zinc-100 dark:border-zinc-800">
+          <Card className="border-neutral-100 dark:border-neutral-800">
             <CardContent className="pt-4 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -721,7 +721,7 @@ function ReviewStep({
 
         {/* CONTEXTO TAB */}
         <TabsContent value="contexto">
-          <Card className="border-zinc-100 dark:border-zinc-800">
+          <Card className="border-neutral-100 dark:border-neutral-800">
             <CardContent className="pt-4 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -812,7 +812,7 @@ function ReviewStep({
 
         {/* PERFIL TAB */}
         <TabsContent value="perfil">
-          <Card className="border-zinc-100 dark:border-zinc-800">
+          <Card className="border-neutral-100 dark:border-neutral-800">
             <CardContent className="pt-4 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -881,7 +881,7 @@ function ReviewStep({
 
         {/* DETRACAO TAB */}
         <TabsContent value="detracao">
-          <Card className="border-zinc-100 dark:border-zinc-800">
+          <Card className="border-neutral-100 dark:border-neutral-800">
             <CardContent className="pt-4 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -1043,17 +1043,17 @@ function ConfirmStep({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Confirmar Registro</h2>
-        <p className="text-sm text-zinc-500 mt-1">
+        <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Confirmar Registro</h2>
+        <p className="text-sm text-neutral-500 mt-1">
           Revise o resumo e confirme o salvamento.
         </p>
       </div>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
         {/* Contexto Summary */}
-        <Card className="border-zinc-100 dark:border-zinc-800">
+        <Card className="border-neutral-100 dark:border-neutral-800">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+            <CardTitle className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
               Contexto da Sessao
             </CardTitle>
           </CardHeader>
@@ -1068,9 +1068,9 @@ function ConfirmStep({
         </Card>
 
         {/* Dosimetria Summary */}
-        <Card className="border-zinc-100 dark:border-zinc-800">
+        <Card className="border-neutral-100 dark:border-neutral-800">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+            <CardTitle className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
               Dosimetria
             </CardTitle>
           </CardHeader>
@@ -1086,9 +1086,9 @@ function ConfirmStep({
 
       {/* Quesitos Summary */}
       {quesitosComResultado.length > 0 && (
-        <Card className="border-zinc-100 dark:border-zinc-800">
+        <Card className="border-neutral-100 dark:border-neutral-800">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+            <CardTitle className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
               Quesitos ({quesitosComResultado.length})
             </CardTitle>
           </CardHeader>
@@ -1099,8 +1099,8 @@ function ConfirmStep({
                   key={q.quesitoId}
                   className="flex items-center gap-2 text-xs"
                 >
-                  <span className="font-mono text-zinc-500 w-5 text-right">{q.numero}.</span>
-                  <span className="flex-1 text-zinc-700 dark:text-zinc-300 truncate">
+                  <span className="font-mono text-neutral-500 w-5 text-right">{q.numero}.</span>
+                  <span className="flex-1 text-neutral-700 dark:text-neutral-300 truncate">
                     {q.texto}
                   </span>
                   <Badge
@@ -1110,7 +1110,7 @@ function ConfirmStep({
                         ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400"
                         : q.resultado === "nao"
                         ? "bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-400"
-                        : "bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400"
+                        : "bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-400"
                     )}
                   >
                     {q.resultado === "sim" ? "SIM" : q.resultado === "nao" ? "NAO" : "PREJUDICADO"}
@@ -1170,9 +1170,9 @@ function ConfirmStep({
 function SummaryRow({ label, value }: { label: string; value: string | undefined | null }) {
   if (!value) return null;
   return (
-    <div className="flex items-center justify-between py-1 border-b border-zinc-100 dark:border-zinc-800 last:border-0">
-      <span className="text-zinc-500">{label}</span>
-      <span className="font-medium text-zinc-800 dark:text-zinc-200 text-right max-w-[60%] truncate">
+    <div className="flex items-center justify-between py-1 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
+      <span className="text-neutral-500">{label}</span>
+      <span className="font-medium text-neutral-800 dark:text-neutral-200 text-right max-w-[60%] truncate">
         {value}
       </span>
     </div>
@@ -1392,10 +1392,10 @@ export default function RegistroPage({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11] flex items-center justify-center">
+      <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
-          <p className="text-sm text-zinc-500">Carregando sessao...</p>
+          <p className="text-sm text-neutral-500">Carregando sessao...</p>
         </div>
       </div>
     );
@@ -1403,14 +1403,14 @@ export default function RegistroPage({
 
   if (!registro) {
     return (
-      <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11] flex items-center justify-center">
-        <Card className="max-w-sm border-zinc-200 dark:border-zinc-800">
+      <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11] flex items-center justify-center">
+        <Card className="max-w-sm border-neutral-200 dark:border-neutral-800">
           <CardContent className="pt-6 text-center">
             <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-3" />
-            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-1">
+            <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 mb-1">
               Sessao nao encontrada
             </p>
-            <p className="text-xs text-zinc-500 mb-4">ID: {sessaoId}</p>
+            <p className="text-xs text-neutral-500 mb-4">ID: {sessaoId}</p>
             <Link href="/admin/juri">
               <Button size="sm" variant="outline" className="text-xs">
                 <ArrowLeft className="w-3 h-3 mr-1" />
@@ -1426,19 +1426,19 @@ export default function RegistroPage({
   const assistidoNome = registro.assistidoNome || registro.processo?.assistido?.nome || "Reu";
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header with stepper */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center justify-between max-w-4xl mx-auto">
           <div className="flex items-center gap-3">
             <Link href="/admin/juri">
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-zinc-600">
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-400 hover:text-neutral-600">
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             </Link>
             <div>
-              <h1 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">Registro Pos-Juri</h1>
-              <p className="text-[10px] text-zinc-500">{assistidoNome}</p>
+              <h1 className="text-sm font-bold text-neutral-900 dark:text-neutral-50">Registro Pos-Juri</h1>
+              <p className="text-[10px] text-neutral-500">{assistidoNome}</p>
             </div>
           </div>
           <StepIndicator current={step} />

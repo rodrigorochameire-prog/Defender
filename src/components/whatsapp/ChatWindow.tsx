@@ -729,7 +729,7 @@ export function ChatWindow({
 
   if (!contact) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-zinc-50 dark:bg-background text-muted-foreground">
+      <div className="flex-1 flex items-center justify-center bg-neutral-50 dark:bg-background text-muted-foreground">
         Contato nao encontrado
       </div>
     );
@@ -771,7 +771,7 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <h3 className="text-sm font-semibold text-zinc-900 dark:text-foreground flex items-center gap-1.5 truncate">
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-foreground flex items-center gap-1.5 truncate">
                 {contactName}
                 {contact.isFavorite && (
                   <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 shrink-0" />
@@ -800,7 +800,7 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
                     size="icon"
                     className={cn(
                       "h-8 w-8",
-                      searchOpen && "bg-zinc-100 dark:bg-muted"
+                      searchOpen && "bg-neutral-100 dark:bg-muted"
                     )}
                     onClick={() => {
                       setSearchOpen(!searchOpen);
@@ -836,7 +836,7 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
                     size="icon"
                     className={cn(
                       "h-8 w-8",
-                      messageOrder === "newest" && "bg-zinc-100 dark:bg-muted"
+                      messageOrder === "newest" && "bg-neutral-100 dark:bg-muted"
                     )}
                     onClick={() =>
                       setMessageOrder((prev) => (prev === "oldest" ? "newest" : "oldest"))
@@ -918,7 +918,7 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
       {/* SEARCH BAR (toggleable)                                            */}
       {/* ================================================================== */}
       {searchOpen && (
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-zinc-200 dark:border-border bg-zinc-50 dark:bg-background/80">
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-neutral-200 dark:border-border bg-neutral-50 dark:bg-background/80">
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
           <input
             ref={searchInputRef}
@@ -927,7 +927,7 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleSearchKeyDown}
             placeholder="Buscar nesta conversa..."
-            className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-foreground outline-none placeholder:text-muted-foreground"
+            className="flex-1 bg-transparent text-sm text-neutral-900 dark:text-foreground outline-none placeholder:text-muted-foreground"
           />
           {searchQuery.trim() && filteredMessages.length > 0 && (
             <span className="text-xs text-muted-foreground flex-shrink-0 tabular-nums">
@@ -942,14 +942,14 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
           <button
             onClick={() => navigateSearch(-1)}
             disabled={filteredMessages.length === 0}
-            className="p-1 hover:bg-zinc-200 dark:hover:bg-muted rounded disabled:opacity-40"
+            className="p-1 hover:bg-neutral-200 dark:hover:bg-muted rounded disabled:opacity-40"
           >
             <ChevronUp className="h-4 w-4 text-muted-foreground" />
           </button>
           <button
             onClick={() => navigateSearch(1)}
             disabled={filteredMessages.length === 0}
-            className="p-1 hover:bg-zinc-200 dark:hover:bg-muted rounded disabled:opacity-40"
+            className="p-1 hover:bg-neutral-200 dark:hover:bg-muted rounded disabled:opacity-40"
           >
             <ChevronDown className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -959,7 +959,7 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
               setSearchQuery("");
               setSearchIndex(0);
             }}
-            className="p-1 hover:bg-zinc-200 dark:hover:bg-muted rounded"
+            className="p-1 hover:bg-neutral-200 dark:hover:bg-muted rounded"
           >
             <X className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -985,8 +985,8 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
           ) : messageGroups.length === 0 ? (
             /* ---- Empty state ---- */
             <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
-              <div className="h-16 w-16 rounded-full bg-zinc-100 dark:bg-background flex items-center justify-center">
-                <MessageSquare className="h-8 w-8 text-zinc-300 dark:text-muted-foreground/50" />
+              <div className="h-16 w-16 rounded-full bg-neutral-100 dark:bg-background flex items-center justify-center">
+                <MessageSquare className="h-8 w-8 text-neutral-300 dark:text-muted-foreground/50" />
               </div>
               <div className="text-center">
                 <p className="text-sm font-medium text-muted-foreground">
@@ -1078,7 +1078,7 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
         {/* Floating selection bar */}
         {isSelectionMode && selectedMessageIds.size > 0 && (
           <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 animate-slide-up">
-            <div className="flex items-center gap-1 px-3 py-2 rounded-2xl bg-white/90 dark:bg-card/90 backdrop-blur-lg shadow-lg border border-zinc-200 dark:border-border">
+            <div className="flex items-center gap-1 px-3 py-2 rounded-2xl bg-white/90 dark:bg-card/90 backdrop-blur-lg shadow-lg border border-neutral-200 dark:border-border">
               <Button
                 variant="ghost"
                 size="sm"
@@ -1090,7 +1090,7 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
               <span className="text-sm font-medium px-2 tabular-nums">
                 {selectedMessageIds.size}
               </span>
-              <div className="flex items-center gap-0.5 border-l border-zinc-200 dark:border-border pl-2 ml-1">
+              <div className="flex items-center gap-0.5 border-l border-neutral-200 dark:border-border pl-2 ml-1">
                 <TooltipProvider delayDuration={300}>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -1175,7 +1175,7 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
       {/* REPLY BAR                                                          */}
       {/* ================================================================== */}
       {replyingTo && (
-        <div className="px-4 py-2 bg-zinc-50 dark:bg-muted/50 border-t border-zinc-200 dark:border-border flex items-center gap-3">
+        <div className="px-4 py-2 bg-neutral-50 dark:bg-muted/50 border-t border-neutral-200 dark:border-border flex items-center gap-3">
           <div className="w-1 h-8 rounded-full bg-emerald-500 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
@@ -1213,7 +1213,7 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 shrink-0 text-muted-foreground hover:text-zinc-700 dark:hover:text-foreground/80"
+                className="h-9 w-9 shrink-0 text-muted-foreground hover:text-neutral-700 dark:hover:text-foreground/80"
               >
                 <Paperclip className="h-5 w-5" />
               </Button>
@@ -1252,7 +1252,7 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
           />
 
           {/* Textarea wrapper with rounded pill shape */}
-          <div className="flex-1 flex items-end rounded-2xl bg-white dark:bg-card border border-zinc-200 dark:border-border focus-within:ring-1 focus-within:ring-emerald-500/30 focus-within:border-emerald-300 dark:focus-within:border-emerald-700 transition-shadow">
+          <div className="flex-1 flex items-end rounded-2xl bg-white dark:bg-card border border-neutral-200 dark:border-border focus-within:ring-1 focus-within:ring-emerald-500/30 focus-within:border-emerald-300 dark:focus-within:border-emerald-700 transition-shadow">
             {/* Template picker inside the wrapper */}
             <TemplatePickerPopover
               contactId={contactId}

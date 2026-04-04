@@ -95,10 +95,10 @@ export default function TemplatesPage() {
             <LayoutTemplate className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
               Templates de Oficios
             </h1>
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-neutral-500">
               Modelos reutilizaveis com placeholders automaticos
             </p>
           </div>
@@ -106,7 +106,7 @@ export default function TemplatesPage() {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            className="border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+            className="border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300"
             onClick={() => router.push("/admin/oficios")}
           >
             Ver Oficios
@@ -123,19 +123,19 @@ export default function TemplatesPage() {
 
       {/* Search */}
       <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500" />
         <Input
           placeholder="Buscar templates..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-9 bg-white dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100"
+          className="pl-9 bg-white dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100"
         />
       </div>
 
       {/* Content */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 text-zinc-400 animate-spin" />
+          <Loader2 className="w-6 h-6 text-neutral-400 animate-spin" />
         </div>
       ) : !templates?.length ? (
         <EmptyState search={search} onNew={() => router.push("/admin/oficios/templates/novo")} />
@@ -146,17 +146,17 @@ export default function TemplatesPage() {
             return (
               <div
                 key={tmpl.id}
-                className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-700/30 bg-white dark:bg-zinc-900/50 hover:border-emerald-500/30 transition-colors"
+                className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-700/30 bg-white dark:bg-neutral-900/50 hover:border-emerald-500/30 transition-colors"
               >
                 {/* Card top: icon + title */}
                 <div className="flex items-start gap-2 mb-2">
                   <FileText className="w-4 h-4 text-emerald-500 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                    <p className="font-medium text-neutral-900 dark:text-neutral-100 truncate">
                       {tmpl.titulo}
                     </p>
                     {tmpl.descricao && (
-                      <p className="text-xs text-zinc-500 line-clamp-2 mt-0.5">
+                      <p className="text-xs text-neutral-500 line-clamp-2 mt-0.5">
                         {tmpl.descricao}
                       </p>
                     )}
@@ -176,22 +176,22 @@ export default function TemplatesPage() {
                   {tmpl.area && (
                     <Badge
                       variant="outline"
-                      className="text-[10px] text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-600"
+                      className="text-[10px] text-neutral-500 dark:text-neutral-400 border-neutral-300 dark:border-neutral-600"
                     >
                       {AREA_LABELS[tmpl.area] ?? tmpl.area}
                     </Badge>
                   )}
-                  <span className="text-[10px] text-zinc-400 dark:text-zinc-600 ml-auto">
+                  <span className="text-[10px] text-neutral-400 dark:text-neutral-600 ml-auto">
                     {tmpl.totalUsos ?? 0}x usado
                   </span>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                <div className="flex items-center gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
                   <Button
                     size="sm"
                     variant="outline"
-                    className="flex-1 h-7 text-xs border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                    className="flex-1 h-7 text-xs border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                     onClick={() => router.push(`/admin/oficios/templates/${tmpl.id}`)}
                   >
                     <Pencil className="w-3 h-3 mr-1.5" />
@@ -200,7 +200,7 @@ export default function TemplatesPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 w-7 p-0 border-zinc-200 dark:border-zinc-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 dark:hover:border-red-800"
+                    className="h-7 w-7 p-0 border-neutral-200 dark:border-neutral-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 dark:hover:border-red-800"
                     onClick={() => setDeleteId(tmpl.id)}
                   >
                     <Trash2 className="w-3 h-3" />
@@ -249,11 +249,11 @@ function EmptyState({
 }) {
   return (
     <div className="text-center py-12">
-      <LayoutTemplate className="w-10 h-10 mx-auto text-zinc-400 dark:text-zinc-600 mb-3" />
-      <h3 className="text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+      <LayoutTemplate className="w-10 h-10 mx-auto text-neutral-400 dark:text-neutral-600 mb-3" />
+      <h3 className="text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
         {search ? "Nenhum template encontrado" : "Nenhum template criado"}
       </h3>
-      <p className="text-xs text-zinc-400 dark:text-zinc-600 mb-4 max-w-sm mx-auto">
+      <p className="text-xs text-neutral-400 dark:text-neutral-600 mb-4 max-w-sm mx-auto">
         {search
           ? `Nenhum resultado para "${search}"`
           : "Crie templates de oficios com placeholders para agilizar a producao de documentos"}
@@ -261,7 +261,7 @@ function EmptyState({
       {!search && (
         <Button
           variant="outline"
-          className="border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+          className="border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300"
           onClick={onNew}
         >
           <Plus className="w-4 h-4 mr-2" />

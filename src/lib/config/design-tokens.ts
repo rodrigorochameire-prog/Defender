@@ -75,7 +75,7 @@ export const CARD_STYLE = {
   /** Card com borda lateral colorida (urgência, nulidades) */
   highlight: "rounded-lg border-l-4 p-4",
   /** Card glass translúcido (v3) */
-  glass: "bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06] rounded-lg p-3.5",
+  glass: "bg-neutral-100/60 dark:bg-white/[0.04] border border-neutral-200/80 dark:border-white/[0.06] rounded-lg p-3.5",
 } as const;
 
 // ============================================
@@ -98,9 +98,9 @@ export const HEADER_STYLE = {
 // ============================================
 
 export const GLASS = {
-  card: "bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06] rounded-lg",
-  hover: "hover:bg-zinc-100 dark:hover:bg-white/[0.07] transition-all duration-200",
-  cardHover: "bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06] rounded-lg hover:bg-zinc-100 dark:hover:bg-white/[0.07] transition-all duration-200 cursor-pointer",
+  card: "bg-neutral-100/60 dark:bg-white/[0.04] border border-neutral-200/80 dark:border-white/[0.06] rounded-lg",
+  hover: "hover:bg-neutral-100 dark:hover:bg-white/[0.07] transition-all duration-200",
+  cardHover: "bg-neutral-100/60 dark:bg-white/[0.04] border border-neutral-200/80 dark:border-white/[0.06] rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.07] transition-all duration-200 cursor-pointer",
 } as const;
 
 // ============================================
@@ -108,8 +108,8 @@ export const GLASS = {
 // ============================================
 
 export const LIST_ITEM = {
-  container: "bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06] rounded-lg px-3 py-2.5 hover:bg-zinc-100 dark:hover:bg-white/[0.07] cursor-pointer transition-all",
-  icon: "w-[13px] h-[13px] text-zinc-500 dark:text-zinc-400 shrink-0",
+  container: "bg-neutral-100/60 dark:bg-white/[0.04] border border-neutral-200/80 dark:border-white/[0.06] rounded-lg px-3 py-2.5 hover:bg-neutral-100 dark:hover:bg-white/[0.07] cursor-pointer transition-all",
+  icon: "w-[13px] h-[13px] text-neutral-500 dark:text-neutral-400 shrink-0",
   title: "text-[11px] font-medium text-foreground/80",
   meta: "text-[9px] text-muted-foreground",
 } as const;
@@ -119,12 +119,12 @@ export const LIST_ITEM = {
 // ============================================
 
 export const TAB_STYLE_V3 = {
-  bar: "flex items-center gap-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 p-1",
-  item: "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-white/5",
-  active: "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm",
+  bar: "flex items-center gap-0.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 p-1",
+  item: "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-300 hover:bg-neutral-200/60 dark:hover:bg-white/5",
+  active: "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 shadow-sm",
   badge: "text-[9px] min-w-[18px] text-center px-1 py-px rounded-full font-medium",
-  badgeActive: "bg-white/20 text-white/70 dark:bg-zinc-700 dark:text-zinc-300",
-  badgeInactive: "bg-zinc-200/60 dark:bg-white/10 text-zinc-400 dark:text-zinc-500",
+  badgeActive: "bg-white/20 text-white/70 dark:bg-neutral-700 dark:text-neutral-300",
+  badgeInactive: "bg-neutral-200/60 dark:bg-white/10 text-neutral-400 dark:text-neutral-500",
 } as const;
 
 // ============================================
@@ -137,7 +137,7 @@ export const COLORS = {
   warning: { border: "border-amber-200 dark:border-amber-800", bg: "bg-amber-50/50 dark:bg-amber-950/10", text: "text-amber-600 dark:text-amber-400" },
   info:    { border: "border-blue-200 dark:border-blue-800", bg: "bg-blue-50/50 dark:bg-blue-950/10", text: "text-blue-600 dark:text-blue-400" },
   violet:  { border: "border-violet-200 dark:border-violet-800", bg: "bg-violet-50/50 dark:bg-violet-950/10", text: "text-violet-600 dark:text-violet-400" },
-  neutral: { border: "border-border", bg: "bg-zinc-50 dark:bg-card", text: "text-zinc-600 dark:text-muted-foreground" },
+  neutral: { border: "border-border", bg: "bg-neutral-50 dark:bg-card", text: "text-neutral-600 dark:text-muted-foreground" },
 } as const;
 
 // ============================================

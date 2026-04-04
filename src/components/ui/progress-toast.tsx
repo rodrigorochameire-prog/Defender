@@ -40,24 +40,24 @@ function ProgressToastContent({ type, label, progress, detail }: Omit<ProgressTo
   const isIndeterminate = progress < 0;
 
   return (
-    <div className="w-[300px] rounded-lg border border-zinc-200 bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="w-[300px] rounded-lg border border-neutral-200 bg-white p-3 shadow-lg dark:border-neutral-700 dark:bg-neutral-900">
       <div className="flex items-start gap-2.5">
         <div className="mt-0.5 shrink-0">
           {isIndeterminate ? (
-            <Loader2 className="h-4 w-4 animate-spin text-zinc-500" />
+            <Loader2 className="h-4 w-4 animate-spin text-neutral-500" />
           ) : (
-            <Icon className="h-4 w-4 text-zinc-500" />
+            <Icon className="h-4 w-4 text-neutral-500" />
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+          <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
             {LABEL_MAP[type]}
           </p>
-          <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+          <p className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
             {label}
           </p>
           <div className="mt-2">
-            <div className="h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+            <div className="h-1.5 w-full rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
               {isIndeterminate ? (
                 <div className={`h-full w-1/3 rounded-full ${colorClass} animate-[indeterminate_1.5s_ease-in-out_infinite]`} />
               ) : (
@@ -69,13 +69,13 @@ function ProgressToastContent({ type, label, progress, detail }: Omit<ProgressTo
             </div>
           </div>
           {detail && (
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1">
+            <p className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-1">
               {detail}
             </p>
           )}
         </div>
         {!isIndeterminate && progress >= 0 && (
-          <span className="text-[10px] font-medium text-zinc-500 shrink-0 mt-0.5">
+          <span className="text-[10px] font-medium text-neutral-500 shrink-0 mt-0.5">
             {Math.round(progress)}%
           </span>
         )}

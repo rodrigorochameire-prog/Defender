@@ -168,7 +168,7 @@ export function PlaudRecordingsList({
               {recordings.map((recording) => (
                 <div
                   key={recording.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-border hover:bg-zinc-50 dark:hover:bg-muted transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-lg border border-neutral-200 dark:border-border hover:bg-neutral-50 dark:hover:bg-muted transition-colors"
                 >
                   <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
                     <Mic className="h-5 w-5 text-purple-600" />
@@ -178,7 +178,7 @@ export function PlaudRecordingsList({
                     <p className="font-medium text-sm truncate">
                       {recording.title || `Gravação ${recording.plaudRecordingId.slice(0, 8)}`}
                     </p>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-zinc-500">
+                    <div className="flex items-center gap-3 mt-1 text-xs text-neutral-500">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {formatDuration(recording.duration)}
@@ -227,9 +227,9 @@ export function PlaudRecordingsList({
             </div>
           ) : (
             <div className="text-center py-8">
-              <Mic className="h-12 w-12 mx-auto text-zinc-300 dark:text-muted-foreground/50 mb-3" />
-              <p className="text-zinc-500">Nenhuma gravação pendente</p>
-              <p className="text-xs text-zinc-400 mt-1">
+              <Mic className="h-12 w-12 mx-auto text-neutral-300 dark:text-muted-foreground/50 mb-3" />
+              <p className="text-neutral-500">Nenhuma gravação pendente</p>
+              <p className="text-xs text-neutral-400 mt-1">
                 Novas gravações do Plaud aparecerão aqui automaticamente
               </p>
             </div>
@@ -250,7 +250,7 @@ export function PlaudRecordingsList({
 
           {/* Aqui deveria ter um seletor de atendimento */}
           <div className="py-4">
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-neutral-500">
               Para vincular esta gravação, acesse a página do atendimento e clique em &quot;Vincular gravação&quot;.
             </p>
           </div>

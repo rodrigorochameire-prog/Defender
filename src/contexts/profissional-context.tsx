@@ -42,8 +42,8 @@ export const PROFISSIONAIS_CONFIG: Record<number, ProfissionalConfig> = {
     nomeCurto: "Rodrigo",
     grupo: "juri_ep_vvd",
     cor: "zinc",
-    corBg: "bg-zinc-800 dark:bg-foreground",
-    corBadge: "bg-zinc-100 text-zinc-800 dark:bg-muted dark:text-foreground",
+    corBg: "bg-neutral-800 dark:bg-foreground",
+    corBadge: "bg-neutral-100 text-neutral-800 dark:bg-muted dark:text-foreground",
   },
   2: {
     id: 2,
@@ -51,8 +51,8 @@ export const PROFISSIONAIS_CONFIG: Record<number, ProfissionalConfig> = {
     nomeCurto: "Juliane",
     grupo: "juri_ep_vvd",
     cor: "zinc",
-    corBg: "bg-zinc-600 dark:bg-muted-foreground",
-    corBadge: "bg-zinc-100 text-zinc-600 dark:bg-muted dark:text-muted-foreground"
+    corBg: "bg-neutral-600 dark:bg-muted-foreground",
+    corBadge: "bg-neutral-100 text-neutral-600 dark:bg-muted dark:text-muted-foreground"
   },
   3: {
     id: 3,
@@ -61,8 +61,8 @@ export const PROFISSIONAIS_CONFIG: Record<number, ProfissionalConfig> = {
     grupo: "varas_criminais",
     vara: "1ª Vara Criminal",
     cor: "zinc",
-    corBg: "bg-zinc-700 dark:bg-foreground/80",
-    corBadge: "bg-zinc-100 text-zinc-700 dark:bg-muted dark:text-foreground/80"
+    corBg: "bg-neutral-700 dark:bg-foreground/80",
+    corBadge: "bg-neutral-100 text-neutral-700 dark:bg-muted dark:text-foreground/80"
   },
   4: {
     id: 4,
@@ -71,8 +71,8 @@ export const PROFISSIONAIS_CONFIG: Record<number, ProfissionalConfig> = {
     grupo: "varas_criminais",
     vara: "2ª Vara Criminal",
     cor: "zinc",
-    corBg: "bg-zinc-500 dark:bg-muted-foreground",
-    corBadge: "bg-zinc-100 text-zinc-500 dark:bg-muted dark:text-muted-foreground"
+    corBg: "bg-neutral-500 dark:bg-muted-foreground",
+    corBadge: "bg-neutral-100 text-neutral-500 dark:bg-muted dark:text-muted-foreground"
   },
   0: {
     id: 0,
@@ -80,17 +80,17 @@ export const PROFISSIONAIS_CONFIG: Record<number, ProfissionalConfig> = {
     nomeCurto: "Geral",
     grupo: "todos",
     cor: "zinc",
-    corBg: "bg-zinc-400 dark:bg-muted-foreground",
-    corBadge: "bg-zinc-100 text-zinc-600 dark:bg-muted dark:text-muted-foreground"
+    corBg: "bg-neutral-400 dark:bg-muted-foreground",
+    corBadge: "bg-neutral-100 text-neutral-600 dark:bg-muted dark:text-muted-foreground"
   },
 };
 
 // Paleta de cores neutras para profissionais dinâmicos que não estão no fallback
 const CORES_NEUTRAS = [
-  { corBg: "bg-zinc-700 dark:bg-foreground/80", corBadge: "bg-zinc-100 text-zinc-700 dark:bg-muted dark:text-foreground/80" },
-  { corBg: "bg-zinc-500 dark:bg-muted-foreground", corBadge: "bg-zinc-100 text-zinc-500 dark:bg-muted dark:text-muted-foreground" },
-  { corBg: "bg-zinc-600 dark:bg-muted-foreground", corBadge: "bg-zinc-100 text-zinc-600 dark:bg-muted dark:text-muted-foreground" },
-  { corBg: "bg-zinc-800 dark:bg-foreground", corBadge: "bg-zinc-100 text-zinc-800 dark:bg-muted dark:text-foreground" },
+  { corBg: "bg-neutral-700 dark:bg-foreground/80", corBadge: "bg-neutral-100 text-neutral-700 dark:bg-muted dark:text-foreground/80" },
+  { corBg: "bg-neutral-500 dark:bg-muted-foreground", corBadge: "bg-neutral-100 text-neutral-500 dark:bg-muted dark:text-muted-foreground" },
+  { corBg: "bg-neutral-600 dark:bg-muted-foreground", corBadge: "bg-neutral-100 text-neutral-600 dark:bg-muted dark:text-muted-foreground" },
+  { corBg: "bg-neutral-800 dark:bg-foreground", corBadge: "bg-neutral-100 text-neutral-800 dark:bg-muted dark:text-foreground" },
 ];
 
 // ============================================

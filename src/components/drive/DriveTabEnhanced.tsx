@@ -115,9 +115,9 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   completed: { label: "Enriquecido", color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950", icon: CheckCircle2 },
   processing: { label: "Processando", color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-950", icon: Loader2 },
   failed: { label: "Falhou", color: "text-rose-600", bg: "bg-rose-50 dark:bg-rose-950", icon: AlertCircle },
-  pending: { label: "Pendente", color: "text-zinc-500", bg: "bg-zinc-50 dark:bg-zinc-900", icon: Clock },
-  skipped: { label: "Ignorado", color: "text-zinc-400", bg: "bg-zinc-50 dark:bg-zinc-900", icon: FileText },
-  unsupported: { label: "Nao suportado", color: "text-zinc-400", bg: "bg-zinc-50 dark:bg-zinc-900", icon: FileText },
+  pending: { label: "Pendente", color: "text-neutral-500", bg: "bg-neutral-50 dark:bg-neutral-900", icon: Clock },
+  skipped: { label: "Ignorado", color: "text-neutral-400", bg: "bg-neutral-50 dark:bg-neutral-900", icon: FileText },
+  unsupported: { label: "Nao suportado", color: "text-neutral-400", bg: "bg-neutral-50 dark:bg-neutral-900", icon: FileText },
 };
 
 function StatusView({ files, assistidoId, processoId }: { files: DriveFileData[]; assistidoId?: number; processoId?: number }) {
@@ -183,7 +183,7 @@ function StatusView({ files, assistidoId, processoId }: { files: DriveFileData[]
         {filterStatus && (
           <button
             onClick={() => setFilterStatus(null)}
-            className="text-[10px] text-zinc-400 hover:text-zinc-600 underline"
+            className="text-[10px] text-neutral-400 hover:text-neutral-600 underline"
           >
             Limpar filtro
           </button>
@@ -192,7 +192,7 @@ function StatusView({ files, assistidoId, processoId }: { files: DriveFileData[]
 
       {/* Progress */}
       {total > 0 && (
-        <div className="h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+        <div className="h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
           <div
             className="h-full bg-emerald-500 rounded-full transition-all"
             style={{ width: `${Math.round((completed / total) * 100)}%` }}
@@ -203,7 +203,7 @@ function StatusView({ files, assistidoId, processoId }: { files: DriveFileData[]
       {/* File list */}
       <div className="space-y-1 max-h-[400px] overflow-y-auto">
         {filteredFiles.length === 0 ? (
-          <div className="text-center py-8 text-zinc-400">
+          <div className="text-center py-8 text-neutral-400">
             <FileText className="h-6 w-6 mx-auto mb-2 opacity-30" />
             <p className="text-[11px]">
               {filterStatus ? "Nenhum arquivo com este status" : "Nenhum arquivo"}
@@ -222,9 +222,9 @@ function StatusView({ files, assistidoId, processoId }: { files: DriveFileData[]
                   "flex items-center gap-2 px-3 py-2 group",
                 )}
               >
-                <FileIcon className="w-[13px] h-[13px] text-zinc-500 dark:text-zinc-400 shrink-0" />
+                <FileIcon className="w-[13px] h-[13px] text-neutral-500 dark:text-neutral-400 shrink-0" />
                 <span
-                  className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate flex-1 cursor-pointer"
+                  className="text-[11px] text-neutral-700 dark:text-neutral-300 truncate flex-1 cursor-pointer"
                   onClick={() => f.webViewLink && window.open(f.webViewLink, "_blank")}
                 >
                   {f.name}
@@ -237,7 +237,7 @@ function StatusView({ files, assistidoId, processoId }: { files: DriveFileData[]
                   )}
                 />
                 {f.documentType && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 shrink-0">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-500 shrink-0">
                     {f.documentType}
                   </span>
                 )}
@@ -256,7 +256,7 @@ function StatusView({ files, assistidoId, processoId }: { files: DriveFileData[]
                   </button>
                 )}
                 {f.webViewLink && (
-                  <ExternalLink className="h-3 w-3 text-zinc-300 group-hover:text-zinc-500 shrink-0 transition-colors" />
+                  <ExternalLink className="h-3 w-3 text-neutral-300 group-hover:text-neutral-500 shrink-0 transition-colors" />
                 )}
               </div>
             );
@@ -308,8 +308,8 @@ function FileDetailSheet({
     completed: { label: "Enriquecido", class: "bg-emerald-100 text-emerald-700 border-emerald-200" },
     processing: { label: "Processando", class: "bg-blue-100 text-blue-700 border-blue-200" },
     failed: { label: "Falhou", class: "bg-rose-100 text-rose-700 border-rose-200" },
-    pending: { label: "Pendente", class: "bg-zinc-100 text-zinc-600 border-zinc-200" },
-    skipped: { label: "Ignorado", class: "bg-zinc-100 text-zinc-400 border-zinc-200" },
+    pending: { label: "Pendente", class: "bg-neutral-100 text-neutral-600 border-neutral-200" },
+    skipped: { label: "Ignorado", class: "bg-neutral-100 text-neutral-400 border-neutral-200" },
   };
   const status = file.enrichmentStatus ? (statusConfig[file.enrichmentStatus] ?? statusConfig.pending) : null;
 
@@ -318,30 +318,30 @@ function FileDetailSheet({
       <Sheet open onOpenChange={(open) => !open && onClose()}>
         <SheetContent
           side="right"
-          className="w-full sm:max-w-md bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 p-0"
+          className="w-full sm:max-w-md bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 p-0"
         >
           <SheetTitle className="sr-only">{file.name}</SheetTitle>
           <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
-              <div className="h-9 w-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
+              <div className="h-9 w-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                 {isAudio ? (
                   <Music className="h-4 w-4 text-cyan-500" />
                 ) : isVideo ? (
                   <Video className="h-4 w-4 text-violet-500" />
                 ) : (
-                  <FileText className="h-4 w-4 text-zinc-400" />
+                  <FileText className="h-4 w-4 text-neutral-400" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{file.name}</p>
+                <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">{file.name}</p>
                 {file.documentType && (
-                  <p className="text-[11px] text-zinc-500">{file.documentType}</p>
+                  <p className="text-[11px] text-neutral-500">{file.documentType}</p>
                 )}
               </div>
               <button
                 onClick={onClose}
-                className="h-7 w-7 rounded-md flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                className="h-7 w-7 rounded-md flex items-center justify-center text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -376,17 +376,17 @@ function FileDetailSheet({
               </div>
 
               {/* Metadata */}
-              <div className="space-y-2 rounded-lg border border-zinc-100 dark:border-zinc-800 p-3">
+              <div className="space-y-2 rounded-lg border border-neutral-100 dark:border-neutral-800 p-3">
                 {file.mimeType && (
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-zinc-400">Tipo</span>
-                    <span className="text-zinc-600 dark:text-zinc-400 font-mono truncate ml-2">{file.mimeType}</span>
+                    <span className="text-neutral-400">Tipo</span>
+                    <span className="text-neutral-600 dark:text-neutral-400 font-mono truncate ml-2">{file.mimeType}</span>
                   </div>
                 )}
                 {file.lastModifiedTime && (
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-zinc-400">Modificado</span>
-                    <span className="text-zinc-600 dark:text-zinc-400 flex items-center gap-1">
+                    <span className="text-neutral-400">Modificado</span>
+                    <span className="text-neutral-600 dark:text-neutral-400 flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {format(file.lastModifiedTime instanceof Date ? file.lastModifiedTime : new Date(file.lastModifiedTime), "dd/MM/yyyy", { locale: ptBR })}
                     </span>
@@ -401,7 +401,7 @@ function FileDetailSheet({
                     <Brain className="h-3 w-3" />
                     Resumo Defesa
                   </p>
-                  <p className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed line-clamp-4">
+                  <p className="text-[11px] text-neutral-700 dark:text-neutral-300 leading-relaxed line-clamp-4">
                     {analysis.resumo_defesa}
                   </p>
                 </div>
@@ -425,7 +425,7 @@ function FileDetailSheet({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="w-full h-8 text-xs text-zinc-600 border-zinc-200 hover:bg-zinc-50"
+                      className="w-full h-8 text-xs text-neutral-600 border-neutral-200 hover:bg-neutral-50"
                     >
                       <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                       Abrir no Drive
@@ -482,7 +482,7 @@ function PreviewContent({ file, onOpenDetail }: { file: DriveFileData; onOpenDet
       </div>
       {enrichText && (
         <div className={cn(GLASS.card, "p-3")}>
-          <p className="text-[9px] uppercase tracking-wider font-semibold text-zinc-500 mb-2">Conteudo Extraido</p>
+          <p className="text-[9px] uppercase tracking-wider font-semibold text-neutral-500 mb-2">Conteudo Extraido</p>
           <div className="text-xs text-foreground/80 whitespace-pre-wrap max-h-[60vh] overflow-y-auto leading-relaxed">
             {enrichText}
           </div>
@@ -581,17 +581,17 @@ export function DriveTabEnhanced({
       {showLinkFlow && (
         <div className={cn(GLASS.card, "p-4 mb-4")}>
           {loadingSuggestion ? (
-            <div className="flex items-center gap-2 text-sm text-zinc-500">
+            <div className="flex items-center gap-2 text-sm text-neutral-500">
               <Loader2 className="w-4 h-4 animate-spin" />
               Procurando pasta correspondente…
             </div>
           ) : suggestion ? (
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-zinc-700">
-                <FolderOpen className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+              <div className="flex items-center gap-2 text-sm font-medium text-neutral-700">
+                <FolderOpen className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
                 Pasta sugerida encontrada
               </div>
-              <p className="text-sm text-zinc-600">
+              <p className="text-sm text-neutral-600">
                 &ldquo;{suggestion.name}&rdquo; &middot; {suggestion.fileCount} arquivo(s)
               </p>
               <div className="flex gap-2">
@@ -623,7 +623,7 @@ export function DriveTabEnhanced({
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-sm text-zinc-500">Nenhuma pasta Drive vinculada.</p>
+              <p className="text-sm text-neutral-500">Nenhuma pasta Drive vinculada.</p>
               <Button size="sm" variant="outline" onClick={() => setPickerOpen(true)}>
                 <FolderOpen className="w-3 h-3 mr-1" />
                 Vincular pasta manualmente
@@ -653,7 +653,7 @@ export function DriveTabEnhanced({
                           })
                         }
                       >
-                        <FolderOpen className="w-3 h-3 mr-2 text-zinc-400" />
+                        <FolderOpen className="w-3 h-3 mr-2 text-neutral-400" />
                         {folder.name}
                       </CommandItem>
                     ))}
@@ -668,7 +668,7 @@ export function DriveTabEnhanced({
       {/* View toggle + search */}
       <div className="flex items-center gap-2 flex-wrap">
         {/* View mode buttons */}
-        <div className="flex rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+        <div className="flex rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden">
           {VIEW_MODES.map((m) => {
             const Icon = m.icon;
             return (
@@ -678,8 +678,8 @@ export function DriveTabEnhanced({
                 className={cn(
                   "flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium transition-colors",
                   view === m.key
-                    ? "bg-zinc-800 dark:bg-white text-white dark:text-zinc-900"
-                    : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800",
+                    ? "bg-neutral-800 dark:bg-white text-white dark:text-neutral-900"
+                    : "text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800",
                 )}
               >
                 <Icon className="h-3 w-3" />
@@ -693,8 +693,8 @@ export function DriveTabEnhanced({
               className={cn(
                 "flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium transition-colors",
                 view === "processo"
-                  ? "bg-zinc-800 dark:bg-white text-white dark:text-zinc-900"
-                  : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800",
+                  ? "bg-neutral-800 dark:bg-white text-white dark:text-neutral-900"
+                  : "text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800",
               )}
             >
               <Scale className="h-3 w-3" />
@@ -705,18 +705,18 @@ export function DriveTabEnhanced({
 
         {/* Search bar */}
         <div className="flex-1 relative min-w-[140px]">
-          <Search className="h-3 w-3 absolute left-2 top-1/2 -translate-y-1/2 text-zinc-400" />
+          <Search className="h-3 w-3 absolute left-2 top-1/2 -translate-y-1/2 text-neutral-400" />
           <input
             type="text"
             placeholder="Buscar arquivos..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-[11px] pl-7 pr-2 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500"
+            className="w-full text-[11px] pl-7 pr-2 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 text-[10px]"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 text-[10px]"
             >
               Limpar
             </button>
@@ -724,7 +724,7 @@ export function DriveTabEnhanced({
         </div>
 
         {/* File count */}
-        <span className="text-[10px] text-zinc-400 shrink-0">
+        <span className="text-[10px] text-neutral-400 shrink-0">
           {filteredFiles.filter((f) => !f.isFolder).length} arquivo{filteredFiles.filter((f) => !f.isFolder).length !== 1 ? "s" : ""}
         </span>
 
@@ -760,8 +760,8 @@ export function DriveTabEnhanced({
             className={cn(
               "text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors",
               typeFilter === tf.key
-                ? "bg-zinc-800 dark:bg-white text-white dark:text-zinc-900"
-                : "bg-zinc-100/60 dark:bg-white/[0.04] text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 border border-zinc-200/80 dark:border-white/[0.06]",
+                ? "bg-neutral-800 dark:bg-white text-white dark:text-neutral-900"
+                : "bg-neutral-100/60 dark:bg-white/[0.04] text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 border border-neutral-200/80 dark:border-white/[0.06]",
             )}
           >
             {tf.label}
@@ -772,7 +772,7 @@ export function DriveTabEnhanced({
       {/* Link para o Drive quando vinculado */}
       {driveFolderId && (
         <div className="flex items-center justify-between mb-2 pb-2 border-b">
-          <span className="text-xs text-zinc-500">Pasta vinculada</span>
+          <span className="text-xs text-neutral-500">Pasta vinculada</span>
           <div className="flex gap-2">
             {(() => {
               const rootFolder = files.find(
@@ -783,7 +783,7 @@ export function DriveTabEnhanced({
                   href={rootFolder.webViewLink}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-xs text-zinc-600 dark:text-zinc-400 hover:underline flex items-center gap-1"
+                  className="text-xs text-neutral-600 dark:text-neutral-400 hover:underline flex items-center gap-1"
                 >
                   Abrir no Drive <ExternalLink className="w-3 h-3" />
                 </a>
@@ -791,7 +791,7 @@ export function DriveTabEnhanced({
             })()}
             {assistidoId && (
               <button
-                className="text-xs text-zinc-400 hover:text-zinc-600"
+                className="text-xs text-neutral-400 hover:text-neutral-600"
                 onClick={() => setPickerOpen(true)}
               >
                 Alterar pasta

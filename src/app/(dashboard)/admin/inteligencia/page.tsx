@@ -199,15 +199,15 @@ export default function InteligenciaPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Sub-header unificado */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-              <Brain className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+            <div className="w-7 h-7 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center border border-neutral-200 dark:border-neutral-700">
+              <Brain className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500" />
             </div>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+            <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">
               Ferramentas de investigação e OSINT
             </span>
           </div>
@@ -216,7 +216,7 @@ export default function InteligenciaPage() {
             <Button 
               variant="ghost" 
               size="sm"
-              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="h-7 w-7 p-0 text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
               title="Exportar Relatório"
             >
               <Download className="w-3.5 h-3.5" />

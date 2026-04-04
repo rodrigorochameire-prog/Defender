@@ -46,11 +46,11 @@ const GRADIENT_CONFIGS = {
     glow: "group-hover:shadow-violet-500/10",
   },
   zinc: {
-    bg: "from-zinc-500/10 via-zinc-500/5 to-transparent",
-    border: "border-zinc-200/50 dark:border-zinc-700/50",
-    icon: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
-    text: "text-zinc-600 dark:text-zinc-400",
-    glow: "group-hover:shadow-zinc-500/10",
+    bg: "from-neutral-500/10 via-neutral-500/5 to-transparent",
+    border: "border-neutral-200/50 dark:border-neutral-700/50",
+    icon: "bg-neutral-500/10 text-neutral-600 dark:text-neutral-400",
+    text: "text-neutral-600 dark:text-neutral-400",
+    glow: "group-hover:shadow-neutral-500/10",
   },
 };
 
@@ -118,10 +118,10 @@ export function KPICardPremium({
     <div
       onClick={onClick}
       className={cn(
-        "group relative rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-200",
+        "group relative rounded-xl bg-white dark:bg-neutral-900 border overflow-hidden transition-all duration-200",
         onClick && "cursor-pointer",
         href && "cursor-pointer",
-        active ? config.border : "border-zinc-200/80 dark:border-zinc-800/80",
+        active ? config.border : "border-neutral-200/80 dark:border-neutral-800/80",
         "shadow-sm hover:shadow-md hover:-translate-y-px",
         config.glow,
         styles.container,
@@ -144,14 +144,14 @@ export function KPICardPremium({
         <div className="flex-1 min-w-0 space-y-1">
           <p className={cn(
             "font-medium uppercase tracking-wider transition-colors",
-            active ? config.text : "text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300",
+            active ? config.text : "text-neutral-400 dark:text-neutral-500 group-hover:text-neutral-600 dark:group-hover:text-neutral-300",
             styles.title
           )}>
             {title}
           </p>
-          <p className={cn("text-zinc-800 dark:text-zinc-100", styles.value)}>{value}</p>
+          <p className={cn("text-neutral-800 dark:text-neutral-100", styles.value)}>{value}</p>
           {subtitle && (
-            <p className={cn("text-zinc-400", styles.subtitle)}>{subtitle}</p>
+            <p className={cn("text-neutral-400", styles.subtitle)}>{subtitle}</p>
           )}
           {trend && (
             <div className={cn(

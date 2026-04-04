@@ -95,7 +95,7 @@ interface JuradoImportado {
 // ============================================
 function getTendenciaIndicator(taxa: number) {
   if (taxa >= 60) return { icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20" };
-  if (taxa >= 40) return { icon: Scale, color: "text-zinc-500", bg: "bg-zinc-100 dark:bg-zinc-800" };
+  if (taxa >= 40) return { icon: Scale, color: "text-neutral-500", bg: "bg-neutral-100 dark:bg-neutral-800" };
   return { icon: TrendingDown, color: "text-rose-600", bg: "bg-rose-50 dark:bg-rose-900/20" };
 }
 
@@ -333,12 +333,12 @@ function ImportarJuradosModal({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center">
-              <Upload className="w-5 h-5 text-white dark:text-zinc-900" />
+            <div className="w-10 h-10 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center">
+              <Upload className="w-5 h-5 text-white dark:text-neutral-900" />
             </div>
             <div>
               <span className="block">Importar Ata de Sorteio</span>
-              <span className="text-xs font-normal text-zinc-500">Cole toda a ata - o sistema identifica automaticamente</span>
+              <span className="text-xs font-normal text-neutral-500">Cole toda a ata - o sistema identifica automaticamente</span>
             </div>
           </DialogTitle>
         </DialogHeader>
@@ -373,7 +373,7 @@ Suplentes
                   {erro}
                 </div>
               )}
-              <Button onClick={parseAtaCompleta} className="w-full h-11 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900">
+              <Button onClick={parseAtaCompleta} className="w-full h-11 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900">
                 <FileText className="w-4 h-4 mr-2" />
                 Processar Ata Completa
               </Button>
@@ -402,7 +402,7 @@ Suplentes
               </div>
               
               {/* Tabs por reunião */}
-              <div className="flex gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-2">
+              <div className="flex gap-2 border-b border-neutral-200 dark:border-neutral-800 pb-2">
                 {juradosAgrupados.map((grupo) => (
                   <button
                     key={grupo.reuniao}
@@ -410,8 +410,8 @@ Suplentes
                     className={cn(
                       "px-4 py-2 rounded-lg text-sm font-medium transition-all",
                       tabAtiva === grupo.reuniao
-                        ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
-                        : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                        : "text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                     )}
                   >
                     {grupo.reuniao}ª Reunião
@@ -432,23 +432,23 @@ Suplentes
                         Titulares ({grupoAtivo.titulares.length})
                       </Badge>
                     </div>
-                    <div className="max-h-[180px] overflow-auto border border-zinc-200 dark:border-zinc-800 rounded-xl">
+                    <div className="max-h-[180px] overflow-auto border border-neutral-200 dark:border-neutral-800 rounded-xl">
                       <table className="w-full text-sm">
-                        <thead className="bg-zinc-50 dark:bg-zinc-900 sticky top-0">
-                          <tr className="border-b border-zinc-200 dark:border-zinc-800">
-                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-zinc-500 w-10">#</th>
-                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-zinc-500">Nome</th>
-                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-zinc-500">Empresa</th>
-                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-zinc-500">Profissão</th>
+                        <thead className="bg-neutral-50 dark:bg-neutral-900 sticky top-0">
+                          <tr className="border-b border-neutral-200 dark:border-neutral-800">
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-neutral-500 w-10">#</th>
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-neutral-500">Nome</th>
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-neutral-500">Empresa</th>
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-neutral-500">Profissão</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                           {grupoAtivo.titulares.map((j, idx) => (
-                            <tr key={idx} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-                              <td className="px-3 py-1.5 text-zinc-400 text-xs">{j.numero}</td>
-                              <td className="px-3 py-1.5 font-medium text-zinc-800 dark:text-zinc-200 text-xs">{j.nome}</td>
-                              <td className="px-3 py-1.5 text-zinc-500 text-xs">{j.empresa || "-"}</td>
-                              <td className="px-3 py-1.5 text-zinc-500 text-xs">{j.profissao || "-"}</td>
+                            <tr key={idx} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+                              <td className="px-3 py-1.5 text-neutral-400 text-xs">{j.numero}</td>
+                              <td className="px-3 py-1.5 font-medium text-neutral-800 dark:text-neutral-200 text-xs">{j.nome}</td>
+                              <td className="px-3 py-1.5 text-neutral-500 text-xs">{j.empresa || "-"}</td>
+                              <td className="px-3 py-1.5 text-neutral-500 text-xs">{j.profissao || "-"}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -463,23 +463,23 @@ Suplentes
                         Suplentes ({grupoAtivo.suplentes.length})
                       </Badge>
                     </div>
-                    <div className="max-h-[180px] overflow-auto border border-zinc-200 dark:border-zinc-800 rounded-xl">
+                    <div className="max-h-[180px] overflow-auto border border-neutral-200 dark:border-neutral-800 rounded-xl">
                       <table className="w-full text-sm">
-                        <thead className="bg-zinc-50 dark:bg-zinc-900 sticky top-0">
-                          <tr className="border-b border-zinc-200 dark:border-zinc-800">
-                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-zinc-500 w-10">#</th>
-                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-zinc-500">Nome</th>
-                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-zinc-500">Empresa</th>
-                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-zinc-500">Profissão</th>
+                        <thead className="bg-neutral-50 dark:bg-neutral-900 sticky top-0">
+                          <tr className="border-b border-neutral-200 dark:border-neutral-800">
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-neutral-500 w-10">#</th>
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-neutral-500">Nome</th>
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-neutral-500">Empresa</th>
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-neutral-500">Profissão</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                           {grupoAtivo.suplentes.map((j, idx) => (
-                            <tr key={idx} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-                              <td className="px-3 py-1.5 text-zinc-400 text-xs">{j.numero}</td>
-                              <td className="px-3 py-1.5 font-medium text-zinc-800 dark:text-zinc-200 text-xs">{j.nome}</td>
-                              <td className="px-3 py-1.5 text-zinc-500 text-xs">{j.empresa || "-"}</td>
-                              <td className="px-3 py-1.5 text-zinc-500 text-xs">{j.profissao || "-"}</td>
+                            <tr key={idx} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+                              <td className="px-3 py-1.5 text-neutral-400 text-xs">{j.numero}</td>
+                              <td className="px-3 py-1.5 font-medium text-neutral-800 dark:text-neutral-200 text-xs">{j.nome}</td>
+                              <td className="px-3 py-1.5 text-neutral-500 text-xs">{j.empresa || "-"}</td>
+                              <td className="px-3 py-1.5 text-neutral-500 text-xs">{j.profissao || "-"}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -492,14 +492,14 @@ Suplentes
           )}
         </div>
 
-        <DialogFooter className="border-t border-zinc-100 dark:border-zinc-800 pt-4">
+        <DialogFooter className="border-t border-neutral-100 dark:border-neutral-800 pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
           <Button 
             onClick={handleImportar}
             disabled={totalJurados === 0 || isImporting}
-            className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100"
+            className="bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-100"
           >
             {isImporting ? (
               <>
@@ -536,21 +536,21 @@ function StatsBar({ jurados }: { jurados: JuradoPerfil[] }) {
   return (
     <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
       {[
-        { label: "Total", value: stats.total, icon: Users, color: "text-zinc-600" },
+        { label: "Total", value: stats.total, icon: Users, color: "text-neutral-600" },
         { label: "Favoráveis", value: stats.favoraveis, icon: TrendingUp, color: "text-emerald-600" },
-        { label: "Neutros", value: stats.neutros, icon: Scale, color: "text-zinc-500" },
+        { label: "Neutros", value: stats.neutros, icon: Scale, color: "text-neutral-500" },
         { label: "Desfavoráveis", value: stats.desfavoraveis, icon: TrendingDown, color: "text-rose-600" },
         { label: "Média", value: `${stats.media}%`, icon: BarChart3, color: "text-blue-600" },
         { label: "Sessões", value: stats.sessoes, icon: History, color: "text-violet-600" },
       ].map((stat, idx) => {
         const Icon = stat.icon;
         return (
-          <div key={idx} className="p-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800">
+          <div key={idx} className="p-2.5 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800">
             <div className="flex items-center gap-2">
               <Icon className={cn("w-4 h-4", stat.color)} />
               <div>
                 <p className={cn("text-lg font-bold", stat.color)}>{stat.value}</p>
-                <p className="text-[9px] text-zinc-500 uppercase tracking-wide">{stat.label}</p>
+                <p className="text-[9px] text-neutral-500 uppercase tracking-wide">{stat.label}</p>
               </div>
             </div>
           </div>
@@ -569,44 +569,44 @@ function JuradoCardCompact({ jurado }: { jurado: JuradoPerfil }) {
 
   return (
     <Link href={`/admin/juri/jurados/${jurado.id}`}>
-      <div className="p-3 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all group">
+      <div className="p-3 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 hover:border-neutral-200 dark:hover:border-neutral-700 transition-all group">
         <div className="flex items-center gap-3">
           {/* Avatar */}
           <Avatar className="h-9 w-9 flex-shrink-0">
-            <AvatarFallback className="text-xs font-medium bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+            <AvatarFallback className="text-xs font-medium bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
               {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
             </AvatarFallback>
           </Avatar>
 
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate group-hover:text-blue-600 transition-colors">
+            <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate group-hover:text-blue-600 transition-colors">
               {jurado.nome}
             </p>
-            <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+            <div className="flex items-center gap-2 text-[11px] text-neutral-500">
               <span className="truncate">{jurado.profissao}</span>
               {jurado.idade && <span>• {jurado.idade}a</span>}
             </div>
           </div>
 
           {/* Perfil */}
-          <div className="hidden sm:block text-[10px] text-zinc-500 text-right w-20">
+          <div className="hidden sm:block text-[10px] text-neutral-500 text-right w-20">
             {getPerfilLabel(jurado.perfilDominante)}
           </div>
 
           {/* Stats */}
           <div className="flex items-center gap-3 text-[11px]">
             <div className="text-center w-12">
-              <p className="font-semibold text-zinc-700 dark:text-zinc-300">{jurado.totalSessoes}</p>
-              <p className="text-[9px] text-zinc-400">sessões</p>
+              <p className="font-semibold text-neutral-700 dark:text-neutral-300">{jurado.totalSessoes}</p>
+              <p className="text-[9px] text-neutral-400">sessões</p>
             </div>
             <div className="text-center w-10">
               <p className="font-semibold text-emerald-600">{jurado.absolvicoes}</p>
-              <p className="text-[9px] text-zinc-400">abs</p>
+              <p className="text-[9px] text-neutral-400">abs</p>
             </div>
             <div className="text-center w-10">
               <p className="font-semibold text-rose-600">{jurado.condenacoes}</p>
-              <p className="text-[9px] text-zinc-400">cond</p>
+              <p className="text-[9px] text-neutral-400">cond</p>
             </div>
           </div>
 
@@ -616,7 +616,7 @@ function JuradoCardCompact({ jurado }: { jurado: JuradoPerfil }) {
             <span className={cn("text-sm font-bold", tendencia.color)}>{jurado.taxaAbsolvicao}%</span>
           </div>
 
-          <ChevronRight className="w-4 h-4 text-zinc-300 group-hover:text-zinc-500 transition-colors" />
+          <ChevronRight className="w-4 h-4 text-neutral-300 group-hover:text-neutral-500 transition-colors" />
         </div>
       </div>
     </Link>
@@ -632,23 +632,23 @@ function JuradoCardGrid({ jurado }: { jurado: JuradoPerfil }) {
 
   return (
     <Link href={`/admin/juri/jurados/${jurado.id}`}>
-      <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 hover:shadow-sm transition-all group">
+      <div className="p-4 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 hover:border-neutral-200 dark:hover:border-neutral-700 hover:shadow-sm transition-all group">
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
-              <AvatarFallback className="text-sm font-medium bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+              <AvatarFallback className="text-sm font-medium bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
                 {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium text-sm text-zinc-800 dark:text-zinc-200 group-hover:text-blue-600 transition-colors">
+              <p className="font-medium text-sm text-neutral-800 dark:text-neutral-200 group-hover:text-blue-600 transition-colors">
                 {jurado.nome.split(" ").slice(0, 2).join(" ")}
               </p>
-              <p className="text-[11px] text-zinc-500 truncate max-w-[140px]">{jurado.profissao}</p>
+              <p className="text-[11px] text-neutral-500 truncate max-w-[140px]">{jurado.profissao}</p>
             </div>
           </div>
-          <Badge variant="outline" className="text-[9px] h-5 px-1.5 text-zinc-500 border-zinc-200">
+          <Badge variant="outline" className="text-[9px] h-5 px-1.5 text-neutral-500 border-neutral-200">
             {getPerfilLabel(jurado.perfilDominante)}
           </Badge>
         </div>
@@ -656,19 +656,19 @@ function JuradoCardGrid({ jurado }: { jurado: JuradoPerfil }) {
         {/* Stats */}
         <div className="flex items-center justify-between text-[11px] mb-3">
           <div className="flex items-center gap-4">
-            <span className="text-zinc-500">{jurado.totalSessoes} sessões</span>
+            <span className="text-neutral-500">{jurado.totalSessoes} sessões</span>
             <span className="text-emerald-600">{jurado.absolvicoes} abs</span>
             <span className="text-rose-600">{jurado.condenacoes} cond</span>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-neutral-800">
           <div className={cn("flex items-center gap-1.5 px-2 py-1 rounded-md", tendencia.bg)}>
             <TendIcon className={cn("w-3.5 h-3.5", tendencia.color)} />
             <span className={cn("text-sm font-bold", tendencia.color)}>{jurado.taxaAbsolvicao}%</span>
           </div>
-          <Button variant="ghost" size="sm" className="h-7 text-[10px] text-zinc-500 hover:text-blue-600">
+          <Button variant="ghost" size="sm" className="h-7 text-[10px] text-neutral-500 hover:text-blue-600">
             <Eye className="w-3 h-3 mr-1" />
             Ver perfil
           </Button>
@@ -877,9 +877,9 @@ export default function JuradosPage() {
   }, [juradosImportados]);
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* SUB-HEADER */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Link href="/admin/juri">
@@ -887,12 +887,12 @@ export default function JuradosPage() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-              <Users className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+            <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+              <Users className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
             </div>
             <div>
-              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Jurados</h1>
-              <p className="text-[10px] text-zinc-500">Análise comportamental</p>
+              <h1 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Jurados</h1>
+              <p className="text-[10px] text-neutral-500">Análise comportamental</p>
             </div>
           </div>
           
@@ -900,13 +900,13 @@ export default function JuradosPage() {
             <Button 
               size="sm" 
               variant="outline"
-              className="h-8 text-xs border-zinc-300 dark:border-zinc-700"
+              className="h-8 text-xs border-neutral-300 dark:border-neutral-700"
               onClick={() => setImportModalOpen(true)}
             >
               <Upload className="w-3.5 h-3.5 mr-1.5" />
               Importar Lista
             </Button>
-            <Button size="sm" className="h-8 text-xs bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200">
+            <Button size="sm" className="h-8 text-xs bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200">
               <Plus className="w-3.5 h-3.5 mr-1.5" />
               Novo Jurado
             </Button>
@@ -914,7 +914,7 @@ export default function JuradosPage() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <MoreVertical className="w-4 h-4 text-zinc-400" />
+                    <MoreVertical className="w-4 h-4 text-neutral-400" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
@@ -937,14 +937,14 @@ export default function JuradosPage() {
         <StatsBar jurados={juradosDoSistema} />
 
         {/* Abas */}
-        <div className="flex gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-2">
+        <div className="flex gap-2 border-b border-neutral-200 dark:border-neutral-800 pb-2">
           <button
             onClick={() => setAbaAtiva("por-reuniao")}
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-medium transition-all",
               abaAtiva === "por-reuniao"
-                ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
-                : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                : "text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
             )}
           >
             Por Reunião
@@ -954,8 +954,8 @@ export default function JuradosPage() {
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-medium transition-all",
               abaAtiva === "lista-geral"
-                ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
-                : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                : "text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
             )}
           >
             Lista Geral
@@ -971,11 +971,11 @@ export default function JuradosPage() {
               if (total === 0) return null;
               
               return (
-                <Card key={reuniao} className="overflow-hidden border-zinc-200 dark:border-zinc-800">
-                  <div className="px-5 py-4 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-                    <h3 className="font-semibold text-zinc-800 dark:text-zinc-200">
+                <Card key={reuniao} className="overflow-hidden border-neutral-200 dark:border-neutral-800">
+                  <div className="px-5 py-4 bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+                    <h3 className="font-semibold text-neutral-800 dark:text-neutral-200">
                       {reuniao}ª Reunião Periódica
-                      <span className="ml-2 text-sm font-normal text-zinc-500">
+                      <span className="ml-2 text-sm font-normal text-neutral-500">
                         ({reuniao === "1" ? "Fev-Abr" : reuniao === "2" ? "Mai-Ago" : "Set-Dez"}/2026)
                       </span>
                       <Badge className="ml-3" variant="secondary">{total} jurados</Badge>
@@ -991,7 +991,7 @@ export default function JuradosPage() {
                         </Badge>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                           {grupo.titulares.map((j, idx) => (
-                            <div key={j.id} className="group relative p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
+                            <div key={j.id} className="group relative p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-800 hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -999,7 +999,7 @@ export default function JuradosPage() {
                                     deleteJuradoMutation.mutate({ id: j.id });
                                   }
                                 }}
-                                className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-400 dark:text-zinc-500 flex items-center justify-center opacity-0 group-hover:opacity-50 hover:!opacity-100 hover:bg-red-200 hover:text-red-600 transition-all text-[10px]"
+                                className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-400 dark:text-neutral-500 flex items-center justify-center opacity-0 group-hover:opacity-50 hover:!opacity-100 hover:bg-red-200 hover:text-red-600 transition-all text-[10px]"
                               >
                                 <X className="w-2.5 h-2.5" />
                               </button>
@@ -1009,9 +1009,9 @@ export default function JuradosPage() {
                                     {idx + 1}
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-sm text-zinc-800 dark:text-zinc-200 truncate">{j.nome}</p>
-                                    <p className="text-xs text-zinc-500 truncate">{j.empresa || "—"}</p>
-                                    <p className="text-[10px] text-zinc-400 truncate">{j.profissao || "—"}</p>
+                                    <p className="font-medium text-sm text-neutral-800 dark:text-neutral-200 truncate">{j.nome}</p>
+                                    <p className="text-xs text-neutral-500 truncate">{j.empresa || "—"}</p>
+                                    <p className="text-[10px] text-neutral-400 truncate">{j.profissao || "—"}</p>
                                   </div>
                                 </div>
                               </Link>
@@ -1029,7 +1029,7 @@ export default function JuradosPage() {
                         </Badge>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                           {grupo.suplentes.map((j, idx) => (
-                            <div key={j.id} className="group relative p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 hover:border-amber-200 dark:hover:border-amber-800 transition-colors">
+                            <div key={j.id} className="group relative p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-800 hover:border-amber-200 dark:hover:border-amber-800 transition-colors">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -1037,7 +1037,7 @@ export default function JuradosPage() {
                                     deleteJuradoMutation.mutate({ id: j.id });
                                   }
                                 }}
-                                className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-400 dark:text-zinc-500 flex items-center justify-center opacity-0 group-hover:opacity-50 hover:!opacity-100 hover:bg-red-200 hover:text-red-600 transition-all text-[10px]"
+                                className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-400 dark:text-neutral-500 flex items-center justify-center opacity-0 group-hover:opacity-50 hover:!opacity-100 hover:bg-red-200 hover:text-red-600 transition-all text-[10px]"
                               >
                                 <X className="w-2.5 h-2.5" />
                               </button>
@@ -1047,9 +1047,9 @@ export default function JuradosPage() {
                                     {idx + 1}
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-sm text-zinc-800 dark:text-zinc-200 truncate">{j.nome}</p>
-                                    <p className="text-xs text-zinc-500 truncate">{j.empresa || "—"}</p>
-                                    <p className="text-[10px] text-zinc-400 truncate">{j.profissao || "—"}</p>
+                                    <p className="font-medium text-sm text-neutral-800 dark:text-neutral-200 truncate">{j.nome}</p>
+                                    <p className="text-xs text-neutral-500 truncate">{j.empresa || "—"}</p>
+                                    <p className="text-[10px] text-neutral-400 truncate">{j.profissao || "—"}</p>
                                   </div>
                                 </div>
                               </Link>
@@ -1065,9 +1065,9 @@ export default function JuradosPage() {
             
             {juradosDoSistema.length === 0 && (
               <div className="text-center py-12">
-                <Users className="w-10 h-10 mx-auto mb-3 text-zinc-300" />
-                <p className="text-sm text-zinc-500">Nenhum jurado cadastrado</p>
-                <p className="text-xs text-zinc-400 mt-1">Importe uma ata de sorteio para começar</p>
+                <Users className="w-10 h-10 mx-auto mb-3 text-neutral-300" />
+                <p className="text-sm text-neutral-500">Nenhum jurado cadastrado</p>
+                <p className="text-xs text-neutral-400 mt-1">Importe uma ata de sorteio para começar</p>
               </div>
             )}
           </div>
@@ -1080,18 +1080,18 @@ export default function JuradosPage() {
         <div className="flex flex-col gap-2">
           <div className="flex flex-col md:flex-row gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
               <Input
                 placeholder="Buscar por nome, empresa ou profissão..."
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                className="pl-9 h-9 text-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
+                className="pl-9 h-9 text-sm bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
               />
             </div>
             
             {/* Filtros de Reunião e Tipo */}
             <Select value={filtroReuniao} onValueChange={setFiltroReuniao}>
-              <SelectTrigger className="w-full md:w-44 h-9 text-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+              <SelectTrigger className="w-full md:w-44 h-9 text-sm bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
                 <SelectValue placeholder="Reunião" />
               </SelectTrigger>
               <SelectContent>
@@ -1103,7 +1103,7 @@ export default function JuradosPage() {
             </Select>
             
             <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-              <SelectTrigger className="w-full md:w-32 h-9 text-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+              <SelectTrigger className="w-full md:w-32 h-9 text-sm bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
                 <SelectValue placeholder="Tipo" />
               </SelectTrigger>
               <SelectContent>
@@ -1116,7 +1116,7 @@ export default function JuradosPage() {
           
           <div className="flex flex-col md:flex-row gap-2">
             <Select value={filtroTendencia} onValueChange={setFiltroTendencia}>
-              <SelectTrigger className="w-full md:w-40 h-9 text-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+              <SelectTrigger className="w-full md:w-40 h-9 text-sm bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
                 <SelectValue placeholder="Tendência" />
               </SelectTrigger>
               <SelectContent>
@@ -1127,7 +1127,7 @@ export default function JuradosPage() {
               </SelectContent>
             </Select>
             <Select value={filtroPerfil} onValueChange={setFiltroPerfil}>
-              <SelectTrigger className="w-full md:w-36 h-9 text-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+              <SelectTrigger className="w-full md:w-36 h-9 text-sm bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
                 <SelectValue placeholder="Perfil" />
               </SelectTrigger>
               <SelectContent>
@@ -1138,12 +1138,12 @@ export default function JuradosPage() {
                 <SelectItem value="conciliador">Conciliador</SelectItem>
               </SelectContent>
             </Select>
-            <div className="flex bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-0.5 rounded-lg">
+            <div className="flex bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-0.5 rounded-lg">
               <button
                 onClick={() => setViewMode("list")}
                 className={cn(
                   "px-2.5 py-1.5 rounded-md transition-all",
-                  viewMode === "list" ? "bg-zinc-100 dark:bg-zinc-800" : "text-zinc-400 hover:text-zinc-600"
+                  viewMode === "list" ? "bg-neutral-100 dark:bg-neutral-800" : "text-neutral-400 hover:text-neutral-600"
                 )}
               >
                 <List className="w-4 h-4" />
@@ -1152,7 +1152,7 @@ export default function JuradosPage() {
                 onClick={() => setViewMode("grid")}
                 className={cn(
                   "px-2.5 py-1.5 rounded-md transition-all",
-                  viewMode === "grid" ? "bg-zinc-100 dark:bg-zinc-800" : "text-zinc-400 hover:text-zinc-600"
+                  viewMode === "grid" ? "bg-neutral-100 dark:bg-neutral-800" : "text-neutral-400 hover:text-neutral-600"
                 )}
               >
                 <LayoutGrid className="w-4 h-4" />
@@ -1178,8 +1178,8 @@ export default function JuradosPage() {
 
         {juradosFiltrados.length === 0 && (
           <div className="text-center py-12">
-            <Users className="w-10 h-10 mx-auto mb-3 text-zinc-300" />
-            <p className="text-sm text-zinc-500">Nenhum jurado encontrado</p>
+            <Users className="w-10 h-10 mx-auto mb-3 text-neutral-300" />
+            <p className="text-sm text-neutral-500">Nenhum jurado encontrado</p>
           </div>
         )}
           </>
@@ -1189,16 +1189,16 @@ export default function JuradosPage() {
         {false && juradosImportados.length > 0 && (
           <div className="mt-8 space-y-6">
             {/* Header com estatísticas */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
-                  <Users className="w-6 h-6 text-white dark:text-zinc-900" />
+                <div className="w-12 h-12 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-md">
+                  <Users className="w-6 h-6 text-white dark:text-neutral-900" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
+                  <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-50">
                     Jurados Sorteados 2026
                   </h2>
-                  <p className="text-sm text-zinc-500">
+                  <p className="text-sm text-neutral-500">
                     {estatisticasImportados.total} jurados • {estatisticasImportados.empresas} empresas • {estatisticasImportados.profissoes} profissões
                   </p>
                 </div>
@@ -1217,11 +1217,11 @@ export default function JuradosPage() {
             
             {/* Listas por período */}
             {Object.entries(importadosAgrupados).map(([reuniao, grupo]) => (
-              <Card key={reuniao} className="overflow-hidden border-zinc-200 dark:border-zinc-800">
-                <div className="px-5 py-4 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-                  <h3 className="font-semibold text-zinc-800 dark:text-zinc-200">
+              <Card key={reuniao} className="overflow-hidden border-neutral-200 dark:border-neutral-800">
+                <div className="px-5 py-4 bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+                  <h3 className="font-semibold text-neutral-800 dark:text-neutral-200">
                     {reuniao}ª Reunião Periódica
-                    <span className="ml-2 text-sm font-normal text-zinc-500">
+                    <span className="ml-2 text-sm font-normal text-neutral-500">
                       ({reuniao === "1" ? "Fev-Abr" : reuniao === "2" ? "Mai-Ago" : "Set-Dez"}/2026)
                     </span>
                   </h3>
@@ -1236,15 +1236,15 @@ export default function JuradosPage() {
                       </Badge>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                         {grupo.titulares.map((j, idx) => (
-                          <div key={idx} className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
+                          <div key={idx} className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-800 hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
                             <div className="flex items-start gap-3">
                               <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-400 flex-shrink-0">
                                 {j.numero}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm text-zinc-800 dark:text-zinc-200 truncate">{j.nome}</p>
-                                <p className="text-xs text-zinc-500 truncate">{j.empresa || "—"}</p>
-                                <p className="text-[10px] text-zinc-400 truncate">{j.profissao || "—"}</p>
+                                <p className="font-medium text-sm text-neutral-800 dark:text-neutral-200 truncate">{j.nome}</p>
+                                <p className="text-xs text-neutral-500 truncate">{j.empresa || "—"}</p>
+                                <p className="text-[10px] text-neutral-400 truncate">{j.profissao || "—"}</p>
                               </div>
                             </div>
                           </div>
@@ -1261,15 +1261,15 @@ export default function JuradosPage() {
                       </Badge>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                         {grupo.suplentes.map((j, idx) => (
-                          <div key={idx} className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 hover:border-amber-200 dark:hover:border-amber-800 transition-colors">
+                          <div key={idx} className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-800 hover:border-amber-200 dark:hover:border-amber-800 transition-colors">
                             <div className="flex items-start gap-3">
                               <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-xs font-bold text-amber-600 dark:text-amber-400 flex-shrink-0">
                                 {j.numero}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm text-zinc-800 dark:text-zinc-200 truncate">{j.nome}</p>
-                                <p className="text-xs text-zinc-500 truncate">{j.empresa || "—"}</p>
-                                <p className="text-[10px] text-zinc-400 truncate">{j.profissao || "—"}</p>
+                                <p className="font-medium text-sm text-neutral-800 dark:text-neutral-200 truncate">{j.nome}</p>
+                                <p className="text-xs text-neutral-500 truncate">{j.empresa || "—"}</p>
+                                <p className="text-[10px] text-neutral-400 truncate">{j.profissao || "—"}</p>
                               </div>
                             </div>
                           </div>
@@ -1303,7 +1303,7 @@ export default function JuradosPage() {
             </DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
               Esta ação irá remover permanentemente <strong>{juradosDoSistema.length} jurados</strong> do banco de dados.
             </p>
             <p className="text-sm text-red-600 dark:text-red-400 mt-2 font-medium">

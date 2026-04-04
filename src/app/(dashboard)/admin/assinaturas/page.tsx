@@ -56,7 +56,7 @@ const STATUS_CONFIG: Record<SubscriptionStatus, { label: string; color: string }
   ativo: { label: "Ativo", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20" },
   pendente: { label: "Pendente", color: "bg-amber-500/15 text-amber-400 border-amber-500/20" },
   vencido: { label: "Vencido", color: "bg-red-500/15 text-red-400 border-red-500/20" },
-  cancelado: { label: "Cancelado", color: "bg-zinc-500/15 text-zinc-400 border-zinc-500/20" },
+  cancelado: { label: "Cancelado", color: "bg-neutral-500/15 text-neutral-400 border-neutral-500/20" },
   isento: { label: "Isento", color: "bg-blue-500/15 text-blue-400 border-blue-500/20" },
 };
 
@@ -209,7 +209,7 @@ export default function AdminAssinaturasPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-500" />
       </div>
     );
   }
@@ -219,7 +219,7 @@ export default function AdminAssinaturasPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Assinaturas</h1>
-        <p className="text-sm text-zinc-500 mt-1">
+        <p className="text-sm text-neutral-500 mt-1">
           Gerencie planos, descontos e pagamentos dos defensores
         </p>
       </div>
@@ -277,14 +277,14 @@ export default function AdminAssinaturasPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-foreground text-sm">{item.user.name}</span>
-                      <span className="text-xs text-zinc-500">{item.user.comarca}</span>
+                      <span className="text-xs text-neutral-500">{item.user.comarca}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-zinc-500 mt-0.5">
+                    <div className="flex items-center gap-3 text-xs text-neutral-500 mt-0.5">
                       <span>R$ {parseFloat(item.payment.valor).toFixed(2).replace(".", ",")}</span>
                       <span>Ref: {item.payment.referenciaMes}</span>
                       <span>{item.payment.createdAt ? new Date(item.payment.createdAt).toLocaleDateString("pt-BR") : ""}</span>
                       {item.payment.nota && (
-                        <span className="text-zinc-400 italic truncate max-w-[200px]">
+                        <span className="text-neutral-400 italic truncate max-w-[200px]">
                           &quot;{item.payment.nota}&quot;
                         </span>
                       )}
@@ -331,10 +331,10 @@ export default function AdminAssinaturasPage() {
                 <span className="font-medium text-foreground">{info.label}</span>
                 <span className="text-emerald-400 font-semibold">
                   R$ {info.valor}
-                  <span className="text-xs text-zinc-500">/mes</span>
+                  <span className="text-xs text-neutral-500">/mes</span>
                 </span>
               </div>
-              <p className="text-xs text-zinc-500">{info.desc}</p>
+              <p className="text-xs text-neutral-500">{info.desc}</p>
             </CardContent>
           </Card>
         ))}
@@ -343,7 +343,7 @@ export default function AdminAssinaturasPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
           <Input
             placeholder="Buscar por nome ou email..."
             value={searchQuery}
@@ -394,12 +394,12 @@ export default function AdminAssinaturasPage() {
                 >
                   <div className="flex items-center gap-2">
                     {isExpanded ? (
-                      <ChevronDown className="h-4 w-4 text-zinc-500" />
+                      <ChevronDown className="h-4 w-4 text-neutral-500" />
                     ) : (
-                      <ChevronRight className="h-4 w-4 text-zinc-500" />
+                      <ChevronRight className="h-4 w-4 text-neutral-500" />
                     )}
                     <span className="font-medium text-foreground">{comarca}</span>
-                    <Badge variant="outline" className="text-xs border-border text-zinc-500">
+                    <Badge variant="outline" className="text-xs border-border text-neutral-500">
                       {rows.length}
                     </Badge>
                   </div>
@@ -430,7 +430,7 @@ export default function AdminAssinaturasPage() {
           })}
 
         {Object.keys(groupedByComarca).length === 0 && (
-          <div className="text-center py-12 text-zinc-500">
+          <div className="text-center py-12 text-neutral-500">
             Nenhum resultado encontrado
           </div>
         )}
@@ -464,7 +464,7 @@ function StatsCard({
       <CardContent className="p-4 flex items-center gap-3">
         <Icon className={cn("h-5 w-5", colorMap[color])} />
         <div>
-          <p className="text-xs text-zinc-500">{label}</p>
+          <p className="text-xs text-neutral-500">{label}</p>
           <p className="text-lg font-semibold text-foreground">{value}</p>
         </div>
       </CardContent>
@@ -536,7 +536,7 @@ function UserSubscriptionRow({
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-2 text-xs text-zinc-500 mt-0.5">
+        <div className="flex items-center gap-2 text-xs text-neutral-500 mt-0.5">
           <span>{user.email}</span>
           {user.funcao && <span>| {user.funcao}</span>}
           {user.areasPrincipais && user.areasPrincipais.length > 0 && (
@@ -601,7 +601,7 @@ function UserSubscriptionRow({
                   className="w-[70px] h-8 text-xs bg-muted/50 border-border text-foreground/80 pr-6"
                   disabled={isLoading}
                 />
-                <Percent className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-zinc-500" />
+                <Percent className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-neutral-500" />
               </div>
               <span className="text-xs text-emerald-400 font-medium whitespace-nowrap">
                 R$ {valorComDesconto.toFixed(0)}
@@ -631,7 +631,7 @@ function UserSubscriptionRow({
             <Button
               size="sm"
               variant="outline"
-              className="h-8 text-xs border-border text-zinc-400 hover:bg-muted/50"
+              className="h-8 text-xs border-border text-neutral-400 hover:bg-muted/50"
               onClick={() => onSetPlano(user.id, "essencial", 0)}
               disabled={isLoading}
             >

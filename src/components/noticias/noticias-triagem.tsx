@@ -169,7 +169,7 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
     return (
       <div className="fixed inset-0 z-50 bg-white dark:bg-background flex flex-col">
         <div className="border-b px-6 py-4 flex items-center justify-between">
-          <div className="h-5 w-32 bg-zinc-100 dark:bg-muted rounded animate-pulse" />
+          <div className="h-5 w-32 bg-neutral-100 dark:bg-muted rounded animate-pulse" />
         </div>
         <div className="flex-1 p-6 space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -185,17 +185,17 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
   return (
     <div className="fixed inset-0 z-50 bg-white dark:bg-background flex flex-col">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-border px-6 py-3.5 flex items-center justify-between bg-white dark:bg-background shrink-0">
+      <div className="border-b border-neutral-200 dark:border-border px-6 py-3.5 flex items-center justify-between bg-white dark:bg-background shrink-0">
         <div className="flex items-center gap-3">
           <button
             onClick={onClose}
-            className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-foreground transition-colors"
+            className="flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-foreground transition-colors"
           >
             <X className="h-4 w-4" />
             Fechar
           </button>
-          <div className="w-px h-4 bg-zinc-200 dark:bg-border" />
-          <Badge variant="outline" className="text-zinc-600 dark:text-muted-foreground font-medium">
+          <div className="w-px h-4 bg-neutral-200 dark:bg-border" />
+          <Badge variant="outline" className="text-neutral-600 dark:text-muted-foreground font-medium">
             {filteredItems.length} {filteredItems.length === 1 ? "pendente" : "pendentes"}
           </Badge>
           <span className="text-xs text-muted-foreground hidden sm:block">
@@ -231,7 +231,7 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
                     {label}
                   </span>
                   <span className="text-[11px] text-muted-foreground/50">{items.length}</span>
-                  <div className="flex-1 h-px bg-zinc-100 dark:bg-muted" />
+                  <div className="flex-1 h-px bg-neutral-100 dark:bg-muted" />
                   <button
                     onClick={() => handleAprovarGrupo(items)}
                     disabled={aprovar.isPending}
@@ -260,11 +260,11 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
                           else itemRefs.current.delete(item.id);
                         }}
                         className={cn(
-                          "border-b border-zinc-100 dark:border-border px-3 py-3 transition-all duration-200 cursor-pointer",
+                          "border-b border-neutral-100 dark:border-border px-3 py-3 transition-all duration-200 cursor-pointer",
                           isRemoving ? "opacity-0 -translate-x-2" : "opacity-100 translate-x-0",
                           isFocused
-                            ? "bg-zinc-50 dark:bg-muted/40 border-l-2 border-l-emerald-500 pl-[10px]"
-                            : "hover:bg-zinc-50/60 dark:hover:bg-muted/20"
+                            ? "bg-neutral-50 dark:bg-muted/40 border-l-2 border-l-emerald-500 pl-[10px]"
+                            : "hover:bg-neutral-50/60 dark:hover:bg-muted/20"
                         )}
                         onClick={() => setFocusedId(item.id)}
                       >
@@ -283,22 +283,22 @@ export function NoticiasTriagem({ onClose, onUpdate, onOpenReader }: Props) {
                         </div>
 
                         {/* Título (sem truncate) */}
-                        <p className="text-sm font-medium text-zinc-800 dark:text-foreground leading-snug mb-1.5">
+                        <p className="text-sm font-medium text-neutral-800 dark:text-foreground leading-snug mb-1.5">
                           {item.titulo}
                         </p>
 
                         {/* Resumo sempre visível */}
                         {resumo && (
-                          <p className="text-xs text-zinc-500 dark:text-muted-foreground leading-relaxed mb-2">
+                          <p className="text-xs text-neutral-500 dark:text-muted-foreground leading-relaxed mb-2">
                             {resumo}
                           </p>
                         )}
 
                         {/* Impacto prático */}
                         {analise?.impactoPratico && (
-                          <div className="flex items-start gap-1.5 mb-2 bg-zinc-50 dark:bg-muted/50 border border-zinc-200 dark:border-border rounded-lg px-2.5 py-2">
+                          <div className="flex items-start gap-1.5 mb-2 bg-neutral-50 dark:bg-muted/50 border border-neutral-200 dark:border-border rounded-lg px-2.5 py-2">
                             <Zap className="h-3 w-3 text-emerald-500 shrink-0 mt-0.5" />
-                            <p className="text-xs text-zinc-600 dark:text-muted-foreground leading-relaxed">
+                            <p className="text-xs text-neutral-600 dark:text-muted-foreground leading-relaxed">
                               {analise.impactoPratico}
                             </p>
                           </div>

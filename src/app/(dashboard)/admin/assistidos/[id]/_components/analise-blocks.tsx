@@ -311,20 +311,20 @@ function BlockShell({
 }) {
   return (
     <AccordionItem value={value} className="border-none mb-3">
-      <AccordionTrigger className="bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06] rounded-xl px-4 py-3 hover:no-underline hover:bg-zinc-100 dark:hover:bg-white/[0.07] transition-all duration-200 data-[state=open]:rounded-b-none data-[state=open]:border-b-zinc-200/50 dark:data-[state=open]:border-b-white/[0.04]">
+      <AccordionTrigger className="bg-neutral-100/60 dark:bg-white/[0.04] border border-neutral-200/80 dark:border-white/[0.06] rounded-xl px-4 py-3 hover:no-underline hover:bg-neutral-100 dark:hover:bg-white/[0.07] transition-all duration-200 data-[state=open]:rounded-b-none data-[state=open]:border-b-neutral-200/50 dark:data-[state=open]:border-b-white/[0.04]">
         <div className="flex items-center gap-3 flex-1">
-          <div className="w-7 h-7 rounded-lg bg-zinc-800 dark:bg-zinc-700 flex items-center justify-center shrink-0">
-            <Icon className="w-3.5 h-3.5 text-white dark:text-zinc-300" />
+          <div className="w-7 h-7 rounded-lg bg-neutral-800 dark:bg-neutral-700 flex items-center justify-center shrink-0">
+            <Icon className="w-3.5 h-3.5 text-white dark:text-neutral-300" />
           </div>
-          <span className="text-[13px] font-bold uppercase tracking-wide text-zinc-900 dark:text-zinc-100">{title}</span>
+          <span className="text-[13px] font-bold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">{title}</span>
           {count != null && (
-            <span className="text-[9px] font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-200/80 dark:bg-white/10 px-2 py-0.5 rounded-full">
+            <span className="text-[9px] font-medium text-neutral-500 dark:text-neutral-400 bg-neutral-200/80 dark:bg-white/10 px-2 py-0.5 rounded-full">
               {count}
             </span>
           )}
         </div>
       </AccordionTrigger>
-      <AccordionContent className="bg-white dark:bg-zinc-900/80 border border-t-0 border-zinc-200/80 dark:border-white/[0.06] rounded-b-xl px-4 pb-4">
+      <AccordionContent className="bg-white dark:bg-neutral-900/80 border border-t-0 border-neutral-200/80 dark:border-white/[0.06] rounded-b-xl px-4 pb-4">
         {children}
       </AccordionContent>
     </AccordionItem>
@@ -356,18 +356,18 @@ function SubRow({
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="w-full bg-zinc-100 dark:bg-[#0f0f11] rounded-lg p-2.5 mb-1.5 cursor-pointer flex justify-between items-center hover:bg-zinc-200/70 dark:hover:bg-zinc-800/50 transition-colors">
-        <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{label}</span>
+      <CollapsibleTrigger className="w-full bg-neutral-100 dark:bg-[#0f0f11] rounded-lg p-2.5 mb-1.5 cursor-pointer flex justify-between items-center hover:bg-neutral-200/70 dark:hover:bg-neutral-800/50 transition-colors">
+        <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">{label}</span>
         <div className="flex items-center gap-2">
           {count != null && (
-            <span className="text-[10px] text-zinc-500 dark:text-zinc-400 bg-zinc-200 dark:bg-zinc-700 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] text-neutral-500 dark:text-neutral-400 bg-neutral-200 dark:bg-neutral-700 px-2 py-0.5 rounded-full">
               {count}
             </span>
           )}
           {open ? (
-            <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+            <ChevronDown className="w-3.5 h-3.5 text-neutral-500" />
           ) : (
-            <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
+            <ChevronRight className="w-3.5 h-3.5 text-neutral-500" />
           )}
         </div>
       </CollapsibleTrigger>
@@ -391,9 +391,9 @@ function tipoBadgeClass(tipo: Depoente["tipo"]): string {
     case "PERITO":
       return "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400";
     case "INFORMANTE":
-      return "bg-zinc-100 dark:bg-zinc-500/10 text-zinc-600 dark:text-zinc-400";
+      return "bg-neutral-100 dark:bg-neutral-500/10 text-neutral-600 dark:text-neutral-400";
     default:
-      return "bg-zinc-100 dark:bg-zinc-500/10 text-zinc-600 dark:text-zinc-400";
+      return "bg-neutral-100 dark:bg-neutral-500/10 text-neutral-600 dark:text-neutral-400";
   }
 }
 
@@ -408,9 +408,9 @@ function statusBadgeClass(status: Depoente["statusIntimacao"]): string {
     case "FALECIDO":
       return "bg-red-50 dark:bg-red-500/[0.08] text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20";
     case "DESISTIDO":
-      return "bg-zinc-100 dark:bg-zinc-500/[0.08] text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-500/20";
+      return "bg-neutral-100 dark:bg-neutral-500/[0.08] text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-500/20";
     default:
-      return "bg-zinc-100 dark:bg-zinc-500/[0.08] text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-500/20";
+      return "bg-neutral-100 dark:bg-neutral-500/[0.08] text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-500/20";
   }
 }
 
@@ -425,7 +425,7 @@ function severidadeBadgeClass(sev: "alta" | "media" | "baixa"): string {
     case "media":
       return "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20";
     case "baixa":
-      return "bg-zinc-100 dark:bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-500/20";
+      return "bg-neutral-100 dark:bg-neutral-500/10 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-500/20";
   }
 }
 
@@ -438,11 +438,11 @@ function v3StatusIcon(status: PainelDepoente["statusIntimacao"]) {
     case "frustrada":
       return <XCircle className="w-3.5 h-3.5 text-red-500" />;
     case "sem_diligencia":
-      return <AlertTriangle className="w-3.5 h-3.5 text-zinc-500" />;
+      return <AlertTriangle className="w-3.5 h-3.5 text-neutral-500" />;
     case "dispensado":
-      return <XCircle className="w-3.5 h-3.5 text-zinc-400" />;
+      return <XCircle className="w-3.5 h-3.5 text-neutral-400" />;
     default:
-      return <AlertTriangle className="w-3.5 h-3.5 text-zinc-500" />;
+      return <AlertTriangle className="w-3.5 h-3.5 text-neutral-500" />;
   }
 }
 
@@ -496,7 +496,7 @@ export function BlocoResumo({ data }: { data: AnalysisBlocksData }) {
     >
       {/* Resumo do fato */}
       {data.caso?.resumoFato && (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed mb-4">
           {data.caso.resumoFato}
         </p>
       )}
@@ -507,7 +507,7 @@ export function BlocoResumo({ data }: { data: AnalysisBlocksData }) {
           <span className="text-[10px] uppercase tracking-wider text-emerald-500 font-semibold">
             Narrativa defensiva
           </span>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mt-1 italic">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed mt-1 italic">
             {data.caso.narrativaDefensiva}
           </p>
         </div>
@@ -516,7 +516,7 @@ export function BlocoResumo({ data }: { data: AnalysisBlocksData }) {
       {/* Alertas operacionais */}
       {data.alertasOperacionais && data.alertasOperacionais.length > 0 && (
         <div className="space-y-2 mb-4">
-          <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
+          <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">
             Alertas operacionais
           </span>
           {data.alertasOperacionais.map((alerta, i) => (
@@ -528,7 +528,7 @@ export function BlocoResumo({ data }: { data: AnalysisBlocksData }) {
               )}
             >
               {alertaIcon(alerta.tipo)}
-              <p className="text-xs text-zinc-700 dark:text-zinc-300">{alerta.texto}</p>
+              <p className="text-xs text-neutral-700 dark:text-neutral-300">{alerta.texto}</p>
             </div>
           ))}
         </div>
@@ -537,13 +537,13 @@ export function BlocoResumo({ data }: { data: AnalysisBlocksData }) {
       {/* Checklist tatico */}
       {data.checklistTatico && data.checklistTatico.length > 0 && (
         <div className="space-y-1.5">
-          <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
+          <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">
             Checklist tatico
           </span>
           {data.checklistTatico.map((item, i) => (
             <div key={i} className="flex items-start gap-2 py-1">
-              <Square className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" />
-              <p className="text-xs text-zinc-700 dark:text-zinc-300">{item}</p>
+              <Square className="w-3.5 h-3.5 text-neutral-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-neutral-700 dark:text-neutral-300">{item}</p>
             </div>
           ))}
         </div>
@@ -579,35 +579,35 @@ export function BlocoPainelDepoentes({ data }: { data: AnalysisBlocksData }) {
           {data.painelDepoentes!.map((dep, i) => (
             <div
               key={i}
-              className="bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5 flex items-center gap-4"
+              className="bg-neutral-50 dark:bg-[#0f0f11] border border-neutral-200 dark:border-neutral-800 rounded-xl p-3.5 flex items-center gap-4"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{dep.nome}</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400">
+                  <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">{dep.nome}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-400">
                     {dep.papel}
                   </span>
                 </div>
-                <div className="flex items-center gap-4 mt-1.5 text-[10px] text-zinc-500">
+                <div className="flex items-center gap-4 mt-1.5 text-[10px] text-neutral-500">
                   <span>
                     Delegacia: {dep.delegacia?.presente ? (
                       <span className="text-emerald-500">{dep.delegacia.data || "Sim"}</span>
                     ) : (
-                      <span className="text-zinc-400">-</span>
+                      <span className="text-neutral-400">-</span>
                     )}
                   </span>
                   <span>
                     Juizo: {dep.juizo?.presente ? (
                       <span className="text-emerald-500">{dep.juizo.data || "Sim"}</span>
                     ) : (
-                      <span className="text-zinc-400">-</span>
+                      <span className="text-neutral-400">-</span>
                     )}
                   </span>
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
                 {v3StatusIcon(dep.statusIntimacao)}
-                <span className="text-[10px] text-zinc-500 capitalize">{dep.statusIntimacao.replace(/_/g, " ")}</span>
+                <span className="text-[10px] text-neutral-500 capitalize">{dep.statusIntimacao.replace(/_/g, " ")}</span>
               </div>
             </div>
           ))}
@@ -618,10 +618,10 @@ export function BlocoPainelDepoentes({ data }: { data: AnalysisBlocksData }) {
           {data.pessoas.depoentes.map((dep, i) => (
             <div
               key={i}
-              className="bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5 flex items-center justify-between"
+              className="bg-neutral-50 dark:bg-[#0f0f11] border border-neutral-200 dark:border-neutral-800 rounded-xl p-3.5 flex items-center justify-between"
             >
               <div className="flex items-center gap-2 flex-wrap min-w-0">
-                <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{dep.nome}</span>
+                <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">{dep.nome}</span>
                 <span
                   className={cn(
                     "text-[10px] px-1.5 py-0.5 rounded",
@@ -675,10 +675,10 @@ export function BlocoDepoimentosComparados({ data }: { data: AnalysisBlocksData 
           {data.depoimentosComparados!.map((comp, i) => (
             <div
               key={i}
-              className="bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5"
+              className="bg-neutral-50 dark:bg-[#0f0f11] border border-neutral-200 dark:border-neutral-800 rounded-xl p-3.5"
             >
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{comp.ponto}</span>
+                <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{comp.ponto}</span>
                 {comp.convergencia ? (
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 ) : (
@@ -687,12 +687,12 @@ export function BlocoDepoimentosComparados({ data }: { data: AnalysisBlocksData 
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <span className="text-[10px] uppercase tracking-wider text-zinc-500">Delegacia</span>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">{comp.delegacia}</p>
+                  <span className="text-[10px] uppercase tracking-wider text-neutral-500">Delegacia</span>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5">{comp.delegacia}</p>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase tracking-wider text-zinc-500">Juizo</span>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">{comp.juizo}</p>
+                  <span className="text-[10px] uppercase tracking-wider text-neutral-500">Juizo</span>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5">{comp.juizo}</p>
                 </div>
               </div>
             </div>
@@ -705,12 +705,12 @@ export function BlocoDepoimentosComparados({ data }: { data: AnalysisBlocksData 
             <SubRow key={i} label={dep.nome}>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <span className="text-[10px] uppercase tracking-wider text-zinc-500">Delegacia</span>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">{dep.versaoDelegacia}</p>
+                  <span className="text-[10px] uppercase tracking-wider text-neutral-500">Delegacia</span>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5">{dep.versaoDelegacia}</p>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase tracking-wider text-zinc-500">Juizo</span>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">{dep.versaoJuizo}</p>
+                  <span className="text-[10px] uppercase tracking-wider text-neutral-500">Juizo</span>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5">{dep.versaoJuizo}</p>
                 </div>
               </div>
               {dep.contradicoes?.length > 0 && (
@@ -759,7 +759,7 @@ export function BlocoPerguntasEstrategicas({ data }: { data: AnalysisBlocksData 
           <SubRow key={i} label={dep.nome} count={dep.perguntasSugeridas.length}>
             <ol className="space-y-1.5 pl-4 list-decimal">
               {dep.perguntasSugeridas.map((p, j) => (
-                <li key={j} className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                <li key={j} className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
                   {p}
                 </li>
               ))}
@@ -803,24 +803,24 @@ export function BlocoTeses({ data }: { data: AnalysisBlocksData }) {
           <span className="text-[10px] uppercase tracking-wider text-emerald-500 font-semibold">
             Tese principal
           </span>
-          <p className="text-base font-medium text-zinc-900 dark:text-zinc-100 mt-1">
+          <p className="text-base font-medium text-neutral-900 dark:text-neutral-100 mt-1">
             {est.tesePrincipal.tese}
           </p>
           {est.tesePrincipal.fundamentoFatico && (
-            <p className="text-xs text-zinc-500 leading-relaxed mt-2">
-              <strong className="text-zinc-800 dark:text-zinc-200">Fatico:</strong>{" "}
+            <p className="text-xs text-neutral-500 leading-relaxed mt-2">
+              <strong className="text-neutral-800 dark:text-neutral-200">Fatico:</strong>{" "}
               {est.tesePrincipal.fundamentoFatico}
             </p>
           )}
           {est.tesePrincipal.fundamentoJuridico && (
-            <p className="text-xs text-zinc-500 leading-relaxed mt-1">
-              <strong className="text-zinc-800 dark:text-zinc-200">Juridico:</strong>{" "}
+            <p className="text-xs text-neutral-500 leading-relaxed mt-1">
+              <strong className="text-neutral-800 dark:text-neutral-200">Juridico:</strong>{" "}
               {est.tesePrincipal.fundamentoJuridico}
             </p>
           )}
           {est.tesePrincipal.elementosQueCorroboram?.length > 0 && (
             <div className="mt-2">
-              <span className="text-[10px] text-zinc-600">Corrobora:</span>
+              <span className="text-[10px] text-neutral-600">Corrobora:</span>
               <ul className="mt-0.5 space-y-0.5">
                 {est.tesePrincipal.elementosQueCorroboram.map((el, i) => (
                   <li
@@ -841,10 +841,10 @@ export function BlocoTeses({ data }: { data: AnalysisBlocksData }) {
         <SubRow label="Teses subsidiarias" count={est.tesesSubsidiarias.length}>
           <div className="space-y-2">
             {est.tesesSubsidiarias.map((ts, i) => (
-              <div key={i} className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3">
-                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{ts.tese}</p>
-                <p className="text-xs text-zinc-500 mt-1">{ts.fundamento}</p>
-                <p className="text-xs text-zinc-600 mt-0.5">
+              <div key={i} className="bg-neutral-50 dark:bg-neutral-800/40 rounded-lg p-3">
+                <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{ts.tese}</p>
+                <p className="text-xs text-neutral-500 mt-1">{ts.fundamento}</p>
+                <p className="text-xs text-neutral-600 mt-0.5">
                   Quando usar: {ts.quandoUsar}
                 </p>
               </div>
@@ -858,9 +858,9 @@ export function BlocoTeses({ data }: { data: AnalysisBlocksData }) {
         <SubRow label="Nulidades" count={est.nulidades.length}>
           <div className="space-y-2">
             {est.nulidades.map((n, i) => (
-              <div key={i} className="bg-zinc-50 dark:bg-zinc-800/40 rounded-lg p-3">
+              <div key={i} className="bg-neutral-50 dark:bg-neutral-800/40 rounded-lg p-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-zinc-700 dark:text-zinc-300">{n.tipo}</span>
+                  <span className="text-sm text-neutral-700 dark:text-neutral-300">{n.tipo}</span>
                   <span
                     className={cn(
                       "text-[10px] px-1.5 py-0.5 rounded",
@@ -870,8 +870,8 @@ export function BlocoTeses({ data }: { data: AnalysisBlocksData }) {
                     {n.severidade.toUpperCase()}
                   </span>
                 </div>
-                <p className="text-xs text-zinc-500 mt-1">{n.descricao}</p>
-                <p className="text-xs text-zinc-600 mt-0.5">
+                <p className="text-xs text-neutral-500 mt-1">{n.descricao}</p>
+                <p className="text-xs text-neutral-600 mt-0.5">
                   Fundamentacao: {n.fundamentacao}
                 </p>
               </div>
@@ -887,27 +887,27 @@ export function BlocoTeses({ data }: { data: AnalysisBlocksData }) {
             {est.matrizGuerra.map((m, i) => (
               <div
                 key={i}
-                className="bg-zinc-50 dark:bg-[#0f0f11] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5"
+                className="bg-neutral-50 dark:bg-[#0f0f11] border border-neutral-200 dark:border-neutral-800 rounded-xl p-3.5"
               >
-                <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{m.fato}</p>
+                <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{m.fato}</p>
                 <div className="grid grid-cols-2 gap-3 mt-2">
                   <div>
                     <span className="text-[10px] uppercase tracking-wider text-red-500 dark:text-red-400/60">
                       Acusacao
                     </span>
-                    <p className="text-xs text-zinc-500 mt-0.5">{m.versaoAcusacao}</p>
+                    <p className="text-xs text-neutral-500 mt-0.5">{m.versaoAcusacao}</p>
                   </div>
                   <div>
                     <span className="text-[10px] uppercase tracking-wider text-emerald-500 dark:text-emerald-400/60">
                       Defesa
                     </span>
-                    <p className="text-xs text-zinc-500 mt-0.5">{m.versaoDefesa}</p>
+                    <p className="text-xs text-neutral-500 mt-0.5">{m.versaoDefesa}</p>
                   </div>
                 </div>
                 {m.elementosDeProva?.length > 0 && (
                   <div className="mt-2">
-                    <span className="text-[10px] text-zinc-600">Provas:</span>
-                    <p className="text-xs text-zinc-500">{m.elementosDeProva.join(", ")}</p>
+                    <span className="text-[10px] text-neutral-600">Provas:</span>
+                    <p className="text-xs text-neutral-500">{m.elementosDeProva.join(", ")}</p>
                   </div>
                 )}
                 {m.contradicoes?.length > 0 && (
@@ -949,7 +949,7 @@ export function BlocoOrientacao({ data }: { data: AnalysisBlocksData }) {
       {/* Orientacao text */}
       {op.orientacaoAoAssistido && (
         <div className="mb-4">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
             {op.orientacaoAoAssistido}
           </p>
         </div>
@@ -958,7 +958,7 @@ export function BlocoOrientacao({ data }: { data: AnalysisBlocksData }) {
       {/* Pontos criticos */}
       {op.pontosCriticos?.length > 0 && (
         <div className="space-y-2">
-          <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
+          <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">
             Pontos criticos
           </span>
           {op.pontosCriticos.map((pc, i) => (
@@ -966,11 +966,11 @@ export function BlocoOrientacao({ data }: { data: AnalysisBlocksData }) {
               key={i}
               className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/15 rounded-lg p-3"
             >
-              <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{pc.ponto}</p>
+              <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{pc.ponto}</p>
               <p className="text-xs text-red-600 dark:text-red-400/80 mt-1">
                 Risco: {pc.risco}
               </p>
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <p className="text-xs text-neutral-500 mt-0.5">
                 Mitigacao: {pc.mitigacao}
               </p>
             </div>
@@ -1002,23 +1002,23 @@ export function BlocoCronologia({ data }: { data: AnalysisBlocksData }) {
     >
       <div className="relative ml-3">
         {/* Vertical line */}
-        <div className="absolute left-0 top-2 bottom-2 w-px bg-zinc-200 dark:bg-zinc-700" />
+        <div className="absolute left-0 top-2 bottom-2 w-px bg-neutral-200 dark:bg-neutral-700" />
         <div className="space-y-4">
           {cronologia.map((item, i) => (
             <div key={i} className="relative pl-5">
               {/* Dot */}
-              <div className="absolute left-[-3px] top-1.5 w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-500" />
+              <div className="absolute left-[-3px] top-1.5 w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500" />
               <div>
-                <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-mono font-bold">
+                <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-mono font-bold">
                   {item.data}
                 </span>
-                <p className="text-sm text-zinc-700 dark:text-zinc-300 mt-0.5">{item.evento}</p>
+                <p className="text-sm text-neutral-700 dark:text-neutral-300 mt-0.5">{item.evento}</p>
                 <div className="flex items-center gap-2 mt-0.5">
                   {item.fonte && (
-                    <span className="text-[10px] text-zinc-500">via {item.fonte}</span>
+                    <span className="text-[10px] text-neutral-500">via {item.fonte}</span>
                   )}
                   {item.relevancia && (
-                    <span className="text-[10px] text-zinc-400">{item.relevancia}</span>
+                    <span className="text-[10px] text-neutral-400">{item.relevancia}</span>
                   )}
                 </div>
               </div>

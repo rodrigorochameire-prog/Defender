@@ -44,7 +44,7 @@ export function AnaliseMapa({ locais }: AnaliseMapaProps) {
   return (
     <div className="space-y-4">
       {/* Placeholder do mapa — v2 terá integração com Mapbox/Leaflet */}
-      <div className={`${CARD_STYLE.base} bg-zinc-50 dark:bg-zinc-900 h-64 flex items-center justify-center`}>
+      <div className={`${CARD_STYLE.base} bg-neutral-50 dark:bg-neutral-900 h-64 flex items-center justify-center`}>
         <div className="text-center space-y-2">
           <MapPin className="h-8 w-8 mx-auto text-muted-foreground/50" />
           <p className={TYPO.body + " text-muted-foreground"}>

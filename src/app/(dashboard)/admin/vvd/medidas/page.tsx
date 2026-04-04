@@ -219,7 +219,7 @@ export default function MonitoramentoMPUPage() {
   const getStatusBadge = (diasRestantes: number | null, mpuAtiva: boolean) => {
     if (!mpuAtiva) {
       return (
-        <Badge variant="outline" className="text-zinc-400">
+        <Badge variant="outline" className="text-neutral-400">
           <ShieldX className="w-3 h-3 mr-1" />
           Inativa
         </Badge>
@@ -283,9 +283,9 @@ export default function MonitoramentoMPUPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Link href="/admin/vvd">
@@ -293,14 +293,14 @@ export default function MonitoramentoMPUPage() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
-              <ShieldCheck className="w-5 h-5 text-white dark:text-zinc-900" />
+            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
+              <ShieldCheck className="w-5 h-5 text-white dark:text-neutral-900" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
+              <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
                 Monitoramento de MPUs
               </h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 hidden sm:block">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 hidden sm:block">
                 Medidas Protetivas de Urgência - Acompanhamento e Histórico
               </p>
             </div>
@@ -312,7 +312,7 @@ export default function MonitoramentoMPUPage() {
               refetchStats();
               refetchProcessos();
             }}
-            className="h-8 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+            className="h-8 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
           >
             <RefreshCw className="h-4 w-4 mr-1" />
             <span className="hidden sm:inline">Atualizar</span>
@@ -323,7 +323,7 @@ export default function MonitoramentoMPUPage() {
       {/* Conteúdo */}
       <div className="p-4 md:p-6 space-y-6">
         {/* Stats Ribbon */}
-        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
           {[
             { icon: FileText, value: mpuStats.total, label: "processos", onClick: undefined },
             { icon: ShieldCheck, value: mpuStats.ativas, label: "MPUs ativas", onClick: () => setFilterVencimento("ativas"), highlight: true },
@@ -334,20 +334,20 @@ export default function MonitoramentoMPUPage() {
             const Icon = stat.icon;
             return (
               <Fragment key={index}>
-                {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
+                {index > 0 && <div className="w-px h-4 bg-neutral-200/60 dark:bg-neutral-700/60 flex-shrink-0" />}
                 <button
                   onClick={stat.onClick}
                   className={cn(
                     "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors",
                     stat.onClick && "cursor-pointer",
-                    "hover:bg-zinc-50 dark:hover:bg-zinc-800",
+                    "hover:bg-neutral-50 dark:hover:bg-neutral-800",
                     stat.alert ? "bg-rose-50 dark:bg-rose-950/20" : "",
                     stat.highlight ? "bg-emerald-50/50 dark:bg-emerald-950/10" : ""
                   )}
                 >
-                  <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-rose-500 dark:text-rose-400" : stat.highlight ? "text-emerald-500 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500")} />
-                  <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-600 dark:text-rose-400" : "text-zinc-800 dark:text-zinc-100")}>{stat.value}</span>
-                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.label}</span>
+                  <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-rose-500 dark:text-rose-400" : stat.highlight ? "text-emerald-500 dark:text-emerald-400" : "text-neutral-400 dark:text-neutral-500")} />
+                  <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-600 dark:text-rose-400" : "text-neutral-800 dark:text-neutral-100")}>{stat.value}</span>
+                  <span className="text-neutral-500 dark:text-neutral-400 font-medium">{stat.label}</span>
                 </button>
               </Fragment>
             );
@@ -584,7 +584,7 @@ export default function MonitoramentoMPUPage() {
                 "border-2",
                 processoDetalhes.mpuAtiva
                   ? "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30"
-                  : "border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/30"
+                  : "border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950/30"
               )}>
                 <CardContent className="pt-4">
                   <div className="flex items-center justify-between">
@@ -627,18 +627,18 @@ export default function MonitoramentoMPUPage() {
                 <h4 className="font-medium mb-3">Linha do Tempo</h4>
                 <ScrollArea className="h-[300px]">
                   {processoDetalhes.historico && processoDetalhes.historico.length > 0 ? (
-                    <div className="relative pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-4">
+                    <div className="relative pl-4 border-l-2 border-neutral-200 dark:border-neutral-700 space-y-4">
                       {processoDetalhes.historico.map((evento: any, idx: number) => {
                         const tipoInfo = TIPOS_EVENTO.find(t => t.value === evento.tipoEvento);
                         return (
                           <div key={idx} className="relative">
                             <div className={cn(
-                              "absolute -left-[21px] w-4 h-4 rounded-full border-2 border-white dark:border-zinc-900",
+                              "absolute -left-[21px] w-4 h-4 rounded-full border-2 border-white dark:border-neutral-900",
                               tipoInfo?.color === "emerald" && "bg-emerald-500",
                               tipoInfo?.color === "rose" && "bg-rose-500",
                               tipoInfo?.color === "blue" && "bg-blue-500",
                               tipoInfo?.color === "amber" && "bg-amber-500",
-                              !tipoInfo && "bg-zinc-500"
+                              !tipoInfo && "bg-neutral-500"
                             )} />
                             <div className="ml-4 p-3 rounded-lg bg-muted/50">
                               <div className="flex items-center justify-between">

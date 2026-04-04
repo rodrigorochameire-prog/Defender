@@ -56,7 +56,7 @@ export default function BeneficiosPage() {
   return (
     <div className="min-h-screen bg-muted dark:bg-[#0f0f11]">
       {/* SUB-HEADER */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-card border-b border-neutral-200 dark:border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Link href="/admin">
@@ -69,7 +69,7 @@ export default function BeneficiosPage() {
             </div>
             <div>
               <h1 className="text-sm font-semibold text-foreground">Painel de Benefícios</h1>
-              <p className="text-[10px] text-zinc-500">Progressões, livramentos e incidentes</p>
+              <p className="text-[10px] text-neutral-500">Progressões, livramentos e incidentes</p>
             </div>
           </div>
           
@@ -91,12 +91,12 @@ export default function BeneficiosPage() {
           ].map((stat, idx) => {
             const Icon = stat.icon;
             return (
-              <div key={idx} className="p-4 sm:p-3 rounded-xl bg-white dark:bg-card border border-zinc-100 dark:border-border">
+              <div key={idx} className="p-4 sm:p-3 rounded-xl bg-white dark:bg-card border border-neutral-100 dark:border-border">
                 <div className="flex items-center gap-3">
                   <Icon className={cn("w-6 h-6 sm:w-5 sm:h-5", stat.color)} />
                   <div>
                     <p className={cn("text-2xl sm:text-xl font-bold", stat.color)}>{stat.value}</p>
-                    <p className="text-xs sm:text-[10px] text-zinc-500 uppercase tracking-wide">{stat.label}</p>
+                    <p className="text-xs sm:text-[10px] text-neutral-500 uppercase tracking-wide">{stat.label}</p>
                   </div>
                 </div>
               </div>
@@ -107,16 +107,16 @@ export default function BeneficiosPage() {
         {/* Filtros */}
         <div className="flex flex-col md:flex-row gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
             <Input
               placeholder="Buscar por nome ou processo..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 h-9 text-sm bg-white dark:bg-card border-zinc-200 dark:border-border"
+              className="pl-9 h-9 text-sm bg-white dark:bg-card border-neutral-200 dark:border-border"
             />
           </div>
           <Select value={tipoFilter} onValueChange={setTipoFilter}>
-            <SelectTrigger className="w-full md:w-40 h-9 text-sm bg-white dark:bg-card border-zinc-200 dark:border-border">
+            <SelectTrigger className="w-full md:w-40 h-9 text-sm bg-white dark:bg-card border-neutral-200 dark:border-border">
               <SelectValue placeholder="Tipo" />
             </SelectTrigger>
             <SelectContent>
@@ -129,7 +129,7 @@ export default function BeneficiosPage() {
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full md:w-36 h-9 text-sm bg-white dark:bg-card border-zinc-200 dark:border-border">
+            <SelectTrigger className="w-full md:w-36 h-9 text-sm bg-white dark:bg-card border-neutral-200 dark:border-border">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -144,15 +144,15 @@ export default function BeneficiosPage() {
         </div>
 
         {/* Estado Vazio */}
-        <Card className="border-zinc-200 dark:border-border">
+        <Card className="border-neutral-200 dark:border-border">
           <CardContent className="py-16 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-zinc-100 dark:bg-muted flex items-center justify-center mx-auto mb-4">
+            <div className="w-14 h-14 rounded-2xl bg-neutral-100 dark:bg-muted flex items-center justify-center mx-auto mb-4">
               <Award className="w-7 h-7 text-muted-foreground" />
             </div>
             <h3 className="text-lg font-semibold text-foreground/80 mb-2">
               Nenhum benefício cadastrado
             </h3>
-            <p className="text-sm text-zinc-500 max-w-md mx-auto mb-6">
+            <p className="text-sm text-neutral-500 max-w-md mx-auto mb-6">
               Utilize a Calculadora SEEU para identificar elegibilidade e cadastre
               os pedidos de progressão, livramento e outros benefícios.
             </p>

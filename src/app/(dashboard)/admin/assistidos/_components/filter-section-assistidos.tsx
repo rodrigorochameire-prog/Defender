@@ -39,8 +39,8 @@ export function FilterSectionAssistidos({
     <div className="flex items-center justify-between">
       {/* Sort pill group */}
       <div className="flex items-center gap-1.5">
-        <span className="text-[10px] text-zinc-400 mr-0.5">Ordenar:</span>
-        <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
+        <span className="text-[10px] text-neutral-400 mr-0.5">Ordenar:</span>
+        <div className="inline-flex items-center gap-1 p-1 rounded-full bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700/60">
           {SORT_OPTIONS.map((opt) => (
             <button
               key={opt.id}
@@ -48,8 +48,8 @@ export function FilterSectionAssistidos({
               className={cn(
                 "px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all duration-200 cursor-pointer",
                 sortBy === opt.id
-                  ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
-                  : "text-zinc-400 dark:text-zinc-500"
+                  ? "bg-neutral-700 dark:bg-neutral-300 text-white dark:text-neutral-900 shadow-sm"
+                  : "text-neutral-400 dark:text-neutral-500"
               )}
             >
               {opt.label}
@@ -66,7 +66,7 @@ export function FilterSectionAssistidos({
               "h-7 w-7 inline-flex items-center justify-center gap-1 rounded-md transition-colors",
               activeCount > 0
                 ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400"
-                : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
             )}
             title="Fila de processamento"
           >
@@ -77,14 +77,14 @@ export function FilterSectionAssistidos({
           </button>
         </ProcessingQueuePanel>
 
-        <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
+        <div className="inline-flex items-center gap-1 p-1 rounded-full bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700/60">
           <button
             onClick={() => setViewMode("grid")}
             className={cn(
               "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 cursor-pointer",
               viewMode === "grid"
-                ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
-                : "text-zinc-400 dark:text-zinc-500"
+                ? "bg-neutral-700 dark:bg-neutral-300 text-white dark:text-neutral-900 shadow-sm"
+                : "text-neutral-400 dark:text-neutral-500"
             )}
             title="Grade"
           >
@@ -95,8 +95,8 @@ export function FilterSectionAssistidos({
             className={cn(
               "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 cursor-pointer",
               viewMode === "list"
-                ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
-                : "text-zinc-400 dark:text-zinc-500"
+                ? "bg-neutral-700 dark:bg-neutral-300 text-white dark:text-neutral-900 shadow-sm"
+                : "text-neutral-400 dark:text-neutral-500"
             )}
             title="Lista"
           >

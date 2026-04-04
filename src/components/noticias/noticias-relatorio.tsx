@@ -129,7 +129,7 @@ export function NoticiasRelatorio() {
                 className={cn(
                   "px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all duration-200 cursor-pointer",
                   periodo === p.value
-                    ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
+                    ? "bg-neutral-700 dark:bg-neutral-300 text-white dark:text-neutral-900 shadow-sm"
                     : "text-muted-foreground"
                 )}
               >

@@ -3,7 +3,7 @@ import { Building2, Newspaper, FileText, Bell } from "lucide-react";
 export default function InstitucionalPage() {
   return (
     <div className="flex flex-col h-full items-center justify-center p-8 text-center">
-      <div className="p-4 bg-zinc-100 dark:bg-muted rounded-2xl mb-4">
+      <div className="p-4 bg-neutral-100 dark:bg-muted rounded-2xl mb-4">
         <Building2 className="h-8 w-8 text-muted-foreground" />
       </div>
       <h1 className="text-xl font-semibold text-foreground mb-2">
@@ -20,11 +20,11 @@ export default function InstitucionalPage() {
         ].map(({ icon: Icon, label, desc }) => (
           <div
             key={label}
-            className="flex flex-col items-center gap-2 p-4 rounded-xl border border-zinc-200 dark:border-border bg-white dark:bg-card"
+            className="flex flex-col items-center gap-2 p-4 rounded-xl border border-neutral-200 dark:border-border bg-white dark:bg-card"
           >
             <Icon className="h-5 w-5 text-muted-foreground" />
             <span className="text-xs font-medium text-foreground/80">{label}</span>
-            <span className="text-[10px] text-muted-foreground bg-zinc-100 dark:bg-muted px-2 py-0.5 rounded-full">{desc}</span>
+            <span className="text-[10px] text-muted-foreground bg-neutral-100 dark:bg-muted px-2 py-0.5 rounded-full">{desc}</span>
           </div>
         ))}
       </div>

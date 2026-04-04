@@ -72,16 +72,16 @@ export function DriveDropZone({
 
       {/* ── Drop overlay ── */}
       {isDragging && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/80 backdrop-blur-sm transition-opacity duration-200">
-          <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-emerald-500/50 bg-zinc-900/60 px-6 md:px-16 py-8 md:py-12">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/80 backdrop-blur-sm transition-opacity duration-200">
+          <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-emerald-500/50 bg-neutral-900/60 px-6 md:px-16 py-8 md:py-12">
             <div className="rounded-xl bg-emerald-500/10 p-4">
               <Upload className="h-10 w-10 text-emerald-400" />
             </div>
             <div className="text-center">
-              <p className="text-lg font-medium text-zinc-200">
+              <p className="text-lg font-medium text-neutral-200">
                 Solte para enviar
               </p>
-              <p className="mt-1 text-sm text-zinc-500">
+              <p className="mt-1 text-sm text-neutral-500">
                 Os arquivos serao enviados para a pasta atual
               </p>
             </div>

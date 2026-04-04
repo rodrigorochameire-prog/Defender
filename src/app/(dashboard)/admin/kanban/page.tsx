@@ -132,7 +132,7 @@ const mockDemandas = [
 ];
 
 const columns = [
-  { id: "2_ATENDER", title: "A Fazer", color: "bg-zinc-400", textColor: "text-zinc-600", count: 0 },
+  { id: "2_ATENDER", title: "A Fazer", color: "bg-neutral-400", textColor: "text-neutral-600", count: 0 },
   { id: "ELABORANDO", title: "Minutando", color: "bg-amber-500", textColor: "text-amber-600", count: 0 },
   { id: "REVISAO", title: "Aguard. Assinatura", color: "bg-blue-500", textColor: "text-blue-600", count: 0 },
   { id: "PROTOCOLADO", title: "Protocolado", color: "bg-emerald-500", textColor: "text-emerald-600", count: 0 },
@@ -147,7 +147,7 @@ function getAreaBadge(area: string) {
     CURADORIA: { label: "Cur", className: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400" },
     FAMILIA: { label: "Fam", className: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" },
   };
-  const config = configs[area] || { label: area, className: "bg-zinc-100 text-zinc-700" };
+  const config = configs[area] || { label: area, className: "bg-neutral-100 text-neutral-700" };
   return <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${config.className}`}>{config.label}</span>;
 }
 
@@ -198,7 +198,7 @@ function getPrazoInfo(prazoStr: string) {
   }
   return { 
     text: `${dias}d`, 
-    className: "text-muted-foreground/50 bg-zinc-100 dark:bg-muted dark:text-muted-foreground", 
+    className: "text-muted-foreground/50 bg-neutral-100 dark:bg-muted dark:text-muted-foreground", 
     urgent: false,
     dias 
   };

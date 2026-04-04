@@ -210,7 +210,7 @@ export function LegislacaoSearch({ onResultClick }: LegislacaoSearchProps) {
           placeholder="Buscar em todas as 15 leis... (ex: homicidio, flagrante, audiencia)"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="pl-12 h-12 text-base rounded-xl border-zinc-300 dark:border-border bg-white dark:bg-card focus-visible:ring-emerald-500"
+          className="pl-12 h-12 text-base rounded-xl border-neutral-300 dark:border-border bg-white dark:bg-card focus-visible:ring-emerald-500"
         />
         {isSearching && (
           <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground animate-spin" />
@@ -222,7 +222,7 @@ export function LegislacaoSearch({ onResultClick }: LegislacaoSearchProps) {
         <div className="space-y-4">
           {/* Summary + filter chips */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-zinc-500 dark:text-muted-foreground">
+            <span className="text-sm text-neutral-500 dark:text-muted-foreground">
               {filteredResults.length} resultado{filteredResults.length !== 1 ? "s" : ""}
               {filterLeiId && " (filtrado)"}
             </span>
@@ -230,7 +230,7 @@ export function LegislacaoSearch({ onResultClick }: LegislacaoSearchProps) {
               {filterLeiId && (
                 <button
                   onClick={() => setFilterLeiId(null)}
-                  className="text-xs px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-muted text-zinc-600 dark:text-foreground/80 hover:bg-zinc-300 dark:hover:bg-muted transition-colors cursor-pointer"
+                  className="text-xs px-2 py-0.5 rounded-full bg-neutral-200 dark:bg-muted text-neutral-600 dark:text-foreground/80 hover:bg-neutral-300 dark:hover:bg-muted transition-colors cursor-pointer"
                 >
                   Limpar filtro
                 </button>
@@ -246,7 +246,7 @@ export function LegislacaoSearch({ onResultClick }: LegislacaoSearchProps) {
                       "text-xs px-2 py-0.5 rounded-full border transition-colors cursor-pointer",
                       filterLeiId === leiId
                         ? "border-current font-medium"
-                        : "border-zinc-200 dark:border-border hover:border-zinc-300 dark:hover:border-border"
+                        : "border-neutral-200 dark:border-border hover:border-neutral-300 dark:hover:border-border"
                     )}
                     style={{
                       color: meta.cor,
@@ -269,7 +269,7 @@ export function LegislacaoSearch({ onResultClick }: LegislacaoSearchProps) {
                 onClick={() => onResultClick(result.leiId, result.artigoId)}
                 className={cn(
                   "w-full text-left rounded-lg border p-3 transition-colors cursor-pointer",
-                  "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50",
+                  "border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50",
                   "dark:border-border dark:bg-card dark:hover:border-border dark:hover:bg-muted/50"
                 )}
               >
@@ -294,7 +294,7 @@ export function LegislacaoSearch({ onResultClick }: LegislacaoSearchProps) {
                           : "(alinea)"}
                   </span>
                 </div>
-                <p className="text-sm text-zinc-600 dark:text-foreground/80 line-clamp-2 leading-relaxed">
+                <p className="text-sm text-neutral-600 dark:text-foreground/80 line-clamp-2 leading-relaxed">
                   {highlightTerm(truncateAroundMatch(result.matchText, query.trim()), query.trim())}
                 </p>
               </button>
@@ -319,7 +319,7 @@ export function LegislacaoSearch({ onResultClick }: LegislacaoSearchProps) {
 
       {/* No results */}
       {hasQuery && !isSearching && results.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-12 text-zinc-500">
+        <div className="flex flex-col items-center justify-center py-12 text-neutral-500">
           <Search className="w-10 h-10 mb-3 text-muted-foreground/50" />
           <p className="text-sm font-medium">Nenhum resultado encontrado</p>
           <p className="text-xs mt-1">Tente outro termo de busca</p>
@@ -330,7 +330,7 @@ export function LegislacaoSearch({ onResultClick }: LegislacaoSearchProps) {
       {isSearching && (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="rounded-lg border border-zinc-200 dark:border-border p-3">
+            <div key={i} className="rounded-lg border border-neutral-200 dark:border-border p-3">
               <div className="flex items-center gap-2 mb-2">
                 <Skeleton className="h-5 w-12 rounded-full" />
                 <Skeleton className="h-4 w-16" />
@@ -345,7 +345,7 @@ export function LegislacaoSearch({ onResultClick }: LegislacaoSearchProps) {
       {/* Empty state: law cards grid */}
       {!hasQuery && !isSearching && (
         <div>
-          <p className="text-sm text-zinc-500 dark:text-muted-foreground mb-4 text-center">
+          <p className="text-sm text-neutral-500 dark:text-muted-foreground mb-4 text-center">
             Selecione uma lei para navegar ou digite para buscar
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -355,7 +355,7 @@ export function LegislacaoSearch({ onResultClick }: LegislacaoSearchProps) {
                 onClick={() => onResultClick(lei.id, "")}
                 className={cn(
                   "group/card flex flex-col items-start p-3 rounded-lg border transition-all cursor-pointer",
-                  "border-zinc-200 bg-white hover:shadow-md hover:border-zinc-300",
+                  "border-neutral-200 bg-white hover:shadow-md hover:border-neutral-300",
                   "dark:border-border dark:bg-card dark:hover:border-border"
                 )}
               >
@@ -371,7 +371,7 @@ export function LegislacaoSearch({ onResultClick }: LegislacaoSearchProps) {
                 >
                   {lei.nomeAbreviado}
                 </span>
-                <span className="text-xs text-zinc-500 dark:text-muted-foreground mt-0.5 text-left leading-tight">
+                <span className="text-xs text-neutral-500 dark:text-muted-foreground mt-0.5 text-left leading-tight">
                   {lei.nome}
                 </span>
                 <span className="text-[10px] text-muted-foreground dark:text-muted-foreground mt-1">

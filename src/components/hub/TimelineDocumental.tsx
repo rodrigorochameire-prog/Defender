@@ -56,11 +56,11 @@ export function TimelineDocumental({ files }: { files: DriveFile[] }) {
             {monthFiles.map((f) => (
               <div
                 key={f.id}
-                className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-zinc-50 dark:hover:bg-muted group cursor-pointer"
+                className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-neutral-50 dark:hover:bg-muted group cursor-pointer"
                 onClick={() => f.webViewLink && window.open(f.webViewLink, "_blank")}
               >
                 <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <span className="text-[11px] text-zinc-700 dark:text-foreground/80 truncate flex-1">
+                <span className="text-[11px] text-neutral-700 dark:text-foreground/80 truncate flex-1">
                   {f.name}
                 </span>
                 {f.lastModifiedTime && (
@@ -69,7 +69,7 @@ export function TimelineDocumental({ files }: { files: DriveFile[] }) {
                   </span>
                 )}
                 {f.webViewLink && (
-                  <ExternalLink className="h-3 w-3 text-zinc-300 group-hover:text-emerald-500 shrink-0 transition-colors" />
+                  <ExternalLink className="h-3 w-3 text-neutral-300 group-hover:text-emerald-500 shrink-0 transition-colors" />
                 )}
               </div>
             ))}

@@ -154,21 +154,21 @@ export function DefenderPageHeader({
 }: DefenderPageHeaderProps) {
   return (
     <div className={cn(
-      "px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800",
+      "px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800",
       className
     )}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-            <span className="text-white dark:text-zinc-900 [&>svg]:w-5 [&>svg]:h-5">
+          <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
+            <span className="text-white dark:text-neutral-900 [&>svg]:w-5 [&>svg]:h-5">
               {icon}
             </span>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
+            <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
               {title}
             </h1>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
               {description}
             </p>
           </div>

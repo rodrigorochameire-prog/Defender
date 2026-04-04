@@ -100,7 +100,7 @@ export function FloatingAgendaButton() {
         className={cn(
           "fixed z-[51] flex items-center justify-center",
           "w-11 h-11 rounded-full shadow-lg",
-          "bg-zinc-900 dark:bg-zinc-700 text-white",
+          "bg-neutral-900 dark:bg-neutral-700 text-white",
           "hover:bg-emerald-600 dark:hover:bg-emerald-600",
           "transition-all duration-200 active:scale-95",
           "bottom-[5.5rem] right-4 sm:bottom-6 sm:right-6",
@@ -201,7 +201,7 @@ function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
       <div
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "absolute bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden flex flex-col",
+          "absolute bg-white dark:bg-neutral-900 shadow-2xl overflow-hidden flex flex-col",
           // Mobile: full screen with small margin
           "inset-2 rounded-2xl",
           // Desktop: right panel
@@ -210,16 +210,16 @@ function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
         style={{ animation: "fadeInRight 0.2s ease-out" }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100 dark:border-neutral-800">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
               <CalendarDays className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+              <h2 className="text-sm font-bold text-neutral-800 dark:text-neutral-200">
                 Agenda Rápida
               </h2>
-              <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+              <p className="text-[10px] text-neutral-400 dark:text-neutral-500">
                 {todayCount > 0
                   ? `${todayCount} evento${todayCount > 1 ? "s" : ""} hoje`
                   : "Nenhum evento hoje"
@@ -239,7 +239,7 @@ function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
             </Link>
             <button
               onClick={onClose}
-              className="p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+              className="p-1.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -250,20 +250,20 @@ function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-6 h-6 text-zinc-400 animate-spin" />
+              <Loader2 className="w-6 h-6 text-neutral-400 animate-spin" />
             </div>
           ) : allEvents.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center px-8">
-              <Calendar className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mb-3" />
-              <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              <Calendar className="w-10 h-10 text-neutral-300 dark:text-neutral-600 mb-3" />
+              <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
                 Nenhum evento agendado
               </p>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
+              <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">
                 Próximos 30 dias sem compromissos
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+            <div className="divide-y divide-neutral-100 dark:divide-neutral-800/50">
               {Array.from(grouped.entries()).map(([dateKey, events]) => {
                 const dayLabel = getDayLabel(dateKey);
                 const isCurrentDay = isToday(new Date(dateKey + "T12:00:00"));
@@ -276,7 +276,7 @@ function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
                         "px-5 py-2 sticky top-0 z-10",
                         isCurrentDay
                           ? "bg-emerald-50/80 dark:bg-emerald-950/20"
-                          : "bg-zinc-50/80 dark:bg-zinc-800/30",
+                          : "bg-neutral-50/80 dark:bg-neutral-800/30",
                         "backdrop-blur-sm"
                       )}
                     >
@@ -286,12 +286,12 @@ function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
                             "text-[11px] font-bold uppercase tracking-wider",
                             isCurrentDay
                               ? "text-emerald-700 dark:text-emerald-400"
-                              : "text-zinc-500 dark:text-zinc-400"
+                              : "text-neutral-500 dark:text-neutral-400"
                           )}
                         >
                           {dayLabel}
                         </span>
-                        <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">
+                        <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium">
                           {events.length} evento{events.length > 1 ? "s" : ""}
                         </span>
                       </div>
@@ -311,11 +311,11 @@ function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-zinc-100 dark:border-zinc-800 px-5 py-3">
+        <div className="border-t border-neutral-100 dark:border-neutral-800 px-5 py-3">
           <Link
             href="/admin/agenda"
             onClick={onClose}
-            className="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-xs font-medium text-zinc-700 dark:text-zinc-300 transition-colors cursor-pointer"
+            className="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-xs font-medium text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer"
           >
             <Calendar className="w-3.5 h-3.5" />
             Ver agenda completa
@@ -348,7 +348,7 @@ function EventRow({ event }: { event: any }) {
   return (
     <div
       className={cn(
-        "px-5 py-2.5 flex items-start gap-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors group",
+        "px-5 py-2.5 flex items-start gap-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors group",
         isPast && "opacity-50"
       )}
     >
@@ -359,11 +359,11 @@ function EventRow({ event }: { event: any }) {
           style={{ backgroundColor: color }}
         />
         {event.hora ? (
-          <span className="text-[11px] font-mono font-semibold text-zinc-700 dark:text-zinc-300">
+          <span className="text-[11px] font-mono font-semibold text-neutral-700 dark:text-neutral-300">
             {event.hora}
           </span>
         ) : (
-          <span className="text-[10px] text-zinc-400">dia todo</span>
+          <span className="text-[10px] text-neutral-400">dia todo</span>
         )}
       </div>
 
@@ -373,7 +373,7 @@ function EventRow({ event }: { event: any }) {
           {isAudiencia && (
             <Gavel className="w-3 h-3 text-amber-500 flex-shrink-0" />
           )}
-          <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 truncate">
+          <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 truncate">
             {event.titulo}
           </p>
         </div>
@@ -381,13 +381,13 @@ function EventRow({ event }: { event: any }) {
         {/* Meta info */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
           {event.assistido && (
-            <span className="flex items-center gap-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+            <span className="flex items-center gap-1 text-[10px] text-neutral-500 dark:text-neutral-400">
               <User className="w-2.5 h-2.5" />
               {event.assistido}
             </span>
           )}
           {event.processo && (
-            <span className="flex items-center gap-1 text-[10px] text-zinc-500 dark:text-zinc-400 font-mono">
+            <span className="flex items-center gap-1 text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">
               <FileText className="w-2.5 h-2.5" />
               {event.processo.length > 20
                 ? event.processo.slice(0, 20) + "..."
@@ -395,7 +395,7 @@ function EventRow({ event }: { event: any }) {
             </span>
           )}
           {event.local && (
-            <span className="flex items-center gap-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+            <span className="flex items-center gap-1 text-[10px] text-neutral-500 dark:text-neutral-400">
               <MapPin className="w-2.5 h-2.5" />
               {event.local.length > 25
                 ? event.local.slice(0, 25) + "..."
@@ -411,10 +411,10 @@ function EventRow({ event }: { event: any }) {
           className={cn(
             "text-[10px] font-medium px-1.5 py-0.5 rounded-full",
             isPast
-              ? "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
+              ? "text-neutral-400 bg-neutral-100 dark:bg-neutral-800"
               : isToday(event.dataHora)
                 ? "text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/30"
-                : "text-zinc-500 bg-zinc-100 dark:text-zinc-400 dark:bg-zinc-800"
+                : "text-neutral-500 bg-neutral-100 dark:text-neutral-400 dark:bg-neutral-800"
           )}
         >
           {relTime}

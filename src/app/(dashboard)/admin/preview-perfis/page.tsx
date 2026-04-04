@@ -86,9 +86,9 @@ export default function PreviewPerfisPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header */}
-      <div className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 p-4">
+      <div className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 p-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/admin/dashboard">
@@ -98,10 +98,10 @@ export default function PreviewPerfisPage() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-xl font-bold text-zinc-800 dark:text-zinc-100">
+              <h1 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">
                 Preview de Dashboards por Perfil
               </h1>
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-neutral-500">
                 Visualize como cada membro da equipe verá seu dashboard
               </p>
             </div>
@@ -133,11 +133,11 @@ export default function PreviewPerfisPage() {
 
       {/* Stats do Banco */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 pt-4">
-        <Card className="p-4 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+        <Card className="p-4 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Database className="w-4 h-4 text-zinc-500" />
-              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <Database className="w-4 h-4 text-neutral-500" />
+              <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                 Dados do Banco
               </span>
             </div>
@@ -148,7 +148,7 @@ export default function PreviewPerfisPage() {
                 ) : (
                   <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
                 )}
-                <span className="text-zinc-600 dark:text-zinc-400">
+                <span className="text-neutral-600 dark:text-neutral-400">
                   {dbStats.assistidos} assistidos
                 </span>
               </div>
@@ -158,7 +158,7 @@ export default function PreviewPerfisPage() {
                 ) : (
                   <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
                 )}
-                <span className="text-zinc-600 dark:text-zinc-400">
+                <span className="text-neutral-600 dark:text-neutral-400">
                   {dbStats.demandas} demandas
                 </span>
               </div>
@@ -168,7 +168,7 @@ export default function PreviewPerfisPage() {
                 ) : (
                   <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
                 )}
-                <span className="text-zinc-600 dark:text-zinc-400">
+                <span className="text-neutral-600 dark:text-neutral-400">
                   {dbStats.processos} processos
                 </span>
               </div>
@@ -176,9 +176,9 @@ export default function PreviewPerfisPage() {
                 {dbStats.delegacoes > 0 ? (
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                 ) : (
-                  <AlertCircle className="w-3.5 h-3.5 text-zinc-400" />
+                  <AlertCircle className="w-3.5 h-3.5 text-neutral-400" />
                 )}
-                <span className="text-zinc-600 dark:text-zinc-400">
+                <span className="text-neutral-600 dark:text-neutral-400">
                   {dbStats.delegacoes} delegações
                 </span>
               </div>
@@ -190,7 +190,7 @@ export default function PreviewPerfisPage() {
       {/* Tabs de Perfil */}
       <div className="max-w-7xl mx-auto p-4 md:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-white dark:bg-zinc-900 p-1 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800">
+          <TabsList className="bg-white dark:bg-neutral-900 p-1 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-800">
             <TabsTrigger 
               value="estagiario" 
               className="gap-2 data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700"
@@ -207,7 +207,7 @@ export default function PreviewPerfisPage() {
             </TabsTrigger>
             <TabsTrigger 
               value="triagem" 
-              className="gap-2 data-[state=active]:bg-zinc-200 data-[state=active]:text-zinc-700"
+              className="gap-2 data-[state=active]:bg-neutral-200 data-[state=active]:text-neutral-700"
             >
               <UserCheck className="w-4 h-4" />
               Triagem
@@ -306,15 +306,15 @@ export default function PreviewPerfisPage() {
 
           {/* Preview Triagem */}
           <TabsContent value="triagem" className="space-y-6">
-            <Card className="p-4 bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+            <Card className="p-4 bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <UserCheck className="w-5 h-5 text-zinc-600" />
+                  <UserCheck className="w-5 h-5 text-neutral-600" />
                   <div>
-                    <p className="font-medium text-zinc-800 dark:text-zinc-200">
+                    <p className="font-medium text-neutral-800 dark:text-neutral-200">
                       Visualizando como: Gustavo (Triagem)
                     </p>
-                    <p className="text-sm text-zinc-500">
+                    <p className="text-sm text-neutral-500">
                       Recepção e Cadastro • Núcleo Especializados
                     </p>
                   </div>
@@ -370,7 +370,7 @@ export default function PreviewPerfisPage() {
             
             {/* Registro Rápido Aprimorado */}
             <div className="mt-6">
-              <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mb-4">
+              <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200 mb-4">
                 Registro Rápido Aprimorado
               </h3>
               <RegistroRapidoAprimorado

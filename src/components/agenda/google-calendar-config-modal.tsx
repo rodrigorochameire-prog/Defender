@@ -235,13 +235,13 @@ export function GoogleCalendarConfigModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-900">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-neutral-900">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+          <DialogTitle className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
             <Calendar className="w-6 h-6 text-blue-600" />
             Integração com Google Calendar
           </DialogTitle>
-          <DialogDescription className="text-sm text-zinc-500 dark:text-zinc-400">
+          <DialogDescription className="text-sm text-neutral-500 dark:text-neutral-400">
             Sincronize eventos entre Ombuds e suas agendas do Google Calendar.
           </DialogDescription>
         </DialogHeader>
@@ -326,7 +326,7 @@ export function GoogleCalendarConfigModal({
 
               {/* Configurações de Sincronização */}
               <div className="space-y-4">
-                <h3 className="font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+                <h3 className="font-bold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
                   <Settings className="w-5 h-5 text-blue-600" />
                   Configurações de Sincronização
                 </h3>
@@ -368,13 +368,13 @@ export function GoogleCalendarConfigModal({
                     <button
                       type="button"
                       onClick={() => setConfig({ ...config, autoImport: !config.autoImport })}
-                      className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300"
+                      className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300"
                     >
                       <div
                         className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                           config.autoImport
                             ? "bg-blue-600 border-blue-600"
-                            : "border-zinc-300 dark:border-zinc-600"
+                            : "border-neutral-300 dark:border-neutral-600"
                         }`}
                       >
                         {config.autoImport && <CheckCircle2 className="w-4 h-4 text-white" />}
@@ -387,13 +387,13 @@ export function GoogleCalendarConfigModal({
                     <button
                       type="button"
                       onClick={() => setConfig({ ...config, twoWaySync: !config.twoWaySync })}
-                      className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300"
+                      className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300"
                     >
                       <div
                         className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                           config.twoWaySync
                             ? "bg-blue-600 border-blue-600"
-                            : "border-zinc-300 dark:border-zinc-600"
+                            : "border-neutral-300 dark:border-neutral-600"
                         }`}
                       >
                         {config.twoWaySync && <CheckCircle2 className="w-4 h-4 text-white" />}
@@ -404,7 +404,7 @@ export function GoogleCalendarConfigModal({
                 </div>
 
                 {config.lastSync && (
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
                     Última sincronização: {formatLastSync(config.lastSync)}
                   </p>
                 )}
@@ -412,7 +412,7 @@ export function GoogleCalendarConfigModal({
 
               {/* Calendários */}
               <div className="space-y-4">
-                <h3 className="font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+                <h3 className="font-bold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-purple-600" />
                   Calendários Sincronizados ({config.calendars.length})
                 </h3>
@@ -426,7 +426,7 @@ export function GoogleCalendarConfigModal({
                     return (
                       <div
                         key={calendar.id}
-                        className="p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-zinc-50 dark:bg-zinc-800/50"
+                        className="p-4 border border-neutral-200 dark:border-neutral-800 rounded-lg bg-neutral-50 dark:bg-neutral-800/50"
                       >
                         <div className="flex items-start gap-3">
                           <div
@@ -441,10 +441,10 @@ export function GoogleCalendarConfigModal({
                           <div className="flex-1 min-w-0 space-y-3">
                             <div className="flex items-center justify-between">
                               <div>
-                                <h4 className="font-bold text-zinc-900 dark:text-zinc-50">
+                                <h4 className="font-bold text-neutral-900 dark:text-neutral-50">
                                   {calendar.name}
                                 </h4>
-                                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                <p className="text-xs text-neutral-500 dark:text-neutral-400">
                                   ID: {calendar.id}
                                 </p>
                               </div>
@@ -453,7 +453,7 @@ export function GoogleCalendarConfigModal({
                                 className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
                                   calendar.syncEnabled
                                     ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
-                                    : "bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400"
+                                    : "bg-neutral-200 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-400"
                                 }`}
                               >
                                 {calendar.syncEnabled ? "Ativo" : "Inativo"}
@@ -484,7 +484,7 @@ export function GoogleCalendarConfigModal({
                                       }
                                       className={`w-8 h-8 rounded-lg border-2 transition-all ${
                                         calendar.color === colorOption.value
-                                          ? "border-zinc-900 dark:border-zinc-100 scale-110"
+                                          ? "border-neutral-900 dark:border-neutral-100 scale-110"
                                           : "border-transparent hover:scale-105"
                                       }`}
                                       style={{ backgroundColor: colorOption.value }}
@@ -505,7 +505,7 @@ export function GoogleCalendarConfigModal({
           )}
 
           {/* Botões de Ação */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+          <div className="flex justify-end gap-3 pt-4 border-t border-neutral-200 dark:border-neutral-800">
             <Button variant="outline" onClick={onClose}>
               Cancelar
             </Button>

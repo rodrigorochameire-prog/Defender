@@ -90,17 +90,17 @@ export function FilterBar({
         {/* Busca */}
         {onSearchChange && (
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
             <Input
               value={searchValue}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={searchPlaceholder}
-              className="pl-9 h-9 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 focus:ring-1 focus:ring-emerald-500/20"
+              className="pl-9 h-9 text-sm border border-neutral-200 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-900 focus:ring-1 focus:ring-emerald-500/20"
             />
             {searchValue && (
               <button
                 onClick={() => onSearchChange("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -117,13 +117,13 @@ export function FilterBar({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="gap-1.5 h-9 px-3 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs font-medium bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                  className="gap-1.5 h-9 px-3 border border-neutral-200 dark:border-neutral-700 rounded-lg text-xs font-medium bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                 >
-                  <SlidersHorizontal className="w-3.5 h-3.5 text-zinc-500" />
-                  <span className="hidden sm:inline text-zinc-600 dark:text-zinc-400">
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-500" />
+                  <span className="hidden sm:inline text-neutral-600 dark:text-neutral-400">
                     {sortOptions.find(o => o.value === sortValue)?.label || "Ordenar"}
                   </span>
-                  <ChevronDown className="w-3 h-3 text-zinc-400" />
+                  <ChevronDown className="w-3 h-3 text-neutral-400" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[180px]">
@@ -153,7 +153,7 @@ export function FilterBar({
                 "gap-1.5 h-9 px-3 rounded-lg text-xs font-medium",
                 showAdvanced 
                   ? "bg-emerald-600 hover:bg-emerald-700 text-white border-0" 
-                  : "border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                  : "border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
               )}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -173,13 +173,13 @@ export function FilterBar({
 
           {/* View Toggle */}
           {showViewToggle && onViewModeChange && (
-            <div className="flex items-center border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden bg-white dark:bg-zinc-900">
+            <div className="flex items-center border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden bg-white dark:bg-neutral-900">
               <button
                 className={cn(
                   "h-9 w-9 flex items-center justify-center transition-colors",
                   viewMode === "grid" 
                     ? "bg-emerald-600 text-white" 
-                    : "text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                    : "text-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                 )}
                 onClick={() => onViewModeChange("grid")}
               >
@@ -190,7 +190,7 @@ export function FilterBar({
                   "h-9 w-9 flex items-center justify-center transition-colors",
                   viewMode === "list" 
                     ? "bg-emerald-600 text-white" 
-                    : "text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                    : "text-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                 )}
                 onClick={() => onViewModeChange("list")}
               >
@@ -213,12 +213,12 @@ export function FilterBar({
 
       {/* Filtros Avançados (Expansível) */}
       {advancedFilters && showAdvanced && (
-        <div className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/50 space-y-3">
+        <div className="p-3 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-900/50 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Filtros avançados</span>
+            <span className="text-xs font-medium text-neutral-500 uppercase tracking-wide">Filtros avançados</span>
             <button
               onClick={() => setShowAdvanced(false)}
-              className="text-zinc-400 hover:text-zinc-600 transition-colors"
+              className="text-neutral-400 hover:text-neutral-600 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -240,13 +240,13 @@ export function FilterBar({
             {activeFilters.map((filter) => (
               <span
                 key={filter.key}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white dark:bg-zinc-800 border border-emerald-200 dark:border-emerald-800/50 text-xs"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white dark:bg-neutral-800 border border-emerald-200 dark:border-emerald-800/50 text-xs"
               >
-                <span className="text-zinc-500">{filter.label}:</span>
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">{filter.value}</span>
+                <span className="text-neutral-500">{filter.label}:</span>
+                <span className="font-medium text-neutral-700 dark:text-neutral-300">{filter.value}</span>
                 <button
                   onClick={() => onRemoveFilter?.(filter.key)}
-                  className="ml-0.5 text-zinc-400 hover:text-rose-500 transition-colors"
+                  className="ml-0.5 text-neutral-400 hover:text-rose-500 transition-colors"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -256,7 +256,7 @@ export function FilterBar({
 
           <button
             onClick={onClearFilters}
-            className="text-[10px] text-zinc-400 hover:text-rose-500 transition-colors flex-shrink-0"
+            className="text-[10px] text-neutral-400 hover:text-rose-500 transition-colors flex-shrink-0"
           >
             Limpar
           </button>
@@ -300,12 +300,12 @@ export function FilterSelect({
   return (
     <div className={cn("space-y-1", className)}>
       {showLabel && label && (
-        <label className="text-[10px] font-medium text-zinc-400 uppercase tracking-wide">
+        <label className="text-[10px] font-medium text-neutral-400 uppercase tracking-wide">
           {label}
         </label>
       )}
       <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger className="h-8 text-xs border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 rounded-md">
+        <SelectTrigger className="h-8 text-xs border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 rounded-md">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>

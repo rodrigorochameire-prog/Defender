@@ -107,20 +107,20 @@ function AlertItem({ alerta, clickable, onMark }: {
         clickable && "cursor-pointer",
         "transition-all duration-200",
         alerta.lido
-          ? "border-zinc-100 bg-zinc-50/50 opacity-60 dark:border-zinc-800 dark:bg-zinc-800/30"
+          ? "border-neutral-100 bg-neutral-50/50 opacity-60 dark:border-neutral-800 dark:bg-neutral-800/30"
           : cn(cfg.bg, cfg.border),
         clickable && isUrgent && !alerta.lido && "animate-pulse border-rose-300 dark:border-rose-700",
       )}
     >
-      <Icon className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", alerta.lido ? "text-zinc-300 dark:text-zinc-600" : cfg.text)} />
+      <Icon className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", alerta.lido ? "text-neutral-300 dark:text-neutral-600" : cfg.text)} />
       <div className="min-w-0 flex-1">
-        <p className={cn("text-[12px]", alerta.lido ? "text-zinc-400 dark:text-zinc-500" : "font-medium text-zinc-900 dark:text-zinc-100")}>
+        <p className={cn("text-[12px]", alerta.lido ? "text-neutral-400 dark:text-neutral-500" : "font-medium text-neutral-900 dark:text-neutral-100")}>
           {alerta.texto}
         </p>
         <div className="mt-0.5 flex items-center gap-2">
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-500">{formatTime(alerta.timestamp)}</span>
+          <span className="text-[10px] text-neutral-400 dark:text-neutral-500">{formatTime(alerta.timestamp)}</span>
           {clickable && (
-            <span className={cn("text-[10px] uppercase tracking-wider", alerta.lido ? "text-zinc-300 dark:text-zinc-600" : cfg.text)}>
+            <span className={cn("text-[10px] uppercase tracking-wider", alerta.lido ? "text-neutral-300 dark:text-neutral-600" : cfg.text)}>
               {cfg.label}
             </span>
           )}
@@ -133,7 +133,7 @@ function AlertItem({ alerta, clickable, onMark }: {
   );
 }
 
-const cardClass = cn("flex flex-col gap-3 rounded-xl border p-4", "border-zinc-200/80 bg-white", "dark:border-zinc-800/80 dark:bg-zinc-900");
+const cardClass = cn("flex flex-col gap-3 rounded-xl border p-4", "border-neutral-200/80 bg-white", "dark:border-neutral-800/80 dark:bg-neutral-900");
 
 // ---------------------------------------------------------------------------
 // Main Component
@@ -197,7 +197,7 @@ export function AlertasTempoReal({ isDarkMode, faseSelecionada, mode }: AlertasT
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bell className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Alertas em Tempo Real</span>
+            <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Alertas em Tempo Real</span>
           </div>
           <Badge variant="outline" className="text-[10px]">{faseSelecionada.label}</Badge>
         </div>
@@ -211,7 +211,7 @@ export function AlertasTempoReal({ isDarkMode, faseSelecionada, mode }: AlertasT
             return (
               <button key={tipo} onClick={() => setTipoSelecionado(tipo)} className={cn(
                 "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium cursor-pointer transition-all duration-200",
-                active ? cn(cfg.bg, cfg.text, "ring-2", cfg.ring) : "bg-zinc-50 text-zinc-500 hover:bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700",
+                active ? cn(cfg.bg, cfg.text, "ring-2", cfg.ring) : "bg-neutral-50 text-neutral-500 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700",
               )}>
                 <Icon className="h-3.5 w-3.5" />{cfg.label}
               </button>
@@ -231,7 +231,7 @@ export function AlertasTempoReal({ isDarkMode, faseSelecionada, mode }: AlertasT
 
         {/* Quick alerts */}
         <div>
-          <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Alertas rapidos</span>
+          <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Alertas rapidos</span>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {quickAlerts.map((qa) => {
               const cfg = tipoConfig[qa.tipo];
@@ -250,7 +250,7 @@ export function AlertasTempoReal({ isDarkMode, faseSelecionada, mode }: AlertasT
         {/* Sent list */}
         {sortedAlertas.length > 0 && (
           <div className="mt-1">
-            <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Enviados ({sortedAlertas.length})</span>
+            <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Enviados ({sortedAlertas.length})</span>
             <div className="mt-1.5 flex max-h-40 flex-col gap-1 overflow-y-auto">
               {sortedAlertas.map((a) => <AlertItem key={a.id} alerta={a} />)}
             </div>
@@ -273,13 +273,13 @@ export function AlertasTempoReal({ isDarkMode, faseSelecionada, mode }: AlertasT
               </span>
             )}
           </div>
-          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Alertas em Tempo Real</span>
+          <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Alertas em Tempo Real</span>
         </div>
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
             <button onClick={marcarTodosLidos} className={cn(
               "flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] cursor-pointer transition-all duration-200",
-              "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200",
+              "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-200",
             )}>
               <Check className="h-3 w-3" />Marcar todas
             </button>
@@ -291,9 +291,9 @@ export function AlertasTempoReal({ isDarkMode, faseSelecionada, mode }: AlertasT
       <div ref={listRef} className="flex max-h-72 flex-col gap-1.5 overflow-y-auto">
         {sortedAlertas.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Bell className="mb-2 h-8 w-8 text-zinc-200 dark:text-zinc-700" />
-            <p className="text-sm text-zinc-400 dark:text-zinc-500">Nenhum alerta recebido</p>
-            <p className="text-[11px] text-zinc-300 dark:text-zinc-600">Alertas do estagiario aparecerao aqui</p>
+            <Bell className="mb-2 h-8 w-8 text-neutral-200 dark:text-neutral-700" />
+            <p className="text-sm text-neutral-400 dark:text-neutral-500">Nenhum alerta recebido</p>
+            <p className="text-[11px] text-neutral-300 dark:text-neutral-600">Alertas do estagiario aparecerao aqui</p>
           </div>
         ) : (
           sortedAlertas.map((a) => <AlertItem key={a.id} alerta={a} clickable onMark={marcarComoLido} />)

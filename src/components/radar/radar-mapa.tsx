@@ -162,13 +162,13 @@ export function RadarMapa({ filtros, onSelectNoticia, focusedNoticiaId }: RadarM
   if (!data || data.length === 0) {
     return (
       <div className="text-center py-20">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
-          <Map className="h-8 w-8 text-zinc-400" />
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4">
+          <Map className="h-8 w-8 text-neutral-400" />
         </div>
-        <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+        <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
           Nenhuma ocorrência com coordenadas
         </h3>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
           O mapa será populado conforme notícias com geolocalização forem coletadas.
         </p>
       </div>
@@ -179,7 +179,7 @@ export function RadarMapa({ filtros, onSelectNoticia, focusedNoticiaId }: RadarM
     <div
       className={
         isFullscreen
-          ? "fixed inset-0 z-50 p-4 bg-white dark:bg-zinc-900 flex flex-col gap-3 overflow-auto"
+          ? "fixed inset-0 z-50 p-4 bg-white dark:bg-neutral-900 flex flex-col gap-3 overflow-auto"
           : "space-y-3"
       }
     >
@@ -189,19 +189,19 @@ export function RadarMapa({ filtros, onSelectNoticia, focusedNoticiaId }: RadarM
           {crimeCounts.map(({ tipo, count }) => (
             <div
               key={tipo}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-sm"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"
             >
               <span
                 className="w-2 h-2 rounded-full flex-shrink-0"
                 style={{ backgroundColor: CRIME_COLORS[tipo] ?? "#71717a" }}
               />
-              <span className="text-zinc-700 dark:text-zinc-300">
+              <span className="text-neutral-700 dark:text-neutral-300">
                 {CRIME_LABELS[tipo] ?? tipo}
               </span>
-              <span className="text-zinc-400 font-normal">{count}</span>
+              <span className="text-neutral-400 font-normal">{count}</span>
             </div>
           ))}
-          <div className="inline-flex items-center px-2.5 py-1 rounded-full text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
+          <div className="inline-flex items-center px-2.5 py-1 rounded-full text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-500">
             {filteredData.length} total
           </div>
           {semCoordenadas > 0 && (
@@ -223,7 +223,7 @@ export function RadarMapa({ filtros, onSelectNoticia, focusedNoticiaId }: RadarM
             />
             <Label className="text-xs">Heatmap</Label>
           </div>
-          <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
+          <div className="h-4 w-px bg-neutral-200 dark:bg-neutral-700" />
           <div className="flex items-center gap-1 flex-wrap">
             {ALL_LAYERS.map((key) => {
               const color = CRIME_COLORS[key] ?? "#52525b";
@@ -259,12 +259,12 @@ export function RadarMapa({ filtros, onSelectNoticia, focusedNoticiaId }: RadarM
             })}
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-zinc-400">
+            <span className="text-xs text-neutral-400">
               {filteredData.length} ocorrência{filteredData.length !== 1 ? "s" : ""}
             </span>
             <button
               onClick={() => setResetViewTrigger((prev) => prev + 1)}
-              className="rounded border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 cursor-pointer transition-colors"
+              className="rounded border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700 cursor-pointer transition-colors"
               title="Centralizar em Camaçari"
             >
               ⌖ Reset

@@ -51,7 +51,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   rascunho: { label: "Rascunho", color: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20", icon: Pencil },
   revisao: { label: "Em Revisao", color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20", icon: Clock },
   enviado: { label: "Enviado", color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20", icon: CheckCircle2 },
-  arquivado: { label: "Arquivado", color: "bg-zinc-500/10 text-zinc-500 dark:text-zinc-400 border-zinc-500/20", icon: Archive },
+  arquivado: { label: "Arquivado", color: "bg-neutral-500/10 text-neutral-500 dark:text-neutral-400 border-neutral-500/20", icon: Archive },
 };
 
 const TIPO_LABELS: Record<string, string> = {
@@ -81,7 +81,7 @@ export function OficioCard({ oficio, onDuplicate, onArchive }: OficioCardProps) 
       ? "border-l-red-500"
       : meta.urgencia === "urgente"
         ? "border-l-amber-500"
-        : "border-l-zinc-300 dark:border-l-zinc-600";
+        : "border-l-neutral-300 dark:border-l-neutral-600";
 
   return (
     <div

@@ -32,7 +32,7 @@ const RESULTADO_MAP: Record<string, { label: string; color: string; icon: React.
   condenacao: { label: "Condenado", color: "bg-rose-500 text-white", icon: XCircle },
   desclassificacao: { label: "Desclassificado", color: "bg-amber-500 text-white", icon: ArrowDownRight },
   nulidade: { label: "Nulidade", color: "bg-violet-500 text-white", icon: Clock },
-  redesignado: { label: "Redesignado", color: "bg-zinc-500 text-white", icon: Clock },
+  redesignado: { label: "Redesignado", color: "bg-neutral-500 text-white", icon: Clock },
 };
 
 export default function HistoricoJuriPage() {
@@ -81,7 +81,7 @@ export default function HistoricoJuriPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+          <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
             <History className="w-5 h-5 text-white dark:text-foreground" />
           </div>
           <div>
@@ -173,7 +173,7 @@ export default function HistoricoJuriPage() {
             {sessoeFiltradas.map((sessao) => {
               const res = RESULTADO_MAP[sessao.resultado || ""] || {
                 label: sessao.resultado || "Sem resultado",
-                color: "bg-zinc-400 text-white",
+                color: "bg-neutral-400 text-white",
                 icon: Clock,
               };
               const Icon = res.icon;

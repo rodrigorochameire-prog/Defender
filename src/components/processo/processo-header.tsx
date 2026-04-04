@@ -87,7 +87,7 @@ export function ProcessoHeader({
             {/* Line 1: Número + Atribuição + Classe */}
             <div className="flex items-center gap-2.5 flex-wrap">
               <h1
-                className="font-mono text-lg font-bold tracking-tight text-zinc-50 select-all hover:text-emerald-400 cursor-pointer transition-colors"
+                className="font-mono text-lg font-bold tracking-tight text-neutral-50 select-all hover:text-emerald-400 cursor-pointer transition-colors"
                 title="Clique para selecionar"
               >
                 {numeroAutos}

@@ -126,7 +126,7 @@ export function FactualFavoritesPanel({
                       variant="ghost"
                       size="sm"
                       onClick={() => onRemove(fav.artigoId)}
-                      className="shrink-0 h-7 w-7 p-0 text-zinc-400 hover:text-red-500"
+                      className="shrink-0 h-7 w-7 p-0 text-neutral-400 hover:text-red-500"
                       aria-label="Remover artigo salvo"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -138,7 +138,7 @@ export function FactualFavoritesPanel({
                   </p>
 
                   <div className="mt-2 flex items-center justify-between">
-                    <span className="text-[10px] text-zinc-400">
+                    <span className="text-[10px] text-neutral-400">
                       {formatDate(fav.createdAt)}
                     </span>
                     <a

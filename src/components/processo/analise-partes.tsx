@@ -42,8 +42,8 @@ function papelBadge(tipo: string) {
   if (t === "TESTEMUNHA") return { label: "Testemunha", cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" };
   if (t === "FAMILIAR") return { label: "Familiar", cls: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300" };
   if (t === "PERITO") return { label: "Perito", cls: "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300" };
-  if (t === "POLICIAL") return { label: "PM / Policial", cls: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300" };
-  return { label: tipo ?? "—", cls: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400" };
+  if (t === "POLICIAL") return { label: "PM / Policial", cls: "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300" };
+  return { label: tipo ?? "—", cls: "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400" };
 }
 
 function statusBadge(status?: string) {
@@ -75,13 +75,13 @@ function statusBadge(status?: string) {
       );
     case "dispensado":
       return (
-        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
           Dispensado
         </span>
       );
     default:
       return (
-        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
           {status}
         </span>
       );
@@ -92,8 +92,8 @@ function CheckIcon({ value }: { value?: boolean }) {
   if (value === true)
     return <span className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">✓</span>;
   if (value === false)
-    return <span className="text-zinc-300 dark:text-zinc-600 text-sm">✗</span>;
-  return <span className="text-zinc-300 dark:text-zinc-600 text-sm">—</span>;
+    return <span className="text-neutral-300 dark:text-neutral-600 text-sm">✗</span>;
+  return <span className="text-neutral-300 dark:text-neutral-600 text-sm">—</span>;
 }
 
 // ─── group ordering ────────────────────────────────────────────────────────────
@@ -144,15 +144,15 @@ function PessoaCard({ p, index }: { p: Pessoa; index: number }) {
   const temContradicoes = (p.contradicoes?.length ?? 0) > 0;
 
   return (
-    <div className="rounded-xl border border-zinc-100 dark:border-zinc-800/50 p-4 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20 transition-colors">
+    <div className="rounded-xl border border-neutral-100 dark:border-neutral-800/50 p-4 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/20 transition-colors">
       {/* Header row */}
       <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => setExpanded(v => !v)}>
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 flex-shrink-0">
-          <User className="h-4 w-4 text-zinc-500" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 flex-shrink-0">
+          <User className="h-4 w-4 text-neutral-500" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[14px] font-semibold text-zinc-900 dark:text-zinc-100 truncate">{p.nome}</span>
+            <span className="text-[14px] font-semibold text-neutral-900 dark:text-neutral-100 truncate">{p.nome}</span>
             <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${badge.cls}`}>
               {badge.label}
             </span>
@@ -180,10 +180,10 @@ function PessoaCard({ p, index }: { p: Pessoa; index: number }) {
             )}
           </div>
           {p.papel && (
-            <p className="mt-0.5 text-[13px] text-zinc-500 dark:text-zinc-400 truncate">{p.papel}</p>
+            <p className="mt-0.5 text-[13px] text-neutral-500 dark:text-neutral-400 truncate">{p.papel}</p>
           )}
         </div>
-        <div className="flex-shrink-0 text-zinc-400">
+        <div className="flex-shrink-0 text-neutral-400">
           {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </div>
       </div>
@@ -192,7 +192,7 @@ function PessoaCard({ p, index }: { p: Pessoa; index: number }) {
       {(temPerguntas || temContradicoes || p.telefone) && (
         <div className="mt-3 flex flex-wrap gap-2">
           {p.telefone && (
-            <span className="inline-flex items-center gap-1 text-[12px] text-zinc-500 dark:text-zinc-400">
+            <span className="inline-flex items-center gap-1 text-[12px] text-neutral-500 dark:text-neutral-400">
               <Phone className="h-3.5 w-3.5" />
               {p.telefone}
             </span>
@@ -220,43 +220,43 @@ function PessoaCard({ p, index }: { p: Pessoa; index: number }) {
 
       {/* Expanded details */}
       {expanded && (
-        <div className="mt-4 space-y-3 border-t border-zinc-100 dark:border-zinc-800 pt-4">
+        <div className="mt-4 space-y-3 border-t border-neutral-100 dark:border-neutral-800 pt-4">
           <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-[13px]">
             {p.profissao && (
               <>
-                <dt className="text-zinc-400 dark:text-zinc-500">Profissão</dt>
-                <dd className="text-zinc-700 dark:text-zinc-300">{p.profissao}</dd>
+                <dt className="text-neutral-400 dark:text-neutral-500">Profissão</dt>
+                <dd className="text-neutral-700 dark:text-neutral-300">{p.profissao}</dd>
               </>
             )}
             {p.idade != null && (
               <>
-                <dt className="text-zinc-400 dark:text-zinc-500">Idade</dt>
-                <dd className="text-zinc-700 dark:text-zinc-300">{p.idade} anos</dd>
+                <dt className="text-neutral-400 dark:text-neutral-500">Idade</dt>
+                <dd className="text-neutral-700 dark:text-neutral-300">{p.idade} anos</dd>
               </>
             )}
             {p.antecedentes && (
               <>
-                <dt className="text-zinc-400 dark:text-zinc-500">Antecedentes</dt>
-                <dd className="text-zinc-700 dark:text-zinc-300">{p.antecedentes}</dd>
+                <dt className="text-neutral-400 dark:text-neutral-500">Antecedentes</dt>
+                <dd className="text-neutral-700 dark:text-neutral-300">{p.antecedentes}</dd>
               </>
             )}
             {p.status_intimacao && (
               <>
-                <dt className="text-zinc-400 dark:text-zinc-500">Intimação</dt>
+                <dt className="text-neutral-400 dark:text-neutral-500">Intimação</dt>
                 <dd>{statusBadge(p.status_intimacao)}</dd>
               </>
             )}
             {p.data_intimacao && (
               <>
-                <dt className="text-zinc-400 dark:text-zinc-500">Data</dt>
-                <dd className="text-zinc-700 dark:text-zinc-300">{p.data_intimacao}</dd>
+                <dt className="text-neutral-400 dark:text-neutral-500">Data</dt>
+                <dd className="text-neutral-700 dark:text-neutral-300">{p.data_intimacao}</dd>
               </>
             )}
           </dl>
 
           {p.relacao_fatos && (
-            <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/50 p-3 text-[13px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">Relação com os fatos: </span>
+            <div className="rounded-lg bg-neutral-50 dark:bg-neutral-800/50 p-3 text-[13px] text-neutral-600 dark:text-neutral-400 leading-relaxed">
+              <span className="font-medium text-neutral-700 dark:text-neutral-300">Relação com os fatos: </span>
               {p.relacao_fatos}
             </div>
           )}
@@ -277,7 +277,7 @@ function PessoaCard({ p, index }: { p: Pessoa; index: number }) {
               {perguntasOpen && (
                 <ol className="divide-y divide-blue-50 dark:divide-blue-900/20">
                   {p.perguntas_sugeridas!.map((q, qi) => (
-                    <li key={qi} className="px-3 py-2.5 text-[13px] text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900/20 leading-snug">
+                    <li key={qi} className="px-3 py-2.5 text-[13px] text-neutral-700 dark:text-neutral-300 bg-white dark:bg-neutral-900/20 leading-snug">
                       <span className="text-blue-500 font-semibold mr-2">{qi + 1}.</span>
                       {q}
                     </li>
@@ -303,7 +303,7 @@ function PessoaCard({ p, index }: { p: Pessoa; index: number }) {
               {contradicoesOpen && (
                 <ul className="divide-y divide-amber-50 dark:divide-amber-900/20">
                   {p.contradicoes!.map((c, ci) => (
-                    <li key={ci} className="px-3 py-2.5 text-[13px] text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900/20 leading-snug flex gap-2">
+                    <li key={ci} className="px-3 py-2.5 text-[13px] text-neutral-700 dark:text-neutral-300 bg-white dark:bg-neutral-900/20 leading-snug flex gap-2">
                       <AlertTriangle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-amber-500" />
                       {c}
                     </li>
@@ -347,8 +347,8 @@ export function AnalisePartes({ pessoas }: AnalisePartesProps) {
   if (pessoas.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <User className="h-10 w-10 text-zinc-300 dark:text-zinc-600 mb-4" />
-        <p className="text-[14px] text-zinc-500 dark:text-zinc-400 max-w-sm">
+        <User className="h-10 w-10 text-neutral-300 dark:text-neutral-600 mb-4" />
+        <p className="text-[14px] text-neutral-500 dark:text-neutral-400 max-w-sm">
           Nenhuma pessoa identificada. Execute uma análise para extrair as partes do caso.
         </p>
       </div>
@@ -359,18 +359,18 @@ export function AnalisePartes({ pessoas }: AnalisePartesProps) {
     <div className="space-y-6">
 
       {/* ── Summary bar ── */}
-      <div className="flex flex-wrap items-center gap-3 text-[13px] text-zinc-500 dark:text-zinc-400">
+      <div className="flex flex-wrap items-center gap-3 text-[13px] text-neutral-500 dark:text-neutral-400">
         <span className="flex items-center gap-1.5">
           <User className="h-3.5 w-3.5" />
-          <strong className="text-zinc-700 dark:text-zinc-300">{pessoas.length}</strong> pessoas identificadas
+          <strong className="text-neutral-700 dark:text-neutral-300">{pessoas.length}</strong> pessoas identificadas
         </span>
-        <span className="text-zinc-300 dark:text-zinc-600">·</span>
+        <span className="text-neutral-300 dark:text-neutral-600">·</span>
         <span>
-          <strong className="text-zinc-700 dark:text-zinc-300">{totalTestemunhas}</strong> testemunhas
+          <strong className="text-neutral-700 dark:text-neutral-300">{totalTestemunhas}</strong> testemunhas
         </span>
         {totalContradicoes > 0 && (
           <>
-            <span className="text-zinc-300 dark:text-zinc-600">·</span>
+            <span className="text-neutral-300 dark:text-neutral-600">·</span>
             <span className="text-amber-600 dark:text-amber-400 font-medium">
               {totalContradicoes} com contradições
             </span>
@@ -380,18 +380,18 @@ export function AnalisePartes({ pessoas }: AnalisePartesProps) {
 
       {/* ── Painel de Depoentes — Tabela ── */}
       {depoentes.length > 0 && (
-        <div className="rounded-xl border border-zinc-100 dark:border-zinc-800 overflow-hidden">
-          <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
-            <h2 className="text-[16px] font-semibold text-zinc-900 dark:text-zinc-100">
+        <div className="rounded-xl border border-neutral-100 dark:border-neutral-800 overflow-hidden">
+          <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800">
+            <h2 className="text-[16px] font-semibold text-neutral-900 dark:text-neutral-100">
               Painel de Depoentes
             </h2>
-            <p className="mt-0.5 text-[12px] text-zinc-400 dark:text-zinc-500">
+            <p className="mt-0.5 text-[12px] text-neutral-400 dark:text-neutral-500">
               Status de intimação e depoimentos anteriores
             </p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-xs uppercase text-zinc-500 dark:text-zinc-400">
+              <thead className="bg-neutral-50 dark:bg-neutral-800/50 text-xs uppercase text-neutral-500 dark:text-neutral-400">
                 <tr>
                   <th className="px-4 py-3 text-left font-semibold tracking-wide">Nome</th>
                   <th className="px-4 py-3 text-left font-semibold tracking-wide">Papel</th>
@@ -400,13 +400,13 @@ export function AnalisePartes({ pessoas }: AnalisePartesProps) {
                   <th className="px-4 py-3 text-left font-semibold tracking-wide">Status Intimação</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {depoentes.map((p, i) => {
                   const badge = papelBadge(p.tipo);
                   return (
-                    <tr key={i} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/20 transition-colors">
+                    <tr key={i} className="hover:bg-neutral-50/60 dark:hover:bg-neutral-800/20 transition-colors">
                       <td className="px-4 py-3">
-                        <span className="text-[14px] font-medium text-zinc-800 dark:text-zinc-200">{p.nome}</span>
+                        <span className="text-[14px] font-medium text-neutral-800 dark:text-neutral-200">{p.nome}</span>
                         {p.preso === true && (
                           <span className="ml-2 inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
                             Preso
@@ -426,7 +426,7 @@ export function AnalisePartes({ pessoas }: AnalisePartesProps) {
                       </td>
                       <td className="px-4 py-3">
                         {statusBadge(p.status_intimacao) ?? (
-                          <span className="text-[12px] text-zinc-400 dark:text-zinc-500">—</span>
+                          <span className="text-[12px] text-neutral-400 dark:text-neutral-500">—</span>
                         )}
                       </td>
                     </tr>
@@ -458,7 +458,7 @@ export function AnalisePartes({ pessoas }: AnalisePartesProps) {
       {/* ── Person cards grouped ── */}
       {grupos.map(grupo => (
         <div key={grupo.key}>
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-3">
+          <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-3">
             {grupo.label}
           </p>
           <div className="space-y-3">

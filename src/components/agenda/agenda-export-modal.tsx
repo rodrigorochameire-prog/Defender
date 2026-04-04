@@ -60,13 +60,13 @@ export function AgendaExportModal({ isOpen, onClose, eventos }: AgendaExportModa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-white dark:bg-zinc-900">
+      <DialogContent className="max-w-md bg-white dark:bg-neutral-900">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+          <DialogTitle className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
             <Download className="w-6 h-6 text-emerald-600" />
             Exportar Agenda
           </DialogTitle>
-          <DialogDescription className="text-sm text-zinc-500 dark:text-zinc-400">
+          <DialogDescription className="text-sm text-neutral-500 dark:text-neutral-400">
             Selecione o formato e as opções de exportação.
           </DialogDescription>
         </DialogHeader>
@@ -102,13 +102,13 @@ export function AgendaExportModal({ isOpen, onClose, eventos }: AgendaExportModa
               <button
                 type="button"
                 onClick={() => setIncluirCancelados(!incluirCancelados)}
-                className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50"
+                className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-50"
               >
                 <div
                   className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                     incluirCancelados
                       ? "bg-emerald-600 border-emerald-600"
-                      : "border-zinc-300 dark:border-zinc-600"
+                      : "border-neutral-300 dark:border-neutral-600"
                   }`}
                 >
                   {incluirCancelados && <CheckSquare className="w-4 h-4 text-white" />}
@@ -121,13 +121,13 @@ export function AgendaExportModal({ isOpen, onClose, eventos }: AgendaExportModa
               <button
                 type="button"
                 onClick={() => setIncluirConcluidos(!incluirConcluidos)}
-                className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50"
+                className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-50"
               >
                 <div
                   className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                     incluirConcluidos
                       ? "bg-emerald-600 border-emerald-600"
-                      : "border-zinc-300 dark:border-zinc-600"
+                      : "border-neutral-300 dark:border-neutral-600"
                   }`}
                 >
                   {incluirConcluidos && <CheckSquare className="w-4 h-4 text-white" />}
@@ -145,7 +145,7 @@ export function AgendaExportModal({ isOpen, onClose, eventos }: AgendaExportModa
           </div>
 
           {/* Botões */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+          <div className="flex justify-end gap-3 pt-4 border-t border-neutral-200 dark:border-neutral-800">
             <Button variant="outline" onClick={onClose}>
               Cancelar
             </Button>

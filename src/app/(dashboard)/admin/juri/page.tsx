@@ -59,7 +59,7 @@ export default function JuriPage() {
         <div className="flex items-center gap-4">
           {/* Title */}
           <div className="flex items-center gap-3 shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-zinc-800 dark:bg-zinc-200 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-neutral-800 dark:bg-neutral-200 flex items-center justify-center">
               <Gavel className="w-5 h-5 text-white dark:text-foreground" />
             </div>
             <div>
@@ -106,8 +106,8 @@ export default function JuriPage() {
             href="/admin/juri/cockpit"
             className={cn(
               "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all shrink-0",
-              "bg-zinc-500 dark:bg-zinc-300 text-white dark:text-zinc-900",
-              "hover:bg-zinc-400 dark:hover:bg-zinc-200 shadow-sm"
+              "bg-neutral-500 dark:bg-neutral-300 text-white dark:text-neutral-900",
+              "hover:bg-neutral-400 dark:hover:bg-neutral-200 shadow-sm"
             )}
           >
             <Zap className="w-3.5 h-3.5" />
@@ -129,7 +129,7 @@ export default function JuriPage() {
                   className={cn(
                     "flex items-center gap-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
                     isActive
-                      ? "px-3 py-1.5 bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
+                      ? "px-3 py-1.5 bg-neutral-700 dark:bg-neutral-300 text-white dark:text-neutral-900 shadow-sm"
                       : "px-2.5 py-1.5 text-muted-foreground"
                   )}
                 >

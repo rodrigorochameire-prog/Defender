@@ -137,9 +137,9 @@ export default function AvaliacoesListPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* SUB-HEADER - Padrão Defender */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Link href="/admin/juri">
@@ -151,8 +151,8 @@ export default function AvaliacoesListPage() {
               <ClipboardCheck className="w-4 h-4 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Avaliações do Júri</h1>
-              <p className="text-[10px] text-zinc-500">Observação comportamental dos jurados</p>
+              <h1 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Avaliações do Júri</h1>
+              <p className="text-[10px] text-neutral-500">Observação comportamental dos jurados</p>
             </div>
           </div>
         </div>

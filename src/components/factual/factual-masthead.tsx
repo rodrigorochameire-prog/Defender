@@ -33,11 +33,11 @@ export function FactualMasthead({
       <header
         className={cn(
           "relative w-full bg-[#1a1a2e] text-white",
-          "dark:bg-zinc-950 dark:border-b dark:border-border"
+          "dark:bg-neutral-950 dark:border-b dark:border-border"
         )}
       >
         {/* Top bar */}
-        <div className="flex items-center justify-between px-4 py-1.5 text-xs text-zinc-400 border-b border-white/10">
+        <div className="flex items-center justify-between px-4 py-1.5 text-xs text-neutral-400 border-b border-white/10">
           <span className="capitalize">{dataFormatada}</span>
           <div className="flex items-center gap-3">
             <span className="hidden sm:inline">
@@ -47,7 +47,7 @@ export function FactualMasthead({
               variant="ghost"
               size="sm"
               onClick={onOpenFavoritos}
-              className="relative h-7 gap-1.5 text-zinc-300 hover:text-white hover:bg-white/10"
+              className="relative h-7 gap-1.5 text-neutral-300 hover:text-white hover:bg-white/10"
             >
               <Bookmark className="h-3.5 w-3.5" />
               <span className="text-xs">Salvos</span>
@@ -80,7 +80,7 @@ export function FactualMasthead({
               Di&aacute;rio da Bahia
             </h1>
 
-            <p className="mt-2 text-xs sm:text-sm tracking-[0.25em] uppercase text-zinc-400">
+            <p className="mt-2 text-xs sm:text-sm tracking-[0.25em] uppercase text-neutral-400">
               Camaçari &middot; Salvador &middot; Bahia &middot; Brasil &middot; Mundo
             </p>
 

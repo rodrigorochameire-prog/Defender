@@ -307,7 +307,7 @@ export function FilesByProcesso({
                       "flex items-center gap-3 p-3 rounded-lg border transition-colors",
                       isSelected
                         ? "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20"
-                        : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900",
+                        : "border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900",
                       isSelectionMode && "cursor-pointer"
                     )}
                     onClick={isSelectionMode ? () => toggleFileSelection(file.id) : undefined}
@@ -332,7 +332,7 @@ export function FilesByProcesso({
                         color === "purple" && "bg-purple-100 dark:bg-purple-900/30",
                         color === "pink" && "bg-pink-100 dark:bg-pink-900/30",
                         color === "blue" && "bg-blue-100 dark:bg-blue-900/30",
-                        color === "zinc" && "bg-zinc-100 dark:bg-zinc-800"
+                        color === "zinc" && "bg-neutral-100 dark:bg-neutral-800"
                       )}
                     >
                       <FileIcon
@@ -345,25 +345,25 @@ export function FilesByProcesso({
                           color === "purple" && "text-purple-600",
                           color === "pink" && "text-pink-600",
                           color === "blue" && "text-blue-600",
-                          color === "zinc" && "text-zinc-500"
+                          color === "zinc" && "text-neutral-500"
                         )}
                       />
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                      <p className="font-medium text-sm text-neutral-900 dark:text-neutral-100 truncate">
                         {file.name}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-zinc-500">
+                        <span className="text-xs text-neutral-500">
                           {formatFileSize(file.fileSize)}
                         </span>
                         {file.lastModifiedTime && (
                           <>
-                            <span className="text-zinc-300 dark:text-zinc-700">
+                            <span className="text-neutral-300 dark:text-neutral-700">
                               •
                             </span>
-                            <span className="text-xs text-zinc-500">
+                            <span className="text-xs text-neutral-500">
                               {formatDistanceToNow(
                                 new Date(file.lastModifiedTime),
                                 { addSuffix: true, locale: ptBR }
@@ -421,8 +421,8 @@ export function FilesByProcesso({
             </div>
           ) : (
             <div className="text-center py-8">
-              <FolderOpen className="h-12 w-12 mx-auto text-zinc-300 dark:text-zinc-600 mb-3" />
-              <p className="text-zinc-500 dark:text-zinc-400">
+              <FolderOpen className="h-12 w-12 mx-auto text-neutral-300 dark:text-neutral-600 mb-3" />
+              <p className="text-neutral-500 dark:text-neutral-400">
                 Nenhum arquivo vinculado
               </p>
               {showUpload && driveFolderId && (

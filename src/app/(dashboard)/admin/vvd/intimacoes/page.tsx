@@ -211,9 +211,9 @@ export default function IntimacoesVVDPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header Secundário - Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Link href="/admin/vvd">
@@ -222,12 +222,12 @@ export default function IntimacoesVVDPage() {
                 <span className="hidden sm:inline">Voltar</span>
               </Button>
             </Link>
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
-              <Bell className="w-5 h-5 text-white dark:text-zinc-900" />
+            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
+              <Bell className="w-5 h-5 text-white dark:text-neutral-900" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Intimações VVD</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 hidden sm:block">Controle de prazos e ciências de violência doméstica</p>
+              <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">Intimações VVD</h1>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 hidden sm:block">Controle de prazos e ciências de violência doméstica</p>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={() => refetch()} className="h-8">
@@ -241,7 +241,7 @@ export default function IntimacoesVVDPage() {
       <div className="p-4 md:p-6 space-y-6">
 
       {/* Stats Ribbon */}
-      <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+      <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
         {[
           { icon: Bell, value: contadores.total, label: "total", onClick: () => setStatusFiltro("todos"), active: statusFiltro === "todos" },
           { icon: Clock, value: contadores.pendentes, label: "pendentes", onClick: () => setStatusFiltro("pendente"), active: statusFiltro === "pendente", alert: contadores.pendentes > 0 },
@@ -252,19 +252,19 @@ export default function IntimacoesVVDPage() {
           const Icon = stat.icon;
           return (
             <Fragment key={index}>
-              {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
+              {index > 0 && <div className="w-px h-4 bg-neutral-200/60 dark:bg-neutral-700/60 flex-shrink-0" />}
               <button
                 onClick={stat.onClick}
                 className={cn(
                   "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors",
                   stat.onClick && "cursor-pointer",
-                  stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-zinc-50 dark:hover:bg-zinc-800",
+                  stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-neutral-50 dark:hover:bg-neutral-800",
                   stat.alert && !stat.active ? "bg-rose-50 dark:bg-rose-950/20" : ""
                 )}
               >
-                <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-rose-500 dark:text-rose-400" : stat.active ? "text-emerald-500 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500")} />
-                <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-600 dark:text-rose-400" : "text-zinc-800 dark:text-zinc-100")}>{stat.value}</span>
-                <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.label}</span>
+                <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-rose-500 dark:text-rose-400" : stat.active ? "text-emerald-500 dark:text-emerald-400" : "text-neutral-400 dark:text-neutral-500")} />
+                <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-600 dark:text-rose-400" : "text-neutral-800 dark:text-neutral-100")}>{stat.value}</span>
+                <span className="text-neutral-500 dark:text-neutral-400 font-medium">{stat.label}</span>
               </button>
             </Fragment>
           );
@@ -541,7 +541,7 @@ export default function IntimacoesVVDPage() {
             <Button
               onClick={handleCriarAudiencia}
               disabled={!audienciaData || criarAudienciaMutation.isPending}
-              className="bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white"
+              className="bg-neutral-900 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white"
             >
               {criarAudienciaMutation.isPending ? "Criando..." : "Agendar Audiência"}
             </Button>

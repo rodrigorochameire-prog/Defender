@@ -49,7 +49,7 @@ export function CountdownBadge({ eventDate }: CountdownBadgeProps) {
       );
     }
     return (
-      <Badge className="bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 border-0 text-[10px] px-1.5 py-0.5 font-medium">
+      <Badge className="bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400 border-0 text-[10px] px-1.5 py-0.5 font-medium">
         Em {days}d
       </Badge>
     );
@@ -58,7 +58,7 @@ export function CountdownBadge({ eventDate }: CountdownBadgeProps) {
   // Today
   if (diff < 0) {
     return (
-      <Badge className="bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 border-0 text-[10px] px-1.5 py-0.5 font-medium animate-pulse">
+      <Badge className="bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400 border-0 text-[10px] px-1.5 py-0.5 font-medium animate-pulse">
         Em andamento
       </Badge>
     );

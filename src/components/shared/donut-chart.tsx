@@ -65,7 +65,7 @@ export function DonutChart({
             stroke="currentColor" 
             strokeWidth={config.strokeWidth} 
             fill="transparent" 
-            className="text-stone-200 dark:text-zinc-800" 
+            className="text-stone-200 dark:text-neutral-800" 
           />
           
           {/* Progress Circle */}
@@ -95,7 +95,7 @@ export function DonutChart({
       </div>
       
       {/* Label */}
-      <span className="mt-2 text-xs font-medium text-stone-500 dark:text-zinc-400 uppercase tracking-wide text-center">
+      <span className="mt-2 text-xs font-medium text-stone-500 dark:text-neutral-400 uppercase tracking-wide text-center">
         {label}
       </span>
     </div>

@@ -14,8 +14,8 @@ export default function PlanilhaPage() {
 
   if (isLoading) return (
     <div className="p-6 space-y-4">
-      <Skeleton className="h-8 w-64 bg-zinc-800" />
-      <Skeleton className="h-48 bg-zinc-800 rounded-lg" />
+      <Skeleton className="h-8 w-64 bg-neutral-800" />
+      <Skeleton className="h-48 bg-neutral-800 rounded-lg" />
     </div>
   );
 
@@ -23,13 +23,13 @@ export default function PlanilhaPage() {
   if (!gs?.googleLinked) {
     return (
       <div className="p-6 max-w-2xl">
-        <h1 className="text-lg font-bold text-zinc-100 mb-6 flex items-center gap-2">
+        <h1 className="text-lg font-bold text-neutral-100 mb-6 flex items-center gap-2">
           <FileSpreadsheet className="h-5 w-5 text-emerald-500" />
           Sincronizar com Google Sheets
         </h1>
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-neutral-900 border-neutral-800">
           <CardContent className="p-6 space-y-4">
-            <p className="text-sm text-zinc-400">Sincronize suas demandas com uma planilha do Google para acompanhar de qualquer lugar.</p>
+            <p className="text-sm text-neutral-400">Sincronize suas demandas com uma planilha do Google para acompanhar de qualquer lugar.</p>
 
             <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
               <div className="flex gap-2 items-start">
@@ -39,8 +39,8 @@ export default function PlanilhaPage() {
             </div>
 
             <div className="space-y-2">
-              <p className="text-xs font-medium text-zinc-300">Passo a passo:</p>
-              <ol className="text-xs text-zinc-500 space-y-1 list-decimal list-inside">
+              <p className="text-xs font-medium text-neutral-300">Passo a passo:</p>
+              <ol className="text-xs text-neutral-500 space-y-1 list-decimal list-inside">
                 <li>Clique no botão abaixo</li>
                 <li>Uma janela do Google vai abrir</li>
                 <li>Faça login com seu email Google</li>
@@ -64,17 +64,17 @@ export default function PlanilhaPage() {
   if (!gs.sheetsSpreadsheetUrl) {
     return (
       <div className="p-6 max-w-2xl">
-        <h1 className="text-lg font-bold text-zinc-100 mb-6 flex items-center gap-2">
+        <h1 className="text-lg font-bold text-neutral-100 mb-6 flex items-center gap-2">
           <FileSpreadsheet className="h-5 w-5 text-emerald-500" />
           Sincronizar com Google Sheets
         </h1>
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-neutral-900 border-neutral-800">
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-500" />
               <p className="text-sm text-emerald-400">Google vinculado: {gs.googleEmail}</p>
             </div>
-            <p className="text-sm text-zinc-400">Sua planilha personalizada será criada com abas para cada área que você atua.</p>
+            <p className="text-sm text-neutral-400">Sua planilha personalizada será criada com abas para cada área que você atua.</p>
             <Button className="w-full bg-emerald-600 hover:bg-emerald-700"
               onClick={() => createSheets.mutate()}
               disabled={createSheets.isPending}
@@ -91,26 +91,26 @@ export default function PlanilhaPage() {
   // State 3: Everything linked
   return (
     <div className="p-6 max-w-2xl">
-      <h1 className="text-lg font-bold text-zinc-100 mb-6 flex items-center gap-2">
+      <h1 className="text-lg font-bold text-neutral-100 mb-6 flex items-center gap-2">
         <FileSpreadsheet className="h-5 w-5 text-emerald-500" />
         Google Sheets — Sincronizado
       </h1>
-      <Card className="bg-zinc-900 border-emerald-800/50">
+      <Card className="bg-neutral-900 border-emerald-800/50">
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
             <p className="text-sm text-emerald-400">Conta: {gs.googleEmail}</p>
           </div>
           <a href={gs.sheetsSpreadsheetUrl} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 p-3 rounded-lg bg-zinc-800/50 border border-zinc-800 hover:border-emerald-800/50 transition-colors">
+            className="flex items-center gap-2 p-3 rounded-lg bg-neutral-800/50 border border-neutral-800 hover:border-emerald-800/50 transition-colors">
             <FileSpreadsheet className="h-5 w-5 text-emerald-500" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-zinc-200 truncate">Abrir planilha</p>
-              <p className="text-xs text-zinc-500 truncate">{gs.sheetsSpreadsheetUrl}</p>
+              <p className="text-sm font-medium text-neutral-200 truncate">Abrir planilha</p>
+              <p className="text-xs text-neutral-500 truncate">{gs.sheetsSpreadsheetUrl}</p>
             </div>
-            <ExternalLink className="h-4 w-4 text-zinc-500" />
+            <ExternalLink className="h-4 w-4 text-neutral-500" />
           </a>
-          <div className="flex items-center justify-between text-xs text-zinc-500 pt-2 border-t border-zinc-800">
+          <div className="flex items-center justify-between text-xs text-neutral-500 pt-2 border-t border-neutral-800">
             <span>Sync: {gs.sheetsSyncEnabled ? "Ativo" : "Desativado"}</span>
             <Button variant="ghost" size="sm" className="text-xs text-red-400 hover:text-red-300"
               onClick={() => { if (confirm("Desvincular Google? Isso não apaga a planilha.")) unlink.mutate(); }}>

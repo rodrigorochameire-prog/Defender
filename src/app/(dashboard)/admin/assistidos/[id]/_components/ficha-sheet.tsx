@@ -98,7 +98,7 @@ function CopyButton({ value }: { value: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="ml-1 text-zinc-300 hover:text-zinc-600 transition-colors"
+      className="ml-1 text-neutral-300 hover:text-neutral-600 transition-colors"
       title="Copiar"
       aria-label={copied ? "Copiado" : "Copiar"}
     >
@@ -121,11 +121,11 @@ function FieldRow({
   className?: string;
 }) {
   return (
-    <div className={cn("py-2 border-b border-zinc-100 dark:border-zinc-800 last:border-b-0", className)}>
-      <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-0.5">
+    <div className={cn("py-2 border-b border-neutral-100 dark:border-neutral-800 last:border-b-0", className)}>
+      <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-0.5">
         {label}
       </p>
-      <div className="text-[11px] text-zinc-700 dark:text-zinc-300 flex items-center gap-1">
+      <div className="text-[11px] text-neutral-700 dark:text-neutral-300 flex items-center gap-1">
         {children}
       </div>
     </div>
@@ -134,7 +134,7 @@ function FieldRow({
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-2">
+    <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-2">
       {children}
     </p>
   );
@@ -189,11 +189,11 @@ export function AssistidoFichaSheet({
         className="w-80 sm:w-96 p-0 overflow-y-auto"
       >
         {/* Sheet Header */}
-        <SheetHeader className="px-4 pt-4 pb-3 border-b border-zinc-100 dark:border-zinc-800">
-          <SheetTitle className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+        <SheetHeader className="px-4 pt-4 pb-3 border-b border-neutral-100 dark:border-neutral-800">
+          <SheetTitle className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">
             Ficha do Assistido
           </SheetTitle>
-          <p className="text-[11px] text-zinc-400 truncate">{assistido.nome}</p>
+          <p className="text-[11px] text-neutral-400 truncate">{assistido.nome}</p>
         </SheetHeader>
 
         {/* Conteúdo */}
@@ -219,7 +219,7 @@ export function AssistidoFichaSheet({
                 <FieldRow label="Data de Nascimento">
                   <span>{dataNascFormatada}</span>
                   {idade !== null && (
-                    <span className="text-zinc-400">({idade} anos)</span>
+                    <span className="text-neutral-400">({idade} anos)</span>
                   )}
                 </FieldRow>
               )}
@@ -275,7 +275,7 @@ export function AssistidoFichaSheet({
                         <span className="font-medium">{assistido.nomeContato}</span>
                       )}
                       {assistido.parentescoContato && (
-                        <span className="text-zinc-400 ml-1">({assistido.parentescoContato})</span>
+                        <span className="text-neutral-400 ml-1">({assistido.parentescoContato})</span>
                       )}
                       {assistido.telefoneContato && (
                         <span className="ml-1 tabular-nums">{assistido.telefoneContato}</span>
@@ -291,7 +291,7 @@ export function AssistidoFichaSheet({
           {assistido.endereco && (
             <div>
               <SectionTitle>Endereço</SectionTitle>
-              <p className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed">
+              <p className="text-[11px] text-neutral-700 dark:text-neutral-300 leading-relaxed">
                 {assistido.endereco}
               </p>
             </div>
@@ -304,7 +304,7 @@ export function AssistidoFichaSheet({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 text-[11px] gap-1.5 border-zinc-200 text-zinc-600 hover:bg-zinc-50 col-span-2"
+                className="h-8 text-[11px] gap-1.5 border-neutral-200 text-neutral-600 hover:bg-neutral-50 col-span-2"
                 onClick={handlePrint}
               >
                 <Printer className="h-3 w-3" />
@@ -360,7 +360,7 @@ export function AssistidoFichaSheet({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 text-[11px] gap-1.5 border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                    className="h-8 text-[11px] gap-1.5 border-neutral-200 text-neutral-600 hover:bg-neutral-50"
                     asChild
                   >
                     <a
@@ -407,8 +407,8 @@ export function AssistidoFichaSheet({
                   {/* Resumo */}
                   {analysisData.resumo && (
                     <div>
-                      <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-1">Resumo</p>
-                      <p className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                      <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-1">Resumo</p>
+                      <p className="text-[11px] text-neutral-700 dark:text-neutral-300 leading-relaxed">
                         {analysisData.resumo}
                       </p>
                     </div>
@@ -418,27 +418,27 @@ export function AssistidoFichaSheet({
                   {analysisData.kpis && (
                     <div className="grid grid-cols-3 gap-1.5">
                       {analysisData.kpis.totalDocumentosAnalisados !== undefined && (
-                        <div className="bg-zinc-50 dark:bg-zinc-900 rounded p-1.5 text-center">
-                          <p className="text-[13px] font-semibold text-zinc-700 dark:text-zinc-200 tabular-nums">
+                        <div className="bg-neutral-50 dark:bg-neutral-900 rounded p-1.5 text-center">
+                          <p className="text-[13px] font-semibold text-neutral-700 dark:text-neutral-200 tabular-nums">
                             {analysisData.kpis.totalDocumentosAnalisados}
                           </p>
-                          <p className="text-[9px] text-zinc-400 leading-tight">Docs</p>
+                          <p className="text-[9px] text-neutral-400 leading-tight">Docs</p>
                         </div>
                       )}
                       {analysisData.kpis.totalPessoas !== undefined && (
-                        <div className="bg-zinc-50 dark:bg-zinc-900 rounded p-1.5 text-center">
-                          <p className="text-[13px] font-semibold text-zinc-700 dark:text-zinc-200 tabular-nums">
+                        <div className="bg-neutral-50 dark:bg-neutral-900 rounded p-1.5 text-center">
+                          <p className="text-[13px] font-semibold text-neutral-700 dark:text-neutral-200 tabular-nums">
                             {analysisData.kpis.totalPessoas}
                           </p>
-                          <p className="text-[9px] text-zinc-400 leading-tight">Pessoas</p>
+                          <p className="text-[9px] text-neutral-400 leading-tight">Pessoas</p>
                         </div>
                       )}
                       {analysisData.kpis.totalEventos !== undefined && (
-                        <div className="bg-zinc-50 dark:bg-zinc-900 rounded p-1.5 text-center">
-                          <p className="text-[13px] font-semibold text-zinc-700 dark:text-zinc-200 tabular-nums">
+                        <div className="bg-neutral-50 dark:bg-neutral-900 rounded p-1.5 text-center">
+                          <p className="text-[13px] font-semibold text-neutral-700 dark:text-neutral-200 tabular-nums">
                             {analysisData.kpis.totalEventos}
                           </p>
-                          <p className="text-[9px] text-zinc-400 leading-tight">Eventos</p>
+                          <p className="text-[9px] text-neutral-400 leading-tight">Eventos</p>
                         </div>
                       )}
                     </div>
@@ -447,10 +447,10 @@ export function AssistidoFichaSheet({
                   {/* Achados-chave */}
                   {analysisData.achadosChave && analysisData.achadosChave.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-1">Achados-chave</p>
+                      <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-1">Achados-chave</p>
                       <ul className="space-y-1">
                         {analysisData.achadosChave.map((achado, i) => (
-                          <li key={i} className="flex items-start gap-1.5 text-[11px] text-zinc-700 dark:text-zinc-300">
+                          <li key={i} className="flex items-start gap-1.5 text-[11px] text-neutral-700 dark:text-neutral-300">
                             <AlertCircle className="h-3 w-3 text-blue-500 mt-0.5 shrink-0" />
                             <span className="leading-relaxed">{achado}</span>
                           </li>
@@ -462,10 +462,10 @@ export function AssistidoFichaSheet({
                   {/* Recomendações */}
                   {analysisData.recomendacoes && analysisData.recomendacoes.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-1">Recomendações</p>
+                      <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-1">Recomendações</p>
                       <ul className="space-y-1">
                         {analysisData.recomendacoes.map((rec, i) => (
-                          <li key={i} className="flex items-start gap-1.5 text-[11px] text-zinc-700 dark:text-zinc-300">
+                          <li key={i} className="flex items-start gap-1.5 text-[11px] text-neutral-700 dark:text-neutral-300">
                             <Lightbulb className="h-3 w-3 text-emerald-500 mt-0.5 shrink-0" />
                             <span className="leading-relaxed">{rec}</span>
                           </li>
@@ -477,10 +477,10 @@ export function AssistidoFichaSheet({
                   {/* Inconsistências */}
                   {analysisData.inconsistencias && analysisData.inconsistencias.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-1">Inconsistências</p>
+                      <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-1">Inconsistências</p>
                       <ul className="space-y-1">
                         {analysisData.inconsistencias.map((inc, i) => (
-                          <li key={i} className="flex items-start gap-1.5 text-[11px] text-zinc-700 dark:text-zinc-300">
+                          <li key={i} className="flex items-start gap-1.5 text-[11px] text-neutral-700 dark:text-neutral-300">
                             <AlertTriangle className="h-3 w-3 text-amber-500 mt-0.5 shrink-0" />
                             <span className="leading-relaxed">{inc}</span>
                           </li>
@@ -500,17 +500,17 @@ export function AssistidoFichaSheet({
                         <Shield className="h-3 w-3" />
                         <span className="text-[10px] font-semibold">{(analysisData as any).radarLiberdade.status}</span>
                       </div>
-                      <p className="text-[10px] text-zinc-500">{(analysisData as any).radarLiberdade.detalhes}</p>
+                      <p className="text-[10px] text-neutral-500">{(analysisData as any).radarLiberdade.detalhes}</p>
                     </div>
                   )}
 
                   {/* Teses */}
                   {(analysisData as any).teses && (analysisData as any).teses.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-1">Teses</p>
+                      <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-1">Teses</p>
                       <ul className="space-y-1">
                         {(analysisData as any).teses.map((tese: string, i: number) => (
-                          <li key={i} className="flex items-start gap-1.5 text-[11px] text-zinc-700 dark:text-zinc-300">
+                          <li key={i} className="flex items-start gap-1.5 text-[11px] text-neutral-700 dark:text-neutral-300">
                             <Scale className="h-3 w-3 text-blue-500 mt-0.5 shrink-0" />
                             <span className="leading-relaxed">{tese}</span>
                           </li>
@@ -522,7 +522,7 @@ export function AssistidoFichaSheet({
                   {/* Saneamento */}
                   {(analysisData as any).saneamento?.pendencias?.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-1">Pendências</p>
+                      <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-1">Pendências</p>
                       <ul className="space-y-0.5">
                         {(analysisData as any).saneamento.pendencias.map((p: string, i: number) => (
                           <li key={i} className="text-[10px] text-orange-600 dark:text-orange-400 flex items-start gap-1">
@@ -534,12 +534,12 @@ export function AssistidoFichaSheet({
                   )}
 
                   {/* Rodapé: versão do modelo e data */}
-                  <div className="pt-1 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                  <div className="pt-1 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
                     {analysisData.versaoModelo && (
-                      <span className="text-[9px] text-zinc-400 font-mono">{analysisData.versaoModelo}</span>
+                      <span className="text-[9px] text-neutral-400 font-mono">{analysisData.versaoModelo}</span>
                     )}
                     {analysisDateFormatted && (
-                      <span className="text-[9px] text-zinc-400">{analysisDateFormatted}</span>
+                      <span className="text-[9px] text-neutral-400">{analysisDateFormatted}</span>
                     )}
                   </div>
                 </div>
@@ -551,7 +551,7 @@ export function AssistidoFichaSheet({
           <div>
             <Button
               variant="outline"
-              className="w-full h-8 text-[11px] gap-1.5 text-zinc-600 border-zinc-200 hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50"
+              className="w-full h-8 text-[11px] gap-1.5 text-neutral-600 border-neutral-200 hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50"
               asChild
             >
               <Link href={`/admin/assistidos/${assistido.id}/editar`}>

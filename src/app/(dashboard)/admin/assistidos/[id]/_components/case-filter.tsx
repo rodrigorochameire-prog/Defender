@@ -55,10 +55,10 @@ const COLOR_CONFIG: Record<string, { dot: string; iconBg: string; iconText: stri
 };
 
 const DEFAULT_CONFIG = {
-  dot: "bg-zinc-400",
-  iconBg: "bg-zinc-100 dark:bg-zinc-800",
-  iconText: "text-zinc-500 dark:text-zinc-400",
-  activeBorder: "border-zinc-400 dark:border-zinc-500",
+  dot: "bg-neutral-400",
+  iconBg: "bg-neutral-100 dark:bg-neutral-800",
+  iconText: "text-neutral-500 dark:text-neutral-400",
+  activeBorder: "border-neutral-400 dark:border-neutral-500",
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -88,8 +88,8 @@ export function CaseFilter({ cases, selectedCaseId, onSelectCase }: CaseFilterPr
             className={cn(
               "flex items-center gap-3.5 px-4 py-3.5 rounded-xl border text-left transition-all duration-150 shrink-0",
               selected
-                ? "bg-white dark:bg-zinc-800/60 border-zinc-300 dark:border-zinc-600 shadow-sm"
-                : "border-zinc-200/60 dark:border-zinc-800/60 bg-zinc-50/30 dark:bg-zinc-900/30 hover:bg-white dark:hover:bg-zinc-800/40 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-sm"
+                ? "bg-white dark:bg-neutral-800/60 border-neutral-300 dark:border-neutral-600 shadow-sm"
+                : "border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/30 dark:bg-neutral-900/30 hover:bg-white dark:hover:bg-neutral-800/40 hover:border-neutral-300 dark:hover:border-neutral-700 hover:shadow-sm"
             )}
           >
             {/* Icon with colored background */}
@@ -103,20 +103,20 @@ export function CaseFilter({ cases, selectedCaseId, onSelectCase }: CaseFilterPr
               {ref?.atribuicao && (
                 <span className={cn(
                   "text-[10px] uppercase tracking-wider font-semibold",
-                  selected ? colors.iconText : "text-zinc-400 dark:text-zinc-500"
+                  selected ? colors.iconText : "text-neutral-400 dark:text-neutral-500"
                 )}>
                   {ref.atribuicao.replace(/_/g, " ")}
                 </span>
               )}
 
               {/* Description */}
-              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
                 {description}
               </span>
 
               {/* Number line */}
               {ref?.numeroAutos && (
-                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">
+                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-mono">
                   {ref.numeroAutos}
                   {c.associadosCount > 0 && (
                     <> · {c.associadosCount} associado{c.associadosCount !== 1 ? "s" : ""}</>

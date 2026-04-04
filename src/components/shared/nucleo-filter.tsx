@@ -59,14 +59,14 @@ export function NucleoFilter({ className, compact = false }: NucleoFilterProps) 
               onClick={() => selecionarNucleo(key as Nucleo)}
               className={cn(
                 "flex items-center gap-2",
-                nucleoSelecionado === key && "bg-zinc-100 dark:bg-zinc-800"
+                nucleoSelecionado === key && "bg-neutral-100 dark:bg-neutral-800"
               )}
             >
               <div className={cn("w-2 h-2 rounded-full", config.bgColor)} />
               <div className="flex-1">
                 <span className="font-medium">{config.label}</span>
                 {key !== "TODOS" && (
-                  <span className="text-[10px] text-zinc-500 ml-1">({config.description})</span>
+                  <span className="text-[10px] text-neutral-500 ml-1">({config.description})</span>
                 )}
               </div>
               {nucleoSelecionado === key && (
@@ -79,7 +79,7 @@ export function NucleoFilter({ className, compact = false }: NucleoFilterProps) 
             <>
               <DropdownMenuSeparator />
               <div className="px-2 py-1.5 flex items-center justify-between">
-                <Label htmlFor="mostrar-outros" className="text-xs text-zinc-500">
+                <Label htmlFor="mostrar-outros" className="text-xs text-neutral-500">
                   Mostrar outros núcleos
                 </Label>
                 <Switch
@@ -115,9 +115,9 @@ export function NucleoFilter({ className, compact = false }: NucleoFilterProps) 
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72 p-0">
-        <div className="p-3 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="p-3 border-b border-neutral-100 dark:border-neutral-800">
           <h4 className="font-semibold text-sm">Filtrar por Núcleo</h4>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="text-xs text-neutral-500 mt-0.5">
             Escolha qual núcleo deseja visualizar
           </p>
         </div>
@@ -131,7 +131,7 @@ export function NucleoFilter({ className, compact = false }: NucleoFilterProps) 
                 "w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-left",
                 nucleoSelecionado === key
                   ? "bg-emerald-50 dark:bg-emerald-900/20"
-                  : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                  : "hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
               )}
             >
               <div className={cn("w-3 h-3 rounded-full", config.bgColor, config.color)} />
@@ -142,7 +142,7 @@ export function NucleoFilter({ className, compact = false }: NucleoFilterProps) 
                 )}>
                   {config.label}
                 </p>
-                <p className="text-[10px] text-zinc-500">{config.description}</p>
+                <p className="text-[10px] text-neutral-500">{config.description}</p>
               </div>
               {nucleoSelecionado === key && (
                 <div className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -152,17 +152,17 @@ export function NucleoFilter({ className, compact = false }: NucleoFilterProps) 
         </div>
 
         {podeVerTodos && (
-          <div className="p-3 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="p-3 border-t border-neutral-100 dark:border-neutral-800">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {mostrarOutrosNucleos ? (
                   <Eye className="w-4 h-4 text-emerald-500" />
                 ) : (
-                  <EyeOff className="w-4 h-4 text-zinc-400" />
+                  <EyeOff className="w-4 h-4 text-neutral-400" />
                 )}
                 <div>
                   <p className="text-xs font-medium">Exibir outros núcleos</p>
-                  <p className="text-[10px] text-zinc-500">
+                  <p className="text-[10px] text-neutral-500">
                     {mostrarOutrosNucleos ? "Todos visíveis" : "Apenas meu núcleo"}
                   </p>
                 </div>

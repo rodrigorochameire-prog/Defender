@@ -54,14 +54,14 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="!max-w-none w-[98vw] md:w-[98vw] h-[98vh] flex flex-col overflow-hidden bg-white dark:bg-zinc-950 p-0 gap-0" hideClose>
+      <DialogContent className="!max-w-none w-[98vw] md:w-[98vw] h-[98vh] flex flex-col overflow-hidden bg-white dark:bg-neutral-950 p-0 gap-0" hideClose>
         <DialogTitle className="sr-only">Registro de Audiência Judicial</DialogTitle>
         <DialogDescription className="sr-only">
           Sistema para registro de audiências com gestão de depoentes.
         </DialogDescription>
 
         {/* Header - Padrão Defender */}
-        <div className="bg-white dark:bg-zinc-950 border-b border-zinc-200/80 dark:border-border/80 px-3 py-2.5 md:px-4 md:py-3 flex items-center justify-between flex-shrink-0">
+        <div className="bg-white dark:bg-neutral-950 border-b border-neutral-200/80 dark:border-border/80 px-3 py-2.5 md:px-4 md:py-3 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2 md:gap-3 min-w-0">
             <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-foreground flex items-center justify-center flex-shrink-0 shadow-lg">
               <Gavel className="w-4 h-4 md:w-5 md:h-5 text-background" />
@@ -148,7 +148,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
             )}
             <button
               onClick={onClose}
-              className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-zinc-100 dark:bg-muted flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-muted transition-colors cursor-pointer"
+              className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-neutral-100 dark:bg-muted flex items-center justify-center hover:bg-neutral-200 dark:hover:bg-muted transition-colors cursor-pointer"
             >
               <X className="w-4 h-4 md:w-5 md:h-5 text-foreground/80" />
             </button>
@@ -156,7 +156,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-zinc-200 dark:border-border bg-zinc-50 dark:bg-muted/50 flex-shrink-0 overflow-x-auto">
+        <div className="border-b border-neutral-200 dark:border-border bg-neutral-50 dark:bg-muted/50 flex-shrink-0 overflow-x-auto">
           <div className="flex gap-0 px-2 md:px-4">
             {visibleTabs.map((tab) => {
               const Icon = tab.icon;
@@ -169,14 +169,14 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                   onClick={() => form.setActiveTab(tab.key)}
                   className={`px-3 sm:px-2 md:px-3 py-2.5 sm:py-2 md:py-3 text-xs md:text-sm font-semibold transition-all border-b-2 flex items-center gap-1.5 md:gap-2 whitespace-nowrap cursor-pointer ${
                     isActive
-                      ? "border-foreground text-foreground bg-white dark:bg-zinc-950"
+                      ? "border-foreground text-foreground bg-white dark:bg-neutral-950"
                       : "border-transparent text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <Icon className="w-5 h-5 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" />
                   <span className="hidden sm:inline">{tab.label}</span>
                   {count !== undefined && count > 0 && (
-                    <Badge className="bg-zinc-100 dark:bg-muted text-muted-foreground text-[10px] px-1.5 py-0">
+                    <Badge className="bg-neutral-100 dark:bg-muted text-muted-foreground text-[10px] px-1.5 py-0">
                       {count}
                     </Badge>
                   )}
@@ -277,8 +277,8 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
         </div>
 
         {/* Footer */}
-        <div className="border-t border-zinc-200 dark:border-border p-2 md:p-3 bg-zinc-50 dark:bg-muted/50 flex flex-col sm:flex-row items-center justify-between gap-2 flex-shrink-0">
-          <div className="text-xs text-zinc-500">
+        <div className="border-t border-neutral-200 dark:border-border p-2 md:p-3 bg-neutral-50 dark:bg-muted/50 flex flex-col sm:flex-row items-center justify-between gap-2 flex-shrink-0">
+          <div className="text-xs text-neutral-500">
             {form.registro.depoentes.length} depoente{form.registro.depoentes.length !== 1 ? "s" : ""}
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
@@ -293,7 +293,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
             <Button
               type="button"
               onClick={form.handleSubmit}
-              className="bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-900 flex-1 sm:flex-none text-xs md:text-sm h-8 md:h-9 cursor-pointer"
+              className="bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-neutral-900 flex-1 sm:flex-none text-xs md:text-sm h-8 md:h-9 cursor-pointer"
             >
               <Save className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1.5 md:mr-2" />
               {form.registroSalvo ? "Atualizar Registro" : "Salvar Registro"}

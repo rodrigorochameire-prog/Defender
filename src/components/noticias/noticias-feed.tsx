@@ -205,7 +205,7 @@ export function NoticiasFeed({ categoria, selectedNoticiaId, busca, fonteFilter,
               {grupos.map(({ label, items }) => (
                 <div key={label}>
                   {/* Separador de grupo */}
-                  <div className="flex items-center gap-2 px-5 py-2.5 sticky top-0 z-10 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-sm">
+                  <div className="flex items-center gap-2 px-5 py-2.5 sticky top-0 z-10 bg-white/95 dark:bg-neutral-950/95 backdrop-blur-sm">
                     <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground shrink-0">
                       {label}
                     </span>

@@ -101,15 +101,15 @@ function QuesitCard({ quesito, disabled, onVote, onRemove }: {
   onVote: (id: string, r: "sim" | "nao" | null) => void;
   onRemove?: (id: string) => void;
 }) {
-  const border = disabled ? "border-zinc-200/40 dark:border-zinc-800/40"
+  const border = disabled ? "border-neutral-200/40 dark:border-neutral-800/40"
     : quesito.resultado === "sim" ? "border-emerald-400 dark:border-emerald-600"
     : quesito.resultado === "nao" ? "border-rose-400 dark:border-rose-600"
-    : "border-zinc-200/80 dark:border-zinc-800/80";
+    : "border-neutral-200/80 dark:border-neutral-800/80";
   const c = TIPO_COLORS[quesito.tipo];
 
   return (
-    <div className={cn("flex items-start gap-3 rounded-xl border bg-white p-3 transition-all duration-200 dark:bg-zinc-900", border, disabled && "opacity-40 pointer-events-none")}>
-      <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold", disabled ? "bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-600" : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200")}>
+    <div className={cn("flex items-start gap-3 rounded-xl border bg-white p-3 transition-all duration-200 dark:bg-neutral-900", border, disabled && "opacity-40 pointer-events-none")}>
+      <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold", disabled ? "bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-600" : "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200")}>
         {quesito.numero}
       </div>
       <div className="min-w-0 flex-1 space-y-1.5">
@@ -118,28 +118,28 @@ function QuesitCard({ quesito, disabled, onVote, onRemove }: {
             {TIPO_LABELS[quesito.tipo]}
           </span>
           {quesito.obrigatorio && (
-            <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">obrigatorio</span>
+            <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500">obrigatorio</span>
           )}
         </div>
-        <p className="text-sm leading-snug text-zinc-900 dark:text-zinc-100">{quesito.texto}</p>
+        <p className="text-sm leading-snug text-neutral-900 dark:text-neutral-100">{quesito.texto}</p>
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
         <Button variant="ghost" size="sm"
           className={cn("h-8 gap-1 rounded-lg px-2.5 text-xs font-medium transition-colors",
             quesito.resultado === "sim" ? "bg-emerald-600 text-white hover:bg-emerald-700"
-            : "text-zinc-500 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400")}
+            : "text-neutral-500 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400")}
           onClick={() => onVote(quesito.id, quesito.resultado === "sim" ? null : "sim")}>
           <CheckCircle2 className="h-3.5 w-3.5" /> SIM
         </Button>
         <Button variant="ghost" size="sm"
           className={cn("h-8 gap-1 rounded-lg px-2.5 text-xs font-medium transition-colors",
             quesito.resultado === "nao" ? "bg-rose-600 text-white hover:bg-rose-700"
-            : "text-zinc-500 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-900/30 dark:hover:text-rose-400")}
+            : "text-neutral-500 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-900/30 dark:hover:text-rose-400")}
           onClick={() => onVote(quesito.id, quesito.resultado === "nao" ? null : "nao")}>
           <XCircle className="h-3.5 w-3.5" /> NAO
         </Button>
         {onRemove && (
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-rose-500"
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-400 hover:text-rose-500"
             onClick={() => onRemove(quesito.id)}>
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
@@ -210,21 +210,21 @@ export function MapaQuesitosVivo({ isDarkMode, faseSelecionada }: MapaQuesitosVi
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Scale className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
-          <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+          <Scale className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+          <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
             Mapa de Quesitos — art. 483 CPP
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">{votedCount} de {activeCount} votados</span>
-          <Button variant="ghost" size="sm" className="h-7 text-[10px] text-zinc-400 hover:text-zinc-600" onClick={() => setQuesitos(defaultQuesitos())}>
+          <span className="text-xs text-neutral-500 dark:text-neutral-400">{votedCount} de {activeCount} votados</span>
+          <Button variant="ghost" size="sm" className="h-7 text-[10px] text-neutral-400 hover:text-neutral-600" onClick={() => setQuesitos(defaultQuesitos())}>
             Resetar
           </Button>
         </div>
       </div>
 
       {/* Progress */}
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
         <div className="h-full rounded-full bg-emerald-500 transition-all duration-500"
           style={{ width: activeCount > 0 ? `${(votedCount / activeCount) * 100}%` : "0%" }} />
       </div>
@@ -233,7 +233,7 @@ export function MapaQuesitosVivo({ isDarkMode, faseSelecionada }: MapaQuesitosVi
       <div className="space-y-2">
         {quesitos.map((q) => (
           <div key={q.id} className="flex items-start gap-1">
-            {q.numero > 1 && <ChevronRight className="mt-3 h-3.5 w-3.5 shrink-0 text-zinc-300 dark:text-zinc-700" />}
+            {q.numero > 1 && <ChevronRight className="mt-3 h-3.5 w-3.5 shrink-0 text-neutral-300 dark:text-neutral-700" />}
             <div className="flex-1">
               <QuesitCard quesito={q} disabled={disabledMap[q.id] ?? false} onVote={handleVote}
                 onRemove={!q.obrigatorio ? handleRemove : undefined} />
@@ -244,24 +244,24 @@ export function MapaQuesitosVivo({ isDarkMode, faseSelecionada }: MapaQuesitosVi
 
       {/* Add quesito */}
       {showAddForm ? (
-        <div className="rounded-xl border border-zinc-200/80 bg-white p-3 dark:border-zinc-800/80 dark:bg-zinc-900">
+        <div className="rounded-xl border border-neutral-200/80 bg-white p-3 dark:border-neutral-800/80 dark:bg-neutral-900">
           <div className="space-y-2">
             <Input placeholder="Texto do quesito..." value={newTexto} onChange={(e) => setNewTexto(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAdd()} className="text-sm" />
             <div className="flex items-center gap-2">
               <select value={newTipo} onChange={(e) => setNewTipo(e.target.value as Quesito["tipo"])}
-                className={cn("h-8 rounded-lg border px-2 text-xs", "border-zinc-200 bg-white text-zinc-700", "dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300")}>
+                className={cn("h-8 rounded-lg border px-2 text-xs", "border-neutral-200 bg-white text-neutral-700", "dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300")}>
                 <option value="qualificadora">Qualificadora</option>
                 <option value="causa_diminuicao">Causa de Diminuicao</option>
                 <option value="privilegio">Privilegio</option>
               </select>
               <Button size="sm" className="h-8 bg-emerald-600 hover:bg-emerald-700" onClick={handleAdd}>Adicionar</Button>
-              <Button variant="ghost" size="sm" className="h-8 text-zinc-400" onClick={() => setShowAddForm(false)}>Cancelar</Button>
+              <Button variant="ghost" size="sm" className="h-8 text-neutral-400" onClick={() => setShowAddForm(false)}>Cancelar</Button>
             </div>
           </div>
         </div>
       ) : (
-        <Button variant="ghost" size="sm" className="h-8 w-full gap-1.5 text-xs text-zinc-400 hover:text-zinc-600" onClick={() => setShowAddForm(true)}>
+        <Button variant="ghost" size="sm" className="h-8 w-full gap-1.5 text-xs text-neutral-400 hover:text-neutral-600" onClick={() => setShowAddForm(true)}>
           <Plus className="h-3.5 w-3.5" /> Adicionar quesito
         </Button>
       )}
@@ -270,21 +270,21 @@ export function MapaQuesitosVivo({ isDarkMode, faseSelecionada }: MapaQuesitosVi
       <div className={cn("flex items-center gap-3 rounded-xl border p-3 transition-all duration-300",
         display.variant === "absolvicao" && "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40",
         display.variant === "condenacao" && "border-rose-300 bg-rose-50 dark:border-rose-800 dark:bg-rose-950/40",
-        display.variant === "pendente" && "border-zinc-200/80 bg-zinc-50 dark:border-zinc-800/80 dark:bg-zinc-900",
+        display.variant === "pendente" && "border-neutral-200/80 bg-neutral-50 dark:border-neutral-800/80 dark:bg-neutral-900",
         isVotacao && display.variant !== "pendente" && "animate-pulse")}>
         {display.variant === "absolvicao" ? <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
           : display.variant === "condenacao" ? <XCircle className="h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400" />
-          : <Circle className="h-5 w-5 shrink-0 text-zinc-400 dark:text-zinc-500" />}
+          : <Circle className="h-5 w-5 shrink-0 text-neutral-400 dark:text-neutral-500" />}
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Resultado projetado</p>
+          <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Resultado projetado</p>
           <p className={cn("text-sm font-semibold",
             display.variant === "absolvicao" && "text-emerald-700 dark:text-emerald-300",
             display.variant === "condenacao" && "text-rose-700 dark:text-rose-300",
-            display.variant === "pendente" && "text-zinc-500 dark:text-zinc-400")}>
+            display.variant === "pendente" && "text-neutral-500 dark:text-neutral-400")}>
             {display.label}
           </p>
         </div>
-        <Vote className="h-4 w-4 shrink-0 text-zinc-300 dark:text-zinc-600" />
+        <Vote className="h-4 w-4 shrink-0 text-neutral-300 dark:text-neutral-600" />
       </div>
     </div>
   );

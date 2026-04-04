@@ -142,8 +142,8 @@ export default function OficiosPage() {
             <Mail className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Oficios</h1>
-            <p className="text-sm text-zinc-500">
+            <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Oficios</h1>
+            <p className="text-sm text-neutral-500">
               Gerar, revisar e gerenciar oficios com IA
             </p>
           </div>
@@ -151,7 +151,7 @@ export default function OficiosPage() {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            className="border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+            className="border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300"
             onClick={() => router.push("/admin/oficios/templates")}
           >
             <LayoutTemplate className="w-4 h-4 mr-2" />
@@ -173,7 +173,7 @@ export default function OficiosPage() {
           icon={BarChart3}
           label="Total"
           value={stats?.oficios.total ?? 0}
-          color="text-zinc-400"
+          color="text-neutral-400"
         />
         <StatsCard
           icon={Pencil}
@@ -197,16 +197,16 @@ export default function OficiosPage() {
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/30">
-          <TabsTrigger value="meus" className="data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-700">
+        <TabsList className="bg-neutral-100 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700/30">
+          <TabsTrigger value="meus" className="data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700">
             <FileText className="w-3.5 h-3.5 mr-1.5" />
             Meus Oficios
           </TabsTrigger>
-          <TabsTrigger value="templates" className="data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-700">
+          <TabsTrigger value="templates" className="data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700">
             <Sparkles className="w-3.5 h-3.5 mr-1.5" />
             Templates
           </TabsTrigger>
-          <TabsTrigger value="analise" className="data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-700">
+          <TabsTrigger value="analise" className="data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-700">
             <FolderSearch className="w-3.5 h-3.5 mr-1.5" />
             Analise Drive
           </TabsTrigger>
@@ -217,16 +217,16 @@ export default function OficiosPage() {
           {/* Filters */}
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500" />
               <Input
                 placeholder="Buscar oficios..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 bg-white dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100"
+                className="pl-9 bg-white dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[140px] bg-white dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300">
+              <SelectTrigger className="w-[140px] bg-white dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -238,7 +238,7 @@ export default function OficiosPage() {
               </SelectContent>
             </Select>
             <Select value={tipoFilter} onValueChange={setTipoFilter}>
-              <SelectTrigger className="w-[160px] bg-white dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300">
+              <SelectTrigger className="w-[160px] bg-white dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300">
                 <SelectValue placeholder="Tipo" />
               </SelectTrigger>
               <SelectContent>
@@ -261,7 +261,7 @@ export default function OficiosPage() {
               action={
                 <Button
                   variant="outline"
-                  className="border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+                  className="border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300"
                   onClick={() => setTemplateSelectorOpen(true)}
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -279,7 +279,7 @@ export default function OficiosPage() {
                 />
               ))}
               {oficiosData.total > oficiosData.items.length && (
-                <p className="text-center text-xs text-zinc-500 dark:text-zinc-600 py-2">
+                <p className="text-center text-xs text-neutral-500 dark:text-neutral-600 py-2">
                   Mostrando {oficiosData.items.length} de {oficiosData.total}
                 </p>
               )}
@@ -297,7 +297,7 @@ export default function OficiosPage() {
               action={
                 <Button
                   variant="outline"
-                  className="border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+                  className="border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300"
                   onClick={() => setTab("analise")}
                 >
                   <FolderSearch className="w-4 h-4 mr-2" />
@@ -313,27 +313,27 @@ export default function OficiosPage() {
                   onClick={() =>
                     router.push(`/admin/oficios/novo?modeloId=${tmpl.id}`)
                   }
-                  className="text-left p-4 rounded-xl border border-zinc-200 dark:border-zinc-700/30 bg-white dark:bg-zinc-900/50
-                    hover:bg-zinc-50 dark:hover:bg-zinc-800/70 hover:border-emerald-500/30 transition-colors"
+                  className="text-left p-4 rounded-xl border border-neutral-200 dark:border-neutral-700/30 bg-white dark:bg-neutral-900/50
+                    hover:bg-neutral-50 dark:hover:bg-neutral-800/70 hover:border-emerald-500/30 transition-colors"
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <FileText className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
-                    <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                    <span className="font-medium text-neutral-900 dark:text-neutral-100 truncate">
                       {tmpl.titulo}
                     </span>
                   </div>
                   {tmpl.descricao && (
-                    <p className="text-xs text-zinc-500 line-clamp-2 mb-2">
+                    <p className="text-xs text-neutral-500 line-clamp-2 mb-2">
                       {tmpl.descricao}
                     </p>
                   )}
                   <div className="flex items-center gap-2">
                     {tmpl.area && (
-                      <Badge variant="outline" className="text-[10px] text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-600">
+                      <Badge variant="outline" className="text-[10px] text-neutral-500 dark:text-neutral-400 border-neutral-300 dark:border-neutral-600">
                         {tmpl.area}
                       </Badge>
                     )}
-                    <span className="text-[10px] text-zinc-400 dark:text-zinc-600">
+                    <span className="text-[10px] text-neutral-400 dark:text-neutral-600">
                       {tmpl.totalUsos || 0}x usado
                     </span>
                   </div>
@@ -345,10 +345,10 @@ export default function OficiosPage() {
 
         {/* Tab: Analise Drive */}
         <TabsContent value="analise" className="space-y-4">
-          <div className="rounded-xl border border-zinc-200 dark:border-zinc-700/30 bg-white dark:bg-zinc-900/50 p-6">
+          <div className="rounded-xl border border-neutral-200 dark:border-neutral-700/30 bg-white dark:bg-neutral-900/50 p-6">
             <div className="flex items-center gap-3 mb-4">
               <FolderSearch className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
-              <h3 className="font-medium text-zinc-900 dark:text-zinc-100">Analise de Oficios do Drive</h3>
+              <h3 className="font-medium text-neutral-900 dark:text-neutral-100">Analise de Oficios do Drive</h3>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
@@ -361,13 +361,13 @@ export default function OficiosPage() {
             {/* Progress bar during analysis */}
             {isAnalyzing && analiseStatus && analiseStatus.total > 0 && (
               <div className="mb-4">
-                <div className="flex items-center justify-between text-xs text-zinc-500 mb-1">
+                <div className="flex items-center justify-between text-xs text-neutral-500 mb-1">
                   <span>Analisando oficios...</span>
                   <span>
                     {analiseStatus.concluidos + analiseStatus.erros}/{analiseStatus.total}
                   </span>
                 </div>
-                <div className="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-emerald-500 rounded-full transition-all duration-500"
                     style={{
@@ -380,7 +380,7 @@ export default function OficiosPage() {
               </div>
             )}
 
-            <p className="text-sm text-zinc-500 mb-4">
+            <p className="text-sm text-neutral-500 mb-4">
               {analiseStatus?.ultimaAnalise
                 ? `Ultima analise: ${new Date(analiseStatus.ultimaAnalise).toLocaleDateString("pt-BR")}`
                 : "Nenhuma analise realizada ainda"}
@@ -406,7 +406,7 @@ export default function OficiosPage() {
               {(analiseStatus?.total ?? 0) > 0 && !isAnalyzing && (
                 <Button
                   variant="outline"
-                  className="border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+                  className="border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300"
                   onClick={() => {
                     refetchStatus();
                     refetchAnalises();
@@ -419,7 +419,7 @@ export default function OficiosPage() {
               )}
             </div>
 
-            <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-3">
+            <p className="text-xs text-neutral-400 dark:text-neutral-600 mt-3">
               A analise vai extrair e classificar todos os oficios da pasta do Drive,
               identificar padroes e gerar templates automaticamente.
             </p>
@@ -428,13 +428,13 @@ export default function OficiosPage() {
           {/* Analysis results */}
           {analises && analises.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+              <h4 className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
                 Oficios Analisados ({analises.length})
               </h4>
               {analises.map((a) => (
                 <div
                   key={a.id}
-                  className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-700/30 bg-zinc-50 dark:bg-zinc-800/30"
+                  className="p-3 rounded-lg border border-neutral-200 dark:border-neutral-700/30 bg-neutral-50 dark:bg-neutral-800/30"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 min-w-0">
@@ -442,7 +442,7 @@ export default function OficiosPage() {
                         <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin flex-shrink-0" />
                       )}
                       {a.status === "pendente" && (
-                        <div className="w-3.5 h-3.5 rounded-full border-2 border-zinc-300 dark:border-zinc-600 flex-shrink-0" />
+                        <div className="w-3.5 h-3.5 rounded-full border-2 border-neutral-300 dark:border-neutral-600 flex-shrink-0" />
                       )}
                       {a.status === "concluido" && (
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
@@ -452,13 +452,13 @@ export default function OficiosPage() {
                           <span className="text-[8px] text-red-500 font-bold">!</span>
                         </div>
                       )}
-                      <span className="text-sm text-zinc-800 dark:text-zinc-200 truncate">
+                      <span className="text-sm text-neutral-800 dark:text-neutral-200 truncate">
                         {a.driveFileName}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {a.tipoOficio && (
-                        <Badge variant="outline" className="text-[10px] text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-600">
+                        <Badge variant="outline" className="text-[10px] text-neutral-500 dark:text-neutral-400 border-neutral-300 dark:border-neutral-600">
                           {a.tipoOficio}
                         </Badge>
                       )}
@@ -479,7 +479,7 @@ export default function OficiosPage() {
                     </div>
                   </div>
                   {a.assunto && (
-                    <p className="text-xs text-zinc-500 mt-1 truncate">{a.assunto}</p>
+                    <p className="text-xs text-neutral-500 mt-1 truncate">{a.assunto}</p>
                   )}
                   {a.erro && (
                     <p className="text-xs text-red-500 dark:text-red-400 mt-1 truncate">{a.erro}</p>
@@ -517,21 +517,21 @@ function StatsCard({
   color: string;
 }) {
   return (
-    <div className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-700/30 bg-white dark:bg-zinc-900/50">
+    <div className="p-3 rounded-xl border border-neutral-200 dark:border-neutral-700/30 bg-white dark:bg-neutral-900/50">
       <div className="flex items-center gap-2 mb-1">
         <Icon className={`w-4 h-4 ${color}`} />
-        <span className="text-xs text-zinc-500">{label}</span>
+        <span className="text-xs text-neutral-500">{label}</span>
       </div>
-      <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{value}</p>
+      <p className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{value}</p>
     </div>
   );
 }
 
 function MiniStat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="text-center p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800/50">
-      <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{value}</p>
-      <p className="text-[10px] text-zinc-500">{label}</p>
+    <div className="text-center p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800/50">
+      <p className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{value}</p>
+      <p className="text-[10px] text-neutral-500">{label}</p>
     </div>
   );
 }
@@ -549,9 +549,9 @@ function EmptyState({
 }) {
   return (
     <div className="text-center py-12">
-      <Icon className="w-10 h-10 mx-auto text-zinc-400 dark:text-zinc-600 mb-3" />
-      <h3 className="text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1">{title}</h3>
-      <p className="text-xs text-zinc-400 dark:text-zinc-600 mb-4 max-w-sm mx-auto">{description}</p>
+      <Icon className="w-10 h-10 mx-auto text-neutral-400 dark:text-neutral-600 mb-3" />
+      <h3 className="text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">{title}</h3>
+      <p className="text-xs text-neutral-400 dark:text-neutral-600 mb-4 max-w-sm mx-auto">{description}</p>
       {action}
     </div>
   );

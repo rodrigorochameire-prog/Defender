@@ -207,24 +207,24 @@ export function PautaImportModal({ isOpen, onClose, onImport }: PautaImportModal
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-2xl max-h-[85vh] bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 shadow-2xl overflow-hidden flex flex-col">
+      <div className="relative w-full max-w-2xl max-h-[85vh] bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200/80 dark:border-neutral-800/80 shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200/80 dark:border-zinc-800/80">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-200/80 dark:border-neutral-800/80">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
               <FileText className="w-4 h-4 text-emerald-500" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
                 Importar Pauta do PJe
               </h2>
-              <p className="text-[11px] text-zinc-400">
+              <p className="text-[11px] text-neutral-400">
                 {step === "paste" ? "Cole o conteúdo da pauta" : `${stats.total} sessões encontradas`}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-            <X className="w-4 h-4 text-zinc-400" />
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+            <X className="w-4 h-4 text-neutral-400" />
           </button>
         </div>
 
@@ -232,7 +232,7 @@ export function PautaImportModal({ isOpen, onClose, onImport }: PautaImportModal
         <div className="flex-1 overflow-y-auto p-5">
           {step === "paste" ? (
             <div className="space-y-3">
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 Copie a pauta de audiências do PJe (Ctrl+A, Ctrl+C na página da pauta) e cole abaixo.
                 O parser identifica automaticamente datas, processos, réus e situação.
               </p>
@@ -242,8 +242,8 @@ export function PautaImportModal({ isOpen, onClose, onImport }: PautaImportModal
                 placeholder="Cole a pauta do PJe aqui..."
                 className={cn(
                   "w-full h-64 p-3 rounded-xl text-xs font-mono resize-none",
-                  "bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700",
-                  "text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-400",
+                  "bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700",
+                  "text-neutral-700 dark:text-neutral-300 placeholder:text-neutral-400",
                   "focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/50"
                 )}
               />
@@ -257,7 +257,7 @@ export function PautaImportModal({ isOpen, onClose, onImport }: PautaImportModal
                   {stats.designadas.length} designada{stats.designadas.length !== 1 ? "s" : ""}
                 </span>
                 {stats.canceladas.length > 0 && (
-                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[11px] font-medium">
+                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-500 text-[11px] font-medium">
                     <XCircle className="w-3 h-3" />
                     {stats.canceladas.length} cancelada{stats.canceladas.length !== 1 ? "s" : ""}
                   </span>
@@ -283,10 +283,10 @@ export function PautaImportModal({ isOpen, onClose, onImport }: PautaImportModal
                       className={cn(
                         "flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all",
                         isInactive
-                          ? "bg-zinc-50 dark:bg-zinc-800/30 border-zinc-200/50 dark:border-zinc-800/50 opacity-50"
+                          ? "bg-neutral-50 dark:bg-neutral-800/30 border-neutral-200/50 dark:border-neutral-800/50 opacity-50"
                           : sessao.selected
                             ? "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200/60 dark:border-emerald-800/40"
-                            : "bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/80"
+                            : "bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/80"
                       )}
                     >
                       {/* Checkbox */}
@@ -295,15 +295,15 @@ export function PautaImportModal({ isOpen, onClose, onImport }: PautaImportModal
                         checked={sessao.selected}
                         onChange={() => toggleSelect(idx)}
                         disabled={isInactive}
-                        className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-emerald-500 focus:ring-emerald-500/30 disabled:opacity-30 shrink-0"
+                        className="w-4 h-4 rounded border-neutral-300 dark:border-neutral-600 text-emerald-500 focus:ring-emerald-500/30 disabled:opacity-30 shrink-0"
                       />
 
                       {/* Date */}
                       <div className="w-16 shrink-0 text-center">
-                        <span className="text-sm font-bold tabular-nums text-zinc-900 dark:text-zinc-100">
+                        <span className="text-sm font-bold tabular-nums text-neutral-900 dark:text-neutral-100">
                           {sessao.data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
                         </span>
-                        <p className="text-[9px] text-zinc-400 uppercase">
+                        <p className="text-[9px] text-neutral-400 uppercase">
                           {sessao.data.toLocaleDateString("pt-BR", { weekday: "short" })}
                         </p>
                       </div>
@@ -313,12 +313,12 @@ export function PautaImportModal({ isOpen, onClose, onImport }: PautaImportModal
                         <p className={cn(
                           "text-xs font-semibold truncate",
                           isInactive
-                            ? "text-zinc-400 dark:text-zinc-500 line-through"
-                            : "text-zinc-900 dark:text-zinc-100"
+                            ? "text-neutral-400 dark:text-neutral-500 line-through"
+                            : "text-neutral-900 dark:text-neutral-100"
                         )}>
                           {sessao.reus.length > 0 ? sessao.reus.join(", ") : "Réu não identificado"}
                         </p>
-                        <span className="text-[10px] font-mono text-zinc-400 tabular-nums">
+                        <span className="text-[10px] font-mono text-neutral-400 tabular-nums">
                           {sessao.processo}
                         </span>
                       </div>
@@ -327,7 +327,7 @@ export function PautaImportModal({ isOpen, onClose, onImport }: PautaImportModal
                       <span className={cn(
                         "text-[10px] font-semibold px-2 py-0.5 rounded-md shrink-0",
                         sessao.situacao === "designada" && "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400",
-                        sessao.situacao === "cancelada" && "bg-zinc-100 dark:bg-zinc-800 text-zinc-500",
+                        sessao.situacao === "cancelada" && "bg-neutral-100 dark:bg-neutral-800 text-neutral-500",
                         sessao.situacao === "redesignada" && "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
                       )}>
                         {sessao.situacao}
@@ -341,11 +341,11 @@ export function PautaImportModal({ isOpen, onClose, onImport }: PautaImportModal
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-3 border-t border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-800/30">
+        <div className="flex items-center justify-between px-5 py-3 border-t border-neutral-200/80 dark:border-neutral-800/80 bg-neutral-50/50 dark:bg-neutral-800/30">
           {step === "review" && (
             <button
               onClick={() => setStep("paste")}
-              className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+              className="text-xs text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors"
             >
               Voltar
             </button>
@@ -353,7 +353,7 @@ export function PautaImportModal({ isOpen, onClose, onImport }: PautaImportModal
           <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={onClose}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
             >
               Cancelar
             </button>

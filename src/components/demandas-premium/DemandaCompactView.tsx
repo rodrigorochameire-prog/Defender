@@ -410,13 +410,13 @@ const CompactRow = React.memo(function CompactRow({
               onQueryChange={onAssistidoQueryChange}
               isLoading={isLoadingAssistidoSearch}
               icon="user"
-              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit font-medium text-zinc-800 dark:text-zinc-200"
+              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit font-medium text-neutral-800 dark:text-neutral-200"
             />
           ) : (
             <EditableTextInline
               value={demanda.assistido}
               onSave={(v) => onAssistidoChange(demanda.id, v)}
-              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit font-medium text-zinc-800 dark:text-zinc-200"
+              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit font-medium text-neutral-800 dark:text-neutral-200"
             />
           )}
         </div>
@@ -446,20 +446,20 @@ const CompactRow = React.memo(function CompactRow({
               onSave={(v) => onProcessoChange(demanda.id, v)}
               placeholder="Sem processo"
               className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit"
-              inputClassName="w-full text-[10px] font-mono px-1.5 py-0.5 rounded border border-emerald-400 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
+              inputClassName="w-full text-[10px] font-mono px-1.5 py-0.5 rounded border border-emerald-400 bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
             />
           )}
         </div>
         {demanda.processos?.[0]?.numero && (
           <button
             onClick={(e) => { e.stopPropagation(); copyCell(demanda.processos[0].numero, "Processo"); }}
-            className="opacity-0 group-hover/cell:opacity-100 transition-opacity flex-shrink-0 p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700"
+            className="opacity-0 group-hover/cell:opacity-100 transition-opacity flex-shrink-0 p-0.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
             title="Copiar numero"
           >
             {copiedCell === "Processo" ? (
               <Check className="w-3 h-3 text-emerald-500" />
             ) : (
-              <Copy className="w-3 h-3 text-zinc-400" />
+              <Copy className="w-3 h-3 text-neutral-400" />
             )}
           </button>
         )}
@@ -469,7 +469,7 @@ const CompactRow = React.memo(function CompactRow({
             className="opacity-0 group-hover/cell:opacity-100 transition-opacity flex-shrink-0"
             title="Abrir processo"
           >
-            <ExternalLink className="w-3 h-3 text-zinc-400 hover:text-emerald-500" />
+            <ExternalLink className="w-3 h-3 text-neutral-400 hover:text-emerald-500" />
           </Link>
         )}
       </div>
@@ -481,7 +481,7 @@ const CompactRow = React.memo(function CompactRow({
         value={demanda.ato}
         compact
         displayValue={
-          <span className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate max-w-[130px] block">
+          <span className="text-[11px] text-neutral-700 dark:text-neutral-300 truncate max-w-[130px] block">
             {demanda.ato || "Selecionar"}
           </span>
         }
@@ -497,7 +497,7 @@ const CompactRow = React.memo(function CompactRow({
         red: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 font-bold",
         amber: "bg-amber-100/80 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 font-semibold",
         yellow: "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400 font-medium",
-        gray: "text-zinc-400 dark:text-zinc-500",
+        gray: "text-neutral-400 dark:text-neutral-500",
       };
       return (
         <div className="flex items-center gap-1.5">
@@ -524,7 +524,7 @@ const CompactRow = React.memo(function CompactRow({
           <button
             data-status-trigger
             onClick={(e) => { e.stopPropagation(); setShowStatusPipeline(!showStatusPipeline); }}
-            className="inline-flex items-center gap-1.5 text-[10px] font-semibold rounded-full px-2 py-0.5 cursor-pointer hover:ring-1 hover:ring-zinc-300 dark:hover:ring-zinc-600 transition-all"
+            className="inline-flex items-center gap-1.5 text-[10px] font-semibold rounded-full px-2 py-0.5 cursor-pointer hover:ring-1 hover:ring-neutral-300 dark:hover:ring-neutral-600 transition-all"
             style={{ color: statusColor, backgroundColor: `${statusColor}12` }}
           >
             <StatusIcon className="w-3 h-3 flex-shrink-0" />
@@ -580,7 +580,7 @@ const CompactRow = React.memo(function CompactRow({
                     value={text}
                     onSave={(v) => onProvidenciasChange(demanda.id, v)}
                     placeholder=""
-                    className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit text-[10px] text-zinc-500 dark:text-zinc-400 truncate"
+                    className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit text-[10px] text-neutral-500 dark:text-neutral-400 truncate"
                   />
                 </div>
               </TooltipTrigger>
@@ -593,7 +593,7 @@ const CompactRow = React.memo(function CompactRow({
               value=""
               onSave={(v) => onProvidenciasChange(demanda.id, v)}
               placeholder="—"
-              className="text-[10px] text-zinc-300 dark:text-zinc-600 hover:text-zinc-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors"
+              className="text-[10px] text-neutral-300 dark:text-neutral-600 hover:text-neutral-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors"
             />
           )}
         </div>
@@ -607,7 +607,7 @@ const CompactRow = React.memo(function CompactRow({
         {onPreview && (
           <button
             onClick={(e) => { e.stopPropagation(); onPreview(demanda.id); }}
-            className="p-1 rounded text-zinc-300 dark:text-zinc-600 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors cursor-pointer"
+            className="p-1 rounded text-neutral-300 dark:text-neutral-600 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors cursor-pointer"
             title="Ver detalhes"
           >
             <Eye className="w-3.5 h-3.5" />
@@ -629,41 +629,41 @@ const CompactRow = React.memo(function CompactRow({
         <div ref={menuRef} className="relative opacity-0 group-hover/row:opacity-100 transition-opacity">
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+            className="p-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
           >
-            <MoreHorizontal className="w-3.5 h-3.5 text-zinc-400" />
+            <MoreHorizontal className="w-3.5 h-3.5 text-neutral-400" />
           </button>
 
           {showMenu && (
-            <div className="absolute right-0 top-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-xl z-50 py-1 w-40 opacity-100">
+            <div className="absolute right-0 top-full mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-xl z-50 py-1 w-40 opacity-100">
               <button
                 onClick={() => { copyToClipboard(getRowTSV(demanda), "Linha copiada!"); setShowMenu(false); }}
-                className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
               >
                 <Copy className="w-3.5 h-3.5" /> Copiar linha
               </button>
               <button
                 onClick={() => { onEdit(demanda); setShowMenu(false); }}
-                className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
               >
                 <Edit className="w-3.5 h-3.5" /> Editar
               </button>
               {demanda.arquivado ? (
                 <button
                   onClick={() => { onUnarchive(demanda.id); setShowMenu(false); }}
-                  className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                  className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
                 >
                   <ArchiveRestore className="w-3.5 h-3.5" /> Restaurar
                 </button>
               ) : (
                 <button
                   onClick={() => { onArchive(demanda.id); setShowMenu(false); }}
-                  className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                  className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
                 >
                   <Archive className="w-3.5 h-3.5" /> Arquivar
                 </button>
               )}
-              <div className="my-1 border-t border-zinc-100 dark:border-zinc-800" />
+              <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />
               <button
                 onClick={() => { onDelete(demanda.id); setShowMenu(false); }}
                 className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600"
@@ -717,12 +717,12 @@ const CompactRow = React.memo(function CompactRow({
           onPreview(demanda.id);
         }
       }}
-      className={`group/row border-b border-zinc-100/60 dark:border-zinc-800/50 transition-all duration-100 cursor-pointer ${rowBg} ${isFocused ? "ring-2 ring-inset ring-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/15" : ""} ${isPreviewActive && !isFocused ? "ring-1 ring-inset ring-emerald-300/40 dark:ring-emerald-700/30 bg-emerald-50/30 dark:bg-emerald-950/10" : ""} ${index % 2 === 1 && !isPreviewActive && !isFocused ? "bg-zinc-50/50 dark:bg-zinc-800/20" : !isPreviewActive && !isFocused ? "bg-white dark:bg-zinc-900" : ""} ${isDragging ? "shadow-lg bg-white dark:bg-zinc-900 ring-1 ring-emerald-400/30" : ""} ${!isSelected && !isPreviewActive && !isFocused ? "hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40" : ""}`}
+      className={`group/row border-b border-neutral-100/60 dark:border-neutral-800/50 transition-all duration-100 cursor-pointer ${rowBg} ${isFocused ? "ring-2 ring-inset ring-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/15" : ""} ${isPreviewActive && !isFocused ? "ring-1 ring-inset ring-emerald-300/40 dark:ring-emerald-700/30 bg-emerald-50/30 dark:bg-emerald-950/10" : ""} ${index % 2 === 1 && !isPreviewActive && !isFocused ? "bg-neutral-50/50 dark:bg-neutral-800/20" : !isPreviewActive && !isFocused ? "bg-white dark:bg-neutral-900" : ""} ${isDragging ? "shadow-lg bg-white dark:bg-neutral-900 ring-1 ring-emerald-400/30" : ""} ${!isSelected && !isPreviewActive && !isFocused ? "hover:bg-neutral-50/80 dark:hover:bg-neutral-800/40" : ""}`}
     >
       {/* Drag handle */}
       {onReorder && (
         <td className="px-1 py-2 w-6 cursor-grab active:cursor-grabbing" {...listeners}>
-          <GripVertical className="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600 opacity-0 group-hover/row:opacity-100 transition-opacity" />
+          <GripVertical className="w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 opacity-0 group-hover/row:opacity-100 transition-opacity" />
         </td>
       )}
       {/* Checkbox */}
@@ -731,7 +731,7 @@ const CompactRow = React.memo(function CompactRow({
           <button
             onClick={(e) => onToggleSelect?.(demanda.id, { shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey })}
             className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${
-              !isSelected ? "border-zinc-300 dark:border-zinc-600 hover:border-zinc-400" : ""
+              !isSelected ? "border-neutral-300 dark:border-neutral-600 hover:border-neutral-400" : ""
             }`}
             style={isSelected ? { borderColor: atribuicaoColor, backgroundColor: atribuicaoColor } : undefined}
           >
@@ -751,10 +751,10 @@ const CompactRow = React.memo(function CompactRow({
 
         if (isIndexCol) {
           return (
-            <td key={col.id} className="px-3 py-3 text-zinc-400 font-mono text-[10px] relative w-8 cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors" onClick={() => setShowAtribDropdown(!showAtribDropdown)} title={`Atribuição: ${demanda.atribuicao}\nClique para alterar`}>
+            <td key={col.id} className="px-3 py-3 text-neutral-400 font-mono text-[10px] relative w-8 cursor-pointer hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors" onClick={() => setShowAtribDropdown(!showAtribDropdown)} title={`Atribuição: ${demanda.atribuicao}\nClique para alterar`}>
               {renderer()}
               {showAtribDropdown && (
-                <div ref={atribDropdownRef} className="absolute left-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl py-1 min-w-[140px]">
+                <div ref={atribDropdownRef} className="absolute left-0 top-full mt-1 z-50 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl py-1 min-w-[140px]">
                   {ATRIBUICAO_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
@@ -762,7 +762,7 @@ const CompactRow = React.memo(function CompactRow({
                       className={`w-full px-3 py-1.5 text-left text-[11px] flex items-center gap-2 transition-colors ${
                         demanda.atribuicao === opt.value
                           ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold"
-                          : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                          : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                       }`}
                     >
                       {demanda.atribuicao === opt.value && <span className="text-emerald-500">✓</span>}
@@ -797,7 +797,7 @@ const CompactRow = React.memo(function CompactRow({
                   : {}),
               }}
               className={`px-2 py-3 group/cell transition-all duration-100 ${columnWidths?.[col.id] ? "" : col.width || ""} ${
-                !isCellFocused(col.colIndex) ? "hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30" : ""
+                !isCellFocused(col.colIndex) ? "hover:bg-neutral-50/60 dark:hover:bg-neutral-800/30" : ""
               } ${col.id === "providencias" ? "hidden md:table-cell" : ""}`}
               onClick={() => onCellFocus(index, col.colIndex)}
               onFocus={() => onCellFocus(index, col.colIndex)}
@@ -1108,10 +1108,10 @@ export function DemandaCompactView({
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="bg-white dark:bg-zinc-900 border-t border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
+      <div className="bg-white dark:bg-neutral-900 border-t border-neutral-200/80 dark:border-neutral-800/80 overflow-hidden">
         {/* Header: keyboard hint */}
-        <div className="px-4 py-1 bg-zinc-50/30 dark:bg-zinc-800/20 border-b border-zinc-100/50 dark:border-zinc-800/50 flex items-center justify-end">
-          <span className="text-[8px] text-zinc-300 dark:text-zinc-700 whitespace-nowrap flex-shrink-0 hidden lg:inline tracking-wider font-medium">
+        <div className="px-4 py-1 bg-neutral-50/30 dark:bg-neutral-800/20 border-b border-neutral-100/50 dark:border-neutral-800/50 flex items-center justify-end">
+          <span className="text-[8px] text-neutral-300 dark:text-neutral-700 whitespace-nowrap flex-shrink-0 hidden lg:inline tracking-wider font-medium">
             CLICK = detalhes &middot; DBL-CLICK = edita &middot; &uarr;&darr;&larr;&rarr; navega &middot; ⌘C/V = copia/cola &middot; ⌘CLICK = seleciona
           </span>
         </div>
@@ -1120,11 +1120,11 @@ export function DemandaCompactView({
         <div ref={scrollContainerRef} className="hidden md:block overflow-x-auto overflow-y-auto max-h-[calc(100vh-220px)]">
           {demandas.length === 0 ? (
             <div className="text-center py-20">
-              <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-3">
-                <Scale className="w-5 h-5 text-zinc-400" />
+              <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-3">
+                <Scale className="w-5 h-5 text-neutral-400" />
               </div>
-              <p className="text-sm text-zinc-500 font-medium">Nenhuma demanda encontrada</p>
-              <p className="text-xs text-zinc-400 mt-1">Ajuste os filtros ou crie uma nova demanda</p>
+              <p className="text-sm text-neutral-500 font-medium">Nenhuma demanda encontrada</p>
+              <p className="text-xs text-neutral-400 mt-1">Ajuste os filtros ou crie uma nova demanda</p>
             </div>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -1135,7 +1135,7 @@ export function DemandaCompactView({
               onKeyDown={handleTableKeyDown}
             >
               <thead className={`sticky top-0 z-10 transition-shadow duration-200 ${isScrolled ? "shadow-[0_1px_6px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_6px_rgba(0,0,0,0.25)]" : ""}`}>
-                <tr className="bg-zinc-50/90 dark:bg-zinc-800/90 backdrop-blur-sm border-b border-zinc-200/60 dark:border-zinc-700/60">
+                <tr className="bg-neutral-50/90 dark:bg-neutral-800/90 backdrop-blur-sm border-b border-neutral-200/60 dark:border-neutral-700/60">
                   {onReorder && <th className="w-6 px-1" />}
                   {isSelectMode && <th className="w-8 px-1" />}
                   {COLUMN_ORDER.map((col) => {
@@ -1149,8 +1149,8 @@ export function DemandaCompactView({
                         key={col.id}
                         onClick={sortable && onColumnSort ? () => onColumnSort(col.id) : undefined}
                         style={columnWidths?.[col.id] ? { width: columnWidths[col.id], position: "relative" } : undefined}
-                        className={`px-3 py-2.5 text-${col.align || "left"} text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ${columnWidths?.[col.id] ? "" : col.width || ""} ${
-                          sortable && onColumnSort ? "cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100/80 dark:hover:bg-zinc-700/40 select-none transition-all" : ""
+                        className={`px-3 py-2.5 text-${col.align || "left"} text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider ${columnWidths?.[col.id] ? "" : col.width || ""} ${
+                          sortable && onColumnSort ? "cursor-pointer hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-100/80 dark:hover:bg-neutral-700/40 select-none transition-all" : ""
                         } ${sortInfo ? "text-emerald-600 dark:text-emerald-400" : ""} ${canResize ? "relative" : ""} ${col.id === "providencias" ? "hidden md:table-cell" : ""}`}
                       >
                         <div className="flex items-center gap-1.5">
@@ -1212,23 +1212,23 @@ export function DemandaCompactView({
                   {/* Group header row */}
                   {groupHeader && (
                     <tr
-                      className="bg-zinc-50/80 dark:bg-zinc-800/40 cursor-pointer hover:bg-zinc-100/80 dark:hover:bg-zinc-800/60 transition-colors"
+                      className="bg-neutral-50/80 dark:bg-neutral-800/40 cursor-pointer hover:bg-neutral-100/80 dark:hover:bg-neutral-800/60 transition-colors"
                       onClick={() => onToggleGroupCollapse?.(groupHeader.key)}
                     >
                       <td colSpan={totalCols} className="px-3 py-2">
                         <div className="flex items-center gap-2">
                           {isCollapsed
-                            ? <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
-                            : <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                            ? <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+                            : <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
                           }
                           <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: groupHeader.color }} />
-                          <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                          <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
                             {groupHeader.label}
                           </span>
-                          <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                          <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
                             ({groupHeader.count})
                           </span>
-                          <div className="flex-1 h-px bg-zinc-200/40 dark:bg-zinc-700/40" />
+                          <div className="flex-1 h-px bg-neutral-200/40 dark:bg-neutral-700/40" />
                         </div>
                       </td>
                     </tr>
@@ -1237,16 +1237,16 @@ export function DemandaCompactView({
                   {isCollapsed ? null : (
                   <>
                   {showDesktopBatchSep && (
-                    <tr className="bg-zinc-100/60 dark:bg-zinc-800/30">
+                    <tr className="bg-neutral-100/60 dark:bg-neutral-800/30">
                       <td colSpan={totalCols} className="px-3 py-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-[9px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                          <span className="text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                             Importado {desktopImportDate}
                           </span>
-                          <span className="text-[9px] text-zinc-400 dark:text-zinc-500">
+                          <span className="text-[9px] text-neutral-400 dark:text-neutral-500">
                             ({desktopBatchCount} {desktopBatchCount === 1 ? "item" : "itens"})
                           </span>
-                          <div className="flex-1 h-px bg-zinc-200/40 dark:bg-zinc-700/40" />
+                          <div className="flex-1 h-px bg-neutral-200/40 dark:bg-neutral-700/40" />
                         </div>
                       </td>
                     </tr>
@@ -1305,14 +1305,14 @@ export function DemandaCompactView({
         <div className="md:hidden">
           {demandas.length === 0 ? (
             <div className="text-center py-20 px-6">
-              <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-3">
-                <Scale className="w-5 h-5 text-zinc-400" />
+              <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-3">
+                <Scale className="w-5 h-5 text-neutral-400" />
               </div>
-              <p className="text-sm text-zinc-500 font-medium">Nenhuma demanda encontrada</p>
-              <p className="text-xs text-zinc-400 mt-1">Ajuste os filtros ou crie uma nova demanda</p>
+              <p className="text-sm text-neutral-500 font-medium">Nenhuma demanda encontrada</p>
+              <p className="text-xs text-neutral-400 mt-1">Ajuste os filtros ou crie uma nova demanda</p>
             </div>
           ) : (
-            <div className="divide-y divide-zinc-100/80 dark:divide-zinc-800/60">
+            <div className="divide-y divide-neutral-100/80 dark:divide-neutral-800/60">
               {demandas.map((demanda, idx) => {
                 const statusConfig = getStatusConfig(demanda.status);
                 const StatusIcon = statusConfig.icon;
@@ -1353,34 +1353,34 @@ export function DemandaCompactView({
                   {/* Mobile group header */}
                   {mobileGroupHeader && (
                     <div
-                      className="flex items-center gap-2 px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200/60 dark:border-zinc-700/50 cursor-pointer active:bg-zinc-100 dark:active:bg-zinc-700/50"
+                      className="flex items-center gap-2 px-3 py-2.5 bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-200/60 dark:border-neutral-700/50 cursor-pointer active:bg-neutral-100 dark:active:bg-neutral-700/50"
                       onClick={() => onToggleGroupCollapse?.(mobileGroupHeader.key)}
                     >
                       {mobileIsCollapsed
-                        ? <ChevronRight className="w-4 h-4 text-zinc-400" />
-                        : <ChevronDown className="w-4 h-4 text-zinc-400" />
+                        ? <ChevronRight className="w-4 h-4 text-neutral-400" />
+                        : <ChevronDown className="w-4 h-4 text-neutral-400" />
                       }
                       <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: mobileGroupHeader.color }} />
-                      <span className="text-[12px] font-bold text-zinc-700 dark:text-zinc-300">
+                      <span className="text-[12px] font-bold text-neutral-700 dark:text-neutral-300">
                         {mobileGroupHeader.label}
                       </span>
-                      <span className="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium">
+                      <span className="text-[11px] text-neutral-400 dark:text-neutral-500 font-medium">
                         {mobileGroupHeader.count}
                       </span>
-                      <div className="flex-1 h-px bg-zinc-200/50 dark:bg-zinc-700/50" />
+                      <div className="flex-1 h-px bg-neutral-200/50 dark:bg-neutral-700/50" />
                     </div>
                   )}
                   {mobileIsCollapsed ? null : (
                   <>
                   {showBatchSeparator && (
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100/60 dark:bg-zinc-800/30">
-                      <span className="text-[9px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-100/60 dark:bg-neutral-800/30">
+                      <span className="text-[9px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
                         Importado {importDateStr}
                       </span>
-                      <span className="text-[9px] text-zinc-300 dark:text-zinc-600">
+                      <span className="text-[9px] text-neutral-300 dark:text-neutral-600">
                         ({batchCount} {batchCount === 1 ? "item" : "itens"})
                       </span>
-                      <div className="flex-1 h-px bg-zinc-200/40 dark:bg-zinc-700/40" />
+                      <div className="flex-1 h-px bg-neutral-200/40 dark:bg-neutral-700/40" />
                     </div>
                   )}
                   <div
@@ -1390,13 +1390,13 @@ export function DemandaCompactView({
                       ...(selectedIds?.has(demanda.id) ? { backgroundColor: `${atribuicaoColor}12` } : {}),
                       ...(previewDemandaId === demanda.id ? { backgroundColor: "rgba(16, 185, 129, 0.06)" } : {}),
                     }}
-                    className={`relative transition-colors cursor-pointer active:bg-zinc-50 dark:active:bg-zinc-800/40 ${
+                    className={`relative transition-colors cursor-pointer active:bg-neutral-50 dark:active:bg-neutral-800/40 ${
                       previewDemandaId === demanda.id ? "ring-1 ring-inset ring-emerald-200/50 dark:ring-emerald-800/40" : ""
                     } ${
                       !selectedIds?.has(demanda.id) && previewDemandaId !== demanda.id
                         ? isUrgente || isPreso
                           ? "bg-rose-50/40 dark:bg-rose-950/10"
-                          : idx % 2 === 1 ? "bg-zinc-50/30 dark:bg-zinc-800/10" : ""
+                          : idx % 2 === 1 ? "bg-neutral-50/30 dark:bg-neutral-800/10" : ""
                         : ""
                     }`}
                     onClick={(e) => {
@@ -1422,7 +1422,7 @@ export function DemandaCompactView({
                           <button
                             onClick={() => onToggleSelect?.(demanda.id)}
                             className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                              !selectedIds?.has(demanda.id) ? "border-zinc-300 dark:border-zinc-600" : ""
+                              !selectedIds?.has(demanda.id) ? "border-neutral-300 dark:border-neutral-600" : ""
                             }`}
                             style={selectedIds?.has(demanda.id) ? { borderColor: atribuicaoColor, backgroundColor: atribuicaoColor } : undefined}
                           >
@@ -1430,7 +1430,7 @@ export function DemandaCompactView({
                           </button>
                         )}
                         {/* Index */}
-                        <span className="text-[10px] text-zinc-400 font-mono w-5 flex-shrink-0 text-right" title={demanda.ordemOriginal != null ? `Ordem PJe: ${demanda.ordemOriginal + 1}` : undefined}>
+                        <span className="text-[10px] text-neutral-400 font-mono w-5 flex-shrink-0 text-right" title={demanda.ordemOriginal != null ? `Ordem PJe: ${demanda.ordemOriginal + 1}` : undefined}>
                           {idx + 1}
                         </span>
                         {/* Preso / Urgente icons */}
@@ -1449,13 +1449,13 @@ export function DemandaCompactView({
                               onQueryChange={onAssistidoQueryChange}
                               isLoading={isLoadingAssistidoSearch}
                               icon="user"
-                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 text-[13px] font-semibold text-zinc-800 dark:text-zinc-200"
+                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 text-[13px] font-semibold text-neutral-800 dark:text-neutral-200"
                             />
                           ) : (
                             <EditableTextInline
                               value={demanda.assistido}
                               onSave={(v) => onAssistidoChange(demanda.id, v)}
-                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 text-[13px] font-semibold text-zinc-800 dark:text-zinc-200"
+                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 text-[13px] font-semibold text-neutral-800 dark:text-neutral-200"
                             />
                           )}
                         </div>
@@ -1473,19 +1473,19 @@ export function DemandaCompactView({
                         <div className="relative flex-shrink-0">
                           <button
                             onClick={() => setMobileMenuOpenId(mobileMenuOpenId === demanda.id ? null : demanda.id)}
-                            className="p-1.5 -mr-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 active:bg-zinc-200 dark:active:bg-zinc-700"
+                            className="p-1.5 -mr-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 active:bg-neutral-200 dark:active:bg-neutral-700"
                           >
                             <MoreHorizontal className="w-4 h-4" />
                           </button>
                           {mobileMenuOpenId === demanda.id && (
                             <div
                               ref={mobileMenuRef}
-                              className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 min-w-[160px]"
+                              className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-xl py-1 min-w-[160px]"
                             >
                               {onPreview && (
                                 <button
                                   onClick={() => { onPreview(demanda.id); setMobileMenuOpenId(null); }}
-                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-emerald-600 dark:text-emerald-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 font-medium"
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-emerald-600 dark:text-emerald-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 font-medium"
                                 >
                                   <Eye className="w-3.5 h-3.5" /> Ver detalhes
                                 </button>
@@ -1493,22 +1493,22 @@ export function DemandaCompactView({
                               {demanda.status !== "resolvido" && demanda.status !== "protocolado" && demanda.status !== "ciencia" && demanda.status !== "sem_atuacao" && (
                                 <button
                                   onClick={() => { onStatusChange(demanda.id, "resolvido"); setMobileMenuOpenId(null); }}
-                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-emerald-600 dark:text-emerald-400 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-emerald-600 dark:text-emerald-400 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                                 >
                                   <CheckCircle2 className="w-3.5 h-3.5" /> Resolver
                                 </button>
                               )}
-                              <div className="my-0.5 border-t border-zinc-100 dark:border-zinc-800" />
+                              <div className="my-0.5 border-t border-neutral-100 dark:border-neutral-800" />
                               <button
                                 onClick={() => { copyToClipboard(getRowTSV(demanda), "Linha copiada!"); setMobileMenuOpenId(null); }}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                               >
                                 <Copy className="w-3.5 h-3.5" /> Copiar linha
                               </button>
                               {demanda.assistidoId && (
                                 <Link
                                   href={`/admin/assistidos/${demanda.assistidoId}`}
-                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                                   onClick={() => setMobileMenuOpenId(null)}
                                 >
                                   <ExternalLink className="w-3.5 h-3.5" />
@@ -1518,7 +1518,7 @@ export function DemandaCompactView({
                               {demanda.processoId && (
                                 <Link
                                   href={`/admin/processos/${demanda.processoId}`}
-                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                                   onClick={() => setMobileMenuOpenId(null)}
                                 >
                                   <ExternalLink className="w-3.5 h-3.5" />
@@ -1527,18 +1527,18 @@ export function DemandaCompactView({
                               )}
                               <button
                                 onClick={() => { onEdit(demanda); setMobileMenuOpenId(null); }}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                               >
                                 <Edit className="w-3.5 h-3.5" /> Editar
                               </button>
                               <button
                                 onClick={() => { demanda.arquivado ? onUnarchive(demanda.id) : onArchive(demanda.id); setMobileMenuOpenId(null); }}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                               >
                                 {demanda.arquivado ? <ArchiveRestore className="w-3.5 h-3.5" /> : <Archive className="w-3.5 h-3.5" />}
                                 {demanda.arquivado ? "Restaurar" : "Arquivar"}
                               </button>
-                              <div className="my-0.5 border-t border-zinc-100 dark:border-zinc-800" />
+                              <div className="my-0.5 border-t border-neutral-100 dark:border-neutral-800" />
                               <button
                                 onClick={() => { onDelete(demanda.id); setMobileMenuOpenId(null); }}
                                 className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20"
@@ -1583,15 +1583,15 @@ export function DemandaCompactView({
                               onQueryChange={onProcessoQueryChange}
                               isLoading={isLoadingProcessoSearch}
                               icon="briefcase"
-                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 font-mono text-[10px] text-zinc-500 dark:text-zinc-400"
+                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 font-mono text-[10px] text-neutral-500 dark:text-neutral-400"
                             />
                           ) : (
                             <EditableTextInline
                               value={demanda.processos?.[0]?.numero || ""}
                               onSave={(v) => onProcessoChange(demanda.id, v)}
                               placeholder="Sem processo"
-                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 font-mono text-[10px] text-zinc-500 dark:text-zinc-400"
-                              inputClassName="w-full text-[10px] font-mono px-1 py-0.5 rounded border border-emerald-400 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
+                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 font-mono text-[10px] text-neutral-500 dark:text-neutral-400"
+                              inputClassName="w-full text-[10px] font-mono px-1 py-0.5 rounded border border-emerald-400 bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
                             />
                           )}
                         </div>
@@ -1601,7 +1601,7 @@ export function DemandaCompactView({
                             value={demanda.ato}
                             compact
                             displayValue={
-                              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate block">
+                              <span className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate block">
                                 {demanda.ato || "Ato..."}
                               </span>
                             }
@@ -1626,7 +1626,7 @@ export function DemandaCompactView({
                           const showProv = provText.trim().length > 0 && !isPlaceholder;
                           return showProv ? (
                             <div className="min-w-0 flex-1 truncate">
-                              <span className="text-[10px] italic text-zinc-400 dark:text-zinc-500 truncate block">
+                              <span className="text-[10px] italic text-neutral-400 dark:text-neutral-500 truncate block">
                                 {provText.length > 25 ? provText.substring(0, 25) + "…" : provText}
                               </span>
                             </div>
@@ -1651,14 +1651,14 @@ export function DemandaCompactView({
               {/* Picker */}
               <div
                 ref={atribuicaoPickerRef}
-                className="relative w-full max-w-md bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-700 rounded-t-xl shadow-2xl pb-safe"
+                className="relative w-full max-w-md bg-white dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-700 rounded-t-xl shadow-2xl pb-safe"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-zinc-100 dark:border-zinc-800">
-                  <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Atribuicao</span>
+                <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-neutral-100 dark:border-neutral-800">
+                  <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Atribuicao</span>
                   <button
                     onClick={() => setAtribuicaoPickerOpenId(null)}
-                    className="text-[11px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 px-2 py-0.5"
+                    className="text-[11px] text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 px-2 py-0.5"
                   >
                     Fechar
                   </button>
@@ -1676,13 +1676,13 @@ export function DemandaCompactView({
                         }}
                         className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-all ${
                           isActive
-                            ? "ring-2 ring-offset-1 dark:ring-offset-zinc-900"
-                            : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                            ? "ring-2 ring-offset-1 dark:ring-offset-neutral-900"
+                            : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
                         }`}
                         style={isActive ? { ["--tw-ring-color" as string]: color, backgroundColor: `${color}10` } : {}}
                       >
                         <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                        <span className={`text-[11px] truncate ${isActive ? "font-semibold" : "font-medium text-zinc-600 dark:text-zinc-300"}`}>
+                        <span className={`text-[11px] truncate ${isActive ? "font-semibold" : "font-medium text-neutral-600 dark:text-neutral-300"}`}>
                           {opt.label}
                         </span>
                       </button>
@@ -1696,8 +1696,8 @@ export function DemandaCompactView({
 
         {/* Footer */}
         {demandas.length > 0 && (
-          <div className="px-4 py-2 border-t border-zinc-200/60 dark:border-zinc-700/60 bg-zinc-50/60 dark:bg-zinc-800/40 flex items-center justify-between">
-            <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">
+          <div className="px-4 py-2 border-t border-neutral-200/60 dark:border-neutral-700/60 bg-neutral-50/60 dark:bg-neutral-800/40 flex items-center justify-between">
+            <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium">
               {demandas.length} demanda{demandas.length !== 1 && "s"}
               {selectedIds && selectedIds.size > 0 && (
                 <span className="ml-2 text-emerald-600 dark:text-emerald-400 font-semibold">

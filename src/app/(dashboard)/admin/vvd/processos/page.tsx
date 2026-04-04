@@ -115,9 +115,9 @@ export default function ProcessosVVDPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header Secundário - Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/admin/vvd">
@@ -126,12 +126,12 @@ export default function ProcessosVVDPage() {
                 Voltar
               </Button>
             </Link>
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <FileText className="w-5 h-5 text-white dark:text-zinc-900" />
+            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
+              <FileText className="w-5 h-5 text-white dark:text-neutral-900" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Processos VVD</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Processos de Medidas Protetivas de Urgência</p>
+              <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">Processos VVD</h1>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">Processos de Medidas Protetivas de Urgência</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -139,7 +139,7 @@ export default function ProcessosVVDPage() {
               <RefreshCw className="h-4 w-4 mr-1" />
               Atualizar
             </Button>
-            <Button size="sm" className="h-8 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white">
+            <Button size="sm" className="h-8 bg-neutral-900 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white">
               <Plus className="h-4 w-4 mr-1" />
               Novo Processo
             </Button>
@@ -175,7 +175,7 @@ export default function ProcessosVVDPage() {
                 variant={filterMPUAtiva === true ? "default" : "outline"}
                 size="sm"
                 onClick={() => setFilterMPUAtiva(true)}
-                className={filterMPUAtiva === true ? "bg-zinc-900 hover:bg-emerald-600 text-white dark:bg-zinc-700 dark:hover:bg-emerald-600" : ""}
+                className={filterMPUAtiva === true ? "bg-neutral-900 hover:bg-emerald-600 text-white dark:bg-neutral-700 dark:hover:bg-emerald-600" : ""}
               >
                 <ShieldCheck className="h-4 w-4 mr-1" />
                 MPU Ativa
@@ -184,7 +184,7 @@ export default function ProcessosVVDPage() {
                 variant={filterMPUAtiva === false ? "default" : "outline"}
                 size="sm"
                 onClick={() => setFilterMPUAtiva(false)}
-                className={filterMPUAtiva === false ? "bg-zinc-900 hover:bg-zinc-700 text-white dark:bg-zinc-700 dark:hover:bg-zinc-600" : ""}
+                className={filterMPUAtiva === false ? "bg-neutral-900 hover:bg-neutral-700 text-white dark:bg-neutral-700 dark:hover:bg-neutral-600" : ""}
               >
                 <ShieldOff className="h-4 w-4 mr-1" />
                 MPU Inativa
@@ -323,7 +323,7 @@ export default function ProcessosVVDPage() {
 
           {isLoadingDetalhes ? (
             <div className="flex items-center justify-center py-12">
-              <RefreshCw className="h-8 w-8 animate-spin text-zinc-400" />
+              <RefreshCw className="h-8 w-8 animate-spin text-neutral-400" />
             </div>
           ) : processoDetalhes ? (
             <ScrollArea className="flex-1 -mx-6 px-6">
@@ -466,7 +466,7 @@ export default function ProcessosVVDPage() {
                     "border-2",
                     processoDetalhes.mpuAtiva
                       ? "border-green-200 dark:border-green-800"
-                      : "border-zinc-200 dark:border-zinc-800"
+                      : "border-neutral-200 dark:border-neutral-800"
                   )}>
                     <CardHeader>
                       <CardTitle className="text-base flex items-center justify-between">
@@ -478,7 +478,7 @@ export default function ProcessosVVDPage() {
                             </>
                           ) : (
                             <>
-                              <ShieldOff className="h-5 w-5 text-zinc-500" />
+                              <ShieldOff className="h-5 w-5 text-neutral-500" />
                               MPU Inativa
                             </>
                           )}

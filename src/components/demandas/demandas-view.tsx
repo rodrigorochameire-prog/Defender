@@ -54,8 +54,8 @@ const STATUS_CONFIG: Record<string, {
   },
   "monitorar": { 
     label: "MONITORAR", 
-    rowColor: "bg-zinc-50 dark:bg-muted/50 border-l-4 border-l-zinc-400",
-    badgeColor: "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-muted dark:text-muted-foreground dark:border-border",
+    rowColor: "bg-neutral-50 dark:bg-muted/50 border-l-4 border-l-neutral-400",
+    badgeColor: "bg-neutral-100 text-neutral-600 border-neutral-200 dark:bg-muted dark:text-muted-foreground dark:border-border",
     icon: Clock,
     order: 4
   },
@@ -171,7 +171,7 @@ function DemandasLista({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; o
               item.status === "a_fazer" && "border-l-yellow-500",
               item.status === "monitorar" && "border-l-blue-500",
               item.status === "fila" && "border-l-purple-500",
-              item.status === "concluido" && "border-l-zinc-300"
+              item.status === "concluido" && "border-l-neutral-300"
             )}
           >
             {/* 1. Status + Data */}
@@ -263,7 +263,7 @@ function DemandasGrid({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; on
               item.status === "a_fazer" && "border-l-yellow-500",
               item.status === "monitorar" && "border-l-blue-500",
               item.status === "fila" && "border-l-purple-500",
-              item.status === "concluido" && "border-l-zinc-300 dark:border-l-border opacity-75"
+              item.status === "concluido" && "border-l-neutral-300 dark:border-l-border opacity-75"
             )}
           >
             {/* Header */}

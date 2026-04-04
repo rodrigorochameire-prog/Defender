@@ -57,7 +57,7 @@ interface RadarScopeSelectorProps {
 export function RadarScopeSelector({ value, onChange, counts, fullWidth }: RadarScopeSelectorProps) {
   return (
     <div className={cn(
-      "flex items-center gap-0.5 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700",
+      "flex items-center gap-0.5 p-1 rounded-xl bg-neutral-100 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-700",
       fullWidth && "w-full"
     )}>
       {SCOPES.map((scope) => {
@@ -75,7 +75,7 @@ export function RadarScopeSelector({ value, onChange, counts, fullWidth }: Radar
               fullWidth && "flex-1 justify-center",
               isActive
                 ? colors.active
-                : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700"
+                : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-white dark:hover:bg-neutral-700"
             )}
           >
             <Icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? colors.icon : "opacity-60")} />
@@ -87,7 +87,7 @@ export function RadarScopeSelector({ value, onChange, counts, fullWidth }: Radar
                   "text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
                   isActive
                     ? "bg-white/20 text-white"
-                    : "bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
+                    : "bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300"
                 )}
               >
                 {count}

@@ -112,7 +112,7 @@ export function TimerSustentacao({
     <div
       className={cn(
         "flex items-center gap-3 rounded-xl border px-4 py-2",
-        "border-zinc-200/80 bg-white dark:border-zinc-800/80 dark:bg-zinc-900",
+        "border-neutral-200/80 bg-white dark:border-neutral-800/80 dark:bg-neutral-900",
         flashActive && "border-rose-400 bg-rose-50 dark:border-rose-700 dark:bg-rose-950/40",
         "transition-colors duration-300",
       )}
@@ -120,7 +120,7 @@ export function TimerSustentacao({
       {/* Phase label */}
       <div className="flex items-center gap-2 min-w-0">
         <Timer className={cn("h-4 w-4 shrink-0", colors.text)} />
-        <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 truncate">
+        <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 truncate">
           {faseSelecionada.label}
         </span>
       </div>
@@ -148,7 +148,7 @@ export function TimerSustentacao({
       </div>
 
       {/* Progress bar with threshold markers */}
-      <div className="relative flex-1 min-w-[120px] h-2 rounded-full bg-zinc-100 dark:bg-zinc-800">
+      <div className="relative flex-1 min-w-[120px] h-2 rounded-full bg-neutral-100 dark:bg-neutral-800">
         <div
           className={cn("absolute inset-y-0 left-0 rounded-full transition-all duration-500", colors.bar)}
           style={{ width: `${progress}%` }}
@@ -167,8 +167,8 @@ export function TimerSustentacao({
                 className={cn(
                   "h-3 w-1 rounded-full",
                   elapsed >= totalTime - t.seconds
-                    ? "bg-white dark:bg-zinc-200"
-                    : "bg-zinc-300 dark:bg-zinc-600",
+                    ? "bg-white dark:bg-neutral-200"
+                    : "bg-neutral-300 dark:bg-neutral-600",
                 )}
               />
             </div>
@@ -177,7 +177,7 @@ export function TimerSustentacao({
       </div>
 
       {/* Elapsed / Total */}
-      <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 tabular-nums whitespace-nowrap">
+      <span className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400 tabular-nums whitespace-nowrap">
         {formatTime(elapsed)} / {formatTime(totalTime)}
       </span>
     </div>

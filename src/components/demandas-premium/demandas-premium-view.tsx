@@ -178,7 +178,7 @@ const ATRIBUICAO_BG_COLORS: Record<string, string> = {
   "Violência Doméstica": "bg-amber-50 dark:bg-amber-950/20",
   "Execução Penal": "bg-blue-50 dark:bg-blue-950/20",
   "Substituição Criminal": "bg-purple-50 dark:bg-purple-950/20",
-  "Curadoria Especial": "bg-zinc-50 dark:bg-zinc-800/30",
+  "Curadoria Especial": "bg-neutral-50 dark:bg-neutral-800/30",
 };
 
 // ==========================================
@@ -245,8 +245,8 @@ const AtoWithIcon = ({ ato, className = "" }: { ato: string; className?: string 
 
   return (
     <div className={`inline-flex items-center gap-1.5 ${className}`}>
-      <Icon className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
-      <span className="text-xs text-zinc-700 dark:text-zinc-300 truncate max-w-[180px]">{ato}</span>
+      <Icon className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500 flex-shrink-0" />
+      <span className="text-xs text-neutral-700 dark:text-neutral-300 truncate max-w-[180px]">{ato}</span>
     </div>
   );
 };
@@ -429,7 +429,7 @@ function DemandaGridCard({
   const isPreso = demanda.estadoPrisional && demanda.estadoPrisional !== "Solto";
 
   return (
-    <div className="group relative bg-white dark:bg-zinc-900/95 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-black/30 hover:border-zinc-300 dark:hover:border-zinc-700 hover:-translate-y-0.5">
+    <div className="group relative bg-white dark:bg-neutral-900/95 rounded-2xl border border-neutral-200/80 dark:border-neutral-800/80 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-neutral-200/50 dark:hover:shadow-black/30 hover:border-neutral-300 dark:hover:border-neutral-700 hover:-translate-y-0.5">
       {/* TOP BAR INDICATOR - appears on hover (like assistidos/processos) */}
       <div
         className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
@@ -449,7 +449,7 @@ function DemandaGridCard({
       {/* Quick Actions Overlay */}
       {showQuickActions && (
         <div
-          className="absolute inset-0 bg-zinc-900/95 dark:bg-zinc-950/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center rounded-2xl animate-in fade-in duration-200"
+          className="absolute inset-0 bg-neutral-900/95 dark:bg-neutral-950/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center rounded-2xl animate-in fade-in duration-200"
           onClick={() => setShowQuickActions(false)}
         >
           <button
@@ -485,7 +485,7 @@ function DemandaGridCard({
             className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
               isSelected
                 ? "bg-emerald-500 border-emerald-500 text-white"
-                : "border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:border-emerald-400"
+                : "border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 hover:border-emerald-400"
             }`}
           >
             {isSelected && <CheckSquare className="w-3 h-3" />}
@@ -504,7 +504,7 @@ function DemandaGridCard({
                   <Lock className="w-2.5 h-2.5 text-white" />
                 </div>
               )}
-              <p className="font-semibold text-sm text-zinc-800 dark:text-zinc-100 truncate">
+              <p className="font-semibold text-sm text-neutral-800 dark:text-neutral-100 truncate">
                 {demanda.assistido}
               </p>
             </div>
@@ -512,7 +512,7 @@ function DemandaGridCard({
           </div>
           <button
             onClick={() => setShowQuickActions(true)}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all opacity-0 group-hover:opacity-100"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all opacity-0 group-hover:opacity-100"
           >
             <Zap className="w-3.5 h-3.5" />
           </button>
@@ -534,7 +534,7 @@ function DemandaGridCard({
             <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
               prazoInfo.urgent
                 ? "bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"
-                : "bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
+                : "bg-neutral-50 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400"
             }`}>
               {prazoInfo.text}
             </span>
@@ -542,7 +542,7 @@ function DemandaGridCard({
         </div>
 
         {/* Footer: Atribuição + Processo */}
-        <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-neutral-800">
           <div
             className="flex items-center gap-1.5 text-[10px] font-medium"
             style={{ color: atribuicaoBorderColor }}
@@ -556,7 +556,7 @@ function DemandaGridCard({
                 e.stopPropagation();
                 copyToClipboard(demanda.processos[0].numero, "Processo copiado!");
               }}
-              className="text-[9px] font-mono text-zinc-400 hover:text-emerald-600 transition-colors truncate max-w-[120px]"
+              className="text-[9px] font-mono text-neutral-400 hover:text-emerald-600 transition-colors truncate max-w-[120px]"
               title={demanda.processos[0].numero}
             >
               {demanda.processos[0].numero}
@@ -1965,19 +1965,19 @@ export default function Demandas() {
   }, [activeTab, demandasOrdenadas, focusedDemandaIndex, setPreviewDemandaId]);
 
   return (
-    <div className="w-full min-h-screen bg-zinc-100 dark:bg-[#0f0f11] overflow-x-hidden">
+    <div className="w-full min-h-screen bg-neutral-100 dark:bg-[#0f0f11] overflow-x-hidden">
       {/* Header — Title + Actions */}
-      <div className="px-5 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 space-y-2">
+      <div className="px-5 py-2.5 bg-white dark:bg-neutral-900 border-b border-neutral-200/80 dark:border-neutral-800/80 space-y-2">
         {/* Row 1: Icon + Title + Search/Config + Stats + Nova */}
         <div className="flex items-center gap-3">
           {/* Icon + Title */}
           <div className="flex items-center gap-2.5 shrink-0">
-            <div className="w-9 h-9 rounded-[10px] bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center shrink-0">
-              <ClipboardList className="w-[18px] h-[18px] text-white dark:text-zinc-900" />
+            <div className="w-9 h-9 rounded-[10px] bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center shrink-0">
+              <ClipboardList className="w-[18px] h-[18px] text-white dark:text-neutral-900" />
             </div>
             <div className="min-w-0 hidden sm:block">
-              <h1 className="font-serif text-[17px] font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">Demandas</h1>
-              <p className="text-[10px] text-zinc-400 leading-tight">Gestão de intimações e providências</p>
+              <h1 className="font-serif text-[17px] font-semibold text-neutral-900 dark:text-neutral-100 tracking-tight leading-tight">Demandas</h1>
+              <p className="text-[10px] text-neutral-400 leading-tight">Gestão de intimações e providências</p>
             </div>
           </div>
 
@@ -1993,16 +1993,16 @@ export default function Demandas() {
               const andamento = total - triagem - concluida;
               return (
                 <>
-                  <span className="flex items-center gap-1 text-[10px] font-medium text-zinc-500 dark:text-zinc-400 px-1.5 py-0.5">
-                    <span className="font-bold tabular-nums text-zinc-800 dark:text-zinc-100">{triagem}</span> triagem
+                  <span className="flex items-center gap-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400 px-1.5 py-0.5">
+                    <span className="font-bold tabular-nums text-neutral-800 dark:text-neutral-100">{triagem}</span> triagem
                   </span>
-                  <div className="w-px h-3 bg-zinc-200/60 dark:bg-zinc-700/60" />
-                  <span className="flex items-center gap-1 text-[10px] font-medium text-zinc-500 dark:text-zinc-400 px-1.5 py-0.5">
-                    <span className="font-bold tabular-nums text-zinc-800 dark:text-zinc-100">{andamento}</span> andamento
+                  <div className="w-px h-3 bg-neutral-200/60 dark:bg-neutral-700/60" />
+                  <span className="flex items-center gap-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400 px-1.5 py-0.5">
+                    <span className="font-bold tabular-nums text-neutral-800 dark:text-neutral-100">{andamento}</span> andamento
                   </span>
-                  <div className="w-px h-3 bg-zinc-200/60 dark:bg-zinc-700/60" />
-                  <span className="flex items-center gap-1 text-[10px] font-medium text-zinc-500 dark:text-zinc-400 px-1.5 py-0.5">
-                    <span className="font-bold tabular-nums text-zinc-800 dark:text-zinc-100">{concluida}</span> concluída
+                  <div className="w-px h-3 bg-neutral-200/60 dark:bg-neutral-700/60" />
+                  <span className="flex items-center gap-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400 px-1.5 py-0.5">
+                    <span className="font-bold tabular-nums text-neutral-800 dark:text-neutral-100">{concluida}</span> concluída
                   </span>
                 </>
               );
@@ -2011,11 +2011,11 @@ export default function Demandas() {
 
           {/* Right: Search + Filtros + Settings grouped, then Nova */}
           <div className="flex items-center gap-2 shrink-0">
-          <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-zinc-200/60 dark:bg-zinc-800 border border-zinc-300/70 dark:border-zinc-700/60">
+          <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-neutral-200/60 dark:bg-neutral-800 border border-neutral-300/70 dark:border-neutral-700/60">
             {/* 1. Search — expandable */}
             {isMobileSearchOpen ? (
               <div className="flex-1 min-w-0 relative animate-in slide-in-from-right-2 duration-200">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
                 <Input
                   ref={mobileSearchRef}
                   placeholder="Buscar assistido, processo..."
@@ -2023,17 +2023,17 @@ export default function Demandas() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onBlur={() => { if (!searchTerm) setIsMobileSearchOpen(false); }}
                   autoFocus
-                  className="pl-8 pr-7 h-8 text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200/80 dark:border-zinc-700/80 focus:border-emerald-400 rounded-lg w-48 sm:w-56"
+                  className="pl-8 pr-7 h-8 text-xs bg-neutral-50 dark:bg-neutral-800 border-neutral-200/80 dark:border-neutral-700/80 focus:border-emerald-400 rounded-lg w-48 sm:w-56"
                 />
                 <button onClick={() => { setSearchTerm(""); setIsMobileSearchOpen(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer">
-                  <X className="w-3 h-3 text-zinc-400 hover:text-zinc-600" />
+                  <X className="w-3 h-3 text-neutral-400 hover:text-neutral-600" />
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => { setIsMobileSearchOpen(true); setTimeout(() => mobileSearchRef.current?.focus(), 100); }}
                 className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors cursor-pointer ${
-                  searchTerm ? "text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-700 shadow-sm" : "text-zinc-400 hover:text-zinc-600 hover:bg-white dark:hover:bg-zinc-700"
+                  searchTerm ? "text-emerald-600 dark:text-emerald-400 bg-white dark:bg-neutral-700 shadow-sm" : "text-neutral-400 hover:text-neutral-600 hover:bg-white dark:hover:bg-neutral-700"
                 }`}
                 title="Buscar"
               >
@@ -2047,8 +2047,8 @@ export default function Demandas() {
                 onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
                 className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors cursor-pointer relative ${
                   isFiltersExpanded || selectedStatusGroup || selectedEstadoPrisional || selectedTipoAto || groupBy || showColumnFilters || showArchived
-                    ? "text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-700 shadow-sm"
-                    : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700"
+                    ? "text-emerald-600 dark:text-emerald-400 bg-white dark:bg-neutral-700 shadow-sm"
+                    : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-white dark:hover:bg-neutral-700"
                 }`}
                 title="Filtros e opções de visualização"
               >
@@ -2063,10 +2063,10 @@ export default function Demandas() {
               {isFiltersExpanded && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setIsFiltersExpanded(false)} />
-                  <div className="absolute right-0 top-full mt-2 z-50 bg-white/95 dark:bg-[#141416]/95 backdrop-blur-xl border border-zinc-200/80 dark:border-white/[0.08] rounded-xl shadow-2xl shadow-black/10 dark:shadow-black/40 py-1.5 min-w-[220px] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200">
+                  <div className="absolute right-0 top-full mt-2 z-50 bg-white/95 dark:bg-[#141416]/95 backdrop-blur-xl border border-neutral-200/80 dark:border-white/[0.08] rounded-xl shadow-2xl shadow-black/10 dark:shadow-black/40 py-1.5 min-w-[220px] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200">
                     {/* Sort */}
                     <div className="px-3 py-1.5">
-                      <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Ordenar</span>
+                      <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Ordenar</span>
                     </div>
                     {[
                       { key: "recentes", label: "Importação ↓" },
@@ -2076,16 +2076,16 @@ export default function Demandas() {
                       { key: "ato", label: "Ato" },
                     ].map(opt => (
                       <button key={opt.key} onClick={() => setSortStack([{ column: opt.key, direction: "asc" }])}
-                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${sortStack[0]?.column === opt.key ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${sortStack[0]?.column === opt.key ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold" : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
                       >
                         {sortStack[0]?.column === opt.key && <span className="text-emerald-500">✓</span>}
                         <span>{opt.label}</span>
                       </button>
                     ))}
-                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1.5" />
+                    <div className="border-t border-neutral-100 dark:border-neutral-800 my-1.5" />
                     {/* Group By */}
                     <div className="px-3 py-1.5">
-                      <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Agrupar</span>
+                      <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Agrupar</span>
                     </div>
                     {[
                       { key: null as "status" | "atribuicao" | null, label: "Sem agrupamento" },
@@ -2093,16 +2093,16 @@ export default function Demandas() {
                       { key: "atribuicao" as const, label: "Por Atribuição" },
                     ].map(opt => (
                       <button key={opt.key ?? "none"} onClick={() => { setGroupBy(opt.key); setCollapsedGroups(new Set()); if (opt.key) localStorage.setItem("defender_demandas_groupby", opt.key); else localStorage.removeItem("defender_demandas_groupby"); }}
-                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${groupBy === opt.key ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${groupBy === opt.key ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold" : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
                       >
                         {groupBy === opt.key && <span className="text-emerald-500">✓</span>}
                         <span>{opt.label}</span>
                       </button>
                     ))}
-                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1.5" />
+                    <div className="border-t border-neutral-100 dark:border-neutral-800 my-1.5" />
                     {/* View Mode */}
                     <div className="px-3 py-1.5">
-                      <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Vista</span>
+                      <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Vista</span>
                     </div>
                     {[
                       { mode: "compact" as const, label: "Planilha", icon: Rows3 },
@@ -2110,38 +2110,38 @@ export default function Demandas() {
                       { mode: "cards" as const, label: "Cards", icon: LayoutList },
                     ].map(({ mode, label, icon: Icon }) => (
                       <button key={mode} onClick={() => { setViewMode(mode); localStorage.setItem("defender_demandas_view_mode", mode); }}
-                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${viewMode === mode ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${viewMode === mode ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold" : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
                       >
                         <Icon className="w-3.5 h-3.5" />
                         <span>{label}</span>
                         {viewMode === mode && <span className="ml-auto text-emerald-500">✓</span>}
                       </button>
                     ))}
-                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1.5" />
+                    <div className="border-t border-neutral-100 dark:border-neutral-800 my-1.5" />
                     {/* Toggle options */}
                     <button onClick={() => setShowColumnFilters(!showColumnFilters)}
-                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${showColumnFilters ? "text-emerald-700 dark:text-emerald-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${showColumnFilters ? "text-emerald-700 dark:text-emerald-400 font-semibold" : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
                     >
                       <Table2 className="w-3.5 h-3.5" />
                       <span>Filtros por coluna</span>
                       {showColumnFilters && <span className="ml-auto text-emerald-500">✓</span>}
                     </button>
                     <button onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "preso" ? null : "preso")}
-                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${selectedEstadoPrisional === "preso" ? "text-rose-700 dark:text-rose-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${selectedEstadoPrisional === "preso" ? "text-rose-700 dark:text-rose-400 font-semibold" : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
                     >
                       <Lock className="w-3.5 h-3.5" />
                       <span>Apenas presos</span>
                       {selectedEstadoPrisional === "preso" && <span className="ml-auto text-rose-500">✓</span>}
                     </button>
                     <button onClick={() => setShowArchived(!showArchived)}
-                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${showArchived ? "text-amber-700 dark:text-amber-400 font-semibold" : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${showArchived ? "text-amber-700 dark:text-amber-400 font-semibold" : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
                     >
                       <Archive className="w-3.5 h-3.5" />
                       <span>Ver arquivados</span>
                       {showArchived && <span className="ml-auto text-amber-500">✓</span>}
                     </button>
                     {/* Advanced filters section */}
-                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1.5" />
+                    <div className="border-t border-neutral-100 dark:border-neutral-800 my-1.5" />
                     <div className="px-2 py-1">
                       <FilterSectionsCompact
                         selectedPrazoFilter={selectedPrazoFilter}
@@ -2171,7 +2171,7 @@ export default function Demandas() {
             <div className="relative">
               <button
                 onClick={() => setIsSettingsDropdownOpen(!isSettingsDropdownOpen)}
-                className="h-7 w-7 flex items-center justify-center rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                className="h-7 w-7 flex items-center justify-center rounded-full text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-white dark:hover:bg-neutral-700 transition-colors cursor-pointer"
                 title="Configurações e importação"
               >
                 <Settings className="w-4 h-4" />
@@ -2179,38 +2179,38 @@ export default function Demandas() {
               {isSettingsDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setIsSettingsDropdownOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl shadow-lg py-1 min-w-[180px]">
-                    <button onClick={() => { setIsAdminConfigModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
-                      <Settings className="w-3.5 h-3.5 text-zinc-400" /> Configurações
+                  <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl shadow-lg py-1 min-w-[180px]">
+                    <button onClick={() => { setIsAdminConfigModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
+                      <Settings className="w-3.5 h-3.5 text-neutral-400" /> Configurações
                     </button>
-                    <button onClick={() => { setIsChartConfigModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
-                      <BarChartIcon className="w-3.5 h-3.5 text-zinc-400" /> Infográficos
+                    <button onClick={() => { setIsChartConfigModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
+                      <BarChartIcon className="w-3.5 h-3.5 text-neutral-400" /> Infográficos
                     </button>
-                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
-                    <button onClick={() => { setIsImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
-                      <Download className="w-3.5 h-3.5 text-zinc-400" /> Importar Excel
+                    <div className="border-t border-neutral-100 dark:border-neutral-800 my-1" />
+                    <button onClick={() => { setIsImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
+                      <Download className="w-3.5 h-3.5 text-neutral-400" /> Importar Excel
                     </button>
-                    <button onClick={() => { setIsPJeImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
-                      <Download className="w-3.5 h-3.5 text-zinc-400" /> Importar PJe
+                    <button onClick={() => { setIsPJeImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
+                      <Download className="w-3.5 h-3.5 text-neutral-400" /> Importar PJe
                     </button>
-                    <button onClick={() => { setIsSheetsImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
-                      <Download className="w-3.5 h-3.5 text-zinc-400" /> Importar Sheets
+                    <button onClick={() => { setIsSheetsImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
+                      <Download className="w-3.5 h-3.5 text-neutral-400" /> Importar Sheets
                     </button>
-                    <button onClick={() => { setIsSEEUImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
-                      <Download className="w-3.5 h-3.5 text-zinc-400" /> Importar SEEU
+                    <button onClick={() => { setIsSEEUImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
+                      <Download className="w-3.5 h-3.5 text-neutral-400" /> Importar SEEU
                     </button>
-                    <button onClick={() => { setIsExportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
-                      <Upload className="w-3.5 h-3.5 text-zinc-400" /> Exportar
+                    <button onClick={() => { setIsExportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
+                      <Upload className="w-3.5 h-3.5 text-neutral-400" /> Exportar
                     </button>
-                    <button onClick={handleExportSheets} disabled={exportToSheetsMutation.isPending} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                    <button onClick={handleExportSheets} disabled={exportToSheetsMutation.isPending} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                       {exportToSheetsMutation.isPending ? (
                         <><Loader2 className="w-3.5 h-3.5 text-emerald-500 animate-spin" /> Exportando...</>
                       ) : (
                         <><Table2 className="w-3.5 h-3.5 text-emerald-600" /> Exportar para Google Sheets</>
                       )}
                     </button>
-                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
-                    <button onClick={() => { setIsDuplicatesModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
+                    <div className="border-t border-neutral-100 dark:border-neutral-800 my-1" />
+                    <button onClick={() => { setIsDuplicatesModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
                       <Copy className="w-3.5 h-3.5 text-amber-500" /> Encontrar Duplicatas
                     </button>
                   </div>
@@ -2225,7 +2225,7 @@ export default function Demandas() {
               size="sm"
               onClick={() => setIsCreateModalOpen(true)}
               title="Nova Demanda"
-              className="h-8 px-3.5 ml-0.5 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow-sm transition-all duration-200 cursor-pointer"
+              className="h-8 px-3.5 ml-0.5 bg-neutral-900 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow-sm transition-all duration-200 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span className="hidden sm:inline ml-1">Nova</span>
@@ -2236,7 +2236,7 @@ export default function Demandas() {
       </div>
 
       {/* Filter bar — Atribuição + View tabs (outside header) */}
-      <div className="mx-3 sm:mx-5 md:mx-8 my-3 px-3 py-2.5 flex items-center gap-2 overflow-x-auto scrollbar-none bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80">
+      <div className="mx-3 sm:mx-5 md:mx-8 my-3 px-3 py-2.5 flex items-center gap-2 overflow-x-auto scrollbar-none bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80">
         <AtribuicaoPills
           options={atribuicaoOptions}
           selectedValues={selectedAtribuicoes}
@@ -2249,7 +2249,7 @@ export default function Demandas() {
         <div className="flex-1 min-w-2" />
 
         {/* View tabs — Kanban/Planilha/Prazos/Analytics */}
-        <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-zinc-200/60 dark:bg-zinc-800 border border-zinc-300/70 dark:border-zinc-700/60 shrink-0">
+        <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-neutral-200/60 dark:bg-neutral-800 border border-neutral-300/70 dark:border-neutral-700/60 shrink-0">
           {[
             { key: "kanban" as const, label: "Kanban", icon: Layers },
             { key: "planilha" as const, label: "Planilha", icon: Table2 },
@@ -2271,8 +2271,8 @@ export default function Demandas() {
                 className={cn(
                   "flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer w-7 h-7",
                   isActive
-                    ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
-                    : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 hover:bg-white dark:hover:bg-zinc-700"
+                    ? "bg-neutral-700 dark:bg-neutral-300 text-white dark:text-neutral-900 shadow-sm"
+                    : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 hover:bg-white dark:hover:bg-neutral-700"
                 )}
               >
                 <tab.icon className="w-3.5 h-3.5" />
@@ -2288,7 +2288,7 @@ export default function Demandas() {
         <>
 
         {/* Lista de Demandas */}
-        <div className="group/card relative bg-white dark:bg-zinc-900">
+        <div className="group/card relative bg-white dark:bg-neutral-900">
 
             {showArchived && (
               <div className="mx-4 mt-4 p-3 rounded-lg bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-950/30 dark:to-orange-950/30 border-2 border-amber-300 dark:border-amber-800">
@@ -2314,7 +2314,7 @@ export default function Demandas() {
               </div>
             )}
 
-            <div className={`${viewMode === "table" ? "p-0" : viewMode === "cards" ? "p-4 space-y-3" : viewMode === "compact" ? "p-0" : "p-4"} ${viewMode === "compact" ? "" : "max-h-[calc(100vh-180px)] min-h-[500px] overflow-y-auto"} scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-700`}>
+            <div className={`${viewMode === "table" ? "p-0" : viewMode === "cards" ? "p-4 space-y-3" : viewMode === "compact" ? "p-0" : "p-4"} ${viewMode === "compact" ? "" : "max-h-[calc(100vh-180px)] min-h-[500px] overflow-y-auto"} scrollbar-thin scrollbar-thumb-neutral-200 dark:scrollbar-thumb-neutral-700`}>
               {viewMode === "table" ? (
                 /* ========== MODO PLANILHA (PADRÃO) ========== */
                 <DemandaTableView
@@ -2340,13 +2340,13 @@ export default function Demandas() {
                 <>
                   {demandasOrdenadas.length === 0 ? (
                     <div className="text-center py-16">
-                      <div className="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 mx-auto mb-5 flex items-center justify-center">
-                        <ListTodo className="w-10 h-10 text-zinc-400 dark:text-zinc-600" />
+                      <div className="w-20 h-20 rounded-2xl bg-neutral-100 dark:bg-neutral-800 mx-auto mb-5 flex items-center justify-center">
+                        <ListTodo className="w-10 h-10 text-neutral-400 dark:text-neutral-600" />
                       </div>
-                      <p className="text-base font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                      <p className="text-base font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
                         Nenhuma demanda encontrada
                       </p>
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
                         {showArchived
                           ? "Não há demandas arquivadas no momento"
                           : "Ajuste os filtros ou crie uma nova demanda"}
@@ -2449,13 +2449,13 @@ export default function Demandas() {
                 <>
                   {demandasOrdenadas.length === 0 ? (
                     <div className="text-center py-16">
-                      <div className="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 mx-auto mb-5 flex items-center justify-center">
-                        <ListTodo className="w-10 h-10 text-zinc-400 dark:text-zinc-600" />
+                      <div className="w-20 h-20 rounded-2xl bg-neutral-100 dark:bg-neutral-800 mx-auto mb-5 flex items-center justify-center">
+                        <ListTodo className="w-10 h-10 text-neutral-400 dark:text-neutral-600" />
                       </div>
-                      <p className="text-base font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                      <p className="text-base font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
                         Nenhuma demanda encontrada
                       </p>
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
                         {showArchived
                           ? "Não há demandas arquivadas no momento"
                           : "Ajuste os filtros ou crie uma nova demanda"}
@@ -2491,16 +2491,16 @@ export default function Demandas() {
               )}
             </div>
 
-            <div className="px-4 md:px-5 py-3 border-t border-zinc-100 dark:border-zinc-800/60 flex items-center justify-between">
+            <div className="px-4 md:px-5 py-3 border-t border-neutral-100 dark:border-neutral-800/60 flex items-center justify-between">
               {isSelectMode ? (
                 <div className="flex items-center gap-3 w-full">
                   <button
                     onClick={handleSelectAll}
-                    className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                    className="text-xs text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors"
                   >
                     {selectedIds.size === demandasOrdenadas.length ? "Desmarcar tudo" : "Selecionar tudo"}
                   </button>
-                  <span className="text-xs text-zinc-400">
+                  <span className="text-xs text-neutral-400">
                     {selectedIds.size} selecionada{selectedIds.size !== 1 ? "s" : ""}
                   </span>
                   <div className="ml-auto flex items-center gap-2">
@@ -2515,7 +2515,7 @@ export default function Demandas() {
                               e.target.value = "";
                             }
                           }}
-                          className="h-7 text-[11px] rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 cursor-pointer focus:ring-1 focus:ring-emerald-400/50 focus:outline-none"
+                          className="h-7 text-[11px] rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 px-2 cursor-pointer focus:ring-1 focus:ring-emerald-400/50 focus:outline-none"
                         >
                           <option value="" disabled>Status...</option>
                           <optgroup label="Triagem">
@@ -2549,7 +2549,7 @@ export default function Demandas() {
                               e.target.value = "";
                             }
                           }}
-                          className="h-7 text-[11px] rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 cursor-pointer focus:ring-1 focus:ring-emerald-400/50 focus:outline-none"
+                          className="h-7 text-[11px] rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 px-2 cursor-pointer focus:ring-1 focus:ring-emerald-400/50 focus:outline-none"
                         >
                           <option value="" disabled>Atribuição...</option>
                           {atribuicaoOptions
@@ -2569,7 +2569,7 @@ export default function Demandas() {
                               e.target.value = "";
                             }
                           }}
-                          className="h-7 text-[11px] rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 cursor-pointer focus:ring-1 focus:ring-emerald-400/50 focus:outline-none"
+                          className="h-7 text-[11px] rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 px-2 cursor-pointer focus:ring-1 focus:ring-emerald-400/50 focus:outline-none"
                         >
                           <option value="" disabled>Ato...</option>
                           {atoOptionsFiltered.map(o => (
@@ -2609,7 +2609,7 @@ export default function Demandas() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 text-xs text-zinc-400 hover:text-zinc-600"
+                      className="h-7 text-xs text-neutral-400 hover:text-neutral-600"
                       onClick={handleExitSelectMode}
                     >
                       <X className="w-3 h-3" />
@@ -2618,7 +2618,7 @@ export default function Demandas() {
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-300">
+                  <p className="text-sm text-neutral-600 dark:text-neutral-300">
                     Mostrando <strong>{demandasOrdenadas.length}</strong> de{" "}
                     <strong>
                       {showArchived
@@ -2629,7 +2629,7 @@ export default function Demandas() {
                   </p>
                   <button
                     onClick={() => setIsSelectMode(true)}
-                    className="text-zinc-300 hover:text-zinc-500 dark:text-zinc-600 dark:hover:text-zinc-400 transition-colors"
+                    className="text-neutral-300 hover:text-neutral-500 dark:text-neutral-600 dark:hover:text-neutral-400 transition-colors"
                     title="Selecionar demandas"
                   >
                     <CheckSquare className="w-4 h-4" />
@@ -2674,13 +2674,13 @@ export default function Demandas() {
                 const isAlert = stat.gradient === "rose" || stat.gradient === "amber";
                 const hasValue = Number(String(stat.value).replace('%','')) > 0;
                 return (
-                  <div key={index} className={`flex items-center gap-3 p-4 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 ${isAlert && hasValue ? 'border-rose-200 dark:border-rose-800/50' : ''}`}>
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isAlert && hasValue ? 'bg-rose-100 dark:bg-rose-950/30' : 'bg-zinc-100 dark:bg-zinc-800'}`}>
-                      <Icon className={`w-4 h-4 ${isAlert && hasValue ? 'text-rose-500' : 'text-zinc-400'}`} />
+                  <div key={index} className={`flex items-center gap-3 p-4 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 bg-white dark:bg-neutral-900 ${isAlert && hasValue ? 'border-rose-200 dark:border-rose-800/50' : ''}`}>
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isAlert && hasValue ? 'bg-rose-100 dark:bg-rose-950/30' : 'bg-neutral-100 dark:bg-neutral-800'}`}>
+                      <Icon className={`w-4 h-4 ${isAlert && hasValue ? 'text-rose-500' : 'text-neutral-400'}`} />
                     </div>
                     <div>
-                      <p className="text-lg font-bold tabular-nums text-zinc-900 dark:text-zinc-100">{stat.value}</p>
-                      <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{stat.title}</p>
+                      <p className="text-lg font-bold tabular-nums text-neutral-900 dark:text-neutral-100">{stat.value}</p>
+                      <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500">{stat.title}</p>
                     </div>
                   </div>
                 );
@@ -2695,15 +2695,15 @@ export default function Demandas() {
                   const Icon = chartConfig?.icon || BarChartIcon;
 
                   return (
-                    <Card key={chartKey} className="group/chart relative p-4 border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/[0.02]">
+                    <Card key={chartKey} className="group/chart relative p-4 border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-xl hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/[0.02]">
                       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover/chart:via-emerald-500/20 transition-all duration-300 rounded-t-xl" />
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover/chart:border-emerald-300/30 dark:group-hover/chart:border-emerald-700/30 group-hover/chart:bg-emerald-50 dark:group-hover/chart:bg-emerald-900/20 transition-all duration-300">
-                          <Icon className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 group-hover/chart:text-emerald-600 dark:group-hover/chart:text-emerald-400 transition-colors duration-300" />
+                        <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center border border-neutral-200 dark:border-neutral-700 group-hover/chart:border-emerald-300/30 dark:group-hover/chart:border-emerald-700/30 group-hover/chart:bg-emerald-50 dark:group-hover/chart:bg-emerald-900/20 transition-all duration-300">
+                          <Icon className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 group-hover/chart:text-emerald-600 dark:group-hover/chart:text-emerald-400 transition-colors duration-300" />
                         </div>
                         <div>
-                          <h4 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{chartConfig?.label || chartKey}</h4>
-                          <p className="text-[10px] text-zinc-400 dark:text-zinc-500">{chartConfig?.category}</p>
+                          <h4 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">{chartConfig?.label || chartKey}</h4>
+                          <p className="text-[10px] text-neutral-400 dark:text-neutral-500">{chartConfig?.category}</p>
                         </div>
                       </div>
                       <div className="h-[300px] w-full">
@@ -2724,7 +2724,7 @@ export default function Demandas() {
       {/* Mobile FAB — floating "+" button */}
       <button
         onClick={() => setIsCreateModalOpen(true)}
-        className="sm:hidden fixed bottom-20 right-4 z-40 w-12 h-12 rounded-full bg-zinc-900 dark:bg-zinc-700 hover:bg-emerald-600 dark:hover:bg-emerald-600 text-white shadow-lg shadow-zinc-900/30 dark:shadow-black/50 flex items-center justify-center transition-all duration-200 active:scale-95 cursor-pointer"
+        className="sm:hidden fixed bottom-20 right-4 z-40 w-12 h-12 rounded-full bg-neutral-900 dark:bg-neutral-700 hover:bg-emerald-600 dark:hover:bg-emerald-600 text-white shadow-lg shadow-neutral-900/30 dark:shadow-black/50 flex items-center justify-center transition-all duration-200 active:scale-95 cursor-pointer"
         title="Nova Demanda"
       >
         <Plus className="w-5 h-5" />

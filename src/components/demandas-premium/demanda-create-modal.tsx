@@ -120,8 +120,8 @@ function SimpleSelect({
         type="button"
         onClick={toggleDropdown}
         className={cn(
-          "w-full h-11 text-sm bg-white dark:bg-zinc-900/80 border rounded-xl cursor-pointer transition-all duration-200 text-left relative flex items-center",
-          "border-zinc-200 dark:border-zinc-700/80",
+          "w-full h-11 text-sm bg-white dark:bg-neutral-900/80 border rounded-xl cursor-pointer transition-all duration-200 text-left relative flex items-center",
+          "border-neutral-200 dark:border-neutral-700/80",
           "hover:border-emerald-400 dark:hover:border-emerald-600 hover:shadow-sm hover:shadow-emerald-500/10",
           "focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500",
           isOpen && "border-emerald-500 ring-2 ring-emerald-500/20",
@@ -130,14 +130,14 @@ function SimpleSelect({
       >
         {/* Ícone opcional à esquerda */}
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400">
             {icon}
           </div>
         )}
         
         <span className={cn(
           "block truncate",
-          hasValue ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-400 dark:text-zinc-500"
+          hasValue ? "text-neutral-900 dark:text-neutral-100" : "text-neutral-400 dark:text-neutral-500"
         )}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
@@ -148,7 +148,7 @@ function SimpleSelect({
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           )}
           <ChevronDown className={cn(
-            "w-4 h-4 text-zinc-400 transition-transform duration-200",
+            "w-4 h-4 text-neutral-400 transition-transform duration-200",
             isOpen && "rotate-180 text-emerald-500"
           )} />
         </div>
@@ -165,7 +165,7 @@ function SimpleSelect({
             width: position.width,
             zIndex: 999999,
           }}
-          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-xl shadow-black/10 dark:shadow-black/30 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150"
+          className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-xl shadow-black/10 dark:shadow-black/30 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150"
         >
           <div className="max-h-[220px] overflow-y-auto py-1">
             {options.map((opt, index) => (
@@ -182,7 +182,7 @@ function SimpleSelect({
                   "hover:bg-emerald-50 dark:hover:bg-emerald-950/40",
                   value === opt.value 
                     ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-medium" 
-                    : "text-zinc-700 dark:text-zinc-300"
+                    : "text-neutral-700 dark:text-neutral-300"
                 )}
               >
                 <span className="truncate">{opt.label}</span>
@@ -355,28 +355,28 @@ export function DemandaCreateModal({
             display: 'flex',
             flexDirection: 'column',
           }}
-          className="dark:bg-zinc-900"
+          className="dark:bg-neutral-900"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="p-5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+          <div className="p-5 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
                 <FileText className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
+                <h2 className="text-lg font-bold text-neutral-900 dark:text-white">
                   {mode === "edit" ? "Editar Demanda" : "Nova Demanda"}
                 </h2>
-                <p className="text-xs text-zinc-500">Preencha os campos abaixo</p>
+                <p className="text-xs text-neutral-500">Preencha os campos abaixo</p>
               </div>
             </div>
             <button 
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
               type="button"
             >
-              <X className="h-5 w-5 text-zinc-500" />
+              <X className="h-5 w-5 text-neutral-500" />
             </button>
           </div>
 
@@ -386,7 +386,7 @@ export function DemandaCreateModal({
               
               {/* Assistido */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5 text-emerald-500" />
                   Nome do Assistido
                 </Label>
@@ -394,14 +394,14 @@ export function DemandaCreateModal({
                   value={formData.assistido}
                   onChange={(e) => setFormData({ ...formData, assistido: e.target.value })}
                   placeholder="Nome completo do assistido"
-                  className="h-11 rounded-xl border-zinc-200 dark:border-zinc-700/80 hover:border-emerald-400 dark:hover:border-emerald-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                  className="h-11 rounded-xl border-neutral-200 dark:border-neutral-700/80 hover:border-emerald-400 dark:hover:border-emerald-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 />
               </div>
 
               {/* Grid: Atribuição e Status */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                  <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
                     <Scale className="w-3.5 h-3.5 text-emerald-500" />
                     Atribuição
                   </Label>
@@ -413,7 +413,7 @@ export function DemandaCreateModal({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                  <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                     Status
                   </Label>
@@ -427,7 +427,7 @@ export function DemandaCreateModal({
 
               {/* Tipo de Ato */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
                   <FileText className="w-3.5 h-3.5 text-blue-500" />
                   Tipo de Ato
                 </Label>
@@ -441,7 +441,7 @@ export function DemandaCreateModal({
 
               {/* Estado Prisional */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-rose-500" />
                   Situação Prisional
                 </Label>
@@ -455,7 +455,7 @@ export function DemandaCreateModal({
               {/* Grid: Data e Prazo */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                  <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
                     <svg className="w-3.5 h-3.5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
@@ -465,11 +465,11 @@ export function DemandaCreateModal({
                     type="date"
                     value={formData.data}
                     onChange={(e) => handleDataChange(e.target.value)}
-                    className="h-11 rounded-xl border-zinc-200 dark:border-zinc-700/80 hover:border-emerald-400 dark:hover:border-emerald-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                    className="h-11 rounded-xl border-neutral-200 dark:border-neutral-700/80 hover:border-emerald-400 dark:hover:border-emerald-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                  <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
                     <svg className="w-3.5 h-3.5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -479,7 +479,7 @@ export function DemandaCreateModal({
                     value={formData.prazo}
                     onChange={(e) => setFormData({ ...formData, prazo: e.target.value })}
                     placeholder="DD/MM/AAAA"
-                    className="h-11 rounded-xl border-zinc-200 dark:border-zinc-700/80 hover:border-emerald-400 dark:hover:border-emerald-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-mono"
+                    className="h-11 rounded-xl border-neutral-200 dark:border-neutral-700/80 hover:border-emerald-400 dark:hover:border-emerald-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-mono"
                   />
                 </div>
               </div>
@@ -499,7 +499,7 @@ export function DemandaCreateModal({
               {/* Processos */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                  <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
                     <Scale className="w-3.5 h-3.5 text-cyan-500" />
                     Processos Vinculados
                   </Label>
@@ -519,7 +519,7 @@ export function DemandaCreateModal({
                   {formData.processos.map((processo, index) => (
                     <div 
                       key={index} 
-                      className="flex items-center gap-2 p-3 bg-gradient-to-r from-zinc-50 to-zinc-100/50 dark:from-zinc-800/60 dark:to-zinc-800/30 rounded-xl border border-zinc-200/60 dark:border-zinc-700/50 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors group"
+                      className="flex items-center gap-2 p-3 bg-gradient-to-r from-neutral-50 to-neutral-100/50 dark:from-neutral-800/60 dark:to-neutral-800/30 rounded-xl border border-neutral-200/60 dark:border-neutral-700/50 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors group"
                     >
                       <div className="w-32 flex-shrink-0">
                         <SimpleSelect
@@ -532,7 +532,7 @@ export function DemandaCreateModal({
                         value={processo.numero}
                         onChange={(e) => updateProcesso(index, "numero", e.target.value)}
                         placeholder="0000000-00.0000.0.00.0000"
-                        className="h-11 text-sm flex-1 font-mono tracking-wide rounded-xl border-zinc-200 dark:border-zinc-700/80 hover:border-emerald-400 dark:hover:border-emerald-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                        className="h-11 text-sm flex-1 font-mono tracking-wide rounded-xl border-neutral-200 dark:border-neutral-700/80 hover:border-emerald-400 dark:hover:border-emerald-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                       />
                       {formData.processos.length > 1 && (
                         <Button
@@ -540,7 +540,7 @@ export function DemandaCreateModal({
                           variant="ghost"
                           size="sm"
                           onClick={() => removeProcesso(index)}
-                          className="h-11 w-11 p-0 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
+                          className="h-11 w-11 p-0 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -552,7 +552,7 @@ export function DemandaCreateModal({
 
               {/* Providências */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-purple-500" />
                   Providências / Observações
                 </Label>
@@ -561,18 +561,18 @@ export function DemandaCreateModal({
                   onChange={(e) => setFormData({ ...formData, providencias: e.target.value })}
                   placeholder="Descreva as providências necessárias, observações importantes ou anotações sobre a demanda..."
                   rows={3}
-                  className="w-full px-4 py-3 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-700/80 rounded-xl text-sm resize-none transition-all duration-200 hover:border-emerald-400 dark:hover:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 placeholder:text-zinc-400"
+                  className="w-full px-4 py-3 bg-white dark:bg-neutral-900/80 border border-neutral-200 dark:border-neutral-700/80 rounded-xl text-sm resize-none transition-all duration-200 hover:border-emerald-400 dark:hover:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 placeholder:text-neutral-400"
                 />
               </div>
             </div>
 
             {/* Footer */}
-            <div className="flex gap-3 p-5 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-b-2xl">
+            <div className="flex gap-3 p-5 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 rounded-b-2xl">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                className="flex-1 h-12 rounded-xl border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 font-medium transition-all"
+                className="flex-1 h-12 rounded-xl border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-medium transition-all"
               >
                 <X className="w-4 h-4 mr-2 opacity-60" />
                 Cancelar

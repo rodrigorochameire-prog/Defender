@@ -115,7 +115,7 @@ export function AnaliseImputacoes({
   if (isEmpty) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <Gavel className="h-10 w-10 text-zinc-300 dark:text-zinc-600 mb-4" />
+        <Gavel className="h-10 w-10 text-neutral-300 dark:text-neutral-600 mb-4" />
         <p className={`${TYPO.body} text-muted-foreground`}>
           Nenhuma imputação identificada. Execute uma análise para detalhar as acusações.
         </p>
@@ -131,7 +131,7 @@ export function AnaliseImputacoes({
           <h3 className={`${TYPO.h2} flex items-center gap-2.5 mb-4`}>
             <Gavel className="h-5 w-5 text-red-500 shrink-0" />
             Imputações
-            <span className="text-xs text-zinc-400 font-normal ml-1">({imputacoes.length})</span>
+            <span className="text-xs text-neutral-400 font-normal ml-1">({imputacoes.length})</span>
           </h3>
 
           <div className="space-y-3">
@@ -145,7 +145,7 @@ export function AnaliseImputacoes({
                     <div className="flex items-center gap-2">
                       <span className={TYPO.h3}>{imp.crime}</span>
                       {imp.artigo && (
-                        <span className="text-xs text-zinc-400 font-mono">{imp.artigo}</span>
+                        <span className="text-xs text-neutral-400 font-mono">{imp.artigo}</span>
                       )}
                       {imp.favoravel_defesa === true && (
                         <Badge variant="default" className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
@@ -157,11 +157,11 @@ export function AnaliseImputacoes({
                       <p className={`${TYPO.caption} mt-0.5`}>Pena abstrata: {imp.pena_abstrata}</p>
                     )}
                   </div>
-                  {expandedIdx === i ? <ChevronUp className="h-4 w-4 text-zinc-400" /> : <ChevronDown className="h-4 w-4 text-zinc-400" />}
+                  {expandedIdx === i ? <ChevronUp className="h-4 w-4 text-neutral-400" /> : <ChevronDown className="h-4 w-4 text-neutral-400" />}
                 </div>
 
                 {expandedIdx === i && (
-                  <div className="mt-3 space-y-3 border-t border-zinc-100 dark:border-zinc-800 pt-3">
+                  <div className="mt-3 space-y-3 border-t border-neutral-100 dark:border-neutral-800 pt-3">
                     {imp.qualificadoras && imp.qualificadoras.length > 0 && (
                       <div>
                         <p className={`${TYPO.label} text-red-600 dark:text-red-400 mb-1.5`}>Qualificadoras</p>
@@ -349,7 +349,7 @@ export function AnaliseImputacoes({
                 <ol className="space-y-1.5">
                   {ritoBifasico.quesitos_propostos.map((q, i) => (
                     <li key={i} className={`${TYPO.body} flex items-start gap-2`}>
-                      <span className="text-zinc-400 font-semibold text-xs shrink-0 tabular-nums">{i + 1}.</span> {q}
+                      <span className="text-neutral-400 font-semibold text-xs shrink-0 tabular-nums">{i + 1}.</span> {q}
                     </li>
                   ))}
                 </ol>
@@ -418,13 +418,13 @@ export function AnaliseImputacoes({
               {calculoPena.pena_base && (
                 <div>
                   <p className={TYPO.label}>Pena Base</p>
-                  <p className={`${TYPO.h3} text-zinc-800 dark:text-zinc-100`}>{calculoPena.pena_base}</p>
+                  <p className={`${TYPO.h3} text-neutral-800 dark:text-neutral-100`}>{calculoPena.pena_base}</p>
                 </div>
               )}
               {calculoPena.regime_inicial && (
                 <div>
                   <p className={TYPO.label}>Regime Inicial</p>
-                  <p className={`${TYPO.h3} text-zinc-800 dark:text-zinc-100`}>{calculoPena.regime_inicial}</p>
+                  <p className={`${TYPO.h3} text-neutral-800 dark:text-neutral-100`}>{calculoPena.regime_inicial}</p>
                 </div>
               )}
             </div>
@@ -521,7 +521,7 @@ export function AnaliseImputacoes({
                 <ul className="space-y-1.5">
                   {contextoRelacional.historico.map((h, i) => (
                     <li key={i} className={`${TYPO.body} flex items-start gap-2`}>
-                      <span className="text-zinc-400">—</span> {h}
+                      <span className="text-neutral-400">—</span> {h}
                     </li>
                   ))}
                 </ul>

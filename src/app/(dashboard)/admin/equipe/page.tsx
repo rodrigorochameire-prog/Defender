@@ -411,16 +411,16 @@ export default function EquipePage() {
       defensor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
       servidor: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
       estagiario: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-      triagem: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400",
+      triagem: "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400",
     };
-    return colors[role] || "bg-zinc-100 text-zinc-700";
+    return colors[role] || "bg-neutral-100 text-neutral-700";
   };
 
   // Loading state
   if (isLoadingMembros) {
     return (
-      <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-        <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
+        <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
           <div className="flex items-center gap-3">
             <Skeleton className="w-11 h-11 rounded-xl" />
             <div>
@@ -446,41 +446,41 @@ export default function EquipePage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <Users className="w-5 h-5 text-white dark:text-zinc-900" />
+            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
+              <Users className="w-5 h-5 text-white dark:text-neutral-900" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Equipe</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Gestão de membros e delegações</p>
+              <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">Equipe</h1>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">Gestão de membros e delegações</p>
             </div>
           </div>
 
           <div className="flex items-center gap-1">
             <div className="relative mr-1">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
               <Input
                 placeholder="Buscar..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 w-[140px] h-7 text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 rounded-md"
+                className="pl-8 w-[140px] h-7 text-xs bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 rounded-md"
               />
             </div>
             <Button 
               variant="ghost" 
               size="sm"
-              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
+              className="h-7 w-7 p-0 text-neutral-400 hover:text-emerald-600"
               title="Exportar"
             >
               <Download className="w-3.5 h-3.5" />
             </Button>
             <Button 
               size="sm" 
-              className="h-7 px-2.5 ml-1 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+              className="h-7 px-2.5 ml-1 bg-neutral-800 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
               onClick={() => {
                 resetForm();
                 setAddModalOpen(true);
@@ -498,58 +498,58 @@ export default function EquipePage() {
 
       {/* Stats Cards - Mobile-first */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Total</p>
-              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{estatisticas.total}</p>
-              <p className="text-xs sm:text-[10px] text-zinc-400">membros</p>
+              <p className="text-xs sm:text-[10px] font-medium text-neutral-400 dark:text-neutral-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Total</p>
+              <p className="text-2xl sm:text-xl font-semibold text-neutral-700 dark:text-neutral-300">{estatisticas.total}</p>
+              <p className="text-xs sm:text-[10px] text-neutral-400">membros</p>
             </div>
-            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-              <Users className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center border border-neutral-200 dark:border-neutral-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+              <Users className="w-5 h-5 sm:w-4 sm:h-4 text-neutral-500 group-hover:text-emerald-600 transition-colors" />
             </div>
           </div>
         </div>
 
-        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Pendentes</p>
-              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{estatisticas.delegacoesPendentes}</p>
-              <p className="text-xs sm:text-[10px] text-zinc-400">delegações</p>
+              <p className="text-xs sm:text-[10px] font-medium text-neutral-400 dark:text-neutral-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Pendentes</p>
+              <p className="text-2xl sm:text-xl font-semibold text-neutral-700 dark:text-neutral-300">{estatisticas.delegacoesPendentes}</p>
+              <p className="text-xs sm:text-[10px] text-neutral-400">delegações</p>
             </div>
-            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-              <Clock className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center border border-neutral-200 dark:border-neutral-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+              <Clock className="w-5 h-5 sm:w-4 sm:h-4 text-neutral-500 group-hover:text-emerald-600 transition-colors" />
             </div>
           </div>
         </div>
 
-        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Andamento</p>
-              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{estatisticas.delegacoesEmAndamento}</p>
-              <p className="text-xs sm:text-[10px] text-zinc-400">em execução</p>
+              <p className="text-xs sm:text-[10px] font-medium text-neutral-400 dark:text-neutral-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Andamento</p>
+              <p className="text-2xl sm:text-xl font-semibold text-neutral-700 dark:text-neutral-300">{estatisticas.delegacoesEmAndamento}</p>
+              <p className="text-xs sm:text-[10px] text-neutral-400">em execução</p>
             </div>
-            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-              <RefreshCw className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center border border-neutral-200 dark:border-neutral-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+              <RefreshCw className="w-5 h-5 sm:w-4 sm:h-4 text-neutral-500 group-hover:text-emerald-600 transition-colors" />
             </div>
           </div>
         </div>
 
-        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Concluídas</p>
-              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{estatisticasDelegacoes?.concluidas || 0}</p>
-              <p className="text-xs sm:text-[10px] text-zinc-400">este mês</p>
+              <p className="text-xs sm:text-[10px] font-medium text-neutral-400 dark:text-neutral-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Concluídas</p>
+              <p className="text-2xl sm:text-xl font-semibold text-neutral-700 dark:text-neutral-300">{estatisticasDelegacoes?.concluidas || 0}</p>
+              <p className="text-xs sm:text-[10px] text-neutral-400">este mês</p>
             </div>
-            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-              <CheckCircle2 className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center border border-neutral-200 dark:border-neutral-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+              <CheckCircle2 className="w-5 h-5 sm:w-4 sm:h-4 text-neutral-500 group-hover:text-emerald-600 transition-colors" />
             </div>
           </div>
         </div>
@@ -557,14 +557,14 @@ export default function EquipePage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
+        <TabsList className="bg-neutral-100 dark:bg-neutral-800 p-1 rounded-xl">
           <TabsTrigger 
             value="visao-geral" 
             className={cn(
               "rounded-lg px-4 py-2 text-sm font-medium transition-all",
               activeTab === "visao-geral" 
-                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md" 
-                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-md" 
+                : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
             )}
           >
             <Users className="w-4 h-4 mr-2" />
@@ -575,8 +575,8 @@ export default function EquipePage() {
             className={cn(
               "rounded-lg px-4 py-2 text-sm font-medium transition-all",
               activeTab === "delegacoes" 
-                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md" 
-                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-md" 
+                : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
             )}
           >
             <Send className="w-4 h-4 mr-2" />
@@ -587,8 +587,8 @@ export default function EquipePage() {
             className={cn(
               "rounded-lg px-4 py-2 text-sm font-medium transition-all",
               activeTab === "atividade" 
-                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md" 
-                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-md" 
+                : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
             )}
           >
             <Activity className="w-4 h-4 mr-2" />
@@ -600,11 +600,11 @@ export default function EquipePage() {
         <TabsContent value="visao-geral" className="space-y-4">
           {membrosFiltered.length === 0 ? (
             <Card className="p-12 text-center border-dashed">
-              <Users className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-600 mb-4" />
-              <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+              <Users className="w-12 h-12 mx-auto text-neutral-300 dark:text-neutral-600 mb-4" />
+              <h3 className="text-lg font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                 Nenhum membro encontrado
               </h3>
-              <p className="text-sm text-zinc-500 mb-4">
+              <p className="text-sm text-neutral-500 mb-4">
                 {searchQuery ? "Tente ajustar sua busca" : "Adicione membros à sua equipe"}
               </p>
               {canManageTeam() && !searchQuery && (
@@ -619,17 +619,17 @@ export default function EquipePage() {
               {membrosFiltered.map((membro) => (
                 <Card
                   key={membro.id}
-                  className="group p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:shadow-zinc-900/10 dark:hover:shadow-white/5 transition-all"
+                  className="group p-5 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800 rounded-2xl hover:shadow-xl hover:shadow-neutral-900/10 dark:hover:shadow-white/5 transition-all"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <Avatar className="w-12 h-12 border-2 border-zinc-100 dark:border-zinc-800">
-                        <AvatarFallback className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-semibold">
+                      <Avatar className="w-12 h-12 border-2 border-neutral-100 dark:border-neutral-800">
+                        <AvatarFallback className="bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 font-semibold">
                           {membro.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">{membro.name}</h3>
+                        <h3 className="font-semibold text-neutral-900 dark:text-neutral-50">{membro.name}</h3>
                         <Badge className={cn("text-[10px] font-medium", getRoleColorLocal(membro.role))}>
                           {getRoleLabelLocal(membro.role)}
                         </Badge>
@@ -677,7 +677,7 @@ export default function EquipePage() {
                   </div>
 
                   <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                    <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
                       <Mail className="w-4 h-4" />
                       <span className="truncate flex-1">{membro.email}</span>
                       <Button
@@ -694,13 +694,13 @@ export default function EquipePage() {
                       </Button>
                     </div>
                     {membro.phone && (
-                      <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                      <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
                         <Phone className="w-4 h-4" />
                         <span>{membro.phone}</span>
                       </div>
                     )}
                     {membro.comarca && (
-                      <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                      <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
                         <Scale className="w-4 h-4" />
                         <span>{membro.comarca}</span>
                       </div>
@@ -715,7 +715,7 @@ export default function EquipePage() {
                           key={area}
                           className={cn(
                             "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium text-white",
-                            AREA_COLORS[area] ?? "bg-zinc-500"
+                            AREA_COLORS[area] ?? "bg-neutral-500"
                           )}
                         >
                           {AREA_LABELS[area] ?? area}
@@ -724,8 +724,8 @@ export default function EquipePage() {
                     </div>
                   )}
 
-                  <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
-                    <div className="flex items-center justify-between text-xs text-zinc-500">
+                  <div className="mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800 space-y-2">
+                    <div className="flex items-center justify-between text-xs text-neutral-500">
                       <span>Desde {format(new Date(membro.createdAt), "MMM yyyy", { locale: ptBR })}</span>
                       {membro.inviteToken ? (
                         <Badge variant="outline" className="text-amber-600 border-amber-200">
@@ -761,11 +761,11 @@ export default function EquipePage() {
             </div>
           ) : !delegacoesEnviadas || delegacoesEnviadas.length === 0 ? (
             <Card className="p-12 text-center border-dashed">
-              <Send className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-600 mb-4" />
-              <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+              <Send className="w-12 h-12 mx-auto text-neutral-300 dark:text-neutral-600 mb-4" />
+              <h3 className="text-lg font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                 Nenhuma delegação
               </h3>
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-neutral-500">
                 As delegações que você enviar aparecerão aqui
               </p>
             </Card>
@@ -774,7 +774,7 @@ export default function EquipePage() {
               {delegacoesEnviadas.map((delegacao) => (
                 <Card
                   key={delegacao.id}
-                  className="p-4 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-xl hover:shadow-md transition-all"
+                  className="p-4 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800 rounded-xl hover:shadow-md transition-all"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -791,10 +791,10 @@ export default function EquipePage() {
                         {delegacao.status === "concluida" && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
                       </div>
                       <div>
-                        <p className="font-medium text-zinc-900 dark:text-zinc-50">
+                        <p className="font-medium text-neutral-900 dark:text-neutral-50">
                           {delegacao.instrucoes}
                         </p>
-                        <p className="text-sm text-zinc-500">
+                        <p className="text-sm text-neutral-500">
                           Para: {delegacao.delegadoPara?.name} • {format(new Date(delegacao.dataDelegacao), "dd/MM/yyyy")}
                         </p>
                       </div>
@@ -821,7 +821,7 @@ export default function EquipePage() {
         <TabsContent value="atividade" className="space-y-6">
           {/* Cards de estatísticas por membro */}
           <div>
-            <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-4 flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Produtividade da Equipe (30 dias)
             </h3>
@@ -837,16 +837,16 @@ export default function EquipePage() {
                 {teamActivity.map((member) => (
                   <Card
                     key={member.userId}
-                    className="p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all"
+                    className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800 rounded-2xl hover:shadow-xl transition-all"
                   >
                     <div className="flex items-center gap-3 mb-4">
                       <Avatar className="w-10 h-10">
-                        <AvatarFallback className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-semibold">
+                        <AvatarFallback className="bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 text-xs font-semibold">
                           {member.userName?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h4 className="font-semibold text-zinc-900 dark:text-zinc-50 text-sm">{member.userName}</h4>
+                        <h4 className="font-semibold text-neutral-900 dark:text-neutral-50 text-sm">{member.userName}</h4>
                         <Badge className={cn("text-[9px]", getRoleColorLocal(member.userRole as string))}>
                           {getRoleLabelLocal(member.userRole as string)}
                         </Badge>
@@ -870,12 +870,12 @@ export default function EquipePage() {
                         <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{member.assistidos}</p>
                       </div>
                       
-                      <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
+                      <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-800">
                         <div className="flex items-center gap-2 mb-1">
-                          <Scale className="w-3.5 h-3.5 text-zinc-500" />
-                          <span className="text-[10px] text-zinc-600 dark:text-zinc-400 font-medium">Processos</span>
+                          <Scale className="w-3.5 h-3.5 text-neutral-500" />
+                          <span className="text-[10px] text-neutral-600 dark:text-neutral-400 font-medium">Processos</span>
                         </div>
-                        <p className="text-xl font-bold text-zinc-700 dark:text-zinc-300">{member.processos}</p>
+                        <p className="text-xl font-bold text-neutral-700 dark:text-neutral-300">{member.processos}</p>
                       </div>
                       
                       <div className="p-3 rounded-lg bg-violet-50 dark:bg-violet-900/20 border border-violet-100 dark:border-violet-900/30">
@@ -887,10 +887,10 @@ export default function EquipePage() {
                       </div>
                     </div>
                     
-                    <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                    <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-800">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-zinc-500">Total de ações</span>
-                        <span className="font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1">
+                        <span className="text-neutral-500">Total de ações</span>
+                        <span className="font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-1">
                           <TrendingUp className="w-3 h-3 text-emerald-500" />
                           {member.total}
                         </span>
@@ -901,11 +901,11 @@ export default function EquipePage() {
               </div>
             ) : (
               <Card className="p-12 text-center border-dashed">
-                <Activity className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-600 mb-4" />
-                <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                <Activity className="w-12 h-12 mx-auto text-neutral-300 dark:text-neutral-600 mb-4" />
+                <h3 className="text-lg font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                   Nenhuma atividade registrada
                 </h3>
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-neutral-500">
                   As atividades da equipe aparecerão aqui
                 </p>
               </Card>
@@ -913,15 +913,15 @@ export default function EquipePage() {
           </div>
 
           {/* Timeline de atividades recentes */}
-          <Card className="bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
-              <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+          <Card className="bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800 rounded-xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-neutral-100 dark:border-neutral-800">
+              <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-2">
                 <Activity className="w-4 h-4" />
                 Atividades Recentes da Equipe
               </h3>
             </div>
             
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800 max-h-[400px] overflow-y-auto">
+            <div className="divide-y divide-neutral-100 dark:divide-neutral-800 max-h-[400px] overflow-y-auto">
               {isLoadingLogs ? (
                 <div className="p-4 space-y-3">
                   {[1, 2, 3, 4, 5].map((i) => (
@@ -962,23 +962,23 @@ export default function EquipePage() {
                   };
                   
                   return (
-                    <div key={log.id} className="flex items-center gap-4 px-5 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                      <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                        {acaoIcons[log.acao] || <Activity className="w-4 h-4 text-zinc-500" />}
+                    <div key={log.id} className="flex items-center gap-4 px-5 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                      <div className="w-9 h-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                        {acaoIcons[log.acao] || <Activity className="w-4 h-4 text-neutral-500" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                        <p className="text-sm text-neutral-700 dark:text-neutral-300">
                           <span className="font-medium">{log.user?.name}</span>
                           {" "}
-                          <span className="text-zinc-500">{acaoLabels[log.acao] || log.acao}</span>
+                          <span className="text-neutral-500">{acaoLabels[log.acao] || log.acao}</span>
                           {" "}
                           <span className="font-medium">{entidadeLabels[log.entidadeTipo] || log.entidadeTipo}</span>
                         </p>
                         {log.descricao && (
-                          <p className="text-xs text-zinc-500 truncate">{log.descricao}</p>
+                          <p className="text-xs text-neutral-500 truncate">{log.descricao}</p>
                         )}
                       </div>
-                      <span className="text-[10px] text-zinc-400 flex-shrink-0">
+                      <span className="text-[10px] text-neutral-400 flex-shrink-0">
                         {format(new Date(log.createdAt), "dd/MM HH:mm", { locale: ptBR })}
                       </span>
                     </div>
@@ -986,8 +986,8 @@ export default function EquipePage() {
                 })
               ) : (
                 <div className="p-8 text-center">
-                  <Activity className="w-8 h-8 mx-auto text-zinc-300 dark:text-zinc-600 mb-2" />
-                  <p className="text-sm text-zinc-500">Nenhuma atividade recente</p>
+                  <Activity className="w-8 h-8 mx-auto text-neutral-300 dark:text-neutral-600 mb-2" />
+                  <p className="text-sm text-neutral-500">Nenhuma atividade recente</p>
                 </div>
               )}
             </div>
@@ -1065,7 +1065,7 @@ export default function EquipePage() {
             <Button 
               onClick={handleAddMembro} 
               disabled={createUserMutation.isPending}
-              className="bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-900"
+              className="bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 dark:text-neutral-900"
             >
               {createUserMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Adicionar
@@ -1130,7 +1130,7 @@ export default function EquipePage() {
             <Button 
               onClick={handleEditMembro} 
               disabled={updateUserMutation.isPending}
-              className="bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-900"
+              className="bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 dark:text-neutral-900"
             >
               {updateUserMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Salvar
@@ -1162,23 +1162,23 @@ export default function EquipePage() {
               </div>
               <div className="space-y-3 pt-4 border-t">
                 <div className="flex items-center gap-3">
-                  <Mail className="w-4 h-4 text-zinc-400" />
+                  <Mail className="w-4 h-4 text-neutral-400" />
                   <span>{selectedMembro.email}</span>
                 </div>
                 {selectedMembro.phone && (
                   <div className="flex items-center gap-3">
-                    <Phone className="w-4 h-4 text-zinc-400" />
+                    <Phone className="w-4 h-4 text-neutral-400" />
                     <span>{selectedMembro.phone}</span>
                   </div>
                 )}
                 {selectedMembro.comarca && (
                   <div className="flex items-center gap-3">
-                    <Scale className="w-4 h-4 text-zinc-400" />
+                    <Scale className="w-4 h-4 text-neutral-400" />
                     <span>{selectedMembro.comarca}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-3">
-                  <User className="w-4 h-4 text-zinc-400" />
+                  <User className="w-4 h-4 text-neutral-400" />
                   <span>Desde {format(new Date(selectedMembro.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
                 </div>
               </div>

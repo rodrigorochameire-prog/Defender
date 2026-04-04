@@ -144,8 +144,8 @@ function TreeNode({
         onClick={() => onToggle(currentPath)}
         className={cn(
           "flex w-full items-center gap-1 rounded-md px-2 py-1.5 text-left text-xs transition-colors",
-          "hover:bg-zinc-100 dark:hover:bg-muted",
-          "text-zinc-700 dark:text-foreground/80"
+          "hover:bg-neutral-100 dark:hover:bg-muted",
+          "text-neutral-700 dark:text-foreground/80"
         )}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
       >
@@ -155,7 +155,7 @@ function TreeNode({
           <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         )}
         <span className="truncate font-medium">{node.nome}</span>
-        <span className="ml-auto shrink-0 rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground dark:bg-muted">
+        <span className="ml-auto shrink-0 rounded-full bg-neutral-100 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground dark:bg-muted">
           {articleCount}
         </span>
       </button>
@@ -176,7 +176,7 @@ function TreeNode({
                     "flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs transition-colors",
                     isSelected
                       ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
-                      : "text-zinc-600 hover:bg-zinc-100 dark:text-muted-foreground dark:hover:bg-muted"
+                      : "text-neutral-600 hover:bg-neutral-100 dark:text-muted-foreground dark:hover:bg-muted"
                   )}
                   style={{ paddingLeft: `${(depth + 1) * 16 + 8}px` }}
                 >
@@ -418,7 +418,7 @@ export function LegislacaoTree({
       {/* ===== Left Sidebar (Tree) ===== */}
       <div
         className={cn(
-          "flex flex-col border-r border-zinc-200 dark:border-border shrink-0 transition-[width] duration-300 ease-in-out overflow-hidden",
+          "flex flex-col border-r border-neutral-200 dark:border-border shrink-0 transition-[width] duration-300 ease-in-out overflow-hidden",
           // Mobile: full width when no article, hidden when article selected
           // Desktop: shrinks slightly when article is open (focus effect)
           selectedArtigo
@@ -427,14 +427,14 @@ export function LegislacaoTree({
         )}
       >
         {/* Search inline */}
-        <div className="border-b border-zinc-200 dark:border-border p-2">
+        <div className="border-b border-neutral-200 dark:border-border p-2">
           {/* Mobile header: law selector button + search */}
           {onOpenLawSelector && (
             <div className="flex items-center gap-2 mb-2 lg:hidden">
               <button
                 type="button"
                 onClick={onOpenLawSelector}
-                className="flex items-center gap-1.5 rounded-md border border-zinc-200 dark:border-border px-2 py-1 text-xs text-zinc-600 dark:text-muted-foreground hover:bg-zinc-50 dark:hover:bg-muted transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 rounded-md border border-neutral-200 dark:border-border px-2 py-1 text-xs text-neutral-600 dark:text-muted-foreground hover:bg-neutral-50 dark:hover:bg-muted transition-colors cursor-pointer"
               >
                 <span className="font-medium text-[11px]">Leis</span>
                 <ChevronRight className="h-3 w-3" />
@@ -451,7 +451,7 @@ export function LegislacaoTree({
               placeholder="Artigo ou texto..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-md border border-zinc-200 dark:border-border bg-zinc-50 dark:bg-card pl-8 pr-7 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:focus:ring-emerald-400"
+              className="w-full rounded-md border border-neutral-200 dark:border-border bg-neutral-50 dark:bg-card pl-8 pr-7 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:focus:ring-emerald-400"
             />
             {searchQuery && (
               <button
@@ -512,7 +512,7 @@ export function LegislacaoTree({
                         "flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-xs transition-colors cursor-pointer",
                         selectedArtigoId === artigo.id
                           ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
-                          : "hover:bg-zinc-100 dark:hover:bg-muted text-zinc-600 dark:text-muted-foreground"
+                          : "hover:bg-neutral-100 dark:hover:bg-muted text-neutral-600 dark:text-muted-foreground"
                       )}
                     >
                       <FileText className="h-3 w-3 shrink-0 text-muted-foreground" />
@@ -556,7 +556,7 @@ export function LegislacaoTree({
 
         {/* Article count footer */}
         {lei && (
-          <div className="border-t border-zinc-200 dark:border-border px-3 py-2 text-[10px] text-muted-foreground">
+          <div className="border-t border-neutral-200 dark:border-border px-3 py-2 text-[10px] text-muted-foreground">
             {allArtigos.length} artigos
           </div>
         )}
@@ -573,12 +573,12 @@ export function LegislacaoTree({
         {selectedArtigo && leiMeta ? (
           <>
             {/* Breadcrumb + mobile back button */}
-            <div className="flex items-center gap-1 border-b border-zinc-200 px-3 py-2 dark:border-border md:px-4">
+            <div className="flex items-center gap-1 border-b border-neutral-200 px-3 py-2 dark:border-border md:px-4">
               {/* Mobile back button */}
               <button
                 type="button"
                 onClick={() => setSelectedArtigoId(null)}
-                className="mr-1 flex shrink-0 items-center gap-1 rounded-md p-1 text-xs text-muted-foreground hover:bg-zinc-100 hover:text-foreground dark:hover:bg-muted dark:hover:text-foreground transition-colors cursor-pointer md:hidden"
+                className="mr-1 flex shrink-0 items-center gap-1 rounded-md p-1 text-xs text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:hover:bg-muted dark:hover:text-foreground transition-colors cursor-pointer md:hidden"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
               </button>
@@ -592,7 +592,7 @@ export function LegislacaoTree({
                       "text-xs",
                       i === breadcrumb.length - 1
                         ? "font-medium text-emerald-700 dark:text-emerald-400"
-                        : "text-zinc-500 dark:text-muted-foreground"
+                        : "text-neutral-500 dark:text-muted-foreground"
                     )}
                   >
                     {segment}
@@ -613,7 +613,7 @@ export function LegislacaoTree({
             </ScrollArea>
 
             {/* Prev / Next navigation */}
-            <div className="flex items-center justify-between border-t border-zinc-200 px-4 py-2 dark:border-border">
+            <div className="flex items-center justify-between border-t border-neutral-200 px-4 py-2 dark:border-border">
               <Button
                 variant="ghost"
                 size="sm"

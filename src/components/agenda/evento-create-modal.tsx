@@ -76,11 +76,11 @@ const statusOptions = [
   { value: "pendente", label: "Pendente", color: "text-amber-600" },
   { value: "cancelado", label: "Cancelado", color: "text-red-600" },
   { value: "reagendado", label: "Reagendado", color: "text-blue-600" },
-  { value: "concluido", label: "Concluído", color: "text-zinc-600" },
+  { value: "concluido", label: "Concluído", color: "text-neutral-600" },
 ];
 
 const prioridadeOptions = [
-  { value: "baixa", label: "Baixa", color: "text-zinc-600" },
+  { value: "baixa", label: "Baixa", color: "text-neutral-600" },
   { value: "media", label: "Média", color: "text-blue-600" },
   { value: "alta", label: "Alta", color: "text-amber-600" },
   { value: "urgente", label: "Urgente", color: "text-red-600" },
@@ -209,12 +209,12 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-900">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-neutral-900">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+          <DialogTitle className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
             {isEditMode ? "Editar Evento" : "Novo Evento"}
           </DialogTitle>
-          <DialogDescription className="text-sm text-zinc-500 dark:text-zinc-400">
+          <DialogDescription className="text-sm text-neutral-500 dark:text-neutral-400">
             {isEditMode ? "Atualize os detalhes do evento." : "Crie um novo evento."}
           </DialogDescription>
         </DialogHeader>
@@ -222,7 +222,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Informações Básicas */}
           <div className="space-y-4">
-            <h3 className="font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+            <h3 className="font-bold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
               <Calendar className="w-5 h-5 text-emerald-600" />
               Informações Básicas
             </h3>
@@ -234,7 +234,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                   value={formData.titulo}
                   onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
                   placeholder="Ex: Audiência de Instrução"
-                  className="bg-white dark:bg-zinc-900"
+                  className="bg-white dark:bg-neutral-900"
                 />
               </div>
 
@@ -264,7 +264,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                   type="date"
                   value={formData.data}
                   onChange={(e) => setFormData({ ...formData, data: e.target.value })}
-                  className="bg-white dark:bg-zinc-900"
+                  className="bg-white dark:bg-neutral-900"
                 />
               </div>
 
@@ -275,7 +275,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                     type="time"
                     value={formData.horarioInicio}
                     onChange={(e) => setFormData({ ...formData, horarioInicio: e.target.value })}
-                    className="bg-white dark:bg-zinc-900"
+                    className="bg-white dark:bg-neutral-900"
                   />
                 </div>
                 <div>
@@ -284,7 +284,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                     type="time"
                     value={formData.horarioFim}
                     onChange={(e) => setFormData({ ...formData, horarioFim: e.target.value })}
-                    className="bg-white dark:bg-zinc-900"
+                    className="bg-white dark:bg-neutral-900"
                   />
                 </div>
               </div>
@@ -313,7 +313,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
 
           {/* Localização e Pessoas */}
           <div className="space-y-4">
-            <h3 className="font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+            <h3 className="font-bold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-blue-600" />
               Localização e Participantes
             </h3>
@@ -325,7 +325,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                   value={formData.local}
                   onChange={(e) => setFormData({ ...formData, local: e.target.value })}
                   placeholder="Ex: Vara Criminal - Sala 3"
-                  className="bg-white dark:bg-zinc-900"
+                  className="bg-white dark:bg-neutral-900"
                 />
               </div>
 
@@ -335,7 +335,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                   value={formData.assistido}
                   onChange={(e) => setFormData({ ...formData, assistido: e.target.value })}
                   placeholder="Nome do assistido"
-                  className="bg-white dark:bg-zinc-900"
+                  className="bg-white dark:bg-neutral-900"
                 />
               </div>
 
@@ -347,7 +347,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                     onChange={(e) => setNewParticipante(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), handleAddParticipante())}
                     placeholder="Nome do participante"
-                    className="bg-white dark:bg-zinc-900"
+                    className="bg-white dark:bg-neutral-900"
                   />
                   <Button type="button" variant="outline" onClick={handleAddParticipante}>
                     <Plus className="w-4 h-4" />
@@ -359,7 +359,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                       <Badge
                         key={participante}
                         variant="secondary"
-                        className="cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                        className="cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700"
                         onClick={() => handleRemoveParticipante(participante)}
                       >
                         {participante}
@@ -374,7 +374,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
 
           {/* Processo e Vínculo */}
           <div className="space-y-4">
-            <h3 className="font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+            <h3 className="font-bold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
               <FileText className="w-5 h-5 text-purple-600" />
               Processo e Vínculo
             </h3>
@@ -386,7 +386,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                   value={formData.processo}
                   onChange={(e) => setFormData({ ...formData, processo: e.target.value })}
                   placeholder="0000000-00.0000.0.00.0000"
-                  className="bg-white dark:bg-zinc-900 font-mono"
+                  className="bg-white dark:bg-neutral-900 font-mono"
                 />
               </div>
 
@@ -396,7 +396,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                   value={formData.vinculoDemanda || ""}
                   onChange={(e) => setFormData({ ...formData, vinculoDemanda: e.target.value })}
                   placeholder="ID da demanda vinculada"
-                  className="bg-white dark:bg-zinc-900"
+                  className="bg-white dark:bg-neutral-900"
                 />
               </div>
             </div>
@@ -404,7 +404,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
 
           {/* Descrição e Observações */}
           <div className="space-y-4">
-            <h3 className="font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+            <h3 className="font-bold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
               <FileText className="w-5 h-5 text-amber-600" />
               Descrição
             </h3>
@@ -416,7 +416,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                 onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
                 placeholder="Descreva os detalhes do evento..."
                 rows={3}
-                className="bg-white dark:bg-zinc-900"
+                className="bg-white dark:bg-neutral-900"
               />
             </div>
 
@@ -427,14 +427,14 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                 onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
                 placeholder="Anotações e observações (uso interno)..."
                 rows={2}
-                className="bg-white dark:bg-zinc-900"
+                className="bg-white dark:bg-neutral-900"
               />
             </div>
           </div>
 
           {/* Recorrência e Lembretes */}
           <div className="space-y-4">
-            <h3 className="font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+            <h3 className="font-bold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
               <Repeat className="w-5 h-5 text-indigo-600" />
               Recorrência e Lembretes
             </h3>
@@ -469,7 +469,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
 
           {/* Tags */}
           <div className="space-y-4">
-            <h3 className="font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+            <h3 className="font-bold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
               <Tag className="w-5 h-5 text-pink-600" />
               Tags
             </h3>
@@ -481,7 +481,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                   onChange={(e) => setNewTag(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), handleAddTag())}
                   placeholder="Adicionar tag"
-                  className="bg-white dark:bg-zinc-900"
+                  className="bg-white dark:bg-neutral-900"
                 />
                 <Button type="button" variant="outline" onClick={handleAddTag}>
                   <Plus className="w-4 h-4" />
@@ -493,7 +493,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                     <Badge
                       key={tag}
                       variant="secondary"
-                      className="cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                      className="cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700"
                       onClick={() => handleRemoveTag(tag)}
                     >
                       {tag}
@@ -506,7 +506,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
           </div>
 
           {/* Botões de Ação */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+          <div className="flex justify-end gap-3 pt-4 border-t border-neutral-200 dark:border-neutral-800">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>

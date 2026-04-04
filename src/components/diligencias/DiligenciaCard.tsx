@@ -64,7 +64,7 @@ const CATEGORIA_COLORS: Record<CategoriaDigilenciaKey, string> = {
   OFICIAL: "border-l-purple-500 bg-purple-50/30 dark:bg-purple-950/20",
   GEO: "border-l-orange-500 bg-orange-50/30 dark:bg-orange-950/20",
   TELEFONIA: "border-l-rose-500 bg-rose-50/30 dark:bg-rose-950/20",
-  DOCUMENTAL: "border-l-zinc-500 bg-zinc-50/30 dark:bg-zinc-950/20",
+  DOCUMENTAL: "border-l-neutral-500 bg-neutral-50/30 dark:bg-neutral-950/20",
   PERICIAL: "border-l-cyan-500 bg-cyan-50/30 dark:bg-cyan-950/20",
   TESTEMUNHAL: "border-l-amber-500 bg-amber-50/30 dark:bg-amber-950/20",
 };

@@ -81,7 +81,7 @@ export function SelectAssistedModal({
     if (roleUpper.includes("FLAGRANTEADO")) {
       return "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400";
     }
-    return "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400";
+    return "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400";
   };
 
   return (
@@ -114,7 +114,7 @@ export function SelectAssistedModal({
             <Button variant="outline" size="sm" onClick={selectNone} className="text-xs h-7">
               Limpar seleção
             </Button>
-            <span className="text-xs text-zinc-500 ml-auto">
+            <span className="text-xs text-neutral-500 ml-auto">
               {selectedNames.size} de {extractedPersons.length} selecionados
             </span>
           </div>
@@ -130,7 +130,7 @@ export function SelectAssistedModal({
                     "flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer",
                     isSelected
                       ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
-                      : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                      : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600"
                   )}
                   onClick={() => togglePerson(person.name)}
                 >
@@ -143,7 +143,7 @@ export function SelectAssistedModal({
                     htmlFor={`person-${index}`}
                     className="flex-1 cursor-pointer flex items-center justify-between"
                   >
-                    <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                    <span className="font-medium text-neutral-900 dark:text-neutral-100">
                       {person.name}
                     </span>
                     <span

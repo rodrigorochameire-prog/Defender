@@ -39,7 +39,7 @@ const STATUS_STYLE = {
   agendada:   { icon: Calendar,     color: "bg-blue-500",    badge: "bg-blue-500/10 text-blue-600 ring-blue-500/20",    label: "Agendada" },
   realizada:  { icon: CheckCircle2, color: "bg-emerald-500", badge: "bg-emerald-500/10 text-emerald-600 ring-emerald-500/20", label: "Realizada" },
   adiada:     { icon: Clock,        color: "bg-amber-500",   badge: "bg-amber-500/10 text-amber-600 ring-amber-500/20",  label: "Adiada" },
-  cancelada:  { icon: XCircle,      color: "bg-zinc-400",    badge: "bg-zinc-400/10 text-muted-foreground ring-zinc-400/20",     label: "Cancelada" },
+  cancelada:  { icon: XCircle,      color: "bg-neutral-400",    badge: "bg-neutral-400/10 text-muted-foreground ring-neutral-400/20",     label: "Cancelada" },
 } as const;
 
 type StatusKey = keyof typeof STATUS_STYLE;

@@ -23,7 +23,7 @@ const STATUS_DOT: Record<StatusLevel, string> = {
   online: "bg-emerald-500",
   warning: "bg-amber-500",
   offline: "bg-rose-500",
-  unknown: "bg-zinc-400",
+  unknown: "bg-neutral-400",
 };
 
 function StatusDot({ level }: { level: StatusLevel }) {

@@ -54,8 +54,8 @@ function SectionCard({ title, icon: Icon, children, className }: {
   className?: string;
 }) {
   return (
-    <div className={cn("rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5", className)}>
-      <h3 className="text-sm font-semibold flex items-center gap-2 mb-4 text-zinc-800 dark:text-zinc-200">
+    <div className={cn("rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5", className)}>
+      <h3 className="text-sm font-semibold flex items-center gap-2 mb-4 text-neutral-800 dark:text-neutral-200">
         <Icon className="w-4 h-4 text-emerald-600" />
         {title}
       </h3>
@@ -67,9 +67,9 @@ function SectionCard({ title, icon: Icon, children, className }: {
 function FieldRow({ label, value }: { label: string; value: string | number | null | undefined }) {
   if (!value && value !== 0) return null;
   return (
-    <div className="flex flex-col gap-0.5 py-1.5 border-b border-zinc-100 dark:border-zinc-800 last:border-0">
+    <div className="flex flex-col gap-0.5 py-1.5 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
       <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{label}</span>
-      <span className="text-sm text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap">{value}</span>
+      <span className="text-sm text-neutral-800 dark:text-neutral-200 whitespace-pre-wrap">{value}</span>
     </div>
   );
 }
@@ -132,13 +132,13 @@ export default function RelatorioPosJuriPage({ params }: { params: Promise<{ ava
   const indeciso = juradosAv.filter(j => j.tendenciaVoto === "INDECISO").length;
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
       {/* Header */}
-      <div className="sticky top-0 z-20 px-4 md:px-6 py-3 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border-b border-zinc-200/80 dark:border-zinc-800/80">
+      <div className="sticky top-0 z-20 px-4 md:px-6 py-3 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm border-b border-neutral-200/80 dark:border-neutral-800/80">
         <div className="flex items-center justify-between max-w-5xl mx-auto">
           <div className="flex items-center gap-2.5">
             <Link href="/admin/juri">
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600">
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-neutral-400 hover:text-emerald-600">
                 <ArrowLeft className="w-3.5 h-3.5" />
               </Button>
             </Link>
@@ -146,8 +146,8 @@ export default function RelatorioPosJuriPage({ params }: { params: Promise<{ ava
               <FileText className="w-4 h-4 text-white" />
             </div>
             <div>
-              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Relatório Pós-Júri</span>
-              <span className="text-xs text-zinc-400 ml-2">#{avaliacao.id}</span>
+              <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Relatório Pós-Júri</span>
+              <span className="text-xs text-neutral-400 ml-2">#{avaliacao.id}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -166,10 +166,10 @@ export default function RelatorioPosJuriPage({ params }: { params: Promise<{ ava
       {/* Conteúdo */}
       <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-6 print:space-y-4">
         {/* Cabeçalho do Relatório */}
-        <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
+        <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="space-y-1">
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+              <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">
                 Relatório de Observação — Tribunal do Júri
               </h1>
               <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
@@ -211,10 +211,10 @@ export default function RelatorioPosJuriPage({ params }: { params: Promise<{ ava
           <SectionCard title="Conselho de Sentença — 7 Jurados" icon={Users}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {juradosAv.sort((a, b) => a.posicao - b.posicao).map((j) => (
-                <div key={j.id} className="rounded-lg border border-zinc-100 dark:border-zinc-800 p-3 space-y-2">
+                <div key={j.id} className="rounded-lg border border-neutral-100 dark:border-neutral-800 p-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-xs font-bold">
+                      <div className="w-6 h-6 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-xs font-bold">
                         {j.posicao}
                       </div>
                       <span className="text-sm font-medium truncate">{j.nome || "—"}</span>
@@ -222,8 +222,8 @@ export default function RelatorioPosJuriPage({ params }: { params: Promise<{ ava
                     <TendenciaBadge tendencia={j.tendenciaVoto} />
                   </div>
                   {j.profissao && <span className="text-xs text-muted-foreground block">{j.profissao}{j.idadeAproximada ? `, ~${j.idadeAproximada} anos` : ""}</span>}
-                  {j.aparenciaPrimeiraImpressao && <p className="text-xs text-zinc-600 dark:text-zinc-400">{j.aparenciaPrimeiraImpressao}</p>}
-                  {j.linguagemCorporalInicial && <p className="text-xs text-zinc-500 italic">{j.linguagemCorporalInicial}</p>}
+                  {j.aparenciaPrimeiraImpressao && <p className="text-xs text-neutral-600 dark:text-neutral-400">{j.aparenciaPrimeiraImpressao}</p>}
+                  {j.linguagemCorporalInicial && <p className="text-xs text-neutral-500 italic">{j.linguagemCorporalInicial}</p>}
                   {j.nivelConfianca && (
                     <Badge variant="outline" className="text-[10px]">Confiança: {j.nivelConfianca}</Badge>
                   )}
@@ -251,7 +251,7 @@ export default function RelatorioPosJuriPage({ params }: { params: Promise<{ ava
           <SectionCard title={`Testemunhas (${testemunhas.length})`} icon={Mic}>
             <div className="space-y-4">
               {testemunhas.sort((a, b) => (a.ordem || 0) - (b.ordem || 0)).map((t) => (
-                <div key={t.id} className="rounded-lg border border-zinc-100 dark:border-zinc-800 p-3 space-y-1.5">
+                <div key={t.id} className="rounded-lg border border-neutral-100 dark:border-neutral-800 p-3 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">{t.ordem}. {t.nome}</span>
                     <ScoreBar value={t.credibilidade} label="" />
@@ -273,7 +273,7 @@ export default function RelatorioPosJuriPage({ params }: { params: Promise<{ ava
             <div className="space-y-3">
               <FieldRow label="Estratégia Geral" value={avaliacao.mpEstrategiaGeral} />
               {argsMp.map((a, i) => (
-                <div key={a.id} className="rounded-lg bg-zinc-50 dark:bg-zinc-800/50 p-2.5 space-y-1">
+                <div key={a.id} className="rounded-lg bg-neutral-50 dark:bg-neutral-800/50 p-2.5 space-y-1">
                   <span className="text-xs font-medium">Argumento {i + 1}</span>
                   <p className="text-sm">{a.descricaoArgumento}</p>
                   {a.reacaoJurados && <p className="text-xs text-muted-foreground">{a.reacaoJurados}</p>}
@@ -290,7 +290,7 @@ export default function RelatorioPosJuriPage({ params }: { params: Promise<{ ava
             <div className="space-y-3">
               <FieldRow label="Estratégia Geral" value={avaliacao.defesaEstrategiaGeral} />
               {argsDefesa.map((a, i) => (
-                <div key={a.id} className="rounded-lg bg-zinc-50 dark:bg-zinc-800/50 p-2.5 space-y-1">
+                <div key={a.id} className="rounded-lg bg-neutral-50 dark:bg-neutral-800/50 p-2.5 space-y-1">
                   <span className="text-xs font-medium">Argumento {i + 1}</span>
                   <p className="text-sm">{a.descricaoArgumento}</p>
                   {a.reacaoJurados && <p className="text-xs text-muted-foreground">{a.reacaoJurados}</p>}

@@ -558,56 +558,56 @@
 
   /* ===== SIDEBAR — 3 THEME MODES ===== */
 
-  /* Light: solid zinc-100, clean separation from white page */
+  /* Light: solid neutral-100, clean separation from white page */
   .glass-sidebar {
-    background: #f4f4f5;
+    background: #f5f5f5;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    border-right: 1px solid #e4e4e7;
+    border-right: 1px solid #e5e5e5;
     box-shadow: none;
   }
 
-  /* Medium: dark sidebar (zinc-800) against warm-gray page */
+  /* Medium: dark sidebar (neutral-800) against warm-gray page */
   .medium .glass-sidebar {
-    background: #27272a;
+    background: #262626;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    border-right: 1px solid #3f3f46;
+    border-right: 1px solid #404040;
     box-shadow: none;
   }
 
   /* Dark/Noturno: deep sidebar */
   .dark .glass-sidebar {
-    background: #18181b;
+    background: #171717;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    border-right: 1px solid #27272a;
+    border-right: 1px solid #262626;
     box-shadow: none;
   }
 
   /* ===== MOBILE SIDEBAR — 3 THEME MODES ===== */
   /* Sheet portal renders outside Sidebar, so glass-sidebar doesn't apply */
 
-  /* Light: solid zinc-100 to match desktop */
+  /* Light: solid neutral-100 to match desktop */
   [data-mobile="true"][data-sidebar="sidebar"] {
-    background: #f4f4f5 !important;
+    background: #f5f5f5 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    border-color: #e4e4e7 !important;
+    border-color: #e5e5e5 !important;
   }
 
-  /* Medium: dark zinc-800 to match desktop */
+  /* Medium: dark neutral-800 to match desktop */
   .medium [data-mobile="true"][data-sidebar="sidebar"] {
-    background: #27272a !important;
-    color: #f4f4f5 !important;
-    border-color: #3f3f46 !important;
+    background: #262626 !important;
+    color: #f5f5f5 !important;
+    border-color: #404040 !important;
   }
 
-  /* Dark: deep zinc-900 to match desktop */
+  /* Dark: deep neutral-900 to match desktop */
   .dark [data-mobile="true"][data-sidebar="sidebar"] {
-    background: #18181b !important;
-    color: #f4f4f5 !important;
-    border-color: #27272a !important;
+    background: #171717 !important;
+    color: #f5f5f5 !important;
+    border-color: #262626 !important;
   }
 
   /* ===== PAGE BACKGROUNDS — MEDIUM MODE ===== */

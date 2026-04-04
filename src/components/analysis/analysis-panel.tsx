@@ -113,7 +113,7 @@ export function AnalysisPanel({ data, analysisStatus, analyzedAt }: AnalysisPane
             { label: "Eventos", value: data.kpis.totalEventos, icon: Clock },
             { label: "Nulidades", value: data.kpis.totalNulidades, icon: AlertTriangle },
           ].filter(k => k.value !== undefined && k.value > 0).map((kpi) => (
-            <div key={kpi.label} className="bg-zinc-50 dark:bg-card rounded-lg p-2.5 text-center">
+            <div key={kpi.label} className="bg-neutral-50 dark:bg-card rounded-lg p-2.5 text-center">
               <kpi.icon className="h-3.5 w-3.5 mx-auto mb-1 text-muted-foreground" />
               <p className="text-lg font-semibold tabular-nums">{kpi.value}</p>
               <p className="text-[10px] text-muted-foreground">{kpi.label}</p>

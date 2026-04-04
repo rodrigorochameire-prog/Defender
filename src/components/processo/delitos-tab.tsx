@@ -42,7 +42,7 @@ function BeneficioBadge({ label, cabe }: BeneficioBadgeProps) {
         "inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium",
         cabe
           ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-          : "bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500"
+          : "bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500"
       )}
     >
       {cabe ? (
@@ -108,7 +108,7 @@ export function DelitosTab({ processoId }: DelitosTabProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12 text-zinc-400">
+      <div className="flex items-center justify-center py-12 text-neutral-400">
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
         <span className="text-xs">Carregando delitos...</span>
       </div>
@@ -120,12 +120,12 @@ export function DelitosTab({ processoId }: DelitosTabProps) {
       {/* Header com botão */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Scale className="h-4 w-4 text-zinc-400" />
-          <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+          <Scale className="h-4 w-4 text-neutral-400" />
+          <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
             Delitos Imputados
           </span>
           {delitos.length > 0 && (
-            <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded-full">
+            <span className="text-[10px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 px-1.5 py-0.5 rounded-full">
               {delitos.length}
             </span>
           )}
@@ -136,7 +136,7 @@ export function DelitosTab({ processoId }: DelitosTabProps) {
             <Button
               size="sm"
               variant="outline"
-              className="h-7 text-[11px] gap-1 border-zinc-200 dark:border-zinc-700"
+              className="h-7 text-[11px] gap-1 border-neutral-200 dark:border-neutral-700"
             >
               <Plus className="h-3 w-3" />
               Adicionar Delito
@@ -195,7 +195,7 @@ export function DelitosTab({ processoId }: DelitosTabProps) {
                   id="violencia"
                   checked={form.envolveuViolencia}
                   onChange={(e) => setForm((f) => ({ ...f, envolveuViolencia: e.target.checked }))}
-                  className="rounded border-zinc-300"
+                  className="rounded border-neutral-300"
                 />
                 <Label htmlFor="violencia" className="text-xs cursor-pointer">
                   Envolveu violência ou grave ameaça
@@ -237,10 +237,10 @@ export function DelitosTab({ processoId }: DelitosTabProps) {
 
       {/* Lista de delitos */}
       {delitos.length === 0 ? (
-        <div className="text-center py-10 text-zinc-400">
+        <div className="text-center py-10 text-neutral-400">
           <Scale className="h-8 w-8 mx-auto mb-2 opacity-30" />
           <p className="text-xs">Nenhum delito registrado</p>
-          <p className="text-[10px] mt-0.5 text-zinc-300">
+          <p className="text-[10px] mt-0.5 text-neutral-300">
             Adicione os delitos imputados ao assistido
           </p>
         </div>
@@ -249,17 +249,17 @@ export function DelitosTab({ processoId }: DelitosTabProps) {
           {delitos.map((delito) => (
             <div
               key={delito.id}
-              className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 bg-white dark:bg-zinc-900"
+              className="border border-neutral-200 dark:border-neutral-800 rounded-lg p-3 bg-white dark:bg-neutral-900"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-200">
+                    <span className="text-[11px] font-semibold text-neutral-800 dark:text-neutral-200">
                       {delito.tipoDelito}
                     </span>
                     <Badge
                       variant="outline"
-                      className="text-[9px] px-1.5 py-0 h-4 font-mono border-zinc-200 dark:border-zinc-700 text-zinc-500"
+                      className="text-[9px] px-1.5 py-0 h-4 font-mono border-neutral-200 dark:border-neutral-700 text-neutral-500"
                     >
                       {delito.artigoBase}
                     </Badge>
@@ -267,7 +267,7 @@ export function DelitosTab({ processoId }: DelitosTabProps) {
 
                   {/* Penas */}
                   {(delito.penaMinimaMeses || delito.penaMaximaMeses) && (
-                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                    <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5">
                       Pena:{" "}
                       {delito.penaMinimaMeses && mesesParaTexto(delito.penaMinimaMeses)}
                       {delito.penaMinimaMeses && delito.penaMaximaMeses && " – "}
@@ -285,7 +285,7 @@ export function DelitosTab({ processoId }: DelitosTabProps) {
 
                   {/* Observações */}
                   {delito.observacoes && (
-                    <p className="text-[10px] text-zinc-400 mt-1 italic">{delito.observacoes}</p>
+                    <p className="text-[10px] text-neutral-400 mt-1 italic">{delito.observacoes}</p>
                   )}
                 </div>
               </div>

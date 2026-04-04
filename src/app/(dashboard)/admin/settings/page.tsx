@@ -76,17 +76,17 @@ export default function AdminSettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <Settings className="w-5 h-5 text-white dark:text-zinc-900" />
+            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
+              <Settings className="w-5 h-5 text-white dark:text-neutral-900" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Configurações</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Preferências e configurações do sistema</p>
+              <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">Configurações</h1>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">Preferências e configurações do sistema</p>
             </div>
           </div>
           
@@ -95,7 +95,7 @@ export default function AdminSettingsPage() {
               onClick={handleSave} 
               disabled={isSaving}
               size="sm"
-              className="h-7 px-2.5 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+              className="h-7 px-2.5 bg-neutral-800 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
             >
               {isSaving ? (
                 <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />

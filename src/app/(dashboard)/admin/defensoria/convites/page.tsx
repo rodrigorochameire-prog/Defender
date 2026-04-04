@@ -107,7 +107,7 @@ function AreaBadges({ areas }: { areas: string[] | null | undefined }) {
           key={area}
           className={cn(
             "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium text-white",
-            AREA_COLORS[area] ?? "bg-zinc-600"
+            AREA_COLORS[area] ?? "bg-neutral-600"
           )}
         >
           {AREA_LABELS[area] ?? area}

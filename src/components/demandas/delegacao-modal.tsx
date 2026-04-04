@@ -277,7 +277,7 @@ export function DelegacaoModal({
       servidor: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
       estagiario: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
     };
-    return colors[role] || "bg-zinc-100 text-zinc-700";
+    return colors[role] || "bg-neutral-100 text-neutral-700";
   };
 
   const getInitials = (name: string) => {
@@ -299,7 +299,7 @@ export function DelegacaoModal({
             </div>
             <div>
               <span className="text-lg">Delegar Tarefa</span>
-              <p className="text-xs font-normal text-zinc-500 mt-0.5">
+              <p className="text-xs font-normal text-neutral-500 mt-0.5">
                 Delegue uma atividade para um membro da sua equipe
               </p>
             </div>
@@ -309,14 +309,14 @@ export function DelegacaoModal({
         <div className="space-y-4 py-4">
           {/* Contexto da delegação */}
           {(assistidoNome || processoNumero || demandaAto) && (
-            <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 space-y-2">
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Contexto</p>
+            <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 space-y-2">
+              <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Contexto</p>
               {assistidoNome && (
                 <div className="flex items-center gap-2 text-sm">
                   <div className="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                     <User className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  <span className="text-zinc-700 dark:text-zinc-300 font-medium">{assistidoNome}</span>
+                  <span className="text-neutral-700 dark:text-neutral-300 font-medium">{assistidoNome}</span>
                 </div>
               )}
               {processoNumero && (
@@ -324,7 +324,7 @@ export function DelegacaoModal({
                   <div className="w-6 h-6 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
                     <Briefcase className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
                   </div>
-                  <span className="text-zinc-700 dark:text-zinc-300 font-mono text-xs">{processoNumero}</span>
+                  <span className="text-neutral-700 dark:text-neutral-300 font-mono text-xs">{processoNumero}</span>
                 </div>
               )}
               {demandaAto && (
@@ -332,7 +332,7 @@ export function DelegacaoModal({
                   <div className="w-6 h-6 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
                     <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                   </div>
-                  <span className="text-zinc-700 dark:text-zinc-300">{demandaAto}</span>
+                  <span className="text-neutral-700 dark:text-neutral-300">{demandaAto}</span>
                 </div>
               )}
             </div>
@@ -340,12 +340,12 @@ export function DelegacaoModal({
 
           {/* Seletor de destinatário */}
           <div className="space-y-2">
-            <Label htmlFor="destinatario" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+            <Label htmlFor="destinatario" className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
               Delegar para <span className="text-rose-500">*</span>
             </Label>
             {loadingMembros ? (
-              <div className="h-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 animate-pulse flex items-center justify-center">
-                <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
+              <div className="h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 animate-pulse flex items-center justify-center">
+                <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />
               </div>
             ) : (
               <Select value={destinatarioId} onValueChange={setDestinatarioId}>
@@ -354,7 +354,7 @@ export function DelegacaoModal({
                 </SelectTrigger>
                 <SelectContent>
                   {membrosEquipe?.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-zinc-500">
+                    <div className="p-4 text-center text-sm text-neutral-500">
                       Nenhum membro da equipe encontrado
                     </div>
                   ) : (
@@ -362,7 +362,7 @@ export function DelegacaoModal({
                       <SelectItem key={member.id} value={member.id.toString()}>
                         <div className="flex items-center gap-2.5">
                           <Avatar className="h-7 w-7">
-                            <AvatarFallback className="text-[10px] bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-600 dark:to-zinc-700 font-semibold">
+                            <AvatarFallback className="text-[10px] bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-600 dark:to-neutral-700 font-semibold">
                               {getInitials(member.name)}
                             </AvatarFallback>
                           </Avatar>
@@ -381,7 +381,7 @@ export function DelegacaoModal({
 
           {/* Templates de instrução */}
           <div className="space-y-2">
-            <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+            <Label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
               Instruções <span className="text-rose-500">*</span>
             </Label>
             <div className="flex flex-wrap gap-1.5">
@@ -394,8 +394,8 @@ export function DelegacaoModal({
                     onClick={() => handleTemplateClick(tpl)}
                     className={cn(
                       "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium",
-                      "border border-zinc-200 dark:border-zinc-700",
-                      "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400",
+                      "border border-neutral-200 dark:border-neutral-700",
+                      "bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400",
                       "hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700",
                       "dark:hover:border-emerald-700 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400",
                       "transition-all cursor-pointer"
@@ -414,7 +414,7 @@ export function DelegacaoModal({
               onChange={(e) => setInstrucoes(e.target.value)}
               className="min-h-[100px] resize-none rounded-xl"
             />
-            <p className="text-[10px] text-zinc-400">
+            <p className="text-[10px] text-neutral-400">
               Clique num template acima ou escreva instruções personalizadas.
             </p>
           </div>
@@ -422,8 +422,8 @@ export function DelegacaoModal({
           {/* Prazo e Prioridade */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="prazo" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+              <Label htmlFor="prazo" className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-neutral-400" />
                 Prazo Sugerido
               </Label>
               <Input
@@ -436,8 +436,8 @@ export function DelegacaoModal({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="prioridade" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-zinc-400" />
+              <Label htmlFor="prioridade" className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-neutral-400" />
                 Prioridade
               </Label>
               <Select value={prioridade} onValueChange={(v) => setPrioridade(v as typeof prioridade)}>
@@ -447,7 +447,7 @@ export function DelegacaoModal({
                 <SelectContent>
                   <SelectItem value="BAIXA">
                     <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-zinc-400" />
+                      <span className="w-2 h-2 rounded-full bg-neutral-400" />
                       Baixa
                     </span>
                   </SelectItem>
@@ -478,31 +478,31 @@ export function DelegacaoModal({
                   "w-full flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer",
                   enviarWhatsApp
                     ? "border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-900/20"
-                    : "border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50 hover:border-zinc-300"
+                    : "border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800/50 hover:border-neutral-300"
                 )}
               >
                 <div className={cn(
                   "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
                   enviarWhatsApp
                     ? "bg-emerald-500 text-white"
-                    : "bg-zinc-200 dark:bg-zinc-700 text-zinc-500"
+                    : "bg-neutral-200 dark:bg-neutral-700 text-neutral-500"
                 )}>
                   <MessageCircle className="w-4 h-4" />
                 </div>
                 <div className="text-left flex-1">
                   <p className={cn(
                     "text-sm font-medium",
-                    enviarWhatsApp ? "text-emerald-700 dark:text-emerald-400" : "text-zinc-600 dark:text-zinc-400"
+                    enviarWhatsApp ? "text-emerald-700 dark:text-emerald-400" : "text-neutral-600 dark:text-neutral-400"
                   )}>
                     Enviar via WhatsApp
                   </p>
-                  <p className="text-[10px] text-zinc-400">
+                  <p className="text-[10px] text-neutral-400">
                     Gera mensagem pronta com saudação + processo + instruções
                   </p>
                 </div>
                 <div className={cn(
                   "w-10 h-5 rounded-full relative transition-colors",
-                  enviarWhatsApp ? "bg-emerald-500" : "bg-zinc-300 dark:bg-zinc-600"
+                  enviarWhatsApp ? "bg-emerald-500" : "bg-neutral-300 dark:bg-neutral-600"
                 )}>
                   <div className={cn(
                     "w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform shadow-sm",
@@ -541,7 +541,7 @@ export function DelegacaoModal({
                     onChange={(e) => setWhatsAppMsg(e.target.value)}
                     readOnly={!editandoWhatsApp}
                     className={cn(
-                      "min-h-[80px] text-xs resize-none rounded-lg bg-white dark:bg-zinc-900 border-emerald-200 dark:border-emerald-800",
+                      "min-h-[80px] text-xs resize-none rounded-lg bg-white dark:bg-neutral-900 border-emerald-200 dark:border-emerald-800",
                       !editandoWhatsApp && "cursor-default opacity-80"
                     )}
                   />

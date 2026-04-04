@@ -63,7 +63,7 @@ function getFileIcon(fileName: string, mimeType?: string | null) {
     return <Video className="h-5 w-5 text-orange-500" />;
   }
 
-  return <FileQuestion className="h-5 w-5 text-zinc-400" />;
+  return <FileQuestion className="h-5 w-5 text-neutral-400" />;
 }
 
 // Tipo de conteúdo para badge

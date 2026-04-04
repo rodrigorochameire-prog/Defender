@@ -86,8 +86,8 @@ const atribuicaoOptions = [
     value: "Substituição", 
     label: "Substituição", 
     icon: RefreshCw, 
-    gradient: "from-zinc-500 to-zinc-600",
-    iconColor: "text-zinc-600 dark:text-zinc-500",
+    gradient: "from-neutral-500 to-neutral-600",
+    iconColor: "text-neutral-600 dark:text-neutral-500",
   },
   { 
     value: "Curadoria Especial", 
@@ -100,8 +100,8 @@ const atribuicaoOptions = [
     value: "Geral", 
     label: "Geral", 
     icon: Scale, 
-    gradient: "from-zinc-500 to-zinc-600",
-    iconColor: "text-zinc-600 dark:text-zinc-500",
+    gradient: "from-neutral-500 to-neutral-600",
+    iconColor: "text-neutral-600 dark:text-neutral-500",
   },
 ];
 
@@ -136,7 +136,7 @@ function FilterButton({
         "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap",
         isSelected
           ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-300 dark:ring-emerald-700"
-          : "bg-zinc-100 dark:bg-muted text-muted-foreground hover:bg-zinc-200 dark:hover:bg-muted"
+          : "bg-neutral-100 dark:bg-muted text-muted-foreground hover:bg-neutral-200 dark:hover:bg-muted"
       )}
     >
       {Icon && <Icon className="w-3.5 h-3.5" />}

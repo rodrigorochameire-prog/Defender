@@ -141,10 +141,10 @@ export function ParecerModal({
     const colors: Record<string, string> = {
       admin: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
       defensor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-      servidor: "bg-zinc-100 text-zinc-700 dark:bg-muted dark:text-muted-foreground",
-      estagiario: "bg-zinc-100 text-zinc-700 dark:bg-muted dark:text-muted-foreground",
+      servidor: "bg-neutral-100 text-neutral-700 dark:bg-muted dark:text-muted-foreground",
+      estagiario: "bg-neutral-100 text-neutral-700 dark:bg-muted dark:text-muted-foreground",
     };
-    return colors[role] || "bg-zinc-100 text-zinc-700";
+    return colors[role] || "bg-neutral-100 text-neutral-700";
   };
 
   const getInitials = (name: string) => {
@@ -180,17 +180,17 @@ export function ParecerModal({
               Consultar colega <span className="text-rose-500">*</span>
             </Label>
             {loadingColegas ? (
-              <div className="h-10 rounded-xl bg-zinc-100 dark:bg-muted animate-pulse flex items-center justify-center">
+              <div className="h-10 rounded-xl bg-neutral-100 dark:bg-muted animate-pulse flex items-center justify-center">
                 <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
               </div>
             ) : (
               <Select value={respondedorId} onValueChange={setRespondedorId}>
-                <SelectTrigger className="h-10 rounded-xl bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border">
+                <SelectTrigger className="h-10 rounded-xl bg-neutral-50 dark:bg-muted border-neutral-200 dark:border-border">
                   <SelectValue placeholder="Selecione um colega..." />
                 </SelectTrigger>
                 <SelectContent>
                   {colegas?.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-zinc-500">
+                    <div className="p-4 text-center text-sm text-neutral-500">
                       Nenhum colega encontrado
                     </div>
                   ) : (
@@ -198,7 +198,7 @@ export function ParecerModal({
                       <SelectItem key={colega.id} value={colega.id.toString()}>
                         <div className="flex items-center gap-2.5">
                           <Avatar className="h-6 w-6">
-                            <AvatarFallback className="text-[9px] bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-600 dark:to-zinc-700 font-semibold">
+                            <AvatarFallback className="text-[9px] bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-600 dark:to-neutral-700 font-semibold">
                               {getInitials(colega.name)}
                             </AvatarFallback>
                           </Avatar>
@@ -223,12 +223,12 @@ export function ParecerModal({
               </Label>
               <div className="flex flex-wrap gap-2">
                 {assistidoNome && (
-                  <Badge variant="outline" className="text-xs bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border">
+                  <Badge variant="outline" className="text-xs bg-neutral-50 dark:bg-muted border-neutral-200 dark:border-border">
                     Assistido: {assistidoNome}
                   </Badge>
                 )}
                 {processoNumero && (
-                  <Badge variant="outline" className="text-xs bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border font-mono">
+                  <Badge variant="outline" className="text-xs bg-neutral-50 dark:bg-muted border-neutral-200 dark:border-border font-mono">
                     {processoNumero}
                   </Badge>
                 )}
@@ -255,7 +255,7 @@ export function ParecerModal({
                         ? "bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-400"
                         : isSelected && opt.id === "urgente"
                         ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400"
-                        : "bg-zinc-50 dark:bg-muted/50 border-zinc-200 dark:border-border text-muted-foreground hover:text-foreground hover:border-zinc-300"
+                        : "bg-neutral-50 dark:bg-muted/50 border-neutral-200 dark:border-border text-muted-foreground hover:text-foreground hover:border-neutral-300"
                     )}
                   >
                     <UrgIcon className="w-3.5 h-3.5" />
@@ -275,7 +275,7 @@ export function ParecerModal({
               placeholder="Descreva sua duvida ou questao..."
               value={pergunta}
               onChange={(e) => setPergunta(e.target.value)}
-              className="min-h-[120px] resize-none rounded-xl bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border focus:ring-violet-500/30"
+              className="min-h-[120px] resize-none rounded-xl bg-neutral-50 dark:bg-muted border-neutral-200 dark:border-border focus:ring-violet-500/30"
             />
             <p className="text-[10px] text-muted-foreground">
               Seja claro e objetivo. Inclua detalhes relevantes do caso para facilitar a resposta.

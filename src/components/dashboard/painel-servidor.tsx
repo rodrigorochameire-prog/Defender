@@ -113,7 +113,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   },
   devolvida: {
     label: "Devolvida",
-    color: "bg-zinc-100 dark:bg-muted text-zinc-700 dark:text-muted-foreground",
+    color: "bg-neutral-100 dark:bg-muted text-neutral-700 dark:text-muted-foreground",
   },
 };
 
@@ -124,11 +124,11 @@ const PRIORIDADE_CONFIG: Record<string, { label: string; color: string }> = {
   },
   NORMAL: {
     label: "Normal",
-    color: "bg-zinc-100 dark:bg-muted text-zinc-600 dark:text-muted-foreground border-zinc-200 dark:border-border",
+    color: "bg-neutral-100 dark:bg-muted text-neutral-600 dark:text-muted-foreground border-neutral-200 dark:border-border",
   },
   BAIXA: {
     label: "Baixa",
-    color: "bg-zinc-50 dark:bg-muted/50 text-muted-foreground border-zinc-100 dark:border-border",
+    color: "bg-neutral-50 dark:bg-muted/50 text-muted-foreground border-neutral-100 dark:border-border",
   },
 };
 
@@ -410,7 +410,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
   const firstName = user.name?.split(" ")[0] || "Servidor(a)";
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header */}
       <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-border">
         <div className="flex items-center justify-between">
@@ -481,19 +481,19 @@ export function PainelServidor({ user }: PainelServidorProps) {
                 <p className="text-sm font-medium text-foreground">
                   Nenhum pedido pendente
                 </p>
-                <p className="text-[10px] text-zinc-400 mt-0.5">
+                <p className="text-[10px] text-neutral-400 mt-0.5">
                   Seus pedidos de trabalho aparecerao aqui
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-zinc-100 dark:divide-border">
+              <div className="divide-y divide-neutral-100 dark:divide-border">
                 {delegacoesAtivas.map((deleg: any) => {
                   const TipoIcon =
                     TIPO_ICONS[deleg.tipo || "delegacao_generica"] || Send;
                   const status =
                     STATUS_CONFIG[deleg.status] || {
                       label: deleg.status,
-                      color: "bg-zinc-100 text-zinc-600",
+                      color: "bg-neutral-100 text-neutral-600",
                     };
                   const prioridade =
                     PRIORIDADE_CONFIG[deleg.prioridade || "NORMAL"] ||
@@ -512,14 +512,14 @@ export function PainelServidor({ user }: PainelServidorProps) {
                     <div
                       key={deleg.id}
                       className={cn(
-                        "px-3 py-3 hover:bg-zinc-50 dark:hover:bg-muted/50 transition-colors",
+                        "px-3 py-3 hover:bg-neutral-50 dark:hover:bg-muted/50 transition-colors",
                         deleg.prioridade === "URGENTE" &&
                           "bg-red-50/50 dark:bg-red-950/20 border-l-4 border-red-500"
                       )}
                     >
                       <div className="flex items-start gap-3">
                         {/* Icon */}
-                        <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <div className="w-9 h-9 rounded-lg bg-neutral-100 dark:bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
                           <TipoIcon className="w-4 h-4 text-muted-foreground" />
                         </div>
 
@@ -527,7 +527,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 mb-0.5">
                             {/* Tipo badge */}
-                            <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">
+                            <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider">
                               {deleg.tipo === "minuta"
                                 ? "Minuta"
                                 : deleg.tipo === "atendimento"
@@ -549,7 +549,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                             {deleg.instrucoes || "Pedido de trabalho"}
                           </p>
                           {/* Meta info */}
-                          <div className="flex items-center gap-1.5 mt-1 text-[10px] text-zinc-400">
+                          <div className="flex items-center gap-1.5 mt-1 text-[10px] text-neutral-400">
                             {assistidoName && (
                               <>
                                 <User className="w-3 h-3" />
@@ -652,7 +652,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
           <div className="p-4 space-y-3">
             {/* Assistido search */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
                 Assistido
               </label>
               <Popover
@@ -664,7 +664,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                     variant="outline"
                     role="combobox"
                     aria-expanded={assistidoSearchOpen}
-                    className="w-full h-10 justify-between text-sm bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border hover:bg-zinc-100 dark:hover:bg-muted hover:border-emerald-300 dark:hover:border-emerald-700 focus:ring-emerald-500/20 transition-all duration-200"
+                    className="w-full h-10 justify-between text-sm bg-neutral-50 dark:bg-muted border-neutral-200 dark:border-border hover:bg-neutral-100 dark:hover:bg-muted hover:border-emerald-300 dark:hover:border-emerald-700 focus:ring-emerald-500/20 transition-all duration-200"
                   >
                     {registroRapido.assistidoId ? (
                       <span className="flex items-center gap-2 truncate">
@@ -674,7 +674,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                         </span>
                       </span>
                     ) : (
-                      <span className="text-zinc-400 flex items-center gap-2">
+                      <span className="text-neutral-400 flex items-center gap-2">
                         <Search className="w-4 h-4" />
                         Buscar por nome...
                       </span>
@@ -696,8 +696,8 @@ export function PainelServidor({ user }: PainelServidorProps) {
                     <CommandList>
                       <CommandEmpty>
                         <div className="py-4 text-center">
-                          <User className="w-8 h-8 mx-auto mb-2 text-zinc-400" />
-                          <p className="text-sm text-zinc-500">
+                          <User className="w-8 h-8 mx-auto mb-2 text-neutral-400" />
+                          <p className="text-sm text-neutral-500">
                             Nenhum assistido encontrado
                           </p>
                         </div>
@@ -754,7 +754,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                       processoId: null,
                     }))
                   }
-                  className="text-[10px] text-zinc-400 hover:text-red-500 transition-colors"
+                  className="text-[10px] text-neutral-400 hover:text-red-500 transition-colors"
                 >
                   Limpar selecao
                 </button>
@@ -763,7 +763,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
 
             {/* Tipo (simplified) */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
                 Tipo
               </label>
               <div className="flex gap-1.5">
@@ -795,7 +795,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                         "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors border",
                         isSelected
                           ? "bg-emerald-100 dark:bg-emerald-900/30 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400"
-                          : "border-zinc-200 dark:border-border hover:border-zinc-300 dark:hover:border-border bg-white dark:bg-muted text-muted-foreground"
+                          : "border-neutral-200 dark:border-border hover:border-neutral-300 dark:hover:border-border bg-white dark:bg-muted text-muted-foreground"
                       )}
                     >
                       <Icon
@@ -803,7 +803,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                           "w-3.5 h-3.5",
                           isSelected
                             ? "text-emerald-600 dark:text-emerald-400"
-                            : "text-zinc-400"
+                            : "text-neutral-400"
                         )}
                       />
                       {tipo.label}
@@ -816,7 +816,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
             {/* Processo vinculado (se assistido selecionado e tem processos) */}
             {registroRapido.assistidoId && processosDoAssistido.length > 0 && (
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
                   Processo vinculado
                 </label>
                 <select
@@ -829,7 +829,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                         : null,
                     }))
                   }
-                  className="w-full h-8 text-xs rounded-md border border-zinc-200 dark:border-border bg-white dark:bg-muted text-foreground px-2 focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
+                  className="w-full h-8 text-xs rounded-md border border-neutral-200 dark:border-border bg-white dark:bg-muted text-foreground px-2 focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
                 >
                   <option value="">
                     {processosDoAssistido.length === 1
@@ -849,7 +849,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
             {/* Descricao + Gravação */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
                   Descricao
                 </label>
                 <div className="flex items-center gap-0.5">
@@ -916,7 +916,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                   }))
                 }
                 rows={3}
-                className="w-full text-sm bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border resize-none focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
+                className="w-full text-sm bg-neutral-50 dark:bg-muted border-neutral-200 dark:border-border resize-none focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
               />
               {/* Ações pós-transcrição */}
               {transcript && (
@@ -973,11 +973,11 @@ export function PainelServidor({ user }: PainelServidorProps) {
           <div className="p-3 border-b border-border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-zinc-500" />
+                <Clock className="w-4 h-4 text-neutral-500" />
                 <h3 className="text-sm font-semibold text-foreground">
                   Hoje
                 </h3>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-muted text-muted-foreground font-medium">
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-muted text-muted-foreground font-medium">
                   {registrosHoje.length} registro
                   {registrosHoje.length !== 1 ? "s" : ""}
                 </span>
@@ -986,7 +986,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 text-xs text-zinc-500 hover:text-emerald-600"
+                  className="h-7 text-xs text-neutral-500 hover:text-emerald-600"
                 >
                   Ver todas <ArrowRight className="w-3 h-3 ml-1" />
                 </Button>
@@ -994,7 +994,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
             </div>
           </div>
 
-          <div className="divide-y divide-zinc-100 dark:divide-border max-h-[300px] overflow-y-auto">
+          <div className="divide-y divide-neutral-100 dark:divide-border max-h-[300px] overflow-y-auto">
             {loadingDemandas ? (
               <div className="p-4 space-y-2">
                 {[1, 2, 3].map((i) => (
@@ -1003,11 +1003,11 @@ export function PainelServidor({ user }: PainelServidorProps) {
               </div>
             ) : registrosHoje.length === 0 ? (
               <div className="p-6 text-center">
-                <Calendar className="w-8 h-8 mx-auto mb-2 text-zinc-300 dark:text-muted-foreground/50" />
-                <p className="text-sm text-zinc-500">
+                <Calendar className="w-8 h-8 mx-auto mb-2 text-neutral-300 dark:text-muted-foreground/50" />
+                <p className="text-sm text-neutral-500">
                   Nenhum registro hoje ainda
                 </p>
-                <p className="text-[10px] text-zinc-400 mt-0.5">
+                <p className="text-[10px] text-neutral-400 mt-0.5">
                   Use o Registro Rapido acima para comecar
                 </p>
               </div>
@@ -1022,21 +1022,21 @@ export function PainelServidor({ user }: PainelServidorProps) {
                     href={`/admin/demandas/${demanda.id}`}
                     key={demanda.id}
                   >
-                    <div className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-muted/50 transition-colors">
-                      <span className="text-[11px] font-mono text-zinc-400 w-10 flex-shrink-0">
+                    <div className="flex items-center gap-3 px-3 py-2.5 hover:bg-neutral-50 dark:hover:bg-muted/50 transition-colors">
+                      <span className="text-[11px] font-mono text-neutral-400 w-10 flex-shrink-0">
                         {hora}
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">
                           {demanda.assistido?.nome || "Sem assistido"}
                         </p>
-                        <p className="text-[11px] text-zinc-400 truncate">
+                        <p className="text-[11px] text-neutral-400 truncate">
                           {demanda.ato}
                         </p>
                       </div>
                       <Badge
                         variant="outline"
-                        className="text-[9px] border-zinc-200 dark:border-border text-muted-foreground"
+                        className="text-[9px] border-neutral-200 dark:border-border text-muted-foreground"
                       >
                         {demanda.status === "5_FILA"
                           ? "Fila"
@@ -1057,7 +1057,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
         {/* ===== 4. ACESSO RAPIDO ===== */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <Link href="/admin/demandas">
-            <Card className="p-4 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-xl hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
+            <Card className="p-4 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-xl hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
               <div className="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                 <ClipboardList className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               </div>
@@ -1067,7 +1067,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
             </Card>
           </Link>
           <Link href="/admin/assistidos">
-            <Card className="p-4 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-xl hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer group">
+            <Card className="p-4 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-xl hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer group">
               <div className="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                 <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               </div>
@@ -1077,7 +1077,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
             </Card>
           </Link>
           <Link href="/admin/drive">
-            <Card className="p-4 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-xl hover:shadow-lg hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer group">
+            <Card className="p-4 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-xl hover:shadow-lg hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer group">
               <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                 <FileEdit className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               </div>
@@ -1087,7 +1087,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
             </Card>
           </Link>
           <Link href="/admin/agenda">
-            <Card className="p-4 bg-white dark:bg-card border-zinc-200/80 dark:border-border rounded-xl hover:shadow-lg hover:border-violet-200 dark:hover:border-violet-800 transition-all cursor-pointer group">
+            <Card className="p-4 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-xl hover:shadow-lg hover:border-violet-200 dark:hover:border-violet-800 transition-all cursor-pointer group">
               <div className="w-9 h-9 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                 <Calendar className="w-4 h-4 text-violet-600 dark:text-violet-400" />
               </div>

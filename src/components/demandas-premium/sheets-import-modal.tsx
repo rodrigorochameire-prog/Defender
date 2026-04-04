@@ -63,7 +63,7 @@ function EditableCell({
             setDraft(value);
           }
         }}
-        className={`w-full bg-white dark:bg-zinc-900 border border-emerald-400 rounded px-1 py-0.5 text-xs outline-none ${className}`}
+        className={`w-full bg-white dark:bg-neutral-900 border border-emerald-400 rounded px-1 py-0.5 text-xs outline-none ${className}`}
       />
     );
   }
@@ -74,8 +74,8 @@ function EditableCell({
         setDraft(value);
         setEditing(true);
       }}
-      className={`cursor-text hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded px-1 py-0.5 -mx-1 block truncate ${
-        value ? className : "text-zinc-400 italic"
+      className={`cursor-text hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded px-1 py-0.5 -mx-1 block truncate ${
+        value ? className : "text-neutral-400 italic"
       }`}
       title="Clique para editar"
     >
@@ -128,14 +128,14 @@ function StatusDropdown({
         <ChevronDown className="w-2.5 h-2.5 flex-shrink-0 opacity-60" />
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl z-50 min-w-[160px] max-h-48 overflow-y-auto py-1">
+        <div className="absolute left-0 top-full mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl z-50 min-w-[160px] max-h-48 overflow-y-auto py-1">
           {STATUS_DROPDOWN_OPTIONS.map((opt, i) => {
             const isFirst = i === 0 || STATUS_DROPDOWN_OPTIONS[i - 1]?.group !== opt.group;
             return (
               <div key={opt.value}>
-                {isFirst && i > 0 && <div className="my-1 border-t border-zinc-100 dark:border-zinc-800" />}
+                {isFirst && i > 0 && <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />}
                 {isFirst && (
-                  <div className="px-3 py-0.5 text-[9px] text-zinc-400 font-semibold uppercase tracking-wider">
+                  <div className="px-3 py-0.5 text-[9px] text-neutral-400 font-semibold uppercase tracking-wider">
                     {opt.group}
                   </div>
                 )}
@@ -146,8 +146,8 @@ function StatusDropdown({
                   }}
                   className={`w-full px-3 py-1 text-left text-[11px] transition-colors ${
                     opt.value === value
-                      ? "bg-zinc-50 dark:bg-zinc-800/50 font-semibold"
-                      : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                      ? "bg-neutral-50 dark:bg-neutral-800/50 font-semibold"
+                      : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
                   }`}
                   style={{ color: opt.color }}
                 >
@@ -800,7 +800,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
           </DialogTitle>
           <DialogDescription>
             Cole o conteúdo copiado da planilha do Google Sheets. O formato esperado é:
-            <span className="block mt-1 text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 p-2 rounded">
+            <span className="block mt-1 text-[10px] font-mono bg-neutral-100 dark:bg-neutral-800 p-2 rounded">
               Status | Prisão | Data | Assistido | Tipo | Autos | Ato | Prazo | Providências
             </span>
           </DialogDescription>
@@ -830,7 +830,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
                 })}
               </SelectContent>
             </Select>
-            <p className="text-[10px] text-zinc-500">
+            <p className="text-[10px] text-neutral-500">
               Todas as demandas importadas serão atribuídas a esta vara
             </p>
           </div>
@@ -845,7 +845,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
               disabled={!selectedAtribuicao}
             />
             <div className="flex justify-between items-center mt-2">
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-neutral-500">
                 {rawText.split("\n").filter(l => l.trim()).length} linhas detectadas
               </p>
               <Button
@@ -863,7 +863,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
           {parsedDemandas.length > 0 && (
             <div className="space-y-3">
               {/* Stats */}
-              <div className="flex flex-wrap items-center gap-4 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+              <div className="flex flex-wrap items-center gap-4 p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   <span className="text-sm font-medium">{stats.validas} válidas</span>
@@ -905,10 +905,10 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
               )}
 
               {/* Tabela editável */}
-              <p className="text-[10px] text-zinc-400">Clique em qualquer campo para editar antes de importar</p>
+              <p className="text-[10px] text-neutral-400">Clique em qualquer campo para editar antes de importar</p>
               <div className="max-h-[300px] overflow-auto border rounded-lg">
                 <table className="w-full text-xs">
-                  <thead className="bg-zinc-100 dark:bg-zinc-800 sticky top-0 z-10">
+                  <thead className="bg-neutral-100 dark:bg-neutral-800 sticky top-0 z-10">
                     <tr>
                       <th className="px-2 py-1.5 text-left font-medium w-[40px]"></th>
                       <th className="px-2 py-1.5 text-left font-medium w-[100px]">Status</th>
@@ -918,12 +918,12 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
                       <th className="px-2 py-1.5 text-left font-medium w-[80px]">Data</th>
                       <th className="px-2 py-1.5 text-left font-medium w-[80px]">Prazo</th>
                       <th className="px-2 py-1.5 text-center w-8">
-                        <FileText className="h-3 w-3 inline text-zinc-400" />
+                        <FileText className="h-3 w-3 inline text-neutral-400" />
                       </th>
                       <th className="px-2 py-1.5 text-left font-medium w-[40px]"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                     {parsedDemandas.map((demanda) => {
                       const isDup = duplicatas.some(d => d.nova.id === demanda.id);
                       const isNew = demandasNovas.some(d => d.id === demanda.id);
@@ -1026,7 +1026,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
                               className={`rounded p-0.5 transition-colors ${
                                 demanda.providencias?.trim()
                                   ? "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
-                                  : "text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400"
+                                  : "text-neutral-300 dark:text-neutral-600 hover:text-neutral-500 dark:hover:text-neutral-400"
                               }`}
                             >
                               <FileText className="h-3.5 w-3.5" />
@@ -1038,7 +1038,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-zinc-400 hover:text-red-500"
+                              className="h-8 w-8 p-0 text-neutral-400 hover:text-red-500"
                               onClick={() => handleRemove(demanda.id)}
                             >
                               <Trash2 className="w-3 h-3" />
@@ -1047,9 +1047,9 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
                         </tr>
                         {expandedProv.has(demanda.id) && (
                           <tr>
-                            <td colSpan={9} className="px-3 pb-2 pt-0 bg-zinc-50/70 dark:bg-zinc-800/30">
+                            <td colSpan={9} className="px-3 pb-2 pt-0 bg-neutral-50/70 dark:bg-neutral-800/30">
                               <div className="flex items-start gap-2">
-                                <FileText className="h-3 w-3 text-zinc-400 mt-1.5 flex-shrink-0" />
+                                <FileText className="h-3 w-3 text-neutral-400 mt-1.5 flex-shrink-0" />
                                 <textarea
                                   autoFocus
                                   rows={2}
@@ -1069,7 +1069,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
                                     }
                                   }}
                                   placeholder="Providências para esta demanda..."
-                                  className="flex-1 text-xs bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 outline-none resize-none w-full"
+                                  className="flex-1 text-xs bg-white dark:bg-neutral-900 border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 outline-none resize-none w-full"
                                 />
                               </div>
                             </td>
@@ -1086,7 +1086,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="flex justify-end gap-2 pt-4 border-t border-neutral-200 dark:border-neutral-800">
           <Button variant="outline" onClick={handleClose}>
             Cancelar
           </Button>

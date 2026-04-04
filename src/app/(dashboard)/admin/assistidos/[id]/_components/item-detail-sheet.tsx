@@ -55,11 +55,11 @@ interface ItemDetailSheetProps {
 
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex gap-2 items-start py-1 border-b border-zinc-100 dark:border-zinc-800 last:border-0">
-      <span className="w-20 text-[10px] text-zinc-400 uppercase tracking-wide shrink-0 pt-0.5">
+    <div className="flex gap-2 items-start py-1 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
+      <span className="w-20 text-[10px] text-neutral-400 uppercase tracking-wide shrink-0 pt-0.5">
         {label}
       </span>
-      <span className="text-[11px] text-zinc-700 dark:text-zinc-300 break-words min-w-0">
+      <span className="text-[11px] text-neutral-700 dark:text-neutral-300 break-words min-w-0">
         {children}
       </span>
     </div>
@@ -68,7 +68,7 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-1.5">
+    <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-1.5">
       {children}
     </p>
   );
@@ -106,15 +106,15 @@ function ProcessoView({
 }) {
   return (
     <>
-      <SheetHeader className="px-4 pt-4 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+      <SheetHeader className="px-4 pt-4 pb-3 border-b border-neutral-100 dark:border-neutral-800">
         <div className="flex items-center gap-2">
-          <SheetTitle className="text-sm font-mono font-semibold text-zinc-800 dark:text-zinc-100 truncate flex-1">
+          <SheetTitle className="text-sm font-mono font-semibold text-neutral-800 dark:text-neutral-100 truncate flex-1">
             {processo.numeroAutos ?? "Sem número"}
           </SheetTitle>
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 w-6 p-0 text-zinc-400 hover:text-emerald-600 shrink-0"
+            className="h-6 w-6 p-0 text-neutral-400 hover:text-emerald-600 shrink-0"
             title="Editar processo"
             asChild
           >
@@ -150,9 +150,9 @@ function ProcessoView({
                 return (
                   <div
                     key={d.id}
-                    className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 py-1.5 last:border-0"
+                    className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 py-1.5 last:border-0"
                   >
-                    <span className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate mr-2">
+                    <span className="text-[11px] text-neutral-700 dark:text-neutral-300 truncate mr-2">
                       {d.ato ?? d.tipoAto ?? "Demanda"}
                     </span>
                     {prazoFormatado && (
@@ -161,7 +161,7 @@ function ProcessoView({
                           "text-[10px] shrink-0 tabular-nums",
                           vencido
                             ? "text-rose-600 dark:text-rose-400 font-semibold"
-                            : "text-zinc-400",
+                            : "text-neutral-400",
                         )}
                       >
                         {prazoFormatado}
@@ -182,20 +182,20 @@ function ProcessoView({
               {processoAudiencias.map((a) => (
                 <div
                   key={a.id}
-                  className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 py-1.5 last:border-0"
+                  className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 py-1.5 last:border-0"
                 >
-                  <span className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate mr-2">
+                  <span className="text-[11px] text-neutral-700 dark:text-neutral-300 truncate mr-2">
                     {a.tipo ?? "Audiência"}
                   </span>
                   {a.dataAudiencia && (() => {
                     try {
                       return (
-                        <span className="text-[10px] text-zinc-400 shrink-0 tabular-nums">
+                        <span className="text-[10px] text-neutral-400 shrink-0 tabular-nums">
                           {format(new Date(a.dataAudiencia!), "dd/MMM HH'h'mm", { locale: ptBR })}
                         </span>
                       );
                     } catch {
-                      return <span className="text-[10px] text-zinc-400 shrink-0">Data inválida</span>;
+                      return <span className="text-[10px] text-neutral-400 shrink-0">Data inválida</span>;
                     }
                   })()}
                 </div>
@@ -207,7 +207,7 @@ function ProcessoView({
         {/* Botão principal */}
         <Button
           variant="outline"
-          className="w-full h-8 text-[11px] gap-1.5 border-zinc-200 text-zinc-600 hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/10"
+          className="w-full h-8 text-[11px] gap-1.5 border-neutral-200 text-neutral-600 hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/10"
           asChild
         >
           <Link href={`/admin/processos/${processo.id}`}>
@@ -229,8 +229,8 @@ function DemandaView({ demanda }: { demanda: DemandaDetalhe }) {
 
   return (
     <>
-      <SheetHeader className="px-4 pt-4 pb-3 border-b border-zinc-100 dark:border-zinc-800">
-        <SheetTitle className="text-sm font-semibold text-zinc-800 dark:text-zinc-100 truncate">
+      <SheetHeader className="px-4 pt-4 pb-3 border-b border-neutral-100 dark:border-neutral-800">
+        <SheetTitle className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 truncate">
           {demanda.ato ?? demanda.tipoAto ?? "Demanda"}
         </SheetTitle>
       </SheetHeader>
@@ -263,7 +263,7 @@ function DemandaView({ demanda }: { demanda: DemandaDetalhe }) {
 
         <Button
           variant="outline"
-          className="w-full h-8 text-[11px] gap-1.5 border-zinc-200 text-zinc-600 hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/10"
+          className="w-full h-8 text-[11px] gap-1.5 border-neutral-200 text-neutral-600 hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/10"
           asChild
         >
           <Link href={`/admin/demandas/${demanda.id}`}>

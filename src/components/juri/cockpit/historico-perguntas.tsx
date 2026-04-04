@@ -145,26 +145,26 @@ export function HistoricoPerguntas({ isDarkMode, faseSelecionada }: HistoricoPer
   }, [perguntas]);
 
   return (
-    <div className={cn("flex flex-col gap-3 rounded-xl border border-zinc-200/80 bg-white p-4 dark:border-zinc-800/80 dark:bg-zinc-900")}>
+    <div className={cn("flex flex-col gap-3 rounded-xl border border-neutral-200/80 bg-white p-4 dark:border-neutral-800/80 dark:bg-neutral-900")}>
       {/* Header */}
       <div className="flex items-center gap-2">
-        <MessageSquare className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
-        <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Historico de Perguntas</span>
-        <span className="ml-auto text-[10px] text-zinc-400 dark:text-zinc-500">{faseSelecionada.label}</span>
+        <MessageSquare className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+        <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Historico de Perguntas</span>
+        <span className="ml-auto text-[10px] text-neutral-400 dark:text-neutral-500">{faseSelecionada.label}</span>
       </div>
 
       {/* Stats bar */}
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200/80 bg-zinc-50/50 px-3 py-2 dark:border-zinc-800/80 dark:bg-zinc-800/30">
-        <span className="text-[11px] font-medium text-zinc-900 dark:text-zinc-100">{stats.total}</span>
-        <span className="text-[10px] text-zinc-400 dark:text-zinc-500">perguntas</span>
-        <span className="text-zinc-200 dark:text-zinc-700">|</span>
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-neutral-200/80 bg-neutral-50/50 px-3 py-2 dark:border-neutral-800/80 dark:bg-neutral-800/30">
+        <span className="text-[11px] font-medium text-neutral-900 dark:text-neutral-100">{stats.total}</span>
+        <span className="text-[10px] text-neutral-400 dark:text-neutral-500">perguntas</span>
+        <span className="text-neutral-200 dark:text-neutral-700">|</span>
         {QUEM_OPTIONS.map((q) => (
           <span key={q.id} className="flex items-center gap-1">
             <span className={cn("h-1.5 w-1.5 rounded-full", q.dot)} />
             <span className={cn("text-[10px]", q.color)}>{stats.byQuem[q.id]}</span>
           </span>
         ))}
-        <span className="text-zinc-200 dark:text-zinc-700">|</span>
+        <span className="text-neutral-200 dark:text-neutral-700">|</span>
         <span className="flex items-center gap-1">
           <X className="h-3 w-3 text-rose-500" />
           <span className="text-[10px] text-rose-600 dark:text-rose-400">{stats.indeferidas}</span>
@@ -176,7 +176,7 @@ export function HistoricoPerguntas({ isDarkMode, faseSelecionada }: HistoricoPer
       </div>
 
       {/* Add form */}
-      <div className="flex flex-col gap-2 rounded-lg border border-zinc-200/80 bg-zinc-50/30 p-3 dark:border-zinc-800/80 dark:bg-zinc-800/20">
+      <div className="flex flex-col gap-2 rounded-lg border border-neutral-200/80 bg-neutral-50/30 p-3 dark:border-neutral-800/80 dark:bg-neutral-800/20">
         <div className="flex gap-1">
           {QUEM_OPTIONS.map((q) => {
             const Icon = q.icon;
@@ -186,7 +186,7 @@ export function HistoricoPerguntas({ isDarkMode, faseSelecionada }: HistoricoPer
                 onClick={() => setQuem(q.id)}
                 className={cn(
                   "flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-all duration-200 cursor-pointer",
-                  quem === q.id ? cn(q.bg, q.color, "ring-1", q.border) : "text-zinc-400 hover:bg-zinc-100 dark:text-zinc-500 dark:hover:bg-zinc-800"
+                  quem === q.id ? cn(q.bg, q.color, "ring-1", q.border) : "text-neutral-400 hover:bg-neutral-100 dark:text-neutral-500 dark:hover:bg-neutral-800"
                 )}
               >
                 <Icon className="h-3 w-3" />
@@ -205,12 +205,12 @@ export function HistoricoPerguntas({ isDarkMode, faseSelecionada }: HistoricoPer
             className="h-8 text-xs"
           />
           {showTestemunhaList && filteredTestemunhas.length > 0 && (
-            <div className="absolute z-10 mt-1 w-full rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+            <div className="absolute z-10 mt-1 w-full rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-800">
               {filteredTestemunhas.map((name) => (
                 <button
                   key={name}
                   onMouseDown={() => { setTestemunha(name); setShowTestemunhaList(false); }}
-                  className="w-full cursor-pointer px-3 py-1.5 text-left text-xs text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  className="w-full cursor-pointer px-3 py-1.5 text-left text-xs text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
                 >
                   {name}
                 </button>
@@ -227,7 +227,7 @@ export function HistoricoPerguntas({ isDarkMode, faseSelecionada }: HistoricoPer
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
-        <Filter className="h-3 w-3 text-zinc-400 dark:text-zinc-500" />
+        <Filter className="h-3 w-3 text-neutral-400 dark:text-neutral-500" />
         <div className="flex gap-1">
           {[{ id: "all" as const, label: "Todos" }, ...QUEM_OPTIONS.map((q) => ({ id: q.id, label: q.label }))].map((opt) => (
             <button
@@ -235,7 +235,7 @@ export function HistoricoPerguntas({ isDarkMode, faseSelecionada }: HistoricoPer
               onClick={() => setFiltroQuem(opt.id)}
               className={cn(
                 "rounded-md px-2 py-1 text-[10px] font-medium transition-all cursor-pointer",
-                filtroQuem === opt.id ? "bg-emerald-600 text-white" : "text-zinc-400 hover:bg-zinc-100 dark:text-zinc-500 dark:hover:bg-zinc-800"
+                filtroQuem === opt.id ? "bg-emerald-600 text-white" : "text-neutral-400 hover:bg-neutral-100 dark:text-neutral-500 dark:hover:bg-neutral-800"
               )}
             >
               {opt.label}
@@ -245,7 +245,7 @@ export function HistoricoPerguntas({ isDarkMode, faseSelecionada }: HistoricoPer
         <select
           value={filtroTestemunha}
           onChange={(e) => setFiltroTestemunha(e.target.value)}
-          className="h-6 rounded-md border border-zinc-200 bg-white px-1.5 text-[10px] text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
+          className="h-6 rounded-md border border-neutral-200 bg-white px-1.5 text-[10px] text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
         >
           <option value="all">Todas testemunhas</option>
           {testemunhas.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -254,7 +254,7 @@ export function HistoricoPerguntas({ isDarkMode, faseSelecionada }: HistoricoPer
           onClick={() => setFiltroIndeferidas(!filtroIndeferidas)}
           className={cn(
             "flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium transition-all cursor-pointer",
-            filtroIndeferidas ? "bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400" : "text-zinc-400 hover:bg-zinc-100 dark:text-zinc-500 dark:hover:bg-zinc-800"
+            filtroIndeferidas ? "bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400" : "text-neutral-400 hover:bg-neutral-100 dark:text-neutral-500 dark:hover:bg-neutral-800"
           )}
         >
           <X className="h-2.5 w-2.5" />
@@ -265,7 +265,7 @@ export function HistoricoPerguntas({ isDarkMode, faseSelecionada }: HistoricoPer
       {/* Questions list */}
       <div className="flex max-h-[420px] flex-col gap-2 overflow-y-auto">
         {filtered.length === 0 && (
-          <p className="py-8 text-center text-xs text-zinc-400 dark:text-zinc-500">Nenhuma pergunta registrada</p>
+          <p className="py-8 text-center text-xs text-neutral-400 dark:text-neutral-500">Nenhuma pergunta registrada</p>
         )}
         {filtered.map((p) => {
           const s = QUEM_MAP[p.quemPerguntou];
@@ -277,22 +277,22 @@ export function HistoricoPerguntas({ isDarkMode, faseSelecionada }: HistoricoPer
                 "flex flex-col gap-1.5 rounded-lg border p-3 transition-all duration-200",
                 p.vinculadaContradicao
                   ? "border-amber-300 bg-amber-50/30 dark:border-amber-800 dark:bg-amber-950/10"
-                  : "border-zinc-200/80 bg-white dark:border-zinc-800/80 dark:bg-zinc-900"
+                  : "border-neutral-200/80 bg-white dark:border-neutral-800/80 dark:bg-neutral-900"
               )}
             >
               <div className="flex items-center gap-2">
                 <Badge className={cn(s.bg, s.color, s.border, "text-[10px] px-1.5 py-0")}>{s.label}</Badge>
-                <span className="text-[11px] font-medium text-zinc-700 dark:text-zinc-300">{p.testemunha}</span>
-                <span className="ml-auto text-[10px] text-zinc-400 dark:text-zinc-500">{p.horario} - {p.fase}</span>
+                <span className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300">{p.testemunha}</span>
+                <span className="ml-auto text-[10px] text-neutral-400 dark:text-neutral-500">{p.horario} - {p.fase}</span>
               </div>
-              <p className="text-xs leading-snug text-zinc-900 dark:text-zinc-100">{p.texto}</p>
+              <p className="text-xs leading-snug text-neutral-900 dark:text-neutral-100">{p.texto}</p>
               <div className="flex items-center gap-1.5">
                 {/* Ruling buttons */}
                 <button
                   onClick={() => setDeferida(p.id, p.deferida === true ? null : true)}
                   className={cn(
                     "flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium transition-all cursor-pointer",
-                    p.deferida === true ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" : "text-zinc-400 hover:text-emerald-600 dark:text-zinc-500"
+                    p.deferida === true ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" : "text-neutral-400 hover:text-emerald-600 dark:text-neutral-500"
                   )}
                 >
                   <Check className="h-3 w-3" />
@@ -302,7 +302,7 @@ export function HistoricoPerguntas({ isDarkMode, faseSelecionada }: HistoricoPer
                   onClick={() => setDeferida(p.id, p.deferida === false ? null : false)}
                   className={cn(
                     "flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium transition-all cursor-pointer",
-                    p.deferida === false ? "bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400" : "text-zinc-400 hover:text-rose-600 dark:text-zinc-500"
+                    p.deferida === false ? "bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400" : "text-neutral-400 hover:text-rose-600 dark:text-neutral-500"
                   )}
                 >
                   <X className="h-3 w-3" />
@@ -312,14 +312,14 @@ export function HistoricoPerguntas({ isDarkMode, faseSelecionada }: HistoricoPer
                   onClick={() => toggleContradicao(p.id)}
                   className={cn(
                     "flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium transition-all cursor-pointer",
-                    p.vinculadaContradicao ? "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" : "text-zinc-400 hover:text-amber-600 dark:text-zinc-500"
+                    p.vinculadaContradicao ? "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" : "text-neutral-400 hover:text-amber-600 dark:text-neutral-500"
                   )}
                 >
                   <AlertTriangle className="h-3 w-3" />
                 </button>
                 <button
                   onClick={() => setExpandedResposta(isExpanded ? null : p.id)}
-                  className="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[10px] text-zinc-400 transition-all hover:text-zinc-600 cursor-pointer dark:text-zinc-500 dark:hover:text-zinc-300"
+                  className="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[10px] text-neutral-400 transition-all hover:text-neutral-600 cursor-pointer dark:text-neutral-500 dark:hover:text-neutral-300"
                 >
                   <ChevronDown className={cn("h-3 w-3 transition-transform", isExpanded && "rotate-180")} />
                   Resposta

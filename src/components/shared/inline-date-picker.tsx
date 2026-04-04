@@ -57,20 +57,20 @@ export function InlineDatePicker({
           data-edit-trigger
           onClick={activateOnDoubleClick && !showEditIcon ? undefined : handleOpen}
           onDoubleClick={activateOnDoubleClick && !showEditIcon ? handleOpen : undefined}
-          className="text-[11px] text-zinc-600 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 transition-colors flex items-center gap-1 whitespace-nowrap group/date cursor-pointer"
+          className="text-[11px] text-neutral-600 dark:text-neutral-400 hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 transition-colors flex items-center gap-1 whitespace-nowrap group/date cursor-pointer"
         >
           {value ? (
             <span>{value}</span>
           ) : placeholder ? (
-            <span className="text-zinc-400 dark:text-zinc-500 italic">{placeholder}</span>
+            <span className="text-neutral-400 dark:text-neutral-500 italic">{placeholder}</span>
           ) : null}
-          <CalendarIcon className={`w-3 h-3 text-zinc-300 dark:text-zinc-600 transition-opacity ${
+          <CalendarIcon className={`w-3 h-3 text-neutral-300 dark:text-neutral-600 transition-opacity ${
             showEditIcon ? "opacity-40 group-hover/date:opacity-100" : !value && !placeholder ? "opacity-30 group-hover/date:opacity-100" : "opacity-0 group-hover/date:opacity-100"
           }`} />
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-auto p-0 rounded-xl shadow-xl border-zinc-200/80 dark:border-zinc-700"
+        className="w-auto p-0 rounded-xl shadow-xl border-neutral-200/80 dark:border-neutral-700"
         align="start"
         sideOffset={4}
         collisionPadding={16}

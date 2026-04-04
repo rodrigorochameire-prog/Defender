@@ -152,9 +152,9 @@ export default function LaboratorioOratoriaPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* SUB-HEADER - Padrão Defender */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Link href="/admin/juri">
@@ -167,13 +167,13 @@ export default function LaboratorioOratoriaPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Laboratório de Oratória</h1>
+                <h1 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Laboratório de Oratória</h1>
                 <Badge className="bg-violet-500 text-white text-[9px] border-0">
                   <Sparkles className="w-2.5 h-2.5 mr-0.5" />
                   Premium
                 </Badge>
               </div>
-              <p className="text-[10px] text-zinc-500">Treine sustentação e impacto no plenário</p>
+              <p className="text-[10px] text-neutral-500">Treine sustentação e impacto no plenário</p>
             </div>
           </div>
         </div>

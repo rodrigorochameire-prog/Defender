@@ -67,23 +67,23 @@ function AtribuicaoCard({
         if (atribuicao.folderId) ctx.navigateToFolder(atribuicao.folderId, atribuicao.label);
       }}
       className={cn(
-        "group bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3.5 cursor-pointer text-left",
+        "group bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-3.5 cursor-pointer text-left",
         "transition-all duration-200",
-        "hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-sm hover:shadow-zinc-200/50 dark:hover:shadow-black/20"
+        "hover:border-neutral-300 dark:hover:border-neutral-700 hover:shadow-sm hover:shadow-neutral-200/50 dark:hover:shadow-black/20"
       )}
     >
       <div className="flex items-center gap-2.5 mb-2.5">
-        <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
-          <Icon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+        <div className="h-8 w-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+          <Icon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+            <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">
               {atribuicao.label}
             </span>
             <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", atribuicao.dotClass)} />
           </div>
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+          <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
             {fileCount} arquivo{fileCount !== 1 ? "s" : ""} · {syncTimeStr}
           </span>
         </div>
@@ -91,13 +91,13 @@ function AtribuicaoCard({
 
       {/* Vinculação bar */}
       <div className="flex items-center gap-2">
-        <div className="flex-1 h-1 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+        <div className="flex-1 h-1 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
           <div
-            className="h-full rounded-full bg-zinc-400 dark:bg-zinc-600 transition-all duration-500"
+            className="h-full rounded-full bg-neutral-400 dark:bg-neutral-600 transition-all duration-500"
             style={{ width: `${Math.min(linkedPercent, 100)}%` }}
           />
         </div>
-        <span className="text-[10px] font-medium tabular-nums text-zinc-400 min-w-[3ch] text-right">
+        <span className="text-[10px] font-medium tabular-nums text-neutral-400 min-w-[3ch] text-right">
           {linkedPercent}%
         </span>
       </div>
@@ -124,18 +124,18 @@ function SpecialFolderCard({
         if (folder.folderId) ctx.navigateToFolder(folder.folderId, folder.label);
       }}
       className={cn(
-        "group bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3.5 cursor-pointer text-left",
+        "group bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-3.5 cursor-pointer text-left",
         "transition-all duration-200",
-        "hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-sm hover:shadow-zinc-200/50 dark:hover:shadow-black/20"
+        "hover:border-neutral-300 dark:hover:border-neutral-700 hover:shadow-sm hover:shadow-neutral-200/50 dark:hover:shadow-black/20"
       )}
     >
       <div className="flex items-center gap-2.5">
-        <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
-          <Icon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+        <div className="h-8 w-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+          <Icon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">{folder.label}</p>
-          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 tabular-nums">
+          <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">{folder.label}</p>
+          <p className="text-[10px] text-neutral-400 dark:text-neutral-500 tabular-nums">
             {fileCount} arquivo{fileCount !== 1 ? "s" : ""}
           </p>
         </div>
@@ -177,18 +177,18 @@ function RecentFileItem({
       href={file.webViewLink ?? "#"}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-2.5 px-3.5 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors duration-150 group cursor-pointer"
+      className="flex items-center gap-2.5 px-3.5 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors duration-150 group cursor-pointer"
     >
-      <Icon className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
-      <span className="text-xs text-zinc-700 dark:text-zinc-300 truncate flex-1 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors">
+      <Icon className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500 shrink-0" />
+      <span className="text-xs text-neutral-700 dark:text-neutral-300 truncate flex-1 group-hover:text-neutral-900 dark:group-hover:text-neutral-100 transition-colors">
         {file.name}
       </span>
       {atribuicaoLabel && (
-        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 shrink-0">
+        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 shrink-0">
           {atribuicaoLabel}
         </span>
       )}
-      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 shrink-0 tabular-nums">
+      <span className="text-[10px] text-neutral-400 dark:text-neutral-500 shrink-0 tabular-nums">
         {timeStr}
       </span>
     </a>
@@ -278,16 +278,16 @@ export function DriveOverviewDashboard() {
   return (
     <div className="flex-1 overflow-y-auto">
       {/* --- Header --- */}
-      <div className="flex items-center gap-4 px-5 md:px-6 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 shrink-0">
+      <div className="flex items-center gap-4 px-5 md:px-6 py-4 border-b border-neutral-200/50 dark:border-neutral-800/50 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-sm shrink-0">
-            <HardDrive className="w-4 h-4 text-white dark:text-zinc-900" />
+          <div className="w-9 h-9 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-sm shrink-0">
+            <HardDrive className="w-4 h-4 text-white dark:text-neutral-900" />
           </div>
           <div className="min-w-0">
-            <h2 className="font-serif text-xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">
+            <h2 className="font-serif text-xl font-semibold text-neutral-900 dark:text-neutral-50 tracking-tight">
               Drive Hub
             </h2>
-            <div className="flex items-center gap-2 text-[10px] text-zinc-400 dark:text-zinc-500">
+            <div className="flex items-center gap-2 text-[10px] text-neutral-400 dark:text-neutral-500">
               <span className="tabular-nums">{totalFiles} docs</span>
               <span>·</span>
               <span className="tabular-nums">{linkedPercent}% vinc.</span>
@@ -311,7 +311,7 @@ export function DriveOverviewDashboard() {
             <Button
               variant="outline"
               size="sm"
-              className="h-7 px-2.5 text-xs rounded-lg border-zinc-200/80 dark:border-zinc-700/50 hover:border-emerald-300 dark:hover:border-emerald-500/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+              className="h-7 px-2.5 text-xs rounded-lg border-neutral-200/80 dark:border-neutral-700/50 hover:border-emerald-300 dark:hover:border-emerald-500/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
               onClick={() => retryEnrichment.mutate({})}
               disabled={retryEnrichment.isPending}
             >
@@ -329,18 +329,18 @@ export function DriveOverviewDashboard() {
       <div className="max-w-5xl mx-auto space-y-6 p-5 md:p-6">
         {/* --- Atribuicao Cards --- */}
         <div>
-          <h3 className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-3">
+          <h3 className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-3">
             Atribuições
           </h3>
           {isLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3.5 animate-pulse">
+                <div key={i} className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-3.5 animate-pulse">
                   <div className="flex items-center gap-2.5 mb-2.5">
-                    <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-                    <div className="h-3 w-16 rounded bg-zinc-100 dark:bg-zinc-800" />
+                    <div className="h-8 w-8 rounded-lg bg-neutral-100 dark:bg-neutral-800" />
+                    <div className="h-3 w-16 rounded bg-neutral-100 dark:bg-neutral-800" />
                   </div>
-                  <div className="h-1 w-full rounded-full bg-zinc-100 dark:bg-zinc-800" />
+                  <div className="h-1 w-full rounded-full bg-neutral-100 dark:bg-neutral-800" />
                 </div>
               ))}
             </div>
@@ -364,7 +364,7 @@ export function DriveOverviewDashboard() {
 
         {/* --- Special Folders --- */}
         <div>
-          <h3 className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-3">
+          <h3 className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-3">
             Especiais
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -378,26 +378,26 @@ export function DriveOverviewDashboard() {
         {/* --- Enrichment Progress (inline) --- */}
         {enrichedPercent > 0 && (
           <div>
-            <h3 className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-3">
+            <h3 className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-3">
               Extração IA
             </h3>
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-4">
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-4">
               <div className="flex items-center justify-between mb-2.5">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
-                  <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Enriquecimento</span>
+                  <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Enriquecimento</span>
                 </div>
-                <span className="text-[10px] font-medium tabular-nums text-zinc-400">{enrichedPercent}%</span>
+                <span className="text-[10px] font-medium tabular-nums text-neutral-400">{enrichedPercent}%</span>
               </div>
 
-              <div className="h-1 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden mb-2.5">
+              <div className="h-1 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden mb-2.5">
                 <div
                   className="h-full rounded-full bg-emerald-500 transition-all duration-1000 ease-out"
                   style={{ width: `${enrichedPercent}%` }}
                 />
               </div>
 
-              <div className="flex items-center gap-3 text-[10px] text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center gap-3 text-[10px] text-neutral-500 dark:text-neutral-400">
                 <span className="tabular-nums">{enrichmentCounts.completed} extraídos</span>
                 {enrichmentCounts.processing > 0 && (
                   <span className="tabular-nums text-amber-600 dark:text-amber-400">{enrichmentCounts.processing} processando</span>
@@ -418,12 +418,12 @@ export function DriveOverviewDashboard() {
 
         {/* --- Recent Activity --- */}
         <div>
-          <h3 className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+          <h3 className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
             <Clock className="h-3 w-3" />
             Atividade Recente
           </h3>
           {recentFiles && recentFiles.length > 0 ? (
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl divide-y divide-zinc-100 dark:divide-zinc-800/50 overflow-hidden">
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl divide-y divide-neutral-100 dark:divide-neutral-800/50 overflow-hidden">
               {recentFiles.map((file) => (
                 <RecentFileItem
                   key={file.id}
@@ -433,10 +433,10 @@ export function DriveOverviewDashboard() {
               ))}
             </div>
           ) : !isLoadingStats ? (
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl">
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl">
               <div className="text-center py-8">
-                <Clock className="h-5 w-5 text-zinc-300 dark:text-zinc-600 mx-auto mb-2" />
-                <p className="text-xs text-zinc-400">Nenhuma atividade recente</p>
+                <Clock className="h-5 w-5 text-neutral-300 dark:text-neutral-600 mx-auto mb-2" />
+                <p className="text-xs text-neutral-400">Nenhuma atividade recente</p>
               </div>
             </div>
           ) : null}

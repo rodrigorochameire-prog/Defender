@@ -13,9 +13,9 @@ export default function LegislacaoPage() {
   const [updateOpen, setUpdateOpen] = useState(false);
 
   return (
-    <div className="flex flex-col h-screen bg-zinc-50/50 dark:bg-zinc-950">
+    <div className="flex flex-col h-screen bg-neutral-50/50 dark:bg-neutral-950">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-border bg-white dark:bg-card shrink-0">
+      <div className="border-b border-neutral-200 dark:border-border bg-white dark:bg-card shrink-0">
         <div className="px-6 py-4">
           <Breadcrumbs
             items={[{ label: "Dashboard", href: "/admin" }, { label: "Legislação" }]}
@@ -29,7 +29,7 @@ export default function LegislacaoPage() {
                 <h1 className="text-xl font-semibold text-foreground">
                   Legislação
                 </h1>
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-neutral-500">
                   28 leis — consulta rápida com navegação hierárquica
                 </p>
               </div>

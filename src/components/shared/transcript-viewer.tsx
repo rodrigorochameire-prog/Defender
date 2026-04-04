@@ -157,7 +157,7 @@ const TAG_COLORS: Record<string, string> = {
   testemunha_ouvir_dizer_boato: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
   testemunha_ouvir_dizer_fonte: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
   testemunha_mera_conduta: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  testemunha_referida: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+  testemunha_referida: "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400",
   vitima: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   policial_civil: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
   policial_militar: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
@@ -279,7 +279,7 @@ export function TranscriptViewer({
                 key={tag}
                 className={cn(
                   "text-[10px] font-medium border-0",
-                  TAG_COLORS[tag] ?? "bg-zinc-100 text-zinc-600"
+                  TAG_COLORS[tag] ?? "bg-neutral-100 text-neutral-600"
                 )}
               >
                 {TAG_LABELS[tag] ?? tag.replace(/_/g, " ")}

@@ -96,12 +96,12 @@ function DuplicateWarningModal({
                   ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800"
                   : dup.tipo === "exato"
                     ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
-                    : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700"
+                    : "bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700"
               )}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm text-zinc-900 dark:text-zinc-100">
+                  <span className="font-medium text-sm text-neutral-900 dark:text-neutral-100">
                     {dup.nome}
                   </span>
                   <Badge 
@@ -112,7 +112,7 @@ function DuplicateWarningModal({
                         ? "border-rose-300 text-rose-600"
                         : dup.tipo === "exato"
                           ? "border-amber-300 text-amber-600"
-                          : "border-zinc-300 text-zinc-500"
+                          : "border-neutral-300 text-neutral-500"
                     )}
                   >
                     {dup.tipo === "cpf" ? "CPF Igual" : 
@@ -121,7 +121,7 @@ function DuplicateWarningModal({
                   </Badge>
                 </div>
                 {dup.cpf && (
-                  <p className="text-xs text-zinc-500 mt-0.5">CPF: {dup.cpf}</p>
+                  <p className="text-xs text-neutral-500 mt-0.5">CPF: {dup.cpf}</p>
                 )}
               </div>
               <Button 
@@ -274,10 +274,10 @@ export default function NovoAssistidoPage() {
             <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-700 dark:text-emerald-400" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-100">
               Novo Assistido
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">
+            <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 hidden sm:block">
               Cadastre um novo assistido
             </p>
           </div>

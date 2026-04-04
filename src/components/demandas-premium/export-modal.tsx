@@ -588,10 +588,10 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
               <Download className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div className="flex-1">
-              <DialogTitle className="text-base font-bold text-zinc-900 dark:text-zinc-50">
+              <DialogTitle className="text-base font-bold text-neutral-900 dark:text-neutral-50">
                 Exportar Demandas
               </DialogTitle>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 Escolha o formato
               </p>
             </div>
@@ -608,8 +608,8 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
               <div
                 className={`flex items-center justify-center w-5 h-5 rounded-full text-[9px] font-medium transition-all ${
                   step >= s
-                    ? "bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900"
-                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500"
+                    ? "bg-neutral-700 dark:bg-neutral-300 text-white dark:text-neutral-900"
+                    : "bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500"
                 }`}
               >
                 {step > s ? <CheckCircle2 className="w-2.5 h-2.5" /> : s}
@@ -617,7 +617,7 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
               {s < 3 && (
                 <div
                   className={`flex-1 h-px mx-1 transition-all ${
-                    step > s ? "bg-zinc-500" : "bg-zinc-200 dark:bg-zinc-700"
+                    step > s ? "bg-neutral-500" : "bg-neutral-200 dark:bg-neutral-700"
                   }`}
                 />
               )}
@@ -642,10 +642,10 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
                         isSelected
                           ? isHighlight
                             ? "border-amber-400 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-600"
-                            : "border-zinc-400 bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-600"
+                            : "border-neutral-400 bg-neutral-100 dark:bg-neutral-800 dark:border-neutral-600"
                           : isHighlight
                           ? "border-amber-200 dark:border-amber-800 hover:bg-amber-50/50 dark:hover:bg-amber-950/20"
-                          : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                          : "border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
                       }`}
                     >
                       <Icon
@@ -653,17 +653,17 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
                           isSelected
                             ? isHighlight
                               ? "text-amber-600 dark:text-amber-400"
-                              : "text-zinc-700 dark:text-zinc-300"
+                              : "text-neutral-700 dark:text-neutral-300"
                             : isHighlight
                             ? "text-amber-500"
-                            : "text-zinc-400"
+                            : "text-neutral-400"
                         }`}
                       />
                       <div className="flex-1">
                         <div className="flex items-center gap-1.5">
                           <p
                             className={`text-xs font-medium ${
-                              isHighlight ? "text-amber-800 dark:text-amber-200" : "text-zinc-800 dark:text-zinc-200"
+                              isHighlight ? "text-amber-800 dark:text-amber-200" : "text-neutral-800 dark:text-neutral-200"
                             }`}
                           >
                             {option.label}
@@ -674,14 +674,14 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
                             </span>
                           )}
                         </div>
-                        <p className={`text-[10px] ${isHighlight ? "text-amber-600 dark:text-amber-400" : "text-zinc-400"}`}>
+                        <p className={`text-[10px] ${isHighlight ? "text-amber-600 dark:text-amber-400" : "text-neutral-400"}`}>
                           {option.description}
                         </p>
                       </div>
                       {isSelected && (
                         <CheckCircle2
                           className={`w-3.5 h-3.5 ${
-                            isHighlight ? "text-amber-600 dark:text-amber-400" : "text-zinc-600 dark:text-zinc-400"
+                            isHighlight ? "text-amber-600 dark:text-amber-400" : "text-neutral-600 dark:text-neutral-400"
                           }`}
                         />
                       )}
@@ -691,30 +691,30 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
               </div>
 
               {/* Scope Selection */}
-              <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                <p className="text-[10px] font-medium text-zinc-400 mb-1.5">Dados a exportar</p>
+              <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800">
+                <p className="text-[10px] font-medium text-neutral-400 mb-1.5">Dados a exportar</p>
                 <div className="grid grid-cols-2 gap-1.5">
                   <button
                     onClick={() => setScope("filtered")}
                     className={`p-2 rounded-lg border text-left transition-all ${
                       scope === "filtered"
-                        ? "border-zinc-400 bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-600"
-                        : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50"
+                        ? "border-neutral-400 bg-neutral-100 dark:bg-neutral-800 dark:border-neutral-600"
+                        : "border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50"
                     }`}
                   >
-                    <span className="text-xs font-medium text-zinc-800 dark:text-zinc-200">Filtrados</span>
-                    <p className="text-[10px] text-zinc-400">{demandasFiltradas.length}</p>
+                    <span className="text-xs font-medium text-neutral-800 dark:text-neutral-200">Filtrados</span>
+                    <p className="text-[10px] text-neutral-400">{demandasFiltradas.length}</p>
                   </button>
                   <button
                     onClick={() => setScope("all")}
                     className={`p-2 rounded-lg border text-left transition-all ${
                       scope === "all"
-                        ? "border-zinc-400 bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-600"
-                        : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50"
+                        ? "border-neutral-400 bg-neutral-100 dark:bg-neutral-800 dark:border-neutral-600"
+                        : "border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50"
                     }`}
                   >
-                    <span className="text-xs font-medium text-zinc-800 dark:text-zinc-200">Todas</span>
-                    <p className="text-[10px] text-zinc-400">{demandas.length}</p>
+                    <span className="text-xs font-medium text-neutral-800 dark:text-neutral-200">Todas</span>
+                    <p className="text-[10px] text-neutral-400">{demandas.length}</p>
                   </button>
                 </div>
               </div>
@@ -725,7 +725,7 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
           {step === 2 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-zinc-500">Campos ({selectedFields.length})</p>
+                <p className="text-xs font-semibold text-neutral-500">Campos ({selectedFields.length})</p>
                 <div className="flex gap-1">
                   <Button variant="ghost" size="sm" onClick={selectDefaultFields} className="h-8 text-xs px-2">
                     Padrão
@@ -746,13 +746,13 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
                       className={`flex items-center gap-2 p-2 rounded-lg border text-left text-xs ${
                         isSelected
                           ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30"
-                          : "border-zinc-200 dark:border-zinc-800"
+                          : "border-neutral-200 dark:border-neutral-800"
                       }`}
                     >
                       {isSelected ? (
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
                       ) : (
-                        <Circle className="w-3.5 h-3.5 text-zinc-300 flex-shrink-0" />
+                        <Circle className="w-3.5 h-3.5 text-neutral-300 flex-shrink-0" />
                       )}
                       <span className="truncate">{field.label}</span>
                     </button>
@@ -784,7 +784,7 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
 
                   {/* Colunas que serão copiadas */}
                   <div>
-                    <p className="text-[10px] font-medium text-zinc-500 mb-2">Colunas (na ordem da planilha):</p>
+                    <p className="text-[10px] font-medium text-neutral-500 mb-2">Colunas (na ordem da planilha):</p>
                     <div className="flex flex-wrap gap-1">
                       {sheetsFields.map((field, index) => (
                         <Badge
@@ -799,10 +799,10 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
                   </div>
 
                   {/* Instrução */}
-                  <div className="p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
-                    <p className="text-[10px] text-zinc-600 dark:text-zinc-400">
+                  <div className="p-2.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
+                    <p className="text-[10px] text-neutral-600 dark:text-neutral-400">
                       <span className="font-semibold">Após copiar:</span> Selecione a célula A na próxima linha vazia da
-                      planilha e pressione <kbd className="px-1 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 font-mono">Ctrl+V</kbd>
+                      planilha e pressione <kbd className="px-1 py-0.5 rounded bg-neutral-200 dark:bg-neutral-700 font-mono">Ctrl+V</kbd>
                     </p>
                   </div>
                 </>
@@ -811,22 +811,22 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
                   <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <p className="text-zinc-500">Formato</p>
-                        <p className="font-semibold text-zinc-900 dark:text-zinc-50">
+                        <p className="text-neutral-500">Formato</p>
+                        <p className="font-semibold text-neutral-900 dark:text-neutral-50">
                           {formatOptions.find((f) => f.value === format)?.label}
                         </p>
                       </div>
                       <div>
-                        <p className="text-zinc-500">Registros</p>
-                        <p className="font-semibold text-zinc-900 dark:text-zinc-50">{dataToExport.length}</p>
+                        <p className="text-neutral-500">Registros</p>
+                        <p className="font-semibold text-neutral-900 dark:text-neutral-50">{dataToExport.length}</p>
                       </div>
                       <div>
-                        <p className="text-zinc-500">Campos</p>
-                        <p className="font-semibold text-zinc-900 dark:text-zinc-50">{selectedFields.length}</p>
+                        <p className="text-neutral-500">Campos</p>
+                        <p className="font-semibold text-neutral-900 dark:text-neutral-50">{selectedFields.length}</p>
                       </div>
                       <div>
-                        <p className="text-zinc-500">Data</p>
-                        <p className="font-semibold text-zinc-900 dark:text-zinc-50">
+                        <p className="text-neutral-500">Data</p>
+                        <p className="font-semibold text-neutral-900 dark:text-neutral-50">
                           {new Date().toLocaleDateString("pt-BR")}
                         </p>
                       </div>
@@ -849,7 +849,7 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between p-4 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center justify-between p-4 pt-3 border-t border-neutral-100 dark:border-neutral-800">
           <Button
             variant="ghost"
             size="sm"
@@ -864,7 +864,7 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
               }
             }}
             disabled={isExporting}
-            className="h-8 text-xs text-zinc-500 hover:text-zinc-700"
+            className="h-8 text-xs text-neutral-500 hover:text-neutral-700"
           >
             {step === 1 ? "Cancelar" : "Voltar"}
           </Button>
@@ -883,7 +883,7 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
               className={`h-8 text-xs ${
                 format === "clipboard"
                   ? "bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white"
-                  : "bg-zinc-800 hover:bg-zinc-700 dark:bg-zinc-200 dark:hover:bg-zinc-300 dark:text-zinc-900 text-white"
+                  : "bg-neutral-800 hover:bg-neutral-700 dark:bg-neutral-200 dark:hover:bg-neutral-300 dark:text-neutral-900 text-white"
               }`}
               disabled={selectedFields.length === 0 && step === 2}
             >
@@ -897,7 +897,7 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
               className={`h-8 text-xs ${
                 format === "clipboard"
                   ? "bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white"
-                  : "bg-zinc-800 hover:bg-zinc-700 dark:bg-zinc-200 dark:hover:bg-zinc-300 dark:text-zinc-900 text-white"
+                  : "bg-neutral-800 hover:bg-neutral-700 dark:bg-neutral-200 dark:hover:bg-neutral-300 dark:text-neutral-900 text-white"
               }`}
             >
               {isExporting ? (

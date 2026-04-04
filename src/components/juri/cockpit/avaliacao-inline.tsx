@@ -391,8 +391,8 @@ export function AvaliacaoInline({ isDarkMode, faseSelecionada }: AvaliacaoInline
 
   const secIdx = SECOES.findIndex(s => s.id === secao);
   const cardCls = isDarkMode
-    ? "rounded-xl border border-zinc-800/80 bg-zinc-900 p-4"
-    : "rounded-xl border border-zinc-200/80 bg-white p-4";
+    ? "rounded-xl border border-neutral-800/80 bg-neutral-900 p-4"
+    : "rounded-xl border border-neutral-200/80 bg-white p-4";
 
   // Helper para campo de texto
   const Campo = ({ path, placeholder, multiline = false, label: lbl }: {
@@ -467,8 +467,8 @@ export function AvaliacaoInline({ isDarkMode, faseSelecionada }: AvaliacaoInline
                   : isFase
                   ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 ring-1 ring-purple-300 dark:ring-purple-700"
                   : isDarkMode
-                  ? "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
-                  : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
+                  ? "bg-neutral-800 text-neutral-400 hover:bg-neutral-700"
+                  : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200"
               )}
             >
               <Icon className="w-3 h-3" />
@@ -505,7 +505,7 @@ export function AvaliacaoInline({ isDarkMode, faseSelecionada }: AvaliacaoInline
               {data.jurados.map((j, i) => (
                 <div key={i} className={cn(
                   "p-3 rounded-lg space-y-2",
-                  isDarkMode ? "bg-zinc-800/40 border border-zinc-700/50" : "bg-zinc-50 border border-zinc-200/50"
+                  isDarkMode ? "bg-neutral-800/40 border border-neutral-700/50" : "bg-neutral-50 border border-neutral-200/50"
                 )}>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-[10px] font-bold px-1.5 h-5 shrink-0">
@@ -574,7 +574,7 @@ export function AvaliacaoInline({ isDarkMode, faseSelecionada }: AvaliacaoInline
               {data.testemunhas.map((t, i) => (
                 <div key={i} className={cn(
                   "p-3 rounded-lg space-y-2",
-                  isDarkMode ? "bg-zinc-800/40 border border-zinc-700/50" : "bg-zinc-50 border border-zinc-200/50"
+                  isDarkMode ? "bg-neutral-800/40 border border-neutral-700/50" : "bg-neutral-50 border border-neutral-200/50"
                 )}>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-[10px] font-bold px-1.5 h-5 shrink-0">{i + 1}</Badge>
@@ -601,7 +601,7 @@ export function AvaliacaoInline({ isDarkMode, faseSelecionada }: AvaliacaoInline
             <SectionTitle icon={Gavel} title="Parte IV — Sustentação do Ministério Público" isDark={isDarkMode} color="text-rose-500" />
             <Campo path="mpEstrategiaGeral" placeholder="Estratégia geral do MP..." multiline label="Estratégia Geral do MP" />
             {data.mpArgumentos.map((a, i) => (
-              <div key={i} className={cn("p-3 rounded-lg space-y-2", isDarkMode ? "bg-zinc-800/40" : "bg-zinc-50")}>
+              <div key={i} className={cn("p-3 rounded-lg space-y-2", isDarkMode ? "bg-neutral-800/40" : "bg-neutral-50")}>
                 <Label className="text-[10px] font-semibold text-rose-600">Argumento {i + 1} do MP</Label>
                 <Textarea value={a.descricao} onChange={(e) => up(`mpArgumentos.${i}.descricao`, e.target.value)} placeholder="Descrição do argumento..." className="text-[10px] min-h-[40px]" />
                 <Textarea value={a.reacaoJurados} onChange={(e) => up(`mpArgumentos.${i}.reacaoJurados`, e.target.value)} placeholder="Reação dos jurados..." className="text-[10px] min-h-[30px]" />
@@ -619,7 +619,7 @@ export function AvaliacaoInline({ isDarkMode, faseSelecionada }: AvaliacaoInline
             <SectionTitle icon={Scale} title="Parte V — Sustentação da Defesa" isDark={isDarkMode} color="text-emerald-500" />
             <Campo path="defesaEstrategiaGeral" placeholder="Estratégia geral da defesa..." multiline label="Estratégia Geral da Defesa" />
             {data.defesaArgumentos.map((a, i) => (
-              <div key={i} className={cn("p-3 rounded-lg space-y-2", isDarkMode ? "bg-zinc-800/40" : "bg-zinc-50")}>
+              <div key={i} className={cn("p-3 rounded-lg space-y-2", isDarkMode ? "bg-neutral-800/40" : "bg-neutral-50")}>
                 <Label className="text-[10px] font-semibold text-emerald-600">Argumento {i + 1} da Defesa</Label>
                 <Textarea value={a.descricao} onChange={(e) => up(`defesaArgumentos.${i}.descricao`, e.target.value)} placeholder="Descrição do argumento..." className="text-[10px] min-h-[40px]" />
                 <Textarea value={a.reacaoJurados} onChange={(e) => up(`defesaArgumentos.${i}.reacaoJurados`, e.target.value)} placeholder="Reação dos jurados..." className="text-[10px] min-h-[30px]" />
@@ -673,7 +673,7 @@ export function AvaliacaoInline({ isDarkMode, faseSelecionada }: AvaliacaoInline
                 {data.analise.previsaoVoto.map((pv, i) => (
                   <div key={i} className={cn(
                     "flex items-center gap-2 p-2 rounded-lg",
-                    isDarkMode ? "bg-zinc-800/40" : "bg-zinc-50"
+                    isDarkMode ? "bg-neutral-800/40" : "bg-neutral-50"
                   )}>
                     <Badge variant="outline" className="text-[10px] font-bold px-1.5 h-5 shrink-0 w-6 justify-center">{i + 1}</Badge>
                     <span className="text-[10px] text-muted-foreground w-20 shrink-0 truncate">
@@ -758,18 +758,18 @@ export function AvaliacaoLiveFeed({ isDarkMode }: AvaliacaoLiveFeedProps) {
     return (
       <div className={cn(
         "rounded-xl border p-6 text-center",
-        isDarkMode ? "border-zinc-800 bg-zinc-900" : "border-zinc-200 bg-white"
+        isDarkMode ? "border-neutral-800 bg-neutral-900" : "border-neutral-200 bg-white"
       )}>
-        <Eye className="w-8 h-8 mx-auto mb-2 text-zinc-400" />
+        <Eye className="w-8 h-8 mx-auto mb-2 text-neutral-400" />
         <p className="text-sm text-muted-foreground">Aguardando dados da estagiária...</p>
-        <p className="text-[10px] text-zinc-400 mt-1">O formulário aparecerá aqui em tempo real</p>
+        <p className="text-[10px] text-neutral-400 mt-1">O formulário aparecerá aqui em tempo real</p>
       </div>
     );
   }
 
   const cardCls = isDarkMode
-    ? "rounded-xl border border-zinc-800/80 bg-zinc-900 p-4"
-    : "rounded-xl border border-zinc-200/80 bg-white p-4";
+    ? "rounded-xl border border-neutral-800/80 bg-neutral-900 p-4"
+    : "rounded-xl border border-neutral-200/80 bg-white p-4";
 
   // Helper para mostrar campo preenchido
   const Filled = ({ label, value }: { label: string; value: string | number | null }) => {
@@ -777,7 +777,7 @@ export function AvaliacaoLiveFeed({ isDarkMode }: AvaliacaoLiveFeedProps) {
     return (
       <div className="flex gap-2 text-[11px]">
         <span className="text-muted-foreground shrink-0 font-medium">{label}:</span>
-        <span className={isDarkMode ? "text-zinc-300" : "text-zinc-700"}>{value}</span>
+        <span className={isDarkMode ? "text-neutral-300" : "text-neutral-700"}>{value}</span>
       </div>
     );
   };
@@ -833,7 +833,7 @@ export function AvaliacaoLiveFeed({ isDarkMode }: AvaliacaoLiveFeedProps) {
                 <Badge variant="outline" className="h-4 w-4 p-0 justify-center text-[8px]">{i + 1}</Badge>
                 <span className="font-medium">{j.nome}</span>
                 {j.profissao && <span className="text-muted-foreground">• {j.profissao}</span>}
-                {j.linguagemCorporalInicial && <span className="text-zinc-400 truncate">— {j.linguagemCorporalInicial}</span>}
+                {j.linguagemCorporalInicial && <span className="text-neutral-400 truncate">— {j.linguagemCorporalInicial}</span>}
               </div>
             ))}
           </div>
@@ -858,7 +858,7 @@ export function AvaliacaoLiveFeed({ isDarkMode }: AvaliacaoLiveFeedProps) {
         <div className={cn(cardCls, "space-y-2")}>
           <Label className="text-[10px] font-semibold text-purple-600">Testemunhas</Label>
           {data.testemunhas.filter(t => t.nome).map((t, i) => (
-            <div key={i} className={cn("p-2 rounded-lg space-y-1", isDarkMode ? "bg-zinc-800/40" : "bg-zinc-50")}>
+            <div key={i} className={cn("p-2 rounded-lg space-y-1", isDarkMode ? "bg-neutral-800/40" : "bg-neutral-50")}>
               <span className="text-[10px] font-semibold">{t.nome}</span>
               <Filled label="Depoimento" value={t.resumoDepoimento} />
               <Filled label="Jurados" value={t.reacaoJurados} />
@@ -942,7 +942,7 @@ export function AvaliacaoLiveFeed({ isDarkMode }: AvaliacaoLiveFeedProps) {
       {data.analise.impressaoLeiga && (
         <div className={cn(cardCls, "space-y-1")}>
           <Label className="text-[10px] font-semibold text-purple-600">Impressão Leiga</Label>
-          <p className={cn("text-[11px]", isDarkMode ? "text-zinc-300" : "text-zinc-700")}>{data.analise.impressaoLeiga}</p>
+          <p className={cn("text-[11px]", isDarkMode ? "text-neutral-300" : "text-neutral-700")}>{data.analise.impressaoLeiga}</p>
         </div>
       )}
     </div>
@@ -956,7 +956,7 @@ function SectionTitle({ icon: Icon, title, isDark, color = "text-purple-500" }: 
   icon: any; title: string; isDark: boolean; color?: string;
 }) {
   return (
-    <h4 className={cn("text-sm font-semibold flex items-center gap-2", isDark ? "text-zinc-200" : "text-zinc-700")}>
+    <h4 className={cn("text-sm font-semibold flex items-center gap-2", isDark ? "text-neutral-200" : "text-neutral-700")}>
       <Icon className={cn("w-4 h-4", color)} />
       {title}
     </h4>

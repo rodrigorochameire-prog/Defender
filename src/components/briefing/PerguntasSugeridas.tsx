@@ -206,8 +206,8 @@ export function PerguntasSugeridas({
             {Object.entries(perguntasPorTestemunha).map(
               ([testemunha, data]) => (
                 <div key={testemunha} className="space-y-2">
-                  <div className="flex items-center gap-2 sticky top-0 bg-white dark:bg-zinc-950 py-1 z-10">
-                    <User className="w-4 h-4 text-zinc-500" />
+                  <div className="flex items-center gap-2 sticky top-0 bg-white dark:bg-neutral-950 py-1 z-10">
+                    <User className="w-4 h-4 text-neutral-500" />
                     <span className="font-medium text-sm">{testemunha}</span>
                     <Badge
                       variant="outline"
@@ -233,7 +233,7 @@ export function PerguntasSugeridas({
                             "flex items-start gap-2 p-2 rounded-lg transition-colors group",
                             isSelected
                               ? "bg-emerald-50 dark:bg-emerald-900/20"
-                              : "hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                              : "hover:bg-neutral-50 dark:hover:bg-neutral-900"
                           )}
                         >
                           {onPerguntaSelect && (
@@ -248,7 +248,7 @@ export function PerguntasSugeridas({
                           <span className="font-medium text-emerald-600 text-sm">
                             {idx + 1}.
                           </span>
-                          <p className="flex-1 text-sm text-zinc-700 dark:text-zinc-300">
+                          <p className="flex-1 text-sm text-neutral-700 dark:text-neutral-300">
                             {pergunta}
                           </p>
                           <Button

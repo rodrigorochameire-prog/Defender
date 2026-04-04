@@ -60,7 +60,7 @@ function nulidadeClasses(severidade: Nulidade["severidade"]): string {
     return `border-l-red-500 ${COLORS.danger.bg}`;
   if (severidade === "media")
     return `border-l-amber-500 ${COLORS.warning.bg}`;
-  return `border-l-zinc-300 ${COLORS.neutral.bg}`;
+  return `border-l-neutral-300 ${COLORS.neutral.bg}`;
 }
 
 function nulidadeBadgeVariant(
@@ -127,7 +127,7 @@ function TesesSection({
             className={`${CARD_STYLE.base} rounded-xl`}
           >
             <div className="flex items-start gap-3">
-              <span className="text-zinc-400 font-semibold text-sm shrink-0 pt-0.5">
+              <span className="text-neutral-400 font-semibold text-sm shrink-0 pt-0.5">
                 {principal ? i + 2 : i + 1}.
               </span>
               <div className="space-y-1.5">
@@ -400,7 +400,7 @@ function ChecklistTaticoSection({
   return (
     <div>
       <h3 className={`${TYPO.h2} flex items-center gap-2.5 mb-4`}>
-        <CheckSquare className="h-5 w-5 text-zinc-500 shrink-0" />
+        <CheckSquare className="h-5 w-5 text-neutral-500 shrink-0" />
         Plano de Acao — 48h
       </h3>
 
@@ -412,7 +412,7 @@ function ChecklistTaticoSection({
               <span
                 className={[
                   "shrink-0 mt-0.5",
-                  "h-4 w-4 rounded border-2 border-zinc-300 dark:border-border",
+                  "h-4 w-4 rounded border-2 border-neutral-300 dark:border-border",
                   "inline-block",
                 ].join(" ")}
                 aria-hidden="true"

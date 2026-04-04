@@ -104,9 +104,9 @@ const ATRIBUICAO_CONFIG: Record<string, {
     label: "Curadoria Especial",
     shortLabel: "Curad.",
     color: "#71717a",
-    bgLight: "bg-zinc-100",
+    bgLight: "bg-neutral-100",
     bgDark: "dark:bg-muted",
-    textLight: "text-zinc-700",
+    textLight: "text-neutral-700",
     textDark: "dark:text-muted-foreground",
     icon: FileText,
   },
@@ -117,7 +117,7 @@ const ATRIBUICAO_CONFIG: Record<string, {
 // ==========================================
 
 function getPrazoInfo(prazoStr: string) {
-  if (!prazoStr) return { text: "-", dias: 0, className: "text-muted-foreground bg-zinc-100 dark:bg-muted", icon: Calendar, urgent: false };
+  if (!prazoStr) return { text: "-", dias: 0, className: "text-muted-foreground bg-neutral-100 dark:bg-muted", icon: Calendar, urgent: false };
 
   // Parse DD/MM/YYYY or YYYY-MM-DD
   let prazoDate: Date;
@@ -129,7 +129,7 @@ function getPrazoInfo(prazoStr: string) {
     prazoDate = new Date(prazoStr + "T12:00:00");
   }
 
-  if (isNaN(prazoDate.getTime())) return { text: prazoStr, dias: 0, className: "text-muted-foreground bg-zinc-100", icon: Calendar, urgent: false };
+  if (isNaN(prazoDate.getTime())) return { text: prazoStr, dias: 0, className: "text-muted-foreground bg-neutral-100", icon: Calendar, urgent: false };
 
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
@@ -151,7 +151,7 @@ function getPrazoInfo(prazoStr: string) {
   if (dias <= 7) {
     return { text: `${dias}d`, dias, className: "text-sky-600 bg-sky-50 dark:bg-sky-900/20 dark:text-sky-400", icon: Calendar, urgent: false };
   }
-  return { text: format(prazoDate, "dd/MM", { locale: ptBR }), dias, className: "text-muted-foreground bg-zinc-100 dark:bg-muted", icon: Calendar, urgent: false };
+  return { text: format(prazoDate, "dd/MM", { locale: ptBR }), dias, className: "text-muted-foreground bg-neutral-100 dark:bg-muted", icon: Calendar, urgent: false };
 }
 
 // ==========================================
@@ -238,7 +238,7 @@ export default function PrazosPage() {
   return (
     <div className="min-h-screen bg-muted dark:bg-[#0f0f11]">
       {/* Header Padrao Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-neutral-200 dark:border-border">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-xl bg-foreground dark:bg-white flex items-center justify-center shadow-lg">
             <Clock className="w-5 h-5 text-background dark:text-foreground" />
@@ -261,7 +261,7 @@ export default function PrazosPage() {
               "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
               areaFilter === "all"
                 ? "bg-foreground dark:bg-white text-background dark:text-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-muted bg-white dark:bg-card border border-zinc-200 dark:border-border"
+                : "text-muted-foreground hover:bg-muted bg-white dark:bg-card border border-neutral-200 dark:border-border"
             )}
           >
             <Clock className="w-3.5 h-3.5" />
@@ -282,7 +282,7 @@ export default function PrazosPage() {
                   "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
                   isActive
                     ? "text-white shadow-sm ring-1 ring-black/10"
-                    : "text-muted-foreground hover:bg-muted bg-white dark:bg-card border border-zinc-200 dark:border-border"
+                    : "text-muted-foreground hover:bg-muted bg-white dark:bg-card border border-neutral-200 dark:border-border"
                 )}
                 style={isActive ? { backgroundColor: config.color } : undefined}
               >
@@ -312,7 +312,7 @@ export default function PrazosPage() {
                 "group relative p-3 md:p-4 rounded-xl bg-white dark:bg-card border transition-all duration-300 cursor-pointer hover:shadow-lg",
                 stat.urgent
                   ? "border-rose-200 dark:border-rose-800/50 hover:border-rose-300"
-                  : "border-zinc-100 dark:border-border hover:border-emerald-200/50"
+                  : "border-neutral-100 dark:border-border hover:border-emerald-200/50"
               )}
             >
               <div className="flex items-start justify-between gap-2">
@@ -329,7 +329,7 @@ export default function PrazosPage() {
                   "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 border",
                   stat.urgent
                     ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800"
-                    : "bg-zinc-100 dark:bg-muted border-zinc-200 dark:border-border"
+                    : "bg-neutral-100 dark:bg-muted border-neutral-200 dark:border-border"
                 )}>
                   <stat.icon className={cn("w-4 h-4", stat.urgent ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground")} />
                 </div>
@@ -346,7 +346,7 @@ export default function PrazosPage() {
               placeholder="Buscar por assistido, processo ou ato..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-10 rounded-xl bg-white dark:bg-card border-zinc-200 dark:border-border"
+              className="pl-10 h-10 rounded-xl bg-white dark:bg-card border-neutral-200 dark:border-border"
             />
           </div>
           <Select value={periodoFilter} onValueChange={setPeriodoFilter}>
@@ -384,7 +384,7 @@ export default function PrazosPage() {
                   key={prazo.id}
                   className={cn(
                     "relative overflow-hidden transition-all duration-200 hover:shadow-md group",
-                    "border-zinc-100 dark:border-border",
+                    "border-neutral-100 dark:border-border",
                     prazoInfo.urgent && "ring-1 ring-rose-200/50 dark:ring-rose-900/30"
                   )}
                 >
@@ -435,7 +435,7 @@ export default function PrazosPage() {
 
                         {/* Providencias */}
                         {prazo.providencias && (
-                          <div className="p-2 rounded-lg bg-zinc-50 dark:bg-muted/50 border border-zinc-100 dark:border-border">
+                          <div className="p-2 rounded-lg bg-neutral-50 dark:bg-muted/50 border border-neutral-100 dark:border-border">
                             <p className="text-[11px] text-muted-foreground">
                               <span className="font-semibold text-foreground/80">Prov:</span> {prazo.providencias}
                             </p>

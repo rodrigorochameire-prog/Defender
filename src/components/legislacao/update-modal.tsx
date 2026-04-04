@@ -255,7 +255,7 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
         {/* ============================================================ */}
         {step === "select" && (
           <>
-            <div className="flex items-center gap-2 px-1 pb-2 border-b border-zinc-200 dark:border-border">
+            <div className="flex items-center gap-2 px-1 pb-2 border-b border-neutral-200 dark:border-border">
               <Checkbox
                 id="select-all"
                 checked={selectedLaws.size === LEGISLACOES.length}
@@ -279,9 +279,9 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
                     key={law.id}
                     className={cn(
                       "flex items-center gap-3 rounded-md px-3 py-2 cursor-pointer transition-colors",
-                      "hover:bg-zinc-100 dark:hover:bg-muted/50",
+                      "hover:bg-neutral-100 dark:hover:bg-muted/50",
                       selectedLaws.has(law.id) &&
-                        "bg-zinc-100 dark:bg-muted/50"
+                        "bg-neutral-100 dark:bg-muted/50"
                     )}
                   >
                     <Checkbox
@@ -310,7 +310,7 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
               </div>
             </ScrollArea>
 
-            <div className="flex justify-end gap-2 pt-4 border-t border-zinc-200 dark:border-border">
+            <div className="flex justify-end gap-2 pt-4 border-t border-neutral-200 dark:border-border">
               <Button
                 variant="outline"
                 onClick={() => onOpenChange(false)}
@@ -355,7 +355,7 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
                       {/* Status icon */}
                       <div className="h-5 w-5 shrink-0 flex items-center justify-center">
                         {lp.status === "pending" && (
-                          <div className="h-2 w-2 rounded-full bg-zinc-300 dark:bg-muted-foreground" />
+                          <div className="h-2 w-2 rounded-full bg-neutral-300 dark:bg-muted-foreground" />
                         )}
                         {(lp.status === "downloading" ||
                           lp.status === "analyzing") && (
@@ -403,7 +403,7 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
             </ScrollArea>
 
             {scrapingDone && (
-              <div className="space-y-3 pt-4 border-t border-zinc-200 dark:border-border">
+              <div className="space-y-3 pt-4 border-t border-neutral-200 dark:border-border">
                 <p className="text-sm text-muted-foreground">
                   {lawProgress.length} leis analisadas
                   {changedCount > 0 && (
@@ -458,13 +458,13 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
                   return (
                     <div
                       key={ld.lawId}
-                      className="border border-zinc-200 dark:border-border rounded-lg overflow-hidden"
+                      className="border border-neutral-200 dark:border-border rounded-lg overflow-hidden"
                     >
                       {/* Collapsible header */}
                       <button
                         type="button"
                         onClick={() => toggleDiffExpand(ld.lawId)}
-                        className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-muted/50 transition-colors"
+                        className="flex items-center gap-2 w-full px-4 py-3 text-left hover:bg-neutral-50 dark:hover:bg-muted/50 transition-colors"
                       >
                         {isExpanded ? (
                           <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -488,10 +488,10 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
 
                       {/* Diff content */}
                       {isExpanded && (
-                        <div className="border-t border-zinc-200 dark:border-border divide-y divide-zinc-100 dark:divide-border ">
+                        <div className="border-t border-neutral-200 dark:border-border divide-y divide-neutral-100 dark:divide-border ">
                           {ld.diffs.map((diff, idx) => (
                             <div key={idx} className="px-4 py-3 space-y-2">
-                              <span className="text-xs font-mono font-semibold text-zinc-600 dark:text-muted-foreground">
+                              <span className="text-xs font-mono font-semibold text-neutral-600 dark:text-muted-foreground">
                                 {diff.artigo}
                               </span>
 
@@ -522,7 +522,7 @@ export function UpdateModal({ open, onOpenChange }: UpdateModalProps) {
               </div>
             </ScrollArea>
 
-            <div className="flex justify-end gap-2 pt-4 border-t border-zinc-200 dark:border-border">
+            <div className="flex justify-end gap-2 pt-4 border-t border-neutral-200 dark:border-border">
               <Button
                 variant="outline"
                 onClick={() => onOpenChange(false)}

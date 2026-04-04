@@ -525,7 +525,7 @@ function JuradoDetailModal({
                     ) : reacao.tipo === "negativa" ? (
                       <ThumbsDown className="w-3 h-3 text-rose-500" />
                     ) : (
-                      <Minus className="w-3 h-3 text-zinc-400" />
+                      <Minus className="w-3 h-3 text-neutral-400" />
                     )}
                     <span className="text-muted-foreground">{reacao.fase}</span>
                     <span className="text-muted-foreground/50">•</span>

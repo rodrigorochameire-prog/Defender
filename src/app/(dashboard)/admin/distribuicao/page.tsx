@@ -247,7 +247,7 @@ function UploadDropzone({
         "flex flex-col items-center justify-center gap-3 min-h-[160px]",
         isDragOver
           ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
-          : "border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600 bg-white dark:bg-zinc-900"
+          : "border-neutral-300 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-600 bg-white dark:bg-neutral-900"
       )}
       onDragOver={(e) => {
         e.preventDefault();
@@ -275,7 +275,7 @@ function UploadDropzone({
           {uploadProgress.map((file, idx) => (
             <div key={idx} className="space-y-1">
               <div className="flex items-center justify-between text-sm">
-                <span className="truncate max-w-[200px] text-zinc-700 dark:text-zinc-300">
+                <span className="truncate max-w-[200px] text-neutral-700 dark:text-neutral-300">
                   {file.name}
                 </span>
                 <span className="text-emerald-600 dark:text-emerald-400 font-medium">
@@ -293,7 +293,7 @@ function UploadDropzone({
               "w-14 h-14 rounded-xl flex items-center justify-center",
               isDragOver
                 ? "bg-emerald-500/20"
-                : "bg-zinc-100 dark:bg-zinc-800"
+                : "bg-neutral-100 dark:bg-neutral-800"
             )}
           >
             <CloudUpload
@@ -301,19 +301,19 @@ function UploadDropzone({
                 "w-7 h-7",
                 isDragOver
                   ? "text-emerald-500"
-                  : "text-zinc-400 dark:text-zinc-500"
+                  : "text-neutral-400 dark:text-neutral-500"
               )}
             />
           </div>
           <div className="text-center">
-            <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
               Arraste arquivos PDF aqui
             </p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
               ou clique para selecionar
             </p>
           </div>
-          <div className="flex items-center gap-2 text-xs text-zinc-400">
+          <div className="flex items-center gap-2 text-xs text-neutral-400">
             <File className="w-3.5 h-3.5" />
             <span>PDF, PNG, JPG (max. 50MB)</span>
           </div>
@@ -344,10 +344,10 @@ function FileCard({
   return (
     <div
       className={cn(
-        "flex items-center gap-4 p-4 bg-white dark:bg-zinc-900 rounded-xl border transition-all cursor-pointer",
+        "flex items-center gap-4 p-4 bg-white dark:bg-neutral-900 rounded-xl border transition-all cursor-pointer",
         isSelected
           ? "border-emerald-500 ring-2 ring-emerald-500/20"
-          : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
+          : "border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700"
       )}
       onClick={onProcess}
     >
@@ -356,10 +356,10 @@ function FileCard({
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+        <p className="font-medium text-neutral-900 dark:text-neutral-100 truncate">
           {file.name}
         </p>
-        <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500">
+        <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500">
           {file.size && <span>{file.size}</span>}
           {file.createdTime && (
             <span>
@@ -391,7 +391,7 @@ function FileCard({
         ) : isSelected ? (
           <CheckCircle2 className="w-5 h-5 text-emerald-500" />
         ) : (
-          <ChevronRight className="w-5 h-5 text-zinc-400" />
+          <ChevronRight className="w-5 h-5 text-neutral-400" />
         )}
       </div>
     </div>
@@ -410,10 +410,10 @@ function PdfPreview({
 }) {
   if (!webViewLink) {
     return (
-      <div className="h-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
+      <div className="h-full flex items-center justify-center bg-neutral-50 dark:bg-neutral-800/50 rounded-xl">
         <div className="text-center p-8">
-          <FileText className="w-12 h-12 mx-auto mb-3 text-zinc-300 dark:text-zinc-600" />
-          <p className="text-sm text-zinc-500">Nenhum documento selecionado</p>
+          <FileText className="w-12 h-12 mx-auto mb-3 text-neutral-300 dark:text-neutral-600" />
+          <p className="text-sm text-neutral-500">Nenhum documento selecionado</p>
         </div>
       </div>
     );
@@ -424,8 +424,8 @@ function PdfPreview({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between p-2 bg-zinc-100 dark:bg-zinc-800 rounded-t-xl">
-        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+      <div className="flex items-center justify-between p-2 bg-neutral-100 dark:bg-neutral-800 rounded-t-xl">
+        <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
           Visualização do Documento
         </span>
         <div className="flex items-center gap-1">
@@ -467,7 +467,7 @@ function PdfPreview({
           </TooltipProvider>
         </div>
       </div>
-      <div className="flex-1 bg-white dark:bg-zinc-900 rounded-b-xl overflow-hidden">
+      <div className="flex-1 bg-white dark:bg-neutral-900 rounded-b-xl overflow-hidden">
         <iframe
           src={embedUrl}
           className="w-full h-full border-0"
@@ -511,11 +511,11 @@ function ProcessoExistenteCard({
               Existente
             </Badge>
           </div>
-          <p className="text-sm font-mono text-zinc-700 dark:text-zinc-300 mb-1">
+          <p className="text-sm font-mono text-neutral-700 dark:text-neutral-300 mb-1">
             {processo.numero}
           </p>
           {processo.assistidoNome && (
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 flex items-center gap-1">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 flex items-center gap-1">
               <User className="w-3.5 h-3.5" />
               {processo.assistidoNome}
             </p>
@@ -669,7 +669,7 @@ function ExtractedDataCard({
         <CardContent className="space-y-4">
           {/* Resumo */}
           {data.resumo && (
-            <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 text-sm text-zinc-600 dark:text-zinc-400">
+            <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 text-sm text-neutral-600 dark:text-neutral-400">
               {data.resumo}
             </div>
           )}
@@ -677,28 +677,28 @@ function ExtractedDataCard({
           {/* Grid de informações */}
           <div className="grid grid-cols-2 gap-3">
             {data.orgaoJulgador && (
-              <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 col-span-2">
-                <div className="flex items-center gap-2 text-xs text-zinc-500 mb-1">
+              <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 col-span-2">
+                <div className="flex items-center gap-2 text-xs text-neutral-500 mb-1">
                   <Building2 className="w-3.5 h-3.5" />
                   Órgão Julgador
                 </div>
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
                   {data.orgaoJulgador}
                 </p>
               </div>
             )}
             {data.classeDemanda && (
-              <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
-                <p className="text-xs text-zinc-500 mb-1">Classe</p>
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+              <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50">
+                <p className="text-xs text-neutral-500 mb-1">Classe</p>
+                <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
                   {data.classeDemanda}
                 </p>
               </div>
             )}
             {data.assuntos && (
-              <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
-                <p className="text-xs text-zinc-500 mb-1">Assuntos</p>
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+              <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50">
+                <p className="text-xs text-neutral-500 mb-1">Assuntos</p>
+                <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
                   {data.assuntos}
                 </p>
               </div>
@@ -736,7 +736,7 @@ function ExtractedDataCard({
                 </Badge>
               </div>
               {data.atribuicaoMotivo && (
-                <p className="text-xs text-zinc-500 mt-1">
+                <p className="text-xs text-neutral-500 mt-1">
                   {data.atribuicaoMotivo}
                 </p>
               )}
@@ -744,7 +744,7 @@ function ExtractedDataCard({
           )}
 
           {/* Formulário de Confirmação */}
-          <div className="space-y-4 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+          <div className="space-y-4 pt-4 border-t border-neutral-200 dark:border-neutral-700">
             {/* Tipo de Processo */}
             <div className="space-y-2">
               <Label className="text-xs flex items-center gap-2">
@@ -763,7 +763,7 @@ function ExtractedDataCard({
                     <SelectItem key={key} value={key}>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{config.label}</span>
-                        <span className="text-xs text-zinc-500">
+                        <span className="text-xs text-neutral-500">
                           ({config.description})
                         </span>
                       </div>
@@ -797,7 +797,7 @@ function ExtractedDataCard({
                   placeholder="0000000-00.0000.0.00.0000"
                   className="font-mono text-sm"
                 />
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-neutral-500">
                   Se souber o número da Ação Penal, informe aqui para vincular automaticamente.
                 </p>
               </div>
@@ -816,7 +816,7 @@ function ExtractedDataCard({
                       "flex items-center gap-2 p-3 rounded-lg border-2 transition-all text-left",
                       selectedAtribuicao === key
                         ? cn(config.bgClass, config.borderClass, "ring-2", config.ringClass)
-                        : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300"
+                        : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300"
                     )}
                   >
                     {React.createElement(config.icon, {
@@ -952,7 +952,7 @@ function HistoryCard({
     : null;
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800">
+    <div className="flex items-center gap-3 p-3 bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800">
       <div
         className={cn(
           "w-10 h-10 rounded-lg flex items-center justify-center",
@@ -968,12 +968,12 @@ function HistoryCard({
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+        <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
           {item.originalFilename}
         </p>
         <div className="flex items-center gap-2 mt-0.5">
           {item.extractedAssistidoNome && (
-            <span className="text-xs text-zinc-500 truncate">
+            <span className="text-xs text-neutral-500 truncate">
               {item.extractedAssistidoNome}
             </span>
           )}
@@ -988,7 +988,7 @@ function HistoryCard({
         </div>
       </div>
       {item.processedAt && (
-        <span className="text-xs text-zinc-400">
+        <span className="text-xs text-neutral-400">
           {formatDistanceToNow(new Date(item.processedAt), {
             addSuffix: true,
             locale: ptBR,
@@ -1205,19 +1205,19 @@ export default function DistribuicaoPage() {
   }, [pendingFiles, history]);
 
   return (
-    <div className="h-screen flex flex-col bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="h-screen flex flex-col bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <FolderInput className="w-5 h-5 text-white dark:text-zinc-900" />
+            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
+              <FolderInput className="w-5 h-5 text-white dark:text-neutral-900" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
+              <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
                 Distribuição
               </h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 Distribuição automática de documentos com IA
               </p>
             </div>
@@ -1228,20 +1228,20 @@ export default function DistribuicaoPage() {
             <div className="hidden md:flex items-center gap-4 mr-4">
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-amber-500" />
-                <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                <span className="text-sm text-neutral-600 dark:text-neutral-400">
                   {stats.pending} pendentes
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                <span className="text-sm text-neutral-600 dark:text-neutral-400">
                   {stats.completed} distribuídos
                 </span>
               </div>
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center border border-zinc-200 dark:border-zinc-700 rounded-lg">
+            <div className="flex items-center border border-neutral-200 dark:border-neutral-700 rounded-lg">
               <Button
                 variant={viewMode === "split" ? "secondary" : "ghost"}
                 size="sm"
@@ -1333,13 +1333,13 @@ export default function DistribuicaoPage() {
                     </div>
                   ) : (
                     <Card className="p-8 text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
                         <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                       </div>
-                      <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                      <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
                         Nenhum arquivo pendente
                       </h3>
-                      <p className="text-sm text-zinc-500">
+                      <p className="text-sm text-neutral-500">
                         Todos os documentos foram distribuídos
                       </p>
                     </Card>
@@ -1361,8 +1361,8 @@ export default function DistribuicaoPage() {
                     </div>
                   ) : (
                     <Card className="p-8 text-center">
-                      <History className="w-8 h-8 mx-auto mb-3 text-zinc-400" />
-                      <p className="text-sm text-zinc-500">
+                      <History className="w-8 h-8 mx-auto mb-3 text-neutral-400" />
+                      <p className="text-sm text-neutral-500">
                         Nenhuma distribuição realizada ainda
                       </p>
                     </Card>
@@ -1391,10 +1391,10 @@ export default function DistribuicaoPage() {
                 {extractMutation.isPending ? (
                   <Card className="p-8 text-center">
                     <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin text-emerald-500" />
-                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1">
+                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-1">
                       Analisando documento com IA...
                     </p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-neutral-500">
                       Extraindo dados do PDF com Gemini Vision
                     </p>
                   </Card>
@@ -1415,13 +1415,13 @@ export default function DistribuicaoPage() {
                   />
                 ) : (
                   <Card className="p-8 text-center border-dashed border-2">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                      <FileCheck className="w-8 h-8 text-zinc-400" />
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                      <FileCheck className="w-8 h-8 text-neutral-400" />
                     </div>
-                    <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                    <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
                       Selecione um documento
                     </h3>
-                    <p className="text-sm text-zinc-500">
+                    <p className="text-sm text-neutral-500">
                       Clique em um documento para visualizar e extrair os dados
                     </p>
                   </Card>
@@ -1436,8 +1436,8 @@ export default function DistribuicaoPage() {
               {/* Lista de Arquivos Pendentes */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                    <Inbox className="w-5 h-5 text-zinc-400" />
+                  <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+                    <Inbox className="w-5 h-5 text-neutral-400" />
                     Caixa de Entrada
                   </h2>
                   {pendingFiles && (
@@ -1476,13 +1476,13 @@ export default function DistribuicaoPage() {
                   </div>
                 ) : (
                   <Card className="p-8 text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
                       <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                     </div>
-                    <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                    <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
                       Nenhum arquivo pendente
                     </h3>
-                    <p className="text-sm text-zinc-500">
+                    <p className="text-sm text-neutral-500">
                       Todos os documentos foram distribuídos
                     </p>
                   </Card>
@@ -1491,15 +1491,15 @@ export default function DistribuicaoPage() {
 
               {/* Preview e Confirmação */}
               <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-zinc-400" />
+                <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-neutral-400" />
                   Processamento
                 </h2>
 
                 {extractMutation.isPending ? (
                   <Card className="p-8 text-center">
                     <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin text-emerald-500" />
-                    <p className="text-sm text-zinc-500">
+                    <p className="text-sm text-neutral-500">
                       Extraindo dados do documento...
                     </p>
                   </Card>
@@ -1520,13 +1520,13 @@ export default function DistribuicaoPage() {
                   />
                 ) : (
                   <Card className="p-8 text-center border-dashed border-2">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                      <FolderOpen className="w-8 h-8 text-zinc-400" />
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                      <FolderOpen className="w-8 h-8 text-neutral-400" />
                     </div>
-                    <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                    <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
                       Selecione um documento
                     </h3>
-                    <p className="text-sm text-zinc-500">
+                    <p className="text-sm text-neutral-500">
                       Clique em &ldquo;Processar&rdquo; em um documento da lista para extrair
                       os dados
                     </p>

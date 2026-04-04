@@ -200,21 +200,21 @@ export default function RadarCriminalPage() {
     >
       {/* Header compacto */}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&display=swap');`}</style>
-      <div className="flex items-center justify-between gap-4 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+      <div className="flex items-center justify-between gap-4 pb-3 border-b border-neutral-100 dark:border-neutral-800">
         <div className="flex items-center gap-3 min-w-0">
-          <Radio className="w-4 h-4 text-zinc-400 shrink-0" />
+          <Radio className="w-4 h-4 text-neutral-400 shrink-0" />
           <h1
-            className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 leading-tight"
+            className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 leading-tight"
             style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
           >
             Radar Criminal
           </h1>
-          <span className="text-xs text-zinc-400">·</span>
-          <span className="text-xs text-zinc-400">
+          <span className="text-xs text-neutral-400">·</span>
+          <span className="text-xs text-neutral-400">
             {statsLoading ? "—" : totalNoticias} notícias
           </span>
           {ultimaColeta && (
-            <span className="hidden sm:inline text-xs text-zinc-400">
+            <span className="hidden sm:inline text-xs text-neutral-400">
               · {formatDistanceToNow(new Date(ultimaColeta), { addSuffix: true, locale: ptBR })}
             </span>
           )}
@@ -222,7 +222,7 @@ export default function RadarCriminalPage() {
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 px-2.5 text-xs gap-1.5 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer shrink-0"
+          className="h-7 px-2.5 text-xs gap-1.5 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200 cursor-pointer shrink-0"
           onClick={handleTriggerPipeline}
           disabled={pipelineRunning || triggerPipeline.isPending}
         >
@@ -235,40 +235,40 @@ export default function RadarCriminalPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3">
         <div className="flex items-center gap-1">
-          <TabsList className="flex w-full sm:w-auto items-center h-8 gap-0 bg-transparent p-0 border-b border-zinc-100 dark:border-zinc-800 rounded-none">
-            <TabsTrigger value="feed" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 data-[state=active]:shadow-none text-zinc-500 dark:data-[state=active]:border-zinc-100 dark:data-[state=active]:text-zinc-100 px-3 text-[13px]">
+          <TabsList className="flex w-full sm:w-auto items-center h-8 gap-0 bg-transparent p-0 border-b border-neutral-100 dark:border-neutral-800 rounded-none">
+            <TabsTrigger value="feed" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-neutral-900 data-[state=active]:text-neutral-900 data-[state=active]:shadow-none text-neutral-500 dark:data-[state=active]:border-neutral-100 dark:data-[state=active]:text-neutral-100 px-3 text-[13px]">
               <Newspaper className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Feed</span>
             </TabsTrigger>
-            <TabsTrigger value="mapa" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 data-[state=active]:shadow-none text-zinc-500 dark:data-[state=active]:border-zinc-100 dark:data-[state=active]:text-zinc-100 px-3 text-[13px]">
+            <TabsTrigger value="mapa" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-neutral-900 data-[state=active]:text-neutral-900 data-[state=active]:shadow-none text-neutral-500 dark:data-[state=active]:border-neutral-100 dark:data-[state=active]:text-neutral-100 px-3 text-[13px]">
               <Map className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Mapa</span>
             </TabsTrigger>
-            <TabsTrigger value="matches" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 data-[state=active]:shadow-none text-zinc-500 dark:data-[state=active]:border-zinc-100 dark:data-[state=active]:text-zinc-100 px-3 text-[13px]">
+            <TabsTrigger value="matches" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-neutral-900 data-[state=active]:text-neutral-900 data-[state=active]:shadow-none text-neutral-500 dark:data-[state=active]:border-neutral-100 dark:data-[state=active]:text-neutral-100 px-3 text-[13px]">
               <Link2 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">
                 Matches
                 {matchesPendentes > 0 && (
-                  <span className="ml-1.5 rounded-full bg-zinc-700 dark:bg-zinc-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                  <span className="ml-1.5 rounded-full bg-neutral-700 dark:bg-neutral-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                     {matchesPendentes}
                   </span>
                 )}
               </span>
             </TabsTrigger>
-            <TabsTrigger value="reincidentes" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 data-[state=active]:shadow-none text-zinc-500 dark:data-[state=active]:border-zinc-100 dark:data-[state=active]:text-zinc-100 px-3 text-[13px]">
+            <TabsTrigger value="reincidentes" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-neutral-900 data-[state=active]:text-neutral-900 data-[state=active]:shadow-none text-neutral-500 dark:data-[state=active]:border-neutral-100 dark:data-[state=active]:text-neutral-100 px-3 text-[13px]">
               <Users className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Reincidentes</span>
             </TabsTrigger>
-            <TabsTrigger value="estatisticas" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 data-[state=active]:shadow-none text-zinc-500 dark:data-[state=active]:border-zinc-100 dark:data-[state=active]:text-zinc-100 px-3 text-[13px]">
+            <TabsTrigger value="estatisticas" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-neutral-900 data-[state=active]:text-neutral-900 data-[state=active]:shadow-none text-neutral-500 dark:data-[state=active]:border-neutral-100 dark:data-[state=active]:text-neutral-100 px-3 text-[13px]">
               <BarChart3 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Estatísticas</span>
             </TabsTrigger>
-            <TabsTrigger value="fontes" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 data-[state=active]:shadow-none text-zinc-500 dark:data-[state=active]:border-zinc-100 dark:data-[state=active]:text-zinc-100 px-3 text-[13px]">
+            <TabsTrigger value="fontes" className="cursor-pointer gap-1.5 h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-neutral-900 data-[state=active]:text-neutral-900 data-[state=active]:shadow-none text-neutral-500 dark:data-[state=active]:border-neutral-100 dark:data-[state=active]:text-neutral-100 px-3 text-[13px]">
               <Globe className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">
                 Fontes
                 {healthPending > 0 && (
-                  <span className="ml-1.5 rounded-full bg-zinc-700 dark:bg-zinc-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                  <span className="ml-1.5 rounded-full bg-neutral-700 dark:bg-neutral-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                     {healthPending}
                   </span>
                 )}
@@ -279,12 +279,12 @@ export default function RadarCriminalPage() {
 
         {/* Banner de filtros ativos */}
         {filtrosAtivos && (
-          <div className="flex items-center gap-2 rounded-md bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-100 dark:border-zinc-700 px-3 py-1.5 text-xs text-zinc-600 dark:text-zinc-400">
-            <span className="text-zinc-400 shrink-0">Filtros:</span>
-            <span className="truncate text-zinc-700 dark:text-zinc-300">{filtrosDescricao}</span>
+          <div className="flex items-center gap-2 rounded-md bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-700 px-3 py-1.5 text-xs text-neutral-600 dark:text-neutral-400">
+            <span className="text-neutral-400 shrink-0">Filtros:</span>
+            <span className="truncate text-neutral-700 dark:text-neutral-300">{filtrosDescricao}</span>
             <button
               onClick={resetFiltros}
-              className="ml-auto shrink-0 text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 font-medium cursor-pointer transition-colors"
+              className="ml-auto shrink-0 text-xs text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 font-medium cursor-pointer transition-colors"
             >
               × Limpar
             </button>
@@ -298,7 +298,7 @@ export default function RadarCriminalPage() {
               <RadarScopeSelector value={scope} onChange={handleScopeChange} />
               <div className="flex items-center gap-2 shrink-0">
                 <button
-                  className="flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 px-2.5 py-1.5 text-xs text-zinc-600 dark:text-zinc-400 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+                  className="flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800 px-2.5 py-1.5 text-xs text-neutral-600 dark:text-neutral-400 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
                   onClick={() => setIntelOpen(true)}
                 >
                   <BarChart2 className="h-3.5 w-3.5" />Inteligência
@@ -346,21 +346,21 @@ export default function RadarCriminalPage() {
                   <div className="flex flex-col items-center gap-3 pt-1">
                     <button
                       onClick={() => { setSidebarCollapsed(false); localStorage.setItem("radar-sidebar-collapsed", "false"); }}
-                      className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-md text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                       title="Inteligência"
                     >
                       <BarChart2 className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => { setSidebarCollapsed(false); localStorage.setItem("radar-sidebar-collapsed", "false"); }}
-                      className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-md text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                       title="Filtros"
                     >
                       <SlidersHorizontal className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => { setSidebarCollapsed(false); localStorage.setItem("radar-sidebar-collapsed", "false"); }}
-                      className="p-1.5 rounded-md text-zinc-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-md text-neutral-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors cursor-pointer"
                       title="Reincidentes"
                     >
                       <Users className="h-4 w-4" />
@@ -375,9 +375,9 @@ export default function RadarCriminalPage() {
               onClick={handleSidebarToggle}
               className={cn(
                 "absolute top-0 z-20 flex items-center justify-center",
-                "w-6 h-6 rounded-full border border-zinc-200 dark:border-zinc-700",
-                "bg-white dark:bg-zinc-900 shadow-sm",
-                "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200",
+                "w-6 h-6 rounded-full border border-neutral-200 dark:border-neutral-700",
+                "bg-white dark:bg-neutral-900 shadow-sm",
+                "text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200",
                 "transition-all duration-200 cursor-pointer"
               )}
               style={{ left: sidebarCollapsed ? "calc(2.5rem - 12px)" : "calc(18rem - 12px)" }}
@@ -390,7 +390,7 @@ export default function RadarCriminalPage() {
             </button>
 
             {/* Feed principal */}
-            <div className="flex-1 min-w-0 border-l border-zinc-100 dark:border-zinc-800 pl-4">
+            <div className="flex-1 min-w-0 border-l border-neutral-100 dark:border-neutral-800 pl-4">
               <RadarFeed filtros={filtros} municipio={scope} onVerNoMapa={handleVerNoMapa} />
             </div>
           </div>

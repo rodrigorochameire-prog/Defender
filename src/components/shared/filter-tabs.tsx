@@ -35,15 +35,15 @@ export function FilterTab({
       className={cn(
         "group relative flex items-center gap-1.5 rounded-full text-[13px] font-semibold transition-all duration-200 whitespace-nowrap cursor-pointer",
         selected
-          ? "px-3 py-1.5 bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
-          : "px-2.5 py-1.5 text-zinc-400 dark:text-zinc-500",
+          ? "px-3 py-1.5 bg-neutral-700 dark:bg-neutral-300 text-white dark:text-neutral-900 shadow-sm"
+          : "px-2.5 py-1.5 text-neutral-400 dark:text-neutral-500",
         className
       )}
     >
       {icon && (
         <span className={cn(
           "flex-shrink-0 [&>svg]:w-[15px] [&>svg]:h-[15px] transition-colors",
-          selected ? "text-white dark:text-zinc-900" : "text-zinc-400 dark:text-zinc-500"
+          selected ? "text-white dark:text-neutral-900" : "text-neutral-400 dark:text-neutral-500"
         )}>
           {icon}
         </span>
@@ -55,8 +55,8 @@ export function FilterTab({
         <span className={cn(
           "flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full text-[9px] font-bold transition-all",
           selected
-            ? "bg-white/20 dark:bg-black/15 text-white dark:text-zinc-900"
-            : "text-zinc-400 dark:text-zinc-500"
+            ? "bg-white/20 dark:bg-black/15 text-white dark:text-neutral-900"
+            : "text-neutral-400 dark:text-neutral-500"
         )}>
           {count}
         </span>
@@ -79,11 +79,11 @@ export function FilterTabsGroup({ children, label, className }: FilterTabsGroupP
   return (
     <div className={cn("space-y-2", className)}>
       {label && (
-        <label className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+        <label className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
           {label}
         </label>
       )}
-      <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
+      <div className="inline-flex items-center gap-1 p-1 rounded-full bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700/60">
         {children}
       </div>
     </div>
@@ -120,8 +120,8 @@ export function FilterPill({
       className={cn(
         "relative flex items-center gap-1.5 rounded-full text-[12px] font-semibold transition-all duration-200 cursor-pointer whitespace-nowrap",
         selected
-          ? "px-3 py-1.5 bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900 shadow-sm"
-          : "px-2.5 py-1.5 text-zinc-400 dark:text-zinc-500",
+          ? "px-3 py-1.5 bg-neutral-700 dark:bg-neutral-300 text-white dark:text-neutral-900 shadow-sm"
+          : "px-2.5 py-1.5 text-neutral-400 dark:text-neutral-500",
         className
       )}
     >
@@ -137,7 +137,7 @@ export function FilterPill({
       {count !== undefined && count > 0 && (
         <span className={cn(
           "text-[9px] font-bold tabular-nums",
-          selected ? "text-white/70 dark:text-zinc-900/60" : "text-zinc-400 dark:text-zinc-500"
+          selected ? "text-white/70 dark:text-neutral-900/60" : "text-neutral-400 dark:text-neutral-500"
         )}>
           {count}
         </span>

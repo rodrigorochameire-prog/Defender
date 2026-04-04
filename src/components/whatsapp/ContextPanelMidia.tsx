@@ -75,7 +75,7 @@ export function ContextPanelMidia({ contactId }: ContextPanelMidiaProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Filter chips */}
-      <div className="flex gap-1 px-3 py-2 border-b border-zinc-200 dark:border-border">
+      <div className="flex gap-1 px-3 py-2 border-b border-neutral-200 dark:border-border">
         {filters.map(({ key, label }) => (
           <button
             key={key}
@@ -83,8 +83,8 @@ export function ContextPanelMidia({ contactId }: ContextPanelMidiaProps) {
             className={cn(
               "px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors cursor-pointer",
               activeFilter === key
-                ? "bg-zinc-200 dark:bg-muted text-zinc-900 dark:text-foreground"
-                : "bg-transparent text-muted-foreground hover:text-zinc-700 dark:hover:text-foreground/80"
+                ? "bg-neutral-200 dark:bg-muted text-neutral-900 dark:text-foreground"
+                : "bg-transparent text-muted-foreground hover:text-neutral-700 dark:hover:text-foreground/80"
             )}
           >
             {label}
@@ -100,7 +100,7 @@ export function ContextPanelMidia({ contactId }: ContextPanelMidiaProps) {
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-2 text-center px-4">
-            <File className="h-8 w-8 text-zinc-300 dark:text-muted-foreground/50" />
+            <File className="h-8 w-8 text-neutral-300 dark:text-muted-foreground/50" />
             <p className="text-xs text-muted-foreground">Nenhuma mídia encontrada</p>
           </div>
         ) : (
@@ -108,13 +108,13 @@ export function ContextPanelMidia({ contactId }: ContextPanelMidiaProps) {
             {filtered.map((msg) => (
               <div
                 key={msg.id}
-                className="flex items-center gap-2 rounded-md p-2 hover:bg-zinc-100 dark:hover:bg-muted/50 transition-colors group"
+                className="flex items-center gap-2 rounded-md p-2 hover:bg-neutral-100 dark:hover:bg-muted/50 transition-colors group"
               >
-                <div className="w-7 h-7 rounded-md bg-zinc-100 dark:bg-muted flex items-center justify-center flex-shrink-0">
+                <div className="w-7 h-7 rounded-md bg-neutral-100 dark:bg-muted flex items-center justify-center flex-shrink-0">
                   {getTypeIcon(msg.type)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-zinc-900 dark:text-foreground truncate">
+                  <p className="text-xs text-neutral-900 dark:text-foreground truncate">
                     {msg.mediaFilename || msg.content || `${msg.type}`}
                   </p>
                   <p className="text-[10px] text-muted-foreground">

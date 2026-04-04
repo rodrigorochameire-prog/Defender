@@ -146,17 +146,17 @@ function getMarcoColor(tipo: MarcoExecucao["tipo"]) {
       };
     case "fim_pena":
       return {
-        border: "border-zinc-200 dark:border-zinc-700",
-        bg: "bg-zinc-50 dark:bg-zinc-900/40",
-        icon: "text-zinc-600 dark:text-zinc-400",
-        accent: "bg-zinc-500",
+        border: "border-neutral-200 dark:border-neutral-700",
+        bg: "bg-neutral-50 dark:bg-neutral-900/40",
+        icon: "text-neutral-600 dark:text-neutral-400",
+        accent: "bg-neutral-500",
       };
     default:
       return {
-        border: "border-zinc-200 dark:border-zinc-700",
-        bg: "bg-zinc-50 dark:bg-zinc-900/40",
-        icon: "text-zinc-600 dark:text-zinc-400",
-        accent: "bg-zinc-500",
+        border: "border-neutral-200 dark:border-neutral-700",
+        bg: "bg-neutral-50 dark:bg-neutral-900/40",
+        icon: "text-neutral-600 dark:text-neutral-400",
+        accent: "bg-neutral-500",
       };
   }
 }
@@ -396,10 +396,10 @@ export default function CalculadoraExecucaoPenalPage() {
             <Scale className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
               Calculadora de Execucao Penal
             </h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
               Progressao de regime, livramento condicional e marcos da pena
             </p>
           </div>
@@ -467,7 +467,7 @@ export default function CalculadoraExecucaoPenalPage() {
                         value={penaAnos}
                         onChange={(e) => setPenaAnos(e.target.value)}
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400">
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400">
                         anos
                       </span>
                     </div>
@@ -482,7 +482,7 @@ export default function CalculadoraExecucaoPenalPage() {
                         value={penaMeses}
                         onChange={(e) => setPenaMeses(e.target.value)}
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400">
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400">
                         meses
                       </span>
                     </div>
@@ -584,7 +584,7 @@ export default function CalculadoraExecucaoPenalPage() {
               </div>
 
               {/* Detracao */}
-              <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="space-y-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
                 <Label htmlFor="detracaoInicio">
                   Detracao -- Inicio da Preventiva
                 </Label>
@@ -594,7 +594,7 @@ export default function CalculadoraExecucaoPenalPage() {
                   value={detracaoInicio}
                   onChange={(e) => setDetracaoInicio(e.target.value)}
                 />
-                <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                <p className="text-xs text-neutral-400 dark:text-neutral-500">
                   Data em que o reu foi preso preventivamente. Deixe em branco
                   se nao houve preventiva.
                 </p>
@@ -628,13 +628,13 @@ export default function CalculadoraExecucaoPenalPage() {
             /* Empty state */
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
-                  <Scale className="w-8 h-8 text-zinc-400 dark:text-zinc-500" />
+                <div className="w-16 h-16 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-4">
+                  <Scale className="w-8 h-8 text-neutral-400 dark:text-neutral-500" />
                 </div>
-                <h3 className="text-lg font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                <h3 className="text-lg font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
                   Preencha os dados do caso
                 </h3>
-                <p className="text-sm text-zinc-400 dark:text-zinc-500 max-w-sm">
+                <p className="text-sm text-neutral-400 dark:text-neutral-500 max-w-sm">
                   Os marcos de execucao penal serao calculados automaticamente
                   com base na legislacao vigente na data do fato.
                 </p>
@@ -644,7 +644,7 @@ export default function CalculadoraExecucaoPenalPage() {
             <>
               {/* Actions bar */}
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
                   Resultado
                 </h2>
                 <div className="flex gap-2">
@@ -672,7 +672,7 @@ export default function CalculadoraExecucaoPenalPage() {
                   label="Pena Total"
                   value={formatDaysToLabel(result.penaTotalDias)}
                   icon={Clock}
-                  color="text-zinc-600 dark:text-zinc-400"
+                  color="text-neutral-600 dark:text-neutral-400"
                 />
                 <SummaryCard
                   label="Detracao"
@@ -730,7 +730,7 @@ export default function CalculadoraExecucaoPenalPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex h-14 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700">
+                  <div className="flex h-14 rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-700">
                     {segments.map((seg, i) => (
                       <div
                         key={`${seg.label}-${i}`}
@@ -753,7 +753,7 @@ export default function CalculadoraExecucaoPenalPage() {
                           </>
                         )}
                         {/* Tooltip on hover for narrow segments */}
-                        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] px-2 py-1 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-[10px] px-2 py-1 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                           {seg.label}: {formatDaysToLabel(seg.days)}
                         </div>
                       </div>
@@ -772,7 +772,7 @@ export default function CalculadoraExecucaoPenalPage() {
                             seg.color
                           )}
                         />
-                        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                        <span className="text-xs text-neutral-500 dark:text-neutral-400">
                           {seg.label}
                         </span>
                       </div>
@@ -783,7 +783,7 @@ export default function CalculadoraExecucaoPenalPage() {
 
               {/* Marco cards */}
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   Marcos da Execucao
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -818,18 +818,18 @@ function SummaryCard({
   sublabel?: string;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-3.5">
+    <div className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 p-3.5">
       <div className="flex items-center gap-1.5 mb-1.5">
         <Icon className={cn("w-3.5 h-3.5", color)} />
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+        <span className="text-xs text-neutral-500 dark:text-neutral-400">
           {label}
         </span>
       </div>
-      <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
+      <p className="text-lg font-bold text-neutral-900 dark:text-neutral-100 leading-tight">
         {value}
       </p>
       {sublabel && (
-        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+        <p className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-0.5">
           {sublabel}
         </p>
       )}
@@ -855,30 +855,30 @@ function MarcoCard({ marco }: { marco: MarcoExecucao }) {
       {/* Label + icon */}
       <div className="flex items-center gap-2 mb-1.5">
         <Icon className={cn("w-4 h-4 shrink-0", colors.icon)} />
-        <span className="font-semibold text-sm text-zinc-800 dark:text-zinc-200">
+        <span className="font-semibold text-sm text-neutral-800 dark:text-neutral-200">
           {marco.label}
         </span>
       </div>
 
       {/* Date */}
-      <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mt-1 font-mono tabular-nums">
+      <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mt-1 font-mono tabular-nums">
         {formatDateBR(marco.data)}
       </p>
 
       {/* Fracao + fundamento */}
       {marco.fracao && (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
           {marco.fracao} -- {marco.fundamentoLegal}
         </p>
       )}
       {!marco.fracao && marco.fundamentoLegal && (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
           {marco.fundamentoLegal}
         </p>
       )}
 
       {/* Accessible label */}
-      <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-2.5 italic leading-relaxed">
+      <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2.5 italic leading-relaxed">
         {marco.labelAcessivel}
       </p>
     </div>

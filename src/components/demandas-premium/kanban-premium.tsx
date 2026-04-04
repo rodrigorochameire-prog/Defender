@@ -161,9 +161,9 @@ function KanbanCard({
       onDragEnd={() => onDragEnd?.()}
       className={`
         relative group/kcard cursor-grab active:cursor-grabbing
-        rounded-lg bg-white dark:bg-zinc-900
-        border border-zinc-200/80 dark:border-zinc-800/80
-        hover:shadow-md hover:shadow-zinc-200/50 dark:hover:shadow-black/20
+        rounded-lg bg-white dark:bg-neutral-900
+        border border-neutral-200/80 dark:border-neutral-800/80
+        hover:shadow-md hover:shadow-neutral-200/50 dark:hover:shadow-black/20
         hover:border-emerald-300/50 dark:hover:border-emerald-700/40
         hover:-translate-y-[1px]
         transition-all duration-200
@@ -182,7 +182,7 @@ function KanbanCard({
       <div className="pl-4 pr-3 py-3">
         {/* Row 1: Nome + Flags */}
         <div className="flex items-center gap-2 mb-1">
-          <p className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 truncate flex-1 leading-tight">
+          <p className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 truncate flex-1 leading-tight">
             {demanda.assistido}
           </p>
           {isPreso && (
@@ -198,7 +198,7 @@ function KanbanCard({
         </div>
 
         {/* Row 2: Ato */}
-        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mb-1">
+        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate mb-1">
           {demanda.ato}
         </p>
 
@@ -206,7 +206,7 @@ function KanbanCard({
         {processo && (
           <div className="flex items-center gap-1 mb-1">
             <span
-              className="text-[11px] font-mono tabular-nums text-zinc-400 dark:text-zinc-500 truncate hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+              className="text-[11px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 truncate hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 copyToClipboard(processo);
@@ -215,7 +215,7 @@ function KanbanCard({
             >
               {processo}
             </span>
-            <Copy className="w-2.5 h-2.5 text-zinc-300 dark:text-zinc-600 opacity-0 group-hover/kcard:opacity-100 transition-opacity shrink-0" />
+            <Copy className="w-2.5 h-2.5 text-neutral-300 dark:text-neutral-600 opacity-0 group-hover/kcard:opacity-100 transition-opacity shrink-0" />
           </div>
         )}
 
@@ -228,7 +228,7 @@ function KanbanCard({
                   ? "text-rose-500 font-bold"
                   : prazoDiff !== null && prazoDiff <= 3
                     ? "text-amber-500 font-semibold"
-                    : "text-zinc-400"
+                    : "text-neutral-400"
               }`}
             >
               {prazoDiff !== null && prazoDiff < 0 ? (
@@ -327,9 +327,9 @@ function ColumnHeader({
     <div
       className={`
         flex items-center gap-2 px-3.5 py-2.5 rounded-lg min-h-[48px]
-        bg-white dark:bg-zinc-900
-        border border-zinc-200/80 dark:border-zinc-800/80
-        ${onToggleExpand ? "cursor-pointer hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors" : ""}
+        bg-white dark:bg-neutral-900
+        border border-neutral-200/80 dark:border-neutral-800/80
+        ${onToggleExpand ? "cursor-pointer hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors" : ""}
       `}
       style={{ borderBottomColor: `${color}40`, borderBottomWidth: 2 }}
       onClick={onToggleExpand}
@@ -339,7 +339,7 @@ function ColumnHeader({
         style={{ backgroundColor: color }}
       />
       <span style={{ color }}><Icon className="w-3.5 h-3.5 shrink-0" /></span>
-      <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 tracking-tight whitespace-nowrap">
+      <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200 tracking-tight whitespace-nowrap">
         {config.label}
       </span>
       <span
@@ -353,8 +353,8 @@ function ColumnHeader({
       </span>
       {onToggleExpand && (
         isExpanded
-          ? <ChevronLeft className="w-3.5 h-3.5 text-zinc-400 ml-0.5" />
-          : <ChevronRight className="w-3.5 h-3.5 text-zinc-400 ml-0.5" />
+          ? <ChevronLeft className="w-3.5 h-3.5 text-neutral-400 ml-0.5" />
+          : <ChevronRight className="w-3.5 h-3.5 text-neutral-400 ml-0.5" />
       )}
     </div>
   );
@@ -378,7 +378,7 @@ function SubGroupHeader({
 
   return (
     <div
-      className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80"
+      className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80"
       style={{ borderBottomColor: `${color}40`, borderBottomWidth: 2 }}
     >
       <div
@@ -386,7 +386,7 @@ function SubGroupHeader({
         style={{ backgroundColor: color }}
       />
       <span style={{ color }}><Icon className="w-3 h-3 shrink-0" /></span>
-      <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider truncate">
+      <span className="text-[11px] font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider truncate">
         {config.label}
       </span>
       <span
@@ -429,7 +429,7 @@ function EmAndamentoExpanded({
 
   if (visibleSubGroups.length === 0) {
     return (
-      <div className="flex items-center justify-center h-20 text-[10px] text-zinc-400 dark:text-zinc-600">
+      <div className="flex items-center justify-center h-20 text-[10px] text-neutral-400 dark:text-neutral-600">
         Nenhuma demanda em andamento
       </div>
     );
@@ -465,7 +465,7 @@ function EmAndamentoExpanded({
                 />
               ))}
               {items.length > 30 && (
-                <p className="text-[10px] text-center text-zinc-400 py-2">
+                <p className="text-[10px] text-center text-neutral-400 py-2">
                   +{items.length - 30} mais
                 </p>
               )}
@@ -526,8 +526,8 @@ function MobileColumnTabs({
               flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap
               transition-all duration-200 cursor-pointer
               ${isActive
-                ? "bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200/80 dark:border-zinc-800/80"
-                : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                ? "bg-white dark:bg-neutral-900 shadow-sm border border-neutral-200/80 dark:border-neutral-800/80"
+                : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
               }
             `}
             style={
@@ -582,8 +582,8 @@ function MobileSubGroupTabs({
               flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider
               whitespace-nowrap transition-all duration-200 cursor-pointer
               ${isActive
-                ? "bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200/80 dark:border-zinc-800/80"
-                : "text-zinc-400 dark:text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                ? "bg-white dark:bg-neutral-900 shadow-sm border border-neutral-200/80 dark:border-neutral-800/80"
+                : "text-neutral-400 dark:text-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
               }
             `}
             style={
@@ -634,7 +634,7 @@ function MobileCardList({
 }) {
   if (items.length === 0) {
     return (
-      <div className="flex items-center justify-center h-24 text-[10px] text-zinc-400 dark:text-zinc-600">
+      <div className="flex items-center justify-center h-24 text-[10px] text-neutral-400 dark:text-neutral-600">
         Nenhuma demanda
       </div>
     );
@@ -656,7 +656,7 @@ function MobileCardList({
         />
       ))}
       {items.length > 50 && (
-        <p className="text-[10px] text-center text-zinc-400 py-2">
+        <p className="text-[10px] text-center text-neutral-400 py-2">
           +{items.length - 50} mais
         </p>
       )}
@@ -839,7 +839,7 @@ export function KanbanPremium({
 
         {/* Archived count (mobile) */}
         {!showArchived && columnDemandas.arquivado.length > 0 && (
-          <div className="flex items-center justify-center gap-2 py-2 text-[10px] text-zinc-400 dark:text-zinc-600">
+          <div className="flex items-center justify-center gap-2 py-2 text-[10px] text-neutral-400 dark:text-neutral-600">
             <Archive className="w-3 h-3" />
             <span>
               {columnDemandas.arquivado.length} arquivada{columnDemandas.arquivado.length !== 1 ? "s" : ""}
@@ -852,7 +852,7 @@ export function KanbanPremium({
       <div className="hidden sm:block">
         {/* Kanban Grid */}
         <div
-          className="grid gap-4 transition-all duration-500 ease-out overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-700"
+          className="grid gap-4 transition-all duration-500 ease-out overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-neutral-200 dark:scrollbar-thumb-neutral-700"
           style={{
             gridTemplateColumns: gridTemplate,
             minWidth: emAndamentoExpanded ? `${Math.max(600, nonEmptySubGroupCount * 240 + 400)}px` : undefined,
@@ -882,16 +882,16 @@ export function KanbanPremium({
                     <div
                       className="
                         flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer min-h-[44px]
-                        bg-white dark:bg-zinc-900
-                        border border-zinc-200/80 dark:border-zinc-800/80
-                        hover:border-zinc-300 dark:hover:border-zinc-700
+                        bg-white dark:bg-neutral-900
+                        border border-neutral-200/80 dark:border-neutral-800/80
+                        hover:border-neutral-300 dark:hover:border-neutral-700
                         transition-colors duration-200
                       "
                       style={{ borderBottomColor: `${STATUS_GROUPS.preparacao.color}30`, borderBottomWidth: 2 }}
                       onClick={() => setEmAndamentoExpanded((p) => !p)}
                     >
                       <Activity className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 shrink-0" />
-                      <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 tracking-tight whitespace-nowrap">
+                      <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200 tracking-tight whitespace-nowrap">
                         Em Andamento
                       </span>
                       {/* Spacer for layout */}
@@ -905,8 +905,8 @@ export function KanbanPremium({
                         {totalEmAndamento}
                       </span>
                       {emAndamentoExpanded
-                        ? <ChevronLeft className="w-3.5 h-3.5 text-zinc-400 ml-0.5" />
-                        : <ChevronRight className="w-3.5 h-3.5 text-zinc-400 ml-0.5" />
+                        ? <ChevronLeft className="w-3.5 h-3.5 text-neutral-400 ml-0.5" />
+                        : <ChevronRight className="w-3.5 h-3.5 text-neutral-400 ml-0.5" />
                       }
                     </div>
                   </div>
@@ -942,12 +942,12 @@ export function KanbanPremium({
                         );
                       })}
                       {items.length > 30 && (
-                        <p className="text-[10px] text-center text-zinc-400 py-2">
+                        <p className="text-[10px] text-center text-neutral-400 py-2">
                           +{items.length - 30} mais
                         </p>
                       )}
                       {items.length === 0 && (
-                        <div className="flex items-center justify-center py-8 text-zinc-300 dark:text-zinc-600 text-xs">
+                        <div className="flex items-center justify-center py-8 text-neutral-300 dark:text-neutral-600 text-xs">
                           Nenhuma demanda
                         </div>
                       )}
@@ -997,12 +997,12 @@ export function KanbanPremium({
                     />
                   ))}
                   {items.length > 30 && (
-                    <p className="text-[10px] text-center text-zinc-400 py-2">
+                    <p className="text-[10px] text-center text-neutral-400 py-2">
                       +{items.length - 30} mais
                     </p>
                   )}
                   {items.length === 0 && (
-                    <div className="flex items-center justify-center h-20 text-[10px] text-zinc-400 dark:text-zinc-600">
+                    <div className="flex items-center justify-center h-20 text-[10px] text-neutral-400 dark:text-neutral-600">
                       Nenhuma demanda
                     </div>
                   )}
@@ -1014,7 +1014,7 @@ export function KanbanPremium({
 
         {/* Archived count (desktop) */}
         {!showArchived && columnDemandas.arquivado.length > 0 && (
-          <div className="flex items-center justify-center gap-2 py-2 text-[10px] text-zinc-400 dark:text-zinc-600">
+          <div className="flex items-center justify-center gap-2 py-2 text-[10px] text-neutral-400 dark:text-neutral-600">
             <Archive className="w-3 h-3" />
             <span>
               {columnDemandas.arquivado.length} demanda{columnDemandas.arquivado.length !== 1 ? "s" : ""} arquivada{columnDemandas.arquivado.length !== 1 ? "s" : ""}

@@ -34,7 +34,7 @@ const CRIME_CONFIG: Record<string, { label: string; color: string; bg: string }>
   porte_arma:         { label: "Porte Arma",      color: "text-pink-600 dark:text-pink-400",    bg: "bg-pink-600" },
   estelionato:        { label: "Estelionato",     color: "text-fuchsia-700 dark:text-fuchsia-400",bg: "bg-fuchsia-600" },
   execucao_penal:     { label: "Exec. Penal",     color: "text-blue-700 dark:text-blue-400",    bg: "bg-blue-700" },
-  outros:             { label: "Outros",          color: "text-zinc-600 dark:text-zinc-400",    bg: "bg-zinc-400" },
+  outros:             { label: "Outros",          color: "text-neutral-600 dark:text-neutral-400",    bg: "bg-neutral-400" },
 };
 
 interface Props {
@@ -83,17 +83,17 @@ export function RadarIntelligencePanel({ scope, dias = 30, onSelectTipoCrime }: 
   return (
     <div className="space-y-4">
       {/* === TOP BAIRROS === */}
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
-          <MapPin className="h-3.5 w-3.5 text-zinc-400" />
-          <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+      <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-neutral-100 dark:border-neutral-800">
+          <MapPin className="h-3.5 w-3.5 text-neutral-400" />
+          <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
             Top Bairros — {SCOPE_LABELS[scope]}
           </span>
         </div>
 
         <div className="p-3 space-y-1.5">
           {currentBairros.length === 0 ? (
-            <p className="text-xs text-zinc-400 text-center py-3">
+            <p className="text-xs text-neutral-400 text-center py-3">
               Aguardando dados geocodificados
             </p>
           ) : (
@@ -102,15 +102,15 @@ export function RadarIntelligencePanel({ scope, dias = 30, onSelectTipoCrime }: 
               const pct = Math.round((b.total / maxCount) * 100);
               return (
                 <div key={b.bairro} className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-zinc-400 w-3 text-right">{i + 1}</span>
+                  <span className="text-[10px] font-bold text-neutral-400 w-3 text-right">{i + 1}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate">
+                      <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 truncate">
                         {b.bairro}
                       </span>
-                      <span className="text-[10px] font-semibold text-zinc-500 ml-2">{b.total}</span>
+                      <span className="text-[10px] font-semibold text-neutral-500 ml-2">{b.total}</span>
                     </div>
-                    <div className="h-1 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                    <div className="h-1 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
                       <div
                         className={cn("h-full rounded-full transition-all duration-500", SCOPE_COLORS[scope])}
                         style={{ width: `${pct}%` }}
@@ -125,18 +125,18 @@ export function RadarIntelligencePanel({ scope, dias = 30, onSelectTipoCrime }: 
       </div>
 
       {/* === RANKING DE CRIMES === */}
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
-          <Shield className="h-3.5 w-3.5 text-zinc-400" />
-          <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+      <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-neutral-100 dark:border-neutral-800">
+          <Shield className="h-3.5 w-3.5 text-neutral-400" />
+          <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
             Crime Ranking
           </span>
-          <span className="ml-auto text-[10px] text-zinc-400">{dias}d</span>
+          <span className="ml-auto text-[10px] text-neutral-400">{dias}d</span>
         </div>
 
         <div className="p-3 space-y-2">
           {crimeRanking.length === 0 ? (
-            <p className="text-xs text-zinc-400 text-center py-3">Sem dados ainda</p>
+            <p className="text-xs text-neutral-400 text-center py-3">Sem dados ainda</p>
           ) : (
             crimeRanking.map((c) => {
               const config = CRIME_CONFIG[c.tipo] ?? CRIME_CONFIG.outros;
@@ -147,20 +147,20 @@ export function RadarIntelligencePanel({ scope, dias = 30, onSelectTipoCrime }: 
                   key={c.tipo}
                   className={cn(
                     "flex items-center gap-2 rounded-md px-1.5 py-0.5 -mx-1.5 transition-colors",
-                    isClickable && "cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                    isClickable && "cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
                   )}
                   onClick={isClickable ? () => onSelectTipoCrime(c.tipo) : undefined}
                   title={isClickable ? `Filtrar por ${config.label}` : undefined}
                 >
                   <div className={cn("w-2 h-2 rounded-full flex-shrink-0", config.bg)} />
                   <span className={cn("text-xs font-medium flex-1", config.color)}>{config.label}</span>
-                  <div className="w-16 h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                  <div className="w-16 h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
                     <div
                       className={cn("h-full rounded-full", config.bg)}
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <span className="text-[10px] font-semibold text-zinc-500 w-8 text-right">
+                  <span className="text-[10px] font-semibold text-neutral-500 w-8 text-right">
                     {pct}%
                   </span>
                 </div>
@@ -171,10 +171,10 @@ export function RadarIntelligencePanel({ scope, dias = 30, onSelectTipoCrime }: 
       </div>
 
       {/* === COMPARATIVO === */}
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
-          <BarChart3 className="h-3.5 w-3.5 text-zinc-400" />
-          <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+      <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-neutral-100 dark:border-neutral-800">
+          <BarChart3 className="h-3.5 w-3.5 text-neutral-400" />
+          <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
             Comparativo {dias}d
           </span>
         </div>
@@ -192,17 +192,17 @@ export function RadarIntelligencePanel({ scope, dias = 30, onSelectTipoCrime }: 
                   className={cn(
                     "text-xs w-20 flex-shrink-0",
                     isCurrentScope
-                      ? "font-semibold text-zinc-800 dark:text-zinc-100"
-                      : "text-zinc-500 dark:text-zinc-400"
+                      ? "font-semibold text-neutral-800 dark:text-neutral-100"
+                      : "text-neutral-500 dark:text-neutral-400"
                   )}
                 >
                   {SCOPE_LABELS[s]}
                 </span>
-                <div className="flex-1 h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                <div className="flex-1 h-2 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
                   <div
                     className={cn(
                       "h-full rounded-full transition-all duration-700",
-                      isCurrentScope ? SCOPE_COLORS[s] : "bg-zinc-300 dark:bg-zinc-600"
+                      isCurrentScope ? SCOPE_COLORS[s] : "bg-neutral-300 dark:bg-neutral-600"
                     )}
                     style={{ width: `${pct}%` }}
                   />
@@ -210,7 +210,7 @@ export function RadarIntelligencePanel({ scope, dias = 30, onSelectTipoCrime }: 
                 <span
                   className={cn(
                     "text-[11px] font-semibold w-6 text-right",
-                    isCurrentScope ? "text-zinc-800 dark:text-zinc-200" : "text-zinc-400"
+                    isCurrentScope ? "text-neutral-800 dark:text-neutral-200" : "text-neutral-400"
                   )}
                 >
                   {total}

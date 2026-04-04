@@ -107,9 +107,9 @@ function getCountdown(dataHora: Date | null) {
   const days = differenceInCalendarDays(dataHora, new Date());
   if (days === 0) return { text: "hoje", className: "text-emerald-600 dark:text-emerald-400 font-semibold" };
   if (days === 1) return { text: "amanhã", className: "text-amber-600 dark:text-amber-400 font-semibold" };
-  if (days === -1) return { text: "ontem", className: "text-zinc-400 dark:text-zinc-500" };
-  if (days > 1) return { text: `em ${days} dias`, className: "text-zinc-500 dark:text-zinc-400" };
-  return { text: `há ${Math.abs(days)} dias`, className: "text-zinc-400 dark:text-zinc-500" };
+  if (days === -1) return { text: "ontem", className: "text-neutral-400 dark:text-neutral-500" };
+  if (days > 1) return { text: `em ${days} dias`, className: "text-neutral-500 dark:text-neutral-400" };
+  return { text: `há ${Math.abs(days)} dias`, className: "text-neutral-400 dark:text-neutral-500" };
 }
 
 // ─────────────────────────────────────────────
@@ -145,24 +145,24 @@ function DepoenteCard({ depoente }: { depoente: any }) {
 
   return (
     <div className={cn(
-      "rounded-lg border border-zinc-200 dark:border-zinc-700/60 border-l-[3px] bg-white dark:bg-zinc-800/40 overflow-hidden",
+      "rounded-lg border border-neutral-200 dark:border-neutral-700/60 border-l-[3px] bg-white dark:bg-neutral-800/40 overflow-hidden",
       statusCfg.borderColor
     )}>
       <div className="px-3 py-2.5">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-100 truncate">
+              <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-100 truncate">
                 {depoente.nome}
               </span>
               {depoente.tipo && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 font-medium flex-shrink-0">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400 font-medium flex-shrink-0">
                   {depoente.tipo}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <div className="flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center gap-1 text-[11px] text-neutral-500 dark:text-neutral-400">
                 {statusCfg.icon}
                 <span>
                   {statusCfg.label}
@@ -180,7 +180,7 @@ function DepoenteCard({ depoente }: { depoente: any }) {
           {hasCertidao && (
             <button
               onClick={() => setExpanded(!expanded)}
-              className="flex-shrink-0 p-1 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+              className="flex-shrink-0 p-1 rounded text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
               title="Ver certidão"
             >
               {expanded
@@ -191,8 +191,8 @@ function DepoenteCard({ depoente }: { depoente: any }) {
         </div>
       </div>
       {expanded && hasCertidao && (
-        <div className="px-3 py-2 border-t border-zinc-100 dark:border-zinc-700/40 bg-zinc-50 dark:bg-zinc-900/40">
-          <p className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap">
+        <div className="px-3 py-2 border-t border-neutral-100 dark:border-neutral-700/40 bg-neutral-50 dark:bg-neutral-900/40">
+          <p className="text-[11px] font-mono text-neutral-500 dark:text-neutral-400 leading-relaxed whitespace-pre-wrap">
             {depoente.certidao}
           </p>
         </div>
@@ -203,7 +203,7 @@ function DepoenteCard({ depoente }: { depoente: any }) {
 
 function SectionLabel({ icon: Icon, label }: { icon: React.ComponentType<any>; label: string }) {
   return (
-    <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium flex items-center gap-1.5 mb-2.5">
+    <p className="text-[10px] text-neutral-400 uppercase tracking-wider font-medium flex items-center gap-1.5 mb-2.5">
       <Icon className="w-3 h-3" />
       {label}
     </p>
@@ -216,30 +216,30 @@ function HistoricoTimeline({ itens }: { itens: any[] }) {
     if (r.includes("realiz") || r.includes("conclu")) return "bg-emerald-500";
     if (r.includes("adiada") || r.includes("adiado") || r.includes("suspenso")) return "bg-amber-500";
     if (r.includes("cancel") || r.includes("não realiz")) return "bg-red-500";
-    return "bg-zinc-400";
+    return "bg-neutral-400";
   }
 
   return (
     <div className="relative pl-4">
-      <div className="absolute left-[7px] top-0 bottom-0 w-px bg-zinc-200 dark:bg-zinc-700" />
+      <div className="absolute left-[7px] top-0 bottom-0 w-px bg-neutral-200 dark:bg-neutral-700" />
       <div className="space-y-3">
         {itens.map((h: any, i: number) => (
           <div key={i} className="relative flex gap-3 text-xs">
             <div className={cn(
-              "absolute left-[-9px] top-[3px] w-2.5 h-2.5 rounded-full border-2 border-white dark:border-zinc-900 flex-shrink-0",
+              "absolute left-[-9px] top-[3px] w-2.5 h-2.5 rounded-full border-2 border-white dark:border-neutral-900 flex-shrink-0",
               getPontoColor(h.resultado ?? h.status)
             )} />
-            <span className="text-zinc-400 flex-shrink-0 tabular-nums w-10">
+            <span className="text-neutral-400 flex-shrink-0 tabular-nums w-10">
               {h.dataAudiencia
                 ? format(new Date(h.dataAudiencia), "dd/MM")
                 : "—"}
             </span>
             <div className="flex-1 min-w-0">
-              <span className="text-zinc-500 dark:text-zinc-400 font-medium">
+              <span className="text-neutral-500 dark:text-neutral-400 font-medium">
                 {h.tipo ?? "Audiência"}
               </span>
               {(h.resultado ?? h.status) && (
-                <span className="text-zinc-400 dark:text-zinc-500">
+                <span className="text-neutral-400 dark:text-neutral-500">
                   {" · "}{h.resultado ?? h.status}
                 </span>
               )}
@@ -308,13 +308,13 @@ export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailS
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
       <SheetContent
         side="right"
-        className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l border-zinc-200 dark:border-zinc-800 [&>button:first-of-type]:hidden"
+        className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l border-neutral-200 dark:border-neutral-800 [&>button:first-of-type]:hidden"
       >
         <SheetTitle className="sr-only">Detalhes do evento</SheetTitle>
 
         {/* ── Header premium ── */}
         <div className={cn(
-          "px-4 pt-3 pb-4 border-b border-zinc-100 dark:border-zinc-800",
+          "px-4 pt-3 pb-4 border-b border-neutral-100 dark:border-neutral-800",
           tipoCfg?.tint ?? ""
         )}>
           {/* Linha 1: badges + botões */}
@@ -340,7 +340,7 @@ export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailS
               {onEdit && (
                 <button
                   onClick={() => onEdit(evento)}
-                  className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100/80 dark:hover:bg-zinc-800 transition-colors"
+                  className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100/80 dark:hover:bg-neutral-800 transition-colors"
                   title="Editar evento"
                 >
                   <Pencil className="w-3.5 h-3.5" />
@@ -348,7 +348,7 @@ export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailS
               )}
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100/80 dark:hover:bg-zinc-800 transition-colors"
+                className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100/80 dark:hover:bg-neutral-800 transition-colors"
                 title="Fechar"
               >
                 <X className="w-3.5 h-3.5" />
@@ -357,14 +357,14 @@ export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailS
           </div>
 
           {/* Linha 2: título */}
-          <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100 leading-snug">
+          <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 leading-snug">
             {evento.titulo ?? evento.tipo ?? "Evento"}
           </p>
 
           {/* Linha 3: data/hora + countdown */}
           {dataHora && (
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 {format(dataHora, "EEEE, dd 'de' MMMM · HH:mm", { locale: ptBR })}
                 {evento.horarioFim ? ` — ${evento.horarioFim}` : ""}
               </p>
@@ -378,7 +378,7 @@ export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailS
 
           {/* Linha 4: local */}
           {evento.local && (
-            <p className="text-xs text-zinc-400 dark:text-zinc-500 flex items-center gap-1 mt-1">
+            <p className="text-xs text-neutral-400 dark:text-neutral-500 flex items-center gap-1 mt-1">
               <MapPin className="w-3 h-3 flex-shrink-0" />
               {evento.local}
             </p>
@@ -386,23 +386,23 @@ export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailS
         </div>
 
         {/* ── Scrollable body ── */}
-        <div className="flex-1 overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-800/60">
+        <div className="flex-1 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800/60">
 
           {/* 1 — Assistido + Processo */}
           {(assistidoNome || processoNum) && (
             <div className="px-4 py-3 space-y-2.5">
               {assistidoNome && (
                 <div className="flex items-center gap-2.5">
-                  <User className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
+                  <User className="w-3.5 h-3.5 text-neutral-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-0.5">Assistido</p>
+                    <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-0.5">Assistido</p>
                     <div className="flex items-center gap-1.5">
-                      <p className="text-xs font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                      <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 truncate">
                         {assistidoNome}
                       </p>
                       {evento.assistidoId && (
                         <Link href={`/admin/assistidos/${evento.assistidoId}`} onClick={onClose}>
-                          <ExternalLink className="w-3 h-3 text-zinc-400 hover:text-emerald-600 flex-shrink-0 transition-colors" />
+                          <ExternalLink className="w-3 h-3 text-neutral-400 hover:text-emerald-600 flex-shrink-0 transition-colors" />
                         </Link>
                       )}
                     </div>
@@ -411,17 +411,17 @@ export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailS
               )}
               {processoNum && (
                 <div className="flex items-center gap-2.5">
-                  <FileText className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
+                  <FileText className="w-3.5 h-3.5 text-neutral-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-0.5">Processo</p>
+                    <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-0.5">Processo</p>
                     <div className="flex items-center gap-1.5">
-                      <p className="text-xs font-mono text-zinc-700 dark:text-zinc-300 truncate">
+                      <p className="text-xs font-mono text-neutral-700 dark:text-neutral-300 truncate">
                         {processoNum}
                       </p>
                       <button onClick={() => copyProcesso(processoNum)} title="Copiar número">
                         {copied
                           ? <Check className="w-3 h-3 text-emerald-500" />
-                          : <Copy className="w-3 h-3 text-zinc-400 hover:text-zinc-600 cursor-pointer transition-colors" />}
+                          : <Copy className="w-3 h-3 text-neutral-400 hover:text-neutral-600 cursor-pointer transition-colors" />}
                       </button>
                     </div>
                   </div>
@@ -448,13 +448,13 @@ export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailS
                 ))}
               </div>
             ) : (
-              <div className="flex items-start gap-3 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700/60 bg-zinc-50/60 dark:bg-zinc-800/20 px-3.5 py-3">
-                <AlertCircle className="w-4 h-4 text-zinc-300 dark:text-zinc-600 flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 rounded-xl border border-dashed border-neutral-200 dark:border-neutral-700/60 bg-neutral-50/60 dark:bg-neutral-800/20 px-3.5 py-3">
+                <AlertCircle className="w-4 h-4 text-neutral-300 dark:text-neutral-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
                     Análise de depoentes não disponível
                   </p>
-                  <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                  <p className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-0.5">
                     Ative o enrichment do processo no Drive para visualizar status, intimações e certidões por depoente.
                   </p>
                   {evento.processoId && (
@@ -477,29 +477,29 @@ export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailS
               <SectionLabel icon={Scale} label="Dados do Caso" />
               <div className="grid grid-cols-2 gap-2">
                 {(evento.crime ?? evento.assunto) && (
-                  <div className="col-span-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 px-3 py-2">
-                    <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-0.5">Crime / Assunto</p>
-                    <p className="text-xs text-zinc-700 dark:text-zinc-300 font-medium leading-snug">
+                  <div className="col-span-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/40 px-3 py-2">
+                    <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-0.5">Crime / Assunto</p>
+                    <p className="text-xs text-neutral-700 dark:text-neutral-300 font-medium leading-snug">
                       {evento.crime ?? evento.assunto}
                     </p>
                   </div>
                 )}
                 {evento.fase && (
-                  <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/40 px-3 py-2">
-                    <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-0.5">Fase</p>
-                    <p className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">{evento.fase}</p>
+                  <div className="rounded-lg bg-neutral-50 dark:bg-neutral-800/40 px-3 py-2">
+                    <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-0.5">Fase</p>
+                    <p className="text-xs text-neutral-700 dark:text-neutral-300 font-medium">{evento.fase}</p>
                   </div>
                 )}
                 {historicoRecente.length > 0 && (
-                  <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/40 px-3 py-2">
-                    <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-0.5">Audiências anteriores</p>
-                    <p className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">{historicoRecente.length} realizadas</p>
+                  <div className="rounded-lg bg-neutral-50 dark:bg-neutral-800/40 px-3 py-2">
+                    <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-0.5">Audiências anteriores</p>
+                    <p className="text-xs text-neutral-700 dark:text-neutral-300 font-medium">{historicoRecente.length} realizadas</p>
                   </div>
                 )}
                 {evento.atribuicao && (
-                  <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/40 px-3 py-2">
-                    <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-0.5">Atribuição</p>
-                    <p className="text-xs text-zinc-700 dark:text-zinc-300 font-medium truncate">{evento.atribuicao}</p>
+                  <div className="rounded-lg bg-neutral-50 dark:bg-neutral-800/40 px-3 py-2">
+                    <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-0.5">Atribuição</p>
+                    <p className="text-xs text-neutral-700 dark:text-neutral-300 font-medium truncate">{evento.atribuicao}</p>
                   </div>
                 )}
               </div>
@@ -510,7 +510,7 @@ export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailS
           {evento.descricao && (
             <div className="px-4 py-3">
               <SectionLabel icon={StickyNote} label="Observações" />
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap leading-relaxed">
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 whitespace-pre-wrap leading-relaxed">
                 {evento.descricao}
               </p>
             </div>
@@ -525,7 +525,7 @@ export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailS
                   <Link
                     href={`/admin/audiencias?processo=${evento.processoId}`}
                     onClick={onClose}
-                    className="text-[10px] text-zinc-400 hover:text-emerald-600 flex items-center gap-0.5 transition-colors -mt-2.5"
+                    className="text-[10px] text-neutral-400 hover:text-emerald-600 flex items-center gap-0.5 transition-colors -mt-2.5"
                   >
                     Ver todas <ExternalLink className="w-2.5 h-2.5" />
                   </Link>
@@ -538,11 +538,11 @@ export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailS
         </div>
 
         {/* ── Bottom bar sticky ── */}
-        <div className="px-4 py-3 border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex gap-2">
+        <div className="px-4 py-3 border-t border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex gap-2">
           {onEdit && (
             <button
               onClick={() => onEdit(evento)}
-              className="flex-1 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+              className="flex-1 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-xs font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
             >
               Editar
             </button>

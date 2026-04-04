@@ -113,9 +113,9 @@ function getTendenciaBadge(tendencia: string) {
     case "condenatorio":
       return { label: "Condenatorio", className: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400" };
     case "neutro":
-      return { label: "Neutro", className: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400" };
+      return { label: "Neutro", className: "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400" };
     default:
-      return { label: "Desconhecido", className: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500" };
+      return { label: "Desconhecido", className: "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-500" };
   }
 }
 
@@ -210,14 +210,14 @@ function KPICard({
   const isGood = invertDelta ? !delta.positive : delta.positive;
 
   const colorMap = {
-    zinc: "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400",
+    zinc: "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400",
     emerald: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400",
     rose: "bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400",
     violet: "bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400",
   };
 
   return (
-    <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800">
+    <div className="p-4 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800">
       <div className="flex items-center justify-between mb-3">
         <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", colorMap[color])}>
           <Icon className="w-4.5 h-4.5" />
@@ -234,8 +234,8 @@ function KPICard({
           </div>
         )}
       </div>
-      <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 tabular-nums">{value}</p>
-      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">{label}</p>
+      <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 tabular-nums">{value}</p>
+      <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">{label}</p>
     </div>
   );
 }
@@ -251,15 +251,15 @@ function MiniBarRow({
 }) {
   return (
     <div className="flex items-center gap-2 py-1.5">
-      <span className="text-xs w-28 truncate text-zinc-700 dark:text-zinc-300" title={label}>{label}</span>
-      <div className="flex-1 h-2 bg-zinc-100 dark:bg-zinc-700 rounded-full overflow-hidden">
+      <span className="text-xs w-28 truncate text-neutral-700 dark:text-neutral-300" title={label}>{label}</span>
+      <div className="flex-1 h-2 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">
         <div
           className="h-full bg-emerald-500 rounded-full transition-all duration-500"
           style={{ width: `${Math.max(taxa, 2)}%` }}
         />
       </div>
-      <span className="text-xs font-mono w-12 text-right text-zinc-600 dark:text-zinc-400">{taxa}%</span>
-      <span className="text-[10px] text-zinc-400 w-8 text-right">n={total}</span>
+      <span className="text-xs font-mono w-12 text-right text-neutral-600 dark:text-neutral-400">{taxa}%</span>
+      <span className="text-[10px] text-neutral-400 w-8 text-right">n={total}</span>
     </div>
   );
 }
@@ -271,10 +271,10 @@ function SectionCard({ title, icon: Icon, children, className }: {
   className?: string;
 }) {
   return (
-    <div className={cn("rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-4", className)}>
+    <div className={cn("rounded-xl bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 p-4", className)}>
       <div className="flex items-center gap-2 mb-4">
-        <Icon className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-        <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{title}</h3>
+        <Icon className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
+        <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">{title}</h3>
       </div>
       {children}
     </div>
@@ -284,13 +284,13 @@ function SectionCard({ title, icon: Icon, children, className }: {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
-        <BarChart3 className="w-8 h-8 text-zinc-400" />
+      <div className="w-16 h-16 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-4">
+        <BarChart3 className="w-8 h-8 text-neutral-400" />
       </div>
-      <h2 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mb-1">
+      <h2 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200 mb-1">
         Ainda sem dados de sessoes
       </h2>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mb-6">
+      <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-md mb-6">
         Registre o resultado das sessoes de juri para ver estatisticas,
         padroes e insights automaticos aqui.
       </p>
@@ -343,26 +343,26 @@ export default function CosmovisaoPage() {
   const isEmpty = panorama && panorama.total === 0;
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header */}
-      <div className="px-4 sm:px-6 md:px-8 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
+      <div className="px-4 sm:px-6 md:px-8 py-3 bg-white dark:bg-neutral-900 border-b border-neutral-200/80 dark:border-neutral-800/80">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/admin/juri" className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-              <ArrowLeft className="w-4 h-4 text-zinc-400" />
+            <Link href="/admin/juri" className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+              <ArrowLeft className="w-4 h-4 text-neutral-400" />
             </Link>
-            <div className="w-9 h-9 rounded-lg bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center">
-              <Eye className="w-4 h-4 text-white dark:text-zinc-900" />
+            <div className="w-9 h-9 rounded-lg bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center">
+              <Eye className="w-4 h-4 text-white dark:text-neutral-900" />
             </div>
             <div>
-              <h1 className="font-serif text-lg font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">Cosmovisão</h1>
-              <p className="text-[11px] text-zinc-400">Analytics completo do Tribunal do Júri</p>
+              <h1 className="font-serif text-lg font-semibold text-neutral-900 dark:text-neutral-100 tracking-tight">Cosmovisão</h1>
+              <p className="text-[11px] text-neutral-400">Analytics completo do Tribunal do Júri</p>
             </div>
           </div>
 
           {/* Period filter — inline in header */}
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/60 dark:border-zinc-700/40">
+            <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-neutral-100 dark:bg-neutral-800/60 border border-neutral-200/60 dark:border-neutral-700/40">
               {([
                 { key: "mes", label: "Mês" },
                 { key: "trimestre", label: "Trim." },
@@ -376,8 +376,8 @@ export default function CosmovisaoPage() {
                   className={cn(
                     "px-2.5 py-1 rounded-md text-[10px] font-medium transition-all",
                     periodo === opt.key
-                      ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 shadow-sm"
-                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                      ? "bg-white dark:bg-neutral-700 text-neutral-800 dark:text-neutral-100 shadow-sm"
+                      : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
                   )}
                 >
                   {opt.label}
@@ -388,7 +388,7 @@ export default function CosmovisaoPage() {
             {periodo === "custom" && (
               <div className="flex items-center gap-1.5">
                 <Input type="date" value={customInicio} onChange={(e) => setCustomInicio(e.target.value)} className="w-32 h-7 text-[10px]" />
-                <span className="text-[10px] text-zinc-400">—</span>
+                <span className="text-[10px] text-neutral-400">—</span>
                 <Input type="date" value={customFim} onChange={(e) => setCustomFim(e.target.value)} className="w-32 h-7 text-[10px]" />
               </div>
             )}
@@ -462,11 +462,11 @@ export default function CosmovisaoPage() {
 
                     return (
                       <div key={month.mes} className="flex flex-col items-center gap-1 min-w-[2.5rem]">
-                        <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 mb-1">
+                        <span className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400 mb-1">
                           {month.total}
                         </span>
                         <div
-                          className="flex flex-col-reverse w-10 rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800"
+                          className="flex flex-col-reverse w-10 rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-800"
                           style={{ height: `${barHeight}px` }}
                         >
                           <div
@@ -485,24 +485,24 @@ export default function CosmovisaoPage() {
                             title={`Desclassificacoes/Nulidades: ${month.desclassificacoes + month.nulidades}`}
                           />
                         </div>
-                        <span className="text-[10px] text-zinc-500 dark:text-zinc-400">{formatMes(month.mes)}</span>
+                        <span className="text-[10px] text-neutral-500 dark:text-neutral-400">{formatMes(month.mes)}</span>
                       </div>
                     );
                   })}
                 </div>
                 {/* Legend */}
-                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
                   <div className="flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
-                    <span className="text-[10px] text-zinc-500">Absolvicao</span>
+                    <span className="text-[10px] text-neutral-500">Absolvicao</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-sm bg-rose-500" />
-                    <span className="text-[10px] text-zinc-500">Condenacao</span>
+                    <span className="text-[10px] text-neutral-500">Condenacao</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-sm bg-amber-500" />
-                    <span className="text-[10px] text-zinc-500">Desc./Nulidade</span>
+                    <span className="text-[10px] text-neutral-500">Desc./Nulidade</span>
                   </div>
                 </div>
               </SectionCard>
@@ -526,7 +526,7 @@ export default function CosmovisaoPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-zinc-400 py-4 text-center">Sem dados de tipo penal</p>
+                  <p className="text-xs text-neutral-400 py-4 text-center">Sem dados de tipo penal</p>
                 )}
               </SectionCard>
 
@@ -546,7 +546,7 @@ export default function CosmovisaoPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-zinc-400 py-4 text-center">Sem dados de tese</p>
+                  <p className="text-xs text-neutral-400 py-4 text-center">Sem dados de tese</p>
                 )}
               </SectionCard>
 
@@ -566,7 +566,7 @@ export default function CosmovisaoPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-zinc-400 py-4 text-center">Sem dados de duracao</p>
+                  <p className="text-xs text-neutral-400 py-4 text-center">Sem dados de duracao</p>
                 )}
               </SectionCard>
 
@@ -578,7 +578,7 @@ export default function CosmovisaoPage() {
                   <div className="space-y-4">
                     {/* Primariedade */}
                     <div>
-                      <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-2">Primariedade</p>
+                      <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-2">Primariedade</p>
                       <div className="space-y-0.5">
                         {perfil.porPrimariedade.map((p: PerfilRow) => (
                           <MiniBarRow
@@ -593,7 +593,7 @@ export default function CosmovisaoPage() {
                     {/* Local do fato */}
                     {perfil.porLocalFato.length > 0 && (
                       <div>
-                        <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-2">Local do Fato</p>
+                        <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-2">Local do Fato</p>
                         <div className="space-y-0.5">
                           {perfil.porLocalFato.slice(0, 5).map((l: PerfilRow) => (
                             <MiniBarRow
@@ -608,7 +608,7 @@ export default function CosmovisaoPage() {
                     )}
                   </div>
                 ) : (
-                  <p className="text-xs text-zinc-400 py-4 text-center">Sem dados de perfil</p>
+                  <p className="text-xs text-neutral-400 py-4 text-center">Sem dados de perfil</p>
                 )}
               </SectionCard>
             </div>
@@ -616,7 +616,7 @@ export default function CosmovisaoPage() {
             {/* Actors Section */}
             <SectionCard title="Atores do Juri" icon={Users}>
               {/* Tabs */}
-              <div className="flex items-center gap-1 p-0.5 bg-zinc-100 dark:bg-zinc-800 rounded-lg w-fit mb-4 -mt-1">
+              <div className="flex items-center gap-1 p-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg w-fit mb-4 -mt-1">
                 {(["jurados", "juizes", "promotores"] as const).map((tab) => (
                   <button
                     key={tab}
@@ -624,8 +624,8 @@ export default function CosmovisaoPage() {
                     className={cn(
                       "px-3 py-1.5 rounded-md text-xs font-medium transition-all",
                       atoresTab === tab
-                        ? "bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-zinc-200"
-                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                        ? "bg-white dark:bg-neutral-700 shadow-sm text-neutral-800 dark:text-neutral-200"
+                        : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
                     )}
                   >
                     {tab === "jurados" ? "Jurados" : tab === "juizes" ? "Juizes" : "Promotores"}
@@ -651,21 +651,21 @@ export default function CosmovisaoPage() {
 
                           return (
                             <Link key={jurado.id} href={`/admin/juri/jurados/${jurado.id}`}>
-                              <div className="p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all group cursor-pointer">
+                              <div className="p-3 rounded-xl border border-neutral-100 dark:border-neutral-800 hover:border-neutral-200 dark:hover:border-neutral-700 transition-all group cursor-pointer">
                                 <div className="flex items-center justify-between mb-2">
-                                  <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{jurado.nome}</p>
-                                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">{jurado.nome}</p>
+                                  <ChevronRight className="w-3.5 h-3.5 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </div>
                                 <div className="flex items-center gap-2 mb-2">
                                   <Badge className={cn("text-[10px] border-0", badge.className)}>
                                     {badge.label}
                                   </Badge>
-                                  <span className="text-[10px] text-zinc-400">{jurado.totalSessoes} sessoes</span>
+                                  <span className="text-[10px] text-neutral-400">{jurado.totalSessoes} sessoes</span>
                                 </div>
                                 {/* Voting bar */}
                                 {totalVotos > 0 && (
                                   <div className="flex items-center gap-2">
-                                    <div className="flex-1 h-2 bg-zinc-100 dark:bg-zinc-700 rounded-full overflow-hidden flex">
+                                    <div className="flex-1 h-2 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden flex">
                                       <div
                                         className="h-full bg-emerald-500"
                                         style={{ width: `${pctAbs}%` }}
@@ -677,7 +677,7 @@ export default function CosmovisaoPage() {
                                         title={`Condenacao: ${pctCond}%`}
                                       />
                                     </div>
-                                    <span className="text-[10px] font-mono text-zinc-400">
+                                    <span className="text-[10px] font-mono text-neutral-400">
                                       {pctAbs}/{pctCond}
                                     </span>
                                   </div>
@@ -688,7 +688,7 @@ export default function CosmovisaoPage() {
                         })}
                       </div>
                     ) : (
-                      <p className="text-xs text-zinc-400 text-center py-4">Nenhum jurado cadastrado</p>
+                      <p className="text-xs text-neutral-400 text-center py-4">Nenhum jurado cadastrado</p>
                     )
                   )}
 
@@ -697,28 +697,28 @@ export default function CosmovisaoPage() {
                     atores.juizes.length > 0 ? (
                       <div className="space-y-1">
                         {atores.juizes.map((juiz: AtorRow) => (
-                          <div key={juiz.nome} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                              <Scale className="w-4 h-4 text-zinc-500" />
+                          <div key={juiz.nome} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                            <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                              <Scale className="w-4 h-4 text-neutral-500" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{juiz.nome}</p>
-                              <p className="text-[10px] text-zinc-400">{juiz.total} sessoes presididas</p>
+                              <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">{juiz.nome}</p>
+                              <p className="text-[10px] text-neutral-400">{juiz.total} sessoes presididas</p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-16 h-2 bg-zinc-100 dark:bg-zinc-700 rounded-full overflow-hidden">
+                              <div className="w-16 h-2 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">
                                 <div
                                   className="h-full bg-emerald-500 rounded-full"
                                   style={{ width: `${juiz.taxaAbsolvicao}%` }}
                                 />
                               </div>
-                              <span className="text-xs font-mono text-zinc-500 w-10 text-right">{juiz.taxaAbsolvicao}%</span>
+                              <span className="text-xs font-mono text-neutral-500 w-10 text-right">{juiz.taxaAbsolvicao}%</span>
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-zinc-400 text-center py-4">Nenhum juiz registrado</p>
+                      <p className="text-xs text-neutral-400 text-center py-4">Nenhum juiz registrado</p>
                     )
                   )}
 
@@ -727,28 +727,28 @@ export default function CosmovisaoPage() {
                     atores.promotores.length > 0 ? (
                       <div className="space-y-1">
                         {atores.promotores.map((promotor: AtorRow) => (
-                          <div key={promotor.nome} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                              <Gavel className="w-4 h-4 text-zinc-500" />
+                          <div key={promotor.nome} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                            <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                              <Gavel className="w-4 h-4 text-neutral-500" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{promotor.nome}</p>
-                              <p className="text-[10px] text-zinc-400">{promotor.total} sessoes</p>
+                              <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">{promotor.nome}</p>
+                              <p className="text-[10px] text-neutral-400">{promotor.total} sessoes</p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-16 h-2 bg-zinc-100 dark:bg-zinc-700 rounded-full overflow-hidden">
+                              <div className="w-16 h-2 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">
                                 <div
                                   className="h-full bg-emerald-500 rounded-full"
                                   style={{ width: `${promotor.taxaAbsolvicao}%` }}
                                 />
                               </div>
-                              <span className="text-xs font-mono text-zinc-500 w-10 text-right">{promotor.taxaAbsolvicao}%</span>
+                              <span className="text-xs font-mono text-neutral-500 w-10 text-right">{promotor.taxaAbsolvicao}%</span>
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-zinc-400 text-center py-4">Nenhum promotor registrado</p>
+                      <p className="text-xs text-neutral-400 text-center py-4">Nenhum promotor registrado</p>
                     )
                   )}
                 </>
@@ -764,7 +764,7 @@ export default function CosmovisaoPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Lightbulb className="w-4 h-4 text-violet-500" />
-                  <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Insights Automaticos</h3>
+                  <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Insights Automaticos</h3>
                 </div>
                 {insights.map((insight, idx) => (
                   <div
@@ -774,8 +774,8 @@ export default function CosmovisaoPage() {
                     <div className="flex items-start gap-3">
                       <Lightbulb className="w-5 h-5 text-violet-500 mt-0.5 flex-shrink-0" />
                       <div>
-                        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{insight.insight}</p>
-                        <p className="text-[10px] text-zinc-500 mt-1">
+                        <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{insight.insight}</p>
+                        <p className="text-[10px] text-neutral-500 mt-1">
                           Confianca: {Math.round(insight.confianca)}% &middot; n={insight.n} sessoes
                         </p>
                       </div>

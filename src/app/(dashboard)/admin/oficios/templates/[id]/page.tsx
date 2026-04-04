@@ -174,7 +174,7 @@ export default function EditarTemplatePage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 text-zinc-400 animate-spin" />
+        <Loader2 className="w-6 h-6 text-neutral-400 animate-spin" />
       </div>
     );
   }
@@ -182,7 +182,7 @@ export default function EditarTemplatePage() {
   if (!template && !isLoading) {
     return (
       <div className="text-center py-12">
-        <p className="text-sm text-zinc-500">Template nao encontrado.</p>
+        <p className="text-sm text-neutral-500">Template nao encontrado.</p>
         <Button
           variant="link"
           className="text-emerald-600 mt-2"
@@ -202,7 +202,7 @@ export default function EditarTemplatePage() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+            className="h-8 w-8 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
             onClick={() => router.push("/admin/oficios/templates")}
           >
             <ArrowLeft className="w-4 h-4" />
@@ -211,10 +211,10 @@ export default function EditarTemplatePage() {
             <LayoutTemplate className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
               Editar Template
             </h1>
-            <p className="text-sm text-zinc-500 truncate max-w-xs">
+            <p className="text-sm text-neutral-500 truncate max-w-xs">
               {template?.titulo}
             </p>
           </div>
@@ -245,8 +245,8 @@ export default function EditarTemplatePage() {
 
       {/* Total de usos */}
       {(template?.totalUsos ?? 0) > 0 && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/30 w-fit">
-          <span className="text-xs text-zinc-500">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700/30 w-fit">
+          <span className="text-xs text-neutral-500">
             Este template foi usado
           </span>
           <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
@@ -259,42 +259,42 @@ export default function EditarTemplatePage() {
         {/* Formulario principal */}
         <div className="lg:col-span-2 space-y-4">
           {/* Informacoes */}
-          <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-700/30 bg-white dark:bg-zinc-900/50 space-y-4">
-            <h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <div className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-700/30 bg-white dark:bg-neutral-900/50 space-y-4">
+            <h2 className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
               Informacoes do template
             </h2>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
                 Titulo *
               </label>
               <Input
                 placeholder="Ex: Oficio requisitorio para UPA"
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
-                className="bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100"
+                className="bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
                 Descricao
               </label>
               <Input
                 placeholder="Breve descricao do uso deste template"
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
-                className="bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100"
+                className="bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
                   Tipo de oficio
                 </label>
                 <Select value={tipoOficio} onValueChange={setTipoOficio}>
-                  <SelectTrigger className="bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100">
+                  <SelectTrigger className="bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100">
                     <SelectValue placeholder="Selecionar tipo" />
                   </SelectTrigger>
                   <SelectContent>
@@ -308,11 +308,11 @@ export default function EditarTemplatePage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
                   Area juridica
                 </label>
                 <Select value={area} onValueChange={setArea}>
-                  <SelectTrigger className="bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100">
+                  <SelectTrigger className="bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100">
                     <SelectValue placeholder="Selecionar area" />
                   </SelectTrigger>
                   <SelectContent>
@@ -328,15 +328,15 @@ export default function EditarTemplatePage() {
           </div>
 
           {/* Editor de conteudo */}
-          <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-700/30 bg-white dark:bg-zinc-900/50 space-y-3">
+          <div className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-700/30 bg-white dark:bg-neutral-900/50 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <h2 className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                 Conteudo *
               </h2>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                className="h-7 text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
                 onClick={() => setShowPreview((v) => !v)}
               >
                 <Eye className="w-3.5 h-3.5 mr-1.5" />
@@ -345,9 +345,9 @@ export default function EditarTemplatePage() {
             </div>
 
             {showPreview ? (
-              <div className="min-h-[300px] p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap font-mono leading-relaxed">
+              <div className="min-h-[300px] p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 text-sm text-neutral-800 dark:text-neutral-200 whitespace-pre-wrap font-mono leading-relaxed">
                 {preview || (
-                  <span className="text-zinc-400 dark:text-zinc-600">
+                  <span className="text-neutral-400 dark:text-neutral-600">
                     Nenhum conteudo para visualizar
                   </span>
                 )}
@@ -357,11 +357,11 @@ export default function EditarTemplatePage() {
                 placeholder="Digite o conteudo do template..."
                 value={conteudo}
                 onChange={(e) => setConteudo(e.target.value)}
-                className="min-h-[300px] bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-mono text-sm resize-y"
+                className="min-h-[300px] bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 font-mono text-sm resize-y"
               />
             )}
 
-            <p className="text-[11px] text-zinc-400 dark:text-zinc-600">
+            <p className="text-[11px] text-neutral-400 dark:text-neutral-600">
               Use os placeholders do painel lateral para inserir variaveis automaticas no texto.
             </p>
           </div>
@@ -369,18 +369,18 @@ export default function EditarTemplatePage() {
 
         {/* Painel lateral: placeholders */}
         <div className="space-y-4">
-          <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-700/30 bg-white dark:bg-zinc-900/50 sticky top-4">
-            <h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">
+          <div className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-700/30 bg-white dark:bg-neutral-900/50 sticky top-4">
+            <h2 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">
               Placeholders disponiveis
             </h2>
-            <p className="text-xs text-zinc-500 mb-3">
+            <p className="text-xs text-neutral-500 mb-3">
               Clique para inserir no conteudo ou copie manualmente.
             </p>
             <div className="space-y-1.5">
               {PLACEHOLDERS.map((ph) => (
                 <div
                   key={ph.key}
-                  className="flex items-center justify-between gap-2 p-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 group cursor-pointer"
+                  className="flex items-center justify-between gap-2 p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/50 group cursor-pointer"
                   onClick={() => {
                     if (!showPreview) {
                       inserirPlaceholder(ph.key);
@@ -391,7 +391,7 @@ export default function EditarTemplatePage() {
                     <p className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 truncate">
                       {ph.key}
                     </p>
-                    <p className="text-[10px] text-zinc-500 truncate">{ph.label}</p>
+                    <p className="text-[10px] text-neutral-500 truncate">{ph.label}</p>
                   </div>
                   <Button
                     variant="ghost"
@@ -403,14 +403,14 @@ export default function EditarTemplatePage() {
                       toast.success("Copiado!");
                     }}
                   >
-                    <Copy className="w-3 h-3 text-zinc-400" />
+                    <Copy className="w-3 h-3 text-neutral-400" />
                   </Button>
                 </div>
               ))}
             </div>
 
-            <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-              <p className="text-[10px] text-zinc-400 dark:text-zinc-600">
+            <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+              <p className="text-[10px] text-neutral-400 dark:text-neutral-600">
                 No preview, os placeholders sao substituidos por valores de exemplo.
                 No oficio final, sao preenchidos com dados reais do assistido e processo.
               </p>
@@ -419,8 +419,8 @@ export default function EditarTemplatePage() {
 
           {/* Badges de estado */}
           {(tipoOficio || area) && (
-            <div className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-700/30 bg-white dark:bg-zinc-900/50">
-              <p className="text-xs text-zinc-500 mb-2">Classificacao do template</p>
+            <div className="p-3 rounded-xl border border-neutral-200 dark:border-neutral-700/30 bg-white dark:bg-neutral-900/50">
+              <p className="text-xs text-neutral-500 mb-2">Classificacao do template</p>
               <div className="flex flex-wrap gap-1.5">
                 {tipoOficio && (
                   <Badge
@@ -433,7 +433,7 @@ export default function EditarTemplatePage() {
                 {area && (
                   <Badge
                     variant="outline"
-                    className="text-[10px] text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-600"
+                    className="text-[10px] text-neutral-500 dark:text-neutral-400 border-neutral-300 dark:border-neutral-600"
                   >
                     {AREAS.find((a) => a.value === area)?.label}
                   </Badge>

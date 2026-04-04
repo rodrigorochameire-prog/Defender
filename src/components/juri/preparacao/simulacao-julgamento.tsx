@@ -235,7 +235,7 @@ function TeseAnaliseCard({ tese }: { tese: TeseAnalise }) {
         {/* Expand toggle */}
         <CollapsibleTrigger asChild>
           <button
-            className="mt-3 flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-stone-700 dark:hover:text-zinc-300 transition-colors"
+            className="mt-3 flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-stone-700 dark:hover:text-neutral-300 transition-colors"
           >
             {isOpen ? (
               <ChevronDown className="w-3.5 h-3.5" />

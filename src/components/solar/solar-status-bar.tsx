@@ -41,7 +41,7 @@ const STATUS_COLORS: Record<StatusLevel, string> = {
   online: "bg-emerald-500",
   warning: "bg-amber-500",
   offline: "bg-red-500",
-  unknown: "bg-zinc-400",
+  unknown: "bg-neutral-400",
 };
 
 const STATUS_TEXT: Record<StatusLevel, string> = {

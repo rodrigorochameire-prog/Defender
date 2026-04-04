@@ -107,7 +107,7 @@ export function SyncHistoryModal({ isOpen, onClose, historico }: SyncHistoryModa
       default:
         return {
           icon: CheckCircle2,
-          color: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+          color: "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300",
           label: status,
         };
     }
@@ -121,13 +121,13 @@ export function SyncHistoryModal({ isOpen, onClose, historico }: SyncHistoryModa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-900">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-neutral-900">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+          <DialogTitle className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
             <History className="w-6 h-6 text-purple-600" />
             Histórico de Sincronizações
           </DialogTitle>
-          <DialogDescription className="text-sm text-zinc-500 dark:text-zinc-400">
+          <DialogDescription className="text-sm text-neutral-500 dark:text-neutral-400">
             Visualize todas as sincronizações realizadas entre Ombuds e Google Calendar.
           </DialogDescription>
         </DialogHeader>
@@ -135,12 +135,12 @@ export function SyncHistoryModal({ isOpen, onClose, historico }: SyncHistoryModa
         {/* Filtros */}
         <div className="space-y-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
             <Input
               placeholder="Buscar por calendário ou atribuição..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white dark:bg-zinc-900"
+              className="pl-10 bg-white dark:bg-neutral-900"
             />
           </div>
 
@@ -214,13 +214,13 @@ export function SyncHistoryModal({ isOpen, onClose, historico }: SyncHistoryModa
         <div className="space-y-3">
           {historicoFiltrado.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 mx-auto mb-4 flex items-center justify-center">
-                <History className="w-8 h-8 text-zinc-400 dark:text-zinc-600" />
+              <div className="w-16 h-16 rounded-2xl bg-neutral-100 dark:bg-neutral-800 mx-auto mb-4 flex items-center justify-center">
+                <History className="w-8 h-8 text-neutral-400 dark:text-neutral-600" />
               </div>
-              <p className="font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+              <p className="font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
                 Nenhum registro encontrado
               </p>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
                 Ajuste os filtros ou realize uma sincronização
               </p>
             </div>
@@ -233,7 +233,7 @@ export function SyncHistoryModal({ isOpen, onClose, historico }: SyncHistoryModa
               return (
                 <Card
                   key={entry.id}
-                  className="p-4 border border-zinc-200 dark:border-zinc-800 hover:shadow-lg transition-shadow"
+                  className="p-4 border border-neutral-200 dark:border-neutral-800 hover:shadow-lg transition-shadow"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-start gap-3">
@@ -241,7 +241,7 @@ export function SyncHistoryModal({ isOpen, onClose, historico }: SyncHistoryModa
                         <TipoIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-zinc-900 dark:text-zinc-50">
+                        <h3 className="font-bold text-neutral-900 dark:text-neutral-50">
                           {getTipoLabel(entry.tipo)}
                         </h3>
                         <div className="flex items-center gap-2 mt-1">
@@ -249,7 +249,7 @@ export function SyncHistoryModal({ isOpen, onClose, historico }: SyncHistoryModa
                             <StatusIcon className="w-3 h-3 mr-1" />
                             {statusConfig.label}
                           </Badge>
-                          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                          <span className="text-xs text-neutral-500 dark:text-neutral-400">
                             {new Date(entry.timestamp).toLocaleString("pt-BR")}
                           </span>
                         </div>
@@ -264,11 +264,11 @@ export function SyncHistoryModal({ isOpen, onClose, historico }: SyncHistoryModa
 
                   {/* Estatísticas */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                    <div className="bg-zinc-50 dark:bg-zinc-800/50 p-2 rounded">
-                      <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mb-1">
+                    <div className="bg-neutral-50 dark:bg-neutral-800/50 p-2 rounded">
+                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mb-1">
                         Eventos Afetados
                       </p>
-                      <p className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
+                      <p className="text-lg font-bold text-neutral-900 dark:text-neutral-50">
                         {entry.eventosAfetados}
                       </p>
                     </div>
@@ -309,7 +309,7 @@ export function SyncHistoryModal({ isOpen, onClose, historico }: SyncHistoryModa
 
                   {/* Detalhes */}
                   {(entry.detalhes.calendario || entry.detalhes.atribuicao) && (
-                    <div className="flex gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+                    <div className="flex gap-2 text-xs text-neutral-600 dark:text-neutral-400">
                       {entry.detalhes.calendario && (
                         <Badge variant="secondary">
                           <Calendar className="w-3 h-3 mr-1" />
@@ -342,8 +342,8 @@ export function SyncHistoryModal({ isOpen, onClose, historico }: SyncHistoryModa
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between items-center pt-4 border-t border-zinc-200 dark:border-zinc-800">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <div className="flex justify-between items-center pt-4 border-t border-neutral-200 dark:border-neutral-800">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
             Total: {historicoFiltrado.length} registros
           </p>
           <Button variant="outline" onClick={onClose}>

@@ -171,7 +171,7 @@ const matchStatusConfig: Record<string, { label: string; icon: typeof CheckCircl
   confirmado_auto: { label: "Confirmado (auto)", icon: CheckCircle2, color: "text-emerald-600" },
   confirmado_manual: { label: "Confirmado", icon: CheckCircle2, color: "text-emerald-600" },
   possivel: { label: "Possivel", icon: AlertTriangle, color: "text-amber-600" },
-  descartado: { label: "Descartado", icon: XCircle, color: "text-zinc-400" },
+  descartado: { label: "Descartado", icon: XCircle, color: "text-neutral-400" },
 };
 
 const circunstanciaLabels: Record<string, string> = {
@@ -227,7 +227,7 @@ function CorpoSection({
   if (isEditing) {
     return (
       <div className="space-y-1.5">
-        <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide flex items-center gap-1.5">
+        <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wide flex items-center gap-1.5">
           <FileText className="h-3.5 w-3.5" />
           Resumo
         </h4>
@@ -244,7 +244,7 @@ function CorpoSection({
   // Estado pending — skeleton
   if (!resumoIA && !corpo && enrichmentStatus === "pending") {
     return (
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-4 space-y-2">
+      <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 p-4 space-y-2">
         <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-xs font-medium">
           <Sparkles className="h-3.5 w-3.5" />
           Analisando com IA...
@@ -262,7 +262,7 @@ function CorpoSection({
     <div className="space-y-3">
       {/* Card Resumo IA */}
       {resumoIA && (
-        <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-4">
+        <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="flex items-center gap-1.5 text-xs font-medium text-amber-600 dark:text-amber-400">
               <Sparkles className="h-3.5 w-3.5" />
@@ -270,7 +270,7 @@ function CorpoSection({
             </span>
           </div>
           <p className={cn(
-            "text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed",
+            "text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed",
             !resumoExpanded && resumoIA.length > MAX_RESUMO && "line-clamp-4"
           )}>
             {resumoIA}
@@ -291,18 +291,18 @@ function CorpoSection({
         <div className="space-y-1">
           <button
             onClick={() => setCorpoExpanded((v) => !v)}
-            className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+            className="flex items-center gap-1 text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer"
           >
             {corpoExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
             {resumoIA ? "Texto completo da notícia" : "Conteúdo"}
           </button>
           {corpoExpanded && (
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap bg-zinc-50 dark:bg-zinc-900/50 rounded-lg p-3 border border-zinc-100 dark:border-zinc-800">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed whitespace-pre-wrap bg-neutral-50 dark:bg-neutral-900/50 rounded-lg p-3 border border-neutral-100 dark:border-neutral-800">
               {corpo}
             </p>
           )}
           {!corpoExpanded && !resumoIA && (
-            <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+            <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
               {corpo.length > 600 ? corpo.slice(0, 600) + "…" : corpo}
             </p>
           )}
@@ -330,7 +330,7 @@ function EnvolvidoAvatar({ nome, papel }: { nome: string | null; papel: string }
     .map((n) => n[0])
     .join("")
     .toUpperCase();
-  const colorClass = avatarColors[papel] || "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";
+  const colorClass = avatarColors[papel] || "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
   return (
     <div
       className={cn(
@@ -438,13 +438,13 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
             <Skeleton className="h-4 w-2/3" />
           </div>
         ) : !noticia ? (
-          <div className="px-6 pt-6 flex items-center justify-center h-40 text-sm text-zinc-400">
+          <div className="px-6 pt-6 flex items-center justify-center h-40 text-sm text-neutral-400">
             Noticia nao encontrada
           </div>
         ) : (
           <>
             {/* STICKY HEADER */}
-            <div className="shrink-0 px-6 pt-5 pb-3 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+            <div className="shrink-0 px-6 pt-5 pb-3 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950">
               {/* Badges + Edit toggle + Close */}
               <div className="flex items-center gap-2 flex-wrap">
                 {isEditing ? (
@@ -524,7 +524,7 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
               </SheetTitle>
 
               {/* Meta row */}
-              <div className="flex items-center gap-3 text-xs text-zinc-400 flex-wrap mt-1.5">
+              <div className="flex items-center gap-3 text-xs text-neutral-400 flex-wrap mt-1.5">
                 <span>{noticia.fonte}</span>
                 {noticia.dataPublicacao && (
                   <span className="flex items-center gap-1">
@@ -539,7 +539,7 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
             {/* Imagem */}
             {noticia.imagemUrl && (
-              <div className="rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+              <div className="rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-800">
                 <img
                   src={noticia.imagemUrl}
                   alt=""
@@ -565,14 +565,14 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
               <>
                 <Separator />
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide flex items-center gap-1.5">
+                  <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wide flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5" />
                     Localizacao
                   </h4>
                   {isEditing ? (
                     <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                       <div className="space-y-1">
-                        <span className="text-xs text-zinc-400">Bairro</span>
+                        <span className="text-xs text-neutral-400">Bairro</span>
                         <Input
                           value={editForm.bairro}
                           onChange={(e) => setEditForm((prev) => ({ ...prev, bairro: e.target.value }))}
@@ -581,7 +581,7 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                         />
                       </div>
                       <div className="space-y-1">
-                        <span className="text-xs text-zinc-400">Logradouro</span>
+                        <span className="text-xs text-neutral-400">Logradouro</span>
                         <Input
                           value={editForm.logradouro}
                           onChange={(e) => setEditForm((prev) => ({ ...prev, logradouro: e.target.value }))}
@@ -590,7 +590,7 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                         />
                       </div>
                       <div className="space-y-1">
-                        <span className="text-xs text-zinc-400">Delegacia</span>
+                        <span className="text-xs text-neutral-400">Delegacia</span>
                         <Input
                           value={editForm.delegacia}
                           onChange={(e) => setEditForm((prev) => ({ ...prev, delegacia: e.target.value }))}
@@ -600,8 +600,8 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                       </div>
                       {noticia.dataFato && (
                         <div>
-                          <span className="text-xs text-zinc-400">Data do fato</span>
-                          <p className="font-medium text-zinc-800 dark:text-zinc-200 mt-1">
+                          <span className="text-xs text-neutral-400">Data do fato</span>
+                          <p className="font-medium text-neutral-800 dark:text-neutral-200 mt-1">
                             {format(new Date(noticia.dataFato), "dd/MM/yyyy", { locale: ptBR })}
                           </p>
                         </div>
@@ -611,13 +611,13 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                     /* VIEW MODE — chips inline */
                     <div className="flex flex-wrap gap-1.5">
                       {noticia.bairro && (
-                        <span className="inline-flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-full px-3 py-1 text-xs font-medium">
-                          <MapPin className="h-2.5 w-2.5 text-zinc-400" />
+                        <span className="inline-flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded-full px-3 py-1 text-xs font-medium">
+                          <MapPin className="h-2.5 w-2.5 text-neutral-400" />
                           {noticia.bairro}
                         </span>
                       )}
                       {noticia.logradouro && (
-                        <span className="inline-flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-full px-3 py-1 text-xs font-medium">
+                        <span className="inline-flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded-full px-3 py-1 text-xs font-medium">
                           {noticia.logradouro}
                         </span>
                       )}
@@ -628,15 +628,15 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                         </span>
                       )}
                       {noticia.dataFato && (
-                        <span className="inline-flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-full px-3 py-1 text-xs font-medium">
-                          <Clock className="h-2.5 w-2.5 text-zinc-400" />
+                        <span className="inline-flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded-full px-3 py-1 text-xs font-medium">
+                          <Clock className="h-2.5 w-2.5 text-neutral-400" />
                           {format(new Date(noticia.dataFato), "dd/MM/yyyy", { locale: ptBR })}
                         </span>
                       )}
                     </div>
                   )}
                   {noticia.latitude && noticia.longitude && (
-                    <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                    <div className="flex items-center gap-1.5 text-xs text-neutral-400">
                       <Crosshair className="h-3 w-3" />
                       {Number(noticia.latitude).toFixed(5)}, {Number(noticia.longitude).toFixed(5)}
                     </div>
@@ -650,7 +650,7 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
               <>
                 <Separator />
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide flex items-center gap-1.5">
+                  <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wide flex items-center gap-1.5">
                     <Scale className="h-3.5 w-3.5" />
                     Tipificacao
                   </h4>
@@ -665,8 +665,8 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                   )}
                   {noticia.armaMeio && (
                     <div className="text-sm">
-                      <span className="text-xs text-zinc-400">Arma/Meio: </span>
-                      <span className="text-zinc-700 dark:text-zinc-300">{noticia.armaMeio}</span>
+                      <span className="text-xs text-neutral-400">Arma/Meio: </span>
+                      <span className="text-neutral-700 dark:text-neutral-300">{noticia.armaMeio}</span>
                     </div>
                   )}
                 </div>
@@ -678,7 +678,7 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
               <>
                 <Separator />
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide flex items-center gap-1.5">
+                  <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wide flex items-center gap-1.5">
                     <Users className="h-3.5 w-3.5" />
                     Envolvidos ({parseEnvolvidos(noticia.envolvidos as any).length})
                   </h4>
@@ -686,21 +686,21 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                     {parseEnvolvidos(noticia.envolvidos as any).map((e, i) => (
                       <div
                         key={i}
-                        className="flex items-center gap-3 px-2.5 py-2 rounded-lg border border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors group"
+                        className="flex items-center gap-3 px-2.5 py-2 rounded-lg border border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors group"
                       >
                         <EnvolvidoAvatar nome={e.nome} papel={e.papel} />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                          <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
                             {e.nome || "Desconhecido"}
-                            {e.vulgo ? <span className="text-zinc-500 italic"> &quot;{e.vulgo}&quot;</span> : null}
-                            {e.idade ? <span className="text-zinc-500">, {e.idade} anos</span> : null}
+                            {e.vulgo ? <span className="text-neutral-500 italic"> &quot;{e.vulgo}&quot;</span> : null}
+                            {e.idade ? <span className="text-neutral-500">, {e.idade} anos</span> : null}
                           </p>
-                          <p className="text-xs text-zinc-500">
+                          <p className="text-xs text-neutral-500">
                             {papelLabels[e.papel] || e.papel}
                           </p>
                         </div>
                         <button
-                          className="opacity-0 group-hover:opacity-100 transition-opacity h-6 px-2 text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer flex items-center gap-1"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity h-6 px-2 text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 cursor-pointer flex items-center gap-1"
                           onClick={() => {
                             navigator.clipboard.writeText(e.nome || "");
                             toast.success("Nome copiado");
@@ -721,7 +721,7 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                 <Separator />
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide flex items-center gap-1.5">
+                    <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wide flex items-center gap-1.5">
                       <Shield className="h-3.5 w-3.5" />
                       Matches com Assistidos DPE
                     </h4>
@@ -741,29 +741,29 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                       return (
                         <div
                           key={match.id}
-                          className="flex items-center gap-3 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50"
+                          className="flex items-center gap-3 px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50"
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <div className="flex-1 h-1 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                              <div className="flex-1 h-1 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
                                 <div
                                   className={cn(
                                     "h-full rounded-full",
                                     match.scoreConfianca >= 80 ? "bg-emerald-500" :
-                                    match.scoreConfianca >= 60 ? "bg-amber-500" : "bg-zinc-400"
+                                    match.scoreConfianca >= 60 ? "bg-amber-500" : "bg-neutral-400"
                                   )}
                                   style={{ width: `${match.scoreConfianca}%` }}
                                 />
                               </div>
-                              <span className="text-xs text-zinc-500 shrink-0">{match.scoreConfianca}%</span>
+                              <span className="text-xs text-neutral-500 shrink-0">{match.scoreConfianca}%</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                              <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">
                                 {match.assistidoNome || match.nomeEncontrado}
                               </span>
                               <Icon className={cn("h-3.5 w-3.5 shrink-0", cfg.color)} />
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-zinc-400 mt-0.5">
+                            <div className="flex items-center gap-2 text-xs text-neutral-400 mt-0.5">
                               <span>{cfg.label}</span>
                               {match.nomeEncontrado !== match.assistidoNome && (
                                 <span className="truncate">
@@ -772,14 +772,14 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                               )}
                             </div>
                             {(match.status === "confirmado_manual" || match.status === "descartado") && match.updatedAt && (
-                              <div className="text-[10px] text-zinc-400 flex items-center gap-1 mt-1">
+                              <div className="text-[10px] text-neutral-400 flex items-center gap-1 mt-1">
                                 <Clock className="h-2.5 w-2.5" />
                                 {match.status === "confirmado_manual" ? "Confirmado" : "Descartado"}{" "}
                                 {formatDistanceToNow(new Date(match.updatedAt), { addSuffix: true, locale: ptBR })}
                               </div>
                             )}
                             {match.notes && (
-                              <div className="text-[10px] text-zinc-500 italic flex items-center gap-1 mt-0.5">
+                              <div className="text-[10px] text-neutral-500 italic flex items-center gap-1 mt-0.5">
                                 <MessageSquare className="h-2.5 w-2.5 shrink-0" />
                                 {match.notes}
                               </div>
@@ -787,7 +787,7 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                             {/* Por que este match? */}
                             <Accordion type="single" collapsible className="mt-1">
                               <AccordionItem value={`match-${match.id}`} className="border-0">
-                                <AccordionTrigger className="py-1 text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:no-underline">
+                                <AccordionTrigger className="py-1 text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:no-underline">
                                   <span className="flex items-center gap-2">
                                     Por que este match?
                                     <button
@@ -797,28 +797,28 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                                         navigator.clipboard.writeText(text);
                                         toast.success("Trecho copiado");
                                       }}
-                                      className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 flex items-center gap-1 cursor-pointer"
+                                      className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 flex items-center gap-1 cursor-pointer"
                                     >
                                       <Copy className="h-3 w-3" /> Copiar
                                     </button>
                                   </span>
                                 </AccordionTrigger>
                                 <AccordionContent className="pb-1">
-                                  <div className="text-xs bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3 border border-zinc-100 dark:border-zinc-800">
+                                  <div className="text-xs bg-neutral-50 dark:bg-neutral-900 rounded-lg p-3 border border-neutral-100 dark:border-neutral-800">
                                     {noticia.corpo ? (
-                                      <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                                      <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed">
                                         <HighlightedText
                                           text={noticia.corpo.slice(0, 600)}
                                           highlights={[match.nomeEncontrado].filter(Boolean) as string[]}
                                         />
                                         {noticia.corpo.length > 600 && (
-                                          <span className="text-zinc-400"> ...</span>
+                                          <span className="text-neutral-400"> ...</span>
                                         )}
                                       </p>
                                     ) : (
-                                      <p className="text-zinc-500">
+                                      <p className="text-neutral-500">
                                         Nome encontrado:{" "}
-                                        <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                                        <span className="font-medium text-neutral-700 dark:text-neutral-300">
                                           {match.nomeEncontrado}
                                         </span>
                                       </p>
@@ -853,7 +853,7 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
               <>
                 <Separator />
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wide flex items-center gap-1.5">
+                  <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wide flex items-center gap-1.5">
                     <Newspaper className="h-3.5 w-3.5" />
                     Ver também ({relacionadas.length})
                   </h4>
@@ -861,11 +861,11 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                     {relacionadas.map((rel) => (
                       <button
                         key={rel.id}
-                        className="w-full text-left flex items-start gap-2.5 p-2 rounded-lg border border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer group"
+                        className="w-full text-left flex items-start gap-2.5 p-2 rounded-lg border border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer group"
                         onClick={() => onSelectNoticia?.(rel.id)}
                       >
                         {rel.imagemUrl && (
-                          <div className="w-12 h-12 rounded-md overflow-hidden shrink-0 bg-zinc-100 dark:bg-zinc-800">
+                          <div className="w-12 h-12 rounded-md overflow-hidden shrink-0 bg-neutral-100 dark:bg-neutral-800">
                             <img src={rel.imagemUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
                           </div>
                         )}
@@ -878,10 +878,10 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                               {getCrimeLabel(rel.tipoCrime)}
                             </Badge>
                           </div>
-                          <p className="text-xs font-medium text-zinc-800 dark:text-zinc-200 line-clamp-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                          <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 line-clamp-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
                             {rel.titulo}
                           </p>
-                          <div className="flex items-center gap-2 text-[10px] text-zinc-400 mt-0.5">
+                          <div className="flex items-center gap-2 text-[10px] text-neutral-400 mt-0.5">
                             {rel.bairro && (
                               <span className="flex items-center gap-0.5">
                                 <MapPin className="h-2.5 w-2.5" />
@@ -906,7 +906,7 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
             </div>{/* end SCROLLABLE BODY */}
 
             {/* STICKY FOOTER */}
-            <div className="shrink-0 px-6 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex gap-2">
+            <div className="shrink-0 px-6 py-3 border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 flex gap-2">
               {isEditing ? (
                 <>
                   <Button
@@ -941,7 +941,7 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 gap-1.5 cursor-pointer text-zinc-600 hover:text-emerald-700 hover:border-emerald-300"
+                      className="flex-1 gap-1.5 cursor-pointer text-neutral-600 hover:text-emerald-700 hover:border-emerald-300"
                       onClick={() => { onOpenChange(false); onVerNoMapa(noticiaId); }}
                     >
                       <MapPin className="h-3.5 w-3.5" />
@@ -951,7 +951,7 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="gap-1.5 cursor-pointer text-zinc-500 hover:text-zinc-700"
+                    className="gap-1.5 cursor-pointer text-neutral-500 hover:text-neutral-700"
                     onClick={() => reprocessMutation.mutate({ id: noticiaId! })}
                     disabled={reprocessMutation.isPending || noticia.enrichmentStatus === "pending"}
                     title="Re-analisar esta notícia com IA"
@@ -965,7 +965,7 @@ export function RadarNoticiaSheet({ noticiaId, open, onOpenChange, onSelectNotic
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="gap-1.5 cursor-pointer text-zinc-500 hover:text-zinc-700"
+                    className="gap-1.5 cursor-pointer text-neutral-500 hover:text-neutral-700"
                     onClick={() => {
                       const texto = noticia.resumoIA || noticia.corpo?.slice(0, 500) || noticia.titulo;
                       navigator.clipboard.writeText(texto);

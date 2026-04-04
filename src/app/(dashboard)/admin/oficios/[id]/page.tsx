@@ -311,8 +311,8 @@ export default function OficioEditorPage() {
   if (!oficio && id > 0) {
     return (
       <div className="text-center py-20">
-        <FileText className="w-10 h-10 mx-auto text-zinc-600 mb-3" />
-        <p className="text-zinc-500">Oficio nao encontrado</p>
+        <FileText className="w-10 h-10 mx-auto text-neutral-600 mb-3" />
+        <p className="text-neutral-500">Oficio nao encontrado</p>
         <Button variant="ghost" className="mt-4" onClick={() => router.push("/admin/oficios")}>
           <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
         </Button>
@@ -330,21 +330,21 @@ export default function OficioEditorPage() {
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-400 hover:text-zinc-100"
+            className="text-neutral-400 hover:text-neutral-100"
             onClick={() => router.push("/admin/oficios")}
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <h1 className="text-lg font-semibold text-zinc-100">
+            <h1 className="text-lg font-semibold text-neutral-100">
               {titulo || "Novo Oficio"}
             </h1>
             <div className="flex items-center gap-2 mt-0.5">
               {oficio?.assistidoNome && (
-                <span className="text-xs text-zinc-500">{oficio.assistidoNome}</span>
+                <span className="text-xs text-neutral-500">{oficio.assistidoNome}</span>
               )}
               {oficio?.processoNumero && (
-                <span className="text-xs text-zinc-500 font-mono">
+                <span className="text-xs text-neutral-500 font-mono">
                   {oficio.processoNumero}
                 </span>
               )}
@@ -361,7 +361,7 @@ export default function OficioEditorPage() {
           <Button
             variant="outline"
             size="sm"
-            className="border-zinc-700 text-zinc-300"
+            className="border-neutral-700 text-neutral-300"
             disabled={!dirty || saving}
             onClick={handleSave}
           >
@@ -373,7 +373,7 @@ export default function OficioEditorPage() {
             Salvar
           </Button>
           {oficio?.googleDocUrl && (
-            <Button variant="ghost" size="sm" className="text-zinc-400" asChild>
+            <Button variant="ghost" size="sm" className="text-neutral-400" asChild>
               <a href={oficio.googleDocUrl} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
                 Google Doc
@@ -384,22 +384,22 @@ export default function OficioEditorPage() {
       </div>
 
       {/* Metadata Bar */}
-      <div className="rounded-xl border border-zinc-700/30 bg-zinc-900/50 p-4">
+      <div className="rounded-xl border border-neutral-700/30 bg-neutral-900/50 p-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div>
-            <label className="text-xs text-zinc-500 mb-1 block">Titulo</label>
+            <label className="text-xs text-neutral-500 mb-1 block">Titulo</label>
             <Input
               value={titulo}
               onChange={(e) => {
                 setTitulo(e.target.value);
                 setDirty(true);
               }}
-              className="bg-zinc-800/50 border-zinc-700 text-zinc-100 text-sm"
+              className="bg-neutral-800/50 border-neutral-700 text-neutral-100 text-sm"
               placeholder="Titulo do oficio"
             />
           </div>
           <div>
-            <label className="text-xs text-zinc-500 mb-1 block">Tipo</label>
+            <label className="text-xs text-neutral-500 mb-1 block">Tipo</label>
             <Select
               value={tipoOficio}
               onValueChange={(v) => {
@@ -407,10 +407,10 @@ export default function OficioEditorPage() {
                 setDirty(true);
               }}
             >
-              <SelectTrigger className="bg-zinc-800/50 border-zinc-700 text-zinc-300 text-sm">
+              <SelectTrigger className="bg-neutral-800/50 border-neutral-700 text-neutral-300 text-sm">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-zinc-700">
+              <SelectContent className="bg-neutral-900 border-neutral-700">
                 {TIPOS_OFICIO.map((t) => (
                   <SelectItem key={t.value} value={t.value}>
                     {t.label}
@@ -420,19 +420,19 @@ export default function OficioEditorPage() {
             </Select>
           </div>
           <div>
-            <label className="text-xs text-zinc-500 mb-1 block">Destinatario</label>
+            <label className="text-xs text-neutral-500 mb-1 block">Destinatario</label>
             <Input
               value={destinatario}
               onChange={(e) => {
                 setDestinatario(e.target.value);
                 setDirty(true);
               }}
-              className="bg-zinc-800/50 border-zinc-700 text-zinc-100 text-sm"
+              className="bg-neutral-800/50 border-neutral-700 text-neutral-100 text-sm"
               placeholder="Ex: Juiz da 1a Vara Criminal"
             />
           </div>
           <div>
-            <label className="text-xs text-zinc-500 mb-1 block">Urgencia</label>
+            <label className="text-xs text-neutral-500 mb-1 block">Urgencia</label>
             <Select
               value={urgencia}
               onValueChange={(v) => {
@@ -440,10 +440,10 @@ export default function OficioEditorPage() {
                 setDirty(true);
               }}
             >
-              <SelectTrigger className="bg-zinc-800/50 border-zinc-700 text-zinc-300 text-sm">
+              <SelectTrigger className="bg-neutral-800/50 border-neutral-700 text-neutral-300 text-sm">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-zinc-700">
+              <SelectContent className="bg-neutral-900 border-neutral-700">
                 <SelectItem value="normal">Normal</SelectItem>
                 <SelectItem value="urgente">Urgente</SelectItem>
                 <SelectItem value="urgentissimo">Urgentissimo</SelectItem>
@@ -454,9 +454,9 @@ export default function OficioEditorPage() {
       </div>
 
       {/* Editor */}
-      <div className="rounded-xl border border-zinc-700/30 bg-zinc-900/50">
+      <div className="rounded-xl border border-neutral-700/30 bg-neutral-900/50">
         {/* Toolbar */}
-        <div className="flex items-center gap-1 p-2 border-b border-zinc-800">
+        <div className="flex items-center gap-1 p-2 border-b border-neutral-800">
           <Select
             value={status}
             onValueChange={(v) => {
@@ -464,10 +464,10 @@ export default function OficioEditorPage() {
               setDirty(true);
             }}
           >
-            <SelectTrigger className="w-[130px] h-7 bg-zinc-800/50 border-zinc-700 text-zinc-400 text-xs">
+            <SelectTrigger className="w-[130px] h-7 bg-neutral-800/50 border-neutral-700 text-neutral-400 text-xs">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-900 border-zinc-700">
+            <SelectContent className="bg-neutral-900 border-neutral-700">
               <SelectItem value="rascunho">Rascunho</SelectItem>
               <SelectItem value="revisao">Em Revisao</SelectItem>
               <SelectItem value="enviado">Enviado</SelectItem>
@@ -528,13 +528,13 @@ export default function OficioEditorPage() {
 
         {/* Gerar Input */}
         {showGerarInput && (
-          <div className="flex items-center gap-2 p-2 border-b border-zinc-800 bg-violet-500/5">
+          <div className="flex items-center gap-2 p-2 border-b border-neutral-800 bg-violet-500/5">
             <Sparkles className="w-4 h-4 text-violet-400 shrink-0" />
             <Input
               value={instrucaoGerar}
               onChange={(e) => setInstrucaoGerar(e.target.value)}
               placeholder="Instrucoes para gerar o corpo (ex: tom formal, mencionar artigo 121...)"
-              className="flex-1 h-7 bg-zinc-800/50 border-zinc-700 text-zinc-200 text-xs"
+              className="flex-1 h-7 bg-neutral-800/50 border-neutral-700 text-neutral-200 text-xs"
               onKeyDown={(e) => e.key === "Enter" && handleGerar()}
             />
             <Button
@@ -548,7 +548,7 @@ export default function OficioEditorPage() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-zinc-500"
+              className="h-7 w-7 text-neutral-500"
               onClick={() => { setShowGerarInput(false); setInstrucaoGerar(""); }}
             >
               <X className="w-3 h-3" />
@@ -558,13 +558,13 @@ export default function OficioEditorPage() {
 
         {/* Melhorar Input */}
         {showMelhorarInput && (
-          <div className="flex items-center gap-2 p-2 border-b border-zinc-800 bg-amber-500/5">
+          <div className="flex items-center gap-2 p-2 border-b border-neutral-800 bg-amber-500/5">
             <Wand2 className="w-4 h-4 text-amber-400 shrink-0" />
             <Input
               value={instrucaoMelhorar}
               onChange={(e) => setInstrucaoMelhorar(e.target.value)}
               placeholder="O que melhorar? (ex: mais formal, corrigir ortografia, simplificar)"
-              className="flex-1 h-7 bg-zinc-800/50 border-zinc-700 text-zinc-200 text-xs"
+              className="flex-1 h-7 bg-neutral-800/50 border-neutral-700 text-neutral-200 text-xs"
               onKeyDown={(e) => e.key === "Enter" && instrucaoMelhorar.trim() && handleMelhorar()}
             />
             <Button
@@ -578,7 +578,7 @@ export default function OficioEditorPage() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-zinc-500"
+              className="h-7 w-7 text-neutral-500"
               onClick={() => { setShowMelhorarInput(false); setInstrucaoMelhorar(""); }}
             >
               <X className="w-3 h-3" />
@@ -588,9 +588,9 @@ export default function OficioEditorPage() {
 
         {/* IA Processing Indicator */}
         {isIABusy && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-zinc-800/50 border-b border-zinc-800">
+          <div className="flex items-center gap-2 px-4 py-2 bg-neutral-800/50 border-b border-neutral-800">
             <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-400" />
-            <span className="text-xs text-zinc-400">
+            <span className="text-xs text-neutral-400">
               {generating && "Gemini 2.5 Pro gerando corpo do oficio..."}
               {reviewing && "Claude Sonnet revisando oficio..."}
               {improving && "Claude Sonnet melhorando texto..."}
@@ -602,7 +602,7 @@ export default function OficioEditorPage() {
         <Textarea
           value={conteudo}
           onChange={(e) => handleContentChange(e.target.value)}
-          className="min-h-[500px] border-0 rounded-none bg-transparent text-zinc-200 text-sm
+          className="min-h-[500px] border-0 rounded-none bg-transparent text-neutral-200 text-sm
             font-mono leading-relaxed p-6 resize-y focus-visible:ring-0 focus-visible:ring-offset-0"
           placeholder={`DEFENSORIA PUBLICA DO ESTADO DA BAHIA
 Nucleo Criminal de Camacari
@@ -625,10 +625,10 @@ Defensor(a) Publico(a)`}
 
       {/* Review Panel */}
       {reviewResult && (
-        <div className="rounded-xl border border-blue-500/20 bg-zinc-900/50 overflow-hidden">
+        <div className="rounded-xl border border-blue-500/20 bg-neutral-900/50 overflow-hidden">
           <button
             onClick={() => setShowReview(!showReview)}
-            className="w-full flex items-center justify-between p-3 hover:bg-zinc-800/30 transition-colors"
+            className="w-full flex items-center justify-between p-3 hover:bg-neutral-800/30 transition-colors"
           >
             <div className="flex items-center gap-3">
               <div className={`flex items-center gap-1.5 text-sm font-medium ${
@@ -678,35 +678,35 @@ Defensor(a) Publico(a)`}
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-zinc-600">{reviewResult.modelo}</span>
+              <span className="text-[10px] text-neutral-600">{reviewResult.modelo}</span>
               {showReview ? (
-                <ChevronUp className="w-4 h-4 text-zinc-500" />
+                <ChevronUp className="w-4 h-4 text-neutral-500" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-zinc-500" />
+                <ChevronDown className="w-4 h-4 text-neutral-500" />
               )}
             </div>
           </button>
 
           {showReview && (
-            <div className="border-t border-zinc-800 p-4 space-y-3">
+            <div className="border-t border-neutral-800 p-4 space-y-3">
               {reviewResult.sugestoes.length > 0 && (
                 <div>
-                  <h4 className="text-xs font-medium text-zinc-400 mb-2">
+                  <h4 className="text-xs font-medium text-neutral-400 mb-2">
                     Sugestoes ({reviewResult.sugestoes.length})
                   </h4>
                   <div className="space-y-2">
                     {reviewResult.sugestoes.map((s, i) => (
                       <div
                         key={i}
-                        className="flex gap-2 p-2 rounded-lg bg-zinc-800/30 border border-zinc-700/20"
+                        className="flex gap-2 p-2 rounded-lg bg-neutral-800/30 border border-neutral-700/20"
                       >
-                        <Badge variant="outline" className="text-[9px] text-zinc-400 border-zinc-600 shrink-0 mt-0.5">
+                        <Badge variant="outline" className="text-[9px] text-neutral-400 border-neutral-600 shrink-0 mt-0.5">
                           {s.tipo}
                         </Badge>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs text-zinc-300">{(s as any).sugestao || (s as any).descricao}</p>
+                          <p className="text-xs text-neutral-300">{(s as any).sugestao || (s as any).descricao}</p>
                           {s.trecho && (
-                            <p className="text-[10px] text-zinc-600 mt-1 font-mono truncate">
+                            <p className="text-[10px] text-neutral-600 mt-1 font-mono truncate">
                               Trecho: {s.trecho}
                             </p>
                           )}
@@ -718,7 +718,7 @@ Defensor(a) Publico(a)`}
               )}
 
               {reviewResult.conteudoRevisado && (
-                <div className="flex items-center gap-2 pt-2 border-t border-zinc-800">
+                <div className="flex items-center gap-2 pt-2 border-t border-neutral-800">
                   <Button
                     size="sm"
                     className="text-xs bg-blue-600 hover:bg-blue-500 text-white"
@@ -727,7 +727,7 @@ Defensor(a) Publico(a)`}
                     <CheckCircle2 className="w-3 h-3 mr-1" />
                     Aplicar versao revisada
                   </Button>
-                  <span className="text-[10px] text-zinc-600">
+                  <span className="text-[10px] text-neutral-600">
                     Substitui o conteudo atual pela versao corrigida
                   </span>
                 </div>
@@ -736,7 +736,7 @@ Defensor(a) Publico(a)`}
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-xs text-zinc-500"
+                className="text-xs text-neutral-500"
                 onClick={() => { setReviewResult(null); setShowReview(false); }}
               >
                 <X className="w-3 h-3 mr-1" />
@@ -748,8 +748,8 @@ Defensor(a) Publico(a)`}
       )}
 
       {/* Export Bar */}
-      <div className="flex items-center justify-between rounded-xl border border-zinc-700/30 bg-zinc-900/50 p-3">
-        <span className="text-xs text-zinc-500">
+      <div className="flex items-center justify-between rounded-xl border border-neutral-700/30 bg-neutral-900/50 p-3">
+        <span className="text-xs text-neutral-500">
           {conteudo.length} caracteres
           {oficio?.createdAt && (
             <> | Criado em {new Date(oficio.createdAt).toLocaleDateString("pt-BR")}</>
@@ -759,7 +759,7 @@ Defensor(a) Publico(a)`}
           <Button
             variant="outline"
             size="sm"
-            className="border-zinc-700 text-zinc-400 text-xs hover:text-zinc-200 hover:border-zinc-500 cursor-pointer"
+            className="border-neutral-700 text-neutral-400 text-xs hover:text-neutral-200 hover:border-neutral-500 cursor-pointer"
             disabled={exportingPDF || !conteudo.trim()}
             onClick={handleExportPDF}
           >
@@ -773,7 +773,7 @@ Defensor(a) Publico(a)`}
           <Button
             variant="outline"
             size="sm"
-            className="border-zinc-700 text-zinc-400 text-xs hover:text-zinc-200 hover:border-zinc-500 cursor-pointer"
+            className="border-neutral-700 text-neutral-400 text-xs hover:text-neutral-200 hover:border-neutral-500 cursor-pointer"
             disabled={exportingGDocs || !conteudo.trim()}
             onClick={handleExportGDocs}
           >

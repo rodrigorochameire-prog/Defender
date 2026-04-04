@@ -42,9 +42,9 @@ interface DriveFileCompactProps {
 function SkeletonRow() {
   return (
     <div className="flex items-center gap-1.5 px-2 h-6 animate-pulse">
-      <div className="w-3.5 h-3.5 rounded bg-zinc-200/50 dark:bg-zinc-700/50" />
-      <div className="flex-1 h-2.5 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-1/3" />
-      <div className="h-2.5 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-10" />
+      <div className="w-3.5 h-3.5 rounded bg-neutral-200/50 dark:bg-neutral-700/50" />
+      <div className="flex-1 h-2.5 bg-neutral-200/50 dark:bg-neutral-700/50 rounded w-1/3" />
+      <div className="h-2.5 bg-neutral-200/50 dark:bg-neutral-700/50 rounded w-10" />
     </div>
   );
 }
@@ -78,7 +78,7 @@ function CompactRow({ file }: { file: DriveFile }) {
       onClick={handleClick}
       className={cn(
         "flex items-center gap-1.5 px-2 h-6 cursor-pointer transition-colors duration-100",
-        "hover:bg-zinc-50 dark:hover:bg-zinc-800/60",
+        "hover:bg-neutral-50 dark:hover:bg-neutral-800/60",
         file.isFolder && "font-medium"
       )}
     >
@@ -92,17 +92,17 @@ function CompactRow({ file }: { file: DriveFile }) {
       {/* Icon */}
       <Icon className={cn(
         "w-3 h-3 shrink-0",
-        file.isFolder ? "text-emerald-600 dark:text-emerald-500" : "text-zinc-400 dark:text-zinc-500"
+        file.isFolder ? "text-emerald-600 dark:text-emerald-500" : "text-neutral-400 dark:text-neutral-500"
       )} />
 
       {/* Name */}
-      <span className="text-[11px] text-zinc-800 dark:text-zinc-200 truncate flex-1" title={file.name}>
+      <span className="text-[11px] text-neutral-800 dark:text-neutral-200 truncate flex-1" title={file.name}>
         {file.name}
       </span>
 
       {/* Inline metadata */}
       {meta && (
-        <span className="text-[9px] text-zinc-400 dark:text-zinc-600 shrink-0 tabular-nums">
+        <span className="text-[9px] text-neutral-400 dark:text-neutral-600 shrink-0 tabular-nums">
           {meta}
         </span>
       )}
@@ -123,7 +123,7 @@ export function DriveFileCompact({ files, isLoading }: DriveFileCompactProps) {
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800/60 overflow-hidden bg-white dark:bg-zinc-900">
+      <div className="rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden bg-white dark:bg-neutral-900">
         {Array.from({ length: 16 }).map((_, i) => <SkeletonRow key={i} />)}
       </div>
     );
@@ -132,14 +132,14 @@ export function DriveFileCompact({ files, isLoading }: DriveFileCompactProps) {
   if (sortedFiles.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <FolderOpen className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mb-2" />
-        <p className="text-[12px] text-zinc-500 font-medium">Nenhum arquivo</p>
+        <FolderOpen className="w-10 h-10 text-neutral-300 dark:text-neutral-600 mb-2" />
+        <p className="text-[12px] text-neutral-500 font-medium">Nenhum arquivo</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800/60 overflow-hidden bg-white dark:bg-zinc-900 divide-y divide-zinc-100/50 dark:divide-zinc-800/30">
+    <div className="rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden bg-white dark:bg-neutral-900 divide-y divide-neutral-100/50 dark:divide-neutral-800/30">
       {sortedFiles.map((file) => (
         <CompactRow key={file.id} file={file} />
       ))}

@@ -27,7 +27,7 @@ export function StatusDistributionChart({ demandas }: StatusDistributionChartPro
 
   if (data.length === 0) {
     return (
-      <div className="h-64 flex items-center justify-center text-zinc-500 dark:text-zinc-400">
+      <div className="h-64 flex items-center justify-center text-neutral-500 dark:text-neutral-400">
         Nenhuma demanda para exibir
       </div>
     );

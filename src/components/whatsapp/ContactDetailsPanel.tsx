@@ -248,7 +248,7 @@ export function ContactDetailsPanel({
       )}
     >
       {/* ===== HEADER ===== */}
-      <div className="flex items-center justify-between px-4 py-3 bg-zinc-50/80 dark:bg-muted/50 backdrop-blur-sm border-b border-border shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 bg-neutral-50/80 dark:bg-muted/50 backdrop-blur-sm border-b border-border shrink-0">
         <span className="text-sm font-semibold text-foreground">
           Detalhes do Contato
         </span>
@@ -262,9 +262,9 @@ export function ContactDetailsPanel({
         <div className="px-4 py-5 space-y-6">
           {/* --- 2. Profile Section --- */}
           <div className="flex flex-col items-center gap-2">
-            <Avatar className="h-16 w-16 ring-2 ring-zinc-200 dark:ring-border ring-offset-2 ring-offset-white dark:ring-offset-card">
+            <Avatar className="h-16 w-16 ring-2 ring-neutral-200 dark:ring-border ring-offset-2 ring-offset-white dark:ring-offset-card">
               <AvatarImage src={contact.profilePicUrl ?? undefined} />
-              <AvatarFallback className="bg-zinc-100 dark:bg-muted text-zinc-600 dark:text-foreground/80 text-lg">
+              <AvatarFallback className="bg-neutral-100 dark:bg-muted text-neutral-600 dark:text-foreground/80 text-lg">
                 {getInitials(contact.name || contact.pushName)}
               </AvatarFallback>
             </Avatar>
@@ -307,7 +307,7 @@ export function ContactDetailsPanel({
                 Interlocutor
               </span>
             </div>
-            <div className="bg-zinc-50 dark:bg-muted/50 rounded-lg p-3 space-y-3">
+            <div className="bg-neutral-50 dark:bg-muted/50 rounded-lg p-3 space-y-3">
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">
                   Tipo
@@ -351,7 +351,7 @@ export function ContactDetailsPanel({
               </span>
             </div>
             {assistido ? (
-              <div className="bg-zinc-50 dark:bg-muted/50 rounded-lg p-3">
+              <div className="bg-neutral-50 dark:bg-muted/50 rounded-lg p-3">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={assistido.photoUrl ?? undefined} />
@@ -381,7 +381,7 @@ export function ContactDetailsPanel({
                 </Button>
               </div>
             ) : (
-              <div className="bg-zinc-50 dark:bg-muted/50 rounded-lg p-3">
+              <div className="bg-neutral-50 dark:bg-muted/50 rounded-lg p-3">
                 <p className="text-sm text-muted-foreground mb-2">
                   Nenhum assistido vinculado
                 </p>
@@ -438,7 +438,7 @@ export function ContactDetailsPanel({
                   ))}
                 </div>
               ) : (
-                <div className="bg-zinc-50 dark:bg-muted/50 rounded-lg p-3">
+                <div className="bg-neutral-50 dark:bg-muted/50 rounded-lg p-3">
                   <p className="text-sm text-muted-foreground">
                     Nenhum processo encontrado
                   </p>
@@ -456,19 +456,19 @@ export function ContactDetailsPanel({
               </span>
             </div>
             <div className="grid grid-cols-3 gap-2">
-              <div className="text-center p-2 rounded-lg bg-zinc-50 dark:bg-muted/50">
+              <div className="text-center p-2 rounded-lg bg-neutral-50 dark:bg-muted/50">
                 <div className="text-lg font-semibold text-foreground">
                   {stats?.totalMessages ?? "--"}
                 </div>
                 <div className="text-[10px] text-muted-foreground">Mensagens</div>
               </div>
-              <div className="text-center p-2 rounded-lg bg-zinc-50 dark:bg-muted/50">
+              <div className="text-center p-2 rounded-lg bg-neutral-50 dark:bg-muted/50">
                 <div className="text-lg font-semibold text-foreground">
                   {stats?.mediaMessages ?? "--"}
                 </div>
                 <div className="text-[10px] text-muted-foreground">Arquivos</div>
               </div>
-              <div className="text-center p-2 rounded-lg bg-zinc-50 dark:bg-muted/50">
+              <div className="text-center p-2 rounded-lg bg-neutral-50 dark:bg-muted/50">
                 <div className="text-lg font-semibold text-foreground">
                   {stats?.firstMessageAt
                     ? format(new Date(stats.firstMessageAt), "dd/MM", {
@@ -493,7 +493,7 @@ export function ContactDetailsPanel({
                 Notas
               </span>
             </div>
-            <div className="bg-zinc-50 dark:bg-muted/50 rounded-lg p-3">
+            <div className="bg-neutral-50 dark:bg-muted/50 rounded-lg p-3">
               {editingNotes ? (
                 <div className="space-y-2">
                   <Textarea
@@ -554,7 +554,7 @@ export function ContactDetailsPanel({
                 Tags
               </span>
             </div>
-            <div className="bg-zinc-50 dark:bg-muted/50 rounded-lg p-3">
+            <div className="bg-neutral-50 dark:bg-muted/50 rounded-lg p-3">
               {/* Existing tags */}
               {(contact.tags ?? []).length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-2">

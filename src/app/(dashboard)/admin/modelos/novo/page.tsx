@@ -308,9 +308,9 @@ export default function NovoModeloPage() {
   const extractedVars = extractVariables();
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950">
+    <div className="min-h-screen bg-neutral-50/50 dark:bg-neutral-950">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-border bg-white dark:bg-card">
+      <div className="border-b border-neutral-200 dark:border-border bg-white dark:bg-card">
         <div className="px-6 py-4">
           <Breadcrumbs
             items={[
@@ -331,10 +331,10 @@ export default function NovoModeloPage() {
                 <FileStack className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-zinc-900 dark:text-foreground">
+                <h1 className="text-xl font-semibold text-neutral-900 dark:text-foreground">
                   Novo Modelo
                 </h1>
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-neutral-500">
                   Crie um novo modelo de documento
                 </p>
               </div>
@@ -413,17 +413,17 @@ export default function NovoModeloPage() {
                             "flex flex-col items-start p-3 rounded-lg border-2 text-left transition-all",
                             categoria === opt.value
                               ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
-                              : "border-zinc-200 dark:border-border hover:border-zinc-300 dark:hover:border-zinc-600"
+                              : "border-neutral-200 dark:border-border hover:border-neutral-300 dark:hover:border-neutral-600"
                           )}
                         >
                           <Icon className={cn(
                             "w-5 h-5 mb-2",
                             categoria === opt.value
                               ? "text-emerald-600"
-                              : "text-zinc-400"
+                              : "text-neutral-400"
                           )} />
                           <span className="font-medium text-sm">{opt.label}</span>
-                          <span className="text-xs text-zinc-500 mt-0.5">
+                          <span className="text-xs text-neutral-500 mt-0.5">
                             {opt.description}
                           </span>
                         </button>
@@ -454,7 +454,7 @@ export default function NovoModeloPage() {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
-                        <HelpCircle className="w-4 h-4 text-zinc-400" />
+                        <HelpCircle className="w-4 h-4 text-neutral-400" />
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         <p>Use {"{{NOME_VARIAVEL}}"} para inserir variáveis dinâmicas no texto.</p>
@@ -468,7 +468,7 @@ export default function NovoModeloPage() {
               </CardHeader>
               <CardContent>
                 {showPreview ? (
-                  <div className="prose prose-zinc dark:prose-invert max-w-none p-4 bg-zinc-50 dark:bg-muted/50 rounded-lg min-h-[400px]">
+                  <div className="prose prose-zinc dark:prose-invert max-w-none p-4 bg-neutral-50 dark:bg-muted/50 rounded-lg min-h-[400px]">
                     {conteudo.split("\n").map((line, i) => (
                       <p key={i}>
                         {line.replace(/\{\{(\w+)\}\}/g, (_, varName) => (
@@ -545,8 +545,8 @@ OAB/BA {{OAB_DEFENSOR}}`}
               </CardHeader>
               <CardContent>
                 {variaveis.length === 0 ? (
-                  <div className="text-center py-8 text-zinc-500">
-                    <Variable className="w-10 h-10 mx-auto mb-3 text-zinc-300" />
+                  <div className="text-center py-8 text-neutral-500">
+                    <Variable className="w-10 h-10 mx-auto mb-3 text-neutral-300" />
                     <p className="text-sm">Nenhuma variável personalizada</p>
                     <p className="text-xs mt-1">
                       Clique em &quot;Adicionar&quot; para criar variáveis manuais
@@ -557,7 +557,7 @@ OAB/BA {{OAB_DEFENSOR}}`}
                     {variaveis.map((v, index) => (
                       <div
                         key={index}
-                        className="flex items-start gap-3 p-3 bg-zinc-50 dark:bg-muted/50 rounded-lg"
+                        className="flex items-start gap-3 p-3 bg-neutral-50 dark:bg-muted/50 rounded-lg"
                       >
                         <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3">
                           <div>
@@ -731,24 +731,24 @@ function VariableButton({ nome, label, onClick, onCopy, copied }: VariableButton
       <button
         type="button"
         onClick={onClick}
-        className="flex-1 flex items-center gap-2 px-2 py-1.5 text-left rounded-md hover:bg-zinc-100 dark:hover:bg-muted transition-colors"
+        className="flex-1 flex items-center gap-2 px-2 py-1.5 text-left rounded-md hover:bg-neutral-100 dark:hover:bg-muted transition-colors"
       >
-        <code className="text-xs font-mono text-zinc-500 bg-zinc-100 dark:bg-muted px-1.5 py-0.5 rounded">
+        <code className="text-xs font-mono text-neutral-500 bg-neutral-100 dark:bg-muted px-1.5 py-0.5 rounded">
           {nome}
         </code>
-        <span className="text-xs text-zinc-600 dark:text-muted-foreground truncate">
+        <span className="text-xs text-neutral-600 dark:text-muted-foreground truncate">
           {label}
         </span>
       </button>
       <button
         type="button"
         onClick={onCopy}
-        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-zinc-100 dark:hover:bg-muted transition-all"
+        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-neutral-100 dark:hover:bg-muted transition-all"
       >
         {copied ? (
           <Check className="w-3 h-3 text-emerald-500" />
         ) : (
-          <Copy className="w-3 h-3 text-zinc-400" />
+          <Copy className="w-3 h-3 text-neutral-400" />
         )}
       </button>
     </div>

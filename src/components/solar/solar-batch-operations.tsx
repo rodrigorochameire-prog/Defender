@@ -158,10 +158,10 @@ function AssistidoStatusBadge({ status }: { status: AssistidoSolarStatus }) {
         "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-400",
     },
     unchecked: {
-      dot: "bg-zinc-400",
+      dot: "bg-neutral-400",
       text: "Não verificado",
       className:
-        "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-400",
+        "border-neutral-200 bg-neutral-50 text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800/50 dark:text-neutral-400",
     },
   } as const;
 

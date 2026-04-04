@@ -88,7 +88,7 @@ const MATCH_TYPE_LABELS: Record<string, { label: string; color: string }> = {
   first_last: { label: "nome/sobrenome", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300" },
   contains: { label: "contido", color: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300" },
   fuzzy: { label: "fuzzy", color: "bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300" },
-  none: { label: "-", color: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400" },
+  none: { label: "-", color: "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400" },
 };
 
 // ==========================================
@@ -298,7 +298,7 @@ export default function DriveSyncDashboardPage() {
                       <span className="text-xs font-medium">{rate}%</span>
                     </div>
                   </div>
-                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
                     <div
                       className={cn(
                         "h-full rounded-full transition-all duration-500",

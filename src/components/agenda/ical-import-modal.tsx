@@ -169,15 +169,15 @@ export function ICalImportModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-white to-blue-50 dark:from-zinc-900 dark:to-zinc-950">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-white to-blue-50 dark:from-neutral-900 dark:to-neutral-950">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-3">
+          <DialogTitle className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 flex items-center gap-3">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
               <Calendar className="w-7 h-7 text-white" />
             </div>
             Importar Arquivo iCalendar
           </DialogTitle>
-          <DialogDescription className="text-sm text-zinc-500 dark:text-zinc-400 mt-2">
+          <DialogDescription className="text-sm text-neutral-500 dark:text-neutral-400 mt-2">
             Importe eventos de arquivos .ics ou .ical (Google Calendar, Outlook, Apple Calendar)
           </DialogDescription>
         </DialogHeader>
@@ -204,10 +204,10 @@ export function ICalImportModal({
                 </div>
                 
                 <div className="text-center">
-                  <p className="font-bold text-lg text-zinc-900 dark:text-zinc-50 mb-1">
+                  <p className="font-bold text-lg text-neutral-900 dark:text-neutral-50 mb-1">
                     {isProcessing ? "Processando..." : "Clique para selecionar arquivo"}
                   </p>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
                     Arquivos .ics ou .ical de qualquer aplicativo de calendário
                   </p>
                   {fileName && (
@@ -259,7 +259,7 @@ export function ICalImportModal({
           {importedEvents.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-50">
+                <h3 className="font-bold text-lg text-neutral-900 dark:text-neutral-50">
                   Eventos Encontrados ({importedEvents.length})
                 </h3>
                 <div className="flex items-center gap-2">
@@ -274,7 +274,7 @@ export function ICalImportModal({
                 {importedEvents.map((evento, index) => (
                   <Card
                     key={index}
-                    className="p-4 border-2 border-zinc-200 dark:border-zinc-800 hover:border-blue-300 dark:hover:border-blue-700 transition-all"
+                    className="p-4 border-2 border-neutral-200 dark:border-neutral-800 hover:border-blue-300 dark:hover:border-blue-700 transition-all"
                   >
                     <div className="flex items-start gap-3">
                       <div
@@ -300,12 +300,12 @@ export function ICalImportModal({
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-zinc-900 dark:text-zinc-50 mb-2">
+                        <h4 className="font-bold text-neutral-900 dark:text-neutral-50 mb-2">
                           {evento.titulo}
                         </h4>
 
                         <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
+                          <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
                             <Clock className="w-3.5 h-3.5" />
                             <span>
                               {new Date(evento.data).toLocaleDateString("pt-BR")}
@@ -314,7 +314,7 @@ export function ICalImportModal({
                           </div>
 
                           {evento.local && (
-                            <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
+                            <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
                               <MapPin className="w-3.5 h-3.5" />
                               <span className="truncate">{evento.local}</span>
                             </div>
@@ -361,7 +361,7 @@ export function ICalImportModal({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-between items-center pt-6 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="flex justify-between items-center pt-6 border-t border-neutral-200 dark:border-neutral-800">
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>

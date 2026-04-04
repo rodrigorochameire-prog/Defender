@@ -41,7 +41,7 @@ export default async function SetPasswordPage() {
           <h1 className="font-serif text-xl font-semibold text-foreground tracking-tight">
             OMBUDS
           </h1>
-          <p className="text-[10px] font-light tracking-[0.2em] uppercase text-zinc-500 mt-1">
+          <p className="text-[10px] font-light tracking-[0.2em] uppercase text-neutral-500 mt-1">
             Gestao para Defesa Criminal
           </p>
         </div>
@@ -54,7 +54,7 @@ export default async function SetPasswordPage() {
           <p className="text-sm text-foreground/80">
             Bem-vindo ao OMBUDS!
           </p>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs text-neutral-500 mt-1">
             Defina sua senha para continuar.
           </p>
         </div>
@@ -64,7 +64,7 @@ export default async function SetPasswordPage() {
 
         {/* Footer institucional */}
         <div className="mt-10 pt-5 border-t border-border/50">
-          <p className="text-center text-[10px] text-zinc-700 tracking-wide">
+          <p className="text-center text-[10px] text-neutral-700 tracking-wide">
             Defensoria Publica do Estado da Bahia
           </p>
         </div>

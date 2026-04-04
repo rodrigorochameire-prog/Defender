@@ -115,7 +115,7 @@ function getEntityIcon(entityType: string) {
     case "caso":
       return <Briefcase className="h-5 w-5 text-purple-500" />;
     default:
-      return <Info className="h-5 w-5 text-zinc-400" />;
+      return <Info className="h-5 w-5 text-neutral-400" />;
   }
 }
 
@@ -172,7 +172,7 @@ function FieldRow({
         "flex items-start gap-3 rounded-md border p-3 transition-colors",
         isSelected
           ? "border-emerald-200 bg-emerald-50"
-          : "border-zinc-200 bg-white hover:bg-zinc-50"
+          : "border-neutral-200 bg-white hover:bg-neutral-50"
       )}
     >
       <Checkbox
@@ -181,10 +181,10 @@ function FieldRow({
         className="mt-0.5"
       />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-zinc-700">{label}</p>
+        <p className="text-sm font-medium text-neutral-700">{label}</p>
         <p
           className={cn(
-            "text-sm text-zinc-600",
+            "text-sm text-neutral-600",
             isLongValue ? "line-clamp-3" : ""
           )}
           title={isLongValue ? formattedValue : undefined}
@@ -250,7 +250,7 @@ function EntitySection({
             {...({ indeterminate: someSelected && !allSelected } as any)}
             onCheckedChange={(checked) => onToggleAll(checked as boolean)}
           />
-          <span className="text-sm text-zinc-600">
+          <span className="text-sm text-neutral-600">
             {allSelected ? "Desmarcar todos" : "Selecionar todos"}
           </span>
         </div>
@@ -304,10 +304,10 @@ export function SuggestionsReviewPanel({
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <AlertCircle className="h-12 w-12 text-amber-400 mb-4" />
-        <p className="text-lg font-medium text-zinc-700">
+        <p className="text-lg font-medium text-neutral-700">
           Nenhuma sugestão encontrada
         </p>
-        <p className="text-sm text-zinc-500 mt-1">
+        <p className="text-sm text-neutral-500 mt-1">
           Não foi possível extrair dados dos arquivos selecionados.
         </p>
       </div>
@@ -317,7 +317,7 @@ export function SuggestionsReviewPanel({
   return (
     <div className="space-y-4">
       {/* Header com resumo */}
-      <div className="flex items-center justify-between bg-zinc-50 rounded-lg p-3">
+      <div className="flex items-center justify-between bg-neutral-50 rounded-lg p-3">
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-5 w-5 text-emerald-500" />
           <span className="text-sm font-medium">

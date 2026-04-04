@@ -43,10 +43,10 @@ export default function LotacaoPage() {
             <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-orange-700 dark:text-orange-400" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-100">
               Lotação das Unidades
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">
+            <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 hidden sm:block">
               Capacidade e ocupação atual
             </p>
           </div>
@@ -57,13 +57,13 @@ export default function LotacaoPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card>
           <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{totalOcupacao.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{totalOcupacao.toLocaleString()}</p>
             <p className="text-xs text-muted-foreground">Total Presos</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{totalCapacidade.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{totalCapacidade.toLocaleString()}</p>
             <p className="text-xs text-muted-foreground">Capacidade</p>
           </CardContent>
         </Card>

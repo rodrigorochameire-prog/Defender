@@ -334,7 +334,7 @@ export default function DashboardVarasCriminaisPage() {
             orange: "bg-orange-600",
             amber: "bg-amber-600",
             violet: "bg-violet-600",
-            zinc: "bg-zinc-600",
+            zinc: "bg-neutral-600",
           };
 
           return (

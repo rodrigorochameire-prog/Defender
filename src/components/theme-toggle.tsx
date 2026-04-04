@@ -9,7 +9,7 @@ const themeConfig = {
     icon: Sun,
     iconClass: "h-4 w-4 text-amber-500",
     buttonClass:
-      "bg-zinc-100 hover:bg-zinc-200 border-zinc-200 hover:border-emerald-500/50",
+      "bg-neutral-100 hover:bg-neutral-200 border-neutral-200 hover:border-emerald-500/50",
     ariaLabel: "Modo claro",
   },
   dark: {

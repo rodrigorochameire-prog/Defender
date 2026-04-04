@@ -61,7 +61,7 @@ function SyncHealthDot() {
 
   if (isLoading || !health) {
     return (
-      <span className="h-2 w-2 rounded-full bg-zinc-300 dark:bg-zinc-600 animate-pulse" />
+      <span className="h-2 w-2 rounded-full bg-neutral-300 dark:bg-neutral-600 animate-pulse" />
     );
   }
 
@@ -102,9 +102,9 @@ function SyncHealthDot() {
       <TooltipContent side="bottom">
         <div className="space-y-0.5">
           <p className="font-medium text-xs">{config.label}</p>
-          <p className="text-zinc-400 text-[10px]">{timeSinceSync}</p>
+          <p className="text-neutral-400 text-[10px]">{timeSinceSync}</p>
           {health.issues.length > 0 && (
-            <ul className="text-zinc-400 text-[10px] space-y-0.5">
+            <ul className="text-neutral-400 text-[10px] space-y-0.5">
               {health.issues.slice(0, 3).map((issue: string, i: number) => (
                 <li key={i}>- {issue}</li>
               ))}
@@ -186,7 +186,7 @@ function NewDocumentButton() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400"
+              className="h-7 w-7 text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400"
               disabled={!targetFolderId}
             >
               <FilePlus2 className="h-3.5 w-3.5" />
@@ -198,18 +198,18 @@ function NewDocumentButton() {
         </TooltipContent>
       </Tooltip>
       <PopoverContent align="end" className="w-72 p-0 max-h-[400px] overflow-y-auto">
-        <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800">
-          <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Novo Documento</p>
-          <p className="text-[10px] text-zinc-400 mt-0.5">Template para a pasta atual</p>
+        <div className="px-3 py-2 border-b border-neutral-100 dark:border-neutral-800">
+          <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300">Novo Documento</p>
+          <p className="text-[10px] text-neutral-400 mt-0.5">Template para a pasta atual</p>
         </div>
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+            <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />
           </div>
         ) : sortedCategories.length === 0 ? (
           <div className="py-6 text-center">
-            <FileText className="h-6 w-6 mx-auto mb-2 text-zinc-300" />
-            <p className="text-xs text-zinc-400">Nenhum template cadastrado</p>
+            <FileText className="h-6 w-6 mx-auto mb-2 text-neutral-300" />
+            <p className="text-xs text-neutral-400">Nenhum template cadastrado</p>
           </div>
         ) : (
           <div className="py-1">
@@ -220,8 +220,8 @@ function NewDocumentButton() {
               return (
                 <div key={cat}>
                   <div className="flex items-center gap-1.5 px-3 py-1.5 mt-1">
-                    <Icon className="h-3 w-3 text-zinc-400" />
-                    <span className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    <Icon className="h-3 w-3 text-neutral-400" />
+                    <span className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                       {config.label}
                     </span>
                   </div>
@@ -238,15 +238,15 @@ function NewDocumentButton() {
                     >
                       <FileText className="h-3.5 w-3.5 text-emerald-600/60 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-zinc-700 dark:text-zinc-300 truncate">{t.name}</p>
+                        <p className="text-xs text-neutral-700 dark:text-neutral-300 truncate">{t.name}</p>
                         {t.description && (
-                          <p className="text-[10px] text-zinc-400 truncate">{t.description}</p>
+                          <p className="text-[10px] text-neutral-400 truncate">{t.description}</p>
                         )}
                       </div>
                       {generateMutation.isPending && generateMutation.variables?.templateId === t.id ? (
                         <Loader2 className="h-3 w-3 animate-spin text-emerald-500 shrink-0" />
                       ) : (
-                        <ExternalLink className="h-3 w-3 text-zinc-300 shrink-0" />
+                        <ExternalLink className="h-3 w-3 text-neutral-300 shrink-0" />
                       )}
                     </button>
                   ))}
@@ -293,7 +293,7 @@ function NewFolderButton() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400"
+          className="h-7 w-7 text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400"
           onClick={handleCreateFolder}
           disabled={!targetFolderId || createFolder.isPending}
         >
@@ -330,7 +330,7 @@ function InlineBreadcrumbs({ fileCount }: { fileCount?: number }) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 mr-0.5 text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 shrink-0"
+          className="h-6 w-6 mr-0.5 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 shrink-0"
           onClick={() => ctx.navigateBack()}
         >
           <ChevronLeft className="h-3.5 w-3.5" />
@@ -345,15 +345,15 @@ function InlineBreadcrumbs({ fileCount }: { fileCount?: number }) {
             className={cn(
               "flex items-center gap-1 text-xs font-medium transition-colors shrink-0",
               ctx.breadcrumbPath.length === 0
-                ? "text-zinc-800 dark:text-zinc-200 cursor-default"
-                : "text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 cursor-pointer"
+                ? "text-neutral-800 dark:text-neutral-200 cursor-default"
+                : "text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 cursor-pointer"
             )}
           >
             <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", atribuicao.dotClass)} />
             <span>{atribuicao.label}</span>
           </button>
           {ctx.breadcrumbPath.length > 0 && (
-            <ChevronRight className="h-3 w-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
+            <ChevronRight className="h-3 w-3 text-neutral-300 dark:text-neutral-600 shrink-0" />
           )}
         </>
       )}
@@ -368,8 +368,8 @@ function InlineBreadcrumbs({ fileCount }: { fileCount?: number }) {
         if (showEllipsis) {
           return (
             <div key={segment.id} className="flex items-center gap-0.5 shrink-0">
-              <span className="text-xs text-zinc-400 dark:text-zinc-600 px-0.5">...</span>
-              <ChevronRight className="h-3 w-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
+              <span className="text-xs text-neutral-400 dark:text-neutral-600 px-0.5">...</span>
+              <ChevronRight className="h-3 w-3 text-neutral-300 dark:text-neutral-600 shrink-0" />
             </div>
           );
         }
@@ -383,14 +383,14 @@ function InlineBreadcrumbs({ fileCount }: { fileCount?: number }) {
               className={cn(
                 "text-xs transition-colors duration-150 max-w-[160px] truncate",
                 isLast
-                  ? "text-zinc-800 dark:text-zinc-200 font-medium cursor-default"
-                  : "text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 cursor-pointer"
+                  ? "text-neutral-800 dark:text-neutral-200 font-medium cursor-default"
+                  : "text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 cursor-pointer"
               )}
             >
               {segment.name}
             </button>
             {!isLast && (
-              <ChevronRight className="h-3 w-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
+              <ChevronRight className="h-3 w-3 text-neutral-300 dark:text-neutral-600 shrink-0" />
             )}
           </div>
         );
@@ -398,7 +398,7 @@ function InlineBreadcrumbs({ fileCount }: { fileCount?: number }) {
 
       {/* File count */}
       {fileCount != null && fileCount > 0 && (
-        <span className="text-[10px] text-zinc-400 dark:text-zinc-500 tabular-nums ml-1.5 shrink-0">
+        <span className="text-[10px] text-neutral-400 dark:text-neutral-500 tabular-nums ml-1.5 shrink-0">
           {fileCount} arquivo{fileCount !== 1 ? "s" : ""}
         </span>
       )}
@@ -450,7 +450,7 @@ function ExpandableSearch() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+            className="h-7 w-7 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
             onClick={() => setExpanded(true)}
           >
             <Search className="h-3.5 w-3.5" />
@@ -463,7 +463,7 @@ function ExpandableSearch() {
 
   return (
     <div className="relative flex items-center">
-      <Search className="absolute left-2 h-3 w-3 text-zinc-400 pointer-events-none" />
+      <Search className="absolute left-2 h-3 w-3 text-neutral-400 pointer-events-none" />
       <input
         ref={inputRef}
         type="text"
@@ -473,15 +473,15 @@ function ExpandableSearch() {
         placeholder="Buscar..."
         className={cn(
           "h-7 w-40 pl-7 pr-7 rounded-md text-xs",
-          "bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/40",
-          "text-zinc-700 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500",
+          "bg-neutral-100 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-700/40",
+          "text-neutral-700 dark:text-neutral-200 placeholder:text-neutral-400 dark:placeholder:text-neutral-500",
           "focus:outline-none focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-500/30",
           "transition-all duration-200"
         )}
       />
       <button
         onClick={handleClose}
-        className="absolute right-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+        className="absolute right-2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
       >
         <X className="h-3 w-3" />
       </button>
@@ -558,7 +558,7 @@ function AddMenu() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400"
+              className="h-7 w-7 text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400"
             >
               <Plus className="h-3.5 w-3.5" />
             </Button>
@@ -568,21 +568,21 @@ function AddMenu() {
       </Tooltip>
       <PopoverContent align="end" className="w-56 p-0 max-h-[420px] overflow-y-auto">
         {/* Quick actions */}
-        <div className="p-1 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="p-1 border-b border-neutral-100 dark:border-neutral-800">
           <button
             onClick={handleNewFolder}
             disabled={!targetFolderId || createFolder.isPending}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-left transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-left transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <FolderPlus className="h-3.5 w-3.5 text-zinc-500" />
-            <span className="text-xs text-zinc-700 dark:text-zinc-300">Nova pasta</span>
+            <FolderPlus className="h-3.5 w-3.5 text-neutral-500" />
+            <span className="text-xs text-neutral-700 dark:text-neutral-300">Nova pasta</span>
           </button>
           <button
             onClick={handleUpload}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-left transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-left transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
           >
-            <Upload className="h-3.5 w-3.5 text-zinc-500" />
-            <span className="text-xs text-zinc-700 dark:text-zinc-300">Upload</span>
+            <Upload className="h-3.5 w-3.5 text-neutral-500" />
+            <span className="text-xs text-neutral-700 dark:text-neutral-300">Upload</span>
           </button>
         </div>
 
@@ -590,7 +590,7 @@ function AddMenu() {
         {sortedCategories.length > 0 ? (
           <div className="py-1">
             <div className="px-2.5 py-1">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Templates</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400">Templates</span>
             </div>
             {sortedCategories.map((cat) => {
               const config = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.outros;
@@ -607,7 +607,7 @@ function AddMenu() {
                   className="w-full flex items-center gap-2 px-2.5 py-1.5 text-left transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/30 disabled:opacity-50"
                 >
                   <CatIcon className="h-3 w-3 text-emerald-600/60 shrink-0" />
-                  <span className="text-xs text-zinc-700 dark:text-zinc-300 truncate flex-1">{t.name}</span>
+                  <span className="text-xs text-neutral-700 dark:text-neutral-300 truncate flex-1">{t.name}</span>
                   {generateMutation.isPending && generateMutation.variables?.templateId === t.id && (
                     <Loader2 className="h-3 w-3 animate-spin text-emerald-500 shrink-0" />
                   )}
@@ -617,7 +617,7 @@ function AddMenu() {
           </div>
         ) : templates && templates.length === 0 ? (
           <div className="py-4 text-center">
-            <p className="text-[10px] text-zinc-400">Nenhum template</p>
+            <p className="text-[10px] text-neutral-400">Nenhum template</p>
           </div>
         ) : null}
       </PopoverContent>
@@ -651,7 +651,7 @@ function ViewModeCycleButton() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
+          className="h-7 w-7 text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300"
           onClick={handleCycle}
         >
           <Icon className="h-3.5 w-3.5" />
@@ -693,7 +693,7 @@ export function DriveTopBar({ fileCount }: { fileCount?: number }) {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex items-center gap-1.5 h-10 px-4 border-b border-zinc-200/50 dark:border-zinc-800/50 shrink-0">
+      <div className="flex items-center gap-1.5 h-10 px-4 border-b border-neutral-200/50 dark:border-neutral-800/50 shrink-0">
         {/* Mobile hamburger spacer */}
         <div className="w-8 lg:hidden" />
 
@@ -716,7 +716,7 @@ export function DriveTopBar({ fileCount }: { fileCount?: number }) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                className="h-7 w-7 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
                 onClick={handleSyncAll}
                 disabled={syncAll.isPending}
               >
@@ -738,7 +738,7 @@ export function DriveTopBar({ fileCount }: { fileCount?: number }) {
                 "h-7 w-7 inline-flex items-center justify-center gap-0.5 rounded-md transition-colors",
                 activeCount > 0
                   ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400"
-                  : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
               )}
               title="Fila de processamento"
             >
@@ -750,7 +750,7 @@ export function DriveTopBar({ fileCount }: { fileCount?: number }) {
           </ProcessingQueuePanel>
 
           {/* Separator */}
-          <div className="h-4 w-px bg-zinc-200/80 dark:bg-zinc-700/50 mx-0.5" />
+          <div className="h-4 w-px bg-neutral-200/80 dark:bg-neutral-700/50 mx-0.5" />
 
           {/* View Mode Cycle Button */}
           <ViewModeCycleButton />

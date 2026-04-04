@@ -183,7 +183,7 @@ function ProtocoloSection({
   return (
     <div>
       <h3 className={`${TYPO.h2} flex items-center gap-2.5 mb-4`}>
-        <ListOrdered className="h-5 w-5 text-zinc-500 shrink-0" />
+        <ListOrdered className="h-5 w-5 text-neutral-500 shrink-0" />
         Protocolo do Dia
       </h3>
 
@@ -195,9 +195,9 @@ function ProtocoloSection({
                 className={[
                   "shrink-0 mt-0.5",
                   "h-6 w-6 rounded-full",
-                  "bg-zinc-100 dark:bg-zinc-800",
+                  "bg-neutral-100 dark:bg-neutral-800",
                   "flex items-center justify-center",
-                  "text-xs font-semibold text-zinc-500 dark:text-zinc-400 tabular-nums",
+                  "text-xs font-semibold text-neutral-500 dark:text-neutral-400 tabular-nums",
                 ].join(" ")}
               >
                 {i + 1}

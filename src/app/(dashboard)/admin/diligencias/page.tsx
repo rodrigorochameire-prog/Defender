@@ -130,19 +130,19 @@ export default function DiligenciasPage() {
   const hasSelection = selectedAssistidoId || selectedProcessoId;
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-emerald-600 flex items-center justify-center shadow-lg">
               <Radar className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
+              <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
                 Central de Investigação
               </h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 Diligências investigativas e pesquisa OSINT
               </p>
             </div>

@@ -47,10 +47,10 @@ const statusConfig = {
     bg: "bg-emerald-50 dark:bg-emerald-950/30",
   },
   neutral: {
-    dot: "bg-zinc-400",
-    ring: "bg-zinc-300",
-    text: "text-zinc-600 dark:text-zinc-400",
-    bg: "bg-zinc-50 dark:bg-zinc-900/30",
+    dot: "bg-neutral-400",
+    ring: "bg-neutral-300",
+    text: "text-neutral-600 dark:text-neutral-400",
+    bg: "bg-neutral-50 dark:bg-neutral-900/30",
   },
 };
 

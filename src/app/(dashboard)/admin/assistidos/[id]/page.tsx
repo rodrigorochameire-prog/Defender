@@ -340,7 +340,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             // Check if assistido has processos with multiple distinct atribuições
             const atribuicoes = new Set(data.processos.map(() => (data as any).atribuicaoPrimaria).filter(Boolean));
             const hasMultiple = atribuicoes.size > 1 || data.processos.length > 1;
-            const avatarBg = "bg-zinc-100 text-zinc-800";
+            const avatarBg = "bg-neutral-100 text-neutral-800";
             return (
               <div className="relative shrink-0">
                 <div
@@ -489,7 +489,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
       </div>
 
       {/* Content container — unified card for summary + tabs + content */}
-      <div className="mx-4 lg:mx-6 mt-2 bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/60 dark:border-zinc-800/40 overflow-hidden flex-1 flex flex-col min-h-0">
+      <div className="mx-4 lg:mx-6 mt-2 bg-white dark:bg-neutral-900/50 rounded-xl border border-neutral-200/60 dark:border-neutral-800/40 overflow-hidden flex-1 flex flex-col min-h-0">
 
       {/* Overview Panel */}
       <div className="px-4 pt-3 pb-1">
@@ -511,7 +511,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
       </div>
 
       {/* ── Tabs ── */}
-      <div className="flex items-center gap-0.5 mx-3 mt-1 mb-0 overflow-x-auto rounded-lg bg-zinc-100 dark:bg-zinc-800 p-1">
+      <div className="flex items-center gap-0.5 mx-3 mt-1 mb-0 overflow-x-auto rounded-lg bg-neutral-100 dark:bg-neutral-800 p-1">
         {tabs.map((t) => {
           const TabIcon = t.icon;
           const isActive = tab === t.key;
@@ -523,8 +523,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0",
                 isActive
-                  ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm"
-                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-white/5"
+                  ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 shadow-sm"
+                  : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-300 hover:bg-neutral-200/60 dark:hover:bg-white/5"
               )}
             >
               <TabIcon className="h-3 w-3" />
@@ -537,8 +537,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                     : t.urgency === "amber"
                     ? "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-300"
                     : isActive
-                    ? "bg-white/15 text-white/70 dark:bg-zinc-700 dark:text-zinc-300"
-                    : "bg-zinc-200/60 dark:bg-white/10 text-zinc-400 dark:text-zinc-500"
+                    ? "bg-white/15 text-white/70 dark:bg-neutral-700 dark:text-neutral-300"
+                    : "bg-neutral-200/60 dark:bg-white/10 text-neutral-400 dark:text-neutral-500"
                 )}>
                   {t.count}
                 </span>
@@ -554,8 +554,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               className={cn(
                 "px-2 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1 shrink-0",
                 overflowTabs.some(t => t.key === tab)
-                  ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm"
-                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-white/5"
+                  ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 shadow-sm"
+                  : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 hover:bg-neutral-200/60 dark:hover:bg-white/5"
               )}
             >
               <MoreHorizontal className="h-3.5 w-3.5" />
@@ -738,7 +738,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               </p>
               <Button
                 size="sm"
-                className="h-7 text-xs bg-zinc-800 hover:bg-zinc-700 text-white"
+                className="h-7 text-xs bg-neutral-800 hover:bg-neutral-700 text-white"
                 onClick={() => router.push(`/admin/oficios/novo?assistidoId=${id}`)}
               >
                 <Plus className="w-3 h-3 mr-1" />

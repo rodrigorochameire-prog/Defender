@@ -38,7 +38,7 @@ export function ProcessoTabs({ active, onChange }: ProcessoTabsProps) {
   ];
 
   return (
-    <div className="flex items-center gap-0.5 mx-3 mt-3 mb-0 overflow-x-auto rounded-lg bg-zinc-100 dark:bg-zinc-800 p-1">
+    <div className="flex items-center gap-0.5 mx-3 mt-3 mb-0 overflow-x-auto rounded-lg bg-neutral-100 dark:bg-neutral-800 p-1">
       {TABS.map((tab) => {
         const isActive = active === tab.key;
         return (
@@ -48,8 +48,8 @@ export function ProcessoTabs({ active, onChange }: ProcessoTabsProps) {
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0",
               isActive
-                ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm"
-                : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-white/5"
+                ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 shadow-sm"
+                : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-300 hover:bg-neutral-200/60 dark:hover:bg-white/5"
             )}
           >
             <tab.icon className="h-3 w-3" />

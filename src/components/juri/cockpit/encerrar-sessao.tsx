@@ -246,14 +246,14 @@ export function EncerrarSessaoButton({
   const percentual = total > 0 ? Math.round((preenchidos / total) * 100) : 0;
 
   const cardClass = isDarkMode
-    ? "bg-zinc-900/80 border border-zinc-800 rounded-xl"
-    : "bg-white border border-zinc-200 rounded-xl shadow-sm";
+    ? "bg-neutral-900/80 border border-neutral-800 rounded-xl"
+    : "bg-white border border-neutral-200 rounded-xl shadow-sm";
 
   const resultadoOptions = [
     { value: "absolvicao", label: "Absolvição", icon: ThumbsUp, color: "text-emerald-600" },
     { value: "condenacao", label: "Condenação", icon: ThumbsDown, color: "text-rose-600" },
     { value: "desclassificacao", label: "Desclassificação", icon: Scale, color: "text-amber-600" },
-    { value: "nulidade", label: "Nulidade", icon: XCircle, color: "text-zinc-500" },
+    { value: "nulidade", label: "Nulidade", icon: XCircle, color: "text-neutral-500" },
   ];
 
   return (
@@ -270,7 +270,7 @@ export function EncerrarSessaoButton({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className={cn("max-w-lg", isDarkMode ? "bg-zinc-900 text-zinc-100 border-zinc-800" : "")}>
+        <DialogContent className={cn("max-w-lg", isDarkMode ? "bg-neutral-900 text-neutral-100 border-neutral-800" : "")}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Save className="w-5 h-5 text-rose-500" />
@@ -296,7 +296,7 @@ export function EncerrarSessaoButton({
           ) : (
             <div className="space-y-4">
               {/* Resumo do que será salvo */}
-              <div className={cn("p-4 rounded-lg space-y-2", isDarkMode ? "bg-zinc-800" : "bg-zinc-50")}>
+              <div className={cn("p-4 rounded-lg space-y-2", isDarkMode ? "bg-neutral-800" : "bg-neutral-50")}>
                 <h4 className="text-sm font-semibold flex items-center gap-2">
                   <Database className="w-4 h-4 text-blue-500" />
                   Dados que serão salvos
@@ -327,7 +327,7 @@ export function EncerrarSessaoButton({
                   Resultado do Julgamento *
                 </label>
                 <Select value={resultado} onValueChange={setResultado}>
-                  <SelectTrigger className={isDarkMode ? "bg-zinc-800 border-zinc-700" : ""}>
+                  <SelectTrigger className={isDarkMode ? "bg-neutral-800 border-neutral-700" : ""}>
                     <SelectValue placeholder="Selecione o resultado..." />
                   </SelectTrigger>
                   <SelectContent>

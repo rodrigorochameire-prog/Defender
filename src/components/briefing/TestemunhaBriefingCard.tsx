@@ -101,7 +101,7 @@ export function TestemunhaBriefingCard({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-muted flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-muted flex items-center justify-center">
               <User className="w-5 h-5 text-muted-foreground/50 dark:text-muted-foreground" />
             </div>
             <div>
@@ -155,8 +155,8 @@ export function TestemunhaBriefingCard({
               </span>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="mt-2 p-3 bg-zinc-50 dark:bg-card rounded-lg border border-zinc-200 dark:border-border">
-                <p className="text-sm text-zinc-700 dark:text-foreground/80 whitespace-pre-wrap">
+              <div className="mt-2 p-3 bg-neutral-50 dark:bg-card rounded-lg border border-neutral-200 dark:border-border">
+                <p className="text-sm text-neutral-700 dark:text-foreground/80 whitespace-pre-wrap">
                   {testemunha.versao_delegacia}
                 </p>
               </div>
@@ -182,8 +182,8 @@ export function TestemunhaBriefingCard({
               </span>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="mt-2 p-3 bg-zinc-50 dark:bg-card rounded-lg border border-zinc-200 dark:border-border">
-                <p className="text-sm text-zinc-700 dark:text-foreground/80 whitespace-pre-wrap">
+              <div className="mt-2 p-3 bg-neutral-50 dark:bg-card rounded-lg border border-neutral-200 dark:border-border">
+                <p className="text-sm text-neutral-700 dark:text-foreground/80 whitespace-pre-wrap">
                   {testemunha.versao_juizo}
                 </p>
               </div>
@@ -232,13 +232,13 @@ export function TestemunhaBriefingCard({
             open={openSections.pontos}
             onOpenChange={() => toggleSection("pontos")}
           >
-            <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 rounded-lg bg-zinc-100 dark:bg-muted hover:bg-zinc-200 dark:hover:bg-muted transition-colors">
+            <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 rounded-lg bg-neutral-100 dark:bg-muted hover:bg-neutral-200 dark:hover:bg-muted transition-colors">
               {openSections.pontos ? (
                 <ChevronDown className="w-4 h-4 text-muted-foreground/50" />
               ) : (
                 <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
               )}
-              <span className="font-medium text-sm text-zinc-800 dark:text-foreground">
+              <span className="font-medium text-sm text-neutral-800 dark:text-foreground">
                 Análise de Pontos
               </span>
               <Badge variant="secondary" className="ml-auto">
@@ -331,7 +331,7 @@ export function TestemunhaBriefingCard({
                           "p-3 rounded-lg border transition-colors group",
                           isSelected
                             ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700"
-                            : "bg-white dark:bg-card border-zinc-200 dark:border-border hover:border-emerald-300 dark:hover:border-emerald-700"
+                            : "bg-white dark:bg-card border-neutral-200 dark:border-border hover:border-emerald-300 dark:hover:border-emerald-700"
                         )}
                       >
                         <div className="flex items-start gap-3">
@@ -345,7 +345,7 @@ export function TestemunhaBriefingCard({
                             />
                           )}
                           <div className="flex-1">
-                            <p className="text-sm text-zinc-800 dark:text-foreground">
+                            <p className="text-sm text-neutral-800 dark:text-foreground">
                               <span className="font-medium text-emerald-600 mr-1">
                                 {idx + 1}.
                               </span>

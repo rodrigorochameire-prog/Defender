@@ -119,21 +119,21 @@ export function CompartilharEventoModal({
         </DialogHeader>
 
         {/* Preview do Evento */}
-        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2">
+        <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-2">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
               <Calendar className="w-5 h-5 text-blue-600" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+              <p className="font-medium text-neutral-900 dark:text-neutral-100 truncate">
                 {evento.title}
               </p>
-              <div className="flex items-center gap-2 text-xs text-zinc-500 mt-1">
+              <div className="flex items-center gap-2 text-xs text-neutral-500 mt-1">
                 <Clock className="w-3 h-3" />
                 {format(eventDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
               </div>
               {evento.location && (
-                <div className="flex items-center gap-2 text-xs text-zinc-500 mt-0.5">
+                <div className="flex items-center gap-2 text-xs text-neutral-500 mt-0.5">
                   <MapPin className="w-3 h-3" />
                   {evento.location}
                 </div>
@@ -173,7 +173,7 @@ export function CompartilharEventoModal({
                 {/* Estagiários vinculados */}
                 {estagiarios.length > 0 && (
                   <>
-                    <div className="px-2 py-1.5 text-xs font-semibold text-zinc-500 bg-zinc-50 dark:bg-zinc-900">
+                    <div className="px-2 py-1.5 text-xs font-semibold text-neutral-500 bg-neutral-50 dark:bg-neutral-900">
                       Meus Estagiários
                     </div>
                     {estagiarios.map((est: any) => (
@@ -192,7 +192,7 @@ export function CompartilharEventoModal({
                 {/* Outros profissionais */}
                 {outrosProfissionais.length > 0 && (
                   <>
-                    <div className="px-2 py-1.5 text-xs font-semibold text-zinc-500 bg-zinc-50 dark:bg-zinc-900 mt-1">
+                    <div className="px-2 py-1.5 text-xs font-semibold text-neutral-500 bg-neutral-50 dark:bg-neutral-900 mt-1">
                       Outros Profissionais
                     </div>
                     {outrosProfissionais.map((prof: any) => (

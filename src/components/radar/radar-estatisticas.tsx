@@ -49,7 +49,7 @@ const CRIME_CHART_COLORS: Record<string, string> = {
   porte_arma:          "#db2777", // pink-600
   estelionato:         "#c026d3", // fuchsia-600
   execucao_penal:      "#1d4ed8", // blue-700
-  outros:              "#71717a", // zinc-500
+  outros:              "#71717a", // neutral-500
 };
 
 function getCrimeBadgeColor(tipo: string): string {
@@ -67,7 +67,7 @@ function getCrimeBadgeColor(tipo: string): string {
     estelionato:         "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/40 dark:text-fuchsia-300",
     execucao_penal:      "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
   };
-  return map[tipo] ?? "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";
+  return map[tipo] ?? "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
 }
 
 function renderDelta(atual: number, anterior: number) {
@@ -187,14 +187,14 @@ export function RadarEstatisticas({ tipoCrime, bairro }: RadarEstatisticasProps 
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                <Newspaper className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800">
+                <Newspaper className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
                   {stats?.total || 0}
                 </p>
-                <p className="text-xs text-zinc-500">Ocorrências</p>
+                <p className="text-xs text-neutral-500">Ocorrências</p>
                 {statsComp && renderDelta(statsComp.noticias.atual, statsComp.noticias.anterior)}
               </div>
             </div>
@@ -208,10 +208,10 @@ export function RadarEstatisticas({ tipoCrime, bairro }: RadarEstatisticasProps 
                 <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
                   {stats?.porTipo?.find((t) => t.tipo === "homicidio")?.count || 0}
                 </p>
-                <p className="text-xs text-zinc-500">Homicídios</p>
+                <p className="text-xs text-neutral-500">Homicídios</p>
               </div>
             </div>
           </CardContent>
@@ -224,10 +224,10 @@ export function RadarEstatisticas({ tipoCrime, bairro }: RadarEstatisticasProps 
                 <Link2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
                   {stats?.totalMatches || 0}
                 </p>
-                <p className="text-xs text-zinc-500">Matches DPE</p>
+                <p className="text-xs text-neutral-500">Matches DPE</p>
                 {statsComp && renderDelta(statsComp.matches.atual, statsComp.matches.anterior)}
               </div>
             </div>
@@ -245,11 +245,11 @@ export function RadarEstatisticas({ tipoCrime, bairro }: RadarEstatisticasProps 
                 <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
                   {deteccao?.taxaConfirmacao ?? 0}%
                 </p>
-                <p className="text-xs text-zinc-500">Taxa de Confirmação</p>
-                <p className="text-[10px] text-zinc-400">
+                <p className="text-xs text-neutral-500">Taxa de Confirmação</p>
+                <p className="text-[10px] text-neutral-400">
                   {deteccao?.confirmados ?? 0} de {deteccao?.totalMatches ?? 0} matches
                 </p>
               </div>
@@ -265,15 +265,15 @@ export function RadarEstatisticas({ tipoCrime, bairro }: RadarEstatisticasProps 
                 <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
                   {deteccao?.tempoMedioHoras
                     ? deteccao.tempoMedioHoras < 24
                       ? `${deteccao.tempoMedioHoras}h`
                       : `${Math.round(deteccao.tempoMedioHoras / 24)}d`
                     : "—"}
                 </p>
-                <p className="text-xs text-zinc-500">Tempo Médio de Detecção</p>
-                <p className="text-[10px] text-zinc-400">entre fato e identificação</p>
+                <p className="text-xs text-neutral-500">Tempo Médio de Detecção</p>
+                <p className="text-[10px] text-neutral-400">entre fato e identificação</p>
               </div>
             </div>
           </CardContent>
@@ -287,11 +287,11 @@ export function RadarEstatisticas({ tipoCrime, bairro }: RadarEstatisticasProps 
                 <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
                   {deteccao?.matchesPorStatus?.find(m => m.status === "possivel")?.count ?? 0}
                 </p>
-                <p className="text-xs text-zinc-500">Matches Pendentes</p>
-                <p className="text-[10px] text-zinc-400">aguardando revisão</p>
+                <p className="text-xs text-neutral-500">Matches Pendentes</p>
+                <p className="text-[10px] text-neutral-400">aguardando revisão</p>
               </div>
             </div>
           </CardContent>
@@ -308,7 +308,7 @@ export function RadarEstatisticas({ tipoCrime, bairro }: RadarEstatisticasProps 
               <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 text-xs border-0">
                 {alertas.length}
               </Badge>
-              <span className="text-xs text-zinc-400 ml-1">matches ≥80% pendentes de revisão</span>
+              <span className="text-xs text-neutral-400 ml-1">matches ≥80% pendentes de revisão</span>
             </div>
             <div className="space-y-1.5">
               {alertas.map((alerta) => (
@@ -323,7 +323,7 @@ export function RadarEstatisticas({ tipoCrime, bairro }: RadarEstatisticasProps 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium truncate">{alerta.assistidoNome}</p>
-                    <p className="text-[10px] text-zinc-500 truncate">{alerta.noticiaTitulo}</p>
+                    <p className="text-[10px] text-neutral-500 truncate">{alerta.noticiaTitulo}</p>
                   </div>
                   {/* Crime badge */}
                   {alerta.noticiaTipoCrime && (
@@ -337,7 +337,7 @@ export function RadarEstatisticas({ tipoCrime, bairro }: RadarEstatisticasProps 
                     </Badge>
                   )}
                   {/* Tempo */}
-                  <span className="text-[10px] text-zinc-400 shrink-0">
+                  <span className="text-[10px] text-neutral-400 shrink-0">
                     {formatDistanceToNow(new Date(alerta.createdAt), {
                       locale: ptBR,
                       addSuffix: true,
@@ -416,7 +416,7 @@ export function RadarEstatisticas({ tipoCrime, bairro }: RadarEstatisticasProps 
         {bairros && bairros.length > 0 && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
                 Top Bairros
               </CardTitle>
@@ -428,8 +428,8 @@ export function RadarEstatisticas({ tipoCrime, bairro }: RadarEstatisticasProps 
                   <div key={b.bairro} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-zinc-400 w-4 text-right">{i + 1}</span>
-                        <span className="font-medium text-zinc-800 dark:text-zinc-200 truncate max-w-[140px]">
+                        <span className="text-neutral-400 w-4 text-right">{i + 1}</span>
+                        <span className="font-medium text-neutral-800 dark:text-neutral-200 truncate max-w-[140px]">
                           {b.bairro}
                         </span>
                         {b.tipoCrimeDominante && (
@@ -441,9 +441,9 @@ export function RadarEstatisticas({ tipoCrime, bairro }: RadarEstatisticasProps 
                           </Badge>
                         )}
                       </div>
-                      <span className="text-zinc-500 shrink-0 ml-2">{b.count}</span>
+                      <span className="text-neutral-500 shrink-0 ml-2">{b.count}</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{
@@ -516,12 +516,12 @@ export function RadarEstatisticas({ tipoCrime, bairro }: RadarEstatisticasProps 
                   return (
                     <div key={i} className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate max-w-[70%]">
+                        <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 truncate max-w-[70%]">
                           {d.nome}
                         </span>
-                        <span className="text-xs text-zinc-500">{d.count}</span>
+                        <span className="text-xs text-neutral-500">{d.count}</span>
                       </div>
-                      <div className="h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-emerald-500 rounded-full transition-all"
                           style={{ width: `${pct}%` }}
@@ -543,7 +543,7 @@ export function RadarEstatisticas({ tipoCrime, bairro }: RadarEstatisticasProps 
           {byHora && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                <CardTitle className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-2">
                   <Clock className="h-4 w-4" />
                   Ocorrências por Hora
                 </CardTitle>
@@ -574,7 +574,7 @@ export function RadarEstatisticas({ tipoCrime, bairro }: RadarEstatisticasProps 
           {byDiaSemana && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                <CardTitle className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   Ocorrências por Dia da Semana
                 </CardTitle>
@@ -605,8 +605,8 @@ export function RadarEstatisticas({ tipoCrime, bairro }: RadarEstatisticasProps 
       {/* Estado vazio */}
       {(!stats || stats.total === 0) && (
         <div className="text-center py-12">
-          <Radio className="h-8 w-8 text-zinc-300 mx-auto mb-3" />
-          <p className="text-sm text-zinc-500">
+          <Radio className="h-8 w-8 text-neutral-300 mx-auto mb-3" />
+          <p className="text-sm text-neutral-500">
             Estatísticas serão exibidas após a coleta de notícias.
           </p>
         </div>

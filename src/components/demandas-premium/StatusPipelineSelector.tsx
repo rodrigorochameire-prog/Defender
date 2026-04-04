@@ -95,10 +95,10 @@ export function StatusPipelineSelector({
     <div className="px-4 py-3">
       <div className="relative flex items-center">
         {/* Background track */}
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] bg-zinc-200 dark:bg-zinc-700/60 rounded-full" />
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] bg-neutral-200 dark:bg-neutral-700/60 rounded-full" />
         {/* Filled track (neutral gray) */}
         <div
-          className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] rounded-full transition-all duration-300 bg-zinc-300 dark:bg-zinc-600"
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] rounded-full transition-all duration-300 bg-neutral-300 dark:bg-neutral-600"
           style={{
             width: currentStageIdx >= 0 ? `${(currentStageIdx / (PIPELINE_STAGES.length - 1)) * 100}%` : "0%",
           }}
@@ -122,11 +122,11 @@ export function StatusPipelineSelector({
               <div
                 className={`flex items-center justify-center rounded-full transition-all duration-200 ${
                   isCurrent
-                    ? "w-5 h-5 ring-2 ring-offset-1 dark:ring-offset-zinc-900"
+                    ? "w-5 h-5 ring-2 ring-offset-1 dark:ring-offset-neutral-900"
                     : isCompleted
                       ? "w-4 h-4"
                       : isViewing
-                        ? "w-4 h-4 ring-2 ring-offset-1 dark:ring-offset-zinc-900"
+                        ? "w-4 h-4 ring-2 ring-offset-1 dark:ring-offset-neutral-900"
                         : "w-3.5 h-3.5 group-hover/node:w-4 group-hover/node:h-4"
                 }`}
                 style={{
@@ -140,7 +140,7 @@ export function StatusPipelineSelector({
               {/* Label */}
               <span
                 className={`mt-1 text-[9px] font-medium whitespace-nowrap transition-colors ${
-                  isCurrent || isViewing ? "font-bold" : "text-zinc-400 dark:text-zinc-500"
+                  isCurrent || isViewing ? "font-bold" : "text-neutral-400 dark:text-neutral-500"
                 }`}
                 style={{ color: isCurrent || isViewing ? color : undefined }}
               >
@@ -167,7 +167,7 @@ export function StatusPipelineSelector({
               transition-colors duration-100 cursor-pointer
               ${isActive
                 ? "bg-emerald-50/80 dark:bg-emerald-950/20"
-                : "hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                : "hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
               }
             `}
           >
@@ -177,8 +177,8 @@ export function StatusPipelineSelector({
             <span
               className={`text-xs flex-1 ${
                 isActive
-                  ? "font-bold text-zinc-900 dark:text-zinc-100"
-                  : "font-medium text-zinc-600 dark:text-zinc-400"
+                  ? "font-bold text-neutral-900 dark:text-neutral-100"
+                  : "font-medium text-neutral-600 dark:text-neutral-400"
               }`}
             >
               {opt.label}
@@ -195,7 +195,7 @@ export function StatusPipelineSelector({
   // ====== INLINE variant (embedded, no portal) ======
   if (variant === "inline") {
     return (
-      <div className="rounded-xl bg-zinc-50/80 dark:bg-zinc-800/30 border border-zinc-200/60 dark:border-zinc-700/40 overflow-hidden">
+      <div className="rounded-xl bg-neutral-50/80 dark:bg-neutral-800/30 border border-neutral-200/60 dark:border-neutral-700/40 overflow-hidden">
         {stepperContent}
         <div className="mx-3 h-px" style={{ backgroundColor: `${stageColor}30` }} />
         {optionsContent}
@@ -212,17 +212,17 @@ export function StatusPipelineSelector({
         {/* Sheet */}
         <div
           ref={ref}
-          className="absolute inset-x-3 bottom-3 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden"
+          className="absolute inset-x-3 bottom-3 bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-2xl shadow-2xl overflow-hidden"
           style={{ animation: "fadeInUp 0.15s ease-out", maxHeight: "70vh" }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
-            <h4 className="text-xs font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-wide">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 dark:border-neutral-800">
+            <h4 className="text-xs font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-wide">
               Alterar Status
             </h4>
             <button
               onClick={onClose}
-              className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 p-1 -mr-1 cursor-pointer"
+              className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 p-1 -mr-1 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -249,7 +249,7 @@ export function StatusPipelineSelector({
     return (
       <div
         ref={ref}
-        className="absolute top-full right-0 mt-2 w-[260px] bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden"
+        className="absolute top-full right-0 mt-2 w-[260px] bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-xl shadow-xl z-50 overflow-hidden"
         style={{ animation: "fadeInDown 0.15s ease-out" }}
       >
         {stepperContent}
@@ -265,7 +265,7 @@ export function StatusPipelineSelector({
     return createPortal(
       <div
         ref={ref}
-        className="fixed w-[260px] max-w-[calc(100vw-2rem)] bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-xl shadow-xl z-[9999] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
+        className="fixed w-[260px] max-w-[calc(100vw-2rem)] bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-xl shadow-xl z-[9999] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
         style={{ top: pos.top, right: pos.right }}
       >
         {stepperContent}

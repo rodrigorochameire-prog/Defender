@@ -245,17 +245,17 @@ export function FileUploadWithLink({
               "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
               file
                 ? "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-900/20"
-                : "border-zinc-300 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-600"
+                : "border-neutral-300 hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-600"
             )}
           >
             {file ? (
               <div className="flex flex-col items-center gap-2">
                 <FileText className="h-12 w-12 text-green-600" />
                 <div>
-                  <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                  <p className="font-medium text-neutral-900 dark:text-neutral-100">
                     {file.name}
                   </p>
-                  <p className="text-sm text-zinc-500">
+                  <p className="text-sm text-neutral-500">
                     {formatFileSize(file.size)}
                   </p>
                 </div>
@@ -272,7 +272,7 @@ export function FileUploadWithLink({
                 </Button>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-2 text-zinc-500">
+              <div className="flex flex-col items-center gap-2 text-neutral-500">
                 <Upload className="h-12 w-12" />
                 <p>Arraste um arquivo ou clique para selecionar</p>
                 <p className="text-xs">PDF, DOC, DOCX, XLS, XLSX, JPG, PNG</p>

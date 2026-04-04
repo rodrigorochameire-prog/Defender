@@ -182,10 +182,10 @@ const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
 
 // Status NEUTROS para reduzir poluição visual
 const SITUACAO_CONFIGS: Record<string, { label: string; color: string; bg: string }> = {
-  ativo: { label: "Ativo", color: "text-zinc-700 dark:text-zinc-300", bg: "bg-zinc-100 dark:bg-zinc-800" },
-  suspenso: { label: "Suspenso", color: "text-zinc-500 dark:text-zinc-400", bg: "bg-zinc-100 dark:bg-zinc-800" },
-  arquivado: { label: "Arquivado", color: "text-zinc-400 dark:text-zinc-500", bg: "bg-zinc-50 dark:bg-zinc-900" },
-  baixado: { label: "Baixado", color: "text-zinc-400 dark:text-zinc-500", bg: "bg-zinc-50 dark:bg-zinc-900" },
+  ativo: { label: "Ativo", color: "text-neutral-700 dark:text-neutral-300", bg: "bg-neutral-100 dark:bg-neutral-800" },
+  suspenso: { label: "Suspenso", color: "text-neutral-500 dark:text-neutral-400", bg: "bg-neutral-100 dark:bg-neutral-800" },
+  arquivado: { label: "Arquivado", color: "text-neutral-400 dark:text-neutral-500", bg: "bg-neutral-50 dark:bg-neutral-900" },
+  baixado: { label: "Baixado", color: "text-neutral-400 dark:text-neutral-500", bg: "bg-neutral-50 dark:bg-neutral-900" },
 };
 
 // ==========================================
@@ -278,8 +278,8 @@ function PrazoFilterChips({
                   filter.color === "blue" ? "bg-blue-500 text-white shadow-sm" :
                   filter.color === "emerald" ? "bg-emerald-500 text-white shadow-sm" :
                   filter.color === "violet" ? "bg-violet-500 text-white shadow-sm" :
-                  "bg-zinc-800 text-white shadow-sm"
-                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                  "bg-neutral-800 text-white shadow-sm"
+                : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700"
             )}
           >
             <Icon className="w-3 h-3" />
@@ -291,7 +291,7 @@ function PrazoFilterChips({
                   ? "bg-white/20"
                   : filter.color === "rose" ? "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400" :
                     filter.color === "amber" ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" :
-                    "bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400"
+                    "bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-400"
               )}>
                 {count}
               </span>
@@ -422,7 +422,7 @@ function FaseProgressBar({ faseAtual }: { faseAtual?: string }) {
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-[10px]">
-        <span className="text-zinc-400 uppercase tracking-wider font-medium">Fase Processual</span>
+        <span className="text-neutral-400 uppercase tracking-wider font-medium">Fase Processual</span>
         <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
           {FASES_JURI.find(f => f.id === faseAtual)?.label || "Inquérito"}
         </span>
@@ -437,7 +437,7 @@ function FaseProgressBar({ faseAtual }: { faseAtual?: string }) {
                 ? "bg-emerald-500" 
                 : idx === faseIndex 
                   ? "bg-emerald-300 dark:bg-emerald-700" 
-                  : "bg-zinc-200 dark:bg-zinc-700"
+                  : "bg-neutral-200 dark:bg-neutral-700"
             )}
           />
         ))}
@@ -452,24 +452,24 @@ function MiniTimeline({ eventos }: { eventos: Array<{ texto: string; data?: Date
   
   return (
     <div className="space-y-2">
-      <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium">Últimos Eventos</span>
+      <span className="text-[10px] text-neutral-400 uppercase tracking-wider font-medium">Últimos Eventos</span>
       <div className="space-y-1.5">
         {eventos.slice(0, 3).map((evento, idx) => (
           <div key={idx} className="flex items-start gap-2">
             <div className="flex flex-col items-center">
               <div className={cn(
                 "w-1.5 h-1.5 rounded-full mt-1.5",
-                idx === 0 ? "bg-emerald-500" : "bg-zinc-300 dark:bg-zinc-600"
+                idx === 0 ? "bg-emerald-500" : "bg-neutral-300 dark:bg-neutral-600"
               )} />
-              {idx < 2 && <div className="w-px h-3 bg-zinc-200 dark:bg-zinc-700" />}
+              {idx < 2 && <div className="w-px h-3 bg-neutral-200 dark:bg-neutral-700" />}
             </div>
             <div className="flex-1 min-w-0">
               <p className={cn(
                 "text-xs truncate",
-                idx === 0 ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-500 dark:text-zinc-400"
+                idx === 0 ? "text-neutral-700 dark:text-neutral-300" : "text-neutral-500 dark:text-neutral-400"
               )}>{evento.texto}</p>
               {evento.data && (
-                <p className="text-[10px] text-zinc-400 font-mono tabular-nums">
+                <p className="text-[10px] text-neutral-400 font-mono tabular-nums">
                   {format(evento.data, "dd/MM/yy")}
                 </p>
               )}
@@ -496,7 +496,7 @@ function ProcessoTimeline({ processoId }: { processoId: number }) {
   
   if (!timeline || timeline.length === 0) {
     return (
-      <p className="text-[10px] text-zinc-400 italic">Nenhum ato registrado</p>
+      <p className="text-[10px] text-neutral-400 italic">Nenhum ato registrado</p>
     );
   }
   
@@ -515,9 +515,9 @@ function ProcessoTimeline({ processoId }: { processoId: number }) {
       case "movimentacao":
         return { 
           color: tipo === "sentenca" ? "bg-emerald-500" : 
-                 tipo === "decisao" ? "bg-amber-500" : "bg-zinc-400",
+                 tipo === "decisao" ? "bg-amber-500" : "bg-neutral-400",
           textColor: tipo === "sentenca" ? "text-emerald-600 dark:text-emerald-400" : 
-                     tipo === "decisao" ? "text-amber-600 dark:text-amber-400" : "text-zinc-500",
+                     tipo === "decisao" ? "text-amber-600 dark:text-amber-400" : "text-neutral-500",
           label: tipo === "sentenca" ? "Sentença" : 
                  tipo === "decisao" ? "Decisão" : 
                  tipo === "despacho" ? "Despacho" : "Movimentação"
@@ -536,15 +536,15 @@ function ProcessoTimeline({ processoId }: { processoId: number }) {
         };
       default:
         return { 
-          color: "bg-zinc-400", 
-          textColor: "text-zinc-500",
+          color: "bg-neutral-400", 
+          textColor: "text-neutral-500",
           label: "Ato"
         };
     }
   };
   
   return (
-    <div className="relative pl-3 space-y-1.5 border-l border-zinc-200 dark:border-zinc-700">
+    <div className="relative pl-3 space-y-1.5 border-l border-neutral-200 dark:border-neutral-700">
       {timeline.slice(0, 5).map((ato, index) => {
         const config = getCategoriaConfig(ato.categoria, ato.tipo);
         const isPast = new Date(ato.data) < new Date();
@@ -561,7 +561,7 @@ function ProcessoTimeline({ processoId }: { processoId: number }) {
               <span className={cn("text-[10px] font-medium", config.textColor)}>
                 {format(new Date(ato.data), "dd/MM/yyyy")}
               </span>
-              <span className="text-[10px] text-zinc-500 truncate flex-1">
+              <span className="text-[10px] text-neutral-500 truncate flex-1">
                 {ato.titulo.length > 40 ? ato.titulo.substring(0, 40) + "..." : ato.titulo}
               </span>
               {ato.status && (
@@ -570,7 +570,7 @@ function ProcessoTimeline({ processoId }: { processoId: number }) {
                   ato.status === "realizada" ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" :
                   ato.status === "agendada" ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" :
                   ato.status === "adiada" ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" :
-                  "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                  "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
                 )}>
                   {ato.status}
                 </span>
@@ -580,7 +580,7 @@ function ProcessoTimeline({ processoId }: { processoId: number }) {
         );
       })}
       {timeline.length > 5 && (
-        <p className="ml-2 text-[9px] text-zinc-400">
+        <p className="ml-2 text-[9px] text-neutral-400">
           +{timeline.length - 5} mais atos...
         </p>
       )}
@@ -618,7 +618,7 @@ function UniversalProgressBar({ area, faseAtual, isJuri }: { area: string; faseA
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-[9px]">
-        <span className="text-zinc-400 uppercase tracking-wider font-medium">Fase</span>
+        <span className="text-neutral-400 uppercase tracking-wider font-medium">Fase</span>
         <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
           {fases[currentIndex]?.label || fases[0].label}
         </span>
@@ -634,7 +634,7 @@ function UniversalProgressBar({ area, faseAtual, isJuri }: { area: string; faseA
                     ? "bg-emerald-500"
                     : idx === currentIndex
                       ? "bg-emerald-400 dark:bg-emerald-600"
-                      : "bg-zinc-200 dark:bg-zinc-700"
+                      : "bg-neutral-200 dark:bg-neutral-700"
                 )}
               />
             </TooltipTrigger>
@@ -676,7 +676,7 @@ function QuickActionsOverlay({
 
   return (
     <div
-      className="absolute inset-0 bg-zinc-900/95 dark:bg-zinc-950/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center animate-in fade-in duration-200 cursor-pointer"
+      className="absolute inset-0 bg-neutral-900/95 dark:bg-neutral-950/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center animate-in fade-in duration-200 cursor-pointer"
       onClick={onClose}
     >
       {/* Botão Fechar */}
@@ -768,7 +768,7 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
   return (
     <div
       className={cn(
-        "group relative bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800",
+        "group relative bg-white dark:bg-neutral-900 rounded-xl border border-neutral-100 dark:border-neutral-800",
         "transition-all duration-300",
         "overflow-hidden",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
@@ -840,7 +840,7 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
                 prazoVencido && "bg-rose-500 text-white",
                 prazoHoje && "bg-amber-500 text-white animate-pulse",
                 prazoUrgente && "bg-blue-500 text-white",
-                !prazoVencido && !prazoHoje && !prazoUrgente && "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                !prazoVencido && !prazoHoje && !prazoUrgente && "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400"
               )}>
                 {prazoVencido ? (
                   <>
@@ -872,18 +872,18 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
             className="flex items-center gap-2 cursor-pointer group/copy"
             onClick={handleCopy}
           >
-            <span className="font-mono tabular-nums text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate hover:text-emerald-600 transition-colors">
+            <span className="font-mono tabular-nums text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate hover:text-emerald-600 transition-colors">
               {processo.numeroAutos}
             </span>
             {copied ? (
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
             ) : (
-              <Copy className="w-3.5 h-3.5 text-zinc-400 opacity-0 group-hover/copy:opacity-100 transition-opacity flex-shrink-0" />
+              <Copy className="w-3.5 h-3.5 text-neutral-400 opacity-0 group-hover/copy:opacity-100 transition-opacity flex-shrink-0" />
             )}
           </div>
 
           {/* Linha 3: Assunto */}
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-1">
             {processo.assunto}
           </p>
 
@@ -895,7 +895,7 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
           />
 
           {/* Linha 5: Assistido + Comarca */}
-          <div className="flex items-center justify-between gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center justify-between gap-3 pt-2 border-t border-neutral-100 dark:border-neutral-800">
             <Link href={`/admin/assistidos/${processo.assistido.id}`} className="flex items-center gap-2.5 min-w-0 group/link">
               <AssistidoAvatar
                 nome={processo.assistido?.nome || ""}
@@ -904,7 +904,7 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
                 atribuicao={processo.area}
               />
               <div className="min-w-0">
-                <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate block group-hover/link:text-emerald-600 transition-colors">
+                <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 truncate block group-hover/link:text-emerald-600 transition-colors">
                   {processo.assistido.nome}
                 </span>
                 {processo.assistido.preso && processo.assistido.localPrisao && (
@@ -915,7 +915,7 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
               </div>
             </Link>
 
-            <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 flex-shrink-0 bg-zinc-50 dark:bg-zinc-800 px-2 py-1 rounded-md">
+            <div className="flex items-center gap-1.5 text-[10px] text-neutral-400 flex-shrink-0 bg-neutral-50 dark:bg-neutral-800 px-2 py-1 rounded-md">
               <MapPin className="w-3 h-3" />
               <span>{processo.comarca}</span>
             </div>
@@ -1008,11 +1008,11 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
 
         {/* Conteúdo Expansível */}
         <CollapsibleContent>
-          <div className="px-4 pb-4 pt-3 space-y-3 border-t border-zinc-100 dark:border-zinc-800 bg-gradient-to-b from-zinc-50/50 to-white dark:from-zinc-900/50 dark:to-zinc-900">
+          <div className="px-4 pb-4 pt-3 space-y-3 border-t border-neutral-100 dark:border-neutral-800 bg-gradient-to-b from-neutral-50/50 to-white dark:from-neutral-900/50 dark:to-neutral-900">
 
             {/* Timeline de Atos Principais - Dados do Banco */}
             <div>
-              <p className="text-[10px] text-zinc-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+              <p className="text-[10px] text-neutral-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
                 <Activity className="w-3 h-3" />
                 Timeline de Atos
               </p>
@@ -1030,13 +1030,13 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
 
             {/* Info Grid */}
             <div className="grid grid-cols-2 gap-2">
-              <div className="flex items-center gap-2 text-xs text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50 px-2.5 py-1.5 rounded-md">
-                <Building2 className="w-3.5 h-3.5 text-zinc-400" />
+              <div className="flex items-center gap-2 text-xs text-neutral-500 bg-neutral-50 dark:bg-neutral-800/50 px-2.5 py-1.5 rounded-md">
+                <Building2 className="w-3.5 h-3.5 text-neutral-400" />
                 <span className="truncate">{processo.vara}</span>
               </div>
               {processo.defensorNome && (
-                <div className="flex items-center gap-2 text-xs text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50 px-2.5 py-1.5 rounded-md">
-                  <Users className="w-3.5 h-3.5 text-zinc-400" />
+                <div className="flex items-center gap-2 text-xs text-neutral-500 bg-neutral-50 dark:bg-neutral-800/50 px-2.5 py-1.5 rounded-md">
+                  <Users className="w-3.5 h-3.5 text-neutral-400" />
                   <span className="truncate">{processo.defensorNome}</span>
                 </div>
               )}
@@ -1046,7 +1046,7 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
 
         {/* Trigger de Expansão Premium */}
         <CollapsibleTrigger asChild>
-          <button className="w-full flex items-center justify-center gap-1.5 py-2 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors border-t border-zinc-100 dark:border-zinc-800 text-zinc-400 hover:text-zinc-600">
+          <button className="w-full flex items-center justify-center gap-1.5 py-2 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors border-t border-neutral-100 dark:border-neutral-800 text-neutral-400 hover:text-neutral-600">
             <span className="text-[10px] font-medium">{isOpen ? "Menos" : "Mais"}</span>
             <ChevronDown className={cn(
               "w-3.5 h-3.5 transition-transform",
@@ -1085,7 +1085,7 @@ function ProcessoRow({ processo }: { processo: Processo }) {
   return (
     <DataTableRow 
       selected={false} 
-      className={cn("relative border-l-[3px]", processo.assistido.preso ? "border-l-rose-500" : "border-l-zinc-300 dark:border-l-zinc-600")}
+      className={cn("relative border-l-[3px]", processo.assistido.preso ? "border-l-rose-500" : "border-l-neutral-300 dark:border-l-neutral-600")}
     >
       {/* Número do Processo */}
       <DataTableCellMono className="min-w-[200px]">
@@ -1328,12 +1328,12 @@ function FilterSectionProcessos({
           onClick={() => setIsMainExpanded(!isMainExpanded)}
           className="flex items-center gap-3 cursor-pointer flex-1 group"
         >
-          <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-            <Filter className="w-3.5 h-3.5 text-zinc-500" />
+          <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+            <Filter className="w-3.5 h-3.5 text-neutral-500" />
           </div>
           <div>
-            <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Filtros</h3>
-            <p className="text-[10px] text-zinc-400">
+            <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Filtros</h3>
+            <p className="text-[10px] text-neutral-400">
               {totalFilters > 0 ? `${totalFilters} ativo${totalFilters > 1 ? 's' : ''}` : 'Nenhum filtro aplicado'}
             </p>
           </div>
@@ -1344,7 +1344,7 @@ function FilterSectionProcessos({
               variant="ghost" 
               size="sm" 
               onClick={handleClearAll}
-              className="h-7 text-[10px] px-2 text-zinc-400 hover:text-zinc-600"
+              className="h-7 text-[10px] px-2 text-neutral-400 hover:text-neutral-600"
             >
               <XCircle className="w-3 h-3 mr-1" />
               Limpar
@@ -1352,12 +1352,12 @@ function FilterSectionProcessos({
           )}
           <div 
             onClick={() => setIsMainExpanded(!isMainExpanded)}
-            className="p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
           >
             {isMainExpanded ? (
-              <ChevronUp className="w-4 h-4 text-zinc-400" />
+              <ChevronUp className="w-4 h-4 text-neutral-400" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-zinc-400" />
+              <ChevronDown className="w-4 h-4 text-neutral-400" />
             )}
           </div>
         </div>
@@ -1365,15 +1365,15 @@ function FilterSectionProcessos({
 
       {/* Seções de Filtro */}
       {isMainExpanded && (
-        <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="space-y-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
           {/* Atribuição/Área */}
           <div>
             <button
               onClick={() => toggleSection('atribuicoes')}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wide">Atribuição</span>
+                <span className="text-[11px] font-medium text-neutral-500 uppercase tracking-wide">Atribuição</span>
                 {selectedArea !== "all" && (
                   <span 
                     className="px-2 py-0.5 rounded text-[10px] font-medium text-white"
@@ -1383,7 +1383,7 @@ function FilterSectionProcessos({
                   </span>
                 )}
               </div>
-              {expandedSections.atribuicoes ? <ChevronUp className="w-3.5 h-3.5 text-zinc-400" /> : <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />}
+              {expandedSections.atribuicoes ? <ChevronUp className="w-3.5 h-3.5 text-neutral-400" /> : <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />}
             </button>
             
             {expandedSections.atribuicoes && (
@@ -1397,8 +1397,8 @@ function FilterSectionProcessos({
                       className={cn(
                         "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all",
                         isSelected
-                          ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100"
-                          : "bg-white dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300"
+                          ? "bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-100"
+                          : "bg-white dark:bg-neutral-800 text-neutral-500 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300"
                       )}
                     >
                       <div 
@@ -1417,10 +1417,10 @@ function FilterSectionProcessos({
           <div>
             <button
               onClick={() => toggleSection('situacao')}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wide">Situação</span>
+                <span className="text-[11px] font-medium text-neutral-500 uppercase tracking-wide">Situação</span>
                 {selectedSituacao !== "all" && (
                   <span 
                     className="px-2 py-0.5 rounded text-[10px] font-medium text-white"
@@ -1430,7 +1430,7 @@ function FilterSectionProcessos({
                   </span>
                 )}
               </div>
-              {expandedSections.situacao ? <ChevronUp className="w-3.5 h-3.5 text-zinc-400" /> : <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />}
+              {expandedSections.situacao ? <ChevronUp className="w-3.5 h-3.5 text-neutral-400" /> : <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />}
             </button>
             
             {expandedSections.situacao && (
@@ -1444,8 +1444,8 @@ function FilterSectionProcessos({
                       className={cn(
                         "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all",
                         isSelected
-                          ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100"
-                          : "bg-white dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300"
+                          ? "bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-100"
+                          : "bg-white dark:bg-neutral-800 text-neutral-500 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300"
                       )}
                     >
                       <div 
@@ -1463,22 +1463,22 @@ function FilterSectionProcessos({
       )}
 
       {/* Barra de Ações (Busca, Ordenação, Agrupamento, View) */}
-      <div className="flex items-center justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex-wrap">
+      <div className="flex items-center justify-between gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex-wrap">
         {/* Busca */}
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
           <Input
             placeholder="Buscar processo, assistido..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 h-8 text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
+            className="pl-9 h-8 text-xs bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700"
           />
         </div>
 
         <div className="flex items-center gap-2">
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-[110px] h-8 text-xs">
-              <ArrowUpDown className="w-3 h-3 mr-1 text-zinc-400" />
+              <ArrowUpDown className="w-3 h-3 mr-1 text-neutral-400" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1491,7 +1491,7 @@ function FilterSectionProcessos({
           
           <Select value={groupBy} onValueChange={setGroupBy}>
             <SelectTrigger className="w-[100px] h-8 text-xs">
-              <Layers className="w-3 h-3 mr-1 text-zinc-400" />
+              <Layers className="w-3 h-3 mr-1 text-neutral-400" />
               <SelectValue placeholder="Agrupar" />
             </SelectTrigger>
             <SelectContent>
@@ -1501,14 +1501,14 @@ function FilterSectionProcessos({
             </SelectContent>
           </Select>
           
-          <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
+          <div className="flex bg-neutral-100 dark:bg-neutral-800 p-0.5 rounded-lg">
             <button
               onClick={() => setViewMode("grid")}
               className={cn(
                 "flex items-center gap-1 px-2.5 h-7 text-xs font-medium rounded-md transition-all",
                 viewMode === "grid"
-                  ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-700"
+                  ? "bg-white dark:bg-neutral-700 text-neutral-800 dark:text-white shadow-sm"
+                  : "text-neutral-500 hover:text-neutral-700"
               )}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -1518,8 +1518,8 @@ function FilterSectionProcessos({
               className={cn(
                 "flex items-center gap-1 px-2.5 h-7 text-xs font-medium rounded-md transition-all",
                 viewMode === "list"
-                  ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-700"
+                  ? "bg-white dark:bg-neutral-700 text-neutral-800 dark:text-white shadow-sm"
+                  : "text-neutral-500 hover:text-neutral-700"
               )}
             >
               <List className="w-3.5 h-3.5" />
@@ -1733,9 +1733,9 @@ export default function ProcessosPage() {
   if (isLoading) {
     return (
       <TooltipProvider>
-        <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+        <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
           {/* Sub-header Skeleton */}
-          <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+          <div className="px-4 md:px-6 py-3 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <Skeleton className="w-7 h-7 rounded-md" />
@@ -1753,7 +1753,7 @@ export default function ProcessosPage() {
             {/* Stats Skeleton - 2 colunas em mobile */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800">
+                <div key={i} className="p-3 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800">
                   <div className="flex items-center justify-between">
                     <div className="space-y-2">
                       <Skeleton className="h-3 w-16" />
@@ -1766,8 +1766,8 @@ export default function ProcessosPage() {
             </div>
 
             {/* Filter Card Skeleton */}
-            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 overflow-hidden">
-              <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
+            <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-100 dark:border-neutral-800 overflow-hidden">
+              <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800">
                 <div className="flex items-center justify-between">
                   <Skeleton className="h-3 w-24" />
                   <div className="flex gap-1.5">
@@ -1791,7 +1791,7 @@ export default function ProcessosPage() {
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div 
                   key={i} 
-                  className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 overflow-hidden"
+                  className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-100 dark:border-neutral-800 overflow-hidden"
                   style={{ animationDelay: `${i * 100}ms` }}
                 >
                   <div className="p-4 space-y-3">
@@ -1810,7 +1810,7 @@ export default function ProcessosPage() {
                     {/* Localização */}
                     <Skeleton className="h-4 w-32" />
                     {/* Divider */}
-                    <div className="border-t border-zinc-100 dark:border-zinc-800 pt-3">
+                    <div className="border-t border-neutral-100 dark:border-neutral-800 pt-3">
                       <div className="flex items-center gap-3">
                         <Skeleton className="w-9 h-9 rounded-full" />
                         <div className="flex-1 space-y-1">
@@ -1822,7 +1822,7 @@ export default function ProcessosPage() {
                     </div>
                   </div>
                   {/* Footer */}
-                  <div className="border-t border-zinc-100 dark:border-zinc-800 py-2 flex justify-center">
+                  <div className="border-t border-neutral-100 dark:border-neutral-800 py-2 flex justify-center">
                     <Skeleton className="h-4 w-20" />
                   </div>
                 </div>
@@ -1853,17 +1853,17 @@ export default function ProcessosPage() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
         {/* Header Compact */}
-        <div className="px-5 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
+        <div className="px-5 py-2.5 bg-white dark:bg-neutral-900 border-b border-neutral-200/80 dark:border-neutral-800/80">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-[10px] bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center">
-                <Scale className="w-4 h-4 text-white dark:text-zinc-900" />
+              <div className="w-9 h-9 rounded-[10px] bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center">
+                <Scale className="w-4 h-4 text-white dark:text-neutral-900" />
               </div>
               <div>
-                <h1 className="font-serif text-[17px] font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">Processos</h1>
-                <p className="text-[10px] text-zinc-400">Gestão e acompanhamento judicial</p>
+                <h1 className="font-serif text-[17px] font-semibold text-neutral-900 dark:text-neutral-100 tracking-tight leading-tight">Processos</h1>
+                <p className="text-[10px] text-neutral-400">Gestão e acompanhamento judicial</p>
               </div>
             </div>
 
@@ -1874,7 +1874,7 @@ export default function ProcessosPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                      className="h-8 w-8 p-0 text-neutral-400 hover:text-emerald-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                     </Button>
@@ -1885,7 +1885,7 @@ export default function ProcessosPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="h-8 w-8 p-0 text-neutral-400 hover:text-emerald-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                 title="Exportar"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -1893,7 +1893,7 @@ export default function ProcessosPage() {
               <Link href="/admin/processos/novo">
                 <Button
                   size="sm"
-                  className="h-8 px-3.5 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer"
+                  className="h-8 px-3.5 bg-neutral-900 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5 mr-1" />
                   Novo
@@ -1907,7 +1907,7 @@ export default function ProcessosPage() {
         <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
 
         {/* Stats Ribbon — compact inline KPIs */}
-        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 text-xs overflow-x-auto scrollbar-none">
           {[
             { icon: Scale, value: stats.total, label: "total", sublabel: `${stats.comarcas} comarcas`, onClick: undefined, active: false, alert: false },
             { icon: Gavel, value: stats.juri, label: "júri", onClick: () => setAreaFilter(areaFilter === "JURI" ? "all" : "JURI"), active: areaFilter === "JURI", alert: false },
@@ -1919,40 +1919,40 @@ export default function ProcessosPage() {
             const Icon = stat.icon;
             return (
               <Fragment key={index}>
-                {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
+                {index > 0 && <div className="w-px h-4 bg-neutral-200/60 dark:bg-neutral-700/60 flex-shrink-0" />}
                 <button
                   onClick={stat.onClick}
                   className={cn(
                     "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors",
                     stat.onClick && "cursor-pointer",
-                    stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-zinc-50 dark:hover:bg-zinc-800",
+                    stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-neutral-50 dark:hover:bg-neutral-800",
                     stat.alert && !stat.active ? "bg-rose-50 dark:bg-rose-950/20" : ""
                   )}
                 >
-                  <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-rose-500 dark:text-rose-400" : stat.active ? "text-emerald-500 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500")} />
-                  <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-600 dark:text-rose-400" : "text-zinc-800 dark:text-zinc-100")}>{stat.value}</span>
-                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.label}</span>
+                  <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-rose-500 dark:text-rose-400" : stat.active ? "text-emerald-500 dark:text-emerald-400" : "text-neutral-400 dark:text-neutral-500")} />
+                  <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-600 dark:text-rose-400" : "text-neutral-800 dark:text-neutral-100")}>{stat.value}</span>
+                  <span className="text-neutral-500 dark:text-neutral-400 font-medium">{stat.label}</span>
                 </button>
               </Fragment>
             );
           })}
           <div className="flex-1" />
-          <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px] tabular-nums whitespace-nowrap">{stats.total} processos</span>
+          <span className="text-neutral-400 dark:text-neutral-500 font-mono text-[10px] tabular-nums whitespace-nowrap">{stats.total} processos</span>
         </div>
 
         {/* Filtros de Prazo - Chips Premium */}
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-5">
+        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <CalendarClock className="w-4 h-4 text-zinc-400" />
-              <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Filtrar por Prazo</span>
+              <CalendarClock className="w-4 h-4 text-neutral-400" />
+              <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">Filtrar por Prazo</span>
             </div>
             {prazoFilter !== "all" && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setPrazoFilter("all")}
-                className="h-6 text-[10px] text-zinc-400 hover:text-zinc-600"
+                className="h-6 text-[10px] text-neutral-400 hover:text-neutral-600"
               >
                 <XCircle className="w-3 h-3 mr-1" />
                 Limpar
@@ -1967,7 +1967,7 @@ export default function ProcessosPage() {
         </div>
 
         {/* Card de Filtros - Padrão Demandas */}
-        <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-xl p-5">
+        <Card className="border border-neutral-200/80 dark:border-neutral-800/80 bg-white dark:bg-neutral-900 rounded-xl p-5">
           <FilterSectionProcessos
             selectedArea={areaFilter}
             setSelectedArea={setAreaFilter}
@@ -1985,11 +1985,11 @@ export default function ProcessosPage() {
         </Card>
 
         {/* Card de Listagem */}
-        <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden">
+        <Card className="border border-neutral-200/80 dark:border-neutral-800/80 bg-white dark:bg-neutral-900 rounded-xl overflow-hidden">
 
           {/* Header da listagem */}
-          <div className="px-4 py-3 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/50">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <div className="px-4 py-3 border-b border-neutral-200/80 dark:border-neutral-800/80 bg-neutral-50/50 dark:bg-neutral-900/50">
+            <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
               {filteredProcessos.length} processo{filteredProcessos.length !== 1 && 's'}
             </span>
           </div>
@@ -2015,10 +2015,10 @@ export default function ProcessosPage() {
                 {groupedProcessos.map(([groupName, processos], groupIdx) => (
                   <div key={groupName} className="space-y-3">
                     {/* Header do Grupo */}
-                    <div className="flex items-center gap-3 py-2 border-b border-zinc-200 dark:border-zinc-700">
-                      <Layers className="w-4 h-4 text-zinc-400" />
-                      <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{groupName}</h3>
-                      <span className="text-xs text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
+                    <div className="flex items-center gap-3 py-2 border-b border-neutral-200 dark:border-neutral-700">
+                      <Layers className="w-4 h-4 text-neutral-400" />
+                      <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">{groupName}</h3>
+                      <span className="text-xs text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full">
                         {processos.length} processo{processos.length !== 1 && 's'}
                       </span>
                     </div>
@@ -2048,7 +2048,7 @@ export default function ProcessosPage() {
               </div>
             )
           ) : (
-            <div className="max-h-[calc(100vh-400px)] overflow-auto rounded-lg border border-zinc-200 dark:border-zinc-700">
+            <div className="max-h-[calc(100vh-400px)] overflow-auto rounded-lg border border-neutral-200 dark:border-neutral-700">
               <DataTable>
                 <DataTableHeader>
                   <tr>

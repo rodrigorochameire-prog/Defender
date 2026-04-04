@@ -353,8 +353,8 @@ export function SmartExtractModal({
             {/* Step: Select */}
             {step === "select" && (
               <div className="flex flex-col items-center justify-center h-[400px]">
-                <FileText className="h-16 w-16 text-zinc-300 mb-4" />
-                <p className="text-zinc-600 mb-4">
+                <FileText className="h-16 w-16 text-neutral-300 mb-4" />
+                <p className="text-neutral-600 mb-4">
                   Selecione os arquivos que deseja processar
                 </p>
                 <Button
@@ -381,7 +381,7 @@ export function SmartExtractModal({
                 <p className="text-lg font-medium mb-2">
                   Processando {selectedFileIds.length} arquivo(s)...
                 </p>
-                <p className="text-sm text-zinc-500 mb-4">
+                <p className="text-sm text-neutral-500 mb-4">
                   Extraindo texto, analisando conteúdo e gerando sugestões
                 </p>
                 <Progress value={undefined} className="w-64" />
@@ -392,7 +392,7 @@ export function SmartExtractModal({
                     {extractionDetails.map((detail, i) => (
                       <div
                         key={i}
-                        className="flex items-center gap-2 text-sm text-zinc-600"
+                        className="flex items-center gap-2 text-sm text-neutral-600"
                       >
                         {detail.status === "success" ? (
                           <CheckCircle2 className="h-4 w-4 text-emerald-500" />

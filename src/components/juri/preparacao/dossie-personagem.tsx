@@ -122,7 +122,7 @@ function StatBox({
     warning:
       "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800",
     default:
-      "text-stone-700 dark:text-zinc-300 bg-stone-50 dark:bg-zinc-800/50 border-stone-200 dark:border-zinc-700",
+      "text-stone-700 dark:text-neutral-300 bg-stone-50 dark:bg-neutral-800/50 border-stone-200 dark:border-neutral-700",
   };
 
   return (
@@ -158,7 +158,7 @@ function ConvictionBar({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between text-xs text-stone-500 dark:text-zinc-500">
+      <div className="flex items-center justify-between text-xs text-stone-500 dark:text-neutral-500">
         <span className="flex items-center gap-1">
           <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
           Condenacao {condenacaoPct}%
@@ -168,7 +168,7 @@ function ConvictionBar({
           <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
         </span>
       </div>
-      <div className="flex h-3 w-full rounded-full overflow-hidden bg-stone-100 dark:bg-zinc-800">
+      <div className="flex h-3 w-full rounded-full overflow-hidden bg-stone-100 dark:bg-neutral-800">
         <div
           className="bg-red-500 dark:bg-red-400 transition-all duration-500"
           style={{ width: `${condenacaoPct}%` }}
@@ -203,9 +203,9 @@ function CollapsibleSection({
         <button
           className={cn(
             "w-full flex items-center justify-between p-2.5 rounded-lg transition-all duration-150",
-            "hover:bg-stone-50 dark:hover:bg-zinc-800/50",
+            "hover:bg-stone-50 dark:hover:bg-neutral-800/50",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-            "text-sm font-medium text-stone-600 dark:text-zinc-400",
+            "text-sm font-medium text-stone-600 dark:text-neutral-400",
             accentClass
           )}
         >
@@ -214,9 +214,9 @@ function CollapsibleSection({
             <span>{title}</span>
           </div>
           {isOpen ? (
-            <ChevronUp className="w-4 h-4 text-stone-400 dark:text-zinc-500 shrink-0" />
+            <ChevronUp className="w-4 h-4 text-stone-400 dark:text-neutral-500 shrink-0" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-stone-400 dark:text-zinc-500 shrink-0" />
+            <ChevronDown className="w-4 h-4 text-stone-400 dark:text-neutral-500 shrink-0" />
           )}
         </button>
       </CollapsibleTrigger>
@@ -265,7 +265,7 @@ export function DossiePersonagem({ personagem, onEdit }: DossiePersonagemProps) 
               </Badge>
             </CardTitle>
             {(personagem.vara || personagem.comarca) && (
-              <p className="text-xs text-stone-500 dark:text-zinc-500 mt-1.5">
+              <p className="text-xs text-stone-500 dark:text-neutral-500 mt-1.5">
                 {[personagem.vara, personagem.comarca].filter(Boolean).join(" - ")}
               </p>
             )}
@@ -311,11 +311,11 @@ export function DossiePersonagem({ personagem, onEdit }: DossiePersonagemProps) 
 
         {/* Tempo Medio */}
         {personagem.tempoMedioSustentacao != null && personagem.tempoMedioSustentacao > 0 && (
-          <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-zinc-500 px-1">
+          <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-neutral-500 px-1">
             <Calendar className="w-3.5 h-3.5 shrink-0" />
             <span>
               Tempo medio de sustentacao:{" "}
-              <strong className="text-stone-700 dark:text-zinc-300 font-mono">
+              <strong className="text-stone-700 dark:text-neutral-300 font-mono">
                 {personagem.tempoMedioSustentacao} min
               </strong>
             </span>
@@ -323,7 +323,7 @@ export function DossiePersonagem({ personagem, onEdit }: DossiePersonagemProps) 
         )}
 
         {/* ---- COLLAPSIBLE SECTIONS ---- */}
-        <div className="space-y-1 border-t border-stone-100 dark:border-zinc-800 pt-3">
+        <div className="space-y-1 border-t border-stone-100 dark:border-neutral-800 pt-3">
           {/* Estilo de Atuacao */}
           {personagem.estiloAtuacao && (
             <CollapsibleSection
@@ -331,7 +331,7 @@ export function DossiePersonagem({ personagem, onEdit }: DossiePersonagemProps) 
               icon={<Eye className="w-4 h-4 text-blue-500" />}
               defaultOpen
             >
-              <p className="text-sm text-stone-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm text-stone-600 dark:text-neutral-400 leading-relaxed whitespace-pre-wrap">
                 {personagem.estiloAtuacao}
               </p>
             </CollapsibleSection>
@@ -348,7 +348,7 @@ export function DossiePersonagem({ personagem, onEdit }: DossiePersonagemProps) 
                 {/* Pontos Fortes */}
                 {pontosFortesList.length > 0 && (
                   <div className="space-y-2">
-                    <span className="text-xs font-semibold text-stone-500 dark:text-zinc-500 uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-stone-500 dark:text-neutral-500 uppercase tracking-wider">
                       Fortes
                     </span>
                     <div className="flex flex-wrap gap-1.5">
@@ -364,7 +364,7 @@ export function DossiePersonagem({ personagem, onEdit }: DossiePersonagemProps) 
                 {/* Pontos Fracos */}
                 {pontosFracosList.length > 0 && (
                   <div className="space-y-2">
-                    <span className="text-xs font-semibold text-stone-500 dark:text-zinc-500 uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-stone-500 dark:text-neutral-500 uppercase tracking-wider">
                       Fracos
                     </span>
                     <div className="flex flex-wrap gap-1.5">
@@ -387,7 +387,7 @@ export function DossiePersonagem({ personagem, onEdit }: DossiePersonagemProps) 
               title="Tendencias Observadas"
               icon={<Eye className="w-4 h-4 text-amber-500" />}
             >
-              <p className="text-sm text-stone-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm text-stone-600 dark:text-neutral-400 leading-relaxed whitespace-pre-wrap">
                 {personagem.tendenciasObservadas}
               </p>
             </CollapsibleSection>
@@ -432,7 +432,7 @@ export function DossiePersonagem({ personagem, onEdit }: DossiePersonagemProps) 
                 title="Teses Vulneraveis"
                 icon={<AlertTriangle className="w-4 h-4 text-emerald-500" />}
               >
-                <p className="text-xs text-stone-500 dark:text-zinc-500 mb-2">
+                <p className="text-xs text-stone-500 dark:text-neutral-500 mb-2">
                   Teses que funcionaram contra este personagem
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -450,10 +450,10 @@ export function DossiePersonagem({ personagem, onEdit }: DossiePersonagemProps) 
           {personagem.notasEstrategicas && (
             <CollapsibleSection
               title="Notas Estrategicas"
-              icon={<StickyNote className="w-4 h-4 text-stone-500 dark:text-zinc-400" />}
+              icon={<StickyNote className="w-4 h-4 text-stone-500 dark:text-neutral-400" />}
             >
-              <div className="p-3 rounded-lg bg-stone-50 dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700">
-                <p className="text-sm text-stone-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap">
+              <div className="p-3 rounded-lg bg-stone-50 dark:bg-neutral-800/50 border border-stone-200 dark:border-neutral-700">
+                <p className="text-sm text-stone-600 dark:text-neutral-400 leading-relaxed whitespace-pre-wrap">
                   {personagem.notasEstrategicas}
                 </p>
               </div>
@@ -464,7 +464,7 @@ export function DossiePersonagem({ personagem, onEdit }: DossiePersonagemProps) 
 
       {/* ---- FOOTER ---- */}
       <CardFooter className="flex items-center justify-between">
-        <span className="text-xs text-stone-400 dark:text-zinc-500">
+        <span className="text-xs text-stone-400 dark:text-neutral-500">
           {personagem.ultimaSessaoData ? (
             <>
               <Calendar className="w-3 h-3 inline mr-1" />
@@ -479,7 +479,7 @@ export function DossiePersonagem({ personagem, onEdit }: DossiePersonagemProps) 
             variant="ghost"
             size="xs"
             onClick={() => onEdit(personagem.id)}
-            className="text-stone-500 dark:text-zinc-400 hover:text-stone-700 dark:hover:text-zinc-200"
+            className="text-stone-500 dark:text-neutral-400 hover:text-stone-700 dark:hover:text-neutral-200"
           >
             <Pencil className="w-3.5 h-3.5 mr-1" />
             Editar

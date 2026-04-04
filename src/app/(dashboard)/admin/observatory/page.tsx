@@ -36,21 +36,21 @@ export default function ObservatoryPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Observatory</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Observatory</h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
             Observabilidade da plataforma OMBUDS
           </p>
         </div>
         {/* Seletor de período */}
-        <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white p-1 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex items-center gap-1 rounded-lg border border-neutral-200 bg-white p-1 dark:border-neutral-800 dark:bg-neutral-900">
           {(["7d", "30d", "90d", "6m"] as const).map((op) => (
             <button
               key={op}
               onClick={() => setPeriodo(op)}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                 periodo === op
-                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                  : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
+                  : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
               }`}
             >
               {op === "7d" ? "7 dias" : op === "30d" ? "30 dias" : op === "90d" ? "90 dias" : "6 meses"}

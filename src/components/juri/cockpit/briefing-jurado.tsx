@@ -46,7 +46,7 @@ export function BriefingJuradoButton({ juradoId, juradoNome, isDarkMode }: Brief
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className={cn("max-w-md", isDarkMode ? "bg-zinc-900 text-zinc-100 border-zinc-800" : "")}>
+        <DialogContent className={cn("max-w-md", isDarkMode ? "bg-neutral-900 text-neutral-100 border-neutral-800" : "")}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <Brain className="w-4 h-4 text-violet-500" />
@@ -86,7 +86,7 @@ function BriefingContent({ juradoId, isDarkMode }: { juradoId: number; isDarkMod
   return (
     <div className="space-y-4 max-h-[60vh] overflow-y-auto">
       {/* Perfil */}
-      <div className={cn("rounded-lg p-3 space-y-2", isDarkMode ? "bg-zinc-800" : "bg-zinc-50")}>
+      <div className={cn("rounded-lg p-3 space-y-2", isDarkMode ? "bg-neutral-800" : "bg-neutral-50")}>
         <div className="flex items-center justify-between">
           <div>
             <div className="text-sm font-medium">{jurado.nome}</div>
@@ -99,7 +99,7 @@ function BriefingContent({ juradoId, isDarkMode }: { juradoId: number; isDarkMod
               "text-[10px]",
               jurado.perfilTendencia === "absolutorio" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400" :
               jurado.perfilTendencia === "condenatorio" ? "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400" :
-              "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
+              "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
             )}>
               {jurado.perfilTendencia}
             </Badge>
@@ -115,7 +115,7 @@ function BriefingContent({ juradoId, isDarkMode }: { juradoId: number; isDarkMod
 
       {/* Estatísticas de voto */}
       {temHistorico ? (
-        <div className={cn("rounded-lg p-3", isDarkMode ? "bg-zinc-800" : "bg-zinc-50")}>
+        <div className={cn("rounded-lg p-3", isDarkMode ? "bg-neutral-800" : "bg-neutral-50")}>
           <div className="flex items-center gap-2 mb-2">
             <Target className="w-3.5 h-3.5 text-blue-500" />
             <span className="text-xs font-semibold uppercase tracking-wider">Histórico de Votos</span>
@@ -157,7 +157,7 @@ function BriefingContent({ juradoId, isDarkMode }: { juradoId: number; isDarkMod
           </div>
         </div>
       ) : (
-        <div className={cn("rounded-lg p-3 text-center", isDarkMode ? "bg-zinc-800" : "bg-zinc-50")}>
+        <div className={cn("rounded-lg p-3 text-center", isDarkMode ? "bg-neutral-800" : "bg-neutral-50")}>
           <Users className="w-6 h-6 text-muted-foreground mx-auto mb-1" />
           <p className="text-xs text-muted-foreground">Primeiro júri deste jurado — sem histórico</p>
         </div>
@@ -167,12 +167,12 @@ function BriefingContent({ juradoId, isDarkMode }: { juradoId: number; isDarkMod
       {participacoes.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <History className="w-3.5 h-3.5 text-zinc-500" />
+            <History className="w-3.5 h-3.5 text-neutral-500" />
             <span className="text-xs font-semibold uppercase tracking-wider">Participações Anteriores</span>
           </div>
           <div className="space-y-2">
             {participacoes.slice(0, 5).map((p, i) => (
-              <div key={i} className={cn("rounded-md p-2 text-xs space-y-1", isDarkMode ? "bg-zinc-800/50" : "bg-zinc-50")}>
+              <div key={i} className={cn("rounded-md p-2 text-xs space-y-1", isDarkMode ? "bg-neutral-800/50" : "bg-neutral-50")}>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">{p.data || "—"}</span>
                   <div className="flex items-center gap-1.5">

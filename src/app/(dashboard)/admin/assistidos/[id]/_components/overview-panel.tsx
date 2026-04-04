@@ -119,7 +119,7 @@ export function AssistidoOverviewPanel({
       {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed((prev) => !prev)}
-        className="absolute top-1.5 right-1 p-1 rounded-md text-muted-foreground/30 hover:text-muted-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors z-10"
+        className="absolute top-1.5 right-1 p-1 rounded-md text-muted-foreground/30 hover:text-muted-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors z-10"
         aria-label={collapsed ? "Expandir painel" : "Recolher painel"}
       >
         {collapsed ? (
@@ -134,8 +134,8 @@ export function AssistidoOverviewPanel({
           {/* ── Audiência card ── */}
           <div
             className={cn(
-              "bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06]",
-              "rounded-lg p-3.5 hover:bg-zinc-100 dark:hover:bg-white/[0.07] transition-all duration-200 cursor-pointer",
+              "bg-neutral-100/60 dark:bg-white/[0.04] border border-neutral-200/80 dark:border-white/[0.06]",
+              "rounded-lg p-3.5 hover:bg-neutral-100 dark:hover:bg-white/[0.07] transition-all duration-200 cursor-pointer",
             )}
           >
             <div className="flex items-center gap-2 mb-1.5">
@@ -143,8 +143,8 @@ export function AssistidoOverviewPanel({
                 className={cn(
                   "w-7 h-7 rounded-md flex items-center justify-center",
                   proximaAudiencia
-                    ? "bg-zinc-800 dark:bg-zinc-700"
-                    : "bg-zinc-200 dark:bg-zinc-700",
+                    ? "bg-neutral-800 dark:bg-neutral-700"
+                    : "bg-neutral-200 dark:bg-neutral-700",
                 )}
               >
                 <Calendar
@@ -152,7 +152,7 @@ export function AssistidoOverviewPanel({
                     "w-3 h-3",
                     proximaAudiencia
                       ? "text-white"
-                      : "text-zinc-400",
+                      : "text-neutral-400",
                   )}
                 />
               </div>
@@ -160,7 +160,7 @@ export function AssistidoOverviewPanel({
                 className={cn(
                   "text-[9px] uppercase tracking-wider font-semibold",
                   proximaAudiencia
-                    ? "text-zinc-900 dark:text-amber-400"
+                    ? "text-neutral-900 dark:text-amber-400"
                     : "text-muted-foreground",
                 )}
               >
@@ -225,8 +225,8 @@ export function AssistidoOverviewPanel({
                 : undefined
             }
             className={cn(
-              "bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06]",
-              "rounded-lg p-3.5 hover:bg-zinc-100 dark:hover:bg-white/[0.07] transition-all duration-200 cursor-pointer",
+              "bg-neutral-100/60 dark:bg-white/[0.04] border border-neutral-200/80 dark:border-white/[0.06]",
+              "rounded-lg p-3.5 hover:bg-neutral-100 dark:hover:bg-white/[0.07] transition-all duration-200 cursor-pointer",
             )}
           >
             <div className="flex items-center gap-2 mb-1.5">
@@ -234,8 +234,8 @@ export function AssistidoOverviewPanel({
                 className={cn(
                   "w-7 h-7 rounded-md flex items-center justify-center",
                   demandaCritica
-                    ? "bg-zinc-800 dark:bg-zinc-700"
-                    : "bg-zinc-200 dark:bg-zinc-700",
+                    ? "bg-neutral-800 dark:bg-neutral-700"
+                    : "bg-neutral-200 dark:bg-neutral-700",
                 )}
               >
                 <AlertCircle
@@ -243,7 +243,7 @@ export function AssistidoOverviewPanel({
                     "w-3 h-3",
                     demandaCritica
                       ? "text-white"
-                      : "text-zinc-400",
+                      : "text-neutral-400",
                   )}
                 />
               </div>
@@ -251,7 +251,7 @@ export function AssistidoOverviewPanel({
                 className={cn(
                   "text-[9px] uppercase tracking-wider font-semibold",
                   demandaCritica
-                    ? "text-zinc-900 dark:text-rose-400"
+                    ? "text-neutral-900 dark:text-rose-400"
                     : "text-muted-foreground",
                 )}
               >

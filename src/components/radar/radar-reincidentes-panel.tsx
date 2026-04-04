@@ -24,11 +24,11 @@ export function RadarReincidentesPanel() {
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-2 px-4 pt-4">
-        <CardTitle className="flex items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+        <CardTitle className="flex items-center gap-2 text-sm font-semibold text-neutral-800 dark:text-neutral-100">
           <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
           Alertas de Reincidentes
         </CardTitle>
-        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 -mt-1">
+        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 -mt-1">
           Envolvidos em 4+ notícias
         </p>
       </CardHeader>
@@ -49,13 +49,13 @@ export function RadarReincidentesPanel() {
         )}
 
         {isError && (
-          <p className="text-xs text-zinc-400 text-center py-3">
+          <p className="text-xs text-neutral-400 text-center py-3">
             Não foi possível carregar os reincidentes.
           </p>
         )}
 
         {!isLoading && !isError && (!data || data.length === 0) && (
-          <p className="text-xs text-zinc-400 text-center py-3">
+          <p className="text-xs text-neutral-400 text-center py-3">
             Nenhum reincidente no período
           </p>
         )}
@@ -85,7 +85,7 @@ export function RadarReincidentesPanel() {
                   ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                   : pessoa.totalNoticias >= 3
                     ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                    : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";
+                    : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
 
               return (
                 <div
@@ -101,7 +101,7 @@ export function RadarReincidentesPanel() {
 
                   {/* Name + crimes */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-zinc-800 dark:text-zinc-200 truncate leading-tight">
+                    <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 truncate leading-tight">
                       {pessoa.nome}
                     </p>
                     {crimeTypes.length > 0 && (
@@ -135,7 +135,7 @@ export function RadarReincidentesPanel() {
                   {/* External link (assistido profile if matched, else no link) */}
                   <NextLink
                     href={`/admin/radar?tab=reincidentes`}
-                    className="text-zinc-300 dark:text-zinc-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors shrink-0 cursor-pointer opacity-0 group-hover:opacity-100"
+                    className="text-neutral-300 dark:text-neutral-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors shrink-0 cursor-pointer opacity-0 group-hover:opacity-100"
                     title="Ver detalhes na aba Reincidentes"
                   >
                     <ExternalLink className="h-3 w-3" />

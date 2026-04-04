@@ -154,11 +154,11 @@ function ProcessoGroup({
   const [expanded, setExpanded] = useState(true);
 
   return (
-    <div className="border border-zinc-200 dark:border-border rounded-lg overflow-hidden">
+    <div className="border border-neutral-200 dark:border-border rounded-lg overflow-hidden">
       {/* Group header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-2 px-3 py-2 bg-zinc-50 dark:bg-muted/50 hover:bg-zinc-100 dark:hover:bg-muted transition-colors text-left"
+        className="w-full flex items-center gap-2 px-3 py-2 bg-neutral-50 dark:bg-muted/50 hover:bg-neutral-100 dark:hover:bg-muted transition-colors text-left"
       >
         {expanded ? (
           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -175,7 +175,7 @@ function ProcessoGroup({
 
       {/* Files */}
       {expanded && (
-        <div className="divide-y divide-zinc-100 dark:divide-border">
+        <div className="divide-y divide-neutral-100 dark:divide-border">
           {files.map((file) => (
             <MediaCard
               key={file.id}

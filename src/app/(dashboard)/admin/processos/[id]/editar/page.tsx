@@ -314,7 +314,7 @@ export default function EditarProcessoPage({ params }: { params: Promise<{ id: s
                   readOnly
                   disabled
                   placeholder="0000000-00.0000.8.05.0000"
-                  className="font-mono bg-zinc-50 dark:bg-zinc-800/50 cursor-not-allowed"
+                  className="font-mono bg-neutral-50 dark:bg-neutral-800/50 cursor-not-allowed"
                 />
               </div>
               <div className="space-y-2">
@@ -558,7 +558,7 @@ export default function EditarProcessoPage({ params }: { params: Promise<{ id: s
                   )}
                 </Button>
               </div>
-              <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+              <p className="text-[11px] text-neutral-400 dark:text-neutral-500">
                 Pressione Enter ou clique na lupa para geocodificar automaticamente via OpenStreetMap.
               </p>
             </div>

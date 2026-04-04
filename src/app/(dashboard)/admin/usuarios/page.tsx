@@ -214,7 +214,7 @@ export default function UsuariosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header - Padrão Processos */}
       <div className="px-4 md:px-6 py-3 bg-card border-b border-border">
         <div className="flex items-center justify-between">
@@ -254,7 +254,7 @@ export default function UsuariosPage() {
               <p className="text-2xl sm:text-xl font-semibold text-foreground">{stats?.total ?? 0}</p>
             </div>
             <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-muted flex items-center justify-center border border-border">
-              <Users className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500" />
+              <Users className="w-5 h-5 sm:w-4 sm:h-4 text-neutral-500" />
             </div>
           </div>
         </div>
@@ -266,7 +266,7 @@ export default function UsuariosPage() {
               <p className="text-2xl sm:text-xl font-semibold text-foreground">{stats?.admins ?? 0}</p>
             </div>
             <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-muted flex items-center justify-center border border-border">
-              <Crown className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500" />
+              <Crown className="w-5 h-5 sm:w-4 sm:h-4 text-neutral-500" />
             </div>
           </div>
         </div>
@@ -278,7 +278,7 @@ export default function UsuariosPage() {
               <p className="text-2xl sm:text-xl font-semibold text-foreground">{stats?.defensores ?? 0}</p>
             </div>
             <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-muted flex items-center justify-center border border-border">
-              <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500" />
+              <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 text-neutral-500" />
             </div>
           </div>
         </div>
@@ -290,7 +290,7 @@ export default function UsuariosPage() {
               <p className="text-2xl sm:text-xl font-semibold text-foreground">{stats?.estagiarios ?? 0}</p>
             </div>
             <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-muted flex items-center justify-center border border-border">
-              <GraduationCap className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500" />
+              <GraduationCap className="w-5 h-5 sm:w-4 sm:h-4 text-neutral-500" />
             </div>
           </div>
         </div>
@@ -302,7 +302,7 @@ export default function UsuariosPage() {
               <p className="text-2xl sm:text-xl font-semibold text-foreground">{stats?.servidores ?? 0}</p>
             </div>
             <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-muted flex items-center justify-center border border-border">
-              <Building className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500" />
+              <Building className="w-5 h-5 sm:w-4 sm:h-4 text-neutral-500" />
             </div>
           </div>
         </div>
@@ -312,7 +312,7 @@ export default function UsuariosPage() {
       <Card className="border border-border bg-card rounded-xl p-4">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
             <Input
               placeholder="Buscar por nome, email ou OAB..."
               value={searchTerm}
@@ -374,7 +374,7 @@ export default function UsuariosPage() {
                         <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-zinc-500">
+                    <div className="flex items-center gap-3 text-xs text-neutral-500">
                       <span className="flex items-center gap-1 truncate">
                         <Mail className="h-3 w-3" />
                         {user.email}
@@ -397,7 +397,7 @@ export default function UsuariosPage() {
                       {roleLabels[user.role]}
                     </Badge>
 
-                    <span className="text-[10px] text-zinc-400 hidden md:block">
+                    <span className="text-[10px] text-neutral-400 hidden md:block">
                       {format(new Date(user.createdAt), "dd/MM/yy", { locale: ptBR })}
                     </span>
 
@@ -443,10 +443,10 @@ export default function UsuariosPage() {
           ) : (
             <div className="text-center py-16">
               <div className="w-16 h-16 rounded-2xl bg-muted mx-auto mb-4 flex items-center justify-center">
-                <Users className="w-8 h-8 text-zinc-400" />
+                <Users className="w-8 h-8 text-neutral-400" />
               </div>
               <p className="text-sm font-medium text-foreground mb-1">Nenhum usuário encontrado</p>
-              <p className="text-xs text-zinc-500">Ajuste os filtros ou adicione um novo usuário</p>
+              <p className="text-xs text-neutral-500">Ajuste os filtros ou adicione um novo usuário</p>
             </div>
           )}
         </div>

@@ -42,39 +42,39 @@ const ATRIBUICAO_COLORS: Record<string, {
   indicator: string;
 }> = {
   all: {
-    border: "border-l-zinc-300",
-    bg: "bg-zinc-100 dark:bg-muted",
-    text: "text-zinc-600 dark:text-muted-foreground",
-    hoverBg: "hover:bg-zinc-100 dark:hover:bg-muted",
-    indicator: "bg-zinc-500"
+    border: "border-l-neutral-300",
+    bg: "bg-neutral-100 dark:bg-muted",
+    text: "text-neutral-600 dark:text-muted-foreground",
+    hoverBg: "hover:bg-neutral-100 dark:hover:bg-muted",
+    indicator: "bg-neutral-500"
   },
   JURI: {
-    border: "border-l-zinc-400",
-    bg: "bg-zinc-100 dark:bg-muted",
-    text: "text-zinc-600 dark:text-muted-foreground",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-muted/80",
-    indicator: "bg-zinc-500"
+    border: "border-l-neutral-400",
+    bg: "bg-neutral-100 dark:bg-muted",
+    text: "text-neutral-600 dark:text-muted-foreground",
+    hoverBg: "hover:bg-neutral-50 dark:hover:bg-muted/80",
+    indicator: "bg-neutral-500"
   },
   VVD: {
-    border: "border-l-zinc-400",
-    bg: "bg-zinc-100 dark:bg-muted",
-    text: "text-zinc-600 dark:text-muted-foreground",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-muted/80",
-    indicator: "bg-zinc-500"
+    border: "border-l-neutral-400",
+    bg: "bg-neutral-100 dark:bg-muted",
+    text: "text-neutral-600 dark:text-muted-foreground",
+    hoverBg: "hover:bg-neutral-50 dark:hover:bg-muted/80",
+    indicator: "bg-neutral-500"
   },
   EXECUCAO: {
-    border: "border-l-zinc-400",
-    bg: "bg-zinc-100 dark:bg-muted",
-    text: "text-zinc-600 dark:text-muted-foreground",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-muted/80",
-    indicator: "bg-zinc-500"
+    border: "border-l-neutral-400",
+    bg: "bg-neutral-100 dark:bg-muted",
+    text: "text-neutral-600 dark:text-muted-foreground",
+    hoverBg: "hover:bg-neutral-50 dark:hover:bg-muted/80",
+    indicator: "bg-neutral-500"
   },
   CRIMINAL: {
-    border: "border-l-zinc-400",
-    bg: "bg-zinc-100 dark:bg-muted",
-    text: "text-zinc-600 dark:text-muted-foreground",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-muted/80",
-    indicator: "bg-zinc-500"
+    border: "border-l-neutral-400",
+    bg: "bg-neutral-100 dark:bg-muted",
+    text: "text-neutral-600 dark:text-muted-foreground",
+    hoverBg: "hover:bg-neutral-50 dark:hover:bg-muted/80",
+    indicator: "bg-neutral-500"
   },
 };
 
@@ -282,7 +282,7 @@ export default function AudienciasPage() {
 
           {/* Seletor de Atribuição */}
           <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
-            <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-zinc-200 dark:border-border pb-px">
+            <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-neutral-200 dark:border-border pb-px">
               {ATRIBUICAO_OPTIONS.map((option) => {
                 const isActive = areaFilter === option.value;
                 const optionColors = ATRIBUICAO_COLORS[option.value] || ATRIBUICAO_COLORS.all;
@@ -308,7 +308,7 @@ export default function AudienciasPage() {
                       "ml-0.5 px-1.5 py-0.5 text-xs font-semibold rounded-full",
                       isActive 
                         ? cn(optionColors.text, "bg-white/60 dark:bg-black/20")
-                        : "text-muted-foreground bg-zinc-100 dark:bg-muted"
+                        : "text-muted-foreground bg-neutral-100 dark:bg-muted"
                     )}>
                       {option.value === "all" ? audiencias.length : "-"}
                     </span>
@@ -329,7 +329,7 @@ export default function AudienciasPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
           <Card className={cn(
             "border-l-2",
-            stats.hoje > 0 ? "border-l-rose-500" : "border-l-zinc-300"
+            stats.hoje > 0 ? "border-l-rose-500" : "border-l-neutral-300"
           )}>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
@@ -359,7 +359,7 @@ export default function AudienciasPage() {
           
           <Card className={cn(
             "border-l-2",
-            stats.amanha > 0 ? "border-l-amber-500" : "border-l-zinc-300"
+            stats.amanha > 0 ? "border-l-amber-500" : "border-l-neutral-300"
           )}>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
@@ -389,7 +389,7 @@ export default function AudienciasPage() {
           
           <Card className={cn(
             "border-l-2",
-            stats.aguardandoAta > 0 ? "border-l-orange-500" : "border-l-zinc-300"
+            stats.aguardandoAta > 0 ? "border-l-orange-500" : "border-l-neutral-300"
           )}>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
@@ -419,7 +419,7 @@ export default function AudienciasPage() {
           
           <Card className={cn(
             "border-l-2",
-            stats.reuPreso > 0 ? "border-l-rose-500" : "border-l-zinc-300"
+            stats.reuPreso > 0 ? "border-l-rose-500" : "border-l-neutral-300"
           )}>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">

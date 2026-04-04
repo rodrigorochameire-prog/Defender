@@ -175,14 +175,14 @@ export function MuralEquipe({ className }: MuralEquipeProps) {
   return (
     <div
       className={cn(
-        "bg-white dark:bg-card border border-zinc-100 dark:border-border rounded-xl flex flex-col",
+        "bg-white dark:bg-card border border-neutral-100 dark:border-border rounded-xl flex flex-col",
         className
       )}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-100 dark:border-border">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-neutral-100 dark:border-border">
         <Pin className="h-4 w-4 text-amber-500" />
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-foreground">
+        <h3 className="text-sm font-semibold text-neutral-900 dark:text-foreground">
           Mural da Equipe
         </h3>
         <span className="ml-auto text-xs text-muted-foreground">
@@ -191,7 +191,7 @@ export function MuralEquipe({ className }: MuralEquipeProps) {
       </div>
 
       {/* Input area */}
-      <div className="px-4 py-3 border-b border-zinc-100 dark:border-border">
+      <div className="px-4 py-3 border-b border-neutral-100 dark:border-border">
         <div className="flex gap-2 items-end">
           <Textarea
             ref={textareaRef}
@@ -200,7 +200,7 @@ export function MuralEquipe({ className }: MuralEquipeProps) {
             onChange={(e) => setNovaMensagem(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={2}
-            className="resize-none bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border text-sm min-h-[60px]"
+            className="resize-none bg-neutral-50 dark:bg-muted border-neutral-200 dark:border-border text-sm min-h-[60px]"
           />
           <Button
             size="icon"
@@ -222,7 +222,7 @@ export function MuralEquipe({ className }: MuralEquipeProps) {
 
       {/* Notes feed */}
       <ScrollArea className="flex-1 max-h-[400px]">
-        <div className="divide-y divide-zinc-50 dark:divide-border">
+        <div className="divide-y divide-neutral-50 dark:divide-border">
           {isLoading && (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -252,7 +252,7 @@ export function MuralEquipe({ className }: MuralEquipeProps) {
                 <div className="flex gap-3">
                   {/* Avatar */}
                   <Avatar className="h-8 w-8 shrink-0">
-                    <AvatarFallback className="bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-600 text-zinc-600 dark:text-foreground/80 text-[10px] font-medium">
+                    <AvatarFallback className="bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-700 dark:to-neutral-600 text-neutral-600 dark:text-foreground/80 text-[10px] font-medium">
                       {iniciais(nota.autor?.name || "?")}
                     </AvatarFallback>
                   </Avatar>
@@ -263,7 +263,7 @@ export function MuralEquipe({ className }: MuralEquipeProps) {
                       {nota.fixado && (
                         <Pin className="h-3 w-3 text-amber-500 shrink-0" />
                       )}
-                      <span className="text-sm font-medium text-zinc-900 dark:text-foreground truncate">
+                      <span className="text-sm font-medium text-neutral-900 dark:text-foreground truncate">
                         {nota.autor?.name || "Desconhecido"}
                       </span>
                       <span className="text-xs text-muted-foreground shrink-0">
@@ -277,7 +277,7 @@ export function MuralEquipe({ className }: MuralEquipeProps) {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 ml-auto shrink-0 text-zinc-400 hover:text-zinc-600"
+                              className="h-6 w-6 ml-auto shrink-0 text-neutral-400 hover:text-neutral-600"
                             >
                               <MoreHorizontal className="h-3.5 w-3.5" />
                             </Button>
@@ -325,7 +325,7 @@ export function MuralEquipe({ className }: MuralEquipeProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 ml-auto shrink-0 text-zinc-400 hover:text-zinc-600"
+                          className="h-6 w-6 ml-auto shrink-0 text-neutral-400 hover:text-neutral-600"
                           onClick={() =>
                             fixarNota.mutate({
                               id: nota.id,
@@ -350,7 +350,7 @@ export function MuralEquipe({ className }: MuralEquipeProps) {
                           value={editandoTexto}
                           onChange={(e) => setEditandoTexto(e.target.value)}
                           rows={2}
-                          className="resize-none bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border text-sm"
+                          className="resize-none bg-neutral-50 dark:bg-muted border-neutral-200 dark:border-border text-sm"
                           autoFocus
                         />
                         <div className="flex gap-2">
@@ -376,7 +376,7 @@ export function MuralEquipe({ className }: MuralEquipeProps) {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-sm text-zinc-600 dark:text-muted-foreground mt-0.5 whitespace-pre-wrap break-words">
+                      <p className="text-sm text-neutral-600 dark:text-muted-foreground mt-0.5 whitespace-pre-wrap break-words">
                         {nota.mensagem}
                       </p>
                     )}

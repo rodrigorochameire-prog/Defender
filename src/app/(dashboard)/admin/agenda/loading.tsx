@@ -3,9 +3,9 @@ import { Card } from "@/components/ui/card";
 
 export default function AgendaLoading() {
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Skeleton className="w-11 h-11 rounded-xl" />
@@ -26,11 +26,11 @@ export default function AgendaLoading() {
       {/* Content */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Stats Ribbon */}
-        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
+        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 overflow-hidden">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="flex items-center gap-1.5">
               {i > 1 && (
-                <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 mr-2.5" />
+                <div className="w-px h-4 bg-neutral-200/60 dark:bg-neutral-700/60 mr-2.5" />
               )}
               <Skeleton className="w-3.5 h-3.5 rounded" />
               <Skeleton className="h-4 w-5" />
@@ -42,9 +42,9 @@ export default function AgendaLoading() {
         </div>
 
         {/* Filter + Calendar Card */}
-        <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden">
+        <Card className="border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-xl overflow-hidden">
           {/* Filter header */}
-          <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+          <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
             <div className="flex items-center justify-between">
               <Skeleton className="h-3 w-32" />
               <div className="flex gap-1.5">
@@ -56,7 +56,7 @@ export default function AgendaLoading() {
           </div>
 
           {/* Toolbar */}
-          <div className="px-4 py-3 flex gap-3 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="px-4 py-3 flex gap-3 border-b border-neutral-100 dark:border-neutral-800">
             <Skeleton className="h-9 flex-1 max-w-md rounded-md" />
             <Skeleton className="h-9 w-20 rounded-md" />
             <div className="flex gap-1">
@@ -66,7 +66,7 @@ export default function AgendaLoading() {
           </div>
 
           {/* Month navigation */}
-          <div className="px-4 py-3 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800">
+          <div className="px-4 py-3 flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800">
             <Skeleton className="h-7 w-7 rounded" />
             <Skeleton className="h-5 w-32" />
             <Skeleton className="h-7 w-7 rounded" />
@@ -95,15 +95,15 @@ export default function AgendaLoading() {
         </Card>
 
         {/* Upcoming events list card */}
-        <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
+        <Card className="border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800">
             <Skeleton className="h-5 w-40" />
           </div>
           <div className="p-4 space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 p-3 rounded-lg border border-zinc-100 dark:border-zinc-800"
+                className="flex items-center gap-3 p-3 rounded-lg border border-neutral-100 dark:border-neutral-800"
               >
                 <Skeleton className="w-10 h-10 rounded-lg shrink-0" />
                 <div className="flex-1 space-y-1.5">

@@ -15,7 +15,7 @@ export function BarChartSimple({ data }: { data: Array<{ label: string; value: n
         <Tooltip key={d.label}>
           <TooltipTrigger asChild>
             <div className="flex-1 flex flex-col items-center gap-1">
-              <span className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-300 tabular-nums">{d.value}</span>
+              <span className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-300 tabular-nums">{d.value}</span>
               <div
                 className="w-full rounded-t-md transition-all min-h-[2px]"
                 style={{
@@ -23,7 +23,7 @@ export function BarChartSimple({ data }: { data: Array<{ label: string; value: n
                   backgroundColor: d.color,
                 }}
               />
-              <span className="text-[9px] text-zinc-400 truncate max-w-[40px]">{d.label}</span>
+              <span className="text-[9px] text-neutral-400 truncate max-w-[40px]">{d.label}</span>
             </div>
           </TooltipTrigger>
           <TooltipContent className="text-xs">{d.label}: {d.value}</TooltipContent>

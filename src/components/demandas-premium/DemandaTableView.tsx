@@ -190,7 +190,7 @@ function Row({
       : "";
 
   return (
-    <div className={`group/row border-b border-zinc-100 dark:border-zinc-800/60 hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors duration-150 ${rowBg}`}>
+    <div className={`group/row border-b border-neutral-100 dark:border-neutral-800/60 hover:bg-neutral-50/80 dark:hover:bg-neutral-800/40 transition-colors duration-150 ${rowBg}`}>
       <div className="flex items-start px-3 py-2.5 gap-2">
 
         {/* Checkbox de seleção */}
@@ -198,7 +198,7 @@ function Row({
           <button
             onClick={() => onToggleSelect?.(demanda.id)}
             className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 mt-2.5 ${
-              isSelected ? "border-emerald-500 bg-emerald-500" : "border-zinc-300 dark:border-zinc-600 hover:border-zinc-400"
+              isSelected ? "border-emerald-500 bg-emerald-500" : "border-neutral-300 dark:border-neutral-600 hover:border-neutral-400"
             }`}
           >
             {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
@@ -234,28 +234,28 @@ function Row({
                     value={demanda.assistido}
                     onSave={(v) => onAssistidoChange(demanda.id, v)}
                     placeholder="Nome do assistido"
-                    className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors truncate flex items-center gap-1 group/edit text-[13px] font-semibold text-zinc-900 dark:text-zinc-100"
+                    className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors truncate flex items-center gap-1 group/edit text-[13px] font-semibold text-neutral-900 dark:text-neutral-100"
                   />
                   {demanda.assistidoId && (
                     <Link
                       href={`/admin/assistidos/${demanda.assistidoId}`}
-                      className="flex-shrink-0 p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                      className="flex-shrink-0 p-0.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
                       title="Abrir ficha"
                     >
-                      <ExternalLink className="w-3 h-3 text-zinc-400 hover:text-emerald-500" />
+                      <ExternalLink className="w-3 h-3 text-neutral-400 hover:text-emerald-500" />
                     </Link>
                   )}
                 </div>
               ) : demanda.assistidoId ? (
                 <Link
                   href={`/admin/assistidos/${demanda.assistidoId}`}
-                  className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 hover:text-emerald-600 truncate"
+                  className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 hover:text-emerald-600 truncate"
                   title={demanda.assistido}
                 >
                   {demanda.assistido}
                 </Link>
               ) : (
-                <span className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                <span className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 truncate">
                   {demanda.assistido}
                 </span>
               )}
@@ -278,13 +278,13 @@ function Row({
               />
 
               <div className="flex items-center gap-1.5 text-[10px]">
-                <Calendar className="w-3 h-3 text-zinc-400" />
-                <span className="text-zinc-400">{formatarData(demanda.data)}</span>
-                <span className="text-zinc-300">→</span>
+                <Calendar className="w-3 h-3 text-neutral-400" />
+                <span className="text-neutral-400">{formatarData(demanda.data)}</span>
+                <span className="text-neutral-300">→</span>
                 <span className={`font-semibold flex items-center gap-0.5 ${
                   prazoInfo.cor === "red" ? "text-rose-600" :
                   prazoInfo.cor === "amber" ? "text-amber-600" :
-                  prazoInfo.cor === "yellow" ? "text-yellow-600" : "text-zinc-500"
+                  prazoInfo.cor === "yellow" ? "text-yellow-600" : "text-neutral-500"
                 }`}>
                   {prazoInfo.cor === "red" && <AlertCircle className="w-3 h-3" />}
                   {prazoInfo.texto}
@@ -299,8 +299,8 @@ function Row({
                   value={demanda.ato}
                   compact
                   displayValue={
-                    <span className="text-[12px] font-semibold text-zinc-800 dark:text-zinc-100 truncate flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-md border border-zinc-200 dark:border-zinc-700">
-                      <FileText className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 flex-shrink-0" />
+                    <span className="text-[12px] font-semibold text-neutral-800 dark:text-neutral-100 truncate flex items-center gap-1.5 bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded-md border border-neutral-200 dark:border-neutral-700">
+                      <FileText className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 flex-shrink-0" />
                       {demanda.ato || "Selecionar ato"}
                     </span>
                   }
@@ -308,8 +308,8 @@ function Row({
                   onChange={(v) => onAtoChange(demanda.id, v)}
                 />
               ) : (
-                <span className="text-[12px] font-semibold text-zinc-800 dark:text-zinc-100 truncate flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-md border border-zinc-200 dark:border-zinc-700">
-                  <FileText className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
+                <span className="text-[12px] font-semibold text-neutral-800 dark:text-neutral-100 truncate flex items-center gap-1.5 bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded-md border border-neutral-200 dark:border-neutral-700">
+                  <FileText className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
                   {demanda.ato}
                 </span>
               )}
@@ -319,7 +319,7 @@ function Row({
             {demanda.processos.length > 0 && (
               <div className="flex items-center gap-1 min-w-0">
                 <span
-                  className="text-[10px] font-mono text-zinc-500 truncate cursor-pointer hover:text-emerald-600"
+                  className="text-[10px] font-mono text-neutral-500 truncate cursor-pointer hover:text-emerald-600"
                   onClick={() => copy(demanda.processos[0].numero)}
                   title={demanda.processos[0].numero}
                 >
@@ -327,9 +327,9 @@ function Row({
                 </span>
                 <button
                   onClick={() => copy(demanda.processos[0].numero)}
-                  className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 flex-shrink-0"
+                  className="p-0.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 flex-shrink-0"
                 >
-                  {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-zinc-400" />}
+                  {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-neutral-400" />}
                 </button>
               </div>
             )}
@@ -344,7 +344,7 @@ function Row({
                     placeholder="+ providências"
                   />
                 ) : (
-                  <span className="text-[10px] text-zinc-500 truncate block">{demanda.providencias}</span>
+                  <span className="text-[10px] text-neutral-500 truncate block">{demanda.providencias}</span>
                 )}
               </div>
             )}
@@ -365,28 +365,28 @@ function Row({
                     onSave={(v) => onAssistidoChange(demanda.id, v)}
                     placeholder="Nome do assistido"
                     className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors truncate flex items-center gap-1 group/edit"
-                    inputClassName="w-full text-[13px] font-semibold px-1.5 py-0.5 rounded border border-emerald-400 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
+                    inputClassName="w-full text-[13px] font-semibold px-1.5 py-0.5 rounded border border-emerald-400 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
                   />
                   {demanda.assistidoId && (
                     <Link
                       href={`/admin/assistidos/${demanda.assistidoId}`}
-                      className="flex-shrink-0 p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 opacity-0 group-hover/row:opacity-100 transition-all"
+                      className="flex-shrink-0 p-0.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 opacity-0 group-hover/row:opacity-100 transition-all"
                       title="Abrir ficha"
                     >
-                      <ExternalLink className="w-3 h-3 text-zinc-400 hover:text-emerald-500" />
+                      <ExternalLink className="w-3 h-3 text-neutral-400 hover:text-emerald-500" />
                     </Link>
                   )}
                 </div>
               ) : demanda.assistidoId ? (
                 <Link
                   href={`/admin/assistidos/${demanda.assistidoId}`}
-                  className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 hover:text-emerald-600 dark:hover:text-emerald-400 truncate transition-colors"
+                  className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 hover:text-emerald-600 dark:hover:text-emerald-400 truncate transition-colors"
                   title={demanda.assistido}
                 >
                   {demanda.assistido}
                 </Link>
               ) : (
-                <span className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 truncate" title={demanda.assistido}>
+                <span className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 truncate" title={demanda.assistido}>
                   {demanda.assistido}
                 </span>
               )}
@@ -411,14 +411,14 @@ function Row({
 
             {/* Datas: Exp + Prazo (2 cols) */}
             <div className="col-span-2 flex items-center gap-2 text-center justify-center">
-              <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+              <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
                 {formatarData(demanda.data)}
               </span>
-              <span className="text-zinc-300 dark:text-zinc-600">→</span>
+              <span className="text-neutral-300 dark:text-neutral-600">→</span>
               <span className={`text-[11px] font-semibold flex items-center gap-0.5 ${
                 prazoInfo.cor === "red" ? "text-rose-600 dark:text-rose-400" :
                 prazoInfo.cor === "amber" ? "text-amber-600 dark:text-amber-400" :
-                prazoInfo.cor === "yellow" ? "text-yellow-600 dark:text-yellow-400" : "text-zinc-500 dark:text-zinc-400"
+                prazoInfo.cor === "yellow" ? "text-yellow-600 dark:text-yellow-400" : "text-neutral-500 dark:text-neutral-400"
               }`}>
                 {prazoInfo.cor === "red" && <AlertCircle className="w-3 h-3" />}
                 {prazoInfo.texto}
@@ -430,7 +430,7 @@ function Row({
               {demanda.processos.length > 0 ? (
                 <div className="flex items-center gap-1 min-w-0">
                   <span
-                    className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 truncate cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                    className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400 truncate cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                     onClick={() => copy(demanda.processos[0].numero)}
                     title={demanda.processos[0].numero}
                   >
@@ -438,30 +438,30 @@ function Row({
                   </span>
                   <button
                     onClick={() => copy(demanda.processos[0].numero)}
-                    className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 opacity-0 group-hover/row:opacity-100 transition-all flex-shrink-0"
+                    className="p-0.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 opacity-0 group-hover/row:opacity-100 transition-all flex-shrink-0"
                     title="Copiar número"
                   >
-                    {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-zinc-400" />}
+                    {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-neutral-400" />}
                   </button>
                   {demanda.processoId && (
                     <Link
                       href={`/admin/processos/${demanda.processoId}`}
-                      className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 opacity-0 group-hover/row:opacity-100 transition-all flex-shrink-0"
+                      className="p-0.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 opacity-0 group-hover/row:opacity-100 transition-all flex-shrink-0"
                       title="Abrir processo"
                     >
-                      <ExternalLink className="w-3 h-3 text-zinc-400 hover:text-emerald-500" />
+                      <ExternalLink className="w-3 h-3 text-neutral-400 hover:text-emerald-500" />
                     </Link>
                   )}
                 </div>
               ) : (
-                <span className="text-[10px] text-zinc-400 dark:text-zinc-500">Sem processo</span>
+                <span className="text-[10px] text-neutral-400 dark:text-neutral-500">Sem processo</span>
               )}
             </div>
 
             {/* Atribuição (2 cols) */}
             <div className="col-span-2 hidden lg:flex items-center gap-1.5 min-w-0">
-              {Icon && <Icon className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />}
-              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate" title={demanda.atribuicao}>
+              {Icon && <Icon className="w-3.5 h-3.5 text-neutral-400 flex-shrink-0" />}
+              <span className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate" title={demanda.atribuicao}>
                 {demanda.atribuicao}
               </span>
             </div>
@@ -475,8 +475,8 @@ function Row({
                   value={demanda.ato}
                   compact
                   displayValue={
-                    <span className="text-[12px] font-semibold text-zinc-800 dark:text-zinc-100 truncate flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-md border border-zinc-200 dark:border-zinc-700">
-                      <FileText className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 flex-shrink-0" />
+                    <span className="text-[12px] font-semibold text-neutral-800 dark:text-neutral-100 truncate flex items-center gap-1.5 bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded-md border border-neutral-200 dark:border-neutral-700">
+                      <FileText className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 flex-shrink-0" />
                       {demanda.ato || "Selecionar ato"}
                     </span>
                   }
@@ -484,8 +484,8 @@ function Row({
                   onChange={(v) => onAtoChange(demanda.id, v)}
                 />
               ) : (
-                <span className="text-[12px] font-semibold text-zinc-800 dark:text-zinc-100 truncate flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-md border border-zinc-200 dark:border-zinc-700">
-                  <FileText className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
+                <span className="text-[12px] font-semibold text-neutral-800 dark:text-neutral-100 truncate flex items-center gap-1.5 bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded-md border border-neutral-200 dark:border-neutral-700">
+                  <FileText className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
                   {demanda.ato}
                 </span>
               )}
@@ -500,7 +500,7 @@ function Row({
                   placeholder="+ providências"
                 />
               ) : demanda.providencias ? (
-                <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate block">{demanda.providencias}</span>
+                <span className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate block">{demanda.providencias}</span>
               ) : null}
             </div>
           </div>
@@ -510,13 +510,13 @@ function Row({
         <div ref={menuRef} className="relative flex-shrink-0">
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors md:opacity-0 md:group-hover/row:opacity-100"
+            className="p-1.5 rounded-md text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors md:opacity-0 md:group-hover/row:opacity-100"
           >
             <MoreHorizontal className="w-4 h-4" />
           </button>
 
           {showMenu && (
-            <div className="absolute right-0 top-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl z-50 py-1 w-36">
+            <div className="absolute right-0 top-full mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl z-50 py-1 w-36">
               {onDelegate && (
                 <button
                   onClick={() => { onDelegate(demanda); setShowMenu(false); }}
@@ -527,26 +527,26 @@ function Row({
               )}
               <button
                 onClick={() => { onEdit(demanda); setShowMenu(false); }}
-                className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
               >
                 <Edit className="w-3.5 h-3.5" /> Editar
               </button>
               {demanda.arquivado ? (
                 <button
                   onClick={() => { onUnarchive(demanda.id); setShowMenu(false); }}
-                  className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                  className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
                 >
                   <ArchiveRestore className="w-3.5 h-3.5" /> Restaurar
                 </button>
               ) : (
                 <button
                   onClick={() => { onArchive(demanda.id); setShowMenu(false); }}
-                  className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                  className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
                 >
                   <Archive className="w-3.5 h-3.5" /> Arquivar
                 </button>
               )}
-              <div className="my-1 border-t border-zinc-100 dark:border-zinc-800" />
+              <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />
               <button
                 onClick={() => { onDelete(demanda.id); setShowMenu(false); }}
                 className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600"
@@ -584,13 +584,13 @@ export function DemandaTableView({
   onToggleSelect,
 }: DemandaTableViewProps) {
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
+    <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 overflow-hidden">
       {/* Header - Apenas desktop */}
-      <div className="hidden md:flex items-center px-3 py-2.5 gap-2 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/80 dark:bg-zinc-800/60">
+      <div className="hidden md:flex items-center px-3 py-2.5 gap-2 border-b border-neutral-200/80 dark:border-neutral-800/80 bg-neutral-50/80 dark:bg-neutral-800/60">
         {isSelectMode && <div className="w-4" />}
         <div className="w-1" />
         <div className="w-9" />
-        <div className="flex-1 grid grid-cols-12 gap-x-3 text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+        <div className="flex-1 grid grid-cols-12 gap-x-3 text-[10px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
           <div className="col-span-3">Assistido</div>
           <div className="col-span-2">Status</div>
           <div className="col-span-2 text-center">Exp. → Prazo</div>
@@ -601,14 +601,14 @@ export function DemandaTableView({
       </div>
 
       {/* Header Mobile */}
-      <div className="md:hidden px-3 py-2 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-800/60">
-        <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+      <div className="md:hidden px-3 py-2 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50/80 dark:bg-neutral-800/60">
+        <span className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
           Demandas
         </span>
       </div>
 
       {/* Rows */}
-      <div className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
+      <div className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
         {demandas.map((d) => {
           const cfg = getStatusConfig(d.status);
           const color = STATUS_GROUPS[cfg.group].color;
@@ -638,7 +638,7 @@ export function DemandaTableView({
 
       {/* Empty State */}
       {demandas.length === 0 && (
-        <div className="py-16 text-center text-zinc-400 dark:text-zinc-500">
+        <div className="py-16 text-center text-neutral-400 dark:text-neutral-500">
           <p className="text-sm font-medium">Nenhuma demanda encontrada</p>
           <p className="text-xs mt-1">Ajuste os filtros ou crie uma nova demanda</p>
         </div>
@@ -646,8 +646,8 @@ export function DemandaTableView({
 
       {/* Footer */}
       {demandas.length > 0 && (
-        <div className="px-4 py-2.5 border-t border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-800/40 flex items-center justify-between">
-          <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+        <div className="px-4 py-2.5 border-t border-neutral-200/80 dark:border-neutral-800/80 bg-neutral-50/50 dark:bg-neutral-800/40 flex items-center justify-between">
+          <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
             {demandas.length} demanda{demandas.length !== 1 && "s"}
             {selectedIds && selectedIds.size > 0 && (
               <span className="ml-2 text-emerald-600 dark:text-emerald-400 font-medium">

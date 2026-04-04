@@ -85,8 +85,8 @@ export function AssignmentSwitcher({ collapsed = false }: { collapsed?: boolean 
         <button
           className={cn(
             "w-full flex items-center gap-3 rounded-2xl transition-all duration-300",
-            "bg-gradient-to-br from-white to-zinc-50 dark:from-card dark:to-background",
-            "border border-zinc-200/80 dark:border-border",
+            "bg-gradient-to-br from-white to-neutral-50 dark:from-card dark:to-background",
+            "border border-neutral-200/80 dark:border-border",
             "hover:border-emerald-300 dark:hover:border-emerald-800",
             "hover:shadow-lg hover:shadow-emerald-500/10",
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40",
@@ -113,10 +113,10 @@ export function AssignmentSwitcher({ collapsed = false }: { collapsed?: boolean 
           {!collapsed && (
             <>
               <div className="flex-1 text-left min-w-0">
-                <p className="text-sm font-bold truncate text-zinc-900 dark:text-foreground tracking-tight">
+                <p className="text-sm font-bold truncate text-neutral-900 dark:text-foreground tracking-tight">
                   {config.shortName}
                 </p>
-                <p className="text-[11px] text-zinc-500 dark:text-muted-foreground truncate uppercase tracking-widest font-medium">
+                <p className="text-[11px] text-neutral-500 dark:text-muted-foreground truncate uppercase tracking-widest font-medium">
                   Atribuição
                 </p>
               </div>
@@ -124,12 +124,12 @@ export function AssignmentSwitcher({ collapsed = false }: { collapsed?: boolean 
               {/* Chevron animado */}
               <div className={cn(
                 "h-7 w-7 rounded-lg flex items-center justify-center transition-all duration-300",
-                "bg-zinc-100 dark:bg-muted",
+                "bg-neutral-100 dark:bg-muted",
                 "group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30"
               )}>
                 <ChevronDown
                   className={cn(
-                    "h-4 w-4 text-zinc-500 dark:text-muted-foreground transition-all duration-300",
+                    "h-4 w-4 text-neutral-500 dark:text-muted-foreground transition-all duration-300",
                     "group-hover:text-emerald-600 dark:group-hover:text-emerald-400",
                     open && "rotate-180"
                   )}
@@ -146,13 +146,13 @@ export function AssignmentSwitcher({ collapsed = false }: { collapsed?: boolean 
         className={cn(
           "w-80 p-2",
           "bg-white/95 dark:bg-background/95 backdrop-blur-xl",
-          "border border-zinc-200/80 dark:border-border",
-          "shadow-2xl shadow-zinc-900/10 dark:shadow-black/30",
+          "border border-neutral-200/80 dark:border-border",
+          "shadow-2xl shadow-neutral-900/10 dark:shadow-black/30",
           "rounded-2xl"
         )}
         sideOffset={8}
       >
-        <DropdownMenuLabel className="text-[11px] text-zinc-500 dark:text-muted-foreground font-bold px-2 py-2 uppercase tracking-widest flex items-center gap-2">
+        <DropdownMenuLabel className="text-[11px] text-neutral-500 dark:text-muted-foreground font-bold px-2 py-2 uppercase tracking-widest flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           Trocar Atribuição
         </DropdownMenuLabel>
@@ -188,7 +188,7 @@ export function AssignmentSwitcher({ collapsed = false }: { collapsed?: boolean 
                         "flex items-center gap-3 px-3 py-3 cursor-pointer rounded-xl mx-1 my-0.5 transition-all duration-200",
                         isActive 
                           ? "bg-gradient-to-r from-emerald-50 to-emerald-100/50 dark:from-emerald-950/50 dark:to-emerald-900/30 border border-emerald-200/50 dark:border-emerald-800/50"
-                          : "hover:bg-zinc-100 dark:hover:bg-muted"
+                          : "hover:bg-neutral-100 dark:hover:bg-muted"
                       )}
                     >
                       {/* Ícone */}
@@ -217,11 +217,11 @@ export function AssignmentSwitcher({ collapsed = false }: { collapsed?: boolean 
                           "text-sm truncate transition-colors",
                           isActive 
                             ? "font-bold text-emerald-700 dark:text-emerald-400"
-                            : "font-medium text-zinc-700 dark:text-foreground/80"
+                            : "font-medium text-neutral-700 dark:text-foreground/80"
                         )}>
                           {assignmentConfig.name}
                         </p>
-                        <p className="text-xs text-zinc-500 dark:text-muted-foreground truncate mt-0.5">
+                        <p className="text-xs text-neutral-500 dark:text-muted-foreground truncate mt-0.5">
                           {assignmentConfig.description}
                         </p>
                       </div>

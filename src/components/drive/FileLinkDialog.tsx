@@ -194,7 +194,7 @@ export function FileLinkDialog({
             <Link2 className="w-4 h-4 text-emerald-500" />
             Vincular Arquivo
           </DialogTitle>
-          <p className="text-[11px] text-zinc-400 truncate">{fileName}</p>
+          <p className="text-[11px] text-neutral-400 truncate">{fileName}</p>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
@@ -231,27 +231,27 @@ export function FileLinkDialog({
           {/* ── Processo Search ── */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Scale className="w-3.5 h-3.5 text-zinc-400" />
-              <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Processo</span>
+              <Scale className="w-3.5 h-3.5 text-neutral-400" />
+              <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Processo</span>
             </div>
 
             {selectedProcessoId && selectedProcessoLabel ? (
-              <div className="flex items-center gap-2 p-2 rounded-md bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+              <div className="flex items-center gap-2 p-2 rounded-md bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
                 <Badge variant="outline" className="text-[10px] h-5 bg-violet-50 dark:bg-violet-900/10 text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-800/30">
                   <Scale className="w-2.5 h-2.5 mr-1" />
                   {selectedProcessoLabel}
                 </Badge>
                 <button
                   onClick={() => { setSelectedProcessoId(null); setSelectedProcessoLabel(null); }}
-                  className="ml-auto p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                  className="ml-auto p-0.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
                 >
-                  <X className="w-3 h-3 text-zinc-400" />
+                  <X className="w-3 h-3 text-neutral-400" />
                 </button>
               </div>
             ) : (
               <>
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
                   <Input
                     value={processoSearch}
                     onChange={(e) => setProcessoSearch(e.target.value)}
@@ -259,17 +259,17 @@ export function FileLinkDialog({
                     className="pl-8 h-8 text-xs"
                   />
                   {processosLoading && (
-                    <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin text-zinc-400" />
+                    <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin text-neutral-400" />
                   )}
                 </div>
 
                 {/* Results */}
                 {processoResults && processoResults.length > 0 && (
-                  <div className="max-h-32 overflow-y-auto rounded-md border border-zinc-200 dark:border-zinc-700 divide-y divide-zinc-100 dark:divide-zinc-800">
+                  <div className="max-h-32 overflow-y-auto rounded-md border border-neutral-200 dark:border-neutral-700 divide-y divide-neutral-100 dark:divide-neutral-800">
                     {processoResults.map((p: any) => (
                       <button
                         key={p.id}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
                         onClick={() => {
                           setSelectedProcessoId(p.id);
                           setSelectedProcessoLabel(p.numero);
@@ -282,9 +282,9 @@ export function FileLinkDialog({
                       >
                         <Scale className="w-3 h-3 text-violet-400 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 truncate">{p.numero}</p>
+                          <p className="text-[11px] font-mono text-neutral-700 dark:text-neutral-300 truncate">{p.numero}</p>
                           {p.assistidoNome && (
-                            <p className="text-[10px] text-zinc-400 truncate">{p.assistidoNome}</p>
+                            <p className="text-[10px] text-neutral-400 truncate">{p.assistidoNome}</p>
                           )}
                         </div>
                       </button>
@@ -293,7 +293,7 @@ export function FileLinkDialog({
                 )}
 
                 {processoSearch.length >= 2 && processoResults?.length === 0 && !processosLoading && (
-                  <p className="text-[10px] text-zinc-400 text-center py-2">Nenhum processo encontrado</p>
+                  <p className="text-[10px] text-neutral-400 text-center py-2">Nenhum processo encontrado</p>
                 )}
 
                 {/* Quick create processo */}
@@ -307,7 +307,7 @@ export function FileLinkDialog({
                 </button>
 
                 {showCreateProcesso && (
-                  <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-200 dark:border-zinc-700 space-y-2">
+                  <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/30 border border-neutral-200 dark:border-neutral-700 space-y-2">
                     <Input
                       value={newProcessoNumero}
                       onChange={(e) => setNewProcessoNumero(e.target.value)}
@@ -349,32 +349,32 @@ export function FileLinkDialog({
           </div>
 
           {/* Divider */}
-          <div className="border-t border-zinc-100 dark:border-zinc-800" />
+          <div className="border-t border-neutral-100 dark:border-neutral-800" />
 
           {/* ── Assistido Search ── */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <User className="w-3.5 h-3.5 text-zinc-400" />
-              <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Assistido</span>
+              <User className="w-3.5 h-3.5 text-neutral-400" />
+              <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Assistido</span>
             </div>
 
             {selectedAssistidoId && selectedAssistidoLabel ? (
-              <div className="flex items-center gap-2 p-2 rounded-md bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+              <div className="flex items-center gap-2 p-2 rounded-md bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
                 <Badge variant="outline" className="text-[10px] h-5 bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/30">
                   <User className="w-2.5 h-2.5 mr-1" />
                   {selectedAssistidoLabel}
                 </Badge>
                 <button
                   onClick={() => { setSelectedAssistidoId(null); setSelectedAssistidoLabel(null); }}
-                  className="ml-auto p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                  className="ml-auto p-0.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
                 >
-                  <X className="w-3 h-3 text-zinc-400" />
+                  <X className="w-3 h-3 text-neutral-400" />
                 </button>
               </div>
             ) : (
               <>
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
                   <Input
                     value={assistidoSearch}
                     onChange={(e) => setAssistidoSearch(e.target.value)}
@@ -382,17 +382,17 @@ export function FileLinkDialog({
                     className="pl-8 h-8 text-xs"
                   />
                   {assistidosLoading && (
-                    <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin text-zinc-400" />
+                    <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin text-neutral-400" />
                   )}
                 </div>
 
                 {/* Results */}
                 {assistidoResults && assistidoResults.length > 0 && (
-                  <div className="max-h-32 overflow-y-auto rounded-md border border-zinc-200 dark:border-zinc-700 divide-y divide-zinc-100 dark:divide-zinc-800">
+                  <div className="max-h-32 overflow-y-auto rounded-md border border-neutral-200 dark:border-neutral-700 divide-y divide-neutral-100 dark:divide-neutral-800">
                     {assistidoResults.map((a: any) => (
                       <button
                         key={a.id}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
                         onClick={() => {
                           setSelectedAssistidoId(a.id);
                           setSelectedAssistidoLabel(a.nome);
@@ -401,9 +401,9 @@ export function FileLinkDialog({
                       >
                         <User className="w-3 h-3 text-blue-400 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate">{a.nome}</p>
+                          <p className="text-[11px] text-neutral-700 dark:text-neutral-300 truncate">{a.nome}</p>
                           {a.cpf && (
-                            <p className="text-[10px] text-zinc-400 font-mono">{a.cpf}</p>
+                            <p className="text-[10px] text-neutral-400 font-mono">{a.cpf}</p>
                           )}
                         </div>
                       </button>
@@ -412,7 +412,7 @@ export function FileLinkDialog({
                 )}
 
                 {assistidoSearch.length >= 2 && assistidoResults?.length === 0 && !assistidosLoading && (
-                  <p className="text-[10px] text-zinc-400 text-center py-2">Nenhum assistido encontrado</p>
+                  <p className="text-[10px] text-neutral-400 text-center py-2">Nenhum assistido encontrado</p>
                 )}
 
                 {/* Quick create assistido */}
@@ -426,7 +426,7 @@ export function FileLinkDialog({
                 </button>
 
                 {showCreateAssistido && (
-                  <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-200 dark:border-zinc-700 space-y-2">
+                  <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/30 border border-neutral-200 dark:border-neutral-700 space-y-2">
                     <Input
                       value={newAssistidoNome}
                       onChange={(e) => setNewAssistidoNome(e.target.value)}
@@ -466,7 +466,7 @@ export function FileLinkDialog({
         </div>
 
         {/* Footer: Vincular button */}
-        <div className="flex items-center gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
           <Button variant="ghost" size="sm" className="text-xs" onClick={onClose}>
             Cancelar
           </Button>

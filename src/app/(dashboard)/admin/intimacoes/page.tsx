@@ -175,7 +175,7 @@ function TipoSolarBadge({ tipo }: { tipo: string }) {
     "Fórum de conciliação": "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
   };
   const className =
-    map[tipo] ?? "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300";
+    map[tipo] ?? "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300";
   return <Badge className={cn("text-xs", className)}>{tipo}</Badge>;
 }
 
@@ -359,7 +359,7 @@ export default function SolarHubPage() {
   // ──────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
 
       {/* ── StatusBar ────────────────────────────────────────────────────── */}
       <SolarStatusBar
@@ -372,11 +372,11 @@ export default function SolarHubPage() {
       <Tabs defaultValue="caixa" className="w-full">
 
         {/* Tab triggers */}
-        <div className="px-4 md:px-6 pt-4 bg-zinc-100 dark:bg-[#0f0f11] overflow-x-auto scrollbar-none">
-          <TabsList className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-9 p-0.5 rounded-lg w-full min-w-max">
+        <div className="px-4 md:px-6 pt-4 bg-neutral-100 dark:bg-[#0f0f11] overflow-x-auto scrollbar-none">
+          <TabsList className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm h-9 p-0.5 rounded-lg w-full min-w-max">
             <TabsTrigger
               value="caixa"
-              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-zinc-900 data-[state=active]:text-white dark:data-[state=active]:bg-zinc-100 dark:data-[state=active]:text-zinc-900"
+              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
             >
               <Inbox className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Caixa de Entrada</span>
@@ -392,7 +392,7 @@ export default function SolarHubPage() {
             </TabsTrigger>
             <TabsTrigger
               value="batch"
-              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-zinc-900 data-[state=active]:text-white dark:data-[state=active]:bg-zinc-100 dark:data-[state=active]:text-zinc-900"
+              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
             >
               <Layers className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Operações Batch</span>
@@ -400,7 +400,7 @@ export default function SolarHubPage() {
             </TabsTrigger>
             <TabsTrigger
               value="fases"
-              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-zinc-900 data-[state=active]:text-white dark:data-[state=active]:bg-zinc-100 dark:data-[state=active]:text-zinc-900"
+              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
             >
               <RefreshCw className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Fases &rarr; Solar</span>
@@ -408,7 +408,7 @@ export default function SolarHubPage() {
             </TabsTrigger>
             <TabsTrigger
               value="logs"
-              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-zinc-900 data-[state=active]:text-white dark:data-[state=active]:bg-zinc-100 dark:data-[state=active]:text-zinc-900"
+              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
             >
               <Settings className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Logs & Stats</span>
@@ -416,7 +416,7 @@ export default function SolarHubPage() {
             </TabsTrigger>
             <TabsTrigger
               value="assistidos-sync"
-              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-zinc-900 data-[state=active]:text-white dark:data-[state=active]:bg-zinc-100 dark:data-[state=active]:text-zinc-900"
+              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
             >
               <Users className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Assistidos</span>
@@ -438,7 +438,7 @@ export default function SolarHubPage() {
           <div className="p-4 md:p-6 space-y-5">
 
             {/* Stats Ribbon — compact inline KPIs */}
-            <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+            <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
               {[
                 { icon: Bell, value: contadores.total, label: "pendentes" },
                 { icon: AlertTriangle, value: contadores.vencidas, label: "vencidas", onClick: () => setFilterUrgencia(filterUrgencia === "vencidas" ? "todos" : "vencidas"), active: filterUrgencia === "vencidas", alert: contadores.vencidas > 0 },
@@ -448,25 +448,25 @@ export default function SolarHubPage() {
                 const Icon = stat.icon;
                 return (
                   <Fragment key={index}>
-                    {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
+                    {index > 0 && <div className="w-px h-4 bg-neutral-200/60 dark:bg-neutral-700/60 flex-shrink-0" />}
                     <button
                       onClick={stat.onClick}
                       className={cn(
                         "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors",
                         stat.onClick && "cursor-pointer",
-                        stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-zinc-50 dark:hover:bg-zinc-800",
+                        stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-neutral-50 dark:hover:bg-neutral-800",
                         stat.alert && !stat.active ? "bg-rose-50 dark:bg-rose-950/20" : ""
                       )}
                     >
-                      <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-rose-500 dark:text-rose-400" : stat.active ? "text-emerald-500 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500")} />
-                      <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-600 dark:text-rose-400" : "text-zinc-800 dark:text-zinc-100")}>{stat.value}</span>
-                      <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.label}</span>
+                      <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-rose-500 dark:text-rose-400" : stat.active ? "text-emerald-500 dark:text-emerald-400" : "text-neutral-400 dark:text-neutral-500")} />
+                      <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-600 dark:text-rose-400" : "text-neutral-800 dark:text-neutral-100")}>{stat.value}</span>
+                      <span className="text-neutral-500 dark:text-neutral-400 font-medium">{stat.label}</span>
                     </button>
                   </Fragment>
                 );
               })}
               <div className="flex-1" />
-              <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px] tabular-nums whitespace-nowrap">{contadores.total} intimações</span>
+              <span className="text-neutral-400 dark:text-neutral-500 font-mono text-[10px] tabular-nums whitespace-nowrap">{contadores.total} intimações</span>
             </div>
 
             {/* Filtros */}
@@ -480,8 +480,8 @@ export default function SolarHubPage() {
                     className={cn(
                       "px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors",
                       filterUrgencia === f.value
-                        ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                        : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700",
+                        ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
+                        : "bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700",
                     )}
                   >
                     {f.label}
@@ -495,7 +495,7 @@ export default function SolarHubPage() {
                 ))}
 
                 {/* Separator */}
-                <span className="w-px h-4 bg-zinc-300 dark:bg-zinc-700 mx-1" />
+                <span className="w-px h-4 bg-neutral-300 dark:bg-neutral-700 mx-1" />
 
                 {/* Fonte pills */}
                 {FONTE_FILTERS.map((f) => (
@@ -505,8 +505,8 @@ export default function SolarHubPage() {
                     className={cn(
                       "px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors",
                       filterFonte === f.value
-                        ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                        : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700",
+                        ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
+                        : "bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700",
                     )}
                   >
                     {f.label}
@@ -516,7 +516,7 @@ export default function SolarHubPage() {
 
               {/* Filtro ativo count */}
               {(filterUrgencia !== "todos" || filterFonte !== "todos") && (
-                <div className="flex items-center gap-2 text-xs text-zinc-500">
+                <div className="flex items-center gap-2 text-xs text-neutral-500">
                   <span>
                     {itensFiltrados.length} de {todosItens.length}
                   </span>
@@ -525,7 +525,7 @@ export default function SolarHubPage() {
                       setFilterUrgencia("todos");
                       setFilterFonte("todos");
                     }}
-                    className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 underline"
+                    className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 underline"
                   >
                     Limpar
                   </button>
@@ -571,7 +571,7 @@ export default function SolarHubPage() {
                       {isLoading ? (
                         <TableRow>
                           <TableCell colSpan={7} className="text-center py-12">
-                            <RefreshCw className="h-5 w-5 animate-spin mx-auto text-zinc-400" />
+                            <RefreshCw className="h-5 w-5 animate-spin mx-auto text-neutral-400" />
                             <p className="text-sm text-muted-foreground mt-2">Carregando...</p>
                           </TableCell>
                         </TableRow>
@@ -579,7 +579,7 @@ export default function SolarHubPage() {
                         <TableRow>
                           <TableCell colSpan={7} className="text-center py-16">
                             <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-emerald-400 opacity-60" />
-                            <p className="font-medium text-zinc-700 dark:text-zinc-300">
+                            <p className="font-medium text-neutral-700 dark:text-neutral-300">
                               {filterUrgencia !== "todos" || filterFonte !== "todos"
                                 ? "Nenhum item com esses filtros"
                                 : "Nenhuma pendência!"}
@@ -656,7 +656,7 @@ export default function SolarHubPage() {
 
                             {/* Parte */}
                             <TableCell className="hidden lg:table-cell">
-                              <span className="text-sm text-zinc-700 dark:text-zinc-300 max-w-[140px] truncate block">
+                              <span className="text-sm text-neutral-700 dark:text-neutral-300 max-w-[140px] truncate block">
                                 {item.parte ?? "—"}
                               </span>
                             </TableCell>

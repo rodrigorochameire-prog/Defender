@@ -292,7 +292,7 @@ export function BriefingSection({
           </div>
           <div>
             <h3 className="font-bold text-lg">Briefing Inteligente</h3>
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-neutral-500">
               Análise automática de depoimentos e sugestões de inquirição
             </p>
           </div>
@@ -345,10 +345,10 @@ export function BriefingSection({
                 <div className="absolute inset-0 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
               </div>
               <div>
-                <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                <p className="font-medium text-neutral-900 dark:text-neutral-100">
                   Analisando documentos...
                 </p>
-                <p className="text-sm text-zinc-500 mt-1">
+                <p className="text-sm text-neutral-500 mt-1">
                   Identificando testemunhas, extraindo depoimentos e gerando
                   análise estratégica
                 </p>
@@ -361,17 +361,17 @@ export function BriefingSection({
 
       {/* Empty State */}
       {!isLoading && !briefing && !isLoadingExisting && (
-        <Card className="border-2 border-dashed border-zinc-300 dark:border-zinc-700">
+        <Card className="border-2 border-dashed border-neutral-300 dark:border-neutral-700">
           <CardContent className="py-12">
             <div className="text-center space-y-4">
-              <div className="w-16 h-16 mx-auto rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                <FileText className="w-8 h-8 text-zinc-400" />
+              <div className="w-16 h-16 mx-auto rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                <FileText className="w-8 h-8 text-neutral-400" />
               </div>
               <div>
-                <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                <p className="font-medium text-neutral-900 dark:text-neutral-100">
                   Nenhum briefing gerado
                 </p>
-                <p className="text-sm text-zinc-500 mt-1">
+                <p className="text-sm text-neutral-500 mt-1">
                   Clique em &quot;Gerar Briefing&quot; para analisar os
                   documentos do processo
                 </p>
@@ -388,7 +388,7 @@ export function BriefingSection({
           {stats && (
             <div className="overflow-x-auto pb-2">
               <div className="flex gap-3 min-w-max">
-                <Card className="border-zinc-200 dark:border-zinc-800 w-36">
+                <Card className="border-neutral-200 dark:border-neutral-800 w-36">
                   <CardContent className="p-3 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                       <Users className="w-5 h-5 text-emerald-600" />
@@ -397,67 +397,67 @@ export function BriefingSection({
                       <p className="text-2xl font-bold">
                         {stats.totalTestemunhas}
                       </p>
-                      <p className="text-xs text-zinc-500">Testemunhas</p>
+                      <p className="text-xs text-neutral-500">Testemunhas</p>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="border-zinc-200 dark:border-zinc-800 w-36">
+                <Card className="border-neutral-200 dark:border-neutral-800 w-36">
                   <CardContent className="p-3 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
                       <Microscope className="w-5 h-5 text-purple-600" />
                     </div>
                     <div>
                       <p className="text-2xl font-bold">{stats.laudos}</p>
-                      <p className="text-xs text-zinc-500">Laudos</p>
+                      <p className="text-xs text-neutral-500">Laudos</p>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="border-zinc-200 dark:border-zinc-800 w-36">
+                <Card className="border-neutral-200 dark:border-neutral-800 w-36">
                   <CardContent className="p-3 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
                       <AlertTriangle className="w-5 h-5 text-rose-600" />
                     </div>
                     <div>
                       <p className="text-2xl font-bold">{stats.contradicoes}</p>
-                      <p className="text-xs text-zinc-500">Contradições</p>
+                      <p className="text-xs text-neutral-500">Contradições</p>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="border-zinc-200 dark:border-zinc-800 w-36">
+                <Card className="border-neutral-200 dark:border-neutral-800 w-36">
                   <CardContent className="p-3 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
                       <UserCheck className="w-5 h-5 text-amber-600" />
                     </div>
                     <div>
                       <p className="text-2xl font-bold">{stats.antecedentes}</p>
-                      <p className="text-xs text-zinc-500">C/ Antecedentes</p>
+                      <p className="text-xs text-neutral-500">C/ Antecedentes</p>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="border-zinc-200 dark:border-zinc-800 w-36">
+                <Card className="border-neutral-200 dark:border-neutral-800 w-36">
                   <CardContent className="p-3 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center">
                       <Link2 className="w-5 h-5 text-cyan-600" />
                     </div>
                     <div>
                       <p className="text-2xl font-bold">{stats.correlacoes}</p>
-                      <p className="text-xs text-zinc-500">Correlações</p>
+                      <p className="text-xs text-neutral-500">Correlações</p>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="border-zinc-200 dark:border-zinc-800 w-36">
+                <Card className="border-neutral-200 dark:border-neutral-800 w-36">
                   <CardContent className="p-3 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                       <MessageCircleQuestion className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
                       <p className="text-2xl font-bold">{stats.perguntas}</p>
-                      <p className="text-xs text-zinc-500">Perguntas</p>
+                      <p className="text-xs text-neutral-500">Perguntas</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -511,7 +511,7 @@ export function BriefingSection({
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">
                       {briefing.cenario_probatorio}
                     </p>
                   </CardContent>
@@ -549,19 +549,19 @@ export function BriefingSection({
                         )}
                         {briefing.teses_subsidiarias.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold text-zinc-500 mb-2">
+                            <p className="text-xs font-semibold text-neutral-500 mb-2">
                               TESES SUBSIDIÁRIAS
                             </p>
                             <div className="space-y-2">
                               {briefing.teses_subsidiarias.map((tese, idx) => (
                                 <div
                                   key={idx}
-                                  className="flex items-start gap-2 p-2 bg-zinc-50 dark:bg-zinc-900 rounded-lg"
+                                  className="flex items-start gap-2 p-2 bg-neutral-50 dark:bg-neutral-900 rounded-lg"
                                 >
                                   <Badge variant="outline" className="mt-0.5">
                                     {idx + 1}
                                   </Badge>
-                                  <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                                  <p className="text-sm text-neutral-700 dark:text-neutral-300">
                                     {tese}
                                   </p>
                                 </div>
@@ -662,37 +662,37 @@ export function BriefingSection({
 
               {/* Estratégia e Ordem de Inquirição */}
               {(briefing.resumo_geral || briefing.estrategia_recomendada || briefing.ordem_inquiricao_sugerida.length > 0) && (
-                <Card className="border-2 border-zinc-200 dark:border-zinc-700">
+                <Card className="border-2 border-neutral-200 dark:border-neutral-700">
                   <CardHeader className="pb-2">
                     <CardTitle className="flex items-center gap-2 text-base">
-                      <Target className="w-5 h-5 text-zinc-600" />
+                      <Target className="w-5 h-5 text-neutral-600" />
                       Recomendações
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {briefing.resumo_geral && (
                       <div>
-                        <p className="text-xs font-medium text-zinc-500 mb-1">
+                        <p className="text-xs font-medium text-neutral-500 mb-1">
                           Resumo Geral
                         </p>
-                        <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                        <p className="text-sm text-neutral-700 dark:text-neutral-300">
                           {briefing.resumo_geral}
                         </p>
                       </div>
                     )}
                     {briefing.estrategia_recomendada && (
                       <div>
-                        <p className="text-xs font-medium text-zinc-500 mb-1">
+                        <p className="text-xs font-medium text-neutral-500 mb-1">
                           Estratégia Recomendada
                         </p>
-                        <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                        <p className="text-sm text-neutral-700 dark:text-neutral-300">
                           {briefing.estrategia_recomendada}
                         </p>
                       </div>
                     )}
                     {briefing.ordem_inquiricao_sugerida.length > 0 && (
                       <div>
-                        <p className="text-xs font-medium text-zinc-500 mb-2 flex items-center gap-1">
+                        <p className="text-xs font-medium text-neutral-500 mb-2 flex items-center gap-1">
                           <ListOrdered className="w-3 h-3" />
                           Ordem de Inquirição Sugerida
                         </p>
@@ -731,8 +731,8 @@ export function BriefingSection({
                   ) : (
                     <Card className="border-dashed">
                       <CardContent className="py-8 text-center">
-                        <Users className="w-10 h-10 mx-auto text-zinc-300 mb-2" />
-                        <p className="text-sm text-zinc-500">
+                        <Users className="w-10 h-10 mx-auto text-neutral-300 mb-2" />
+                        <p className="text-sm text-neutral-500">
                           Nenhuma testemunha identificada nos documentos
                         </p>
                       </CardContent>
@@ -753,8 +753,8 @@ export function BriefingSection({
                   ) : (
                     <Card className="border-dashed">
                       <CardContent className="py-8 text-center">
-                        <Microscope className="w-10 h-10 mx-auto text-zinc-300 mb-2" />
-                        <p className="text-sm text-zinc-500">
+                        <Microscope className="w-10 h-10 mx-auto text-neutral-300 mb-2" />
+                        <p className="text-sm text-neutral-500">
                           Nenhum laudo identificado nos documentos
                         </p>
                       </CardContent>
@@ -775,8 +775,8 @@ export function BriefingSection({
                   ) : (
                     <Card className="border-dashed">
                       <CardContent className="py-8 text-center">
-                        <UserCheck className="w-10 h-10 mx-auto text-zinc-300 mb-2" />
-                        <p className="text-sm text-zinc-500">
+                        <UserCheck className="w-10 h-10 mx-auto text-neutral-300 mb-2" />
+                        <p className="text-sm text-neutral-500">
                           Nenhuma informação de antecedentes encontrada
                         </p>
                       </CardContent>
@@ -800,7 +800,7 @@ export function BriefingSection({
                             ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-900/10"
                             : correlacao.impacto_defesa === "desfavoravel"
                             ? "border-rose-200 dark:border-rose-800 bg-rose-50/30 dark:bg-rose-900/10"
-                            : "border-zinc-200 dark:border-zinc-700"
+                            : "border-neutral-200 dark:border-neutral-700"
                         )}
                       >
                         <CardContent className="p-4">
@@ -827,7 +827,7 @@ export function BriefingSection({
                                     ? "bg-emerald-100 text-emerald-700"
                                     : correlacao.impacto_defesa === "desfavoravel"
                                     ? "bg-rose-100 text-rose-700"
-                                    : "bg-zinc-100 text-zinc-700"
+                                    : "bg-neutral-100 text-neutral-700"
                                 )}
                               >
                                 {correlacao.impacto_defesa === "favoravel"
@@ -840,29 +840,29 @@ export function BriefingSection({
                           </div>
 
                           <div className="flex items-center gap-2 text-sm mb-3">
-                            <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                            <span className="font-medium text-neutral-700 dark:text-neutral-300">
                               {correlacao.prova_1}
                             </span>
-                            <Link2 className="w-4 h-4 text-zinc-400" />
-                            <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                            <Link2 className="w-4 h-4 text-neutral-400" />
+                            <span className="font-medium text-neutral-700 dark:text-neutral-300">
                               {correlacao.prova_2}
                             </span>
                           </div>
 
-                          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-3">
+                          <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-3">
                             {correlacao.descricao}
                           </p>
 
                           {correlacao.perguntas_sugeridas.length > 0 && (
-                            <div className="pt-3 border-t border-zinc-200 dark:border-zinc-700">
-                              <p className="text-xs font-medium text-zinc-500 mb-2">
+                            <div className="pt-3 border-t border-neutral-200 dark:border-neutral-700">
+                              <p className="text-xs font-medium text-neutral-500 mb-2">
                                 Perguntas sugeridas:
                               </p>
                               <ul className="space-y-1">
                                 {correlacao.perguntas_sugeridas.map((pergunta, pIdx) => (
                                   <li
                                     key={pIdx}
-                                    className="text-sm text-zinc-600 dark:text-zinc-400 flex items-start gap-2"
+                                    className="text-sm text-neutral-600 dark:text-neutral-400 flex items-start gap-2"
                                   >
                                     <span className="text-emerald-600 font-medium">•</span>
                                     {pergunta}
@@ -877,8 +877,8 @@ export function BriefingSection({
                   ) : (
                     <Card className="border-dashed">
                       <CardContent className="py-8 text-center">
-                        <Link2 className="w-10 h-10 mx-auto text-zinc-300 mb-2" />
-                        <p className="text-sm text-zinc-500">
+                        <Link2 className="w-10 h-10 mx-auto text-neutral-300 mb-2" />
+                        <p className="text-sm text-neutral-500">
                           Nenhuma correlação identificada entre as provas
                         </p>
                       </CardContent>

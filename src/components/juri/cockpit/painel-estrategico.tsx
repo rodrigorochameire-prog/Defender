@@ -97,7 +97,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   frase_impacto: "text-purple-500",
   jurado_reacao: "text-blue-500",
   testemunha: "text-indigo-500",
-  geral: "text-zinc-500",
+  geral: "text-neutral-500",
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -135,8 +135,8 @@ function Section({
   return (
     <div
       className={cn(
-        "rounded-xl border border-zinc-200/80 bg-white",
-        "dark:border-zinc-800/80 dark:bg-zinc-900",
+        "rounded-xl border border-neutral-200/80 bg-white",
+        "dark:border-neutral-800/80 dark:bg-neutral-900",
         "overflow-hidden transition-all duration-200"
       )}
     >
@@ -146,16 +146,16 @@ function Section({
         className={cn(
           "flex w-full items-center gap-2 px-4 py-3",
           "cursor-pointer transition-colors duration-200",
-          "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+          "hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
         )}
       >
         {isOpen ? (
-          <ChevronDown className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
+          <ChevronDown className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500" />
         ) : (
-          <ChevronRight className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
+          <ChevronRight className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500" />
         )}
-        <Icon className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
-        <span className="text-xs font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+        <Icon className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
+        <span className="text-xs font-medium uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
           {title}
         </span>
         {badge !== undefined && (
@@ -163,7 +163,7 @@ function Section({
             className={cn(
               "ml-auto text-[10px] border",
               badgeColor ||
-                "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
+                "bg-neutral-100 text-neutral-600 border-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:border-neutral-700"
             )}
           >
             {badge}
@@ -285,26 +285,26 @@ export function PainelEstrategico({
         <div
           className={cn(
             "mb-3 flex flex-wrap items-center gap-3 rounded-lg px-3 py-2.5",
-            "bg-zinc-50 dark:bg-zinc-800/50"
+            "bg-neutral-50 dark:bg-neutral-800/50"
           )}
         >
           <div className="flex items-center gap-1.5">
             <Shield className="h-3 w-3 text-rose-500" />
-            <span className="text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
+            <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
               MP: {mpArguments.length}
             </span>
           </div>
-          <div className="h-3 w-px bg-zinc-200 dark:bg-zinc-700" />
+          <div className="h-3 w-px bg-neutral-200 dark:bg-neutral-700" />
           <div className="flex items-center gap-1.5">
             <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-            <span className="text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
+            <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
               Refutados: {refutedCount}
             </span>
           </div>
-          <div className="h-3 w-px bg-zinc-200 dark:bg-zinc-700" />
+          <div className="h-3 w-px bg-neutral-200 dark:bg-neutral-700" />
           <div className="flex items-center gap-1.5">
             <Clock className="h-3 w-3 text-amber-500" />
-            <span className="text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
+            <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
               Pendentes: {pendingCount}
             </span>
           </div>
@@ -313,14 +313,14 @@ export function PainelEstrategico({
         {/* Progress bar */}
         <div className="mb-4">
           <div className="mb-1 flex items-center justify-between">
-            <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+            <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
               Taxa de refutacao
             </span>
-            <span className="text-[10px] font-mono font-medium text-zinc-500 dark:text-zinc-400">
+            <span className="text-[10px] font-mono font-medium text-neutral-500 dark:text-neutral-400">
               {refutationRate}%
             </span>
           </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
             <div className="flex h-full">
               <div
                 className="h-full bg-emerald-500 transition-all duration-500"
@@ -340,12 +340,12 @@ export function PainelEstrategico({
 
         {/* MP Arguments list */}
         {mpArguments.length === 0 ? (
-          <p className="text-center text-xs text-zinc-400 dark:text-zinc-500 py-3">
+          <p className="text-center text-xs text-neutral-400 dark:text-neutral-500 py-3">
             Nenhum argumento do MP registrado.
           </p>
         ) : (
           <div className="space-y-2 mb-4">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
               Argumentos do MP
             </span>
             {mpArguments.map((arg) => {
@@ -357,7 +357,7 @@ export function PainelEstrategico({
                     "flex items-start gap-2.5 rounded-lg border px-3 py-2",
                     isRefuted
                       ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800/50 dark:bg-emerald-950/20"
-                      : "border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800/50"
+                      : "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800/50"
                   )}
                 >
                   <Checkbox
@@ -370,13 +370,13 @@ export function PainelEstrategico({
                       className={cn(
                         "text-xs leading-relaxed",
                         isRefuted
-                          ? "line-through text-zinc-400 dark:text-zinc-500"
-                          : "text-zinc-700 dark:text-zinc-300"
+                          ? "line-through text-neutral-400 dark:text-neutral-500"
+                          : "text-neutral-700 dark:text-neutral-300"
                       )}
                     >
                       {arg.texto}
                     </p>
-                    <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">
+                    <span className="text-[10px] font-mono text-neutral-400 dark:text-neutral-500">
                       {arg.horario} - {arg.fase}
                     </span>
                   </div>
@@ -400,10 +400,10 @@ export function PainelEstrategico({
                   "bg-orange-50/50 dark:bg-orange-950/20 dark:border-orange-800/50"
                 )}
               >
-                <p className="text-xs leading-relaxed text-zinc-700 dark:text-zinc-300">
+                <p className="text-xs leading-relaxed text-neutral-700 dark:text-neutral-300">
                   {item.texto}
                 </p>
-                <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">
+                <span className="text-[10px] font-mono text-neutral-400 dark:text-neutral-500">
                   {item.horario}
                 </span>
               </div>
@@ -427,7 +427,7 @@ export function PainelEstrategico({
         defaultOpen={contradictions.length > 0}
       >
         {contradictions.length === 0 ? (
-          <p className="text-center text-xs text-zinc-400 dark:text-zinc-500 py-3">
+          <p className="text-center text-xs text-neutral-400 dark:text-neutral-500 py-3">
             Nenhuma contradicao identificada ainda.
           </p>
         ) : (
@@ -444,7 +444,7 @@ export function PainelEstrategico({
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-500" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs leading-relaxed text-zinc-700 dark:text-zinc-300">
+                    <p className="text-xs leading-relaxed text-neutral-700 dark:text-neutral-300">
                       {item.texto}
                     </p>
                     <div className="mt-1 flex items-center gap-2">
@@ -475,7 +475,7 @@ export function PainelEstrategico({
         badge={anotacoes.length > 0 ? anotacoes.length : undefined}
       >
         {recentAnnotations.length === 0 ? (
-          <p className="text-center text-xs text-zinc-400 dark:text-zinc-500 py-3">
+          <p className="text-center text-xs text-neutral-400 dark:text-neutral-500 py-3">
             Nenhuma anotacao registrada.
           </p>
         ) : (
@@ -487,7 +487,7 @@ export function PainelEstrategico({
               const Icon =
                 CATEGORY_ICONS[anot.categoria] || PenLine;
               const colorClass =
-                CATEGORY_COLORS[anot.categoria] || "text-zinc-500";
+                CATEGORY_COLORS[anot.categoria] || "text-neutral-500";
               const label =
                 CATEGORY_LABELS[anot.categoria] || anot.categoria;
 
@@ -499,8 +499,8 @@ export function PainelEstrategico({
                     "border transition-all duration-200",
                     anot.importante
                       ? "border-amber-300 bg-amber-50/30 dark:border-amber-700/50 dark:bg-amber-950/10"
-                      : "border-zinc-100 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-800/30",
-                    "hover:bg-zinc-100/80 dark:hover:bg-zinc-800/60"
+                      : "border-neutral-100 bg-neutral-50/50 dark:border-neutral-800 dark:bg-neutral-800/30",
+                    "hover:bg-neutral-100/80 dark:hover:bg-neutral-800/60"
                   )}
                 >
                   <Icon
@@ -516,14 +516,14 @@ export function PainelEstrategico({
                       >
                         {label}
                       </span>
-                      <span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500">
+                      <span className="text-[9px] font-mono text-neutral-400 dark:text-neutral-500">
                         {anot.horario}
                       </span>
                       {anot.importante && (
                         <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
                       )}
                     </div>
-                    <p className="text-[11px] leading-relaxed text-zinc-600 dark:text-zinc-400 line-clamp-2">
+                    <p className="text-[11px] leading-relaxed text-neutral-600 dark:text-neutral-400 line-clamp-2">
                       {anot.texto}
                     </p>
                   </div>
@@ -554,7 +554,7 @@ export function PainelEstrategico({
         }
       >
         {councilPulse.length === 0 ? (
-          <p className="text-center text-xs text-zinc-400 dark:text-zinc-500 py-3">
+          <p className="text-center text-xs text-neutral-400 dark:text-neutral-500 py-3">
             Nenhum jurado no conselho de sentenca.
           </p>
         ) : (
@@ -562,7 +562,7 @@ export function PainelEstrategico({
             {/* Overall projection bar */}
             <div className="mb-4">
               <div className="mb-1.5 flex items-center justify-between">
-                <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
                   Projecao geral
                 </span>
                 <span
@@ -578,7 +578,7 @@ export function PainelEstrategico({
                   {overallProjection}%
                 </span>
               </div>
-              <div className="h-3 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+              <div className="h-3 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
                 <div
                   className={cn(
                     "h-full rounded-full transition-all duration-700",
@@ -604,27 +604,27 @@ export function PainelEstrategico({
                       key={jurado.id}
                       className={cn(
                         "flex items-center gap-2.5 rounded-lg px-3 py-2",
-                        "bg-zinc-50 dark:bg-zinc-800/40"
+                        "bg-neutral-50 dark:bg-neutral-800/40"
                       )}
                     >
                       {/* Chair badge */}
                       <span
                         className={cn(
                           "flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold",
-                          "bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"
+                          "bg-neutral-200 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300"
                         )}
                       >
                         {jurado.cadeira}
                       </span>
 
                       {/* Name */}
-                      <span className="w-16 truncate text-[11px] font-medium text-zinc-700 dark:text-zinc-300">
+                      <span className="w-16 truncate text-[11px] font-medium text-neutral-700 dark:text-neutral-300">
                         {firstName}
                       </span>
 
                       {/* Mini bar */}
                       <div className="flex-1">
-                        <div className="flex h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+                        <div className="flex h-2 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
                           {total > 0 ? (
                             <>
                               <div
@@ -641,7 +641,7 @@ export function PainelEstrategico({
                               />
                             </>
                           ) : (
-                            <div className="h-full w-full bg-zinc-200 dark:bg-zinc-700" />
+                            <div className="h-full w-full bg-neutral-200 dark:bg-neutral-700" />
                           )}
                         </div>
                       </div>

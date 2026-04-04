@@ -227,7 +227,7 @@ export function CommandPalette() {
       <Button
         variant="outline"
         size="sm"
-        className="gap-2 text-xs bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white hover:border-emerald-500/50 dark:hover:border-emerald-500/50 h-8 px-2 sm:px-3"
+        className="gap-2 text-xs bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-white hover:border-emerald-500/50 dark:hover:border-emerald-500/50 h-8 px-2 sm:px-3"
         onClick={() => setOpen(true)}
       >
         <Search className="h-4 w-4" />
@@ -242,7 +242,7 @@ export function CommandPalette() {
         <CommandList>
           <CommandEmpty>
             {isSearching ? (
-              <div className="flex items-center justify-center gap-2 py-2 text-zinc-500">
+              <div className="flex items-center justify-center gap-2 py-2 text-neutral-500">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Buscando...
               </div>
@@ -283,10 +283,10 @@ export function CommandPalette() {
             <CommandGroup heading="Buscando...">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-center gap-3 px-2 py-1.5">
-                  <div className="h-4 w-4 rounded bg-zinc-200 dark:bg-zinc-700 animate-pulse flex-shrink-0" />
+                  <div className="h-4 w-4 rounded bg-neutral-200 dark:bg-neutral-700 animate-pulse flex-shrink-0" />
                   <div className="flex-1 space-y-1">
-                    <div className="h-3 w-40 rounded bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
-                    <div className="h-2.5 w-24 rounded bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
+                    <div className="h-3 w-40 rounded bg-neutral-200 dark:bg-neutral-700 animate-pulse" />
+                    <div className="h-2.5 w-24 rounded bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
                   </div>
                 </div>
               ))}
@@ -308,17 +308,17 @@ export function CommandPalette() {
                     <div className="relative flex-shrink-0">
                       <User className="h-4 w-4 text-emerald-500" />
                       <span
-                        className={`absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border border-white dark:border-zinc-900 ${isPreso ? "bg-red-500" : "bg-emerald-500"}`}
+                        className={`absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border border-white dark:border-neutral-900 ${isPreso ? "bg-red-500" : "bg-emerald-500"}`}
                         title={isPreso ? "Preso" : "Solto"}
                       />
                     </div>
                     <div className="flex-1 min-w-0">
                       <span className="text-sm font-medium">{a.nome}</span>
                       {a.cpf && (
-                        <span className="ml-2 text-xs text-zinc-400 font-mono">{a.cpf}</span>
+                        <span className="ml-2 text-xs text-neutral-400 font-mono">{a.cpf}</span>
                       )}
                     </div>
-                    <ArrowRight className="h-3 w-3 text-zinc-400" />
+                    <ArrowRight className="h-3 w-3 text-neutral-400" />
                   </CommandItem>
                 );
               })}
@@ -339,10 +339,10 @@ export function CommandPalette() {
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-mono">{p.numeroAutos}</span>
                     {p.vara && (
-                      <span className="ml-2 text-xs text-zinc-400 truncate">{p.vara}</span>
+                      <span className="ml-2 text-xs text-neutral-400 truncate">{p.vara}</span>
                     )}
                   </div>
-                  <ArrowRight className="h-3 w-3 text-zinc-400" />
+                  <ArrowRight className="h-3 w-3 text-neutral-400" />
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -376,16 +376,16 @@ export function CommandPalette() {
                       </span>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         {d.status && (
-                          <span className="text-xs text-zinc-400">{d.status.replace(/_/g, " ")}</span>
+                          <span className="text-xs text-neutral-400">{d.status.replace(/_/g, " ")}</span>
                         )}
                         {prazoStr && (
-                          <span className={`text-xs font-mono ${prazoVencido ? "text-red-500" : "text-zinc-400"}`}>
+                          <span className={`text-xs font-mono ${prazoVencido ? "text-red-500" : "text-neutral-400"}`}>
                             · {prazoStr}
                           </span>
                         )}
                       </div>
                     </div>
-                    <ArrowRight className="h-3 w-3 text-zinc-400" />
+                    <ArrowRight className="h-3 w-3 text-neutral-400" />
                   </CommandItem>
                 );
               })}
@@ -407,14 +407,14 @@ export function CommandPalette() {
                     className="flex items-center gap-3"
                   >
                     {item.type === "assistido" ? (
-                      <User className="h-4 w-4 text-zinc-400 flex-shrink-0" />
+                      <User className="h-4 w-4 text-neutral-400 flex-shrink-0" />
                     ) : item.type === "demanda" ? (
-                      <FileText className="h-4 w-4 text-zinc-400 flex-shrink-0" />
+                      <FileText className="h-4 w-4 text-neutral-400 flex-shrink-0" />
                     ) : (
-                      <Scale className="h-4 w-4 text-zinc-400 flex-shrink-0" />
+                      <Scale className="h-4 w-4 text-neutral-400 flex-shrink-0" />
                     )}
                     <span className="text-sm">{item.label}</span>
-                    <ArrowRight className="h-3 w-3 text-zinc-400 ml-auto" />
+                    <ArrowRight className="h-3 w-3 text-neutral-400 ml-auto" />
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -452,7 +452,7 @@ export function CommandPalette() {
                 {item.icon || <Plus className="h-4 w-4" />}
                 <span>{item.label}</span>
                 {item.shortcut && (
-                  <CommandShortcut className="bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-[10px] font-mono">
+                  <CommandShortcut className="bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded text-[10px] font-mono">
                     {item.shortcut}
                   </CommandShortcut>
                 )}
@@ -505,16 +505,16 @@ export function CommandPalette() {
         </CommandList>
 
         {/* Keyboard hint */}
-        <div className="flex items-center justify-center gap-3 border-t border-zinc-200 dark:border-zinc-700 px-4 py-2">
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+        <div className="flex items-center justify-center gap-3 border-t border-neutral-200 dark:border-neutral-700 px-4 py-2">
+          <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
             <kbd className="font-mono">↑↓</kbd> navegar
           </span>
-          <span className="text-[10px] text-zinc-300 dark:text-zinc-600">·</span>
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+          <span className="text-[10px] text-neutral-300 dark:text-neutral-600">·</span>
+          <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
             <kbd className="font-mono">Enter</kbd> confirmar
           </span>
-          <span className="text-[10px] text-zinc-300 dark:text-zinc-600">·</span>
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+          <span className="text-[10px] text-neutral-300 dark:text-neutral-600">·</span>
+          <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
             <kbd className="font-mono">Esc</kbd> fechar
           </span>
         </div>

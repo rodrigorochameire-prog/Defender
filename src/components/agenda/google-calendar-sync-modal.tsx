@@ -344,13 +344,13 @@ export function GoogleCalendarSyncModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-900">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-neutral-900">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+          <DialogTitle className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
             <Calendar className="w-6 h-6 text-blue-600" />
             Sincronização Google Calendar
           </DialogTitle>
-          <DialogDescription className="text-sm text-zinc-500 dark:text-zinc-400">
+          <DialogDescription className="text-sm text-neutral-500 dark:text-neutral-400">
             Conecte sua agenda do Google Calendar para importar eventos automaticamente
           </DialogDescription>
         </DialogHeader>
@@ -358,7 +358,7 @@ export function GoogleCalendarSyncModal({
         <div className="space-y-6">
           {/* URL do Calendário */}
           <div className="space-y-2">
-            <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+            <Label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
               URL do Google Calendar
             </Label>
             <div className="flex gap-2">
@@ -366,7 +366,7 @@ export function GoogleCalendarSyncModal({
                 value={calendarUrl}
                 onChange={(e) => setCalendarUrl(e.target.value)}
                 placeholder="https://calendar.google.com/calendar/u/0?cid=..."
-                className="flex-1 bg-white dark:bg-zinc-900"
+                className="flex-1 bg-white dark:bg-neutral-900"
               />
               <Button
                 variant="outline"
@@ -440,7 +440,7 @@ export function GoogleCalendarSyncModal({
           {syncComplete && importedEvents.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-50">
+                <h3 className="font-bold text-lg text-neutral-900 dark:text-neutral-50">
                   Eventos Encontrados ({importedEvents.length})
                 </h3>
                 <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
@@ -453,7 +453,7 @@ export function GoogleCalendarSyncModal({
                 {importedEvents.map((evento, index) => (
                   <Card
                     key={index}
-                    className="p-4 border border-zinc-200 dark:border-zinc-800"
+                    className="p-4 border border-neutral-200 dark:border-neutral-800"
                   >
                     <div className="flex items-start gap-3">
                       <div
@@ -479,12 +479,12 @@ export function GoogleCalendarSyncModal({
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-zinc-900 dark:text-zinc-50 mb-2">
+                        <h4 className="font-bold text-neutral-900 dark:text-neutral-50 mb-2">
                           {evento.titulo}
                         </h4>
 
                         <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
+                          <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
                             <Clock className="w-3.5 h-3.5" />
                             <span>
                               {new Date(evento.data).toLocaleDateString("pt-BR")} às{" "}
@@ -493,7 +493,7 @@ export function GoogleCalendarSyncModal({
                           </div>
 
                           {evento.local && (
-                            <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
+                            <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
                               <MapPin className="w-3.5 h-3.5" />
                               <span className="truncate">{evento.local}</span>
                             </div>
@@ -544,7 +544,7 @@ export function GoogleCalendarSyncModal({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-between items-center pt-4 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="flex justify-between items-center pt-4 border-t border-neutral-200 dark:border-neutral-800">
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>

@@ -69,7 +69,7 @@ export function HighlightPopover({
       ref={popoverRef}
       className={cn(
         "fixed z-50 flex items-center gap-1 rounded-lg border px-2 py-1.5 shadow-lg",
-        "bg-white border-zinc-200",
+        "bg-white border-neutral-200",
         "dark:bg-muted dark:border-border",
         "animate-in fade-in-0 zoom-in-95"
       )}
@@ -84,7 +84,7 @@ export function HighlightPopover({
         <button
           key={cor.id}
           className={cn(
-            "h-8 w-8 rounded-full border border-zinc-300 dark:border-border transition-transform",
+            "h-8 w-8 rounded-full border border-neutral-300 dark:border-border transition-transform",
             "hover:scale-110 hover:ring-2",
             cor.bg,
             cor.ring
@@ -96,7 +96,7 @@ export function HighlightPopover({
       ))}
 
       {/* Divider */}
-      <div className="mx-1 h-5 w-px bg-zinc-200 dark:bg-border" />
+      <div className="mx-1 h-5 w-px bg-neutral-200 dark:bg-border" />
 
       {/* Anotar */}
       <Tooltip>
@@ -107,7 +107,7 @@ export function HighlightPopover({
             className="h-7 w-7"
             onClick={onNote}
           >
-            <PenLine className="h-3.5 w-3.5 text-zinc-600 dark:text-foreground/80" />
+            <PenLine className="h-3.5 w-3.5 text-neutral-600 dark:text-foreground/80" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>Anotar</TooltipContent>
@@ -122,7 +122,7 @@ export function HighlightPopover({
             className="h-7 w-7"
             onClick={onCopyRef}
           >
-            <Copy className="h-3.5 w-3.5 text-zinc-600 dark:text-foreground/80" />
+            <Copy className="h-3.5 w-3.5 text-neutral-600 dark:text-foreground/80" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>Copiar referencia</TooltipContent>

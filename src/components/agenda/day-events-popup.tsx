@@ -49,89 +49,89 @@ const isEventoCancelado = (status: string) =>
   status === "remarcado" || status === "redesignado" || status === "reagendada";
 
 // Cor neutra para eventos que não ocorrerão
-const COR_EVENTO_CANCELADO = "#a1a1aa"; // zinc-400
+const COR_EVENTO_CANCELADO = "#a1a1aa"; // neutral-400
 
 // Cores por atribuição - Design Premium e Profissional
 const atribuicaoColors: Record<string, { bg: string; text: string; dot: string; icon: string; border: string; borderLeft: string; borderColor: string; borderHover: string }> = {
   "Tribunal do Júri": {
-    bg: "bg-white dark:bg-zinc-900 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/10",
+    bg: "bg-white dark:bg-neutral-900 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/10",
     text: "text-emerald-800 dark:text-emerald-400",
     dot: "bg-emerald-600",
     icon: "text-emerald-600 dark:text-emerald-500",
-    border: "border-zinc-200/70 dark:border-zinc-800/70",
+    border: "border-neutral-200/70 dark:border-neutral-800/70",
     borderLeft: "border-l-emerald-500",
     borderColor: "border-emerald-300/70 dark:border-emerald-700/50",
     borderHover: "hover:border-emerald-400 dark:hover:border-emerald-600 hover:shadow-emerald-200/50 dark:hover:shadow-emerald-900/50",
   },
   "Grupo Especial do Júri": {
-    bg: "bg-white dark:bg-zinc-900 hover:bg-teal-50/30 dark:hover:bg-teal-950/10",
+    bg: "bg-white dark:bg-neutral-900 hover:bg-teal-50/30 dark:hover:bg-teal-950/10",
     text: "text-teal-800 dark:text-teal-400",
     dot: "bg-teal-600",
     icon: "text-teal-600 dark:text-teal-500",
-    border: "border-zinc-200/70 dark:border-zinc-800/70",
+    border: "border-neutral-200/70 dark:border-neutral-800/70",
     borderLeft: "border-l-teal-600",
     borderColor: "border-teal-300/70 dark:border-teal-700/50",
     borderHover: "hover:border-teal-400 dark:hover:border-teal-600 hover:shadow-teal-200/50 dark:hover:shadow-teal-900/50",
   },
   "Violência Doméstica": {
-    bg: "bg-white dark:bg-zinc-900 hover:bg-amber-50/30 dark:hover:bg-amber-950/10",
+    bg: "bg-white dark:bg-neutral-900 hover:bg-amber-50/30 dark:hover:bg-amber-950/10",
     text: "text-amber-800 dark:text-amber-400",
     dot: "bg-amber-500",
     icon: "text-amber-600 dark:text-amber-500",
-    border: "border-zinc-200/70 dark:border-zinc-800/70",
+    border: "border-neutral-200/70 dark:border-neutral-800/70",
     borderLeft: "border-l-amber-500",
     borderColor: "border-amber-300/70 dark:border-amber-700/50",
     borderHover: "hover:border-amber-400 dark:hover:border-amber-600 hover:shadow-amber-200/50 dark:hover:shadow-amber-900/50",
   },
   "Execução Penal": {
-    bg: "bg-white dark:bg-zinc-900 hover:bg-blue-50/30 dark:hover:bg-blue-950/10",
+    bg: "bg-white dark:bg-neutral-900 hover:bg-blue-50/30 dark:hover:bg-blue-950/10",
     text: "text-blue-800 dark:text-blue-400",
     dot: "bg-blue-600",
     icon: "text-blue-600 dark:text-blue-500",
-    border: "border-zinc-200/70 dark:border-zinc-800/70",
+    border: "border-neutral-200/70 dark:border-neutral-800/70",
     borderLeft: "border-l-blue-600",
     borderColor: "border-blue-300/70 dark:border-blue-700/50",
     borderHover: "hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-blue-200/50 dark:hover:shadow-blue-900/50",
   },
   "Criminal Geral": {
-    bg: "bg-white dark:bg-zinc-900 hover:bg-rose-50/30 dark:hover:bg-rose-950/10",
+    bg: "bg-white dark:bg-neutral-900 hover:bg-rose-50/30 dark:hover:bg-rose-950/10",
     text: "text-rose-800 dark:text-rose-400",
     dot: "bg-rose-600",
     icon: "text-rose-600 dark:text-rose-500",
-    border: "border-zinc-200/70 dark:border-zinc-800/70",
+    border: "border-neutral-200/70 dark:border-neutral-800/70",
     borderLeft: "border-l-rose-600",
     borderColor: "border-rose-300/70 dark:border-rose-700/50",
     borderHover: "hover:border-rose-400 dark:hover:border-rose-600 hover:shadow-rose-200/50 dark:hover:shadow-rose-900/50",
   },
   "Substituição": {
-    bg: "bg-white dark:bg-zinc-900 hover:bg-zinc-50/30 dark:hover:bg-zinc-950/10",
-    text: "text-zinc-800 dark:text-zinc-400",
-    dot: "bg-zinc-600",
-    icon: "text-zinc-600 dark:text-zinc-500",
-    border: "border-zinc-200/70 dark:border-zinc-800/70",
-    borderLeft: "border-l-zinc-600",
-    borderColor: "border-zinc-300/70 dark:border-zinc-700/50",
-    borderHover: "hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-zinc-200/50 dark:hover:shadow-zinc-900/50",
+    bg: "bg-white dark:bg-neutral-900 hover:bg-neutral-50/30 dark:hover:bg-neutral-950/10",
+    text: "text-neutral-800 dark:text-neutral-400",
+    dot: "bg-neutral-600",
+    icon: "text-neutral-600 dark:text-neutral-500",
+    border: "border-neutral-200/70 dark:border-neutral-800/70",
+    borderLeft: "border-l-neutral-600",
+    borderColor: "border-neutral-300/70 dark:border-neutral-700/50",
+    borderHover: "hover:border-neutral-400 dark:hover:border-neutral-600 hover:shadow-neutral-200/50 dark:hover:shadow-neutral-900/50",
   },
   "Curadoria Especial": {
-    bg: "bg-white dark:bg-zinc-900 hover:bg-purple-50/30 dark:hover:bg-purple-950/10",
+    bg: "bg-white dark:bg-neutral-900 hover:bg-purple-50/30 dark:hover:bg-purple-950/10",
     text: "text-purple-800 dark:text-purple-400",
     dot: "bg-purple-600",
     icon: "text-purple-600 dark:text-purple-500",
-    border: "border-zinc-200/70 dark:border-zinc-800/70",
+    border: "border-neutral-200/70 dark:border-neutral-800/70",
     borderLeft: "border-l-purple-600",
     borderColor: "border-purple-300/70 dark:border-purple-700/50",
     borderHover: "hover:border-purple-400 dark:hover:border-purple-600 hover:shadow-purple-200/50 dark:hover:shadow-purple-900/50",
   },
   "Geral": {
-    bg: "bg-white dark:bg-zinc-900 hover:bg-zinc-50/30 dark:hover:bg-zinc-950/10",
-    text: "text-zinc-800 dark:text-zinc-400",
-    dot: "bg-zinc-500",
-    icon: "text-zinc-600 dark:text-zinc-500",
-    border: "border-zinc-200/70 dark:border-zinc-800/70",
-    borderLeft: "border-l-zinc-500",
-    borderColor: "border-zinc-300/70 dark:border-zinc-700/50",
-    borderHover: "hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-zinc-200/50 dark:hover:shadow-zinc-900/50",
+    bg: "bg-white dark:bg-neutral-900 hover:bg-neutral-50/30 dark:hover:bg-neutral-950/10",
+    text: "text-neutral-800 dark:text-neutral-400",
+    dot: "bg-neutral-500",
+    icon: "text-neutral-600 dark:text-neutral-500",
+    border: "border-neutral-200/70 dark:border-neutral-800/70",
+    borderLeft: "border-l-neutral-500",
+    borderColor: "border-neutral-300/70 dark:border-neutral-700/50",
+    borderHover: "hover:border-neutral-400 dark:hover:border-neutral-600 hover:shadow-neutral-200/50 dark:hover:shadow-neutral-900/50",
   },
 };
 
@@ -237,14 +237,14 @@ const prioridadeConfig: Record<string, { color: string; label: string }> = {
   urgente: { color: "text-red-600 dark:text-red-400", label: "Urgente" },
   alta: { color: "text-amber-600 dark:text-amber-400", label: "Alta" },
   media: { color: "text-blue-600 dark:text-blue-400", label: "Média" },
-  baixa: { color: "text-zinc-500 dark:text-zinc-400", label: "Baixa" },
+  baixa: { color: "text-neutral-500 dark:text-neutral-400", label: "Baixa" },
 };
 
 function CopyProcessoInline({ processo, cancelado }: { processo: string; cancelado: boolean }) {
   const [copied, setCopied] = useState(false);
   return (
     <div className={`flex items-center gap-2 text-sm group/proc ${
-      cancelado ? "text-zinc-400" : "text-zinc-600 dark:text-zinc-400"
+      cancelado ? "text-neutral-400" : "text-neutral-600 dark:text-neutral-400"
     }`}>
       <FileText className="w-3.5 h-3.5 flex-shrink-0" />
       <span className="truncate font-mono text-xs">{processo}</span>
@@ -258,7 +258,7 @@ function CopyProcessoInline({ processo, cancelado }: { processo: string; cancela
         className={`shrink-0 p-0.5 rounded transition-all cursor-pointer ${
           copied
             ? "text-emerald-500 opacity-100"
-            : "text-zinc-300 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-300 opacity-0 group-hover/proc:opacity-100"
+            : "text-neutral-300 hover:text-neutral-600 dark:text-neutral-600 dark:hover:text-neutral-300 opacity-0 group-hover/proc:opacity-100"
         }`}
         title="Copiar"
       >
@@ -371,22 +371,22 @@ export function DayEventsPopup({
             top: `${adjustedPosition.y}px`,
           }}
         >
-          <Card className="w-[calc(100vw-32px)] sm:w-[420px] max-h-[70vh] sm:max-h-[600px] overflow-hidden shadow-2xl border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+          <Card className="w-[calc(100vw-32px)] sm:w-[420px] max-h-[70vh] sm:max-h-[600px] overflow-hidden shadow-2xl border-2 border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900">
             {/* Header */}
-            <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 flex items-center justify-between sticky top-0 z-10">
+            <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/50 flex items-center justify-between sticky top-0 z-10">
               <div>
-                <p className="text-[10px] sm:text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <p className="text-[10px] sm:text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   {format(date, "EEEE", { locale: ptBR })}
                 </p>
-                <h3 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-50">
+                <h3 className="text-lg sm:text-xl font-bold text-neutral-900 dark:text-neutral-50">
                   {format(date, "d 'de' MMMM", { locale: ptBR })}
                 </h3>
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 flex items-center justify-center transition-colors"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 flex items-center justify-center transition-colors"
               >
-                <X className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-600 dark:text-zinc-400" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5 text-neutral-600 dark:text-neutral-400" />
               </button>
             </div>
 
@@ -394,8 +394,8 @@ export function DayEventsPopup({
             <div className="max-h-[calc(70vh-120px)] sm:max-h-[480px] overflow-y-auto overscroll-contain">
               {eventosOrdenados.length === 0 ? (
                 <div className="p-8 sm:p-12 text-center">
-                  <CalendarIcon className="w-12 h-12 sm:w-14 sm:h-14 text-zinc-300 dark:text-zinc-700 mx-auto mb-3" />
-                  <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                  <CalendarIcon className="w-12 h-12 sm:w-14 sm:h-14 text-neutral-300 dark:text-neutral-700 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
                     Nenhum evento neste dia
                   </p>
                 </div>
@@ -420,8 +420,8 @@ export function DayEventsPopup({
                         }}
                         className={`mb-2 sm:mb-2.5 rounded-xl border cursor-pointer transition-all group shadow-sm hover:shadow-md relative ${
                           eventoCancelado
-                            ? "border-zinc-300/60 dark:border-zinc-700/60 bg-zinc-50/80 dark:bg-zinc-800/30 opacity-70"
-                            : `border-zinc-300/60 dark:border-zinc-700/60 hover:border-zinc-400/80 dark:hover:border-zinc-600/80 ${atribuicaoColor.bg}`
+                            ? "border-neutral-300/60 dark:border-neutral-700/60 bg-neutral-50/80 dark:bg-neutral-800/30 opacity-70"
+                            : `border-neutral-300/60 dark:border-neutral-700/60 hover:border-neutral-400/80 dark:hover:border-neutral-600/80 ${atribuicaoColor.bg}`
                         }`}
                       >
                         <div className="p-3 sm:p-4 relative">
@@ -434,10 +434,10 @@ export function DayEventsPopup({
                                   onEditEvento(evento);
                                   onClose();
                                 }}
-                                className="p-1.5 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                                className="p-1.5 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
                                 title="Editar"
                               >
-                                <Edit3 className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
+                                <Edit3 className="w-3.5 h-3.5 text-neutral-600 dark:text-neutral-400" />
                               </button>
                             )}
                             {onArchiveEvento && (
@@ -473,25 +473,25 @@ export function DayEventsPopup({
                             <div className="flex items-center gap-2.5 flex-1 min-w-0">
                               {/* Ícone de status cancelado/redesignado */}
                               {evento.status === "cancelado" && (
-                                <XCircle className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+                                <XCircle className="w-4 h-4 text-neutral-400 flex-shrink-0" />
                               )}
                               {(evento.status === "remarcado" || evento.status === "redesignado") && (
-                                <CalendarX2 className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+                                <CalendarX2 className="w-4 h-4 text-neutral-400 flex-shrink-0" />
                               )}
 
                               <span className={`text-sm font-bold ${
                                 eventoCancelado
-                                  ? "text-zinc-400 line-through"
+                                  ? "text-neutral-400 line-through"
                                   : atribuicaoColor.text
                               }`}>
                                 {evento.horarioInicio}
                               </span>
                               {evento.horarioFim && (
                                 <>
-                                  <span className="text-xs text-zinc-400">até</span>
+                                  <span className="text-xs text-neutral-400">até</span>
                                   <span className={`text-sm font-bold ${
                                     eventoCancelado
-                                      ? "text-zinc-400 line-through"
+                                      ? "text-neutral-400 line-through"
                                       : atribuicaoColor.text
                                   }`}>
                                     {evento.horarioFim}
@@ -504,35 +504,35 @@ export function DayEventsPopup({
                             {eventoCancelado && (
                               <Badge
                                 variant="outline"
-                                className="text-[10px] px-2 py-0.5 h-5 border-0 font-medium bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                                className="text-[10px] px-2 py-0.5 h-5 border-0 font-medium bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
                               >
                                 {evento.status === "cancelado" ? "Cancelado" : "Redesignado"}
                               </Badge>
                             )}
 
                             {!eventoCancelado && (
-                              <ChevronRight className="w-4 h-4 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                              <ChevronRight className="w-4 h-4 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                             )}
                           </div>
 
                           {/* Título e Tipo */}
                           <div className="flex items-start gap-2.5 sm:gap-3 mb-2 sm:mb-3">
                             <TipoIcon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${
-                              eventoCancelado ? "text-zinc-400" : "text-zinc-600 dark:text-zinc-400"
+                              eventoCancelado ? "text-neutral-400" : "text-neutral-600 dark:text-neutral-400"
                             }`} />
                             <div className="flex-1 min-w-0">
                               <h4 className={`text-base font-bold leading-tight mb-1.5 line-clamp-2 ${
                                 eventoCancelado
-                                  ? "text-zinc-400 dark:text-zinc-500 line-through"
-                                  : "text-zinc-900 dark:text-zinc-100"
+                                  ? "text-neutral-400 dark:text-neutral-500 line-through"
+                                  : "text-neutral-900 dark:text-neutral-100"
                               }`}>
                                 {abreviarTitulo(evento.titulo)}
                               </h4>
                               {evento.assistido && (
                                 <p className={`text-sm truncate flex items-center gap-1.5 ${
                                   eventoCancelado
-                                    ? "text-zinc-400 dark:text-zinc-500"
-                                    : "text-zinc-600 dark:text-zinc-400"
+                                    ? "text-neutral-400 dark:text-neutral-500"
+                                    : "text-neutral-600 dark:text-neutral-400"
                                 }`}>
                                   <User className="w-3.5 h-3.5 flex-shrink-0" />
                                   {evento.assistido}
@@ -546,7 +546,7 @@ export function DayEventsPopup({
                             <div className="space-y-1 sm:space-y-1.5 mb-2 sm:mb-3">
                               {evento.local && (
                                 <div className={`flex items-center gap-2 text-sm ${
-                                  eventoCancelado ? "text-zinc-400" : "text-zinc-600 dark:text-zinc-400"
+                                  eventoCancelado ? "text-neutral-400" : "text-neutral-600 dark:text-neutral-400"
                                 }`}>
                                   <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                                   <span className="truncate">{evento.local}</span>
@@ -559,13 +559,13 @@ export function DayEventsPopup({
                           )}
 
                           {/* Footer - Atribuição e Prioridade */}
-                          <div className="flex items-center justify-between pt-3 border-t border-zinc-200/50 dark:border-zinc-700/50">
+                          <div className="flex items-center justify-between pt-3 border-t border-neutral-200/50 dark:border-neutral-700/50">
                             <div className="flex items-center gap-2">
                               <AtribuicaoIcon className={`w-4 h-4 ${
-                                eventoCancelado ? "text-zinc-400" : atribuicaoColor.icon
+                                eventoCancelado ? "text-neutral-400" : atribuicaoColor.icon
                               }`} />
                               <span className={`text-xs font-semibold ${
-                                eventoCancelado ? "text-zinc-400" : atribuicaoColor.text
+                                eventoCancelado ? "text-neutral-400" : atribuicaoColor.text
                               }`}>
                                 {evento.atribuicao}
                               </span>
@@ -596,8 +596,8 @@ export function DayEventsPopup({
 
             {/* Footer com total */}
             {eventosOrdenados.length > 0 && (
-              <div className="px-4 py-2.5 sm:px-5 sm:py-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 sticky bottom-0">
-                <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 text-center">
+              <div className="px-4 py-2.5 sm:px-5 sm:py-3 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/50 sticky bottom-0">
+                <p className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 text-center">
                   {eventosOrdenados.length} evento{eventosOrdenados.length !== 1 ? "s" : ""} neste dia
                 </p>
               </div>

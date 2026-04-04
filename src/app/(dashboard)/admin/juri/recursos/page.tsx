@@ -57,14 +57,14 @@ const STATUS_CONFIG = {
   admitida: { label: "Admitida", color: "bg-sky-500", textColor: "text-sky-600 dark:text-sky-400", step: 1 },
   em_julgamento: { label: "Em julgamento", color: "bg-violet-500", textColor: "text-violet-600 dark:text-violet-400", step: 2 },
   julgada: { label: "Julgada", color: "bg-emerald-500", textColor: "text-emerald-600 dark:text-emerald-400", step: 3 },
-  transitada: { label: "Transitada", color: "bg-zinc-500", textColor: "text-zinc-600 dark:text-zinc-400", step: 4 },
+  transitada: { label: "Transitada", color: "bg-neutral-500", textColor: "text-neutral-600 dark:text-neutral-400", step: 4 },
 } as const;
 
 const RESULTADO_CONFIG = {
   provido: { label: "Provido", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/30" },
   parcialmente_provido: { label: "Parc. Provido", color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/30" },
   improvido: { label: "Improvido", color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/30" },
-  nao_conhecido: { label: "Não Conhecido", color: "text-zinc-600 dark:text-zinc-400", bg: "bg-zinc-50 dark:bg-zinc-950/30" },
+  nao_conhecido: { label: "Não Conhecido", color: "text-neutral-600 dark:text-neutral-400", bg: "bg-neutral-50 dark:bg-neutral-950/30" },
 } as const;
 
 const STEPS = ["Interposta", "Admitida", "Em Julgamento", "Julgada", "Transitada"];
@@ -81,12 +81,12 @@ function StatusStepper({ currentStep }: { currentStep: number }) {
           <div
             className={cn(
               "w-2 h-2 rounded-full transition-colors",
-              i <= currentStep ? Object.values(STATUS_CONFIG)[i].color : "bg-zinc-200 dark:bg-zinc-700"
+              i <= currentStep ? Object.values(STATUS_CONFIG)[i].color : "bg-neutral-200 dark:bg-neutral-700"
             )}
             title={step}
           />
           {i < STEPS.length - 1 && (
-            <div className={cn("w-3 h-px", i < currentStep ? "bg-zinc-400" : "bg-zinc-200 dark:bg-zinc-700")} />
+            <div className={cn("w-3 h-px", i < currentStep ? "bg-neutral-400" : "bg-neutral-200 dark:bg-neutral-700")} />
           )}
         </div>
       ))}
@@ -108,10 +108,10 @@ function StatInline({
   icon: React.ElementType;
 }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-800/80">
-      <Icon className="w-4 h-4 text-zinc-400" />
-      <span className="text-xs text-zinc-500 dark:text-zinc-400">{label}</span>
-      <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{value}</span>
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800/80">
+      <Icon className="w-4 h-4 text-neutral-400" />
+      <span className="text-xs text-neutral-500 dark:text-neutral-400">{label}</span>
+      <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{value}</span>
     </div>
   );
 }
@@ -382,7 +382,7 @@ function EditarRecursoDialog({
           </div>
 
           {/* REsp */}
-          <div className="space-y-3 p-3 rounded-lg border border-zinc-200/80 dark:border-zinc-800/80">
+          <div className="space-y-3 p-3 rounded-lg border border-neutral-200/80 dark:border-neutral-800/80">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -390,7 +390,7 @@ function EditarRecursoDialog({
                 onChange={(e) => setHouveREsp(e.target.checked)}
                 className="rounded"
               />
-              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                 Houve Recurso Especial (STJ)
               </span>
             </label>
@@ -409,7 +409,7 @@ function EditarRecursoDialog({
           </div>
 
           {/* RE */}
-          <div className="space-y-3 p-3 rounded-lg border border-zinc-200/80 dark:border-zinc-800/80">
+          <div className="space-y-3 p-3 rounded-lg border border-neutral-200/80 dark:border-neutral-800/80">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -417,7 +417,7 @@ function EditarRecursoDialog({
                 onChange={(e) => setHouveRE(e.target.checked)}
                 className="rounded"
               />
-              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                 Houve Recurso Extraordinário (STF)
               </span>
             </label>
@@ -481,14 +481,14 @@ function RecursoCard({
     : null;
 
   return (
-    <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 hover:shadow-md hover:shadow-zinc-200/50 dark:hover:shadow-black/20 transition-all duration-200">
+    <div className="group relative p-4 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 hover:shadow-md hover:shadow-neutral-200/50 dark:hover:shadow-black/20 transition-all duration-200">
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+          <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 truncate">
             {recurso.reuNome || "Réu não identificado"}
           </h3>
-          <p className="text-xs font-mono text-zinc-400 dark:text-zinc-500 mt-0.5">
+          <p className="text-xs font-mono text-neutral-400 dark:text-neutral-500 mt-0.5">
             {recurso.numeroAutos || "Processo S/N"}
           </p>
         </div>
@@ -532,38 +532,38 @@ function RecursoCard({
       <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
         {recurso.comarca && (
           <div>
-            <span className="text-zinc-400">Comarca</span>
-            <p className="text-zinc-600 dark:text-zinc-300">{recurso.comarca}</p>
+            <span className="text-neutral-400">Comarca</span>
+            <p className="text-neutral-600 dark:text-neutral-300">{recurso.comarca}</p>
           </div>
         )}
         {recurso.dataSessao && (
           <div>
-            <span className="text-zinc-400">Sessão</span>
-            <p className="text-zinc-600 dark:text-zinc-300">
+            <span className="text-neutral-400">Sessão</span>
+            <p className="text-neutral-600 dark:text-neutral-300">
               {new Date(recurso.dataSessao).toLocaleDateString("pt-BR")}
             </p>
           </div>
         )}
         {recurso.dataInterposicao && (
           <div>
-            <span className="text-zinc-400">Interposição</span>
-            <p className="text-zinc-600 dark:text-zinc-300">
+            <span className="text-neutral-400">Interposição</span>
+            <p className="text-neutral-600 dark:text-neutral-300">
               {new Date(recurso.dataInterposicao).toLocaleDateString("pt-BR")}
             </p>
           </div>
         )}
         {(recurso.turmaTJBA || recurso.camaraTJBA) && (
           <div>
-            <span className="text-zinc-400">TJBA</span>
-            <p className="text-zinc-600 dark:text-zinc-300">
+            <span className="text-neutral-400">TJBA</span>
+            <p className="text-neutral-600 dark:text-neutral-300">
               {[recurso.turmaTJBA, recurso.camaraTJBA].filter(Boolean).join(" / ")}
             </p>
           </div>
         )}
         {recurso.relator && (
           <div>
-            <span className="text-zinc-400">Relator</span>
-            <p className="text-zinc-600 dark:text-zinc-300">{recurso.relator}</p>
+            <span className="text-neutral-400">Relator</span>
+            <p className="text-neutral-600 dark:text-neutral-300">{recurso.relator}</p>
           </div>
         )}
       </div>
@@ -618,19 +618,19 @@ export default function RecursosPage() {
   });
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <Scale className="w-5 h-5 text-white dark:text-zinc-900" />
+            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
+              <Scale className="w-5 h-5 text-white dark:text-neutral-900" />
             </div>
             <div>
-              <h1 className="font-serif text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+              <h1 className="font-serif text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
                 Recursos
               </h1>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
                 Acompanhamento de apelações pós-júri
               </p>
             </div>
@@ -663,7 +663,7 @@ export default function RecursosPage() {
 
         {/* Filters */}
         <div className="flex items-center gap-3">
-          <Filter className="w-4 h-4 text-zinc-400" />
+          <Filter className="w-4 h-4 text-neutral-400" />
           <Select value={filtroStatus} onValueChange={setFiltroStatus}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Filtrar por status" />
@@ -703,13 +703,13 @@ export default function RecursosPage() {
           </div>
         ) : (
           <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
-              <Scale className="w-8 h-8 text-zinc-300 dark:text-zinc-600" />
+            <div className="w-16 h-16 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-4">
+              <Scale className="w-8 h-8 text-neutral-300 dark:text-neutral-600" />
             </div>
-            <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+            <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
               Nenhuma apelação registrada
             </h3>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
               Registre apelações após sessões de júri com condenação
             </p>
             <Button

@@ -118,7 +118,7 @@ const CATEGORIA_CONFIG: Record<ModeloCategoria, {
   OUTRO: {
     label: "Outro",
     icon: FileText,
-    color: "text-zinc-600 bg-zinc-50 border-zinc-200",
+    color: "text-neutral-600 bg-neutral-50 border-neutral-200",
   },
 };
 
@@ -275,7 +275,7 @@ export default function GerarDocumentoPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-50/50 dark:bg-background p-6">
+      <div className="min-h-screen bg-neutral-50/50 dark:bg-background p-6">
         <div className="max-w-5xl mx-auto space-y-6">
           <Skeleton className="h-20 rounded-xl" />
           <div className="grid grid-cols-2 gap-6">
@@ -289,9 +289,9 @@ export default function GerarDocumentoPage() {
 
   if (!modelo) {
     return (
-      <div className="min-h-screen bg-zinc-50/50 dark:bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-neutral-50/50 dark:bg-background flex items-center justify-center">
         <div className="text-center">
-          <FileStack className="w-16 h-16 mx-auto text-zinc-300 mb-4" />
+          <FileStack className="w-16 h-16 mx-auto text-neutral-300 mb-4" />
           <h2 className="text-xl font-semibold text-foreground">
             Modelo não encontrado
           </h2>
@@ -307,9 +307,9 @@ export default function GerarDocumentoPage() {
   const Icon = config.icon;
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 dark:bg-background">
+    <div className="min-h-screen bg-neutral-50/50 dark:bg-background">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-border bg-white dark:bg-card">
+      <div className="border-b border-neutral-200 dark:border-border bg-white dark:bg-card">
         <div className="px-6 py-4">
           <Breadcrumbs
             items={[
@@ -334,7 +334,7 @@ export default function GerarDocumentoPage() {
                 <h1 className="text-xl font-semibold text-foreground">
                   Gerar Documento
                 </h1>
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-neutral-500">
                   {modelo.titulo}
                 </p>
               </div>
@@ -470,8 +470,8 @@ export default function GerarDocumentoPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {variaveisNoConteudo.length === 0 ? (
-                  <div className="text-center py-6 text-zinc-500">
-                    <FileText className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
+                  <div className="text-center py-6 text-neutral-500">
+                    <FileText className="w-8 h-8 mx-auto mb-2 text-neutral-300" />
                     <p className="text-sm">Nenhuma variável no modelo</p>
                   </div>
                 ) : (
@@ -545,7 +545,7 @@ export default function GerarDocumentoPage() {
                 </Button>
               </CardHeader>
               <CardContent>
-                <div className="prose prose-zinc dark:prose-invert max-w-none p-4 bg-zinc-50 dark:bg-muted/50 rounded-lg min-h-[500px] max-h-[600px] overflow-y-auto">
+                <div className="prose prose-zinc dark:prose-invert max-w-none p-4 bg-neutral-50 dark:bg-muted/50 rounded-lg min-h-[500px] max-h-[600px] overflow-y-auto">
                   <pre className="whitespace-pre-wrap font-sans text-sm">
                     {previewContent.split(/(\[[^\]]+\])/).map((part, i) => {
                       if (part.match(/^\[[^\]]+\]$/)) {

@@ -12,7 +12,7 @@ interface PageContainerProps {
   children: ReactNode;
   className?: string;
   maxWidth?: "default" | "wide" | "full";
-  /** Use the unified background style (bg-zinc-100 dark:bg-[#0f0f11]) */
+  /** Use the unified background style (bg-neutral-100 dark:bg-[#0f0f11]) */
   unifiedBackground?: boolean;
 }
 
@@ -31,7 +31,7 @@ export function PageContainer({
   return (
     <div className={cn(
       "min-h-screen",
-      unifiedBackground && "bg-zinc-100 dark:bg-[#0f0f11]"
+      unifiedBackground && "bg-neutral-100 dark:bg-[#0f0f11]"
     )}>
       <div className={cn(
         "mx-auto w-full",
@@ -387,7 +387,7 @@ export function StatBlock({
   className,
 }: StatBlockProps) {
   const variantStyles = {
-    default: "border-l-zinc-300 dark:border-l-zinc-600",
+    default: "border-l-neutral-300 dark:border-l-neutral-600",
     primary: "border-l-primary",
     success: "border-l-emerald-500",
     warning: "border-l-amber-500",

@@ -251,13 +251,13 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
             "h-10 w-10 p-0 mx-auto transition-all duration-200 rounded-xl flex items-center justify-center",
             isActive
               ? "bg-emerald-500/15 text-emerald-400"
-              : "text-zinc-600 dark:text-zinc-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-zinc-900 dark:hover:text-zinc-200"
+              : "text-neutral-600 dark:text-neutral-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-neutral-900 dark:hover:text-neutral-200"
           )}
         >
           <Link href={item.path} prefetch={true} onClick={onNavigate}>
             <Icon className={cn(
               "h-5 w-5 transition-all duration-200",
-              isActive ? "text-emerald-400" : "text-zinc-500 dark:text-zinc-400"
+              isActive ? "text-emerald-400" : "text-neutral-500 dark:text-neutral-400"
             )} strokeWidth={isActive ? 2.5 : 2} />
           </Link>
         </SidebarMenuButton>
@@ -275,13 +275,13 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
           "h-10 transition-all duration-250 ease-in-out rounded-xl group/item relative overflow-hidden",
           isActive
             ? "bg-emerald-500/15 text-emerald-400 font-semibold"
-            : "text-zinc-700 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-black/[0.05] dark:hover:bg-white/[0.08] hover:scale-[1.01]"
+            : "text-neutral-700 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-black/[0.05] dark:hover:bg-white/[0.08] hover:scale-[1.01]"
         )}
       >
         <Link href={item.path} prefetch={true} onClick={onNavigate}>
           <Icon className={cn(
             "h-[18px] w-[18px] mr-2.5 transition-all duration-200 flex-shrink-0",
-            isActive ? "text-emerald-500" : "text-zinc-900 dark:text-zinc-400 group-hover/item:text-zinc-950 dark:group-hover/item:text-zinc-200"
+            isActive ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
           )} strokeWidth={isActive ? 2.5 : 1.8} />
           <span className="text-[13px] font-medium truncate">{item.label}</span>
           {item.isPremium && (
@@ -336,7 +336,7 @@ const SECTION_THEMES = {
   cowork: { accent: "purple", headerColor: "text-purple-400", iconColor: "text-purple-400/70", activeBg: "bg-purple-500/12", activeText: "text-purple-400", activeBorder: "bg-purple-400", hoverBg: "hover:bg-white/[0.06]" },
   news: { accent: "emerald", headerColor: "text-emerald-400", iconColor: "text-emerald-400/70", activeBg: "bg-emerald-500/12", activeText: "text-emerald-400", activeBorder: "bg-emerald-400", hoverBg: "hover:bg-white/[0.06]" },
   ferramentas: { accent: "teal", headerColor: "text-teal-400", iconColor: "text-teal-400/70", activeBg: "bg-teal-500/12", activeText: "text-teal-400", activeBorder: "bg-teal-400", hoverBg: "hover:bg-white/[0.06]" },
-  mais: { accent: "zinc", headerColor: "text-zinc-300", iconColor: "text-zinc-400/70", activeBg: "bg-emerald-500/12", activeText: "text-emerald-400", activeBorder: "bg-emerald-400", hoverBg: "hover:bg-white/[0.06]" },
+  mais: { accent: "zinc", headerColor: "text-neutral-300", iconColor: "text-neutral-400/70", activeBg: "bg-emerald-500/12", activeText: "text-emerald-400", activeBorder: "bg-emerald-400", hoverBg: "hover:bg-white/[0.06]" },
   especialidades: { accent: "emerald", headerColor: "text-emerald-400", iconColor: "text-emerald-400/70", activeBg: "bg-emerald-500/12", activeText: "text-emerald-400", activeBorder: "bg-emerald-400", hoverBg: "hover:bg-white/[0.06]" },
 } as const;
 
@@ -379,7 +379,7 @@ function SidebarPopoverMenu({
                 "h-10 w-10 p-0 mx-auto transition-all duration-200 rounded-xl flex items-center justify-center",
                 hasActiveItem
                   ? "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/20"
-                  : "text-zinc-500 dark:text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-200"
+                  : "text-neutral-500 dark:text-neutral-400 hover:bg-white/[0.06] hover:text-neutral-200"
               )}
             >
               <HeaderIcon className="h-5 w-5" />
@@ -421,7 +421,7 @@ function SidebarPopoverMenu({
                         "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-150 relative group/popitem",
                         isActive
                           ? cn(theme.activeBg, theme.activeText, "font-medium")
-                          : cn("text-zinc-300 hover:text-white", theme.hoverBg)
+                          : cn("text-neutral-300 hover:text-white", theme.hoverBg)
                       )}
                     >
                       {/* Barra lateral ativa */}
@@ -430,7 +430,7 @@ function SidebarPopoverMenu({
                       )}
                       <Icon className={cn(
                         "h-4 w-4 flex-shrink-0 transition-colors duration-150",
-                        isActive ? theme.activeText : "text-zinc-400 group-hover/popitem:text-zinc-200"
+                        isActive ? theme.activeText : "text-neutral-400 group-hover/popitem:text-neutral-200"
                       )} />
                       <span className="truncate">{item.label}</span>
                       {/* Badge sutil */}
@@ -438,8 +438,8 @@ function SidebarPopoverMenu({
                         <span className={cn(
                           "ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-md text-[10px] font-semibold tabular-nums",
                           item.badge > 50
-                            ? "bg-white/[0.08] text-zinc-300 ring-1 ring-white/[0.06]"
-                            : "bg-white/[0.08] text-zinc-300 ring-1 ring-white/[0.06]"
+                            ? "bg-white/[0.08] text-neutral-300 ring-1 ring-white/[0.06]"
+                            : "bg-white/[0.08] text-neutral-300 ring-1 ring-white/[0.06]"
                         )}>
                           {item.badge > 99 ? "99+" : item.badge}
                         </span>
@@ -496,14 +496,14 @@ function MoreMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
             className={cn(
               "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
               hasActiveItem
-                ? "bg-black/[0.05] dark:bg-white/[0.08] text-zinc-700 dark:text-zinc-200"
-                : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                ? "bg-black/[0.05] dark:bg-white/[0.08] text-neutral-700 dark:text-neutral-200"
+                : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
             )}
           >
             <div className="mr-2.5 transition-all duration-200">
               <MoreHorizontal className={cn(
                 "h-[18px] w-[18px] transition-all duration-200",
-                hasActiveItem ? "text-emerald-500" : "text-zinc-800 dark:text-zinc-400 group-hover/item:text-zinc-900 dark:group-hover/item:text-zinc-200"
+                hasActiveItem ? "text-emerald-500" : "text-neutral-800 dark:text-neutral-400 group-hover/item:text-neutral-900 dark:group-hover/item:text-neutral-200"
               )} />
             </div>
             <span className="text-[13px] font-medium">Mais</span>
@@ -518,7 +518,7 @@ function MoreMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
           align="start"
           className="w-52 p-2 glass-dark shadow-xl shadow-black/30"
         >
-          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-2 pb-2">
+          <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider px-2 pb-2">
             Mais opções
           </p>
           {items.map((item) => {
@@ -536,7 +536,7 @@ function MoreMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                   "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
                   isActive
                     ? "bg-emerald-500/15 text-emerald-400 font-medium"
-                    : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                    : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -594,13 +594,13 @@ function NewsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
             "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
             hasActiveItem
               ? "bg-emerald-600/15 text-emerald-400"
-              : "text-zinc-700 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+              : "text-neutral-700 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
           )}
         >
           <div className="mr-2.5 transition-all duration-200">
             <Rss className={cn(
               "h-[18px] w-[18px] transition-all duration-200",
-              hasActiveItem ? "text-emerald-500" : "text-zinc-900 dark:text-zinc-400 group-hover/item:text-zinc-950 dark:group-hover/item:text-zinc-200"
+              hasActiveItem ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
             )} />
           </div>
           <span className="text-[13px] font-medium">News</span>
@@ -631,7 +631,7 @@ function NewsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                     "h-9 transition-all duration-300 rounded-lg group/subitem relative",
                     isActive
                       ? "bg-emerald-500/15 text-emerald-400 font-medium"
-                      : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                      : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                   )}
                 >
                   <Link href={item.path} prefetch={true} onClick={onNavigate}>
@@ -641,7 +641,7 @@ function NewsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                     )} />
                     <Icon className={cn(
                       "h-3.5 w-3.5 mr-2 transition-all duration-300",
-                      isActive ? "text-emerald-400" : "text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-600 dark:group-hover/subitem:text-zinc-300"
+                      isActive ? "text-emerald-400" : "text-neutral-400 dark:text-neutral-500 group-hover/subitem:text-neutral-600 dark:group-hover/subitem:text-neutral-300"
                     )} />
                     <span className="text-[12px] truncate">{item.label}</span>
                     {typeof item.badge === "number" && item.badge > 0 && (
@@ -650,7 +650,7 @@ function NewsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                       </span>
                     )}
                     {item.path === "/admin/institucional" && (
-                      <span className="ml-auto text-[9px] font-semibold text-zinc-400 dark:text-zinc-600 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-full leading-none">
+                      <span className="ml-auto text-[9px] font-semibold text-neutral-400 dark:text-neutral-600 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded-full leading-none">
                         breve
                       </span>
                     )}
@@ -710,7 +710,7 @@ function ToolsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
             "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
             hasActiveItem
               ? "bg-emerald-600/15 text-emerald-400"
-              : "text-zinc-700 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+              : "text-neutral-700 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
           )}
         >
           <div className={cn(
@@ -718,7 +718,7 @@ function ToolsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
           )}>
             <Puzzle className={cn(
               "h-[18px] w-[18px] transition-all duration-200",
-              hasActiveItem ? "text-emerald-500" : "text-zinc-900 dark:text-zinc-400 group-hover/item:text-zinc-950 dark:group-hover/item:text-zinc-200"
+              hasActiveItem ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
             )} />
           </div>
           <span className="text-[13px] font-medium">Ferramentas</span>
@@ -754,7 +754,7 @@ function ToolsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                     "h-9 transition-all duration-300 rounded-lg group/subitem relative",
                     isActive
                       ? "bg-emerald-500/15 text-emerald-400 font-medium"
-                      : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                      : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                   )}
                 >
                   <Link href={item.path} prefetch={true} onClick={onNavigate}>
@@ -765,7 +765,7 @@ function ToolsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                     )} />
                     <Icon className={cn(
                       "h-3.5 w-3.5 mr-2 transition-all duration-300",
-                      isActive ? "text-emerald-400" : "text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-600 dark:group-hover/subitem:text-zinc-300"
+                      isActive ? "text-emerald-400" : "text-neutral-400 dark:text-neutral-500 group-hover/subitem:text-neutral-600 dark:group-hover/subitem:text-neutral-300"
                     )} />
                     <span className="text-[12px] truncate">{item.label}</span>
                     {typeof item.badge === "number" && item.badge > 0 && (
@@ -832,7 +832,7 @@ function PrincipalMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
             "w-full h-10 transition-all duration-200 rounded-xl flex items-center px-3 group/item",
             hasActiveItem
               ? "bg-emerald-500/10 text-emerald-400"
-              : "text-zinc-700 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+              : "text-neutral-700 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
           )}
         >
           <div className={cn(
@@ -840,7 +840,7 @@ function PrincipalMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
           )}>
             <Home className={cn(
               "h-[18px] w-[18px] transition-all duration-200",
-              hasActiveItem ? "text-emerald-500" : "text-zinc-900 dark:text-zinc-400 group-hover/item:text-zinc-950 dark:group-hover/item:text-zinc-200"
+              hasActiveItem ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
             )} />
           </div>
           <span className="text-[13px] font-medium">Principal</span>
@@ -876,7 +876,7 @@ function PrincipalMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                     "h-9 transition-all duration-200 rounded-lg group/subitem relative",
                     isActive
                       ? "bg-emerald-500/15 text-emerald-400 font-semibold"
-                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                      : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                   )}
                 >
                   <Link href={item.path} prefetch={true} onClick={onNavigate}>
@@ -887,7 +887,7 @@ function PrincipalMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                     )} />
                     <Icon className={cn(
                       "h-3.5 w-3.5 mr-2 transition-all duration-200",
-                      isActive ? "text-emerald-400" : "text-zinc-500 dark:text-zinc-400 group-hover/subitem:text-zinc-700 dark:group-hover/subitem:text-zinc-300"
+                      isActive ? "text-emerald-400" : "text-neutral-500 dark:text-neutral-400 group-hover/subitem:text-neutral-700 dark:group-hover/subitem:text-neutral-300"
                     )} />
                     <span className="text-[12px] truncate">{item.label}</span>
                     {typeof item.badge === "number" && item.badge > 0 && (
@@ -951,7 +951,7 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
             "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
             hasActiveItem
               ? "bg-emerald-600/15 text-emerald-400"
-              : "text-zinc-700 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+              : "text-neutral-700 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
           )}
         >
           <div className={cn(
@@ -959,7 +959,7 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
           )}>
             <BookUser className={cn(
               "h-[18px] w-[18px] transition-all duration-200",
-              hasActiveItem ? "text-emerald-500" : "text-zinc-900 dark:text-zinc-400 group-hover/item:text-zinc-950 dark:group-hover/item:text-zinc-200"
+              hasActiveItem ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
             )} />
           </div>
           <span className="text-[13px] font-medium">Cadastros</span>
@@ -995,7 +995,7 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                     "h-9 transition-all duration-300 rounded-lg group/subitem relative",
                     isActive
                       ? "bg-emerald-500/15 text-emerald-400 font-medium"
-                      : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                      : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                   )}
                 >
                   <Link href={item.path} prefetch={true} onClick={onNavigate}>
@@ -1006,7 +1006,7 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                     )} />
                     <Icon className={cn(
                       "h-3.5 w-3.5 mr-2 transition-all duration-300",
-                      isActive ? "text-emerald-400" : "text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-600 dark:group-hover/subitem:text-zinc-300"
+                      isActive ? "text-emerald-400" : "text-neutral-400 dark:text-neutral-500 group-hover/subitem:text-neutral-600 dark:group-hover/subitem:text-neutral-300"
                     )} />
                     <span className="text-[12px] truncate">{item.label}</span>
                   </Link>
@@ -1065,7 +1065,7 @@ function DocumentosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: 
             "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
             hasActiveItem
               ? "bg-emerald-600/15 text-emerald-400"
-              : "text-zinc-700 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+              : "text-neutral-700 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
           )}
         >
           <div className={cn(
@@ -1073,7 +1073,7 @@ function DocumentosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: 
           )}>
             <FolderOpen className={cn(
               "h-[18px] w-[18px] transition-all duration-200",
-              hasActiveItem ? "text-emerald-500" : "text-zinc-900 dark:text-zinc-400 group-hover/item:text-zinc-950 dark:group-hover/item:text-zinc-200"
+              hasActiveItem ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
             )} />
           </div>
           <span className="text-[13px] font-medium">Documentos</span>
@@ -1109,7 +1109,7 @@ function DocumentosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: 
                     "h-9 transition-all duration-300 rounded-lg group/subitem relative",
                     isActive
                       ? "bg-emerald-500/15 text-emerald-400 font-medium"
-                      : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                      : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                   )}
                 >
                   <Link href={item.path} prefetch={true} onClick={onNavigate}>
@@ -1120,7 +1120,7 @@ function DocumentosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: 
                     )} />
                     <Icon className={cn(
                       "h-3.5 w-3.5 mr-2 transition-all duration-300",
-                      isActive ? "text-emerald-400" : "text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-600 dark:group-hover/subitem:text-zinc-300"
+                      isActive ? "text-emerald-400" : "text-neutral-400 dark:text-neutral-500 group-hover/subitem:text-neutral-600 dark:group-hover/subitem:text-neutral-300"
                     )} />
                     <span className="text-[12px] truncate">{item.label}</span>
                   </Link>
@@ -1180,7 +1180,7 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
             "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
             hasActiveItem
               ? "bg-emerald-600/15 text-emerald-400"
-              : "text-zinc-700 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+              : "text-neutral-700 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
           )}
         >
           <div className={cn(
@@ -1188,7 +1188,7 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
           )}>
             <Users2 className={cn(
               "h-[18px] w-[18px] transition-all duration-200",
-              hasActiveItem ? "text-emerald-500" : "text-zinc-900 dark:text-zinc-400 group-hover/item:text-zinc-950 dark:group-hover/item:text-zinc-200"
+              hasActiveItem ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
             )} />
           </div>
           <span className="text-[13px] font-medium">Cowork</span>
@@ -1218,7 +1218,7 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
             return (
               <div key={item.path}>
                 {idx === 2 && (
-                  <div className="my-1.5 ml-2 mr-1 h-px bg-gradient-to-r from-zinc-700/40 to-transparent" />
+                  <div className="my-1.5 ml-2 mr-1 h-px bg-gradient-to-r from-neutral-700/40 to-transparent" />
                 )}
                 <SidebarMenuItem>
                   <SidebarMenuButton
@@ -1228,7 +1228,7 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                       "h-9 transition-all duration-300 rounded-lg group/subitem relative",
                       isActive
                         ? "bg-emerald-500/15 text-emerald-400 font-medium"
-                        : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                        : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                     )}
                   >
                     <Link href={item.path} prefetch={true} onClick={onNavigate}>
@@ -1239,7 +1239,7 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                       )} />
                       <Icon className={cn(
                         "h-3.5 w-3.5 mr-2 transition-all duration-300",
-                        isActive ? "text-emerald-400" : "text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-600 dark:group-hover/subitem:text-zinc-300"
+                        isActive ? "text-emerald-400" : "text-neutral-400 dark:text-neutral-500 group-hover/subitem:text-neutral-600 dark:group-hover/subitem:text-neutral-300"
                       )} />
                       <span className="text-[12px] truncate">{item.label}</span>
                     </Link>
@@ -1346,7 +1346,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
                 "py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer",
                 isSelected
                   ? `${esp.colors.bg} ${esp.colors.text} ring-1 ${esp.colors.ring} px-3`
-                  : "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.06] px-2"
+                  : "text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.06] px-2"
               )}
             >
               <esp.icon className={cn("h-3.5 w-3.5", isSelected && esp.colors.text)} />
@@ -1381,7 +1381,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
             "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
             hasActiveItem
               ? "bg-emerald-600/15 text-emerald-400"
-              : "text-zinc-700 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+              : "text-neutral-700 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
           )}
         >
           <div className={cn(
@@ -1389,7 +1389,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
           )}>
             <Target className={cn(
               "h-[18px] w-[18px] transition-all duration-200",
-              hasActiveItem ? "text-emerald-500" : "text-zinc-900 dark:text-zinc-400 group-hover/item:text-zinc-950 dark:group-hover/item:text-zinc-200"
+              hasActiveItem ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
             )} />
           </div>
           <span className="text-xs font-medium">Especialidades</span>
@@ -1416,7 +1416,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
         <div className="relative pl-4 space-y-0.5">
           {/* Linha vertical conectora - cor dinâmica */}
           <div className={cn(
-            "absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b via-zinc-300 dark:via-zinc-800 to-transparent",
+            "absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b via-neutral-300 dark:via-neutral-800 to-transparent",
             ESPECIALIDADE_COLORS[especialidade].line
           )} />
 
@@ -1432,7 +1432,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
                     "py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer",
                     isSelected
                       ? `${esp.colors.bg} ${esp.colors.text} ring-1 ${esp.colors.ring} px-3`
-                      : "text-zinc-500 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] px-2"
+                      : "text-neutral-500 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] px-2"
                   )}
                 >
                   <esp.icon className={cn("h-3.5 w-3.5", isSelected && esp.colors.text)} />
@@ -1446,11 +1446,11 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
             <div key={section.title || `section-${sIdx}`}>
               {section.title && (
                 <div className="flex items-center gap-2 pr-2 pt-2.5 pb-0.5">
-                  <div className="h-px flex-1 bg-zinc-200/60 dark:bg-zinc-700/30" />
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 select-none whitespace-nowrap">
+                  <div className="h-px flex-1 bg-neutral-200/60 dark:bg-neutral-700/30" />
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-600 select-none whitespace-nowrap">
                     {section.title}
                   </span>
-                  <div className="h-px flex-1 bg-zinc-200/60 dark:bg-zinc-700/30" />
+                  <div className="h-px flex-1 bg-neutral-200/60 dark:bg-neutral-700/30" />
                 </div>
               )}
               {section.items.map((item) => {
@@ -1469,7 +1469,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
                         "h-9 transition-all duration-300 rounded-lg group/subitem relative",
                         isActive
                           ? `${activeColor.bg} ${activeColor.text} font-medium`
-                          : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                          : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                       )}
                     >
                       <Link href={item.path} prefetch={true} onClick={onNavigate}>
@@ -1484,7 +1484,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
                         )} />
                         <Icon className={cn(
                           "h-3.5 w-3.5 mr-2 transition-all duration-300",
-                          isActive ? activeColor.text : "text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-600 dark:group-hover/subitem:text-zinc-300"
+                          isActive ? activeColor.text : "text-neutral-400 dark:text-neutral-500 group-hover/subitem:text-neutral-600 dark:group-hover/subitem:text-neutral-300"
                         )} />
                         <span className="text-xs truncate">{item.label}</span>
                         {isActive && (
@@ -1789,20 +1789,20 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
                 "ring-2 ring-black/[0.08] dark:ring-white/[0.1] ring-offset-2 ring-offset-transparent",
                 "group-hover/user:ring-emerald-500/30 group-hover/user:scale-105"
               )}>
-                <AvatarFallback className="bg-gradient-to-br from-zinc-600 via-zinc-700 to-zinc-800 text-white font-bold text-sm shadow-inner">
+                <AvatarFallback className="bg-gradient-to-br from-neutral-600 via-neutral-700 to-neutral-800 text-white font-bold text-sm shadow-inner">
                   {userName.replace(/^(Dr\.|Dra\.|Dr |Dra )/i, '').trim().charAt(0).toUpperCase() || userName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               {!isCollapsed && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 truncate tracking-tight">
+                  <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-200 truncate tracking-tight">
                     {userName}
                   </p>
                   <button
                     onClick={handleLogout}
                     className={cn(
                       "text-[11px] flex items-center gap-1.5 mt-0.5 transition-all duration-200",
-                      "text-zinc-500 hover:text-red-400",
+                      "text-neutral-500 hover:text-red-400",
                       "font-medium"
                     )}
                   >
@@ -1817,20 +1817,20 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
       </Sidebar>
 
       {/* Main Content */}
-      <SidebarInset className={cn("flex flex-col min-h-screen", theme === "dark" ? "bg-zinc-950" : "bg-zinc-50")}>
+      <SidebarInset className={cn("flex flex-col min-h-screen", theme === "dark" ? "bg-neutral-950" : "bg-neutral-50")}>
         {/* Header - Light clean com accent emerald */}
         <header className={cn(
           "flex h-12 shrink-0 items-center",
           "sticky top-0 z-30",
-          "bg-white dark:bg-zinc-900",
-          "border-b-2 border-zinc-900 dark:border-zinc-700"
+          "bg-white dark:bg-neutral-900",
+          "border-b-2 border-neutral-900 dark:border-neutral-700"
         )}>
           {/* Conteúdo - Esquerda: Toggle + Breadcrumbs */}
           <div className="flex items-center gap-3 px-3 flex-1 min-w-0">
-            <SidebarTrigger className="h-7 w-7 rounded-md text-zinc-900 dark:text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-200 shrink-0" />
+            <SidebarTrigger className="h-7 w-7 rounded-md text-neutral-900 dark:text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all duration-200 shrink-0" />
 
             {/* Separador */}
-            <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700 shrink-0" />
+            <div className="h-4 w-px bg-neutral-200 dark:bg-neutral-700 shrink-0" />
 
             {/* Breadcrumbs navegáveis */}
             <Breadcrumbs />
@@ -1844,19 +1844,19 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
             {/* Indicador ativo */}
             <div className="hidden md:flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium">Online</span>
+              <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-medium">Online</span>
             </div>
 
             {/* Separador */}
-            <div className="hidden md:block h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
+            <div className="hidden md:block h-4 w-px bg-neutral-200 dark:bg-neutral-700" />
 
             {/* Data */}
-            <div className="hidden lg:flex items-center gap-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">
+            <div className="hidden lg:flex items-center gap-1.5 text-[11px] text-neutral-400 dark:text-neutral-500">
               <span className="capitalize">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'short' })}</span>
             </div>
 
             {/* Separador */}
-            <div className="hidden lg:block h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
+            <div className="hidden lg:block h-4 w-px bg-neutral-200 dark:bg-neutral-700" />
 
             {/* Badge de conflitos de sync */}
             <ConflictBadge />
@@ -1869,7 +1869,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
               <button
                 onClick={() => chatPanelActions.toggle()}
                 title="Assistente OMBUDS"
-                className="inline-flex items-center justify-center h-8 w-8 rounded-md text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                className="inline-flex items-center justify-center h-8 w-8 rounded-md text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
               >
                 <MessageSquare className="h-4 w-4" />
               </button>

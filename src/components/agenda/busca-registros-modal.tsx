@@ -150,10 +150,10 @@ export function BuscaRegistrosModal({
         </div>
 
         {/* Barra de Busca e Filtros */}
-        <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 space-y-3">
+        <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 space-y-3">
           {/* Busca */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
             <Input
               placeholder="Buscar por processo, assistido, resultado, manifestações..."
               value={searchTerm}
@@ -163,7 +163,7 @@ export function BuscaRegistrosModal({
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -173,8 +173,8 @@ export function BuscaRegistrosModal({
           {/* Filtros */}
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-              <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+              <Filter className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
+              <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                 Filtros:
               </span>
             </div>
@@ -213,7 +213,7 @@ export function BuscaRegistrosModal({
               <select
                 value={filterResultado}
                 onChange={(e) => setFilterResultado(e.target.value)}
-                className="px-3 py-1.5 text-sm border border-zinc-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900"
+                className="px-3 py-1.5 text-sm border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-neutral-900"
               >
                 <option value="">Todos os resultados</option>
                 {resultadosUnicos.map((resultado) => (
@@ -244,13 +244,13 @@ export function BuscaRegistrosModal({
             <div className="space-y-3">
               {registrosFiltrados.length === 0 ? (
                 <Card className="p-8 text-center">
-                  <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
-                    <Search className="w-8 h-8 text-zinc-400" />
+                  <div className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-8 h-8 text-neutral-400" />
                   </div>
-                  <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50 mb-2">
+                  <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 mb-2">
                     Nenhum registro encontrado
                   </h3>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
                     Tente ajustar os filtros ou termos de busca
                   </p>
                 </Card>
@@ -261,7 +261,7 @@ export function BuscaRegistrosModal({
                     className={`p-4 border-2 transition-all cursor-pointer hover:shadow-lg ${
                       selectedRegistro?.historicoId === registro.historicoId
                         ? "border-blue-500 bg-blue-50/30 dark:bg-blue-950/20"
-                        : "border-zinc-200 dark:border-zinc-800"
+                        : "border-neutral-200 dark:border-neutral-800"
                     }`}
                     onClick={() => setSelectedRegistro(registro)}
                   >
@@ -302,11 +302,11 @@ export function BuscaRegistrosModal({
                                 <Badge variant="outline">{registro.resultado}</Badge>
                               )}
                             </div>
-                            <h3 className="font-bold text-zinc-900 dark:text-zinc-50">
+                            <h3 className="font-bold text-neutral-900 dark:text-neutral-50">
                               {registro.processoId || "Processo não informado"}
                             </h3>
                           </div>
-                          <span className="text-xs text-zinc-500 dark:text-zinc-500 whitespace-nowrap">
+                          <span className="text-xs text-neutral-500 dark:text-neutral-500 whitespace-nowrap">
                             {format(new Date(registro.dataRealizacao), "dd/MM/yyyy", {
                               locale: ptBR,
                             })}
@@ -316,16 +316,16 @@ export function BuscaRegistrosModal({
                         {/* Informações */}
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           {registro.assistidoId && (
-                            <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                            <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
                               <User className="w-3.5 h-3.5" />
                               <span className="truncate">{registro.assistidoId}</span>
                             </div>
                           )}
-                          <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                          <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
                             <Users className="w-3.5 h-3.5" />
                             <span>{registro.depoentes.length} depoente(s)</span>
                           </div>
-                          <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                          <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
                             <Clock className="w-3.5 h-3.5" />
                             <span className="text-xs">
                               Registrado em{" "}
@@ -338,7 +338,7 @@ export function BuscaRegistrosModal({
 
                         {/* Preview */}
                         {registro.anotacoesGerais && (
-                          <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-2 line-clamp-2">
+                          <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-2 line-clamp-2">
                             {registro.anotacoesGerais}
                           </p>
                         )}
@@ -367,13 +367,13 @@ export function BuscaRegistrosModal({
 
           {/* Preview do Registro Selecionado */}
           {selectedRegistro && (
-            <div className="w-96 border-l border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50">
+            <div className="w-96 border-l border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
               <ScrollArea className="h-full p-6">
                 <div className="space-y-4">
                   {/* Header */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-50">
+                      <h3 className="font-bold text-lg text-neutral-900 dark:text-neutral-50">
                         Detalhes do Registro
                       </h3>
                       <Button
@@ -384,7 +384,7 @@ export function BuscaRegistrosModal({
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">
                       {format(new Date(selectedRegistro.dataRealizacao), "dd 'de' MMMM 'de' yyyy", {
                         locale: ptBR,
                       })}
@@ -394,23 +394,23 @@ export function BuscaRegistrosModal({
                   {/* Informações Básicas */}
                   <Card className="p-4 space-y-3">
                     <div>
-                      <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1">
+                      <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">
                         PROCESSO
                       </p>
-                      <p className="text-sm font-mono text-zinc-900 dark:text-zinc-50">
+                      <p className="text-sm font-mono text-neutral-900 dark:text-neutral-50">
                         {selectedRegistro.processoId || "-"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1">
+                      <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">
                         ASSISTIDO
                       </p>
-                      <p className="text-sm text-zinc-900 dark:text-zinc-50">
+                      <p className="text-sm text-neutral-900 dark:text-neutral-50">
                         {selectedRegistro.assistidoId || "-"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1">
+                      <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">
                         RESULTADO
                       </p>
                       <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
@@ -422,16 +422,16 @@ export function BuscaRegistrosModal({
                   {/* Depoentes */}
                   {selectedRegistro.depoentes.length > 0 && (
                     <Card className="p-4">
-                      <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-3">
+                      <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-3">
                         DEPOENTES ({selectedRegistro.depoentes.length})
                       </p>
                       <div className="space-y-2">
                         {selectedRegistro.depoentes.map((depoente) => (
                           <div
                             key={depoente.id}
-                            className="flex items-center justify-between text-sm p-2 bg-zinc-50 dark:bg-zinc-900/50 rounded"
+                            className="flex items-center justify-between text-sm p-2 bg-neutral-50 dark:bg-neutral-900/50 rounded"
                           >
-                            <span className="font-medium text-zinc-900 dark:text-zinc-50">
+                            <span className="font-medium text-neutral-900 dark:text-neutral-50">
                               {depoente.nome}
                             </span>
                             <Badge variant="outline" className="text-xs">
@@ -448,11 +448,11 @@ export function BuscaRegistrosModal({
                     <Card className="p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <MessageSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                        <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                        <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
                           MANIFESTAÇÃO DA DEFESA
                         </p>
                       </div>
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                      <p className="text-sm text-neutral-700 dark:text-neutral-300">
                         {selectedRegistro.manifestacaoDefesa}
                       </p>
                     </Card>
@@ -463,11 +463,11 @@ export function BuscaRegistrosModal({
                     <Card className="p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <Gavel className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                        <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                        <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
                           DECISÃO DO JUIZ
                         </p>
                       </div>
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                      <p className="text-sm text-neutral-700 dark:text-neutral-300">
                         {selectedRegistro.decisaoJuiz}
                       </p>
                     </Card>
@@ -477,12 +477,12 @@ export function BuscaRegistrosModal({
                   {selectedRegistro.anotacoesGerais && (
                     <Card className="p-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <FileText className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-                        <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                        <FileText className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
+                        <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
                           ANOTAÇÕES GERAIS
                         </p>
                       </div>
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                      <p className="text-sm text-neutral-700 dark:text-neutral-300">
                         {selectedRegistro.anotacoesGerais}
                       </p>
                     </Card>

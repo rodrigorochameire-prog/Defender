@@ -97,13 +97,13 @@ function FileSelector({
         setSearch("");
       }}
       className={cn(
-        "w-full flex items-center gap-2 px-3 py-2 text-left text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors",
+        "w-full flex items-center gap-2 px-3 py-2 text-left text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors",
         selectedFile?.id === file.id &&
           "bg-violet-50 dark:bg-violet-900/20"
       )}
     >
-      <FileText className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-      <span className="truncate text-zinc-700 dark:text-zinc-300">
+      <FileText className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+      <span className="truncate text-neutral-700 dark:text-neutral-300">
         {file.name}
       </span>
     </button>
@@ -118,34 +118,34 @@ function FileSelector({
           "w-full flex items-center gap-2 px-3 py-2 rounded-lg border text-left transition-colors",
           selectedFile
             ? "border-violet-300 bg-violet-50 dark:border-violet-700 dark:bg-violet-900/20"
-            : "border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 hover:border-zinc-300"
+            : "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800 hover:border-neutral-300"
         )}
       >
-        <FileText className="w-4 h-4 text-zinc-400 shrink-0" />
+        <FileText className="w-4 h-4 text-neutral-400 shrink-0" />
         <span
           className={cn(
             "text-sm truncate flex-1",
             selectedFile
-              ? "text-zinc-900 dark:text-zinc-100 font-medium"
-              : "text-zinc-400"
+              ? "text-neutral-900 dark:text-neutral-100 font-medium"
+              : "text-neutral-400"
           )}
         >
           {selectedFile ? selectedFile.name : `Selecionar ${label}...`}
         </span>
         <ChevronDown
           className={cn(
-            "w-4 h-4 text-zinc-400 transition-transform",
+            "w-4 h-4 text-neutral-400 transition-transform",
             isOpen && "rotate-180"
           )}
         />
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl max-h-[380px] overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl max-h-[380px] overflow-hidden">
           {/* Search */}
-          <div className="p-2 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="p-2 border-b border-neutral-100 dark:border-neutral-800">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -159,10 +159,10 @@ function FileSelector({
           <div className="overflow-y-auto max-h-[320px]">
             {isLoading ? (
               <div className="flex items-center justify-center py-6">
-                <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+                <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
               </div>
             ) : !hasResults ? (
-              <div className="text-center py-6 text-xs text-zinc-400">
+              <div className="text-center py-6 text-xs text-neutral-400">
                 Nenhum arquivo encontrado
               </div>
             ) : (
@@ -170,7 +170,7 @@ function FileSelector({
                 {/* Same folder section */}
                 {filteredSameFolder.length > 0 && (
                   <div>
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50/50 dark:bg-emerald-900/10 border-b border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50/50 dark:bg-emerald-900/10 border-b border-neutral-100 dark:border-neutral-800">
                       <FolderOpen className="w-3 h-3 text-emerald-500" />
                       <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                         Mesma pasta
@@ -189,14 +189,14 @@ function FileSelector({
                 {/* Other files section */}
                 {filteredOther.length > 0 && (
                   <div>
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800/30 border-b border-zinc-100 dark:border-zinc-800">
-                      <Files className="w-3 h-3 text-zinc-400" />
-                      <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-50 dark:bg-neutral-800/30 border-b border-neutral-100 dark:border-neutral-800">
+                      <Files className="w-3 h-3 text-neutral-400" />
+                      <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                         Outros arquivos
                       </span>
                       <Badge
                         variant="outline"
-                        className="ml-auto text-[9px] px-1.5 py-0 h-4 text-zinc-400 border-zinc-300 dark:border-zinc-700"
+                        className="ml-auto text-[9px] px-1.5 py-0 h-4 text-neutral-400 border-neutral-300 dark:border-neutral-700"
                       >
                         {filteredOther.length}
                       </Badge>
@@ -224,10 +224,10 @@ function PdfPanel({
 }) {
   if (!file) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-zinc-50 dark:bg-zinc-900 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-lg">
+      <div className="flex-1 flex items-center justify-center bg-neutral-50 dark:bg-neutral-900 border border-dashed border-neutral-300 dark:border-neutral-700 rounded-lg">
         <div className="text-center">
-          <FileText className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mx-auto mb-2" />
-          <p className="text-sm text-zinc-400">Selecione {label}</p>
+          <FileText className="w-10 h-10 text-neutral-300 dark:text-neutral-600 mx-auto mb-2" />
+          <p className="text-sm text-neutral-400">Selecione {label}</p>
         </div>
       </div>
     );
@@ -240,15 +240,15 @@ function PdfPanel({
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <div className="px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-700 rounded-t-lg">
+      <div className="px-3 py-2 bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-200 dark:border-neutral-700 rounded-t-lg">
         <p
-          className="text-xs font-medium text-zinc-600 dark:text-zinc-400 truncate"
+          className="text-xs font-medium text-neutral-600 dark:text-neutral-400 truncate"
           title={file.name}
         >
           {file.name}
         </p>
       </div>
-      <div className="flex-1 rounded-b-lg overflow-hidden border border-t-0 border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900">
+      <div className="flex-1 rounded-b-lg overflow-hidden border border-t-0 border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-900">
         {previewUrl ? (
           <iframe
             src={previewUrl}
@@ -256,7 +256,7 @@ function PdfPanel({
             title={file.name}
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-zinc-400 text-sm">
+          <div className="flex items-center justify-center h-full text-neutral-400 text-sm">
             Preview indisponivel
           </div>
         )}
@@ -349,16 +349,16 @@ export function DocumentCompareModal({
   return (
     <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-4 px-4 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 shadow-sm">
+      <div className="flex items-center gap-4 px-4 py-3 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 shadow-sm">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
             <Columns className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
               Comparar Documentos
             </h2>
-            <p className="text-[10px] text-zinc-400">
+            <p className="text-[10px] text-neutral-400">
               {isSameFileMode
                 ? "Comparando páginas do mesmo arquivo"
                 : "Visualize dois PDFs lado a lado"}
@@ -417,7 +417,7 @@ export function DocumentCompareModal({
             setFileA(initialFileA || null);
             setFileB(null);
           }}
-          className="h-8 w-8 text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 shrink-0"
+          className="h-8 w-8 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 shrink-0"
         >
           <X className="h-5 w-5" />
         </Button>

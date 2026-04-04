@@ -160,7 +160,7 @@ export default function BuscaPage() {
                     const entity = ENTITY_LABELS[result.entity_type] || {
                       label: result.entity_type,
                       icon: <FileText className="h-3.5 w-3.5" />,
-                      color: "bg-zinc-100 text-zinc-700",
+                      color: "bg-neutral-100 text-neutral-700",
                       href: () => "#",
                     };
                     const scorePercent = Math.round(result.score * 100);

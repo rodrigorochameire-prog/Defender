@@ -80,7 +80,7 @@ const TRIBUNAL_CONFIG: Record<
   },
   OUTRO: {
     label: "Outro Tribunal",
-    color: "text-zinc-600 bg-zinc-50 border-zinc-200",
+    color: "text-neutral-600 bg-neutral-50 border-neutral-200",
     icon: FileText,
   },
 };
@@ -136,7 +136,7 @@ export default function JulgadoDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-50/50 dark:bg-background p-6">
+      <div className="min-h-screen bg-neutral-50/50 dark:bg-background p-6">
         <Skeleton className="h-8 w-64 mb-4" />
         <Skeleton className="h-96 rounded-xl" />
       </div>
@@ -145,7 +145,7 @@ export default function JulgadoDetailPage() {
 
   if (!julgado) {
     return (
-      <div className="min-h-screen bg-zinc-50/50 dark:bg-background p-6">
+      <div className="min-h-screen bg-neutral-50/50 dark:bg-background p-6">
         <p>Julgado nao encontrado</p>
       </div>
     );
@@ -155,7 +155,7 @@ export default function JulgadoDetailPage() {
   const Icon = config.icon;
 
   const statusConfig = {
-    pendente: { icon: Clock, color: "text-zinc-500", label: "Pendente de processamento" },
+    pendente: { icon: Clock, color: "text-neutral-500", label: "Pendente de processamento" },
     processando: { icon: Loader2, color: "text-blue-500", label: "Processando com IA" },
     processado: { icon: Check, color: "text-emerald-500", label: "Processado" },
     erro: { icon: AlertCircle, color: "text-red-500", label: "Erro no processamento" },
@@ -165,9 +165,9 @@ export default function JulgadoDetailPage() {
   const StatusIcon = status.icon;
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 dark:bg-background">
+    <div className="min-h-screen bg-neutral-50/50 dark:bg-background">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-border bg-white dark:bg-card">
+      <div className="border-b border-neutral-200 dark:border-border bg-white dark:bg-card">
         <div className="px-6 py-4">
           <Breadcrumbs
             items={[
@@ -194,7 +194,7 @@ export default function JulgadoDetailPage() {
                   </h1>
                   <Badge variant="outline">{config.label}</Badge>
                 </div>
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-neutral-500">
                   {julgado.relator && `Rel. ${julgado.relator}`}
                   {julgado.orgaoJulgador && ` - ${julgado.orgaoJulgador}`}
                 </p>
@@ -265,7 +265,7 @@ export default function JulgadoDetailPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <code className="text-sm bg-zinc-100 dark:bg-muted p-3 rounded-lg block">
+                  <code className="text-sm bg-neutral-100 dark:bg-muted p-3 rounded-lg block">
                     {julgado.citacaoFormatada}
                   </code>
                 </CardContent>
@@ -284,13 +284,13 @@ export default function JulgadoDetailPage() {
                       <Sparkles className="w-4 h-4 text-amber-600" />
                       <span className="text-xs font-medium text-amber-600">Resumo por IA</span>
                     </div>
-                    <p className="text-sm text-zinc-700 dark:text-foreground/80">
+                    <p className="text-sm text-neutral-700 dark:text-foreground/80">
                       {julgado.ementaResumo}
                     </p>
                   </div>
                 )}
                 <ScrollArea className="max-h-96">
-                  <p className="text-sm text-zinc-600 dark:text-muted-foreground whitespace-pre-wrap">
+                  <p className="text-sm text-neutral-600 dark:text-muted-foreground whitespace-pre-wrap">
                     {julgado.ementa || "Ementa nao disponivel"}
                   </p>
                 </ScrollArea>
@@ -310,12 +310,12 @@ export default function JulgadoDetailPage() {
                   {/* Pontos-chave */}
                   {julgado.iaPontosChave && (julgado.iaPontosChave as string[]).length > 0 && (
                     <div>
-                      <h4 className="text-xs font-medium text-zinc-500 mb-2">Pontos-Chave</h4>
+                      <h4 className="text-xs font-medium text-neutral-500 mb-2">Pontos-Chave</h4>
                       <ul className="space-y-1">
                         {(julgado.iaPontosChave as string[]).map((ponto, i) => (
                           <li
                             key={i}
-                            className="text-sm text-zinc-600 dark:text-muted-foreground flex items-start gap-2"
+                            className="text-sm text-neutral-600 dark:text-muted-foreground flex items-start gap-2"
                           >
                             <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                             {ponto}
@@ -337,7 +337,7 @@ export default function JulgadoDetailPage() {
                             (arg: string, i: number) => (
                               <li
                                 key={i}
-                                className="text-sm text-zinc-600 dark:text-muted-foreground flex items-start gap-2"
+                                className="text-sm text-neutral-600 dark:text-muted-foreground flex items-start gap-2"
                               >
                                 <span className="text-emerald-500">+</span>
                                 {arg}
@@ -355,7 +355,7 @@ export default function JulgadoDetailPage() {
                             (arg: string, i: number) => (
                               <li
                                 key={i}
-                                className="text-sm text-zinc-600 dark:text-muted-foreground flex items-start gap-2"
+                                className="text-sm text-neutral-600 dark:text-muted-foreground flex items-start gap-2"
                               >
                                 <span className="text-red-500">-</span>
                                 {arg}
@@ -378,7 +378,7 @@ export default function JulgadoDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <ScrollArea className="h-96">
-                    <p className="text-sm text-zinc-600 dark:text-muted-foreground whitespace-pre-wrap">
+                    <p className="text-sm text-neutral-600 dark:text-muted-foreground whitespace-pre-wrap">
                       {julgado.textoIntegral}
                     </p>
                   </ScrollArea>
@@ -411,19 +411,19 @@ export default function JulgadoDetailPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <span className="text-xs text-zinc-500">Tribunal</span>
+                  <span className="text-xs text-neutral-500">Tribunal</span>
                   <p className="text-sm font-medium">{config.label}</p>
                 </div>
                 <Separator />
                 <div>
-                  <span className="text-xs text-zinc-500">Tipo de Decisao</span>
+                  <span className="text-xs text-neutral-500">Tipo de Decisao</span>
                   <p className="text-sm font-medium">{julgado.tipoDecisao}</p>
                 </div>
                 {julgado.dataJulgamento && (
                   <>
                     <Separator />
                     <div>
-                      <span className="text-xs text-zinc-500">Data do Julgamento</span>
+                      <span className="text-xs text-neutral-500">Data do Julgamento</span>
                       <p className="text-sm font-medium">
                         {format(new Date(julgado.dataJulgamento), "dd/MM/yyyy", { locale: ptBR })}
                       </p>
@@ -434,7 +434,7 @@ export default function JulgadoDetailPage() {
                   <>
                     <Separator />
                     <div>
-                      <span className="text-xs text-zinc-500">Votacao</span>
+                      <span className="text-xs text-neutral-500">Votacao</span>
                       <p className="text-sm font-medium">{julgado.votacao}</p>
                     </div>
                   </>
@@ -449,7 +449,7 @@ export default function JulgadoDetailPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <span className="text-xs text-zinc-500">Tema</span>
+                  <span className="text-xs text-neutral-500">Tema</span>
                   <Select
                     value={julgado.temaId?.toString() || ""}
                     onValueChange={(value) =>
@@ -476,7 +476,7 @@ export default function JulgadoDetailPage() {
                   <>
                     <Separator />
                     <div>
-                      <span className="text-xs text-zinc-500">Palavras-chave</span>
+                      <span className="text-xs text-neutral-500">Palavras-chave</span>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {(julgado.palavrasChave as string[]).map((tag, i) => (
                           <Badge key={i} variant="secondary" className="text-xs">

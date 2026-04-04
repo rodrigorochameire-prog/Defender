@@ -57,7 +57,7 @@ function EventoCard({ evento }: { evento: EventoUnificado }) {
   return (
     <div className={cn(
       "p-2.5 rounded-lg border-l-2 text-left transition-all duration-200",
-      colorMap[evento.cor] || "border-l-zinc-300",
+      colorMap[evento.cor] || "border-l-neutral-300",
       "bg-white dark:bg-card/50 hover:shadow-sm"
     )}>
       <div className="flex items-center gap-1.5">
@@ -85,7 +85,7 @@ function MembroColuna({ nome, iniciais, eventos }: { nome: string; iniciais: str
     <div className="flex-1 min-w-[200px]">
       <div className="flex items-center gap-2 mb-3 px-1">
         <Avatar className="h-7 w-7">
-          <AvatarFallback className="text-[10px] bg-zinc-100 dark:bg-muted text-muted-foreground font-medium">
+          <AvatarFallback className="text-[10px] bg-neutral-100 dark:bg-muted text-muted-foreground font-medium">
             {iniciais}
           </AvatarFallback>
         </Avatar>
@@ -96,7 +96,7 @@ function MembroColuna({ nome, iniciais, eventos }: { nome: string; iniciais: str
       </div>
       <div className="space-y-2">
         {eventos.length === 0 ? (
-          <div className="p-4 text-center rounded-lg bg-zinc-50 dark:bg-muted/50 border border-dashed border-zinc-200 dark:border-border">
+          <div className="p-4 text-center rounded-lg bg-neutral-50 dark:bg-muted/50 border border-dashed border-neutral-200 dark:border-border">
             <p className="text-[10px] text-muted-foreground">Sem eventos</p>
           </div>
         ) : (
@@ -199,7 +199,7 @@ export default function AgendaEquipePage() {
   return (
     <div className="min-h-screen bg-muted dark:bg-[#0f0f11]">
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-neutral-200 dark:border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-foreground dark:bg-white flex items-center justify-center shadow-lg">
@@ -214,7 +214,7 @@ export default function AgendaEquipePage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex bg-zinc-100 dark:bg-muted rounded-lg p-0.5">
+            <div className="flex bg-neutral-100 dark:bg-muted rounded-lg p-0.5">
               {(["dia", "lista"] as VisaoAgenda[]).map((v) => (
                 <button
                   key={v}
@@ -239,7 +239,7 @@ export default function AgendaEquipePage() {
         <div className="flex items-center gap-3 mb-4">
           <button
             onClick={() => setDataAtual(prev => addDays(prev, -1))}
-            className="p-1.5 rounded-lg bg-white dark:bg-card border border-zinc-200 dark:border-border text-muted-foreground hover:text-foreground hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer"
+            className="p-1.5 rounded-lg bg-white dark:bg-card border border-neutral-200 dark:border-border text-muted-foreground hover:text-foreground hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -249,14 +249,14 @@ export default function AgendaEquipePage() {
               "px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
               isToday(dataAtual)
                 ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                : "bg-white dark:bg-card border border-zinc-200 dark:border-border text-muted-foreground hover:border-emerald-200"
+                : "bg-white dark:bg-card border border-neutral-200 dark:border-border text-muted-foreground hover:border-emerald-200"
             )}
           >
             Hoje
           </button>
           <button
             onClick={() => setDataAtual(prev => addDays(prev, 1))}
-            className="p-1.5 rounded-lg bg-white dark:bg-card border border-zinc-200 dark:border-border text-muted-foreground hover:text-foreground hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer"
+            className="p-1.5 rounded-lg bg-white dark:bg-card border border-neutral-200 dark:border-border text-muted-foreground hover:text-foreground hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -276,10 +276,10 @@ export default function AgendaEquipePage() {
 
         {/* Visão Dia - Colunas por membro */}
         {!isLoading && visao === "dia" && (
-          <Card className="bg-white dark:bg-card border-zinc-200/80 dark:border-border/80 rounded-xl p-4">
+          <Card className="bg-white dark:bg-card border-neutral-200/80 dark:border-border/80 rounded-xl p-4">
             {membrosComEventos.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <CalendarX className="w-10 h-10 text-zinc-300 dark:text-muted-foreground/50 mb-3" />
+                <CalendarX className="w-10 h-10 text-neutral-300 dark:text-muted-foreground/50 mb-3" />
                 <p className="text-sm font-medium text-muted-foreground">Nenhum evento para {isToday(dataAtual) ? "hoje" : format(dataAtual, "dd/MM")}</p>
                 <p className="text-xs text-muted-foreground/70 mt-1">Navegue para outro dia ou mude para a visao Lista</p>
               </div>
@@ -303,17 +303,17 @@ export default function AgendaEquipePage() {
           <div className="space-y-2">
             {eventosLista.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <CalendarX className="w-10 h-10 text-zinc-300 dark:text-muted-foreground/50 mb-3" />
+                <CalendarX className="w-10 h-10 text-neutral-300 dark:text-muted-foreground/50 mb-3" />
                 <p className="text-sm font-medium text-muted-foreground">Nenhum evento proximo</p>
               </div>
             ) : (
               eventosLista.map(ev => {
                 const membro = membrosAtivos.find(m => m.id === ev.membroId);
                 return (
-                  <Card key={ev.id} className="bg-white dark:bg-card border-zinc-200/80 dark:border-border/80 rounded-xl p-3 flex items-center gap-3 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all">
+                  <Card key={ev.id} className="bg-white dark:bg-card border-neutral-200/80 dark:border-border/80 rounded-xl p-3 flex items-center gap-3 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all">
                     <div className="flex items-center gap-2 min-w-[100px]">
                       <Avatar className="h-6 w-6">
-                        <AvatarFallback className="text-[9px] bg-zinc-100 dark:bg-muted text-muted-foreground">
+                        <AvatarFallback className="text-[9px] bg-neutral-100 dark:bg-muted text-muted-foreground">
                           {membro?.iniciais || "?"}
                         </AvatarFallback>
                       </Avatar>

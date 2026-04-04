@@ -68,7 +68,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   encerramento:
     "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
   geral:
-    "bg-zinc-100 text-zinc-700 dark:bg-muted dark:text-muted-foreground border-zinc-200 dark:border-border",
+    "bg-neutral-100 text-neutral-700 dark:bg-muted dark:text-muted-foreground border-neutral-200 dark:border-border",
 };
 
 const AVAILABLE_VARIABLES = [
@@ -371,11 +371,11 @@ export default function WhatsAppTemplatesPage() {
             placeholder="Buscar templates..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-white dark:bg-muted/50 border-zinc-200 dark:border-border text-foreground"
+            className="pl-9 bg-white dark:bg-muted/50 border-neutral-200 dark:border-border text-foreground"
           />
         </div>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-full sm:w-[160px] bg-white dark:bg-muted/50 border-zinc-200 dark:border-border text-foreground/80">
+          <SelectTrigger className="w-full sm:w-[160px] bg-white dark:bg-muted/50 border-neutral-200 dark:border-border text-foreground/80">
             <SelectValue placeholder="Categoria" />
           </SelectTrigger>
           <SelectContent>
@@ -395,7 +395,7 @@ export default function WhatsAppTemplatesPage() {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-48 rounded-xl border border-zinc-200 dark:border-border/30 bg-white dark:bg-card/50 animate-pulse"
+              className="h-48 rounded-xl border border-neutral-200 dark:border-border/30 bg-white dark:bg-card/50 animate-pulse"
             />
           ))}
         </div>
@@ -407,7 +407,7 @@ export default function WhatsAppTemplatesPage() {
           action={
             <Button
               variant="outline"
-              className="border-zinc-300 dark:border-border text-foreground/80"
+              className="border-neutral-300 dark:border-border text-foreground/80"
               onClick={openCreate}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -420,7 +420,7 @@ export default function WhatsAppTemplatesPage() {
           {templates.map((template) => (
             <Card
               key={template.id}
-              className="border border-zinc-200 dark:border-border/30 bg-white dark:bg-card/50 hover:border-emerald-500/30 transition-colors"
+              className="border border-neutral-200 dark:border-border/30 bg-white dark:bg-card/50 hover:border-emerald-500/30 transition-colors"
             >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
@@ -452,7 +452,7 @@ export default function WhatsAppTemplatesPage() {
                       {(template.variables as string[]).map((v) => (
                         <span
                           key={v}
-                          className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-muted text-muted-foreground"
+                          className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-neutral-100 dark:bg-muted text-muted-foreground"
                         >
                           {v}
                         </span>
@@ -460,7 +460,7 @@ export default function WhatsAppTemplatesPage() {
                     </div>
                   )}
               </CardContent>
-              <CardFooter className="pt-2 border-t border-zinc-100 dark:border-border">
+              <CardFooter className="pt-2 border-t border-neutral-100 dark:border-border">
                 <div className="flex items-center gap-1 w-full">
                   <Button
                     variant="ghost"
@@ -525,7 +525,7 @@ export default function WhatsAppTemplatesPage() {
                 value={form.title}
                 onChange={(e) => handleTitleChange(e.target.value)}
                 placeholder="Ex: Orientacao sobre audiencia"
-                className="bg-white dark:bg-muted/50 border-zinc-200 dark:border-border"
+                className="bg-white dark:bg-muted/50 border-neutral-200 dark:border-border"
               />
             </div>
 
@@ -544,9 +544,9 @@ export default function WhatsAppTemplatesPage() {
                   }))
                 }
                 placeholder="orientacao-audiencia"
-                className="bg-white dark:bg-muted/50 border-zinc-200 dark:border-border font-mono text-sm"
+                className="bg-white dark:bg-muted/50 border-neutral-200 dark:border-border font-mono text-sm"
               />
-              <p className="text-[10px] text-zinc-400">
+              <p className="text-[10px] text-neutral-400">
                 Gerado automaticamente a partir do titulo
               </p>
             </div>
@@ -564,7 +564,7 @@ export default function WhatsAppTemplatesPage() {
                   }))
                 }
                 placeholder="/consulta"
-                className="bg-white dark:bg-muted/50 border-zinc-200 dark:border-border font-mono text-sm"
+                className="bg-white dark:bg-muted/50 border-neutral-200 dark:border-border font-mono text-sm"
               />
             </div>
 
@@ -577,7 +577,7 @@ export default function WhatsAppTemplatesPage() {
                   setForm((prev) => ({ ...prev, category: value }))
                 }
               >
-                <SelectTrigger className="bg-white dark:bg-muted/50 border-zinc-200 dark:border-border">
+                <SelectTrigger className="bg-white dark:bg-muted/50 border-neutral-200 dark:border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -605,13 +605,13 @@ export default function WhatsAppTemplatesPage() {
                 }
                 placeholder="Ola {nome_assistido}, segue informacao sobre..."
                 rows={10}
-                className="bg-white dark:bg-muted/50 border-zinc-200 dark:border-border resize-none font-mono text-sm"
+                className="bg-white dark:bg-muted/50 border-neutral-200 dark:border-border resize-none font-mono text-sm"
               />
             </div>
 
             {/* Quick-insert variables */}
             <div className="space-y-2">
-              <Label className="text-xs text-zinc-500">
+              <Label className="text-xs text-neutral-500">
                 Inserir variavel
               </Label>
               <div className="flex flex-wrap gap-1.5">
@@ -621,7 +621,7 @@ export default function WhatsAppTemplatesPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-7 text-[11px] font-mono border-zinc-300 dark:border-border text-muted-foreground hover:border-emerald-500 hover:text-emerald-600"
+                    className="h-7 text-[11px] font-mono border-neutral-300 dark:border-border text-muted-foreground hover:border-emerald-500 hover:text-emerald-600"
                     onClick={() => insertVariable(v)}
                   >
                     <Zap className="w-3 h-3 mr-1" />
@@ -634,10 +634,10 @@ export default function WhatsAppTemplatesPage() {
             {/* Preview */}
             {form.content && (
               <div className="space-y-2">
-                <Label className="text-xs text-zinc-500">
+                <Label className="text-xs text-neutral-500">
                   Preview
                 </Label>
-                <div className="p-3 rounded-lg border border-zinc-200 dark:border-border bg-zinc-50 dark:bg-muted/50 text-sm whitespace-pre-line">
+                <div className="p-3 rounded-lg border border-neutral-200 dark:border-border bg-neutral-50 dark:bg-muted/50 text-sm whitespace-pre-line">
                   {renderPreview(form.content)}
                 </div>
                 {contentVariables.length > 0 && (
@@ -668,16 +668,16 @@ export default function WhatsAppTemplatesPage() {
                     sortOrder: parseInt(e.target.value) || 0,
                   }))
                 }
-                className="bg-white dark:bg-muted/50 border-zinc-200 dark:border-border w-24"
+                className="bg-white dark:bg-muted/50 border-neutral-200 dark:border-border w-24"
               />
             </div>
 
             {/* Save button */}
-            <div className="flex justify-end gap-2 pt-4 border-t border-zinc-200 dark:border-border">
+            <div className="flex justify-end gap-2 pt-4 border-t border-neutral-200 dark:border-border">
               <Button
                 variant="outline"
                 onClick={closeSheet}
-                className="border-zinc-300 dark:border-border text-foreground/80"
+                className="border-neutral-300 dark:border-border text-foreground/80"
               >
                 Cancelar
               </Button>
@@ -715,10 +715,10 @@ function StatsCard({
   color: string;
 }) {
   return (
-    <div className="p-3 rounded-xl border border-zinc-200 dark:border-border/30 bg-white dark:bg-card/50">
+    <div className="p-3 rounded-xl border border-neutral-200 dark:border-border/30 bg-white dark:bg-card/50">
       <div className="flex items-center gap-2 mb-1">
         <Icon className={`w-4 h-4 ${color}`} />
-        <span className="text-xs text-zinc-500">{label}</span>
+        <span className="text-xs text-neutral-500">{label}</span>
       </div>
       <p className="text-lg font-semibold text-foreground">
         {value}

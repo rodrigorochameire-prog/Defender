@@ -242,8 +242,8 @@ export function DriveFilePicker({
                   className={cn(
                     "hover:underline",
                     i === folderStack.length - 1
-                      ? "font-medium text-zinc-700 dark:text-foreground/80"
-                      : "text-zinc-500"
+                      ? "font-medium text-neutral-700 dark:text-foreground/80"
+                      : "text-neutral-500"
                   )}
                   onClick={() => setFolderStack((prev) => prev.slice(0, i + 1))}
                 >
@@ -258,7 +258,7 @@ export function DriveFilePicker({
         <ScrollArea className="flex-1 min-h-0 max-h-[50vh]">
           {!currentFolderId ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Folder className="h-10 w-10 text-zinc-300 mb-3" />
+              <Folder className="h-10 w-10 text-neutral-300 mb-3" />
               <p className="text-sm text-muted-foreground">
                 Contato não vinculado a um assistido com pasta no Drive.
               </p>
@@ -274,15 +274,15 @@ export function DriveFilePicker({
             </div>
           ) : folders.length === 0 && files.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <FileQuestion className="h-10 w-10 text-zinc-300 mb-3" />
-              <p className="text-sm text-zinc-500">Pasta vazia</p>
+              <FileQuestion className="h-10 w-10 text-neutral-300 mb-3" />
+              <p className="text-sm text-neutral-500">Pasta vazia</p>
             </div>
           ) : (
             <div className="space-y-1 p-1">
               {/* Back button when inside subfolders */}
               {folderStack.length > 0 && (
                 <button
-                  className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-muted transition-colors text-left"
+                  className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-muted transition-colors text-left"
                   onClick={navigateBack}
                 >
                   <ArrowLeft className="h-5 w-5 text-muted-foreground" />
@@ -294,12 +294,12 @@ export function DriveFilePicker({
               {folders.map((folder) => (
                 <button
                   key={folder.id}
-                  className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-muted transition-colors text-left"
+                  className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-muted transition-colors text-left"
                   onClick={() => navigateInto(folder)}
                   disabled={sending}
                 >
                   {getFileIcon(folder.mimeType, folder.name)}
-                  <span className="flex-1 text-sm font-medium truncate text-zinc-900 dark:text-foreground">
+                  <span className="flex-1 text-sm font-medium truncate text-neutral-900 dark:text-foreground">
                     {folder.name}
                   </span>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -310,11 +310,11 @@ export function DriveFilePicker({
               {files.map((file) => (
                 <div
                   key={file.id}
-                  className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-muted transition-colors group"
+                  className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-muted transition-colors group"
                 >
                   {getFileIcon(file.mimeType, file.name)}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate text-zinc-900 dark:text-foreground">
+                    <p className="text-sm font-medium truncate text-neutral-900 dark:text-foreground">
                       {file.name}
                     </p>
                     <p className="text-xs text-muted-foreground">

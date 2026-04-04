@@ -63,19 +63,19 @@ export default function EstatisticasJuizesPage() {
 
           {/* Preview Features */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full max-w-2xl mb-8">
-            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-muted/50 border border-zinc-200 dark:border-border">
+            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-muted/50 border border-neutral-200 dark:border-border">
               <Gavel className="w-6 h-6 text-emerald-600 mb-2 mx-auto" />
               <p className="text-xs font-medium text-foreground/80">Por Juiz</p>
             </div>
-            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-muted/50 border border-zinc-200 dark:border-border">
+            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-muted/50 border border-neutral-200 dark:border-border">
               <PieChart className="w-6 h-6 text-emerald-600 mb-2 mx-auto" />
               <p className="text-xs font-medium text-foreground/80">Taxas</p>
             </div>
-            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-muted/50 border border-zinc-200 dark:border-border">
+            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-muted/50 border border-neutral-200 dark:border-border">
               <TrendingUp className="w-6 h-6 text-emerald-600 mb-2 mx-auto" />
               <p className="text-xs font-medium text-foreground/80">Tendências</p>
             </div>
-            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-muted/50 border border-zinc-200 dark:border-border">
+            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-muted/50 border border-neutral-200 dark:border-border">
               <Target className="w-6 h-6 text-emerald-600 mb-2 mx-auto" />
               <p className="text-xs font-medium text-foreground/80">Comparativos</p>
             </div>

@@ -109,7 +109,7 @@ export function EntityRow({
               className={cn(
                 "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card",
                 avatar.indicator === "online" && "bg-emerald-500",
-                avatar.indicator === "offline" && "bg-zinc-400",
+                avatar.indicator === "offline" && "bg-neutral-400",
                 avatar.indicator === "warning" && "bg-amber-500",
                 avatar.indicator === "danger" && "bg-rose-500"
               )}

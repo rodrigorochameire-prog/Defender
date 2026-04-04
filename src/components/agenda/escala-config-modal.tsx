@@ -242,16 +242,16 @@ export function EscalaConfigModal({ isOpen, onClose, onSave, currentConfig }: Es
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto bg-white dark:bg-zinc-900">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto bg-white dark:bg-neutral-900">
         {/* Header Profissional */}
-        <DialogHeader className="border-b border-zinc-200 dark:border-zinc-800 pb-4">
-          <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2.5">
+        <DialogHeader className="border-b border-neutral-200 dark:border-neutral-800 pb-4">
+          <DialogTitle className="text-lg font-bold text-neutral-900 dark:text-neutral-50 flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center">
               <Users className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-500" />
             </div>
             Configuração de Escalas
           </DialogTitle>
-          <DialogDescription className="text-sm text-zinc-600 dark:text-zinc-400 mt-1.5">
+          <DialogDescription className="text-sm text-neutral-600 dark:text-neutral-400 mt-1.5">
             Gerencie os defensores e defina as escalas mensais por atribuição.
           </DialogDescription>
         </DialogHeader>
@@ -260,7 +260,7 @@ export function EscalaConfigModal({ isOpen, onClose, onSave, currentConfig }: Es
           {/* Seção Defensores - Layout Profissional */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              <h3 className="text-xs font-bold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                 Defensores ({defensores.length})
               </h3>
             </div>
@@ -270,7 +270,7 @@ export function EscalaConfigModal({ isOpen, onClose, onSave, currentConfig }: Es
               {defensores.map((defensor) => (
                 <div
                   key={defensor.id}
-                  className="group flex items-center justify-between p-3 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+                  className="group flex items-center justify-between p-3 border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
                     <div
@@ -280,7 +280,7 @@ export function EscalaConfigModal({ isOpen, onClose, onSave, currentConfig }: Es
                       {defensor.nome.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-50">{defensor.nome}</p>
+                      <p className="font-semibold text-sm text-neutral-900 dark:text-neutral-50">{defensor.nome}</p>
                     </div>
                   </div>
                   {defensores.length > 1 && (
@@ -288,7 +288,7 @@ export function EscalaConfigModal({ isOpen, onClose, onSave, currentConfig }: Es
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemoveDefensor(defensor.id)}
-                      className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all text-xs h-7 px-2"
+                      className="opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all text-xs h-7 px-2"
                     >
                       Remover
                     </Button>
@@ -298,7 +298,7 @@ export function EscalaConfigModal({ isOpen, onClose, onSave, currentConfig }: Es
             </div>
 
             {/* Form Adicionar Defensor - Compacto */}
-            <div className="flex items-center gap-2.5 p-3 bg-zinc-50 dark:bg-zinc-900/50 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-lg">
+            <div className="flex items-center gap-2.5 p-3 bg-neutral-50 dark:bg-neutral-900/50 border border-dashed border-neutral-300 dark:border-neutral-700 rounded-lg">
               <input
                 type="text"
                 value={novoDefensorNome}
@@ -310,7 +310,7 @@ export function EscalaConfigModal({ isOpen, onClose, onSave, currentConfig }: Es
                   }
                 }}
                 placeholder="Nome do defensor"
-                className="flex-1 px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="flex-1 px-3 py-1.5 border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
               <div className="flex gap-1">
                 {cores.map((cor) => (
@@ -319,8 +319,8 @@ export function EscalaConfigModal({ isOpen, onClose, onSave, currentConfig }: Es
                     onClick={() => setNovoDefensorCor(cor.value)}
                     className={`w-7 h-7 rounded-lg border-2 transition-all hover:scale-110 ${
                       novoDefensorCor === cor.value
-                        ? "border-zinc-900 dark:border-zinc-100 scale-110"
-                        : "border-zinc-200 dark:border-zinc-700"
+                        ? "border-neutral-900 dark:border-neutral-100 scale-110"
+                        : "border-neutral-200 dark:border-neutral-700"
                     }`}
                     style={{ backgroundColor: cor.value }}
                     title={cor.label}
@@ -335,12 +335,12 @@ export function EscalaConfigModal({ isOpen, onClose, onSave, currentConfig }: Es
           </div>
 
           {/* Divisor */}
-          <div className="border-t border-zinc-200 dark:border-zinc-800" />
+          <div className="border-t border-neutral-200 dark:border-neutral-800" />
 
           {/* Seção Escalas - Layout Profissional */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              <h3 className="text-xs font-bold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                 Escalas Mensais
               </h3>
               <div className="flex items-center gap-2">
@@ -380,7 +380,7 @@ export function EscalaConfigModal({ isOpen, onClose, onSave, currentConfig }: Es
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                       isSelected
                         ? "bg-emerald-600 text-white shadow-md"
-                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                        : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700"
                     }`}
                   >
                     {format(mesDate, "MMM/yyyy", { locale: ptBR })}
@@ -399,13 +399,13 @@ export function EscalaConfigModal({ isOpen, onClose, onSave, currentConfig }: Es
                 return (
                   <div
                     key={atrib.value}
-                    className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+                    className="flex items-center justify-between p-3 bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
                   >
                     <div className="flex items-center gap-2.5 min-w-[180px]">
-                      <div className={`w-8 h-8 rounded-lg bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center`}>
+                      <div className={`w-8 h-8 rounded-lg bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center`}>
                         <Icon className={`w-4 h-4 ${atrib.color}`} />
                       </div>
-                      <span className="font-medium text-zinc-900 dark:text-zinc-50 text-sm">
+                      <span className="font-medium text-neutral-900 dark:text-neutral-50 text-sm">
                         {atrib.label}
                       </span>
                     </div>
@@ -432,8 +432,8 @@ export function EscalaConfigModal({ isOpen, onClose, onSave, currentConfig }: Es
         </div>
 
         {/* Footer - Botões de Ação */}
-        <div className="flex justify-between items-center gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="flex justify-between items-center gap-3 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
             Escalas aplicadas automaticamente aos eventos
           </p>
           <div className="flex gap-2.5">

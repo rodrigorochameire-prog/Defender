@@ -65,10 +65,10 @@ const COLORS = {
   aberto: "#10b981", // emerald
   livramento: "#8b5cf6", // violet
   fim_pena: "#64748b", // slate
-  text: "#1e293b", // zinc-800
-  textLight: "#64748b", // zinc-500
+  text: "#1e293b", // neutral-800
+  textLight: "#64748b", // neutral-500
   background: "#ffffff",
-  border: "#e2e8f0", // zinc-200
+  border: "#e2e8f0", // neutral-200
 } as const;
 
 const MARCO_COLORS: Record<string, string> = {
@@ -378,7 +378,7 @@ export function generateExcalidrawTimeline(
       TIMELINE_Y,
       TIMELINE_WIDTH,
       TIMELINE_HEIGHT,
-      "#f1f5f9", // zinc-100
+      "#f1f5f9", // neutral-100
       COLORS.border,
       1
     )
@@ -666,7 +666,7 @@ export function generateExcalidrawTimeline(
       "Gerado por OMBUDS - Defensoria Publica",
       10,
       "left",
-      "#cbd5e1" // zinc-300
+      "#cbd5e1" // neutral-300
     )
   );
 

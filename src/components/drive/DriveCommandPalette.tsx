@@ -255,12 +255,12 @@ export function DriveCommandPalette() {
                   onSelect={() => handleSelectFile(file)}
                   className="gap-3"
                 >
-                  <FileIcon className="h-4 w-4 shrink-0 text-zinc-400" />
+                  <FileIcon className="h-4 w-4 shrink-0 text-neutral-400" />
                   <div className="flex flex-col gap-0.5 min-w-0">
-                    <span className="truncate text-sm text-zinc-200">
+                    <span className="truncate text-sm text-neutral-200">
                       {file.name}
                     </span>
-                    <span className="text-xs text-zinc-500">
+                    <span className="text-xs text-neutral-500">
                       {file.atribuicaoLabel}
                     </span>
                   </div>
@@ -282,13 +282,13 @@ export function DriveCommandPalette() {
                   onSelect={() => handleSelectAssistido(a.id)}
                   className="gap-3"
                 >
-                  <User className="h-4 w-4 shrink-0 text-zinc-400" />
+                  <User className="h-4 w-4 shrink-0 text-neutral-400" />
                   <div className="flex flex-col gap-0.5 min-w-0">
-                    <span className="truncate text-sm text-zinc-200">
+                    <span className="truncate text-sm text-neutral-200">
                       {a.nome}
                     </span>
                     {a.cpf && (
-                      <span className="text-xs font-mono text-zinc-500">
+                      <span className="text-xs font-mono text-neutral-500">
                         {maskCpf(a.cpf)}
                       </span>
                     )}
@@ -311,13 +311,13 @@ export function DriveCommandPalette() {
                   onSelect={() => handleSelectProcesso(p.id)}
                   className="gap-3"
                 >
-                  <Scale className="h-4 w-4 shrink-0 text-zinc-400" />
+                  <Scale className="h-4 w-4 shrink-0 text-neutral-400" />
                   <div className="flex flex-col gap-0.5 min-w-0">
-                    <span className="truncate text-sm font-mono text-zinc-200">
+                    <span className="truncate text-sm font-mono text-neutral-200">
                       {p.numero}
                     </span>
                     {p.assistidoNome && (
-                      <span className="text-xs text-zinc-500">
+                      <span className="text-xs text-neutral-500">
                         {p.assistidoNome}
                       </span>
                     )}
@@ -336,7 +336,7 @@ export function DriveCommandPalette() {
               {semanticSearch.isPending && (
                 <CommandItem value="semantic-loading" disabled className="gap-3 opacity-60">
                   <Loader2 className="h-4 w-4 shrink-0 text-emerald-400 animate-spin" />
-                  <span className="text-sm text-zinc-400">Buscando em depoimentos...</span>
+                  <span className="text-sm text-neutral-400">Buscando em depoimentos...</span>
                 </CommandItem>
               )}
               {semanticResults.map((result) => {
@@ -354,20 +354,20 @@ export function DriveCommandPalette() {
                     <Brain className="h-4 w-4 shrink-0 text-emerald-400" />
                     <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="truncate text-sm text-zinc-200">
+                        <span className="truncate text-sm text-neutral-200">
                           {result.fileName || `Arquivo #${result.file_id}`}
                         </span>
                         <span className={`text-[10px] tabular-nums shrink-0 ${
-                          score >= 70 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-zinc-500"
+                          score >= 70 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-neutral-500"
                         }`}>
                           {score}%
                         </span>
                       </div>
-                      <span className="text-xs text-zinc-500 line-clamp-1">
+                      <span className="text-xs text-neutral-500 line-clamp-1">
                         {result.chunk_text?.slice(0, 100)}
                       </span>
                       {result.assistidoNome && (
-                        <span className="text-[10px] text-zinc-600">
+                        <span className="text-[10px] text-neutral-600">
                           {result.assistidoNome}
                         </span>
                       )}
@@ -392,7 +392,7 @@ export function DriveCommandPalette() {
                 syncAll.isPending ? "animate-spin" : ""
               }`}
             />
-            <span className="text-sm text-zinc-200">Sincronizar Drive</span>
+            <span className="text-sm text-neutral-200">Sincronizar Drive</span>
           </CommandItem>
 
           <CommandItem
@@ -401,7 +401,7 @@ export function DriveCommandPalette() {
             className="gap-3"
           >
             <Upload className="h-4 w-4 shrink-0 text-emerald-400" />
-            <span className="text-sm text-zinc-200">Upload arquivo</span>
+            <span className="text-sm text-neutral-200">Upload arquivo</span>
           </CommandItem>
 
           <CommandItem
@@ -410,17 +410,17 @@ export function DriveCommandPalette() {
             className="gap-3"
           >
             <BarChart3 className="h-4 w-4 shrink-0 text-emerald-400" />
-            <span className="text-sm text-zinc-200">Ver estatisticas</span>
+            <span className="text-sm text-neutral-200">Ver estatisticas</span>
           </CommandItem>
         </CommandGroup>
       </CommandList>
 
       {/* ── Footer hint ── */}
-      <div className="flex items-center justify-between border-t border-zinc-800 px-3 py-2">
-        <span className="text-xs text-zinc-500">
+      <div className="flex items-center justify-between border-t border-neutral-800 px-3 py-2">
+        <span className="text-xs text-neutral-500">
           Navegue com setas, Enter para selecionar
         </span>
-        <kbd className="rounded border border-zinc-700 bg-zinc-800 px-1.5 py-0.5 text-[10px] font-mono text-zinc-400">
+        <kbd className="rounded border border-neutral-700 bg-neutral-800 px-1.5 py-0.5 text-[10px] font-mono text-neutral-400">
           {isMac ? "Cmd" : "Ctrl"}+K
         </kbd>
       </div>

@@ -54,7 +54,7 @@ const TIPO_DOT_COLORS: Record<string, string> = {
   andamento: "bg-amber-500",
   mural: "bg-violet-500",
   parecer: "bg-sky-500",
-  cobertura: "bg-zinc-400",
+  cobertura: "bg-neutral-400",
 };
 
 export function EquipeCoworkCard({
@@ -89,18 +89,18 @@ export function EquipeCoworkCard({
   ];
 
   return (
-    <Card className="group/card relative bg-white dark:bg-card border border-zinc-200/80 dark:border-border rounded-xl overflow-hidden transition-all duration-200">
+    <Card className="group/card relative bg-white dark:bg-card border border-neutral-200/80 dark:border-border rounded-xl overflow-hidden transition-all duration-200">
       {/* Accent bar */}
       <div className="h-1 bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-600" />
       {/* Header */}
-      <div className="px-5 py-4 border-b border-zinc-100 dark:border-border flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-neutral-100 dark:border-border flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
-            <Users className="w-4 h-4 text-white dark:text-zinc-900" />
+          <div className="w-9 h-9 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-md">
+            <Users className="w-4 h-4 text-white dark:text-neutral-900" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-zinc-800 dark:text-foreground tracking-tight">Equipe & Cowork</h3>
-            <p className="text-xs text-zinc-400 dark:text-muted-foreground">Delegações, pareceres e coberturas</p>
+            <h3 className="text-base font-bold text-neutral-800 dark:text-foreground tracking-tight">Equipe & Cowork</h3>
+            <p className="text-xs text-neutral-400 dark:text-muted-foreground">Delegações, pareceres e coberturas</p>
           </div>
           {pareceresPendentes > 0 && (
             <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
@@ -134,11 +134,11 @@ export function EquipeCoworkCard({
                   href={stat.href}
                   className="flex items-center gap-1.5 group/stat transition-colors py-0.5"
                 >
-                  <StatIcon className="w-3 h-3 text-zinc-400 group-hover/stat:text-emerald-500 transition-colors flex-shrink-0" />
-                  <span className="text-sm font-bold tabular-nums text-zinc-800 dark:text-foreground group-hover/stat:text-emerald-600 dark:group-hover/stat:text-emerald-400 transition-colors">
+                  <StatIcon className="w-3 h-3 text-neutral-400 group-hover/stat:text-emerald-500 transition-colors flex-shrink-0" />
+                  <span className="text-sm font-bold tabular-nums text-neutral-800 dark:text-foreground group-hover/stat:text-emerald-600 dark:group-hover/stat:text-emerald-400 transition-colors">
                     {stat.value}
                   </span>
-                  <span className="text-[10px] text-zinc-400 group-hover/stat:text-zinc-600 dark:group-hover/stat:text-foreground transition-colors truncate">
+                  <span className="text-[10px] text-neutral-400 group-hover/stat:text-neutral-600 dark:group-hover/stat:text-foreground transition-colors truncate">
                     {stat.label}
                   </span>
                 </Link>
@@ -156,8 +156,8 @@ export function EquipeCoworkCard({
                   onClick={acao.onClick}
                   className={cn(
                     "flex items-center gap-2 px-4 py-2.5 rounded-lg",
-                    "border border-zinc-200/60 dark:border-border",
-                    "bg-zinc-50/50 dark:bg-muted/50",
+                    "border border-neutral-200/60 dark:border-border",
+                    "bg-neutral-50/50 dark:bg-muted/50",
                     "hover:bg-emerald-50/60 dark:hover:bg-emerald-900/10",
                     "hover:border-emerald-300/60 dark:hover:border-emerald-800/50",
                     "hover:shadow-sm",
@@ -165,7 +165,7 @@ export function EquipeCoworkCard({
                   )}
                 >
                   <AcaoIcon className="w-4 h-4 text-emerald-600/80 dark:text-emerald-400/80" />
-                  <span className="text-xs font-medium text-zinc-700 dark:text-foreground/80">{acao.label}</span>
+                  <span className="text-xs font-medium text-neutral-700 dark:text-foreground/80">{acao.label}</span>
                 </button>
               );
             })}
@@ -175,18 +175,18 @@ export function EquipeCoworkCard({
         {/* Row 2 — Atividade Recente (compacta) */}
         {atividades.length > 0 && (
           <div className="space-y-1">
-            <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-wide">Atividade recente</p>
+            <p className="text-[10px] font-medium text-neutral-400 uppercase tracking-wide">Atividade recente</p>
             <div className="space-y-1.5">
               {atividades.slice(0, 5).map((ativ) => (
                 <div key={ativ.id} className="flex items-start gap-2">
                   <div className="relative mt-1.5 flex-shrink-0">
-                    <div className={cn("w-1.5 h-1.5 rounded-full", TIPO_DOT_COLORS[ativ.tipo] || "bg-zinc-400")} />
+                    <div className={cn("w-1.5 h-1.5 rounded-full", TIPO_DOT_COLORS[ativ.tipo] || "bg-neutral-400")} />
                   </div>
-                  <p className="text-[11px] text-zinc-500 dark:text-muted-foreground leading-snug flex-1 min-w-0 truncate">
-                    <span className="font-medium text-zinc-600 dark:text-foreground/80">{ativ.autor.nome}</span>{" "}
+                  <p className="text-[11px] text-neutral-500 dark:text-muted-foreground leading-snug flex-1 min-w-0 truncate">
+                    <span className="font-medium text-neutral-600 dark:text-foreground/80">{ativ.autor.nome}</span>{" "}
                     {ativ.texto}
                   </p>
-                  <span className="text-[10px] text-zinc-400 whitespace-nowrap flex-shrink-0">{ativ.tempo}</span>
+                  <span className="text-[10px] text-neutral-400 whitespace-nowrap flex-shrink-0">{ativ.tempo}</span>
                 </div>
               ))}
             </div>
@@ -194,10 +194,10 @@ export function EquipeCoworkCard({
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-border">
+        <div className="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-border">
           <Link
             href="/admin/delegacoes"
-            className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-foreground uppercase tracking-wide transition-colors"
+            className="flex items-center gap-1.5 text-[10px] font-medium text-neutral-400 hover:text-neutral-600 dark:hover:text-foreground uppercase tracking-wide transition-colors"
           >
             Ver histórico completo
             <ArrowRight className="w-3 h-3" />

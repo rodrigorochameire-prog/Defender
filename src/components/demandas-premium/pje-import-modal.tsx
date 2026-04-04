@@ -495,17 +495,17 @@ export function PJeImportModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleFechar}>
-      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto w-[96vw] md:w-full bg-white dark:bg-zinc-900">
-        <DialogHeader className="pb-4 border-b border-zinc-100 dark:border-zinc-800">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto w-[96vw] md:w-full bg-white dark:bg-neutral-900">
+        <DialogHeader className="pb-4 border-b border-neutral-100 dark:border-neutral-800">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
-              <FileText className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            <div className="w-10 h-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center flex-shrink-0">
+              <FileText className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
             </div>
             <div className="flex-1">
-              <DialogTitle className="text-base font-semibold text-zinc-800 dark:text-zinc-200">
+              <DialogTitle className="text-base font-semibold text-neutral-800 dark:text-neutral-200">
                 Importar do PJe
               </DialogTitle>
-              <DialogDescription className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+              <DialogDescription className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-0.5">
                 {etapa === "configurar" && "Configure a atribuição"}
                 {etapa === "colar" && "Cole o texto das intimações"}
                 {etapa === "revisar" && "Revise antes de importar"}
@@ -519,19 +519,19 @@ export function PJeImportModal({
         {etapa === "configurar" && (
           <div className="space-y-7 py-6">
             {/* Banner de Instruções */}
-            <div className="p-4 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+            <div className="p-4 bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-xl">
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-lg bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center flex-shrink-0">
-                  <Settings className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+                <div className="w-8 h-8 rounded-lg bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center flex-shrink-0">
+                  <Settings className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-sm text-zinc-800 dark:text-zinc-200 mb-1">
+                  <p className="font-medium text-sm text-neutral-800 dark:text-neutral-200 mb-1">
                     Configuração Simplificada
                   </p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-2">
                     Informe a atribuição. O sistema extrairá automaticamente o nome, data e processo.
                   </p>
-                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 border-l-2 border-emerald-400 pl-2">
+                  <p className="text-[10px] text-neutral-400 dark:text-neutral-500 border-l-2 border-emerald-400 pl-2">
                     Prazo calculado ao selecionar o tipo de ato
                   </p>
                 </div>
@@ -545,18 +545,18 @@ export function PJeImportModal({
                   <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-50">
+                  <h3 className="text-base font-bold text-neutral-900 dark:text-neutral-50">
                     Configuração Necessária
                   </h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
                     Selecione a atribuição para as intimações
                   </p>
                 </div>
               </div>
 
               <div className="space-y-2.5">
-                <Label htmlFor="atribuicao" className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
-                  <Scale className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                <Label htmlFor="atribuicao" className="text-sm font-semibold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
+                  <Scale className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
                   Atribuição
                   <span className="text-red-500 text-xs">*</span>
                 </Label>
@@ -567,11 +567,11 @@ export function PJeImportModal({
                     onChange={(e) => setAtribuicao(e.target.value)}
                     className={cn(
                       "w-full h-11 px-4 pr-10 rounded-lg border text-sm font-medium appearance-none cursor-pointer transition-all",
-                      "bg-white dark:bg-zinc-900",
-                      "border-zinc-300 dark:border-zinc-700",
-                      "text-zinc-900 dark:text-zinc-100",
-                      "hover:border-zinc-400 dark:hover:border-zinc-600",
-                      "focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600"
+                      "bg-white dark:bg-neutral-900",
+                      "border-neutral-300 dark:border-neutral-700",
+                      "text-neutral-900 dark:text-neutral-100",
+                      "hover:border-neutral-400 dark:hover:border-neutral-600",
+                      "focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-600"
                     )}
                   >
                     <option value="" disabled>Selecione a atribuição</option>
@@ -583,9 +583,9 @@ export function PJeImportModal({
                         </option>
                       ))}
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
                 </div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
                   <Info className="w-3.5 h-3.5" />
                   Todas as intimações terão esta atribuição
                 </p>
@@ -618,14 +618,14 @@ export function PJeImportModal({
 
             {/* Card de Revisão v2 - Só mostra para não-VVD */}
             {!isVVD && (
-              <div className="p-3 bg-zinc-50 dark:bg-zinc-800/50 border-l-2 border-emerald-400 rounded-r-lg">
+              <div className="p-3 bg-neutral-50 dark:bg-neutral-800/50 border-l-2 border-emerald-400 rounded-r-lg">
                 <div className="flex items-start gap-2">
                   <Sparkles className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <p className="font-medium text-xs text-zinc-700 dark:text-zinc-300 mb-1">
+                    <p className="font-medium text-xs text-neutral-700 dark:text-neutral-300 mb-1">
                       Revisão inteligente
                     </p>
-                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                    <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
                       Ato sugerido automaticamente • Prazo calculado em dobro • Assistidos vinculados
                     </p>
                   </div>
@@ -634,12 +634,12 @@ export function PJeImportModal({
             )}
 
             {/* Botões */}
-            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-neutral-200 dark:border-neutral-800">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleFechar}
-                className="h-11 px-6 text-sm font-semibold border-zinc-300 dark:border-zinc-700"
+                className="h-11 px-6 text-sm font-semibold border-neutral-300 dark:border-neutral-700"
               >
                 Cancelar
               </Button>
@@ -698,7 +698,7 @@ export function PJeImportModal({
 
             {/* Área de texto */}
             <div className="space-y-2.5">
-              <Label htmlFor="pje-texto" className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+              <Label htmlFor="pje-texto" className="text-sm font-semibold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
                 <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 Cole o texto das intimações do PJe:
               </Label>
@@ -707,14 +707,14 @@ export function PJeImportModal({
                 value={texto}
                 onChange={(e) => setTexto(e.target.value)}
                 placeholder="Cole aqui o texto copiado do PJe..."
-                className="w-full min-h-[380px] px-4 py-3 bg-white dark:bg-zinc-900 border-2 border-zinc-300 dark:border-zinc-700 rounded-xl text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all"
+                className="w-full min-h-[380px] px-4 py-3 bg-white dark:bg-neutral-900 border-2 border-neutral-300 dark:border-neutral-700 rounded-xl text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all"
               />
-              <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
                 <span>
                   {texto.length > 0 ? (
                     <>
-                      <strong className="text-zinc-700 dark:text-zinc-300">{texto.length}</strong> caracteres •{" "}
-                      <strong className="text-zinc-700 dark:text-zinc-300">{texto.split('\n').length}</strong> linhas
+                      <strong className="text-neutral-700 dark:text-neutral-300">{texto.length}</strong> caracteres •{" "}
+                      <strong className="text-neutral-700 dark:text-neutral-300">{texto.split('\n').length}</strong> linhas
                     </>
                   ) : (
                     "Aguardando entrada..."
@@ -732,12 +732,12 @@ export function PJeImportModal({
             </div>
 
             {/* Botões */}
-            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-neutral-200 dark:border-neutral-800">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleVoltar}
-                className="h-11 px-6 text-sm font-semibold border-zinc-300 dark:border-zinc-700"
+                className="h-11 px-6 text-sm font-semibold border-neutral-300 dark:border-neutral-700"
               >
                 Voltar
               </Button>
@@ -924,11 +924,11 @@ export function PJeImportModal({
 
             {/* Resumo da separação VVD */}
             {isVVD && intimacoes.length > 0 && (
-              <div className="p-4 bg-gradient-to-r from-zinc-50 to-zinc-100 dark:from-zinc-900/50 dark:to-zinc-800/30 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+              <div className="p-4 bg-gradient-to-r from-neutral-50 to-neutral-100 dark:from-neutral-900/50 dark:to-neutral-800/30 border border-neutral-200 dark:border-neutral-700 rounded-xl">
                 <div className="flex gap-3">
                   <Shield className="w-5 h-5 text-emerald-600 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="font-medium text-sm text-zinc-900 dark:text-zinc-100 mb-3">
+                    <p className="font-medium text-sm text-neutral-900 dark:text-neutral-100 mb-3">
                       Separação de Intimações VVD
                     </p>
                     <div className="grid grid-cols-2 gap-3">
@@ -943,19 +943,19 @@ export function PJeImportModal({
                           Medidas Protetivas de Urgência
                         </p>
                       </div>
-                      <div className="p-3 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg border border-zinc-200 dark:border-zinc-700">
-                        <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                      <div className="p-3 bg-neutral-100 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700">
+                        <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
                           📋 Demandas Gerais
                         </p>
-                        <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                        <p className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
                           {intimacoesGerais.length}
                         </p>
-                        <p className="text-[10px] text-zinc-600 dark:text-zinc-400">
+                        <p className="text-[10px] text-neutral-600 dark:text-neutral-400">
                           APOrd, APSum, PetCrim, etc.
                         </p>
                       </div>
                     </div>
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-3">
+                    <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-3">
                       <strong>MPUs</strong> vão para a página especial de Medidas Protetivas.
                       <strong> Demandas gerais</strong> vão para a lista de demandas com atribuição VVD.
                     </p>
@@ -971,17 +971,17 @@ export function PJeImportModal({
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/10 to-indigo-500/10 dark:from-blue-500/20 dark:to-indigo-500/20 flex items-center justify-center border border-blue-200 dark:border-blue-800">
                     <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
+                  <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-50">
                     Revise e ajuste antes de importar
                   </h3>
                   {matchQuery.isLoading && (
-                    <span className="text-[10px] text-zinc-400 animate-pulse">
+                    <span className="text-[10px] text-neutral-400 animate-pulse">
                       Buscando assistidos...
                     </span>
                   )}
                 </div>
 
-                <div className="max-h-[420px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700 scrollbar-track-transparent">
+                <div className="max-h-[420px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent">
                   <PjeReviewTable
                     rows={reviewRows}
                     onRowsChange={setReviewRows}
@@ -1039,13 +1039,13 @@ export function PJeImportModal({
             )}
 
             {/* Botões */}
-            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-neutral-200 dark:border-neutral-800">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleVoltar}
                 disabled={isImporting || isScraping}
-                className="h-11 px-6 text-sm font-semibold border-zinc-300 dark:border-zinc-700"
+                className="h-11 px-6 text-sm font-semibold border-neutral-300 dark:border-neutral-700"
               >
                 Voltar
               </Button>
@@ -1106,10 +1106,10 @@ export function PJeImportModal({
                   <div className="w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto">
                     <Loader2 className="w-7 h-7 text-blue-600 dark:text-blue-400 animate-spin" />
                   </div>
-                  <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200">
+                  <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200">
                     Importando...
                   </h3>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-md mx-auto">
                     Processando {importResult.enviadas} intimações no servidor. Aguarde.
                   </p>
                 </>
@@ -1118,7 +1118,7 @@ export function PJeImportModal({
                   <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto">
                     <AlertCircle className="w-7 h-7 text-red-600 dark:text-red-400" />
                   </div>
-                  <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200">
+                  <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200">
                     Erro na importação
                   </h3>
                 </>
@@ -1127,11 +1127,11 @@ export function PJeImportModal({
                   <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto">
                     <CheckCircle2 className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200">
+                  <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200">
                     {importResult.serverConfirmed ? "Importação confirmada" : "Importação enviada"}
                   </h3>
                   {importResult.serverConfirmed && importResult.importadas !== undefined && (
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-md mx-auto">
                       {importResult.importadas === importResult.enviadas
                         ? `Todas as ${importResult.importadas} intimações foram importadas com sucesso.`
                         : `${importResult.importadas} de ${importResult.enviadas} intimações importadas.`
@@ -1176,11 +1176,11 @@ export function PJeImportModal({
                   </div>
                 )}
                 {importResult.excluidas > 0 && (
-                  <div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-3 text-center">
-                    <span className="text-2xl font-bold text-zinc-500 dark:text-zinc-400">
+                  <div className="bg-neutral-100 dark:bg-neutral-800 rounded-lg p-3 text-center">
+                    <span className="text-2xl font-bold text-neutral-500 dark:text-neutral-400">
                       {importResult.excluidas}
                     </span>
-                    <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-medium mt-0.5">
+                    <p className="text-[10px] text-neutral-500 dark:text-neutral-500 font-medium mt-0.5">
                       Excluídas
                     </p>
                   </div>
@@ -1219,21 +1219,21 @@ export function PJeImportModal({
             )}
 
             {/* Detalhes */}
-            <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4 text-xs text-zinc-600 dark:text-zinc-400 max-w-md mx-auto space-y-1">
+            <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-4 text-xs text-neutral-600 dark:text-neutral-400 max-w-md mx-auto space-y-1">
               <div className="flex justify-between">
                 <span>Atribuição:</span>
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">{importResult.atribuicao}</span>
+                <span className="font-medium text-neutral-700 dark:text-neutral-300">{importResult.atribuicao}</span>
               </div>
               <div className="flex justify-between">
                 <span>Total no texto:</span>
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">{reviewRows.length + (resultadoVerificacao?.duplicadas.length || 0)}</span>
+                <span className="font-medium text-neutral-700 dark:text-neutral-300">{reviewRows.length + (resultadoVerificacao?.duplicadas.length || 0)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Enviadas ao servidor:</span>
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">{importResult.enviadas}</span>
+                <span className="font-medium text-neutral-700 dark:text-neutral-300">{importResult.enviadas}</span>
               </div>
               {importResult.serverConfirmed && importResult.importadas !== undefined && (
-                <div className="flex justify-between border-t border-zinc-200 dark:border-zinc-700 pt-1 mt-1">
+                <div className="flex justify-between border-t border-neutral-200 dark:border-neutral-700 pt-1 mt-1">
                   <span className="font-medium">Confirmadas pelo servidor:</span>
                   <span className="font-semibold text-emerald-700 dark:text-emerald-400">
                     {importResult.importadas + (importResult.atualizadas || 0)}

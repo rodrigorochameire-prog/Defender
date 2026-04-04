@@ -65,14 +65,14 @@ export function SyncStatusIndicator({
       case "offline":
         return {
           icon: CloudOff,
-          color: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+          color: "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300",
           label: "Offline",
           description: "Sem conexão",
         };
       default:
         return {
           icon: Cloud,
-          color: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+          color: "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300",
           label: "Desconhecido",
           description: "",
         };
@@ -98,10 +98,10 @@ export function SyncStatusIndicator({
         />
         {/* Tooltip */}
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50">
-          <div className="bg-zinc-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+          <div className="bg-neutral-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
             {config.label}
             {config.description && (
-              <div className="text-zinc-400 text-[10px]">{config.description}</div>
+              <div className="text-neutral-400 text-[10px]">{config.description}</div>
             )}
           </div>
         </div>

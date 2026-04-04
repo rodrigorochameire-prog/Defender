@@ -131,7 +131,7 @@ function DiffView({ oldText, newText }: { oldText: string; newText: string }) {
   );
 
   return (
-    <p className="text-sm leading-relaxed text-zinc-700 dark:text-foreground/80">
+    <p className="text-sm leading-relaxed text-neutral-700 dark:text-foreground/80">
       {segments.map((seg, i) => {
         if (seg.type === "added") {
           return (
@@ -185,11 +185,11 @@ function TimelineEntry({
               ? "border-emerald-500 bg-emerald-500 ring-2 ring-emerald-500/30"
               : isFirst
                 ? "border-emerald-500 bg-emerald-500"
-                : "border-zinc-300 bg-white dark:border-border dark:bg-muted"
+                : "border-neutral-300 bg-white dark:border-border dark:bg-muted"
           )}
         />
         {!isLast && (
-          <div className="w-0.5 grow bg-zinc-200 dark:bg-border" />
+          <div className="w-0.5 grow bg-neutral-200 dark:bg-border" />
         )}
       </div>
 
@@ -199,7 +199,7 @@ function TimelineEntry({
           "mb-6 flex-1 rounded-lg border p-3",
           isHighlighted
             ? "border-emerald-300 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/30"
-            : "border-zinc-200 bg-zinc-50 dark:border-border dark:bg-card"
+            : "border-neutral-200 bg-neutral-50 dark:border-border dark:bg-card"
         )}
       >
         {/* Version badge + law info */}
@@ -216,9 +216,9 @@ function TimelineEntry({
           </Badge>
 
           {versao.redacaoDadaPor ? (
-            <span className="text-xs text-zinc-500 dark:text-muted-foreground">
+            <span className="text-xs text-neutral-500 dark:text-muted-foreground">
               Redacao dada pela{" "}
-              <span className="font-medium text-zinc-700 dark:text-foreground/80">
+              <span className="font-medium text-neutral-700 dark:text-foreground/80">
                 {versao.redacaoDadaPor.lei}
               </span>
               {versao.redacaoDadaPor.artigo && (
@@ -226,7 +226,7 @@ function TimelineEntry({
               )}
             </span>
           ) : (
-            <span className="text-xs text-zinc-500 dark:text-muted-foreground">
+            <span className="text-xs text-neutral-500 dark:text-muted-foreground">
               Redacao original
             </span>
           )}
@@ -254,7 +254,7 @@ function TimelineEntry({
         {showDiff && previousVersao ? (
           <DiffView oldText={previousVersao.texto} newText={versao.texto} />
         ) : (
-          <p className="text-sm leading-relaxed text-zinc-700 dark:text-foreground/80">
+          <p className="text-sm leading-relaxed text-neutral-700 dark:text-foreground/80">
             {versao.texto}
           </p>
         )}
@@ -317,7 +317,7 @@ export function ArtigoTimeline({
             </SheetTitle>
             <Badge
               variant="outline"
-              className="text-xs text-zinc-500 dark:text-muted-foreground"
+              className="text-xs text-neutral-500 dark:text-muted-foreground"
             >
               {leiAbreviado}
             </Badge>
@@ -327,7 +327,7 @@ export function ArtigoTimeline({
         {!hasHistorico ? (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
             <History className="h-10 w-10 text-muted-foreground/50" />
-            <p className="text-sm text-zinc-500 dark:text-muted-foreground">
+            <p className="text-sm text-neutral-500 dark:text-muted-foreground">
               Sem alteracoes registradas
             </p>
             <p className="text-xs text-muted-foreground">
@@ -337,10 +337,10 @@ export function ArtigoTimeline({
         ) : (
           <div className="space-y-4">
             {/* Date picker */}
-            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-border dark:bg-card">
+            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 dark:border-border dark:bg-card">
               <Label
                 htmlFor="timeline-date"
-                className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-zinc-600 dark:text-muted-foreground"
+                className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-muted-foreground"
               >
                 <Calendar className="h-3.5 w-3.5" />
                 Qual era a redacao em:
@@ -351,7 +351,7 @@ export function ArtigoTimeline({
                 value={selectedDate}
                 onChange={handleDateChange}
                 className={cn(
-                  "w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm",
+                  "w-full rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm",
                   "focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500",
                   "dark:border-border dark:bg-muted dark:text-foreground"
                 )}
@@ -369,12 +369,12 @@ export function ArtigoTimeline({
             </div>
 
             {/* Diff toggle */}
-            <div className="flex items-center justify-between rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-border dark:bg-card">
+            <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 dark:border-border dark:bg-card">
               <div className="flex items-center gap-2">
-                <GitCompare className="h-4 w-4 text-zinc-500 dark:text-muted-foreground" />
+                <GitCompare className="h-4 w-4 text-neutral-500 dark:text-muted-foreground" />
                 <Label
                   htmlFor="diff-toggle"
-                  className="text-sm text-zinc-600 dark:text-muted-foreground"
+                  className="text-sm text-neutral-600 dark:text-muted-foreground"
                 >
                   Comparar versoes
                 </Label>

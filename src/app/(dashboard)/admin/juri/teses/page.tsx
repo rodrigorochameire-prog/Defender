@@ -56,9 +56,9 @@ export default function TesesJuriPage() {
   const [narrativa, setNarrativa] = useState("");
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* SUB-HEADER - Padrão Defender */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Link href="/admin/juri">
@@ -70,8 +70,8 @@ export default function TesesJuriPage() {
               <Lightbulb className="w-4 h-4 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Teses & Argumentos</h1>
-              <p className="text-[10px] text-zinc-500">Estruture narrativa e antecipações do MP</p>
+              <h1 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Teses & Argumentos</h1>
+              <p className="text-[10px] text-neutral-500">Estruture narrativa e antecipações do MP</p>
             </div>
           </div>
           <Badge variant="outline" className="text-[10px] border-amber-300 text-amber-700">

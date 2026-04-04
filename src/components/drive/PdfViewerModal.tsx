@@ -305,14 +305,14 @@ const SECTION_TYPE_CONFIG: Record<
   documento_identidade: {
     label: "Documento/Identidade",
     color: "#a1a1aa",
-    bgColor: "bg-zinc-400/10 text-zinc-400 border-zinc-400/20",
+    bgColor: "bg-neutral-400/10 text-neutral-400 border-neutral-400/20",
     icon: Fingerprint,
     relevancia: "baixo",
   },
   outros: {
     label: "Outros",
     color: "#71717a",
-    bgColor: "bg-zinc-500/10 text-zinc-500 border-zinc-500/20",
+    bgColor: "bg-neutral-500/10 text-neutral-500 border-neutral-500/20",
     icon: HelpCircle,
     relevancia: "baixo",
   },
@@ -321,7 +321,7 @@ const SECTION_TYPE_CONFIG: Record<
   burocracia: {
     label: "Burocracia",
     color: "#d4d4d8",
-    bgColor: "bg-zinc-300/10 text-zinc-400 border-zinc-300/20",
+    bgColor: "bg-neutral-300/10 text-neutral-400 border-neutral-300/20",
     icon: Ban,
     relevancia: "oculto",
   },
@@ -677,7 +677,7 @@ function SectionIndexPanel({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-2 text-zinc-400">
+      <div className="flex flex-col items-center justify-center h-full gap-2 text-neutral-400">
         <Loader2 className="w-5 h-5 animate-spin" />
         <span className="text-xs">Carregando índice...</span>
       </div>
@@ -687,11 +687,11 @@ function SectionIndexPanel({
   if (sections.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-2 px-4 text-center">
-        <FileText className="w-8 h-8 text-zinc-300 dark:text-zinc-600" />
-        <p className="text-xs text-zinc-400 dark:text-zinc-500">
+        <FileText className="w-8 h-8 text-neutral-300 dark:text-neutral-600" />
+        <p className="text-xs text-neutral-400 dark:text-neutral-500">
           Nenhuma peça processual identificada
         </p>
-        <p className="text-[10px] text-zinc-300 dark:text-zinc-600">
+        <p className="text-[10px] text-neutral-300 dark:text-neutral-600">
           O pipeline de IA ainda não processou este PDF
         </p>
       </div>
@@ -701,28 +701,28 @@ function SectionIndexPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Search */}
-      <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-700">
+      <div className="px-3 py-2 border-b border-neutral-200 dark:border-neutral-700">
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-400" />
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-neutral-400" />
           <Input
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Buscar peça..."
-            className="h-7 pl-7 text-xs bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700"
+            className="h-7 pl-7 text-xs bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700"
           />
         </div>
       </div>
 
       {/* Batch select toolbar */}
       {onToggleBatchSelect && (
-        <div className="px-3 py-1 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
+        <div className="px-3 py-1 border-b border-neutral-100 dark:border-neutral-800 flex items-center gap-2">
           <button
             onClick={onToggleBatchSelect}
             className={cn(
               "text-[10px] px-2 py-0.5 rounded border transition-colors",
               batchSelectMode
                 ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
-                : "bg-zinc-50 dark:bg-zinc-800 text-zinc-500 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300"
+                : "bg-neutral-50 dark:bg-neutral-800 text-neutral-500 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300"
             )}
           >
             {batchSelectMode ? "Cancelar" : "Selecionar"}
@@ -734,13 +734,13 @@ function SectionIndexPanel({
                   const allIds = filteredSections.filter((s) => getSectionConfig(s.tipo).relevancia !== "oculto").map((s) => s.id);
                   onSelectAll?.(allIds);
                 }}
-                className="text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                className="text-[10px] text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
               >
                 Todas
               </button>
               <button
                 onClick={onClearSelection}
-                className="text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                className="text-[10px] text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
               >
                 Limpar
               </button>
@@ -764,14 +764,14 @@ function SectionIndexPanel({
       )}
 
       {/* Quick filter chips */}
-      <div className="px-2 py-1.5 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-1 overflow-x-auto scrollbar-none">
+      <div className="px-2 py-1.5 border-b border-neutral-100 dark:border-neutral-800 flex items-center gap-1 overflow-x-auto scrollbar-none">
         <button
           onClick={() => setFilterGroup(null)}
           className={cn(
             "text-[9px] px-2 py-0.5 rounded-full border whitespace-nowrap transition-colors flex-shrink-0",
             !filterGroup
-              ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-transparent"
-              : "bg-zinc-50 dark:bg-zinc-800 text-zinc-500 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+              ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-transparent"
+              : "bg-neutral-50 dark:bg-neutral-800 text-neutral-500 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600"
           )}
         >
           Todos {sections.length - burocraciaCount}
@@ -790,7 +790,7 @@ function SectionIndexPanel({
                 "text-[9px] px-2 py-0.5 rounded-full border whitespace-nowrap transition-colors flex-shrink-0",
                 isActive
                   ? "text-white border-transparent"
-                  : "bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                  : "bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600"
               )}
               style={isActive ? { backgroundColor: config.color } : { color: config.color }}
             >
@@ -807,7 +807,7 @@ function SectionIndexPanel({
           className={cn(
             "px-3 py-1 border-b text-[10px] flex items-center gap-1.5 transition-colors w-full",
             hideBurocracia
-              ? "bg-zinc-50 dark:bg-zinc-800/30 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 border-zinc-100 dark:border-zinc-800"
+              ? "bg-neutral-50 dark:bg-neutral-800/30 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 border-neutral-100 dark:border-neutral-800"
               : "bg-amber-50/50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/20"
           )}
         >
@@ -815,13 +815,13 @@ function SectionIndexPanel({
             <>
               <EyeOff className="w-3 h-3" />
               <span>{burocraciaCount} burocracia oculta</span>
-              <span className="text-zinc-300 dark:text-zinc-600 ml-auto">mostrar</span>
+              <span className="text-neutral-300 dark:text-neutral-600 ml-auto">mostrar</span>
             </>
           ) : (
             <>
               <Eye className="w-3 h-3" />
               <span>{burocraciaCount} burocracia visível</span>
-              <span className="text-zinc-300 dark:text-zinc-600 ml-auto">ocultar</span>
+              <span className="text-neutral-300 dark:text-neutral-600 ml-auto">ocultar</span>
             </>
           )}
         </button>
@@ -845,8 +845,8 @@ function SectionIndexPanel({
                 onClick={() => !filterGroup && toggleGroup(groupKey)}
                 className={cn(
                   "w-full text-left px-3 py-1.5 flex items-center gap-2 border-b transition-colors",
-                  "bg-zinc-50/80 dark:bg-zinc-800/40 border-zinc-100 dark:border-zinc-800",
-                  !filterGroup && "hover:bg-zinc-100 dark:hover:bg-zinc-800/60 cursor-pointer"
+                  "bg-neutral-50/80 dark:bg-neutral-800/40 border-neutral-100 dark:border-neutral-800",
+                  !filterGroup && "hover:bg-neutral-100 dark:hover:bg-neutral-800/60 cursor-pointer"
                 )}
               >
                 <div
@@ -855,20 +855,20 @@ function SectionIndexPanel({
                 >
                   <GroupIcon className="w-2.5 h-2.5" style={{ color: config.color }} />
                 </div>
-                <span className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 flex-1 truncate uppercase tracking-wider">
+                <span className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 flex-1 truncate uppercase tracking-wider">
                   {config.label}
                 </span>
                 <Badge
                   variant="outline"
-                  className="text-[9px] px-1.5 py-0 h-4 font-mono border-zinc-200 dark:border-zinc-700"
+                  className="text-[9px] px-1.5 py-0 h-4 font-mono border-neutral-200 dark:border-neutral-700"
                   style={{ color: config.color }}
                 >
                   {groupSections.length}
                 </Badge>
                 {!filterGroup && (
                   isExpanded
-                    ? <ChevronUp className="w-3 h-3 text-zinc-400 flex-shrink-0" />
-                    : <ChevronDown className="w-3 h-3 text-zinc-400 flex-shrink-0" />
+                    ? <ChevronUp className="w-3 h-3 text-neutral-400 flex-shrink-0" />
+                    : <ChevronDown className="w-3 h-3 text-neutral-400 flex-shrink-0" />
                 )}
               </button>
 
@@ -892,10 +892,10 @@ function SectionIndexPanel({
                       }
                     }}
                     className={cn(
-                      "w-full text-left pl-6 pr-3 py-1.5 border-b border-zinc-100 dark:border-zinc-800 transition-colors group",
+                      "w-full text-left pl-6 pr-3 py-1.5 border-b border-neutral-100 dark:border-neutral-800 transition-colors group",
                       isActive && !batchSelectMode
-                        ? "bg-zinc-100 dark:bg-zinc-800/80"
-                        : "hover:bg-zinc-50 dark:hover:bg-zinc-800/40",
+                        ? "bg-neutral-100 dark:bg-neutral-800/80"
+                        : "hover:bg-neutral-50 dark:hover:bg-neutral-800/40",
                       isSelected && !batchSelectMode && "ring-1 ring-inset ring-emerald-500/30",
                       isBatchSelected && "bg-emerald-50/50 dark:bg-emerald-950/20"
                     )}
@@ -907,7 +907,7 @@ function SectionIndexPanel({
                           "w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors",
                           isBatchSelected
                             ? "bg-emerald-500 border-emerald-500"
-                            : "border-zinc-300 dark:border-zinc-600"
+                            : "border-neutral-300 dark:border-neutral-600"
                         )}>
                           {isBatchSelected && <Check className="w-2.5 h-2.5 text-white" />}
                         </div>
@@ -922,11 +922,11 @@ function SectionIndexPanel({
                       )}
 
                       <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-medium text-zinc-700 dark:text-zinc-300 truncate leading-tight">
+                        <p className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300 truncate leading-tight">
                           {section.titulo}
                         </p>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[9px] text-zinc-400 font-mono">
+                          <span className="text-[9px] text-neutral-400 font-mono">
                             pg {section.paginaInicio}
                             {section.paginaFim !== section.paginaInicio &&
                               `–${section.paginaFim}`}
@@ -939,7 +939,7 @@ function SectionIndexPanel({
                                   ? "text-emerald-500"
                                   : section.confianca >= 50
                                     ? "text-amber-500"
-                                    : "text-zinc-400"
+                                    : "text-neutral-400"
                               )}
                             >
                               {section.confianca}%
@@ -960,12 +960,12 @@ function SectionIndexPanel({
                           onExtract?.(section.id);
                         }}
                         disabled={extractingId === section.id}
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all flex-shrink-0"
+                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all flex-shrink-0"
                       >
                         {extractingId === section.id ? (
-                          <Loader2 className="w-3 h-3 animate-spin text-zinc-400" />
+                          <Loader2 className="w-3 h-3 animate-spin text-neutral-400" />
                         ) : (
-                          <FileDown className="w-3 h-3 text-zinc-400 hover:text-emerald-500" />
+                          <FileDown className="w-3 h-3 text-neutral-400 hover:text-emerald-500" />
                         )}
                       </button>
                     </div>
@@ -998,14 +998,14 @@ function SectionDetailFooter({
   const meta = section.metadata;
 
   return (
-    <div className="border-t border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+    <div className="border-t border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center gap-2 px-4 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+        className="w-full flex items-center gap-2 px-4 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
       >
         <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-        <span className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider flex-1 text-left">
+        <span className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex-1 text-left">
           Resumo IA
         </span>
         <Badge
@@ -1016,9 +1016,9 @@ function SectionDetailFooter({
           {config.label}
         </Badge>
         {isExpanded ? (
-          <ChevronDown className="w-3 h-3 text-zinc-400" />
+          <ChevronDown className="w-3 h-3 text-neutral-400" />
         ) : (
-          <ChevronUp className="w-3 h-3 text-zinc-400" />
+          <ChevronUp className="w-3 h-3 text-neutral-400" />
         )}
       </button>
 
@@ -1026,17 +1026,17 @@ function SectionDetailFooter({
         <div className="px-4 pb-3 space-y-2">
           {/* Title + page range */}
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
               {section.titulo}
             </p>
-            <span className="text-[10px] text-zinc-400 font-mono">
+            <span className="text-[10px] text-neutral-400 font-mono">
               pg {section.paginaInicio}–{section.paginaFim}
             </span>
           </div>
 
           {/* Summary */}
           {section.resumo && (
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
+            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
               {section.resumo}
             </p>
           )}
@@ -1082,7 +1082,7 @@ function SectionDetailFooter({
                 <Badge
                   key={d}
                   variant="outline"
-                  className="text-[9px] px-1.5 py-0 h-4 bg-zinc-500/5 text-zinc-500 border-zinc-500/20"
+                  className="text-[9px] px-1.5 py-0 h-4 bg-neutral-500/5 text-neutral-500 border-neutral-500/20"
                 >
                   {d}
                 </Badge>
@@ -1118,9 +1118,9 @@ function FilesPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Search */}
-      <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-700">
+      <div className="px-3 py-2 border-b border-neutral-200 dark:border-neutral-700">
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-400" />
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-neutral-400" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -1138,19 +1138,19 @@ function FilesPanel({
             type="button"
             onClick={() => onSelectFile(file.id)}
             className={cn(
-              "w-full flex items-center gap-2 px-3 py-2 text-left border-b border-zinc-100 dark:border-zinc-800 transition-colors group",
+              "w-full flex items-center gap-2 px-3 py-2 text-left border-b border-neutral-100 dark:border-neutral-800 transition-colors group",
               file.id === currentFileId
                 ? "bg-emerald-50 dark:bg-emerald-900/20 border-l-2 border-l-emerald-500"
-                : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
             )}
           >
-            <FileText className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+            <FileText className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
             <span
               className={cn(
                 "text-[11px] truncate",
                 file.id === currentFileId
                   ? "font-medium text-emerald-700 dark:text-emerald-400"
-                  : "text-zinc-600 dark:text-zinc-400"
+                  : "text-neutral-600 dark:text-neutral-400"
               )}
             >
               {file.name}
@@ -1161,7 +1161,7 @@ function FilesPanel({
           </button>
         ))}
         {filtered.length === 0 && (
-          <div className="text-center py-6 text-xs text-zinc-400">
+          <div className="text-center py-6 text-xs text-neutral-400">
             Nenhum arquivo encontrado
           </div>
         )}
@@ -1214,8 +1214,8 @@ function AnnotationsPanel({
         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/10 flex items-center justify-center mb-3">
           <Highlighter className="w-6 h-6 text-amber-400 dark:text-amber-500" />
         </div>
-        <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Nenhuma anotacao</p>
-        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1 leading-relaxed">
+        <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Nenhuma anotacao</p>
+        <p className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-1 leading-relaxed">
           Use <span className="font-medium text-amber-500">Grifo</span>,{" "}
           <span className="font-medium text-emerald-500">Sublinhado</span> ou{" "}
           <span className="font-medium text-blue-500">Nota</span> para anotar
@@ -1228,13 +1228,13 @@ function AnnotationsPanel({
     <div className="flex flex-col h-full overflow-y-auto">
       {grouped.map(([page, items]) => (
         <div key={page}>
-          <div className="px-3 py-1.5 bg-gradient-to-r from-zinc-50 to-zinc-100/50 dark:from-zinc-800/40 dark:to-zinc-800/20 border-b border-zinc-100 dark:border-zinc-800 sticky top-0 z-10 backdrop-blur-sm">
+          <div className="px-3 py-1.5 bg-gradient-to-r from-neutral-50 to-neutral-100/50 dark:from-neutral-800/40 dark:to-neutral-800/20 border-b border-neutral-100 dark:border-neutral-800 sticky top-0 z-10 backdrop-blur-sm">
             <div className="flex items-center gap-1.5">
-              <FileText className="w-3 h-3 text-zinc-400" />
-              <span className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide uppercase">
+              <FileText className="w-3 h-3 text-neutral-400" />
+              <span className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 tracking-wide uppercase">
                 Pagina {page}
               </span>
-              <span className="text-[9px] text-zinc-400 dark:text-zinc-500 ml-auto">
+              <span className="text-[9px] text-neutral-400 dark:text-neutral-500 ml-auto">
                 {items.length} {items.length === 1 ? "item" : "itens"}
               </span>
             </div>
@@ -1249,9 +1249,9 @@ function AnnotationsPanel({
                 key={a.id}
                 onClick={() => onNavigate(a.pagina)}
                 className={cn(
-                  "flex items-start gap-2.5 px-3 py-2.5 border-b border-zinc-100 dark:border-zinc-800",
+                  "flex items-start gap-2.5 px-3 py-2.5 border-b border-neutral-100 dark:border-neutral-800",
                   "border-l-[3px] cursor-pointer group",
-                  "hover:bg-zinc-50/80 dark:hover:bg-zinc-800/50",
+                  "hover:bg-neutral-50/80 dark:hover:bg-neutral-800/50",
                   "hover:translate-x-0.5 transition-all duration-200",
                 )}
                 style={{ borderLeftColor: aColor.hex }}
@@ -1266,13 +1266,13 @@ function AnnotationsPanel({
                 </div>
                 <div className="flex-1 min-w-0">
                   {hasSelectedText ? (
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-300 line-clamp-2 italic leading-relaxed">
-                      <span className="text-zinc-400 dark:text-zinc-500 not-italic">&ldquo;</span>
+                    <p className="text-[11px] text-neutral-600 dark:text-neutral-300 line-clamp-2 italic leading-relaxed">
+                      <span className="text-neutral-400 dark:text-neutral-500 not-italic">&ldquo;</span>
                       {a.textoSelecionado}
-                      <span className="text-zinc-400 dark:text-zinc-500 not-italic">&rdquo;</span>
+                      <span className="text-neutral-400 dark:text-neutral-500 not-italic">&rdquo;</span>
                     </p>
                   ) : (
-                    <p className="text-[11px] text-zinc-700 dark:text-zinc-300 line-clamp-2 leading-relaxed">
+                    <p className="text-[11px] text-neutral-700 dark:text-neutral-300 line-clamp-2 leading-relaxed">
                       {a.texto}
                     </p>
                   )}
@@ -1283,11 +1283,11 @@ function AnnotationsPanel({
                     >
                       {tipoLabel}
                     </span>
-                    <span className="text-[9px] text-zinc-400 dark:text-zinc-500">
+                    <span className="text-[9px] text-neutral-400 dark:text-neutral-500">
                       {aColor.label}
                     </span>
                     {a.createdAt && (
-                      <span className="text-[9px] text-zinc-300 dark:text-zinc-600 ml-auto">
+                      <span className="text-[9px] text-neutral-300 dark:text-neutral-600 ml-auto">
                         {relativeTime(a.createdAt)}
                       </span>
                     )}
@@ -1346,7 +1346,7 @@ function ColorSettingsDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-sm flex items-center gap-2">
-            <Settings2 className="w-4 h-4 text-zinc-500" />
+            <Settings2 className="w-4 h-4 text-neutral-500" />
             Categorias de Cor
           </DialogTitle>
         </DialogHeader>
@@ -1373,7 +1373,7 @@ function ColorSettingsDialog({
           <Button
             variant="ghost"
             size="sm"
-            className="text-xs text-zinc-500"
+            className="text-xs text-neutral-500"
             onClick={handleReset}
           >
             Restaurar padrao
@@ -1420,9 +1420,9 @@ function BookmarksPanel({
         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/10 flex items-center justify-center mb-3">
           <Bookmark className="w-6 h-6 text-amber-400 dark:text-amber-500" />
         </div>
-        <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Nenhum marcador</p>
-        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1 leading-relaxed">
-          Pressione <kbd className="px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[9px]">B</kbd> para marcar paginas importantes
+        <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Nenhum marcador</p>
+        <p className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-1 leading-relaxed">
+          Pressione <kbd className="px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 font-mono text-[9px]">B</kbd> para marcar paginas importantes
         </p>
       </div>
     );
@@ -1430,8 +1430,8 @@ function BookmarksPanel({
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      <div className="px-3 py-1.5 border-b border-zinc-100 dark:border-zinc-800 bg-gradient-to-r from-zinc-50 to-zinc-100/50 dark:from-zinc-800/40 dark:to-zinc-800/20">
-        <span className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide uppercase">
+      <div className="px-3 py-1.5 border-b border-neutral-100 dark:border-neutral-800 bg-gradient-to-r from-neutral-50 to-neutral-100/50 dark:from-neutral-800/40 dark:to-neutral-800/20">
+        <span className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 tracking-wide uppercase">
           {bookmarks.length} {bookmarks.length === 1 ? "marcador" : "marcadores"}
         </span>
       </div>
@@ -1442,17 +1442,17 @@ function BookmarksPanel({
           <div
             key={bk.id}
             className={cn(
-              "flex items-center gap-2.5 px-3 py-2.5 border-b border-zinc-100 dark:border-zinc-800 cursor-pointer group transition-all duration-200",
+              "flex items-center gap-2.5 px-3 py-2.5 border-b border-neutral-100 dark:border-neutral-800 cursor-pointer group transition-all duration-200",
               isActive
                 ? "bg-amber-50/60 dark:bg-amber-900/10 border-l-[3px] border-l-amber-500"
-                : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border-l-[3px] border-l-transparent hover:border-l-zinc-300 dark:hover:border-l-zinc-600"
+                : "hover:bg-neutral-50 dark:hover:bg-neutral-800/50 border-l-[3px] border-l-transparent hover:border-l-neutral-300 dark:hover:border-l-neutral-600"
             )}
             onClick={() => onNavigate(bk.pagina)}
           >
             <Bookmark
               className={cn(
                 "w-4 h-4 flex-shrink-0 transition-colors",
-                isActive ? "text-amber-500 fill-amber-500" : "text-zinc-400 group-hover:text-amber-400"
+                isActive ? "text-amber-500 fill-amber-500" : "text-neutral-400 group-hover:text-amber-400"
               )}
             />
             <div className="flex-1 min-w-0">
@@ -1479,11 +1479,11 @@ function BookmarksPanel({
                 <>
                   <p className={cn(
                     "text-[11px] font-medium leading-tight",
-                    isActive ? "text-amber-700 dark:text-amber-400" : "text-zinc-600 dark:text-zinc-300"
+                    isActive ? "text-amber-700 dark:text-amber-400" : "text-neutral-600 dark:text-neutral-300"
                   )}>
                     {bk.texto || `Pagina ${bk.pagina}`}
                   </p>
-                  <span className="text-[9px] text-zinc-400 font-mono">pg {bk.pagina}</span>
+                  <span className="text-[9px] text-neutral-400 font-mono">pg {bk.pagina}</span>
                 </>
               )}
             </div>
@@ -1493,9 +1493,9 @@ function BookmarksPanel({
                   e.stopPropagation();
                   setEditingId(bk.id);
                 }}
-                className="p-1 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                className="p-1 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
               >
-                <Pencil className="w-3 h-3 text-zinc-400" />
+                <Pencil className="w-3 h-3 text-neutral-400" />
               </button>
               <button
                 onClick={(e) => {
@@ -1544,7 +1544,7 @@ function CasoPanel({
       case "approved": return <Check className="w-3.5 h-3.5 text-emerald-500" />;
       case "rejected": return <X className="w-3.5 h-3.5 text-red-500" />;
       case "needs_review": return <AlertCircle className="w-3.5 h-3.5 text-amber-500" />;
-      default: return <div className="w-3.5 h-3.5 rounded-full border-2 border-zinc-300 dark:border-zinc-600" />;
+      default: return <div className="w-3.5 h-3.5 rounded-full border-2 border-neutral-300 dark:border-neutral-600" />;
     }
   };
 
@@ -1553,7 +1553,7 @@ function CasoPanel({
       case "approved": return "border-l-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/10";
       case "rejected": return "border-l-red-500 bg-red-50/30 dark:bg-red-900/10 opacity-60";
       case "needs_review": return "border-l-amber-500 bg-amber-50/30 dark:bg-amber-900/10";
-      default: return "border-l-zinc-300 dark:border-l-zinc-600 hover:border-l-emerald-400";
+      default: return "border-l-neutral-300 dark:border-l-neutral-600 hover:border-l-emerald-400";
     }
   };
 
@@ -1569,8 +1569,8 @@ function CasoPanel({
         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/20 dark:to-violet-800/10 flex items-center justify-center mb-3">
           <Sparkles className="w-6 h-6 text-violet-400 dark:text-violet-500" />
         </div>
-        <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Nenhuma seção classificada</p>
-        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1 leading-relaxed">
+        <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Nenhuma seção classificada</p>
+        <p className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-1 leading-relaxed">
           O pipeline de IA classificará as peças processuais automaticamente
         </p>
       </div>
@@ -1583,16 +1583,16 @@ function CasoPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Progress bar */}
-      <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 bg-gradient-to-r from-zinc-50 to-zinc-100/50 dark:from-zinc-800/40 dark:to-zinc-800/20">
+      <div className="px-3 py-2 border-b border-neutral-100 dark:border-neutral-800 bg-gradient-to-r from-neutral-50 to-neutral-100/50 dark:from-neutral-800/40 dark:to-neutral-800/20">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide uppercase">
+          <span className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 tracking-wide uppercase">
             Revisão do Caso
           </span>
-          <span className="text-[10px] font-mono text-zinc-400">
+          <span className="text-[10px] font-mono text-neutral-400">
             {reviewProgress?.reviewed || 0}/{totalCount}
           </span>
         </div>
-        <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-1.5 overflow-hidden">
+        <div className="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-1.5 overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-emerald-500 to-emerald-400"
             style={{ width: `${reviewProgress?.percentReviewed || 0}%` }}
@@ -1605,7 +1605,7 @@ function CasoPanel({
           <span className="text-[9px] text-red-400 flex items-center gap-0.5">
             <X className="w-2.5 h-2.5" /> {reviewProgress?.rejected || 0}
           </span>
-          <span className="text-[9px] text-zinc-400 flex items-center gap-0.5">
+          <span className="text-[9px] text-neutral-400 flex items-center gap-0.5">
             pendente: {reviewProgress?.pending || 0}
           </span>
         </div>
@@ -1625,7 +1625,7 @@ function CasoPanel({
             <div key={section.id}>
               <div
                 className={cn(
-                  "flex items-start gap-2 px-3 py-2.5 border-b border-zinc-100 dark:border-zinc-800 cursor-pointer group transition-all duration-200 border-l-[3px]",
+                  "flex items-start gap-2 px-3 py-2.5 border-b border-neutral-100 dark:border-neutral-800 cursor-pointer group transition-all duration-200 border-l-[3px]",
                   getStatusBg(status),
                   isActivePage && status === "pending" && "bg-violet-50/40 dark:bg-violet-900/10"
                 )}
@@ -1655,10 +1655,10 @@ function CasoPanel({
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-zinc-600 dark:text-zinc-300 mt-0.5 line-clamp-2 leading-snug">
+                  <p className="text-[10px] text-neutral-600 dark:text-neutral-300 mt-0.5 line-clamp-2 leading-snug">
                     {section.titulo}
                   </p>
-                  <span className="text-[8px] text-zinc-400 font-mono">
+                  <span className="text-[8px] text-neutral-400 font-mono">
                     pg {section.paginaInicio}{section.paginaFim !== section.paginaInicio ? `-${section.paginaFim}` : ""}
                   </span>
                 </div>
@@ -1692,7 +1692,7 @@ function CasoPanel({
                       e.stopPropagation();
                       setExpandedFicha(isExpanded ? null : section.id);
                     }}
-                    className="p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex-shrink-0"
+                    className="p-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors flex-shrink-0"
                     title="Ver Ficha"
                   >
                     <FileSearch className="w-3.5 h-3.5 text-violet-500" />
@@ -1721,7 +1721,7 @@ function CasoPanel({
                           <span className="text-[9px] font-medium text-violet-500 dark:text-violet-400 flex-shrink-0 w-20 text-right">
                             {displayKey}:
                           </span>
-                          <span className="text-[9px] text-zinc-600 dark:text-zinc-300">
+                          <span className="text-[9px] text-neutral-600 dark:text-neutral-300">
                             {Array.isArray(value)
                               ? (value as string[]).join(", ")
                               : typeof value === "object" && value !== null
@@ -1741,7 +1741,7 @@ function CasoPanel({
 
       {/* Footer actions */}
       {approvedCount > 0 && (
-        <div className="border-t border-zinc-200 dark:border-zinc-700 p-2 space-y-1.5 bg-zinc-50 dark:bg-zinc-900">
+        <div className="border-t border-neutral-200 dark:border-neutral-700 p-2 space-y-1.5 bg-neutral-50 dark:bg-neutral-900">
           <Button
             variant="outline"
             size="sm"
@@ -1817,7 +1817,7 @@ const HighlightOverlay = memo(function HighlightOverlay({
       <PopoverContent side="top" align="start" className="w-64 p-2.5 z-[60]">
         {/* Selected text preview */}
         {annotation.textoSelecionado && (
-          <p className="text-[11px] italic text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-2 leading-relaxed">
+          <p className="text-[11px] italic text-neutral-500 dark:text-neutral-400 line-clamp-2 mb-2 leading-relaxed">
             &ldquo;{annotation.textoSelecionado}&rdquo;
           </p>
         )}
@@ -1833,7 +1833,7 @@ const HighlightOverlay = memo(function HighlightOverlay({
                 className={cn(
                   "w-5 h-5 rounded-md transition-all",
                   annotation.cor === c.color
-                    ? "ring-1.5 ring-offset-1 ring-offset-white dark:ring-offset-zinc-800 scale-110"
+                    ? "ring-1.5 ring-offset-1 ring-offset-white dark:ring-offset-neutral-800 scale-110"
                     : "hover:scale-110"
                 )}
                 style={{
@@ -1862,7 +1862,7 @@ const HighlightOverlay = memo(function HighlightOverlay({
         />
         {/* Actions */}
         <div className="flex items-center gap-1">
-          <span className="text-[9px] text-zinc-400 flex-1">
+          <span className="text-[9px] text-neutral-400 flex-1">
             {getAnnotationColor(annotation.cor, customColorLabels).label} &middot; {isUnderline ? "Sublinhado" : "Grifo"}
           </span>
           <Button
@@ -1911,7 +1911,7 @@ const NoteIndicator = memo(function NoteIndicator({
 
           {/* Main pin */}
           <div
-            className="relative w-7 h-7 rounded-full flex items-center justify-center drop-shadow-md border-2 border-white dark:border-zinc-800 transition-transform duration-200 group-hover:scale-110"
+            className="relative w-7 h-7 rounded-full flex items-center justify-center drop-shadow-md border-2 border-white dark:border-neutral-800 transition-transform duration-200 group-hover:scale-110"
             style={{ backgroundColor: noteColor.hex }}
           >
             <StickyNote className="w-3.5 h-3.5 text-white drop-shadow-sm" />
@@ -1923,14 +1923,14 @@ const NoteIndicator = memo(function NoteIndicator({
 
           {/* Note preview on hover */}
           <div className="absolute left-8 top-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">
-            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 px-2.5 py-1.5 max-w-[180px]">
+            <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 px-2.5 py-1.5 max-w-[180px]">
               <div className="flex items-center gap-1 mb-0.5">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: noteColor.hex }} />
                 <span className="text-[8px] font-medium" style={{ color: noteColor.hex }}>
                   {noteColor.label}
                 </span>
               </div>
-              <p className="text-[10px] text-zinc-700 dark:text-zinc-300 line-clamp-2 leading-relaxed">
+              <p className="text-[10px] text-neutral-700 dark:text-neutral-300 line-clamp-2 leading-relaxed">
                 {note.texto}
               </p>
             </div>
@@ -2747,13 +2747,13 @@ export function PdfViewerModal({
         <div
           ref={containerRef}
           className={cn(
-            "w-full h-full bg-white dark:bg-zinc-900 flex flex-col relative",
+            "w-full h-full bg-white dark:bg-neutral-900 flex flex-col relative",
             annotationMode === "highlight" && "pdf-highlight-mode",
             annotationMode === "underline" && "pdf-underline-mode"
           )}
         >
           {/* ── Top Bar — Enlarged & Enhanced ── */}
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 flex-shrink-0">
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900 flex-shrink-0">
             {/* Left: Toggle index */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -2768,7 +2768,7 @@ export function PdfViewerModal({
                       "h-4.5 w-4.5",
                       showIndex
                         ? "text-emerald-500"
-                        : "text-zinc-400 dark:text-zinc-500"
+                        : "text-neutral-400 dark:text-neutral-500"
                     )}
                   />
                 </Button>
@@ -2815,14 +2815,14 @@ export function PdfViewerModal({
                     <p className="text-xs">Proximo arquivo (Alt+&#x2192;)</p>
                   </TooltipContent>
                 </Tooltip>
-                <span className="text-[10px] text-zinc-400 font-mono mx-0.5">
+                <span className="text-[10px] text-neutral-400 font-mono mx-0.5">
                   {currentFileIndex + 1}/{siblingFiles.length}
                 </span>
               </div>
             )}
 
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">
+              <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate">
                 {fileName}
               </p>
             </div>
@@ -2853,9 +2853,9 @@ export function PdfViewerModal({
                   max={numPages}
                   value={currentPage}
                   onChange={(e) => goToPage(parseInt(e.target.value) || 1)}
-                  className="w-14 h-8 text-sm text-center bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-14 h-8 text-sm text-center bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
-                <span className="text-sm text-zinc-400 font-mono">/ {numPages}</span>
+                <span className="text-sm text-neutral-400 font-mono">/ {numPages}</span>
               </div>
               <Button
                 variant="ghost"
@@ -2876,7 +2876,7 @@ export function PdfViewerModal({
               </Tooltip>
             </div>
 
-            <div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700 mx-1" />
+            <div className="w-px h-5 bg-neutral-200 dark:bg-neutral-700 mx-1" />
 
             {/* Right: Actions — Enlarged buttons with more options */}
             <div className="flex items-center gap-1">
@@ -2930,14 +2930,14 @@ export function PdfViewerModal({
                       <Zap className="h-4 w-4 mr-2 text-yellow-500" />
                       <div>
                         <div className="font-medium">Rápido</div>
-                        <div className="text-xs text-zinc-500">Arquivos até 5MB (~100 pgs)</div>
+                        <div className="text-xs text-neutral-500">Arquivos até 5MB (~100 pgs)</div>
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleProcessFile("deep")} disabled={isProcessing}>
                       <Brain className="h-4 w-4 mr-2 text-violet-500" />
                       <div>
                         <div className="font-medium">Profundo</div>
-                        <div className="text-xs text-zinc-500">Até 100MB — sem limite de tempo</div>
+                        <div className="text-xs text-neutral-500">Até 100MB — sem limite de tempo</div>
                       </div>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -2959,7 +2959,7 @@ export function PdfViewerModal({
                       className="h-2"
                     />
                   </div>
-                  <span className="text-[10px] text-zinc-500 whitespace-nowrap">
+                  <span className="text-[10px] text-neutral-500 whitespace-nowrap">
                     {deepProcessingProgress.phase === "extracting"
                       ? "Extraindo..."
                       : `${deepProcessingProgress.processedChunks}/${deepProcessingProgress.totalChunks}`}
@@ -3047,7 +3047,7 @@ export function PdfViewerModal({
                 );
               })()}
 
-              <div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700 mx-0.5" />
+              <div className="w-px h-5 bg-neutral-200 dark:bg-neutral-700 mx-0.5" />
 
               {/* Current page section badges */}
               {currentPageSections.length > 0 && (
@@ -3079,7 +3079,7 @@ export function PdfViewerModal({
                 </div>
               )}
 
-              <div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700 mx-0.5" />
+              <div className="w-px h-5 bg-neutral-200 dark:bg-neutral-700 mx-0.5" />
 
               {/* Fit-to-width toggle */}
               <Tooltip>
@@ -3099,13 +3099,13 @@ export function PdfViewerModal({
               </Tooltip>
 
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={zoomOut}>
-                <ZoomOut className="h-4.5 w-4.5 text-zinc-500" />
+                <ZoomOut className="h-4.5 w-4.5 text-neutral-500" />
               </Button>
-              <span className="text-[11px] text-zinc-400 w-10 text-center font-mono">
+              <span className="text-[11px] text-neutral-400 w-10 text-center font-mono">
                 {Math.round(effectiveScale * 100)}%
               </span>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={zoomIn}>
-                <ZoomIn className="h-4.5 w-4.5 text-zinc-500" />
+                <ZoomIn className="h-4.5 w-4.5 text-neutral-500" />
               </Button>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -3132,9 +3132,9 @@ export function PdfViewerModal({
                 onClick={toggleFullscreen}
               >
                 {isFullscreen ? (
-                  <Minimize2 className="h-4.5 w-4.5 text-zinc-500" />
+                  <Minimize2 className="h-4.5 w-4.5 text-neutral-500" />
                 ) : (
-                  <Maximize2 className="h-4.5 w-4.5 text-zinc-500" />
+                  <Maximize2 className="h-4.5 w-4.5 text-neutral-500" />
                 )}
               </Button>
               <Button
@@ -3143,7 +3143,7 @@ export function PdfViewerModal({
                 className="h-8 w-8"
                 onClick={onClose}
               >
-                <X className="h-4.5 w-4.5 text-zinc-500" />
+                <X className="h-4.5 w-4.5 text-neutral-500" />
               </Button>
             </div>
           </div>
@@ -3152,16 +3152,16 @@ export function PdfViewerModal({
           {annotationMode !== "none" && (
             <div className="flex flex-col flex-shrink-0">
               {/* Main toolbar — redesigned larger */}
-              <div className="flex items-center gap-3 px-4 py-2.5 border-b border-zinc-200/80 dark:border-zinc-700/80 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md">
+              <div className="flex items-center gap-3 px-4 py-2.5 border-b border-neutral-200/80 dark:border-neutral-700/80 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md">
                 {/* Mode toggle - pill design (larger) */}
-                <div className="flex rounded-xl bg-zinc-100 dark:bg-zinc-800 p-1 shadow-inner">
+                <div className="flex rounded-xl bg-neutral-100 dark:bg-neutral-800 p-1 shadow-inner">
                   <button
                     onClick={() => setAnnotationMode("highlight")}
                     className={cn(
                       "flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200",
                       annotationMode === "highlight"
-                        ? "bg-white dark:bg-zinc-700 text-amber-600 dark:text-amber-400 shadow-md"
-                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                        ? "bg-white dark:bg-neutral-700 text-amber-600 dark:text-amber-400 shadow-md"
+                        : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
                     )}
                   >
                     <Highlighter className="w-4 h-4" />
@@ -3172,8 +3172,8 @@ export function PdfViewerModal({
                     className={cn(
                       "flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200",
                       annotationMode === "underline"
-                        ? "bg-white dark:bg-zinc-700 text-emerald-600 dark:text-emerald-400 shadow-md"
-                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                        ? "bg-white dark:bg-neutral-700 text-emerald-600 dark:text-emerald-400 shadow-md"
+                        : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
                     )}
                   >
                     <Underline className="w-4 h-4" />
@@ -3184,8 +3184,8 @@ export function PdfViewerModal({
                     className={cn(
                       "flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200",
                       annotationMode === "note"
-                        ? "bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-md"
-                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                        ? "bg-white dark:bg-neutral-700 text-blue-600 dark:text-blue-400 shadow-md"
+                        : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
                     )}
                   >
                     <StickyNote className="w-4 h-4" />
@@ -3194,7 +3194,7 @@ export function PdfViewerModal({
                 </div>
 
                 {/* Divider */}
-                <div className="w-px h-8 bg-zinc-200 dark:bg-zinc-700" />
+                <div className="w-px h-8 bg-neutral-200 dark:bg-neutral-700" />
 
                 {/* Color picker — soft pastel dots matching actual highlight colors */}
                 <div className="flex items-center gap-1">
@@ -3209,7 +3209,7 @@ export function PdfViewerModal({
                             className={cn(
                               "w-5 h-5 rounded-md transition-all duration-150",
                               selectedColor === c.color
-                                ? "ring-1.5 ring-offset-1 ring-offset-white dark:ring-offset-zinc-900 shadow-sm"
+                                ? "ring-1.5 ring-offset-1 ring-offset-white dark:ring-offset-neutral-900 shadow-sm"
                                 : "hover:scale-110"
                             )}
                             style={{
@@ -3231,7 +3231,7 @@ export function PdfViewerModal({
                 </div>
 
                 {/* Divider */}
-                <div className="w-px h-8 bg-zinc-200 dark:bg-zinc-700" />
+                <div className="w-px h-8 bg-neutral-200 dark:bg-neutral-700" />
 
                 {/* Active color label + settings */}
                 <div className="flex items-center gap-1.5">
@@ -3242,16 +3242,16 @@ export function PdfViewerModal({
                       border: `1.5px solid ${getAnnotationColor(selectedColor, customColorLabels).hexMid}`,
                     }}
                   />
-                  <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                  <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
                     {getAnnotationColor(selectedColor, customColorLabels).label}
                   </span>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => setShowColorSettings(true)}
-                        className="p-1 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                        className="p-1 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
                       >
-                        <Settings2 className="w-3.5 h-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300" />
+                        <Settings2 className="w-3.5 h-3.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300" />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="text-[10px]">Editar categorias</TooltipContent>
@@ -3263,7 +3263,7 @@ export function PdfViewerModal({
 
                 {/* Annotation count badge */}
                 {(annotations?.length || 0) > 0 && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-xs font-medium text-neutral-500 dark:text-neutral-400">
                     <Highlighter className="w-3 h-3" />
                     {annotations?.filter((a: any) => a.tipo !== "bookmark").length}
                   </div>
@@ -3273,7 +3273,7 @@ export function PdfViewerModal({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-full text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50"
+                  className="h-8 w-8 rounded-full text-neutral-400 hover:text-neutral-600 hover:bg-neutral-200/50 dark:hover:bg-neutral-700/50"
                   onClick={() => setAnnotationMode("none")}
                 >
                   <X className="h-4 w-4" />
@@ -3302,9 +3302,9 @@ export function PdfViewerModal({
           <div className="flex-1 flex overflow-hidden">
             {/* Sidebar (left) — Sections or Files tab */}
             {showIndex && (
-              <div className="w-72 border-r border-zinc-200 dark:border-zinc-700 flex-shrink-0 bg-white dark:bg-zinc-900 overflow-hidden flex flex-col">
+              <div className="w-72 border-r border-neutral-200 dark:border-neutral-700 flex-shrink-0 bg-white dark:bg-neutral-900 overflow-hidden flex flex-col">
                 {/* Tab Header — icon-based compact design for 5 tabs */}
-                <div className="flex border-b border-zinc-200 dark:border-zinc-700 flex-shrink-0">
+                <div className="flex border-b border-neutral-200 dark:border-neutral-700 flex-shrink-0">
                   {([
                     { key: "files" as const, icon: FolderOpen, label: "Arquivos", activeColor: "emerald", count: siblingFiles?.length },
                     { key: "sections" as const, icon: BookMarked, label: "Seções", activeColor: "emerald", count: undefined },
@@ -3328,7 +3328,7 @@ export function PdfViewerModal({
                               "flex-1 flex items-center justify-center gap-1 px-1 py-2.5 text-[10px] font-medium transition-colors relative",
                               isActive
                                 ? colorClasses[tab.activeColor as keyof typeof colorClasses]
-                                : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                                : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                             )}
                           >
                             <Icon className="w-3.5 h-3.5" />
@@ -3338,7 +3338,7 @@ export function PdfViewerModal({
                                 "min-w-[14px] h-[14px] flex items-center justify-center text-[8px] font-bold rounded-full leading-none",
                                 isActive
                                   ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                                  : "bg-zinc-200 dark:bg-zinc-700 text-zinc-500"
+                                  : "bg-neutral-200 dark:bg-neutral-700 text-neutral-500"
                               )}>
                                 {tab.count}
                               </span>
@@ -3421,15 +3421,15 @@ export function PdfViewerModal({
             <div
               ref={pageContainerRef}
               className={cn(
-                "flex-1 overflow-auto bg-zinc-100 dark:bg-zinc-950 flex justify-center",
+                "flex-1 overflow-auto bg-neutral-100 dark:bg-neutral-950 flex justify-center",
                 annotationMode === "note" && "cursor-crosshair"
               )}
               onMouseUp={annotationMode === "highlight" || annotationMode === "underline" ? handleTextSelection : undefined}
             >
               {pdfError || !pdfUrl ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-8">
-                  <AlertCircle className="w-10 h-10 text-zinc-300 dark:text-zinc-600" />
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <AlertCircle className="w-10 h-10 text-neutral-300 dark:text-neutral-600" />
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">
                     {pdfError || "URL do arquivo não disponível"}
                   </p>
                   {pdfUrl && (
@@ -3451,8 +3451,8 @@ export function PdfViewerModal({
                     onLoadError={onDocumentLoadError}
                     loading={
                       <div className="flex items-center justify-center h-96 gap-2">
-                        <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
-                        <span className="text-sm text-zinc-400">
+                        <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
+                        <span className="text-sm text-neutral-400">
                           Carregando PDF...
                         </span>
                       </div>
@@ -3468,7 +3468,7 @@ export function PdfViewerModal({
                       renderAnnotationLayer={false}
                       loading={
                         <div className="flex items-center justify-center h-96">
-                          <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                          <Loader2 className="w-5 h-5 animate-spin text-neutral-300" />
                         </div>
                       }
                     />
@@ -3587,15 +3587,15 @@ export function PdfViewerModal({
 
           {/* ── Extract Result Notification ── */}
           {extractResult && (
-            <div className="absolute bottom-4 right-4 z-50 bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-700 rounded-lg shadow-xl p-4 max-w-sm animate-in slide-in-from-bottom-2">
+            <div className="absolute bottom-4 right-4 z-50 bg-white dark:bg-neutral-900 border border-emerald-300 dark:border-emerald-700 rounded-lg shadow-xl p-4 max-w-sm animate-in slide-in-from-bottom-2">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
                   <Check className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Peça extraída!</p>
-                  <p className="text-xs text-zinc-500 mt-0.5 truncate">{extractResult.fileName}</p>
-                  <p className="text-[10px] text-zinc-400 mt-0.5">{extractResult.pageCount} página(s)</p>
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Peça extraída!</p>
+                  <p className="text-xs text-neutral-500 mt-0.5 truncate">{extractResult.fileName}</p>
+                  <p className="text-[10px] text-neutral-400 mt-0.5">{extractResult.pageCount} página(s)</p>
                   <div className="flex gap-2 mt-3">
                     <a
                       href={extractResult.webViewLink}
@@ -3611,7 +3611,7 @@ export function PdfViewerModal({
                         navigator.clipboard.writeText(extractResult.webViewLink);
                         toast.success("Link copiado!");
                       }}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
                     >
                       <Link2 className="w-3 h-3" />
                       Copiar link
@@ -3620,7 +3620,7 @@ export function PdfViewerModal({
                 </div>
                 <button
                   onClick={() => setExtractResult(null)}
-                  className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                  className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                 >
                   <X className="w-4 h-4" />
                 </button>

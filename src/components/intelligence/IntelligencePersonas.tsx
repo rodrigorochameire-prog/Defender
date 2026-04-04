@@ -31,9 +31,9 @@ const TIPO_CONFIG: Record<
   policial: { label: "Policial", icon: Shield, color: "text-cyan-500" },
   delegado: { label: "Delegado", icon: BadgeCheck, color: "text-teal-500" },
   juiz: { label: "Juiz", icon: Gavel, color: "text-indigo-500" },
-  familiar: { label: "Familiar", icon: Users, color: "text-zinc-500" },
-  jurado: { label: "Jurado", icon: Users, color: "text-zinc-500" },
-  outro: { label: "Outro", icon: User, color: "text-zinc-400" },
+  familiar: { label: "Familiar", icon: Users, color: "text-neutral-500" },
+  jurado: { label: "Jurado", icon: Users, color: "text-neutral-500" },
+  outro: { label: "Outro", icon: User, color: "text-neutral-400" },
 };
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {

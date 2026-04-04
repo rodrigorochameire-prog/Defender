@@ -128,7 +128,7 @@ function FolderTreeItem({
           "flex items-center gap-1.5 cursor-pointer rounded-md px-2 py-1.5 transition-colors text-sm",
           isSelected
             ? "ring-1 ring-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 dark:ring-emerald-600 text-emerald-800 dark:text-emerald-300"
-            : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+            : "hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
         )}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
       >
@@ -136,12 +136,12 @@ function FolderTreeItem({
         <button
           type="button"
           onClick={handleToggle}
-          className="shrink-0 p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+          className="shrink-0 p-0.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
         >
           {isExpanded ? (
-            <ChevronDown className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
+            <ChevronDown className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
+            <ChevronRight className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
           )}
         </button>
 
@@ -161,7 +161,7 @@ function FolderTreeItem({
         <div>
           {isLoading ? (
             <div
-              className="flex items-center gap-2 py-1.5 text-zinc-400 text-xs"
+              className="flex items-center gap-2 py-1.5 text-neutral-400 text-xs"
               style={{ paddingLeft: `${(depth + 1) * 16 + 8}px` }}
             >
               <Loader2 className="h-3 w-3 animate-spin" />
@@ -169,7 +169,7 @@ function FolderTreeItem({
             </div>
           ) : filteredSubfolders.length === 0 && !searchQuery.trim() ? (
             <div
-              className="py-1 text-zinc-400 dark:text-zinc-500 text-xs"
+              className="py-1 text-neutral-400 dark:text-neutral-500 text-xs"
               style={{ paddingLeft: `${(depth + 1) * 16 + 8}px` }}
             >
               Sem subpastas
@@ -332,12 +332,12 @@ export function MoveFileModal({
         {/* Folder tree */}
         <ScrollArea className="h-[400px] rounded-md border p-2">
           {isLoadingFolders ? (
-            <div className="flex flex-col items-center justify-center h-full gap-2 text-zinc-400">
+            <div className="flex flex-col items-center justify-center h-full gap-2 text-neutral-400">
               <Loader2 className="h-5 w-5 animate-spin" />
               <span className="text-sm">Carregando pastas...</span>
             </div>
           ) : !filteredRootFolders || filteredRootFolders.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-zinc-400">
+            <div className="flex flex-col items-center justify-center h-full text-neutral-400">
               <Folder className="h-10 w-10 mb-2 opacity-40" />
               <span className="text-sm">Nenhuma pasta encontrada</span>
             </div>

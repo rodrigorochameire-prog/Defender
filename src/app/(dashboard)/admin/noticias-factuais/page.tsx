@@ -139,10 +139,10 @@ export default function NoticiasFactuaisPage() {
         <div className="max-w-3xl mx-auto w-full px-4 py-8 space-y-6">
           {[1, 2, 3].map(i => (
             <div key={i} className="animate-pulse space-y-3">
-              <div className="h-3 bg-zinc-200 dark:bg-border rounded w-24" />
-              <div className="h-6 bg-zinc-200 dark:bg-border rounded w-3/4" />
-              <div className="h-4 bg-zinc-100 dark:bg-muted rounded w-full" />
-              <div className="h-4 bg-zinc-100 dark:bg-muted rounded w-5/6" />
+              <div className="h-3 bg-neutral-200 dark:bg-border rounded w-24" />
+              <div className="h-6 bg-neutral-200 dark:bg-border rounded w-3/4" />
+              <div className="h-4 bg-neutral-100 dark:bg-muted rounded w-full" />
+              <div className="h-4 bg-neutral-100 dark:bg-muted rounded w-5/6" />
             </div>
           ))}
         </div>
@@ -155,11 +155,11 @@ export default function NoticiasFactuaisPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 px-4">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-serif font-medium text-zinc-800 dark:text-zinc-200"
+          <h2 className="text-2xl font-serif font-medium text-neutral-800 dark:text-neutral-200"
               style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}>
             Diário da Bahia
           </h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
             Nenhuma edição disponível. Execute o pipeline para gerar a primeira edição.
           </p>
         </div>
@@ -190,7 +190,7 @@ export default function NoticiasFactuaisPage() {
       />
 
       {/* Navigation bar */}
-      <div className="sticky top-0 z-30 bg-white dark:bg-zinc-950 border-b border-zinc-200/60 dark:border-zinc-800">
+      <div className="sticky top-0 z-30 bg-white dark:bg-neutral-950 border-b border-neutral-200/60 dark:border-neutral-800">
         <div className="max-w-3xl mx-auto px-4 flex items-center justify-between gap-2">
           {/* Section nav */}
           <FactualSectionNav
@@ -207,7 +207,7 @@ export default function NoticiasFactuaisPage() {
               onClick={() => triggerPipeline.mutate()}
               disabled={triggerPipeline.isPending}
               title="Atualizar notícias"
-              className="h-7 w-7 p-0 text-zinc-400"
+              className="h-7 w-7 p-0 text-neutral-400"
             >
               <RefreshCw className={cn("h-3.5 w-3.5", triggerPipeline.isPending && "animate-spin")} />
             </Button>
@@ -219,7 +219,7 @@ export default function NoticiasFactuaisPage() {
       <main className="max-w-3xl mx-auto w-full px-4 md:px-8 pb-16">
 
         {/* Edition info bar */}
-        <div className="flex items-center justify-between gap-3 py-4 text-xs text-zinc-400">
+        <div className="flex items-center justify-between gap-3 py-4 text-xs text-neutral-400">
           <span>
             {totalArtigos} artigos em {secoesOrdenadas.length} seções
           </span>
@@ -229,7 +229,7 @@ export default function NoticiasFactuaisPage() {
                 <button
                   onClick={handlePrevEdicao}
                   disabled={currentEdicaoIndex >= edicoes.length - 1}
-                  className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 transition-colors"
+                  className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-30 transition-colors"
                   title="Edição anterior"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
@@ -240,7 +240,7 @@ export default function NoticiasFactuaisPage() {
                 <button
                   onClick={handleNextEdicao}
                   disabled={currentEdicaoIndex <= 0}
-                  className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 transition-colors"
+                  className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-30 transition-colors"
                   title="Próxima edição"
                 >
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -279,11 +279,11 @@ export default function NoticiasFactuaisPage() {
         })}
 
         {/* Footer */}
-        <footer className="border-t border-zinc-200 dark:border-zinc-800 mt-16 pt-8 pb-4 text-center">
-          <p className="text-xs text-zinc-400 tracking-wide">
+        <footer className="border-t border-neutral-200 dark:border-neutral-800 mt-16 pt-8 pb-4 text-center">
+          <p className="text-xs text-neutral-400 tracking-wide">
             Diário da Bahia &mdash; Edição diária &middot; Horário de Salvador
           </p>
-          <p className="text-[11px] text-zinc-400/70 mt-2">
+          <p className="text-[11px] text-neutral-400/70 mt-2">
             Gerado automaticamente com base em fontes públicas. Todas as matérias possuem link para a fonte original.
           </p>
         </footer>

@@ -173,7 +173,7 @@ export function FeedbackFAB() {
         className={cn(
           "fixed z-[52] flex items-center justify-center",
           "w-11 h-11 rounded-full shadow-lg",
-          "bg-zinc-900 dark:bg-zinc-700 text-white",
+          "bg-neutral-900 dark:bg-neutral-700 text-white",
           "hover:bg-emerald-600 dark:hover:bg-emerald-600",
           "transition-all duration-200 active:scale-95",
           "bottom-[8.5rem] right-4 sm:bottom-6 sm:right-[4.5rem]",
@@ -195,16 +195,16 @@ export function FeedbackFAB() {
             "fixed z-[52]",
             "bottom-[12rem] right-4 sm:bottom-[4.5rem] sm:right-[4.5rem]",
             "w-80 sm:w-96",
-            "bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-2xl",
+            "bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-2xl",
             "animate-in fade-in slide-in-from-bottom-2 duration-200"
           )}
         >
           {/* Header */}
           <div className="px-4 pt-4 pb-2">
-            <h3 className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+            <h3 className="text-sm font-bold text-neutral-800 dark:text-neutral-200">
               Enviar feedback
             </h3>
-            <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+            <p className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-0.5">
               Sua opinião ajuda a melhorar o OMBUDS
             </p>
           </div>
@@ -222,7 +222,7 @@ export function FeedbackFAB() {
                     "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer",
                     isSelected
                       ? cn(t.selectedBg, t.selectedBorder, t.selectedText)
-                      : "bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-750"
+                      : "bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-750"
                   )}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -245,8 +245,8 @@ export function FeedbackFAB() {
               placeholder="Descreva o que aconteceu ou o que poderia melhorar..."
               className={cn(
                 "w-full rounded-lg border px-3 py-2 text-sm resize-none",
-                "bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700",
-                "text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500",
+                "bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700",
+                "text-neutral-800 dark:text-neutral-200 placeholder:text-neutral-400 dark:placeholder:text-neutral-500",
                 "focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500",
                 "transition-colors"
               )}
@@ -255,7 +255,7 @@ export function FeedbackFAB() {
 
           {/* Footer */}
           <div className="px-4 pb-4 pt-1 flex items-center justify-between">
-            <span className="text-[10px] text-zinc-400 dark:text-zinc-500 tabular-nums">
+            <span className="text-[10px] text-neutral-400 dark:text-neutral-500 tabular-nums">
               {mensagem.length}/{MAX_CHARS}
             </span>
             <button
@@ -265,7 +265,7 @@ export function FeedbackFAB() {
                 "flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all",
                 canSubmit && !createFeedback.isPending
                   ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
-                  : "bg-zinc-200 dark:bg-zinc-700 text-zinc-400 dark:text-zinc-500 cursor-not-allowed"
+                  : "bg-neutral-200 dark:bg-neutral-700 text-neutral-400 dark:text-neutral-500 cursor-not-allowed"
               )}
             >
               {createFeedback.isPending ? (

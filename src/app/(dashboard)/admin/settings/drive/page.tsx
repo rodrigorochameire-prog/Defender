@@ -125,7 +125,7 @@ function ConnectionStatus({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Google Drive</h3>
+              <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">Google Drive</h3>
               <Badge className={cn(
                 isConfigured
                   ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
@@ -138,7 +138,7 @@ function ConnectionStatus({
                 )}
               </Badge>
             </div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
               {isConfigured
                 ? "Integração ativa. Configure as pastas para sincronização abaixo."
                 : "Configure as variáveis de ambiente para conectar ao Google Drive."
@@ -158,8 +158,8 @@ function ConnectionStatus({
 
       {/* Mostrar conta autenticada */}
       {isConfigured && accountEmail && (
-        <div className="mt-4 p-4 bg-white dark:bg-zinc-900 rounded-lg border border-emerald-200 dark:border-emerald-800">
-          <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-2">
+        <div className="mt-4 p-4 bg-white dark:bg-neutral-900 rounded-lg border border-emerald-200 dark:border-emerald-800">
+          <h4 className="text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-2">
             Conta Google autenticada:
           </h4>
           <div className="flex items-center gap-3">
@@ -170,37 +170,37 @@ function ConnectionStatus({
             </div>
             <div>
               {accountName && (
-                <p className="font-medium text-zinc-900 dark:text-zinc-100">{accountName}</p>
+                <p className="font-medium text-neutral-900 dark:text-neutral-100">{accountName}</p>
               )}
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">{accountEmail}</p>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">{accountEmail}</p>
             </div>
           </div>
-          <p className="text-xs text-zinc-500 mt-3">
+          <p className="text-xs text-neutral-500 mt-3">
             💡 As pastas do Drive devem estar <strong>compartilhadas</strong> com esta conta para funcionar.
           </p>
         </div>
       )}
 
       {!isConfigured && (
-        <div className="mt-6 p-4 bg-white dark:bg-zinc-900 rounded-lg border border-amber-200 dark:border-amber-800">
-          <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-3">
+        <div className="mt-6 p-4 bg-white dark:bg-neutral-900 rounded-lg border border-amber-200 dark:border-amber-800">
+          <h4 className="text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-3">
             Variáveis de ambiente necessárias:
           </h4>
           <div className="space-y-2 font-mono text-xs">
-            <div className="p-2 bg-zinc-50 dark:bg-zinc-800 rounded flex items-center justify-between">
-              <code className="text-zinc-600 dark:text-zinc-400">GOOGLE_CLIENT_ID</code>
+            <div className="p-2 bg-neutral-50 dark:bg-neutral-800 rounded flex items-center justify-between">
+              <code className="text-neutral-600 dark:text-neutral-400">GOOGLE_CLIENT_ID</code>
               <span className="text-rose-500">não definida</span>
             </div>
-            <div className="p-2 bg-zinc-50 dark:bg-zinc-800 rounded flex items-center justify-between">
-              <code className="text-zinc-600 dark:text-zinc-400">GOOGLE_CLIENT_SECRET</code>
+            <div className="p-2 bg-neutral-50 dark:bg-neutral-800 rounded flex items-center justify-between">
+              <code className="text-neutral-600 dark:text-neutral-400">GOOGLE_CLIENT_SECRET</code>
               <span className="text-rose-500">não definida</span>
             </div>
-            <div className="p-2 bg-zinc-50 dark:bg-zinc-800 rounded flex items-center justify-between">
-              <code className="text-zinc-600 dark:text-zinc-400">GOOGLE_REFRESH_TOKEN</code>
+            <div className="p-2 bg-neutral-50 dark:bg-neutral-800 rounded flex items-center justify-between">
+              <code className="text-neutral-600 dark:text-neutral-400">GOOGLE_REFRESH_TOKEN</code>
               <span className="text-rose-500">não definida</span>
             </div>
-            <div className="p-2 bg-zinc-50 dark:bg-zinc-800 rounded flex items-center justify-between">
-              <code className="text-zinc-600 dark:text-zinc-400">GOOGLE_DRIVE_ROOT_FOLDER_ID</code>
+            <div className="p-2 bg-neutral-50 dark:bg-neutral-800 rounded flex items-center justify-between">
+              <code className="text-neutral-600 dark:text-neutral-400">GOOGLE_DRIVE_ROOT_FOLDER_ID</code>
               <span className="text-rose-500">não definida</span>
             </div>
           </div>
@@ -241,9 +241,9 @@ function SyncFolderCard({
             <FolderOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <h4 className="font-medium text-zinc-900 dark:text-zinc-100">{folder.name}</h4>
+            <h4 className="font-medium text-neutral-900 dark:text-neutral-100">{folder.name}</h4>
             {folder.description && (
-              <p className="text-xs text-zinc-500">{folder.description}</p>
+              <p className="text-xs text-neutral-500">{folder.description}</p>
             )}
             <div className="flex items-center gap-3 mt-1">
               <Badge variant="outline" className="text-xs">
@@ -251,7 +251,7 @@ function SyncFolderCard({
                 <span className="ml-1">{directionLabels[folder.syncDirection as keyof typeof directionLabels]}</span>
               </Badge>
               {folder.lastSyncAt && (
-                <span className="text-xs text-zinc-400 flex items-center gap-1">
+                <span className="text-xs text-neutral-400 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   {formatDistanceToNow(new Date(folder.lastSyncAt), { addSuffix: true, locale: ptBR })}
                 </span>
@@ -300,8 +300,8 @@ function SyncFolderCard({
         </div>
       </div>
       
-      <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-        <code className="text-xs text-zinc-400 font-mono break-all">
+      <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+        <code className="text-xs text-neutral-400 font-mono break-all">
           ID: {folder.driveFolderId}
         </code>
       </div>
@@ -380,24 +380,24 @@ function SuggestedFolders({
     emerald: "hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/10",
     amber: "hover:border-amber-300 dark:hover:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/10",
     blue: "hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/10",
-    zinc: "hover:border-zinc-400 dark:hover:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800/50",
+    zinc: "hover:border-neutral-400 dark:hover:border-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800/50",
   };
 
   const iconColorClasses = {
     emerald: "text-emerald-600 dark:text-emerald-400",
     amber: "text-amber-600 dark:text-amber-400",
     blue: "text-blue-600 dark:text-blue-400",
-    zinc: "text-zinc-600 dark:text-zinc-400",
+    zinc: "text-neutral-600 dark:text-neutral-400",
   };
 
   return (
     <Card className="p-4 border-dashed">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <h4 className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
             Pastas de Atribuição
           </h4>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs text-neutral-500 mt-1">
             Estrutura: Atribuição → Assistido → Processo → Documentos
           </p>
         </div>
@@ -448,18 +448,18 @@ function SuggestedFolders({
               key={suggestion.name}
               onClick={() => onAdd(suggestion)}
               className={cn(
-                "p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 transition-all text-left group",
+                "p-3 rounded-lg border border-neutral-200 dark:border-neutral-700 transition-all text-left group",
                 colorClasses[suggestion.color]
               )}
             >
               <div className="flex items-center gap-2">
-                <Icon className={cn("w-4 h-4 text-zinc-400 group-hover:" + iconColorClasses[suggestion.color])} />
-                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <Icon className={cn("w-4 h-4 text-neutral-400 group-hover:" + iconColorClasses[suggestion.color])} />
+                <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                   {suggestion.name}
                 </span>
               </div>
-              <p className="text-xs text-zinc-500 mt-1">{suggestion.description}</p>
-              <code className="text-[10px] text-zinc-400 font-mono mt-2 block truncate">
+              <p className="text-xs text-neutral-500 mt-1">{suggestion.description}</p>
+              <code className="text-[10px] text-neutral-400 font-mono mt-2 block truncate">
                 {suggestion.folderId}
               </code>
             </button>
@@ -657,14 +657,14 @@ export default function DriveConfigPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-            <HardDrive className="w-5 h-5 text-white dark:text-zinc-900" />
+          <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
+            <HardDrive className="w-5 h-5 text-white dark:text-neutral-900" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
+            <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
               Configuração do Google Drive
             </h1>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
               Gerencie a integração e pastas sincronizadas
             </p>
           </div>
@@ -731,10 +731,10 @@ export default function DriveConfigPage() {
                 <XCircle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
               )}
               <div>
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
                   {tokenHealth.status === "ok" ? "Token OAuth ativo" : "Token OAuth expirado"}
                 </p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-neutral-500">
                   {tokenHealth.status === "ok"
                     ? `Autenticado como ${tokenHealth.email || "—"} · Fonte: ${tokenHealth.authMethod === "oauth_db" ? "Banco de dados" : "Variável de ambiente"}`
                     : "Re-autorize para restaurar a integração com o Google Drive"
@@ -800,10 +800,10 @@ export default function DriveConfigPage() {
         <>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
                 Pastas Sincronizadas
               </h2>
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-neutral-500">
                 {syncFolders?.length || 0} pastas configuradas • {stats?.totalFiles || 0} arquivos sincronizados
               </p>
             </div>
@@ -827,7 +827,7 @@ export default function DriveConfigPage() {
                   resetForm();
                   setAddModalOpen(true);
                 }}
-                className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
+                className="bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Adicionar Pasta
@@ -858,11 +858,11 @@ export default function DriveConfigPage() {
             </div>
           ) : (
             <Card className="p-8 text-center border-dashed">
-              <FolderOpen className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-600 mb-4" />
-              <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+              <FolderOpen className="w-12 h-12 mx-auto text-neutral-300 dark:text-neutral-600 mb-4" />
+              <h3 className="text-lg font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                 Nenhuma pasta sincronizada
               </h3>
-              <p className="text-sm text-zinc-500 mb-4">
+              <p className="text-sm text-neutral-500 mb-4">
                 Adicione pastas do Google Drive para sincronizar com a aplicação
               </p>
               <Button onClick={() => setAddModalOpen(true)}>
@@ -882,28 +882,28 @@ export default function DriveConfigPage() {
           />
 
           {/* Instruções */}
-          <Card className="p-6 bg-zinc-50 dark:bg-zinc-900/50">
-            <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+          <Card className="p-6 bg-neutral-50 dark:bg-neutral-900/50">
+            <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 mb-4">
               Como obter o ID de uma pasta do Google Drive
             </h3>
-            <ol className="space-y-3 text-sm text-zinc-600 dark:text-zinc-400">
+            <ol className="space-y-3 text-sm text-neutral-600 dark:text-neutral-400">
               <li className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-medium shrink-0">1</span>
+                <span className="w-6 h-6 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-xs font-medium shrink-0">1</span>
                 <span>Abra o Google Drive e navegue até a pasta desejada</span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-medium shrink-0">2</span>
+                <span className="w-6 h-6 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-xs font-medium shrink-0">2</span>
                 <span>Copie o URL da barra de endereços do navegador</span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-medium shrink-0">3</span>
-                <span>O ID é a parte final do URL após <code className="px-1 py-0.5 bg-zinc-200 dark:bg-zinc-800 rounded text-xs">/folders/</code></span>
+                <span className="w-6 h-6 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-xs font-medium shrink-0">3</span>
+                <span>O ID é a parte final do URL após <code className="px-1 py-0.5 bg-neutral-200 dark:bg-neutral-800 rounded text-xs">/folders/</code></span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-medium shrink-0">4</span>
+                <span className="w-6 h-6 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-xs font-medium shrink-0">4</span>
                 <div>
                   <span>Exemplo: </span>
-                  <code className="px-1 py-0.5 bg-zinc-200 dark:bg-zinc-800 rounded text-xs break-all">
+                  <code className="px-1 py-0.5 bg-neutral-200 dark:bg-neutral-800 rounded text-xs break-all">
                     https://drive.google.com/drive/folders/<strong>1ABC123xyz...</strong>
                   </code>
                 </div>
@@ -932,7 +932,7 @@ export default function DriveConfigPage() {
                 placeholder="1ABC123xyz..."
                 className="font-mono"
               />
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-neutral-500">
                 Copie o ID da URL da pasta no Google Drive
               </p>
             </div>
@@ -993,7 +993,7 @@ export default function DriveConfigPage() {
             <Button 
               onClick={handleAddFolder} 
               disabled={registerMutation.isPending}
-              className="bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-900"
+              className="bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 dark:text-neutral-900"
             >
               {registerMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Adicionar

@@ -113,7 +113,7 @@ const CATEGORIA_CONFIG: Record<ModeloCategoria, {
     label: "Outro",
     shortLabel: "Outro",
     icon: FileText,
-    color: "text-zinc-600 bg-zinc-50 border-zinc-200",
+    color: "text-neutral-600 bg-neutral-50 border-neutral-200",
     gradient: "zinc",
   },
 };
@@ -165,22 +165,22 @@ export default function ModelosPage() {
   }, [statsCards.porCategoria]);
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-background">
+    <div className="min-h-screen bg-neutral-100 dark:bg-background">
       {/* Header Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-neutral-200 dark:border-border">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
-              <FileStack className="w-5 h-5 text-white dark:text-zinc-900" />
+            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
+              <FileStack className="w-5 h-5 text-white dark:text-neutral-900" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-foreground tracking-tight">Modelos</h1>
-              <p className="text-xs text-zinc-500 dark:text-muted-foreground">Banco de modelos com variáveis dinâmicas</p>
+              <h1 className="text-xl font-bold text-neutral-900 dark:text-foreground tracking-tight">Modelos</h1>
+              <p className="text-xs text-neutral-500 dark:text-muted-foreground">Banco de modelos com variáveis dinâmicas</p>
             </div>
           </div>
 
           <Link href="/admin/modelos/novo">
-            <Button size="sm" className="h-8 px-3 bg-zinc-800 hover:bg-emerald-600 dark:bg-secondary dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors">
+            <Button size="sm" className="h-8 px-3 bg-neutral-800 hover:bg-emerald-600 dark:bg-secondary dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors">
               <Plus className="w-3.5 h-3.5 mr-1" />
               Novo Modelo
             </Button>
@@ -192,7 +192,7 @@ export default function ModelosPage() {
       <div className="p-6 space-y-6">
         {/* Stats */}
         {/* Stats Ribbon */}
-        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-card rounded-xl border border-zinc-200/80 dark:border-border/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-card rounded-xl border border-neutral-200/80 dark:border-border/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
           {[
             { icon: FileStack, value: statsCards.totalModelos, label: "modelos" },
             { icon: Building2, value: porCategoriaObj.PROVIDENCIA_ADMINISTRATIVA || 0, label: "administrativos" },
@@ -203,11 +203,11 @@ export default function ModelosPage() {
             const Icon = stat.icon;
             return (
               <Fragment key={index}>
-                {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-border/60 flex-shrink-0" />}
-                <div className="flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-zinc-50 dark:hover:bg-muted">
-                  <Icon className="w-3.5 h-3.5 flex-shrink-0 text-zinc-400 dark:text-zinc-500" />
-                  <span className="font-bold tabular-nums text-zinc-800 dark:text-foreground">{stat.value}</span>
-                  <span className="text-zinc-500 dark:text-muted-foreground font-medium">{stat.label}</span>
+                {index > 0 && <div className="w-px h-4 bg-neutral-200/60 dark:bg-border/60 flex-shrink-0" />}
+                <div className="flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-neutral-50 dark:hover:bg-muted">
+                  <Icon className="w-3.5 h-3.5 flex-shrink-0 text-neutral-400 dark:text-neutral-500" />
+                  <span className="font-bold tabular-nums text-neutral-800 dark:text-foreground">{stat.value}</span>
+                  <span className="text-neutral-500 dark:text-muted-foreground font-medium">{stat.label}</span>
                 </div>
               </Fragment>
             );
@@ -219,7 +219,7 @@ export default function ModelosPage() {
           <div className="flex items-center gap-3 flex-1">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
               <Input
                 placeholder="Buscar modelos..."
                 value={search}
@@ -231,7 +231,7 @@ export default function ModelosPage() {
             {/* Filtro de Categoria */}
             <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
               <SelectTrigger className="w-[140px] sm:w-[200px] shrink-0">
-                <Filter className="w-4 h-4 mr-2 text-zinc-400" />
+                <Filter className="w-4 h-4 mr-2 text-neutral-400" />
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>
               <SelectContent>
@@ -246,14 +246,14 @@ export default function ModelosPage() {
           </div>
 
           {/* View Mode Toggle */}
-          <div className="flex items-center gap-1 p-1 bg-zinc-100 dark:bg-muted rounded-lg">
+          <div className="flex items-center gap-1 p-1 bg-neutral-100 dark:bg-muted rounded-lg">
             <button
               onClick={() => setViewMode("grid")}
               className={cn(
                 "p-2 rounded-md transition-colors",
                 viewMode === "grid"
                   ? "bg-white dark:bg-secondary shadow-sm"
-                  : "hover:bg-zinc-200 dark:hover:bg-muted"
+                  : "hover:bg-neutral-200 dark:hover:bg-muted"
               )}
             >
               <LayoutGrid className="w-4 h-4" />
@@ -264,7 +264,7 @@ export default function ModelosPage() {
                 "p-2 rounded-md transition-colors",
                 viewMode === "list"
                   ? "bg-white dark:bg-secondary shadow-sm"
-                  : "hover:bg-zinc-200 dark:hover:bg-muted"
+                  : "hover:bg-neutral-200 dark:hover:bg-muted"
               )}
             >
               <List className="w-4 h-4" />
@@ -339,7 +339,7 @@ function ModeloCard({ modelo }: ModeloCardProps) {
   const numTags = modelo.tags?.length || 0;
 
   return (
-    <div className="group relative bg-white dark:bg-card border border-zinc-200 dark:border-border rounded-xl overflow-hidden hover:shadow-lg hover:border-zinc-300 dark:hover:border-border transition-all duration-200">
+    <div className="group relative bg-white dark:bg-card border border-neutral-200 dark:border-border rounded-xl overflow-hidden hover:shadow-lg hover:border-neutral-300 dark:hover:border-border transition-all duration-200">
       {/* Top accent */}
       <div className={cn("h-1", config.color.split(" ")[1])} />
 
@@ -389,11 +389,11 @@ function ModeloCard({ modelo }: ModeloCardProps) {
 
         {/* Title & Description */}
         <div>
-          <h3 className="font-semibold text-zinc-900 dark:text-foreground line-clamp-2">
+          <h3 className="font-semibold text-neutral-900 dark:text-foreground line-clamp-2">
             {modelo.titulo}
           </h3>
           {modelo.descricao && (
-            <p className="mt-1 text-sm text-zinc-500 line-clamp-2">
+            <p className="mt-1 text-sm text-neutral-500 line-clamp-2">
               {modelo.descricao}
             </p>
           )}
@@ -417,7 +417,7 @@ function ModeloCard({ modelo }: ModeloCardProps) {
         </div>
 
         {/* Footer */}
-        <div className="pt-3 border-t border-zinc-100 dark:border-border flex items-center justify-between text-xs text-zinc-500">
+        <div className="pt-3 border-t border-neutral-100 dark:border-border flex items-center justify-between text-xs text-neutral-500">
           <div className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {format(new Date(modelo.createdAt), "dd/MM/yyyy", { locale: ptBR })}
@@ -453,7 +453,7 @@ function ModeloListItem({ modelo }: ModeloCardProps) {
   const numTags = modelo.tags?.length || 0;
 
   return (
-    <div className="group flex items-center gap-4 p-4 bg-white dark:bg-card border border-zinc-200 dark:border-border rounded-xl hover:shadow-md hover:border-zinc-300 dark:hover:border-border transition-all">
+    <div className="group flex items-center gap-4 p-4 bg-white dark:bg-card border border-neutral-200 dark:border-border rounded-xl hover:shadow-md hover:border-neutral-300 dark:hover:border-border transition-all">
       {/* Icon */}
       <div className={cn("p-2.5 rounded-lg shrink-0", config.color)}>
         <Icon className="w-5 h-5" />
@@ -462,7 +462,7 @@ function ModeloListItem({ modelo }: ModeloCardProps) {
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-zinc-900 dark:text-foreground truncate">
+          <h3 className="font-semibold text-neutral-900 dark:text-foreground truncate">
             {modelo.titulo}
           </h3>
           <Badge variant="outline" className="text-[10px] shrink-0">
@@ -470,14 +470,14 @@ function ModeloListItem({ modelo }: ModeloCardProps) {
           </Badge>
         </div>
         {modelo.descricao && (
-          <p className="mt-0.5 text-sm text-zinc-500 truncate">
+          <p className="mt-0.5 text-sm text-neutral-500 truncate">
             {modelo.descricao}
           </p>
         )}
       </div>
 
       {/* Meta */}
-      <div className="hidden md:flex items-center gap-6 text-sm text-zinc-500 shrink-0">
+      <div className="hidden md:flex items-center gap-6 text-sm text-neutral-500 shrink-0">
         {modelo.tipoPeca && (
           <span>{modelo.tipoPeca}</span>
         )}

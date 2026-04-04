@@ -57,7 +57,7 @@ const PRIORIDADE_CONFIG: Record<
   baixa: {
     label: "Baixa",
     className:
-      "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+      "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400",
   },
 };
 
@@ -165,14 +165,14 @@ export function RoteiroSustentacao({
     <div
       className={cn(
         "rounded-xl border bg-white",
-        "border-zinc-200/80 dark:border-zinc-800/80 dark:bg-zinc-900",
+        "border-neutral-200/80 dark:border-neutral-800/80 dark:bg-neutral-900",
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
+      <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-3 dark:border-neutral-800">
         <div className="flex items-center gap-2">
           <ListChecks className="h-4 w-4 text-emerald-600" />
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
             Roteiro de Sustentacao
           </h3>
           {total > 0 && (
@@ -198,14 +198,14 @@ export function RoteiroSustentacao({
       {total > 0 && (
         <div className="px-4 pt-3">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+            <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
               Progresso
             </span>
-            <span className="text-[10px] font-medium tabular-nums text-zinc-500 dark:text-zinc-400">
+            <span className="text-[10px] font-medium tabular-nums text-neutral-500 dark:text-neutral-400">
               {pct}%
             </span>
           </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
             <div
               className="h-full rounded-full bg-emerald-600 transition-all duration-500 ease-out"
               style={{ width: `${pct}%` }}
@@ -230,8 +230,8 @@ export function RoteiroSustentacao({
           onChange={(e) => setNovaPrioridade(e.target.value as Prioridade)}
           className={cn(
             "h-8 rounded-md border px-2 text-xs",
-            "border-zinc-200 bg-white text-zinc-700",
-            "dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+            "border-neutral-200 bg-white text-neutral-700",
+            "dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300",
             "focus:outline-none focus:ring-1 focus:ring-emerald-600",
           )}
         >
@@ -253,11 +253,11 @@ export function RoteiroSustentacao({
       <div className="max-h-[360px] overflow-y-auto px-4 pb-3">
         {total === 0 && (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <ListChecks className="mb-2 h-8 w-8 text-zinc-300 dark:text-zinc-600" />
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <ListChecks className="mb-2 h-8 w-8 text-neutral-300 dark:text-neutral-600" />
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
               Nenhum ponto adicionado
             </p>
-            <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-1">
+            <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mt-1">
               Adicione os pontos que o defensor deve cobrir
             </p>
           </div>
@@ -271,7 +271,7 @@ export function RoteiroSustentacao({
                 "group flex items-start gap-2 rounded-lg border-l-2 px-3 py-2 transition-colors",
                 ponto.coberto
                   ? "border-l-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20"
-                  : "border-l-amber-400 bg-zinc-50/50 dark:bg-zinc-800/40",
+                  : "border-l-amber-400 bg-neutral-50/50 dark:bg-neutral-800/40",
                 !ponto.coberto &&
                   isSustentacao &&
                   "animate-pulse [animation-duration:3s]",
@@ -289,7 +289,7 @@ export function RoteiroSustentacao({
                 {ponto.coberto ? (
                   <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                 ) : (
-                  <Circle className="h-4 w-4 text-zinc-400 hover:text-emerald-600 transition-colors cursor-pointer" />
+                  <Circle className="h-4 w-4 text-neutral-400 hover:text-emerald-600 transition-colors cursor-pointer" />
                 )}
               </button>
 
@@ -299,8 +299,8 @@ export function RoteiroSustentacao({
                   className={cn(
                     "text-sm leading-snug",
                     ponto.coberto
-                      ? "line-through text-zinc-400 dark:text-zinc-500"
-                      : "text-zinc-900 dark:text-zinc-100",
+                      ? "line-through text-neutral-400 dark:text-neutral-500"
+                      : "text-neutral-900 dark:text-neutral-100",
                   )}
                 >
                   {ponto.texto}
@@ -323,24 +323,24 @@ export function RoteiroSustentacao({
                   onClick={() => moveUp(idx)}
                   disabled={idx === 0}
                   className={cn(
-                    "rounded p-0.5 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors",
+                    "rounded p-0.5 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors",
                     idx === 0 && "invisible",
                   )}
                   aria-label="Mover para cima"
                 >
-                  <ChevronUp className="h-3.5 w-3.5 text-zinc-500" />
+                  <ChevronUp className="h-3.5 w-3.5 text-neutral-500" />
                 </button>
                 <button
                   type="button"
                   onClick={() => moveDown(idx)}
                   disabled={idx === total - 1}
                   className={cn(
-                    "rounded p-0.5 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors",
+                    "rounded p-0.5 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors",
                     idx === total - 1 && "invisible",
                   )}
                   aria-label="Mover para baixo"
                 >
-                  <ChevronDown className="h-3.5 w-3.5 text-zinc-500" />
+                  <ChevronDown className="h-3.5 w-3.5 text-neutral-500" />
                 </button>
                 <button
                   type="button"
@@ -348,7 +348,7 @@ export function RoteiroSustentacao({
                   className="rounded p-0.5 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors"
                   aria-label="Remover ponto"
                 >
-                  <Trash2 className="h-3.5 w-3.5 text-zinc-400 hover:text-rose-500 transition-colors" />
+                  <Trash2 className="h-3.5 w-3.5 text-neutral-400 hover:text-rose-500 transition-colors" />
                 </button>
               </div>
             </li>

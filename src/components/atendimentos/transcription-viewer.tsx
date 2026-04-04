@@ -97,8 +97,8 @@ export function TranscriptionViewer({
     return (
       <Card className={className}>
         <CardContent className="py-8 text-center">
-          <AlertCircle className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
-          <p className="text-zinc-500">Atendimento não encontrado</p>
+          <AlertCircle className="h-12 w-12 mx-auto text-neutral-300 mb-3" />
+          <p className="text-neutral-500">Atendimento não encontrado</p>
         </CardContent>
       </Card>
     );
@@ -186,11 +186,11 @@ export function TranscriptionViewer({
       <CardContent>
         {!hasTranscription && status === "pending" ? (
           <div className="text-center py-8">
-            <Mic className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
-            <p className="text-zinc-500 mb-2">
+            <Mic className="h-12 w-12 mx-auto text-neutral-300 mb-3" />
+            <p className="text-neutral-500 mb-2">
               Nenhuma transcrição disponível
             </p>
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-neutral-400">
               Vincule uma gravação do Plaud para obter a transcrição automática
             </p>
           </div>
@@ -221,7 +221,7 @@ export function TranscriptionViewer({
                       Copiar
                     </Button>
                   </div>
-                  <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-4 max-h-96 overflow-y-auto">
+                  <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-4 max-h-96 overflow-y-auto">
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">
                       {data.transcricao}
                     </p>
@@ -232,12 +232,12 @@ export function TranscriptionViewer({
                   {status === "processing" ? (
                     <>
                       <Loader2 className="h-8 w-8 mx-auto text-amber-500 animate-spin mb-3" />
-                      <p className="text-zinc-500">Processando transcrição...</p>
+                      <p className="text-neutral-500">Processando transcrição...</p>
                     </>
                   ) : (
                     <>
-                      <FileText className="h-8 w-8 mx-auto text-zinc-300 mb-3" />
-                      <p className="text-zinc-500">Transcrição não disponível</p>
+                      <FileText className="h-8 w-8 mx-auto text-neutral-300 mb-3" />
+                      <p className="text-neutral-500">Transcrição não disponível</p>
                     </>
                   )}
                 </div>
@@ -255,9 +255,9 @@ export function TranscriptionViewer({
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <Sparkles className="h-8 w-8 mx-auto text-zinc-300 mb-3" />
-                  <p className="text-zinc-500">Resumo não disponível</p>
-                  <p className="text-xs text-zinc-400 mt-1">
+                  <Sparkles className="h-8 w-8 mx-auto text-neutral-300 mb-3" />
+                  <p className="text-neutral-500">Resumo não disponível</p>
+                  <p className="text-xs text-neutral-400 mt-1">
                     O resumo será gerado automaticamente após a transcrição
                   </p>
                 </div>
@@ -277,7 +277,7 @@ export function TranscriptionViewer({
                       </h4>
                       <ul className="space-y-1 ml-6">
                         {pontosChave.compromissos.map((item, i) => (
-                          <li key={i} className="text-sm text-zinc-600 dark:text-zinc-400 list-disc">
+                          <li key={i} className="text-sm text-neutral-600 dark:text-neutral-400 list-disc">
                             {item}
                           </li>
                         ))}
@@ -294,7 +294,7 @@ export function TranscriptionViewer({
                       </h4>
                       <ul className="space-y-1 ml-6">
                         {pontosChave.informacoesRelevantes.map((item, i) => (
-                          <li key={i} className="text-sm text-zinc-600 dark:text-zinc-400 list-disc">
+                          <li key={i} className="text-sm text-neutral-600 dark:text-neutral-400 list-disc">
                             {item}
                           </li>
                         ))}
@@ -311,7 +311,7 @@ export function TranscriptionViewer({
                       </h4>
                       <ul className="space-y-1 ml-6">
                         {pontosChave.duvidasPendentes.map((item, i) => (
-                          <li key={i} className="text-sm text-zinc-600 dark:text-zinc-400 list-disc">
+                          <li key={i} className="text-sm text-neutral-600 dark:text-neutral-400 list-disc">
                             {item}
                           </li>
                         ))}
@@ -328,7 +328,7 @@ export function TranscriptionViewer({
                       </h4>
                       <ul className="space-y-1 ml-6">
                         {pontosChave.providenciasNecessarias.map((item, i) => (
-                          <li key={i} className="text-sm text-zinc-600 dark:text-zinc-400 list-disc">
+                          <li key={i} className="text-sm text-neutral-600 dark:text-neutral-400 list-disc">
                             {item}
                           </li>
                         ))}
@@ -338,8 +338,8 @@ export function TranscriptionViewer({
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <ListChecks className="h-8 w-8 mx-auto text-zinc-300 mb-3" />
-                  <p className="text-zinc-500 mb-4">Pontos-chave não extraídos</p>
+                  <ListChecks className="h-8 w-8 mx-auto text-neutral-300 mb-3" />
+                  <p className="text-neutral-500 mb-4">Pontos-chave não extraídos</p>
                   {data.transcricao && (
                     <Button
                       variant="outline"

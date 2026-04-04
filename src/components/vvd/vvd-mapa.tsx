@@ -25,7 +25,7 @@ function StatusBadge({ status }: { status: string | null }) {
   }
   if (status === "inativa") {
     return (
-      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 text-zinc-600 dark:bg-muted dark:text-muted-foreground">
+      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-neutral-100 text-neutral-600 dark:bg-muted dark:text-muted-foreground">
         Inativa
       </span>
     );
@@ -58,8 +58,8 @@ function LayerToggle({
       className={cn(
         "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer w-full text-left",
         active
-          ? "bg-zinc-100 dark:bg-muted text-zinc-900 dark:text-foreground"
-          : "text-zinc-400 dark:text-muted-foreground hover:bg-zinc-50 dark:hover:bg-muted/50"
+          ? "bg-neutral-100 dark:bg-muted text-neutral-900 dark:text-foreground"
+          : "text-neutral-400 dark:text-muted-foreground hover:bg-neutral-50 dark:hover:bg-muted/50"
       )}
     >
       {dotVariant === "ring" ? (
@@ -75,7 +75,7 @@ function LayerToggle({
       )}
       <span>{label}</span>
       {count !== undefined && count > 0 && (
-        <span className="ml-auto text-[10px] text-zinc-400 dark:text-muted-foreground">
+        <span className="ml-auto text-[10px] text-neutral-400 dark:text-muted-foreground">
           {count}
         </span>
       )}
@@ -132,29 +132,29 @@ export function VvdMapa() {
   return (
     <div className="flex h-full w-full overflow-hidden">
       {/* Painel lateral esquerdo */}
-      <aside className="hidden md:flex w-[280px] flex-shrink-0 flex-col border-r border-zinc-200/80 dark:border-border/80 bg-white dark:bg-card overflow-y-auto">
+      <aside className="hidden md:flex w-[280px] flex-shrink-0 flex-col border-r border-neutral-200/80 dark:border-border/80 bg-white dark:bg-card overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center gap-2 px-4 py-4 border-b border-zinc-200/80 dark:border-border/80">
+        <div className="flex items-center gap-2 px-4 py-4 border-b border-neutral-200/80 dark:border-border/80">
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/40">
             <Shield className="h-4 w-4 text-rose-600 dark:text-rose-400" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-foreground">
+            <h2 className="text-sm font-semibold text-neutral-900 dark:text-foreground">
               Mapa VVD — MPU
             </h2>
-            <p className="text-xs text-zinc-500 dark:text-muted-foreground">
+            <p className="text-xs text-neutral-500 dark:text-muted-foreground">
               Camaçari, BA
             </p>
           </div>
         </div>
 
         {/* Contagem */}
-        <div className="px-4 py-3 border-b border-zinc-200/80 dark:border-border/80">
+        <div className="px-4 py-3 border-b border-neutral-200/80 dark:border-border/80">
           {isLoading ? (
             <Skeleton className="h-4 w-40" />
           ) : (
-            <p className="text-xs text-zinc-500 dark:text-muted-foreground">
-              <span className="font-semibold text-zinc-900 dark:text-foreground">
+            <p className="text-xs text-neutral-500 dark:text-muted-foreground">
+              <span className="font-semibold text-neutral-900 dark:text-foreground">
                 {contagemComLocalizacao}
               </span>{" "}
               caso{contagemComLocalizacao !== 1 ? "s" : ""} com localização
@@ -163,8 +163,8 @@ export function VvdMapa() {
         </div>
 
         {/* Camadas */}
-        <div className="px-4 py-3 border-b border-zinc-200/80 dark:border-border/80">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-muted-foreground mb-2">
+        <div className="px-4 py-3 border-b border-neutral-200/80 dark:border-border/80">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-muted-foreground mb-2">
             Camadas
           </p>
           <div className="space-y-0.5">
@@ -201,8 +201,8 @@ export function VvdMapa() {
         </div>
 
         {/* Filtro por status MPU */}
-        <div className="px-4 py-3 border-b border-zinc-200/80 dark:border-border/80">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-muted-foreground mb-2">
+        <div className="px-4 py-3 border-b border-neutral-200/80 dark:border-border/80">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-muted-foreground mb-2">
             Status MPU
           </p>
           <div className="flex gap-1">
@@ -219,8 +219,8 @@ export function VvdMapa() {
                 className={cn(
                   "flex-1 px-2 py-1 rounded text-[11px] font-medium transition-all cursor-pointer",
                   filtroMpu === key
-                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                    : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted"
+                    ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
+                    : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted"
                 )}
               >
                 {label}
@@ -231,7 +231,7 @@ export function VvdMapa() {
 
         {/* Lista de casos */}
         <div className="px-4 py-3 flex-1">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-muted-foreground mb-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-muted-foreground mb-2">
             Casos ({casosVisiveis.length})
           </p>
           {isLoading ? (
@@ -241,7 +241,7 @@ export function VvdMapa() {
               ))}
             </div>
           ) : casosVisiveis.length === 0 ? (
-            <p className="text-xs text-zinc-400 dark:text-muted-foreground">
+            <p className="text-xs text-neutral-400 dark:text-muted-foreground">
               {data && data.length > 0
                 ? "Nenhum caso para este filtro."
                 : "Nenhum caso encontrado"}
@@ -251,16 +251,16 @@ export function VvdMapa() {
               {casosVisiveis.map((caso) => (
                 <div
                   key={caso.id}
-                  className="px-3 py-2 rounded-lg bg-zinc-50 dark:bg-muted/50 border border-zinc-100 dark:border-border"
+                  className="px-3 py-2 rounded-lg bg-neutral-50 dark:bg-muted/50 border border-neutral-100 dark:border-border"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <span className="text-xs font-medium text-zinc-900 dark:text-foreground leading-tight">
+                    <span className="text-xs font-medium text-neutral-900 dark:text-foreground leading-tight">
                       {caso.assistidoNome || "—"}
                     </span>
                     <StatusBadge status={caso.statusMpu} />
                   </div>
                   {caso.processoNumero && (
-                    <span className="text-[10px] font-mono text-zinc-400 dark:text-muted-foreground">
+                    <span className="text-[10px] font-mono text-neutral-400 dark:text-muted-foreground">
                       {caso.processoNumero}
                     </span>
                   )}
@@ -274,25 +274,25 @@ export function VvdMapa() {
       {/* Mapa */}
       <div className="flex-1 min-w-0 h-full relative">
         {isLoading ? (
-          <div className="h-full w-full flex items-center justify-center bg-zinc-50 dark:bg-background">
+          <div className="h-full w-full flex items-center justify-center bg-neutral-50 dark:bg-background">
             <div className="flex flex-col items-center gap-3">
               <div className="w-8 h-8 rounded-full border-2 border-rose-500 border-t-transparent animate-spin" />
-              <p className="text-xs text-zinc-500 dark:text-muted-foreground">
+              <p className="text-xs text-neutral-500 dark:text-muted-foreground">
                 Carregando casos...
               </p>
             </div>
           </div>
         ) : !data || data.length === 0 ? (
-          <div className="h-full w-full flex items-center justify-center bg-zinc-50 dark:bg-background">
+          <div className="h-full w-full flex items-center justify-center bg-neutral-50 dark:bg-background">
             <div className="flex flex-col items-center gap-3 text-center max-w-xs">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100 dark:bg-muted">
-                <MapPin className="h-6 w-6 text-zinc-400" />
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-neutral-100 dark:bg-muted">
+                <MapPin className="h-6 w-6 text-neutral-400" />
               </div>
               <div>
-                <h3 className="text-sm font-medium text-zinc-900 dark:text-foreground">
+                <h3 className="text-sm font-medium text-neutral-900 dark:text-foreground">
                   Nenhum caso georreferenciado
                 </h3>
-                <p className="text-xs text-zinc-500 dark:text-muted-foreground mt-1">
+                <p className="text-xs text-neutral-500 dark:text-muted-foreground mt-1">
                   O mapa será populado conforme casos com localização do agressor forem cadastrados.
                 </p>
               </div>

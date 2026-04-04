@@ -258,14 +258,14 @@ function ContactCard({
                 assistidos.map((assistido: any) => (
                   <button
                     key={assistido.id}
-                    className="w-full p-3 rounded-lg border border-zinc-200 dark:border-border hover:bg-zinc-50 dark:hover:bg-muted/50 transition-colors text-left"
+                    className="w-full p-3 rounded-lg border border-neutral-200 dark:border-border hover:bg-neutral-50 dark:hover:bg-muted/50 transition-colors text-left"
                     onClick={() => {
                       onLink(assistido.id);
                       setShowLinkDialog(false);
                     }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-muted flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-muted flex items-center justify-center">
                         {assistido.nome?.[0]?.toUpperCase() || "?"}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -367,7 +367,7 @@ function VincularContent({ configId }: { configId: number }) {
   return (
     <div className="min-h-screen bg-muted dark:bg-background">
       {/* Header */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-card border-b border-neutral-200 dark:border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/admin/whatsapp">
@@ -427,7 +427,7 @@ function VincularContent({ configId }: { configId: number }) {
           </div>
 
           {/* Filtro de vinculação */}
-          <div className="flex gap-1 p-1 bg-zinc-100 dark:bg-muted rounded-lg">
+          <div className="flex gap-1 p-1 bg-neutral-100 dark:bg-muted rounded-lg">
             <Button
               variant={filter === "all" ? "secondary" : "ghost"}
               size="sm"

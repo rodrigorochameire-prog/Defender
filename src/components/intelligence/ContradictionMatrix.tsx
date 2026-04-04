@@ -217,7 +217,7 @@ export function ContradictionMatrix({ items, onFileClick }: ContradictionMatrixP
           className={cn(
             "text-xs px-2.5 py-1 rounded-full border transition-colors",
             filter === "all"
-              ? "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-50 dark:text-zinc-900 dark:border-zinc-50"
+              ? "bg-neutral-900 text-white border-neutral-900 dark:bg-neutral-50 dark:text-neutral-900 dark:border-neutral-50"
               : "border-border text-muted-foreground/50 hover:bg-muted/50",
           )}
         >

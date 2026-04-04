@@ -25,7 +25,7 @@ export function ColumnFilterRow({
 }: ColumnFilterRowProps) {
   // Don't render if no filters are active and user hasn't interacted
   return (
-    <tr className="bg-zinc-50/80 dark:bg-zinc-800/40 border-b border-zinc-200/60 dark:border-zinc-700/60">
+    <tr className="bg-neutral-50/80 dark:bg-neutral-800/40 border-b border-neutral-200/60 dark:border-neutral-700/60">
       {hasReorder && <td className="w-6" />}
       {hasSelectMode && <td className="w-8" />}
       {columns.map(col => {
@@ -39,7 +39,7 @@ export function ColumnFilterRow({
               value={filters[col.id] || ""}
               onChange={(e) => onFilterChange(col.id, e.target.value)}
               placeholder={col.header}
-              className="w-full text-[10px] px-1.5 py-0.5 rounded border border-zinc-200/80 dark:border-zinc-700/60 bg-white/80 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-300 placeholder-zinc-300 dark:placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-emerald-400/50 focus:border-emerald-400/50 transition-colors"
+              className="w-full text-[10px] px-1.5 py-0.5 rounded border border-neutral-200/80 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-800/80 text-neutral-600 dark:text-neutral-300 placeholder-neutral-300 dark:placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-emerald-400/50 focus:border-emerald-400/50 transition-colors"
             />
           </td>
         );

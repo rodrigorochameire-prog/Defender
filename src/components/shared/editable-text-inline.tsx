@@ -75,7 +75,7 @@ export function EditableTextInline({
             // Enter sem Shift salva (Shift+Enter = nova linha)
             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); save(); }
           }}
-          className={inputClassName || "w-full text-sm px-2.5 py-2 rounded-lg border border-emerald-400 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-400/50 resize-none"}
+          className={inputClassName || "w-full text-sm px-2.5 py-2 rounded-lg border border-emerald-400 bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-emerald-400/50 resize-none"}
           placeholder={placeholder}
           rows={3}
         />
@@ -93,7 +93,7 @@ export function EditableTextInline({
           if (e.key === "Enter") { e.preventDefault(); save(); }
           if (e.key === "Escape") { setTemp(value); setIsEditing(false); }
         }}
-        className={inputClassName || "w-full text-[11px] px-1.5 py-0.5 rounded border border-emerald-400 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"}
+        className={inputClassName || "w-full text-[11px] px-1.5 py-0.5 rounded border border-emerald-400 bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"}
         placeholder={placeholder}
       />
     );
@@ -113,19 +113,19 @@ export function EditableTextInline({
     >
       {value ? (
         multiline ? (
-          <span className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap break-words">
+          <span className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap break-words">
             {value}
           </span>
         ) : (
-          <span className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">{value}</span>
+          <span className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate">{value}</span>
         )
       ) : (
-        <span className={`${multiline ? "text-sm" : "text-[11px]"} text-zinc-400 dark:text-zinc-500 italic`}>
+        <span className={`${multiline ? "text-sm" : "text-[11px]"} text-neutral-400 dark:text-neutral-500 italic`}>
           {placeholder}
         </span>
       )}
       {showEditIcon && (
-        <Pencil className="w-2.5 h-2.5 text-zinc-400 opacity-40 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
+        <Pencil className="w-2.5 h-2.5 text-neutral-400 opacity-40 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
       )}
     </div>
   );

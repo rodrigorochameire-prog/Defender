@@ -62,7 +62,7 @@ function tipoBg(tipo?: string) {
   if (t === "testemunhal") return "border-l-purple-500";
   if (t === "pericial") return "border-l-cyan-500";
   if (t === "material") return "border-l-amber-500";
-  return "border-l-zinc-300 dark:border-l-zinc-600";
+  return "border-l-neutral-300 dark:border-l-neutral-600";
 }
 
 // ─── Main ───────────────────────────────────────────────────────────────────
@@ -75,7 +75,7 @@ export function AnaliseProvas({ inventarioProvas, mapaDocumental, laudos }: Anal
   if (isEmpty) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <FileText className="h-10 w-10 text-zinc-300 dark:text-zinc-600 mb-4" />
+        <FileText className="h-10 w-10 text-neutral-300 dark:text-neutral-600 mb-4" />
         <p className={`${TYPO.body} text-muted-foreground`}>
           Nenhuma prova catalogada. Execute uma análise para inventariar as provas do caso.
         </p>
@@ -91,7 +91,7 @@ export function AnaliseProvas({ inventarioProvas, mapaDocumental, laudos }: Anal
           <h3 className={`${TYPO.h2} flex items-center gap-2.5 mb-4`}>
             <Search className="h-5 w-5 text-blue-500 shrink-0" />
             Inventário de Provas
-            <span className="text-xs text-zinc-400 font-normal ml-1">({inventarioProvas.length})</span>
+            <span className="text-xs text-neutral-400 font-normal ml-1">({inventarioProvas.length})</span>
           </h3>
 
           <div className="space-y-2">
@@ -104,7 +104,7 @@ export function AnaliseProvas({ inventarioProvas, mapaDocumental, laudos }: Anal
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       {prova.tipo && (
-                        <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+                        <span className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
                           {prova.tipo}
                         </span>
                       )}
@@ -126,7 +126,7 @@ export function AnaliseProvas({ inventarioProvas, mapaDocumental, laudos }: Anal
                     )}
                   </div>
                   {prova.pagina && (
-                    <span className="text-xs text-zinc-400 shrink-0 tabular-nums">
+                    <span className="text-xs text-neutral-400 shrink-0 tabular-nums">
                       p. {prova.pagina}
                     </span>
                   )}
@@ -143,7 +143,7 @@ export function AnaliseProvas({ inventarioProvas, mapaDocumental, laudos }: Anal
           <h3 className={`${TYPO.h2} flex items-center gap-2.5 mb-4`}>
             <FileText className="h-5 w-5 text-cyan-500 shrink-0" />
             Laudos Periciais
-            <span className="text-xs text-zinc-400 font-normal ml-1">({laudos.length})</span>
+            <span className="text-xs text-neutral-400 font-normal ml-1">({laudos.length})</span>
           </h3>
 
           <div className="space-y-3">
@@ -170,7 +170,7 @@ export function AnaliseProvas({ inventarioProvas, mapaDocumental, laudos }: Anal
                       )}
                     </div>
                   </div>
-                  {expandedLaudo === i ? <ChevronUp className="h-4 w-4 text-zinc-400" /> : <ChevronDown className="h-4 w-4 text-zinc-400" />}
+                  {expandedLaudo === i ? <ChevronUp className="h-4 w-4 text-neutral-400" /> : <ChevronDown className="h-4 w-4 text-neutral-400" />}
                 </div>
 
                 {/* Conclusão sempre visível */}
@@ -178,7 +178,7 @@ export function AnaliseProvas({ inventarioProvas, mapaDocumental, laudos }: Anal
 
                 {/* Expanded details */}
                 {expandedLaudo === i && (
-                  <div className="mt-3 space-y-3 border-t border-zinc-100 dark:border-zinc-800 pt-3">
+                  <div className="mt-3 space-y-3 border-t border-neutral-100 dark:border-neutral-800 pt-3">
                     {laudo.pontos_chave && laudo.pontos_chave.length > 0 && (
                       <div>
                         <p className={`${TYPO.label} mb-2`}>Pontos-Chave</p>
@@ -219,13 +219,13 @@ export function AnaliseProvas({ inventarioProvas, mapaDocumental, laudos }: Anal
           <h3 className={`${TYPO.h2} flex items-center gap-2.5 mb-4`}>
             <Folder className="h-5 w-5 text-amber-500 shrink-0" />
             Mapa Documental
-            <span className="text-xs text-zinc-400 font-normal ml-1">({mapaDocumental.length})</span>
+            <span className="text-xs text-neutral-400 font-normal ml-1">({mapaDocumental.length})</span>
           </h3>
 
-          <div className="rounded-xl border border-zinc-100 dark:border-zinc-800 overflow-hidden">
+          <div className="rounded-xl border border-neutral-100 dark:border-neutral-800 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-xs uppercase text-zinc-500 dark:text-zinc-400">
+                <thead className="bg-neutral-50 dark:bg-neutral-800/50 text-xs uppercase text-neutral-500 dark:text-neutral-400">
                   <tr>
                     <th className="px-4 py-3 text-left font-semibold tracking-wide">Documento</th>
                     <th className="px-4 py-3 text-left font-semibold tracking-wide">Tipo</th>
@@ -233,13 +233,13 @@ export function AnaliseProvas({ inventarioProvas, mapaDocumental, laudos }: Anal
                     <th className="px-4 py-3 text-left font-semibold tracking-wide">Resumo</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {mapaDocumental.map((doc, i) => (
-                    <tr key={i} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/20 transition-colors">
+                    <tr key={i} className="hover:bg-neutral-50/60 dark:hover:bg-neutral-800/20 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <File className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-                          <span className="text-[14px] font-medium text-zinc-800 dark:text-zinc-200">{doc.nome}</span>
+                          <File className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
+                          <span className="text-[14px] font-medium text-neutral-800 dark:text-neutral-200">{doc.nome}</span>
                         </div>
                         {doc.alerta && (
                           <span className="flex items-center gap-1 mt-1 text-xs text-amber-600 dark:text-amber-400">
@@ -248,9 +248,9 @@ export function AnaliseProvas({ inventarioProvas, mapaDocumental, laudos }: Anal
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-[13px] text-zinc-500">{doc.tipo ?? "—"}</td>
-                      <td className="px-4 py-3 text-[13px] text-zinc-500 tabular-nums">{doc.paginas ?? "—"}</td>
-                      <td className="px-4 py-3 text-[13px] text-zinc-500 max-w-xs truncate">{doc.resumo ?? "—"}</td>
+                      <td className="px-4 py-3 text-[13px] text-neutral-500">{doc.tipo ?? "—"}</td>
+                      <td className="px-4 py-3 text-[13px] text-neutral-500 tabular-nums">{doc.paginas ?? "—"}</td>
+                      <td className="px-4 py-3 text-[13px] text-neutral-500 max-w-xs truncate">{doc.resumo ?? "—"}</td>
                     </tr>
                   ))}
                 </tbody>

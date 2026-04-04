@@ -28,7 +28,7 @@ export function MobileBottomNav() {
         "fixed bottom-0 left-0 right-0 z-50",
         "md:hidden",
         "bg-[#1f1f23]/95 backdrop-blur-xl",
-        "border-t border-zinc-700/30",
+        "border-t border-neutral-700/30",
         "h-16 pb-[env(safe-area-inset-bottom)]"
       )}
     >
@@ -47,7 +47,7 @@ export function MobileBottomNav() {
                 "flex flex-col items-center justify-center gap-0.5",
                 "w-full h-full relative",
                 "transition-colors duration-150",
-                isActive ? "text-emerald-400" : "text-zinc-500"
+                isActive ? "text-emerald-400" : "text-neutral-500"
               )}
             >
               {/* Active dot indicator */}

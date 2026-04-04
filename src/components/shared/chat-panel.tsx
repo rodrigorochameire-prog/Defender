@@ -96,7 +96,7 @@ export function ChatPanel() {
                 <div className={`inline-block rounded-lg px-3 py-2 text-sm max-w-[85%] whitespace-pre-wrap ${
                   msg.role === "user"
                     ? "bg-emerald-600 text-white"
-                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                    : "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
                 }`}>
                   {msg.content}
                 </div>
@@ -121,7 +121,7 @@ export function ChatPanel() {
 
         <div className="p-3 border-t flex gap-2 shrink-0">
           <input
-            className="flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-emerald-500"
+            className="flex-1 bg-neutral-100 dark:bg-neutral-800 rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-emerald-500"
             placeholder="O que você precisa?"
             value={input}
             onChange={(e) => setInput(e.target.value)}

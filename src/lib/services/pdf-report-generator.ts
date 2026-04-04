@@ -141,11 +141,11 @@ export function generateSectionReport(data: ReportData): Uint8Array {
 
   // ─── Title ───
   doc.setFontSize(14);
-  doc.setTextColor(39, 39, 42); // zinc-800
+  doc.setTextColor(39, 39, 42); // neutral-800
   doc.text("RELATÓRIO DE PEÇAS PROCESSUAIS", margin, 24);
 
   doc.setFontSize(9);
-  doc.setTextColor(113, 113, 122); // zinc-500
+  doc.setTextColor(113, 113, 122); // neutral-500
   const fileNameTruncated =
     data.fileName.length > 80
       ? data.fileName.slice(0, 77) + "..."
@@ -275,7 +275,7 @@ export function generateSectionReport(data: ReportData): Uint8Array {
     currentY += 4;
 
     // Separator line
-    doc.setDrawColor(228, 228, 231); // zinc-200
+    doc.setDrawColor(228, 228, 231); // neutral-200
     doc.setLineWidth(0.2);
     doc.line(margin + 5, currentY - 2, pageWidth - margin, currentY - 2);
   }

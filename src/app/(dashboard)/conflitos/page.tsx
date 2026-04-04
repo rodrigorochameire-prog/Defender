@@ -25,9 +25,9 @@ export default function ConflitosPage() {
     return (
       <div className="p-6 max-w-4xl mx-auto">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-zinc-200 dark:bg-muted rounded w-64" />
-          <div className="h-32 bg-zinc-200 dark:bg-muted rounded" />
-          <div className="h-32 bg-zinc-200 dark:bg-muted rounded" />
+          <div className="h-8 bg-neutral-200 dark:bg-muted rounded w-64" />
+          <div className="h-32 bg-neutral-200 dark:bg-muted rounded" />
+          <div className="h-32 bg-neutral-200 dark:bg-muted rounded" />
         </div>
       </div>
     );
@@ -66,7 +66,7 @@ export default function ConflitosPage() {
               <span className="text-sm text-muted-foreground font-mono">{c.numeroAutos}</span>
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Campo: <code className="bg-zinc-100 dark:bg-muted px-1.5 py-0.5 rounded text-xs">{c.campo}</code>
+              Campo: <code className="bg-neutral-100 dark:bg-muted px-1.5 py-0.5 rounded text-xs">{c.campo}</code>
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -75,7 +75,7 @@ export default function ConflitosPage() {
                 <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Planilha</p>
                 <p className="font-medium text-sm">{c.valorPlanilha || "(vazio)"}</p>
               </div>
-              <div className="p-3 rounded-lg border border-zinc-200 dark:border-border bg-zinc-50/50 dark:bg-card/50">
+              <div className="p-3 rounded-lg border border-neutral-200 dark:border-border bg-neutral-50/50 dark:bg-card/50">
                 <p className="text-xs text-muted-foreground font-medium mb-1">OMBUDS</p>
                 <p className="font-medium text-sm">{c.valorBanco || "(vazio)"}</p>
               </div>

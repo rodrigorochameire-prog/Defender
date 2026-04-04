@@ -72,7 +72,7 @@ export function FactualSectionNav({
               "shrink-0 h-7 rounded-full px-3 text-xs font-medium transition-all duration-200",
               isActive
                 ? "bg-[#1a1a2e] text-white hover:bg-[#1a1a2e]/90 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30"
-                : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-muted"
+                : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-muted"
             )}
           >
             {secao}

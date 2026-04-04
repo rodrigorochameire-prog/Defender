@@ -161,8 +161,8 @@ export function QuickReactionsBar({
     <div
       className={cn(
         "fixed bottom-16 md:bottom-0 left-0 right-0 md:left-64",
-        "bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm",
-        "border-t border-zinc-200 dark:border-zinc-800",
+        "bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm",
+        "border-t border-neutral-200 dark:border-neutral-800",
         "z-30 transition-all duration-300",
         isCollapsed ? "h-8" : "h-14"
       )}
@@ -173,10 +173,10 @@ export function QuickReactionsBar({
         className={cn(
           "absolute -top-6 left-1/2 -translate-x-1/2",
           "flex h-6 w-10 items-center justify-center",
-          "rounded-t-lg border border-b-0 border-zinc-200 dark:border-zinc-800",
-          "bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm",
-          "text-zinc-400 dark:text-zinc-500",
-          "hover:text-zinc-600 dark:hover:text-zinc-300",
+          "rounded-t-lg border border-b-0 border-neutral-200 dark:border-neutral-800",
+          "bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm",
+          "text-neutral-400 dark:text-neutral-500",
+          "hover:text-neutral-600 dark:hover:text-neutral-300",
           "cursor-pointer transition-colors duration-200"
         )}
       >
@@ -190,7 +190,7 @@ export function QuickReactionsBar({
       {/* Collapsed state: just a thin label */}
       {isCollapsed ? (
         <div className="flex h-full items-center justify-center">
-          <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+          <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
             Reacoes Rapidas ({seatedJurors.length} jurados)
           </span>
         </div>
@@ -198,7 +198,7 @@ export function QuickReactionsBar({
         /* Expanded state: avatars row */
         <div className="flex h-full items-center justify-center gap-3 px-4">
           {/* Phase indicator */}
-          <span className="hidden sm:inline text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mr-1">
+          <span className="hidden sm:inline text-[10px] font-medium uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mr-1">
             {faseSelecionada.label}
           </span>
 
@@ -211,8 +211,8 @@ export function QuickReactionsBar({
                   key={`empty-${idx}`}
                   className={cn(
                     "relative flex h-9 w-9 items-center justify-center",
-                    "rounded-full border-2 border-dashed border-zinc-200 dark:border-zinc-700",
-                    "text-[10px] text-zinc-300 dark:text-zinc-600"
+                    "rounded-full border-2 border-dashed border-neutral-200 dark:border-neutral-700",
+                    "text-[10px] text-neutral-300 dark:text-neutral-600"
                   )}
                 >
                   {idx + 1}
@@ -241,7 +241,7 @@ export function QuickReactionsBar({
                       "h-9 w-9 border-2",
                       isActive
                         ? "ring-2 ring-emerald-400 border-emerald-400 dark:ring-emerald-500 dark:border-emerald-500"
-                        : "border-zinc-200 dark:border-zinc-700 hover:ring-2 hover:ring-emerald-400 dark:hover:ring-emerald-500"
+                        : "border-neutral-200 dark:border-neutral-700 hover:ring-2 hover:ring-emerald-400 dark:hover:ring-emerald-500"
                     )}
                   >
                     {jurado.foto ? (
@@ -253,7 +253,7 @@ export function QuickReactionsBar({
                     <AvatarFallback
                       className={cn(
                         "text-[10px] font-semibold",
-                        "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                        "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
                       )}
                     >
                       {getInitials(jurado.nome)}
@@ -265,8 +265,8 @@ export function QuickReactionsBar({
                     className={cn(
                       "absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center",
                       "rounded-full text-[8px] font-bold",
-                      "bg-zinc-700 text-white dark:bg-zinc-300 dark:text-zinc-900",
-                      "border border-white dark:border-zinc-900"
+                      "bg-neutral-700 text-white dark:bg-neutral-300 dark:text-neutral-900",
+                      "border border-white dark:border-neutral-900"
                     )}
                   >
                     {jurado.cadeira}
@@ -276,7 +276,7 @@ export function QuickReactionsBar({
                   <span
                     className={cn(
                       "absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full",
-                      "border border-white dark:border-zinc-900",
+                      "border border-white dark:border-neutral-900",
                       getTaxaDotColor(jurado.taxaAbsolvicao)
                     )}
                   />
@@ -288,7 +288,7 @@ export function QuickReactionsBar({
                         "absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center",
                         "rounded-full text-[8px] font-bold",
                         "bg-blue-500 text-white",
-                        "border border-white dark:border-zinc-900"
+                        "border border-white dark:border-neutral-900"
                       )}
                     >
                       {behaviorCount > 9 ? "9+" : behaviorCount}
@@ -303,8 +303,8 @@ export function QuickReactionsBar({
                     className={cn(
                       "absolute bottom-full left-1/2 -translate-x-1/2 mb-3",
                       "w-52 rounded-xl shadow-xl",
-                      "bg-white dark:bg-zinc-900",
-                      "border border-zinc-200 dark:border-zinc-800",
+                      "bg-white dark:bg-neutral-900",
+                      "border border-neutral-200 dark:border-neutral-800",
                       "p-3 z-50"
                     )}
                   >
@@ -315,7 +315,7 @@ export function QuickReactionsBar({
                         "w-0 h-0",
                         "border-l-[6px] border-l-transparent",
                         "border-r-[6px] border-r-transparent",
-                        "border-t-[6px] border-t-zinc-200 dark:border-t-zinc-800"
+                        "border-t-[6px] border-t-neutral-200 dark:border-t-neutral-800"
                       )}
                     />
                     <div
@@ -324,12 +324,12 @@ export function QuickReactionsBar({
                         "w-0 h-0",
                         "border-l-[5px] border-l-transparent",
                         "border-r-[5px] border-r-transparent",
-                        "border-t-[5px] border-t-white dark:border-t-zinc-900"
+                        "border-t-[5px] border-t-white dark:border-t-neutral-900"
                       )}
                     />
 
                     {/* Juror name */}
-                    <p className="mb-2 truncate text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                    <p className="mb-2 truncate text-xs font-medium text-neutral-700 dark:text-neutral-300">
                       {jurado.nome}
                     </p>
 
@@ -348,11 +348,11 @@ export function QuickReactionsBar({
                       }}
                       className={cn(
                         "mb-3 w-full rounded-lg border px-2.5 py-1.5 text-[11px]",
-                        "border-zinc-200 bg-zinc-50 text-zinc-700",
-                        "placeholder:text-zinc-400",
+                        "border-neutral-200 bg-neutral-50 text-neutral-700",
+                        "placeholder:text-neutral-400",
                         "focus:border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-300/30",
-                        "dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
-                        "dark:placeholder:text-zinc-500",
+                        "dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300",
+                        "dark:placeholder:text-neutral-500",
                         "dark:focus:border-emerald-600 dark:focus:ring-emerald-600/20",
                         "transition-all duration-200"
                       )}

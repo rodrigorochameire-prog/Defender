@@ -42,10 +42,10 @@ const TIPO_CONFIG: Record<string, { icon: LucideIcon; color: string; bg: string;
   investigacao: { icon: Shield, color: "text-orange-400", bg: "bg-orange-400", label: "Investigacao" },
   audiencia: { icon: CalendarDays, color: "text-indigo-500", bg: "bg-indigo-500", label: "Audiencia" },
   midia: { icon: Music, color: "text-cyan-500", bg: "bg-cyan-500", label: "Midia" },
-  documento: { icon: FileText, color: "text-zinc-600 dark:text-zinc-400", bg: "bg-zinc-400", label: "Documento" },
+  documento: { icon: FileText, color: "text-neutral-600 dark:text-neutral-400", bg: "bg-neutral-400", label: "Documento" },
 };
 
-const DEFAULT_CONFIG = { icon: HelpCircle, color: "text-zinc-600 dark:text-zinc-400", bg: "bg-zinc-400", label: "Outro" };
+const DEFAULT_CONFIG = { icon: HelpCircle, color: "text-neutral-600 dark:text-neutral-400", bg: "bg-neutral-400", label: "Outro" };
 
 function getConfig(tipo: string) {
   return TIPO_CONFIG[tipo.toLowerCase()] || DEFAULT_CONFIG;

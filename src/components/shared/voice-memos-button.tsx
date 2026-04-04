@@ -197,22 +197,22 @@ export function VoiceMemosButton({
             <div className="space-y-0.5">
               <button
                 onClick={startRecordingViaShortcut}
-                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
               >
                 <Mic className="h-3.5 w-3.5 text-rose-500" />
                 Gravar agora (Atalhos)
               </button>
               <button
                 onClick={triggerFileInput}
-                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
               >
                 <Upload className="h-3.5 w-3.5 text-blue-500" />
                 Importar audio (.m4a)
               </button>
-              <div className="border-t border-zinc-200 dark:border-zinc-700 my-1" />
+              <div className="border-t border-neutral-200 dark:border-neutral-700 my-1" />
               <button
                 onClick={showSetupInstructions}
-                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-[10px] text-zinc-400 dark:text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-[10px] text-neutral-400 dark:text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
               >
                 <CircleHelp className="h-3 w-3" />
                 Como configurar o Atalho
@@ -260,22 +260,22 @@ export function VoiceMemosButton({
           <div className="space-y-0.5">
             <button
               onClick={startRecordingViaShortcut}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
             >
               <Mic className="h-4 w-4 text-rose-500" />
               Gravar agora (Atalhos)
             </button>
             <button
               onClick={triggerFileInput}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
             >
               <Upload className="h-4 w-4 text-blue-500" />
               Importar audio (.m4a)
             </button>
-            <div className="border-t border-zinc-200 dark:border-zinc-700 my-1" />
+            <div className="border-t border-neutral-200 dark:border-neutral-700 my-1" />
             <button
               onClick={showSetupInstructions}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-xs text-zinc-400 dark:text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-xs text-neutral-400 dark:text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
             >
               <CircleHelp className="h-3.5 w-3.5" />
               Como configurar o Atalho

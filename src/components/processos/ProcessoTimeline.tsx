@@ -131,8 +131,8 @@ const GROUP_CONFIG: Record<Grupo, GroupConfig> = {
   outros: {
     icon: HelpCircle,
     label: "Outros",
-    border: "border-l-zinc-500",
-    bg: "bg-zinc-500/10",
+    border: "border-l-neutral-500",
+    bg: "bg-neutral-500/10",
     text: "text-muted-foreground",
   },
 };
@@ -154,8 +154,8 @@ const RELEVANCIA_CONFIG: Record<Relevancia, RelevanciaConfig> = {
     label: "Medio",
   },
   baixo: {
-    dot: "bg-zinc-500",
-    badge: "bg-zinc-500/20 text-muted-foreground border-zinc-500/30",
+    dot: "bg-neutral-500",
+    badge: "bg-neutral-500/20 text-muted-foreground border-neutral-500/30",
     label: "Baixo",
   },
 };

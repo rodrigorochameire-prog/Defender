@@ -13,7 +13,7 @@ function DrivePageInner() {
   useKeyboardShortcuts();
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-zinc-50 dark:bg-[#0f0f11] overflow-hidden relative">
+    <div className="flex h-[calc(100vh-4rem)] bg-neutral-50 dark:bg-[#0f0f11] overflow-hidden relative">
       {/* Sidebar */}
       <DriveSidebar />
       {/* Content column */}

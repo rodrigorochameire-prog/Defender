@@ -130,7 +130,7 @@ export function PlaudApprovalQueue({ className }: PlaudApprovalQueueProps) {
                       <p className="font-medium text-sm truncate">
                         {recording.title || `Gravação ${recording.plaudRecordingId.slice(0, 8)}`}
                       </p>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-zinc-500">
+                      <div className="flex items-center gap-3 mt-1 text-xs text-neutral-500">
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           {formatDuration(recording.duration)}
@@ -171,12 +171,12 @@ export function PlaudApprovalQueue({ className }: PlaudApprovalQueueProps) {
                     <div className="px-3 pb-3 space-y-3">
                       {/* Transcrição preview */}
                       {recording.transcription && (
-                        <div className="rounded-md bg-white dark:bg-card p-3 border border-zinc-200 dark:border-border">
-                          <div className="flex items-center gap-2 mb-2 text-xs font-medium text-zinc-500">
+                        <div className="rounded-md bg-white dark:bg-card p-3 border border-neutral-200 dark:border-border">
+                          <div className="flex items-center gap-2 mb-2 text-xs font-medium text-neutral-500">
                             <FileText className="h-3 w-3" />
                             Transcrição
                           </div>
-                          <p className="text-xs text-zinc-600 dark:text-muted-foreground line-clamp-4 whitespace-pre-line">
+                          <p className="text-xs text-neutral-600 dark:text-muted-foreground line-clamp-4 whitespace-pre-line">
                             {recording.transcription.slice(0, 500)}
                             {recording.transcription.length > 500 && "..."}
                           </p>
@@ -185,12 +185,12 @@ export function PlaudApprovalQueue({ className }: PlaudApprovalQueueProps) {
 
                       {/* Resumo preview */}
                       {recording.summary && (
-                        <div className="rounded-md bg-white dark:bg-card p-3 border border-zinc-200 dark:border-border">
-                          <div className="flex items-center gap-2 mb-2 text-xs font-medium text-zinc-500">
+                        <div className="rounded-md bg-white dark:bg-card p-3 border border-neutral-200 dark:border-border">
+                          <div className="flex items-center gap-2 mb-2 text-xs font-medium text-neutral-500">
                             <MessageSquare className="h-3 w-3" />
                             Resumo
                           </div>
-                          <p className="text-xs text-zinc-600 dark:text-muted-foreground line-clamp-4 whitespace-pre-line">
+                          <p className="text-xs text-neutral-600 dark:text-muted-foreground line-clamp-4 whitespace-pre-line">
                             {recording.summary.slice(0, 500)}
                             {recording.summary.length > 500 && "..."}
                           </p>
@@ -247,9 +247,9 @@ export function PlaudApprovalQueue({ className }: PlaudApprovalQueueProps) {
             </div>
           ) : (
             <div className="text-center py-8">
-              <CheckCircle2 className="h-12 w-12 mx-auto text-zinc-300 dark:text-muted-foreground/50 mb-3" />
-              <p className="text-zinc-500">Nenhuma gravação pendente</p>
-              <p className="text-xs text-zinc-400 mt-1">
+              <CheckCircle2 className="h-12 w-12 mx-auto text-neutral-300 dark:text-muted-foreground/50 mb-3" />
+              <p className="text-neutral-500">Nenhuma gravação pendente</p>
+              <p className="text-xs text-neutral-400 mt-1">
                 Novas gravações do Plaud aparecerão aqui para aprovação
               </p>
             </div>

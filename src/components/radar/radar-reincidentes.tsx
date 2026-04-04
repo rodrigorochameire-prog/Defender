@@ -54,13 +54,13 @@ export function RadarReincidentes() {
   return (
     <div className="space-y-4">
       {/* Subtítulo da aba completa */}
-      <p className="text-xs text-zinc-400 dark:text-zinc-500">
+      <p className="text-xs text-neutral-400 dark:text-neutral-500">
         Exploração completa — 2+ ocorrências
       </p>
 
       {/* Filtros: mínimo de ocorrências + período */}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs text-zinc-500">Mínimo de ocorrências:</span>
+        <span className="text-xs text-neutral-500">Mínimo de ocorrências:</span>
         {[2, 3, 4, 5].map((n) => (
           <Button
             key={n}
@@ -72,9 +72,9 @@ export function RadarReincidentes() {
             {n}+
           </Button>
         ))}
-        <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
+        <div className="h-4 w-px bg-neutral-200 dark:bg-neutral-700" />
         <div className="flex items-center gap-1">
-          <span className="text-xs text-zinc-500">Período:</span>
+          <span className="text-xs text-neutral-500">Período:</span>
           {[30, 90, 180, 365].map((d) => (
             <button
               key={d}
@@ -82,15 +82,15 @@ export function RadarReincidentes() {
               className={cn(
                 "rounded px-2 py-0.5 text-xs transition-colors",
                 dias === d
-                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                  : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                  ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
+                  : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
               )}
             >
               {d === 365 ? "1a" : `${d}d`}
             </button>
           ))}
         </div>
-        <span className="ml-auto text-xs text-zinc-400">
+        <span className="ml-auto text-xs text-neutral-400">
           {reincidentes.length} envolvido{reincidentes.length !== 1 ? "s" : ""}
         </span>
       </div>
@@ -98,13 +98,13 @@ export function RadarReincidentes() {
       {/* Empty state */}
       {reincidentes.length === 0 && (
         <div className="text-center py-16">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
-            <Users className="h-8 w-8 text-zinc-400" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4">
+            <Users className="h-8 w-8 text-neutral-400" />
           </div>
-          <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
             Nenhum reincidente encontrado
           </h3>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
             Pessoas que aparecem em {minOcorrencias}+ notícias serão listadas aqui.
           </p>
         </div>
@@ -119,11 +119,11 @@ export function RadarReincidentes() {
               <CardContent className="p-0">
                 {/* Header row */}
                 <button
-                  className="w-full flex items-center gap-3 p-4 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-3 p-4 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer"
                   onClick={() => toggleExpand(pessoa.nome)}
                 >
                   {/* Expand icon */}
-                  <span className="text-zinc-400 shrink-0">
+                  <span className="text-neutral-400 shrink-0">
                     {isExpanded
                       ? <ChevronDown className="h-4 w-4" />
                       : <ChevronRight className="h-4 w-4" />
@@ -137,17 +137,17 @@ export function RadarReincidentes() {
                       ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                       : pessoa.totalNoticias >= 3
                         ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                        : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                        : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
                   )}>
                     {pessoa.totalNoticias}
                   </span>
 
                   {/* Name and role */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
                       {pessoa.nome}
                     </p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-neutral-500">
                       {pessoa.totalNoticias} ocorrência{pessoa.totalNoticias !== 1 ? "s" : ""}
                     </p>
                   </div>
@@ -158,7 +158,7 @@ export function RadarReincidentes() {
                     className={cn(
                       "text-[10px] shrink-0",
                       papelColors[pessoa.papel?.toLowerCase()] ||
-                      "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                      "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
                     )}
                   >
                     {pessoa.papel || "Envolvido"}
@@ -183,12 +183,12 @@ export function RadarReincidentes() {
                   >
                     Ver matches automáticos
                   </button>
-                  <span className="text-zinc-300 dark:text-zinc-700">·</span>
+                  <span className="text-neutral-300 dark:text-neutral-700">·</span>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(pessoa.nome);
                     }}
-                    className="text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 cursor-pointer"
+                    className="text-xs text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer"
                   >
                     Copiar nome
                   </button>
@@ -196,9 +196,9 @@ export function RadarReincidentes() {
 
                 {/* Expanded timeline */}
                 {isExpanded && (
-                  <div className="border-t border-zinc-100 dark:border-zinc-800 px-4 pb-4">
+                  <div className="border-t border-neutral-100 dark:border-neutral-800 px-4 pb-4">
                     <div className="pt-3 space-y-2">
-                      <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-3">
+                      <p className="text-[10px] font-medium text-neutral-500 uppercase tracking-wider mb-3">
                         Linha do tempo
                       </p>
                       {pessoa.noticias.map((noticia, i) => (
@@ -209,10 +209,10 @@ export function RadarReincidentes() {
                               "h-2 w-2 rounded-full",
                               i === 0
                                 ? "bg-emerald-500"
-                                : "bg-zinc-300 dark:bg-zinc-600"
+                                : "bg-neutral-300 dark:bg-neutral-600"
                             )} />
                             {i < pessoa.noticias.length - 1 && (
-                              <div className="w-px flex-1 bg-zinc-200 dark:bg-zinc-700 mt-1 h-4" />
+                              <div className="w-px flex-1 bg-neutral-200 dark:bg-neutral-700 mt-1 h-4" />
                             )}
                           </div>
 
@@ -228,20 +228,20 @@ export function RadarReincidentes() {
                                 </Badge>
                               )}
                               {noticia.dataFato && (
-                                <span className="text-[10px] text-zinc-400 flex items-center gap-0.5">
+                                <span className="text-[10px] text-neutral-400 flex items-center gap-0.5">
                                   <Calendar className="h-2.5 w-2.5" />
                                   {format(new Date(noticia.dataFato), "dd/MM/yyyy", { locale: ptBR })}
                                 </span>
                               )}
                               {noticia.bairro && (
-                                <span className="text-[10px] text-zinc-400 flex items-center gap-0.5">
+                                <span className="text-[10px] text-neutral-400 flex items-center gap-0.5">
                                   <MapPin className="h-2.5 w-2.5" />
                                   {noticia.bairro}
                                 </span>
                               )}
                             </div>
                             <div className="flex items-center gap-2">
-                              <p className="text-xs text-zinc-700 dark:text-zinc-300 line-clamp-1 flex-1">
+                              <p className="text-xs text-neutral-700 dark:text-neutral-300 line-clamp-1 flex-1">
                                 {noticia.titulo}
                               </p>
                               <a

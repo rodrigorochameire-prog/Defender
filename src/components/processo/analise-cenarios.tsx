@@ -68,9 +68,9 @@ function cenarioColor(tipo: string): {
       badgeVariant: "warning",
     };
   return {
-    border: "border-l-zinc-400",
+    border: "border-l-neutral-400",
     bg: COLORS.neutral.bg,
-    text: "text-zinc-700 dark:text-zinc-300",
+    text: "text-neutral-700 dark:text-neutral-300",
     badgeVariant: "default",
   };
 }
@@ -168,7 +168,7 @@ function ProvidenciaChecklist({
                 "h-4 w-4 rounded border-2",
                 item.concluido
                   ? "bg-emerald-500 border-emerald-500"
-                  : "border-zinc-300 dark:border-border",
+                  : "border-neutral-300 dark:border-border",
                 "inline-flex items-center justify-center",
               ].join(" ")}
               aria-hidden="true"
@@ -210,7 +210,7 @@ function ProvidenciasSection({
   return (
     <div>
       <h3 className={`${TYPO.h2} flex items-center gap-2.5 mb-4`}>
-        <CheckSquare className="h-5 w-5 text-zinc-500 shrink-0" />
+        <CheckSquare className="h-5 w-5 text-neutral-500 shrink-0" />
         Providencias
       </h3>
 

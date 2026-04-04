@@ -69,7 +69,7 @@ function EditableCell({
           if (e.key === "Escape") { setEditing(false); setDraft(value); }
         }}
         className={cn(
-          "w-full bg-white dark:bg-zinc-900 border border-emerald-400 rounded px-1.5 py-0.5 text-xs outline-none",
+          "w-full bg-white dark:bg-neutral-900 border border-emerald-400 rounded px-1.5 py-0.5 text-xs outline-none",
           mono && "font-mono",
           className
         )}
@@ -82,8 +82,8 @@ function EditableCell({
       onClick={() => { setDraft(value); setEditing(true); }}
       title="Clique para editar"
       className={cn(
-        "cursor-text hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded px-1.5 py-0.5 -mx-1.5 flex items-center gap-1 group",
-        !value && "text-zinc-400 italic",
+        "cursor-text hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded px-1.5 py-0.5 -mx-1.5 flex items-center gap-1 group",
+        !value && "text-neutral-400 italic",
         className
       )}
     >
@@ -134,7 +134,7 @@ function EditableDateCell({
         onChange={(e) => {
           // commit immediately on change so blur always has latest
         }}
-        className="w-[130px] bg-white dark:bg-zinc-900 border border-emerald-400 rounded px-1.5 py-0.5 text-xs outline-none"
+        className="w-[130px] bg-white dark:bg-neutral-900 border border-emerald-400 rounded px-1.5 py-0.5 text-xs outline-none"
       />
     );
   }
@@ -144,8 +144,8 @@ function EditableDateCell({
       onClick={() => setEditing(true)}
       title="Clique para editar prazo"
       className={cn(
-        "cursor-text hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded px-1.5 py-0.5 -mx-1.5 flex items-center gap-1 group text-xs",
-        !value && "text-zinc-400 italic"
+        "cursor-text hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded px-1.5 py-0.5 -mx-1.5 flex items-center gap-1 group text-xs",
+        !value && "text-neutral-400 italic"
       )}
     >
       <Calendar className="w-3 h-3 flex-shrink-0" />
@@ -182,7 +182,7 @@ function EditableTextarea({
         onKeyDown={(e) => {
           if (e.key === "Escape") { setEditing(false); setDraft(value); }
         }}
-        className="w-full bg-white dark:bg-zinc-900 border border-emerald-400 rounded px-1.5 py-1 text-xs outline-none resize-none"
+        className="w-full bg-white dark:bg-neutral-900 border border-emerald-400 rounded px-1.5 py-1 text-xs outline-none resize-none"
         placeholder={placeholder}
       />
     );
@@ -193,8 +193,8 @@ function EditableTextarea({
       onClick={() => { setDraft(value); setEditing(true); }}
       title="Clique para adicionar observação"
       className={cn(
-        "cursor-text hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded px-1.5 py-0.5 -mx-1.5 flex items-center gap-1 group text-xs",
-        !value && "text-zinc-400 italic"
+        "cursor-text hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded px-1.5 py-0.5 -mx-1.5 flex items-center gap-1 group text-xs",
+        !value && "text-neutral-400 italic"
       )}
     >
       <span className="flex-1 truncate">{value || placeholder}</span>
@@ -565,17 +565,17 @@ export function SEEUImportModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleFechar}>
-      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto w-[96vw] md:w-full bg-white dark:bg-zinc-900">
-        <DialogHeader className="pb-4 border-b border-zinc-100 dark:border-zinc-800">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto w-[96vw] md:w-full bg-white dark:bg-neutral-900">
+        <DialogHeader className="pb-4 border-b border-neutral-100 dark:border-neutral-800">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center border border-amber-200 dark:border-amber-800">
               <Gavel className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
+              <DialogTitle className="text-lg font-bold text-neutral-900 dark:text-neutral-50">
                 Importar do SEEU
               </DialogTitle>
-              <DialogDescription className="text-sm text-zinc-500 dark:text-zinc-400">
+              <DialogDescription className="text-sm text-neutral-500 dark:text-neutral-400">
                 Sistema Eletrônico de Execução Unificada - Execução Penal
               </DialogDescription>
             </div>
@@ -587,7 +587,7 @@ export function SEEUImportModal({
           <div className="space-y-5 py-4">
             {/* Seletor de tipo de manifestação */}
             <div className="space-y-2.5">
-              <Label className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+              <Label className="text-sm font-semibold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
                 <FileText className="w-4 h-4 text-amber-500" />
                 Tipo de Intimação
                 <span className="text-red-500 text-xs">*</span>
@@ -600,17 +600,17 @@ export function SEEUImportModal({
                     "p-4 rounded-xl border-2 transition-all text-left",
                     tipoManifestacao === "manifestacao"
                       ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
-                      : "border-zinc-200 dark:border-zinc-700 hover:border-amber-300"
+                      : "border-neutral-200 dark:border-neutral-700 hover:border-amber-300"
                   )}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <FileText className={cn(
                       "w-5 h-5",
-                      tipoManifestacao === "manifestacao" ? "text-amber-600" : "text-zinc-400"
+                      tipoManifestacao === "manifestacao" ? "text-amber-600" : "text-neutral-400"
                     )} />
                     <span className="font-semibold text-sm">Manifestação</span>
                   </div>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
                     Intimações que exigem manifestação nos autos. Prazo para resposta.
                   </p>
                 </button>
@@ -621,17 +621,17 @@ export function SEEUImportModal({
                     "p-4 rounded-xl border-2 transition-all text-left",
                     tipoManifestacao === "ciencia"
                       ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
-                      : "border-zinc-200 dark:border-zinc-700 hover:border-blue-300"
+                      : "border-neutral-200 dark:border-neutral-700 hover:border-blue-300"
                   )}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <CheckCircle2 className={cn(
                       "w-5 h-5",
-                      tipoManifestacao === "ciencia" ? "text-blue-600" : "text-zinc-400"
+                      tipoManifestacao === "ciencia" ? "text-blue-600" : "text-neutral-400"
                     )} />
                     <span className="font-semibold text-sm">Mera Ciência</span>
                   </div>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
                     Intimações apenas para ciência. Não exigem resposta.
                   </p>
                 </button>
@@ -640,7 +640,7 @@ export function SEEUImportModal({
 
             {/* Área de texto */}
             <div className="space-y-2.5">
-              <Label className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+              <Label className="text-sm font-semibold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
                 <Upload className="w-4 h-4 text-amber-500" />
                 Cole o texto da Mesa do Defensor
               </Label>
@@ -657,18 +657,18 @@ Autoridade: Ministério Público do Estado da Bahia
 Executado: NEMIAS DOS SANTOS JESUS
 27/01/2026
 06/02/2026  6 dias corridos  Livre  [ Analisar ]`}
-                  className="w-full h-[250px] p-4 text-sm font-mono bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl resize-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                  className="w-full h-[250px] p-4 text-sm font-mono bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-xl resize-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                 />
                 {texto && (
                   <button
                     onClick={() => setTexto("")}
-                    className="absolute top-2 right-2 p-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded"
+                    className="absolute top-2 right-2 p-1 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded"
                   >
-                    <AlertCircle className="w-4 h-4 text-zinc-400" />
+                    <AlertCircle className="w-4 h-4 text-neutral-400" />
                   </button>
                 )}
               </div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
                 <Info className="w-3.5 h-3.5" />
                 Copie toda a tabela da Mesa do Defensor incluindo cabecalhos
               </p>
@@ -695,7 +695,7 @@ Executado: NEMIAS DOS SANTOS JESUS
             </div>
 
             {/* Botões */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="flex justify-end gap-3 pt-4 border-t border-neutral-200 dark:border-neutral-800">
               <Button variant="outline" onClick={handleFechar}>
                 Cancelar
               </Button>
@@ -733,7 +733,7 @@ Executado: NEMIAS DOS SANTOS JESUS
                 <Card key={assunto}>
                   <CardContent className="pt-4">
                     <div className="flex items-center gap-2">
-                      <Scale className="w-5 h-5 text-zinc-500" />
+                      <Scale className="w-5 h-5 text-neutral-500" />
                       <div>
                         <p className="text-2xl font-bold">{count}</p>
                         <p className="text-xs text-muted-foreground truncate max-w-[120px]" title={assunto}>
@@ -781,10 +781,10 @@ Executado: NEMIAS DOS SANTOS JESUS
 
             {/* Sem ações - tudo igual */}
             {intimacoesNovas.length === 0 && duplicatas.length === 0 && (
-              <div className="p-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg">
+              <div className="p-3 bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-lg">
                 <div className="flex items-center gap-2">
-                  <Info className="w-4 h-4 text-zinc-500" />
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  <Info className="w-4 h-4 text-neutral-500" />
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
                     Todas as intimações já estão cadastradas e atualizadas.
                   </p>
                 </div>
@@ -799,7 +799,7 @@ Executado: NEMIAS DOS SANTOS JESUS
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500/10 to-green-500/10 flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
                       <FileText className="w-4 h-4 text-emerald-600" />
                     </div>
-                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
+                    <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-50">
                       Novas Intimações ({intimacoesNovas.length})
                     </h3>
                   </div>
@@ -810,10 +810,10 @@ Executado: NEMIAS DOS SANTOS JESUS
                     >
                       Todas
                     </button>
-                    <span className="text-zinc-300 text-[10px]">|</span>
+                    <span className="text-neutral-300 text-[10px]">|</span>
                     <button
                       onClick={() => setSelectedNovas(new Set())}
-                      className="text-[10px] text-zinc-500 hover:text-zinc-700 font-medium cursor-pointer"
+                      className="text-[10px] text-neutral-500 hover:text-neutral-700 font-medium cursor-pointer"
                     >
                       Nenhuma
                     </button>
@@ -823,7 +823,7 @@ Executado: NEMIAS DOS SANTOS JESUS
                   </div>
                 </div>
 
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 flex items-center gap-1">
+                <p className="text-[10px] text-neutral-400 dark:text-neutral-500 flex items-center gap-1">
                   <Pencil className="w-2.5 h-2.5" />
                   Clique em qualquer campo para editar antes de importar
                 </p>
@@ -838,7 +838,7 @@ Executado: NEMIAS DOS SANTOS JESUS
                             "transition-all",
                             isSelected
                               ? "border-emerald-200 dark:border-emerald-900/50"
-                              : "border-zinc-200 dark:border-zinc-800 opacity-50"
+                              : "border-neutral-200 dark:border-neutral-800 opacity-50"
                           )}
                         >
                           <CardContent className="py-3">
@@ -855,7 +855,7 @@ Executado: NEMIAS DOS SANTOS JESUS
                                   "mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors cursor-pointer",
                                   isSelected
                                     ? "bg-emerald-600 border-emerald-600"
-                                    : "border-zinc-300 dark:border-zinc-600"
+                                    : "border-neutral-300 dark:border-neutral-600"
                                 )}
                               >
                                 {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
@@ -911,7 +911,7 @@ Executado: NEMIAS DOS SANTOS JESUS
 
                                 {/* Row 3: prazo (editable date) */}
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground" onClick={(e) => e.stopPropagation()}>
-                                  <span className="text-[10px] text-zinc-400 font-medium">Prazo:</span>
+                                  <span className="text-[10px] text-neutral-400 font-medium">Prazo:</span>
                                   <EditableDateCell
                                     value={intimacao.ultimoDia || ""}
                                     onChange={(v) => handleUpdateNova(index, 'ultimoDia', v)}
@@ -932,14 +932,14 @@ Executado: NEMIAS DOS SANTOS JESUS
                                     className={`rounded p-0.5 transition-colors ${
                                       (intimacao as IntimacaoSEEUEditable).observacao?.trim()
                                         ? "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
-                                        : "text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400"
+                                        : "text-neutral-300 dark:text-neutral-600 hover:text-neutral-500 dark:hover:text-neutral-400"
                                     }`}
                                   >
                                     <FileText className="h-3.5 w-3.5" />
                                   </button>
                                   {expandedObsNovas.has(index) && (
                                     <div className="flex items-start gap-2 mt-1.5">
-                                      <FileText className="h-3 w-3 text-zinc-400 mt-1.5 flex-shrink-0" />
+                                      <FileText className="h-3 w-3 text-neutral-400 mt-1.5 flex-shrink-0" />
                                       <textarea
                                         autoFocus
                                         rows={2}
@@ -959,7 +959,7 @@ Executado: NEMIAS DOS SANTOS JESUS
                                           }
                                         }}
                                         placeholder="Observações / providências para esta demanda..."
-                                        className="flex-1 text-xs bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 outline-none resize-none w-full"
+                                        className="flex-1 text-xs bg-white dark:bg-neutral-900 border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 outline-none resize-none w-full"
                                       />
                                     </div>
                                   )}
@@ -983,7 +983,7 @@ Executado: NEMIAS DOS SANTOS JESUS
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/10 to-violet-500/10 flex items-center justify-center border border-purple-200 dark:border-purple-800">
                       <RefreshCw className="w-4 h-4 text-purple-600" />
                     </div>
-                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
+                    <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-50">
                       Para Atualizar ({duplicatas.length})
                     </h3>
                   </div>
@@ -994,10 +994,10 @@ Executado: NEMIAS DOS SANTOS JESUS
                     >
                       Todas
                     </button>
-                    <span className="text-zinc-300 text-[10px]">|</span>
+                    <span className="text-neutral-300 text-[10px]">|</span>
                     <button
                       onClick={() => setSelectedDups(new Set())}
-                      className="text-[10px] text-zinc-500 hover:text-zinc-700 font-medium cursor-pointer"
+                      className="text-[10px] text-neutral-500 hover:text-neutral-700 font-medium cursor-pointer"
                     >
                       Nenhuma
                     </button>
@@ -1007,7 +1007,7 @@ Executado: NEMIAS DOS SANTOS JESUS
                   </div>
                 </div>
 
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 flex items-center gap-1">
+                <p className="text-[10px] text-neutral-400 dark:text-neutral-500 flex items-center gap-1">
                   <Pencil className="w-2.5 h-2.5" />
                   Clique em qualquer campo para editar antes de atualizar
                 </p>
@@ -1023,7 +1023,7 @@ Executado: NEMIAS DOS SANTOS JESUS
                             "transition-all",
                             isSelected
                               ? "border-purple-200 dark:border-purple-900/50"
-                              : "border-zinc-200 dark:border-zinc-800 opacity-50"
+                              : "border-neutral-200 dark:border-neutral-800 opacity-50"
                           )}
                         >
                           <CardContent className="py-3">
@@ -1039,7 +1039,7 @@ Executado: NEMIAS DOS SANTOS JESUS
                                   "mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors cursor-pointer",
                                   isSelected
                                     ? "bg-purple-600 border-purple-600"
-                                    : "border-zinc-300 dark:border-zinc-600"
+                                    : "border-neutral-300 dark:border-neutral-600"
                                 )}
                               >
                                 {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
@@ -1088,7 +1088,7 @@ Executado: NEMIAS DOS SANTOS JESUS
 
                                 {/* Row 3: prazo (editable date) */}
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground" onClick={(e) => e.stopPropagation()}>
-                                  <span className="text-[10px] text-zinc-400 font-medium">Prazo:</span>
+                                  <span className="text-[10px] text-neutral-400 font-medium">Prazo:</span>
                                   <EditableDateCell
                                     value={nova.ultimoDia || ""}
                                     onChange={(v) => handleUpdateDup(index, 'ultimoDia', v)}
@@ -1109,14 +1109,14 @@ Executado: NEMIAS DOS SANTOS JESUS
                                     className={`rounded p-0.5 transition-colors ${
                                       nova.observacao?.trim()
                                         ? "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
-                                        : "text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400"
+                                        : "text-neutral-300 dark:text-neutral-600 hover:text-neutral-500 dark:hover:text-neutral-400"
                                     }`}
                                   >
                                     <FileText className="h-3.5 w-3.5" />
                                   </button>
                                   {expandedObsDups.has(index) && (
                                     <div className="flex items-start gap-2 mt-1.5">
-                                      <FileText className="h-3 w-3 text-zinc-400 mt-1.5 flex-shrink-0" />
+                                      <FileText className="h-3 w-3 text-neutral-400 mt-1.5 flex-shrink-0" />
                                       <textarea
                                         autoFocus
                                         rows={2}
@@ -1136,7 +1136,7 @@ Executado: NEMIAS DOS SANTOS JESUS
                                           }
                                         }}
                                         placeholder="Observações / providências para esta demanda..."
-                                        className="flex-1 text-xs bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 outline-none resize-none w-full"
+                                        className="flex-1 text-xs bg-white dark:bg-neutral-900 border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 outline-none resize-none w-full"
                                       />
                                     </div>
                                   )}
@@ -1158,11 +1158,11 @@ Executado: NEMIAS DOS SANTOS JESUS
             )}
 
             {/* Botões */}
-            <div className="flex flex-col gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="flex flex-col gap-3 pt-4 border-t border-neutral-200 dark:border-neutral-800">
               {/* Progress bar — shown only while importing */}
               {isImporting && importProgress && (
                 <div className="flex flex-col gap-1 w-full">
-                  <div className="flex justify-between text-xs text-zinc-500">
+                  <div className="flex justify-between text-xs text-neutral-500">
                     <span className="truncate max-w-[70%]">
                       Importando {importProgress.currentName}...
                     </span>
@@ -1170,7 +1170,7 @@ Executado: NEMIAS DOS SANTOS JESUS
                       {importProgress.currentIndex + 1}/{importProgress.total}
                     </span>
                   </div>
-                  <div className="h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-emerald-500 transition-all duration-300"
                       style={{

@@ -113,7 +113,7 @@ export default function NoticiasPage() {
 
       {/* Masthead editorial — Diário Criminal */}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap');`}</style>
-      <header className="-mx-6 md:-mx-8 -mt-6 md:-mt-8 bg-[#6b1d1d] dark:bg-zinc-950 dark:border-b dark:border-border text-white shrink-0">
+      <header className="-mx-6 md:-mx-8 -mt-6 md:-mt-8 bg-[#6b1d1d] dark:bg-neutral-950 dark:border-b dark:border-border text-white shrink-0">
         <div className="flex flex-col items-center py-4 px-4">
           <div className="flex items-center gap-3 mb-2 w-full max-w-lg">
             <div className="flex-1 h-px bg-white/20" />
@@ -148,14 +148,14 @@ export default function NoticiasPage() {
               className={cn(
                 "self-center h-7 w-7 inline-flex items-center justify-center rounded-md transition-colors shrink-0",
                 sidebarOpen
-                  ? "text-muted-foreground bg-zinc-100 dark:bg-muted"
-                  : "text-muted-foreground hover:text-foreground hover:bg-zinc-50 dark:hover:bg-muted/50"
+                  ? "text-muted-foreground bg-neutral-100 dark:bg-muted"
+                  : "text-muted-foreground hover:text-foreground hover:bg-neutral-50 dark:hover:bg-muted/50"
               )}
               title={sidebarOpen ? "Ocultar pastas" : "Mostrar pastas"}
             >
               <PanelLeft className="h-3.5 w-3.5" />
             </button>
-            <div className="w-px h-4 self-center bg-zinc-200 dark:bg-border mx-0.5 shrink-0" />
+            <div className="w-px h-4 self-center bg-neutral-200 dark:bg-border mx-0.5 shrink-0" />
           </>
         )}
 
@@ -181,11 +181,11 @@ export default function NoticiasPage() {
         </div>
 
         {/* Separador vertical */}
-        <div className="w-px h-4 self-center bg-zinc-200 dark:bg-border mx-1 shrink-0" />
+        <div className="w-px h-4 self-center bg-neutral-200 dark:bg-border mx-1 shrink-0" />
 
         {/* Busca inline */}
         <div className="relative self-center shrink-0">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 pointer-events-none" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400 pointer-events-none" />
           <Input
             placeholder="Buscar..."
             value={busca}
@@ -194,7 +194,7 @@ export default function NoticiasPage() {
           />
           {busca && (
             <button
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
               onClick={() => setBusca("")}
             >
               <X className="h-3 w-3" />
@@ -208,8 +208,8 @@ export default function NoticiasPage() {
             <button className={cn(
               "self-center flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs transition-colors shrink-0",
               fonteFilter
-                ? "bg-zinc-100 dark:bg-muted text-foreground/80"
-                : "text-muted-foreground hover:text-foreground hover:bg-zinc-50 dark:hover:bg-muted/50"
+                ? "bg-neutral-100 dark:bg-muted text-foreground/80"
+                : "text-muted-foreground hover:text-foreground hover:bg-neutral-50 dark:hover:bg-muted/50"
             )}>
               {fonteAtiva ? (
                 <>
@@ -230,7 +230,7 @@ export default function NoticiasPage() {
               onClick={() => setFonteFilter(undefined)}
               className="gap-2 text-sm cursor-pointer"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-neutral-300 shrink-0" />
               Todas as fontes
               {!fonteFilter && <Check className="h-3.5 w-3.5 ml-auto text-emerald-500" />}
             </DropdownMenuItem>
@@ -272,7 +272,7 @@ export default function NoticiasPage() {
             onClick={() => enriquecerBatch.mutate()}
             disabled={enriquecerBatch.isPending}
             title="Enriquecer com IA"
-            className="h-7 w-7 p-0 text-zinc-400"
+            className="h-7 w-7 p-0 text-neutral-400"
           >
             <Sparkles className={cn("h-3.5 w-3.5", enriquecerBatch.isPending && "animate-spin")} />
           </Button>
@@ -282,7 +282,7 @@ export default function NoticiasPage() {
             onClick={handleBuscarAgora}
             disabled={buscarAgora.isPending}
             title="Buscar notícias agora"
-            className="h-7 w-7 p-0 text-zinc-400"
+            className="h-7 w-7 p-0 text-neutral-400"
           >
             <RefreshCw className={cn("h-3.5 w-3.5", buscarAgora.isPending && "animate-spin")} />
           </Button>
@@ -296,7 +296,7 @@ export default function NoticiasPage() {
         <div className={cn(
           "overflow-y-auto transition-all duration-300 ease-out",
           readerOpen
-            ? "w-full md:w-[420px] shrink-0 border-r border-zinc-200 dark:border-border bg-zinc-50/80 dark:bg-card/80"
+            ? "w-full md:w-[420px] shrink-0 border-r border-neutral-200 dark:border-border bg-neutral-50/80 dark:bg-card/80"
             : "flex-1 bg-white dark:bg-background"
         )}>
           <div>

@@ -165,19 +165,19 @@ export function CompartilharDemandaModal({
             <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center mx-auto mb-4">
               <Check className="w-8 h-8 text-emerald-600" />
             </div>
-            <p className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
+            <p className="text-lg font-bold text-neutral-900 dark:text-neutral-50">
               Compartilhado com sucesso!
             </p>
-            <p className="text-sm text-zinc-500 mt-1">
+            <p className="text-sm text-neutral-500 mt-1">
               Os colegas selecionados foram notificados.
             </p>
           </div>
         ) : (
           <>
             {/* ENTIDADE */}
-            <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 mb-4">
-              <p className="text-xs text-zinc-500 mb-1">Compartilhando:</p>
-              <p className="font-bold text-zinc-900 dark:text-zinc-50 truncate">
+            <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 mb-4">
+              <p className="text-xs text-neutral-500 mb-1">Compartilhando:</p>
+              <p className="font-bold text-neutral-900 dark:text-neutral-50 truncate">
                 {entidadeTitulo}
               </p>
             </div>
@@ -185,7 +185,7 @@ export function CompartilharDemandaModal({
             {/* SELECIONAR COLEGAS */}
             <div className="space-y-3">
               <Label className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-zinc-400" />
+                <Users className="w-4 h-4 text-neutral-400" />
                 Compartilhar com:
               </Label>
               <div className="grid grid-cols-2 gap-2">
@@ -198,15 +198,15 @@ export function CompartilharDemandaModal({
                       className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
                         isSelected
                           ? `border-${prof.cor}-500 bg-${prof.cor}-50 dark:bg-${prof.cor}-950/30`
-                          : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300"
+                          : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300"
                       }`}
                     >
                       <Checkbox checked={isSelected} className="pointer-events-none" />
                       <div className="text-left">
-                        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                        <p className="text-sm font-medium text-neutral-900 dark:text-neutral-50">
                           {prof.nome}
                         </p>
-                        <p className="text-xs text-zinc-500">
+                        <p className="text-xs text-neutral-500">
                           {prof.grupo === "juri_ep_vvd" ? "Júri/EP/VVD" : "Vara Criminal"}
                         </p>
                       </div>
@@ -219,7 +219,7 @@ export function CompartilharDemandaModal({
             {/* PRAZO */}
             <div className="space-y-3 mt-4">
               <Label className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-zinc-400" />
+                <Calendar className="w-4 h-4 text-neutral-400" />
                 Prazo do compartilhamento:
               </Label>
               <div className="flex flex-wrap gap-2">
@@ -235,7 +235,7 @@ export function CompartilharDemandaModal({
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                         isSelected
                           ? "bg-emerald-600 text-white"
-                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200"
+                          : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200"
                       }`}
                     >
                       {prazo.label}
@@ -244,7 +244,7 @@ export function CompartilharDemandaModal({
                 })}
               </div>
               {prazoSelecionado && (
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-neutral-500">
                   Expira em: {format(prazoSelecionado, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                 </p>
               )}

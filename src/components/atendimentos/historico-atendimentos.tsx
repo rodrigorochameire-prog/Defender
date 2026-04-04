@@ -443,7 +443,7 @@ export function HistoricoAtendimentos({
                 </h4>
                 <div className="relative">
                   {/* Linha da timeline */}
-                  <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-zinc-200 dark:bg-zinc-700" />
+                  <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-neutral-200 dark:bg-neutral-700" />
 
                   <div className="space-y-4">
                     {grupo.atendimentos.map((atendimento) => {

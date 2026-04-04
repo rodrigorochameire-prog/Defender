@@ -105,8 +105,8 @@ export function AnaliseHub(props: AnaliseHubProps) {
             className={cn(
               "px-4 py-1.5 text-xs font-medium rounded-full transition-all",
               subTab === tab.key
-                ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
-                : "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
+                : "text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800"
             )}
           >
             {tab.label}

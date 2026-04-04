@@ -160,7 +160,7 @@ const WORKFLOWS: Workflow[] = [
 function IntegrationCard({ integration }: { integration: Integration }) {
   const statusConfig = {
     connected: { label: "Conectado", color: "bg-emerald-500", textColor: "text-emerald-700 dark:text-emerald-400" },
-    disconnected: { label: "Desconectado", color: "bg-zinc-400", textColor: "text-muted-foreground" },
+    disconnected: { label: "Desconectado", color: "bg-neutral-400", textColor: "text-muted-foreground" },
     error: { label: "Erro", color: "bg-rose-500", textColor: "text-rose-700 dark:text-rose-400" },
   };
 
@@ -173,7 +173,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
           "p-3 rounded-xl",
           integration.status === "connected" 
             ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-            : "bg-zinc-100 text-muted-foreground dark:bg-muted"
+            : "bg-neutral-100 text-muted-foreground dark:bg-muted"
         )}>
           {integration.icon}
         </div>
@@ -248,7 +248,7 @@ function WorkflowCard({ workflow }: { workflow: Workflow }) {
   return (
     <Card className={cn(
       "p-4 transition-all",
-      isActive ? "border-l-[3px] border-l-emerald-500" : "border-l-[3px] border-l-zinc-300 dark:border-l-zinc-600"
+      isActive ? "border-l-[3px] border-l-emerald-500" : "border-l-[3px] border-l-neutral-300 dark:border-l-neutral-600"
     )}>
       <div className="flex items-start justify-between mb-3">
         <div>
@@ -345,7 +345,7 @@ function WebhookSection() {
           </div>
         </div>
 
-        <div className="pt-4 border-t border-zinc-100 dark:border-border">
+        <div className="pt-4 border-t border-neutral-100 dark:border-border">
           <h4 className="text-sm font-medium text-foreground/80 mb-3">
             Endpoints Disponíveis
           </h4>
@@ -356,7 +356,7 @@ function WebhookSection() {
               { method: "POST", path: "/documentos", desc: "Registrar novo documento do Drive" },
               { method: "POST", path: "/alertas", desc: "Criar alerta/notificação" },
             ].map((endpoint, idx) => (
-              <div key={idx} className="flex items-center gap-3 p-2 rounded bg-zinc-50 dark:bg-card">
+              <div key={idx} className="flex items-center gap-3 p-2 rounded bg-neutral-50 dark:bg-card">
                 <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs">
                   {endpoint.method}
                 </Badge>
@@ -465,7 +465,7 @@ export default function IntegracoesPage() {
         </div>
 
         <Tabs defaultValue={initialTab}>
-          <TabsList className="bg-zinc-100 dark:bg-muted">
+          <TabsList className="bg-neutral-100 dark:bg-muted">
             <TabsTrigger value="integracoes" className="flex items-center gap-2">
               <Link2 className="w-4 h-4" />
               Integrações
@@ -627,7 +627,7 @@ export default function IntegracoesPage() {
                   </div>
                 </div>
               </Card>
-              <Card className="p-4 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-card dark:to-muted border-0">
+              <Card className="p-4 bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-card dark:to-muted border-0">
                 <div className="flex items-center gap-3">
                   <Database className="w-5 h-5 text-muted-foreground" />
                   <div>

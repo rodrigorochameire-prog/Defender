@@ -86,7 +86,7 @@ export function ArtigoDiff({ leiId, artigoId }: Props) {
       )}
 
       {open && !ultima && (
-        <div className="mt-2 p-3 text-xs text-zinc-500 bg-zinc-50 rounded-lg border">
+        <div className="mt-2 p-3 text-xs text-neutral-500 bg-neutral-50 rounded-lg border">
           Carregando histórico de alterações...
         </div>
       )}

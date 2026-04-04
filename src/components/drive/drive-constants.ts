@@ -146,9 +146,9 @@ export function getEnrichmentBadge(status: string | null) {
   switch (status) {
     case "completed": return { label: "Extraido", class: "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30" };
     case "processing": return { label: "Processando", class: "bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30 animate-pulse" };
-    case "pending": return { label: "Pendente", class: "bg-zinc-100 dark:bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-500/30" };
+    case "pending": return { label: "Pendente", class: "bg-neutral-100 dark:bg-neutral-500/10 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-500/30" };
     case "failed": return { label: "Falhou", class: "bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/30" };
-    case "unsupported": return { label: "N/A", class: "bg-zinc-100 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-500 border-zinc-200 dark:border-zinc-700/30" };
+    case "unsupported": return { label: "N/A", class: "bg-neutral-100 dark:bg-neutral-800/50 text-neutral-500 dark:text-neutral-500 border-neutral-200 dark:border-neutral-700/30" };
     default: return { label: "", class: "" };
   }
 }

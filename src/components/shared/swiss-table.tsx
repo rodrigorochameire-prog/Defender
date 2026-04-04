@@ -83,7 +83,7 @@ export function SwissTableHead({
     <TableHead
       className={cn(
         "text-xs uppercase tracking-[0.08em] font-semibold",
-        "text-zinc-600 dark:text-zinc-300", // Melhor contraste
+        "text-neutral-600 dark:text-neutral-300", // Melhor contraste
         "py-3.5 px-4 first:pl-6 last:pr-6",
         "bg-muted/80 dark:bg-muted/60",
         "font-sans whitespace-nowrap",
@@ -134,7 +134,7 @@ export function SwissTableCell({
     <TableCell 
       className={cn(
         "table-cell-enhanced",
-        "text-zinc-700 dark:text-zinc-300", // Melhor contraste
+        "text-neutral-700 dark:text-neutral-300", // Melhor contraste
         className
       )} 
       {...props} 
@@ -163,8 +163,8 @@ export function SwissTableEmpty({
           {icon}
         </div>
       )}
-      <h3 className="text-base font-medium text-foreground dark:text-zinc-200 mb-1">{title}</h3>
-      <p className="text-sm text-muted-foreground dark:text-zinc-400 max-w-sm mb-4">{description}</p>
+      <h3 className="text-base font-medium text-foreground dark:text-neutral-200 mb-1">{title}</h3>
+      <p className="text-sm text-muted-foreground dark:text-neutral-400 max-w-sm mb-4">{description}</p>
       {action}
     </div>
   );

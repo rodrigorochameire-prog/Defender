@@ -112,7 +112,7 @@ export function CitarEmCasoModal({
 
           {/* Busca */}
           <div className="relative">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-neutral-400" />
             <Input
               placeholder={alvo === "caso" ? "Buscar caso..." : "Buscar processo..."}
               value={search}
@@ -136,7 +136,7 @@ export function CitarEmCasoModal({
                   )}
                 >
                   <span className="font-medium">{caso.titulo}</span>
-                  {caso.codigo && <span className="ml-2 text-xs text-zinc-400">({caso.codigo})</span>}
+                  {caso.codigo && <span className="ml-2 text-xs text-neutral-400">({caso.codigo})</span>}
                 </button>
               ))}
             </div>
@@ -156,7 +156,7 @@ export function CitarEmCasoModal({
                   )}
                 >
                   <span className="font-mono font-medium">{proc.numeroAutos}</span>
-                  {proc.vara && <span className="ml-2 text-xs text-zinc-400">{proc.vara}</span>}
+                  {proc.vara && <span className="ml-2 text-xs text-neutral-400">{proc.vara}</span>}
                 </button>
               ))}
             </div>
@@ -166,7 +166,7 @@ export function CitarEmCasoModal({
             (alvo === "caso" && casosData?.length === 0) ||
             (alvo === "processo" && (!processosData || processosData.length === 0))
           ) && (
-            <p className="text-sm text-zinc-500 text-center py-2">Nenhum resultado para &quot;{search}&quot;</p>
+            <p className="text-sm text-neutral-500 text-center py-2">Nenhum resultado para &quot;{search}&quot;</p>
           )}
 
           <Textarea

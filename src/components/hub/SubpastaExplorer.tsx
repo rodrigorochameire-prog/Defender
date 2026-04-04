@@ -58,7 +58,7 @@ function FileNode({
     <div>
       <div
         className={cn(
-          "flex items-center gap-1.5 py-1 px-2 rounded hover:bg-zinc-100 dark:hover:bg-muted cursor-pointer group",
+          "flex items-center gap-1.5 py-1 px-2 rounded hover:bg-neutral-100 dark:hover:bg-muted cursor-pointer group",
           { "cursor-default": !isFolder && !file.webViewLink && !onFileClick }
         )}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
@@ -87,9 +87,9 @@ function FileNode({
             <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           </>
         )}
-        <span className="text-[11px] text-zinc-700 dark:text-foreground/80 truncate flex-1">{file.name}</span>
+        <span className="text-[11px] text-neutral-700 dark:text-foreground/80 truncate flex-1">{file.name}</span>
         {!isFolder && file.webViewLink && (
-          <ExternalLink className="h-3 w-3 text-zinc-300 group-hover:text-emerald-500 shrink-0 transition-colors" />
+          <ExternalLink className="h-3 w-3 text-neutral-300 group-hover:text-emerald-500 shrink-0 transition-colors" />
         )}
       </div>
       {isFolder && expanded && hasChildren && (
@@ -123,7 +123,7 @@ export function SubpastaExplorer({ files, onFileClick }: { files: DriveFile[]; o
   }
 
   return (
-    <div className="border border-zinc-200 dark:border-border rounded-lg overflow-hidden">
+    <div className="border border-neutral-200 dark:border-border rounded-lg overflow-hidden">
       {roots.map((f) => (
         <FileNode
           key={f.id}

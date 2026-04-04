@@ -312,7 +312,7 @@ function StageSubstatusPopover({
   return (
     <div
       ref={ref}
-      className="fixed z-[9999] max-w-[calc(100vw-2rem)] rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-700/80 shadow-xl shadow-black/10 dark:shadow-black/40 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
+      className="fixed z-[9999] max-w-[calc(100vw-2rem)] rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-700/80 shadow-xl shadow-black/10 dark:shadow-black/40 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
       style={{ top, left, width: popoverWidth }}
     >
       {/* Header with stage color accent */}
@@ -343,7 +343,7 @@ function StageSubstatusPopover({
                 transition-colors duration-100 cursor-pointer
                 ${isActive
                   ? "bg-emerald-50/80 dark:bg-emerald-950/20"
-                  : "hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                  : "hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
                 }
               `}
             >
@@ -354,8 +354,8 @@ function StageSubstatusPopover({
               <span
                 className={`text-xs flex-1 truncate ${
                   isActive
-                    ? "font-semibold text-zinc-900 dark:text-zinc-100"
-                    : "font-medium text-zinc-600 dark:text-zinc-400"
+                    ? "font-semibold text-neutral-900 dark:text-neutral-100"
+                    : "font-medium text-neutral-600 dark:text-neutral-400"
                 }`}
               >
                 {opt.label}
@@ -600,9 +600,9 @@ export function DemandaQuickPreview({
         }}
       >
         {/* ===== STICKY NAV HEADER ===== */}
-        <div className="sticky top-0 z-10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-zinc-200/50 dark:border-zinc-800/50 px-4 py-2.5 flex items-center justify-between">
+        <div className="sticky top-0 z-10 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-800/50 px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 space-y-0">
-            <SheetTitle className="text-xs font-medium text-zinc-400 dark:text-zinc-500">
+            <SheetTitle className="text-xs font-medium text-neutral-400 dark:text-neutral-500">
               Demanda
             </SheetTitle>
           </SheetHeader>
@@ -611,19 +611,19 @@ export function DemandaQuickPreview({
               <>
                 <button
                   onClick={() => onNavigate("prev")}
-                  className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+                  className="p-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer"
                   title="Anterior (↑)"
                 >
                   <ChevronUp className="w-4 h-4" />
                 </button>
                 {currentIndex != null && totalCount != null && (
-                  <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 tabular-nums min-w-[40px] text-center">
+                  <span className="text-[10px] font-mono text-neutral-400 dark:text-neutral-500 tabular-nums min-w-[40px] text-center">
                     {currentIndex + 1}/{totalCount}
                   </span>
                 )}
                 <button
                   onClick={() => onNavigate("next")}
-                  className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+                  className="p-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer"
                   title="Próximo (↓)"
                 >
                   <ChevronDown className="w-4 h-4" />
@@ -633,7 +633,7 @@ export function DemandaQuickPreview({
             {/* Close button */}
             <button
               onClick={() => onOpenChange(false)}
-              className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer ml-1"
+              className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer ml-1"
               title="Fechar (Esc)"
             >
               <X className="w-4 h-4" />
@@ -661,7 +661,7 @@ export function DemandaQuickPreview({
               />
               <div className="flex-1 min-w-0 pt-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="font-serif text-lg sm:text-xl font-semibold text-zinc-900 dark:text-zinc-100 leading-tight truncate">
+                  <h2 className="font-serif text-lg sm:text-xl font-semibold text-neutral-900 dark:text-neutral-100 leading-tight truncate">
                     {demanda.assistido}
                   </h2>
                   {/* Flags inline com nome */}
@@ -680,7 +680,7 @@ export function DemandaQuickPreview({
                 {/* Processo — chip copiável */}
                 {processo && (
                   <button
-                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 group/proc cursor-pointer transition-colors"
+                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 group/proc cursor-pointer transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
@@ -688,8 +688,8 @@ export function DemandaQuickPreview({
                     }}
                     title="Copiar número do processo"
                   >
-                    <span className="font-mono text-xs text-zinc-500 dark:text-zinc-400 group-hover/proc:text-emerald-700 dark:group-hover/proc:text-emerald-400 transition-colors">{processo.numero}</span>
-                    <Copy className="w-3 h-3 text-zinc-300 dark:text-zinc-600 group-hover/proc:text-emerald-500 transition-colors" />
+                    <span className="font-mono text-xs text-neutral-500 dark:text-neutral-400 group-hover/proc:text-emerald-700 dark:group-hover/proc:text-emerald-400 transition-colors">{processo.numero}</span>
+                    <Copy className="w-3 h-3 text-neutral-300 dark:text-neutral-600 group-hover/proc:text-emerald-500 transition-colors" />
                   </button>
                 )}
 
@@ -698,7 +698,7 @@ export function DemandaQuickPreview({
                   {demanda.assistidoId && (
                     <Link
                       href={`/admin/assistidos/${demanda.assistidoId}`}
-                      className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:underline underline-offset-2 transition-colors"
+                      className="text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline underline-offset-2 transition-colors"
                     >
                       Ver assistido
                     </Link>
@@ -706,7 +706,7 @@ export function DemandaQuickPreview({
                   {demanda.processoId && (
                     <Link
                       href={`/admin/processos/${demanda.processoId}`}
-                      className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:underline underline-offset-2 transition-colors"
+                      className="text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline underline-offset-2 transition-colors"
                     >
                       Ver processo
                     </Link>
@@ -717,14 +717,14 @@ export function DemandaQuickPreview({
           </div>
 
           {/* ===== PIPELINE STEPPER ===== */}
-          <div className="px-5 py-5 border-t border-zinc-100 dark:border-zinc-800/50">
+          <div className="px-5 py-5 border-t border-neutral-100 dark:border-neutral-800/50">
             {/* Track + nodes */}
             <div className="relative flex items-center">
               {/* Background track */}
-              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] bg-zinc-200 dark:bg-zinc-700/60 rounded-full" />
+              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] bg-neutral-200 dark:bg-neutral-700/60 rounded-full" />
               {/* Filled track (neutral — only current stage has color) */}
               <div
-                className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] rounded-full transition-all duration-500 bg-zinc-300 dark:bg-zinc-600"
+                className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] rounded-full transition-all duration-500 bg-neutral-300 dark:bg-neutral-600"
                 style={{
                   width: currentStageIdx >= 0 ? `${(currentStageIdx / (PIPELINE_STAGES.length - 1)) * 100}%` : "0%",
                 }}
@@ -761,11 +761,11 @@ export function DemandaQuickPreview({
                     <div
                       className={`flex items-center justify-center rounded-full transition-all duration-300 ${
                         isActive
-                          ? "w-6 h-6 ring-2 ring-offset-2 dark:ring-offset-zinc-900"
+                          ? "w-6 h-6 ring-2 ring-offset-2 dark:ring-offset-neutral-900"
                           : isCompleted
                             ? "w-5 h-5"
                             : isPopoverOpen
-                              ? "w-5 h-5 ring-2 ring-offset-1 dark:ring-offset-zinc-900"
+                              ? "w-5 h-5 ring-2 ring-offset-1 dark:ring-offset-neutral-900"
                               : "w-4 h-4 group-hover/stage:w-5 group-hover/stage:h-5"
                       }`}
                       style={{
@@ -781,7 +781,7 @@ export function DemandaQuickPreview({
                     {/* Label — neutral for completed, colored only for current */}
                     <span
                       className={`mt-1.5 text-[10px] font-medium whitespace-nowrap transition-colors ${
-                        isActive || isPopoverOpen ? "font-bold" : "text-zinc-400 dark:text-zinc-500"
+                        isActive || isPopoverOpen ? "font-bold" : "text-neutral-400 dark:text-neutral-500"
                       }`}
                       style={{
                         color: isActive || isPopoverOpen ? stageColor : undefined,
@@ -814,17 +814,17 @@ export function DemandaQuickPreview({
           <div className="px-4 sm:px-5 pb-4 space-y-4">
             {/* Section label: AÇÃO */}
             <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-bold">Ação</span>
-              <div className="flex-1 h-px bg-zinc-200/50 dark:bg-zinc-700/30" />
+              <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-bold">Ação</span>
+              <div className="flex-1 h-px bg-neutral-200/50 dark:bg-neutral-700/30" />
             </div>
 
             {/* Card 1: Prazo + Providências — unified with border */}
-            <div className="rounded-xl bg-zinc-50/80 dark:bg-zinc-800/30 border border-zinc-200/60 dark:border-zinc-700/40 overflow-hidden">
+            <div className="rounded-xl bg-neutral-50/80 dark:bg-neutral-800/30 border border-neutral-200/60 dark:border-neutral-700/40 overflow-hidden">
               {/* Prazo row */}
               <div className="flex items-center justify-between px-3.5 sm:px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
-                  <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-bold">Prazo</span>
+                  <Calendar className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500 shrink-0" />
+                  <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-bold">Prazo</span>
                   <InlineDatePicker
                     value={demanda.prazo}
                     onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
@@ -837,18 +837,18 @@ export function DemandaQuickPreview({
                     prazoBadge.cor === "red" ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 animate-pulse" :
                     prazoBadge.cor === "amber" ? "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
                     prazoBadge.cor === "green" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" :
-                    "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                    "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
                   }`}>
                     {prazoBadge.texto}
                   </span>
                 )}
               </div>
               {/* Divider */}
-              <div className="border-t border-zinc-200/40 dark:border-zinc-700/30" />
+              <div className="border-t border-neutral-200/40 dark:border-neutral-700/30" />
               {/* Providências */}
               <div className="px-3.5 sm:px-4 pt-2.5 pb-3.5">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-bold">Providências</span>
+                  <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-bold">Providências</span>
                   <div className="flex items-center gap-0.5">
                     <AudioRecorderButton
                       compact
@@ -874,14 +874,14 @@ export function DemandaQuickPreview({
                   value={demanda.providencias || ""}
                   onSave={(v) => onProvidenciasChange(demanda.id, v)}
                   placeholder="O que precisa ser feito?"
-                  className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 min-h-[64px] bg-white/60 dark:bg-zinc-900/40 rounded-lg p-2.5 transition-colors group/edit"
+                  className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 min-h-[64px] bg-white/60 dark:bg-neutral-900/40 rounded-lg p-2.5 transition-colors group/edit"
                   multiline
                 />
                 {/* Timestamp última edição */}
                 {demanda.updatedAt && (
                   <div className="flex items-center gap-1 mt-1.5 px-1">
-                    <Clock className="w-2.5 h-2.5 text-zinc-300 dark:text-zinc-600" />
-                    <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                    <Clock className="w-2.5 h-2.5 text-neutral-300 dark:text-neutral-600" />
+                    <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
                       Editado {new Date(demanda.updatedAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>
@@ -891,24 +891,24 @@ export function DemandaQuickPreview({
 
             {/* Section label: CLASSIFICAÇÃO */}
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-bold">Classificação</span>
-              <div className="flex-1 h-px bg-zinc-200/50 dark:bg-zinc-700/30" />
+              <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-bold">Classificação</span>
+              <div className="flex-1 h-px bg-neutral-200/50 dark:bg-neutral-700/30" />
             </div>
 
             {/* Detalhes — floating rows without card bg */}
-            <div className="overflow-hidden divide-y divide-zinc-200/40 dark:divide-zinc-700/25">
+            <div className="overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-700/25">
               {/* Status row */}
               <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
                 <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${statusColor}18` }}>
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColor }} />
                 </div>
-                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium w-14 shrink-0">Status</span>
+                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Status</span>
                 <div className="flex-1 text-right">
                   <InlineDropdown
                     value={demanda.status}
                     compact
                     displayValue={
-                      <span className="text-xs text-zinc-600 dark:text-zinc-300">
+                      <span className="text-xs text-neutral-600 dark:text-neutral-300">
                         {statusConfig.label}
                       </span>
                     }
@@ -922,13 +922,13 @@ export function DemandaQuickPreview({
                 <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${atribuicaoColor}18` }}>
                   <AtribuicaoIcon className="w-3 h-3" style={{ color: atribuicaoColor }} />
                 </div>
-                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium w-14 shrink-0">Atribuição</span>
+                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Atribuição</span>
                 <div className="flex-1 text-right">
                   <InlineDropdown
                     value={demanda.atribuicao}
                     compact
                     displayValue={
-                      <span className="text-xs text-zinc-600 dark:text-zinc-300">
+                      <span className="text-xs text-neutral-600 dark:text-neutral-300">
                         {demanda.atribuicao}
                       </span>
                     }
@@ -939,17 +939,17 @@ export function DemandaQuickPreview({
               </div>
               {/* Ato row */}
               <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
-                <div className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-700/40 flex items-center justify-center shrink-0">
-                  <Scale className="w-3 h-3 text-zinc-400 dark:text-zinc-500" />
+                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
+                  <Scale className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                 </div>
-                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium w-14 shrink-0">Ato</span>
+                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Ato</span>
                 <div className="flex-1 text-right">
                   <InlineDropdown
                     value={demanda.ato}
                     compact
                     displayValue={
-                      <span className="text-xs text-zinc-600 dark:text-zinc-300">
-                        {demanda.ato || <span className="text-zinc-400 dark:text-zinc-500 italic">Selecionar</span>}
+                      <span className="text-xs text-neutral-600 dark:text-neutral-300">
+                        {demanda.ato || <span className="text-neutral-400 dark:text-neutral-500 italic">Selecionar</span>}
                       </span>
                     }
                     options={atoOptions}
@@ -961,9 +961,9 @@ export function DemandaQuickPreview({
               {/* Metadados — collapsible */}
               <button
                 onClick={() => setMetadataOpen(!metadataOpen)}
-                className="w-full flex items-center gap-3 px-3.5 sm:px-4 py-2 text-[10px] text-zinc-400 dark:text-zinc-500 hover:bg-zinc-100/50 dark:hover:bg-zinc-700/20 transition-colors cursor-pointer"
+                className="w-full flex items-center gap-3 px-3.5 sm:px-4 py-2 text-[10px] text-neutral-400 dark:text-neutral-500 hover:bg-neutral-100/50 dark:hover:bg-neutral-700/20 transition-colors cursor-pointer"
               >
-                <div className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-700/40 flex items-center justify-center shrink-0">
+                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
                   {metadataOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                 </div>
                 <span className="font-medium">Metadados</span>
@@ -972,38 +972,38 @@ export function DemandaQuickPreview({
                 <>
                   {demanda.dataInclusao && (
                     <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-700/40 flex items-center justify-center shrink-0">
-                        <Clock className="w-3 h-3 text-zinc-400" />
+                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
+                        <Clock className="w-3 h-3 text-neutral-400" />
                       </div>
-                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium w-14 shrink-0">Importado</span>
-                      <span className="flex-1 text-right text-xs text-zinc-500 dark:text-zinc-400">{new Date(demanda.dataInclusao).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                      <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Importado</span>
+                      <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400">{new Date(demanda.dataInclusao).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
                     </div>
                   )}
                   {demanda.estadoPrisional && (
                     <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-700/40 flex items-center justify-center shrink-0">
-                        <Lock className="w-3 h-3 text-zinc-400" />
+                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
+                        <Lock className="w-3 h-3 text-neutral-400" />
                       </div>
-                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium w-14 shrink-0">Prisional</span>
-                      <span className="flex-1 text-right text-xs text-zinc-500 dark:text-zinc-400 capitalize">{demanda.estadoPrisional}</span>
+                      <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Prisional</span>
+                      <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 capitalize">{demanda.estadoPrisional}</span>
                     </div>
                   )}
                   {processo?.tipo && (
                     <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-700/40 flex items-center justify-center shrink-0">
-                        <FileText className="w-3 h-3 text-zinc-400" />
+                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
+                        <FileText className="w-3 h-3 text-neutral-400" />
                       </div>
-                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium w-14 shrink-0">Tipo</span>
-                      <span className="flex-1 text-right text-xs text-zinc-500 dark:text-zinc-400">{processo.tipo}</span>
+                      <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Tipo</span>
+                      <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400">{processo.tipo}</span>
                     </div>
                   )}
                   {demanda.importBatchId && (
                     <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-700/40 flex items-center justify-center shrink-0">
-                        <AlertCircle className="w-3 h-3 text-zinc-400" />
+                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
+                        <AlertCircle className="w-3 h-3 text-neutral-400" />
                       </div>
-                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium w-14 shrink-0">Batch</span>
-                      <span className="flex-1 text-right text-xs font-mono text-zinc-500 dark:text-zinc-400">{demanda.importBatchId.slice(0, 8)}</span>
+                      <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Batch</span>
+                      <span className="flex-1 text-right text-xs font-mono text-neutral-500 dark:text-neutral-400">{demanda.importBatchId.slice(0, 8)}</span>
                     </div>
                   )}
                 </>
@@ -1014,8 +1014,8 @@ export function DemandaQuickPreview({
             {oficioSugerido && (
               <>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-bold">Ofício</span>
-                  <div className="flex-1 h-px bg-zinc-200/50 dark:bg-zinc-700/30" />
+                  <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-bold">Ofício</span>
+                  <div className="flex-1 h-px bg-neutral-200/50 dark:bg-neutral-700/30" />
                 </div>
 
                 <div className="rounded-xl bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-200/40 dark:border-emerald-800/20 overflow-hidden">
@@ -1024,14 +1024,14 @@ export function DemandaQuickPreview({
                       <div className="w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
                         <Mail className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                       </div>
-                      <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">
+                      <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-200">
                         Ofício sugerido
                       </span>
                       <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400">
                         {oficioSugerido.tipoLabel}
                       </span>
                     </div>
-                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 ml-7 mb-2.5">
+                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400 ml-7 mb-2.5">
                       Com base no ato &ldquo;{demanda.ato}&rdquo;
                     </p>
                     <Link
@@ -1048,16 +1048,16 @@ export function DemandaQuickPreview({
             )}
 
             {/* ===== DOCUMENTOS (Drive) ===== */}
-            <div className="rounded-xl border border-zinc-200/60 dark:border-zinc-700/40 overflow-hidden">
+            <div className="rounded-xl border border-neutral-200/60 dark:border-neutral-700/40 overflow-hidden">
               {/* Collapsible header */}
               <button
                 onClick={() => setDocsOpen((v) => !v)}
-                className="w-full flex items-center gap-2 px-3.5 sm:px-4 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                className="w-full flex items-center gap-2 px-3.5 sm:px-4 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer"
               >
-                <FolderOpen className="w-4 h-4 text-zinc-400 shrink-0" />
-                <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Documentos</span>
+                <FolderOpen className="w-4 h-4 text-neutral-400 shrink-0" />
+                <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">Documentos</span>
                 {driveFolder?.files && driveFolder.files.length > 0 && (
-                  <span className="ml-1 inline-flex items-center justify-center text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200/60 dark:border-zinc-700/40">
+                  <span className="ml-1 inline-flex items-center justify-center text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border border-neutral-200/60 dark:border-neutral-700/40">
                     {driveFolder.files.length}
                   </span>
                 )}
@@ -1067,7 +1067,7 @@ export function DemandaQuickPreview({
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="ml-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                    className="ml-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
                     title="Abrir pasta no Drive"
                   >
                     <ExternalLink className="w-3 h-3" />
@@ -1075,19 +1075,19 @@ export function DemandaQuickPreview({
                 )}
                 <div className="ml-auto">
                   {docsOpen ? (
-                    <ChevronDown className="w-3 h-3 text-zinc-400" />
+                    <ChevronDown className="w-3 h-3 text-neutral-400" />
                   ) : (
-                    <ChevronRight className="w-3 h-3 text-zinc-400" />
+                    <ChevronRight className="w-3 h-3 text-neutral-400" />
                   )}
                 </div>
               </button>
 
               {/* Expanded content */}
               {docsOpen && (
-                <div className="border-t border-zinc-200/40 dark:border-zinc-700/30">
+                <div className="border-t border-neutral-200/40 dark:border-neutral-700/30">
                   {/* Loading state */}
                   {driveFolderLoading && (
-                    <div className="flex items-center justify-center gap-2 py-5 text-zinc-400">
+                    <div className="flex items-center justify-center gap-2 py-5 text-neutral-400">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       <span className="text-xs">Carregando...</span>
                     </div>
@@ -1096,7 +1096,7 @@ export function DemandaQuickPreview({
                   {/* Drive not configured */}
                   {!driveFolderLoading && driveFolder && !driveFolder.configured && (
                     <div className="px-4 py-4 text-center">
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">Google Drive não configurado</p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-2">Google Drive não configurado</p>
                       <a
                         href="/admin/settings/drive"
                         className="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
@@ -1109,13 +1109,13 @@ export function DemandaQuickPreview({
                   {/* No folder exists yet */}
                   {!driveFolderLoading && driveFolder?.configured && !driveFolder.folderId && (
                     <div className="px-4 py-4 text-center">
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-3">
                         Nenhuma pasta vinculada a esta demanda
                       </p>
                       <button
                         onClick={() => createDriveFolder.mutate({ demandaId: demanda.id })}
                         disabled={createDriveFolder.isPending}
-                        className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         {createDriveFolder.isPending ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1131,19 +1131,19 @@ export function DemandaQuickPreview({
                   {!driveFolderLoading && driveFolder?.configured && driveFolder.folderId && (
                     <>
                       {driveFolder.files.length === 0 ? (
-                        <div className="px-4 py-3 text-center text-xs text-zinc-400 dark:text-zinc-500">
+                        <div className="px-4 py-3 text-center text-xs text-neutral-400 dark:text-neutral-500">
                           Nenhum arquivo na pasta
                         </div>
                       ) : (
-                        <div className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
+                        <div className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
                           {driveFolder.files.map((f) => (
-                            <div key={f.id} className="flex items-center gap-2 px-3.5 sm:px-4 py-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors group/file">
-                              <DriveFileIcon mimeType={f.mimeType} className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                              <span className="text-xs text-zinc-700 dark:text-zinc-300 flex-1 truncate" title={f.name}>
+                            <div key={f.id} className="flex items-center gap-2 px-3.5 sm:px-4 py-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors group/file">
+                              <DriveFileIcon mimeType={f.mimeType} className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                              <span className="text-xs text-neutral-700 dark:text-neutral-300 flex-1 truncate" title={f.name}>
                                 {f.name}
                               </span>
                               {f.size !== null && (
-                                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 shrink-0">
+                                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 shrink-0">
                                   {formatBytes(f.size)}
                                 </span>
                               )}
@@ -1152,7 +1152,7 @@ export function DemandaQuickPreview({
                                   href={f.webViewLink}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="opacity-0 group-hover/file:opacity-100 transition-opacity text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                                  className="opacity-0 group-hover/file:opacity-100 transition-opacity text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                                   title="Abrir no Drive"
                                 >
                                   <ExternalLink className="w-3 h-3" />
@@ -1164,7 +1164,7 @@ export function DemandaQuickPreview({
                       )}
 
                       {/* Upload area */}
-                      <div className="px-3.5 sm:px-4 py-2.5 border-t border-zinc-100 dark:border-zinc-800/60">
+                      <div className="px-3.5 sm:px-4 py-2.5 border-t border-neutral-100 dark:border-neutral-800/60">
                         <input
                           ref={fileInputRef}
                           type="file"
@@ -1176,7 +1176,7 @@ export function DemandaQuickPreview({
                         <button
                           onClick={() => fileInputRef.current?.click()}
                           disabled={uploadingFiles.length > 0}
-                          className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-600 text-xs text-zinc-500 dark:text-zinc-400 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 dark:hover:border-emerald-600 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                          className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-600 text-xs text-neutral-500 dark:text-neutral-400 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 dark:hover:border-emerald-600 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                           {uploadingFiles.length > 0 ? (
                             <>
@@ -1201,16 +1201,16 @@ export function DemandaQuickPreview({
 
         {/* ===== PRÓXIMA AUDIÊNCIA ===== */}
         {proximaAudiencia && (
-          <div className="mx-4 mb-3 rounded-xl border border-zinc-200/60 dark:border-zinc-700/40 px-3.5 py-2.5">
+          <div className="mx-4 mb-3 rounded-xl border border-neutral-200/60 dark:border-neutral-700/40 px-3.5 py-2.5">
             <div className="flex items-center gap-1.5 mb-1.5">
-              <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-              <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium">Próxima Audiência</span>
+              <Calendar className="w-3.5 h-3.5 text-neutral-400" />
+              <span className="text-[10px] text-neutral-400 uppercase tracking-wider font-medium">Próxima Audiência</span>
             </div>
-            <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
               {new Date(proximaAudiencia.dataHora).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" })}
               {proximaAudiencia.horario ? ` · ${proximaAudiencia.horario}` : ""}
             </p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
               {proximaAudiencia.tipo}
               {proximaAudiencia.local ? ` · ${proximaAudiencia.local}` : ""}
             </p>
@@ -1218,7 +1218,7 @@ export function DemandaQuickPreview({
         )}
 
         {/* ===== STICKY ACTIONS BOTTOM BAR ===== */}
-        <div className="sticky bottom-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-zinc-200/80 dark:border-zinc-800/80 px-5 py-2.5 flex items-center gap-2">
+        <div className="sticky bottom-0 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/80 dark:border-neutral-800/80 px-5 py-2.5 flex items-center gap-2">
           <button
             onClick={() => { onStatusChange(demanda.id, "resolvido"); onOpenChange(false); }}
             className="flex-1 h-8 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
@@ -1228,7 +1228,7 @@ export function DemandaQuickPreview({
           </button>
           <button
             onClick={() => { onArchive(demanda.id); onOpenChange(false); }}
-            className="h-8 px-3.5 rounded-lg border border-zinc-200/80 dark:border-zinc-700/80 text-zinc-500 dark:text-zinc-400 text-xs font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-1.5"
+            className="h-8 px-3.5 rounded-lg border border-neutral-200/80 dark:border-neutral-700/80 text-neutral-500 dark:text-neutral-400 text-xs font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer flex items-center gap-1.5"
           >
             <Archive className="w-3 h-3" />
             Arquivar

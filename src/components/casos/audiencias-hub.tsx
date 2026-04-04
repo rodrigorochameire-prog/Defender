@@ -122,11 +122,11 @@ const TIPOS_AUDIENCIA: Record<string, { label: string; icon: LucideIcon; color: 
   UNA: { label: "Una", icon: ScrollText, color: "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400", dotColor: "bg-slate-500" },
   PLENARIO_JURI: { label: "Plenário", icon: Theater, color: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400", dotColor: "bg-rose-500" },
   CONTINUACAO: { label: "Continuação", icon: ArrowRight, color: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400", dotColor: "bg-cyan-500" },
-  OUTRA: { label: "Outra", icon: Pin, color: "bg-zinc-100 text-zinc-700 dark:bg-zinc-900/30 dark:text-zinc-400", dotColor: "bg-zinc-500" },
+  OUTRA: { label: "Outra", icon: Pin, color: "bg-neutral-100 text-neutral-700 dark:bg-neutral-900/30 dark:text-neutral-400", dotColor: "bg-neutral-500" },
 };
 
 const STATUS_AUDIENCIA = {
-  A_DESIGNAR: { label: "A Designar", color: "border-zinc-300 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400" },
+  A_DESIGNAR: { label: "A Designar", color: "border-neutral-300 bg-neutral-50 text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400" },
   DESIGNADA: { label: "Designada", color: "border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
   REALIZADA: { label: "Realizada", color: "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-400" },
   AGUARDANDO_ATA: { label: "Aguardando Ata", color: "border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-700 dark:bg-orange-900/30 dark:text-orange-400" },

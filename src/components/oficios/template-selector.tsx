@@ -93,7 +93,7 @@ export function TemplateSelector({ open, onClose, onSelect }: TemplateSelectorPr
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <FileText className="w-4 h-4 text-zinc-400 shrink-0" />
+                        <FileText className="w-4 h-4 text-neutral-400 shrink-0" />
                         <span className="font-medium text-foreground truncate">
                           {tmpl.titulo}
                         </span>

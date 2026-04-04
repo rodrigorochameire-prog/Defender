@@ -120,7 +120,7 @@ export function DailyProgress() {
   const getProgressColor = (percentual: number) => {
     if (percentual >= 80) return "bg-emerald-500";
     if (percentual >= 50) return "bg-amber-500";
-    return "bg-zinc-500";
+    return "bg-neutral-500";
   };
 
   return (

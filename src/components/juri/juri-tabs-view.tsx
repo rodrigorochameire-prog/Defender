@@ -38,14 +38,14 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
               <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800">
                 RÉU PRESO
               </Badge>
-              <span className="text-xs font-mono text-stone-400 dark:text-zinc-500">
+              <span className="text-xs font-mono text-stone-400 dark:text-neutral-500">
                 Autos: {sessao.reus[0]?.numeroAutos || "0004567-89.2024.8.05.0000"}
               </span>
             </div>
             <h1 className="text-2xl font-serif font-bold text-stone-900 dark:text-stone-100">
               M.P. vs. {sessao.reus[0]?.nome}
             </h1>
-            <div className="flex items-center gap-4 text-sm text-stone-500 dark:text-zinc-400">
+            <div className="flex items-center gap-4 text-sm text-stone-500 dark:text-neutral-400">
               <span className="flex items-center gap-1">
                 <Gavel className="w-4 h-4" /> 1ª Vara do Júri
               </span>
@@ -57,17 +57,17 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
           </div>
           
           {/* Placar Rápido (Stats) */}
-          <div className="flex gap-4 border-l border-stone-100 dark:border-zinc-800 pl-6">
+          <div className="flex gap-4 border-l border-stone-100 dark:border-neutral-800 pl-6">
             <div className="text-center">
-              <div className="text-xs uppercase tracking-wider text-stone-400 dark:text-zinc-500 font-medium">Jurados</div>
+              <div className="text-xs uppercase tracking-wider text-stone-400 dark:text-neutral-500 font-medium">Jurados</div>
               <div className="text-2xl font-bold text-stone-800 dark:text-stone-200">{sessao.jurados?.convocados || 25}</div>
             </div>
             <div className="text-center">
-              <div className="text-xs uppercase tracking-wider text-stone-400 dark:text-zinc-500 font-medium">Teses</div>
+              <div className="text-xs uppercase tracking-wider text-stone-400 dark:text-neutral-500 font-medium">Teses</div>
               <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-500">3</div>
             </div>
             <div className="text-center">
-              <div className="text-xs uppercase tracking-wider text-stone-400 dark:text-zinc-500 font-medium">Testemunhas</div>
+              <div className="text-xs uppercase tracking-wider text-stone-400 dark:text-neutral-500 font-medium">Testemunhas</div>
               <div className="text-2xl font-bold text-blue-700 dark:text-blue-500">{sessao.testemunhas?.acusacao + sessao.testemunhas?.defesa || 5}</div>
             </div>
           </div>
@@ -76,10 +76,10 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
 
       {/* Navegação por Abas */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="w-full justify-start h-12 bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 p-1 rounded-xl shadow-sm">
+        <TabsList className="w-full justify-start h-12 bg-white dark:bg-neutral-900 border border-stone-200 dark:border-neutral-800 p-1 rounded-xl shadow-sm">
           <TabsTrigger 
             value="cockpit" 
-            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary flex gap-2"
+            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-neutral-800 data-[state=active]:text-primary flex gap-2"
           >
             <Mic2 className="w-4 h-4" /> 
             <span className="hidden sm:inline">Cockpit (Plenário)</span>
@@ -87,7 +87,7 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
           </TabsTrigger>
           <TabsTrigger 
             value="investigacao" 
-            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary flex gap-2"
+            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-neutral-800 data-[state=active]:text-primary flex gap-2"
           >
             <Search className="w-4 h-4" /> 
             <span className="hidden sm:inline">Investigação Defensiva</span>
@@ -95,7 +95,7 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
           </TabsTrigger>
           <TabsTrigger 
             value="jurados" 
-            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary flex gap-2"
+            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-neutral-800 data-[state=active]:text-primary flex gap-2"
           >
             <Users className="w-4 h-4" /> 
             <span className="hidden sm:inline">Conselho de Sentença</span>
@@ -103,7 +103,7 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
           </TabsTrigger>
           <TabsTrigger
             value="teses"
-            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary flex gap-2"
+            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-neutral-800 data-[state=active]:text-primary flex gap-2"
           >
             <Shield className="w-4 h-4" />
             <span className="hidden sm:inline">Teses & Quesitos</span>
@@ -111,7 +111,7 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
           </TabsTrigger>
           <TabsTrigger
             value="preparacao"
-            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary flex gap-2"
+            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-neutral-800 data-[state=active]:text-primary flex gap-2"
           >
             <BookOpen className="w-4 h-4" />
             <span className="hidden sm:inline">Preparacao</span>
@@ -130,8 +130,8 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="text-stone-400 dark:text-zinc-500 text-sm text-center py-10 border-2 border-dashed border-stone-200 dark:border-zinc-800 rounded-lg">
-                  <Zap className="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-zinc-700" />
+                <div className="text-stone-400 dark:text-neutral-500 text-sm text-center py-10 border-2 border-dashed border-stone-200 dark:border-neutral-800 rounded-lg">
+                  <Zap className="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-neutral-700" />
                   <p>Módulo de Cronômetro e Roteiro</p>
                   <Button variant="outline" className="mt-4" size="sm">
                     <ExternalLink className="w-4 h-4 mr-2" />
@@ -150,15 +150,15 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
               </CardHeader>
               <CardContent className="p-0 space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-stone-500 dark:text-zinc-400">Acusação</span>
+                  <span className="text-stone-500 dark:text-neutral-400">Acusação</span>
                   <span className="font-mono font-semibold">{sessao.testemunhas?.acusacao || 3}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-stone-500 dark:text-zinc-400">Defesa</span>
+                  <span className="text-stone-500 dark:text-neutral-400">Defesa</span>
                   <span className="font-mono font-semibold">{sessao.testemunhas?.defesa || 2}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm pt-2 border-t">
-                  <span className="text-stone-500 dark:text-zinc-400">Ouvidas</span>
+                  <span className="text-stone-500 dark:text-neutral-400">Ouvidas</span>
                   <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-500">
                     {sessao.testemunhas?.ouvidas || 4}
                   </span>
@@ -178,10 +178,10 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="text-stone-400 dark:text-zinc-500 text-sm text-center py-10 border-2 border-dashed border-stone-200 dark:border-zinc-800 rounded-lg">
-                <FileText className="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-zinc-700" />
+              <div className="text-stone-400 dark:text-neutral-500 text-sm text-center py-10 border-2 border-dashed border-stone-200 dark:border-neutral-800 rounded-lg">
+                <FileText className="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-neutral-700" />
                 <p>Módulo de Investigação Defensiva</p>
-                <p className="text-xs mt-2 text-stone-500 dark:text-zinc-400">
+                <p className="text-xs mt-2 text-stone-500 dark:text-neutral-400">
                   Gestão de provas, depoimentos e evidências
                 </p>
               </div>
@@ -204,7 +204,7 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
                   <div className="text-4xl font-bold text-stone-900 dark:text-stone-100 mb-2">
                     {sessao.jurados?.convocados || 25}
                   </div>
-                  <p className="text-sm text-stone-500 dark:text-zinc-400">jurados convocados</p>
+                  <p className="text-sm text-stone-500 dark:text-neutral-400">jurados convocados</p>
                 </div>
               </CardContent>
             </Card>
@@ -221,15 +221,15 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
                   <div className="text-4xl font-bold text-emerald-700 dark:text-emerald-500 mb-2">
                     {sessao.jurados?.presentes || 0}
                   </div>
-                  <p className="text-sm text-stone-500 dark:text-zinc-400">jurados presentes</p>
+                  <p className="text-sm text-stone-500 dark:text-neutral-400">jurados presentes</p>
                 </div>
               </CardContent>
             </Card>
           </div>
 
           <Card className="p-6 mt-6">
-            <div className="text-stone-400 dark:text-zinc-500 text-sm text-center py-10 border-2 border-dashed border-stone-200 dark:border-zinc-800 rounded-lg">
-              <Brain className="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-zinc-700" />
+            <div className="text-stone-400 dark:text-neutral-500 text-sm text-center py-10 border-2 border-dashed border-stone-200 dark:border-neutral-800 rounded-lg">
+              <Brain className="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-neutral-700" />
               <p>Perfil detalhado dos jurados será exibido aqui</p>
             </div>
           </Card>
@@ -276,8 +276,8 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
               <CardTitle>Quesitos</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="text-stone-400 dark:text-zinc-500 text-sm text-center py-10 border-2 border-dashed border-stone-200 dark:border-zinc-800 rounded-lg">
-                <FileText className="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-zinc-700" />
+              <div className="text-stone-400 dark:text-neutral-500 text-sm text-center py-10 border-2 border-dashed border-stone-200 dark:border-neutral-800 rounded-lg">
+                <FileText className="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-neutral-700" />
                 <p>Lista de quesitos será exibida aqui</p>
               </div>
             </CardContent>

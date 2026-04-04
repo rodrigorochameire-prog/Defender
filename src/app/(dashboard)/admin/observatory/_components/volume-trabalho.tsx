@@ -19,19 +19,19 @@ export function VolumeTrabalho({ inicio, fim }: VolumeTrabalhoProps) {
   );
 
   if (isLoading) {
-    return <div className="h-64 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />;
+    return <div className="h-64 animate-pulse rounded-lg bg-neutral-100 dark:bg-neutral-800" />;
   }
   if (!data) return null;
 
   return (
     <section>
-      <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+      <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
         Volume de Trabalho
       </h2>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Distribuição por comarca */}
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="mb-3 text-xs font-medium uppercase text-zinc-500">Atendimentos por comarca</p>
+        <div className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+          <p className="mb-3 text-xs font-medium uppercase text-neutral-500">Atendimentos por comarca</p>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={data.porComarca} layout="vertical">
               <XAxis type="number" tick={{ fontSize: 11 }} />
@@ -43,8 +43,8 @@ export function VolumeTrabalho({ inicio, fim }: VolumeTrabalhoProps) {
         </div>
 
         {/* Tendência mensal */}
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="mb-3 text-xs font-medium uppercase text-zinc-500">Tendência (6 meses)</p>
+        <div className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+          <p className="mb-3 text-xs font-medium uppercase text-neutral-500">Tendência (6 meses)</p>
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={data.tendencia}>
               <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
@@ -56,10 +56,10 @@ export function VolumeTrabalho({ inicio, fim }: VolumeTrabalhoProps) {
         </div>
 
         {/* Por tipo */}
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="mb-3 text-xs font-medium uppercase text-zinc-500">Tipos de demanda</p>
+        <div className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+          <p className="mb-3 text-xs font-medium uppercase text-neutral-500">Tipos de demanda</p>
           {data.porTipo.length === 0 ? (
-            <p className="text-xs text-zinc-400">Sem dados no período.</p>
+            <p className="text-xs text-neutral-400">Sem dados no período.</p>
           ) : (
             <ResponsiveContainer width="100%" height={180}>
               <PieChart>

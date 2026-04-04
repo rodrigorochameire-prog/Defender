@@ -64,7 +64,7 @@ export default function ImportarWhatsAppPage() {
         </Link>
         <div>
           <h1 className="text-xl font-semibold">Importar Histórico WhatsApp</h1>
-          <p className="text-sm text-zinc-500">Importe conversas do backup do seu iPhone</p>
+          <p className="text-sm text-neutral-500">Importe conversas do backup do seu iPhone</p>
         </div>
       </div>
 
@@ -76,18 +76,18 @@ export default function ImportarWhatsAppPage() {
         <CardContent className="space-y-4 text-sm">
           <div className="space-y-1">
             <p className="font-medium">1. Fazer backup do iPhone</p>
-            <p className="text-zinc-500">
+            <p className="text-neutral-500">
               Conecte o iPhone ao Mac → abra o Finder → selecione o iPhone → clique em{" "}
               <strong>&ldquo;Fazer backup agora&rdquo;</strong> → sem senha (não criptografado).
             </p>
           </div>
           <div className="space-y-1">
             <p className="font-medium">2. Executar o script de extração</p>
-            <pre className="bg-zinc-950 text-foreground rounded-md p-3 text-xs overflow-x-auto">
+            <pre className="bg-neutral-950 text-foreground rounded-md p-3 text-xs overflow-x-auto">
               python3 scripts/extract_whatsapp_ios.py
             </pre>
-            <p className="text-zinc-500">
-              O arquivo <code className="text-xs bg-zinc-100 dark:bg-muted px-1 rounded">whatsapp-ombuds-export.json</code> será gerado na sua Área de Trabalho.
+            <p className="text-neutral-500">
+              O arquivo <code className="text-xs bg-neutral-100 dark:bg-muted px-1 rounded">whatsapp-ombuds-export.json</code> será gerado na sua Área de Trabalho.
             </p>
           </div>
           <div className="space-y-1">
@@ -103,7 +103,7 @@ export default function ImportarWhatsAppPage() {
             className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
               isDragActive
                 ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20"
-                : "border-zinc-200 dark:border-border hover:border-zinc-300 dark:hover:border-border"
+                : "border-neutral-200 dark:border-border hover:border-neutral-300 dark:hover:border-border"
             }`}
           >
             <input {...getInputProps()} />
@@ -111,7 +111,7 @@ export default function ImportarWhatsAppPage() {
               <div className="flex flex-col items-center gap-2">
                 <FileJson className="h-10 w-10 text-emerald-600" />
                 <p className="font-medium text-sm">{file.name}</p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-neutral-500">
                   {(file.size / 1024 / 1024).toFixed(1)} MB
                 </p>
               </div>
@@ -143,7 +143,7 @@ export default function ImportarWhatsAppPage() {
           )}
 
           {importMutation.isPending && (
-            <p className="text-xs text-center text-zinc-500 animate-pulse">
+            <p className="text-xs text-center text-neutral-500 animate-pulse">
               Processando mensagens...
             </p>
           )}
@@ -158,21 +158,21 @@ export default function ImportarWhatsAppPage() {
               <p className="font-medium">Importação concluída</p>
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="bg-zinc-50 dark:bg-card rounded-lg p-3">
+              <div className="bg-neutral-50 dark:bg-card rounded-lg p-3">
                 <p className="text-2xl font-bold">{result.messagesImported}</p>
-                <p className="text-zinc-500 text-xs">mensagens importadas</p>
+                <p className="text-neutral-500 text-xs">mensagens importadas</p>
               </div>
-              <div className="bg-zinc-50 dark:bg-card rounded-lg p-3">
+              <div className="bg-neutral-50 dark:bg-card rounded-lg p-3">
                 <p className="text-2xl font-bold">{result.contactsCreated}</p>
-                <p className="text-zinc-500 text-xs">contatos criados</p>
+                <p className="text-neutral-500 text-xs">contatos criados</p>
               </div>
-              <div className="bg-zinc-50 dark:bg-card rounded-lg p-3">
+              <div className="bg-neutral-50 dark:bg-card rounded-lg p-3">
                 <p className="text-2xl font-bold">{result.contactsUpdated}</p>
-                <p className="text-zinc-500 text-xs">contatos atualizados</p>
+                <p className="text-neutral-500 text-xs">contatos atualizados</p>
               </div>
-              <div className="bg-zinc-50 dark:bg-card rounded-lg p-3">
+              <div className="bg-neutral-50 dark:bg-card rounded-lg p-3">
                 <p className="text-2xl font-bold">{result.messagesSkipped}</p>
-                <p className="text-zinc-500 text-xs">duplicatas ignoradas</p>
+                <p className="text-neutral-500 text-xs">duplicatas ignoradas</p>
               </div>
             </div>
             <Link href="/admin/whatsapp/chat">

@@ -51,10 +51,10 @@ export default function NovoTemplatePage() {
             <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-700 dark:text-emerald-400" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-100">
               Novo Template
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">
+            <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 hidden sm:block">
               Crie um novo modelo de petição
             </p>
           </div>

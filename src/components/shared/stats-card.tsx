@@ -70,10 +70,10 @@ export function StatsCard({
     <Component
       onClick={onClick}
       className={cn(
-        "group relative text-left rounded-xl bg-white dark:bg-zinc-900 border transition-all duration-300",
+        "group relative text-left rounded-xl bg-white dark:bg-neutral-900 border transition-all duration-300",
         isActive 
           ? "border-emerald-200 dark:border-emerald-800/50 ring-2 ring-emerald-100 dark:ring-emerald-900/30" 
-          : "border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30",
+          : "border-neutral-100 dark:border-neutral-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30",
         onClick && "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03] dark:hover:shadow-emerald-500/[0.05]",
         sizes.container,
         className
@@ -85,16 +85,16 @@ export function StatsCard({
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0 space-y-1">
           <p className={cn(
-            "font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300",
+            "font-medium text-neutral-400 dark:text-neutral-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300",
             sizes.label
           )}>
             {label}
           </p>
-          <p className={cn("text-zinc-700 dark:text-zinc-300", sizes.value)}>
+          <p className={cn("text-neutral-700 dark:text-neutral-300", sizes.value)}>
             {value}
           </p>
           {subtitle && (
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+            <p className="text-[10px] text-neutral-400 dark:text-neutral-500">
               {subtitle}
             </p>
           )}
@@ -105,7 +105,7 @@ export function StatsCard({
                   "text-xs font-semibold",
                   trend.direction === "up" && "text-emerald-600",
                   trend.direction === "down" && "text-rose-600",
-                  trend.direction === "neutral" && "text-zinc-500"
+                  trend.direction === "neutral" && "text-neutral-500"
                 )}
               >
                 {trend.direction === "up" && "↑"}
@@ -113,18 +113,18 @@ export function StatsCard({
                 {trend.value}%
               </span>
               {trend.label && (
-                <span className="text-[10px] text-zinc-400">{trend.label}</span>
+                <span className="text-[10px] text-neutral-400">{trend.label}</span>
               )}
             </div>
           )}
         </div>
         {Icon && (
           <div className={cn(
-            "rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300",
+            "rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center flex-shrink-0 border border-neutral-200 dark:border-neutral-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300",
             sizes.icon
           )}>
             <Icon className={cn(
-              "text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300",
+              "text-neutral-500 dark:text-neutral-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300",
               sizes.iconInner
             )} />
           </div>

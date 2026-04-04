@@ -79,7 +79,7 @@ const STATUS_MAP: Record<string, any> = {
   },
   "7 - Concluido": { 
     label: "CONCLUÍDO", 
-    className: "status-badge-neutral line-through decoration-zinc-400 dark:decoration-zinc-600",
+    className: "status-badge-neutral line-through decoration-neutral-400 dark:decoration-neutral-600",
     icon: CheckCircle2,
     priority: 7
   },

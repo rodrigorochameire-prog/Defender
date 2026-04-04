@@ -64,7 +64,7 @@ export function LegislacaoUnified() {
   }, [handleSelectLei]);
 
   return (
-    <div className="flex h-full overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-border dark:bg-background">
+    <div className="flex h-full overflow-hidden rounded-lg border border-neutral-200 bg-white dark:border-border dark:bg-background">
       {/* Coluna 1 — Lei Selector (large desktop only) */}
       <div className="hidden lg:flex">
         <LeiSelectorPanel
@@ -97,7 +97,7 @@ export function LegislacaoUnified() {
       {/* Mobile — Lei Selector Sheet */}
       <Sheet open={mobileLawSheetOpen} onOpenChange={setMobileLawSheetOpen}>
         <SheetContent side="left" className="w-64 p-0">
-          <SheetHeader className="border-b border-zinc-200 dark:border-border px-4 py-3">
+          <SheetHeader className="border-b border-neutral-200 dark:border-border px-4 py-3">
             <SheetTitle className="text-sm">Legislação</SheetTitle>
           </SheetHeader>
           <LeiSelectorPanel

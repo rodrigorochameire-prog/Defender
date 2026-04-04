@@ -77,9 +77,9 @@ const ATRIBUICAO_COLORS: Record<string, { bg: string; bar: string; text: string;
 
 function getAtribColor(key: string | null) {
   return ATRIBUICAO_COLORS[key || ""] || {
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    bar: "bg-zinc-400",
-    text: "text-zinc-600 dark:text-zinc-400",
+    bg: "bg-neutral-100 dark:bg-neutral-800",
+    bar: "bg-neutral-400",
+    text: "text-neutral-600 dark:text-neutral-400",
     label: key || "Sem atribuicao",
   };
 }
@@ -138,14 +138,14 @@ export default function EnrichmentDashboardPage() {
     <div className="space-y-6 max-w-5xl">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Link href="/admin/settings" className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">
+        <Link href="/admin/settings" className="text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
             Enrichment Dashboard
           </h1>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-neutral-500">
             Processamento de documentos e reverse sync Drive
           </p>
         </div>
@@ -192,7 +192,7 @@ export default function EnrichmentDashboardPage() {
         <Card className="p-4 border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
           <div className="flex items-center gap-2 mb-3">
             <TriangleAlert className="h-4 w-4 text-amber-600" />
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
               Pendentes Revisao ({pendentes.length})
             </h2>
           </div>
@@ -201,10 +201,10 @@ export default function EnrichmentDashboardPage() {
               const dup = p.duplicataSugerida as { assistidoId: number; nome: string; confidence: number } | null;
               const color = getAtribColor(p.atribuicaoPrimaria);
               return (
-                <div key={p.id} className="flex items-center justify-between gap-3 bg-white dark:bg-zinc-900 rounded-lg p-3 border border-zinc-200 dark:border-zinc-800">
+                <div key={p.id} className="flex items-center justify-between gap-3 bg-white dark:bg-neutral-900 rounded-lg p-3 border border-neutral-200 dark:border-neutral-800">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                      <span className="font-medium text-sm text-neutral-900 dark:text-neutral-100 truncate">
                         {p.nome}
                       </span>
                       <Badge variant="outline" className={cn("text-xs", color.text)}>
@@ -212,7 +212,7 @@ export default function EnrichmentDashboardPage() {
                       </Badge>
                     </div>
                     {dup && (
-                      <p className="text-xs text-zinc-500 mt-0.5">
+                      <p className="text-xs text-neutral-500 mt-0.5">
                         Possivel duplicata de &ldquo;{dup.nome}&rdquo; (ID {dup.assistidoId}, {Math.round(dup.confidence * 100)}%)
                       </p>
                     )}
@@ -259,12 +259,12 @@ export default function EnrichmentDashboardPage() {
 
       {/* Batch Processing */}
       <Card className="p-4">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
+        <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3">
           Processamento em Batch
         </h2>
         <div className="flex items-end gap-3 flex-wrap">
           <div className="space-y-1">
-            <label className="text-xs text-zinc-500">Escopo</label>
+            <label className="text-xs text-neutral-500">Escopo</label>
             <Select value={batchScope} onValueChange={setBatchScope}>
               <SelectTrigger className="w-48 h-8 text-sm">
                 <SelectValue />
@@ -277,7 +277,7 @@ export default function EnrichmentDashboardPage() {
           </div>
           {batchScope === "by_atribuicao" && (
             <div className="space-y-1">
-              <label className="text-xs text-zinc-500">Atribuicao</label>
+              <label className="text-xs text-neutral-500">Atribuicao</label>
               <Select value={batchAtribuicao} onValueChange={setBatchAtribuicao}>
                 <SelectTrigger className="w-48 h-8 text-sm">
                   <SelectValue placeholder="Selecionar..." />
@@ -313,10 +313,10 @@ export default function EnrichmentDashboardPage() {
 
       {/* Detect New Folders (Reverse Sync) */}
       <Card className="p-4">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
+        <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3">
           Detectar Pastas Novas (Reverse Sync)
         </h2>
-        <p className="text-xs text-zinc-500 mb-3">
+        <p className="text-xs text-neutral-500 mb-3">
           Escaneia as pastas de atribuicao no Drive e cria assistidos para pastas orfas.
         </p>
         <div className="flex items-center gap-3">
@@ -356,7 +356,7 @@ export default function EnrichmentDashboardPage() {
         {/* Preview Results */}
         {detectMutation.data?.dryRun && detectMutation.data.orphans.length > 0 && (
           <div className="mt-3 space-y-1 max-h-64 overflow-y-auto">
-            <p className="text-xs text-zinc-500 mb-2">
+            <p className="text-xs text-neutral-500 mb-2">
               {detectMutation.data.orphanCount} pastas orfas encontradas:
             </p>
             {detectMutation.data.orphans.map((o) => {
@@ -367,11 +367,11 @@ export default function EnrichmentDashboardPage() {
                 o.atribuicao
               );
               return (
-                <div key={o.folderId} className="flex items-center gap-2 text-sm py-1 px-2 rounded bg-zinc-50 dark:bg-zinc-800/50">
+                <div key={o.folderId} className="flex items-center gap-2 text-sm py-1 px-2 rounded bg-neutral-50 dark:bg-neutral-800/50">
                   <Badge variant="outline" className={cn("text-xs shrink-0", color.text)}>
                     {color.label}
                   </Badge>
-                  <span className="text-zinc-700 dark:text-zinc-300 truncate">{o.folderName}</span>
+                  <span className="text-neutral-700 dark:text-neutral-300 truncate">{o.folderName}</span>
                 </div>
               );
             })}
@@ -381,17 +381,17 @@ export default function EnrichmentDashboardPage() {
         {/* Execution Results */}
         {detectMutation.data && !detectMutation.data.dryRun && detectMutation.data.results.length > 0 && (
           <div className="mt-3 space-y-1 max-h-64 overflow-y-auto">
-            <p className="text-xs text-zinc-500 mb-2">
+            <p className="text-xs text-neutral-500 mb-2">
               Resultados:
             </p>
             {detectMutation.data.results.map((r, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm py-1 px-2 rounded bg-zinc-50 dark:bg-zinc-800/50">
+              <div key={i} className="flex items-center gap-2 text-sm py-1 px-2 rounded bg-neutral-50 dark:bg-neutral-800/50">
                 {r.action === "created" && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />}
                 {r.action === "created_pending" && <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0" />}
                 {r.action === "linked" && <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 shrink-0" />}
-                {r.action === "skipped" && <XCircle className="h-3.5 w-3.5 text-zinc-400 shrink-0" />}
+                {r.action === "skipped" && <XCircle className="h-3.5 w-3.5 text-neutral-400 shrink-0" />}
                 {r.action === "error" && <XCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />}
-                <span className="text-zinc-700 dark:text-zinc-300 truncate">
+                <span className="text-neutral-700 dark:text-neutral-300 truncate">
                   {(r as Record<string, unknown>).folderName as string || (r as Record<string, unknown>).assistidoNome as string || "Unknown"}
                 </span>
                 <Badge variant="outline" className="text-xs ml-auto shrink-0">
@@ -406,7 +406,7 @@ export default function EnrichmentDashboardPage() {
       {/* Status by Atribuicao */}
       <Card className="p-4">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
             Status por Atribuicao
           </h2>
           <Button
@@ -426,7 +426,7 @@ export default function EnrichmentDashboardPage() {
             ))}
           </div>
         ) : byAtribuicao.length === 0 ? (
-          <p className="text-sm text-zinc-500">Nenhum dado disponivel</p>
+          <p className="text-sm text-neutral-500">Nenhum dado disponivel</p>
         ) : (
           <div className="space-y-2.5">
             {byAtribuicao.map((item) => {
@@ -441,11 +441,11 @@ export default function EnrichmentDashboardPage() {
                     <span className={cn("font-medium", color.text)}>
                       {color.label}
                     </span>
-                    <span className="text-zinc-500 text-xs tabular-nums">
+                    <span className="text-neutral-500 text-xs tabular-nums">
                       {pct}% ({item.enriched}/{item.totalFiles})
                     </span>
                   </div>
-                  <div className="h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                  <div className="h-2 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
                     <div
                       className={cn("h-full rounded-full transition-all", color.bar)}
                       style={{ width: `${pct}%` }}
@@ -477,7 +477,7 @@ function StatCard({
   color: "zinc" | "emerald" | "amber" | "red";
 }) {
   const colorMap = {
-    zinc: "text-zinc-600 dark:text-zinc-400",
+    zinc: "text-neutral-600 dark:text-neutral-400",
     emerald: "text-emerald-600 dark:text-emerald-400",
     amber: "text-amber-600 dark:text-amber-400",
     red: "text-red-600 dark:text-red-400",
@@ -487,9 +487,9 @@ function StatCard({
     <Card className="p-3">
       <div className="flex items-center gap-2 mb-1">
         <span className={colorMap[color]}>{icon}</span>
-        <span className="text-xs text-zinc-500">{label}</span>
+        <span className="text-xs text-neutral-500">{label}</span>
       </div>
-      <p className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 tabular-nums">
+      <p className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100 tabular-nums">
         {value.toLocaleString("pt-BR")}
       </p>
     </Card>

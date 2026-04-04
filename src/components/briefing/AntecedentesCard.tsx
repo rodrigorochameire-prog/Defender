@@ -50,8 +50,8 @@ const tipoPessoaConfig: Record<
   },
   DESCONHECIDO: {
     label: "Não identificado",
-    color: "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300",
-    icon: <User className="w-5 h-5 text-zinc-600" />,
+    color: "bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-300",
+    icon: <User className="w-5 h-5 text-neutral-600" />,
   },
 };
 
@@ -116,7 +116,7 @@ export function AntecedentesCard({
             </div>
           </div>
 
-          <div className="text-right text-sm text-zinc-500">
+          <div className="text-right text-sm text-neutral-500">
             <div>{antecedente.processos_anteriores.length} processo(s)</div>
             <div>{antecedente.ros_anteriores.length} RO(s)</div>
           </div>
@@ -147,14 +147,14 @@ export function AntecedentesCard({
                   {antecedente.processos_anteriores.map((processo, idx) => (
                     <div
                       key={idx}
-                      className="p-3 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800"
+                      className="p-3 bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <p className="font-mono text-sm text-zinc-800 dark:text-zinc-200">
+                          <p className="font-mono text-sm text-neutral-800 dark:text-neutral-200">
                             {processo.numero || "Número não informado"}
                           </p>
-                          <p className="text-xs text-zinc-500 mt-0.5">
+                          <p className="text-xs text-neutral-500 mt-0.5">
                             {processo.vara || "Vara não informada"}
                           </p>
                         </div>
@@ -168,24 +168,24 @@ export function AntecedentesCard({
                                 ? "bg-emerald-50 text-emerald-700"
                                 : processo.status === "prescrito"
                                   ? "bg-amber-50 text-amber-700"
-                                  : "bg-zinc-50 text-zinc-700"
+                                  : "bg-neutral-50 text-neutral-700"
                           )}
                         >
                           {processo.status || "Status desconhecido"}
                         </Badge>
                       </div>
-                      <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      <div className="mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400">
                           <span className="font-medium">Crime:</span>{" "}
                           {processo.tipo_crime || "Não informado"}
                         </p>
                         {processo.pena && (
-                          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                          <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
                             <span className="font-medium">Pena:</span> {processo.pena}
                           </p>
                         )}
                         {processo.data && (
-                          <p className="text-xs text-zinc-500 mt-1">
+                          <p className="text-xs text-neutral-500 mt-1">
                             Data: {processo.data}
                           </p>
                         )}
@@ -221,14 +221,14 @@ export function AntecedentesCard({
                   {antecedente.ros_anteriores.map((ro, idx) => (
                     <div
                       key={idx}
-                      className="p-3 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800"
+                      className="p-3 bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <p className="font-mono text-sm text-zinc-800 dark:text-zinc-200">
+                          <p className="font-mono text-sm text-neutral-800 dark:text-neutral-200">
                             {ro.numero || "Número não informado"}
                           </p>
-                          <p className="text-xs text-zinc-500 mt-0.5">
+                          <p className="text-xs text-neutral-500 mt-0.5">
                             {ro.data || "Data não informada"}
                           </p>
                         </div>
@@ -240,19 +240,19 @@ export function AntecedentesCard({
                               ? "bg-rose-50 text-rose-700"
                               : ro.papel === "vítima"
                                 ? "bg-amber-50 text-amber-700"
-                                : "bg-zinc-50 text-zinc-700"
+                                : "bg-neutral-50 text-neutral-700"
                           )}
                         >
                           {ro.papel || "Papel desconhecido"}
                         </Badge>
                       </div>
-                      <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      <div className="mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400">
                           <span className="font-medium">Tipo:</span>{" "}
                           {ro.tipo || "Não informado"}
                         </p>
                         {ro.resumo && (
-                          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                          <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
                             {ro.resumo}
                           </p>
                         )}
@@ -271,7 +271,7 @@ export function AntecedentesCard({
             open={openSections.observacoes}
             onOpenChange={() => toggleSection("observacoes")}
           >
-            <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+            <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors">
               {openSections.observacoes ? (
                 <ChevronDown className="w-4 h-4" />
               ) : (
@@ -287,9 +287,9 @@ export function AntecedentesCard({
                 {antecedente.observacoes.map((obs, idx) => (
                   <div
                     key={idx}
-                    className="p-3 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-800"
+                    className="p-3 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg border border-neutral-200 dark:border-neutral-800"
                   >
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300">
                       {obs}
                     </p>
                   </div>
@@ -330,7 +330,7 @@ export function AntecedentesCard({
         {!antecedente.possui_antecedentes &&
           antecedente.processos_anteriores.length === 0 &&
           antecedente.ros_anteriores.length === 0 && (
-            <div className="text-center py-6 text-zinc-500">
+            <div className="text-center py-6 text-neutral-500">
               <CheckCircle className="w-8 h-8 mx-auto mb-2 text-emerald-500" />
               <p className="text-sm">Nenhum registro de antecedentes encontrado</p>
             </div>

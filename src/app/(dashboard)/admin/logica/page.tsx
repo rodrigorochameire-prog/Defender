@@ -190,26 +190,26 @@ export default function LogicaArgumentacaoPage() {
       case "medio":
         return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Médio Impacto</Badge>;
       case "baixo":
-        return <Badge className="bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">Baixo Impacto</Badge>;
+        return <Badge className="bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400">Baixo Impacto</Badge>;
       default:
         return null;
     }
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
-              <Brain className="w-5 h-5 text-white dark:text-zinc-900" />
+            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
+              <Brain className="w-5 h-5 text-white dark:text-neutral-900" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
+              <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
                 Lógica e Argumentação
               </h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 hidden sm:block">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 hidden sm:block">
                 Análise de contradições e construção de teses
               </p>
             </div>
@@ -230,7 +230,7 @@ export default function LogicaArgumentacaoPage() {
           <CardContent className="p-4">
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
               <div className="flex-1 min-w-0">
-                <Label htmlFor="caso" className="text-xs text-zinc-500 mb-1 block">
+                <Label htmlFor="caso" className="text-xs text-neutral-500 mb-1 block">
                   Selecione o Caso
                 </Label>
                 <Select value={selectedCasoId} onValueChange={setSelectedCasoId}>
@@ -306,7 +306,7 @@ export default function LogicaArgumentacaoPage() {
                             <SelectItem key={tipo.id} value={tipo.id}>
                               <div className="flex flex-col">
                                 <span>{tipo.label}</span>
-                                <span className="text-xs text-zinc-500">{tipo.descricao}</span>
+                                <span className="text-xs text-neutral-500">{tipo.descricao}</span>
                               </div>
                             </SelectItem>
                           ))}
@@ -380,7 +380,7 @@ export default function LogicaArgumentacaoPage() {
               {/* Lista de Contradições */}
               {contradicoes.length > 0 ? (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                  <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                     Contradições Identificadas ({contradicoes.length})
                   </h3>
                   <Accordion type="single" collapsible className="space-y-2">
@@ -388,18 +388,18 @@ export default function LogicaArgumentacaoPage() {
                       <AccordionItem
                         key={cont.id}
                         value={cont.id}
-                        className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden bg-white dark:bg-zinc-900"
+                        className="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden bg-white dark:bg-neutral-900"
                       >
-                        <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                        <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
                           <div className="flex items-center gap-3 text-left flex-1">
                             <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 font-bold text-sm">
                               {idx + 1}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                              <p className="font-medium text-sm text-neutral-900 dark:text-neutral-100 truncate">
                                 {cont.titulo}
                               </p>
-                              <p className="text-xs text-zinc-500">
+                              <p className="text-xs text-neutral-500">
                                 {TIPOS_CONTRADICAO.find(t => t.id === cont.tipo)?.label || cont.tipo}
                               </p>
                             </div>
@@ -413,7 +413,7 @@ export default function LogicaArgumentacaoPage() {
                                 <p className="text-xs font-semibold text-rose-700 dark:text-rose-400 mb-1">
                                   Versão A
                                 </p>
-                                <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                                <p className="text-sm text-neutral-700 dark:text-neutral-300">
                                   {cont.fonteA}
                                 </p>
                               </div>
@@ -421,15 +421,15 @@ export default function LogicaArgumentacaoPage() {
                                 <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-1">
                                   Versão B
                                 </p>
-                                <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                                <p className="text-sm text-neutral-700 dark:text-neutral-300">
                                   {cont.fonteB}
                                 </p>
                               </div>
                             </div>
                             {cont.descricao && (
-                              <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800">
-                                <p className="text-xs font-semibold text-zinc-500 mb-1">Análise</p>
-                                <p className="text-sm text-zinc-700 dark:text-zinc-300">{cont.descricao}</p>
+                              <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800">
+                                <p className="text-xs font-semibold text-neutral-500 mb-1">Análise</p>
+                                <p className="text-sm text-neutral-700 dark:text-neutral-300">{cont.descricao}</p>
                               </div>
                             )}
                             <div className="flex gap-2">
@@ -449,11 +449,11 @@ export default function LogicaArgumentacaoPage() {
               ) : (
                 <Card className="border-dashed">
                   <CardContent className="py-12 text-center">
-                    <AlertTriangle className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-700 mb-4" />
-                    <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                    <AlertTriangle className="w-12 h-12 mx-auto text-neutral-300 dark:text-neutral-700 mb-4" />
+                    <h3 className="text-lg font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                       Nenhuma contradição identificada
                     </h3>
-                    <p className="text-sm text-zinc-500 mb-4">
+                    <p className="text-sm text-neutral-500 mb-4">
                       Analise os autos e registre inconsistências que possam favorecer a defesa
                     </p>
                   </CardContent>
@@ -516,7 +516,7 @@ export default function LogicaArgumentacaoPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-6 w-6 p-0 text-zinc-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="h-6 w-6 p-0 text-neutral-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
                                 onClick={() => {
                                   if (confirm("Remover esta tese?")) {
                                     deleteTese.mutate({ id: tese.id });
@@ -530,13 +530,13 @@ export default function LogicaArgumentacaoPage() {
                         </CardHeader>
                         {tese.descricao && (
                           <CardContent className="pt-0">
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2">{tese.descricao}</p>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2">{tese.descricao}</p>
                           </CardContent>
                         )}
                         {tese.probabilidadeAceitacao != null && (
                           <CardContent className="pt-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-zinc-400">Probabilidade:</span>
+                              <span className="text-[10px] text-neutral-400">Probabilidade:</span>
                               <Badge variant="outline" className="text-[10px]">{tese.probabilidadeAceitacao}%</Badge>
                             </div>
                           </CardContent>
@@ -550,11 +550,11 @@ export default function LogicaArgumentacaoPage() {
               {teses.length === 0 && (
                 <Card className="border-dashed mt-6">
                   <CardContent className="py-12 text-center">
-                    <Scale className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-700 mb-4" />
-                    <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                    <Scale className="w-12 h-12 mx-auto text-neutral-300 dark:text-neutral-700 mb-4" />
+                    <h3 className="text-lg font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                       Nenhuma tese cadastrada
                     </h3>
-                    <p className="text-sm text-zinc-500">
+                    <p className="text-sm text-neutral-500">
                       Construa suas teses defensivas baseadas nas contradições identificadas
                     </p>
                   </CardContent>
@@ -620,8 +620,8 @@ export default function LogicaArgumentacaoPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="py-12 text-center">
-                  <Zap className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-700 mb-4" />
-                  <p className="text-sm text-zinc-500">
+                  <Zap className="w-12 h-12 mx-auto text-neutral-300 dark:text-neutral-700 mb-4" />
+                  <p className="text-sm text-neutral-500">
                     Adicione argumentos para visualizar o fluxo lógico
                   </p>
                 </CardContent>
@@ -631,11 +631,11 @@ export default function LogicaArgumentacaoPage() {
         ) : (
           <Card className="border-dashed">
             <CardContent className="py-16 text-center">
-              <Brain className="w-16 h-16 mx-auto text-zinc-300 dark:text-zinc-700 mb-4" />
-              <h3 className="text-xl font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+              <Brain className="w-16 h-16 mx-auto text-neutral-300 dark:text-neutral-700 mb-4" />
+              <h3 className="text-xl font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                 Selecione um Caso
               </h3>
-              <p className="text-sm text-zinc-500 max-w-md mx-auto">
+              <p className="text-sm text-neutral-500 max-w-md mx-auto">
                 Escolha um caso para começar a análise de contradições e construção de teses defensivas
               </p>
             </CardContent>
@@ -659,7 +659,7 @@ export default function LogicaArgumentacaoPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="tese-titulo" className="text-xs text-zinc-500">Título</Label>
+              <Label htmlFor="tese-titulo" className="text-xs text-neutral-500">Título</Label>
               <Input
                 id="tese-titulo"
                 placeholder="Ex: Legítima defesa própria"
@@ -669,7 +669,7 @@ export default function LogicaArgumentacaoPage() {
               />
             </div>
             <div>
-              <Label htmlFor="tese-descricao" className="text-xs text-zinc-500">Descrição (opcional)</Label>
+              <Label htmlFor="tese-descricao" className="text-xs text-neutral-500">Descrição (opcional)</Label>
               <Textarea
                 id="tese-descricao"
                 placeholder="Fundamentos e estratégia da tese..."

@@ -154,7 +154,7 @@ export function StatusBar({ collapsed = false }: StatusBarProps) {
         </span>
         {lastSync && (
           <>
-            <span className="text-zinc-300 dark:text-muted-foreground/50">·</span>
+            <span className="text-neutral-300 dark:text-muted-foreground/50">·</span>
             <RefreshCw className="w-2.5 h-2.5 text-muted-foreground dark:text-muted-foreground/50 shrink-0" />
             <span className="text-muted-foreground dark:text-muted-foreground/50 truncate">
               {formatDistanceToNow(lastSync, { addSuffix: true, locale: ptBR })}
@@ -170,7 +170,7 @@ export function StatusBar({ collapsed = false }: StatusBarProps) {
             <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-medium text-zinc-700 dark:text-foreground/80 truncate">
+            <p className="text-[11px] font-medium text-neutral-700 dark:text-foreground/80 truncate">
               {evento.titulo}
             </p>
             <p className="text-[10px] text-muted-foreground flex items-center gap-1">

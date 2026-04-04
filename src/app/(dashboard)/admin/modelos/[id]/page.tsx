@@ -126,7 +126,7 @@ const CATEGORIA_CONFIG: Record<ModeloCategoria, {
   OUTRO: {
     label: "Outro",
     icon: FileText,
-    color: "text-zinc-600 bg-zinc-50 border-zinc-200",
+    color: "text-neutral-600 bg-neutral-50 border-neutral-200",
   },
 };
 
@@ -221,7 +221,7 @@ export default function ModeloDetalhesPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 p-6">
+      <div className="min-h-screen bg-neutral-50/50 dark:bg-neutral-950 p-6">
         <div className="max-w-4xl mx-auto space-y-6">
           <Skeleton className="h-20 rounded-xl" />
           <Skeleton className="h-96 rounded-xl" />
@@ -232,13 +232,13 @@ export default function ModeloDetalhesPage() {
 
   if (!modelo) {
     return (
-      <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen bg-neutral-50/50 dark:bg-neutral-950 flex items-center justify-center">
         <div className="text-center">
-          <FileStack className="w-16 h-16 mx-auto text-zinc-300 mb-4" />
-          <h2 className="text-xl font-semibold text-zinc-900 dark:text-foreground">
+          <FileStack className="w-16 h-16 mx-auto text-neutral-300 mb-4" />
+          <h2 className="text-xl font-semibold text-neutral-900 dark:text-foreground">
             Modelo não encontrado
           </h2>
-          <p className="text-zinc-500 mt-2">
+          <p className="text-neutral-500 mt-2">
             O modelo solicitado não existe ou foi removido.
           </p>
           <Link href="/admin/modelos">
@@ -254,9 +254,9 @@ export default function ModeloDetalhesPage() {
   const variaveis = modelo.variaveis as VariavelModelo[] | null;
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950">
+    <div className="min-h-screen bg-neutral-50/50 dark:bg-neutral-950">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-border bg-white dark:bg-card">
+      <div className="border-b border-neutral-200 dark:border-border bg-white dark:bg-card">
         <div className="px-6 py-4">
           <Breadcrumbs
             items={[
@@ -277,7 +277,7 @@ export default function ModeloDetalhesPage() {
                 <Icon className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-zinc-900 dark:text-foreground">
+                <h1 className="text-xl font-semibold text-neutral-900 dark:text-foreground">
                   {modelo.titulo}
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
@@ -289,7 +289,7 @@ export default function ModeloDetalhesPage() {
                       {modelo.tipoPeca}
                     </Badge>
                   )}
-                  <span className="text-xs text-zinc-500">
+                  <span className="text-xs text-neutral-500">
                     {modelo.totalUsos} usos
                   </span>
                 </div>
@@ -440,7 +440,7 @@ export default function ModeloDetalhesPage() {
                   {modelo.descricao && (
                     <Card>
                       <CardContent className="pt-6">
-                        <p className="text-zinc-600 dark:text-muted-foreground">
+                        <p className="text-neutral-600 dark:text-muted-foreground">
                           {modelo.descricao}
                         </p>
                       </CardContent>
@@ -465,7 +465,7 @@ export default function ModeloDetalhesPage() {
                       </Button>
                     </CardHeader>
                     <CardContent>
-                      <div className="prose prose-zinc dark:prose-invert max-w-none p-4 bg-zinc-50 dark:bg-muted/50 rounded-lg font-mono text-sm whitespace-pre-wrap">
+                      <div className="prose prose-zinc dark:prose-invert max-w-none p-4 bg-neutral-50 dark:bg-muted/50 rounded-lg font-mono text-sm whitespace-pre-wrap">
                         {modelo.conteudo.split(/(\{\{[^}]+\}\})/).map((part, i) => {
                           if (part.match(/\{\{[^}]+\}\}/)) {
                             return (
@@ -497,8 +497,8 @@ export default function ModeloDetalhesPage() {
                 </CardHeader>
                 <CardContent>
                   {!variaveis || variaveis.length === 0 ? (
-                    <div className="text-center py-8 text-zinc-500">
-                      <Variable className="w-10 h-10 mx-auto mb-3 text-zinc-300" />
+                    <div className="text-center py-8 text-neutral-500">
+                      <Variable className="w-10 h-10 mx-auto mb-3 text-neutral-300" />
                       <p>Nenhuma variável definida</p>
                     </div>
                   ) : (
@@ -506,14 +506,14 @@ export default function ModeloDetalhesPage() {
                       {variaveis.map((v, i) => (
                         <div
                           key={i}
-                          className="flex items-center gap-4 p-3 bg-zinc-50 dark:bg-muted/50 rounded-lg"
+                          className="flex items-center gap-4 p-3 bg-neutral-50 dark:bg-muted/50 rounded-lg"
                         >
                           <code className="px-2 py-1 bg-white dark:bg-secondary rounded font-mono text-sm">
                             {`{{${v.nome}}}`}
                           </code>
                           <div className="flex-1">
                             <p className="font-medium text-sm">{v.label}</p>
-                            <p className="text-xs text-zinc-500">
+                            <p className="text-xs text-neutral-500">
                               {v.tipo} • {v.origem} • {v.obrigatoria ? "obrigatória" : "opcional"}
                             </p>
                           </div>
@@ -536,8 +536,8 @@ export default function ModeloDetalhesPage() {
                 </CardHeader>
                 <CardContent>
                   {!documentosGerados || documentosGerados.length === 0 ? (
-                    <div className="text-center py-8 text-zinc-500">
-                      <History className="w-10 h-10 mx-auto mb-3 text-zinc-300" />
+                    <div className="text-center py-8 text-neutral-500">
+                      <History className="w-10 h-10 mx-auto mb-3 text-neutral-300" />
                       <p>Nenhum documento gerado ainda</p>
                       <Link href={`/admin/modelos/${modeloId}/gerar`}>
                         <Button variant="outline" className="mt-4 gap-2">
@@ -551,13 +551,13 @@ export default function ModeloDetalhesPage() {
                       {documentosGerados.map((doc) => (
                         <div
                           key={doc.id}
-                          className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-muted/50 rounded-lg"
+                          className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-muted/50 rounded-lg"
                         >
                           <div className="flex items-center gap-3">
-                            <FileText className="w-5 h-5 text-zinc-400" />
+                            <FileText className="w-5 h-5 text-neutral-400" />
                             <div>
                               <p className="font-medium text-sm">{doc.titulo}</p>
-                              <div className="flex items-center gap-2 text-xs text-zinc-500">
+                              <div className="flex items-center gap-2 text-xs text-neutral-500">
                                 <Clock className="w-3 h-3" />
                                 {format(new Date(doc.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                                 {doc.geradoPorIA && (
@@ -593,7 +593,7 @@ export default function ModeloDetalhesPage() {
           </Tabs>
 
           {/* Meta info */}
-          <div className="mt-6 flex items-center justify-between text-xs text-zinc-500 border-t border-zinc-200 dark:border-border pt-4">
+          <div className="mt-6 flex items-center justify-between text-xs text-neutral-500 border-t border-neutral-200 dark:border-border pt-4">
             <div className="flex items-center gap-4">
               <span>
                 Criado em {format(new Date(modelo.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}

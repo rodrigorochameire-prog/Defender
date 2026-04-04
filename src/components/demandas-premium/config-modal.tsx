@@ -23,21 +23,21 @@ export function ConfigModal({ isOpen, onClose }: ConfigModalProps) {
           </DialogDescription>
         </DialogHeader>
         <div className="py-6 space-y-4">
-          <div className="p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
+          <div className="p-4 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
             <h3 className="font-semibold mb-2">Personalização de Filtros</h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
               Configure quais filtros devem aparecer por padrão e suas opções.
             </p>
           </div>
-          <div className="p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
+          <div className="p-4 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
             <h3 className="font-semibold mb-2">Ordenação Padrão</h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
               Defina como as demandas devem ser ordenadas ao carregar a página.
             </p>
           </div>
-          <div className="p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
+          <div className="p-4 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
             <h3 className="font-semibold mb-2">Notificações</h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
               Configure alertas para prazos críticos e demandas urgentes.
             </p>
           </div>

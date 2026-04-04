@@ -145,12 +145,12 @@ function toggleFavorite(fileId: number): boolean {
 }
 
 function getPrazoBadgeClass(prazoFatal: string | Date | null): string {
-  if (!prazoFatal) return "bg-zinc-500/10 text-zinc-400 border-zinc-500/30";
+  if (!prazoFatal) return "bg-neutral-500/10 text-neutral-400 border-neutral-500/30";
   const days = differenceInDays(new Date(prazoFatal), new Date());
   if (days < 0) return "bg-red-500/10 text-red-400 border-red-500/30";
   if (days <= 3) return "bg-rose-500/10 text-rose-400 border-rose-500/30";
   if (days <= 7) return "bg-amber-500/10 text-amber-400 border-amber-500/30";
-  return "bg-zinc-500/10 text-zinc-400 border-zinc-500/30";
+  return "bg-neutral-500/10 text-neutral-400 border-neutral-500/30";
 }
 
 // ─── Section Header ─────────────────────────────────────────────────
@@ -171,10 +171,10 @@ function SectionHeader({
   return (
     <button
       onClick={onToggle}
-      className="flex items-center gap-2 w-full px-4 py-2.5 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors duration-150"
+      className="flex items-center gap-2 w-full px-4 py-2.5 text-left hover:bg-neutral-100 dark:hover:bg-neutral-800/50 transition-colors duration-150"
     >
-      <Icon className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
-      <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider flex-1">
+      <Icon className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500 shrink-0" />
+      <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex-1">
         {title}
       </span>
       {badge && (
@@ -183,9 +183,9 @@ function SectionHeader({
         </span>
       )}
       {isOpen ? (
-        <ChevronDown className="h-3 w-3 text-zinc-400 dark:text-zinc-600 shrink-0" />
+        <ChevronDown className="h-3 w-3 text-neutral-400 dark:text-neutral-600 shrink-0" />
       ) : (
-        <ChevronRight className="h-3 w-3 text-zinc-400 dark:text-zinc-600 shrink-0" />
+        <ChevronRight className="h-3 w-3 text-neutral-400 dark:text-neutral-600 shrink-0" />
       )}
     </button>
   );
@@ -204,11 +204,11 @@ function MediaPlayer({ file }: { file: DriveFile }) {
 
   if (isAudio) {
     return (
-      <div className="bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 flex flex-col items-center gap-3">
+      <div className="bg-neutral-100 dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 p-4 flex flex-col items-center gap-3">
         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 flex items-center justify-center">
           <Volume2 className="w-8 h-8 text-cyan-400" />
         </div>
-        <p className="text-xs text-zinc-400 font-medium truncate max-w-full">
+        <p className="text-xs text-neutral-400 font-medium truncate max-w-full">
           {file.name}
         </p>
         <audio
@@ -225,7 +225,7 @@ function MediaPlayer({ file }: { file: DriveFile }) {
         </audio>
         {hasError && file.webViewLink && (
           <div className="w-full text-center">
-            <p className="text-xs text-zinc-500 mb-2">Player nativo indisponivel.</p>
+            <p className="text-xs text-neutral-500 mb-2">Player nativo indisponivel.</p>
             <a href={file.webViewLink} target="_blank" rel="noopener noreferrer">
               <Button variant="ghost" size="sm" className="text-xs text-emerald-400 hover:text-emerald-300">
                 <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
@@ -240,9 +240,9 @@ function MediaPlayer({ file }: { file: DriveFile }) {
 
   // Vídeo
   return (
-    <div className="bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-200 dark:border-zinc-800">
-        <p className="text-xs text-zinc-400 truncate max-w-[200px]">{file.name}</p>
+    <div className="bg-neutral-100 dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-neutral-200 dark:border-neutral-800">
+        <p className="text-xs text-neutral-400 truncate max-w-[200px]">{file.name}</p>
       </div>
 
       {/* Player nativo HTML5 via proxy */}
@@ -263,8 +263,8 @@ function MediaPlayer({ file }: { file: DriveFile }) {
       {/* Fallback: abrir no Drive */}
       {hasError && (
         <div className="aspect-video flex flex-col items-center justify-center gap-2">
-          <MonitorPlay className="w-12 h-12 text-zinc-600" />
-          <p className="text-xs text-zinc-500">Player indisponivel</p>
+          <MonitorPlay className="w-12 h-12 text-neutral-600" />
+          <p className="text-xs text-neutral-500">Player indisponivel</p>
           {file.webViewLink && (
             <a href={file.webViewLink} target="_blank" rel="noopener noreferrer">
               <Button variant="ghost" size="sm" className="text-xs text-emerald-400 hover:text-emerald-300">
@@ -278,8 +278,8 @@ function MediaPlayer({ file }: { file: DriveFile }) {
 
       {/* Info de tamanho */}
       {fileSize > 0 && (
-        <div className="px-3 py-1 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-          <span className="text-[10px] text-zinc-500">
+        <div className="px-3 py-1 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+          <span className="text-[10px] text-neutral-500">
             {formatFileSize(fileSize)}
           </span>
         </div>
@@ -302,7 +302,7 @@ function FilePreview({ file }: { file: DriveFile }) {
 
   if (isPdf && file.driveFileId) {
     return (
-      <div className="h-[500px] bg-zinc-100 dark:bg-zinc-900 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800">
+      <div className="h-[500px] bg-neutral-100 dark:bg-neutral-900 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800">
         <iframe
           src={`/api/drive/proxy?fileId=${file.driveFileId}`}
           className="w-full h-full border-0"
@@ -318,7 +318,7 @@ function FilePreview({ file }: { file: DriveFile }) {
       : file.webViewLink;
     if (imgSrc) {
       return (
-        <div className="aspect-video bg-zinc-100 dark:bg-zinc-900 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 flex items-center justify-center">
+        <div className="aspect-video bg-neutral-100 dark:bg-neutral-900 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800 flex items-center justify-center">
           <a
             href={file.webViewLink || "#"}
             target="_blank"
@@ -343,17 +343,17 @@ function FilePreview({ file }: { file: DriveFile }) {
   if (isGoogleDoc && file.webViewLink) {
     const docIcon = mimeType.includes("spreadsheet") ? "Planilha" : "Documento";
     return (
-      <div className="bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-8 flex flex-col items-center gap-3">
+      <div className="bg-neutral-100 dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 p-8 flex flex-col items-center gap-3">
         {file.thumbnailLink ? (
           <img
             src={file.thumbnailLink.replace("=s220", "=s600")}
             alt={file.name}
-            className="max-w-full max-h-[300px] object-contain rounded border border-zinc-200 dark:border-zinc-700"
+            className="max-w-full max-h-[300px] object-contain rounded border border-neutral-200 dark:border-neutral-700"
           />
         ) : (
-          <FileText className="w-16 h-16 text-zinc-400 dark:text-zinc-600" />
+          <FileText className="w-16 h-16 text-neutral-400 dark:text-neutral-600" />
         )}
-        <p className="text-xs text-zinc-400 dark:text-zinc-500">{docIcon} Google — abrir no Drive para visualizar</p>
+        <p className="text-xs text-neutral-400 dark:text-neutral-500">{docIcon} Google — abrir no Drive para visualizar</p>
         <a href={file.webViewLink} target="_blank" rel="noopener noreferrer">
           <Button variant="ghost" size="sm" className="text-xs text-emerald-400 hover:text-emerald-300">
             <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
@@ -367,9 +367,9 @@ function FilePreview({ file }: { file: DriveFile }) {
   // Fallback: large file icon + open in Drive
   const FileIcon = getFileIcon(file.mimeType);
   return (
-    <div className="bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-8 flex flex-col items-center gap-3">
-      <FileIcon className="w-16 h-16 text-zinc-400 dark:text-zinc-600" />
-      <p className="text-xs text-zinc-400 dark:text-zinc-500">Preview nao disponivel</p>
+    <div className="bg-neutral-100 dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 p-8 flex flex-col items-center gap-3">
+      <FileIcon className="w-16 h-16 text-neutral-400 dark:text-neutral-600" />
+      <p className="text-xs text-neutral-400 dark:text-neutral-500">Preview nao disponivel</p>
       {file.webViewLink && (
         <a
           href={file.webViewLink}
@@ -419,7 +419,7 @@ function ActionRow({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+            className="h-8 w-8 text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
             title="Download"
           >
             <Download className="h-4 w-4" />
@@ -437,7 +437,7 @@ function ActionRow({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+            className="h-8 w-8 text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
             title="Abrir no Drive"
           >
             <ExternalLink className="h-4 w-4" />
@@ -478,7 +478,7 @@ function ActionRow({
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+        className="h-8 w-8 text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
         title="Renomear"
         onClick={onStartRename}
       >
@@ -493,7 +493,7 @@ function ActionRow({
           "h-8 w-8",
           isFavorited
             ? "text-amber-400 hover:text-amber-300"
-            : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+            : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
         )}
         title={isFavorited ? "Remover dos favoritos" : "Favoritar"}
         onClick={onToggleFavorite}
@@ -555,7 +555,7 @@ function InlineRename({
           if (e.key === "Enter") handleSubmit();
           if (e.key === "Escape") onCancel();
         }}
-        className="h-7 text-sm bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-200 flex-1"
+        className="h-7 text-sm bg-neutral-100 dark:bg-neutral-800 border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-200 flex-1"
         disabled={renameMutation.isPending}
       />
       <Button
@@ -574,7 +574,7 @@ function InlineRename({
       <Button
         variant="ghost"
         size="icon"
-        className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
+        className="h-7 w-7 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300"
         onClick={onCancel}
         disabled={renameMutation.isPending}
       >
@@ -617,7 +617,7 @@ function MetadataSection({ file }: { file: DriveFile }) {
             label="Drive ID"
             value={
               <span
-                className="font-mono text-[10px] text-zinc-400 dark:text-zinc-600 truncate block max-w-[180px]"
+                className="font-mono text-[10px] text-neutral-400 dark:text-neutral-600 truncate block max-w-[180px]"
                 title={file.driveFileId}
               >
                 {file.driveFileId}
@@ -639,8 +639,8 @@ function MetaRow({
 }) {
   return (
     <div className="flex items-start justify-between gap-2">
-      <span className="text-[11px] text-zinc-400 dark:text-zinc-500 shrink-0">{label}</span>
-      <span className="text-[11px] text-zinc-700 dark:text-zinc-300 text-right">{value}</span>
+      <span className="text-[11px] text-neutral-400 dark:text-neutral-500 shrink-0">{label}</span>
+      <span className="text-[11px] text-neutral-700 dark:text-neutral-300 text-right">{value}</span>
     </div>
   );
 }
@@ -777,7 +777,7 @@ function SuggestedActionsSection({ file }: { file: DriveFile }) {
   const urgencyColors: Record<string, string> = {
     alta: "bg-red-500/10 text-red-500 border-red-500/20",
     media: "bg-amber-500/10 text-amber-600 border-amber-500/20",
-    baixa: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
+    baixa: "bg-neutral-500/10 text-neutral-400 border-neutral-500/20",
   };
 
   return (
@@ -798,10 +798,10 @@ function SuggestedActionsSection({ file }: { file: DriveFile }) {
           {suggestions.map((s, i) => (
             <div
               key={i}
-              className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-2.5 border border-zinc-200 dark:border-zinc-700 space-y-1.5"
+              className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-2.5 border border-neutral-200 dark:border-neutral-700 space-y-1.5"
             >
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-medium text-zinc-800 dark:text-zinc-200 flex-1">
+                <span className="text-[11px] font-medium text-neutral-800 dark:text-neutral-200 flex-1">
                   {s.title}
                 </span>
                 {s.urgencia && (
@@ -810,7 +810,7 @@ function SuggestedActionsSection({ file }: { file: DriveFile }) {
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
+              <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
                 {s.description}
               </p>
               <div className="flex items-center gap-1.5 pt-0.5">
@@ -836,7 +836,7 @@ function SuggestedActionsSection({ file }: { file: DriveFile }) {
                   )}
                   Aplicar
                 </Button>
-                <span className="text-[9px] text-zinc-400">
+                <span className="text-[9px] text-neutral-400">
                   {Math.round(s.confidence * 100)}% confiança
                 </span>
               </div>
@@ -904,12 +904,12 @@ function LinkSuggestionsSection({ file }: { file: DriveFile }) {
               {s.suggestedAssistidoNome && (
                 <div className="flex items-center gap-1.5">
                   <User className="h-3 w-3 text-blue-400" />
-                  <span className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                  <span className="text-[11px] text-neutral-600 dark:text-neutral-400">
                     {s.suggestedAssistidoNome}
                   </span>
                 </div>
               )}
-              <p className="text-[10px] text-zinc-400">{s.reason}</p>
+              <p className="text-[10px] text-neutral-400">{s.reason}</p>
               <div className="flex items-center gap-1.5 pt-0.5">
                 <Button
                   variant="ghost"
@@ -931,7 +931,7 @@ function LinkSuggestionsSection({ file }: { file: DriveFile }) {
                   )}
                   Vincular
                 </Button>
-                <span className="text-[9px] text-zinc-400">
+                <span className="text-[9px] text-neutral-400">
                   {Math.round(s.confidence * 100)}% confiança
                 </span>
               </div>
@@ -988,7 +988,7 @@ function TranscriptionSection({
         ? "bg-cyan-500/10 text-cyan-500 border-cyan-500/20"
         : file.enrichmentStatus === "failed"
           ? "bg-red-500/10 text-red-400 border-red-500/20"
-          : "bg-zinc-500/10 text-zinc-400 border-zinc-500/20";
+          : "bg-neutral-500/10 text-neutral-400 border-neutral-500/20";
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -1017,12 +1017,12 @@ function TranscriptionSection({
               {statusLabel}
             </span>
             {speakers && speakers.length > 0 && (
-              <span className="text-[10px] text-zinc-500">
+              <span className="text-[10px] text-neutral-500">
                 {speakers.length} speaker{speakers.length > 1 ? "s" : ""}
               </span>
             )}
             {duration ? (
-              <span className="text-[10px] text-zinc-500">
+              <span className="text-[10px] text-neutral-500">
                 {Math.floor(duration / 60)}min {Math.floor(duration % 60)}s
               </span>
             ) : null}
@@ -1034,15 +1034,15 @@ function TranscriptionSection({
             const pct = progress?.percent ?? 15;
             const detail = progress?.detail ?? "Processando...";
             return (
-              <div className="bg-zinc-500/5 dark:bg-zinc-500/10 border border-zinc-200 dark:border-zinc-700/50 rounded-lg p-3 space-y-2">
+              <div className="bg-neutral-500/5 dark:bg-neutral-500/10 border border-neutral-200 dark:border-neutral-700/50 rounded-lg p-3 space-y-2">
                 <div className="flex items-center gap-2">
-                  <div className="flex-1 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                  <div className="flex-1 h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 transition-all duration-1000 ease-out"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <span className="text-[10px] font-mono text-zinc-500 tabular-nums w-8 text-right shrink-0">
+                  <span className="text-[10px] font-mono text-neutral-500 tabular-nums w-8 text-right shrink-0">
                     {pct}%
                   </span>
                 </div>
@@ -1066,7 +1066,7 @@ function TranscriptionSection({
             <div className="space-y-2">
               <div
                 className={cn(
-                  "text-xs text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap font-mono leading-relaxed bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3 border border-zinc-200 dark:border-zinc-800",
+                  "text-xs text-neutral-600 dark:text-neutral-400 whitespace-pre-wrap font-mono leading-relaxed bg-neutral-50 dark:bg-neutral-900 rounded-lg p-3 border border-neutral-200 dark:border-neutral-800",
                   !showFull && "max-h-[200px] overflow-hidden relative"
                 )}
               >
@@ -1075,7 +1075,7 @@ function TranscriptionSection({
                   : transcriptPlain.slice(0, 500) +
                     (transcriptPlain.length > 500 ? "..." : "")}
                 {!showFull && transcriptPlain.length > 500 && (
-                  <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-zinc-50 dark:from-zinc-900 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-neutral-50 dark:from-neutral-900 to-transparent" />
                 )}
               </div>
               <Button
@@ -1160,19 +1160,19 @@ function JuridicalContextSection({ file }: { file: DriveFile }) {
         <div className="px-4 pb-3 space-y-3">
           {isLoading && (
             <div className="space-y-2">
-              <Skeleton className="h-10 w-full bg-zinc-200 dark:bg-zinc-800" />
-              <Skeleton className="h-6 w-3/4 bg-zinc-200 dark:bg-zinc-800" />
+              <Skeleton className="h-10 w-full bg-neutral-200 dark:bg-neutral-800" />
+              <Skeleton className="h-6 w-3/4 bg-neutral-200 dark:bg-neutral-800" />
             </div>
           )}
 
           {!isLoading && !assistido && (
             <div className="text-center py-3">
-              <User className="w-8 h-8 mx-auto text-zinc-300 dark:text-zinc-700 mb-2" />
-              <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+              <User className="w-8 h-8 mx-auto text-neutral-300 dark:text-neutral-700 mb-2" />
+              <p className="text-[11px] text-neutral-400 dark:text-neutral-500">
                 Nenhum assistido vinculado
               </p>
               {folderName && (
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-1">
+                <p className="text-[10px] text-neutral-400 dark:text-neutral-600 mt-1">
                   Pasta: {folderName}
                 </p>
               )}
@@ -1182,9 +1182,9 @@ function JuridicalContextSection({ file }: { file: DriveFile }) {
           {!isLoading && assistido && (
             <>
               {/* Assistido info */}
-              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 space-y-2">
+              <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-3 space-y-2">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center shrink-0">
+                  <div className="h-8 w-8 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center shrink-0">
                     {assistido.photoUrl ? (
                       <img
                         src={assistido.photoUrl}
@@ -1192,14 +1192,14 @@ function JuridicalContextSection({ file }: { file: DriveFile }) {
                         className="h-8 w-8 rounded-full object-cover"
                       />
                     ) : (
-                      <User className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                      <User className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-200 truncate">
+                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-200 truncate">
                       {assistido.nome}
                     </p>
-                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">
+                    <p className="text-[10px] text-neutral-400 dark:text-neutral-500 font-mono">
                       {maskCpf(assistido.cpf)}
                     </p>
                   </div>
@@ -1211,7 +1211,7 @@ function JuridicalContextSection({ file }: { file: DriveFile }) {
                     className={cn(
                       "text-[10px]",
                       statusColors[assistido.statusPrisional] ||
-                        "bg-zinc-200/50 dark:bg-zinc-700/50 text-zinc-500 dark:text-zinc-400"
+                        "bg-neutral-200/50 dark:bg-neutral-700/50 text-neutral-500 dark:text-neutral-400"
                     )}
                   >
                     {assistido.statusPrisional.replace(/_/g, " ")}
@@ -1221,8 +1221,8 @@ function JuridicalContextSection({ file }: { file: DriveFile }) {
                 {/* Contact */}
                 {assistido.telefone && (
                   <div className="flex items-center gap-1.5">
-                    <Phone className="h-3 w-3 text-zinc-400 dark:text-zinc-500" />
-                    <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                    <Phone className="h-3 w-3 text-neutral-400 dark:text-neutral-500" />
+                    <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
                       {assistido.telefone}
                     </span>
                   </div>
@@ -1230,7 +1230,7 @@ function JuridicalContextSection({ file }: { file: DriveFile }) {
                 {assistido.localPrisao && (
                   <div className="flex items-center gap-1.5">
                     <MapPin className="h-3 w-3 text-rose-500" />
-                    <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                    <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
                       {assistido.localPrisao}
                     </span>
                   </div>
@@ -1240,7 +1240,7 @@ function JuridicalContextSection({ file }: { file: DriveFile }) {
               {/* Processos */}
               {assistido.processos && assistido.processos.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">
+                  <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-1.5">
                     Processos ({assistido.processos.length})
                   </p>
                   <div className="space-y-1">
@@ -1249,11 +1249,11 @@ function JuridicalContextSection({ file }: { file: DriveFile }) {
                         key={proc.id}
                         href={`/admin/processos/${proc.id}`}
                       >
-                        <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-md px-2.5 py-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
-                          <p className="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 truncate">
+                        <div className="bg-neutral-100 dark:bg-neutral-800/50 rounded-md px-2.5 py-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
+                          <p className="text-[11px] font-mono text-neutral-700 dark:text-neutral-300 truncate">
                             {proc.numero}
                           </p>
-                          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate">
+                          <p className="text-[10px] text-neutral-400 dark:text-neutral-500 truncate">
                             {proc.vara || proc.tipoAcao || proc.status}
                           </p>
                         </div>
@@ -1266,7 +1266,7 @@ function JuridicalContextSection({ file }: { file: DriveFile }) {
               {/* Demandas pendentes */}
               {assistido.demandas && assistido.demandas.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
                     <AlertCircle className="h-3 w-3 text-amber-500" />
                     Demandas Pendentes
                   </p>
@@ -1282,12 +1282,12 @@ function JuridicalContextSection({ file }: { file: DriveFile }) {
                             : "border-amber-500 bg-amber-500/5"
                         )}
                       >
-                        <p className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate">
+                        <p className="text-[11px] text-neutral-700 dark:text-neutral-300 truncate">
                           {dem.ato}
                         </p>
                         {dem.prazoFatal && (
                           <div className="flex items-center gap-1 mt-0.5">
-                            <Calendar className="h-2.5 w-2.5 text-zinc-400 dark:text-zinc-500" />
+                            <Calendar className="h-2.5 w-2.5 text-neutral-400 dark:text-neutral-500" />
                             <span
                               className={cn(
                                 "text-[10px] px-1 py-px rounded border",
@@ -1309,7 +1309,7 @@ function JuridicalContextSection({ file }: { file: DriveFile }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 w-full"
+                  className="h-7 text-xs text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 w-full"
                 >
                   Ver perfil completo
                 </Button>
@@ -1343,11 +1343,11 @@ function IAInsightsSection({ file }: { file: DriveFile }) {
         <div className="px-4 pb-3 space-y-3">
           {/* Dados Extraidos */}
           <div>
-            <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">
+            <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-1.5">
               Dados Extraidos
             </p>
             {file.documentType || file.categoria ? (
-              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-2 space-y-1">
+              <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-2 space-y-1">
                 {file.documentType && (
                   <MetaRow label="Tipo Doc" value={file.documentType} />
                 )}
@@ -1356,7 +1356,7 @@ function IAInsightsSection({ file }: { file: DriveFile }) {
                 )}
               </div>
             ) : (
-              <p className="text-[11px] text-zinc-400 dark:text-zinc-600">
+              <p className="text-[11px] text-neutral-400 dark:text-neutral-600">
                 Nenhum dado extraido
               </p>
             )}
@@ -1364,16 +1364,16 @@ function IAInsightsSection({ file }: { file: DriveFile }) {
 
           {/* Jurisprudencia Relacionada */}
           <div>
-            <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">
+            <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-1.5">
               Jurisprudencia Relacionada
             </p>
-            <p className="text-[11px] text-zinc-400 dark:text-zinc-600">
+            <p className="text-[11px] text-neutral-400 dark:text-neutral-600">
               Analise nao disponivel
             </p>
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-xs text-zinc-400 dark:text-zinc-600 w-full mt-1 cursor-not-allowed"
+              className="h-7 text-xs text-neutral-400 dark:text-neutral-600 w-full mt-1 cursor-not-allowed"
               disabled
             >
               <Search className="h-3 w-3 mr-1.5" />
@@ -1383,16 +1383,16 @@ function IAInsightsSection({ file }: { file: DriveFile }) {
 
           {/* Analise do Caso */}
           <div>
-            <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">
+            <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-1.5">
               Analise do Caso
             </p>
-            <p className="text-[11px] text-zinc-400 dark:text-zinc-600">
+            <p className="text-[11px] text-neutral-400 dark:text-neutral-600">
               Agente IA nao configurado
             </p>
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-xs text-zinc-400 dark:text-zinc-600 w-full mt-1 cursor-not-allowed"
+              className="h-7 text-xs text-neutral-400 dark:text-neutral-600 w-full mt-1 cursor-not-allowed"
               disabled
             >
               <Brain className="h-3 w-3 mr-1.5" />
@@ -1457,12 +1457,12 @@ function LinkActionsSection({ file }: { file: DriveFile }) {
                 Vinculado a:
               </p>
               {file.processoId && (
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
                   Processo #{file.processoId}
                 </p>
               )}
               {file.assistidoId && (
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
                   Assistido #{file.assistidoId}
                 </p>
               )}
@@ -1471,16 +1471,16 @@ function LinkActionsSection({ file }: { file: DriveFile }) {
 
           {/* Vincular a Processo */}
           <div>
-            <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">
+            <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-1.5">
               Vincular a Processo
             </p>
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-zinc-400 dark:text-zinc-600" />
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-neutral-400 dark:text-neutral-600" />
               <Input
                 value={processoSearch}
                 onChange={(e) => setProcessoSearch(e.target.value)}
                 placeholder="Buscar por numero ou nome..."
-                className="h-7 text-xs pl-7 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-300 placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+                className="h-7 text-xs pl-7 bg-neutral-100 dark:bg-neutral-800 border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-300 placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
               />
             </div>
             {processoResults && processoResults.length > 0 && (
@@ -1494,14 +1494,14 @@ function LinkActionsSection({ file }: { file: DriveFile }) {
                         processoId: proc.id,
                       })
                     }
-                    className="w-full text-left px-2 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    className="w-full text-left px-2 py-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                     disabled={linkMutation.isPending}
                   >
-                    <p className="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 truncate">
+                    <p className="text-[11px] font-mono text-neutral-700 dark:text-neutral-300 truncate">
                       {proc.numero}
                     </p>
                     {proc.assistidoNome && (
-                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate">
+                      <p className="text-[10px] text-neutral-400 dark:text-neutral-500 truncate">
                         {proc.assistidoNome}
                       </p>
                     )}
@@ -1513,16 +1513,16 @@ function LinkActionsSection({ file }: { file: DriveFile }) {
 
           {/* Vincular a Assistido */}
           <div>
-            <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">
+            <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-1.5">
               Vincular a Assistido
             </p>
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-zinc-400 dark:text-zinc-600" />
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-neutral-400 dark:text-neutral-600" />
               <Input
                 value={assistidoSearch}
                 onChange={(e) => setAssistidoSearch(e.target.value)}
                 placeholder="Buscar por nome ou CPF..."
-                className="h-7 text-xs pl-7 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-300 placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+                className="h-7 text-xs pl-7 bg-neutral-100 dark:bg-neutral-800 border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-300 placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
               />
             </div>
             {assistidoResults && assistidoResults.length > 0 && (
@@ -1536,14 +1536,14 @@ function LinkActionsSection({ file }: { file: DriveFile }) {
                         assistidoId: ass.id,
                       })
                     }
-                    className="w-full text-left px-2 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    className="w-full text-left px-2 py-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                     disabled={linkMutation.isPending}
                   >
-                    <p className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate">
+                    <p className="text-[11px] text-neutral-700 dark:text-neutral-300 truncate">
                       {ass.nome}
                     </p>
                     {ass.cpf && (
-                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">
+                      <p className="text-[10px] text-neutral-400 dark:text-neutral-500 font-mono">
                         {maskCpf(ass.cpf)}
                       </p>
                     )}
@@ -1685,8 +1685,8 @@ function PecasProcessuaisSection({
         <div className="px-4 pb-3 space-y-2">
           {isLoading ? (
             <div className="flex items-center gap-2 py-2">
-              <Loader2 className="w-3 h-3 animate-spin text-zinc-400" />
-              <span className="text-[11px] text-zinc-400">Carregando...</span>
+              <Loader2 className="w-3 h-3 animate-spin text-neutral-400" />
+              <span className="text-[11px] text-neutral-400">Carregando...</span>
             </div>
           ) : hasSections ? (
             <>
@@ -1726,7 +1726,7 @@ function PecasProcessuaisSection({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 h-7 text-[10px] text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    className="flex-1 h-7 text-[10px] text-neutral-500 dark:text-neutral-400 border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                     onClick={handleBookmark}
                     disabled={isBookmarking}
                   >
@@ -1740,7 +1740,7 @@ function PecasProcessuaisSection({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 h-7 text-[10px] text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    className="flex-1 h-7 text-[10px] text-neutral-500 dark:text-neutral-400 border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                     onClick={handleExport}
                     disabled={isExporting}
                   >
@@ -1756,7 +1756,7 @@ function PecasProcessuaisSection({
             </>
           ) : (
             <>
-              <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+              <p className="text-[11px] text-neutral-400 dark:text-neutral-500">
                 {file.enrichmentStatus === "processing"
                   ? "Pipeline de IA processando..."
                   : file.enrichmentStatus === "completed"
@@ -1878,7 +1878,7 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
   return (
     <div className="flex flex-col h-full">
       {/* ─── Header ─── */}
-      <div className="flex items-center gap-2 h-12 px-4 border-b border-zinc-200 dark:border-zinc-800 shrink-0">
+      <div className="flex items-center gap-2 h-12 px-4 border-b border-neutral-200 dark:border-neutral-800 shrink-0">
         <div className="flex-1 min-w-0">
           {isRenaming ? (
             <InlineRename
@@ -1888,7 +1888,7 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
             />
           ) : (
             <p
-              className="text-sm font-medium text-zinc-900 dark:text-zinc-200 truncate"
+              className="text-sm font-medium text-neutral-900 dark:text-neutral-200 truncate"
               title={file.name}
             >
               {file.name}
@@ -1898,7 +1898,7 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 shrink-0"
+          className="h-7 w-7 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 shrink-0"
           onClick={() => ctx.closeDetailPanel()}
         >
           <X className="h-4 w-4" />
@@ -1908,7 +1908,7 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
       {/* ─── Scrollable Content ─── */}
       <div className="flex-1 overflow-y-auto">
         {/* Actions Row — above preview for quick access */}
-        <div className="px-4 pt-3 pb-2 flex items-center justify-between border-b border-zinc-200/50 dark:border-zinc-800/50">
+        <div className="px-4 pt-3 pb-2 flex items-center justify-between border-b border-neutral-200/50 dark:border-neutral-800/50">
           <ActionRow
             file={file}
             isFavorited={isFavorited}
@@ -1938,7 +1938,7 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 h-8 text-xs text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                  className="flex-1 h-8 text-xs text-neutral-600 dark:text-neutral-400 border-neutral-300 dark:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                   onClick={() => setShowExpandedPreview(true)}
                 >
                   <Maximize2 className="h-3.5 w-3.5 mr-1.5" />
@@ -1992,7 +1992,7 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
         </div>
 
         {/* Collapsible Sections */}
-        <div className="divide-y divide-zinc-200/50 dark:divide-zinc-800/50">
+        <div className="divide-y divide-neutral-200/50 dark:divide-neutral-800/50">
           {isPdf && (
             <PecasProcessuaisSection
               file={file}
@@ -2121,28 +2121,28 @@ export function DriveDetailPanel() {
       <Sheet open={isOpen} onOpenChange={(open) => { if (!open) ctx.closeDetailPanel(); }}>
         <SheetContent
           side="right"
-          className="w-full sm:w-[480px] md:w-[560px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 p-0"
+          className="w-full sm:w-[480px] md:w-[560px] bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 p-0"
         >
           <SheetTitle className="sr-only">Detalhes do arquivo</SheetTitle>
           {/* Header skeleton */}
-          <div className="flex items-center gap-2 h-12 px-4 border-b border-zinc-200 dark:border-zinc-800">
-            <Skeleton className="h-4 flex-1 bg-zinc-200 dark:bg-zinc-800 rounded" />
-            <Skeleton className="h-7 w-7 bg-zinc-200 dark:bg-zinc-800 rounded" />
+          <div className="flex items-center gap-2 h-12 px-4 border-b border-neutral-200 dark:border-neutral-800">
+            <Skeleton className="h-4 flex-1 bg-neutral-200 dark:bg-neutral-800 rounded" />
+            <Skeleton className="h-7 w-7 bg-neutral-200 dark:bg-neutral-800 rounded" />
           </div>
           {/* Actions skeleton */}
-          <div className="px-4 pt-3 pb-2 border-b border-zinc-200/50 dark:border-zinc-800/50 flex gap-2">
+          <div className="px-4 pt-3 pb-2 border-b border-neutral-200/50 dark:border-neutral-800/50 flex gap-2">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-8 w-8 bg-zinc-200 dark:bg-zinc-800 rounded" />
+              <Skeleton key={i} className="h-8 w-8 bg-neutral-200 dark:bg-neutral-800 rounded" />
             ))}
           </div>
           {/* Preview skeleton */}
           <div className="p-4 space-y-3">
-            <Skeleton className="h-[300px] w-full bg-zinc-200 dark:bg-zinc-800 rounded-lg" />
+            <Skeleton className="h-[300px] w-full bg-neutral-200 dark:bg-neutral-800 rounded-lg" />
             <div className="space-y-2">
-              <Skeleton className="h-4 w-3/4 bg-zinc-200 dark:bg-zinc-800 rounded" />
-              <Skeleton className="h-4 w-1/2 bg-zinc-200 dark:bg-zinc-800 rounded" />
+              <Skeleton className="h-4 w-3/4 bg-neutral-200 dark:bg-neutral-800 rounded" />
+              <Skeleton className="h-4 w-1/2 bg-neutral-200 dark:bg-neutral-800 rounded" />
             </div>
-            <Skeleton className="h-20 w-full bg-zinc-200 dark:bg-zinc-800 rounded" />
+            <Skeleton className="h-20 w-full bg-neutral-200 dark:bg-neutral-800 rounded" />
           </div>
         </SheetContent>
       </Sheet>
@@ -2153,7 +2153,7 @@ export function DriveDetailPanel() {
     <Sheet open={isOpen} onOpenChange={(open) => { if (!open) ctx.closeDetailPanel(); }}>
       <SheetContent
         side="right"
-        className="w-full sm:w-[480px] md:w-[560px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 p-0"
+        className="w-full sm:w-[480px] md:w-[560px] bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 p-0"
       >
         <SheetTitle className="sr-only">{file.name}</SheetTitle>
         <DetailPanelContent file={file as any} />

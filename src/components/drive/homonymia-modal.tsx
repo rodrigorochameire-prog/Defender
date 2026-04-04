@@ -103,9 +103,9 @@ export function HomonymiaModal({
 
         <div className="space-y-4 py-4">
           {/* Nome extraído */}
-          <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Nome extraído do documento:</p>
-            <p className="font-medium text-zinc-900 dark:text-zinc-100">{extractedName}</p>
+          <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Nome extraído do documento:</p>
+            <p className="font-medium text-neutral-900 dark:text-neutral-100">{extractedName}</p>
           </div>
 
           {/* Lista de sugestões */}
@@ -118,7 +118,7 @@ export function HomonymiaModal({
                     "flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer",
                     selectedOption === String(suggestion.id)
                       ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
-                      : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                      : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600"
                   )}
                   onClick={() => setSelectedOption(String(suggestion.id))}
                 >
@@ -128,19 +128,19 @@ export function HomonymiaModal({
                     className="flex-1 cursor-pointer flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                        <User className="w-4 h-4 text-zinc-500" />
+                      <div className="w-9 h-9 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                        <User className="w-4 h-4 text-neutral-500" />
                       </div>
                       <div>
-                        <p className="font-medium text-zinc-900 dark:text-zinc-100">{suggestion.nome}</p>
+                        <p className="font-medium text-neutral-900 dark:text-neutral-100">{suggestion.nome}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           {suggestion.cpf && (
-                            <span className="text-xs text-zinc-500 font-mono">
+                            <span className="text-xs text-neutral-500 font-mono">
                               CPF: {suggestion.cpf}
                             </span>
                           )}
                           {suggestion.processosCount !== undefined && suggestion.processosCount > 0 && (
-                            <span className="text-xs text-zinc-400">
+                            <span className="text-xs text-neutral-400">
                               {suggestion.processosCount} processo{suggestion.processosCount > 1 ? "s" : ""}
                             </span>
                           )}
@@ -163,7 +163,7 @@ export function HomonymiaModal({
                   "flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer",
                   selectedOption === "new"
                     ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                    : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 border-dashed"
+                    : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 border-dashed"
                 )}
                 onClick={() => setSelectedOption("new")}
               >
@@ -176,8 +176,8 @@ export function HomonymiaModal({
                     <Plus className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100">Criar novo assistido</p>
-                    <p className="text-xs text-zinc-500 mt-0.5">
+                    <p className="font-medium text-neutral-900 dark:text-neutral-100">Criar novo assistido</p>
+                    <p className="text-xs text-neutral-500 mt-0.5">
                       Registrar &ldquo;{extractedName}&rdquo; como novo assistido
                     </p>
                   </div>

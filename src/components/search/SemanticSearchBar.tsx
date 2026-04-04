@@ -100,7 +100,7 @@ export function SemanticSearchBar({
       <PopoverTrigger asChild>
         <div className={cn("relative w-full max-w-md", className)}>
           {/* Search icon */}
-          <Brain className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+          <Brain className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none" />
 
           <Input
             ref={inputRef}
@@ -129,7 +129,7 @@ export function SemanticSearchBar({
               className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted transition-colors cursor-pointer"
               aria-label="Limpar busca"
             >
-              <X className="h-3.5 w-3.5 text-zinc-400" />
+              <X className="h-3.5 w-3.5 text-neutral-400" />
             </button>
           )}
         </div>
@@ -155,7 +155,7 @@ export function SemanticSearchBar({
             </span>
           </div>
           {results.length > 0 && (
-            <span className="text-[10px] text-zinc-400 tabular-nums">
+            <span className="text-[10px] text-neutral-400 tabular-nums">
               {results.length} resultado{results.length !== 1 ? "s" : ""}
             </span>
           )}

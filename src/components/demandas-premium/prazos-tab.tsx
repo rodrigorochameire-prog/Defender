@@ -152,37 +152,37 @@ function CalendarView({
   return (
     <div className="space-y-3">
       {/* Calendar header */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 dark:border-zinc-800/50">
+      <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 dark:border-neutral-800/50">
           <button
             onClick={goToPrev}
-            className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="p-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
           >
-            <ChevronLeft className="w-4 h-4 text-zinc-500" />
+            <ChevronLeft className="w-4 h-4 text-neutral-500" />
           </button>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+            <span className="text-sm font-bold text-neutral-800 dark:text-neutral-200">
               {MONTH_NAMES[viewMonth]} {viewYear}
             </span>
             <button
               onClick={goToToday}
-              className="text-[10px] px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+              className="text-[10px] px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors cursor-pointer"
             >
               Hoje
             </button>
           </div>
           <button
             onClick={goToNext}
-            className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="p-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
           >
-            <ChevronRight className="w-4 h-4 text-zinc-500" />
+            <ChevronRight className="w-4 h-4 text-neutral-500" />
           </button>
         </div>
 
         {/* Weekday headers */}
-        <div className="grid grid-cols-7 border-b border-zinc-100 dark:border-zinc-800/50">
+        <div className="grid grid-cols-7 border-b border-neutral-100 dark:border-neutral-800/50">
           {WEEKDAY_LABELS.map((wd) => (
-            <div key={wd} className="text-center py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+            <div key={wd} className="text-center py-2 text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
               {wd}
             </div>
           ))}
@@ -192,7 +192,7 @@ function CalendarView({
         <div className="grid grid-cols-7">
           {calendarDays.map((cell) => {
             if (!cell.date) {
-              return <div key={cell.key} className="h-16 sm:h-20 border-b border-r border-zinc-50 dark:border-zinc-800/30" />;
+              return <div key={cell.key} className="h-16 sm:h-20 border-b border-r border-neutral-50 dark:border-neutral-800/30" />;
             }
 
             const day = cell.date.getDate();
@@ -203,9 +203,9 @@ function CalendarView({
                 key={cell.key}
                 onClick={() => setSelectedDay(cell.key === selectedDay ? null : cell.key)}
                 className={`
-                  h-16 sm:h-20 border-b border-r border-zinc-50 dark:border-zinc-800/30
+                  h-16 sm:h-20 border-b border-r border-neutral-50 dark:border-neutral-800/30
                   flex flex-col items-center justify-start pt-1.5 gap-1 transition-all cursor-pointer
-                  ${isSelected ? "bg-emerald-50/80 dark:bg-emerald-950/20" : "hover:bg-zinc-50 dark:hover:bg-zinc-800/30"}
+                  ${isSelected ? "bg-emerald-50/80 dark:bg-emerald-950/20" : "hover:bg-neutral-50 dark:hover:bg-neutral-800/30"}
                   ${cell.isToday ? "ring-1 ring-inset ring-emerald-300/50 dark:ring-emerald-700/30" : ""}
                 `}
               >
@@ -213,8 +213,8 @@ function CalendarView({
                   cell.isToday
                     ? "text-emerald-600 dark:text-emerald-400 font-bold"
                     : cell.isPast
-                      ? "text-zinc-300 dark:text-zinc-600"
-                      : "text-zinc-700 dark:text-zinc-300"
+                      ? "text-neutral-300 dark:text-neutral-600"
+                      : "text-neutral-700 dark:text-neutral-300"
                 }`}>
                   {day}
                 </span>
@@ -226,7 +226,7 @@ function CalendarView({
                         ? "bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400"
                         : cell.count >= 3
                           ? "bg-sky-100 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400"
-                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
+                          : "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400"
                   }`}>
                     {cell.count}
                   </div>
@@ -239,31 +239,31 @@ function CalendarView({
 
       {/* Selected day detail */}
       {selectedDay && selectedDemandas.length > 0 && (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/50">
+        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-neutral-100 dark:border-neutral-800/50">
             <CalendarDays className="w-3.5 h-3.5 text-emerald-500" />
-            <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+            <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
               {(() => {
                 const [y, m, d] = selectedDay.split("-").map(Number);
                 return `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
               })()}
             </span>
-            <span className="text-[10px] font-mono tabular-nums text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] font-mono tabular-nums text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">
               {selectedDemandas.length}
             </span>
           </div>
-          <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+          <div className="divide-y divide-neutral-100 dark:divide-neutral-800/50">
             {selectedDemandas.map((d: any) => {
               const statusCfg = getStatusConfig(d.substatus || d.status);
               return (
                 <div
                   key={d.id}
                   onClick={() => onCardClick(d.id)}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate">{d.assistido}</p>
-                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate">{d.ato}</p>
+                    <p className="text-xs font-medium text-neutral-900 dark:text-neutral-100 truncate">{d.assistido}</p>
+                    <p className="text-[10px] text-neutral-400 dark:text-neutral-500 truncate">{d.ato}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {d.estadoPrisional === "preso" && <Lock className="w-3 h-3 text-amber-500" />}
@@ -346,7 +346,7 @@ function ListView({
       case "yellow": return "text-yellow-500";
       case "emerald": return "text-emerald-500";
       case "sky": return "text-sky-500";
-      default: return "text-zinc-400";
+      default: return "text-neutral-400";
     }
   };
 
@@ -362,20 +362,20 @@ function ListView({
         ].map((kpi) => (
           <div
             key={kpi.label}
-            className={`flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl border bg-white dark:bg-zinc-900 ${
+            className={`flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl border bg-white dark:bg-neutral-900 ${
               kpi.color === "rose" && kpi.count > 0 ? "border-rose-200 dark:border-rose-800/50" :
               kpi.color === "amber" && kpi.count > 0 ? "border-amber-200 dark:border-amber-800/50" :
-              "border-zinc-200/80 dark:border-zinc-800/80"
+              "border-neutral-200/80 dark:border-neutral-800/80"
             }`}
           >
             <p className={`text-xl font-bold tabular-nums ${
               kpi.color === "rose" && kpi.count > 0 ? "text-rose-600 dark:text-rose-400" :
               kpi.color === "amber" && kpi.count > 0 ? "text-amber-600 dark:text-amber-400" :
-              "text-zinc-900 dark:text-zinc-100"
+              "text-neutral-900 dark:text-neutral-100"
             }`}>
               {kpi.count}
             </p>
-            <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+            <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
               {kpi.label}
             </p>
           </div>
@@ -386,15 +386,15 @@ function ListView({
       {sections.map((section) => {
         const SectionIcon = section.icon;
         return (
-          <div key={section.label} className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80">
-            <div className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 border-b border-zinc-100 dark:border-zinc-800/50">
+          <div key={section.label} className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80">
+            <div className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 border-b border-neutral-100 dark:border-neutral-800/50">
               <SectionIcon className={`w-3.5 h-3.5 ${sectionIconColor(section.color)}`} />
-              <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{section.label}</span>
-              <span className="text-[10px] font-mono tabular-nums text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
+              <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{section.label}</span>
+              <span className="text-[10px] font-mono tabular-nums text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">
                 {section.items.length}
               </span>
             </div>
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+            <div className="divide-y divide-neutral-100 dark:divide-neutral-800/50">
               {section.items.slice(0, 15).map((d: any) => {
                 const statusCfg = getStatusConfig(d.substatus || d.status);
                 const atribColor = ATRIB_COLORS[d.atribuicao] || "#71717a";
@@ -402,19 +402,19 @@ function ListView({
                   <div
                     key={d.id}
                     onClick={() => onCardClick(d.id)}
-                    className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                    className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer"
                   >
                     {selectedAtribuicoes.length !== 1 && (
                       <div className="w-1 h-8 rounded-full shrink-0" style={{ backgroundColor: atribColor }} />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate">{d.assistido}</p>
-                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate">{d.ato}</p>
+                      <p className="text-xs font-medium text-neutral-900 dark:text-neutral-100 truncate">{d.assistido}</p>
+                      <p className="text-[10px] text-neutral-400 dark:text-neutral-500 truncate">{d.ato}</p>
                     </div>
                     <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                       {d.estadoPrisional === "preso" && <Lock className="w-3 h-3 text-amber-500" />}
                       {d.prazo && (
-                        <span className="text-[10px] font-mono tabular-nums text-zinc-500 hidden sm:inline">
+                        <span className="text-[10px] font-mono tabular-nums text-neutral-500 hidden sm:inline">
                           {d.prazo}
                         </span>
                       )}
@@ -432,7 +432,7 @@ function ListView({
                 );
               })}
               {section.items.length > 15 && (
-                <p className="text-[10px] text-center text-zinc-400 py-2">
+                <p className="text-[10px] text-center text-neutral-400 py-2">
                   +{section.items.length - 15} mais
                 </p>
               )}
@@ -462,7 +462,7 @@ export function PrazosTab({
   return (
     <div className="space-y-3">
       {/* Header: Atribuição pills + View toggle */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 px-3 py-2 flex items-center gap-2">
+      <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 px-3 py-2 flex items-center gap-2">
         <div className="flex-1 min-w-0">
           <AtribuicaoPills
             options={atribuicaoOptions}
@@ -473,13 +473,13 @@ export function PrazosTab({
           />
         </div>
         {/* View mode toggle */}
-        <div className="flex items-center gap-0.5 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5 shrink-0">
+        <div className="flex items-center gap-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg p-0.5 shrink-0">
           <button
             onClick={() => setViewMode("list")}
             className={`p-1.5 rounded-md transition-all cursor-pointer ${
               viewMode === "list"
-                ? "bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-zinc-200"
-                : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                ? "bg-white dark:bg-neutral-700 shadow-sm text-neutral-800 dark:text-neutral-200"
+                : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
             }`}
             title="Vista lista"
           >
@@ -489,8 +489,8 @@ export function PrazosTab({
             onClick={() => setViewMode("calendar")}
             className={`p-1.5 rounded-md transition-all cursor-pointer ${
               viewMode === "calendar"
-                ? "bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-zinc-200"
-                : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                ? "bg-white dark:bg-neutral-700 shadow-sm text-neutral-800 dark:text-neutral-200"
+                : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
             }`}
             title="Vista calendário"
           >

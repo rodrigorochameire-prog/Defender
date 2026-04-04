@@ -244,7 +244,7 @@ export function AudienciaManagerModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden bg-gradient-to-br from-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-950 p-0">
+      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden bg-gradient-to-br from-white to-neutral-50 dark:from-neutral-900 dark:to-neutral-950 p-0">
         {/* Header Premium */}
         <div className="bg-gradient-to-r from-yellow-600 via-amber-600 to-orange-600 p-6 text-white">
           <DialogHeader>
@@ -285,7 +285,7 @@ export function AudienciaManagerModal({
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-6 pb-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-            <TabsList className="grid w-full grid-cols-4 bg-zinc-100 dark:bg-zinc-800 p-1">
+            <TabsList className="grid w-full grid-cols-4 bg-neutral-100 dark:bg-neutral-800 p-1">
               <TabsTrigger value="geral" className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />
                 Geral
@@ -308,15 +308,15 @@ export function AudienciaManagerModal({
 
             {/* Tab: Geral */}
             <TabsContent value="geral" className="space-y-6 mt-6">
-              <Card className="p-6 border-2 border-zinc-200 dark:border-zinc-800 shadow-lg">
-                <h3 className="font-bold text-xl text-zinc-900 dark:text-zinc-50 mb-6 flex items-center gap-2">
+              <Card className="p-6 border-2 border-neutral-200 dark:border-neutral-800 shadow-lg">
+                <h3 className="font-bold text-xl text-neutral-900 dark:text-neutral-50 mb-6 flex items-center gap-2">
                   <Gavel className="w-5 h-5 text-yellow-600" />
                   Informações da Audiência
                 </h3>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                    <Label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                       Juiz(a) Presidente
                     </Label>
                     <Input
@@ -325,12 +325,12 @@ export function AudienciaManagerModal({
                         setDadosAudiencia({ ...dadosAudiencia, juizPresidente: e.target.value })
                       }
                       placeholder="Nome do(a) Juiz(a)"
-                      className="bg-white dark:bg-zinc-900"
+                      className="bg-white dark:bg-neutral-900"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                    <Label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                       Promotor(a) de Justiça
                     </Label>
                     <Input
@@ -339,12 +339,12 @@ export function AudienciaManagerModal({
                         setDadosAudiencia({ ...dadosAudiencia, promotor: e.target.value })
                       }
                       placeholder="Nome do(a) Promotor(a)"
-                      className="bg-white dark:bg-zinc-900"
+                      className="bg-white dark:bg-neutral-900"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                    <Label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                       Horário de Início
                     </Label>
                     <Input
@@ -353,12 +353,12 @@ export function AudienciaManagerModal({
                       onChange={(e) =>
                         setDadosAudiencia({ ...dadosAudiencia, horarioInicio: e.target.value })
                       }
-                      className="bg-white dark:bg-zinc-900"
+                      className="bg-white dark:bg-neutral-900"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                    <Label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                       Horário de Término
                     </Label>
                     <Input
@@ -367,13 +367,13 @@ export function AudienciaManagerModal({
                       onChange={(e) =>
                         setDadosAudiencia({ ...dadosAudiencia, horarioFim: e.target.value })
                       }
-                      className="bg-white dark:bg-zinc-900"
+                      className="bg-white dark:bg-neutral-900"
                     />
                   </div>
                 </div>
 
                 <div className="mt-4 space-y-2">
-                  <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                  <Label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                     Resultado da Audiência
                   </Label>
                   <select
@@ -381,7 +381,7 @@ export function AudienciaManagerModal({
                     onChange={(e) =>
                       setDadosAudiencia({ ...dadosAudiencia, resultado: e.target.value })
                     }
-                    className="w-full h-10 px-3 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50"
+                    className="w-full h-10 px-3 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-50"
                   >
                     <option value="">Selecione...</option>
                     <option value="realizada">Realizada com êxito</option>
@@ -393,7 +393,7 @@ export function AudienciaManagerModal({
                 </div>
 
                 <div className="mt-4 space-y-2">
-                  <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                  <Label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                     Decisão / Sentença
                   </Label>
                   <Textarea
@@ -403,12 +403,12 @@ export function AudienciaManagerModal({
                     }
                     placeholder="Registre a decisão proferida pelo(a) Juiz(a)..."
                     rows={4}
-                    className="bg-white dark:bg-zinc-900"
+                    className="bg-white dark:bg-neutral-900"
                   />
                 </div>
 
                 <div className="mt-4 space-y-2">
-                  <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                  <Label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                     Observações Gerais
                   </Label>
                   <Textarea
@@ -421,12 +421,12 @@ export function AudienciaManagerModal({
                     }
                     placeholder="Observações importantes sobre a audiência..."
                     rows={4}
-                    className="bg-white dark:bg-zinc-900"
+                    className="bg-white dark:bg-neutral-900"
                   />
                 </div>
 
                 <div className="mt-4 space-y-2">
-                  <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                  <Label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                     Próxima Audiência
                   </Label>
                   <Input
@@ -438,7 +438,7 @@ export function AudienciaManagerModal({
                         proximaAudiencia: e.target.value,
                       })
                     }
-                    className="bg-white dark:bg-zinc-900"
+                    className="bg-white dark:bg-neutral-900"
                   />
                 </div>
               </Card>
@@ -489,15 +489,15 @@ export function AudienciaManagerModal({
               </div>
 
               {/* Adicionar Testemunha */}
-              <Card className="p-6 border-2 border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50">
-                <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-50 mb-4 flex items-center gap-2">
+              <Card className="p-6 border-2 border-dashed border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900/50">
+                <h3 className="font-bold text-lg text-neutral-900 dark:text-neutral-50 mb-4 flex items-center gap-2">
                   <Plus className="w-5 h-5 text-blue-600" />
                   Adicionar Testemunha
                 </h3>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div className="col-span-2 space-y-2">
-                    <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                    <Label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
                       Nome Completo
                     </Label>
                     <Input
@@ -506,12 +506,12 @@ export function AudienciaManagerModal({
                         setNovaTestemunha({ ...novaTestemunha, nome: e.target.value })
                       }
                       placeholder="Digite o nome da testemunha"
-                      className="bg-white dark:bg-zinc-900"
+                      className="bg-white dark:bg-neutral-900"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                    <Label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
                       Tipo
                     </Label>
                     <select
@@ -522,7 +522,7 @@ export function AudienciaManagerModal({
                           tipo: e.target.value as "acusacao" | "defesa",
                         })
                       }
-                      className="w-full h-10 px-3 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50"
+                      className="w-full h-10 px-3 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-50"
                     >
                       <option value="defesa">Defesa</option>
                       <option value="acusacao">Acusação</option>
@@ -530,7 +530,7 @@ export function AudienciaManagerModal({
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                    <Label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
                       Categoria
                     </Label>
                     <select
@@ -541,7 +541,7 @@ export function AudienciaManagerModal({
                           categoria: e.target.value as any,
                         })
                       }
-                      className="w-full h-10 px-3 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50"
+                      className="w-full h-10 px-3 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-50"
                     >
                       <option value="ocular">Ocular</option>
                       <option value="conduta">Conduta</option>
@@ -551,7 +551,7 @@ export function AudienciaManagerModal({
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                    <Label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
                       Horário Oitiva
                     </Label>
                     <Input
@@ -563,12 +563,12 @@ export function AudienciaManagerModal({
                           horarioOitiva: e.target.value,
                         })
                       }
-                      className="bg-white dark:bg-zinc-900"
+                      className="bg-white dark:bg-neutral-900"
                     />
                   </div>
 
                   <div className="col-span-2 space-y-2">
-                    <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                    <Label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
                       Observações
                     </Label>
                     <Input
@@ -580,7 +580,7 @@ export function AudienciaManagerModal({
                         })
                       }
                       placeholder="Observações sobre a testemunha"
-                      className="bg-white dark:bg-zinc-900"
+                      className="bg-white dark:bg-neutral-900"
                     />
                   </div>
 
@@ -597,7 +597,7 @@ export function AudienciaManagerModal({
                         }
                         className="w-4 h-4"
                       />
-                      <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                      <span className="text-sm text-neutral-700 dark:text-neutral-300">
                         Foi intimada
                       </span>
                     </label>
@@ -621,7 +621,7 @@ export function AudienciaManagerModal({
                   return (
                     <Card
                       key={testemunha.id}
-                      className="p-4 border-2 border-zinc-200 dark:border-zinc-800 hover:border-blue-300 dark:hover:border-blue-700 transition-all"
+                      className="p-4 border-2 border-neutral-200 dark:border-neutral-800 hover:border-blue-300 dark:hover:border-blue-700 transition-all"
                     >
                       <div className="flex items-start gap-4">
                         <div
@@ -635,7 +635,7 @@ export function AudienciaManagerModal({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between mb-2">
                             <div>
-                              <h4 className="font-bold text-lg text-zinc-900 dark:text-zinc-50">
+                              <h4 className="font-bold text-lg text-neutral-900 dark:text-neutral-50">
                                 {testemunha.nome}
                               </h4>
                               <div className="flex flex-wrap gap-2 mt-1">
@@ -664,7 +664,7 @@ export function AudienciaManagerModal({
 
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
                             <div>
-                              <div className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">
+                              <div className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">
                                 Intimação
                               </div>
                               <div className="flex items-center gap-2">
@@ -677,8 +677,8 @@ export function AudienciaManagerModal({
                                   </>
                                 ) : (
                                   <>
-                                    <BellOff className="w-4 h-4 text-zinc-400" />
-                                    <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                                    <BellOff className="w-4 h-4 text-neutral-400" />
+                                    <span className="text-sm text-neutral-500 dark:text-neutral-400">
                                       Não intimada
                                     </span>
                                   </>
@@ -687,7 +687,7 @@ export function AudienciaManagerModal({
                             </div>
 
                             <div>
-                              <div className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">
+                              <div className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">
                                 Comparecimento
                               </div>
                               <button
@@ -710,8 +710,8 @@ export function AudienciaManagerModal({
                                   </>
                                 ) : (
                                   <>
-                                    <AlertCircle className="w-4 h-4 text-zinc-400" />
-                                    <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                                    <AlertCircle className="w-4 h-4 text-neutral-400" />
+                                    <span className="text-sm text-neutral-500 dark:text-neutral-400">
                                       Pendente
                                     </span>
                                   </>
@@ -721,12 +721,12 @@ export function AudienciaManagerModal({
 
                             {testemunha.horarioOitiva && (
                               <div>
-                                <div className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">
+                                <div className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">
                                   Horário Oitiva
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Clock className="w-4 h-4 text-blue-600" />
-                                  <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                                  <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">
                                     {testemunha.horarioOitiva}
                                   </span>
                                 </div>
@@ -735,10 +735,10 @@ export function AudienciaManagerModal({
 
                             {testemunha.observacoes && (
                               <div className="col-span-4">
-                                <div className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">
+                                <div className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">
                                   Observações
                                 </div>
-                                <p className="text-sm text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-900 p-2 rounded">
+                                <p className="text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-900 p-2 rounded">
                                   {testemunha.observacoes}
                                 </p>
                               </div>
@@ -755,15 +755,15 @@ export function AudienciaManagerModal({
             {/* Tab: Anotações */}
             <TabsContent value="anotacoes" className="space-y-6 mt-6">
               {/* Adicionar Anotação */}
-              <Card className="p-6 border-2 border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50">
-                <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-50 mb-4 flex items-center gap-2">
+              <Card className="p-6 border-2 border-dashed border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900/50">
+                <h3 className="font-bold text-lg text-neutral-900 dark:text-neutral-50 mb-4 flex items-center gap-2">
                   <Plus className="w-5 h-5 text-purple-600" />
                   Nova Anotação
                 </h3>
 
                 <div className="space-y-3">
                   <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                    <Label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                       Tipo
                     </Label>
                     <div className="flex gap-2">
@@ -774,7 +774,7 @@ export function AudienciaManagerModal({
                           className={`px-4 py-2 rounded-lg font-semibold transition-all ${
                             novaAnotacao.tipo === key
                               ? value.color
-                              : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                              : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
                           }`}
                         >
                           {value.label}
@@ -784,7 +784,7 @@ export function AudienciaManagerModal({
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                    <Label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                       Conteúdo
                     </Label>
                     <Textarea
@@ -794,7 +794,7 @@ export function AudienciaManagerModal({
                       }
                       placeholder="Digite sua anotação..."
                       rows={3}
-                      className="bg-white dark:bg-zinc-900"
+                      className="bg-white dark:bg-neutral-900"
                     />
                   </div>
 
@@ -815,7 +815,7 @@ export function AudienciaManagerModal({
                   return (
                     <Card
                       key={anotacao.id}
-                      className="p-4 border-l-4 border-l-purple-500 bg-white dark:bg-zinc-900"
+                      className="p-4 border-l-4 border-l-purple-500 bg-white dark:bg-neutral-900"
                     >
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0 text-center">
@@ -829,7 +829,7 @@ export function AudienciaManagerModal({
 
                         <div className="flex-1">
                           <Badge className={`${tipo.color} mb-2`}>{tipo.label}</Badge>
-                          <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                          <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
                             {anotacao.conteudo}
                           </p>
                         </div>
@@ -842,8 +842,8 @@ export function AudienciaManagerModal({
 
             {/* Tab: Cronologia */}
             <TabsContent value="cronologia" className="space-y-6 mt-6">
-              <Card className="p-6 border-2 border-zinc-200 dark:border-zinc-800">
-                <h3 className="font-bold text-xl text-zinc-900 dark:text-zinc-50 mb-6 flex items-center gap-2">
+              <Card className="p-6 border-2 border-neutral-200 dark:border-neutral-800">
+                <h3 className="font-bold text-xl text-neutral-900 dark:text-neutral-50 mb-6 flex items-center gap-2">
                   <Timer className="w-5 h-5 text-blue-600" />
                   Linha do Tempo da Audiência
                 </h3>
@@ -879,15 +879,15 @@ export function AudienciaManagerModal({
                           />
                         </div>
                         {index < anotacoes.length + 1 && (
-                          <div className="w-0.5 h-12 bg-zinc-200 dark:bg-zinc-700" />
+                          <div className="w-0.5 h-12 bg-neutral-200 dark:bg-neutral-700" />
                         )}
                       </div>
 
                       <div className="flex-1 pb-8">
-                        <div className="font-semibold text-lg text-zinc-900 dark:text-zinc-50">
+                        <div className="font-semibold text-lg text-neutral-900 dark:text-neutral-50">
                           {item.time}
                         </div>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
                           {item.event}
                         </p>
                       </div>
@@ -900,7 +900,7 @@ export function AudienciaManagerModal({
         </div>
 
         {/* Footer com Ações */}
-        <div className="border-t border-zinc-200 dark:border-zinc-800 p-6 bg-white dark:bg-zinc-900">
+        <div className="border-t border-neutral-200 dark:border-neutral-800 p-6 bg-white dark:bg-neutral-900">
           <div className="flex justify-between items-center">
             <Button variant="outline" onClick={onClose}>
               Cancelar

@@ -34,13 +34,13 @@ interface AnaliseDepoimentosProps {
 
 function tipoBadgeVariant(tipo: string): string {
   const map: Record<string, string> = {
-    testemunha: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+    testemunha: "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300",
     familiar: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
     perito: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300",
     vitima: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
     policial: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
   };
-  return map[tipo.toLowerCase()] ?? "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300";
+  return map[tipo.toLowerCase()] ?? "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300";
 }
 
 function resolveContradicaoTexto(c: string | Contradicao): string {
@@ -55,11 +55,11 @@ function DepoimentoCard({ dep }: { dep: Depoimento }) {
   const totalContradicoes = dep.contradicoes.length;
 
   return (
-    <div className="rounded-xl border border-zinc-100 dark:border-zinc-800/50 p-5 space-y-4 bg-white dark:bg-zinc-900">
+    <div className="rounded-xl border border-neutral-100 dark:border-neutral-800/50 p-5 space-y-4 bg-white dark:bg-neutral-900">
       {/* Header */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+          <span className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
             {dep.nome}
           </span>
           <span
@@ -78,7 +78,7 @@ function DepoimentoCard({ dep }: { dep: Depoimento }) {
             </span>
           )}
           {dep.favoravel_defesa === null && (
-            <span className="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+            <span className="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
               Neutro
             </span>
           )}
@@ -93,9 +93,9 @@ function DepoimentoCard({ dep }: { dep: Depoimento }) {
 
       {/* Credibilidade */}
       {dep.credibilidade && (
-        <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+        <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
           Credibilidade:{" "}
-          <span className="normal-case font-normal text-zinc-500 dark:text-zinc-400">
+          <span className="normal-case font-normal text-neutral-500 dark:text-neutral-400">
             {dep.credibilidade}
           </span>
         </p>
@@ -104,23 +104,23 @@ function DepoimentoCard({ dep }: { dep: Depoimento }) {
       {/* Comparação Fase Policial vs Fase Judicial */}
       {hasComparacao ? (
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+          <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
             Depoimentos Comparados
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="rounded-lg p-4 bg-zinc-50 dark:bg-zinc-800/30 space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+            <div className="rounded-lg p-4 bg-neutral-50 dark:bg-neutral-800/30 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
                 Fase Policial
               </p>
-              <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
+              <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
                 {dep.fase_policial}
               </p>
             </div>
-            <div className="rounded-lg p-4 bg-zinc-50 dark:bg-zinc-800/30 space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+            <div className="rounded-lg p-4 bg-neutral-50 dark:bg-neutral-800/30 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
                 Fase Judicial
               </p>
-              <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
+              <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
                 {dep.fase_judicial}
               </p>
             </div>
@@ -128,22 +128,22 @@ function DepoimentoCard({ dep }: { dep: Depoimento }) {
         </div>
       ) : (
         <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Resumo</p>
-          <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">{dep.resumo}</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Resumo</p>
+          <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">{dep.resumo}</p>
         </div>
       )}
 
       {/* Trechos Relevantes */}
       {dep.trechos_relevantes && dep.trechos_relevantes.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+          <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
             Trechos Relevantes
           </p>
           <ul className="space-y-1.5">
             {dep.trechos_relevantes.map((trecho, i) => (
               <li
                 key={i}
-                className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-300 pl-3 border-l-2 border-zinc-200 dark:border-zinc-700 italic"
+                className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-300 pl-3 border-l-2 border-neutral-200 dark:border-neutral-700 italic"
               >
                 &ldquo;{trecho}&rdquo;
               </li>
@@ -271,8 +271,8 @@ export function AnaliseDepoimentos({ depoimentos }: AnaliseDepoimentosProps) {
   if (depoimentos.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
-        <Users className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <Users className="h-8 w-8 text-neutral-300 dark:text-neutral-600" />
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">
           Nenhum depoimento analisado. Execute uma análise para extrair depoimentos.
         </p>
       </div>
@@ -286,17 +286,17 @@ export function AnaliseDepoimentos({ depoimentos }: AnaliseDepoimentosProps) {
     <div className="space-y-5">
       {/* Summary bar */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 px-1">
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">
-          <span className="font-semibold text-zinc-800 dark:text-zinc-200">{depoimentos.length}</span>{" "}
+        <span className="text-sm text-neutral-500 dark:text-neutral-400">
+          <span className="font-semibold text-neutral-800 dark:text-neutral-200">{depoimentos.length}</span>{" "}
           depoimento{depoimentos.length > 1 ? "s" : ""} analisado{depoimentos.length > 1 ? "s" : ""}
         </span>
-        <span className="text-zinc-200 dark:text-zinc-700 select-none">&middot;</span>
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">
+        <span className="text-neutral-200 dark:text-neutral-700 select-none">&middot;</span>
+        <span className="text-sm text-neutral-500 dark:text-neutral-400">
           <span className="font-semibold text-amber-600 dark:text-amber-400">{totalContradicoes}</span>{" "}
           contradição{totalContradicoes !== 1 ? "ões" : ""}
         </span>
-        <span className="text-zinc-200 dark:text-zinc-700 select-none">&middot;</span>
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">
+        <span className="text-neutral-200 dark:text-neutral-700 select-none">&middot;</span>
+        <span className="text-sm text-neutral-500 dark:text-neutral-400">
           <span className="font-semibold text-emerald-600 dark:text-emerald-400">{totalFavoraveis}</span>{" "}
           favoráve{totalFavoraveis !== 1 ? "is" : "l"} à defesa
         </span>

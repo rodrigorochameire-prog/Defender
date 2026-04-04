@@ -120,8 +120,8 @@ function AlineaList({
   return (
     <div className="space-y-1">
       {alineas.map((alinea) => (
-        <p key={alinea.id} className="pl-14 text-sm text-zinc-700 dark:text-foreground/80">
-          <span className="font-medium text-zinc-500 dark:text-muted-foreground">
+        <p key={alinea.id} className="pl-14 text-sm text-neutral-700 dark:text-foreground/80">
+          <span className="font-medium text-neutral-500 dark:text-muted-foreground">
             {alinea.numero})
           </span>{" "}
           {applyHighlights(alinea.texto, destaques, searchTerm)}
@@ -145,8 +145,8 @@ function IncisoList({
     <div className="space-y-1.5">
       {incisos.map((inciso) => (
         <div key={inciso.id}>
-          <p className="pl-10 text-sm text-zinc-700 dark:text-foreground/80">
-            <span className="font-semibold text-zinc-600 dark:text-muted-foreground">
+          <p className="pl-10 text-sm text-neutral-700 dark:text-foreground/80">
+            <span className="font-semibold text-neutral-600 dark:text-muted-foreground">
               {inciso.numero}
             </span>{" "}
             - {applyHighlights(inciso.texto, destaques, searchTerm)}
@@ -178,8 +178,8 @@ function ParagrafoList({
     <div className="space-y-2">
       {paragrafos.map((par) => (
         <div key={par.id}>
-          <p className="pl-6 text-sm text-zinc-700 dark:text-foreground/80">
-            <span className="font-semibold text-zinc-600 dark:text-muted-foreground">
+          <p className="pl-6 text-sm text-neutral-700 dark:text-foreground/80">
+            <span className="font-semibold text-neutral-600 dark:text-muted-foreground">
               {par.numero}
             </span>{" "}
             {applyHighlights(par.texto, destaques, searchTerm)}
@@ -231,7 +231,7 @@ export function ArtigoRenderer({
     <div
       className={cn(
         "group relative rounded-lg border bg-white p-4 transition-colors",
-        "border-zinc-200 hover:border-zinc-300",
+        "border-neutral-200 hover:border-neutral-300",
         "dark:bg-card dark:border-border dark:hover:border-border"
       )}
     >
@@ -242,7 +242,7 @@ export function ArtigoRenderer({
             Art. {artigo.numero}.
           </span>
           {artigo.rubrica && (
-            <span className="text-sm italic text-zinc-500 dark:text-muted-foreground">
+            <span className="text-sm italic text-neutral-500 dark:text-muted-foreground">
               {artigo.rubrica}
             </span>
           )}
@@ -275,7 +275,7 @@ export function ArtigoRenderer({
       </div>
 
       {/* Caput */}
-      <p className="mt-2 text-sm leading-relaxed text-zinc-900 dark:text-foreground">
+      <p className="mt-2 text-sm leading-relaxed text-neutral-900 dark:text-foreground">
         {applyHighlights(artigo.caput, artigoDestaques, searchHighlight)}
       </p>
 
@@ -311,7 +311,7 @@ export function ArtigoRenderer({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 gap-1 text-xs text-zinc-500"
+              className="h-7 gap-1 text-xs text-neutral-500"
               onClick={copyReference}
             >
               <Copy className="h-3.5 w-3.5" />
@@ -329,7 +329,7 @@ export function ArtigoRenderer({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 gap-1 text-xs text-zinc-500"
+                className="h-7 gap-1 text-xs text-neutral-500"
                 onClick={() => setTimelineOpen(true)}
               >
                 <History className="h-3.5 w-3.5" />

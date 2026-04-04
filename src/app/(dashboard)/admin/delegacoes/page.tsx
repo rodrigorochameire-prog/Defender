@@ -164,7 +164,7 @@ function DelegacaoCard({
           statusConfig.color.includes("blue") && "bg-blue-500",
           statusConfig.color.includes("violet") && "bg-violet-500",
           statusConfig.color.includes("rose") && "bg-rose-500",
-          statusConfig.color.includes("zinc") && "bg-zinc-400"
+          statusConfig.color.includes("zinc") && "bg-neutral-400"
         )}
       />
 
@@ -183,7 +183,7 @@ function DelegacaoCard({
               {statusConfig.label}
             </Badge>
           </div>
-          <span className="text-[10px] text-zinc-500">{dataFormatada}</span>
+          <span className="text-[10px] text-neutral-500">{dataFormatada}</span>
         </div>
 
         {/* Contexto: Assistido e Processo (direto ou via demanda) */}
@@ -232,7 +232,7 @@ function DelegacaoCard({
 
         {/* Instruções */}
         <div className="mb-3">
-          <p className="text-[10px] font-semibold text-zinc-500 uppercase mb-1 flex items-center gap-1">
+          <p className="text-[10px] font-semibold text-neutral-500 uppercase mb-1 flex items-center gap-1">
             <MessageSquare className="w-3 h-3" />
             Instruções
           </p>
@@ -244,8 +244,8 @@ function DelegacaoCard({
         {/* Prazo Sugerido */}
         {delegacao.prazoSugerido && (
           <div className="flex items-center gap-2 text-sm mb-3">
-            <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="text-zinc-500">Prazo:</span>
+            <Calendar className="w-3.5 h-3.5 text-neutral-400" />
+            <span className="text-neutral-500">Prazo:</span>
             <span className="text-foreground font-medium">
               {format(new Date(delegacao.prazoSugerido + "T12:00:00"), "dd/MM/yyyy")}
             </span>
@@ -267,7 +267,7 @@ function DelegacaoCard({
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] text-zinc-500">
+            <p className="text-[10px] text-neutral-500">
               {tipo === "recebida" ? "Delegado por" : "Delegado para"}
             </p>
             <p className="text-sm font-medium text-foreground truncate">
@@ -275,7 +275,7 @@ function DelegacaoCard({
             </p>
           </div>
           {tipo === "recebida" && (
-            <ArrowRight className="w-4 h-4 text-zinc-400" />
+            <ArrowRight className="w-4 h-4 text-neutral-400" />
           )}
         </div>
 
@@ -472,13 +472,13 @@ export default function DelegacoesPage() {
   const isLoading = activeTab === "recebidas" ? loadingRecebidas : loadingEnviadas;
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header Padrão Defender */}
       <div className="px-4 md:px-6 py-4 bg-card border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <UserCheck className="w-5 h-5 text-white dark:text-zinc-900" />
+            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
+              <UserCheck className="w-5 h-5 text-white dark:text-neutral-900" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-foreground tracking-tight">Delegações</h1>
@@ -494,7 +494,7 @@ export default function DelegacoesPage() {
                 refetchRecebidas();
                 refetchEnviadas();
               }}
-              className="gap-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-foreground"
+              className="gap-2 text-neutral-500 hover:text-neutral-900 dark:hover:text-foreground"
             >
               <RefreshCw className="w-4 h-4" />
               Atualizar
@@ -627,7 +627,7 @@ delegações
 
             {/* Filtro de status */}
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-zinc-400" />
+              <Filter className="w-4 h-4 text-neutral-400" />
               <Select value={filtroStatus} onValueChange={setFiltroStatus}>
                 <SelectTrigger className="w-[160px] h-9 rounded-lg">
                   <SelectValue placeholder="Filtrar por status" />
@@ -648,17 +648,17 @@ delegações
           <TabsContent value="recebidas" className="mt-0">
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
+                <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
               </div>
             ) : delegacoes.length === 0 ? (
               <Card className="p-12 text-center">
                 <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-                  <Inbox className="w-8 h-8 text-zinc-400" />
+                  <Inbox className="w-8 h-8 text-neutral-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">
                   Nenhuma delegação recebida
                 </h3>
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-neutral-500">
                   Quando você receber delegações de tarefas, elas aparecerão aqui.
                 </p>
               </Card>
@@ -681,17 +681,17 @@ delegações
           <TabsContent value="enviadas" className="mt-0">
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
+                <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
               </div>
             ) : delegacoes.length === 0 ? (
               <Card className="p-12 text-center">
                 <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-                  <SendHorizontal className="w-8 h-8 text-zinc-400" />
+                  <SendHorizontal className="w-8 h-8 text-neutral-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">
                   Nenhuma delegação enviada
                 </h3>
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-neutral-500">
                   Delegue tarefas a partir da tela de demandas alterando o status para um membro da equipe.
                 </p>
               </Card>
@@ -723,7 +723,7 @@ delegações
               </div>
               <div>
                 <span className="text-lg">Detalhes da Delegação</span>
-                <p className="text-xs font-normal text-zinc-500 mt-0.5">
+                <p className="text-xs font-normal text-neutral-500 mt-0.5">
                   #{delegacaoDetalhes?.id}
                 </p>
               </div>
@@ -734,7 +734,7 @@ delegações
             <div className="space-y-4 py-4">
               {/* Status atual */}
               <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-500">Status:</span>
+                <span className="text-sm text-neutral-500">Status:</span>
                 <Badge
                   className={cn(
                     "gap-1",
@@ -748,7 +748,7 @@ delegações
 
               {/* Data da delegação */}
               <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-500">Data:</span>
+                <span className="text-sm text-neutral-500">Data:</span>
                 <span className="text-sm font-medium">
                   {delegacaoDetalhes.dataDelegacao &&
                     format(new Date(delegacaoDetalhes.dataDelegacao), "dd/MM/yyyy HH:mm")}
@@ -758,7 +758,7 @@ delegações
               {/* Prazo */}
               {delegacaoDetalhes.prazoSugerido && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-zinc-500">Prazo sugerido:</span>
+                  <span className="text-sm text-neutral-500">Prazo sugerido:</span>
                   <span className="text-sm font-medium">
                     {format(new Date(delegacaoDetalhes.prazoSugerido + "T12:00:00"), "dd/MM/yyyy")}
                   </span>
@@ -775,7 +775,7 @@ delegações
 
                 return (
                   <div className="p-3 rounded-xl bg-muted/50 border border-border space-y-2">
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                    <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
                       Contexto
                     </p>
                     {assistidoNome && (
@@ -807,7 +807,7 @@ delegações
               {/* Tipo do pedido */}
               {delegacaoDetalhes.tipo && TIPO_CONFIG[delegacaoDetalhes.tipo] && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-zinc-500">Tipo:</span>
+                  <span className="text-sm text-neutral-500">Tipo:</span>
                   <Badge variant="outline" className="gap-1 text-muted-foreground">
                     {TIPO_CONFIG[delegacaoDetalhes.tipo].icon}
                     {TIPO_CONFIG[delegacaoDetalhes.tipo].label}
@@ -818,12 +818,12 @@ delegações
               {/* Prioridade */}
               {delegacaoDetalhes.prioridade && delegacaoDetalhes.prioridade !== "NORMAL" && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-zinc-500">Prioridade:</span>
+                  <span className="text-sm text-neutral-500">Prioridade:</span>
                   <Badge className={cn(
                     "text-[10px]",
                     delegacaoDetalhes.prioridade === "URGENTE"
                       ? "bg-rose-100 text-rose-700"
-                      : "bg-zinc-100 text-zinc-600"
+                      : "bg-neutral-100 text-neutral-600"
                   )}>
                     {delegacaoDetalhes.prioridade === "URGENTE" ? "Urgente" : "Baixa"}
                   </Badge>

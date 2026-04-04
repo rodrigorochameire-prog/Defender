@@ -124,7 +124,7 @@ export function AtosInfracionaisTab({ processoId }: AtosInfracionaisTabProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12 text-zinc-400">
+      <div className="flex items-center justify-center py-12 text-neutral-400">
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
         <span className="text-xs">Carregando atos infracionais...</span>
       </div>
@@ -136,12 +136,12 @@ export function AtosInfracionaisTab({ processoId }: AtosInfracionaisTabProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Baby className="h-4 w-4 text-zinc-400" />
-          <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+          <Baby className="h-4 w-4 text-neutral-400" />
+          <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
             Atos Infracionais
           </span>
           {atos.length > 0 && (
-            <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded-full">
+            <span className="text-[10px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 px-1.5 py-0.5 rounded-full">
               {atos.length}
             </span>
           )}
@@ -152,7 +152,7 @@ export function AtosInfracionaisTab({ processoId }: AtosInfracionaisTabProps) {
             <Button
               size="sm"
               variant="outline"
-              className="h-7 text-[11px] gap-1 border-zinc-200 dark:border-zinc-700"
+              className="h-7 text-[11px] gap-1 border-neutral-200 dark:border-neutral-700"
             >
               <Plus className="h-3 w-3" />
               Adicionar Ato
@@ -200,7 +200,7 @@ export function AtosInfracionaisTab({ processoId }: AtosInfracionaisTabProps) {
                     id="violencia-ato"
                     checked={form.envolveuViolencia}
                     onChange={(e) => setForm((f) => ({ ...f, envolveuViolencia: e.target.checked }))}
-                    className="rounded border-zinc-300"
+                    className="rounded border-neutral-300"
                   />
                   <Label htmlFor="violencia-ato" className="text-xs cursor-pointer">
                     Violencia
@@ -212,7 +212,7 @@ export function AtosInfracionaisTab({ processoId }: AtosInfracionaisTabProps) {
                     id="grave-ameaca"
                     checked={form.envolveuGraveAmeaca}
                     onChange={(e) => setForm((f) => ({ ...f, envolveuGraveAmeaca: e.target.checked }))}
-                    className="rounded border-zinc-300"
+                    className="rounded border-neutral-300"
                   />
                   <Label htmlFor="grave-ameaca" className="text-xs cursor-pointer">
                     Grave Ameaca
@@ -311,10 +311,10 @@ export function AtosInfracionaisTab({ processoId }: AtosInfracionaisTabProps) {
 
       {/* Lista de atos */}
       {atos.length === 0 ? (
-        <div className="text-center py-10 text-zinc-400">
+        <div className="text-center py-10 text-neutral-400">
           <Baby className="h-8 w-8 mx-auto mb-2 opacity-30" />
           <p className="text-xs">Nenhum ato infracional registrado</p>
-          <p className="text-[10px] mt-0.5 text-zinc-300">
+          <p className="text-[10px] mt-0.5 text-neutral-300">
             Adicione os atos infracionais equiparados
           </p>
         </div>
@@ -325,22 +325,22 @@ export function AtosInfracionaisTab({ processoId }: AtosInfracionaisTabProps) {
             return (
               <div
                 key={ato.id}
-                className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 bg-white dark:bg-zinc-900"
+                className="border border-neutral-200 dark:border-neutral-800 rounded-lg p-3 bg-white dark:bg-neutral-900"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-200">
+                      <span className="text-[11px] font-semibold text-neutral-800 dark:text-neutral-200">
                         {ato.atoEquiparado}
                       </span>
                       <Badge
                         variant="outline"
-                        className="text-[9px] px-1.5 py-0 h-4 font-mono border-zinc-200 dark:border-zinc-700 text-zinc-500"
+                        className="text-[9px] px-1.5 py-0 h-4 font-mono border-neutral-200 dark:border-neutral-700 text-neutral-500"
                       >
                         {ato.artigoEquiparado}
                       </Badge>
                       {ato.idadeNaData && (
-                        <span className="text-[9px] px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 rounded-full">
+                        <span className="text-[9px] px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-500 rounded-full">
                           {ato.idadeNaData} anos
                         </span>
                       )}
@@ -367,14 +367,14 @@ export function AtosInfracionaisTab({ processoId }: AtosInfracionaisTabProps) {
                           {remConfig.label}
                         </span>
                       ) : (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500">
                           Sem remissao
                         </span>
                       )}
                     </div>
 
                     {ato.observacoes && (
-                      <p className="text-[10px] text-zinc-400 mt-1 italic">{ato.observacoes}</p>
+                      <p className="text-[10px] text-neutral-400 mt-1 italic">{ato.observacoes}</p>
                     )}
                   </div>
 
@@ -382,7 +382,7 @@ export function AtosInfracionaisTab({ processoId }: AtosInfracionaisTabProps) {
                   {!ato.remissao && (
                     <button
                       onClick={() => setRemissaoDialog(ato.id)}
-                      className="text-[9px] px-2 py-0.5 rounded-full border font-medium transition-colors border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:border-emerald-400 hover:text-emerald-700 shrink-0"
+                      className="text-[9px] px-2 py-0.5 rounded-full border font-medium transition-colors border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:border-emerald-400 hover:text-emerald-700 shrink-0"
                     >
                       Remissao
                     </button>

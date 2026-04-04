@@ -92,8 +92,8 @@ const statusConfig: Record<string, {
   },
   concluido: {
     label: "Concluído",
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-500 dark:text-zinc-400",
+    bg: "bg-neutral-100 dark:bg-neutral-800",
+    text: "text-neutral-500 dark:text-neutral-400",
     icon: CheckCircle2,
   },
   realizado: {
@@ -162,16 +162,16 @@ export function EventoCard({
       <div
         onClick={() => onClick?.(evento)}
         className={cn(
-          "group relative p-2 bg-white dark:bg-zinc-900 rounded-lg",
-          "border-l-[3px] border border-zinc-100 dark:border-zinc-800",
-          "hover:border-zinc-200 dark:hover:border-zinc-700 hover:shadow-sm",
+          "group relative p-2 bg-white dark:bg-neutral-900 rounded-lg",
+          "border-l-[3px] border border-neutral-100 dark:border-neutral-800",
+          "hover:border-neutral-200 dark:hover:border-neutral-700 hover:shadow-sm",
           "transition-all duration-200 cursor-pointer"
         )}
         style={{ borderLeftColor: atribuicaoColor }}
       >
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{evento.horarioInicio}</span>
-          <span className="text-xs text-zinc-600 dark:text-zinc-400 truncate flex-1">{evento.titulo}</span>
+          <span className="text-xs font-bold text-neutral-900 dark:text-neutral-100">{evento.horarioInicio}</span>
+          <span className="text-xs text-neutral-600 dark:text-neutral-400 truncate flex-1">{evento.titulo}</span>
           {hasRegistro && <CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0" />}
         </div>
       </div>
@@ -182,9 +182,9 @@ export function EventoCard({
     <div
       onClick={() => onClick?.(evento)}
       className={cn(
-        "group relative bg-white dark:bg-zinc-900",
+        "group relative bg-white dark:bg-neutral-900",
         "border-l-[3px] transition-all duration-200 cursor-pointer",
-        "hover:bg-zinc-50/80 dark:hover:bg-zinc-800/50"
+        "hover:bg-neutral-50/80 dark:hover:bg-neutral-800/50"
       )}
       style={{ borderLeftColor: atribuicaoColor }}
     >
@@ -198,10 +198,10 @@ export function EventoCard({
             <Button 
               variant="secondary" 
               size="icon" 
-              className="h-6 w-6 bg-white/90 dark:bg-zinc-800/90 backdrop-blur-sm shadow-sm"
+              className="h-6 w-6 bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm shadow-sm"
               onClick={(e) => { e.stopPropagation(); onClick?.(evento); }}
             >
-              <Eye className="w-3 h-3 text-zinc-600" />
+              <Eye className="w-3 h-3 text-neutral-600" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>Ver detalhes</TooltipContent>
@@ -212,7 +212,7 @@ export function EventoCard({
               <Button 
                 variant="secondary" 
                 size="icon" 
-                className="h-6 w-6 bg-white/90 dark:bg-zinc-800/90 backdrop-blur-sm shadow-sm"
+                className="h-6 w-6 bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm shadow-sm"
                 onClick={(e) => { e.stopPropagation(); onEdit(evento); }}
               >
                 <Edit className="w-3 h-3 text-blue-600" />
@@ -230,18 +230,18 @@ export function EventoCard({
             "text-[10px] font-semibold uppercase tracking-wide",
             isHoje ? "text-rose-600 dark:text-rose-400" :
             isAmanha ? "text-amber-600 dark:text-amber-400" :
-            "text-zinc-400"
+            "text-neutral-400"
           )}>
             {formatData(evento.data)}
           </p>
           {evento.horarioInicio && (
-            <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+            <p className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
               {evento.horarioInicio}
             </p>
           )}
           {/* Indicador de dias */}
           {diasAte > 1 && diasAte <= 7 && (
-            <p className="text-[10px] text-zinc-400 mt-0.5">{diasAte}d</p>
+            <p className="text-[10px] text-neutral-400 mt-0.5">{diasAte}d</p>
           )}
         </div>
 
@@ -249,7 +249,7 @@ export function EventoCard({
         <div className="flex-1 min-w-0 space-y-1.5">
           {/* Linha 1: Título + Indicadores */}
           <div className="flex items-start gap-2 pr-16">
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-1 flex-1">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-1 flex-1">
               {evento.titulo}
             </h3>
             
@@ -278,13 +278,13 @@ export function EventoCard({
                 >
                   {evento.assistido.substring(0, 2).toUpperCase()}
                 </div>
-                <span className="font-medium text-zinc-700 dark:text-zinc-300 truncate">
+                <span className="font-medium text-neutral-700 dark:text-neutral-300 truncate">
                   {evento.assistido}
                 </span>
               </div>
             )}
             {evento.local && (
-              <div className="flex items-center gap-1 text-zinc-500 min-w-0">
+              <div className="flex items-center gap-1 text-neutral-500 min-w-0">
                 <MapPin className="w-3 h-3 flex-shrink-0" />
                 <span className="truncate">{evento.local}</span>
               </div>
@@ -297,13 +297,13 @@ export function EventoCard({
               className="inline-flex items-center gap-1.5 group/copy cursor-pointer"
               onClick={handleCopyProcesso}
             >
-              <span className="font-mono text-[10px] text-zinc-500 hover:text-emerald-600 transition-colors">
+              <span className="font-mono text-[10px] text-neutral-500 hover:text-emerald-600 transition-colors">
                 {evento.processo}
               </span>
               {copied ? (
                 <CheckCircle2 className="w-3 h-3 text-emerald-500" />
               ) : (
-                <Copy className="w-3 h-3 text-zinc-300 group-hover/copy:text-zinc-500 transition-colors" />
+                <Copy className="w-3 h-3 text-neutral-300 group-hover/copy:text-neutral-500 transition-colors" />
               )}
             </div>
           )}

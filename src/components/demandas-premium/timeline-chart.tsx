@@ -38,19 +38,19 @@ export function TimelineChart({ demandas }: TimelineChartProps) {
   const totalConcluidas = timelineData.reduce((sum, d) => sum + d.concluidas, 0);
 
   return (
-    <Card className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xl overflow-hidden">
+    <Card className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-xl overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-5 border-b border-zinc-100 dark:border-zinc-800 bg-gradient-to-r from-blue-50/50 via-purple-50/30 to-white dark:from-blue-950/20 dark:via-purple-950/10 dark:to-zinc-900">
+      <div className="px-6 py-5 border-b border-neutral-100 dark:border-neutral-800 bg-gradient-to-r from-blue-50/50 via-purple-50/30 to-white dark:from-blue-950/20 dark:via-purple-950/10 dark:to-neutral-900">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 shadow-lg shadow-blue-500/30">
               <TrendingUp className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-50">
+              <h3 className="text-base font-bold text-neutral-900 dark:text-neutral-50">
                 Evolução Temporal
               </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 Últimos 7 dias - Demandas abertas vs concluídas
               </p>
             </div>
@@ -73,7 +73,7 @@ export function TimelineChart({ demandas }: TimelineChartProps) {
       </div>
 
       {/* Chart */}
-      <div className="p-6 bg-gradient-to-b from-white to-zinc-50/30 dark:from-zinc-900 dark:to-zinc-900/50">
+      <div className="p-6 bg-gradient-to-b from-white to-neutral-50/30 dark:from-neutral-900 dark:to-neutral-900/50">
         <ResponsiveContainer width="100%" height={300}>
           <AreaChart data={timelineData}>
             <defs>
@@ -89,7 +89,7 @@ export function TimelineChart({ demandas }: TimelineChartProps) {
                 <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.3"/>
               </filter>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-zinc-700" opacity={0.3} vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-neutral-700" opacity={0.3} vertical={false} />
             <XAxis
               dataKey="dia"
               stroke="#9ca3af"

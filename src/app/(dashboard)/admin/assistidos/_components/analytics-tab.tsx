@@ -99,9 +99,9 @@ export function AnalyticsTab({ assistidos }: { assistidos: AssistidoUI[] }) {
           { label: "Audiencia proxima (30d)", value: `${generalStats.pctAudiencia}%` },
           { label: "Completude media", value: `${generalStats.completudeMedia}%` },
         ].map((s) => (
-          <div key={s.label} className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/60 dark:border-zinc-700/60">
-            <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100 tabular-nums">{s.value}</p>
-            <p className="text-[10px] text-zinc-400 mt-1">{s.label}</p>
+          <div key={s.label} className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/60 dark:border-neutral-700/60">
+            <p className="text-2xl font-bold text-neutral-800 dark:text-neutral-100 tabular-nums">{s.value}</p>
+            <p className="text-[10px] text-neutral-400 mt-1">{s.label}</p>
           </div>
         ))}
       </div>
@@ -109,21 +109,21 @@ export function AnalyticsTab({ assistidos }: { assistidos: AssistidoUI[] }) {
       {/* Charts Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Atribuicoes Donut */}
-        <div className="p-4 rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 bg-white dark:bg-zinc-900">
-          <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 mb-4">Distribuicao por Atribuicao</p>
+        <div className="p-4 rounded-xl border border-neutral-200/60 dark:border-neutral-700/60 bg-white dark:bg-neutral-900">
+          <p className="text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-4">Distribuicao por Atribuicao</p>
           <DonutChart data={atribuicaoData} />
         </div>
 
         {/* Status Bar */}
-        <div className="p-4 rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 bg-white dark:bg-zinc-900">
-          <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 mb-4">Distribuicao por Status</p>
+        <div className="p-4 rounded-xl border border-neutral-200/60 dark:border-neutral-700/60 bg-white dark:bg-neutral-900">
+          <p className="text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-4">Distribuicao por Status</p>
           <BarChartSimple data={statusData} />
         </div>
       </div>
 
       {/* Monthly Trend */}
-      <div className="p-4 rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 bg-white dark:bg-zinc-900">
-        <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 mb-4">Novos cadastros (ultimos 6 meses)</p>
+      <div className="p-4 rounded-xl border border-neutral-200/60 dark:border-neutral-700/60 bg-white dark:bg-neutral-900">
+        <p className="text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-4">Novos cadastros (ultimos 6 meses)</p>
         <BarChartSimple data={monthlyData} />
       </div>
     </div>

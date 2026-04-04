@@ -272,7 +272,7 @@ export function DemandaCard({
         />
         {showAtribuicaoDropdown && (
           <div
-            className="absolute left-3 top-2 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden py-1"
+            className="absolute left-3 top-2 w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-xl z-50 overflow-hidden py-1"
             style={{ animation: 'fadeInDown 0.15s ease-out' }}
           >
             {ATRIBUICAO_OPTIONS.map((opt) => {
@@ -289,11 +289,11 @@ export function DemandaCard({
                   className={`w-full px-3 py-2 text-left text-[11px] flex items-center gap-2.5 transition-colors ${
                     isCurrentAtribuicao
                       ? 'bg-emerald-50 dark:bg-emerald-950/30 font-bold'
-                      : 'hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                      : 'hover:bg-neutral-50 dark:hover:bg-neutral-800'
                   }`}
                 >
                   <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: optColor }} />
-                  <span style={{ color: isCurrentAtribuicao ? optColor : undefined }} className={isCurrentAtribuicao ? '' : 'text-zinc-700 dark:text-zinc-300'}>{opt.label}</span>
+                  <span style={{ color: isCurrentAtribuicao ? optColor : undefined }} className={isCurrentAtribuicao ? '' : 'text-neutral-700 dark:text-neutral-300'}>{opt.label}</span>
                 </button>
               );
             })}
@@ -317,7 +317,7 @@ export function DemandaCard({
 
       {/* Conteúdo do Card */}
       <div
-        className={`relative bg-white dark:bg-zinc-900 p-4 md:p-3 rounded-r-xl border border-l-0 border-zinc-200/80 dark:border-zinc-800/80 transition-all duration-200 ${isSelectMode ? "ml-8" : "ml-2.5"}`}
+        className={`relative bg-white dark:bg-neutral-900 p-4 md:p-3 rounded-r-xl border border-l-0 border-neutral-200/80 dark:border-neutral-800/80 transition-all duration-200 ${isSelectMode ? "ml-8" : "ml-2.5"}`}
         style={{
           boxShadow: isHovered
             ? '0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04)'
@@ -343,12 +343,12 @@ export function DemandaCard({
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   {demanda.assistidoId ? (
                     <Link href={`/admin/assistidos/${demanda.assistidoId}`}>
-                      <h4 className="text-base font-bold text-zinc-900 dark:text-zinc-50 hover:text-primary transition-colors break-words">
+                      <h4 className="text-base font-bold text-neutral-900 dark:text-neutral-50 hover:text-primary transition-colors break-words">
                         {demanda.assistido}
                       </h4>
                     </Link>
                   ) : (
-                    <h4 className="text-base font-bold text-zinc-900 dark:text-zinc-50 break-words">
+                    <h4 className="text-base font-bold text-neutral-900 dark:text-neutral-50 break-words">
                       {demanda.assistido}
                     </h4>
                   )}
@@ -361,14 +361,14 @@ export function DemandaCard({
                   <div className="relative inline-block">
                     <button
                       onClick={handleAtoClick}
-                      className="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center gap-1 group/ato"
+                      className="text-sm font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center gap-1 group/ato"
                     >
                       {demanda.ato}
                       <Edit className="w-3 h-3 opacity-50 group-hover/ato:opacity-100 transition-opacity" />
                     </button>
                     {showAtoDropdown && (
                       <div 
-                        className="fixed inset-x-4 bottom-20 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl z-[999] overflow-hidden"
+                        className="fixed inset-x-4 bottom-20 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl z-[999] overflow-hidden"
                         style={{
                           animation: 'fadeInUp 0.2s ease-out',
                           maxHeight: '50vh'
@@ -389,7 +389,7 @@ export function DemandaCard({
                                   className={`w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 transition-all ${
                                     isCurrentAto
                                       ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
-                                      : 'hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
+                                      : 'hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
                                   }`}
                                 >
                                   <span className="flex-1">{ato.label}</span>
@@ -404,7 +404,7 @@ export function DemandaCard({
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+                  <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
                     {demanda.ato}
                   </p>
                 )}
@@ -430,9 +430,9 @@ export function DemandaCard({
           <div className="grid grid-cols-2 gap-3">
             {/* Atribuição */}
             {AtribuicaoIcon && (
-              <div className="flex items-center gap-2 p-2.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+              <div className="flex items-center gap-2 p-2.5 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg">
                 <AtribuicaoIcon className={`w-4 h-4 ${atribuicaoColors[demanda.atribuicao]} flex-shrink-0`} />
-                <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate">
+                <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 truncate">
                   {demanda.atribuicao}
                 </span>
               </div>
@@ -440,28 +440,28 @@ export function DemandaCard({
             
             {/* Prazo */}
             {prazoInfo.texto ? (
-              <div className="flex items-center gap-2 p-2.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+              <div className="flex items-center gap-2 p-2.5 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg">
                 <Clock className={`w-4 h-4 flex-shrink-0 ${
                   prazoInfo.cor === "red"
                     ? "text-red-500 dark:text-red-400"
                     : prazoInfo.cor === "yellow"
                     ? "text-amber-500 dark:text-amber-400"
-                    : "text-zinc-400 dark:text-zinc-500"
+                    : "text-neutral-400 dark:text-neutral-500"
                 }`} />
                 <span className={`text-xs font-medium ${
                   prazoInfo.cor === "red"
                     ? "text-red-600 dark:text-red-400"
                     : prazoInfo.cor === "yellow"
                     ? "text-amber-600 dark:text-amber-400"
-                    : "text-zinc-600 dark:text-zinc-400"
+                    : "text-neutral-600 dark:text-neutral-400"
                 }`}>
                   {prazoInfo.texto}
                 </span>
               </div>
             ) : (
-              <div className="flex items-center gap-2 p-2.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
-                <Clock className="w-4 h-4 text-zinc-400 flex-shrink-0" />
-                <span className="text-xs font-medium text-zinc-500">Sem prazo</span>
+              <div className="flex items-center gap-2 p-2.5 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg">
+                <Clock className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+                <span className="text-xs font-medium text-neutral-500">Sem prazo</span>
               </div>
             )}
           </div>
@@ -469,12 +469,12 @@ export function DemandaCard({
           {/* Processos */}
           <div className="space-y-2">
             {demanda.processos.map((proc, index) => (
-              <div key={index} className="flex items-center gap-2 p-2.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
-                <FileText className="w-4 h-4 text-zinc-500 dark:text-zinc-400 flex-shrink-0" />
-                <span className="inline-flex items-center px-2 py-0.5 bg-zinc-200 dark:bg-zinc-700 rounded text-xs font-bold text-zinc-700 dark:text-zinc-300 flex-shrink-0">
+              <div key={index} className="flex items-center gap-2 p-2.5 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg">
+                <FileText className="w-4 h-4 text-neutral-500 dark:text-neutral-400 flex-shrink-0" />
+                <span className="inline-flex items-center px-2 py-0.5 bg-neutral-200 dark:bg-neutral-700 rounded text-xs font-bold text-neutral-700 dark:text-neutral-300 flex-shrink-0">
                   {proc.tipo}
                 </span>
-                <p className="text-xs font-mono text-zinc-600 dark:text-zinc-400 truncate flex-1 min-w-0">
+                <p className="text-xs font-mono text-neutral-600 dark:text-neutral-400 truncate flex-1 min-w-0">
                   {proc.numero}
                 </p>
                 <CopyProcessButton processo={proc.numero} />
@@ -483,18 +483,18 @@ export function DemandaCard({
           </div>
 
           {/* Datas */}
-          <div className="flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="flex items-center gap-4 text-xs text-neutral-500 dark:text-neutral-400">
             <span className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5" />
               <span className="font-medium">Exp:</span>
-              <span className="font-semibold text-zinc-700 dark:text-zinc-300">{demanda.data}</span>
+              <span className="font-semibold text-neutral-700 dark:text-neutral-300">{demanda.data}</span>
             </span>
             {demanda.prazo && (
               <>
-                <span className="text-zinc-300 dark:text-zinc-600">•</span>
+                <span className="text-neutral-300 dark:text-neutral-600">•</span>
                 <span className="flex items-center gap-1.5">
                   <span className="font-medium">Prazo:</span>
-                  <span className="font-semibold text-zinc-700 dark:text-zinc-300">{demanda.prazo}</span>
+                  <span className="font-semibold text-neutral-700 dark:text-neutral-300">{demanda.prazo}</span>
                 </span>
               </>
             )}
@@ -505,7 +505,7 @@ export function DemandaCard({
             <div className="flex items-center justify-between">
               <button
                 onClick={() => setShowProvidencias(!showProvidencias)}
-                className="flex items-center gap-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors py-1"
+                className="flex items-center gap-2 text-xs font-semibold text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors py-1"
               >
                 {showProvidencias ? (
                   <ChevronDown className="w-4 h-4 flex-shrink-0" />
@@ -517,7 +517,7 @@ export function DemandaCard({
               {onProvidenciasChange && !isEditingProvidencias && (
                 <button
                   onClick={handleStartEditProvidencias}
-                  className="p-1.5 rounded-md text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                  className="p-1.5 rounded-md text-neutral-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
                   title="Editar providências"
                 >
                   <MessageSquarePlus className="w-3.5 h-3.5" />
@@ -557,13 +557,13 @@ export function DemandaCard({
                     </div>
                   </div>
                 ) : demanda.providencias ? (
-                  <div className="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                  <div className="p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg">
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">
                       {demanda.providencias}
                     </p>
                   </div>
                 ) : (
-                  <p className="text-xs text-zinc-400 italic p-2">
+                  <p className="text-xs text-neutral-400 italic p-2">
                     Nenhuma providência registrada
                   </p>
                 )}
@@ -572,7 +572,7 @@ export function DemandaCard({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="flex gap-2 pt-3 border-t border-neutral-100 dark:border-neutral-800">
             <Link href={`/admin/demandas/${demanda.id}`} className="flex-1">
               <Button
                 variant="ghost"
@@ -587,7 +587,7 @@ export function DemandaCard({
               variant="ghost"
               size="sm"
               onClick={() => onEdit(demanda)}
-              className="h-8 flex-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              className="h-8 flex-1 text-[11px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800"
             >
               <Edit className="w-3.5 h-3.5 mr-1.5" />
               Editar
@@ -597,7 +597,7 @@ export function DemandaCard({
                 variant="ghost"
                 size="sm"
                 onClick={() => onUnarchive(demanda.id)}
-                className="h-8 flex-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                className="h-8 flex-1 text-[11px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
               >
                 <ArchiveRestore className="w-3.5 h-3.5 mr-1.5" />
                 Restaurar
@@ -607,7 +607,7 @@ export function DemandaCard({
                 variant="ghost"
                 size="sm"
                 onClick={() => onArchive(demanda.id)}
-                className="h-8 flex-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="h-8 flex-1 text-[11px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800"
               >
                 <Archive className="w-3.5 h-3.5 mr-1.5" />
                 Arquivar
@@ -617,7 +617,7 @@ export function DemandaCard({
               variant="ghost"
               size="sm"
               onClick={() => onDelete(demanda.id)}
-              className="h-8 w-8 p-0 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+              className="h-8 w-8 p-0 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </Button>
@@ -649,12 +649,12 @@ export function DemandaCard({
             <div className="flex items-center gap-2 flex-1 min-w-0">
               {demanda.assistidoId ? (
                 <Link href={`/admin/assistidos/${demanda.assistidoId}`} onClick={(e) => e.stopPropagation()}>
-                  <span className="text-sm font-bold text-zinc-900 dark:text-zinc-50 hover:text-primary transition-colors truncate">
+                  <span className="text-sm font-bold text-neutral-900 dark:text-neutral-50 hover:text-primary transition-colors truncate">
                     {demanda.assistido}
                   </span>
                 </Link>
               ) : (
-                <span className="text-sm font-bold text-zinc-900 dark:text-zinc-50 truncate">
+                <span className="text-sm font-bold text-neutral-900 dark:text-neutral-50 truncate">
                   {demanda.assistido}
                 </span>
               )}
@@ -662,23 +662,23 @@ export function DemandaCard({
                 <Lock className="w-3.5 h-3.5 text-red-600 dark:text-red-400 flex-shrink-0" />
               )}
             </div>
-            <span className="text-zinc-300 dark:text-zinc-600">·</span>
+            <span className="text-neutral-300 dark:text-neutral-600">·</span>
             {/* Ato inline */}
             {onAtoChange && atoOptions && atoOptions.length > 0 ? (
               <div className="relative flex-shrink-0">
                 <button
                   onClick={handleAtoClick}
-                  className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center gap-1 group/ato"
+                  className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center gap-1 group/ato"
                 >
                   {demanda.ato}
                   <Edit className="w-2.5 h-2.5 opacity-0 group-hover/ato:opacity-100 transition-opacity" />
                 </button>
                 {showAtoDropdown && (
                   <div
-                    className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden"
+                    className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-xl z-50 overflow-hidden"
                     style={{ animation: 'fadeInDown 0.2s ease-out' }}
                   >
-                    <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700">
+                    <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700">
                       {atoOptions
                         .filter(ato => ato.value !== "Todos")
                         .map((ato) => {
@@ -690,7 +690,7 @@ export function DemandaCard({
                               className={`w-full px-4 py-2.5 text-left text-xs font-semibold flex items-center gap-3 transition-all ${
                                 isCurrentAto
                                   ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
-                                  : 'hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
+                                  : 'hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
                               }`}
                             >
                               <span className="flex-1">{ato.label}</span>
@@ -703,7 +703,7 @@ export function DemandaCard({
                 )}
               </div>
             ) : (
-              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide flex-shrink-0">
+              <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide flex-shrink-0">
                 {demanda.ato}
               </span>
             )}
@@ -715,7 +715,7 @@ export function DemandaCard({
                     ? "text-red-600 dark:text-red-400"
                     : prazoInfo.cor === "yellow"
                     ? "text-amber-600 dark:text-amber-400"
-                    : "text-zinc-500 dark:text-zinc-400"
+                    : "text-neutral-500 dark:text-neutral-400"
                 }`}>
                   <Clock className="w-3 h-3" />
                   {prazoInfo.texto}
@@ -751,13 +751,13 @@ export function DemandaCard({
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                  className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                  className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                 >
                   <MoreVertical className="w-4 h-4" />
                 </button>
                 {showMenu && (
                   <div
-                    className="absolute top-full right-0 mt-1 w-40 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden py-1"
+                    className="absolute top-full right-0 mt-1 w-40 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-xl z-50 overflow-hidden py-1"
                     style={{ animation: 'fadeInDown 0.15s ease-out' }}
                   >
                     <Link
@@ -779,7 +779,7 @@ export function DemandaCard({
                     )}
                     <button
                       onClick={(e) => { e.stopPropagation(); setShowMenu(false); onEdit(demanda); }}
-                      className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors"
+                      className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-colors"
                     >
                       <Edit className="w-3.5 h-3.5" />
                       Editar
@@ -795,13 +795,13 @@ export function DemandaCard({
                     ) : (
                       <button
                         onClick={(e) => { e.stopPropagation(); setShowMenu(false); onArchive(demanda.id); }}
-                        className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors"
+                        className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-colors"
                       >
                         <Archive className="w-3.5 h-3.5" />
                         Arquivar
                       </button>
                     )}
-                    <div className="my-1 border-t border-zinc-100 dark:border-zinc-800" />
+                    <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />
                     <button
                       onClick={(e) => { e.stopPropagation(); setShowMenu(false); onDelete(demanda.id); }}
                       className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 transition-colors"
@@ -821,35 +821,35 @@ export function DemandaCard({
             {AtribuicaoIcon && (
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 <AtribuicaoIcon className={`w-3.5 h-3.5 ${atribuicaoColors[demanda.atribuicao]}`} />
-                <span className="text-zinc-500 dark:text-zinc-400 font-medium truncate max-w-[120px]">{demanda.atribuicao}</span>
+                <span className="text-neutral-500 dark:text-neutral-400 font-medium truncate max-w-[120px]">{demanda.atribuicao}</span>
               </div>
             )}
-            <span className="text-zinc-300 dark:text-zinc-600">·</span>
+            <span className="text-neutral-300 dark:text-neutral-600">·</span>
             {/* Processo */}
             {demanda.processos.length > 0 && (
               <div className="flex items-center gap-1.5 min-w-0">
-                <span className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded text-[10px] font-bold text-zinc-600 dark:text-zinc-400 flex-shrink-0">
+                <span className="px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded text-[10px] font-bold text-neutral-600 dark:text-neutral-400 flex-shrink-0">
                   {demanda.processos[0].tipo}
                 </span>
-                <span className="font-mono text-zinc-500 dark:text-zinc-400 truncate">
+                <span className="font-mono text-neutral-500 dark:text-neutral-400 truncate">
                   {demanda.processos[0].numero}
                 </span>
                 <CopyProcessButton processo={demanda.processos[0].numero} />
                 {demanda.processos.length > 1 && (
-                  <span className="text-[10px] text-zinc-400">+{demanda.processos.length - 1}</span>
+                  <span className="text-[10px] text-neutral-400">+{demanda.processos.length - 1}</span>
                 )}
               </div>
             )}
-            <span className="text-zinc-300 dark:text-zinc-600">·</span>
+            <span className="text-neutral-300 dark:text-neutral-600">·</span>
             {/* Datas inline */}
-            <span className="text-zinc-400 dark:text-zinc-500 flex-shrink-0">
-              Exp: <span className="text-zinc-600 dark:text-zinc-300 font-medium">{demanda.data}</span>
+            <span className="text-neutral-400 dark:text-neutral-500 flex-shrink-0">
+              Exp: <span className="text-neutral-600 dark:text-neutral-300 font-medium">{demanda.data}</span>
             </span>
             {demanda.prazo && (
               <>
-                <span className="text-zinc-300 dark:text-zinc-600">·</span>
-                <span className="text-zinc-400 dark:text-zinc-500 flex-shrink-0">
-                  Prazo: <span className="text-zinc-600 dark:text-zinc-300 font-medium">{demanda.prazo}</span>
+                <span className="text-neutral-300 dark:text-neutral-600">·</span>
+                <span className="text-neutral-400 dark:text-neutral-500 flex-shrink-0">
+                  Prazo: <span className="text-neutral-600 dark:text-neutral-300 font-medium">{demanda.prazo}</span>
                 </span>
               </>
             )}
@@ -857,7 +857,7 @@ export function DemandaCard({
             <div className="ml-auto flex-shrink-0">
               <button
                 onClick={(e) => { e.stopPropagation(); setShowProvidencias(!showProvidencias); }}
-                className="flex items-center gap-1 text-[10px] text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                className="flex items-center gap-1 text-[10px] text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
               >
                 {showProvidencias ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                 {demanda.providencias ? "Prov." : "+Prov."}
@@ -888,15 +888,15 @@ export function DemandaCard({
                 </div>
               ) : demanda.providencias ? (
                 <div className="flex items-start gap-2">
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap flex-1">{demanda.providencias}</p>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed whitespace-pre-wrap flex-1">{demanda.providencias}</p>
                   {onProvidenciasChange && (
-                    <button onClick={handleStartEditProvidencias} className="p-1 rounded text-zinc-400 hover:text-emerald-600 transition-colors flex-shrink-0">
+                    <button onClick={handleStartEditProvidencias} className="p-1 rounded text-neutral-400 hover:text-emerald-600 transition-colors flex-shrink-0">
                       <MessageSquarePlus className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
               ) : (
-                <button onClick={handleStartEditProvidencias} className="text-[10px] text-zinc-400 italic hover:text-emerald-500 transition-colors">
+                <button onClick={handleStartEditProvidencias} className="text-[10px] text-neutral-400 italic hover:text-emerald-500 transition-colors">
                   Adicionar providências...
                 </button>
               )}

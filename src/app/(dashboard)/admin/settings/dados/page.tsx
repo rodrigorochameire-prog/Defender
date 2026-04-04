@@ -135,14 +135,14 @@ function StatCard({
   subtitle?: string;
 }) {
   return (
-    <div className="flex items-center gap-3 p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+    <div className="flex items-center gap-3 p-4 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
       <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", color)}>
         <Icon className="w-5 h-5 text-white" />
       </div>
       <div>
-        <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{value}</p>
-        <p className="text-xs text-zinc-500">{label}</p>
-        {subtitle && <p className="text-[10px] text-zinc-400 mt-0.5">{subtitle}</p>}
+        <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{value}</p>
+        <p className="text-xs text-neutral-500">{label}</p>
+        {subtitle && <p className="text-[10px] text-neutral-400 mt-0.5">{subtitle}</p>}
       </div>
     </div>
   );
@@ -180,44 +180,44 @@ function TableRow({
   return (
     <div className={cn(
       "flex items-center gap-4 px-4 py-3 transition-all",
-      "border-b border-zinc-100 dark:border-zinc-800 last:border-0",
-      selected ? "bg-amber-50 dark:bg-amber-900/10" : "hover:bg-zinc-50 dark:hover:bg-zinc-800/30"
+      "border-b border-neutral-100 dark:border-neutral-800 last:border-0",
+      selected ? "bg-amber-50 dark:bg-amber-900/10" : "hover:bg-neutral-50 dark:hover:bg-neutral-800/30"
     )}>
       <Checkbox checked={selected} onCheckedChange={onSelect} />
       
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 font-mono">
+          <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200 font-mono">
             {record.tabela}
           </span>
           <Badge className={cn("text-[10px] px-1.5", tipo.color)}>
             {tipo.label}
           </Badge>
         </div>
-        <p className="text-xs text-zinc-500 mt-0.5">{record.descricao}</p>
+        <p className="text-xs text-neutral-500 mt-0.5">{record.descricao}</p>
       </div>
 
-      <div className="hidden md:flex items-center gap-1 text-xs text-zinc-500">
+      <div className="hidden md:flex items-center gap-1 text-xs text-neutral-500">
         <origem.icon className="w-3 h-3" />
         {origem.label}
       </div>
 
       <div className="text-right hidden sm:block">
-        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
           {record.registros.toLocaleString()}
         </p>
-        <p className="text-[10px] text-zinc-400">registros</p>
+        <p className="text-[10px] text-neutral-400">registros</p>
       </div>
 
       <div className="text-right hidden lg:block">
-        <p className="text-xs text-zinc-600 dark:text-zinc-400">
+        <p className="text-xs text-neutral-600 dark:text-neutral-400">
           {format(record.atualizadoEm, "dd/MM/yy HH:mm", { locale: ptBR })}
         </p>
-        <p className="text-[10px] text-zinc-400">última atualização</p>
+        <p className="text-[10px] text-neutral-400">última atualização</p>
       </div>
 
       <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onView}>
-        <Eye className="w-4 h-4 text-zinc-400" />
+        <Eye className="w-4 h-4 text-neutral-400" />
       </Button>
     </div>
   );
@@ -242,27 +242,27 @@ function ActivityItem({ log }: { log: ActivityLog }) {
   const status = statusConfig[log.status];
 
   return (
-    <div className="flex items-start gap-3 py-3 border-b border-zinc-100 dark:border-zinc-800 last:border-0">
-      <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center bg-zinc-100 dark:bg-zinc-800", tipo.color)}>
+    <div className="flex items-start gap-3 py-3 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
+      <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center bg-neutral-100 dark:bg-neutral-800", tipo.color)}>
         <tipo.icon className="w-4 h-4" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+          <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
             {tipo.label}
           </span>
-          <span className="text-xs text-zinc-500">em</span>
-          <span className="text-sm font-mono text-zinc-600 dark:text-zinc-400">{log.tabela}</span>
+          <span className="text-xs text-neutral-500">em</span>
+          <span className="text-sm font-mono text-neutral-600 dark:text-neutral-400">{log.tabela}</span>
         </div>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-neutral-500">
             {log.quantidade} registro{log.quantidade > 1 ? "s" : ""} • {log.usuario}
           </span>
           {log.detalhes && (
-            <span className="text-xs text-zinc-400">• {log.detalhes}</span>
+            <span className="text-xs text-neutral-400">• {log.detalhes}</span>
           )}
         </div>
-        <p className="text-[10px] text-zinc-400 mt-1">
+        <p className="text-[10px] text-neutral-400 mt-1">
           {format(log.timestamp, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
         </p>
       </div>
@@ -367,19 +367,19 @@ export default function DataManagementPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
               <Database className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
                 Gerenciamento de Dados
               </h1>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-neutral-500">
                 Monitor, gerencie e administre os dados do sistema
               </p>
             </div>
@@ -436,7 +436,7 @@ export default function DataManagementPage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-1 h-auto">
+          <TabsList className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-1 h-auto">
             <TabsTrigger value="visao-geral" className="text-xs px-4 py-2">
               <BarChart3 className="w-3.5 h-3.5 mr-1.5" />
               Visão Geral
@@ -479,8 +479,8 @@ export default function DataManagementPage() {
                   ].map((item) => (
                     <div key={item.label} className="space-y-1">
                       <div className="flex justify-between text-sm">
-                        <span className="text-zinc-600 dark:text-zinc-400">{item.label}</span>
-                        <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                        <span className="text-neutral-600 dark:text-neutral-400">{item.label}</span>
+                        <span className="font-medium text-neutral-800 dark:text-neutral-200">
                           {item.value.toLocaleString()} ({Math.round((item.value / item.total) * 100)}%)
                         </span>
                       </div>
@@ -528,17 +528,17 @@ export default function DataManagementPage() {
                       .filter(t => mod.tabelas.includes(t.tabela))
                       .reduce((acc, t) => acc + t.registros, 0);
                     return (
-                      <div key={mod.modulo} className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+                      <div key={mod.modulo} className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
                         <div className="flex items-center gap-2 mb-2">
                           <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center", mod.cor)}>
                             <mod.icon className="w-3.5 h-3.5 text-white" />
                           </div>
-                          <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{mod.modulo}</span>
+                          <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{mod.modulo}</span>
                         </div>
-                        <div className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                        <div className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
                           {registros.toLocaleString()}
                         </div>
-                        <p className="text-[10px] text-zinc-500">{mod.tabelas.length} tabelas</p>
+                        <p className="text-[10px] text-neutral-500">{mod.tabelas.length} tabelas</p>
                       </div>
                     );
                   })}
@@ -557,7 +557,7 @@ export default function DataManagementPage() {
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
                       <Input
                         placeholder="Buscar tabela..."
                         value={searchTerm}
@@ -631,20 +631,20 @@ export default function DataManagementPage() {
                 )}
 
                 {/* Header */}
-                <div className="px-4 py-2 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex items-center gap-4">
+                <div className="px-4 py-2 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 flex items-center gap-4">
                   <Checkbox 
                     checked={selectedRecords.length === filteredRecords.length && filteredRecords.length > 0}
                     onCheckedChange={handleSelectAll}
                   />
-                  <span className="text-xs text-zinc-500 flex-1">Tabela</span>
-                  <span className="text-xs text-zinc-500 hidden md:block w-16">Origem</span>
-                  <span className="text-xs text-zinc-500 hidden sm:block w-20 text-right">Registros</span>
-                  <span className="text-xs text-zinc-500 hidden lg:block w-28 text-right">Atualização</span>
+                  <span className="text-xs text-neutral-500 flex-1">Tabela</span>
+                  <span className="text-xs text-neutral-500 hidden md:block w-16">Origem</span>
+                  <span className="text-xs text-neutral-500 hidden sm:block w-20 text-right">Registros</span>
+                  <span className="text-xs text-neutral-500 hidden lg:block w-28 text-right">Atualização</span>
                   <div className="w-8" />
                 </div>
 
                 {/* Rows */}
-                <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {filteredRecords.map((record) => (
                     <TableRow
                       key={record.id}
@@ -677,7 +677,7 @@ export default function DataManagementPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-neutral-500">
                     Crie dados fictícios para testar funcionalidades do sistema.
                   </p>
                   
@@ -688,10 +688,10 @@ export default function DataManagementPage() {
                       { tabela: "jurados", label: "Jurados", icon: Gavel },
                       { tabela: "audiencias", label: "Audiências", icon: Calendar },
                     ].map((item) => (
-                      <div key={item.tabela} className="flex items-center justify-between p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
+                      <div key={item.tabela} className="flex items-center justify-between p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50">
                         <div className="flex items-center gap-2">
-                          <item.icon className="w-4 h-4 text-zinc-500" />
-                          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{item.label}</span>
+                          <item.icon className="w-4 h-4 text-neutral-500" />
+                          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{item.label}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Select defaultValue="10">
@@ -730,16 +730,16 @@ export default function DataManagementPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-neutral-500">
                     Dados mockados atualmente no sistema.
                   </p>
                   
                   <div className="space-y-2">
                     {MOCK_TABLES.filter(t => t.tipo === "mock" || t.tipo === "teste").map((table) => (
-                      <div key={table.id} className="flex items-center justify-between p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
+                      <div key={table.id} className="flex items-center justify-between p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50">
                         <div>
-                          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 font-mono">{table.tabela}</span>
-                          <p className="text-[10px] text-zinc-500">{table.registros} registros</p>
+                          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300 font-mono">{table.tabela}</span>
+                          <p className="text-[10px] text-neutral-500">{table.registros} registros</p>
                         </div>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -767,7 +767,7 @@ export default function DataManagementPage() {
                     ))}
                   </div>
 
-                  <div className="pt-2 border-t border-zinc-200 dark:border-zinc-700">
+                  <div className="pt-2 border-t border-neutral-200 dark:border-neutral-700">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm" className="w-full">
@@ -843,12 +843,12 @@ export default function DataManagementPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-neutral-500">
                   Remova registros com base em critérios específicos como data de inclusão ou forma de criação.
                 </p>
 
                 {/* Filtros de Limpeza */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/50">
                   <div className="space-y-2">
                     <Label className="text-xs">Data de Inclusão (De)</Label>
                     <Input 

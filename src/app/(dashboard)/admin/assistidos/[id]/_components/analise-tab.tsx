@@ -625,7 +625,7 @@ export function AnaliseTab({ assistidoId }: AnaliseTabProps) {
     return (
       <div className="space-y-3">
         {[1, 2, 3].map(i => (
-          <div key={i} className="h-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
+          <div key={i} className="h-16 rounded-xl bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
         ))}
       </div>
     );
@@ -635,8 +635,8 @@ export function AnaliseTab({ assistidoId }: AnaliseTabProps) {
   if (!analysis) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
-          <Sparkles className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
+        <div className="w-12 h-12 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-4">
+          <Sparkles className="w-5 h-5 text-neutral-400 dark:text-neutral-500" />
         </div>
         <p className="text-sm font-medium text-foreground mb-1">Nenhuma análise disponível</p>
         <p className="text-xs text-muted-foreground max-w-xs">
@@ -651,7 +651,7 @@ export function AnaliseTab({ assistidoId }: AnaliseTabProps) {
     <div className="space-y-1">
       {/* Case selector pills — future: when multiple cases exist */}
       {/* <div className="flex gap-2 mb-4">
-        <button className="text-xs px-3 py-1.5 rounded-full bg-zinc-700 text-zinc-100">
+        <button className="text-xs px-3 py-1.5 rounded-full bg-neutral-700 text-neutral-100">
           0501234-56.2024 · Homicidio Qualif.
         </button>
       </div> */}
@@ -672,7 +672,7 @@ export function AnaliseTab({ assistidoId }: AnaliseTabProps) {
 
       {/* Metadata footer */}
       {metadata && (
-        <p className="text-[10px] text-zinc-600 text-right pt-2 pb-1">
+        <p className="text-[10px] text-neutral-600 text-right pt-2 pb-1">
           Analisado em{" "}
           {new Date(metadata.analisadoEm).toLocaleDateString("pt-BR")} ·{" "}
           {metadata.documentosAnalisados.length} documentos · via{" "}

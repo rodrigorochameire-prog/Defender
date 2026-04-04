@@ -206,10 +206,10 @@ export function RadarFeed({ filtros, municipio = "camacari", onVerNoMapa }: Rada
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 dark:bg-red-950/30 mb-4">
           <Newspaper className="h-8 w-8 text-red-400" />
         </div>
-        <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+        <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
           Erro ao carregar notícias
         </h3>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-sm mx-auto">
+        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 max-w-sm mx-auto">
           {(error as { message?: string })?.message ?? "Tente atualizar a página."}
         </p>
       </div>
@@ -221,17 +221,17 @@ export function RadarFeed({ filtros, municipio = "camacari", onVerNoMapa }: Rada
   if (allNoticias.length === 0) {
     return (
       <div className="text-center py-20">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
-          <Newspaper className="h-8 w-8 text-zinc-400" />
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4">
+          <Newspaper className="h-8 w-8 text-neutral-400" />
         </div>
-        <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+        <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
           Nenhuma notícia encontrada
         </h3>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-sm mx-auto">
+        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 max-w-sm mx-auto">
           {emptyMessage}
         </p>
         {hasActiveFilters && (
-          <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">
+          <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">
             Tente remover os filtros para ver mais resultados.
           </p>
         )}
@@ -243,21 +243,21 @@ export function RadarFeed({ filtros, municipio = "camacari", onVerNoMapa }: Rada
     <div className={cn("space-y-3 transition-opacity duration-150", isRefetching && "opacity-60 pointer-events-none")}>
       {/* Indicador de refetch sutil */}
       {isRefetching && (
-        <div className="flex items-center gap-1.5 text-xs text-zinc-400 py-0.5">
+        <div className="flex items-center gap-1.5 text-xs text-neutral-400 py-0.5">
           <RefreshCw className="h-3 w-3 animate-spin" />
           <span>Atualizando...</span>
         </div>
       )}
 
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2 text-xs text-zinc-500">
+        <div className="flex items-center gap-2 text-xs text-neutral-500">
           <Radio className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
           <span>{allNoticias.length} notícia{allNoticias.length > 1 ? "s" : ""}</span>
         </div>
 
         <div className="flex items-center gap-2 ml-auto">
           {/* Toggle de visualização — 3 modos */}
-          <div className="flex items-center gap-0.5 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
+          <div className="flex items-center gap-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg p-0.5">
             {([
               { mode: "cards", icon: LayoutGrid, title: "Grid" },
               { mode: "compact", icon: AlignJustify, title: "Compacto" },
@@ -269,8 +269,8 @@ export function RadarFeed({ filtros, municipio = "camacari", onVerNoMapa }: Rada
                 className={cn(
                   "p-1.5 rounded-md transition-colors cursor-pointer",
                   viewMode === mode
-                    ? "bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-zinc-100"
-                    : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                    ? "bg-white dark:bg-neutral-700 shadow-sm text-neutral-800 dark:text-neutral-100"
+                    : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                 )}
                 title={title}
               >
@@ -283,7 +283,7 @@ export function RadarFeed({ filtros, municipio = "camacari", onVerNoMapa }: Rada
           <select
             value={sortBy}
             onChange={(e) => handleSortBy(e.target.value as "recent" | "oldest" | "relevance")}
-            className="h-7 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2 text-xs text-zinc-600 dark:text-zinc-400 cursor-pointer focus:outline-none focus:ring-1 focus:ring-zinc-300"
+            className="h-7 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-2 text-xs text-neutral-600 dark:text-neutral-400 cursor-pointer focus:outline-none focus:ring-1 focus:ring-neutral-300"
           >
             <option value="recent">↓ Mais recentes</option>
             <option value="oldest">↑ Mais antigos</option>
@@ -294,7 +294,7 @@ export function RadarFeed({ filtros, municipio = "camacari", onVerNoMapa }: Rada
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs text-zinc-500 hover:text-zinc-700 cursor-pointer"
+              className="h-7 px-2 text-xs text-neutral-500 hover:text-neutral-700 cursor-pointer"
               onClick={() => exportNoticiasToCsv(allNoticias)}
             >
               <Download className="h-3.5 w-3.5 mr-1.5" />
@@ -307,13 +307,13 @@ export function RadarFeed({ filtros, municipio = "camacari", onVerNoMapa }: Rada
       {groupByDate(allNoticias).map(({ label, items: group }) => (
         <div key={label}>
           <div className="flex items-center gap-2 py-1">
-            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
               {label}
-              <span className="ml-1 text-zinc-300 dark:text-zinc-600">
+              <span className="ml-1 text-neutral-300 dark:text-neutral-600">
                 · {group.length} ocorrência{group.length !== 1 ? "s" : ""}
               </span>
             </span>
-            <div className="flex-1 h-px bg-zinc-100 dark:bg-zinc-800" />
+            <div className="flex-1 h-px bg-neutral-100 dark:bg-neutral-800" />
           </div>
           {/* Grid usa 2 colunas em sm+; compact e list são verticais */}
           <div className={cn(

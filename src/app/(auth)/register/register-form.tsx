@@ -100,7 +100,7 @@ export function RegisterForm() {
     return (
       <div className="flex flex-col items-center justify-center py-8 space-y-3">
         <Loader2 className="h-8 w-8 animate-spin text-teal-400" />
-        <p className="text-sm text-zinc-400">Validando convite...</p>
+        <p className="text-sm text-neutral-400">Validando convite...</p>
       </div>
     );
   }
@@ -113,8 +113,8 @@ export function RegisterForm() {
           <X className="w-6 h-6 text-red-400" />
         </div>
         <h3 className="text-lg font-semibold text-white">Convite Inválido</h3>
-        <p className="text-sm text-zinc-400">{inviteError}</p>
-        <p className="text-xs text-zinc-500">
+        <p className="text-sm text-neutral-400">{inviteError}</p>
+        <p className="text-xs text-neutral-500">
           Solicite um novo convite ao administrador do sistema.
         </p>
       </div>
@@ -134,11 +134,11 @@ export function RegisterForm() {
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="name" className="text-sm font-medium text-zinc-300">
+        <Label htmlFor="name" className="text-sm font-medium text-neutral-300">
           Nome completo
         </Label>
         <div className="relative group">
-          <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 group-focus-within:text-teal-400 transition-colors" />
+          <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500 group-focus-within:text-teal-400 transition-colors" />
           <Input
             id="name"
             name="name"
@@ -146,7 +146,7 @@ export function RegisterForm() {
             placeholder="Seu nome completo"
             autoComplete="name"
             disabled={isLoading}
-            className="pl-10 h-11 text-sm bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:bg-zinc-900 focus:border-teal-500/50 focus:ring-teal-500/20 transition-all"
+            className="pl-10 h-11 text-sm bg-neutral-900 border-neutral-800 text-white placeholder:text-neutral-600 focus:bg-neutral-900 focus:border-teal-500/50 focus:ring-teal-500/20 transition-all"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -155,11 +155,11 @@ export function RegisterForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email" className="text-sm font-medium text-zinc-300">
+        <Label htmlFor="email" className="text-sm font-medium text-neutral-300">
           Email
         </Label>
         <div className="relative group">
-          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 group-focus-within:text-teal-400 transition-colors" />
+          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500 group-focus-within:text-teal-400 transition-colors" />
           <Input
             id="email"
             name="email"
@@ -168,7 +168,7 @@ export function RegisterForm() {
             autoComplete="email"
             disabled={isLoading || (!!inviteToken && inviteValid === true)}
             className={cn(
-              "pl-10 h-11 text-sm bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:bg-zinc-900 focus:border-teal-500/50 focus:ring-teal-500/20 transition-all",
+              "pl-10 h-11 text-sm bg-neutral-900 border-neutral-800 text-white placeholder:text-neutral-600 focus:bg-neutral-900 focus:border-teal-500/50 focus:ring-teal-500/20 transition-all",
               inviteToken && inviteValid && "opacity-70 cursor-not-allowed"
             )}
             value={email}
@@ -177,16 +177,16 @@ export function RegisterForm() {
           />
         </div>
         {inviteToken && inviteValid && (
-          <p className="text-xs text-zinc-500">Email vinculado ao convite, não pode ser alterado</p>
+          <p className="text-xs text-neutral-500">Email vinculado ao convite, não pode ser alterado</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password" className="text-sm font-medium text-zinc-300">
+        <Label htmlFor="password" className="text-sm font-medium text-neutral-300">
           Senha
         </Label>
         <div className="relative group">
-          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 group-focus-within:text-teal-400 transition-colors" />
+          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500 group-focus-within:text-teal-400 transition-colors" />
           <Input
             id="password"
             name="password"
@@ -194,7 +194,7 @@ export function RegisterForm() {
             placeholder="Mínimo 6 caracteres"
             autoComplete="new-password"
             disabled={isLoading}
-            className="pl-10 h-11 text-sm bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:bg-zinc-900 focus:border-teal-500/50 focus:ring-teal-500/20 transition-all"
+            className="pl-10 h-11 text-sm bg-neutral-900 border-neutral-800 text-white placeholder:text-neutral-600 focus:bg-neutral-900 focus:border-teal-500/50 focus:ring-teal-500/20 transition-all"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -203,11 +203,11 @@ export function RegisterForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="confirmPassword" className="text-sm font-medium text-zinc-300">
+        <Label htmlFor="confirmPassword" className="text-sm font-medium text-neutral-300">
           Confirmar senha
         </Label>
         <div className="relative group">
-          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 group-focus-within:text-teal-400 transition-colors" />
+          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500 group-focus-within:text-teal-400 transition-colors" />
           <Input
             id="confirmPassword"
             name="confirmPassword"
@@ -215,7 +215,7 @@ export function RegisterForm() {
             placeholder="Repita a senha"
             autoComplete="new-password"
             disabled={isLoading}
-            className="pl-10 h-11 text-sm bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:bg-zinc-900 focus:border-teal-500/50 focus:ring-teal-500/20 transition-all"
+            className="pl-10 h-11 text-sm bg-neutral-900 border-neutral-800 text-white placeholder:text-neutral-600 focus:bg-neutral-900 focus:border-teal-500/50 focus:ring-teal-500/20 transition-all"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
@@ -225,7 +225,7 @@ export function RegisterForm() {
 
       {/* Password validation indicators */}
       {(password.length > 0 || confirmPassword.length > 0) && (
-        <div className="space-y-2 p-3 bg-zinc-900/80 rounded-lg border border-zinc-800">
+        <div className="space-y-2 p-3 bg-neutral-900/80 rounded-lg border border-neutral-800">
           <div className="flex items-center gap-2 text-sm">
             {passwordChecks.length ? (
               <Check className="h-4 w-4 text-teal-400" />
@@ -234,7 +234,7 @@ export function RegisterForm() {
             )}
             <span
               className={cn(
-                passwordChecks.length ? "text-teal-400" : "text-zinc-500"
+                passwordChecks.length ? "text-teal-400" : "text-neutral-500"
               )}
             >
               Mínimo de 6 caracteres
@@ -249,7 +249,7 @@ export function RegisterForm() {
               )}
               <span
                 className={cn(
-                  passwordChecks.match ? "text-teal-400" : "text-zinc-500"
+                  passwordChecks.match ? "text-teal-400" : "text-neutral-500"
                 )}
               >
                 Senhas conferem

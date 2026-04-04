@@ -29,17 +29,17 @@ export function LeiSelectorPanel({
   return (
     <div
       className={cn(
-        "flex shrink-0 flex-col border-r border-zinc-200 dark:border-border transition-all duration-200",
+        "flex shrink-0 flex-col border-r border-neutral-200 dark:border-border transition-all duration-200",
         collapsed ? "w-10" : "w-44"
       )}
     >
       {/* Toggle button */}
       {!hideToggle && (
-        <div className="flex items-center justify-end border-b border-zinc-200 dark:border-border p-1.5">
+        <div className="flex items-center justify-end border-b border-neutral-200 dark:border-border p-1.5">
           <button
             type="button"
             onClick={onToggleCollapse}
-            className="rounded-md p-1 hover:bg-zinc-100 dark:hover:bg-muted transition-colors cursor-pointer"
+            className="rounded-md p-1 hover:bg-neutral-100 dark:hover:bg-muted transition-colors cursor-pointer"
             title={collapsed ? "Expandir" : "Recolher"}
           >
             {collapsed ? (
@@ -67,8 +67,8 @@ export function LeiSelectorPanel({
                         className={cn(
                           "flex w-full items-center justify-center rounded-md p-1.5 transition-colors cursor-pointer",
                           isSelected
-                            ? "bg-zinc-100 dark:bg-muted"
-                            : "hover:bg-zinc-50 dark:hover:bg-card"
+                            ? "bg-neutral-100 dark:bg-muted"
+                            : "hover:bg-neutral-50 dark:hover:bg-card"
                         )}
                       >
                         <span
@@ -99,8 +99,8 @@ export function LeiSelectorPanel({
                   className={cn(
                     "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors cursor-pointer",
                     isSelected
-                      ? "bg-zinc-100 dark:bg-muted"
-                      : "hover:bg-zinc-50 dark:hover:bg-card"
+                      ? "bg-neutral-100 dark:bg-muted"
+                      : "hover:bg-neutral-50 dark:hover:bg-card"
                   )}
                 >
                   <span

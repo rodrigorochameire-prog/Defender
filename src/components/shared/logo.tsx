@@ -108,11 +108,11 @@ export function Logo({
         <div className={cn("flex flex-col items-center gap-4", className)}>
           <LogoImage width={iconSize} height={iconSize} />
           <div className="text-center">
-            <h1 className={cn("font-bold tracking-tight text-zinc-900 dark:text-zinc-100", sizeConfig.text)}>
+            <h1 className={cn("font-bold tracking-tight text-neutral-900 dark:text-neutral-100", sizeConfig.text)}>
               OMBUDS
             </h1>
             {showSubtitle && (
-              <p className="text-[10px] font-light tracking-[0.2em] uppercase text-zinc-400 dark:text-zinc-500 mt-1">
+              <p className="text-[10px] font-light tracking-[0.2em] uppercase text-neutral-400 dark:text-neutral-500 mt-1">
                 GESTÃO PARA DEFESA CRIMINAL
               </p>
             )}
@@ -126,11 +126,11 @@ export function Logo({
       <div className={cn("flex items-center gap-3", className)}>
         <LogoImage width={iconSize} height={iconSize} />
         <div>
-          <h2 className={cn("font-bold tracking-tight text-zinc-900 dark:text-zinc-100", sizeConfig.text)}>
+          <h2 className={cn("font-bold tracking-tight text-neutral-900 dark:text-neutral-100", sizeConfig.text)}>
             OMBUDS
           </h2>
           {showSubtitle && (
-            <p className="text-[9px] font-light tracking-[0.15em] uppercase text-zinc-400 dark:text-zinc-500">
+            <p className="text-[9px] font-light tracking-[0.15em] uppercase text-neutral-400 dark:text-neutral-500">
               GESTÃO PARA DEFESA CRIMINAL
             </p>
           )}
@@ -189,10 +189,10 @@ export function SidebarLogo({ collapsed = false, className }: SidebarLogoProps) 
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <span className="font-serif text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 block leading-tight">
+            <span className="font-serif text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-100 block leading-tight">
               OMBUDS
             </span>
-            <span className="text-[9px] font-light tracking-[0.12em] uppercase text-zinc-500 dark:text-zinc-500 block leading-tight">
+            <span className="text-[9px] font-light tracking-[0.12em] uppercase text-neutral-500 dark:text-neutral-500 block leading-tight">
               Ecossistema de Defesa Criminal
             </span>
           </div>

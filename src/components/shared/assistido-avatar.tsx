@@ -102,7 +102,7 @@ export function AssistidoAvatar({
       {dotColor && (
         <span
           className={cn(
-            "absolute rounded-full border-white dark:border-zinc-900",
+            "absolute rounded-full border-white dark:border-neutral-900",
             DOT_CLASSES[size],
             dotColor,
           )}

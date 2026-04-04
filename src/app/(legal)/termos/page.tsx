@@ -8,7 +8,7 @@ export default function TermosPage() {
   return (
     <article className="prose prose-zinc dark:prose-invert max-w-none">
       <h1>Termos de Serviço</h1>
-      <p className="text-sm text-zinc-500">Última atualização: 10 de março de 2026</p>
+      <p className="text-sm text-neutral-500">Última atualização: 10 de março de 2026</p>
 
       <h2>1. Aceitação dos termos</h2>
       <p>

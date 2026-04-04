@@ -23,7 +23,7 @@ function Calendar({
         months: "flex flex-col sm:flex-row gap-2",
         month: "flex flex-col gap-4",
         month_caption: "flex justify-center pt-1 relative items-center w-full",
-        caption_label: "text-sm font-semibold text-zinc-800 dark:text-zinc-200 capitalize",
+        caption_label: "text-sm font-semibold text-neutral-800 dark:text-neutral-200 capitalize",
         nav: "flex items-center gap-1",
         button_previous: cn(
           buttonVariants({ variant: "outline" }),
@@ -36,7 +36,7 @@ function Calendar({
         month_grid: "w-full border-collapse",
         weekdays: "flex",
         weekday:
-          "text-zinc-400 dark:text-zinc-500 rounded-md w-9 font-medium text-[0.75rem] uppercase",
+          "text-neutral-400 dark:text-neutral-500 rounded-md w-9 font-medium text-[0.75rem] uppercase",
         week: "flex w-full mt-1",
         day: cn(
           "relative p-0 text-center text-sm focus-within:relative focus-within:z-20",
@@ -55,10 +55,10 @@ function Calendar({
           "day-range-end aria-selected:bg-emerald-600 aria-selected:text-white",
         selected:
           "bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white focus:bg-emerald-600 focus:text-white font-semibold",
-        today: "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold",
+        today: "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-semibold",
         outside:
-          "day-outside text-zinc-300 dark:text-zinc-600 aria-selected:text-white/70",
-        disabled: "text-zinc-300 dark:text-zinc-600 opacity-50",
+          "day-outside text-neutral-300 dark:text-neutral-600 aria-selected:text-white/70",
+        disabled: "text-neutral-300 dark:text-neutral-600 opacity-50",
         range_middle:
           "aria-selected:bg-emerald-50 dark:aria-selected:bg-emerald-950/20 aria-selected:text-emerald-900 dark:aria-selected:text-emerald-200",
         hidden: "invisible",

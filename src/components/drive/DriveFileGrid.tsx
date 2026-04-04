@@ -67,11 +67,11 @@ function getFileTypeShort(mimeType: string | null): string {
 
 function SkeletonCard() {
   return (
-    <div className="bg-zinc-100/50 dark:bg-zinc-800/50 border border-zinc-200/40 dark:border-zinc-700/40 rounded-lg overflow-hidden animate-pulse">
-      <div className="h-24 sm:h-28 bg-zinc-200/30 dark:bg-zinc-700/30" />
+    <div className="bg-neutral-100/50 dark:bg-neutral-800/50 border border-neutral-200/40 dark:border-neutral-700/40 rounded-lg overflow-hidden animate-pulse">
+      <div className="h-24 sm:h-28 bg-neutral-200/30 dark:bg-neutral-700/30" />
       <div className="p-2">
-        <div className="h-3 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-3/4 mb-1" />
-        <div className="h-2.5 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-1/3" />
+        <div className="h-3 bg-neutral-200/50 dark:bg-neutral-700/50 rounded w-3/4 mb-1" />
+        <div className="h-2.5 bg-neutral-200/50 dark:bg-neutral-700/50 rounded w-1/3" />
       </div>
     </div>
   );
@@ -118,7 +118,7 @@ function FileGridCard({ file }: { file: DriveFile }) {
     <div
       onClick={handleClick}
       className={cn(
-        "group relative bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/60 rounded-lg overflow-hidden cursor-pointer",
+        "group relative bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800/60 rounded-lg overflow-hidden cursor-pointer",
         "hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50/20 dark:hover:bg-emerald-500/5",
         "transition-colors duration-200",
         isSelected && "border-emerald-300 dark:border-emerald-500/50 bg-emerald-50/80 dark:bg-emerald-500/10"
@@ -135,7 +135,7 @@ function FileGridCard({ file }: { file: DriveFile }) {
         <Checkbox
           checked={isSelected}
           onCheckedChange={() => ctx.toggleFileSelection(file.id)}
-          className="h-4 w-4 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm"
+          className="h-4 w-4 border-neutral-300 dark:border-neutral-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm"
         />
       </div>
 
@@ -150,8 +150,8 @@ function FileGridCard({ file }: { file: DriveFile }) {
         >
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="h-6 w-6 flex items-center justify-center rounded-md bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
-                <MoreVertical className="h-3.5 w-3.5 text-zinc-500" />
+              <button className="h-6 w-6 flex items-center justify-center rounded-md bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors">
+                <MoreVertical className="h-3.5 w-3.5 text-neutral-500" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
@@ -179,7 +179,7 @@ function FileGridCard({ file }: { file: DriveFile }) {
       {/* Preview area */}
       <div className={cn(
         "relative h-24 sm:h-28 flex items-center justify-center",
-        hasThumbnail ? "bg-zinc-50 dark:bg-zinc-800/50" : file.isFolder ? "bg-emerald-50/50 dark:bg-emerald-500/5" : "bg-zinc-50 dark:bg-zinc-800/30"
+        hasThumbnail ? "bg-neutral-50 dark:bg-neutral-800/50" : file.isFolder ? "bg-emerald-50/50 dark:bg-emerald-500/5" : "bg-neutral-50 dark:bg-neutral-800/30"
       )}>
         {hasThumbnail ? (
           <img
@@ -191,7 +191,7 @@ function FileGridCard({ file }: { file: DriveFile }) {
         ) : (
           <Icon className={cn(
             "w-8 h-8",
-            file.isFolder ? "text-emerald-500/60 dark:text-emerald-500/40" : "text-zinc-300 dark:text-zinc-600"
+            file.isFolder ? "text-emerald-500/60 dark:text-emerald-500/40" : "text-neutral-300 dark:text-neutral-600"
           )} />
         )}
 
@@ -204,17 +204,17 @@ function FileGridCard({ file }: { file: DriveFile }) {
 
         {/* Atribuicao dot - bottom left */}
         {atribuicao && (
-          <span className={cn("absolute bottom-1.5 left-1.5 h-2 w-2 rounded-full ring-1 ring-white dark:ring-zinc-900", atribuicao.dotClass)} />
+          <span className={cn("absolute bottom-1.5 left-1.5 h-2 w-2 rounded-full ring-1 ring-white dark:ring-neutral-900", atribuicao.dotClass)} />
         )}
       </div>
 
       {/* Info */}
       <div className="p-2">
-        <p className="text-[11px] font-medium text-zinc-800 dark:text-zinc-200 truncate leading-tight" title={file.name}>
+        <p className="text-[11px] font-medium text-neutral-800 dark:text-neutral-200 truncate leading-tight" title={file.name}>
           {file.name}
         </p>
         <div className="flex items-center justify-between mt-0.5">
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+          <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
             {file.isFolder ? "Pasta" : [formatFileSize(file.fileSize), dateStr].filter(Boolean).join(" · ")}
           </span>
           {!file.isFolder && enrichment.label && (
@@ -261,9 +261,9 @@ export function DriveFileGrid({ files, isLoading }: DriveFileGridProps) {
   if (sortedFiles.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <FolderOpen className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mb-2" />
-        <p className="text-[12px] text-zinc-500 font-medium">Nenhum arquivo nesta pasta</p>
-        <p className="text-[11px] text-zinc-400 mt-0.5">Sincronize ou faca upload</p>
+        <FolderOpen className="w-10 h-10 text-neutral-300 dark:text-neutral-600 mb-2" />
+        <p className="text-[12px] text-neutral-500 font-medium">Nenhum arquivo nesta pasta</p>
+        <p className="text-[11px] text-neutral-400 mt-0.5">Sincronize ou faca upload</p>
       </div>
     );
   }

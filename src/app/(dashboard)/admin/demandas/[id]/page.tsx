@@ -39,23 +39,23 @@ import { UI_STATUS_TO_DB, ALL_STATUS_OPTIONS, getStatusConfig } from "@/config/d
 const STATUS_BADGE_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   "2_ATENDER":      { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-300", label: "Atender" },
   "4_MONITORAR":    { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-700 dark:text-purple-300", label: "Monitorar" },
-  "5_FILA":         { bg: "bg-zinc-100 dark:bg-zinc-800/50", text: "text-zinc-600 dark:text-zinc-400", label: "Fila" },
+  "5_FILA":         { bg: "bg-neutral-100 dark:bg-neutral-800/50", text: "text-neutral-600 dark:text-neutral-400", label: "Fila" },
   "7_PROTOCOLADO":  { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-300", label: "Protocolado" },
   "7_CIENCIA":      { bg: "bg-sky-100 dark:bg-sky-900/30", text: "text-sky-700 dark:text-sky-300", label: "Ciência" },
-  "7_SEM_ATUACAO":  { bg: "bg-zinc-100 dark:bg-zinc-800/50", text: "text-zinc-500 dark:text-zinc-500", label: "Sem Atuação" },
+  "7_SEM_ATUACAO":  { bg: "bg-neutral-100 dark:bg-neutral-800/50", text: "text-neutral-500 dark:text-neutral-500", label: "Sem Atuação" },
   "URGENTE":        { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-700 dark:text-red-300", label: "Urgente" },
   "CONCLUIDO":      { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-300", label: "Concluído" },
-  "ARQUIVADO":      { bg: "bg-zinc-100 dark:bg-zinc-800/40", text: "text-zinc-400 dark:text-zinc-500", label: "Arquivado" },
+  "ARQUIVADO":      { bg: "bg-neutral-100 dark:bg-neutral-800/40", text: "text-neutral-400 dark:text-neutral-500", label: "Arquivado" },
 };
 
 function getStatusBadge(status: string | null) {
-  if (!status) return { bg: "bg-zinc-100 dark:bg-zinc-800/50", text: "text-zinc-500", label: "Pendente" };
-  return STATUS_BADGE_STYLES[status] || { bg: "bg-zinc-100 dark:bg-zinc-800/50", text: "text-zinc-500", label: status };
+  if (!status) return { bg: "bg-neutral-100 dark:bg-neutral-800/50", text: "text-neutral-500", label: "Pendente" };
+  return STATUS_BADGE_STYLES[status] || { bg: "bg-neutral-100 dark:bg-neutral-800/50", text: "text-neutral-500", label: status };
 }
 
 // ─── Prioridade badge styles ────────────────────────
 const PRIORIDADE_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  "BAIXA":     { bg: "bg-zinc-100 dark:bg-zinc-800/50", text: "text-zinc-500 dark:text-zinc-400", label: "Baixa" },
+  "BAIXA":     { bg: "bg-neutral-100 dark:bg-neutral-800/50", text: "text-neutral-500 dark:text-neutral-400", label: "Baixa" },
   "NORMAL":    { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-600 dark:text-blue-400", label: "Normal" },
   "ALTA":      { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-300", label: "Alta" },
   "URGENTE":   { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-700 dark:text-red-300", label: "Urgente" },
@@ -146,13 +146,13 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
   if (error || !demanda) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
-        <div className="h-16 w-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-          <FileText className="h-8 w-8 text-zinc-400" />
+        <div className="h-16 w-16 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+          <FileText className="h-8 w-8 text-neutral-400" />
         </div>
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
           Demanda não encontrada
         </h2>
-        <p className="text-zinc-500 dark:text-zinc-400 text-sm">
+        <p className="text-neutral-500 dark:text-neutral-400 text-sm">
           {error?.message || "A demanda solicitada não existe ou você não tem acesso."}
         </p>
         <Link href="/admin/demandas">
@@ -226,7 +226,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
       {/* ─── Back navigation ─── */}
       <div className="flex items-center gap-2">
         <Link href="/admin/demandas">
-          <Button variant="ghost" size="sm" className="gap-1.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 -ml-2">
+          <Button variant="ghost" size="sm" className="gap-1.5 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 -ml-2">
             <ArrowLeft className="h-4 w-4" />
             Voltar
           </Button>
@@ -234,7 +234,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* ─── Header card ─── */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-6">
+      <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           {/* Title & badges */}
           <div className="space-y-3 min-w-0 flex-1">
@@ -243,13 +243,13 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
                 <FileText className="h-5 w-5 text-white" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">
+                <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tight leading-tight">
                   {demanda.ato}
                 </h1>
                 {demanda.assistido?.nome && (
                   <Link
                     href={`/admin/assistidos/${demanda.assistido.id}`}
-                    className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                    className="text-sm text-neutral-500 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                   >
                     {demanda.assistido.nome}
                   </Link>
@@ -264,7 +264,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
               </Badge>
 
               {demanda.substatus && (
-                <Badge variant="outline" className="text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 font-normal text-xs">
+                <Badge variant="outline" className="text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700 font-normal text-xs">
                   {demanda.substatus}
                 </Badge>
               )}
@@ -274,7 +274,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
               </Badge>
 
               {atribuicaoLabel && (
-                <Badge variant="outline" className="border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 text-xs">
+                <Badge variant="outline" className="border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 text-xs">
                   {atribuicaoLabel}
                 </Badge>
               )}
@@ -294,7 +294,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
               variant="outline"
               size="sm"
               onClick={() => setShowStatusSelect(!showStatusSelect)}
-              className="border-zinc-200 dark:border-zinc-700"
+              className="border-neutral-200 dark:border-neutral-700"
             >
               <RefreshCw className="h-4 w-4 mr-1.5" />
               Alterar Status
@@ -304,7 +304,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
               size="sm"
               onClick={handleArchive}
               disabled={updateMutation.isPending || demanda.status === "ARQUIVADO"}
-              className="border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+              className="border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
             >
               <Archive className="h-4 w-4 mr-1.5" />
               Arquivar
@@ -314,8 +314,8 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
 
         {/* Status change dropdown */}
         {showStatusSelect && (
-          <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-            <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
+          <div className="mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
+            <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-2">
               Alterar status para:
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -331,7 +331,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
                     className={
                       isActive
                         ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                        : "border-zinc-200 dark:border-zinc-700 text-xs"
+                        : "border-neutral-200 dark:border-neutral-700 text-xs"
                     }
                     disabled={updateMutation.isPending}
                     onClick={() => handleStatusChange(opt.value, opt.substatus)}
@@ -353,7 +353,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
               ? "bg-red-50/80 dark:bg-red-950/20 border-red-200/80 dark:border-red-800/40"
               : prazoUrgente
                 ? "bg-amber-50/80 dark:bg-amber-950/20 border-amber-200/80 dark:border-amber-800/40"
-                : "bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/80"
+                : "bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/80"
           }`}
         >
           <div className="flex items-center justify-between">
@@ -366,7 +366,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
                 <Calendar className="h-7 w-7 text-emerald-500" />
               )}
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
                   Prazo Fatal
                 </p>
                 <p
@@ -375,7 +375,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
                       ? "text-red-600 dark:text-red-400"
                       : prazoUrgente
                         ? "text-amber-600 dark:text-amber-400"
-                        : "text-zinc-900 dark:text-zinc-100"
+                        : "text-neutral-900 dark:text-neutral-100"
                   }`}
                 >
                   {formatDateLong(demanda.prazo)}
@@ -389,7 +389,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
                     ? "text-red-600 dark:text-red-400"
                     : prazoUrgente
                       ? "text-amber-600 dark:text-amber-400"
-                      : "text-zinc-500 dark:text-zinc-400"
+                      : "text-neutral-500 dark:text-neutral-400"
                 }`}
               >
                 <p className="text-2xl font-bold tabular-nums">
@@ -411,34 +411,34 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
       {/* ─── Info grid (2 columns on desktop) ─── */}
       <div className="grid gap-5 md:grid-cols-2">
         {/* Processo card */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-5 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-colors">
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-5 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-colors">
           <div className="flex items-center gap-2 mb-4">
             <Scale className="h-4 w-4 text-emerald-600" />
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Processo</h3>
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Processo</h3>
           </div>
           <div className="space-y-3">
             <InfoRow label="Número dos Autos">
               {demanda.processo?.numeroAutos ? (
                 <Link
                   href={`/admin/processos/${demanda.processo.id}`}
-                  className="font-mono text-sm font-medium text-zinc-900 dark:text-zinc-100 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
+                  className="font-mono text-sm font-medium text-neutral-900 dark:text-neutral-100 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
                 >
                   {demanda.processo.numeroAutos}
                   <ExternalLink className="h-3 w-3 opacity-50" />
                 </Link>
               ) : (
-                <span className="text-zinc-400 text-sm">-</span>
+                <span className="text-neutral-400 text-sm">-</span>
               )}
             </InfoRow>
 
             <div className="grid grid-cols-2 gap-3">
               <InfoRow label="Área">
-                <span className="text-sm text-zinc-900 dark:text-zinc-100">
+                <span className="text-sm text-neutral-900 dark:text-neutral-100">
                   {demanda.processo?.area || "-"}
                 </span>
               </InfoRow>
               <InfoRow label="Comarca">
-                <span className="text-sm text-zinc-900 dark:text-zinc-100">
+                <span className="text-sm text-neutral-900 dark:text-neutral-100">
                   {demanda.processo?.comarca || "-"}
                 </span>
               </InfoRow>
@@ -446,7 +446,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
 
             {demanda.processo?.vara && (
               <InfoRow label="Vara">
-                <span className="text-sm text-zinc-900 dark:text-zinc-100">
+                <span className="text-sm text-neutral-900 dark:text-neutral-100">
                   {demanda.processo.vara}
                 </span>
               </InfoRow>
@@ -454,7 +454,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
 
             {demanda.processo?.classeProcessual && (
               <InfoRow label="Classe Processual">
-                <span className="text-sm text-zinc-900 dark:text-zinc-100">
+                <span className="text-sm text-neutral-900 dark:text-neutral-100">
                   {demanda.processo.classeProcessual}
                 </span>
               </InfoRow>
@@ -462,7 +462,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
 
             {demanda.processo?.assunto && (
               <InfoRow label="Assunto">
-                <span className="text-sm text-zinc-900 dark:text-zinc-100 line-clamp-2">
+                <span className="text-sm text-neutral-900 dark:text-neutral-100 line-clamp-2">
                   {demanda.processo.assunto}
                 </span>
               </InfoRow>
@@ -470,7 +470,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
 
             {demanda.processo?.parteContraria && (
               <InfoRow label="Parte Contrária">
-                <span className="text-sm text-zinc-900 dark:text-zinc-100">
+                <span className="text-sm text-neutral-900 dark:text-neutral-100">
                   {demanda.processo.parteContraria}
                 </span>
               </InfoRow>
@@ -478,7 +478,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
 
             {demanda.processo?.fase && (
               <InfoRow label="Fase">
-                <Badge variant="outline" className="border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 text-xs">
+                <Badge variant="outline" className="border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 text-xs">
                   {demanda.processo.fase}
                 </Badge>
               </InfoRow>
@@ -486,7 +486,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
 
             {demanda.processo?.id && (
               <Link href={`/admin/processos/${demanda.processo.id}`} className="block mt-3">
-                <Button variant="outline" size="sm" className="w-full border-zinc-200 dark:border-zinc-700 text-xs">
+                <Button variant="outline" size="sm" className="w-full border-neutral-200 dark:border-neutral-700 text-xs">
                   <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                   Ver Processo Completo
                 </Button>
@@ -496,18 +496,18 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* Assistido card */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-5 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-colors">
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-5 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-colors">
           <div className="flex items-center gap-2 mb-4">
             <User className="h-4 w-4 text-emerald-600" />
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Assistido</h3>
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Assistido</h3>
           </div>
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-zinc-400 to-zinc-500 dark:from-zinc-600 dark:to-zinc-700 flex items-center justify-center text-white text-lg font-bold shrink-0">
+              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-neutral-400 to-neutral-500 dark:from-neutral-600 dark:to-neutral-700 flex items-center justify-center text-white text-lg font-bold shrink-0">
                 {demanda.assistido?.nome?.charAt(0) || "?"}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">
                   {demanda.assistido?.nome || "Não vinculado"}
                 </p>
                 {demanda.reuPreso && demanda.assistido?.statusPrisional && (
@@ -520,14 +520,14 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             <InfoRow label="Defensor Responsável">
-              <span className="text-sm text-zinc-900 dark:text-zinc-100">
+              <span className="text-sm text-neutral-900 dark:text-neutral-100">
                 {demanda.defensor?.name || "-"}
               </span>
             </InfoRow>
 
             {demanda.assistido?.id && (
               <Link href={`/admin/assistidos/${demanda.assistido.id}`} className="block mt-3">
-                <Button variant="outline" size="sm" className="w-full border-zinc-200 dark:border-zinc-700 text-xs">
+                <Button variant="outline" size="sm" className="w-full border-neutral-200 dark:border-neutral-700 text-xs">
                   <User className="h-3.5 w-3.5 mr-1.5" />
                   Ver Ficha do Assistido
                 </Button>
@@ -538,7 +538,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* ─── Dates metadata strip ─── */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-5">
+      <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-5">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <DateField label="Data de Entrada" value={formatDate(demanda.dataEntrada)} />
           <DateField label="Data da Intimação" value={formatDate(demanda.dataIntimacao)} />
@@ -548,11 +548,11 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* ─── Providências (inline editable) ─── */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-5">
+      <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Gavel className="h-4 w-4 text-emerald-600" />
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
               Providências
             </h3>
           </div>
@@ -561,7 +561,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
               variant="ghost"
               size="sm"
               onClick={handleEditProvidencias}
-              className="h-7 px-2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+              className="h-7 px-2 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
             >
               <Edit2 className="h-3.5 w-3.5 mr-1" />
               Editar
@@ -594,7 +594,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
                 size="sm"
                 onClick={() => setEditingProvidencias(false)}
                 disabled={updateMutation.isPending}
-                className="h-8 border-zinc-200 dark:border-zinc-700"
+                className="h-8 border-neutral-200 dark:border-neutral-700"
               >
                 <X className="h-3.5 w-3.5 mr-1.5" />
                 Cancelar
@@ -602,13 +602,13 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
         ) : demanda.providencias ? (
-          <p className="text-sm text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap leading-relaxed">
+          <p className="text-sm text-neutral-900 dark:text-neutral-100 whitespace-pre-wrap leading-relaxed">
             {demanda.providencias}
           </p>
         ) : (
           <button
             onClick={handleEditProvidencias}
-            className="w-full text-left text-sm text-zinc-400 dark:text-zinc-500 border border-dashed border-zinc-200 dark:border-zinc-700 rounded-lg p-3 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+            className="w-full text-left text-sm text-neutral-400 dark:text-neutral-500 border border-dashed border-neutral-200 dark:border-neutral-700 rounded-lg p-3 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
           >
             <Plus className="h-3.5 w-3.5 inline mr-1.5 -mt-0.5" />
             Adicionar providências...
@@ -617,11 +617,11 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* ─── Documentos & Ofícios vinculados ─── */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-5">
+      <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-emerald-600" />
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
               Ofícios Vinculados
             </h3>
             {oficiosVinculados && oficiosVinculados.items.length > 0 && (
@@ -633,7 +633,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
           <Link
             href={`/admin/oficios/novo?demandaId=${demandaId}&assistidoId=${demanda.assistidoId}&processoId=${demanda.processoId}`}
           >
-            <Button variant="outline" size="sm" className="h-7 px-2 border-zinc-200 dark:border-zinc-700 text-xs">
+            <Button variant="outline" size="sm" className="h-7 px-2 border-neutral-200 dark:border-neutral-700 text-xs">
               <Plus className="h-3.5 w-3.5 mr-1" />
               Novo Ofício
             </Button>
@@ -645,27 +645,27 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
             {oficiosVinculados.items.map((oficio) => {
               const ofStatus = (oficio.metadata as any)?.status as string | undefined;
               const statusBadgeMap: Record<string, { bg: string; text: string; label: string }> = {
-                rascunho: { bg: "bg-zinc-100 dark:bg-zinc-800", text: "text-zinc-500", label: "Rascunho" },
+                rascunho: { bg: "bg-neutral-100 dark:bg-neutral-800", text: "text-neutral-500", label: "Rascunho" },
                 revisao: { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-300", label: "Em Revisão" },
                 enviado: { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-300", label: "Enviado" },
-                arquivado: { bg: "bg-zinc-100 dark:bg-zinc-800", text: "text-zinc-400", label: "Arquivado" },
+                arquivado: { bg: "bg-neutral-100 dark:bg-neutral-800", text: "text-neutral-400", label: "Arquivado" },
               };
               const ofBadge = ofStatus ? statusBadgeMap[ofStatus] : statusBadgeMap["rascunho"];
               return (
                 <Link
                   key={oficio.id}
                   href={`/admin/oficios/${oficio.id}`}
-                  className="flex items-center justify-between gap-3 p-3 rounded-lg border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/10 transition-colors group"
+                  className="flex items-center justify-between gap-3 p-3 rounded-lg border border-neutral-100 dark:border-neutral-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/10 transition-colors group"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
-                      <FileText className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                    <div className="h-8 w-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                      <FileText className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                      <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
                         {oficio.titulo}
                       </p>
-                      <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                      <p className="text-xs text-neutral-400 dark:text-neutral-500">
                         {oficio.createdAt ? format(new Date(oficio.createdAt), "dd/MM/yyyy", { locale: ptBR }) : ""}
                         {oficio.geradoPorIA && (
                           <span className="ml-2 inline-flex items-center gap-0.5 text-violet-500">
@@ -682,7 +682,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
                       </Badge>
                     )}
                     {oficio.googleDocUrl && (
-                      <ExternalLink className="h-3.5 w-3.5 text-zinc-300 dark:text-zinc-600 group-hover:text-emerald-500 transition-colors" />
+                      <ExternalLink className="h-3.5 w-3.5 text-neutral-300 dark:text-neutral-600 group-hover:text-emerald-500 transition-colors" />
                     )}
                   </div>
                 </Link>
@@ -690,7 +690,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
             })}
           </div>
         ) : (
-          <p className="text-sm text-zinc-400 dark:text-zinc-500 text-center py-4">
+          <p className="text-sm text-neutral-400 dark:text-neutral-500 text-center py-4">
             Nenhum ofício vinculado a esta demanda.
           </p>
         )}
@@ -698,32 +698,32 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
 
       {/* ─── Enrichment data (if available) ─── */}
       {demanda.enrichmentData && (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-5">
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="h-4 w-4 text-violet-500" />
-            <h3 className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+            <h3 className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
               Enriquecimento Automático
             </h3>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
             {demanda.enrichmentData.crime && (
               <InfoRow label="Crime">
-                <span className="text-zinc-900 dark:text-zinc-100">{demanda.enrichmentData.crime}</span>
+                <span className="text-neutral-900 dark:text-neutral-100">{demanda.enrichmentData.crime}</span>
               </InfoRow>
             )}
             {demanda.enrichmentData.fase_processual && (
               <InfoRow label="Fase Processual">
-                <span className="text-zinc-900 dark:text-zinc-100">{demanda.enrichmentData.fase_processual}</span>
+                <span className="text-neutral-900 dark:text-neutral-100">{demanda.enrichmentData.fase_processual}</span>
               </InfoRow>
             )}
             {demanda.enrichmentData.intimado && (
               <InfoRow label="Intimado">
-                <span className="text-zinc-900 dark:text-zinc-100">{demanda.enrichmentData.intimado}</span>
+                <span className="text-neutral-900 dark:text-neutral-100">{demanda.enrichmentData.intimado}</span>
               </InfoRow>
             )}
             {demanda.enrichmentData.vitima && (
               <InfoRow label="Vítima">
-                <span className="text-zinc-900 dark:text-zinc-100">{demanda.enrichmentData.vitima}</span>
+                <span className="text-neutral-900 dark:text-neutral-100">{demanda.enrichmentData.vitima}</span>
               </InfoRow>
             )}
             {demanda.enrichmentData.artigos && demanda.enrichmentData.artigos.length > 0 && (
@@ -731,7 +731,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
                 <InfoRow label="Artigos">
                   <div className="flex flex-wrap gap-1">
                     {demanda.enrichmentData.artigos.map((art, i) => (
-                      <Badge key={i} variant="outline" className="text-xs border-zinc-200 dark:border-zinc-700">
+                      <Badge key={i} variant="outline" className="text-xs border-neutral-200 dark:border-neutral-700">
                         {art}
                       </Badge>
                     ))}
@@ -755,17 +755,17 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
           <div className="grid grid-cols-2 gap-3 text-sm">
             {demanda.statusDelegacao && (
               <InfoRow label="Status">
-                <span className="text-zinc-900 dark:text-zinc-100 capitalize">{demanda.statusDelegacao}</span>
+                <span className="text-neutral-900 dark:text-neutral-100 capitalize">{demanda.statusDelegacao}</span>
               </InfoRow>
             )}
             {demanda.dataDelegacao && (
               <InfoRow label="Data">
-                <span className="text-zinc-900 dark:text-zinc-100">{formatDate(demanda.dataDelegacao)}</span>
+                <span className="text-neutral-900 dark:text-neutral-100">{formatDate(demanda.dataDelegacao)}</span>
               </InfoRow>
             )}
           </div>
           {demanda.motivoDelegacao && (
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap">
+            <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400 whitespace-pre-wrap">
               {demanda.motivoDelegacao}
             </p>
           )}
@@ -801,15 +801,15 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
       )}
 
       {/* ─── Quick actions ─── */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-5">
-        <h3 className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-3">
+      <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-5">
+        <h3 className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-3">
           Ações Rápidas
         </h3>
         <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             size="sm"
-            className="border-zinc-200 dark:border-zinc-700 text-xs"
+            className="border-neutral-200 dark:border-neutral-700 text-xs"
             onClick={() => handleStatusChange("7_PROTOCOLADO")}
             disabled={updateMutation.isPending || demanda.status === "7_PROTOCOLADO"}
           >
@@ -819,7 +819,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
           <Button
             variant="outline"
             size="sm"
-            className="border-zinc-200 dark:border-zinc-700 text-xs"
+            className="border-neutral-200 dark:border-neutral-700 text-xs"
             onClick={() => handleStatusChange("URGENTE")}
             disabled={updateMutation.isPending || demanda.status === "URGENTE"}
           >
@@ -829,7 +829,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
           <Button
             variant="outline"
             size="sm"
-            className="border-zinc-200 dark:border-zinc-700 text-xs"
+            className="border-neutral-200 dark:border-neutral-700 text-xs"
             onClick={() => handleStatusChange("7_CIENCIA")}
             disabled={updateMutation.isPending || demanda.status === "7_CIENCIA"}
           >
@@ -840,7 +840,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* ─── Last updated footer ─── */}
-      <p className="text-xs text-zinc-400 dark:text-zinc-600 text-center pb-4">
+      <p className="text-xs text-neutral-400 dark:text-neutral-600 text-center pb-4">
         Última atualização: {formatDate(demanda.updatedAt, "dd/MM/yyyy 'às' HH:mm")}
       </p>
     </div>
@@ -854,7 +854,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-0.5">
+      <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-0.5">
         {label}
       </p>
       {children}
@@ -865,10 +865,10 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
 function DateField({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-0.5">
+      <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-0.5">
         {label}
       </p>
-      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 tabular-nums">
+      <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 tabular-nums">
         {value || "-"}
       </p>
     </div>
@@ -882,7 +882,7 @@ function LoadingSkeleton() {
       <Skeleton className="h-8 w-24" />
 
       {/* Header card */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-6">
+      <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-6">
         <div className="flex items-start gap-3">
           <Skeleton className="h-11 w-11 rounded-xl" />
           <div className="space-y-2 flex-1">
@@ -898,7 +898,7 @@ function LoadingSkeleton() {
       </div>
 
       {/* Prazo */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-5">
+      <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Skeleton className="h-7 w-7 rounded" />
@@ -913,13 +913,13 @@ function LoadingSkeleton() {
 
       {/* Grid */}
       <div className="grid gap-5 md:grid-cols-2">
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-5 space-y-3">
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-5 space-y-3">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-5 w-full" />
           <Skeleton className="h-5 w-3/4" />
           <Skeleton className="h-5 w-1/2" />
         </div>
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-5 space-y-3">
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-5 space-y-3">
           <Skeleton className="h-4 w-24" />
           <div className="flex items-center gap-3">
             <Skeleton className="h-12 w-12 rounded-full" />
@@ -930,7 +930,7 @@ function LoadingSkeleton() {
       </div>
 
       {/* Dates */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-5">
+      <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-5">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i}>

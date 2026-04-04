@@ -75,11 +75,11 @@ const STATUS_CONFIG: Record<StatusKey, { label: string; className: string }> = {
   },
   REVOGADO: {
     label: "Revogado",
-    className: "bg-zinc-100 text-zinc-500 dark:bg-muted dark:text-muted-foreground",
+    className: "bg-neutral-100 text-neutral-500 dark:bg-muted dark:text-muted-foreground",
   },
   REJEITADO: {
     label: "Rejeitado",
-    className: "bg-zinc-100 text-zinc-500 dark:bg-muted dark:text-muted-foreground",
+    className: "bg-neutral-100 text-neutral-500 dark:bg-muted dark:text-muted-foreground",
   },
 };
 
@@ -97,7 +97,7 @@ const STATUS_TRANSITIONS: Record<StatusKey, StatusKey[]> = {
 function StatusBadge({ status }: { status: string }) {
   const config = STATUS_CONFIG[status as StatusKey] ?? {
     label: status,
-    className: "bg-zinc-100 text-zinc-500 dark:bg-muted dark:text-muted-foreground",
+    className: "bg-neutral-100 text-neutral-500 dark:bg-muted dark:text-muted-foreground",
   };
   return (
     <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", config.className)}>
@@ -174,11 +174,11 @@ export function InstitutosTab({ processoId, assistidos }: InstitutosTabProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <Library className="h-4 w-4 text-muted-foreground" />
-          <span className="text-xs font-semibold text-zinc-600 dark:text-muted-foreground uppercase tracking-wide">
+          <span className="text-xs font-semibold text-neutral-600 dark:text-muted-foreground uppercase tracking-wide">
             Institutos Processuais
           </span>
           {institutos.length > 0 && (
-            <span className="text-[10px] bg-zinc-100 dark:bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">
+            <span className="text-[10px] bg-neutral-100 dark:bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">
               {institutos.length}
             </span>
           )}
@@ -189,7 +189,7 @@ export function InstitutosTab({ processoId, assistidos }: InstitutosTabProps) {
             <Button
               size="sm"
               variant="outline"
-              className="h-7 text-[11px] gap-1 border-zinc-200 dark:border-border"
+              className="h-7 text-[11px] gap-1 border-neutral-200 dark:border-border"
             >
               <Plus className="h-3 w-3" />
               Novo Instituto
@@ -308,14 +308,14 @@ export function InstitutosTab({ processoId, assistidos }: InstitutosTabProps) {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] font-semibold text-zinc-800 dark:text-foreground">
+                      <span className="text-[11px] font-semibold text-neutral-800 dark:text-foreground">
                         {TIPO_LABELS[instituto.tipo] ?? instituto.tipo}
                       </span>
                       <StatusBadge status={instituto.status} />
                     </div>
 
                     {instituto.prazoMeses && (
-                      <p className="text-[10px] text-zinc-500 dark:text-muted-foreground mt-0.5">
+                      <p className="text-[10px] text-neutral-500 dark:text-muted-foreground mt-0.5">
                         Prazo: {instituto.prazoMeses} meses
                       </p>
                     )}
@@ -352,7 +352,7 @@ export function InstitutosTab({ processoId, assistidos }: InstitutosTabProps) {
                             disabled={updateStatusMutation.isPending}
                             className={cn(
                               "text-[9px] px-2 py-0.5 rounded-full border font-medium transition-colors disabled:opacity-50",
-                              "border-border text-muted-foreground hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-foreground"
+                              "border-border text-muted-foreground hover:border-neutral-400 dark:hover:border-neutral-500 hover:text-foreground"
                             )}
                             title={`Avançar para: ${cfg.label}`}
                           >

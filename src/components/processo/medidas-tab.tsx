@@ -81,11 +81,11 @@ const STATUS_CONFIG: Record<StatusKey, { label: string; className: string }> = {
   },
   REVOGADA: {
     label: "Revogada",
-    className: "bg-zinc-100 text-zinc-500 dark:bg-muted dark:text-muted-foreground",
+    className: "bg-neutral-100 text-neutral-500 dark:bg-muted dark:text-muted-foreground",
   },
   EXTINTA: {
     label: "Extinta",
-    className: "bg-zinc-100 text-zinc-500 dark:bg-muted dark:text-muted-foreground",
+    className: "bg-neutral-100 text-neutral-500 dark:bg-muted dark:text-muted-foreground",
   },
   PROGRESSAO: {
     label: "Progressao",
@@ -107,7 +107,7 @@ const STATUS_TRANSITIONS: Record<StatusKey, StatusKey[]> = {
 function StatusBadge({ status }: { status: string }) {
   const config = STATUS_CONFIG[status as StatusKey] ?? {
     label: status,
-    className: "bg-zinc-100 text-zinc-500",
+    className: "bg-neutral-100 text-neutral-500",
   };
   return (
     <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", config.className)}>
@@ -198,7 +198,7 @@ export function MedidasTab({ processoId, assistidos }: MedidasTabProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12 text-zinc-400">
+      <div className="flex items-center justify-center py-12 text-neutral-400">
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
         <span className="text-xs">Carregando medidas...</span>
       </div>
@@ -210,12 +210,12 @@ export function MedidasTab({ processoId, assistidos }: MedidasTabProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Scale className="h-4 w-4 text-zinc-400" />
-          <span className="text-xs font-semibold text-zinc-600 dark:text-muted-foreground uppercase tracking-wide">
+          <Scale className="h-4 w-4 text-neutral-400" />
+          <span className="text-xs font-semibold text-neutral-600 dark:text-muted-foreground uppercase tracking-wide">
             Medidas Socioeducativas
           </span>
           {medidas.length > 0 && (
-            <span className="text-[10px] bg-zinc-100 dark:bg-muted text-zinc-500 px-1.5 py-0.5 rounded-full">
+            <span className="text-[10px] bg-neutral-100 dark:bg-muted text-neutral-500 px-1.5 py-0.5 rounded-full">
               {medidas.length}
             </span>
           )}
@@ -226,7 +226,7 @@ export function MedidasTab({ processoId, assistidos }: MedidasTabProps) {
             <Button
               size="sm"
               variant="outline"
-              className="h-7 text-[11px] gap-1 border-zinc-200 dark:border-border"
+              className="h-7 text-[11px] gap-1 border-neutral-200 dark:border-border"
             >
               <Plus className="h-3 w-3" />
               Nova Medida
@@ -362,10 +362,10 @@ export function MedidasTab({ processoId, assistidos }: MedidasTabProps) {
 
       {/* Lista */}
       {medidas.length === 0 ? (
-        <div className="text-center py-10 text-zinc-400">
+        <div className="text-center py-10 text-neutral-400">
           <Scale className="h-8 w-8 mx-auto mb-2 opacity-30" />
           <p className="text-xs">Nenhuma medida socioeducativa registrada</p>
-          <p className="text-[10px] mt-0.5 text-zinc-300">
+          <p className="text-[10px] mt-0.5 text-neutral-300">
             Registre medidas como Advertencia, LA, PSC, Internacao
           </p>
         </div>
@@ -382,7 +382,7 @@ export function MedidasTab({ processoId, assistidos }: MedidasTabProps) {
                   "border rounded-lg p-3 bg-white dark:bg-card",
                   reavaliacaoVencida
                     ? "border-red-300 dark:border-red-800"
-                    : "border-zinc-200 dark:border-border"
+                    : "border-neutral-200 dark:border-border"
                 )}
               >
                 {/* Reavaliacao vencida alert */}
@@ -396,7 +396,7 @@ export function MedidasTab({ processoId, assistidos }: MedidasTabProps) {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] font-semibold text-zinc-800 dark:text-foreground">
+                      <span className="text-[11px] font-semibold text-neutral-800 dark:text-foreground">
                         {TIPO_LABELS[medida.tipo] ?? medida.tipo}
                       </span>
                       <StatusBadge status={medida.status} />
@@ -404,30 +404,30 @@ export function MedidasTab({ processoId, assistidos }: MedidasTabProps) {
 
                     <div className="flex flex-wrap gap-2 mt-1">
                       {medida.prazoMeses && (
-                        <p className="text-[10px] text-zinc-500 dark:text-muted-foreground">
+                        <p className="text-[10px] text-neutral-500 dark:text-muted-foreground">
                           Prazo: {medida.prazoMeses} meses
                         </p>
                       )}
                       {medida.prazoMaximoMeses && (
-                        <p className="text-[10px] text-zinc-500 dark:text-muted-foreground">
+                        <p className="text-[10px] text-neutral-500 dark:text-muted-foreground">
                           (max: {medida.prazoMaximoMeses}m)
                         </p>
                       )}
                       {medida.horasServico && (
-                        <p className="text-[10px] text-zinc-500 dark:text-muted-foreground">
+                        <p className="text-[10px] text-neutral-500 dark:text-muted-foreground">
                           {medida.horasServico}h servico
                         </p>
                       )}
                     </div>
 
                     {medida.unidadeExecucao && (
-                      <p className="text-[10px] text-zinc-500 dark:text-muted-foreground mt-0.5">
+                      <p className="text-[10px] text-neutral-500 dark:text-muted-foreground mt-0.5">
                         Unidade: {medida.unidadeExecucao}
                       </p>
                     )}
 
                     {medida.dataProximaReavaliacao && !reavaliacaoVencida && (
-                      <p className="text-[10px] text-zinc-500 dark:text-muted-foreground mt-0.5">
+                      <p className="text-[10px] text-neutral-500 dark:text-muted-foreground mt-0.5">
                         Proxima reavaliacao: {medida.dataProximaReavaliacao}
                       </p>
                     )}
@@ -437,7 +437,7 @@ export function MedidasTab({ processoId, assistidos }: MedidasTabProps) {
                         {(medida.condicoes as string[]).map((c, i) => (
                           <span
                             key={i}
-                            className="text-[9px] px-1.5 py-0.5 bg-zinc-100 dark:bg-muted text-zinc-500 rounded-full"
+                            className="text-[9px] px-1.5 py-0.5 bg-neutral-100 dark:bg-muted text-neutral-500 rounded-full"
                           >
                             {c}
                           </span>
@@ -446,7 +446,7 @@ export function MedidasTab({ processoId, assistidos }: MedidasTabProps) {
                     )}
 
                     {medida.observacoes && (
-                      <p className="text-[10px] text-zinc-400 mt-1 italic">{medida.observacoes}</p>
+                      <p className="text-[10px] text-neutral-400 mt-1 italic">{medida.observacoes}</p>
                     )}
                   </div>
 
@@ -464,7 +464,7 @@ export function MedidasTab({ processoId, assistidos }: MedidasTabProps) {
                             disabled={updateStatusMutation.isPending}
                             className={cn(
                               "text-[9px] px-2 py-0.5 rounded-full border font-medium transition-colors disabled:opacity-50",
-                              "border-zinc-200 dark:border-border text-zinc-500 hover:border-zinc-400 hover:text-zinc-700"
+                              "border-neutral-200 dark:border-border text-neutral-500 hover:border-neutral-400 hover:text-neutral-700"
                             )}
                             title={`Avancar para: ${cfg.label}`}
                           >

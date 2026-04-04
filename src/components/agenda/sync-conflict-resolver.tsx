@@ -139,13 +139,13 @@ export function SyncConflictResolver({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-900">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-white dark:bg-neutral-900">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+          <DialogTitle className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
             <AlertTriangle className="w-6 h-6 text-orange-600" />
             Resolver Conflitos de Sincronização
           </DialogTitle>
-          <DialogDescription className="text-sm text-zinc-500 dark:text-zinc-400">
+          <DialogDescription className="text-sm text-neutral-500 dark:text-neutral-400">
             Foram detectadas diferenças entre o Ombuds e o Google Calendar. Escolha qual versão
             manter para cada campo.
           </DialogDescription>
@@ -175,7 +175,7 @@ export function SyncConflictResolver({
             <Card key={evento.id} className="p-4 border-2 border-orange-200 dark:border-orange-800">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-50">
+                  <h3 className="font-bold text-lg text-neutral-900 dark:text-neutral-50">
                     {evento.titulo}
                   </h3>
                   <Badge variant="secondary" className="mt-1">
@@ -208,11 +208,11 @@ export function SyncConflictResolver({
                   return (
                     <div
                       key={index}
-                      className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden"
+                      className="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden"
                     >
-                      <div className="bg-zinc-100 dark:bg-zinc-800 px-3 py-2 flex items-center gap-2">
-                        <Icon className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-                        <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-50">
+                      <div className="bg-neutral-100 dark:bg-neutral-800 px-3 py-2 flex items-center gap-2">
+                        <Icon className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
+                        <span className="font-semibold text-sm text-neutral-900 dark:text-neutral-50">
                           {getCampoLabel(conflito.campo)}
                         </span>
                         {resolucaoAtual && (
@@ -220,7 +220,7 @@ export function SyncConflictResolver({
                         )}
                       </div>
 
-                      <div className="grid grid-cols-2 gap-px bg-zinc-200 dark:bg-zinc-700">
+                      <div className="grid grid-cols-2 gap-px bg-neutral-200 dark:bg-neutral-700">
                         {/* Versão Ombuds */}
                         <button
                           onClick={() =>
@@ -229,7 +229,7 @@ export function SyncConflictResolver({
                           className={`p-3 text-left transition-all ${
                             resolucaoAtual === "ombuds"
                               ? "bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-600 dark:border-blue-500"
-                              : "bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                              : "bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                           }`}
                         >
                           <div className="flex items-center justify-between mb-2">
@@ -243,10 +243,10 @@ export function SyncConflictResolver({
                               <CheckCircle2 className="w-5 h-5 text-blue-600" />
                             )}
                           </div>
-                          <p className="font-semibold text-zinc-900 dark:text-zinc-50 mb-1">
+                          <p className="font-semibold text-neutral-900 dark:text-neutral-50 mb-1">
                             {formatValor(conflito.campo, conflito.valorOmbuds)}
                           </p>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400">
                             Alterado em{" "}
                             {new Date(conflito.ultimaAlteracaoOmbuds).toLocaleString("pt-BR")}
                           </p>
@@ -260,7 +260,7 @@ export function SyncConflictResolver({
                           className={`p-3 text-left transition-all ${
                             resolucaoAtual === "google"
                               ? "bg-emerald-50 dark:bg-emerald-950/30 border-2 border-emerald-600 dark:border-emerald-500"
-                              : "bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                              : "bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                           }`}
                         >
                           <div className="flex items-center justify-between mb-2">
@@ -274,10 +274,10 @@ export function SyncConflictResolver({
                               <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                             )}
                           </div>
-                          <p className="font-semibold text-zinc-900 dark:text-zinc-50 mb-1">
+                          <p className="font-semibold text-neutral-900 dark:text-neutral-50 mb-1">
                             {formatValor(conflito.campo, conflito.valorGoogle)}
                           </p>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400">
                             Alterado em{" "}
                             {new Date(conflito.ultimaAlteracaoGoogle).toLocaleString("pt-BR")}
                           </p>
@@ -292,7 +292,7 @@ export function SyncConflictResolver({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-between items-center pt-4 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="flex justify-between items-center pt-4 border-t border-neutral-200 dark:border-neutral-800">
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>

@@ -2,9 +2,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DriveLoading() {
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-zinc-100 dark:bg-[#0f0f11] overflow-hidden">
+    <div className="flex h-[calc(100vh-4rem)] bg-neutral-100 dark:bg-[#0f0f11] overflow-hidden">
       {/* Sidebar */}
-      <div className="w-56 shrink-0 bg-white dark:bg-card border-r border-zinc-200 dark:border-border p-4 space-y-4 hidden md:block">
+      <div className="w-56 shrink-0 bg-white dark:bg-card border-r border-neutral-200 dark:border-border p-4 space-y-4 hidden md:block">
         {/* Sidebar header */}
         <div className="space-y-3">
           <Skeleton className="h-8 w-full rounded-md" />
@@ -32,7 +32,7 @@ export default function DriveLoading() {
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 min-h-0">
         {/* Top bar / breadcrumb */}
-        <div className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-card border-b border-zinc-200 dark:border-border">
+        <div className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-card border-b border-neutral-200 dark:border-border">
           <Skeleton className="w-5 h-5 rounded shrink-0 md:hidden" />
           <div className="flex items-center gap-2 flex-1">
             <Skeleton className="h-4 w-16" />
@@ -57,7 +57,7 @@ export default function DriveLoading() {
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
               <div
                 key={i}
-                className="rounded-xl border border-zinc-200 dark:border-border bg-white dark:bg-card overflow-hidden"
+                className="rounded-xl border border-neutral-200 dark:border-border bg-white dark:bg-card overflow-hidden"
               >
                 {/* File preview area */}
                 <Skeleton className="h-32 w-full rounded-none" />

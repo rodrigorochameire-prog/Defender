@@ -30,7 +30,7 @@ export function AnaliseTimeline({ cronologia }: AnaliseTimelineProps) {
   return (
     <div className="relative pl-6">
       {/* Linha vertical */}
-      <div className="absolute left-2.5 top-2 bottom-2 w-px bg-zinc-200 dark:bg-zinc-700" />
+      <div className="absolute left-2.5 top-2 bottom-2 w-px bg-neutral-200 dark:bg-neutral-700" />
 
       <div className="space-y-4">
         {sorted.map((ev, i) => {

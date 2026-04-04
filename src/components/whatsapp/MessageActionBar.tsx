@@ -58,7 +58,7 @@ function ActionButton({
           }}
           className={cn(
             "flex items-center justify-center w-[30px] h-[30px] rounded-md",
-            "bg-zinc-100 dark:bg-muted hover:bg-zinc-200 dark:hover:bg-muted/80 transition-colors duration-150",
+            "bg-neutral-100 dark:bg-muted hover:bg-neutral-200 dark:hover:bg-muted/80 transition-colors duration-150",
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
             className,
           )}
@@ -95,7 +95,7 @@ export function MessageActionBar({
         className={cn(
           "absolute top-1 right-1 z-20",
           "flex items-center gap-0.5 p-1",
-          "bg-white dark:bg-card border border-zinc-200 dark:border-border rounded-lg shadow-lg",
+          "bg-white dark:bg-card border border-neutral-200 dark:border-border rounded-lg shadow-lg",
           "opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150 pointer-events-none group-hover/msg:pointer-events-auto",
         )}
         onClick={(e) => e.stopPropagation()}
@@ -128,7 +128,7 @@ export function MessageActionBar({
         </ActionButton>
 
         {/* Divider */}
-        <div className="w-px h-5 bg-zinc-300 dark:bg-border mx-0.5" />
+        <div className="w-px h-5 bg-neutral-300 dark:bg-border mx-0.5" />
 
         {/* More dropdown */}
         <DropdownMenu>
@@ -140,7 +140,7 @@ export function MessageActionBar({
                   onClick={(e) => e.stopPropagation()}
                   className={cn(
                     "flex items-center justify-center w-[30px] h-[30px] rounded-md",
-                    "bg-zinc-100 dark:bg-muted hover:bg-zinc-200 dark:hover:bg-muted/80 transition-colors duration-150",
+                    "bg-neutral-100 dark:bg-muted hover:bg-neutral-200 dark:hover:bg-muted/80 transition-colors duration-150",
                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
                   )}
                   aria-label="Mais opções"

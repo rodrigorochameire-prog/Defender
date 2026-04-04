@@ -128,7 +128,7 @@ export function Breadcrumbs() {
     <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs overflow-hidden">
       <Link
         href="/admin"
-        className="flex items-center text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors shrink-0"
+        className="flex items-center text-neutral-400 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors shrink-0"
         title="Dashboard"
       >
         <Home className="w-3.5 h-3.5" />
@@ -140,11 +140,11 @@ export function Breadcrumbs() {
         const RouteIcon = ROUTE_ICONS[segment];
         return (
           <>
-            <ChevronRight className="w-3 h-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
+            <ChevronRight className="w-3 h-3 text-neutral-300 dark:text-neutral-600 shrink-0" />
             {RouteIcon ? (
-              <span title={lastItem.label}><RouteIcon className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100" /></span>
+              <span title={lastItem.label}><RouteIcon className="w-3.5 h-3.5 text-neutral-900 dark:text-neutral-100" /></span>
             ) : (
-              <span className="font-semibold text-zinc-900 dark:text-zinc-100 truncate max-w-[140px]" title={lastItem.label}>
+              <span className="font-semibold text-neutral-900 dark:text-neutral-100 truncate max-w-[140px]" title={lastItem.label}>
                 {lastItem.label}
               </span>
             )}
@@ -158,10 +158,10 @@ export function Breadcrumbs() {
         const RouteIcon = segment ? ROUTE_ICONS[segment] : null;
         return (
           <>
-            <ChevronRight className="w-3 h-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
+            <ChevronRight className="w-3 h-3 text-neutral-300 dark:text-neutral-600 shrink-0" />
             <Link
               href={parentItem.href}
-              className="inline-flex items-center gap-1 text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
+              className="inline-flex items-center gap-1 text-neutral-400 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
               title={parentItem.label}
             >
               {RouteIcon && <RouteIcon className="w-3 h-3" />}
@@ -173,9 +173,9 @@ export function Breadcrumbs() {
 
       {!isListingPage && lastItem && (
         <>
-          <ChevronRight className="w-3 h-3 text-zinc-300 dark:text-zinc-600 shrink-0" />
+          <ChevronRight className="w-3 h-3 text-neutral-300 dark:text-neutral-600 shrink-0" />
           <span
-            className="font-semibold text-zinc-900 dark:text-zinc-100 truncate max-w-[140px]"
+            className="font-semibold text-neutral-900 dark:text-neutral-100 truncate max-w-[140px]"
             title={lastItem.label}
           >
             {lastItem.label}

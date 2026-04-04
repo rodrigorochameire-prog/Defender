@@ -36,14 +36,14 @@ export const statusConfig: Record<string, { label: string; color: string; bgColo
 
 // Fases NEUTRAS para reduzir poluicao visual
 export const faseConfig: Record<string, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
-  INQUERITO: { label: "Inquerito", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: FileText },
-  INSTRUCAO: { label: "Instrucao", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Scale },
-  SUMARIO_CULPA: { label: "Sumario Culpa", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Gavel },
-  ALEGACOES_FINAIS: { label: "Alegacoes Finais", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: FileText },
-  SENTENCA: { label: "Sentenca", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Gavel },
-  RECURSO: { label: "Recurso", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Scale },
-  EXECUCAO: { label: "Execucao", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Clock },
-  ARQUIVADO: { label: "Arquivado", color: "text-zinc-400 dark:text-zinc-500", bgColor: "bg-zinc-50 dark:bg-zinc-900", icon: CheckCircle2 },
+  INQUERITO: { label: "Inquerito", color: "text-neutral-600 dark:text-neutral-400", bgColor: "bg-neutral-100 dark:bg-neutral-800", icon: FileText },
+  INSTRUCAO: { label: "Instrucao", color: "text-neutral-600 dark:text-neutral-400", bgColor: "bg-neutral-100 dark:bg-neutral-800", icon: Scale },
+  SUMARIO_CULPA: { label: "Sumario Culpa", color: "text-neutral-600 dark:text-neutral-400", bgColor: "bg-neutral-100 dark:bg-neutral-800", icon: Gavel },
+  ALEGACOES_FINAIS: { label: "Alegacoes Finais", color: "text-neutral-600 dark:text-neutral-400", bgColor: "bg-neutral-100 dark:bg-neutral-800", icon: FileText },
+  SENTENCA: { label: "Sentenca", color: "text-neutral-600 dark:text-neutral-400", bgColor: "bg-neutral-100 dark:bg-neutral-800", icon: Gavel },
+  RECURSO: { label: "Recurso", color: "text-neutral-600 dark:text-neutral-400", bgColor: "bg-neutral-100 dark:bg-neutral-800", icon: Scale },
+  EXECUCAO: { label: "Execucao", color: "text-neutral-600 dark:text-neutral-400", bgColor: "bg-neutral-100 dark:bg-neutral-800", icon: Clock },
+  ARQUIVADO: { label: "Arquivado", color: "text-neutral-400 dark:text-neutral-500", bgColor: "bg-neutral-50 dark:bg-neutral-900", icon: CheckCircle2 },
 };
 
 // Areas NEUTRAS para reduzir poluicao visual

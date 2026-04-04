@@ -17,16 +17,16 @@ export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-5">
+      <div className="bg-neutral-50/50 dark:bg-neutral-900/30 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 p-5">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center">
-            <BookOpen className="w-5 h-5 text-white dark:text-zinc-900" />
+          <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center">
+            <BookOpen className="w-5 h-5 text-white dark:text-neutral-900" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
               Histórico de Audiências
             </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
               {registrosAnteriores.length} registro{registrosAnteriores.length !== 1 ? "s" : ""} encontrado{registrosAnteriores.length !== 1 ? "s" : ""}
             </p>
           </div>
@@ -35,23 +35,23 @@ export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
 
       {/* Timeline */}
       <div className="space-y-4 relative">
-        <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-zinc-200 dark:bg-zinc-800" />
+        <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-neutral-200 dark:bg-neutral-800" />
 
         {registrosAnteriores.map((reg, idx) => (
           <div key={reg.historicoId} className="relative pl-16">
             {/* Timeline indicator */}
-            <div className="absolute left-3 top-6 w-6 h-6 rounded-full bg-zinc-600 dark:bg-zinc-400 border-4 border-white dark:border-zinc-950 shadow-md flex items-center justify-center">
-              <span className="text-[10px] font-bold text-white dark:text-zinc-900">{idx + 1}</span>
+            <div className="absolute left-3 top-6 w-6 h-6 rounded-full bg-neutral-600 dark:bg-neutral-400 border-4 border-white dark:border-neutral-950 shadow-md flex items-center justify-center">
+              <span className="text-[10px] font-bold text-white dark:text-neutral-900">{idx + 1}</span>
             </div>
 
             {/* Card */}
-            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
+            <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 overflow-hidden">
               {/* Card Header */}
-              <div className="bg-zinc-50/50 dark:bg-zinc-900/50 p-4 border-b border-zinc-200/80 dark:border-zinc-800/80">
+              <div className="bg-neutral-50/50 dark:bg-neutral-900/50 p-4 border-b border-neutral-200/80 dark:border-neutral-800/80">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                    <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">
+                    <Calendar className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
+                    <span className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
                       {new Date(reg.dataRealizacao).toLocaleDateString("pt-BR", {
                         day: "2-digit",
                         month: "long",
@@ -60,7 +60,7 @@ export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
                       })}
                     </span>
                     {reg.horarioInicio && (
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">às {reg.horarioInicio}</span>
+                      <span className="text-xs text-neutral-500 dark:text-neutral-400">às {reg.horarioInicio}</span>
                     )}
                   </div>
                   <Badge
@@ -78,7 +78,7 @@ export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
                   </Badge>
                 </div>
                 {reg.local && (
-                  <div className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+                  <div className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
                     <MapPin className="w-3.5 h-3.5" />
                     {reg.local}
                   </div>
@@ -89,7 +89,7 @@ export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
               <div className="p-4 space-y-4">
                 {/* Resultado */}
                 {reg.realizada && reg.resultado && (
-                  <InfoBlock icon={Gavel} label="Resultado da Audiência" borderColor="border-l-zinc-400 dark:border-l-zinc-600">
+                  <InfoBlock icon={Gavel} label="Resultado da Audiência" borderColor="border-l-neutral-400 dark:border-l-neutral-600">
                     <Badge variant="outline" className="text-xs capitalize mt-1">{reg.resultado}</Badge>
                   </InfoBlock>
                 )}
@@ -97,20 +97,20 @@ export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
                 {/* Motivo não realização */}
                 {!reg.realizada && reg.motivoNaoRealizacao && (
                   <InfoBlock icon={AlertTriangle} label="Motivo da Não Realização" borderColor="border-l-amber-500 dark:border-l-amber-400">
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">{reg.motivoNaoRealizacao}</p>
+                    <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">{reg.motivoNaoRealizacao}</p>
                   </InfoBlock>
                 )}
 
                 {/* Redesignação */}
                 {reg.resultado === "redesignada" && (
-                  <InfoBlock icon={Calendar} label="Audiência Redesignada" borderColor="border-l-zinc-400 dark:border-l-zinc-600">
+                  <InfoBlock icon={Calendar} label="Audiência Redesignada" borderColor="border-l-neutral-400 dark:border-l-neutral-600">
                     {reg.motivoRedesignacao && (
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-2">
+                      <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-2">
                         <span className="font-semibold">Motivo:</span> {reg.motivoRedesignacao}
                       </p>
                     )}
                     {reg.dataRedesignacao && (
-                      <div className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+                      <div className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
                         <Calendar className="w-3.5 h-3.5" />
                         <span className="font-semibold">Nova data:</span>
                         {new Date(reg.dataRedesignacao).toLocaleDateString("pt-BR")}
@@ -121,7 +121,7 @@ export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
                 )}
 
                 {/* Presença do Assistido */}
-                <InfoBlock icon={Users} label="Presença do Assistido" borderColor="border-l-zinc-400 dark:border-l-zinc-600">
+                <InfoBlock icon={Users} label="Presença do Assistido" borderColor="border-l-neutral-400 dark:border-l-neutral-600">
                   <Badge
                     className={
                       reg.assistidoPresente
@@ -140,8 +140,8 @@ export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
                 {/* Depoentes */}
                 {reg.depoentes && reg.depoentes.length > 0 && (
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
+                    <Label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-neutral-600 dark:text-neutral-400" />
                       Depoentes ({reg.depoentes.length})
                     </Label>
                     <div className="space-y-2.5">
@@ -151,7 +151,7 @@ export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
 
                         return (
                           <div key={dep.id} className={`rounded-lg border ${style.border} overflow-hidden`}>
-                            <div className={`p-2.5 border-b border-zinc-200 dark:border-zinc-800 ${style.bg}`}>
+                            <div className={`p-2.5 border-b border-neutral-200 dark:border-neutral-800 ${style.bg}`}>
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <Badge className={`${style.bg} ${style.text} text-[10px] px-1.5 py-0.5`}>{style.label}</Badge>
@@ -184,7 +184,7 @@ export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
                             </div>
 
                             {temConteudo && (
-                              <div className="p-3 space-y-2.5 bg-white dark:bg-zinc-950">
+                              <div className="p-3 space-y-2.5 bg-white dark:bg-neutral-950">
                                 {dep.estrategiaInquiricao && (
                                   <DepoenteField icon={Target} label="Estratégia de Inquirição" text={dep.estrategiaInquiricao} />
                                 )}
@@ -192,11 +192,11 @@ export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
                                   <DepoenteField icon={BookOpen} label="Perguntas da Defesa" text={dep.perguntasDefesa} />
                                 )}
                                 {dep.depoimentoLiteral && (
-                                  <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-lg border border-zinc-200/80 dark:border-zinc-800/80 p-2">
-                                    <Label className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 flex items-center gap-1 mb-1">
+                                  <div className="bg-neutral-50/50 dark:bg-neutral-900/30 rounded-lg border border-neutral-200/80 dark:border-neutral-800/80 p-2">
+                                    <Label className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 flex items-center gap-1 mb-1">
                                       <Quote className="w-2.5 h-2.5" /> Depoimento Literal
                                     </Label>
-                                    <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed italic">
+                                    <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed italic">
                                       &ldquo;{dep.depoimentoLiteral}&rdquo;
                                     </p>
                                   </div>
@@ -216,20 +216,20 @@ export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
                 {/* Manifestações */}
                 {(reg.manifestacaoMP || reg.manifestacaoDefesa || reg.decisaoJuiz) && (
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Manifestações e Decisões</Label>
+                    <Label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Manifestações e Decisões</Label>
                     {reg.manifestacaoMP && (
-                      <InfoBlock icon={Gavel} label="Ministério Público" borderColor="border-l-zinc-400 dark:border-l-zinc-600">
-                        <p className="text-xs text-zinc-600 dark:text-zinc-400">{reg.manifestacaoMP}</p>
+                      <InfoBlock icon={Gavel} label="Ministério Público" borderColor="border-l-neutral-400 dark:border-l-neutral-600">
+                        <p className="text-xs text-neutral-600 dark:text-neutral-400">{reg.manifestacaoMP}</p>
                       </InfoBlock>
                     )}
                     {reg.manifestacaoDefesa && (
                       <InfoBlock icon={Gavel} label="Defesa" borderColor="border-l-emerald-500 dark:border-l-emerald-400">
-                        <p className="text-xs text-zinc-600 dark:text-zinc-400">{reg.manifestacaoDefesa}</p>
+                        <p className="text-xs text-neutral-600 dark:text-neutral-400">{reg.manifestacaoDefesa}</p>
                       </InfoBlock>
                     )}
                     {reg.decisaoJuiz && (
-                      <InfoBlock icon={Gavel} label="Decisão Judicial" borderColor="border-l-zinc-400 dark:border-l-zinc-600">
-                        <p className="text-xs text-zinc-600 dark:text-zinc-400">{reg.decisaoJuiz}</p>
+                      <InfoBlock icon={Gavel} label="Decisão Judicial" borderColor="border-l-neutral-400 dark:border-l-neutral-600">
+                        <p className="text-xs text-neutral-600 dark:text-neutral-400">{reg.decisaoJuiz}</p>
                       </InfoBlock>
                     )}
                   </div>
@@ -237,22 +237,22 @@ export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
 
                 {/* Encaminhamentos */}
                 {reg.encaminhamentos && (
-                  <InfoBlock icon={Gavel} label="Encaminhamentos" borderColor="border-l-zinc-400 dark:border-l-zinc-600">
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400">{reg.encaminhamentos}</p>
+                  <InfoBlock icon={Gavel} label="Encaminhamentos" borderColor="border-l-neutral-400 dark:border-l-neutral-600">
+                    <p className="text-xs text-neutral-600 dark:text-neutral-400">{reg.encaminhamentos}</p>
                   </InfoBlock>
                 )}
 
                 {/* Anotações */}
                 {reg.anotacoesGerais && (
-                  <InfoBlock icon={Gavel} label="Anotações Gerais" borderColor="border-l-zinc-400 dark:border-l-zinc-600">
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400">{reg.anotacoesGerais}</p>
+                  <InfoBlock icon={Gavel} label="Anotações Gerais" borderColor="border-l-neutral-400 dark:border-l-neutral-600">
+                    <p className="text-xs text-neutral-600 dark:text-neutral-400">{reg.anotacoesGerais}</p>
                   </InfoBlock>
                 )}
               </div>
 
               {/* Card Footer */}
-              <div className="bg-zinc-50/50 dark:bg-zinc-900/50 p-3 border-t border-zinc-200/80 dark:border-zinc-800/80 flex items-center justify-between">
-                <span className="text-[10px] text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+              <div className="bg-neutral-50/50 dark:bg-neutral-900/50 p-3 border-t border-neutral-200/80 dark:border-neutral-800/80 flex items-center justify-between">
+                <span className="text-[10px] text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   Registrado em{" "}
                   {new Date(reg.dataRegistro).toLocaleDateString("pt-BR", {
@@ -263,7 +263,7 @@ export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
                     minute: "2-digit",
                   })}
                 </span>
-                <span className="text-[10px] font-mono text-zinc-400 bg-zinc-200 dark:bg-zinc-800 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-mono text-neutral-400 bg-neutral-200 dark:bg-neutral-800 px-2 py-0.5 rounded">
                   #{reg.historicoId.slice(-8).toUpperCase()}
                 </span>
               </div>
@@ -289,9 +289,9 @@ function InfoBlock({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-3">
+    <div className="bg-neutral-50/50 dark:bg-neutral-900/30 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 p-3">
       <div className={`border-l-4 ${borderColor} pl-3 -ml-2`}>
-        <Label className="text-xs font-semibold mb-0.5 block text-zinc-700 dark:text-zinc-300">{label}</Label>
+        <Label className="text-xs font-semibold mb-0.5 block text-neutral-700 dark:text-neutral-300">{label}</Label>
         {children}
       </div>
     </div>
@@ -300,11 +300,11 @@ function InfoBlock({
 
 function DepoenteField({ icon: Icon, label, text }: { icon: any; label: string; text: string }) {
   return (
-    <div className="bg-zinc-50/50 dark:bg-zinc-900/30 rounded-lg border border-zinc-200/80 dark:border-zinc-800/80 p-2">
-      <Label className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 flex items-center gap-1 mb-1">
+    <div className="bg-neutral-50/50 dark:bg-neutral-900/30 rounded-lg border border-neutral-200/80 dark:border-neutral-800/80 p-2">
+      <Label className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 flex items-center gap-1 mb-1">
         <Icon className="w-2.5 h-2.5" /> {label}
       </Label>
-      <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">{text}</p>
+      <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">{text}</p>
     </div>
   );
 }

@@ -8,7 +8,7 @@ interface ChatEmptyStateProps {
 
 export function ChatEmptyState({ variant = "select" }: ChatEmptyStateProps) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-8 bg-zinc-50/50 dark:bg-background/50">
+    <div className="flex-1 flex flex-col items-center justify-center p-8 bg-neutral-50/50 dark:bg-background/50">
       {/* SVG Illustration */}
       <div className="relative mb-6">
         <div className="w-24 h-24 rounded-full bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
@@ -16,24 +16,24 @@ export function ChatEmptyState({ variant = "select" }: ChatEmptyStateProps) {
         </div>
         {/* Decorative circles */}
         <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/30 animate-pulse-soft" />
-        <div className="absolute -bottom-1 -left-3 w-4 h-4 rounded-full bg-zinc-200 dark:bg-border animate-pulse-soft" style={{ animationDelay: "0.5s" }} />
+        <div className="absolute -bottom-1 -left-3 w-4 h-4 rounded-full bg-neutral-200 dark:bg-border animate-pulse-soft" style={{ animationDelay: "0.5s" }} />
       </div>
 
       {variant === "select" ? (
         <>
-          <h3 className="text-lg font-semibold text-zinc-700 dark:text-foreground/80 mb-1">
+          <h3 className="text-lg font-semibold text-neutral-700 dark:text-foreground/80 mb-1">
             WhatsApp Defender
           </h3>
-          <p className="text-sm text-zinc-500 dark:text-muted-foreground text-center max-w-xs">
+          <p className="text-sm text-neutral-500 dark:text-muted-foreground text-center max-w-xs">
             Selecione uma conversa ao lado para visualizar as mensagens
           </p>
         </>
       ) : (
         <>
-          <h3 className="text-lg font-semibold text-zinc-700 dark:text-foreground/80 mb-1">
+          <h3 className="text-lg font-semibold text-neutral-700 dark:text-foreground/80 mb-1">
             Nenhuma conversa
           </h3>
-          <p className="text-sm text-zinc-500 dark:text-muted-foreground text-center max-w-xs">
+          <p className="text-sm text-neutral-500 dark:text-muted-foreground text-center max-w-xs">
             As conversas do WhatsApp aparecerao aqui quando o dispositivo estiver conectado
           </p>
         </>

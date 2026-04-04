@@ -159,12 +159,12 @@ export function PromptorioModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl">
+      <DialogContent className="max-w-md bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 rounded-xl">
         <DialogHeader>
           <DialogTitle className="font-sans text-base font-semibold">
             Promptório
           </DialogTitle>
-          <DialogDescription className="text-xs text-zinc-500">
+          <DialogDescription className="text-xs text-neutral-500">
             Copie instruções para usar no Claude Code
           </DialogDescription>
         </DialogHeader>
@@ -172,11 +172,11 @@ export function PromptorioModal({
         <div className="space-y-4">
           {/* Template select */}
           <div className="space-y-1.5">
-            <label className="text-[10px] uppercase tracking-wider text-zinc-500">
+            <label className="text-[10px] uppercase tracking-wider text-neutral-500">
               TIPO DE INSTRUÇÃO
             </label>
             <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-              <SelectTrigger className="bg-zinc-50 dark:bg-[#0f0f11] border-zinc-200 dark:border-zinc-800">
+              <SelectTrigger className="bg-neutral-50 dark:bg-[#0f0f11] border-neutral-200 dark:border-neutral-800">
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
@@ -191,7 +191,7 @@ export function PromptorioModal({
 
           {/* Additional instruction */}
           <div className="space-y-1.5">
-            <label className="text-[10px] uppercase tracking-wider text-zinc-500">
+            <label className="text-[10px] uppercase tracking-wider text-neutral-500">
               INSTRUÇÃO ADICIONAL{" "}
               <span className="normal-case tracking-normal">(opcional)</span>
             </label>
@@ -199,7 +199,7 @@ export function PromptorioModal({
               value={instrucaoAdicional}
               onChange={(e) => setInstrucaoAdicional(e.target.value)}
               placeholder="Ex: Foque nas contradições entre os depoimentos..."
-              className="bg-zinc-50 dark:bg-[#0f0f11] border-zinc-200 dark:border-zinc-800 min-h-[72px]"
+              className="bg-neutral-50 dark:bg-[#0f0f11] border-neutral-200 dark:border-neutral-800 min-h-[72px]"
             />
           </div>
         </div>
@@ -208,7 +208,7 @@ export function PromptorioModal({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="bg-transparent border-zinc-300 dark:border-zinc-700"
+            className="bg-transparent border-neutral-300 dark:border-neutral-700"
           >
             Cancelar
           </Button>

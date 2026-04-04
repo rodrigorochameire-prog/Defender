@@ -122,7 +122,7 @@ export function DestaquesSheet({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[90vw] sm:w-[400px] sm:max-w-[400px] p-0 flex flex-col">
-        <SheetHeader className="px-4 pt-4 pb-3 border-b border-zinc-200 dark:border-border">
+        <SheetHeader className="px-4 pt-4 pb-3 border-b border-neutral-200 dark:border-border">
           <SheetTitle className="flex items-center gap-2 text-base">
             <Bookmark className="h-4 w-4 text-emerald-600" />
             Meus Destaques
@@ -181,7 +181,7 @@ export function DestaquesSheet({
                 const lei = leiMap.get(leiId);
                 return (
                   <div key={leiId}>
-                    <div className="sticky top-0 z-10 bg-zinc-50 dark:bg-card px-4 py-1.5 border-b border-zinc-100 dark:border-border">
+                    <div className="sticky top-0 z-10 bg-neutral-50 dark:bg-card px-4 py-1.5 border-b border-neutral-100 dark:border-border">
                       <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                         {lei?.nomeAbreviado ?? leiId}
                         {lei && (
@@ -200,8 +200,8 @@ export function DestaquesSheet({
                           onClick={() => onNavigate(item.leiId, item.artigoId)}
                           className={cn(
                             "group w-full text-left px-4 py-2.5 flex items-start gap-2.5",
-                            "hover:bg-zinc-100 dark:hover:bg-muted/50 transition-colors",
-                            "border-b border-zinc-100 dark:border-border/50 last:border-b-0"
+                            "hover:bg-neutral-100 dark:hover:bg-muted/50 transition-colors",
+                            "border-b border-neutral-100 dark:border-border/50 last:border-b-0"
                           )}
                         >
                           <div className="mt-0.5">
@@ -213,7 +213,7 @@ export function DestaquesSheet({
                               Art. {item.artigoId.replace(/^art-/, "")}
                             </span>
                             {preview && (
-                              <p className="text-xs text-zinc-600 dark:text-muted-foreground line-clamp-2 mt-0.5 leading-relaxed">
+                              <p className="text-xs text-neutral-600 dark:text-muted-foreground line-clamp-2 mt-0.5 leading-relaxed">
                                 {preview}
                               </p>
                             )}

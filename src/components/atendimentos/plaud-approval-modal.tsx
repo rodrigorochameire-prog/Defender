@@ -444,7 +444,7 @@ export function PlaudApprovalModal({
                   <p className="font-medium">
                     {recording.title || "Gravação sem título"}
                   </p>
-                  <div className="flex items-center gap-3 text-xs text-zinc-500">
+                  <div className="flex items-center gap-3 text-xs text-neutral-500">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       {formatDuration(recording.duration)}
@@ -466,15 +466,15 @@ export function PlaudApprovalModal({
                     </TabsTrigger>
                   </TabsList>
                   <TabsContent value="transcricao">
-                    <div className="rounded-md bg-zinc-50 dark:bg-card p-3 max-h-40 overflow-y-auto border">
-                      <p className="text-xs text-zinc-600 dark:text-muted-foreground whitespace-pre-line">
+                    <div className="rounded-md bg-neutral-50 dark:bg-card p-3 max-h-40 overflow-y-auto border">
+                      <p className="text-xs text-neutral-600 dark:text-muted-foreground whitespace-pre-line">
                         {recording.transcription || "Sem transcrição disponível"}
                       </p>
                     </div>
                   </TabsContent>
                   <TabsContent value="resumo">
-                    <div className="rounded-md bg-zinc-50 dark:bg-card p-3 max-h-40 overflow-y-auto border">
-                      <p className="text-xs text-zinc-600 dark:text-muted-foreground whitespace-pre-line">
+                    <div className="rounded-md bg-neutral-50 dark:bg-card p-3 max-h-40 overflow-y-auto border">
+                      <p className="text-xs text-neutral-600 dark:text-muted-foreground whitespace-pre-line">
                         {recording.summary || "Sem resumo disponível"}
                       </p>
                     </div>
@@ -504,11 +504,11 @@ export function PlaudApprovalModal({
                         "flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200",
                         isSelected
                           ? "border-2 border-emerald-400 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 shadow-sm shadow-emerald-500/10"
-                          : "border border-zinc-200/80 dark:border-border bg-white dark:bg-muted/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 hover:border-emerald-200 dark:hover:border-emerald-800"
+                          : "border border-neutral-200/80 dark:border-border bg-white dark:bg-muted/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 hover:border-emerald-200 dark:hover:border-emerald-800"
                       )}
                     >
-                      <Icon className={cn("w-3.5 h-3.5", isSelected ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400")} />
-                      <span className={cn("text-xs font-medium", isSelected ? "text-emerald-700 dark:text-emerald-300 font-semibold" : "text-zinc-500 dark:text-muted-foreground")}>{tipo.label}</span>
+                      <Icon className={cn("w-3.5 h-3.5", isSelected ? "text-emerald-600 dark:text-emerald-400" : "text-neutral-400")} />
+                      <span className={cn("text-xs font-medium", isSelected ? "text-emerald-700 dark:text-emerald-300 font-semibold" : "text-neutral-500 dark:text-muted-foreground")}>{tipo.label}</span>
                     </button>
                   );
                 })}
@@ -524,7 +524,7 @@ export function PlaudApprovalModal({
                         "px-2.5 py-1 rounded-md text-xs cursor-pointer transition-colors",
                         subtipoGravacao === sub.value
                           ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-medium"
-                          : "bg-zinc-100 dark:bg-muted text-zinc-500 hover:bg-zinc-200 dark:hover:bg-muted"
+                          : "bg-neutral-100 dark:bg-muted text-neutral-500 hover:bg-neutral-200 dark:hover:bg-muted"
                       )}
                     >
                       {sub.label}
@@ -543,7 +543,7 @@ export function PlaudApprovalModal({
                         "px-2.5 py-1 rounded-md text-xs cursor-pointer transition-colors",
                         subtipoGravacao === sub.value
                           ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-medium"
-                          : "bg-zinc-100 dark:bg-muted text-zinc-500 hover:bg-zinc-200 dark:hover:bg-muted"
+                          : "bg-neutral-100 dark:bg-muted text-neutral-500 hover:bg-neutral-200 dark:hover:bg-muted"
                       )}
                     >
                       {sub.label}
@@ -595,11 +595,11 @@ export function PlaudApprovalModal({
                 {depoentes.length > 0 && (
                   <div className="space-y-1.5">
                     {depoentes.map((dep, i) => (
-                      <div key={i} className="flex items-center gap-2 p-2 rounded-md bg-zinc-50 dark:bg-muted">
+                      <div key={i} className="flex items-center gap-2 p-2 rounded-md bg-neutral-50 dark:bg-muted">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
                         <span className="text-sm flex-1">{dep.nome}</span>
                         <Badge variant="outline" className="text-[10px]">{dep.tipo}</Badge>
-                        <button type="button" onClick={() => setDepoentes(prev => prev.filter((_, j) => j !== i))} className="text-zinc-400 hover:text-red-500 transition-colors">
+                        <button type="button" onClick={() => setDepoentes(prev => prev.filter((_, j) => j !== i))} className="text-neutral-400 hover:text-red-500 transition-colors">
                           <Plus className="w-3 h-3 rotate-45" />
                         </button>
                       </div>
@@ -641,8 +641,8 @@ export function PlaudApprovalModal({
             )}
 
             {tipoGravacao === "outro" && (
-              <div className="rounded-md bg-zinc-50 dark:bg-muted p-3">
-                <p className="text-xs text-zinc-500">Gravação será salva na pasta geral. Vincule a um assistido opcionalmente.</p>
+              <div className="rounded-md bg-neutral-50 dark:bg-muted p-3">
+                <p className="text-xs text-neutral-500">Gravação será salva na pasta geral. Vincule a um assistido opcionalmente.</p>
               </div>
             )}
 
@@ -658,7 +658,7 @@ export function PlaudApprovalModal({
               {!selectedAssistidoId ? (
                 <>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
                     <Input
                       placeholder="Buscar por nome ou CPF..."
                       value={searchQuery}
@@ -676,17 +676,17 @@ export function PlaudApprovalModal({
                       {isSearching || (searchQuery !== debouncedQuery) ? (
                         <div className="flex items-center justify-center py-4">
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          <span className="text-xs text-zinc-500">Buscando...</span>
+                          <span className="text-xs text-neutral-500">Buscando...</span>
                         </div>
                       ) : searchResults?.assistidos && searchResults.assistidos.length > 0 ? (
                         searchResults.assistidos.map((assistido: { id: number; nome: string; cpf?: string | null; atribuicao?: string | null }) => (
                           <button
                             key={assistido.id}
-                            className="w-full flex items-center gap-3 p-2.5 hover:bg-zinc-50 dark:hover:bg-muted text-left border-b last:border-b-0 transition-colors"
+                            className="w-full flex items-center gap-3 p-2.5 hover:bg-neutral-50 dark:hover:bg-muted text-left border-b last:border-b-0 transition-colors"
                             onClick={() => selectAssistido(assistido.id)}
                           >
-                            <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-muted flex items-center justify-center">
-                              <User className="h-4 w-4 text-zinc-500" />
+                            <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-muted flex items-center justify-center">
+                              <User className="h-4 w-4 text-neutral-500" />
                             </div>
                             <div>
                               <p className="text-sm font-medium flex items-center gap-1.5">
@@ -695,7 +695,7 @@ export function PlaudApprovalModal({
                                 <span className={cn("text-[9px] px-1 py-0.5 rounded ml-1", getAtribuicaoColors(assistido.atribuicao).bgSolid, getAtribuicaoColors(assistido.atribuicao).text)}>{getAtribuicaoColors(assistido.atribuicao).shortLabel}</span>
                               </p>
                               {assistido.cpf && (
-                                <p className="text-xs text-zinc-500 font-mono">
+                                <p className="text-xs text-neutral-500 font-mono">
                                   {assistido.cpf}
                                 </p>
                               )}
@@ -704,7 +704,7 @@ export function PlaudApprovalModal({
                         ))
                       ) : (
                         <div className="text-center py-4 space-y-2">
-                          <p className="text-xs text-zinc-500">Nenhum assistido encontrado</p>
+                          <p className="text-xs text-neutral-500">Nenhum assistido encontrado</p>
                           {!showCreateAssistido && (
                             <Button
                               type="button"
@@ -733,7 +733,7 @@ export function PlaudApprovalModal({
                           <Plus className="w-3 h-3" />
                           Criar novo assistido
                         </p>
-                        <button type="button" onClick={() => setShowCreateAssistido(false)} className="text-zinc-400 hover:text-zinc-600">
+                        <button type="button" onClick={() => setShowCreateAssistido(false)} className="text-neutral-400 hover:text-neutral-600">
                           <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -747,7 +747,7 @@ export function PlaudApprovalModal({
                       />
 
                       <div className="space-y-1.5">
-                        <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Atribuição</p>
+                        <p className="text-[10px] font-medium text-neutral-500 uppercase tracking-wide">Atribuição</p>
                         <div className="flex flex-wrap gap-1.5">
                           {ATRIBUICAO_CHIPS.map((chip) => (
                             <button
@@ -758,7 +758,7 @@ export function PlaudApprovalModal({
                                 "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs cursor-pointer transition-all",
                                 novoAssistidoAtribuicao === chip.value
                                   ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-semibold border-2 border-emerald-400"
-                                  : "bg-white dark:bg-muted text-zinc-600 dark:text-muted-foreground border border-zinc-200 dark:border-border hover:border-emerald-300"
+                                  : "bg-white dark:bg-muted text-neutral-600 dark:text-muted-foreground border border-neutral-200 dark:border-border hover:border-emerald-300"
                               )}
                             >
                               <span className={cn("w-2 h-2 rounded-full", chip.color)} />
@@ -794,7 +794,7 @@ export function PlaudApprovalModal({
                       {selectedAssistido?.nome || "Assistido selecionado"}
                     </p>
                     {selectedAssistido?.cpf && (
-                      <p className="text-xs text-zinc-500 font-mono">{selectedAssistido.cpf}</p>
+                      <p className="text-xs text-neutral-500 font-mono">{selectedAssistido.cpf}</p>
                     )}
                   </div>
                   <Button
@@ -825,15 +825,15 @@ export function PlaudApprovalModal({
                   </Label>
 
                   {/* Tabs: Existente | Criar via PDF */}
-                  <div className="flex gap-1.5 p-0.5 bg-zinc-100 dark:bg-muted rounded-lg">
+                  <div className="flex gap-1.5 p-0.5 bg-neutral-100 dark:bg-muted rounded-lg">
                     <button
                       type="button"
                       onClick={() => setProcessoTab("existente")}
                       className={cn(
                         "flex-1 text-xs font-medium py-1.5 px-3 rounded-md transition-all",
                         processoTab === "existente"
-                          ? "bg-white dark:bg-muted shadow-sm text-zinc-900 dark:text-foreground"
-                          : "text-zinc-500 hover:text-zinc-700"
+                          ? "bg-white dark:bg-muted shadow-sm text-neutral-900 dark:text-foreground"
+                          : "text-neutral-500 hover:text-neutral-700"
                       )}
                     >
                       Existente
@@ -844,8 +844,8 @@ export function PlaudApprovalModal({
                       className={cn(
                         "flex-1 text-xs font-medium py-1.5 px-3 rounded-md transition-all flex items-center justify-center gap-1.5",
                         processoTab === "novo"
-                          ? "bg-white dark:bg-muted shadow-sm text-zinc-900 dark:text-foreground"
-                          : "text-zinc-500 hover:text-zinc-700"
+                          ? "bg-white dark:bg-muted shadow-sm text-neutral-900 dark:text-foreground"
+                          : "text-neutral-500 hover:text-neutral-700"
                       )}
                     >
                       <Sparkles className="w-3 h-3" />
@@ -859,7 +859,7 @@ export function PlaudApprovalModal({
                       {isLoadingProcessos ? (
                         <div className="flex items-center gap-2 py-3">
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          <span className="text-xs text-zinc-500">Carregando processos...</span>
+                          <span className="text-xs text-neutral-500">Carregando processos...</span>
                         </div>
                       ) : processos && processos.length > 0 ? (
                         <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -868,11 +868,11 @@ export function PlaudApprovalModal({
                               "w-full text-left p-2.5 rounded-md border transition-colors",
                               !selectedProcessoId
                                 ? "border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-900/20"
-                                : "border-zinc-200 dark:border-border hover:bg-zinc-50 dark:hover:bg-muted"
+                                : "border-neutral-200 dark:border-border hover:bg-neutral-50 dark:hover:bg-muted"
                             )}
                             onClick={() => setSelectedProcessoId(null)}
                           >
-                            <p className="text-xs text-zinc-500">Sem processo vinculado</p>
+                            <p className="text-xs text-neutral-500">Sem processo vinculado</p>
                           </button>
 
                           {processos.map((processo) => (
@@ -882,7 +882,7 @@ export function PlaudApprovalModal({
                                 "w-full text-left p-2.5 rounded-md border transition-colors",
                                 selectedProcessoId === processo.id
                                   ? "border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-900/20"
-                                  : "border-zinc-200 dark:border-border hover:bg-zinc-50 dark:hover:bg-muted"
+                                  : "border-neutral-200 dark:border-border hover:bg-neutral-50 dark:hover:bg-muted"
                               )}
                               onClick={() => setSelectedProcessoId(processo.id)}
                             >
@@ -893,7 +893,7 @@ export function PlaudApprovalModal({
                                   </p>
                                   <div className="flex flex-wrap items-center gap-1.5 mt-1">
                                     {processo.assunto && (
-                                      <span className="text-xs text-zinc-600 dark:text-muted-foreground truncate max-w-[200px]">
+                                      <span className="text-xs text-neutral-600 dark:text-muted-foreground truncate max-w-[200px]">
                                         {processo.assunto}
                                       </span>
                                     )}
@@ -919,8 +919,8 @@ export function PlaudApprovalModal({
                           ))}
                         </div>
                       ) : (
-                        <div className="text-center py-3 text-xs text-zinc-500">
-                          <Scale className="h-8 w-8 mx-auto text-zinc-300 mb-2" />
+                        <div className="text-center py-3 text-xs text-neutral-500">
+                          <Scale className="h-8 w-8 mx-auto text-neutral-300 mb-2" />
                           Nenhum processo vinculado a este assistido
                         </div>
                       )}
@@ -936,13 +936,13 @@ export function PlaudApprovalModal({
                           onDrop={handleDrop}
                           onDragOver={(e) => e.preventDefault()}
                           onClick={() => fileInputRef.current?.click()}
-                          className="border-2 border-dashed border-zinc-300 dark:border-border rounded-lg p-6 text-center cursor-pointer hover:border-emerald-400 dark:hover:border-emerald-700 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 transition-all"
+                          className="border-2 border-dashed border-neutral-300 dark:border-border rounded-lg p-6 text-center cursor-pointer hover:border-emerald-400 dark:hover:border-emerald-700 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 transition-all"
                         >
-                          <Upload className="w-8 h-8 mx-auto text-zinc-400 mb-2" />
-                          <p className="text-xs font-medium text-zinc-600 dark:text-muted-foreground">
+                          <Upload className="w-8 h-8 mx-auto text-neutral-400 mb-2" />
+                          <p className="text-xs font-medium text-neutral-600 dark:text-muted-foreground">
                             Arraste o PDF aqui ou clique para selecionar
                           </p>
-                          <p className="text-[10px] text-zinc-400 mt-1">PDF do processo (max. 20MB)</p>
+                          <p className="text-[10px] text-neutral-400 mt-1">PDF do processo (max. 20MB)</p>
                           <input
                             ref={fileInputRef}
                             type="file"
@@ -957,7 +957,7 @@ export function PlaudApprovalModal({
                       {pdfUploadState === "uploading" && (
                         <div className="flex items-center justify-center py-6 gap-2">
                           <Loader2 className="w-5 h-5 animate-spin text-emerald-600" />
-                          <span className="text-sm text-zinc-600">Enviando PDF...</span>
+                          <span className="text-sm text-neutral-600">Enviando PDF...</span>
                         </div>
                       )}
 
@@ -965,7 +965,7 @@ export function PlaudApprovalModal({
                       {pdfUploadState === "analyzing" && (
                         <div className="flex items-center justify-center py-6 gap-2">
                           <Brain className="w-5 h-5 animate-pulse text-purple-600" />
-                          <span className="text-sm text-zinc-600">IA analisando processo...</span>
+                          <span className="text-sm text-neutral-600">IA analisando processo...</span>
                         </div>
                       )}
 
@@ -1010,7 +1010,7 @@ export function PlaudApprovalModal({
                                 setPdfBase64("");
                                 setDeepAnalise(null);
                               }}
-                              className="text-zinc-400 hover:text-zinc-600"
+                              className="text-neutral-400 hover:text-neutral-600"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -1018,10 +1018,10 @@ export function PlaudApprovalModal({
 
                           {/* Processo fields */}
                           <div className="space-y-2">
-                            <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Processo</p>
+                            <p className="text-[10px] font-medium text-neutral-500 uppercase tracking-wide">Processo</p>
                             <div className="grid grid-cols-2 gap-2">
                               <div>
-                                <label className="text-[10px] text-zinc-400">N.o Autos</label>
+                                <label className="text-[10px] text-neutral-400">N.o Autos</label>
                                 <Input
                                   value={extractedProcesso.numeroAutos || ""}
                                   onChange={(e) => setExtractedProcesso(prev => prev ? { ...prev, numeroAutos: e.target.value } : prev)}
@@ -1029,7 +1029,7 @@ export function PlaudApprovalModal({
                                 />
                               </div>
                               <div>
-                                <label className="text-[10px] text-zinc-400">Vara</label>
+                                <label className="text-[10px] text-neutral-400">Vara</label>
                                 <Input
                                   value={extractedProcesso.vara || ""}
                                   onChange={(e) => setExtractedProcesso(prev => prev ? { ...prev, vara: e.target.value } : prev)}
@@ -1037,7 +1037,7 @@ export function PlaudApprovalModal({
                                 />
                               </div>
                               <div>
-                                <label className="text-[10px] text-zinc-400">Comarca</label>
+                                <label className="text-[10px] text-neutral-400">Comarca</label>
                                 <Input
                                   value={extractedProcesso.comarca || ""}
                                   onChange={(e) => setExtractedProcesso(prev => prev ? { ...prev, comarca: e.target.value } : prev)}
@@ -1045,7 +1045,7 @@ export function PlaudApprovalModal({
                                 />
                               </div>
                               <div>
-                                <label className="text-[10px] text-zinc-400">Tipo Penal</label>
+                                <label className="text-[10px] text-neutral-400">Tipo Penal</label>
                                 <Input
                                   value={extractedProcesso.tipoPenal || ""}
                                   onChange={(e) => setExtractedProcesso(prev => prev ? { ...prev, tipoPenal: e.target.value } : prev)}
@@ -1058,7 +1058,7 @@ export function PlaudApprovalModal({
                             {extractedProcesso.atribuicaoSugerida && (
                               <div className="flex items-center gap-2 text-xs">
                                 <Sparkles className="w-3 h-3 text-purple-500" />
-                                <span className="text-zinc-500">Atribuição sugerida:</span>
+                                <span className="text-neutral-500">Atribuição sugerida:</span>
                                 <span className={cn(
                                   "px-1.5 py-0.5 rounded text-[10px] font-medium",
                                   getAtribuicaoColors(extractedProcesso.atribuicaoSugerida).bgSolid,
@@ -1073,11 +1073,11 @@ export function PlaudApprovalModal({
                           {/* Assistido fields (complement data) */}
                           {extractedAssistido && Object.values(extractedAssistido).some(v => v) && (
                             <div className="space-y-2">
-                              <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Dados do Assistido (complementar)</p>
+                              <p className="text-[10px] font-medium text-neutral-500 uppercase tracking-wide">Dados do Assistido (complementar)</p>
                               <div className="grid grid-cols-2 gap-2">
                                 {extractedAssistido.cpf && (
                                   <div>
-                                    <label className="text-[10px] text-zinc-400">CPF</label>
+                                    <label className="text-[10px] text-neutral-400">CPF</label>
                                     <Input
                                       value={extractedAssistido.cpf}
                                       onChange={(e) => setExtractedAssistido(prev => prev ? { ...prev, cpf: e.target.value } : prev)}
@@ -1087,7 +1087,7 @@ export function PlaudApprovalModal({
                                 )}
                                 {extractedAssistido.rg && (
                                   <div>
-                                    <label className="text-[10px] text-zinc-400">RG</label>
+                                    <label className="text-[10px] text-neutral-400">RG</label>
                                     <Input
                                       value={extractedAssistido.rg}
                                       onChange={(e) => setExtractedAssistido(prev => prev ? { ...prev, rg: e.target.value } : prev)}
@@ -1097,7 +1097,7 @@ export function PlaudApprovalModal({
                                 )}
                                 {extractedAssistido.endereco && (
                                   <div className="col-span-2">
-                                    <label className="text-[10px] text-zinc-400">Endereço</label>
+                                    <label className="text-[10px] text-neutral-400">Endereço</label>
                                     <Input
                                       value={extractedAssistido.endereco}
                                       onChange={(e) => setExtractedAssistido(prev => prev ? { ...prev, endereco: e.target.value } : prev)}
@@ -1107,7 +1107,7 @@ export function PlaudApprovalModal({
                                 )}
                                 {(extractedAssistido.nomeMae || extractedAssistido.filiacao) && (
                                   <div className="col-span-2">
-                                    <label className="text-[10px] text-zinc-400">Filiação</label>
+                                    <label className="text-[10px] text-neutral-400">Filiação</label>
                                     <Input
                                       value={extractedAssistido.nomeMae || extractedAssistido.filiacao || ""}
                                       onChange={(e) => setExtractedAssistido(prev => prev ? { ...prev, nomeMae: e.target.value, filiacao: e.target.value } : prev)}
@@ -1145,7 +1145,7 @@ export function PlaudApprovalModal({
                                 Análise Profunda
                               </p>
                               {deepAnalise.resumoFatos && (
-                                <div className="rounded-md bg-white dark:bg-card p-2 text-[11px] text-zinc-600 dark:text-muted-foreground max-h-24 overflow-y-auto">
+                                <div className="rounded-md bg-white dark:bg-card p-2 text-[11px] text-neutral-600 dark:text-muted-foreground max-h-24 overflow-y-auto">
                                   {deepAnalise.resumoFatos}
                                 </div>
                               )}
@@ -1198,7 +1198,7 @@ export function PlaudApprovalModal({
                         "w-full text-left p-3 rounded-md border transition-colors",
                         criarNovoAtendimento
                           ? "border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-900/20"
-                          : "border-zinc-200 dark:border-border hover:bg-zinc-50 dark:hover:bg-muted"
+                          : "border-neutral-200 dark:border-border hover:bg-neutral-50 dark:hover:bg-muted"
                       )}
                       onClick={() => {
                         setCriarNovoAtendimento(true);

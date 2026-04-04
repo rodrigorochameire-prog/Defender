@@ -134,7 +134,7 @@ export function StatusChanger({
             {groupOrder.map((group, gi) => (
               <DropdownMenuGroup key={group.key}>
                 {gi > 0 && <DropdownMenuSeparator />}
-                <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-zinc-400">
+                <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-neutral-400">
                   {group.label}
                 </DropdownMenuLabel>
                 {group.statuses.map((opt) => {
@@ -175,7 +175,7 @@ export function StatusChanger({
             <div className="space-y-4 py-4">
               <div>
                 <Label htmlFor="observation">
-                  Observação <span className="text-zinc-500">(opcional)</span>
+                  Observação <span className="text-neutral-500">(opcional)</span>
                 </Label>
                 <Textarea
                   id="observation"
@@ -221,7 +221,7 @@ export function StatusChanger({
           <span style={{ color: currentInfo.color }}><CurrentIcon className="w-5 h-5" /></span>
         </div>
         <div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
             Status atual
           </p>
           <p className="text-sm font-semibold" style={{ color: currentInfo.color }}>
@@ -233,7 +233,7 @@ export function StatusChanger({
       {/* Quick Actions */}
       {quickStatuses.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400 flex items-center gap-1">
+          <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400 flex items-center gap-1">
             <Zap className="w-3 h-3" />
             Ações rápidas
           </p>
@@ -250,7 +250,7 @@ export function StatusChanger({
                   className={cn(
                     "flex items-center gap-2 p-3 rounded-lg border-2 border-dashed transition-all",
                     "hover:scale-105 hover:shadow-md",
-                    "border-zinc-200 dark:border-zinc-700 hover:border-current"
+                    "border-neutral-200 dark:border-neutral-700 hover:border-current"
                   )}
                   style={{ backgroundColor: `${groupColor}10` }}
                   whileHover={{ scale: 1.02 }}
@@ -281,7 +281,7 @@ export function StatusChanger({
           {groupOrder.map((group, gi) => (
             <DropdownMenuGroup key={group.key}>
               {gi > 0 && <DropdownMenuSeparator />}
-              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-zinc-400">
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-neutral-400">
                 {group.label}
               </DropdownMenuLabel>
               {group.statuses.map((opt) => {
@@ -322,7 +322,7 @@ export function StatusChanger({
           <div className="space-y-4 py-4">
             <div>
               <Label htmlFor="observation">
-                Observação <span className="text-zinc-500">(opcional)</span>
+                Observação <span className="text-neutral-500">(opcional)</span>
               </Label>
               <Textarea
                 id="observation"
@@ -386,7 +386,7 @@ export function StatusFlow({ currentStatus }: { currentStatus: string }) {
                 "relative flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all",
                 isActive
                   ? "border-current"
-                  : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400",
+                  : "bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-400",
                 isCurrent && "ring-4 ring-emerald-500/20"
               )}
               style={isActive ? {
@@ -403,7 +403,7 @@ export function StatusFlow({ currentStatus }: { currentStatus: string }) {
                   "w-8 h-0.5 transition-all",
                   isActive
                     ? "bg-emerald-500"
-                    : "bg-zinc-200 dark:bg-zinc-700"
+                    : "bg-neutral-200 dark:bg-neutral-700"
                 )}
               />
             )}

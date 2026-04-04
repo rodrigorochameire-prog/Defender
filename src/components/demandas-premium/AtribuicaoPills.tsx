@@ -75,7 +75,7 @@ export function AtribuicaoPills({
   return (
     <div className={className ?? "flex items-center gap-1"}>
       {/* Switch container — segmented control style */}
-      <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-zinc-200/60 dark:bg-zinc-800 border border-zinc-300/70 dark:border-zinc-700/60">
+      <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-neutral-200/60 dark:bg-neutral-800 border border-neutral-300/70 dark:border-neutral-700/60">
         {filtered.map((opt) => {
           const isActive = selectedValues.includes(opt.value);
           const hex = ATRIBUICAO_COLORS[opt.label] || DEFAULT_HEX;
@@ -127,7 +127,7 @@ export function AtribuicaoPills({
       {!singleSelect && selectedValues.length > 0 && (
         <button
           onClick={onClear}
-          className="flex items-center justify-center w-7 h-7 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+          className="flex items-center justify-center w-7 h-7 rounded-lg text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all cursor-pointer"
         >
           <X className="w-3.5 h-3.5" />
         </button>

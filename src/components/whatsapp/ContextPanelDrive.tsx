@@ -13,8 +13,8 @@ export function ContextPanelDrive() {
         <FolderOpen className="h-5 w-5 text-indigo-400" />
       </div>
       <div>
-        <p className="text-sm font-medium text-zinc-700 dark:text-foreground/80">Integração com Drive</p>
-        <p className="text-xs text-zinc-500 mt-1">Em breve — arquivos do assistido aparecerão aqui</p>
+        <p className="text-sm font-medium text-neutral-700 dark:text-foreground/80">Integração com Drive</p>
+        <p className="text-xs text-neutral-500 mt-1">Em breve — arquivos do assistido aparecerão aqui</p>
       </div>
     </div>
   );

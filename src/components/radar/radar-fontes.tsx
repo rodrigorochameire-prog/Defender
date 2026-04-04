@@ -91,38 +91,38 @@ export function RadarFontes() {
                   label: "Pendentes",
                   value: Number(health.pending),
                   total: Number(health.total),
-                  color: Number(health.pending) > 0 ? "text-amber-600" : "text-zinc-400",
-                  bg: Number(health.pending) > 0 ? "bg-amber-50 dark:bg-amber-900/20" : "bg-zinc-50 dark:bg-zinc-800",
+                  color: Number(health.pending) > 0 ? "text-amber-600" : "text-neutral-400",
+                  bg: Number(health.pending) > 0 ? "bg-amber-50 dark:bg-amber-900/20" : "bg-neutral-50 dark:bg-neutral-800",
                 },
                 {
                   label: "Sem resumo",
                   value: Number(health.semResumo),
                   total: Number(health.done),
-                  color: Number(health.semResumo) > 0 ? "text-orange-600" : "text-zinc-400",
-                  bg: Number(health.semResumo) > 0 ? "bg-orange-50 dark:bg-orange-900/20" : "bg-zinc-50 dark:bg-zinc-800",
+                  color: Number(health.semResumo) > 0 ? "text-orange-600" : "text-neutral-400",
+                  bg: Number(health.semResumo) > 0 ? "bg-orange-50 dark:bg-orange-900/20" : "bg-neutral-50 dark:bg-neutral-800",
                 },
                 {
                   label: "Sem bairro",
                   value: Number(health.semBairro),
                   total: Number(health.done),
-                  color: Number(health.semBairro) > 0 ? "text-orange-600" : "text-zinc-400",
-                  bg: Number(health.semBairro) > 0 ? "bg-orange-50 dark:bg-orange-900/20" : "bg-zinc-50 dark:bg-zinc-800",
+                  color: Number(health.semBairro) > 0 ? "text-orange-600" : "text-neutral-400",
+                  bg: Number(health.semBairro) > 0 ? "bg-orange-50 dark:bg-orange-900/20" : "bg-neutral-50 dark:bg-neutral-800",
                 },
                 {
                   label: "Sem coords",
                   value: Number(health.semCoordenadas),
                   total: Number(health.done),
-                  color: Number(health.semCoordenadas) > 0 ? "text-blue-600" : "text-zinc-400",
-                  bg: Number(health.semCoordenadas) > 0 ? "bg-blue-50 dark:bg-blue-900/20" : "bg-zinc-50 dark:bg-zinc-800",
+                  color: Number(health.semCoordenadas) > 0 ? "text-blue-600" : "text-neutral-400",
+                  bg: Number(health.semCoordenadas) > 0 ? "bg-blue-50 dark:bg-blue-900/20" : "bg-neutral-50 dark:bg-neutral-800",
                 },
               ].map((stat) => (
                 <div key={stat.label} className={cn("rounded-lg p-2.5", stat.bg)}>
                   <div className={cn("text-xl font-semibold", stat.color)}>
                     {stat.value.toLocaleString("pt-BR")}
                   </div>
-                  <div className="text-[10px] text-zinc-500 mt-0.5">{stat.label}</div>
+                  <div className="text-[10px] text-neutral-500 mt-0.5">{stat.label}</div>
                   {stat.total > 0 && stat.value > 0 && (
-                    <div className="mt-1 h-1 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
+                    <div className="mt-1 h-1 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden">
                       <div
                         className={cn("h-full rounded-full", stat.color === "text-emerald-600" ? "bg-emerald-500" : "bg-amber-500")}
                         style={{ width: `${Math.min(100, (stat.value / stat.total) * 100)}%` }}
@@ -140,13 +140,13 @@ export function RadarFontes() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-xs text-zinc-500 mb-1">
+            <div className="flex items-center gap-2 text-xs text-neutral-500 mb-1">
               <Globe className="h-3.5 w-3.5" />
               Fontes Ativas
             </div>
-            <p className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+            <p className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
               {fontesAtivas}
-              <span className="text-sm font-normal text-zinc-400">
+              <span className="text-sm font-normal text-neutral-400">
                 /{fontes?.length ?? 0}
               </span>
             </p>
@@ -154,22 +154,22 @@ export function RadarFontes() {
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-xs text-zinc-500 mb-1">
+            <div className="flex items-center gap-2 text-xs text-neutral-500 mb-1">
               <Newspaper className="h-3.5 w-3.5" />
               Notícias Coletadas
             </div>
-            <p className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+            <p className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
               {totalNoticias.toLocaleString("pt-BR")}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-xs text-zinc-500 mb-1">
+            <div className="flex items-center gap-2 text-xs text-neutral-500 mb-1">
               <Link2 className="h-3.5 w-3.5" />
               Matches Gerados
             </div>
-            <p className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+            <p className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
               {totalMatches.toLocaleString("pt-BR")}
             </p>
           </CardContent>
@@ -196,10 +196,10 @@ export function RadarFontes() {
                           "h-3.5 w-3.5 shrink-0",
                           fonte.ativo
                             ? "text-emerald-500"
-                            : "text-zinc-300 dark:text-zinc-600"
+                            : "text-neutral-300 dark:text-neutral-600"
                         )}
                       />
-                      <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                      <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
                         {fonte.nome}
                       </span>
                       {fonte.confiabilidade === "local" && (
@@ -213,21 +213,21 @@ export function RadarFontes() {
                         </Badge>
                       )}
                       {fonte.confiabilidade === "estadual" && (
-                        <Badge className="text-[10px] px-1.5 py-0 h-4 bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700">
+                        <Badge className="text-[10px] px-1.5 py-0 h-4 bg-neutral-100 text-neutral-600 border-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:border-neutral-700">
                           Estadual
                         </Badge>
                       )}
                       {!fonte.ativo && (
                         <Badge
                           variant="outline"
-                          className="text-xs text-zinc-400 border-zinc-200 dark:border-zinc-700"
+                          className="text-xs text-neutral-400 border-neutral-200 dark:border-neutral-700"
                         >
                           Pausada
                         </Badge>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-3 text-xs text-zinc-400 flex-wrap">
+                    <div className="flex items-center gap-3 text-xs text-neutral-400 flex-wrap">
                       <a
                         href={fonte.url}
                         target="_blank"
@@ -250,8 +250,8 @@ export function RadarFontes() {
                     </div>
 
                     <div className="flex items-center gap-3 mt-2 text-xs">
-                      <span className="text-zinc-600 dark:text-zinc-400">
-                        <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                      <span className="text-neutral-600 dark:text-neutral-400">
+                        <span className="font-medium text-neutral-800 dark:text-neutral-200">
                           {totalNot}
                         </span>{" "}
                         notícias

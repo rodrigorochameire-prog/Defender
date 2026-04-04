@@ -156,10 +156,10 @@ function EventoSemana({
             <div className="flex items-center gap-1">
               {/* Ícone de cancelado/redesignado */}
               {evento.status === "cancelado" && (
-                <XCircle className="w-2.5 h-2.5 text-zinc-400 shrink-0" />
+                <XCircle className="w-2.5 h-2.5 text-neutral-400 shrink-0" />
               )}
               {(evento.status === "remarcado" || evento.status === "redesignado") && (
-                <CalendarX2 className="w-2.5 h-2.5 text-zinc-400 shrink-0" />
+                <CalendarX2 className="w-2.5 h-2.5 text-neutral-400 shrink-0" />
               )}
 
               {/* Horário */}
@@ -186,8 +186,8 @@ function EventoSemana({
             <p
               className={`text-[10px] font-medium truncate leading-tight ${
                 eventoCancelado
-                  ? "text-zinc-400 dark:text-zinc-500 line-through"
-                  : "text-zinc-700 dark:text-zinc-300"
+                  ? "text-neutral-400 dark:text-neutral-500 line-through"
+                  : "text-neutral-700 dark:text-neutral-300"
               }`}
             >
               {evento.titulo.replace(/^ADV\s+/i, "")}
@@ -195,7 +195,7 @@ function EventoSemana({
 
             {/* Assistido */}
             {evento.assistido && (
-              <p className="text-[9px] text-zinc-500 dark:text-zinc-400 truncate">
+              <p className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate">
                 {evento.assistido}
               </p>
             )}
@@ -204,7 +204,7 @@ function EventoSemana({
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-[320px] p-0 border border-zinc-200/80 dark:border-zinc-800/80 shadow-2xl rounded-xl overflow-hidden bg-white dark:bg-zinc-900"
+        className="w-[320px] p-0 border border-neutral-200/80 dark:border-neutral-800/80 shadow-2xl rounded-xl overflow-hidden bg-white dark:bg-neutral-900"
         side="right"
         align="start"
         onClick={(e) => e.stopPropagation()}
@@ -219,7 +219,7 @@ function EventoSemana({
                 style={{ backgroundColor: eventoCancelado ? undefined : `${displayColor}15` }}
               >
                 <AtribIcon
-                  className={`w-4 h-4 ${eventoCancelado ? "text-zinc-400 dark:text-zinc-500" : ""}`}
+                  className={`w-4 h-4 ${eventoCancelado ? "text-neutral-400 dark:text-neutral-500" : ""}`}
                   style={eventoCancelado ? undefined : { color: displayColor }}
                 />
               </div>
@@ -233,7 +233,7 @@ function EventoSemana({
                 ) : (
                   <CalendarX2 className="w-3 h-3 text-amber-500" />
                 )}
-                <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-neutral-500">
                   {(evento.status === "cancelado" || evento.status === "cancelada") ? "Cancelada" : "Redesignada"}
                 </span>
               </div>
@@ -241,8 +241,8 @@ function EventoSemana({
             <h4
               className={`font-semibold text-[13px] leading-tight ${
                 eventoCancelado
-                  ? "text-zinc-400 dark:text-zinc-500 line-through"
-                  : "text-zinc-900 dark:text-zinc-100"
+                  ? "text-neutral-400 dark:text-neutral-500 line-through"
+                  : "text-neutral-900 dark:text-neutral-100"
               }`}
             >
               {tipoCompleto}
@@ -260,7 +260,7 @@ function EventoSemana({
             {onEditEvento && (
               <button
                 onClick={(e) => { e.stopPropagation(); onEditEvento(evento); }}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 dark:hover:text-neutral-300 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                 title="Editar"
               >
                 <Edit3 className="w-3.5 h-3.5" />
@@ -269,14 +269,14 @@ function EventoSemana({
             {onDeleteEvento && (
               <button
                 onClick={(e) => { e.stopPropagation(); if (confirm("Excluir este evento?")) onDeleteEvento(evento.id); }}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-neutral-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                 title="Excluir"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             )}
             <PopoverClose
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 dark:hover:text-neutral-300 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
               title="Fechar"
             >
               <X className="w-3.5 h-3.5" />
@@ -286,21 +286,21 @@ function EventoSemana({
 
         {/* ── Seção 2: Assistido — destaque com fundo ── */}
         {evento.assistido && (
-          <div className="mx-3 mb-2 px-3 py-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
+          <div className="mx-3 mb-2 px-3 py-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-800">
             <div className="flex items-center gap-2.5">
-              <User className="w-4 h-4 text-zinc-400 shrink-0" />
+              <User className="w-4 h-4 text-neutral-400 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 leading-none mb-0.5">Assistido</p>
+                <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">Assistido</p>
                 {evento.assistidoId ? (
                   <a
                     href={`/admin/assistidos/${evento.assistidoId}`}
-                    className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 hover:text-zinc-600 dark:hover:text-zinc-300 hover:underline leading-tight block"
+                    className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline leading-tight block"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {evento.assistido}
                   </a>
                 ) : (
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-tight">
+                  <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 leading-tight">
                     {evento.assistido}
                   </p>
                 )}
@@ -313,17 +313,17 @@ function EventoSemana({
         <div className="px-4 pt-1 pb-3 space-y-2">
           {evento.processo && (
             <div className="flex items-center gap-2.5">
-              <FileText className="w-4 h-4 text-zinc-400 shrink-0" />
+              <FileText className="w-4 h-4 text-neutral-400 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 leading-none mb-0.5">Processo</p>
+                <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">Processo</p>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-mono text-zinc-700 dark:text-zinc-300 truncate">{evento.processo}</span>
+                  <span className="text-xs font-mono text-neutral-700 dark:text-neutral-300 truncate">{evento.processo}</span>
                   <button
                     onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(evento.processo); toast.success("Número copiado!"); }}
-                    className="p-0.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
+                    className="p-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer shrink-0"
                     title="Copiar"
                   >
-                    <Copy className="w-3 h-3 text-zinc-400" />
+                    <Copy className="w-3 h-3 text-neutral-400" />
                   </button>
                 </div>
               </div>
@@ -331,10 +331,10 @@ function EventoSemana({
           )}
 
           <div className="flex items-center gap-2.5">
-            <Clock className="w-4 h-4 text-zinc-400 shrink-0" />
+            <Clock className="w-4 h-4 text-neutral-400 shrink-0" />
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 leading-none mb-0.5">Horário</p>
-              <span className={`text-xs font-semibold ${eventoCancelado ? "text-zinc-400 line-through" : "text-zinc-900 dark:text-zinc-100"}`}>
+              <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">Horário</p>
+              <span className={`text-xs font-semibold ${eventoCancelado ? "text-neutral-400 line-through" : "text-neutral-900 dark:text-neutral-100"}`}>
                 {evento.horarioInicio}{evento.horarioFim && ` – ${evento.horarioFim}`}
               </span>
             </div>
@@ -342,10 +342,10 @@ function EventoSemana({
 
           {evento.local && (
             <div className="flex items-center gap-2.5">
-              <MapPin className="w-4 h-4 text-zinc-400 shrink-0" />
+              <MapPin className="w-4 h-4 text-neutral-400 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 leading-none mb-0.5">Local</p>
-                <span className="text-xs text-zinc-700 dark:text-zinc-300 truncate block">{evento.local}</span>
+                <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">Local</p>
+                <span className="text-xs text-neutral-700 dark:text-neutral-300 truncate block">{evento.local}</span>
               </div>
             </div>
           )}
@@ -359,10 +359,10 @@ function EventoSemana({
         </div>
 
         {/* ── Seção 4: Footer ── */}
-        <div className="px-4 py-3 border-t border-zinc-100 dark:border-zinc-800/50">
+        <div className="px-4 py-3 border-t border-neutral-100 dark:border-neutral-800/50">
           <Button
             size="sm"
-            className="w-full h-8 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 text-xs cursor-pointer"
+            className="w-full h-8 bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-neutral-900 text-xs cursor-pointer"
             onClick={(e) => { e.stopPropagation(); onEventClick(evento); }}
           >
             {hasRegistro ? (
@@ -449,11 +449,11 @@ export function CalendarWeekView({
           </Button>
 
           <div className="text-center min-w-[200px]">
-            <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+            <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
               {format(weekStart, "d", { locale: ptBR })} -{" "}
               {format(weekEnd, "d 'de' MMMM", { locale: ptBR })}
             </h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
               {stats.total} eventos{stats.urgentes > 0 ? ` · ${stats.urgentes} urgentes` : ""}
             </p>
           </div>
@@ -481,11 +481,11 @@ export function CalendarWeekView({
       </div>
 
       {/* Grade da Semana */}
-      <Card className="overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+      <Card className="overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
         {/* Header com dias da semana */}
-        <div className="grid grid-cols-8 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="grid grid-cols-8 border-b border-neutral-200 dark:border-neutral-800">
           {/* Coluna de horários */}
-          <div className="w-16 py-3 text-center text-xs font-medium text-zinc-400 border-r border-zinc-200 dark:border-zinc-800">
+          <div className="w-16 py-3 text-center text-xs font-medium text-neutral-400 border-r border-neutral-200 dark:border-neutral-800">
             <Clock className="w-4 h-4 mx-auto" />
           </div>
 
@@ -498,13 +498,13 @@ export function CalendarWeekView({
             return (
               <div
                 key={index}
-                className={`py-3 text-center border-r border-zinc-200 dark:border-zinc-800 last:border-r-0 ${
-                  isWeekendDay ? "bg-zinc-50/50 dark:bg-zinc-900/50" : ""
+                className={`py-3 text-center border-r border-neutral-200 dark:border-neutral-800 last:border-r-0 ${
+                  isWeekendDay ? "bg-neutral-50/50 dark:bg-neutral-900/50" : ""
                 }`}
               >
                 <p
                   className={`text-xs font-medium uppercase ${
-                    isWeekendDay ? "text-zinc-400" : "text-zinc-500 dark:text-zinc-400"
+                    isWeekendDay ? "text-neutral-400" : "text-neutral-500 dark:text-neutral-400"
                   }`}
                 >
                   {format(day, "EEE", { locale: ptBR })}
@@ -514,14 +514,14 @@ export function CalendarWeekView({
                     isDayToday
                       ? "bg-emerald-600 text-white"
                       : isWeekendDay
-                        ? "text-zinc-400"
-                        : "text-zinc-700 dark:text-zinc-300"
+                        ? "text-neutral-400"
+                        : "text-neutral-700 dark:text-neutral-300"
                   }`}
                 >
                   {format(day, "d")}
                 </div>
                 {eventCount > 0 && (
-                  <p className="text-[10px] text-zinc-400 mt-0.5">{eventCount} evento{eventCount > 1 && "s"}</p>
+                  <p className="text-[10px] text-neutral-400 mt-0.5">{eventCount} evento{eventCount > 1 && "s"}</p>
                 )}
               </div>
             );
@@ -531,8 +531,8 @@ export function CalendarWeekView({
         {/* Corpo com horários e eventos */}
         <div className="max-h-[600px] overflow-y-auto">
           {/* Seção "Dia inteiro" */}
-          <div className="grid grid-cols-8 border-b border-zinc-200 dark:border-zinc-800 min-h-[40px]">
-            <div className="w-16 px-2 py-2 text-[10px] text-zinc-400 border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50">
+          <div className="grid grid-cols-8 border-b border-neutral-200 dark:border-neutral-800 min-h-[40px]">
+            <div className="w-16 px-2 py-2 text-[10px] text-neutral-400 border-r border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
               Dia todo
             </div>
             {weekDays.map((day, index) => {
@@ -542,8 +542,8 @@ export function CalendarWeekView({
               return (
                 <div
                   key={index}
-                  className={`p-1 border-r border-zinc-200 dark:border-zinc-800 last:border-r-0 ${
-                    isWeekend(day) ? "bg-zinc-50/50 dark:bg-zinc-900/50" : ""
+                  className={`p-1 border-r border-neutral-200 dark:border-neutral-800 last:border-r-0 ${
+                    isWeekend(day) ? "bg-neutral-50/50 dark:bg-neutral-900/50" : ""
                   }`}
                   onClick={() => onDateClick(day)}
                 >
@@ -563,9 +563,9 @@ export function CalendarWeekView({
 
           {/* Grade de horários */}
           {HORAS_DIA.map((hora) => (
-            <div key={hora} className="grid grid-cols-8 border-b border-zinc-100 dark:border-zinc-800/50 min-h-[60px]">
+            <div key={hora} className="grid grid-cols-8 border-b border-neutral-100 dark:border-neutral-800/50 min-h-[60px]">
               {/* Coluna de horário */}
-              <div className="w-16 px-2 py-1 text-[10px] text-zinc-400 border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30">
+              <div className="w-16 px-2 py-1 text-[10px] text-neutral-400 border-r border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30">
                 {String(hora).padStart(2, "0")}:00
               </div>
 
@@ -582,8 +582,8 @@ export function CalendarWeekView({
                 return (
                   <div
                     key={dayIndex}
-                    className={`group relative p-0.5 border-r border-zinc-100 dark:border-zinc-800/50 last:border-r-0 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors ${
-                      isWeekend(day) ? "bg-zinc-50/30 dark:bg-zinc-900/30" : ""
+                    className={`group relative p-0.5 border-r border-neutral-100 dark:border-neutral-800/50 last:border-r-0 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors ${
+                      isWeekend(day) ? "bg-neutral-50/30 dark:bg-neutral-900/30" : ""
                     } ${isToday(day) ? "bg-emerald-50/30 dark:bg-emerald-950/10" : ""}`}
                     onClick={() => {
                       if (isEmpty && onCreateClick) {

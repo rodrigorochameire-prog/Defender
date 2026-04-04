@@ -755,7 +755,7 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
     <div className="isolate">
       <div
         ref={mapContainerRef}
-        className={`w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 ${
+        className={`w-full rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-700 ${
           fullscreen ? "h-[calc(100vh-8rem)]" : "h-[600px]"
         }`}
       />

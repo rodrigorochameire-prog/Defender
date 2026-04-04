@@ -67,7 +67,7 @@ function RelevanciaChip({ score }: { score?: number | null }) {
     </Badge>
   );
   if (score >= 35) return (
-    <Badge className="bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 text-[10px] px-1.5 py-0 h-4">
+    <Badge className="bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400 text-[10px] px-1.5 py-0 h-4">
       Possível
     </Badge>
   );
@@ -186,14 +186,14 @@ function IntelPanel({
 }) {
   return (
     <div
-      className="mt-2 pt-2.5 border-t border-zinc-100 dark:border-zinc-800 space-y-2.5"
+      className="mt-2 pt-2.5 border-t border-neutral-100 dark:border-neutral-800 space-y-2.5"
       onClick={(e) => e.stopPropagation()}
     >
       {(noticia.bairro || noticia.armaMeio || dataDisplay) && (
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-neutral-500 dark:text-neutral-400">
           {[
             noticia.bairro
-              ? <span key="bairro" className="font-medium text-zinc-700 dark:text-zinc-300">{noticia.bairro}</span>
+              ? <span key="bairro" className="font-medium text-neutral-700 dark:text-neutral-300">{noticia.bairro}</span>
               : null,
             noticia.armaMeio
               ? <span key="arma">{noticia.armaMeio}</span>
@@ -204,7 +204,7 @@ function IntelPanel({
           ]
             .filter(Boolean)
             .reduce<React.ReactNode[]>((acc, el, idx) => {
-              if (idx > 0) acc.push(<span key={`sep-${idx}`} className="text-zinc-300 dark:text-zinc-600">·</span>);
+              if (idx > 0) acc.push(<span key={`sep-${idx}`} className="text-neutral-300 dark:text-neutral-600">·</span>);
               acc.push(el);
               return acc;
             }, [])}
@@ -213,14 +213,14 @@ function IntelPanel({
 
       {envolvidos.length > 0 && (
         <div className="space-y-1">
-          <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">Envolvidos</p>
+          <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide">Envolvidos</p>
           <div className="flex flex-wrap gap-1.5">
             {envolvidos.map((e, i) => (
               <span
                 key={`exp-${e.nome}-${i}`}
                 className={cn(
                   "inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md font-medium",
-                  papelColors[e.papel] || "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+                  papelColors[e.papel] || "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400",
                 )}
               >
                 {e.nome}{e.idade ? `, ${e.idade} anos` : ""}{e.vulgo ? ` (${e.vulgo})` : ""}
@@ -233,11 +233,11 @@ function IntelPanel({
 
       {noticia.resumoIA && (
         <div className="space-y-1">
-          <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide flex items-center gap-1">
+          <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide flex items-center gap-1">
             <FileText className="h-3 w-3" />
             Resumo IA
           </p>
-          <p className="text-[12px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
+          <p className="text-[12px] text-neutral-600 dark:text-neutral-400 leading-relaxed">
             {noticia.resumoIA}
           </p>
         </div>
@@ -287,8 +287,8 @@ export function RadarNoticiaCard({
     return (
       <div
         className={cn(
-          "flex items-center gap-3 px-3 h-9 border-b border-zinc-100 dark:border-zinc-800/60",
-          "hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors cursor-pointer",
+          "flex items-center gap-3 px-3 h-9 border-b border-neutral-100 dark:border-neutral-800/60",
+          "hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors cursor-pointer",
           "border-l-[3px]",
           getCrimeBorderColor(noticia.tipoCrime),
         )}
@@ -297,15 +297,15 @@ export function RadarNoticiaCard({
         {/* Dot + crime label */}
         <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
           <CrimeDot tipoCrime={noticia.tipoCrime} />
-          <span className="text-[10px] text-zinc-500">{getCrimeLabel(noticia.tipoCrime)}</span>
+          <span className="text-[10px] text-neutral-500">{getCrimeLabel(noticia.tipoCrime)}</span>
         </span>
 
-        <span className="flex-1 text-xs text-zinc-800 dark:text-zinc-200 truncate">
+        <span className="flex-1 text-xs text-neutral-800 dark:text-neutral-200 truncate">
           {noticia.titulo}
         </span>
 
         {metaParts.length > 0 && (
-          <span className="hidden sm:block text-[10px] text-zinc-400 shrink-0">
+          <span className="hidden sm:block text-[10px] text-neutral-400 shrink-0">
             {metaParts.join(" · ")}
           </span>
         )}
@@ -321,18 +321,18 @@ export function RadarNoticiaCard({
               "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
               matchScore >= 80 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" :
               matchScore >= 60 ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" :
-              "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+              "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
             )}>
               {matchScore}%
             </span>
           )}
           {noticia.enrichmentStatus === "pending" && (
-            <RefreshCw className="h-3 w-3 text-zinc-400 animate-spin" />
+            <RefreshCw className="h-3 w-3 text-neutral-400 animate-spin" />
           )}
           {onVerNoMapa && (
             <button
               onClick={(e) => { e.stopPropagation(); onVerNoMapa(); }}
-              className="text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+              className="text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
               title="Ver no mapa"
             >
               <MapPin className="h-3 w-3" />
@@ -342,7 +342,7 @@ export function RadarNoticiaCard({
             href={noticia.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-zinc-400 hover:text-emerald-600 transition-colors"
+            className="text-neutral-400 hover:text-emerald-600 transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             <ExternalLink className="h-3 w-3" />
@@ -364,8 +364,8 @@ export function RadarNoticiaCard({
     return (
       <div
         className={cn(
-          "px-4 py-3 border-b border-zinc-100 dark:border-zinc-800/60",
-          "hover:bg-zinc-50/70 dark:hover:bg-zinc-800/30 transition-colors cursor-pointer",
+          "px-4 py-3 border-b border-neutral-100 dark:border-neutral-800/60",
+          "hover:bg-neutral-50/70 dark:hover:bg-neutral-800/30 transition-colors cursor-pointer",
           "border-l-[3px]",
           getCrimeBorderColor(noticia.tipoCrime),
         )}
@@ -375,27 +375,27 @@ export function RadarNoticiaCard({
         <div className="flex items-center gap-2 mb-1.5">
           <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
             <CrimeDot tipoCrime={noticia.tipoCrime} />
-            <span className="text-[10px] text-zinc-500">{getCrimeLabel(noticia.tipoCrime)}</span>
+            <span className="text-[10px] text-neutral-500">{getCrimeLabel(noticia.tipoCrime)}</span>
           </span>
           {noticia.enrichmentStatus === "pending" && (
-            <RefreshCw className="h-3 w-3 text-zinc-300 animate-spin" />
+            <RefreshCw className="h-3 w-3 text-neutral-300 animate-spin" />
           )}
-          <span className="text-[10px] text-zinc-400 ml-auto truncate max-w-[120px]">{noticia.fonte}</span>
+          <span className="text-[10px] text-neutral-400 ml-auto truncate max-w-[120px]">{noticia.fonte}</span>
           {dataRelativa && (
-            <span className="text-[11px] text-zinc-400 shrink-0">{dataRelativa}</span>
+            <span className="text-[11px] text-neutral-400 shrink-0">{dataRelativa}</span>
           )}
         </div>
 
         {/* Row 2: título — 2 linhas */}
         <h3
-          className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 leading-snug line-clamp-2 mb-1.5"
+          className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 leading-snug line-clamp-2 mb-1.5"
           style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
         >
           {noticia.titulo}
         </h3>
 
         {/* Row 3: metadata + actions */}
-        <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+        <div className="flex items-center gap-2 text-[11px] text-neutral-400">
           {metaParts.length > 0 && (
             <span className="truncate">{metaParts.join(" · ")}</span>
           )}
@@ -416,7 +416,7 @@ export function RadarNoticiaCard({
             )}
             {onVerNoMapa && (
               <button
-                className="flex items-center gap-0.5 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                className="flex items-center gap-0.5 text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
                 onClick={(e) => { e.stopPropagation(); onVerNoMapa(); }}
                 title="Ver no mapa"
               >
@@ -428,7 +428,7 @@ export function RadarNoticiaCard({
               href={noticia.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-0.5 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+              className="flex items-center gap-0.5 text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
               <ExternalLink className="h-2.5 w-2.5" />
@@ -440,7 +440,7 @@ export function RadarNoticiaCard({
                   "flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors cursor-pointer",
                   expanded
                     ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
-                    : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                    : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                 )}
                 onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
               >
@@ -475,7 +475,7 @@ export function RadarNoticiaCard({
   return (
     <Card
       className={cn(
-        "group relative border border-zinc-100 dark:border-zinc-800 rounded-xl shadow-none",
+        "group relative border border-neutral-100 dark:border-neutral-800 rounded-xl shadow-none",
         "hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer overflow-hidden",
         hasMatch && "ring-1 ring-emerald-200 dark:ring-emerald-800/60"
       )}
@@ -523,7 +523,7 @@ export function RadarNoticiaCard({
           </span>
 
           {noticia.enrichmentStatus === "pending" && (
-            <RefreshCw className="h-3 w-3 text-zinc-300 animate-spin" />
+            <RefreshCw className="h-3 w-3 text-neutral-300 animate-spin" />
           )}
 
           {hasMatch && (
@@ -533,7 +533,7 @@ export function RadarNoticiaCard({
           )}
 
           {dataRelativa && (
-            <span className="ml-auto flex items-center gap-1 text-[11px] text-zinc-400 shrink-0">
+            <span className="ml-auto flex items-center gap-1 text-[11px] text-neutral-400 shrink-0">
               <Clock className="h-2.5 w-2.5" />
               {dataRelativa}
             </span>
@@ -542,7 +542,7 @@ export function RadarNoticiaCard({
 
         {/* Título */}
         <h3
-          className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2 leading-snug mb-2"
+          className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-2 leading-snug mb-2"
           style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
         >
           {noticia.titulo}
@@ -550,7 +550,7 @@ export function RadarNoticiaCard({
 
         {/* Resumo IA */}
         {noticia.resumoIA && (
-          <p className="text-[12px] text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed mb-2.5">
+          <p className="text-[12px] text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed mb-2.5">
             {noticia.resumoIA}
           </p>
         )}
@@ -563,7 +563,7 @@ export function RadarNoticiaCard({
                 key={`${e.nome}-${i}`}
                 className={cn(
                   "inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md font-medium",
-                  papelColors[e.papel] || "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+                  papelColors[e.papel] || "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400",
                 )}
               >
                 <Tooltip>
@@ -580,7 +580,7 @@ export function RadarNoticiaCard({
               </span>
             ))}
             {envolvidosComNome.length > 2 && (
-              <span className="text-[10px] text-zinc-400 self-center">+{envolvidosComNome.length - 2}</span>
+              <span className="text-[10px] text-neutral-400 self-center">+{envolvidosComNome.length - 2}</span>
             )}
           </div>
         )}
@@ -589,19 +589,19 @@ export function RadarNoticiaCard({
         <MatchTriagem matches={noticia.matches ?? []} onQuickAction={onQuickAction} />
 
         {/* Footer: bairro + fonte + intel */}
-        <div className="flex items-center gap-2 text-[11px] text-zinc-400 mt-2.5 pt-2.5 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center gap-2 text-[11px] text-neutral-400 mt-2.5 pt-2.5 border-t border-neutral-100 dark:border-neutral-800">
           {noticia.bairro && (
-            <span className="flex items-center gap-1 shrink-0 text-zinc-500">
+            <span className="flex items-center gap-1 shrink-0 text-neutral-500">
               <MapPin className="h-2.5 w-2.5" />
               {noticia.bairro}
             </span>
           )}
 
           <div className="flex items-center gap-2 ml-auto shrink-0">
-            <span className="text-zinc-400 truncate max-w-[80px]">{noticia.fonte}</span>
+            <span className="text-neutral-400 truncate max-w-[80px]">{noticia.fonte}</span>
             {onVerNoMapa && (
               <button
-                className="flex items-center gap-0.5 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                className="flex items-center gap-0.5 text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
                 onClick={(e) => { e.stopPropagation(); onVerNoMapa(); }}
                 title="Ver no mapa"
               >
@@ -612,7 +612,7 @@ export function RadarNoticiaCard({
               href={noticia.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-0.5 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+              className="flex items-center gap-0.5 text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
               onClick={(e) => e.stopPropagation()}
               title="Ver fonte"
             >
@@ -624,7 +624,7 @@ export function RadarNoticiaCard({
                   "flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer",
                   expanded
                     ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
-                    : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 )}
                 onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
               >
@@ -679,7 +679,7 @@ function MatchTriagem({ matches, onQuickAction }: MatchTriagemProps) {
 
   return (
     <div
-      className="flex flex-col gap-1 mt-2 pt-1.5 border-t border-zinc-100 dark:border-zinc-800"
+      className="flex flex-col gap-1 mt-2 pt-1.5 border-t border-neutral-100 dark:border-neutral-800"
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center gap-2 text-[11px]">
@@ -689,11 +689,11 @@ function MatchTriagem({ matches, onQuickAction }: MatchTriagemProps) {
             ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
             : top.scoreConfianca >= 50
               ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-              : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+              : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
         )}>
           {top.scoreConfianca}%
         </span>
-        <span className="flex-1 truncate text-zinc-700 dark:text-zinc-300 font-medium">
+        <span className="flex-1 truncate text-neutral-700 dark:text-neutral-300 font-medium">
           {top.assistidoNome || top.nomeEncontrado}
         </span>
 
@@ -721,7 +721,7 @@ function MatchTriagem({ matches, onQuickAction }: MatchTriagemProps) {
             {top.assistidoId && (
               <NextLink
                 href={`/admin/assistidos/${top.assistidoId}`}
-                className="inline-flex items-center p-0.5 rounded text-zinc-400 hover:text-emerald-600 transition-colors cursor-pointer"
+                className="inline-flex items-center p-0.5 rounded text-neutral-400 hover:text-emerald-600 transition-colors cursor-pointer"
               >
                 <ExternalLink className="h-3 w-3" />
               </NextLink>
@@ -729,11 +729,11 @@ function MatchTriagem({ matches, onQuickAction }: MatchTriagemProps) {
           </div>
         )}
         {isDescartado && (
-          <span className="text-[10px] text-zinc-400 italic shrink-0">Descartado</span>
+          <span className="text-[10px] text-neutral-400 italic shrink-0">Descartado</span>
         )}
       </div>
       {rest > 0 && (
-        <span className="text-[10px] text-zinc-400 pl-0.5">
+        <span className="text-[10px] text-neutral-400 pl-0.5">
           +{rest} outro{rest > 1 ? "s" : ""} match{rest > 1 ? "es" : ""}
         </span>
       )}

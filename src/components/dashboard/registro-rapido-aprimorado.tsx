@@ -125,8 +125,8 @@ const TIPOS_REGISTRO = {
   anotacao: {
     label: "Anotação",
     icon: PenLine,
-    color: "text-zinc-600",
-    bgActive: "bg-zinc-100 dark:bg-muted border-zinc-300",
+    color: "text-neutral-600",
+    bgActive: "bg-neutral-100 dark:bg-muted border-neutral-300",
     description: "Adicionar nota ou observação",
   },
   delegacao: {
@@ -146,7 +146,7 @@ const ATRIBUICOES = [
 ];
 
 const PRIORIDADES = [
-  { value: "BAIXA", label: "Baixa", color: "bg-zinc-100 text-zinc-600" },
+  { value: "BAIXA", label: "Baixa", color: "bg-neutral-100 text-neutral-600" },
   { value: "NORMAL", label: "Normal", color: "bg-blue-100 text-blue-600" },
   { value: "ALTA", label: "Alta", color: "bg-amber-100 text-amber-600" },
   { value: "URGENTE", label: "Urgente", color: "bg-rose-100 text-rose-600" },
@@ -480,23 +480,23 @@ export function RegistroRapidoAprimorado({
   const isDelegacao = data.tipo === "delegacao";
 
   return (
-    <Card className="group/card relative bg-white dark:bg-card border border-zinc-100 dark:border-border rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
+    <Card className="group/card relative bg-white dark:bg-card border border-neutral-100 dark:border-border rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
       {/* Header */}
-      <div className="p-3 border-b border-zinc-100 dark:border-border">
+      <div className="p-3 border-b border-neutral-100 dark:border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
               <MessageSquare className="w-3.5 h-3.5 text-white" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-zinc-800 dark:text-foreground">Registro Rápido</h3>
-              <p className="text-[10px] text-zinc-400">Registre e organize informações</p>
+              <h3 className="text-sm font-semibold text-neutral-800 dark:text-foreground">Registro Rápido</h3>
+              <p className="text-[10px] text-neutral-400">Registre e organize informações</p>
             </div>
           </div>
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 text-[10px] text-zinc-500 hover:text-emerald-600"
+            className="h-6 text-[10px] text-neutral-500 hover:text-emerald-600"
             onClick={() => setShowAdvanced(!showAdvanced)}
           >
             {showAdvanced ? "Simplificado" : "Avançado"}
@@ -510,7 +510,7 @@ export function RegistroRapidoAprimorado({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Seletor de Assistido */}
           <div className="space-y-1.5">
-            <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
+            <label className="text-[10px] font-medium text-neutral-500 uppercase tracking-wide">
               Assistido
             </label>
             <Popover open={assistidoSearchOpen} onOpenChange={setAssistidoSearchOpen}>
@@ -518,7 +518,7 @@ export function RegistroRapidoAprimorado({
                 <Button
                   variant="outline"
                   role="combobox"
-                  className="w-full h-9 justify-between text-xs bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border"
+                  className="w-full h-9 justify-between text-xs bg-neutral-50 dark:bg-muted border-neutral-200 dark:border-border"
                 >
                   {data.assistidoId ? (
                     <span className="flex items-center gap-2 truncate">
@@ -526,7 +526,7 @@ export function RegistroRapidoAprimorado({
                       <span className="truncate">{data.assistidoNome}</span>
                     </span>
                   ) : (
-                    <span className="text-zinc-500 flex items-center gap-2">
+                    <span className="text-neutral-500 flex items-center gap-2">
                       <Search className="w-3.5 h-3.5" />
                       Buscar assistido...
                     </span>
@@ -545,8 +545,8 @@ export function RegistroRapidoAprimorado({
                   <CommandList>
                     <CommandEmpty>
                       <div className="py-4 text-center">
-                        <User className="w-8 h-8 mx-auto mb-2 text-zinc-400" />
-                        <p className="text-sm text-zinc-500">Nenhum assistido encontrado</p>
+                        <User className="w-8 h-8 mx-auto mb-2 text-neutral-400" />
+                        <p className="text-sm text-neutral-500">Nenhum assistido encontrado</p>
                         <Link href="/admin/assistidos/novo">
                           <Button variant="link" size="sm" className="mt-2 text-emerald-600">
                             <Plus className="w-3 h-3 mr-1" />
@@ -570,7 +570,7 @@ export function RegistroRapidoAprimorado({
                           />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{assistido.nome}</p>
-                            <div className="flex items-center gap-2 text-[10px] text-zinc-500">
+                            <div className="flex items-center gap-2 text-[10px] text-neutral-500">
                               {assistido.vulgo && <span>({assistido.vulgo})</span>}
                               {assistido.situacaoPrisional === "PRESO" && (
                                 <Badge variant="outline" className="h-4 px-1 text-[9px] border-red-300 text-red-600">
@@ -594,7 +594,7 @@ export function RegistroRapidoAprimorado({
 
           {/* Seletor de Processo */}
           <div className="space-y-1.5">
-            <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
+            <label className="text-[10px] font-medium text-neutral-500 uppercase tracking-wide">
               Processo {data.assistidoId && `(${processosFiltrados.length})`}
             </label>
             <Popover open={processoSearchOpen} onOpenChange={setProcessoSearchOpen}>
@@ -603,7 +603,7 @@ export function RegistroRapidoAprimorado({
                   variant="outline"
                   role="combobox"
                   disabled={!data.assistidoId}
-                  className="w-full h-9 justify-between text-xs bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border"
+                  className="w-full h-9 justify-between text-xs bg-neutral-50 dark:bg-muted border-neutral-200 dark:border-border"
                 >
                   {data.processoId ? (
                     <span className="flex items-center gap-2 truncate">
@@ -611,7 +611,7 @@ export function RegistroRapidoAprimorado({
                       <span className="truncate font-mono text-[10px]">{data.processoNumero}</span>
                     </span>
                   ) : (
-                    <span className="text-zinc-500 flex items-center gap-2">
+                    <span className="text-neutral-500 flex items-center gap-2">
                       <Scale className="w-3.5 h-3.5" />
                       {data.assistidoId ? "Selecionar processo..." : "Selecione assistido primeiro"}
                     </span>
@@ -630,8 +630,8 @@ export function RegistroRapidoAprimorado({
                   <CommandList>
                     <CommandEmpty>
                       <div className="py-4 text-center">
-                        <Scale className="w-8 h-8 mx-auto mb-2 text-zinc-400" />
-                        <p className="text-sm text-zinc-500">Nenhum processo encontrado</p>
+                        <Scale className="w-8 h-8 mx-auto mb-2 text-neutral-400" />
+                        <p className="text-sm text-neutral-500">Nenhum processo encontrado</p>
                       </div>
                     </CommandEmpty>
                     <CommandGroup heading="Processos">
@@ -647,7 +647,7 @@ export function RegistroRapidoAprimorado({
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[11px] font-mono truncate">{processo.numero}</p>
-                            <p className="text-[10px] text-zinc-500 truncate">
+                            <p className="text-[10px] text-neutral-500 truncate">
                               {processo.tipo || processo.atribuicao || "Processo"}
                             </p>
                           </div>
@@ -701,7 +701,7 @@ export function RegistroRapidoAprimorado({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-zinc-400 hover:text-red-500 flex-shrink-0"
+              className="h-6 w-6 text-neutral-400 hover:text-red-500 flex-shrink-0"
               onClick={handleClearAssistido}
             >
               <X className="w-3.5 h-3.5" />
@@ -711,7 +711,7 @@ export function RegistroRapidoAprimorado({
 
         {/* Linha 2: Tipo de Registro - Layout compacto */}
         <div className="space-y-1.5">
-          <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
+          <label className="text-[10px] font-medium text-neutral-500 uppercase tracking-wide">
             Tipo
           </label>
           <div className="flex flex-wrap gap-1.5">
@@ -739,11 +739,11 @@ export function RegistroRapidoAprimorado({
                       ? config.bgActive + " border " + config.color
                       : isDelegacaoBtn
                         ? "border border-rose-200 dark:border-rose-800 hover:border-rose-400 bg-rose-50 dark:bg-rose-900/20 text-rose-600"
-                        : "border border-zinc-200 dark:border-border hover:border-zinc-300 bg-white dark:bg-muted text-zinc-600 dark:text-muted-foreground"
+                        : "border border-neutral-200 dark:border-border hover:border-neutral-300 bg-white dark:bg-muted text-neutral-600 dark:text-muted-foreground"
                   }`}
                   title={config.description}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isSelected && !isDelegacaoBtn ? config.color : isDelegacaoBtn ? "text-rose-500" : "text-zinc-400"}`} />
+                  <Icon className={`w-3.5 h-3.5 ${isSelected && !isDelegacaoBtn ? config.color : isDelegacaoBtn ? "text-rose-500" : "text-neutral-400"}`} />
                   {config.label}
                 </button>
               );
@@ -753,7 +753,7 @@ export function RegistroRapidoAprimorado({
 
         {/* Linha 3: Descrição */}
         <div className="space-y-1.5">
-          <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
+          <label className="text-[10px] font-medium text-neutral-500 uppercase tracking-wide">
             Descrição
           </label>
           <div className="relative">
@@ -761,7 +761,7 @@ export function RegistroRapidoAprimorado({
               placeholder={TIPOS_REGISTRO[data.tipo]?.description || "Descreva o registro..."}
               value={data.descricao}
               onChange={(e) => setData(prev => ({ ...prev, descricao: e.target.value }))}
-              className="min-h-[80px] text-sm bg-zinc-50 dark:bg-muted border-zinc-200 dark:border-border resize-none pr-10"
+              className="min-h-[80px] text-sm bg-neutral-50 dark:bg-muted border-neutral-200 dark:border-border resize-none pr-10"
             />
             <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5">
               <AudioRecorderButton
@@ -826,7 +826,7 @@ export function RegistroRapidoAprimorado({
                   type="button"
                   onClick={handleSummarize}
                   disabled={isSummarizing}
-                  className="text-[11px] text-zinc-400 hover:text-zinc-600 disabled:opacity-50"
+                  className="text-[11px] text-neutral-400 hover:text-neutral-600 disabled:opacity-50"
                 >
                   {isSummarizing ? "Resumindo..." : "Resumir atendimento"}
                 </button>
@@ -837,58 +837,58 @@ export function RegistroRapidoAprimorado({
 
         {/* Opções Avançadas */}
         {showAdvanced && (
-          <div className="space-y-4 p-3 rounded-lg bg-zinc-50 dark:bg-muted/50 border border-zinc-200 dark:border-border">
-            <div className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide mb-2">
+          <div className="space-y-4 p-3 rounded-lg bg-neutral-50 dark:bg-muted/50 border border-neutral-200 dark:border-border">
+            <div className="text-[10px] font-medium text-neutral-500 uppercase tracking-wide mb-2">
               Organizar Registro
             </div>
 
             {/* Destinos */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <label className="flex items-center gap-2 p-2 rounded-lg border border-zinc-200 dark:border-border hover:border-emerald-300 dark:hover:border-emerald-700 cursor-pointer transition-colors">
+              <label className="flex items-center gap-2 p-2 rounded-lg border border-neutral-200 dark:border-border hover:border-emerald-300 dark:hover:border-emerald-700 cursor-pointer transition-colors">
                 <Checkbox
                   checked={data.criarDemanda}
                   onCheckedChange={(checked) => setData(prev => ({ ...prev, criarDemanda: !!checked }))}
                 />
                 <div className="flex items-center gap-1.5">
                   <ListTodo className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="text-[11px] font-medium text-zinc-700 dark:text-foreground/80">Criar Demanda</span>
+                  <span className="text-[11px] font-medium text-neutral-700 dark:text-foreground/80">Criar Demanda</span>
                 </div>
               </label>
 
-              <label className="flex items-center gap-2 p-2 rounded-lg border border-zinc-200 dark:border-border hover:border-emerald-300 dark:hover:border-emerald-700 cursor-pointer transition-colors">
+              <label className="flex items-center gap-2 p-2 rounded-lg border border-neutral-200 dark:border-border hover:border-emerald-300 dark:hover:border-emerald-700 cursor-pointer transition-colors">
                 <Checkbox
                   checked={data.salvarNoDrive}
                   onCheckedChange={(checked) => setData(prev => ({ ...prev, salvarNoDrive: !!checked }))}
                 />
                 <div className="flex items-center gap-1.5">
                   <FolderOpen className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="text-[11px] font-medium text-zinc-700 dark:text-foreground/80">Salvar no Drive</span>
+                  <span className="text-[11px] font-medium text-neutral-700 dark:text-foreground/80">Salvar no Drive</span>
                 </div>
               </label>
 
-              <label className="flex items-center gap-2 p-2 rounded-lg border border-zinc-200 dark:border-border hover:border-emerald-300 dark:hover:border-emerald-700 cursor-pointer transition-colors">
+              <label className="flex items-center gap-2 p-2 rounded-lg border border-neutral-200 dark:border-border hover:border-emerald-300 dark:hover:border-emerald-700 cursor-pointer transition-colors">
                 <Checkbox
                   checked={data.agendarRetorno}
                   onCheckedChange={(checked) => setData(prev => ({ ...prev, agendarRetorno: !!checked }))}
                 />
                 <div className="flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-violet-500" />
-                  <span className="text-[11px] font-medium text-zinc-700 dark:text-foreground/80">Agendar Retorno</span>
+                  <span className="text-[11px] font-medium text-neutral-700 dark:text-foreground/80">Agendar Retorno</span>
                 </div>
               </label>
             </div>
 
             {/* Campos de Demanda */}
             {data.criarDemanda && (
-              <div className="space-y-3 pt-3 border-t border-zinc-200 dark:border-border">
+              <div className="space-y-3 pt-3 border-t border-neutral-200 dark:border-border">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {/* Atribuição */}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-medium text-zinc-500">Atribuição</label>
+                    <label className="text-[10px] font-medium text-neutral-500">Atribuição</label>
                     <select
                       value={data.atribuicao}
                       onChange={(e) => setData(prev => ({ ...prev, atribuicao: e.target.value }))}
-                      className="w-full h-8 px-2 text-xs rounded-md border border-zinc-200 dark:border-border bg-white dark:bg-muted"
+                      className="w-full h-8 px-2 text-xs rounded-md border border-neutral-200 dark:border-border bg-white dark:bg-muted"
                     >
                       <option value="">Selecione...</option>
                       {ATRIBUICOES.map((attr) => (
@@ -899,11 +899,11 @@ export function RegistroRapidoAprimorado({
 
                   {/* Prioridade */}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-medium text-zinc-500">Prioridade</label>
+                    <label className="text-[10px] font-medium text-neutral-500">Prioridade</label>
                     <select
                       value={data.prioridade}
                       onChange={(e) => setData(prev => ({ ...prev, prioridade: e.target.value }))}
-                      className="w-full h-8 px-2 text-xs rounded-md border border-zinc-200 dark:border-border bg-white dark:bg-muted"
+                      className="w-full h-8 px-2 text-xs rounded-md border border-neutral-200 dark:border-border bg-white dark:bg-muted"
                     >
                       {PRIORIDADES.map((prio) => (
                         <option key={prio.value} value={prio.value}>{prio.label}</option>
@@ -913,7 +913,7 @@ export function RegistroRapidoAprimorado({
 
                   {/* Prazo */}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-medium text-zinc-500">Prazo</label>
+                    <label className="text-[10px] font-medium text-neutral-500">Prazo</label>
                     <Input
                       type="date"
                       value={data.prazo}

@@ -37,7 +37,7 @@ const CRIME_TYPES = [
   { value: "porte_arma", label: "Porte Arma", color: "bg-pink-600" },
   { value: "estelionato", label: "Estelionato", color: "bg-fuchsia-700" },
   { value: "execucao_penal", label: "Exec. Penal", color: "bg-blue-700" },
-  { value: "outros", label: "Outros", color: "bg-zinc-500" },
+  { value: "outros", label: "Outros", color: "bg-neutral-500" },
 ] as const;
 
 /** Hex fill colors for dots — muted/pastel palette */
@@ -63,7 +63,7 @@ export function getCrimeHexColor(tipo: string | null | undefined): string {
 }
 
 export function getCrimeColor(tipo: string | null | undefined): string {
-  return CRIME_TYPES.find((c) => c.value === tipo)?.color || "bg-zinc-500";
+  return CRIME_TYPES.find((c) => c.value === tipo)?.color || "bg-neutral-500";
 }
 
 export function getCrimeLabel(tipo: string | null | undefined): string {
@@ -84,13 +84,13 @@ export function getCrimeBorderColor(tipo: string | null | undefined): string {
     porte_arma: "border-l-fuchsia-400",
     estelionato: "border-l-violet-400",
     execucao_penal: "border-l-blue-400",
-    outros: "border-l-zinc-300",
+    outros: "border-l-neutral-300",
   };
   return colors[tipo || ""] || colors.outros;
 }
 
 export function getCrimeBadgeColor(_tipo: string | null | undefined): string {
-  return "bg-zinc-50 text-zinc-600 border border-zinc-200 dark:bg-zinc-800/60 dark:text-zinc-400 dark:border-zinc-700";
+  return "bg-neutral-50 text-neutral-600 border border-neutral-200 dark:bg-neutral-800/60 dark:text-neutral-400 dark:border-neutral-700";
 }
 
 export interface FiltrosState {
@@ -171,7 +171,7 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
       <div className="flex items-center gap-2">
         {/* Search */}
         <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
           <Input
             placeholder="Buscar..."
             value={filtros.search || ""}
@@ -181,7 +181,7 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
           {filtros.search && (
             <button
               onClick={() => onChange((prev) => ({ ...prev, search: undefined }))}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 cursor-pointer"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 cursor-pointer"
             >
               <X className="h-3 w-3" />
             </button>
@@ -198,7 +198,7 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
                 "text-[11px] px-2.5 py-1 rounded-full font-medium transition-colors cursor-pointer",
                 isActivePeriod(days)
                   ? "bg-emerald-600 text-white"
-                  : "bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400"
+                  : "bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-400"
               )}
             >
               {label}
@@ -241,7 +241,7 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
         {(activeCount > 0 || filtros.search) && (
           <button
             onClick={() => onChange(EMPTY_FILTROS)}
-            className="text-zinc-400 hover:text-zinc-600 cursor-pointer shrink-0"
+            className="text-neutral-400 hover:text-neutral-600 cursor-pointer shrink-0"
             title="Limpar filtros"
           >
             <X className="h-4 w-4" />
@@ -262,7 +262,7 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
           <div className="space-y-5">
             {/* Tipo de crime */}
             <div className="space-y-2">
-              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Tipo de Crime</p>
+              <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">Tipo de Crime</p>
               <div className="flex flex-wrap gap-1.5">
                 {CRIME_TYPES.map((crime) => (
                   <button
@@ -277,7 +277,7 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
                       "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer",
                       filtros.tipoCrime === crime.value
                         ? getCrimeBadgeColor(crime.value)
-                        : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                        : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
                     )}
                   >
                     <span className={cn("h-1.5 w-1.5 rounded-full", crime.color)} />
@@ -289,11 +289,11 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
 
             {/* Bairro */}
             <div className="space-y-2">
-              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Bairro</p>
+              <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">Bairro</p>
               <select
                 value={filtros.bairro || ""}
                 onChange={(e) => onChange((prev) => ({ ...prev, bairro: e.target.value || undefined }))}
-                className="w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 cursor-pointer"
+                className="w-full h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 cursor-pointer"
               >
                 <option value="">Todos</option>
                 {bairros?.map((b) => (
@@ -304,11 +304,11 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
 
             {/* Fonte */}
             <div className="space-y-2">
-              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Fonte</p>
+              <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">Fonte</p>
               <select
                 value={filtros.fonte || ""}
                 onChange={(e) => onChange((prev) => ({ ...prev, fonte: e.target.value || undefined }))}
-                className="w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 cursor-pointer"
+                className="w-full h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 cursor-pointer"
               >
                 <option value="">Todas</option>
                 {fontesDistintas?.map((f) => (
@@ -319,11 +319,11 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
 
             {/* Circunstância */}
             <div className="space-y-2">
-              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Circunstância</p>
+              <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">Circunstância</p>
               <select
                 value={filtros.circunstancia || ""}
                 onChange={(e) => onChange((prev) => ({ ...prev, circunstancia: e.target.value || undefined }))}
-                className="w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 cursor-pointer"
+                className="w-full h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 cursor-pointer"
               >
                 <option value="">Todas</option>
                 <option value="flagrante">Flagrante</option>
@@ -336,10 +336,10 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
 
             {/* Período personalizado */}
             <div className="space-y-2">
-              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Período</p>
+              <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">Período</p>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label className="text-[11px] text-zinc-400 mb-1 block">De</Label>
+                  <Label className="text-[11px] text-neutral-400 mb-1 block">De</Label>
                   <Input
                     type="date"
                     value={filtros.dataInicio || ""}
@@ -348,7 +348,7 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
                   />
                 </div>
                 <div>
-                  <Label className="text-[11px] text-zinc-400 mb-1 block">Até</Label>
+                  <Label className="text-[11px] text-neutral-400 mb-1 block">Até</Label>
                   <Input
                     type="date"
                     value={filtros.dataFim || ""}
@@ -362,8 +362,8 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
             {/* Só matches DPE */}
             <div className="flex items-center justify-between py-1">
               <div>
-                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Só Casos DPE</p>
-                <p className="text-[11px] text-zinc-400">Apenas ocorrências com assistidos</p>
+                <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Só Casos DPE</p>
+                <p className="text-[11px] text-neutral-400">Apenas ocorrências com assistidos</p>
               </div>
               <Switch
                 checked={filtros.soMatches}
@@ -374,7 +374,7 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
 
             {/* Filtro de relevância */}
             <div className="space-y-2">
-              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Relevância IA</p>
+              <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">Relevância IA</p>
               <Select
                 value={filtros.relevanciaMin?.toString() ?? "60"}
                 onValueChange={(val) => onChange((prev) => ({ ...prev, relevanciaMin: val ? Number(val) : undefined }))}
@@ -397,7 +397,7 @@ export function RadarFiltros({ filtros, onChange }: RadarFiltrosProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full cursor-pointer text-zinc-500"
+                className="w-full cursor-pointer text-neutral-500"
                 onClick={() => {
                   onChange(EMPTY_FILTROS);
                   setOpen(false);

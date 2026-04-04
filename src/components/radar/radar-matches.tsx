@@ -181,7 +181,7 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
       <div className="flex flex-col sm:flex-row gap-3">
         {/* Busca */}
         <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-400" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-neutral-400" />
           <Input
             placeholder="Buscar por nome do assistido ou encontrado..."
             value={search}
@@ -191,7 +191,7 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
           {search && (
             <button
               onClick={() => setSearch("")}
-              className="absolute right-2.5 top-2.5 text-zinc-400 hover:text-zinc-600 cursor-pointer"
+              className="absolute right-2.5 top-2.5 text-neutral-400 hover:text-neutral-600 cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
@@ -224,7 +224,7 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
       </div>
 
       {/* Contagem */}
-      <div className="flex items-center justify-between text-xs text-zinc-500">
+      <div className="flex items-center justify-between text-xs text-neutral-500">
         <span>
           {data?.total ?? 0} match{(data?.total ?? 0) !== 1 ? "es" : ""}
           {statusFilter === "possivel" ? " possíveis" : ""}
@@ -254,7 +254,7 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
             }}
             className="cursor-pointer"
           />
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-neutral-500">
             Selecionar todos ({possivelMatches.length})
           </span>
         </div>
@@ -263,13 +263,13 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
       {/* Lista */}
       {matches.length === 0 ? (
         <div className="text-center py-16">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
-            <Link2 className="h-8 w-8 text-zinc-400" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4">
+            <Link2 className="h-8 w-8 text-neutral-400" />
           </div>
-          <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
             Nenhum match encontrado
           </h3>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
             Matches serão criados automaticamente quando notícias mencionarem
             assistidos da DPE.
           </p>
@@ -319,8 +319,8 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
 
                     {/* Nome encontrado */}
                     <div className="flex items-center gap-2 flex-wrap">
-                      <User className="h-4 w-4 text-zinc-400 shrink-0" />
-                      <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      <User className="h-4 w-4 text-neutral-400 shrink-0" />
+                      <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
                         {match.nomeEncontrado}
                       </span>
                       {(() => {
@@ -342,7 +342,7 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
                             className={cn(
                               "rounded px-1.5 py-0.5 text-[10px] font-medium uppercase",
                               papelColors[papel] ??
-                                "bg-zinc-100 text-zinc-600"
+                                "bg-neutral-100 text-neutral-600"
                             )}
                           >
                             {papel}
@@ -361,15 +361,15 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
 
                     {/* Notícia */}
                     <div className="pl-6 space-y-1">
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300 line-clamp-1">
+                      <p className="text-sm text-neutral-700 dark:text-neutral-300 line-clamp-1">
                         {match.noticiaTitulo}
                       </p>
                       {match.noticiaResumo && (
-                        <p className="text-xs text-zinc-500 line-clamp-2">
+                        <p className="text-xs text-neutral-500 line-clamp-2">
                           {match.noticiaResumo}
                         </p>
                       )}
-                      <div className="flex items-center gap-3 text-xs text-zinc-400">
+                      <div className="flex items-center gap-3 text-xs text-neutral-400">
                         <span>{match.noticiaFonte}</span>
                         {match.noticiaBairro && (
                           <span>• {match.noticiaBairro}</span>
@@ -393,8 +393,8 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
                     {/* Notes (for already-processed matches) */}
                     {match.notes && (
                       <div className="mt-2 pl-6 flex items-start gap-1.5">
-                        <MessageSquare className="h-3 w-3 text-zinc-400 mt-0.5 shrink-0" />
-                        <p className="text-xs text-zinc-500 italic">
+                        <MessageSquare className="h-3 w-3 text-neutral-400 mt-0.5 shrink-0" />
+                        <p className="text-xs text-neutral-500 italic">
                           {match.notes}
                         </p>
                       </div>
@@ -423,7 +423,7 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 text-xs text-zinc-500 cursor-pointer"
+                        className="h-7 text-xs text-neutral-500 cursor-pointer"
                         onClick={() =>
                           setActionDialog({
                             type: "dismiss",
@@ -446,7 +446,7 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
 
       {/* Floating Bulk Action Bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-zinc-900 text-white rounded-xl shadow-2xl px-6 py-3 flex items-center gap-4">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-neutral-900 text-white rounded-xl shadow-2xl px-6 py-3 flex items-center gap-4">
           <span className="text-sm">
             {selectedIds.size} selecionado(s)
           </span>
@@ -460,7 +460,7 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
           <Button
             size="sm"
             variant="outline"
-            className="text-white border-zinc-600 hover:bg-zinc-800 cursor-pointer"
+            className="text-white border-neutral-600 hover:bg-neutral-800 cursor-pointer"
             onClick={() => handleBulkDismiss()}
           >
             <XCircle className="h-3.5 w-3.5 mr-1" /> Descartar
@@ -468,7 +468,7 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
           <Button
             size="sm"
             variant="ghost"
-            className="text-zinc-400 cursor-pointer"
+            className="text-neutral-400 cursor-pointer"
             onClick={() => setSelectedIds(new Set())}
           >
             Cancelar
@@ -488,13 +488,13 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
               </h3>
               {actionDialog.type === "dismiss" && (
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-zinc-600">
+                  <label className="text-xs font-medium text-neutral-600">
                     Motivo do descarte
                   </label>
                   <select
                     value={dismissReason}
                     onChange={(e) => setDismissReason(e.target.value)}
-                    className="w-full rounded border border-zinc-200 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                    className="w-full rounded border border-neutral-200 bg-white px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
                   >
                     <option value="">Selecionar motivo...</option>
                     <option value="nome_falso">Nome não coincide</option>
@@ -507,7 +507,7 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
                 </div>
               )}
               <div className="space-y-2">
-                <Label className="text-xs text-zinc-500">
+                <Label className="text-xs text-neutral-500">
                   Observações (opcional)
                 </Label>
                 <Textarea
@@ -519,7 +519,7 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
               </div>
               {actionDialog.type === "confirm" && actionDialog.ids.length === 1 && actionDialog.assistidoId && (
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-zinc-600">
+                  <label className="text-xs font-medium text-neutral-600">
                     Vincular ao processo (opcional)
                   </label>
                   {processosAssistido && processosAssistido.length > 0 ? (
@@ -528,7 +528,7 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
                       onChange={(e) =>
                         setLinkProcessoId(e.target.value ? Number(e.target.value) : null)
                       }
-                      className="w-full rounded border border-zinc-200 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                      className="w-full rounded border border-neutral-200 bg-white px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
                     >
                       <option value="">Não vincular agora</option>
                       {processosAssistido.map((p) => (
@@ -538,7 +538,7 @@ export function RadarMatches({ noticiaId, onClearFilter }: RadarMatchesProps = {
                       ))}
                     </select>
                   ) : (
-                    <p className="text-xs text-zinc-400">
+                    <p className="text-xs text-neutral-400">
                       Nenhum processo encontrado para este assistido
                     </p>
                   )}
@@ -625,7 +625,7 @@ function ScoreBreakdown({ dadosExtraidos }: { dadosExtraidos: unknown }) {
 
   return (
     <div className="space-y-1.5 mt-2 pl-6">
-      <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">
+      <p className="text-[10px] font-medium text-neutral-500 uppercase tracking-wider">
         Score Breakdown
       </p>
       {bars.map((bar) => {
@@ -633,14 +633,14 @@ function ScoreBreakdown({ dadosExtraidos }: { dadosExtraidos: unknown }) {
         const pct = Math.min((value / bar.max) * 100, 100);
         return (
           <div key={bar.key} className="flex items-center gap-2">
-            <span className="text-[10px] text-zinc-500 w-14">{bar.label}</span>
-            <div className="flex-1 h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+            <span className="text-[10px] text-neutral-500 w-14">{bar.label}</span>
+            <div className="flex-1 h-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
               <div
                 className={cn("h-full rounded-full", bar.color)}
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <span className="text-[10px] text-zinc-400 w-8 text-right">
+            <span className="text-[10px] text-neutral-400 w-8 text-right">
               {value}/{bar.max}
             </span>
           </div>
@@ -660,7 +660,7 @@ function ScoreBadge({ score }: { score: number }) {
       ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
       : score >= 50
         ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-        : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";
+        : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
 
   return (
     <Badge variant="secondary" className={color}>
@@ -689,7 +689,7 @@ function StatusBadge({ status }: { status: string }) {
     descartado: {
       label: "Descartado",
       className:
-        "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500",
+        "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-500",
     },
   };
 

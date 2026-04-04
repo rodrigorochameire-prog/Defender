@@ -522,9 +522,9 @@ export default function AvaliacaoJuriPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* SUB-HEADER - Padrão Defender */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Link href="/admin/juri/avaliacao">
@@ -537,12 +537,12 @@ export default function AvaliacaoJuriPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Avaliação do Júri</h1>
+                <h1 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Avaliação do Júri</h1>
                 <Badge variant="outline" className="text-[10px] border-purple-300 text-purple-700">
                   Sessão #{sessaoId}
                 </Badge>
               </div>
-              <p className="text-[10px] text-zinc-500">Formulário de observação comportamental</p>
+              <p className="text-[10px] text-neutral-500">Formulário de observação comportamental</p>
             </div>
           </div>
           <Button 

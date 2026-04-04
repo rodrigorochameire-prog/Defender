@@ -63,7 +63,7 @@ function WebhookStatus({
 }) {
   if (!webhook) {
     return (
-      <span className="flex items-center gap-1 text-sm text-zinc-400">
+      <span className="flex items-center gap-1 text-sm text-neutral-400">
         <WifiOff className="h-3.5 w-3.5" />
         Sem webhook
       </span>
@@ -76,7 +76,7 @@ function WebhookStatus({
   });
 
   return (
-    <span className="flex items-center gap-1 text-sm text-zinc-600">
+    <span className="flex items-center gap-1 text-sm text-neutral-600">
       <Wifi className="h-3.5 w-3.5 text-emerald-500" />
       Webhook ativo · expira {expiresIn}
     </span>
@@ -124,8 +124,8 @@ export default function DriveSyncPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-zinc-900">Sync Google Drive</h1>
-          <p className="text-sm text-zinc-500 mt-1">Status em tempo real das pastas monitoradas</p>
+          <h1 className="text-2xl font-semibold text-neutral-900">Sync Google Drive</h1>
+          <p className="text-sm text-neutral-500 mt-1">Status em tempo real das pastas monitoradas</p>
         </div>
         <div className="flex items-center gap-2">
           <HealthBadge health={globalHealth} />
@@ -141,8 +141,8 @@ export default function DriveSyncPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="pt-4">
-              <p className="text-xs text-zinc-500 uppercase tracking-wide">Canais ativos</p>
-              <p className="text-2xl font-semibold text-zinc-900 mt-1">
+              <p className="text-xs text-neutral-500 uppercase tracking-wide">Canais ativos</p>
+              <p className="text-2xl font-semibold text-neutral-900 mt-1">
                 {global.expiredChannels === 0
                   ? "—"
                   : `0 / ${global.expiredChannels + (data?.folders.filter((f) => f.activeWebhook).length ?? 0)}`}
@@ -151,14 +151,14 @@ export default function DriveSyncPage() {
           </Card>
           <Card>
             <CardContent className="pt-4">
-              <p className="text-xs text-zinc-500 uppercase tracking-wide">Canais expirados</p>
-              <p className="text-2xl font-semibold text-zinc-900 mt-1">
+              <p className="text-xs text-neutral-500 uppercase tracking-wide">Canais expirados</p>
+              <p className="text-2xl font-semibold text-neutral-900 mt-1">
                 {global.expiredChannels}
                 {global.expiredChannels > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="ml-2 h-6 text-xs text-zinc-500"
+                    className="ml-2 h-6 text-xs text-neutral-500"
                     onClick={() => cleanMut.mutate()}
                     disabled={cleanMut.isPending}
                   >
@@ -171,14 +171,14 @@ export default function DriveSyncPage() {
           </Card>
           <Card>
             <CardContent className="pt-4">
-              <p className="text-xs text-zinc-500 uppercase tracking-wide">Erros (1h)</p>
-              <p className="text-2xl font-semibold text-zinc-900 mt-1">{global.recentErrors}</p>
+              <p className="text-xs text-neutral-500 uppercase tracking-wide">Erros (1h)</p>
+              <p className="text-2xl font-semibold text-neutral-900 mt-1">{global.recentErrors}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4">
-              <p className="text-xs text-zinc-500 uppercase tracking-wide">Pastas críticas</p>
-              <p className="text-2xl font-semibold text-zinc-900 mt-1">
+              <p className="text-xs text-neutral-500 uppercase tracking-wide">Pastas críticas</p>
+              <p className="text-2xl font-semibold text-neutral-900 mt-1">
                 {folders.filter((f) => f.health === "critical").length}
               </p>
             </CardContent>
@@ -192,11 +192,11 @@ export default function DriveSyncPage() {
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="animate-pulse">
               <CardHeader>
-                <div className="h-4 bg-zinc-200 rounded w-1/2" />
+                <div className="h-4 bg-neutral-200 rounded w-1/2" />
               </CardHeader>
               <CardContent>
-                <div className="h-3 bg-zinc-100 rounded w-3/4 mb-2" />
-                <div className="h-3 bg-zinc-100 rounded w-1/2" />
+                <div className="h-3 bg-neutral-100 rounded w-3/4 mb-2" />
+                <div className="h-3 bg-neutral-100 rounded w-1/2" />
               </CardContent>
             </Card>
           ))}
@@ -211,12 +211,12 @@ export default function DriveSyncPage() {
                   ? "border-red-200"
                   : folder.health === "warning"
                   ? "border-yellow-200"
-                  : "border-zinc-200"
+                  : "border-neutral-200"
               }
             >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-base font-medium text-zinc-900">
+                  <CardTitle className="text-base font-medium text-neutral-900">
                     {folder.name}
                   </CardTitle>
                   <HealthBadge health={folder.health} />
@@ -224,7 +224,7 @@ export default function DriveSyncPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {/* Last sync */}
-                <div className="flex items-center gap-1.5 text-sm text-zinc-600">
+                <div className="flex items-center gap-1.5 text-sm text-neutral-600">
                   <Clock className="h-3.5 w-3.5" />
                   {folder.lastSyncAt
                     ? `Última sync: ${formatDistanceToNow(new Date(folder.lastSyncAt), { locale: ptBR, addSuffix: true })}`
@@ -235,7 +235,7 @@ export default function DriveSyncPage() {
                 <WebhookStatus webhook={folder.activeWebhook} />
 
                 {/* File count + sync token */}
-                <div className="flex items-center gap-3 text-sm text-zinc-500">
+                <div className="flex items-center gap-3 text-sm text-neutral-500">
                   <span className="flex items-center gap-1">
                     <Database className="h-3.5 w-3.5" />
                     {folder.fileCount} arquivos
@@ -243,7 +243,7 @@ export default function DriveSyncPage() {
                   {folder.hasSyncToken ? (
                     <span className="text-emerald-600 text-xs">token ✓</span>
                   ) : (
-                    <span className="text-zinc-400 text-xs">sem token</span>
+                    <span className="text-neutral-400 text-xs">sem token</span>
                   )}
                 </div>
 

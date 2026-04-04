@@ -430,7 +430,7 @@ function getProximityStyle(diffDays: number, defensorNome: string | null) {
   if (diffDays <= 7) return {
     dateBg: "bg-muted/50", dateText: "text-foreground/80",
     border: "border-border", cardBg: "bg-card",
-    bar: "bg-zinc-400/60",
+    bar: "bg-neutral-400/60",
     badge: diffDays === 0 ? "HOJE" : diffDays === 1 ? "AMANHÃ" : `${diffDays}d`,
     badgeStyle: "",
   };

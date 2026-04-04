@@ -238,10 +238,10 @@ export function PedidoTrabalhoModal({
 
   const getRoleColor = (role: string) => {
     const colors: Record<string, string> = {
-      servidor: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400",
-      estagiario: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400",
+      servidor: "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400",
+      estagiario: "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400",
     };
-    return colors[role] || "bg-zinc-100 text-zinc-700";
+    return colors[role] || "bg-neutral-100 text-neutral-700";
   };
 
   const getInitials = (name: string) => {
@@ -265,7 +265,7 @@ export function PedidoTrabalhoModal({
             </div>
             <div>
               <span className="text-lg">Pedido de Trabalho</span>
-              <p className="text-xs font-normal text-zinc-500 mt-0.5">
+              <p className="text-xs font-normal text-neutral-500 mt-0.5">
                 Solicite uma atividade para um membro da equipe
               </p>
             </div>
@@ -275,7 +275,7 @@ export function PedidoTrabalhoModal({
         <div className="space-y-4 py-2">
           {/* Tipo de pedido */}
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+            <Label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
               Tipo de pedido
             </Label>
             <div className="flex flex-wrap gap-1.5">
@@ -290,7 +290,7 @@ export function PedidoTrabalhoModal({
                       "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border",
                       isSelected
                         ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400"
-                        : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-zinc-700 hover:border-zinc-300"
+                        : "bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:text-neutral-700 hover:border-neutral-300"
                     )}
                   >
                     <TipoIcon className="w-3.5 h-3.5" />
@@ -303,7 +303,7 @@ export function PedidoTrabalhoModal({
 
           {/* Assistido (busca) */}
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+            <Label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
               Assistido <span className="text-rose-500">*</span>
             </Label>
             <Popover open={assistidoOpen} onOpenChange={setAssistidoOpen}>
@@ -311,7 +311,7 @@ export function PedidoTrabalhoModal({
                 <Button
                   variant="outline"
                   role="combobox"
-                  className="w-full justify-between h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 font-normal text-sm"
+                  className="w-full justify-between h-10 rounded-xl bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 font-normal text-sm"
                 >
                   {assistidoNome || "Buscar assistido por nome ou CPF..."}
                   <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
@@ -348,7 +348,7 @@ export function PedidoTrabalhoModal({
                             <div className="min-w-0 flex-1">
                               <span className="text-sm font-medium truncate">{a.nome}</span>
                               {a.cpf && (
-                                <span className="text-[10px] text-zinc-400 ml-2 font-mono">{a.cpf}</span>
+                                <span className="text-[10px] text-neutral-400 ml-2 font-mono">{a.cpf}</span>
                               )}
                             </div>
                             {a.reuPreso && (
@@ -369,7 +369,7 @@ export function PedidoTrabalhoModal({
           {/* Processo (select dos processos do assistido) */}
           {assistidoId && processosDoAssistido.length > 0 && (
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+              <Label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
                 Processo vinculado
               </Label>
               <Select
@@ -380,17 +380,17 @@ export function PedidoTrabalhoModal({
                   setProcessoNumero(proc?.numeroAutos || "");
                 }}
               >
-                <SelectTrigger className="h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+                <SelectTrigger className="h-10 rounded-xl bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700">
                   <SelectValue placeholder="Selecionar processo (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
                   {processosDoAssistido.map((proc: any) => (
                     <SelectItem key={proc.id} value={proc.id.toString()}>
                       <div className="flex items-center gap-2">
-                        <Briefcase className="w-3.5 h-3.5 text-zinc-400" />
+                        <Briefcase className="w-3.5 h-3.5 text-neutral-400" />
                         <span className="font-mono text-xs">{proc.numero}</span>
                         {proc.vara && (
-                          <span className="text-[10px] text-zinc-400 truncate">{proc.vara}</span>
+                          <span className="text-[10px] text-neutral-400 truncate">{proc.vara}</span>
                         )}
                       </div>
                     </SelectItem>
@@ -402,21 +402,21 @@ export function PedidoTrabalhoModal({
 
           {/* Destinatario */}
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+            <Label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
               Para quem <span className="text-rose-500">*</span>
             </Label>
             {loadingMembros ? (
-              <div className="h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 animate-pulse flex items-center justify-center">
-                <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
+              <div className="h-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 animate-pulse flex items-center justify-center">
+                <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />
               </div>
             ) : (
               <Select value={destinatarioId} onValueChange={setDestinatarioId}>
-                <SelectTrigger className="h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+                <SelectTrigger className="h-10 rounded-xl bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700">
                   <SelectValue placeholder="Selecione um membro da equipe..." />
                 </SelectTrigger>
                 <SelectContent>
                   {membrosEquipe?.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-zinc-500">
+                    <div className="p-4 text-center text-sm text-neutral-500">
                       Nenhum membro encontrado
                     </div>
                   ) : (
@@ -424,7 +424,7 @@ export function PedidoTrabalhoModal({
                       <SelectItem key={member.id} value={member.id.toString()}>
                         <div className="flex items-center gap-2.5">
                           <Avatar className="h-6 w-6">
-                            <AvatarFallback className="text-[9px] bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-600 dark:to-zinc-700 font-semibold">
+                            <AvatarFallback className="text-[9px] bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-600 dark:to-neutral-700 font-semibold">
                               {getInitials(member.name)}
                             </AvatarFallback>
                           </Avatar>
@@ -443,14 +443,14 @@ export function PedidoTrabalhoModal({
 
           {/* Instrucoes */}
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+            <Label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
               {tipo === "minuta" ? "Peca a elaborar" : "Descricao do pedido"} <span className="text-rose-500">*</span>
             </Label>
             <Textarea
               placeholder={PLACEHOLDERS[tipo]}
               value={instrucoes}
               onChange={(e) => setInstrucoes(e.target.value)}
-              className="min-h-[100px] resize-none rounded-xl bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus:ring-emerald-500/30"
+              className="min-h-[100px] resize-none rounded-xl bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 focus:ring-emerald-500/30"
             />
           </div>
 
@@ -458,7 +458,7 @@ export function PedidoTrabalhoModal({
           <div>
             <button
               onClick={() => setShowOrientacoes(!showOrientacoes)}
-              className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors uppercase tracking-wider"
+              className="flex items-center gap-1.5 text-[10px] font-medium text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors uppercase tracking-wider"
             >
               <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", showOrientacoes && "rotate-180")} />
               Orientacoes e referencias
@@ -471,7 +471,7 @@ export function PedidoTrabalhoModal({
                 placeholder={ORIENTACOES_PLACEHOLDER[tipo]}
                 value={orientacoes}
                 onChange={(e) => setOrientacoes(e.target.value)}
-                className="min-h-[80px] resize-none rounded-xl bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-xs"
+                className="min-h-[80px] resize-none rounded-xl bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-xs"
               />
             </div>
           </div>
@@ -479,31 +479,31 @@ export function PedidoTrabalhoModal({
           {/* Prazo e Prioridade */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
-                <Calendar className="w-3 h-3 text-zinc-400" />
+              <Label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Calendar className="w-3 h-3 text-neutral-400" />
                 Prazo
               </Label>
               <Input
                 type="date"
                 value={prazoSugerido}
                 onChange={(e) => setPrazoSugerido(e.target.value)}
-                className="h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
+                className="h-10 rounded-xl bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700"
                 min={new Date().toISOString().split("T")[0]}
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
-                <Clock className="w-3 h-3 text-zinc-400" />
+              <Label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Clock className="w-3 h-3 text-neutral-400" />
                 Prioridade
               </Label>
               <Select value={prioridade} onValueChange={(v) => setPrioridade(v as typeof prioridade)}>
-                <SelectTrigger className="h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+                <SelectTrigger className="h-10 rounded-xl bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="BAIXA">
                     <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-zinc-400" />
+                      <span className="w-2 h-2 rounded-full bg-neutral-400" />
                       Baixa
                     </span>
                   </SelectItem>

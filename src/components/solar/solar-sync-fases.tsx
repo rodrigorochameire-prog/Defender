@@ -78,7 +78,7 @@ const TIPO_BADGE_CONFIG: Record<
   nota: {
     label: "nota",
     className:
-      "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-border dark:bg-muted/50 dark:text-muted-foreground",
+      "border-neutral-200 bg-neutral-50 text-neutral-600 dark:border-border dark:bg-muted/50 dark:text-muted-foreground",
   },
   providencia: {
     label: "providencia",

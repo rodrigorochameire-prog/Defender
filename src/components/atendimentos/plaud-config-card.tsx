@@ -147,7 +147,7 @@ export function PlaudConfigCard({ className }: PlaudConfigCardProps) {
               className={cn(
                 config?.isActive
                   ? "bg-green-100 text-green-700"
-                  : "bg-zinc-100 text-zinc-500"
+                  : "bg-neutral-100 text-neutral-500"
               )}
             >
               {config?.isActive ? (
@@ -169,7 +169,7 @@ export function PlaudConfigCard({ className }: PlaudConfigCardProps) {
           {config ? (
             <>
               {/* Status do dispositivo */}
-              <div className="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-card rounded-lg">
+              <div className="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-card rounded-lg">
                 <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
                   <Smartphone className="h-5 w-5 text-purple-600" />
                 </div>
@@ -177,7 +177,7 @@ export function PlaudConfigCard({ className }: PlaudConfigCardProps) {
                   <p className="font-medium text-sm">
                     {config.deviceName || "Dispositivo Plaud"}
                   </p>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-neutral-500">
                     {config.deviceModel === "notepin" ? "Plaud NotePin" : "Plaud Note"}
                     {config.deviceId && ` • ${config.deviceId.slice(0, 8)}...`}
                   </p>
@@ -187,13 +187,13 @@ export function PlaudConfigCard({ className }: PlaudConfigCardProps) {
               {/* Estatísticas */}
               {stats && (
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 bg-zinc-50 dark:bg-card rounded-lg text-center">
+                  <div className="p-3 bg-neutral-50 dark:bg-card rounded-lg text-center">
                     <p className="text-2xl font-bold">{stats.total}</p>
-                    <p className="text-xs text-zinc-500">Gravações</p>
+                    <p className="text-xs text-neutral-500">Gravações</p>
                   </div>
-                  <div className="p-3 bg-zinc-50 dark:bg-card rounded-lg text-center">
+                  <div className="p-3 bg-neutral-50 dark:bg-card rounded-lg text-center">
                     <p className="text-2xl font-bold">{stats.linked}</p>
-                    <p className="text-xs text-zinc-500">Vinculadas</p>
+                    <p className="text-xs text-neutral-500">Vinculadas</p>
                   </div>
                 </div>
               )}
@@ -222,9 +222,9 @@ export function PlaudConfigCard({ className }: PlaudConfigCardProps) {
             </>
           ) : (
             <div className="text-center py-4">
-              <Mic className="h-10 w-10 mx-auto text-zinc-300 mb-2" />
-              <p className="text-sm text-zinc-500">Plaud não configurado</p>
-              <p className="text-xs text-zinc-400">
+              <Mic className="h-10 w-10 mx-auto text-neutral-300 mb-2" />
+              <p className="text-sm text-neutral-500">Plaud não configurado</p>
+              <p className="text-xs text-neutral-400">
                 Configure para gravar e transcrever atendimentos
               </p>
             </div>
@@ -358,7 +358,7 @@ export function PlaudConfigCard({ className }: PlaudConfigCardProps) {
                 value={formData.driveFolderId}
                 onChange={(e) => setFormData({ ...formData, driveFolderId: e.target.value })}
               />
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-neutral-500">
                 Áudios serão salvos automaticamente nesta pasta
               </p>
             </div>

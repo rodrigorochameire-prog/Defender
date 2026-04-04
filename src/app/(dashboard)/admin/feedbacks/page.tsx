@@ -87,9 +87,9 @@ export default function AdminFeedbacksPage() {
   const pillBase =
     "rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer";
   const pillActive =
-    "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-transparent";
+    "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 border-transparent";
   const pillInactive =
-    "border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-600";
+    "border-neutral-200 text-neutral-500 hover:border-neutral-300 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-neutral-600";
 
   function clearFilters() {
     setFilterTipo(undefined);
@@ -116,18 +116,18 @@ export default function AdminFeedbacksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header Padrao Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-            <MessageSquare className="w-5 h-5 text-white dark:text-zinc-900" />
+          <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
+            <MessageSquare className="w-5 h-5 text-white dark:text-neutral-900" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
+            <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
               Feedbacks
             </h1>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
               {novosCount > 0
                 ? `${novosCount} novo${novosCount > 1 ? "s" : ""}`
                 : "Nenhum feedback novo"}
@@ -157,7 +157,7 @@ export default function AdminFeedbacksPage() {
             </button>
           ))}
 
-          <div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700 mx-1" />
+          <div className="w-px h-5 bg-neutral-200 dark:bg-neutral-700 mx-1" />
 
           {(["novo", "visto", "enviado_jira", "descartado"] as Status[]).map(
             (status) => (
@@ -175,14 +175,14 @@ export default function AdminFeedbacksPage() {
         {/* Loading state */}
         {isLoading && (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+            <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
           </div>
         )}
 
         {/* Empty state */}
         {!isLoading && feedbackList && feedbackList.length === 0 && (
           <div className="flex items-center justify-center py-20">
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
               Nenhum feedback encontrado
             </p>
           </div>
@@ -195,7 +195,7 @@ export default function AdminFeedbacksPage() {
           feedbackList.map((fb) => (
             <div
               key={fb.id}
-              className={`bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3 ${
+              className={`bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 space-y-3 ${
                 fb.status === "descartado" ? "opacity-50" : ""
               }`}
             >
@@ -204,22 +204,22 @@ export default function AdminFeedbacksPage() {
                 <Badge variant={TIPO_BADGE_VARIANT[fb.tipo as Tipo]}>
                   {TIPO_LABELS[fb.tipo as Tipo]}
                 </Badge>
-                <span className="inline-flex items-center rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                <span className="inline-flex items-center rounded-full bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 text-xs font-medium text-neutral-600 dark:text-neutral-400">
                   {STATUS_LABELS[fb.status as Status]}
                 </span>
-                <span className="ml-auto text-xs text-zinc-400">
+                <span className="ml-auto text-xs text-neutral-400">
                   {formatDate(fb.createdAt)}
                 </span>
               </div>
 
               {/* Message */}
-              <p className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
+              <p className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">
                 {fb.mensagem}
               </p>
 
               {/* Bottom row */}
               <div className="flex items-center justify-between gap-2 flex-wrap">
-                <div className="flex items-center gap-3 text-xs text-zinc-400">
+                <div className="flex items-center gap-3 text-xs text-neutral-400">
                   {fb.userName && <span>{fb.userName}</span>}
                   {fb.pagina && (
                     <span className="truncate max-w-[200px]" title={fb.pagina}>
@@ -259,7 +259,7 @@ export default function AdminFeedbacksPage() {
                         }
                         disabled={updateStatus.isPending}
                         title="Descartar feedback"
-                        className="text-zinc-400 hover:text-red-500"
+                        className="text-neutral-400 hover:text-red-500"
                       >
                         <Trash2 className="h-3.5 w-3.5 mr-1" />
                         Descartar
@@ -271,7 +271,7 @@ export default function AdminFeedbacksPage() {
                     exportingId === fb.id ? (
                       <div className="flex items-center gap-1">
                         <select
-                          className="rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs px-1.5 py-1 text-zinc-700 dark:text-zinc-300"
+                          className="rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-xs px-1.5 py-1 text-neutral-700 dark:text-neutral-300"
                           value={selectedPrioridade}
                           onChange={(e) => setSelectedPrioridade(e.target.value as Prioridade)}
                         >
@@ -307,7 +307,7 @@ export default function AdminFeedbacksPage() {
                           size="xs"
                           onClick={() => setExportingId(null)}
                           disabled={exportToJira.isPending}
-                          className="text-zinc-400"
+                          className="text-neutral-400"
                         >
                           Cancelar
                         </Button>

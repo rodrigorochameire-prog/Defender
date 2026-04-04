@@ -116,7 +116,7 @@ const TRIBUNAL_CONFIG: Record<
   },
   OUTRO: {
     label: "Outro",
-    color: "text-zinc-600 bg-zinc-50 border-zinc-200",
+    color: "text-neutral-600 bg-neutral-50 border-neutral-200",
     icon: FileText,
   },
 };
@@ -195,9 +195,9 @@ export default function JurisprudenciaPage() {
   }, [stats?.porTribunal]);
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 dark:bg-background">
+    <div className="min-h-screen bg-neutral-50/50 dark:bg-background">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-border bg-white dark:bg-card">
+      <div className="border-b border-neutral-200 dark:border-border bg-white dark:bg-card">
         <div className="px-6 py-4">
           <Breadcrumbs
             items={[
@@ -255,7 +255,7 @@ export default function JurisprudenciaPage() {
       <div className="p-6 space-y-6">
         {/* Stats */}
         {/* Stats Ribbon */}
-        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-card rounded-xl border border-zinc-200/80 dark:border-border/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-card rounded-xl border border-neutral-200/80 dark:border-border/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
           {[
             { icon: BookOpen, value: stats?.totalJulgados || 0, label: "julgados" },
             { icon: Building2, value: porTribunalObj["STF"] || 0, label: "STF" },
@@ -266,11 +266,11 @@ export default function JurisprudenciaPage() {
             const Icon = stat.icon;
             return (
               <Fragment key={index}>
-                {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-border/60 flex-shrink-0" />}
-                <div className="flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-zinc-50 dark:hover:bg-muted">
+                {index > 0 && <div className="w-px h-4 bg-neutral-200/60 dark:bg-border/60 flex-shrink-0" />}
+                <div className="flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-neutral-50 dark:hover:bg-muted">
                   <Icon className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground" />
-                  <span className="font-bold tabular-nums text-zinc-800 dark:text-foreground">{stat.value}</span>
-                  <span className="text-zinc-500 dark:text-muted-foreground font-medium">{stat.label}</span>
+                  <span className="font-bold tabular-nums text-neutral-800 dark:text-foreground">{stat.value}</span>
+                  <span className="text-neutral-500 dark:text-muted-foreground font-medium">{stat.label}</span>
                 </div>
               </Fragment>
             );
@@ -304,7 +304,7 @@ export default function JurisprudenciaPage() {
             {activeTab === "julgados" && (
               <div className="flex items-center gap-3">
                 <div className="relative w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
                   <Input
                     placeholder="Buscar julgados..."
                     value={search}
@@ -314,7 +314,7 @@ export default function JurisprudenciaPage() {
                 </div>
                 <Select value={tribunalFilter} onValueChange={setTribunalFilter}>
                   <SelectTrigger className="w-[140px]">
-                    <Filter className="w-4 h-4 mr-2 text-zinc-400" />
+                    <Filter className="w-4 h-4 mr-2 text-neutral-400" />
                     <SelectValue placeholder="Tribunal" />
                   </SelectTrigger>
                   <SelectContent>
@@ -459,7 +459,7 @@ function JulgadoCard({
   const Icon = config.icon;
 
   const statusConfig = {
-    pendente: { icon: Clock, color: "text-zinc-500", label: "Pendente" },
+    pendente: { icon: Clock, color: "text-neutral-500", label: "Pendente" },
     processando: { icon: Loader2, color: "text-blue-500", label: "Processando" },
     processado: { icon: Check, color: "text-emerald-500", label: "Processado" },
     erro: { icon: AlertCircle, color: "text-red-500", label: "Erro" },
@@ -469,7 +469,7 @@ function JulgadoCard({
   const StatusIcon = status.icon;
 
   return (
-    <div className="group bg-white dark:bg-card border border-zinc-200 dark:border-border rounded-xl p-4 hover:shadow-md transition-all">
+    <div className="group bg-white dark:bg-card border border-neutral-200 dark:border-border rounded-xl p-4 hover:shadow-md transition-all">
       <div className="flex items-start gap-4">
         {/* Ícone do tribunal */}
         <div className={cn("p-2.5 rounded-lg shrink-0", config.color)}>
@@ -496,7 +496,7 @@ function JulgadoCard({
                 </div>
               </div>
               {julgado.relator && (
-                <p className="text-sm text-zinc-500 mt-1">
+                <p className="text-sm text-neutral-500 mt-1">
                   Rel. {julgado.relator}
                   {julgado.orgaoJulgador && ` - ${julgado.orgaoJulgador}`}
                   {julgado.dataJulgamento && (
@@ -519,7 +519,7 @@ function JulgadoCard({
                 {julgado.isFavorito ? (
                   <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
                 ) : (
-                  <StarOff className="w-4 h-4 text-zinc-400" />
+                  <StarOff className="w-4 h-4 text-neutral-400" />
                 )}
               </Button>
               <DropdownMenu>
@@ -592,7 +592,7 @@ function JulgadoCard({
           {/* Citação para copiar */}
           {julgado.citacaoFormatada && (
             <div className="mt-3 flex items-center gap-2">
-              <code className="text-xs bg-zinc-100 dark:bg-muted px-2 py-1 rounded flex-1 truncate">
+              <code className="text-xs bg-neutral-100 dark:bg-muted px-2 py-1 rounded flex-1 truncate">
                 {julgado.citacaoFormatada}
               </code>
               <Button
@@ -671,8 +671,8 @@ function AIChatPanel({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="bg-white dark:bg-card border border-zinc-200 dark:border-border rounded-xl overflow-hidden">
-      <div className="p-4 border-b border-zinc-200 dark:border-border flex items-center justify-between">
+    <div className="bg-white dark:bg-card border border-neutral-200 dark:border-border rounded-xl overflow-hidden">
+      <div className="p-4 border-b border-neutral-200 dark:border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-amber-500" />
           <h3 className="font-semibold">Assistente de Jurisprudência</h3>
@@ -684,7 +684,7 @@ function AIChatPanel({ onClose }: { onClose: () => void }) {
 
       <ScrollArea className="h-80 p-4">
         {mensagens.length === 0 ? (
-          <div className="text-center text-zinc-500 py-8">
+          <div className="text-center text-neutral-500 py-8">
             <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p className="text-sm">
               Faça perguntas sobre jurisprudência criminal.
@@ -700,19 +700,19 @@ function AIChatPanel({ onClose }: { onClose: () => void }) {
                   "p-3 rounded-lg",
                   msg.role === "user"
                     ? "bg-amber-50 dark:bg-amber-950/20 ml-8"
-                    : "bg-zinc-50 dark:bg-muted mr-8"
+                    : "bg-neutral-50 dark:bg-muted mr-8"
                 )}
               >
                 <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                 {msg.precedentes && msg.precedentes.length > 0 && (
                   <div className="mt-3 space-y-2">
-                    <p className="text-xs font-medium text-zinc-500">
+                    <p className="text-xs font-medium text-neutral-500">
                       Precedentes citados:
                     </p>
                     {msg.precedentes.map((p, j) => (
                       <div
                         key={j}
-                        className="bg-white dark:bg-card p-2 rounded border border-zinc-200 dark:border-border"
+                        className="bg-white dark:bg-card p-2 rounded border border-neutral-200 dark:border-border"
                       >
                         <div className="flex items-center justify-between">
                           <code className="text-xs">{p.citacao}</code>
@@ -735,7 +735,7 @@ function AIChatPanel({ onClose }: { onClose: () => void }) {
               </div>
             ))}
             {askMutation.isPending && (
-              <div className="flex items-center gap-2 text-zinc-500">
+              <div className="flex items-center gap-2 text-neutral-500">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span className="text-sm">Buscando precedentes...</span>
               </div>
@@ -744,7 +744,7 @@ function AIChatPanel({ onClose }: { onClose: () => void }) {
         )}
       </ScrollArea>
 
-      <div className="p-4 border-t border-zinc-200 dark:border-border">
+      <div className="p-4 border-t border-neutral-200 dark:border-border">
         <div className="flex gap-2">
           <Textarea
             placeholder="Ex: Qual o entendimento do STJ sobre busca domiciliar sem mandado?"
@@ -810,7 +810,7 @@ function TemasSection() {
       {temas.map((tema) => (
         <div
           key={tema.id}
-          className="bg-white dark:bg-card border border-zinc-200 dark:border-border rounded-xl p-4 hover:shadow-md transition-all cursor-pointer"
+          className="bg-white dark:bg-card border border-neutral-200 dark:border-border rounded-xl p-4 hover:shadow-md transition-all cursor-pointer"
         >
           <div className="flex items-start justify-between">
             <div
@@ -825,7 +825,7 @@ function TemasSection() {
             {tema.nome}
           </h3>
           {tema.descricao && (
-            <p className="mt-1 text-sm text-zinc-500 line-clamp-2">
+            <p className="mt-1 text-sm text-neutral-500 line-clamp-2">
               {tema.descricao}
             </p>
           )}
@@ -874,7 +874,7 @@ function SyncSection({
       {folders.map((folder) => (
         <div
           key={folder.id}
-          className="bg-white dark:bg-card border border-zinc-200 dark:border-border rounded-xl p-4"
+          className="bg-white dark:bg-card border border-neutral-200 dark:border-border rounded-xl p-4"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -885,7 +885,7 @@ function SyncSection({
                 <h3 className="font-medium text-foreground">
                   {folder.folderName || "Pasta do Drive"}
                 </h3>
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-neutral-500">
                   {folder.arquivosSincronizados || 0} de {folder.totalArquivos || 0} arquivos
                   {folder.lastSyncAt && (
                     <span className="ml-2">
@@ -976,7 +976,7 @@ function AddFolderDialog({
               value={folderId}
               onChange={(e) => setFolderId(e.target.value)}
             />
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-neutral-500">
               Copie o ID da URL da pasta no Google Drive
             </p>
           </div>

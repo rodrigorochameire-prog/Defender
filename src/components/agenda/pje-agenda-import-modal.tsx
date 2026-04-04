@@ -960,13 +960,13 @@ Fonte: Pauta SEEU - ${tipoPautaRaw}`;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-900">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white dark:bg-neutral-900">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+          <DialogTitle className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 flex items-center gap-2">
             <Upload className="w-6 h-6 text-blue-600" />
             {title || "Importar Pauta de Audiências do PJe"}
           </DialogTitle>
-          <DialogDescription className="text-sm text-zinc-500 dark:text-zinc-400">
+          <DialogDescription className="text-sm text-neutral-500 dark:text-neutral-400">
             {description || "Cole o HTML completo da pauta de audiências do PJe. O sistema irá extrair automaticamente todos os dados importantes."}
           </DialogDescription>
         </DialogHeader>
@@ -979,20 +979,20 @@ Fonte: Pauta SEEU - ${tipoPautaRaw}`;
           </h3>
           <ol className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-decimal list-inside">
             <li>Acesse a pauta de audiências no PJe</li>
-            <li>Pressione <kbd className="px-1.5 py-0.5 bg-white dark:bg-zinc-800 rounded border">Ctrl+A</kbd> para selecionar tudo</li>
-            <li>Pressione <kbd className="px-1.5 py-0.5 bg-white dark:bg-zinc-800 rounded border">Ctrl+C</kbd> para copiar</li>
+            <li>Pressione <kbd className="px-1.5 py-0.5 bg-white dark:bg-neutral-800 rounded border">Ctrl+A</kbd> para selecionar tudo</li>
+            <li>Pressione <kbd className="px-1.5 py-0.5 bg-white dark:bg-neutral-800 rounded border">Ctrl+C</kbd> para copiar</li>
             <li>Cole no campo abaixo e clique em &ldquo;Processar&rdquo;</li>
           </ol>
         </div>
 
         {/* Seletor de Atribuição */}
         <div className="space-y-2">
-          <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+          <Label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-2">
             <Scale className="w-4 h-4" />
             Atribuição da Pauta
           </Label>
           <Select value={forcedAtribuicao} onValueChange={setForcedAtribuicao}>
-            <SelectTrigger className="w-full bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700">
+            <SelectTrigger className="w-full bg-white dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700">
               <SelectValue placeholder="Selecione a atribuição" />
             </SelectTrigger>
             <SelectContent>
@@ -1001,10 +1001,10 @@ Fonte: Pauta SEEU - ${tipoPautaRaw}`;
                 return (
                   <SelectItem key={option.value} value={option.value}>
                     <div className="flex items-start gap-2">
-                      <Icon className="w-4 h-4 mt-0.5 text-zinc-500 flex-shrink-0" />
+                      <Icon className="w-4 h-4 mt-0.5 text-neutral-500 flex-shrink-0" />
                       <div className="flex flex-col">
                         <span className="font-medium">{option.label}</span>
-                        <span className="text-xs text-zinc-500">{option.description}</span>
+                        <span className="text-xs text-neutral-500">{option.description}</span>
                       </div>
                     </div>
                   </SelectItem>
@@ -1025,14 +1025,14 @@ Fonte: Pauta SEEU - ${tipoPautaRaw}`;
 
         {/* Campo de input */}
         <div className="space-y-2">
-          <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+          <Label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
             Conteúdo da Pauta do PJe
           </Label>
           <Textarea
             value={htmlContent}
             onChange={(e) => setHtmlContent(e.target.value)}
             placeholder="Cole aqui o conteúdo completo da página de pauta do PJe..."
-            className="min-h-[200px] font-mono text-xs bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700"
+            className="min-h-[200px] font-mono text-xs bg-white dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700"
           />
           <div className="flex gap-2">
             <Button
@@ -1056,7 +1056,7 @@ Fonte: Pauta SEEU - ${tipoPautaRaw}`;
         {parsedEventos.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-50">
+              <h3 className="font-bold text-lg text-neutral-900 dark:text-neutral-50">
                 Eventos Identificados ({parsedEventos.length})
               </h3>
               <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
@@ -1070,34 +1070,34 @@ Fonte: Pauta SEEU - ${tipoPautaRaw}`;
                 const AtribuicaoIcon = getAtribuicaoIcon(evento.atribuicao);
                 
                 return (
-                  <Card key={index} className="p-4 border border-zinc-200 dark:border-zinc-800">
+                  <Card key={index} className="p-4 border border-neutral-200 dark:border-neutral-800">
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-950/30 flex items-center justify-center flex-shrink-0">
                         <Gavel className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-zinc-900 dark:text-zinc-50 mb-2">
+                        <h4 className="font-bold text-neutral-900 dark:text-neutral-50 mb-2">
                           {evento.titulo}
                         </h4>
 
                         <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
+                          <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
                             <Calendar className="w-3.5 h-3.5" />
                             <span>{new Date(evento.data).toLocaleDateString("pt-BR")} às {evento.horarioInicio}</span>
                           </div>
 
-                          <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
+                          <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
                             <MapPin className="w-3.5 h-3.5" />
                             <span className="truncate">{evento.local}</span>
                           </div>
 
-                          <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
+                          <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
                             <AtribuicaoIcon className="w-3.5 h-3.5" />
                             <span>{evento.atribuicao}</span>
                           </div>
 
-                          <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400">
+                          <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
                             <FileText className="w-3.5 h-3.5" />
                             <span className="truncate">{evento.classeJudicial}</span>
                           </div>
@@ -1135,7 +1135,7 @@ Fonte: Pauta SEEU - ${tipoPautaRaw}`;
         )}
 
         {/* Actions */}
-        <div className="flex justify-between items-center pt-4 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="flex justify-between items-center pt-4 border-t border-neutral-200 dark:border-neutral-800">
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>

@@ -89,7 +89,7 @@ const MARCO_COLORS: Record<string, string> = {
 
 function MarcoCard({ marco, index, total }: { marco: MarcoExecucao; index: number; total: number }) {
   const Icon = MARCO_ICONS[marco.tipo] || Clock;
-  const colorClass = MARCO_COLORS[marco.tipo] || "text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-800";
+  const colorClass = MARCO_COLORS[marco.tipo] || "text-neutral-500 bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-800";
   const dataFormatada = new Date(marco.data).toLocaleDateString("pt-BR");
 
   return (
@@ -100,24 +100,24 @@ function MarcoCard({ marco, index, total }: { marco: MarcoExecucao; index: numbe
           <Icon className="w-4 h-4" />
         </div>
         {index < total - 1 && (
-          <div className="w-px flex-1 bg-zinc-200 dark:bg-zinc-700 my-1" />
+          <div className="w-px flex-1 bg-neutral-200 dark:bg-neutral-700 my-1" />
         )}
       </div>
 
       {/* Content */}
       <div className="pb-6 flex-1">
-        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80">
+        <div className="p-3 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80">
           <div className="flex items-start justify-between">
             <div>
-              <h4 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">
+              <h4 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
                 {marco.labelAcessivel}
               </h4>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
                 {marco.label}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-sm font-mono font-semibold text-zinc-900 dark:text-zinc-100">
+              <p className="text-sm font-mono font-semibold text-neutral-900 dark:text-neutral-100">
                 {dataFormatada}
               </p>
               {marco.fracao && (
@@ -127,7 +127,7 @@ function MarcoCard({ marco, index, total }: { marco: MarcoExecucao; index: numbe
               )}
             </div>
           </div>
-          <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-2">
+          <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mt-2">
             {marco.fundamentoLegal}
           </p>
         </div>
@@ -192,7 +192,7 @@ function HandoffEditor({
 
   if (editing) {
     return (
-      <div className="space-y-4 p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80">
+      <div className="space-y-4 p-4 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80">
         <h3 className="font-semibold text-sm flex items-center gap-2">
           <Settings className="w-4 h-4" />
           Configurar Handoff — {comarca}
@@ -230,7 +230,7 @@ function HandoffEditor({
               <Label className="text-xs">Telefone</Label>
               <input
                 type="text"
-                className="flex h-9 w-full rounded-md border border-zinc-200 bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 px-3 py-1 text-sm"
+                className="flex h-9 w-full rounded-md border border-neutral-200 bg-neutral-100 dark:bg-neutral-800 dark:border-neutral-700 px-3 py-1 text-sm"
                 value={telefone}
                 onChange={(e) => setTelefone(e.target.value)}
                 placeholder="(71) 3117-6800"
@@ -240,7 +240,7 @@ function HandoffEditor({
               <Label className="text-xs">Horário</Label>
               <input
                 type="text"
-                className="flex h-9 w-full rounded-md border border-zinc-200 bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 px-3 py-1 text-sm"
+                className="flex h-9 w-full rounded-md border border-neutral-200 bg-neutral-100 dark:bg-neutral-800 dark:border-neutral-700 px-3 py-1 text-sm"
                 value={horario}
                 onChange={(e) => setHorario(e.target.value)}
                 placeholder="Seg-Sex, 8h-14h"
@@ -274,7 +274,7 @@ function HandoffEditor({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">
+        <h3 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
           Próximos Passos
         </h3>
         <Button variant="ghost" size="sm" onClick={startEditing} className="cursor-pointer">
@@ -283,15 +283,15 @@ function HandoffEditor({
         </Button>
       </div>
 
-      <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 space-y-4">
-        <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
+      <div className="p-4 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 space-y-4">
+        <p className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
           O trabalho do defensor do Tribunal do Júri se encerra com a interposição da apelação. A partir de agora, o acompanhamento segue com:
         </p>
 
         {/* Defensor 2º Grau */}
         <div className="p-3 rounded-lg bg-sky-50 dark:bg-sky-950/20 border border-sky-200/50 dark:border-sky-800/30">
           <p className="text-[10px] uppercase tracking-wider text-sky-500 mb-1">Recurso (2º Grau)</p>
-          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+          <p className="text-sm text-neutral-700 dark:text-neutral-300">
             {config?.defensor2grauInfo || "Não configurado — clique em Configurar"}
           </p>
         </div>
@@ -299,30 +299,30 @@ function HandoffEditor({
         {/* Defensor EP */}
         <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/30">
           <p className="text-[10px] uppercase tracking-wider text-amber-500 mb-1">Execução Penal</p>
-          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+          <p className="text-sm text-neutral-700 dark:text-neutral-300">
             {config?.defensorEPInfo || "Não configurado — clique em Configurar"}
           </p>
         </div>
 
         {/* Núcleo EP */}
         {(config?.nucleoEPEndereco || config?.nucleoEPTelefone) && (
-          <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-800/50 space-y-1.5">
-            <p className="text-[10px] uppercase tracking-wider text-zinc-400 mb-1">Onde buscar atendimento</p>
+          <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/50 dark:border-neutral-800/50 space-y-1.5">
+            <p className="text-[10px] uppercase tracking-wider text-neutral-400 mb-1">Onde buscar atendimento</p>
             {config.nucleoEPEndereco && (
-              <div className="flex items-start gap-2 text-sm text-zinc-600 dark:text-zinc-300">
-                <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0 text-zinc-400" />
+              <div className="flex items-start gap-2 text-sm text-neutral-600 dark:text-neutral-300">
+                <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0 text-neutral-400" />
                 {config.nucleoEPEndereco}
               </div>
             )}
             {config.nucleoEPTelefone && (
-              <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
-                <Phone className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
+              <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">
+                <Phone className="w-3.5 h-3.5 shrink-0 text-neutral-400" />
                 {config.nucleoEPTelefone}
               </div>
             )}
             {config.nucleoEPHorario && (
-              <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
-                <Clock className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
+              <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">
+                <Clock className="w-3.5 h-3.5 shrink-0 text-neutral-400" />
                 {config.nucleoEPHorario}
               </div>
             )}
@@ -330,7 +330,7 @@ function HandoffEditor({
         )}
 
         {config?.mensagemPersonalizada && (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 italic">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 italic">
             {config.mensagemPersonalizada}
           </p>
         )}
@@ -393,7 +393,7 @@ function WhatsAppComposer({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+        <h3 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
           <MessageSquare className="w-4 h-4" />
           Enviar via WhatsApp
         </h3>
@@ -415,9 +415,9 @@ function WhatsAppComposer({
       </div>
 
       {!gerada ? (
-        <div className="p-6 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 text-center">
-          <MessageSquare className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <div className="p-6 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 text-center">
+          <MessageSquare className="w-10 h-10 text-neutral-300 dark:text-neutral-600 mx-auto mb-3" />
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
             Gere uma mensagem formatada com a projeção de marcos e informações de handoff para enviar ao réu ou família via WhatsApp.
           </p>
         </div>
@@ -450,7 +450,7 @@ function WhatsAppComposer({
               Regenerar
             </Button>
           </div>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">
+          <p className="text-xs text-neutral-400 dark:text-neutral-500">
             Edite a mensagem acima antes de enviar. Copie e cole no WhatsApp ou use a integração automática.
           </p>
         </div>
@@ -518,26 +518,26 @@ export default function ExecucaoPage() {
   );
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-            <Timer className="w-5 h-5 text-white dark:text-zinc-900" />
+          <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
+            <Timer className="w-5 h-5 text-white dark:text-neutral-900" />
           </div>
           <div>
-            <h1 className="font-serif text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+            <h1 className="font-serif text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
               Execução
             </h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
               Projeção de marcos e handoff pós-condenação
             </p>
           </div>
         </div>
 
         {/* Seletor de sessão */}
-        <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80">
-          <Label className="text-xs text-zinc-500 dark:text-zinc-400 mb-2 block">
+        <div className="p-4 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80">
+          <Label className="text-xs text-neutral-500 dark:text-neutral-400 mb-2 block">
             Selecione a sessão de júri (condenação)
           </Label>
           {loadingSessoes ? (
@@ -600,7 +600,7 @@ export default function ExecucaoPage() {
                 )}
 
                 {/* Tabs */}
-                <div className="flex gap-1 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-800/50">
+                <div className="flex gap-1 p-1 rounded-lg bg-neutral-100 dark:bg-neutral-800/50">
                   {[
                     { id: "projecao" as const, label: "Projeção", icon: CalendarDays },
                     { id: "handoff" as const, label: "Próximos Passos", icon: ArrowRight },
@@ -612,8 +612,8 @@ export default function ExecucaoPage() {
                       className={cn(
                         "flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer",
                         activeTab === tab.id
-                          ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm"
-                          : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                          ? "bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 shadow-sm"
+                          : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
                       )}
                     >
                       <tab.icon className="w-3.5 h-3.5" />
@@ -626,12 +626,12 @@ export default function ExecucaoPage() {
                 {activeTab === "projecao" && (
                   <div className="space-y-4">
                     {!resultado ? (
-                      <div className="p-6 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 text-center">
+                      <div className="p-6 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 text-center">
                         <AlertTriangle className="w-10 h-10 text-amber-400 mx-auto mb-3" />
-                        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                        <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
                           Dados insuficientes
                         </h3>
-                        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
                           Preencha a dosimetria da sessão (pena total, regime inicial, tipo penal) para calcular a projeção de execução penal.
                         </p>
                       </div>
@@ -639,9 +639,9 @@ export default function ExecucaoPage() {
                       <>
                         {/* Resumo */}
                         <div className="flex flex-wrap gap-3">
-                          <div className="px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-800/80">
-                            <span className="text-[10px] uppercase tracking-wider text-zinc-400 block">Pena Total</span>
-                            <span className="text-sm font-mono font-semibold text-zinc-900 dark:text-zinc-100">
+                          <div className="px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800/80">
+                            <span className="text-[10px] uppercase tracking-wider text-neutral-400 block">Pena Total</span>
+                            <span className="text-sm font-mono font-semibold text-neutral-900 dark:text-neutral-100">
                               {resultado.penaTotalDias} dias ({Math.floor(resultado.penaTotalDias / 30)} meses)
                             </span>
                           </div>
@@ -653,15 +653,15 @@ export default function ExecucaoPage() {
                               </span>
                             </div>
                           )}
-                          <div className="px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-800/80">
-                            <span className="text-[10px] uppercase tracking-wider text-zinc-400 block">Fração Progressão</span>
-                            <span className="text-sm font-mono font-semibold text-zinc-900 dark:text-zinc-100">
+                          <div className="px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800/80">
+                            <span className="text-[10px] uppercase tracking-wider text-neutral-400 block">Fração Progressão</span>
+                            <span className="text-sm font-mono font-semibold text-neutral-900 dark:text-neutral-100">
                               {resultado.fracaoLabel}
                             </span>
                           </div>
-                          <div className="px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-800/80">
-                            <span className="text-[10px] uppercase tracking-wider text-zinc-400 block">Inciso</span>
-                            <span className="text-sm font-mono font-semibold text-zinc-900 dark:text-zinc-100">
+                          <div className="px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800/80">
+                            <span className="text-[10px] uppercase tracking-wider text-neutral-400 block">Inciso</span>
+                            <span className="text-sm font-mono font-semibold text-neutral-900 dark:text-neutral-100">
                               {resultado.incisoAplicado}
                             </span>
                           </div>
@@ -705,9 +705,9 @@ export default function ExecucaoPage() {
                 )}
 
                 {activeTab === "whatsapp" && !resultado && (
-                  <div className="p-6 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 text-center">
-                    <Info className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <div className="p-6 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 text-center">
+                    <Info className="w-10 h-10 text-neutral-300 dark:text-neutral-600 mx-auto mb-3" />
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
                       Preencha a dosimetria primeiro para gerar a mensagem de WhatsApp.
                     </p>
                   </div>
@@ -720,13 +720,13 @@ export default function ExecucaoPage() {
         {/* Empty state */}
         {!selectedSessaoId && (
           <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
-              <Timer className="w-8 h-8 text-zinc-300 dark:text-zinc-600" />
+            <div className="w-16 h-16 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-4">
+              <Timer className="w-8 h-8 text-neutral-300 dark:text-neutral-600" />
             </div>
-            <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+            <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
               Selecione uma sessão
             </h3>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
               Escolha uma sessão de júri com condenação para projetar a execução penal
             </p>
           </div>

@@ -107,7 +107,7 @@ export function ImageCaptureDialog({
             <ScanFace className="h-4 w-4 text-emerald-600" />
             Captura de Imagem
           </DialogTitle>
-          <DialogDescription className="text-xs text-zinc-500">
+          <DialogDescription className="text-xs text-neutral-500">
             Atribua a imagem capturada a uma pessoa do processo
           </DialogDescription>
         </DialogHeader>
@@ -115,7 +115,7 @@ export function ImageCaptureDialog({
         <div className="space-y-4 py-2">
           {/* Circular Preview */}
           <div className="flex flex-col items-center gap-2">
-            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-700 shadow-md">
+            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-neutral-200 dark:border-neutral-700 shadow-md">
               {imageDataUrl && (
                 <img
                   src={imageDataUrl}
@@ -124,7 +124,7 @@ export function ImageCaptureDialog({
                 />
               )}
             </div>
-            <span className="text-[10px] text-zinc-400">~{estimatedSize}KB</span>
+            <span className="text-[10px] text-neutral-400">~{estimatedSize}KB</span>
           </div>
 
           {/* Papel/Funcao */}

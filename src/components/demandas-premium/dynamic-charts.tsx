@@ -41,7 +41,7 @@ const CustomTooltip = ({ active, payload }: any) => {
     
     return (
       <div 
-        className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-zinc-200/60 dark:border-zinc-700/60 rounded-xl shadow-lg p-4 transition-all animate-in fade-in-0 zoom-in-95 duration-150" 
+        className="bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border border-neutral-200/60 dark:border-neutral-700/60 rounded-xl shadow-lg p-4 transition-all animate-in fade-in-0 zoom-in-95 duration-150" 
         style={{
           boxShadow: `0 10px 30px -5px rgba(0, 0, 0, 0.15), 0 0 0 1px ${color}15`,
         }}
@@ -54,17 +54,17 @@ const CustomTooltip = ({ active, payload }: any) => {
               boxShadow: `0 0 8px ${color}50`
             }}
           />
-          <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{payload[0].name}</p>
+          <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">{payload[0].name}</p>
         </div>
         <div className="flex items-baseline gap-2">
-          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Total:</p>
+          <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Total:</p>
           <p className="text-xl font-bold" style={{ color: color }}>
             {payload[0].value}
           </p>
         </div>
         {payload[0].payload.percent && (
-          <div className="mt-2 pt-2 border-t border-zinc-200/50 dark:border-zinc-700/50">
-            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <div className="mt-2 pt-2 border-t border-neutral-200/50 dark:border-neutral-700/50">
+            <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
               {(payload[0].payload.percent * 100).toFixed(1)}% do total
             </p>
           </div>
@@ -118,7 +118,7 @@ const renderExternalLabel = ({ cx, cy, midAngle, outerRadius, name, percent }: a
       fill="#52525b"
       textAnchor={x > cx ? 'start' : 'end'}
       dominantBaseline="central"
-      className="text-xs font-bold dark:fill-zinc-400"
+      className="text-xs font-bold dark:fill-neutral-400"
     >
       {`${name} (${(percent * 100).toFixed(0)}%)`}
     </text>
@@ -130,7 +130,7 @@ export function DynamicChart({ type, demandas, visualizationType }: DynamicChart
   if (!demandas || demandas.length === 0) {
     return (
       <div className="w-full h-full min-h-[300px] flex items-center justify-center">
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">
           Sem dados para exibir
         </p>
       </div>
@@ -725,7 +725,7 @@ export function DynamicChart({ type, demandas, visualizationType }: DynamicChart
   }
 
   return (
-    <div className="h-full flex items-center justify-center text-zinc-500 dark:text-zinc-400">
+    <div className="h-full flex items-center justify-center text-neutral-500 dark:text-neutral-400">
       Gráfico: {type}
     </div>
   );

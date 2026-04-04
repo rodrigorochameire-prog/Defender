@@ -1603,7 +1603,7 @@ export const demandasRouter = router({
         });
       }
 
-      // 3. Formatar: negrito no header + fundo zinc-800 + texto branco + linhas alternadas
+      // 3. Formatar: negrito no header + fundo neutral-800 + texto branco + linhas alternadas
       const batchUpdateRes = await fetch(
         `${sheetsBase}/${spreadsheetId}:batchUpdate`,
         {
@@ -1631,7 +1631,7 @@ export const demandasRouter = router({
                   fields: "userEnteredFormat(backgroundColor,textFormat)",
                 },
               },
-              // Linhas de dados pares: fundo zinc-50
+              // Linhas de dados pares: fundo neutral-50
               ...(dataRows.length > 0
                 ? Array.from({ length: Math.ceil(dataRows.length / 2) }, (_, i) => ({
                     repeatCell: {

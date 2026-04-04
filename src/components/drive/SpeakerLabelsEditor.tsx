@@ -56,10 +56,10 @@ const ROLE_CONFIG: Record<string, { color: string; icon: React.ElementType; labe
   defensor: { color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300", icon: Shield, label: "Defensor" },
   juiz: { color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300", icon: Gavel, label: "Juiz" },
   promotor: { color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300", icon: Scale, label: "Promotor" },
-  assistido: { color: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300", icon: User, label: "Assistido" },
+  assistido: { color: "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300", icon: User, label: "Assistido" },
   testemunha: { color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300", icon: Eye, label: "Testemunha" },
   perito: { color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300", icon: Microscope, label: "Perito" },
-  outro: { color: "bg-zinc-50 text-zinc-600 dark:bg-zinc-800/50 dark:text-zinc-400", icon: HelpCircle, label: "Outro" },
+  outro: { color: "bg-neutral-50 text-neutral-600 dark:bg-neutral-800/50 dark:text-neutral-400", icon: HelpCircle, label: "Outro" },
 };
 
 const ROLE_OPTIONS = [
@@ -143,8 +143,8 @@ export function SpeakerLabelsEditor({ fileDbId, assistidoId }: SpeakerLabelsEdit
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 p-2">
-        <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400" />
-        <span className="text-xs text-zinc-500">Carregando speakers...</span>
+        <Loader2 className="w-3.5 h-3.5 animate-spin text-neutral-400" />
+        <span className="text-xs text-neutral-500">Carregando speakers...</span>
       </div>
     );
   }
@@ -153,7 +153,7 @@ export function SpeakerLabelsEditor({ fileDbId, assistidoId }: SpeakerLabelsEdit
   if (!labels || labels.length === 0) {
     return (
       <div className="space-y-2">
-        <p className="text-xs text-zinc-500">Nenhum speaker identificado.</p>
+        <p className="text-xs text-neutral-500">Nenhum speaker identificado.</p>
         <Button
           variant="outline"
           size="sm"
@@ -193,9 +193,9 @@ export function SpeakerLabelsEditor({ fileDbId, assistidoId }: SpeakerLabelsEdit
 
           if (isEditing) {
             return (
-              <div key={item.id} className="space-y-1.5 p-2 rounded-md bg-zinc-100 dark:bg-zinc-800/50">
+              <div key={item.id} className="space-y-1.5 p-2 rounded-md bg-neutral-100 dark:bg-neutral-800/50">
                 <div className="flex items-center gap-1">
-                  <span className="text-[10px] text-zinc-400 font-mono shrink-0 w-16">
+                  <span className="text-[10px] text-neutral-400 font-mono shrink-0 w-16">
                     {item.speakerKey}
                   </span>
                 </div>
@@ -254,7 +254,7 @@ export function SpeakerLabelsEditor({ fileDbId, assistidoId }: SpeakerLabelsEdit
               key={item.id}
               className="flex items-center gap-1.5 group"
             >
-              <span className="text-[10px] text-zinc-400 font-mono shrink-0 w-12 truncate">
+              <span className="text-[10px] text-neutral-400 font-mono shrink-0 w-12 truncate">
                 {item.speakerKey.replace("Speaker ", "S")}
               </span>
               <Badge
@@ -282,7 +282,7 @@ export function SpeakerLabelsEditor({ fileDbId, assistidoId }: SpeakerLabelsEdit
                 className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 ml-auto cursor-pointer"
                 title="Editar"
               >
-                <Pencil className="w-3 h-3 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300" />
+                <Pencil className="w-3 h-3 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300" />
               </button>
             </div>
           );
@@ -293,7 +293,7 @@ export function SpeakerLabelsEditor({ fileDbId, assistidoId }: SpeakerLabelsEdit
       <Button
         variant="ghost"
         size="sm"
-        className="w-full text-[10px] h-6 text-zinc-400 hover:text-zinc-600 cursor-pointer"
+        className="w-full text-[10px] h-6 text-neutral-400 hover:text-neutral-600 cursor-pointer"
         onClick={() => triggerMutation.mutate({ fileId: fileDbId, assistidoId })}
         disabled={triggerMutation.isPending}
       >

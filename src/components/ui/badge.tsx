@@ -9,7 +9,7 @@ const badgeVariants = cva(
       variant: {
         // === PADRÃO (Neutro suave) ===
         default:
-          "border-stone-200 bg-stone-50 text-stone-600 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-400",
+          "border-stone-200 bg-stone-50 text-stone-600 dark:border-neutral-700 dark:bg-neutral-800/50 dark:text-neutral-400",
         
         // === SEMÂNTICOS (Outline apenas - NUNCA solid) ===
         danger:
@@ -25,9 +25,9 @@ const badgeVariants = cva(
         
         // === ESPECIAIS ===
         outline: 
-          "border-stone-300 bg-transparent text-stone-600 dark:border-zinc-600 dark:text-zinc-400",
+          "border-stone-300 bg-transparent text-stone-600 dark:border-neutral-600 dark:text-neutral-400",
         secondary:
-          "border-transparent bg-stone-100 text-stone-500 dark:bg-zinc-800 dark:text-zinc-400",
+          "border-transparent bg-stone-100 text-stone-500 dark:bg-neutral-800 dark:text-neutral-400",
       },
     },
     defaultVariants: {

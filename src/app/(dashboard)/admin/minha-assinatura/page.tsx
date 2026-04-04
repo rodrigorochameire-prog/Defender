@@ -56,16 +56,16 @@ const STATUS_CONFIG: Record<SubscriptionStatus, { label: string; color: string; 
   ativo: { label: "Ativo", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30", icon: CheckCircle2 },
   pendente: { label: "Pendente", color: "bg-amber-500/15 text-amber-400 border-amber-500/30", icon: Clock },
   vencido: { label: "Vencido", color: "bg-red-500/15 text-red-400 border-red-500/30", icon: AlertTriangle },
-  cancelado: { label: "Cancelado", color: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30", icon: AlertTriangle },
+  cancelado: { label: "Cancelado", color: "bg-neutral-500/15 text-neutral-400 border-neutral-500/30", icon: AlertTriangle },
   isento: { label: "Isento", color: "bg-blue-500/15 text-blue-400 border-blue-500/30", icon: CheckCircle2 },
 };
 
 const PAYMENT_STATUS_MAP: Record<string, { label: string; color: string }> = {
   aguardando_confirmacao: { label: "Aguardando confirmacao", color: "bg-amber-500/15 text-amber-400 border-amber-500/20" },
   confirmado: { label: "Confirmado", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20" },
-  pendente: { label: "Pendente", color: "bg-zinc-500/15 text-zinc-400 border-zinc-500/20" },
+  pendente: { label: "Pendente", color: "bg-neutral-500/15 text-neutral-400 border-neutral-500/20" },
   rejeitado: { label: "Rejeitado", color: "bg-red-500/15 text-red-400 border-red-500/20" },
-  expirado: { label: "Expirado", color: "bg-zinc-500/15 text-zinc-400 border-zinc-500/20" },
+  expirado: { label: "Expirado", color: "bg-neutral-500/15 text-neutral-400 border-neutral-500/20" },
   estornado: { label: "Estornado", color: "bg-red-500/15 text-red-400 border-red-500/20" },
 };
 
@@ -320,7 +320,7 @@ export default function MinhaAssinaturaPage() {
                 </thead>
                 <tbody>
                   {paymentHistory.map((p) => {
-                    const pStatus = PAYMENT_STATUS_MAP[p.status] || { label: p.status, color: "bg-zinc-500/15 text-zinc-400" };
+                    const pStatus = PAYMENT_STATUS_MAP[p.status] || { label: p.status, color: "bg-neutral-500/15 text-neutral-400" };
                     return (
                       <tr key={p.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
                         <td className="py-2.5 px-3 text-foreground/80">

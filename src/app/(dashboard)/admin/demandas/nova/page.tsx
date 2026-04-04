@@ -321,10 +321,10 @@ export default function NovaDemandaPage() {
             <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-violet-700 dark:text-violet-400" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-100">
               Nova Demanda
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">
+            <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 hidden sm:block">
               Registre uma nova demanda com cálculo automático de prazo
             </p>
           </div>

@@ -46,7 +46,7 @@ export function ProfissionalSwitch({
         <button
           onClick={() => setProfissionalAtivo(1)}
           className={cn(
-            "w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold transition-all bg-zinc-800 dark:bg-zinc-700 text-white",
+            "w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold transition-all bg-neutral-800 dark:bg-neutral-700 text-white",
             profissionalAtivoId === 1 && "ring-2 ring-emerald-500"
           )}
           title="Dr. Rodrigo"
@@ -57,7 +57,7 @@ export function ProfissionalSwitch({
         <button
           onClick={() => setProfissionalAtivo(2)}
           className={cn(
-            "w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold transition-all bg-white text-zinc-800 border border-zinc-700",
+            "w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold transition-all bg-white text-neutral-800 border border-neutral-700",
             profissionalAtivoId === 2 && "ring-2 ring-emerald-500"
           )}
           title="Dra. Juliane"
@@ -68,7 +68,7 @@ export function ProfissionalSwitch({
         <button
           onClick={() => setProfissionalAtivo(0)}
           className={cn(
-            "w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-bold transition-all bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400",
+            "w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-bold transition-all bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-400",
             profissionalAtivoId === 0 && "ring-2 ring-emerald-500"
           )}
           title="Geral"
@@ -86,7 +86,7 @@ export function ProfissionalSwitch({
         <button
           onClick={() => setProfissionalAtivo(1)}
           className={cn(
-            "w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-all bg-zinc-800 dark:bg-zinc-700 text-white",
+            "w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-all bg-neutral-800 dark:bg-neutral-700 text-white",
             profissionalAtivoId === 1 && "ring-2 ring-emerald-500 ring-offset-1"
           )}
           title="Dr. Rodrigo"
@@ -97,7 +97,7 @@ export function ProfissionalSwitch({
         <button
           onClick={() => setProfissionalAtivo(2)}
           className={cn(
-            "w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-all bg-white text-zinc-800 border-2 border-zinc-700",
+            "w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-all bg-white text-neutral-800 border-2 border-neutral-700",
             profissionalAtivoId === 2 && "ring-2 ring-emerald-500 ring-offset-1"
           )}
           title="Dra. Juliane"
@@ -108,7 +108,7 @@ export function ProfissionalSwitch({
         <button
           onClick={() => setProfissionalAtivo(0)}
           className={cn(
-            "px-2.5 h-8 rounded-lg flex items-center justify-center text-xs font-medium transition-all bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400",
+            "px-2.5 h-8 rounded-lg flex items-center justify-center text-xs font-medium transition-all bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-400",
             profissionalAtivoId === 0 && "ring-2 ring-emerald-500 ring-offset-1"
           )}
           title="Geral"
@@ -126,23 +126,23 @@ export function ProfissionalSwitch({
       <div className="flex items-center gap-3">
         {/* Badge estilo R/J */}
         {profissionalAtivoId === 1 ? (
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-base bg-zinc-800 dark:bg-zinc-600 shadow-md">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-base bg-neutral-800 dark:bg-neutral-600 shadow-md">
             R
           </div>
         ) : profissionalAtivoId === 2 ? (
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-zinc-900 font-bold text-base bg-white border-2 border-zinc-700 dark:border-zinc-400 shadow-md">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-neutral-900 font-bold text-base bg-white border-2 border-neutral-700 dark:border-neutral-400 shadow-md">
             J
           </div>
         ) : (
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-zinc-600 dark:text-zinc-400 font-bold text-[10px] bg-zinc-200 dark:bg-zinc-700 shadow-md">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-neutral-600 dark:text-neutral-400 font-bold text-[10px] bg-neutral-200 dark:bg-neutral-700 shadow-md">
             Geral
           </div>
         )}
         <div>
-          <p className="font-semibold text-zinc-900 dark:text-zinc-100">
+          <p className="font-semibold text-neutral-900 dark:text-neutral-100">
             {profissionalAtivo.nome}
           </p>
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-neutral-500">
             {profissionalAtivoId === 0 ? "Visão geral de todos" : atribuicaoLabel}
           </p>
         </div>
@@ -156,8 +156,8 @@ export function ProfissionalSwitch({
           <button
             onClick={() => setProfissionalAtivo(1)}
             className={cn(
-              "w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm transition-all bg-zinc-800 dark:bg-zinc-700 text-white",
-              profissionalAtivoId === 1 && "ring-2 ring-emerald-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900"
+              "w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm transition-all bg-neutral-800 dark:bg-neutral-700 text-white",
+              profissionalAtivoId === 1 && "ring-2 ring-emerald-500 ring-offset-2 ring-offset-white dark:ring-offset-neutral-900"
             )}
             title="Dr. Rodrigo"
           >
@@ -168,8 +168,8 @@ export function ProfissionalSwitch({
           <button
             onClick={() => setProfissionalAtivo(2)}
             className={cn(
-              "w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm transition-all bg-white text-zinc-800 border-2 border-zinc-700 dark:border-zinc-500",
-              profissionalAtivoId === 2 && "ring-2 ring-emerald-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900"
+              "w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm transition-all bg-white text-neutral-800 border-2 border-neutral-700 dark:border-neutral-500",
+              profissionalAtivoId === 2 && "ring-2 ring-emerald-500 ring-offset-2 ring-offset-white dark:ring-offset-neutral-900"
             )}
             title="Dra. Juliane"
           >
@@ -180,8 +180,8 @@ export function ProfissionalSwitch({
           <button
             onClick={() => setProfissionalAtivo(0)}
             className={cn(
-              "px-3 h-9 rounded-lg flex items-center justify-center font-medium text-sm transition-all bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400",
-              profissionalAtivoId === 0 && "ring-2 ring-emerald-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900"
+              "px-3 h-9 rounded-lg flex items-center justify-center font-medium text-sm transition-all bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-400",
+              profissionalAtivoId === 0 && "ring-2 ring-emerald-500 ring-offset-2 ring-offset-white dark:ring-offset-neutral-900"
             )}
             title="Visão Geral"
           >
@@ -192,7 +192,7 @@ export function ProfissionalSwitch({
         {/* Link para configurações de escala */}
         {showEscalaLink && (
           <Link href="/admin/configuracoes/escala">
-            <Button variant="outline" size="sm" className="gap-2 text-zinc-500 hover:text-zinc-700">
+            <Button variant="outline" size="sm" className="gap-2 text-neutral-500 hover:text-neutral-700">
               <Settings className="w-4 h-4" />
               Escala
             </Button>
@@ -239,7 +239,7 @@ export function OmbudsLogo({
       
       {showText && (
         <span className={cn(
-          "font-bold tracking-tight text-zinc-900 dark:text-zinc-100",
+          "font-bold tracking-tight text-neutral-900 dark:text-neutral-100",
           sizes[size].text
         )}>
           OMBUDS

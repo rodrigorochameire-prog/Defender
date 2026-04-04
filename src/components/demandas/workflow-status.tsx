@@ -246,7 +246,7 @@ export function WorkflowStatus({
                           "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all",
                           isActive && "ring-2 ring-offset-2",
                           isPast && "opacity-50",
-                          !isActive && !isPast && "hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+                          !isActive && !isPast && "hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
                         )}
                         style={{
                           backgroundColor: isActive ? `${stepConfig.color}30` : undefined,
@@ -272,7 +272,7 @@ export function WorkflowStatus({
                 </TooltipProvider>
 
                 {index < WORKFLOW_STEPS.length - 1 && (
-                  <ArrowRight className="h-4 w-4 text-zinc-300 dark:text-zinc-600 mx-1" />
+                  <ArrowRight className="h-4 w-4 text-neutral-300 dark:text-neutral-600 mx-1" />
                 )}
               </div>
             );
@@ -282,7 +282,7 @@ export function WorkflowStatus({
 
       {/* Atalhos rápidos */}
       <div className="flex flex-wrap gap-2">
-        <span className="text-xs text-zinc-500 self-center">Atalhos:</span>
+        <span className="text-xs text-neutral-500 self-center">Atalhos:</span>
         {ATALHOS_RAPIDOS.map(({ status, label, icon: AtalhoIcon }) => {
           const canTransition = proximosStatus.includes(status);
           const isCurrentStatus = normalizedStatus === status;

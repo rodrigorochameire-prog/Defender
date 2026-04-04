@@ -43,10 +43,10 @@ export default function InspecoesPage() {
             <ClipboardCheck className="w-5 h-5 sm:w-6 sm:h-6 text-blue-700 dark:text-blue-400" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-100">
               Inspeções
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">
+            <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 hidden sm:block">
               Relatórios de condições das unidades
             </p>
           </div>
