@@ -310,14 +310,14 @@ export default function NovoJulgadoPage() {
                 <div className="space-y-2">
                   <Label htmlFor="temaId">Tema</Label>
                   <Select
-                    value={formData.temaId}
-                    onValueChange={(v) => handleSelectChange("temaId", v)}
+                    value={formData.temaId || "none"}
+                    onValueChange={(v) => handleSelectChange("temaId", v === "none" ? "" : v)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um tema (opcional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Nenhum</SelectItem>
+                      <SelectItem value="none">Nenhum</SelectItem>
                       {temas?.map((tema) => (
                         <SelectItem key={tema.id} value={tema.id.toString()}>
                           {tema.nome}

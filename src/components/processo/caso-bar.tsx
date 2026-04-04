@@ -46,7 +46,7 @@ export function CasoBar({ casoTitulo, currentProcessoId, processos, stats }: Cas
           const tipoLabel = TIPO_PROCESSO_LABEL[p.tipoProcesso ?? "AP"] ?? p.tipoProcesso ?? "AP";
           const isInactive = p.ativo === false;
           const shortAutos = p.numeroAutos
-            ? p.numeroAutos.replace(/^0+/, "").slice(0, 15)
+            ? (p.numeroAutos ?? "").replace(/^0+/, "").slice(0, 15)
             : "s/n";
 
           return (

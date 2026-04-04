@@ -147,7 +147,7 @@ function getDefensorDisplayData(config: ProfissionalConfig): { id: string; nome:
   return {
     id: String(config.id),
     nome: config.nome,
-    nomeCurto: config.nomeCurto || config.nome.split(' ').slice(0, 2).join(' '),
+    nomeCurto: config.nomeCurto || (config.nome ?? "").split(' ').slice(0, 2).join(' '),
     inicial,
     cor,
     grupo: config.grupo,

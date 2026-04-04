@@ -451,11 +451,11 @@ export default function JulgadoDetailPage() {
                 <div>
                   <span className="text-xs text-neutral-500">Tema</span>
                   <Select
-                    value={julgado.temaId?.toString() || ""}
+                    value={julgado.temaId?.toString() || "none"}
                     onValueChange={(value) =>
                       updateMutation.mutate({
                         id: julgado.id,
-                        temaId: value ? parseInt(value) : null,
+                        temaId: value && value !== "none" ? parseInt(value) : null,
                       })
                     }
                   >
@@ -463,7 +463,7 @@ export default function JulgadoDetailPage() {
                       <SelectValue placeholder="Selecionar tema" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Nenhum</SelectItem>
+                      <SelectItem value="none">Nenhum</SelectItem>
                       {temas?.map((tema) => (
                         <SelectItem key={tema.id} value={tema.id.toString()}>
                           {tema.nome}

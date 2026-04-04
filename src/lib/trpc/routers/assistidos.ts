@@ -326,6 +326,9 @@ export const assistidosRouter = router({
               fase: processos.fase,
               situacao: processos.situacao,
               papel: assistidosProcessos.papel,
+              tipoProcesso: processos.tipoProcesso,
+              casoId: processos.casoId,
+              isReferencia: processos.isReferencia,
             })
             .from(assistidosProcessos)
             .innerJoin(processos, eq(assistidosProcessos.processoId, processos.id))
@@ -558,7 +561,7 @@ export const assistidosRouter = router({
       }
 
       // Verificar nomes muito similares
-      const primeiroNome = input.nome.split(" ")[0];
+      const primeiroNome = (input.nome ?? "").split(" ")[0];
       const candidatosSimilares = await db
         .select({ id: assistidos.id, nome: assistidos.nome, cpf: assistidos.cpf })
         .from(assistidos)
@@ -698,7 +701,7 @@ export const assistidosRouter = router({
       }
 
       // Verificar nomes similares
-      const primeiroNome = input.nome.split(" ")[0];
+      const primeiroNome = (input.nome ?? "").split(" ")[0];
       const candidatos = await db
         .select({ id: assistidos.id, nome: assistidos.nome, cpf: assistidos.cpf })
         .from(assistidos)

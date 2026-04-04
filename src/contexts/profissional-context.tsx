@@ -117,7 +117,7 @@ function dbToProfissionalConfig(prof: Profissional, index: number): Profissional
   return {
     id: prof.id,
     nome: prof.nome,
-    nomeCurto: prof.nomeCurto || prof.nome.split(" ").pop() || prof.nome,
+    nomeCurto: prof.nomeCurto || (prof.nome ?? "").split(" ").pop() || prof.nome || "",
     grupo: (prof.grupo as GrupoTrabalho) || "varas_criminais",
     vara: prof.vara || undefined,
     cor: "zinc",

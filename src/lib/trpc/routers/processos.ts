@@ -974,7 +974,7 @@ export const processosRouter = router({
 
       if (!processo) throw new TRPCError({ code: "NOT_FOUND", message: "Processo não encontrado" });
 
-      const numero = processo.numeroAutos.replace(/\s/g, "");
+      const numero = (processo.numeroAutos ?? "").replace(/\s/g, "");
 
       const response = await fetch(
         "https://api-publica.datajud.cnj.jus.br/api_publica_tjba/_search",

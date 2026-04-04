@@ -169,15 +169,15 @@ export function CalculadoraPrazo({
           <div className="space-y-2">
             <Label>Tipo de Ato/Prazo</Label>
             <Select
-              value={tipoPrazoCodigo}
-              onValueChange={setTipoPrazoCodigo}
+              value={tipoPrazoCodigo || "none"}
+              onValueChange={(v) => setTipoPrazoCodigo(v === "none" ? "" : v)}
               disabled={loadingTipos}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione ou use prazo manual" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Prazo manual</SelectItem>
+                <SelectItem value="none">Prazo manual</SelectItem>
                 {tiposPrazo?.map((tipo) => (
                   <SelectItem key={tipo.codigo} value={tipo.codigo}>
                     {tipo.nome} ({tipo.prazoLegalDias} dias)

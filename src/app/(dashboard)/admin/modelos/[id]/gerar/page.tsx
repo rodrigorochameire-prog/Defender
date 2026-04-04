@@ -401,14 +401,14 @@ export default function GerarDocumentoPage() {
                   <div>
                     <Label className="text-xs">Assistido</Label>
                     <Select
-                      value={assistidoId?.toString() || ""}
-                      onValueChange={(v) => setAssistidoId(v ? parseInt(v) : null)}
+                      value={assistidoId?.toString() || "none"}
+                      onValueChange={(v) => setAssistidoId(v && v !== "none" ? parseInt(v) : null)}
                     >
                       <SelectTrigger className="mt-1.5">
                         <SelectValue placeholder="Selecionar assistido" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Nenhum</SelectItem>
+                        <SelectItem value="none">Nenhum</SelectItem>
                         {assistidos?.map((a) => (
                           <SelectItem key={a.id} value={a.id.toString()}>
                             {a.nome}
@@ -420,14 +420,14 @@ export default function GerarDocumentoPage() {
                   <div>
                     <Label className="text-xs">Processo</Label>
                     <Select
-                      value={processoId?.toString() || ""}
-                      onValueChange={(v) => setProcessoId(v ? parseInt(v) : null)}
+                      value={processoId?.toString() || "none"}
+                      onValueChange={(v) => setProcessoId(v && v !== "none" ? parseInt(v) : null)}
                     >
                       <SelectTrigger className="mt-1.5">
                         <SelectValue placeholder="Selecionar processo" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Nenhum</SelectItem>
+                        <SelectItem value="none">Nenhum</SelectItem>
                         {processos?.map((p) => (
                           <SelectItem key={p.id} value={p.id.toString()}>
                             {p.numeroAutos} - {p.assistido?.nome}
