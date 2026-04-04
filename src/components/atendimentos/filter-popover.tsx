@@ -150,7 +150,7 @@ export function FilterPopover({ filters, onApply, total }: FilterPopoverProps) {
           </button>
         </PopoverTrigger>
 
-        <PopoverContent align="end" className="w-[260px] p-0">
+        <PopoverContent align="end" className="w-[260px] max-w-[calc(100vw-2rem)] p-0 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
           <div className="p-3 space-y-3">
             {/* Tipo */}
             <div>

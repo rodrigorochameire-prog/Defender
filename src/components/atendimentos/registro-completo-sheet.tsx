@@ -78,7 +78,7 @@ function toDatetimeLocal(value: Date | string): string {
 }
 
 const sectionLabelClass =
-  "text-xs uppercase tracking-wider font-semibold text-neutral-400";
+  "text-xs uppercase tracking-wider font-semibold text-neutral-400 dark:text-neutral-500";
 
 export function RegistroCompletoSheet({
   open,
@@ -239,6 +239,8 @@ export function RegistroCompletoSheet({
                 onChange={(e) => set("dataAtendimento", e.target.value)}
                 className={cn(
                   "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm",
+                  "text-neutral-900 dark:text-neutral-100",
+                  "[color-scheme:light] dark:[color-scheme:dark]",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 )}
               />

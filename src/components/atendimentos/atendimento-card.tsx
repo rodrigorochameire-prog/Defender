@@ -143,7 +143,7 @@ export function AtendimentoCard({
           </span>
 
           {/* Badges */}
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex flex-wrap items-center gap-1 shrink-0 max-w-[50%]">
             {/* Status badge */}
             {statusConfig && (
               <span className={cn("text-[9px] font-medium px-1.5 py-px rounded-full", statusConfig.classes)}>
@@ -231,7 +231,7 @@ export function AtendimentoCard({
           </div>
 
           {/* ── Actions row ─────────────────────────────────────────────────── */}
-          <div className="border-t border-neutral-100 dark:border-neutral-800 px-2 py-1.5 flex items-center gap-1">
+          <div className="border-t border-neutral-100 dark:border-neutral-800 px-2 py-1.5 flex flex-wrap items-center gap-1">
             {/* Editar */}
             <button
               onClick={(e) => { e.stopPropagation(); onEdit(); }}

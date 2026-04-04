@@ -119,7 +119,7 @@ export function AtendimentosTab({
       />
 
       {/* 2. SubTabs */}
-      <div className="flex items-center gap-0.5 mx-0 mt-3 mb-0 overflow-x-auto rounded-lg bg-neutral-100 dark:bg-neutral-800 p-1">
+      <div className="flex items-center gap-0.5 mx-0 mt-3 mb-0 overflow-x-auto scrollbar-hide rounded-lg bg-neutral-100 dark:bg-neutral-800 p-1" style={{ WebkitOverflowScrolling: "touch" }}>
         {subTabs.map((tab) => (
           <button
             key={tab.key}

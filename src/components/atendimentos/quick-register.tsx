@@ -122,7 +122,7 @@ export function QuickRegister({
             if (e.key === "Enter") handleSave();
           }}
           placeholder="Assunto do atendimento..."
-          className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-[12px] text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400"
+          className="flex-1 min-w-0 bg-transparent border-none outline-none text-[12px] text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400"
         />
 
         {/* Processo */}
