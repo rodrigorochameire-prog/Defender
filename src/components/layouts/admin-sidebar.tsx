@@ -12,7 +12,7 @@ import {
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
   MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput, Sun,
   MessageSquare, FileCheck, ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity,
-  UserPlus, CreditCard, FileSpreadsheet
+  UserPlus, CreditCard, FileSpreadsheet, Landmark
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { usePlan } from "@/hooks/use-plan";
@@ -77,6 +77,7 @@ const MAIN_NAV: AssignmentMenuItem[] = [
 const CADASTROS_NAV: AssignmentMenuItem[] = [
   { label: "Assistidos", path: "/admin/assistidos", icon: "Users", requiredRoles: ["admin", "defensor", "servidor", "estagiario", "triagem"] },
   { label: "Processos", path: "/admin/processos", icon: "Scale" },
+  { label: "Inst. Superior", path: "/admin/instancia-superior", icon: "Landmark" },
   { label: "Solar", path: "/admin/intimacoes", icon: "Sun" },
   { label: "Mapa", path: "/admin/cadastro/mapa", icon: "Map" },
 ];
@@ -194,7 +195,7 @@ const iconMap: Record<string, React.ElementType> = {
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
   ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
   BookUser, Users2, Home, FolderInput, Sun, MessageSquare, FileCheck,
-  ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity, UserPlus, CreditCard, FileSpreadsheet
+  ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity, UserPlus, CreditCard, FileSpreadsheet, Landmark
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
@@ -1818,12 +1819,12 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
 
       {/* Main Content */}
       <SidebarInset className={cn("flex flex-col min-h-screen", theme === "dark" ? "bg-neutral-950" : "bg-neutral-50")}>
-        {/* Header - Light clean com accent emerald */}
+        {/* Header - Subtle gray com accent emerald */}
         <header className={cn(
           "flex h-12 shrink-0 items-center",
           "sticky top-0 z-30",
-          "bg-white dark:bg-neutral-900",
-          "border-b-2 border-neutral-900 dark:border-neutral-700"
+          "bg-neutral-100 dark:bg-neutral-900",
+          "border-b border-neutral-200 dark:border-neutral-700"
         )}>
           {/* Conteúdo - Esquerda: Toggle + Breadcrumbs */}
           <div className="flex items-center gap-3 px-3 flex-1 min-w-0">
