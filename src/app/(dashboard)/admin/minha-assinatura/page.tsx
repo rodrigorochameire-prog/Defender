@@ -252,7 +252,7 @@ export default function MinhaAssinaturaPage() {
 
             {/* QR Code */}
             <div className="flex flex-col items-center gap-3">
-              <div className="bg-white p-3 rounded-lg">
+              <div className="bg-white dark:bg-neutral-900 p-3 rounded-lg">
                 <QRCodeSVG
                   value={brCode}
                   size={180}

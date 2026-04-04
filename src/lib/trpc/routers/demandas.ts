@@ -2,7 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction } from "@/lib/db";
 import { demandas, processos, assistidos, users } from "@/lib/db/schema";
-import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull, not, asc } from "drizzle-orm";
+import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull, not, asc, type SQL } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getDefensorResponsavel, getDefensoresVisiveis } from "../defensor-scope";
 import { normalizarNome, calcularSimilaridade } from "@/lib/pje-parser";
@@ -101,7 +101,7 @@ export const demandasRouter = router({
       }
       
       if (status && status !== "all") {
-        conditions.push(eq(demandas.status, status as any));
+        conditions.push(eq(demandas.status, status as typeof demandas.status._.data));
       }
       
       if (reuPreso !== undefined) {
@@ -472,7 +472,8 @@ export const demandasRouter = router({
       const { id, atribuicao, assistidoNome, processoNumero, assistidoId: newAssistidoId, processoId: newProcessoId, ...data } = input;
       const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
 
-      const updateData: any = {
+      // TODO: replace with strict Drizzle insert type once all optional fields are mapped
+      const updateData: Partial<typeof demandas.$inferInsert> & { updatedAt: Date } = {
         ...data,
         updatedAt: new Date(),
       };
@@ -518,8 +519,8 @@ export const demandasRouter = router({
 
         await db.update(processos)
           .set({
-            atribuicao: atribuicao as any,
-            area: (ATRIBUICAO_TO_AREA[atribuicao] || "JURI") as any,
+            atribuicao: atribuicao as typeof processos.atribuicao._.data,
+            area: (ATRIBUICAO_TO_AREA[atribuicao] || "JURI") as typeof processos.area._.data,
             updatedAt: new Date(),
           })
           .where(eq(processos.id, atualizado.processoId));
@@ -634,8 +635,9 @@ export const demandasRouter = router({
     const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
     
     // Construir condição base de acesso
-    let baseConditions: any[] = [isNull(demandas.deletedAt)];
-    
+    // SQL<unknown> is the common base type for all Drizzle conditions
+    const baseConditions: SQL<unknown>[] = [isNull(demandas.deletedAt)];
+
     if (defensoresVisiveis !== "all") {
       if (defensoresVisiveis.length === 1) {
         baseConditions.push(eq(demandas.defensorId, defensoresVisiveis[0]));
@@ -643,7 +645,7 @@ export const demandasRouter = router({
         baseConditions.push(inArray(demandas.defensorId, defensoresVisiveis));
       }
     }
-    
+
     const baseCondition = and(...baseConditions);
 
     const total = await db
@@ -846,7 +848,7 @@ export const demandasRouter = router({
             const targetAtribuicaoPrimariaBackfill = (ATRIBUICAO_TO_ENUM[row.atribuicao || row.atribuicaoDetectada || ""] || null);
             if (targetAtribuicaoPrimariaBackfill) {
               await db.update(assistidos)
-                .set({ atribuicaoPrimaria: targetAtribuicaoPrimariaBackfill as any })
+                .set({ atribuicaoPrimaria: targetAtribuicaoPrimariaBackfill as typeof assistidos.atribuicaoPrimaria._.data })
                 .where(eq(assistidos.id, assistido.id));
             }
           }
@@ -859,11 +861,11 @@ export const demandasRouter = router({
                 : "SOLTO";
 
             // Determinar atribuicaoPrimaria para o novo assistido
-            const targetAtribuicaoPrimaria = (ATRIBUICAO_TO_ENUM[row.atribuicao || row.atribuicaoDetectada || ""] || "JURI_CAMACARI") as any;
+            const targetAtribuicaoPrimaria = (ATRIBUICAO_TO_ENUM[row.atribuicao || row.atribuicaoDetectada || ""] || "JURI_CAMACARI") as typeof assistidos.atribuicaoPrimaria._.data;
 
             const [newAssistido] = await db.insert(assistidos).values({
               nome: row.assistido.trim(),
-              statusPrisional: statusPrisional as any,
+              statusPrisional: statusPrisional as typeof assistidos.statusPrisional._.data,
               atribuicaoPrimaria: targetAtribuicaoPrimaria,
               defensorId: defensorId || ctx.user.id,
             }).returning();
@@ -900,8 +902,8 @@ export const demandasRouter = router({
           // Determinar área e atribuição com base no input
           // Se a atribuição não for encontrada no mapa, usa o valor original (pode já ser o enum)
           const inputAtribuicao = row.atribuicao || "";
-          const targetArea = (ATRIBUICAO_TO_AREA[inputAtribuicao] || "JURI") as any;
-          const targetAtribuicao = (ATRIBUICAO_TO_ENUM[inputAtribuicao] || inputAtribuicao || "JURI_CAMACARI") as any;
+          const targetArea = (ATRIBUICAO_TO_AREA[inputAtribuicao] || "JURI") as typeof processos.area._.data;
+          const targetAtribuicao = (ATRIBUICAO_TO_ENUM[inputAtribuicao] || inputAtribuicao || "JURI_CAMACARI") as typeof processos.atribuicao._.data;
 
           if (processoNumero) {
             processo = await db.query.processos.findFirst({
@@ -1043,7 +1045,7 @@ export const demandasRouter = router({
                   ato: row.ato, // Atualizar o ato também (pode mudar de Ciência para Manifestação)
                   prazo: convertDate(row.prazo),
                   dataEntrada: convertDate(row.dataEntrada),
-                  status: dbStatus as any,
+                  status: dbStatus as typeof demandas.status._.data,
                   substatus: substatus,
                   prioridade: reuPreso ? "REU_PRESO" : "NORMAL",
                   reuPreso,
@@ -1068,7 +1070,7 @@ export const demandasRouter = router({
             ato: row.ato,
             prazo: convertDate(row.prazo),
             dataEntrada: convertDate(row.dataEntrada),
-            status: dbStatus as any,
+            status: dbStatus as typeof demandas.status._.data,
             substatus: substatus, // Status granular preservado
             prioridade: reuPreso ? "REU_PRESO" : "NORMAL",
             reuPreso,
@@ -1077,6 +1079,7 @@ export const demandasRouter = router({
             importBatchId: row.importBatchId || null,
             ordemOriginal: row.ordemOriginal ?? null,
             // PJe pass-through: enrichmentData com dados extraídos do parser
+            // TODO: define a proper EnrichmentData type and use $type<EnrichmentData>() on the column
             enrichmentData: (row.crime || row.tipoDocumento || row.tipoProcesso) ? {
               crime: row.crime || undefined,
               artigos: [],
@@ -1085,7 +1088,7 @@ export const demandasRouter = router({
               tipo_processo: row.tipoProcesso || undefined,
               id_documento_pje: row.idDocumentoPje || undefined,
               vara: row.vara || undefined,
-            } as any : undefined,
+            } as Record<string, unknown> : undefined,
             // createdAt usa defaultNow() — momento real da importação
           }).returning();
 
@@ -1169,7 +1172,7 @@ export const demandasRouter = router({
     .query(async ({ ctx, input }) => {
 
       // 1. Buscar todos assistidos (1 query)
-      const conditions: any[] = [isNull(assistidos.deletedAt)];
+      const conditions: SQL<unknown>[] = [isNull(assistidos.deletedAt)];
 
       const todosAssistidos = await db
         .select({
@@ -1236,7 +1239,7 @@ export const demandasRouter = router({
     .input(z.object({ search: z.string().min(1), assistidoId: z.number().optional() }))
     .query(async ({ ctx, input }) => {
 
-      const conditions: any[] = [
+      const conditions: SQL<unknown>[] = [
         isNull(processos.deletedAt),
         ilike(processos.numeroAutos, `%${input.search}%`),
       ];
@@ -1450,7 +1453,7 @@ export const demandasRouter = router({
       }
 
       if (filtros?.status && filtros.status !== "all") {
-        conditions.push(eq(demandas.status, filtros.status as any));
+        conditions.push(eq(demandas.status, filtros.status as typeof demandas.status._.data));
       }
 
       // Filtro por defensor (isolamento)

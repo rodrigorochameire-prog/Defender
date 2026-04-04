@@ -25,7 +25,7 @@ export const juriRouter = router({
       let conditions = [];
       
       if (status && status !== "all") {
-        conditions.push(eq(sessoesJuri.status, status as any));
+        conditions.push(eq(sessoesJuri.status, status));
       }
       
       if (defensor) {
@@ -101,6 +101,8 @@ export const juriRouter = router({
       
       // Adicionar limite apenas se especificado
       if (limite !== undefined) {
+        // Drizzle narrows the query type after .limit() differently when chained conditionally
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         query = query.limit(limite) as any;
       }
       
@@ -205,7 +207,8 @@ export const juriRouter = router({
     .mutation(async ({ ctx, input }) => {
       const { id, dataSessao, ...data } = input;
 
-      const updateData: any = {
+      // TODO: replace with Drizzle's InferInsert<typeof sessoesJuri> to get strict typing
+      const updateData: Partial<typeof sessoesJuri.$inferInsert> & { updatedAt: Date } = {
         ...data,
         updatedAt: new Date(),
       };
@@ -371,7 +374,7 @@ export const juriRouter = router({
           if (existing[0].status !== newStatus) {
             await db
               .update(sessoesJuri)
-              .set({ status: newStatus as any, updatedAt: new Date() })
+              .set({ status: newStatus, updatedAt: new Date() })
               .where(eq(sessoesJuri.id, existing[0].id));
             updated++;
           } else {
@@ -394,7 +397,7 @@ export const juriRouter = router({
             if (anyExisting[0].status !== newStatus) {
               await db
                 .update(sessoesJuri)
-                .set({ status: newStatus as any, updatedAt: new Date() })
+                .set({ status: newStatus, updatedAt: new Date() })
                 .where(eq(sessoesJuri.id, anyExisting[0].id));
               updated++;
             } else {

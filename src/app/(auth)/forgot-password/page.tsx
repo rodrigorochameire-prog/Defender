@@ -18,7 +18,7 @@ export default function ForgotPasswordPage() {
           <div className="flex flex-col items-center mb-8">
             <div className="relative mb-4">
               <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-rose-400/20 blur-xl rounded-full scale-150" />
-              <div className="relative h-16 w-16 rounded-xl bg-white shadow-md ring-1 ring-black/5 flex items-center justify-center">
+              <div className="relative h-16 w-16 rounded-xl bg-white dark:bg-neutral-800 shadow-md ring-1 ring-black/5 dark:ring-white/10 flex items-center justify-center">
                 <Scale className="h-7 w-7 text-orange-500" />
               </div>
             </div>

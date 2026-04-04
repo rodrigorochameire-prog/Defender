@@ -74,6 +74,8 @@ export const audienciasRouter = router({
 
       // Aplicar limite apenas se especificado
       if (limit !== undefined) {
+        // Drizzle narrows the query type after .limit() differently when chained conditionally
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         query = query.limit(limit) as any;
       }
 
@@ -201,8 +203,9 @@ export const audienciasRouter = router({
     }))
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
-      const updateData: any = { ...data };
-      
+      // TODO: replace with Partial<typeof audiencias.$inferInsert> once all optional fields are mapped
+      const updateData: Partial<typeof audiencias.$inferInsert> = { ...data };
+
       if (data.dataAudiencia) {
         updateData.dataAudiencia = new Date(data.dataAudiencia);
       }
@@ -539,8 +542,8 @@ export const audienciasRouter = router({
               await tx
                 .update(processos)
                 .set({
-                  atribuicao: atribuicaoEnum as any,
-                  area: areaEnum as any,
+                  atribuicao: atribuicaoEnum as typeof processos.atribuicao._.data,
+                  area: areaEnum as typeof processos.area._.data,
                   classeProcessual: evento.classeJudicial || undefined,
                   vara: evento.orgaoJulgador || undefined,
                 })
@@ -592,7 +595,7 @@ export const audienciasRouter = router({
                   nome: nomeFormatado,
                   cpf: primeiroAssistido.cpf || null,
                   statusPrisional: "SOLTO",
-                  atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as any,
+                  atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as typeof assistidos.atribuicaoPrimaria._.data,
                 })
                 .returning({ id: assistidos.id });
 
@@ -607,7 +610,7 @@ export const audienciasRouter = router({
               assistidosNormalizados.push({
                 id: novoAssistido.id,
                 nome: nomeFormatado,
-                atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as any,
+                atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as typeof assistidos.atribuicaoPrimaria._.data,
                 nomeNormalizado: normalizarNome(nomeFormatado),
               });
             }
@@ -637,7 +640,7 @@ export const audienciasRouter = router({
                 .values({
                   nome: nomeFormatado,
                   statusPrisional: "SOLTO",
-                  atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as any,
+                  atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as typeof assistidos.atribuicaoPrimaria._.data,
                 })
                 .returning({ id: assistidos.id });
 
@@ -648,7 +651,7 @@ export const audienciasRouter = router({
               assistidosNormalizados.push({
                 id: novoAssistido.id,
                 nome: nomeFormatado,
-                atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as any,
+                atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as typeof assistidos.atribuicaoPrimaria._.data,
                 nomeNormalizado: normalizarNome(nomeFormatado),
               });
             }
@@ -659,10 +662,10 @@ export const audienciasRouter = router({
             const cached = assistidosNormalizados.find(a => a.id === assistidoId);
             if (cached && !cached.atribuicaoPrimaria) {
               await tx.update(assistidos)
-                .set({ atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as any })
+                .set({ atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as typeof assistidos.atribuicaoPrimaria._.data })
                 .where(eq(assistidos.id, assistidoId));
               // Update in-memory cache
-              cached.atribuicaoPrimaria = mapAtribuicao(evento.atribuicao) as any;
+              cached.atribuicaoPrimaria = mapAtribuicao(evento.atribuicao) as typeof assistidos.atribuicaoPrimaria._.data;
             }
           }
 
@@ -697,8 +700,8 @@ export const audienciasRouter = router({
               .values({
                 assistidoId: assistidoId!,
                 numeroAutos: evento.processo,
-                atribuicao: atribuicaoEnum as any,
-                area: areaEnum as any,
+                atribuicao: atribuicaoEnum as typeof processos.atribuicao._.data,
+                area: areaEnum as typeof processos.area._.data,
                 classeProcessual: evento.classeJudicial || "Não informado",
                 vara: evento.orgaoJulgador || "Não informado",
               })
