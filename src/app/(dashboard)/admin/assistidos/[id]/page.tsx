@@ -36,11 +36,12 @@ import { AnaliseButton } from "./_components/analise-button";
 import { PromptorioModal } from "./_components/promptorio-modal";
 import { AnaliseTab } from "./_components/analise-tab";
 import { CasoBar } from "@/components/processo/caso-bar";
+import { AtendimentosTab } from "@/components/atendimentos/atendimentos-tab";
 // CaseFilter absorbed into header card
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
-type Tab = "demandas" | "drive" | "audiencias" | "midias" | "timeline" | "oficios" | "analise" | "investigacao" | "radar";
+type Tab = "demandas" | "drive" | "audiencias" | "atendimentos" | "midias" | "timeline" | "oficios" | "analise" | "investigacao" | "radar";
 
 interface TranscriptionData {
   transcript: string;
@@ -305,6 +306,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
       ) ? "red" : data.demandas.some(d => d.status === "2_ATENDER") ? "amber" : undefined
     },
     { key: "audiencias", label: "Audiências", icon: Calendar, count: data.audiencias.length },
+    { key: "atendimentos", label: "Atendimentos", icon: ContactRound },
     { key: "drive", label: "Drive", icon: HardDrive, count: data.driveFiles.length },
     { key: "midias", label: "Mídias", icon: Clock, count: mediaFiles.length },
     { key: "oficios", label: "Ofícios", icon: Send, count: oficiosData?.total ?? 0 },
@@ -478,12 +480,55 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             />
           ))
         ) : (
-          <div className={cn("flex items-center gap-3 flex-wrap mt-3", HEADER_STYLE.bottomRow)}>
-            <div className="flex items-center gap-3 text-[11px] text-white/30">
-              <span><span className="font-semibold text-white/60">{data.processos.length}</span> proc</span>
-              <span><span className="font-semibold text-white/60">{data.demandas.length}</span> dem</span>
-              <span><span className="font-semibold text-white/60">{data.audiencias.length}</span> aud</span>
-            </div>
+          <div className="mt-3 space-y-1.5">
+            {(() => {
+              // Group processos: referência first, then associated
+              const procs = data.processos as { id: number; numeroAutos?: string | null; tipoProcesso?: string | null; isReferencia?: boolean | null; casoId?: number | null }[];
+              const refs = procs.filter(p => p.isReferencia);
+              const associated = procs.filter(p => !p.isReferencia);
+              // If no explicit referência, treat all as main
+              const main = refs.length > 0 ? refs : procs;
+              const extras = refs.length > 0 ? associated : [];
+
+              return main.map((proc) => {
+                const relatedCount = extras.filter(e => e.casoId && e.casoId === proc.casoId).length
+                  || (refs.length === 0 ? 0 : extras.length);
+                return (
+                  <div key={proc.id} className={cn("flex items-center gap-3 flex-wrap", HEADER_STYLE.bottomRow)}>
+                    <Link
+                      href={`/admin/processos/${proc.id}`}
+                      className="flex items-center gap-2 hover:text-white transition-colors"
+                    >
+                      <ClipboardList className="w-3.5 h-3.5 text-white/40" />
+                      <span className="text-[12px] font-mono text-white/80 tracking-wide">
+                        {proc.numeroAutos || "Sem número"}
+                      </span>
+                    </Link>
+                    {proc.tipoProcesso && (
+                      <>
+                        <span className="w-px h-3.5 bg-white/15" />
+                        <span className="text-[10px] uppercase tracking-wider text-white/30 font-medium">
+                          {proc.tipoProcesso.replace(/_/g, " ")}
+                        </span>
+                      </>
+                    )}
+                    {relatedCount > 0 && (
+                      <>
+                        <span className="w-px h-3.5 bg-white/15" />
+                        <span className="text-[10px] text-white/30">
+                          +{relatedCount} {relatedCount === 1 ? "processo associado" : "processos associados"}
+                        </span>
+                      </>
+                    )}
+                    <span className="w-px h-3.5 bg-white/15" />
+                    <div className="flex items-center gap-3 text-[11px] text-white/30">
+                      <span><span className="font-semibold text-white/50">{data.demandas.length}</span> dem</span>
+                      <span><span className="font-semibold text-white/50">{data.audiencias.length}</span> aud</span>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
           </div>
         )}
       </div>
@@ -702,6 +747,15 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               })
             )}
           </div>
+        )}
+
+        {tab === "atendimentos" && (
+          <AtendimentosTab
+            assistidoId={Number(id)}
+            processoIdAtivo={data.processos?.[0]?.id}
+            assistidoNome={data.nome}
+            processos={data.processos.map(p => ({ id: p.id, numeroAutos: p.numeroAutos }))}
+          />
         )}
 
         {tab === "midias" && (

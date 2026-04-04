@@ -198,6 +198,8 @@ export const atendimentosRouter = router({
         local: z.string().optional(),
         assunto: z.string().optional(),
         resumo: z.string().optional(),
+        duracao: z.number().optional(),
+        acompanhantes: z.string().optional(),
         status: z.string().default("agendado"),
         interlocutor: z.enum(["assistido", "familiar", "testemunha", "outro"]).default("assistido"),
       })
