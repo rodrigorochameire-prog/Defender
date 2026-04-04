@@ -40,8 +40,12 @@ export const atendimentosRouter = router({
       z.object({
         assistidoId: z.number().optional(),
         processoId: z.number().optional(),
-        status: z.string().optional(),
-        tipo: z.string().optional(),
+        status: z.union([z.string(), z.array(z.string())]).optional(),
+        tipo: z.union([z.string(), z.array(z.string())]).optional(),
+        interlocutor: z.enum(["assistido", "familiar", "testemunha", "outro"]).optional(),
+        hasRecording: z.boolean().optional(),
+        dateFrom: z.string().optional(),
+        dateTo: z.string().optional(),
         search: z.string().optional(),
         limit: z.number().default(50),
         offset: z.number().default(0),
@@ -64,10 +68,29 @@ export const atendimentosRouter = router({
         conditions.push(eq(atendimentos.processoId, input.processoId));
       }
       if (input.status) {
-        conditions.push(eq(atendimentos.status, input.status));
+        const statuses = Array.isArray(input.status) ? input.status : [input.status];
+        conditions.push(inArray(atendimentos.status, statuses));
       }
       if (input.tipo) {
-        conditions.push(eq(atendimentos.tipo, input.tipo));
+        const tipos = Array.isArray(input.tipo) ? input.tipo : [input.tipo];
+        conditions.push(inArray(atendimentos.tipo, tipos));
+      }
+      if (input.interlocutor) {
+        conditions.push(eq(atendimentos.interlocutor, input.interlocutor));
+      }
+      if (input.hasRecording) {
+        conditions.push(
+          or(
+            sql`${atendimentos.audioUrl} IS NOT NULL`,
+            sql`${atendimentos.plaudRecordingId} IS NOT NULL`
+          )!
+        );
+      }
+      if (input.dateFrom) {
+        conditions.push(sql`${atendimentos.dataAtendimento} >= ${new Date(input.dateFrom)}`);
+      }
+      if (input.dateTo) {
+        conditions.push(sql`${atendimentos.dataAtendimento} <= ${new Date(input.dateTo)}`);
       }
 
       const result = await db
@@ -88,6 +111,11 @@ export const atendimentosRouter = router({
             enrichmentStatus: atendimentos.enrichmentStatus,
             transcricaoStatus: atendimentos.transcricaoStatus,
             atendidoPorId: atendimentos.atendidoPorId,
+            pontosChave: atendimentos.pontosChave,
+            plaudRecordingId: atendimentos.plaudRecordingId,
+            audioUrl: atendimentos.audioUrl,
+            audioDriveFileId: atendimentos.audioDriveFileId,
+            interlocutor: atendimentos.interlocutor,
             createdAt: atendimentos.createdAt,
             updatedAt: atendimentos.updatedAt,
           },
@@ -109,7 +137,14 @@ export const atendimentosRouter = router({
         .limit(input.limit)
         .offset(input.offset);
 
-      return result;
+      const [countResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(atendimentos)
+        .leftJoin(assistidos, eq(atendimentos.assistidoId, assistidos.id))
+        .leftJoin(users, eq(atendimentos.atendidoPorId, users.id))
+        .where(conditions.length > 0 ? and(...conditions) : undefined);
+
+      return { items: result, total: countResult?.count ?? 0 };
     }),
 
   /**
@@ -164,6 +199,7 @@ export const atendimentosRouter = router({
         assunto: z.string().optional(),
         resumo: z.string().optional(),
         status: z.string().default("agendado"),
+        interlocutor: z.enum(["assistido", "familiar", "testemunha", "outro"]).default("assistido"),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -199,6 +235,7 @@ export const atendimentosRouter = router({
         resumo: z.string().optional().nullable(),
         status: z.string().optional(),
         acompanhantes: z.string().optional().nullable(),
+        interlocutor: z.enum(["assistido", "familiar", "testemunha", "outro"]).optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -357,7 +394,7 @@ export const atendimentosRouter = router({
           casoId: input.casoId ?? null,
           dataAtendimento: new Date(),
           tipo: input.tipo,
-          descricao: input.descricao,
+          assunto: input.descricao,
           status: "realizado",
           transcricaoStatus: "awaiting_plaud",
           atendidoPorId: ctx.user.id,
@@ -685,7 +722,7 @@ export const atendimentosRouter = router({
             processoId: input.processoId || null,
             dataAtendimento: new Date(),
             tipo: input.novoAtendimento.tipo,
-            descricao: input.novoAtendimento.descricao || null,
+            assunto: input.novoAtendimento.descricao || null,
             status: "realizado",
             transcricaoStatus: "completed",
             atendidoPorId: ctx.user.id,
