@@ -147,6 +147,7 @@ export const atendimentos = pgTable("atendimentos", {
   resumo: text("resumo"),
   acompanhantes: text("acompanhantes"),
   status: varchar("status", { length: 20 }).default("agendado"),
+  interlocutor: varchar("interlocutor", { length: 30 }).default("assistido"),
   audioUrl: text("audio_url"),
   audioDriveFileId: varchar("audio_drive_file_id", { length: 100 }),
   audioMimeType: varchar("audio_mime_type", { length: 50 }),
