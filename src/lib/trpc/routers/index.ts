@@ -75,6 +75,7 @@ import { subscriptionsRouter } from "./subscriptions";
 import { googleIntegrationRouter } from "./google-integration";
 import { analiseRouter } from "./analise";
 import { feedbacksRouter } from "./feedbacks";
+import { instanciaSuperiorRouter } from "./instancia-superior";
 
 
 export const appRouter = router({
@@ -355,6 +356,11 @@ export const appRouter = router({
   // FEEDBACKS (BUG REPORTS, SUGESTOES, DUVIDAS)
   // ==========================================
   feedbacks: feedbacksRouter,
+
+  // ==========================================
+  // INSTÂNCIA SUPERIOR (TJBA - RECURSOS, ACÓRDÃOS)
+  // ==========================================
+  instanciaSuperior: instanciaSuperiorRouter,
 });
 
 export type AppRouter = typeof appRouter;
