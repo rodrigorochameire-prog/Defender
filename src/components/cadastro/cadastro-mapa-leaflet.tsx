@@ -64,8 +64,8 @@ const ATRIBUICAO_LABELS: Record<string, string> = {
   SUBSTITUICAO_CIVEL: "Cível/Curadoria",
 };
 
-const FALLBACK_FILL   = "#a1a1aa";
-const FALLBACK_BORDER = "#3f3f46";
+const FALLBACK_FILL   = "#a3a3a3";
+const FALLBACK_BORDER = "#404040";
 
 // ─── Heatmap weights — criticidade do processo ────────────────────────────
 const ATRIBUICAO_WEIGHTS: Record<string, number> = {
@@ -277,7 +277,7 @@ function createDonutIcon(cluster: MarkerCluster): L.DivIcon {
         ${juryRing}
         <circle cx="${cx}" cy="${cx}" r="${r}" fill="${fill}" filter="url(#${filterId})"/>
         <circle cx="${cx}" cy="${cx}" r="${innerR}" fill="white"/>
-        <text x="${cx}" y="${cx + fontSize * 0.38}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="#3f3f46" font-family="system-ui,sans-serif">${count}</text>
+        <text x="${cx}" y="${cx + fontSize * 0.38}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="#404040" font-family="system-ui,sans-serif">${count}</text>
       </svg>`,
       className: "",
       iconSize: [size, size],
@@ -303,7 +303,7 @@ function createDonutIcon(cluster: MarkerCluster): L.DivIcon {
       <g filter="url(#${filterId})">${paths.join("")}</g>
       <circle cx="${cx}" cy="${cx}" r="${innerR + 1}" fill="white"/>
       <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="1"/>
-      <text x="${cx}" y="${cx + fontSize * 0.38}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="#3f3f46" font-family="system-ui,sans-serif">${count}</text>
+      <text x="${cx}" y="${cx + fontSize * 0.38}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="#404040" font-family="system-ui,sans-serif">${count}</text>
     </svg>`,
     className: "",
     iconSize: [size, size],
@@ -321,7 +321,7 @@ function buildLegendHTML(): string {
 
   const rows = sections.map(({ label, keys }) => {
     const header = label
-      ? `<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:#a1a1aa;margin-bottom:4px;margin-top:2px;">${label}</div>`
+      ? `<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:#a3a3a3;margin-bottom:4px;margin-top:2px;">${label}</div>`
       : "";
     const items = keys.map((k) => {
       const fill   = ATRIBUICAO_FILLS[k]   || FALLBACK_FILL;
@@ -339,16 +339,16 @@ function buildLegendHTML(): string {
       } else {
         dot = `<div style="width:8px;height:8px;border-radius:50%;background:${fill};border:1.5px solid ${border};flex-shrink:0;"></div>`;
       }
-      return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">${dot}<span style="color:#52525b;font-size:10px;">${ATRIBUICAO_LABELS[k]}</span></div>`;
+      return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">${dot}<span style="color:#525252;font-size:10px;">${ATRIBUICAO_LABELS[k]}</span></div>`;
     }).join("");
     return header + items;
-  }).join(`<div style="border-top:1px solid #f4f4f5;margin:5px 0;"></div>`);
+  }).join(`<div style="border-top:1px solid #f5f5f5;margin:5px 0;"></div>`);
 
   return `
     <div style="font-family:system-ui,sans-serif;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <span style="font-weight:500;color:#71717a;font-size:10px;">Legenda</span>
-        <button id="cadastro-legend-toggle" style="background:none;border:none;cursor:pointer;color:#a1a1aa;font-size:14px;line-height:1;padding:0 2px;">−</button>
+        <span style="font-weight:500;color:#737373;font-size:10px;">Legenda</span>
+        <button id="cadastro-legend-toggle" style="background:none;border:none;cursor:pointer;color:#a3a3a3;font-size:14px;line-height:1;padding:0 2px;">−</button>
       </div>
       <div id="cadastro-legend-content">${rows}</div>
     </div>
@@ -370,8 +370,8 @@ function buildTileSwitcherHTML(activeKey: string): string {
         cursor:pointer;
         font-family:system-ui,sans-serif;
         transition:background 0.12s;
-        background:${isActive ? "#f4f4f5" : "transparent"};
-        color:${isActive ? "#18181b" : "#71717a"};
+        background:${isActive ? "#f5f5f5" : "transparent"};
+        color:${isActive ? "#171717" : "#737373"};
         font-weight:${isActive ? "500" : "400"};
       "
     >${k}</button>`;
@@ -461,7 +461,7 @@ export default function CadastroMapaLeaflet({ processos, showProcessos, showHeat
     tileSwitcher.onAdd = () => {
       const div = L.DomUtil.create("div");
       div.style.cssText =
-        "background:rgba(255,255,255,0.95);backdrop-filter:blur(4px);padding:3px 4px;border-radius:8px;border:1px solid #e4e4e7;box-shadow:0 1px 4px rgba(0,0,0,0.08);margin-top:8px;";
+        "background:rgba(255,255,255,0.95);backdrop-filter:blur(4px);padding:3px 4px;border-radius:8px;border:1px solid #e5e5e5;box-shadow:0 1px 4px rgba(0,0,0,0.08);margin-top:8px;";
       div.innerHTML = buildTileSwitcherHTML(defaultKey);
 
       div.addEventListener("click", (e) => {
@@ -494,7 +494,7 @@ export default function CadastroMapaLeaflet({ processos, showProcessos, showHeat
     legend.onAdd = () => {
       const div = L.DomUtil.create("div");
       div.style.cssText =
-        "background:rgba(255,255,255,0.96);backdrop-filter:blur(4px);padding:10px 12px;border-radius:8px;border:1px solid #f4f4f5;box-shadow:0 1px 5px rgba(0,0,0,0.1);max-width:190px;";
+        "background:rgba(255,255,255,0.96);backdrop-filter:blur(4px);padding:10px 12px;border-radius:8px;border:1px solid #f5f5f5;box-shadow:0 1px 5px rgba(0,0,0,0.1);max-width:190px;";
       div.innerHTML = buildLegendHTML();
 
       div.addEventListener("click", (e) => {
@@ -667,20 +667,20 @@ export default function CadastroMapaLeaflet({ processos, showProcessos, showHeat
       if (point.situacao && point.situacao !== "ativo") metaParts.push(point.situacao);
       if (relDate)       metaParts.push(relDate);
       const metaLine = metaParts.length
-        ? `<div style="font-size:10px;color:#a1a1aa;margin-top:1px;">${metaParts.join(" · ")}</div>`
+        ? `<div style="font-size:10px;color:#a3a3a3;margin-top:1px;">${metaParts.join(" · ")}</div>`
         : "";
 
       const assuntoLine = point.assunto
-        ? `<div style="font-size:10px;color:#71717a;margin-top:4px;line-height:1.4;">${point.assunto}</div>`
+        ? `<div style="font-size:10px;color:#737373;margin-top:4px;line-height:1.4;">${point.assunto}</div>`
         : "";
 
       const enderecoLine = point.localDoFatoEndereco
-        ? `<div style="font-size:10px;color:#a1a1aa;margin-top:3px;">${point.localDoFatoEndereco}</div>`
+        ? `<div style="font-size:10px;color:#a3a3a3;margin-top:3px;">${point.localDoFatoEndereco}</div>`
         : "";
 
       const assistidoLine = point.assistidoId
-        ? `<a href="/admin/assistidos/${point.assistidoId}" style="font-size:11px;color:#18181b;font-weight:500;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${point.assistidoNome ?? "—"}</a>`
-        : `<span style="font-size:11px;color:#52525b;">${point.assistidoNome ?? "—"}</span>`;
+        ? `<a href="/admin/assistidos/${point.assistidoId}" style="font-size:11px;color:#171717;font-weight:500;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${point.assistidoNome ?? "—"}</a>`
+        : `<span style="font-size:11px;color:#525252;">${point.assistidoNome ?? "—"}</span>`;
 
       const isRecent = point.createdAt
         ? Date.now() - new Date(point.createdAt).getTime() < 14 * 24 * 60 * 60 * 1000
@@ -692,14 +692,14 @@ export default function CadastroMapaLeaflet({ processos, showProcessos, showHeat
       const popupHtml = `
         <div style="max-width:260px;font-family:system-ui,sans-serif;">
           <!-- Header unificado escuro -->
-          <div style="background:#18181b;border-radius:6px 6px 0 0;padding:8px 10px;margin:-12px -14px 0;display:flex;align-items:center;gap:6px;">
+          <div style="background:#171717;border-radius:6px 6px 0 0;padding:8px 10px;margin:-12px -14px 0;display:flex;align-items:center;gap:6px;">
             <div style="width:7px;height:7px;border-radius:50%;background:${fill};border:1.5px solid ${border};flex-shrink:0;"></div>
-            <span style="font-size:10px;color:#d4d4d8;font-weight:500;">${atribuicaoLabel}</span>
+            <span style="font-size:10px;color:#d4d4d4;font-weight:500;">${atribuicaoLabel}</span>
             ${recentBadge}
           </div>
           <!-- Body -->
           <div style="padding-top:10px;">
-            <div style="font-size:12px;font-family:ui-monospace,monospace;color:#18181b;font-weight:600;margin-bottom:3px;">${point.numeroProcesso}</div>
+            <div style="font-size:12px;font-family:ui-monospace,monospace;color:#171717;font-weight:600;margin-bottom:3px;">${point.numeroProcesso}</div>
             <div style="margin-bottom:2px;">${assistidoLine}</div>
             ${metaLine}
             ${assuntoLine}
@@ -709,7 +709,7 @@ export default function CadastroMapaLeaflet({ processos, showProcessos, showHeat
               margin-top:9px;
               width:100%;
               padding:6px 12px;
-              background:#18181b;
+              background:#171717;
               color:white;
               border-radius:6px;
               font-size:11px;
@@ -719,7 +719,7 @@ export default function CadastroMapaLeaflet({ processos, showProcessos, showHeat
               text-decoration:none;
               box-sizing:border-box;
               transition:background 0.12s;
-            " onmouseover="this.style.background='#3f3f46'" onmouseout="this.style.background='#18181b'">Ver processo →</a>
+            " onmouseover="this.style.background='#404040'" onmouseout="this.style.background='#171717'">Ver processo →</a>
           </div>
         </div>
       `;

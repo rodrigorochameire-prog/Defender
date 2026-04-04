@@ -149,7 +149,7 @@ export default function VvdMapaLeaflet({
         if (!isNaN(lat) && !isNaN(lng)) {
           const marker = L.circleMarker([lat, lng], {
             radius: 6,
-            fillColor: "#71717a",
+            fillColor: "#737373",
             color: "white",
             weight: 1.5,
             fillOpacity: 0.75,
@@ -161,8 +161,8 @@ export default function VvdMapaLeaflet({
           marker.bindPopup(`
             <div style="font-family:system-ui,sans-serif;max-width:240px;">
               <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#71717a;flex-shrink:0;"></span>
-                <span style="font-size:10px;color:#71717a;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">Residência do Agressor</span>
+                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#737373;flex-shrink:0;"></span>
+                <span style="font-size:10px;color:#737373;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">Residência do Agressor</span>
               </div>
               <div style="font-size:11px;color:#374151;">${enderecoStr}</div>
             </div>
@@ -183,7 +183,7 @@ export default function VvdMapaLeaflet({
         if (!isNaN(lat) && !isNaN(lng)) {
           const marker = L.circleMarker([lat, lng], {
             radius: 5,
-            fillColor: "#a1a1aa",
+            fillColor: "#a3a3a3",
             color: "white",
             weight: 1.5,
             fillOpacity: 0.7,
@@ -195,8 +195,8 @@ export default function VvdMapaLeaflet({
           marker.bindPopup(`
             <div style="font-family:system-ui,sans-serif;max-width:240px;">
               <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#a1a1aa;flex-shrink:0;"></span>
-                <span style="font-size:10px;color:#a1a1aa;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">Trabalho do Agressor</span>
+                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#a3a3a3;flex-shrink:0;"></span>
+                <span style="font-size:10px;color:#a3a3a3;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">Trabalho do Agressor</span>
               </div>
               <div style="font-size:11px;color:#374151;">${enderecoStr}</div>
             </div>

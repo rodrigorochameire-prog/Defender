@@ -59,7 +59,7 @@ const CRIME_COLORS: Record<string, string> = {
   furto: "#fcd34d",
   porte_arma: "#e879f9",
   estelionato: "#818cf8",
-  outros: "#a1a1aa",
+  outros: "#a3a3a3",
 };
 
 const CRIME_LABELS: Record<string, string> = {
@@ -223,7 +223,7 @@ function createDonutIcon(cluster: MarkerCluster): L.DivIcon {
 
   // Outer border ring for large clusters
   const outerStroke = size > 44
-    ? `<circle cx="${cx}" cy="${cx}" r="${r + 1}" fill="none" stroke="#d4d4d8" stroke-width="1.5"/>`
+    ? `<circle cx="${cx}" cy="${cx}" r="${r + 1}" fill="none" stroke="#d4d4d4" stroke-width="1.5"/>`
     : "";
 
   // Unique filter IDs per cluster to avoid SVG filter collisions
@@ -237,7 +237,7 @@ function createDonutIcon(cluster: MarkerCluster): L.DivIcon {
       ${outerStroke}
       <circle cx="${cx}" cy="${cx}" r="${r}" fill="${color}" fill-opacity="0.88" filter="url(#${filterId})"/>
       <circle cx="${cx}" cy="${cx}" r="${innerR}" fill="white"/>
-      <text x="${cx}" y="${cx + fontSize * 0.4}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="#3f3f46" font-family="system-ui,sans-serif">${count}</text>
+      <text x="${cx}" y="${cx + fontSize * 0.4}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="#404040" font-family="system-ui,sans-serif">${count}</text>
     </svg>`;
     return L.divIcon({ html: svg, className: "", iconSize: [size, size], iconAnchor: [cx, cx] });
   }
@@ -258,7 +258,7 @@ function createDonutIcon(cluster: MarkerCluster): L.DivIcon {
     <g filter="url(#${filterId})">${paths.join("")}</g>
     ${outerStroke}
     <circle cx="${cx}" cy="${cx}" r="${innerR}" fill="white"/>
-    <text x="${cx}" y="${cx + fontSize * 0.4}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="#3f3f46" font-family="system-ui,sans-serif">${count}</text>
+    <text x="${cx}" y="${cx + fontSize * 0.4}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="#404040" font-family="system-ui,sans-serif">${count}</text>
   </svg>`;
 
   return L.divIcon({
@@ -341,7 +341,7 @@ function buildLegendHTML(): string {
   return `
     <div style="font-family:system-ui,sans-serif;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <span style="font-weight:600;color:#52525b;font-size:11px;">Legenda</span>
+        <span style="font-weight:600;color:#525252;font-size:11px;">Legenda</span>
         <button id="radar-legend-toggle" style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:16px;line-height:1;padding:0 2px;display:flex;align-items:center;">−</button>
       </div>
       <div id="radar-legend-content">
@@ -454,8 +454,8 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
       ];
       let activeKey = "voyager";
       const buttons: Record<string, HTMLButtonElement> = {};
-      const activeStyle = "background:#f4f4f5;color:#18181b;border-radius:5px;font-weight:600;";
-      const inactiveStyle = "background:transparent;color:#71717a;border-radius:5px;font-weight:400;";
+      const activeStyle = "background:#f5f5f5;color:#171717;border-radius:5px;font-weight:600;";
+      const inactiveStyle = "background:transparent;color:#737373;border-radius:5px;font-weight:400;";
       options.forEach(({ key, label }) => {
         const btn = document.createElement("button");
         btn.textContent = label;
@@ -632,7 +632,7 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
 
       const popupHtml = `
         <div style="max-width:280px;font-family:system-ui,sans-serif;overflow:hidden;">
-          <div style="background:#18181b;padding:8px 12px;margin:-1px -1px 0;border-radius:0;">
+          <div style="background:#171717;padding:8px 12px;margin:-1px -1px 0;border-radius:0;">
             <div style="display:flex;align-items:center;gap:6px;">
               ${isVD
                 ? `<div style="width:8px;height:8px;background:white;border-radius:2px;flex-shrink:0;border:1.5px solid ${ring};"></div>`
@@ -646,7 +646,7 @@ export default function RadarMapaLeaflet({ data, showHeatmap, onSelectNoticia, f
             ${resumoTruncado ? `<p style="font-size:11px;color:#6b7280;line-height:1.5;margin-bottom:6px;font-style:italic;">${resumoTruncado}</p>` : ""}
             <div style="font-size:11px;color:#9ca3af;margin-bottom:8px;">${[point.bairro, dateStr].filter(Boolean).join(" · ")}</div>
             ${envolvidosCount > 0 ? `<div style="margin-bottom:8px;font-size:11px;color:#9ca3af;">${envolvidosCount} envolvido${envolvidosCount > 1 ? "s" : ""}</div>` : ""}
-            <button id="radar-popup-${point.id}" style="width:100%;padding:6px 12px;background:#18181b;color:white;border:none;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;letter-spacing:0.02em;">Ver detalhes →</button>
+            <button id="radar-popup-${point.id}" style="width:100%;padding:6px 12px;background:#171717;color:white;border:none;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;letter-spacing:0.02em;">Ver detalhes →</button>
           </div>
         </div>
       `;

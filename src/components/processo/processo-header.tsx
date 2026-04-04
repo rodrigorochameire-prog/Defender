@@ -72,7 +72,7 @@ export function ProcessoHeader({
   return (
     <>
       {/* Header card — elevated, same pattern as assistido */}
-      <div className="mx-4 lg:mx-6 mt-3 px-5 pt-4 pb-3 rounded-xl bg-gradient-to-br from-[#222228] to-[#18181b] shadow-lg shadow-black/10 ring-1 ring-white/[0.04] overflow-hidden">
+      <div className="mx-4 lg:mx-6 mt-3 px-5 pt-4 pb-3 rounded-xl bg-gradient-to-br from-[#222228] to-[#171717] shadow-lg shadow-black/10 ring-1 ring-white/[0.04] overflow-hidden">
 
         {/* Row 1: Back + Número + Meta + Actions */}
         <div className="flex items-center gap-4">

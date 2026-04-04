@@ -115,7 +115,7 @@ const renderExternalLabel = ({ cx, cy, midAngle, outerRadius, name, percent }: a
     <text
       x={x}
       y={y}
-      fill="#52525b"
+      fill="#525252"
       textAnchor={x > cx ? 'start' : 'end'}
       dominantBaseline="central"
       className="text-xs font-bold dark:fill-neutral-400"
@@ -222,13 +222,13 @@ export function DynamicChart({ type, demandas, visualizationType }: DynamicChart
               ))}
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.3} horizontal={true} vertical={false} />
-            <XAxis type="number" stroke="#9ca3af" tick={{ fill: '#71717a', fontSize: 12, fontWeight: 600 }} />
+            <XAxis type="number" stroke="#9ca3af" tick={{ fill: '#737373', fontSize: 12, fontWeight: 600 }} />
             <YAxis 
               type="category" 
               dataKey="name" 
               width={130} 
               stroke="#9ca3af" 
-              tick={{ fill: '#3f3f46', fontSize: 12, fontWeight: 700 }} 
+              tick={{ fill: '#404040', fontSize: 12, fontWeight: 700 }} 
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(16, 185, 129, 0.05)' }} />
             <Bar dataKey="value" radius={[0, 12, 12, 0]} barSize={32}>
@@ -252,15 +252,15 @@ export function DynamicChart({ type, demandas, visualizationType }: DynamicChart
                 <stop offset="100%" stopColor="#10B981" stopOpacity={0.2} />
               </linearGradient>
             </defs>
-            <PolarGrid stroke="#d4d4d8" strokeDasharray="3 3" />
+            <PolarGrid stroke="#d4d4d4" strokeDasharray="3 3" />
             <PolarAngleAxis 
               dataKey="name" 
-              tick={{ fill: '#3f3f46', fontSize: 11, fontWeight: 700 }}
+              tick={{ fill: '#404040', fontSize: 11, fontWeight: 700 }}
             />
             <PolarRadiusAxis 
               angle={90} 
               domain={[0, 'auto']}
-              tick={{ fill: '#71717a', fontSize: 10 }}
+              tick={{ fill: '#737373', fontSize: 10 }}
             />
             <Radar
               name="Atribuições"
@@ -369,12 +369,12 @@ export function DynamicChart({ type, demandas, visualizationType }: DynamicChart
             <XAxis 
               dataKey="name" 
               stroke="#9ca3af" 
-              tick={{ fill: '#3f3f46', fontSize: 11, fontWeight: 700 }} 
+              tick={{ fill: '#404040', fontSize: 11, fontWeight: 700 }} 
               angle={-12} 
               textAnchor="end" 
               height={60}
             />
-            <YAxis stroke="#9ca3af" tick={{ fill: '#71717a', fontSize: 12, fontWeight: 600 }} />
+            <YAxis stroke="#9ca3af" tick={{ fill: '#737373', fontSize: 12, fontWeight: 600 }} />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(16, 185, 129, 0.05)' }} />
             <Bar dataKey="value" radius={[12, 12, 0, 0]} barSize={55}>
               {data.map((entry, index) => (
@@ -394,15 +394,15 @@ export function DynamicChart({ type, demandas, visualizationType }: DynamicChart
                 <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.2} />
               </linearGradient>
             </defs>
-            <PolarGrid stroke="#d4d4d8" strokeDasharray="3 3" />
+            <PolarGrid stroke="#d4d4d4" strokeDasharray="3 3" />
             <PolarAngleAxis 
               dataKey="name" 
-              tick={{ fill: '#3f3f46', fontSize: 11, fontWeight: 700 }}
+              tick={{ fill: '#404040', fontSize: 11, fontWeight: 700 }}
             />
             <PolarRadiusAxis 
               angle={90} 
               domain={[0, 'auto']}
-              tick={{ fill: '#71717a', fontSize: 10 }}
+              tick={{ fill: '#737373', fontSize: 10 }}
             />
             <Radar
               name="Status"
@@ -517,12 +517,12 @@ export function DynamicChart({ type, demandas, visualizationType }: DynamicChart
             <XAxis 
               dataKey="name" 
               stroke="#9ca3af" 
-              tick={{ fill: '#3f3f46', fontSize: 10, fontWeight: 700 }} 
+              tick={{ fill: '#404040', fontSize: 10, fontWeight: 700 }} 
               angle={-35} 
               textAnchor="end" 
               height={80}
             />
-            <YAxis stroke="#9ca3af" tick={{ fill: '#71717a', fontSize: 12, fontWeight: 600 }} />
+            <YAxis stroke="#9ca3af" tick={{ fill: '#737373', fontSize: 12, fontWeight: 600 }} />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(139, 92, 246, 0.05)' }} />
             <Bar dataKey="value" radius={[12, 12, 0, 0]} barSize={45}>
               {data.map((entry, index) => (
@@ -545,15 +545,15 @@ export function DynamicChart({ type, demandas, visualizationType }: DynamicChart
                 <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.2} />
               </linearGradient>
             </defs>
-            <PolarGrid stroke="#d4d4d8" strokeDasharray="3 3" />
+            <PolarGrid stroke="#d4d4d4" strokeDasharray="3 3" />
             <PolarAngleAxis 
               dataKey="name" 
-              tick={{ fill: '#3f3f46', fontSize: 10, fontWeight: 700 }}
+              tick={{ fill: '#404040', fontSize: 10, fontWeight: 700 }}
             />
             <PolarRadiusAxis 
               angle={90} 
               domain={[0, 'auto']}
-              tick={{ fill: '#71717a', fontSize: 10 }}
+              tick={{ fill: '#737373', fontSize: 10 }}
             />
             <Radar
               name="Tipos de Atos"
@@ -677,9 +677,9 @@ export function DynamicChart({ type, demandas, visualizationType }: DynamicChart
             <XAxis 
               dataKey="name" 
               stroke="#9ca3af" 
-              tick={{ fill: '#3f3f46', fontSize: 12, fontWeight: 700 }} 
+              tick={{ fill: '#404040', fontSize: 12, fontWeight: 700 }} 
             />
-            <YAxis stroke="#9ca3af" tick={{ fill: '#71717a', fontSize: 12, fontWeight: 600 }} />
+            <YAxis stroke="#9ca3af" tick={{ fill: '#737373', fontSize: 12, fontWeight: 600 }} />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(16, 185, 129, 0.05)' }} />
             <Bar dataKey="value" radius={[12, 12, 0, 0]} barSize={55}>
               {data.map((entry, index) => (
@@ -699,15 +699,15 @@ export function DynamicChart({ type, demandas, visualizationType }: DynamicChart
                 <stop offset="100%" stopColor="#DC2626" stopOpacity={0.2} />
               </linearGradient>
             </defs>
-            <PolarGrid stroke="#d4d4d8" strokeDasharray="3 3" />
+            <PolarGrid stroke="#d4d4d4" strokeDasharray="3 3" />
             <PolarAngleAxis 
               dataKey="name" 
-              tick={{ fill: '#3f3f46', fontSize: 11, fontWeight: 700 }}
+              tick={{ fill: '#404040', fontSize: 11, fontWeight: 700 }}
             />
             <PolarRadiusAxis 
               angle={90} 
               domain={[0, 'auto']}
-              tick={{ fill: '#71717a', fontSize: 10 }}
+              tick={{ fill: '#737373', fontSize: 10 }}
             />
             <Radar
               name="Situação Prisional"

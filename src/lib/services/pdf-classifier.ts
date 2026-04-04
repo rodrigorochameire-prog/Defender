@@ -210,13 +210,13 @@ export const SECTION_GROUPS = {
   outros: {
     label: "Outros",
     icon: "HelpCircle",
-    color: "#71717a",
+    color: "#737373",
     tipos: ["outros"] as const,
   },
   burocracia: {
     label: "Burocracia",
     icon: "Ban",
-    color: "#d4d4d8",
+    color: "#d4d4d4",
     tipos: ["burocracia"] as const,
   },
 } as const;

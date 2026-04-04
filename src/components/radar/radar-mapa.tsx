@@ -25,7 +25,7 @@ const CRIME_COLORS: Record<string, string> = {
   furto: "#fdba74",
   porte_arma: "#e879f9",
   estelionato: "#a78bfa",
-  outros: "#a1a1aa",
+  outros: "#a3a3a3",
 };
 
 const CRIME_LABELS: Record<string, string> = {
@@ -193,7 +193,7 @@ export function RadarMapa({ filtros, onSelectNoticia, focusedNoticiaId }: RadarM
             >
               <span
                 className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: CRIME_COLORS[tipo] ?? "#71717a" }}
+                style={{ backgroundColor: CRIME_COLORS[tipo] ?? "#737373" }}
               />
               <span className="text-neutral-700 dark:text-neutral-300">
                 {CRIME_LABELS[tipo] ?? tipo}
@@ -226,7 +226,7 @@ export function RadarMapa({ filtros, onSelectNoticia, focusedNoticiaId }: RadarM
           <div className="h-4 w-px bg-neutral-200 dark:bg-neutral-700" />
           <div className="flex items-center gap-1 flex-wrap">
             {ALL_LAYERS.map((key) => {
-              const color = CRIME_COLORS[key] ?? "#52525b";
+              const color = CRIME_COLORS[key] ?? "#525252";
               const label = CRIME_LABELS[key] ?? key;
               const isActive = visibleLayers.includes(key);
               const isIsolated = visibleLayers.length === 1 && visibleLayers[0] === key;

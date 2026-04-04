@@ -203,20 +203,20 @@ function htmlPage(title: string, body: string): string {
   <title>OMBUDS - ${title}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: #0f0f11; color: #e4e4e7; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .container { max-width: 600px; margin: 2rem; padding: 2rem; background: #18181b; border: 1px solid #27272a; border-radius: 16px; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #0f0f11; color: #e5e5e5; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .container { max-width: 600px; margin: 2rem; padding: 2rem; background: #171717; border: 1px solid #262626; border-radius: 16px; }
     h1 { font-size: 1.5rem; margin-bottom: 1rem; color: #fafafa; }
-    h2 { font-size: 1.1rem; margin: 1rem 0 0.5rem; color: #a1a1aa; }
-    p { margin: 0.5rem 0; color: #a1a1aa; line-height: 1.5; }
-    strong { color: #e4e4e7; }
-    code { background: #27272a; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
-    pre { background: #09090b; border: 1px solid #27272a; border-radius: 8px; padding: 1rem; margin: 0.5rem 0; overflow-x: auto; font-size: 0.8rem; color: #10b981; }
+    h2 { font-size: 1.1rem; margin: 1rem 0 0.5rem; color: #a3a3a3; }
+    p { margin: 0.5rem 0; color: #a3a3a3; line-height: 1.5; }
+    strong { color: #e5e5e5; }
+    code { background: #262626; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
+    pre { background: #09090b; border: 1px solid #262626; border-radius: 8px; padding: 1rem; margin: 0.5rem 0; overflow-x: auto; font-size: 0.8rem; color: #10b981; }
     .success-badge { display: inline-block; background: #10b981; color: #000; font-weight: 600; padding: 4px 12px; border-radius: 999px; font-size: 0.85rem; margin-bottom: 1rem; }
     .error { color: #f43f5e; font-weight: 600; }
     .warning { background: #78350f20; border: 1px solid #92400e40; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
     .warning p { color: #fbbf24; }
     .token-section { background: #09090b; border: 1px solid #10b98130; border-radius: 12px; padding: 1rem; margin: 1rem 0; }
-    .token-box { display: flex; gap: 8px; align-items: center; background: #18181b; border: 1px solid #27272a; border-radius: 8px; padding: 8px 12px; margin: 0.5rem 0; }
+    .token-box { display: flex; gap: 8px; align-items: center; background: #171717; border: 1px solid #262626; border-radius: 8px; padding: 8px 12px; margin: 0.5rem 0; }
     .token-box code { flex: 1; word-break: break-all; background: none; padding: 0; color: #10b981; }
     .token-box button { background: #10b981; color: #000; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; white-space: nowrap; }
     .token-box button:hover { background: #059669; }
@@ -225,11 +225,11 @@ function htmlPage(title: string, body: string): string {
     .actions { display: flex; gap: 8px; margin-top: 1.5rem; }
     .btn { display: inline-block; background: #10b981; color: #000; font-weight: 600; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 0.9rem; }
     .btn:hover { background: #059669; }
-    .btn.secondary { background: #27272a; color: #a1a1aa; }
-    .btn.secondary:hover { background: #3f3f46; }
+    .btn.secondary { background: #262626; color: #a3a3a3; }
+    .btn.secondary:hover { background: #404040; }
     a { color: #10b981; }
     ol { padding-left: 1.5rem; margin: 0.5rem 0; }
-    li { margin: 0.25rem 0; color: #a1a1aa; }
+    li { margin: 0.25rem 0; color: #a3a3a3; }
   </style>
 </head>
 <body>

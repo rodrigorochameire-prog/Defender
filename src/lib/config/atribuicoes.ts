@@ -55,7 +55,7 @@ export const ATRIBUICAO_COLORS = {
     label: "Todos",
     shortLabel: "Todos",
     iconName: "Calendar",
-    color: "#71717a", // neutral-500
+    color: "#737373", // neutral-500
   },
 
   // Violência Doméstica - AMARELO
@@ -382,7 +382,7 @@ export const ATRIBUICAO_COLORS = {
 
 // Mapeamento de cores sólidas por atribuição (para estilos inline)
 export const SOLID_COLOR_MAP: Record<string, string> = {
-  all: "#71717a",           // neutral-500
+  all: "#737373",           // neutral-500
   VVD: "#eab308",           // yellow-500 (mais quente e suave que amber-500)
   "Violência Doméstica": "#eab308",
   VVD_CAMACARI: "#eab308",

@@ -93,15 +93,15 @@ export function TimelineChart({ demandas }: TimelineChartProps) {
             <XAxis
               dataKey="dia"
               stroke="#9ca3af"
-              tick={{ fill: "#52525b", fontSize: 12, fontWeight: 600 }}
+              tick={{ fill: "#525252", fontSize: 12, fontWeight: 600 }}
               tickLine={false}
-              axisLine={{ stroke: "#d4d4d8", strokeWidth: 2 }}
+              axisLine={{ stroke: "#d4d4d4", strokeWidth: 2 }}
             />
             <YAxis
               stroke="#9ca3af"
-              tick={{ fill: "#71717a", fontSize: 12, fontWeight: 600 }}
+              tick={{ fill: "#737373", fontSize: 12, fontWeight: 600 }}
               tickLine={false}
-              axisLine={{ stroke: "#d4d4d8", strokeWidth: 2 }}
+              axisLine={{ stroke: "#d4d4d4", strokeWidth: 2 }}
             />
             <Tooltip
               contentStyle={{
@@ -113,7 +113,7 @@ export function TimelineChart({ demandas }: TimelineChartProps) {
               }}
               labelStyle={{
                 fontWeight: "800",
-                color: "#18181b",
+                color: "#171717",
                 marginBottom: "8px",
                 fontSize: "14px",
               }}

@@ -65,12 +65,12 @@ function LayerToggle({
       {dotVariant === "ring" ? (
         <span
           className="w-3 h-3 rounded-full flex-shrink-0 border-2"
-          style={{ borderColor: active ? dotColor : "#a1a1aa", background: "transparent" }}
+          style={{ borderColor: active ? dotColor : "#a3a3a3", background: "transparent" }}
         />
       ) : (
         <span
           className="w-3 h-3 rounded-full flex-shrink-0"
-          style={{ backgroundColor: active ? dotColor : "#a1a1aa" }}
+          style={{ backgroundColor: active ? dotColor : "#a3a3a3" }}
         />
       )}
       <span>{label}</span>
@@ -179,14 +179,14 @@ export function VvdMapa() {
               label="Residência do Agressor"
               active={showAgressorResidencia}
               onToggle={() => setShowAgressorResidencia((v) => !v)}
-              dotColor="#71717a"
+              dotColor="#737373"
               count={contagemResidencia}
             />
             <LayerToggle
               label="Trabalho do Agressor"
               active={showAgressorTrabalho}
               onToggle={() => setShowAgressorTrabalho((v) => !v)}
-              dotColor="#a1a1aa"
+              dotColor="#a3a3a3"
               count={contagemTrabalho}
             />
             <LayerToggle

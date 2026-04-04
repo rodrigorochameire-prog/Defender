@@ -14,7 +14,7 @@ export const noticiasFontes = pgTable("noticias_fontes", {
   urlFeed: varchar("url_feed", { length: 500 }).notNull(),
   tipo: varchar("tipo", { length: 20 }).notNull(), // "rss" | "html_scrape"
   seletorCss: text("seletor_css"),
-  cor: varchar("cor", { length: 20 }).default("#71717a"),
+  cor: varchar("cor", { length: 20 }).default("#737373"),
   ativo: boolean("ativo").default(true).notNull(),
   ultimoScrapeEm: timestamp("ultimo_scrape_em"),
   ultimoErro: text("ultimo_erro"),

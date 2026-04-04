@@ -247,7 +247,7 @@ export function CadastroMapa() {
                   totalComCoordenadas > 0
                     ? Math.round((count / totalComCoordenadas) * 100)
                     : 0;
-                const cor = ATRIBUICAO_COLORS[atribuicao] || "#71717a";
+                const cor = ATRIBUICAO_COLORS[atribuicao] || "#737373";
                 const label = ATRIBUICAO_LABELS[atribuicao] || atribuicao;
                 return (
                   <div key={atribuicao}>
@@ -359,7 +359,7 @@ export function CadastroMapa() {
           {ALL_ATRIBUICOES.map((atribuicao) => {
             const ativo = atribuicoesVisiveis.includes(atribuicao);
             const isIsolated = atribuicoesVisiveis.length === 1 && atribuicoesVisiveis[0] === atribuicao;
-            const cor = ATRIBUICAO_COLORS[atribuicao] || "#71717a";
+            const cor = ATRIBUICAO_COLORS[atribuicao] || "#737373";
             const label = ATRIBUICAO_LABELS[atribuicao] || atribuicao;
             const count = contagens[atribuicao] ?? 0;
             const isDiamond = DIAMOND_ATRIBUICOES.has(atribuicao);
@@ -386,8 +386,8 @@ export function CadastroMapa() {
                     <div
                       className="w-3 h-3"
                       style={{
-                        backgroundColor: ativo ? cor : "#d4d4d8",
-                        border: `1.5px solid ${ativo ? (ATRIBUICAO_BORDERS[atribuicao] || "#52525b") : "#a1a1aa"}`,
+                        backgroundColor: ativo ? cor : "#d4d4d4",
+                        border: `1.5px solid ${ativo ? (ATRIBUICAO_BORDERS[atribuicao] || "#525252") : "#a3a3a3"}`,
                         transform: "rotate(45deg)",
                         borderRadius: "1px",
                       }}
@@ -397,15 +397,15 @@ export function CadastroMapa() {
                       <div
                         className="absolute w-3.5 h-3.5 rounded-full"
                         style={{
-                          border: `1px solid ${ativo ? cor : "#a1a1aa"}`,
+                          border: `1px solid ${ativo ? cor : "#a3a3a3"}`,
                           opacity: 0.3,
                         }}
                       />
                       <div
                         className="w-2 h-2 rounded-full"
                         style={{
-                          backgroundColor: ativo ? cor : "#d4d4d8",
-                          border: `1.5px solid ${ativo ? (ATRIBUICAO_BORDERS[atribuicao] || "#52525b") : "#a1a1aa"}`,
+                          backgroundColor: ativo ? cor : "#d4d4d4",
+                          border: `1.5px solid ${ativo ? (ATRIBUICAO_BORDERS[atribuicao] || "#525252") : "#a3a3a3"}`,
                         }}
                       />
                     </>
@@ -413,8 +413,8 @@ export function CadastroMapa() {
                     <div
                       className="w-2.5 h-2.5 rounded-full"
                       style={{
-                        backgroundColor: ativo ? cor : "#d4d4d8",
-                        border: `1.5px solid ${ativo ? (ATRIBUICAO_BORDERS[atribuicao] || "#52525b") : "#a1a1aa"}`,
+                        backgroundColor: ativo ? cor : "#d4d4d4",
+                        border: `1.5px solid ${ativo ? (ATRIBUICAO_BORDERS[atribuicao] || "#525252") : "#a3a3a3"}`,
                       }}
                     />
                   )}
@@ -448,8 +448,8 @@ export function CadastroMapa() {
       {topAtribuicoes.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap px-3 py-2 border-b border-border bg-background">
           {topAtribuicoes.map(({ atribuicao: a, count }) => {
-            const fill   = ATRIBUICAO_COLORS[a]  || "#a1a1aa";
-            const border = ATRIBUICAO_BORDERS[a] || "#52525b";
+            const fill   = ATRIBUICAO_COLORS[a]  || "#a3a3a3";
+            const border = ATRIBUICAO_BORDERS[a] || "#525252";
             const label  = ATRIBUICAO_LABELS[a]  || a;
             const isDiamondA = DIAMOND_ATRIBUICOES.has(a);
             const isIsolated = atribuicoesVisiveis.length === 1 && atribuicoesVisiveis[0] === a;
