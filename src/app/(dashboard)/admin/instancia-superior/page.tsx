@@ -3,24 +3,22 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 import {
   Landmark,
   Plus,
   Scale,
   Clock,
   CheckCircle2,
-  XCircle,
-  Filter,
-  ChevronDown,
   FileText,
   AlertTriangle,
-  TrendingUp,
+  Filter,
+  ChevronDown,
   Users,
   Gavel,
+  ArrowUpRight,
 } from "lucide-react";
+import { HEADER_STYLE, GLASS, LIST_ITEM } from "@/lib/config/design-tokens";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,7 +38,6 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
@@ -55,25 +52,36 @@ const TIPO_LABELS: Record<string, string> = {
   REVISAO_CRIMINAL: "Revisão Criminal",
 };
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Clock }> = {
-  INTERPOSTO: { label: "Interposto", color: "text-blue-500", icon: Clock },
-  DISTRIBUIDO: { label: "Distribuído", color: "text-amber-500", icon: Clock },
-  CONCLUSO: { label: "Concluso", color: "text-purple-500", icon: FileText },
-  PAUTADO: { label: "Pautado", color: "text-orange-500", icon: AlertTriangle },
-  JULGADO: { label: "Julgado", color: "text-emerald-500", icon: CheckCircle2 },
-  TRANSITADO: { label: "Transitado", color: "text-neutral-400", icon: CheckCircle2 },
+const TIPO_SHORT: Record<string, string> = {
+  APELACAO: "APL",
+  RESE: "RESE",
+  AGRAVO_EXECUCAO: "AGR",
+  AGRAVO_INSTRUMENTO: "AGI",
+  EMBARGOS_INFRINGENTES: "EI",
+  EMBARGOS_DECLARACAO: "ED",
+  HABEAS_CORPUS: "HC",
+  REVISAO_CRIMINAL: "RC",
+};
+
+const STATUS_CONFIG: Record<string, { label: string; dot: string }> = {
+  INTERPOSTO: { label: "Interposto", dot: "bg-blue-500" },
+  DISTRIBUIDO: { label: "Distribuído", dot: "bg-amber-500" },
+  CONCLUSO: { label: "Concluso", dot: "bg-purple-500" },
+  PAUTADO: { label: "Pautado", dot: "bg-orange-500" },
+  JULGADO: { label: "Julgado", dot: "bg-emerald-500" },
+  TRANSITADO: { label: "Transitado", dot: "bg-neutral-400" },
 };
 
 const RESULTADO_CONFIG: Record<string, { label: string; color: string }> = {
-  PENDENTE: { label: "Pendente", color: "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400" },
-  PROVIDO: { label: "Provido", color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400" },
-  PARCIALMENTE_PROVIDO: { label: "Parc. Provido", color: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400" },
-  NAO_PROVIDO: { label: "Não Provido", color: "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400" },
-  NAO_CONHECIDO: { label: "Não Conhecido", color: "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400" },
-  PREJUDICADO: { label: "Prejudicado", color: "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400" },
-  CONCEDIDO: { label: "Concedido", color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400" },
-  PARCIALMENTE_CONCEDIDO: { label: "Parc. Concedido", color: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400" },
-  DENEGADO: { label: "Denegado", color: "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400" },
+  PENDENTE: { label: "Pendente", color: "text-neutral-400" },
+  PROVIDO: { label: "Provido", color: "text-emerald-500" },
+  PARCIALMENTE_PROVIDO: { label: "Parc. Provido", color: "text-amber-500" },
+  NAO_PROVIDO: { label: "Não Provido", color: "text-red-500" },
+  NAO_CONHECIDO: { label: "Não Conhecido", color: "text-neutral-400" },
+  PREJUDICADO: { label: "Prejudicado", color: "text-neutral-400" },
+  CONCEDIDO: { label: "Concedido", color: "text-emerald-500" },
+  PARCIALMENTE_CONCEDIDO: { label: "Parc. Concedido", color: "text-amber-500" },
+  DENEGADO: { label: "Denegado", color: "text-red-500" },
 };
 
 const CAMARAS = ["1ª Câmara Criminal", "2ª Câmara Criminal", "Seção Criminal"];
@@ -98,62 +106,55 @@ export default function InstanciaSuperiorPage() {
   const total = recursosData?.total ?? 0;
   const hasFilters = filtroTipo || filtroStatus || filtroCamara;
 
+  // Derive stats
+  const providos = stats?.porResultado?.filter(
+    (r: any) => r.resultado === "PROVIDO" || r.resultado === "CONCEDIDO"
+  ).reduce((s: number, r: any) => s + Number(r.total), 0) ?? 0;
+  const julgados = stats?.porResultado?.reduce((s: number, r: any) => s + Number(r.total), 0) ?? 0;
+  const taxaProvimento = julgados > 0 ? ((providos / julgados) * 100).toFixed(0) : "—";
+
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="px-6 pt-5 pb-4">
+      {/* ── Header: dark gradient (Padrão Defender v3) ── */}
+      <div className={cn("mx-4 lg:mx-6 mt-3 px-5 pt-5 pb-4", HEADER_STYLE.container)}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-neutral-800 dark:bg-neutral-700 flex items-center justify-center">
-              <Landmark className="w-4.5 h-4.5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+              <Landmark className="w-5 h-5 text-white/80" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold tracking-tight">Instância Superior</h1>
-              <p className="text-[13px] text-muted-foreground">Recursos criminais no TJBA</p>
+              <h1 className="text-lg font-serif font-semibold tracking-tight text-white">
+                Instância Superior
+              </h1>
+              <p className="text-[11px] text-white/40 mt-0.5">
+                Recursos criminais · TJBA
+              </p>
             </div>
           </div>
-          <Button onClick={() => setCreateOpen(true)} className="gap-1.5">
-            <Plus className="w-4 h-4" />
+          <Button
+            onClick={() => setCreateOpen(true)}
+            size="sm"
+            className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg"
+          >
+            <Plus className="w-3.5 h-3.5" />
             Novo Recurso
           </Button>
         </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="px-6 pb-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard
-            label="Total"
-            value={stats?.total ?? 0}
-            icon={Scale}
-            loading={statsLoading}
-          />
-          <StatCard
-            label="Pendentes"
-            value={stats?.pendentes ?? 0}
-            icon={Clock}
-            loading={statsLoading}
-            highlight={Number(stats?.pendentes ?? 0) > 0}
-          />
-          <StatCard
-            label="Câmaras"
-            value={stats?.porCamara?.length ?? 0}
-            icon={Gavel}
-            loading={statsLoading}
-          />
-          <StatCard
-            label="Tipos"
-            value={stats?.porTipo?.length ?? 0}
-            icon={FileText}
-            loading={statsLoading}
-          />
+        {/* Stats row — inside header */}
+        <div className="grid grid-cols-4 gap-3 mt-4">
+          <HeaderStat label="Total" value={stats?.total ?? 0} loading={statsLoading} />
+          <HeaderStat label="Pendentes" value={stats?.pendentes ?? 0} loading={statsLoading} highlight />
+          <HeaderStat label="Julgados" value={julgados} loading={statsLoading} />
+          <HeaderStat label="Taxa provimento" value={`${taxaProvimento}%`} loading={statsLoading} accent />
         </div>
       </div>
 
-      {/* Filters + Results */}
-      <div className="px-6 flex-1 overflow-auto pb-6">
+      {/* ── Content card ── */}
+      <div className="mx-4 lg:mx-6 mt-2 bg-white dark:bg-neutral-900/50 rounded-xl border border-neutral-200/60 dark:border-neutral-800/40 overflow-hidden flex-1 flex flex-col min-h-0">
+
         {/* Filter Bar */}
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-neutral-200/60 dark:border-neutral-800/40">
           <FilterDropdown
             label="Tipo"
             value={filtroTipo}
@@ -182,36 +183,43 @@ export default function InstanciaSuperiorPage() {
               Limpar
             </Button>
           )}
-          <span className="text-[11px] text-muted-foreground ml-auto">
+          <span className="text-[11px] text-muted-foreground ml-auto font-mono tabular-nums">
             {total} {total === 1 ? "recurso" : "recursos"}
           </span>
         </div>
 
         {/* Results */}
-        {recursosLoading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-20 rounded-xl" />
-            ))}
-          </div>
-        ) : rows.length === 0 ? (
-          <div className="text-center py-16">
-            <Landmark className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">
-              {hasFilters ? "Nenhum recurso encontrado com esses filtros" : "Nenhum recurso registrado"}
-            </p>
-            <Button variant="outline" size="sm" className="mt-3" onClick={() => setCreateOpen(true)}>
-              <Plus className="w-3.5 h-3.5 mr-1.5" />
-              Registrar primeiro recurso
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {rows.map((r: any) => (
-              <RecursoCard key={r.id} recurso={r} />
-            ))}
-          </div>
-        )}
+        <div className="flex-1 overflow-auto p-4">
+          {recursosLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-[72px] rounded-xl" />
+              ))}
+            </div>
+          ) : rows.length === 0 ? (
+            <div className="text-center py-20">
+              <div className="w-14 h-14 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-4">
+                <Landmark className="w-6 h-6 text-neutral-300 dark:text-neutral-600" />
+              </div>
+              <p className="text-[13px] text-muted-foreground">
+                {hasFilters ? "Nenhum recurso com esses filtros" : "Nenhum recurso registrado"}
+              </p>
+              <p className="text-[11px] text-muted-foreground/60 mt-1">
+                Registre apelações, habeas corpus e outros recursos no TJBA
+              </p>
+              <Button variant="outline" size="sm" className="mt-4 gap-1.5" onClick={() => setCreateOpen(true)}>
+                <Plus className="w-3.5 h-3.5" />
+                Registrar primeiro recurso
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              {rows.map((r: any) => (
+                <RecursoRow key={r.id} recurso={r} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Create Dialog */}
@@ -220,39 +228,41 @@ export default function InstanciaSuperiorPage() {
   );
 }
 
-// ─── Components ───────────────────────────────────────────────────────────
+// ─── Header Stat ──────────────────────────────────────────────────────────
 
-function StatCard({
+function HeaderStat({
   label,
   value,
-  icon: Icon,
   loading,
   highlight,
+  accent,
 }: {
   label: string;
-  value: number;
-  icon: React.ElementType;
+  value: number | string;
   loading: boolean;
   highlight?: boolean;
+  accent?: boolean;
 }) {
   return (
-    <div className="bg-neutral-50 dark:bg-white/[0.04] border border-neutral-200/60 dark:border-white/[0.06] rounded-xl p-4">
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] uppercase tracking-widest font-semibold text-neutral-400 dark:text-neutral-500">
-          {label}
-        </span>
-        <Icon className={cn("w-4 h-4", highlight ? "text-amber-500" : "text-neutral-300 dark:text-neutral-600")} />
-      </div>
+    <div className={cn("rounded-lg px-3.5 py-2.5", HEADER_STYLE.bottomRow)}>
+      <span className="text-[9px] uppercase tracking-widest text-white/30 font-medium block">
+        {label}
+      </span>
       {loading ? (
-        <Skeleton className="h-7 w-12 mt-2" />
+        <div className="h-6 w-10 rounded bg-white/10 animate-pulse mt-1" />
       ) : (
-        <p className={cn("text-2xl font-bold mt-1", highlight ? "text-amber-600 dark:text-amber-400" : "text-neutral-800 dark:text-neutral-200")}>
+        <span className={cn(
+          "text-xl font-bold tabular-nums block mt-0.5",
+          accent ? "text-emerald-400" : highlight ? "text-amber-400" : "text-white/80"
+        )}>
           {value}
-        </p>
+        </span>
       )}
     </div>
   );
 }
+
+// ─── Filter Dropdown ──────────────────────────────────────────────────────
 
 function FilterDropdown({
   label,
@@ -270,14 +280,21 @@ function FilterDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className={cn("gap-1.5 text-xs", value && "border-emerald-500/50 text-emerald-600 dark:text-emerald-400")}>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "gap-1.5 text-xs h-8 rounded-lg",
+            value && "border-emerald-500/50 text-emerald-600 dark:text-emerald-400"
+          )}
+        >
           <Filter className="w-3 h-3" />
           {selectedLabel || label}
           <ChevronDown className="w-3 h-3" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuLabel className="text-[10px] uppercase tracking-wider">{label}</DropdownMenuLabel>
+      <DropdownMenuContent align="start" className="min-w-[180px]">
+        <DropdownMenuLabel className="text-[10px] uppercase tracking-widest">{label}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {value && (
           <>
@@ -301,91 +318,98 @@ function FilterDropdown({
   );
 }
 
-function RecursoCard({ recurso: r }: { recurso: any }) {
+// ─── Recurso Row ──────────────────────────────────────────────────────────
+
+function RecursoRow({ recurso: r }: { recurso: any }) {
   const statusCfg = STATUS_CONFIG[r.status] ?? STATUS_CONFIG.INTERPOSTO;
   const resultadoCfg = RESULTADO_CONFIG[r.resultado] ?? RESULTADO_CONFIG.PENDENTE;
-  const StatusIcon = statusCfg.icon;
+  const tipoShort = TIPO_SHORT[r.tipo] ?? r.tipo;
 
   return (
-    <div className="bg-neutral-50 dark:bg-white/[0.04] border border-neutral-200/60 dark:border-white/[0.06] rounded-xl p-4 hover:bg-neutral-100 dark:hover:bg-white/[0.07] transition-colors cursor-pointer">
-      <div className="flex items-start justify-between gap-3">
+    <div className={cn(GLASS.cardHover, "p-4 rounded-xl")}>
+      <div className="flex items-center gap-4">
+        {/* Badge tipo */}
+        <div className="w-10 h-10 rounded-lg bg-neutral-800 dark:bg-neutral-700 flex items-center justify-center shrink-0">
+          <span className="text-[10px] font-bold text-white tracking-wider">{tipoShort}</span>
+        </div>
+
+        {/* Content */}
         <div className="flex-1 min-w-0">
-          {/* Row 1: Tipo + Número */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
+          {/* Row 1: Title */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-foreground/90 truncate">
               {TIPO_LABELS[r.tipo] ?? r.tipo}
             </span>
             {r.numeroRecurso && (
               <>
                 <span className="w-px h-3.5 bg-neutral-200 dark:bg-neutral-700" />
-                <span className="text-[12px] font-mono text-neutral-500 dark:text-neutral-400">
+                <span className="text-[12px] font-mono text-muted-foreground tracking-wide">
                   {r.numeroRecurso}
                 </span>
               </>
             )}
           </div>
 
-          {/* Row 2: Assistido + Processo */}
-          <div className="flex items-center gap-2 mt-1.5 text-[11px] text-neutral-400 dark:text-neutral-500">
+          {/* Row 2: Meta */}
+          <div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground">
             {r.assistidoNome && (
-              <span className="flex items-center gap-1">
-                <Users className="w-3 h-3" />
-                {r.assistidoNome}
-              </span>
+              <span className="truncate max-w-[140px]">{r.assistidoNome}</span>
             )}
-            {r.processoNumero && (
-              <>
-                <span>·</span>
-                <span className="font-mono">{r.processoNumero}</span>
-              </>
-            )}
-            {r.camara && (
-              <>
-                <span>·</span>
-                <span>{r.camara}</span>
-              </>
-            )}
+            {r.assistidoNome && r.camara && <span className="text-neutral-300 dark:text-neutral-600">·</span>}
+            {r.camara && <span>{r.camara}</span>}
             {r.relatorNome && (
               <>
-                <span>·</span>
+                <span className="text-neutral-300 dark:text-neutral-600">·</span>
                 <span>Rel. {r.relatorNome}</span>
               </>
             )}
-          </div>
-
-          {/* Row 3: Teses */}
-          {r.tesesInvocadas?.length > 0 && (
-            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-              {(r.tesesInvocadas as string[]).slice(0, 3).map((t: string, i: number) => (
-                <span key={i} className="text-[10px] px-2 py-0.5 rounded-md bg-neutral-200/60 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400">
-                  {t}
+            {r.dataInterposicao && (
+              <>
+                <span className="text-neutral-300 dark:text-neutral-600">·</span>
+                <span className="font-mono tabular-nums">
+                  {format(new Date(r.dataInterposicao), "dd/MM/yy")}
                 </span>
-              ))}
-              {r.tesesInvocadas.length > 3 && (
-                <span className="text-[10px] text-neutral-400">+{r.tesesInvocadas.length - 3}</span>
-              )}
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* Right: Status + Resultado */}
-        <div className="flex flex-col items-end gap-1.5 shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
+          {/* Status dot */}
           <div className="flex items-center gap-1.5">
-            <StatusIcon className={cn("w-3.5 h-3.5", statusCfg.color)} />
-            <span className={cn("text-[11px] font-medium", statusCfg.color)}>{statusCfg.label}</span>
+            <div className={cn("w-1.5 h-1.5 rounded-full", statusCfg.dot)} />
+            <span className="text-[11px] text-muted-foreground">{statusCfg.label}</span>
           </div>
+
+          {/* Resultado */}
           {r.resultado !== "PENDENTE" && (
-            <span className={cn("text-[10px] px-2 py-0.5 rounded-md font-medium", resultadoCfg.color)}>
-              {resultadoCfg.label}
-            </span>
-          )}
-          {r.dataInterposicao && (
-            <span className="text-[10px] text-neutral-400 font-mono">
-              {format(new Date(r.dataInterposicao), "dd/MM/yy")}
-            </span>
+            <>
+              <span className="w-px h-3.5 bg-neutral-200 dark:bg-neutral-700" />
+              <span className={cn("text-[11px] font-semibold", resultadoCfg.color)}>
+                {resultadoCfg.label}
+              </span>
+            </>
           )}
         </div>
       </div>
+
+      {/* Teses row */}
+      {r.tesesInvocadas?.length > 0 && (
+        <div className="flex items-center gap-1.5 mt-2.5 ml-14 flex-wrap">
+          {(r.tesesInvocadas as string[]).slice(0, 4).map((t: string, i: number) => (
+            <span
+              key={i}
+              className="text-[10px] px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-white/[0.06] text-muted-foreground"
+            >
+              {t}
+            </span>
+          ))}
+          {r.tesesInvocadas.length > 4 && (
+            <span className="text-[10px] text-muted-foreground/50">+{r.tesesInvocadas.length - 4}</span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -419,19 +443,19 @@ function CreateRecursoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 font-serif">
             <Landmark className="w-4 h-4" />
             Novo Recurso
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="space-y-5 py-2">
           {/* Tipo */}
           <div>
-            <label className="text-[11px] uppercase tracking-widest font-semibold text-neutral-400 mb-1.5 block">
-              Tipo
+            <label className="text-[10px] uppercase tracking-widest font-semibold text-neutral-400 mb-2 block">
+              Tipo de recurso
             </label>
             <div className="grid grid-cols-2 gap-1.5">
               {Object.entries(TIPO_LABELS).map(([k, v]) => (
@@ -439,12 +463,13 @@ function CreateRecursoDialog({
                   key={k}
                   onClick={() => setTipo(k)}
                   className={cn(
-                    "text-xs px-3 py-2 rounded-lg border transition-colors text-left",
+                    "text-[13px] px-3 py-2.5 rounded-lg border transition-all text-left",
                     tipo === k
-                      ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-medium"
+                      ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-medium shadow-sm shadow-emerald-500/10"
                       : "border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
                   )}
                 >
+                  <span className="text-[9px] font-mono font-bold text-neutral-400 mr-1.5">{TIPO_SHORT[k]}</span>
                   {v}
                 </button>
               ))}
@@ -453,31 +478,31 @@ function CreateRecursoDialog({
 
           {/* Número */}
           <div>
-            <label className="text-[11px] uppercase tracking-widest font-semibold text-neutral-400 mb-1.5 block">
+            <label className="text-[10px] uppercase tracking-widest font-semibold text-neutral-400 mb-1.5 block">
               Número do recurso
             </label>
             <Input
               value={numero}
               onChange={(e) => setNumero(e.target.value)}
               placeholder="0000000-00.0000.0.00.0000"
-              className="font-mono text-sm"
+              className="font-mono text-[13px] h-10"
             />
           </div>
 
           {/* Câmara */}
           <div>
-            <label className="text-[11px] uppercase tracking-widest font-semibold text-neutral-400 mb-1.5 block">
-              Câmara
+            <label className="text-[10px] uppercase tracking-widest font-semibold text-neutral-400 mb-1.5 block">
+              Câmara criminal
             </label>
             <div className="flex gap-1.5">
               {CAMARAS.map(c => (
                 <button
                   key={c}
-                  onClick={() => setCamara(c)}
+                  onClick={() => setCamara(camara === c ? "" : c)}
                   className={cn(
-                    "text-xs px-3 py-2 rounded-lg border transition-colors flex-1",
+                    "text-[13px] px-3 py-2.5 rounded-lg border transition-all flex-1",
                     camara === c
-                      ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-medium"
+                      ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-medium shadow-sm shadow-emerald-500/10"
                       : "border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
                   )}
                 >
@@ -489,20 +514,20 @@ function CreateRecursoDialog({
 
           {/* Resumo */}
           <div>
-            <label className="text-[11px] uppercase tracking-widest font-semibold text-neutral-400 mb-1.5 block">
+            <label className="text-[10px] uppercase tracking-widest font-semibold text-neutral-400 mb-1.5 block">
               Resumo
             </label>
             <textarea
               value={resumo}
               onChange={(e) => setResumo(e.target.value)}
-              placeholder="Breve descrição do recurso..."
-              className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-800 bg-transparent px-3 py-2 min-h-[80px] resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              placeholder="Breve descrição do recurso ou pedido..."
+              className="w-full text-[13px] rounded-lg border border-neutral-200 dark:border-neutral-800 bg-transparent px-3 py-2.5 min-h-[88px] resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500 leading-relaxed"
             />
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-lg">
             Cancelar
           </Button>
           <Button
@@ -513,8 +538,9 @@ function CreateRecursoDialog({
               resumo: resumo || undefined,
             })}
             disabled={create.isPending}
+            className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 rounded-lg"
           >
-            {create.isPending ? "Salvando..." : "Registrar"}
+            {create.isPending ? "Salvando..." : "Registrar recurso"}
           </Button>
         </DialogFooter>
       </DialogContent>
