@@ -42,6 +42,7 @@ export * from "./atos-infracionais";
 export * from "./medidas-socioeducativas";
 export * from "./subscriptions";
 export * from "./google-tokens";
+export * from "./microsoft-tokens";
 export * from "./feedback";
 export * from "./defensoria";
 export * from "./instancia-superior";

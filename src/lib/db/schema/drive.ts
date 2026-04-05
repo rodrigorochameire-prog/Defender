@@ -23,7 +23,8 @@ import { documentos } from "./documentos";
 export const driveSyncFolders = pgTable("drive_sync_folders", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
-  driveFolderId: varchar("drive_folder_id", { length: 100 }).notNull().unique(),
+  driveFolderId: varchar("drive_folder_id", { length: 100 }).notNull(),
+  provider: varchar("provider", { length: 20 }).default("google"),
   driveFolderUrl: text("drive_folder_url"),
   description: text("description"),
   syncDirection: varchar("sync_direction", { length: 20 }).default("bidirectional"),
@@ -36,6 +37,7 @@ export const driveSyncFolders = pgTable("drive_sync_folders", {
 }, (table) => [
   index("drive_sync_folders_drive_folder_id_idx").on(table.driveFolderId),
   index("drive_sync_folders_is_active_idx").on(table.isActive),
+  uniqueIndex("drive_sync_folders_provider_folder_id_unique").on(table.driveFolderId, table.provider),
 ]);
 
 export type DriveSyncFolder = typeof driveSyncFolders.$inferSelect;
@@ -48,8 +50,9 @@ export type InsertDriveSyncFolder = typeof driveSyncFolders.$inferInsert;
 export const driveFiles = pgTable("drive_files", {
   id: serial("id").primaryKey(),
 
-  // Identificação Google Drive
-  driveFileId: varchar("drive_file_id", { length: 100 }).notNull().unique(),
+  // Identificação Google Drive / OneDrive
+  driveFileId: varchar("drive_file_id", { length: 100 }).notNull(),
+  provider: varchar("provider", { length: 20 }).default("google"),
   driveFolderId: varchar("drive_folder_id", { length: 100 }).notNull(),
 
   // Metadados do arquivo
@@ -118,6 +121,7 @@ export const driveFiles = pgTable("drive_files", {
 }, (table) => [
   index("drive_files_drive_folder_id_idx").on(table.driveFolderId),
   index("drive_files_drive_file_id_idx").on(table.driveFileId),
+  uniqueIndex("drive_files_provider_file_id_unique").on(table.driveFileId, table.provider),
   index("drive_files_processo_id_idx").on(table.processoId),
   index("drive_files_assistido_id_idx").on(table.assistidoId),
   index("drive_files_sync_status_idx").on(table.syncStatus),
@@ -137,6 +141,7 @@ export type InsertDriveFile = typeof driveFiles.$inferInsert;
 export const driveSyncLogs = pgTable("drive_sync_logs", {
   id: serial("id").primaryKey(),
   driveFileId: varchar("drive_file_id", { length: 100 }),
+  provider: varchar("provider", { length: 20 }).default("google"),
   action: varchar("action", { length: 50 }).notNull(),
   status: varchar("status", { length: 20 }).default("success"),
   details: text("details"),
