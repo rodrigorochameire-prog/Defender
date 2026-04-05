@@ -15,18 +15,14 @@ import {
   ChevronDown,
   Users,
   Gavel,
-  ArrowUpRight,
 } from "lucide-react";
 import { HEADER_STYLE, GLASS, LIST_ITEM } from "@/lib/config/design-tokens";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -154,38 +150,18 @@ export default function InstanciaSuperiorPage() {
       <div className="mx-4 lg:mx-6 mt-2 bg-white dark:bg-neutral-900/50 rounded-xl border border-neutral-200/60 dark:border-neutral-800/40 overflow-hidden flex-1 flex flex-col min-h-0">
 
         {/* Filter Bar */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-neutral-200/60 dark:border-neutral-800/40">
-          <FilterDropdown
-            label="Tipo"
-            value={filtroTipo}
-            options={Object.entries(TIPO_LABELS).map(([k, v]) => ({ value: k, label: v }))}
-            onChange={setFiltroTipo}
-          />
-          <FilterDropdown
-            label="Status"
-            value={filtroStatus}
-            options={Object.entries(STATUS_CONFIG).map(([k, v]) => ({ value: k, label: v.label }))}
-            onChange={setFiltroStatus}
-          />
-          <FilterDropdown
-            label="Câmara"
-            value={filtroCamara}
-            options={CAMARAS.map(c => ({ value: c, label: c }))}
-            onChange={setFiltroCamara}
-          />
-          {hasFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-muted-foreground"
-              onClick={() => { setFiltroTipo(undefined); setFiltroStatus(undefined); setFiltroCamara(undefined); }}
-            >
-              Limpar
-            </Button>
-          )}
-          <span className="text-[11px] text-muted-foreground ml-auto font-mono tabular-nums">
+        <div className="flex items-center justify-end gap-2 px-4 py-3 border-b border-neutral-200/60 dark:border-neutral-800/40">
+          <span className="text-[11px] text-muted-foreground font-mono tabular-nums">
             {total} {total === 1 ? "recurso" : "recursos"}
           </span>
+          <FiltersButton
+            filtroTipo={filtroTipo}
+            filtroStatus={filtroStatus}
+            filtroCamara={filtroCamara}
+            setFiltroTipo={setFiltroTipo}
+            setFiltroStatus={setFiltroStatus}
+            setFiltroCamara={setFiltroCamara}
+          />
         </div>
 
         {/* Results */}
@@ -264,57 +240,124 @@ function HeaderStat({
 
 // ─── Filter Dropdown ──────────────────────────────────────────────────────
 
-function FilterDropdown({
-  label,
-  value,
-  options,
-  onChange,
+function FiltersButton({
+  filtroTipo,
+  filtroStatus,
+  filtroCamara,
+  setFiltroTipo,
+  setFiltroStatus,
+  setFiltroCamara,
 }: {
-  label: string;
-  value: string | undefined;
-  options: { value: string; label: string }[];
-  onChange: (v: string | undefined) => void;
+  filtroTipo: string | undefined;
+  filtroStatus: string | undefined;
+  filtroCamara: string | undefined;
+  setFiltroTipo: (v: string | undefined) => void;
+  setFiltroStatus: (v: string | undefined) => void;
+  setFiltroCamara: (v: string | undefined) => void;
 }) {
-  const selectedLabel = options.find(o => o.value === value)?.label;
+  const activeCount = [filtroTipo, filtroStatus, filtroCamara].filter(Boolean).length;
+  const hasFilters = activeCount > 0;
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <Popover>
+      <PopoverTrigger asChild>
         <Button
           variant="outline"
           size="sm"
           className={cn(
             "gap-1.5 text-xs h-8 rounded-lg",
-            value && "border-emerald-500/50 text-emerald-600 dark:text-emerald-400"
+            hasFilters && "border-emerald-500/50 text-emerald-600 dark:text-emerald-400"
           )}
         >
           <Filter className="w-3 h-3" />
-          {selectedLabel || label}
-          <ChevronDown className="w-3 h-3" />
+          Filtros
+          {hasFilters && (
+            <span className="w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] flex items-center justify-center font-bold">
+              {activeCount}
+            </span>
+          )}
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-[180px]">
-        <DropdownMenuLabel className="text-[10px] uppercase tracking-widest">{label}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {value && (
-          <>
-            <DropdownMenuItem onClick={() => onChange(undefined)} className="text-xs text-muted-foreground">
-              Todos
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
-        )}
-        {options.map(o => (
-          <DropdownMenuItem
-            key={o.value}
-            onClick={() => onChange(o.value)}
-            className={cn("text-xs", o.value === value && "font-semibold text-emerald-600")}
-          >
-            {o.label}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-[280px] p-4">
+        <div className="space-y-4">
+          {/* Tipo */}
+          <div>
+            <span className="text-[10px] uppercase tracking-widest font-semibold text-neutral-400 block mb-1.5">Tipo</span>
+            <div className="flex flex-wrap gap-1">
+              {Object.entries(TIPO_LABELS).map(([k, v]) => (
+                <button
+                  key={k}
+                  onClick={() => setFiltroTipo(filtroTipo === k ? undefined : k)}
+                  className={cn(
+                    "text-[11px] px-2 py-1 rounded-md border transition-colors",
+                    filtroTipo === k
+                      ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium"
+                      : "border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  )}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Status */}
+          <div>
+            <span className="text-[10px] uppercase tracking-widest font-semibold text-neutral-400 block mb-1.5">Status</span>
+            <div className="flex flex-wrap gap-1">
+              {Object.entries(STATUS_CONFIG).map(([k, v]) => (
+                <button
+                  key={k}
+                  onClick={() => setFiltroStatus(filtroStatus === k ? undefined : k)}
+                  className={cn(
+                    "text-[11px] px-2 py-1 rounded-md border transition-colors flex items-center gap-1",
+                    filtroStatus === k
+                      ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium"
+                      : "border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  )}
+                >
+                  <div className={cn("w-1.5 h-1.5 rounded-full", v.dot)} />
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Câmara */}
+          <div>
+            <span className="text-[10px] uppercase tracking-widest font-semibold text-neutral-400 block mb-1.5">Câmara</span>
+            <div className="flex flex-wrap gap-1">
+              {CAMARAS.map(c => (
+                <button
+                  key={c}
+                  onClick={() => setFiltroCamara(filtroCamara === c ? undefined : c)}
+                  className={cn(
+                    "text-[11px] px-2 py-1 rounded-md border transition-colors",
+                    filtroCamara === c
+                      ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium"
+                      : "border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  )}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Limpar */}
+          {hasFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs text-muted-foreground h-8"
+              onClick={() => { setFiltroTipo(undefined); setFiltroStatus(undefined); setFiltroCamara(undefined); }}
+            >
+              Limpar filtros
+            </Button>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
