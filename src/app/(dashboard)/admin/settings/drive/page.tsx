@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +66,8 @@ import {
   Gavel,
   FolderSync,
   Wand2,
+  Cloud,
+  Unlink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
@@ -477,6 +479,7 @@ function SuggestedFolders({
 export default function DriveConfigPage() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [disconnectMsDialogOpen, setDisconnectMsDialogOpen] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<SyncFolder | null>(null);
   const [syncingFolderId, setSyncingFolderId] = useState<string | null>(null);
   const [organizeResult, setOrganizeResult] = useState<{
@@ -493,6 +496,19 @@ export default function DriveConfigPage() {
     description: "",
     syncDirection: "bidirectional" as "bidirectional" | "drive_to_app" | "app_to_drive",
   });
+
+  // Handle OAuth callback query params for Microsoft
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("ms_success")) {
+      toast.success("OneDrive conectado com sucesso!");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+    if (params.get("ms_error")) {
+      toast.error(`Erro ao conectar OneDrive: ${params.get("ms_error")}`);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   // tRPC queries
   const { data: configStatus, isLoading: isCheckingConfig } = trpc.drive.isConfigured.useQuery();
@@ -512,6 +528,8 @@ export default function DriveConfigPage() {
     enabled: configStatus?.configured === true,
     refetchInterval: 60000, // Check every minute
   });
+  const { data: msStatus, refetch: refetchMsStatus } = trpc.drive.getMicrosoftStatus.useQuery();
+  const { data: currentUser } = trpc.users.me.useQuery();
 
   // Mutations
   const registerMutation = trpc.drive.registerFolder.useMutation({
@@ -576,6 +594,27 @@ export default function DriveConfigPage() {
     },
     onError: (error) => {
       toast.error(error.message || "Erro ao sincronizar");
+    },
+  });
+
+  const updateStorageProviderMutation = trpc.drive.updateStorageProvider.useMutation({
+    onSuccess: () => {
+      toast.success("Provider de armazenamento atualizado!");
+      refetchMsStatus();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao atualizar provider");
+    },
+  });
+
+  const disconnectMicrosoftMutation = trpc.drive.disconnectMicrosoft.useMutation({
+    onSuccess: () => {
+      toast.success("OneDrive desconectado com sucesso");
+      setDisconnectMsDialogOpen(false);
+      refetchMsStatus();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao desconectar OneDrive");
     },
   });
 
@@ -714,6 +753,148 @@ export default function DriveConfigPage() {
         accountEmail={accountInfo?.email}
         accountName={accountInfo?.name}
       />
+
+      {/* OneDrive Connection Card */}
+      <Card className="bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-xl p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className={cn(
+              "w-12 h-12 rounded-xl flex items-center justify-center",
+              msStatus?.connected
+                ? "bg-blue-100 dark:bg-blue-900/30"
+                : "bg-neutral-100 dark:bg-neutral-800"
+            )}>
+              <Cloud className={cn(
+                "w-6 h-6",
+                msStatus?.connected
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-neutral-400 dark:text-neutral-500"
+              )} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">
+                  Microsoft OneDrive
+                </h3>
+                {msStatus?.connected && (
+                  <Badge className={cn(
+                    msStatus.storageProvider === "onedrive"
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                      : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                  )}>
+                    {msStatus.storageProvider === "onedrive" ? (
+                      <><CheckCircle2 className="w-3 h-3 mr-1" /> Ativo</>
+                    ) : (
+                      <>Arquivos anteriores</>
+                    )}
+                  </Badge>
+                )}
+              </div>
+              {msStatus?.connected ? (
+                <div className="mt-1">
+                  {msStatus.displayName && (
+                    <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                      {msStatus.displayName}
+                    </p>
+                  )}
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    {msStatus.email}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                  Conecte seu OneDrive organizacional para armazenar arquivos
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {msStatus?.connected ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-900/20"
+                onClick={() => setDisconnectMsDialogOpen(true)}
+              >
+                <Unlink className="w-4 h-4 mr-2" />
+                Desconectar
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                className="bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
+                asChild
+              >
+                <a href={`/api/microsoft/auth?userId=${currentUser?.id}&returnTo=/admin/settings/drive`}>
+                  <Cloud className="w-4 h-4 mr-2" />
+                  Conectar OneDrive
+                </a>
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Storage provider toggle — only when both are connected */}
+        {msStatus?.connected && msStatus?.googleLinked && (
+          <div className="mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
+            <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-2">
+              Provider ativo para novos arquivos:
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => updateStorageProviderMutation.mutate({ provider: "google" })}
+                disabled={updateStorageProviderMutation.isPending}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border",
+                  msStatus.storageProvider === "google"
+                    ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-transparent"
+                    : "bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400"
+                )}
+              >
+                <HardDrive className="w-4 h-4" />
+                Google Drive
+              </button>
+              <button
+                onClick={() => updateStorageProviderMutation.mutate({ provider: "onedrive" })}
+                disabled={updateStorageProviderMutation.isPending}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border",
+                  msStatus.storageProvider === "onedrive"
+                    ? "bg-blue-600 text-white border-transparent"
+                    : "bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400"
+                )}
+              >
+                <Cloud className="w-4 h-4" />
+                OneDrive
+              </button>
+              {updateStorageProviderMutation.isPending && (
+                <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Show "use OneDrive" button when connected but Google is active */}
+        {msStatus?.connected && !msStatus?.googleLinked && msStatus.storageProvider !== "onedrive" && (
+          <div className="mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20"
+              onClick={() => updateStorageProviderMutation.mutate({ provider: "onedrive" })}
+              disabled={updateStorageProviderMutation.isPending}
+            >
+              {updateStorageProviderMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Cloud className="w-4 h-4 mr-2" />
+              )}
+              Usar OneDrive para novos arquivos
+            </Button>
+          </div>
+        )}
+      </Card>
 
       {/* Token Health */}
       {isConfigured && tokenHealth && (
@@ -1020,6 +1201,29 @@ export default function DriveConfigPage() {
             >
               {removeMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Alert Dialog: Desconectar OneDrive */}
+      <AlertDialog open={disconnectMsDialogOpen} onOpenChange={setDisconnectMsDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desconectar OneDrive?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A conta <strong>{msStatus?.email}</strong> será desconectada. O provider de armazenamento
+              voltará para o Google Drive. Os arquivos existentes no OneDrive não serão excluídos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => disconnectMicrosoftMutation.mutate()}
+              className="bg-rose-600 hover:bg-rose-700"
+            >
+              {disconnectMicrosoftMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Desconectar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

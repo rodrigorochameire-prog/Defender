@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db, driveFiles, driveSyncFolders, driveSyncLogs, driveWebhooks } from "@/lib/db";
+import { db, driveFiles, driveSyncFolders, driveSyncLogs, driveWebhooks, users, userMicrosoftTokens } from "@/lib/db";
 import { type SQL, eq, and, desc, asc, sql, isNull, or, like, not, gt, lt, inArray } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
 import {
@@ -5128,4 +5128,58 @@ export const driveRouter = router({
         dryRun: input.dryRun,
       };
     }),
+
+  // ============================================
+  // ONEDRIVE / STORAGE PROVIDER
+  // ============================================
+
+  /**
+   * Obtém status da conexão Microsoft / OneDrive
+   */
+  getMicrosoftStatus: protectedProcedure.query(async ({ ctx }) => {
+    return safeAsync(async () => {
+      const token = await db.query.userMicrosoftTokens.findFirst({
+        where: eq(userMicrosoftTokens.userId, ctx.user.id),
+        columns: { email: true, displayName: true },
+      });
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, ctx.user.id),
+        columns: { microsoftLinked: true, storageProvider: true, googleLinked: true },
+      });
+      return {
+        connected: !!token,
+        email: token?.email ?? null,
+        displayName: token?.displayName ?? null,
+        storageProvider: (user as any)?.storageProvider ?? "google",
+        googleLinked: user?.googleLinked ?? false,
+      };
+    }, "Erro ao obter status Microsoft");
+  }),
+
+  /**
+   * Atualiza o provider de armazenamento ativo (google | onedrive)
+   */
+  updateStorageProvider: protectedProcedure
+    .input(z.object({ provider: z.enum(["google", "onedrive"]) }))
+    .mutation(async ({ input, ctx }) => {
+      return safeAsync(async () => {
+        await db.update(users).set({ storageProvider: input.provider }).where(eq(users.id, ctx.user.id));
+        return { success: true };
+      }, "Erro ao atualizar provider de armazenamento");
+    }),
+
+  /**
+   * Desconecta a conta Microsoft / OneDrive
+   */
+  disconnectMicrosoft: protectedProcedure.mutation(async ({ ctx }) => {
+    return safeAsync(async () => {
+      await db.delete(userMicrosoftTokens).where(eq(userMicrosoftTokens.userId, ctx.user.id));
+      await db.update(users).set({
+        microsoftLinked: false,
+        storageProvider: "google",
+        onedriveRootFolderId: null,
+      }).where(eq(users.id, ctx.user.id));
+      return { success: true };
+    }, "Erro ao desconectar Microsoft");
+  }),
 });
