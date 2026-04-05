@@ -1,10 +1,9 @@
-import { ConfidentialClientApplication, CryptoProvider, AuthenticationResult } from "@azure/msal-node";
 import crypto from "crypto";
 import { db } from "@/lib/db";
 import { userMicrosoftTokens, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
-const MICROSOFT_SCOPES = [
+const SCOPES = [
   "Files.ReadWrite",
   "Files.ReadWrite.All",
   "offline_access",
@@ -12,85 +11,115 @@ const MICROSOFT_SCOPES = [
 ];
 
 // ---------------------------------------------------------------------------
-// MSAL singleton
+// Helpers
 // ---------------------------------------------------------------------------
 
-let msalClient: ConfidentialClientApplication | null = null;
-
-function getMsalClient(): ConfidentialClientApplication {
-  if (!msalClient) {
-    msalClient = new ConfidentialClientApplication({
-      auth: {
-        clientId: process.env.MICROSOFT_CLIENT_ID!,
-        authority: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID}`,
-        clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
-      },
-    });
-  }
-  return msalClient;
+function getClientId(): string {
+  return process.env.MICROSOFT_CLIENT_ID!;
 }
 
-// ---------------------------------------------------------------------------
-// Redirect URI
-// ---------------------------------------------------------------------------
+function getClientSecret(): string {
+  return process.env.MICROSOFT_CLIENT_SECRET!;
+}
+
+function getTenantId(): string {
+  return process.env.MICROSOFT_TENANT_ID || "common";
+}
 
 function getRedirectUri(): string {
   const base = process.env.NEXTAUTH_URL || "http://localhost:3000";
   return `${base}/api/microsoft/callback`;
 }
 
+/** base64url-encode a Buffer (no padding). */
+function base64url(buf: Buffer): string {
+  return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
 // ---------------------------------------------------------------------------
-// getAuthUrl — generates PKCE challenge + auth URL
+// getAuthUrl — raw URL construction with PKCE (no MSAL)
 // ---------------------------------------------------------------------------
 
 export async function getAuthUrl(
-  userId: number,
-  returnTo: string
+  _userId: number,
+  _returnTo: string
 ): Promise<{ url: string; state: string; codeVerifier: string }> {
-  const client = getMsalClient();
-  const cryptoProvider = new CryptoProvider();
-
   const state = crypto.randomBytes(32).toString("hex");
-  const { verifier: codeVerifier, challenge: codeChallenge } =
-    await cryptoProvider.generatePkceCodes();
 
-  const url = await client.getAuthCodeUrl({
-    scopes: MICROSOFT_SCOPES,
-    redirectUri: getRedirectUri(),
+  // PKCE: verifier = random 32-byte base64url; challenge = SHA256(verifier) base64url
+  const verifierBuf = crypto.randomBytes(32);
+  const codeVerifier = base64url(verifierBuf);
+  const challengeBuf = crypto.createHash("sha256").update(codeVerifier).digest();
+  const codeChallenge = base64url(challengeBuf);
+
+  const params = new URLSearchParams({
+    client_id: getClientId(),
+    response_type: "code",
+    redirect_uri: getRedirectUri(),
+    scope: SCOPES.join(" "),
     state,
-    codeChallenge,
-    codeChallengeMethod: "S256",
+    code_challenge: codeChallenge,
+    code_challenge_method: "S256",
+    response_mode: "query",
   });
+
+  const url = `https://login.microsoftonline.com/${getTenantId()}/oauth2/v2.0/authorize?${params.toString()}`;
 
   return { url, state, codeVerifier };
 }
 
 // ---------------------------------------------------------------------------
-// exchangeCode — exchange auth code for tokens
+// Raw token response shape
+// ---------------------------------------------------------------------------
+
+interface MsTokenResponse {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  token_type: string;
+  scope: string;
+  error?: string;
+  error_description?: string;
+}
+
+// ---------------------------------------------------------------------------
+// exchangeCode — raw fetch, returns token response directly
 // ---------------------------------------------------------------------------
 
 export async function exchangeCode(
   code: string,
   codeVerifier: string
-): Promise<AuthenticationResult> {
-  const client = getMsalClient();
+): Promise<MsTokenResponse> {
+  const res = await fetch(
+    `https://login.microsoftonline.com/${getTenantId()}/oauth2/v2.0/token`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: getClientId(),
+        client_secret: getClientSecret(),
+        code,
+        redirect_uri: getRedirectUri(),
+        grant_type: "authorization_code",
+        code_verifier: codeVerifier,
+        scope: SCOPES.join(" "),
+      }),
+    }
+  );
 
-  const result = await client.acquireTokenByCode({
-    code,
-    scopes: MICROSOFT_SCOPES,
-    redirectUri: getRedirectUri(),
-    codeVerifier,
-  });
+  const data: MsTokenResponse = await res.json();
 
-  if (!result) {
-    throw new Error("MSAL acquireTokenByCode returned null");
+  if (!res.ok || data.error) {
+    throw new Error(
+      `Microsoft token exchange failed: ${data.error_description || data.error || res.status}`
+    );
   }
 
-  return result;
+  return data;
 }
 
 // ---------------------------------------------------------------------------
-// getAccessToken — return valid token, refreshing if needed
+// getAccessToken — return valid token, refreshing via raw fetch if needed
 // ---------------------------------------------------------------------------
 
 export async function getAccessToken(userId: number): Promise<string> {
@@ -113,32 +142,45 @@ export async function getAccessToken(userId: number): Promise<string> {
     }
   }
 
-  // Refresh the token
+  // Refresh the token via raw fetch
   try {
-    const client = getMsalClient();
-    const result = await client.acquireTokenByRefreshToken({
-      refreshToken: record.refreshToken,
-      scopes: MICROSOFT_SCOPES,
-    });
+    const res = await fetch(
+      `https://login.microsoftonline.com/${getTenantId()}/oauth2/v2.0/token`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: getClientId(),
+          client_secret: getClientSecret(),
+          refresh_token: record.refreshToken,
+          grant_type: "refresh_token",
+          scope: SCOPES.join(" "),
+        }),
+      }
+    );
 
-    if (!result) {
-      throw new Error("MSAL acquireTokenByRefreshToken returned null");
+    const data: MsTokenResponse = await res.json();
+
+    if (!res.ok || data.error) {
+      throw new Error(
+        `Token refresh failed: ${data.error_description || data.error || res.status}`
+      );
     }
 
-    const newExpiresAt = result.expiresOn
-      ? new Date(result.expiresOn)
-      : new Date(Date.now() + 3600 * 1000);
+    const newExpiresAt = new Date(Date.now() + data.expires_in * 1000);
 
     await db
       .update(userMicrosoftTokens)
       .set({
-        accessToken: result.accessToken,
+        accessToken: data.access_token,
+        // Persist new refresh_token if Microsoft rotated it
+        ...(data.refresh_token ? { refreshToken: data.refresh_token } : {}),
         expiresAt: newExpiresAt,
         updatedAt: new Date(),
       })
       .where(eq(userMicrosoftTokens.userId, userId));
 
-    return result.accessToken;
+    return data.access_token;
   } catch (err) {
     console.error("[OneDrive] Token refresh failed:", err);
     throw new Error("OneDrive desconectado — reconecte nas configurações");
@@ -151,29 +193,19 @@ export async function getAccessToken(userId: number): Promise<string> {
 
 export async function saveMicrosoftTokens(
   userId: number,
-  authResult: AuthenticationResult,
-  userInfo: { mail?: string; userPrincipalName?: string; displayName?: string; id?: string }
+  tokenData: MsTokenResponse,
+  userInfo: {
+    mail?: string;
+    userPrincipalName?: string;
+    displayName?: string;
+    id?: string;
+  }
 ): Promise<void> {
-  const email =
-    userInfo.mail || userInfo.userPrincipalName || authResult.account?.username || "";
+  const email = userInfo.mail || userInfo.userPrincipalName || "";
   const displayName = userInfo.displayName || null;
-  const microsoftUserId = userInfo.id || authResult.account?.localAccountId || null;
+  const microsoftUserId = userInfo.id || null;
 
-  const expiresAt = authResult.expiresOn
-    ? new Date(authResult.expiresOn)
-    : new Date(Date.now() + 3600 * 1000);
-
-  // The refresh token comes in idTokenClaims or via the account cache.
-  // MSAL stores refresh tokens internally; we persist the serialised cache
-  // entry via account.homeAccountId as a stable key, but the actual
-  // refresh token string is surfaced on the AuthenticationResult only when
-  // the library exposes it through the cache. Access it from the result's
-  // extended properties if present, falling back to empty string so the NOT
-  // NULL constraint is satisfied — subsequent refreshes will use the MSAL
-  // in-memory cache.
-  const refreshToken =
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (authResult as any).refreshToken ?? "";
+  const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000);
 
   await db
     .insert(userMicrosoftTokens)
@@ -182,8 +214,8 @@ export async function saveMicrosoftTokens(
       email,
       displayName,
       microsoftUserId,
-      refreshToken,
-      accessToken: authResult.accessToken,
+      refreshToken: tokenData.refresh_token,
+      accessToken: tokenData.access_token,
       expiresAt,
       updatedAt: new Date(),
     })
@@ -193,8 +225,8 @@ export async function saveMicrosoftTokens(
         email,
         displayName,
         microsoftUserId,
-        refreshToken,
-        accessToken: authResult.accessToken,
+        refreshToken: tokenData.refresh_token,
+        accessToken: tokenData.access_token,
         expiresAt,
         updatedAt: new Date(),
       },

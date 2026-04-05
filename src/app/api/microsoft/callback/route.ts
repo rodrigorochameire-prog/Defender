@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch user info from Microsoft Graph
     const userInfoRes = await fetch("https://graph.microsoft.com/v1.0/me", {
-      headers: { Authorization: `Bearer ${authResult.accessToken}` },
+      headers: { Authorization: `Bearer ${authResult.access_token}` },
     });
     const userInfo = await userInfoRes.json();
 
