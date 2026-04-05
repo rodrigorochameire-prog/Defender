@@ -4,6 +4,7 @@ import { router, protectedProcedure, adminProcedure } from "../init";
 import { db, driveFiles, driveSyncFolders, driveSyncLogs, driveWebhooks, users, userMicrosoftTokens } from "@/lib/db";
 import { type SQL, eq, and, desc, asc, sql, isNull, or, like, not, gt, lt, inArray } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
+import { getDriveProvider, getProviderForFile } from "@/lib/services/drive-factory";
 import {
   listFilesInFolder,
   listAllItemsInFolder,
@@ -1369,47 +1370,43 @@ export const driveRouter = router({
         const base64Data = input.fileBase64.replace(/^data:[^;]+;base64,/, "");
         const buffer = Buffer.from(base64Data, "base64");
 
-        const file = await uploadFileBuffer(
+        // Factory: resolve provider based on user preference (Google or OneDrive)
+        const provider = await getDriveProvider(ctx.user.id);
+        const storageFile = await provider.uploadFile(
           buffer,
           input.fileName,
           input.mimeType,
-          input.folderId,
-          input.description
+          input.folderId
         );
-
-        if (!file) {
-          throw Errors.internal("Falha ao fazer upload do arquivo");
-        }
 
         // Inserir no banco local para sincronização
         await db.insert(driveFiles).values({
-          driveFileId: file.id,
+          driveFileId: storageFile.id,
+          provider: provider.getProviderName(),
           driveFolderId: input.folderId,
-          name: file.name,
-          mimeType: file.mimeType,
-          fileSize: file.size ? parseInt(file.size) : null,
-          webViewLink: file.webViewLink,
-          webContentLink: file.webContentLink,
-          thumbnailLink: file.thumbnailLink,
-          iconLink: file.iconLink,
-          driveChecksum: file.md5Checksum,
+          name: storageFile.name,
+          mimeType: storageFile.mimeType,
+          fileSize: storageFile.size ?? null,
+          webViewLink: storageFile.webUrl,
+          webContentLink: storageFile.downloadUrl,
           isFolder: false,
           syncStatus: "synced",
           lastSyncAt: new Date(),
-          lastModifiedTime: file.modifiedTime ? new Date(file.modifiedTime) : new Date(),
+          lastModifiedTime: storageFile.modifiedAt ? new Date(storageFile.modifiedAt) : new Date(),
           createdById: ctx.user.id,
         });
 
         // Log da ação
         await db.insert(driveSyncLogs).values({
-          driveFileId: file.id,
+          driveFileId: storageFile.id,
+          provider: provider.getProviderName(),
           action: "upload",
           status: "success",
-          details: `Arquivo ${file.name} enviado`,
+          details: `Arquivo ${storageFile.name} enviado`,
           userId: ctx.user.id,
         });
 
-        return file;
+        return storageFile;
       }, "Erro ao fazer upload do arquivo");
     }),
 
@@ -1425,11 +1422,15 @@ export const driveRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
-        const result = await renameFileInDrive(input.fileId, input.newName);
+        // Factory: resolve provider from the file's own provider field
+        const dbFile = await db.query.driveFiles.findFirst({
+          where: eq(driveFiles.driveFileId, input.fileId),
+          columns: { provider: true },
+        });
+        const fileProvider = (dbFile?.provider ?? "google") as "google" | "onedrive";
+        const provider = await getProviderForFile(fileProvider, ctx.user.id);
 
-        if (!result) {
-          throw Errors.internal("Falha ao renomear arquivo");
-        }
+        const result = await provider.renameFile(input.fileId, input.newName);
 
         // Atualizar no banco local
         await db
@@ -1444,6 +1445,7 @@ export const driveRouter = router({
         // Log
         await db.insert(driveSyncLogs).values({
           driveFileId: input.fileId,
+          provider: fileProvider,
           action: "rename",
           status: "success",
           details: `Renomeado para ${input.newName}`,
@@ -1461,11 +1463,15 @@ export const driveRouter = router({
     .input(z.object({ fileId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
-        const success = await deleteFileFromDrive(input.fileId);
+        // Factory: resolve provider from the file's own provider field
+        const dbFile = await db.query.driveFiles.findFirst({
+          where: eq(driveFiles.driveFileId, input.fileId),
+          columns: { provider: true },
+        });
+        const fileProvider = (dbFile?.provider ?? "google") as "google" | "onedrive";
+        const provider = await getProviderForFile(fileProvider, ctx.user.id);
 
-        if (!success) {
-          throw Errors.internal("Falha ao excluir arquivo");
-        }
+        await provider.deleteFile(input.fileId);
 
         // Remover do banco local
         await db
@@ -1475,6 +1481,7 @@ export const driveRouter = router({
         // Log
         await db.insert(driveSyncLogs).values({
           driveFileId: input.fileId,
+          provider: fileProvider,
           action: "delete",
           status: "success",
           details: "Arquivo excluído",
@@ -1733,72 +1740,64 @@ export const driveRouter = router({
         const base64Data = input.fileBase64.replace(/^data:[^;]+;base64,/, "");
         const buffer = Buffer.from(base64Data, "base64");
 
-        const file = await uploadFileBuffer(
+        // Factory: resolve provider based on user preference (Google or OneDrive)
+        // Note: preventDuplicates/updateIfExists logic is handled inside the provider
+        const provider = await getDriveProvider(ctx.user.id);
+        const storageFile = await provider.uploadFile(
           buffer,
           input.fileName,
           input.mimeType,
-          input.folderId,
-          input.description,
-          {
-            preventDuplicates: input.preventDuplicates,
-            updateIfExists: input.updateIfExists,
-          }
+          input.folderId
         );
-
-        if (!file) {
-          throw Errors.internal("Falha ao fazer upload do arquivo");
-        }
 
         // Inserir/atualizar no banco local
         const existing = await db
           .select()
           .from(driveFiles)
-          .where(eq(driveFiles.driveFileId, file.id))
+          .where(eq(driveFiles.driveFileId, storageFile.id))
           .limit(1);
 
         if (existing.length === 0) {
           await db.insert(driveFiles).values({
-            driveFileId: file.id,
+            driveFileId: storageFile.id,
+            provider: provider.getProviderName(),
             driveFolderId: input.folderId,
-            name: file.name,
-            mimeType: file.mimeType,
-            fileSize: file.size ? parseInt(file.size) : null,
-            webViewLink: file.webViewLink,
-            webContentLink: file.webContentLink,
-            thumbnailLink: file.thumbnailLink,
-            iconLink: file.iconLink,
-            driveChecksum: file.md5Checksum,
+            name: storageFile.name,
+            mimeType: storageFile.mimeType,
+            fileSize: storageFile.size ?? null,
+            webViewLink: storageFile.webUrl,
+            webContentLink: storageFile.downloadUrl,
             isFolder: false,
             syncStatus: "synced",
             lastSyncAt: new Date(),
-            lastModifiedTime: file.modifiedTime ? new Date(file.modifiedTime) : new Date(),
+            lastModifiedTime: storageFile.modifiedAt ? new Date(storageFile.modifiedAt) : new Date(),
             createdById: ctx.user.id,
           });
         } else {
           await db
             .update(driveFiles)
             .set({
-              name: file.name,
-              fileSize: file.size ? parseInt(file.size) : null,
-              driveChecksum: file.md5Checksum,
+              name: storageFile.name,
+              fileSize: storageFile.size ?? null,
               syncStatus: "synced",
               lastSyncAt: new Date(),
-              lastModifiedTime: file.modifiedTime ? new Date(file.modifiedTime) : new Date(),
+              lastModifiedTime: storageFile.modifiedAt ? new Date(storageFile.modifiedAt) : new Date(),
               updatedAt: new Date(),
             })
-            .where(eq(driveFiles.driveFileId, file.id));
+            .where(eq(driveFiles.driveFileId, storageFile.id));
         }
 
         // Log da ação
         await db.insert(driveSyncLogs).values({
-          driveFileId: file.id,
+          driveFileId: storageFile.id,
+          provider: provider.getProviderName(),
           action: existing.length === 0 ? "upload" : "update",
           status: "success",
-          details: `Arquivo ${file.name} sincronizado`,
+          details: `Arquivo ${storageFile.name} sincronizado`,
           userId: ctx.user.id,
         });
 
-        return file;
+        return storageFile;
       }, "Erro ao fazer upload do arquivo");
     }),
 
@@ -2018,18 +2017,14 @@ export const driveRouter = router({
         const base64Data = input.fileBase64.replace(/^data:[^;]+;base64,/, "");
         const buffer = Buffer.from(base64Data, "base64");
 
-        const file = await uploadFileBuffer(
+        // Factory: resolve provider based on user preference (Google or OneDrive)
+        const provider = await getDriveProvider(ctx.user.id);
+        const storageFile = await provider.uploadFile(
           buffer,
           input.fileName,
           input.mimeType,
-          input.folderId,
-          input.description,
-          { preventDuplicates: true, updateIfExists: false }
+          input.folderId
         );
-
-        if (!file) {
-          throw Errors.internal("Falha ao fazer upload do arquivo");
-        }
 
         // Se processoId fornecido, buscar assistidoId do processo
         let assistidoId = input.assistidoId;
@@ -2044,20 +2039,18 @@ export const driveRouter = router({
 
         // Inserir no banco local com vinculação
         await db.insert(driveFiles).values({
-          driveFileId: file.id,
+          driveFileId: storageFile.id,
+          provider: provider.getProviderName(),
           driveFolderId: input.folderId,
-          name: file.name,
-          mimeType: file.mimeType,
-          fileSize: file.size ? parseInt(file.size) : null,
-          webViewLink: file.webViewLink,
-          webContentLink: file.webContentLink,
-          thumbnailLink: file.thumbnailLink,
-          iconLink: file.iconLink,
-          driveChecksum: file.md5Checksum,
+          name: storageFile.name,
+          mimeType: storageFile.mimeType,
+          fileSize: storageFile.size ?? null,
+          webViewLink: storageFile.webUrl,
+          webContentLink: storageFile.downloadUrl,
           isFolder: false,
           syncStatus: "synced",
           lastSyncAt: new Date(),
-          lastModifiedTime: file.modifiedTime ? new Date(file.modifiedTime) : new Date(),
+          lastModifiedTime: storageFile.modifiedAt ? new Date(storageFile.modifiedAt) : new Date(),
           createdById: ctx.user.id,
           // Vinculações
           processoId: input.processoId,
@@ -2066,14 +2059,15 @@ export const driveRouter = router({
 
         // Log da ação
         await db.insert(driveSyncLogs).values({
-          driveFileId: file.id,
+          driveFileId: storageFile.id,
+          provider: provider.getProviderName(),
           action: "upload_with_link",
           status: "success",
-          details: `Arquivo ${file.name} enviado e vinculado (processo: ${input.processoId || 'N/A'}, assistido: ${assistidoId || 'N/A'})`,
+          details: `Arquivo ${storageFile.name} enviado e vinculado (processo: ${input.processoId || 'N/A'}, assistido: ${assistidoId || 'N/A'})`,
           userId: ctx.user.id,
         });
 
-        return file;
+        return storageFile;
       }, "Erro ao fazer upload do arquivo");
     }),
 
@@ -3343,7 +3337,7 @@ export const driveRouter = router({
     }),
 
   /**
-   * Move um arquivo de uma pasta para outra no Google Drive.
+   * Move um arquivo de uma pasta para outra no Drive.
    * Usado pelo workflow Protocolar para mover DOCX para subpasta correta.
    */
   moveFile: protectedProcedure
@@ -3352,29 +3346,38 @@ export const driveRouter = router({
       newParentId: z.string(),
       oldParentId: z.string().optional(),
     }))
-    .mutation(async ({ input }) => {
-      const result = await moveFileInDrive(
-        input.fileId,
-        input.newParentId,
-        input.oldParentId,
-      );
+    .mutation(async ({ ctx, input }) => {
+      // Factory: resolve provider from the file's own provider field
+      const dbFile = await db.query.driveFiles.findFirst({
+        where: eq(driveFiles.driveFileId, input.fileId),
+        columns: { provider: true },
+      });
+      const fileProvider = (dbFile?.provider ?? "google") as "google" | "onedrive";
+      const provider = await getProviderForFile(fileProvider, ctx.user.id);
 
-      if (!result) {
+      try {
+        const result = await provider.moveFile(input.fileId, input.newParentId);
+
+        // Atualizar pasta no banco local
+        await db
+          .update(driveFiles)
+          .set({ driveFolderId: input.newParentId, updatedAt: new Date(), lastSyncAt: new Date() })
+          .where(eq(driveFiles.driveFileId, input.fileId));
+
+        return {
+          success: true,
+          file: {
+            id: result.id,
+            name: result.name,
+            webViewLink: result.webUrl,
+          },
+        };
+      } catch {
         return {
           success: false,
           error: "Falha ao mover arquivo no Drive",
         };
       }
-
-      return {
-        success: true,
-        file: {
-          id: result.id,
-          name: result.name,
-          webViewLink: result.webViewLink,
-          parents: result.parents,
-        },
-      };
     }),
 
   /**
