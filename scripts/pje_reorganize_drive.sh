@@ -10,12 +10,12 @@ PDF_DIR="${1:-$HOME/Desktop/pje-autos-juri}"
 JURI_FOLDER_ID="1_S-2qdqO0n1npNcs0PnoagBM4ZtwKhk-"
 MAPPING_FILE="$HOME/Desktop/pje-juri-mapping.txt"
 
-source "$HOME/Projetos/Defender/.env.local"
+source "$HOME/Defender/.env.local"
 
 echo "=== Reorganizar Drive: Processos - Júri ==="
 
 # Gerar mapping via DB
-cd ~/Projetos/Defender
+cd ~/Defender
 env $(grep -v '^#\|GOOGLE_SERVICE_ACCOUNT_KEY' .env.local | xargs) npx tsx -e "
 const { db } = require('./src/lib/db');
 const { processos } = require('./src/lib/db/schema');

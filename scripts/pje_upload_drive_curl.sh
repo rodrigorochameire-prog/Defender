@@ -8,7 +8,7 @@ set -uo pipefail
 PDF_DIR="${1:-$HOME/Desktop/pje-autos-juri}"
 JURI_FOLDER_ID="1_S-2qdqO0n1npNcs0PnoagBM4ZtwKhk-"
 
-source "$HOME/Projetos/Defender/.env.local"
+source "$HOME/Defender/.env.local"
 
 echo "=== Upload Autos → Google Drive ==="
 echo "PDFs: $PDF_DIR"

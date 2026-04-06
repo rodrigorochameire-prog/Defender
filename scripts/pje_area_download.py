@@ -22,7 +22,7 @@ from playwright.sync_api import sync_playwright, TimeoutError as PwTimeout
 # ============================================================================
 # Config
 # ============================================================================
-load_dotenv(Path.home() / "Projetos/Defender/.env.local")
+load_dotenv(Path.home() / "Defender/.env.local")
 CPF = os.environ.get("PJE_CPF", "")
 SENHA = os.environ.get("PJE_SENHA", "")
 OUTPUT_DIR = Path.home() / "Desktop/pje-autos-juri"

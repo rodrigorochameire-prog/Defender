@@ -16,7 +16,7 @@ RELOGIN_EVERY=8
 
 mkdir -p "$OUTPUT_DIR"
 
-ENV_FILE="$HOME/Projetos/Defender/.env.local"
+ENV_FILE="$HOME/Defender/.env.local"
 [ -f "$ENV_FILE" ] && source "$ENV_FILE"
 
 [ ! -f "$LIST_FILE" ] && { echo "ERRO: $LIST_FILE não encontrada"; exit 1; }

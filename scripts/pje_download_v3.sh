@@ -13,7 +13,7 @@ RELOGIN_EVERY=8
 mkdir -p "$OUTPUT_DIR"
 
 # Carregar credenciais
-ENV_FILE="$HOME/Projetos/Defender/.env.local"
+ENV_FILE="$HOME/Defender/.env.local"
 [ -f "$ENV_FILE" ] && source "$ENV_FILE"
 
 if [ ! -f "$LIST_FILE" ]; then

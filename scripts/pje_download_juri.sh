@@ -10,7 +10,7 @@ OUTPUT_DIR="$HOME/Desktop/pje-autos-juri"
 LIST_FILE="${1:-$HOME/Desktop/juri-analisar-processos.txt}"
 
 # Carregar credenciais PJe do .env.local
-ENV_FILE="$HOME/Projetos/Defender/.env.local"
+ENV_FILE="$HOME/Defender/.env.local"
 if [ -f "$ENV_FILE" ]; then
   source "$ENV_FILE"
 fi
