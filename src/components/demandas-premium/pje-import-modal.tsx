@@ -469,7 +469,7 @@ export function PJeImportModal({
           ordemOriginal: intimacao.ordemOriginal ?? index,
           ato: atoFinal,
           atoConfidence: suggestion.confidence,
-          status: "analisar",
+          status: "fila",  // Triagem — aguardando scan ou classificação manual
           prazo: prazoFinal,
           estadoPrisional: "Solto",
           excluded: false,

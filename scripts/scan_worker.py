@@ -97,6 +97,107 @@ def update_job(job_id: int, **fields):
     supabase.table("scan_intimacoes_jobs").update(fields).eq("id", job_id).execute()
 
 
+# Map ato keywords to substatus for the Kanban board
+ATO_TO_SUBSTATUS: dict[str, str] = {
+    "resposta": "elaborar",
+    "defesa": "elaborar",
+    "alegações finais": "elaborar",
+    "alegacoes finais": "elaborar",
+    "contrarrazões": "elaborar",
+    "contrarrazoes": "elaborar",
+    "memorial": "elaborar",
+    "memoriais": "elaborar",
+    "recurso": "elaborar",
+    "apelação": "elaborar",
+    "apelacao": "elaborar",
+    "embargos": "elaborar",
+    "manifestação": "analisar",
+    "manifestacao": "analisar",
+    "ciência": "monitorar",
+    "ciencia": "monitorar",
+    "audiência": "atender",
+    "audiencia": "atender",
+    "designação": "atender",
+    "designacao": "atender",
+    "laudo": "analisar",
+    "perícia": "analisar",
+    "pericia": "analisar",
+}
+
+# Substatus → DB status mapping (mirrors STATUS_TO_DB from pje-import.ts)
+SUBSTATUS_TO_DB: dict[str, str] = {
+    "fila": "5_FILA",
+    "atender": "2_ATENDER",
+    "analisar": "2_ATENDER",
+    "elaborar": "2_ATENDER",
+    "monitorar": "4_MONITORAR",
+}
+
+
+def resolve_substatus(ato: str) -> tuple[str, str]:
+    """Given an ato string, return (db_status, substatus)."""
+    ato_lower = ato.lower()
+    for keyword, sub in ATO_TO_SUBSTATUS.items():
+        if keyword in ato_lower:
+            return SUBSTATUS_TO_DB.get(sub, "2_ATENDER"), sub
+    # Default: move to "atender" (needs action)
+    return "2_ATENDER", "atender"
+
+
+def update_demanda_from_scan(job: dict, result: dict):
+    """Find the demanda matching this process and update ato/status."""
+    numero = clean_processo(job["numero_processo"])
+    ato = result.get("ato", "")
+    if not ato:
+        print(f"[JOB {job['id']}] No ato from scan, skipping demanda update")
+        return
+
+    # Find processo by numero_autos
+    proc_resp = (
+        supabase.table("processos")
+        .select("id")
+        .eq("numero_autos", numero)
+        .limit(1)
+        .execute()
+    )
+    if not proc_resp.data:
+        print(f"[JOB {job['id']}] Processo not found for {numero}")
+        return
+
+    processo_id = proc_resp.data[0]["id"]
+
+    # Find demanda with status 5_FILA for this processo
+    dem_resp = (
+        supabase.table("demandas")
+        .select("id, status")
+        .eq("processo_id", processo_id)
+        .eq("status", "5_FILA")
+        .order("created_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    if not dem_resp.data:
+        print(f"[JOB {job['id']}] No demanda in FILA for processo_id={processo_id}")
+        return
+
+    demanda_id = dem_resp.data[0]["id"]
+    db_status, substatus = resolve_substatus(ato)
+
+    update_fields: dict = {
+        "ato": ato[:100],
+        "status": db_status,
+        "substatus": substatus,
+        "updated_at": now_iso(),
+    }
+
+    providencias = result.get("providencias", "")
+    if providencias:
+        update_fields["providencias"] = providencias
+
+    supabase.table("demandas").update(update_fields).eq("id", demanda_id).execute()
+    print(f"[JOB {job['id']}] Demanda {demanda_id} updated: status={db_status}, substatus={substatus}, ato={ato[:50]}")
+
+
 # ---------------------------------------------------------------------------
 # Extraction JS — runs inside the PJe page
 # ---------------------------------------------------------------------------
@@ -288,6 +389,12 @@ Responda APENAS com JSON valido (sem markdown):
             )
             print(f"[JOB {job_id}] Completed: ato={result.get('ato')}, confianca={result.get('confianca')}")
 
+            # 9. Update corresponding demanda in the database
+            try:
+                update_demanda_from_scan(job, result)
+            except Exception as dem_err:
+                print(f"[JOB {job_id}] Warning: demanda update failed: {dem_err}")
+
     except Exception as exc:
         err_msg = f"{exc}\n{traceback.format_exc()}"[:2000]
         print(f"[JOB {job_id}] FAILED: {exc}")
@@ -312,7 +419,7 @@ def poll_and_process():
         supabase.table("scan_intimacoes_jobs")
         .select("*")
         .eq("status", "pending")
-        .order("created_at")
+        .order("created_at", desc=True)  # Most recent batch first
         .limit(1)
         .execute()
     )
