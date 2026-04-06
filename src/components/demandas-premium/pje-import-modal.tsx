@@ -21,7 +21,7 @@ import {
   type ResultadoVerificacaoDuplicatas,
   type ResultadoParserVVD,
 } from "@/lib/pje-parser";
-import { suggestAto } from "@/lib/ato-suggestion";
+import { suggestAtoWithText } from "@/lib/ato-suggestion";
 import { calcularPrazoPorAto } from "@/lib/prazo-calculator";
 import { PjeReviewTable, type PjeReviewRow } from "./pje-review-table";
 
@@ -254,10 +254,11 @@ export function PJeImportModal({
       // PJe Import v2: Construir review rows com ato sugerido e prazo auto
       const atribuicaoFinal = resultadoParser.atribuicaoDetectada || atribuicao;
       const rows: PjeReviewRow[] = verificacao.novas.map((intimacao, index) => {
-        const suggestion = suggestAto(
+        const suggestion = suggestAtoWithText(
           intimacao.tipoDocumento,
           intimacao.tipoProcesso,
-          atribuicaoFinal
+          atribuicaoFinal,
+          texto
         );
 
         // Calcular prazo automático baseado no ato sugerido
@@ -298,6 +299,11 @@ export function PJeImportModal({
           prazoManual: false,
           providencias: "",
           assistidoMatch: { type: "new" }, // Será atualizado pelo matchQuery
+          // Audiência detection from suggestAtoWithText
+          audienciaData: suggestion.audienciaDetection?.data,
+          audienciaHora: suggestion.audienciaDetection?.hora,
+          audienciaTipo: suggestion.audienciaDetection?.tipoAudiencia,
+          criarEventoAgenda: suggestion.audienciaDetection ? true : undefined,
         };
       });
 
@@ -406,7 +412,7 @@ export function PJeImportModal({
         );
         if (!intimacao) return null;
 
-        return intimacaoToDemanda(intimacao, atribuicao, {
+        const demanda = intimacaoToDemanda(intimacao, atribuicao, {
           ato: row.ato,
           status: row.status,
           prazo: row.prazo,
@@ -414,6 +420,14 @@ export function PJeImportModal({
           assistidoMatchId: row.assistidoMatch.matchedId,
           providencias: row.providencias,
         });
+
+        // Pass audiência fields through for import
+        demanda.audienciaData = row.audienciaData;
+        demanda.audienciaHora = row.audienciaHora;
+        demanda.audienciaTipo = row.audienciaTipo;
+        demanda.criarEventoAgenda = row.criarEventoAgenda;
+
+        return demanda;
       }).filter(Boolean);
 
       // Se atualizar duplicatas, adicionar as duplicadas com defaults

@@ -1423,6 +1423,11 @@ export default function Demandas() {
       vara: data.pjeData?.vara || undefined,
       idDocumentoPje: data.pjeData?.idDocumento || undefined,
       atribuicaoDetectada: data.pjeData?.atribuicaoDetectada || undefined,
+      // Audiência fields (from PJe Import v2 audiência detection)
+      audienciaData: data.audienciaData || undefined,
+      audienciaHora: data.audienciaHora || undefined,
+      audienciaTipo: data.audienciaTipo || undefined,
+      criarEventoAgenda: data.criarEventoAgenda || undefined,
     }));
 
     // Usar mutateAsync para retornar resultado ao modal (exibe confirmação do servidor)

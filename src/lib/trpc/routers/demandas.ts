@@ -2,6 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction } from "@/lib/db";
 import { demandas, processos, assistidos, users } from "@/lib/db/schema";
+import { audiencias, calendarEvents } from "@/lib/db/schema/agenda";
 import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull, not, asc, type SQL } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getDefensorResponsavel, getDefensoresVisiveis } from "../defensor-scope";
@@ -716,6 +717,11 @@ export const demandasRouter = router({
             vara: z.string().optional(), // Vara de Violência Doméstica, etc.
             idDocumentoPje: z.string().optional(), // ID único do documento PJe
             atribuicaoDetectada: z.string().optional(), // Atribuição auto-detectada pelo parser
+            // Audiência fields (PJe Import v2 audiência detection)
+            audienciaData: z.string().optional(), // YYYY-MM-DD
+            audienciaHora: z.string().optional(), // HH:MM
+            audienciaTipo: z.string().optional(), // tipo da audiência
+            criarEventoAgenda: z.boolean().optional(), // create calendar event
           })
         ),
         atualizarExistentes: z.boolean().optional().default(false),
@@ -1064,7 +1070,7 @@ export const demandasRouter = router({
           // createdAt = momento real da importação (para ordenar "mais novo primeiro")
           // ordemOriginal = posição no texto colado (para saber a ordem original do PJe)
           // importBatchId = UUID do lote (para agrupar demandas importadas juntas)
-          await db.insert(demandas).values({
+          const [insertedDemanda] = await db.insert(demandas).values({
             processoId: processo.id,
             assistidoId: assistido.id,
             ato: row.ato,
@@ -1091,6 +1097,47 @@ export const demandasRouter = router({
             } as Record<string, unknown> : undefined,
             // createdAt usa defaultNow() — momento real da importação
           }).returning();
+
+          // 7. Criar audiência + evento de calendário quando a intimação é de audiência
+          const isAudienciaAto = row.ato === "Ciência designação de audiência" ||
+            row.ato === "Ciência redesignação de audiência";
+
+          if (isAudienciaAto && row.criarEventoAgenda && row.audienciaData && insertedDemanda) {
+            try {
+              const dataStr = row.audienciaData;
+              const horaStr = row.audienciaHora || "09:00";
+              const dataAudiencia = new Date(`${dataStr}T${horaStr}:00`);
+
+              const tipoAud = row.audienciaTipo || "Instrução e Julgamento";
+              const titulo = `${tipoAud} — ${row.assistido}`;
+
+              // Create audiencia record
+              await db.insert(audiencias).values({
+                processoId: processo.id,
+                assistidoId: assistido.id,
+                dataAudiencia,
+                tipo: tipoAud.toLowerCase().replace(/ e /g, "_").replace(/ /g, "_"),
+                titulo,
+                status: "agendada",
+              });
+
+              // Create calendar event
+              await db.insert(calendarEvents).values({
+                title: titulo,
+                eventDate: dataAudiencia,
+                eventType: "audiencia",
+                processoId: processo.id,
+                assistidoId: assistido.id,
+                demandaId: insertedDemanda.id,
+                priority: "high",
+                isAllDay: false,
+                createdById: ctx.user.id,
+              });
+            } catch (audienciaError) {
+              // Don't fail the import if audiencia/calendar creation fails
+              console.error(`[import] Audiência creation failed for ${row.assistido}:`, audienciaError);
+            }
+          }
 
           results.imported++;
         } catch (error) {
