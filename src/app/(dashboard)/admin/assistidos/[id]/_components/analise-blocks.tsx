@@ -137,11 +137,65 @@ interface ProvaItem {
   favoravel: boolean;
 }
 
+interface ElementoInquisitorial {
+  tipo: string;
+  descricao: string;
+  origem: string;
+  peso: string;
+  contestavel: boolean;
+  argumento?: string;
+}
+
+interface ElementoProbatorio {
+  tipo: string;
+  descricao: string;
+  origem: string;
+  peso: string;
+  favoravel: boolean;
+  contestavel: boolean;
+}
+
+interface ProvaPericias {
+  tipo: string;
+  perito: string;
+  conclusao: string;
+  pontoCritico: string;
+  contestacao: string;
+}
+
+interface ProvaDocumental {
+  documento: string;
+  conteudo: string;
+  relevancia: string;
+  favoravel: boolean;
+}
+
+interface InformativoInvestigacao {
+  fonte: string;
+  dataApuracao: string;
+  conteudo: string;
+  informacoesRelevantes: string[];
+  credibilidade: string;
+}
+
+interface PossibilidadeProbatoria {
+  diligencia: string;
+  objetivo: string;
+  fundamento: string;
+  urgencia: string;
+}
+
 interface ProvasData {
-  provasAcusacao: ProvaItem[];
-  provasDefesa: ProvaItem[];
-  pericias: ProvaItem[];
-  lacunas: string[];
+  provasAcusacao?: ProvaItem[];
+  provasDefesa?: ProvaItem[];
+  pericias?: ProvaItem[];
+  lacunas?: string[];
+  elementosInquisitoriais?: ElementoInquisitorial[];
+  elementosProbatorios?: ElementoProbatorio[];
+  provasPericiais?: ProvaPericias[];
+  provasDocumentais?: ProvaDocumental[];
+  informativosInvestigacao?: InformativoInvestigacao[];
+  possibilidadesProbatorias?: PossibilidadeProbatoria[];
 }
 
 interface TesePrincipal {
@@ -149,7 +203,7 @@ interface TesePrincipal {
   fundamentoJuridico: string;
   fundamentoFatico: string;
   elementosQueCorroboram: string[];
-  pontosVulneraveis: string[];
+  pontosVulneraveis?: string[];
 }
 
 interface TeseSubsidiaria {
@@ -171,7 +225,34 @@ interface MatrizGuerraItem {
   versaoDefesa: string;
   elementosDeProva: string[];
   contradicoes: string[];
-  estrategia: string;
+  estrategia?: string;
+}
+
+interface Qualificadora {
+  tipo: string;
+  imputada: boolean;
+  contestavel: boolean;
+  argumento: string;
+}
+
+interface PontoDefesa {
+  ponto: string;
+  elementos: string[];
+}
+
+interface PontoAcusacao {
+  ponto: string;
+  elementos: string[];
+}
+
+interface PontoFracoDefesa {
+  ponto: string;
+  mitigacao: string;
+}
+
+interface PontoFracoAcusacao {
+  ponto: string;
+  comoExplorar: string;
 }
 
 interface EstrategiaData {
@@ -179,6 +260,15 @@ interface EstrategiaData {
   tesesSubsidiarias: TeseSubsidiaria[];
   nulidades: Nulidade[];
   matrizGuerra: MatrizGuerraItem[];
+  qualificadoras?: Qualificadora[];
+  pontosFortes?: {
+    defesa: PontoDefesa[];
+    acusacao: PontoAcusacao[];
+  };
+  pontosFracos?: {
+    defesa: PontoFracoDefesa[];
+    acusacao: PontoFracoAcusacao[];
+  };
 }
 
 interface PontoCritico {
@@ -187,9 +277,22 @@ interface PontoCritico {
   mitigacao: string;
 }
 
+interface Quesito {
+  texto: string;
+  estrategia: string;
+}
+
+interface InformacaoAtendimento {
+  data: string;
+  conteudo: string;
+  relevanciaParaCaso: string;
+}
+
 interface PreparacaoData {
   orientacaoAoAssistido: string;
   pontosCriticos: PontoCritico[];
+  quesitos?: Quesito[];
+  informacoesAtendimento?: InformacaoAtendimento[];
 }
 
 interface PainelDepoente {

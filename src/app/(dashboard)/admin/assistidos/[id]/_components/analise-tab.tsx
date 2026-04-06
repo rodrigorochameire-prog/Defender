@@ -181,14 +181,7 @@ const MOCK_ANALYSIS: AnalysisBlocksData = {
         fonte: "Informativo Policial — DRACO/Camacari",
         conteudo:
           "Apuracao sobre dinamica do trafico no Alto do Cruzeiro. Menciona vitima como 'associado' a faccao local, sem comprovacao formal.",
-        confiabilidade: "Media — fonte policial, porem sem provas documentais do envolvimento",
-        informacoesRelevantes: [
-          "Vitima mencionada como associada a faccao",
-          "Historico de conflitos armados na regiao",
-          "Disputa territorial entre grupos rivais",
-        ],
-        conexaoComCaso:
-          "Pode contextualizar perfil agressivo da vitima e ambiente de violencia, mas risco de preconceito contra reu",
+        relevancia: "Media — pode contextualizar perfil agressivo da vitima e ambiente de violencia",
       },
     ],
   },
