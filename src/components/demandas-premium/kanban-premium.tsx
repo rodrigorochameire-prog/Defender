@@ -755,6 +755,15 @@ export function KanbanPremium({
       }
     }
 
+    // Sort each column/subgroup by most recent first (dataInclusao DESC)
+    const sortRecent = (a: KanbanDemanda, b: KanbanDemanda) => {
+      const da = String(a.dataInclusao || "");
+      const db = String(b.dataInclusao || "");
+      return db.localeCompare(da);
+    };
+    for (const key of Object.keys(cols) as KanbanColumn[]) cols[key].sort(sortRecent);
+    for (const key of Object.keys(subs)) (subs as any)[key].sort(sortRecent);
+
     return {
       columnDemandas: cols,
       subGroupDemandas: subs,
