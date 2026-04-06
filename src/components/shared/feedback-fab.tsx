@@ -94,9 +94,6 @@ export function FeedbackFAB() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const pathname = usePathname();
 
-  // Don't render on login page
-  if (pathname === "/login") return null;
-
   const createFeedback = trpc.feedbacks.create.useMutation({
     onSuccess: () => {
       toast.success("Feedback enviado, obrigado!");
@@ -162,6 +159,9 @@ export function FeedbackFAB() {
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
+
+  // Don't render on login page (must be after all hooks)
+  if (pathname === "/login") return null;
 
   const canSubmit = !!tipo && mensagem.trim().length > 0;
 
