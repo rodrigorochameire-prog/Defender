@@ -474,8 +474,11 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
         // Caso 4-5: RÉU X MP → réu é esquerdo (LibProv, etc.)
         nomeAssistidoDaLinhaX = ladoEsquerdo;
       } else if (!ehMPouAutoridade(ladoEsquerdo) && !ehMPouAutoridade(ladoDireito)) {
-        // Caso 7: Ambos são nomes de pessoas (ex: InsanAc) → usar esquerdo
-        nomeAssistidoDaLinhaX = ladoEsquerdo;
+        // Caso 7: Ambos são nomes de pessoas
+        // Em MPU (REQUERENTE X REQUERIDO): assistido da DPE é o REQUERIDO (direito)
+        // Em InsanAc e outros: usar esquerdo (padrão)
+        const isMPUProcesso = intimacaoAtual.tipoProcesso?.toUpperCase() === 'MPUMPCRIM';
+        nomeAssistidoDaLinhaX = isMPUProcesso ? ladoDireito : ladoEsquerdo;
       } else {
         // Caso 6: Ambos são autoridades (Defensoria X MP)
         nomeAssistidoDaLinhaX = '';
@@ -483,9 +486,16 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
 
       // Usar nomeIntimadoAtual (nome acima do tipo de documento) como preferência
       // porque é o nome da pessoa que está sendo efetivamente intimada.
-      // EXCETO se o nome é uma autoridade (Defensoria, etc.) - nesse caso usar a linha X
+      // EXCETO:
+      // - Se o nome é uma autoridade (Defensoria, etc.) → usar a linha X
+      // - Se é MPU: a pessoa intimada pode ser a requerente (ofendida), mas o assistido
+      //   da DPE é o requerido (acusado). Nesse caso, preferir a linha X.
+      const isMPUAtual = intimacaoAtual.tipoProcesso?.toUpperCase() === 'MPUMPCRIM';
       let nomeAssistido = '';
-      if (nomeIntimadoAtual && !ehMPouAutoridade(nomeIntimadoAtual)) {
+      if (isMPUAtual && nomeAssistidoDaLinhaX) {
+        // Em MPU, preferir o nome extraído da linha X (já corrigido para lado direito/requerido)
+        nomeAssistido = nomeAssistidoDaLinhaX;
+      } else if (nomeIntimadoAtual && !ehMPouAutoridade(nomeIntimadoAtual)) {
         nomeAssistido = nomeIntimadoAtual;
       } else if (nomeAssistidoDaLinhaX) {
         nomeAssistido = nomeAssistidoDaLinhaX;
