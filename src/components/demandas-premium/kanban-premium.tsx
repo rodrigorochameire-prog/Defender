@@ -24,6 +24,7 @@ import {
 import {
   KANBAN_COLUMNS,
   SUB_GROUPS,
+  SUB_GROUP_SECTIONS,
   STATUS_GROUPS,
   GROUP_TO_COLUMN,
   getStatusConfig,
@@ -448,26 +449,54 @@ function EmAndamentoExpanded({
       {visibleSubGroups.map((sg) => {
         const items = subGroupDemandas[sg] || [];
 
+        const sections = SUB_GROUP_SECTIONS[sg];
+        const renderCard = (d: KanbanDemanda) => (
+          <KanbanCard
+            key={d.id}
+            demanda={d}
+            group={sg}
+            onCardClick={onCardClick}
+            onStatusChange={onStatusChange}
+            copyToClipboard={copyToClipboard}
+            isDragging={draggedDemandaId === String(d.id)}
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
+          />
+        );
+
         return (
           <div key={sg} className="flex flex-col min-w-0">
             <div className="mb-2">
               <SubGroupHeader group={sg} count={items.length} />
             </div>
             <div className="space-y-2.5 flex-1">
-              {items.slice(0, 30).map((d) => (
-                <KanbanCard
-                  key={d.id}
-                  demanda={d}
-                  group={sg}
-                  onCardClick={onCardClick}
-                  onStatusChange={onStatusChange}
-                  copyToClipboard={copyToClipboard}
-                  isDragging={draggedDemandaId === String(d.id)}
-                  onDragStart={onDragStart}
-                  onDragEnd={onDragEnd}
-                />
-              ))}
-              {items.length > 30 && (
+              {sections ? (
+                // Render with visual sections
+                sections.map((section) => {
+                  const sectionItems = items.filter((d) => {
+                    const key = (d.substatus || d.status || "").replace(/^\d+\s*-\s*/, "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
+                    return section.statuses.includes(key);
+                  });
+                  if (sectionItems.length === 0) return null;
+                  const SectionIcon = section.icon;
+                  return (
+                    <div key={section.label}>
+                      <div className="flex items-center gap-1.5 px-2 py-1 mb-1.5">
+                        <SectionIcon className="w-3 h-3 text-neutral-400" />
+                        <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider">{section.label}</span>
+                        <span className="text-[9px] font-mono text-neutral-300 ml-auto">{sectionItems.length}</span>
+                      </div>
+                      <div className="space-y-2 mb-3">
+                        {sectionItems.map(renderCard)}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                // Render flat (no sections — e.g. Diligências)
+                items.slice(0, 30).map(renderCard)
+              )}
+              {!sections && items.length > 30 && (
                 <p className="text-[10px] text-center text-neutral-400 py-2">
                   +{items.length - 30} mais
                 </p>

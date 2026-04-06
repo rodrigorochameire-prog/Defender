@@ -109,6 +109,23 @@ export const SUB_GROUPS: Record<EmAndamentoSubGroup, SubGroupConfig> = {
   },
 };
 
+/** Seções visuais dentro de cada sub-grupo (para o Kanban expandido) */
+export const SUB_GROUP_SECTIONS: Partial<Record<EmAndamentoSubGroup, Array<{
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  statuses: string[];
+}>>> = {
+  preparacao: [
+    { label: "Elaborar", icon: Edit, statuses: ["elaborar", "elaborando", "analisar", "relatorio"] },
+    { label: "Monitorar", icon: Eye, statuses: ["monitorar"] },
+    { label: "Revisar", icon: FileCheck, statuses: ["revisar", "revisando"] },
+  ],
+  saida: [
+    { label: "Protocolar", icon: Send, statuses: ["protocolar"] },
+    { label: "Delegação", icon: UserPlus, statuses: ["emilly", "amanda", "taissa"] },
+  ],
+};
+
 // ==========================================
 // STATUS_GROUPS (todos os grupos — incluindo sub-grupos)
 // ==========================================
@@ -191,11 +208,13 @@ export const DEMANDA_STATUS: Record<string, StatusConfig> = {
   fila:     { label: "Fila",     group: "triagem", icon: Inbox },
   urgente:  { label: "Urgente",  group: "triagem", icon: AlertCircle },
 
-  // === PREPARAÇÃO (4) ===
+  // === PREPARAÇÃO (7) — 3 seções: Elaborar, Monitorar, Revisar ===
   elaborar:   { label: "Elaborar",   group: "preparacao", icon: Edit },
   elaborando: { label: "Elaborando", group: "preparacao", icon: Edit },
   analisar:   { label: "Analisar",   group: "preparacao", icon: FileSearch },
   relatorio:  { label: "Relatório",  group: "preparacao", icon: ClipboardList },
+  revisar:    { label: "Revisar",    group: "preparacao", icon: FileCheck },
+  revisando:  { label: "Revisando",  group: "preparacao", icon: FileCheck },
 
   // === DILIGÊNCIAS (7) ===
   atender:     { label: "Atender",     group: "diligencias", icon: User },
@@ -206,9 +225,7 @@ export const DEMANDA_STATUS: Record<string, StatusConfig> = {
   diligenciar: { label: "Diligenciar", group: "diligencias", icon: FileText },
   oficiar:     { label: "Oficiar",     group: "diligencias", icon: Mail },
 
-  // === SAÍDA (6) ===
-  revisar:    { label: "Revisar",    group: "saida", icon: FileCheck },
-  revisando:  { label: "Revisando",  group: "saida", icon: FileCheck },
+  // === SAÍDA (4) — 2 seções: Protocolar, Delegação ===
   protocolar: { label: "Protocolar", group: "saida", icon: Send },
   emilly:     { label: "Emilly",     group: "saida", icon: UserPlus },
   amanda:     { label: "Amanda",     group: "saida", icon: UserPlus },
@@ -352,11 +369,16 @@ export const STATUS_OPTIONS_BY_COLUMN: Record<KanbanColumn, Array<{ value: strin
     { value: "fila", label: "Fila", group: "triagem" },
   ],
   em_andamento: [
-    // Preparação
+    // Preparação — Elaborar
     { value: "elaborar", label: "Elaborar", group: "preparacao" },
     { value: "elaborando", label: "Elaborando", group: "preparacao" },
     { value: "analisar", label: "Analisar", group: "preparacao" },
     { value: "relatorio", label: "Relatório", group: "preparacao" },
+    // Preparação — Monitorar
+    { value: "monitorar", label: "Monitorar", group: "preparacao" },
+    // Preparação — Revisar
+    { value: "revisar", label: "Revisar", group: "preparacao" },
+    { value: "revisando", label: "Revisando", group: "preparacao" },
     // Diligências
     { value: "atender", label: "Atender", group: "diligencias" },
     { value: "documentos", label: "Documentos", group: "diligencias" },
@@ -365,15 +387,12 @@ export const STATUS_OPTIONS_BY_COLUMN: Record<KanbanColumn, Array<{ value: strin
     { value: "buscar", label: "Buscar", group: "diligencias" },
     { value: "diligenciar", label: "Diligenciar", group: "diligencias" },
     { value: "oficiar", label: "Oficiar", group: "diligencias" },
-    // Saída
-    { value: "revisar", label: "Revisar", group: "saida" },
-    { value: "revisando", label: "Revisando", group: "saida" },
+    // Saída — Protocolar
     { value: "protocolar", label: "Protocolar", group: "saida" },
+    // Saída — Delegação
     { value: "emilly", label: "Emilly", group: "saida" },
     { value: "amanda", label: "Amanda", group: "saida" },
     { value: "taissa", label: "Taissa", group: "saida" },
-    // Monitorar (em Preparação)
-    { value: "monitorar", label: "Monitorar", group: "preparacao" },
   ],
   concluida: [
     { value: "protocolado", label: "Protocolado", group: "concluida" },
