@@ -383,12 +383,12 @@ export function PJeImportModal({
           }
         }
 
-        // Não preencher ato quando:
-        // - Confiança é baixa (fallback genérico)
-        // - Ato é genérico "Ciência" sem especificidade (precisa do scan para determinar o real)
-        // Manter preenchido quando é específico: "Resposta à Acusação", "Ciência designação de audiência", etc.
-        const isGenericCiencia = /^Ciência$/i.test(suggestion.ato) || /^Ciência de decisão$/i.test(suggestion.ato);
-        const atoFinal = (suggestion.confidence === "low" || isGenericCiencia) ? "" : suggestion.ato;
+        // Só preencher ato automaticamente quando houver ALTO grau de certeza:
+        // - "Ciência designação de audiência" (detectou data/hora no texto)
+        // - "Ciência redesignação de audiência" (idem)
+        // Todos os demais ficam vazios para scan automático ou preenchimento manual.
+        const isAudienciaDetection = suggestion.audienciaDetection != null;
+        const atoFinal = isAudienciaDetection ? suggestion.ato : "";
         const prazoFinal = atoFinal ? prazoCalculado : "";
 
         return {
