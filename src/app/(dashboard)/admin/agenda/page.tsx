@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AgendaFilters } from "@/components/agenda/agenda-filters";
+import { PrepararAudienciasModal } from "@/components/agenda/preparar-audiencias-modal";
 import { EventoCreateModal } from "@/components/agenda/evento-create-modal";
 import { AgendaExportModal } from "@/components/agenda/agenda-export-modal";
 import { PJeAgendaImportModal } from "@/components/agenda/pje-agenda-import-modal";
@@ -1905,6 +1906,8 @@ export default function AgendaPage() {
           evento={selectedEvento}
         />
       )}
+
+      <PrepararAudienciasModal />
 
       <BuscaRegistrosModal
         isOpen={isBuscaRegistrosModalOpen}

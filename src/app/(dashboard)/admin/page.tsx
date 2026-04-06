@@ -1,6 +1,7 @@
 "use client";
 
 import DashboardJuriPage from "./dashboard/page";
+import { PrepararAudienciasModal } from "@/components/agenda/preparar-audiencias-modal";
 
 /**
  * Página principal do admin que renderiza o dashboard unificado
@@ -9,5 +10,10 @@ import DashboardJuriPage from "./dashboard/page";
  * (estagiário, servidor, triagem) via DashboardPorPerfil.
  */
 export default function AdminPage() {
-  return <DashboardJuriPage />;
+  return (
+    <>
+      <DashboardJuriPage />
+      <PrepararAudienciasModal />
+    </>
+  );
 }
