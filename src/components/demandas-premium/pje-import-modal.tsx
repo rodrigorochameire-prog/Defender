@@ -383,13 +383,11 @@ export function PJeImportModal({
           }
         }
 
-        // Só preencher ato automaticamente quando houver ALTO grau de certeza:
-        // - "Ciência designação de audiência" (detectou data/hora no texto)
-        // - "Ciência redesignação de audiência" (idem)
-        // Todos os demais ficam vazios para scan automático ou preenchimento manual.
-        const isAudienciaDetection = suggestion.audienciaDetection != null;
-        const atoFinal = isAudienciaDetection ? suggestion.ato : "";
-        const prazoFinal = atoFinal ? prazoCalculado : "";
+        // Ato sempre vazio por padrão — preenchimento via scan automático ou manual.
+        // A detecção de audiência no texto colado é imprecisa (texto contém TODAS as
+        // intimações misturadas, não o conteúdo individual de cada uma).
+        const atoFinal = "";
+        const prazoFinal = "";
 
         return {
           assistidoNome: intimacao.assistido,
@@ -401,18 +399,18 @@ export function PJeImportModal({
           ordemOriginal: intimacao.ordemOriginal ?? index,
           ato: atoFinal,
           atoConfidence: suggestion.confidence,
-          status: atoFinal && atoFinal.startsWith("Ciência") ? "ciencia" : "analisar",
+          status: "analisar",
           prazo: prazoFinal,
           estadoPrisional: "Solto",
           excluded: false,
           prazoManual: false,
           providencias: "",
           assistidoMatch: { type: "new" }, // Será atualizado pelo matchQuery
-          // Audiência detection from suggestAtoWithText
-          audienciaData: suggestion.audienciaDetection?.data,
-          audienciaHora: suggestion.audienciaDetection?.hora,
-          audienciaTipo: suggestion.audienciaDetection?.tipoAudiencia,
-          criarEventoAgenda: suggestion.audienciaDetection ? true : undefined,
+          // Audiência: não preencher automaticamente (scan resolverá)
+          audienciaData: undefined,
+          audienciaHora: undefined,
+          audienciaTipo: undefined,
+          criarEventoAgenda: undefined,
         };
       });
 
