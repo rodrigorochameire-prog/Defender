@@ -116,9 +116,20 @@ export const SUB_GROUP_SECTIONS: Partial<Record<EmAndamentoSubGroup, Array<{
   statuses: string[];
 }>>> = {
   preparacao: [
-    { label: "Elaborar", icon: Edit, statuses: ["elaborar", "elaborando", "analisar", "relatorio"] },
+    { label: "Analisar", icon: FileSearch, statuses: ["analisar"] },
+    { label: "Elaborar", icon: Edit, statuses: ["elaborar", "elaborando"] },
+    { label: "Relatório", icon: ClipboardList, statuses: ["relatorio"] },
     { label: "Monitorar", icon: Eye, statuses: ["monitorar"] },
     { label: "Revisar", icon: FileCheck, statuses: ["revisar", "revisando"] },
+  ],
+  diligencias: [
+    { label: "Atender", icon: User, statuses: ["atender"] },
+    { label: "Buscar", icon: Search, statuses: ["buscar"] },
+    { label: "Diligenciar", icon: FileText, statuses: ["diligenciar"] },
+    { label: "Investigar", icon: Eye, statuses: ["investigar"] },
+    { label: "Documentos", icon: FileText, statuses: ["documentos"] },
+    { label: "Testemunhas", icon: Users, statuses: ["testemunhas"] },
+    { label: "Oficiar", icon: Mail, statuses: ["oficiar"] },
   ],
   saida: [
     { label: "Protocolar", icon: Send, statuses: ["protocolar"] },
