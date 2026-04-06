@@ -651,7 +651,7 @@ export default function Demandas() {
   // ==========================================
   // BUSCA DADOS REAIS DO BANCO DE DADOS
   // ==========================================
-  const demandasQuery = trpc.demandas.list.useQuery({ limit: 100 });
+  const demandasQuery = trpc.demandas.list.useQuery({ limit: 500 });
   const { data: demandasDB = EMPTY_DEMANDAS, isLoading: loadingDemandas } = useOfflineQuery(
     demandasQuery,
     getOfflineDemandas,
