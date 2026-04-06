@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Check, AlertTriangle, Filter, Eye, EyeOff, FileText, AlertCircle, UserPlus, SquarePen, BarChart3 } from "lucide-react";
+import { Check, AlertTriangle, Filter, Eye, EyeOff, FileText, AlertCircle, UserPlus, SquarePen, BarChart3, ScanSearch, Loader2 } from "lucide-react";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
 import { getAtosPorAtribuicao, getTodosAtosUnicos } from "@/config/atos-por-atribuicao";
@@ -63,6 +63,8 @@ interface PjeReviewTableProps {
   onRowsChange: (rows: PjeReviewRow[]) => void;
   atribuicao: string;
   showTipoProcesso?: boolean; // Mostra badge MPU/Geral para VVD
+  onScanRow?: (index: number) => void;
+  scanningIndex?: number; // which row is currently being scanned
 }
 
 // ============================================================================
@@ -143,6 +145,8 @@ export function PjeReviewTable({
   onRowsChange,
   atribuicao,
   showTipoProcesso = false,
+  onScanRow,
+  scanningIndex,
 }: PjeReviewTableProps) {
   // Filtros
   const [confidenceFilter, setConfidenceFilter] = useState<ConfidenceFilter>("all");
@@ -465,6 +469,8 @@ export function PjeReviewTable({
               onProvidenciasChange={handleProvidenciasChange}
               onAudienciaChange={handleAudienciaChange}
               showTipoProcesso={showTipoProcesso}
+              onScanRow={onScanRow}
+              scanningIndex={scanningIndex}
             />
           ))}
 
@@ -497,6 +503,8 @@ interface PjeReviewRowProps {
   onProvidenciasChange: (index: number, value: string) => void;
   onAudienciaChange: (index: number, fields: { data?: string; hora?: string; tipo?: string; criarEvento?: boolean }) => void;
   showTipoProcesso?: boolean;
+  onScanRow?: (index: number) => void;
+  scanningIndex?: number;
 }
 
 function PjeReviewRowComponent({
@@ -513,6 +521,8 @@ function PjeReviewRowComponent({
   onProvidenciasChange,
   onAudienciaChange,
   showTipoProcesso = false,
+  onScanRow,
+  scanningIndex,
 }: PjeReviewRowProps) {
   const [expandedProv, setExpandedProv] = useState(false);
   const [provDraft, setProvDraft] = useState(row.providencias ?? "");
@@ -667,6 +677,26 @@ function PjeReviewRowComponent({
             options={atoOptions}
             onChange={(v) => onAtoChange(index, v)}
           />
+          {!row.ato && onScanRow && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => onScanRow(index)}
+                  disabled={scanningIndex === index}
+                  className="p-0.5 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors disabled:opacity-50"
+                >
+                  {scanningIndex === index ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <ScanSearch className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                Escanear este processo
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
 
         {/* Prazo */}

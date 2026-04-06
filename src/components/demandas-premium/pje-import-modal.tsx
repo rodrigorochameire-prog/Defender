@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect, useMemo } from "react";
-import { FileText, AlertCircle, CheckCircle2, Upload, Download, Settings, User, Scale, ArrowRight, Sparkles, Info, Edit3, AlertTriangle, ChevronDown, Shield, MessageCircle, RefreshCw, Loader2, Radar } from "lucide-react";
+import { FileText, AlertCircle, CheckCircle2, Upload, Download, Settings, User, Scale, ArrowRight, Sparkles, Info, Edit3, AlertTriangle, ChevronDown, Shield, MessageCircle, RefreshCw, Loader2, Radar, ScanSearch } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
@@ -22,6 +22,7 @@ import {
   type ResultadoParserVVD,
 } from "@/lib/pje-parser";
 import { suggestAtoWithText } from "@/lib/ato-suggestion";
+import type { ScanIntimacaoResult } from "@/lib/services/enrichment-client";
 import { calcularPrazoPorAto } from "@/lib/prazo-calculator";
 import { PjeReviewTable, type PjeReviewRow } from "./pje-review-table";
 
@@ -96,6 +97,12 @@ export function PJeImportModal({
   const [isScraping, setIsScraping] = useState(false);
   const [scrapeProgress, setScrapeProgress] = useState<string | null>(null);
 
+  // PJe Scan — escanear intimações para preencher ato/providências
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState<{ current: number; total: number; currentProcesso: string }>({ current: 0, total: 0, currentProcesso: "" });
+  const [scanResults, setScanResults] = useState<Map<string, ScanIntimacaoResult>>(new Map());
+  const [scanningRowIndex, setScanningRowIndex] = useState<number | undefined>(undefined);
+
   // Mutation para importação VVD
   const importarVVDMutation = trpc.vvd.importarIntimacoesPJe.useMutation({
     onSuccess: (resultado) => {
@@ -155,6 +162,100 @@ export function PJeImportModal({
     setIsScraping(true);
     setScrapeProgress(`Escaneando ${processosParaScrape.length} processos no PJe...`);
     scrapePjeMutation.mutate({ processos: processosParaScrape });
+  };
+
+  // Mutation para scan de intimações PJe
+  const scanIntimacoesMutation = trpc.enrichment.scanIntimacoessPje.useMutation({
+    onSuccess: (result) => {
+      setIsScanning(false);
+      setScanningRowIndex(undefined);
+      if (result.success && result.data) {
+        const newResults = new Map(scanResults);
+        const newRows = [...reviewRows];
+        for (const r of result.data.resultados) {
+          newResults.set(r.numero_processo, r);
+          // Update matching row
+          const rowIdx = newRows.findIndex((row) => row.numeroProcesso === r.numero_processo);
+          if (rowIdx >= 0 && r.status === "success") {
+            if (r.ato_sugerido) {
+              newRows[rowIdx] = {
+                ...newRows[rowIdx],
+                ato: r.ato_sugerido,
+                atoConfidence: r.ato_confianca || "medium",
+              };
+              // Recalculate prazo if not manual
+              if (!newRows[rowIdx].prazoManual && r.ato_sugerido) {
+                const novoPrazo = calcularPrazoPorAto(
+                  (() => {
+                    const de = newRows[rowIdx].dataExpedicao;
+                    if (!de) return new Date();
+                    if (de.includes("-")) return new Date(de + "T12:00:00");
+                    const parts = de.split(/[\s/]/);
+                    return new Date(parseInt(parts[2]) < 100 ? 2000 + parseInt(parts[2]) : parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+                  })(),
+                  r.ato_sugerido,
+                );
+                if (novoPrazo) newRows[rowIdx].prazo = novoPrazo;
+              }
+            }
+            if (r.providencias) newRows[rowIdx].providencias = r.providencias;
+            if (r.audiencia_data) newRows[rowIdx].audienciaData = r.audiencia_data;
+            if (r.audiencia_hora) newRows[rowIdx].audienciaHora = r.audiencia_hora;
+            if (r.audiencia_tipo) newRows[rowIdx].audienciaTipo = r.audiencia_tipo;
+          }
+        }
+        setScanResults(newResults);
+        setReviewRows(newRows);
+        toast.success(
+          `${result.data.total_success} intimações escaneadas${result.data.total_errors > 0 ? ` (${result.data.total_errors} erros)` : ""}`,
+          { duration: 4000 },
+        );
+      } else {
+        toast.error(result.error || "Erro no scan de intimações");
+      }
+    },
+    onError: (error) => {
+      setIsScanning(false);
+      setScanningRowIndex(undefined);
+      toast.error(`Erro no scan: ${error.message}`);
+    },
+  });
+
+  const DRIVE_BASE_PATH = "/Users/rodrigorochameire/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP";
+
+  const handleScan = () => {
+    const vazios = reviewRows
+      .map((r, i) => ({ r, i }))
+      .filter(({ r }) => !r.excluded && !r.ato);
+
+    if (vazios.length === 0) return;
+
+    setIsScanning(true);
+    setScanProgress({ current: 0, total: vazios.length, currentProcesso: vazios[0].r.numeroProcesso });
+
+    scanIntimacoesMutation.mutate({
+      intimacoes: vazios.map(({ r }) => ({
+        numeroProcesso: r.numeroProcesso,
+        assistidoNome: r.assistidoNome,
+        atribuicao: atribuicao,
+      })),
+      driveBasePath: DRIVE_BASE_PATH,
+    });
+  };
+
+  const handleScanRow = (index: number) => {
+    const row = reviewRows[index];
+    if (!row || row.ato) return;
+
+    setScanningRowIndex(index);
+    scanIntimacoesMutation.mutate({
+      intimacoes: [{
+        numeroProcesso: row.numeroProcesso,
+        assistidoNome: row.assistidoNome,
+        atribuicao: atribuicao,
+      }],
+      driveBasePath: DRIVE_BASE_PATH,
+    });
   };
 
   // Batch match de assistidos (PJe Import v2)
@@ -999,12 +1100,38 @@ export function PJeImportModal({
                   )}
                 </div>
 
+                {/* Scan button / progress */}
+                {(() => {
+                  const vaziosCount = reviewRows.filter((r) => !r.excluded && !r.ato).length;
+                  if (vaziosCount === 0 && !isScanning) return null;
+                  return (
+                    <div className="flex items-center gap-2 px-1 pb-1">
+                      {isScanning ? (
+                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Escaneando {scanProgress.current}/{scanProgress.total}... {scanProgress.currentProcesso}
+                        </span>
+                      ) : (
+                        <button
+                          onClick={handleScan}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                        >
+                          <ScanSearch className="w-3.5 h-3.5" />
+                          Escanear {vaziosCount} vazios
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 <div className="max-h-[420px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent">
                   <PjeReviewTable
                     rows={reviewRows}
                     onRowsChange={setReviewRows}
                     atribuicao={atribuicao}
                     showTipoProcesso={isVVD}
+                    onScanRow={handleScanRow}
+                    scanningIndex={scanningRowIndex}
                   />
                 </div>
               </div>

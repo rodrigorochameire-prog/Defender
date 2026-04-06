@@ -23,6 +23,7 @@ import {
   type EnrichPjeOutput,
   type EnrichTranscriptOutput,
   type EnrichAudienciaOutput,
+  type ScanIntimacoesOutput,
 } from "@/lib/services/enrichment-client";
 
 // ==========================================
@@ -44,6 +45,16 @@ const enrichTranscriptInputSchema = z.object({
 
 const enrichAudienciaInputSchema = z.object({
   pautaText: z.string().min(10, "Pauta muito curta"),
+});
+
+const scanIntimacoesInputSchema = z.object({
+  intimacoes: z.array(z.object({
+    numeroProcesso: z.string(),
+    assistidoNome: z.string(),
+    atribuicao: z.string(),
+    idDocumento: z.string().optional(),
+  })),
+  driveBasePath: z.string(),
 });
 
 const enrichmentStatusInputSchema = z.object({
@@ -363,6 +374,37 @@ export const enrichmentRouter = router({
         return {
           success: false,
           error: error instanceof Error ? error.message : "Erro na extração de audiências",
+          data: null,
+        };
+      }
+    }),
+
+  /**
+   * Escanear intimações PJe — extrai ato, providências e audiência de PDFs
+   * Retorna dados estruturados para preencher a review table
+   */
+  scanIntimacoessPje: protectedProcedure
+    .input(scanIntimacoesInputSchema)
+    .mutation(async ({ input }) => {
+      try {
+        const result = await enrichmentClient.scanIntimacoessPje(
+          input.intimacoes.map((i) => ({
+            numero_processo: i.numeroProcesso,
+            assistido_nome: i.assistidoNome,
+            atribuicao: i.atribuicao,
+            id_documento: i.idDocumento,
+          })),
+          input.driveBasePath,
+        );
+
+        return {
+          success: true,
+          data: result,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Erro no scan de intimações",
           data: null,
         };
       }

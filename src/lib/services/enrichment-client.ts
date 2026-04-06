@@ -540,6 +540,35 @@ export interface GenerateFichaOutput {
   confidence: number;
 }
 
+// === PJe Scan Intimações Types ===
+
+export interface ScanIntimacaoInput {
+  numero_processo: string;
+  assistido_nome: string;
+  atribuicao: string;
+  id_documento?: string;
+}
+
+export interface ScanIntimacaoResult {
+  numero_processo: string;
+  status: "success" | "error";
+  ato_sugerido?: string;
+  ato_confianca?: "high" | "medium";
+  providencias?: string;
+  audiencia_data?: string;
+  audiencia_hora?: string;
+  audiencia_tipo?: string;
+  pdf_path?: string;
+  conteudo_resumo?: string;
+  error?: string;
+}
+
+export interface ScanIntimacoesOutput {
+  resultados: ScanIntimacaoResult[];
+  total_success: number;
+  total_errors: number;
+}
+
 // === Client ===
 
 class EnrichmentClient {
@@ -1204,6 +1233,25 @@ class EnrichmentClient {
     }>;
   }> {
     return this.request("/enrich/drive-organize", input, 120_000);
+  }
+
+  /**
+   * Escanear intimações PJe — extrai ato, providências e audiência de PDFs.
+   * Chamado pelo: tRPC enrichment.scanIntimacoessPje
+   */
+  async scanIntimacoessPje(
+    intimacoes: ScanIntimacaoInput[],
+    driveBasePath: string,
+  ): Promise<ScanIntimacoesOutput> {
+    return this.request<ScanIntimacoesOutput>("/pje/scan-intimacoes", {
+      intimacoes: intimacoes.map((i) => ({
+        numero_processo: i.numero_processo,
+        assistido_nome: i.assistido_nome,
+        atribuicao: i.atribuicao,
+        id_documento: i.id_documento ?? null,
+      })),
+      drive_base_path: driveBasePath,
+    }, 300_000); // 5min timeout — scanning can be slow
   }
 
   /**
