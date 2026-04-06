@@ -79,7 +79,7 @@ class Settings(BaseSettings):
     search_default_limit: int = 20
 
     # --- PJe Scraper (CDP — connect to existing Chrome) ---
-    pje_cdp_url: str = "http://localhost:9222"
+    pje_cdp_url: str = "http://127.0.0.1:9222"
     pje_scrape_rate_limit_seconds: float = 2.0  # delay between process navigations
     pje_scrape_timeout: int = 30_000  # ms per page load
     pje_cert_password: str = ""  # senha do certificado digital (A3/A1)

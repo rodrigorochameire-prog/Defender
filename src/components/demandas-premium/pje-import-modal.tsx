@@ -383,8 +383,12 @@ export function PJeImportModal({
           }
         }
 
-        // Se confiança é baixa, não preencher ato — deixar para o usuário ou scan automático
-        const atoFinal = suggestion.confidence === "low" ? "" : suggestion.ato;
+        // Não preencher ato quando:
+        // - Confiança é baixa (fallback genérico)
+        // - Ato é genérico "Ciência" sem especificidade (precisa do scan para determinar o real)
+        // Manter preenchido quando é específico: "Resposta à Acusação", "Ciência designação de audiência", etc.
+        const isGenericCiencia = /^Ciência$/i.test(suggestion.ato) || /^Ciência de decisão$/i.test(suggestion.ato);
+        const atoFinal = (suggestion.confidence === "low" || isGenericCiencia) ? "" : suggestion.ato;
         const prazoFinal = atoFinal ? prazoCalculado : "";
 
         return {
