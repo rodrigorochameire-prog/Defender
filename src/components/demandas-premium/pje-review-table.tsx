@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Check, AlertTriangle, Filter, Wand2, Eye, EyeOff, FileText } from "lucide-react";
+import { Check, AlertTriangle, Filter, Eye, EyeOff, FileText, AlertCircle, UserPlus, SquarePen, BarChart3 } from "lucide-react";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
 import { getAtosPorAtribuicao, getTodosAtosUnicos } from "@/config/atos-por-atribuicao";
@@ -296,204 +296,180 @@ export function PjeReviewTable({
   return (
     <TooltipProvider>
       <div className="space-y-3">
-        {/* Barra de resumo */}
-        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground px-1">
-          <span className="font-medium text-foreground/80">
+        {/* Stats line + alerta sutil */}
+        <div className="flex flex-wrap items-center gap-3 px-1">
+          <span className="text-xs font-semibold text-foreground">
             {includedCount}/{rows.length} para importar
           </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+          <span className="h-3.5 w-px bg-border" />
+          <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             {matchExact} encontrados
           </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
+          <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
             {matchSimilar} similares
           </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-red-500" />
+          <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
             {matchNew} novos
           </span>
+          <span className="flex-1" />
           {lowConfCount > 0 && (
-            <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
-              <AlertTriangle className="w-3 h-3" />
+            <button
+              onClick={() => setConfidenceFilter(confidenceFilter === "low" ? "all" : "low")}
+              className="flex items-center gap-1.5 text-[11px] text-amber-700 dark:text-amber-400 font-medium hover:text-amber-800 dark:hover:text-amber-300 transition-colors cursor-pointer"
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
               {lowConfCount} a conferir
-            </span>
+            </button>
           )}
         </div>
 
-        {/* Barra de filtros + ações em massa */}
-        <div className="flex flex-wrap items-center gap-2 px-1">
-          {/* Filtros rápidos */}
-          <div className="flex items-center gap-1">
-            <Filter className="w-3 h-3 text-muted-foreground" />
-            <span className="text-[10px] text-muted-foreground font-medium mr-0.5">Filtros:</span>
-            {/* Confiança */}
+        {/* Barra de filtros + ações bulk */}
+        <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-700/80 rounded-lg">
+          <Filter className="w-3 h-3 text-muted-foreground mr-0.5" />
+          {/* Filtro: Baixa confiança */}
+          <button
+            onClick={() => setConfidenceFilter(confidenceFilter === "low" ? "all" : "low")}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors ${
+              confidenceFilter === "low"
+                ? "bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-400"
+                : "bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-600"
+            }`}
+          >
+            <AlertCircle className="w-2.5 h-2.5" />
+            Baixa confiança
+          </button>
+          {/* Filtro: Novos */}
+          <button
+            onClick={() => setMatchFilter(matchFilter === "new" ? "all" : "new")}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors ${
+              matchFilter === "new"
+                ? "bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400"
+                : "bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-600"
+            }`}
+          >
+            <UserPlus className="w-2.5 h-2.5" />
+            Novos
+          </button>
+          {/* Filtro: Excluídos */}
+          <button
+            onClick={() => setShowExcluded(!showExcluded)}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors ${
+              !showExcluded
+                ? "bg-neutral-100 dark:bg-neutral-700 border border-neutral-300 dark:border-neutral-600 text-foreground/80"
+                : "bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-600"
+            }`}
+          >
+            {showExcluded ? <Eye className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
+            Excluídos
+          </button>
+          {/* Reset */}
+          {(confidenceFilter !== "all" || matchFilter !== "all" || !showExcluded) && (
             <button
-              onClick={() => setConfidenceFilter(confidenceFilter === "low" ? "all" : "low")}
-              className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
-                confidenceFilter === "low"
-                  ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
+              onClick={() => { setConfidenceFilter("all"); setMatchFilter("all"); setShowExcluded(true); }}
+              className="px-2 py-1 rounded-md text-[10px] text-muted-foreground hover:text-foreground transition-colors"
             >
-              Baixa confiança
+              Limpar
             </button>
-            {/* Match novos */}
-            <button
-              onClick={() => setMatchFilter(matchFilter === "new" ? "all" : "new")}
-              className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
-                matchFilter === "new"
-                  ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-            >
-              Novos
-            </button>
-            {/* Toggle excluídos */}
-            <button
-              onClick={() => setShowExcluded(!showExcluded)}
-              className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors flex items-center gap-0.5 ${
-                !showExcluded
-                  ? "bg-secondary text-foreground/80"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-            >
-              {showExcluded ? <Eye className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
-              Excluídos
-            </button>
-            {/* Reset */}
-            {(confidenceFilter !== "all" || matchFilter !== "all" || !showExcluded) && (
-              <button
-                onClick={() => { setConfidenceFilter("all"); setMatchFilter("all"); setShowExcluded(true); }}
-                className="px-1.5 py-0.5 rounded text-[10px] text-muted-foreground hover:text-foreground"
-              >
-                Limpar
-              </button>
-            )}
-          </div>
+          )}
 
-          <div className="h-4 w-px bg-border mx-1" />
+          <span className="h-3.5 w-px bg-neutral-300 dark:bg-neutral-600 mx-0.5" />
 
-          {/* Ações em massa */}
-          <div className="flex items-center gap-1">
-            <Wand2 className="w-3 h-3 text-muted-foreground" />
-            <span className="text-[10px] text-muted-foreground font-medium mr-0.5">Lote:</span>
-            {/* Bulk Ato — via InlineDropdown */}
-            <InlineDropdown
-              value={bulkAto}
-              compact
-              displayValue={
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 font-medium">
-                  Ato p/ todos
-                </span>
-              }
-              options={atoOptions}
-              onChange={handleBulkAto}
-            />
-            {/* Bulk Status */}
-            <InlineDropdown
-              value={bulkStatus}
-              compact
-              displayValue={
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 font-medium">
-                  Status p/ todos
-                </span>
-              }
-              options={statusOptions}
-              onChange={handleBulkStatus}
-            />
-            {/* Quick: excluir ciências */}
-            {cienciaCount > 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={handleExcludeCiencias}
-                    className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
-                  >
-                    Excluir {cienciaCount} ciências
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">
-                  Desmarca todas as intimações de ciência (normalmente não geram trabalho)
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </div>
+          {/* Bulk: Ato p/ todos */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <InlineDropdown
+                  value={bulkAto}
+                  compact
+                  displayValue={
+                    <span className="flex items-center justify-center w-7 h-7 rounded-md bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/50 transition-colors cursor-pointer">
+                      <SquarePen className="w-3.5 h-3.5" />
+                    </span>
+                  }
+                  options={atoOptions}
+                  onChange={handleBulkAto}
+                />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">Ato p/ todos</TooltipContent>
+          </Tooltip>
+          {/* Bulk: Status p/ todos */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <InlineDropdown
+                  value={bulkStatus}
+                  compact
+                  displayValue={
+                    <span className="flex items-center justify-center w-7 h-7 rounded-md bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/50 transition-colors cursor-pointer">
+                      <BarChart3 className="w-3.5 h-3.5" />
+                    </span>
+                  }
+                  options={statusOptions}
+                  onChange={handleBulkStatus}
+                />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">Status p/ todos</TooltipContent>
+          </Tooltip>
+          {/* Quick: excluir ciências */}
+          {cienciaCount > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={handleExcludeCiencias}
+                  className="px-2.5 py-1 rounded-md text-[10px] font-medium bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:bg-red-50 hover:border-red-200 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:border-red-700 dark:hover:text-red-400 transition-colors"
+                >
+                  Excluir {cienciaCount} ciências
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                Desmarca todas as intimações de ciência (normalmente não geram trabalho)
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
 
-        {/* Tabela */}
-        <div className="border border-border rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="bg-muted/50 border-b border-border">
-                  <th className="w-8 px-2 py-2 text-center">
-                    <button
-                      onClick={handleToggleAll}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                      title={rows.every((r) => !r.excluded) ? "Desmarcar todos" : "Marcar todos"}
-                    >
-                      <Check className="h-3.5 w-3.5" />
-                    </button>
-                  </th>
-                  <th className="w-8 px-1 py-2 text-center text-muted-foreground font-medium">
-                    #
-                  </th>
-                  <th className="px-2 py-2 text-left text-muted-foreground font-medium min-w-[160px]">
-                    Assistido
-                  </th>
-                  <th className="px-2 py-2 text-left text-muted-foreground font-medium min-w-[140px]">
-                    Processo
-                  </th>
-                  {showTipoProcesso && (
-                    <th className="px-2 py-2 text-left text-muted-foreground font-medium min-w-[60px]">
-                      Tipo
-                    </th>
-                  )}
-                  <th className="px-2 py-2 text-left text-muted-foreground font-medium min-w-[75px]">
-                    Expedição
-                  </th>
-                  <th className="px-2 py-2 text-left text-muted-foreground font-medium min-w-[150px]">
-                    Ato
-                  </th>
-                  <th className="px-2 py-2 text-left text-muted-foreground font-medium min-w-[90px]">
-                    Prazo
-                  </th>
-                  <th className="px-2 py-2 text-left text-muted-foreground font-medium min-w-[100px]">
-                    Status
-                  </th>
-                  <th className="px-2 py-2 text-left text-muted-foreground font-medium min-w-[80px]">
-                    Preso
-                  </th>
-                  <th className="w-8 px-2 py-2 text-center text-muted-foreground font-medium">
-                    <FileText className="h-3 w-3 inline" />
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRows.map(({ row, originalIndex }) => (
-                  <PjeReviewRowComponent
-                    key={row.ordemOriginal}
-                    row={row}
-                    index={originalIndex}
-                    atoOptions={atoOptions}
-                    statusOptions={statusOptions}
-                    estadoPrisionalOptions={estadoPrisionalOptions}
-                    onAtoChange={handleAtoChange}
-                    onPrazoChange={handlePrazoChange}
-                    onStatusChange={(i, v) => updateRow(i, { status: v })}
-                    onEstadoPrisionalChange={(i, v) => updateRow(i, { estadoPrisional: v })}
-                    onToggleExclude={handleToggleExclude}
-                    onProvidenciasChange={handleProvidenciasChange}
-                    onAudienciaChange={handleAudienciaChange}
-                    showTipoProcesso={showTipoProcesso}
-                  />
-                ))}
-              </tbody>
-            </table>
+        {/* Card rows */}
+        <div className="flex flex-col gap-1.5">
+          {/* Header - select all */}
+          <div className="flex items-center gap-3 px-4 py-1.5">
+            <button
+              onClick={handleToggleAll}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              title={rows.every((r) => !r.excluded) ? "Desmarcar todos" : "Marcar todos"}
+            >
+              <Check className="h-3.5 w-3.5" />
+            </button>
+            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
+              {filteredRows.length} intimações
+            </span>
           </div>
+
+          {filteredRows.map(({ row, originalIndex }) => (
+            <PjeReviewRowComponent
+              key={row.ordemOriginal}
+              row={row}
+              index={originalIndex}
+              atoOptions={atoOptions}
+              statusOptions={statusOptions}
+              estadoPrisionalOptions={estadoPrisionalOptions}
+              onAtoChange={handleAtoChange}
+              onPrazoChange={handlePrazoChange}
+              onStatusChange={(i, v) => updateRow(i, { status: v })}
+              onEstadoPrisionalChange={(i, v) => updateRow(i, { estadoPrisional: v })}
+              onToggleExclude={handleToggleExclude}
+              onProvidenciasChange={handleProvidenciasChange}
+              onAudienciaChange={handleAudienciaChange}
+              showTipoProcesso={showTipoProcesso}
+            />
+          ))}
+
           {filteredRows.length === 0 && (
-            <div className="py-6 text-center text-xs text-muted-foreground">
+            <div className="py-8 text-center text-xs text-muted-foreground">
               Nenhuma intimação corresponde aos filtros selecionados
             </div>
           )}
@@ -542,8 +518,6 @@ function PjeReviewRowComponent({
   const [provDraft, setProvDraft] = useState(row.providencias ?? "");
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Sync draft when row.providencias changes externally (e.g., bulk actions)
-  // Only when panel is closed, so we don't clobber an in-flight edit
   useEffect(() => {
     if (!expandedProv) {
       setProvDraft(row.providencias ?? "");
@@ -557,122 +531,121 @@ function PjeReviewRowComponent({
   const statusGroup = statusConfig?.group || "triagem";
   const statusColor = STATUS_GROUPS[statusGroup]?.color || "#A1A1AA";
 
-  // Info extra (crime + tipoDocumento) para tooltip do processo
   const extraInfo = [row.tipoDocumento, row.crime].filter(Boolean).join(" · ");
 
+  // Match label
+  const matchLabel = row.assistidoMatch.type === "new" ? "novo" : row.assistidoMatch.type === "similar" ? "similar" : "";
+  const matchLabelColor = row.assistidoMatch.type === "new" ? "text-red-500 dark:text-red-400" : "text-amber-600 dark:text-amber-400";
+
+  // Border color by match
+  const borderColor =
+    row.assistidoMatch.type === "exact" ? "border-l-emerald-500" :
+    row.assistidoMatch.type === "similar" ? "border-l-amber-500" :
+    "border-l-red-500";
+
+  // Card background
+  const cardBg = row.excluded
+    ? "opacity-40"
+    : row.assistidoMatch.type === "similar"
+    ? "bg-amber-50/30 dark:bg-amber-950/10 border-amber-200/60 dark:border-amber-800/40"
+    : "bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/80";
+
   return (
-    <>
-    <tr
-      className={`border-b border-border transition-colors ${
-        row.excluded
-          ? "opacity-40 bg-muted/50"
-          : row.atoConfidence === "low"
-          ? "bg-amber-50/40 dark:bg-amber-950/10"
-          : "hover:bg-muted/50"
-      }`}
-    >
-      {/* Checkbox */}
-      <td className="px-2 py-1.5 text-center">
+    <div className="flex flex-col">
+      {/* Card row */}
+      <div
+        className={`flex items-center gap-3 px-4 py-3 border border-l-2 rounded-lg transition-all duration-150 hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-600 ${borderColor} ${cardBg}`}
+      >
+        {/* Checkbox */}
         <button
           onClick={() => onToggleExclude(index)}
-          className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+          className={`w-4 h-4 rounded flex-shrink-0 border flex items-center justify-center transition-colors ${
             row.excluded
-              ? "border-border"
+              ? "border-neutral-300 dark:border-neutral-600"
               : "border-emerald-500 bg-emerald-500 text-white"
           }`}
         >
           {!row.excluded && <Check className="h-3 w-3" />}
         </button>
-      </td>
 
-      {/* Ordem */}
-      <td className="px-1 py-1.5 text-center text-muted-foreground font-mono text-[10px]">
-        {row.ordemOriginal + 1}
-      </td>
-
-      {/* Assistido */}
-      <td className="px-2 py-1.5">
-        <div className="flex items-center gap-1.5">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${matchInfo.color}`} />
-            </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs max-w-[250px]">
-              {row.assistidoMatch.type === "exact" && (
-                <span>
-                  Encontrado: <strong>{row.assistidoMatch.matchedNome}</strong>
-                  {row.assistidoMatch.matchedCpf && ` (${row.assistidoMatch.matchedCpf})`}
-                  {row.assistidoMatch.similarity && ` — ${Math.round(row.assistidoMatch.similarity * 100)}%`}
-                </span>
-              )}
-              {row.assistidoMatch.type === "similar" && (
-                <span>
-                  Similar: <strong>{row.assistidoMatch.matchedNome}</strong>
-                  {row.assistidoMatch.similarity && ` — ${Math.round(row.assistidoMatch.similarity * 100)}%`}
-                  <br />
-                  <span className="text-amber-600 dark:text-amber-400">Verificar se é a mesma pessoa</span>
-                </span>
-              )}
-              {row.assistidoMatch.type === "new" && (
-                <span>Assistido novo — será cadastrado na importação</span>
-              )}
-            </TooltipContent>
-          </Tooltip>
-          <span className="text-foreground truncate max-w-[150px]" title={row.assistidoNome}>
-            {row.assistidoNome}
-          </span>
-        </div>
-      </td>
-
-      {/* Processo + crime/tipoDoc como subtexto */}
-      <td className="px-2 py-1.5">
-        <div className="flex flex-col gap-0">
-          <span className="text-muted-foreground font-mono text-[10px] truncate max-w-[130px] block" title={row.numeroProcesso}>
-            {row.numeroProcesso || "—"}
-          </span>
-          {extraInfo && (
+        {/* Assistido + Processo (two lines) */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="text-[9px] text-muted-foreground truncate max-w-[130px] block cursor-help flex items-center gap-0.5">
-                  <FileText className="w-2.5 h-2.5 inline flex-shrink-0" />
-                  {extraInfo}
+                <span className="font-serif font-semibold text-[13px] text-neutral-900 dark:text-neutral-100 truncate" title={row.assistidoNome}>
+                  {row.assistidoNome}
                 </span>
               </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs max-w-[300px]">
-                {row.tipoDocumento && <div><strong>Tipo:</strong> {row.tipoDocumento}</div>}
-                {row.crime && <div><strong>Crime:</strong> {row.crime}</div>}
-                {row.dataExpedicao && <div><strong>Expedição:</strong> {row.dataExpedicao}</div>}
+              <TooltipContent side="top" className="text-xs max-w-[250px]">
+                {row.assistidoMatch.type === "exact" && (
+                  <span>
+                    Encontrado: <strong>{row.assistidoMatch.matchedNome}</strong>
+                    {row.assistidoMatch.matchedCpf && ` (${row.assistidoMatch.matchedCpf})`}
+                    {row.assistidoMatch.similarity && ` — ${Math.round(row.assistidoMatch.similarity * 100)}%`}
+                  </span>
+                )}
+                {row.assistidoMatch.type === "similar" && (
+                  <span>
+                    Similar: <strong>{row.assistidoMatch.matchedNome}</strong>
+                    {row.assistidoMatch.similarity && ` — ${Math.round(row.assistidoMatch.similarity * 100)}%`}
+                    <br />
+                    <span className="text-amber-600 dark:text-amber-400">Verificar se é a mesma pessoa</span>
+                  </span>
+                )}
+                {row.assistidoMatch.type === "new" && (
+                  <span>Assistido novo — será cadastrado na importação</span>
+                )}
               </TooltipContent>
             </Tooltip>
-          )}
+            {matchLabel && (
+              <span className={`text-[9px] font-medium ${matchLabelColor}`}>{matchLabel}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-1 mt-0.5">
+            <span className="font-mono text-[10px] text-neutral-400 dark:text-neutral-500 truncate" title={row.numeroProcesso}>
+              {row.numeroProcesso || "—"}
+            </span>
+            {extraInfo && (
+              <>
+                <span className="text-neutral-300 dark:text-neutral-600">·</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-[10px] text-neutral-400 dark:text-neutral-500 truncate cursor-help">
+                      {extraInfo}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs max-w-[300px]">
+                    {row.tipoDocumento && <div><strong>Tipo:</strong> {row.tipoDocumento}</div>}
+                    {row.crime && <div><strong>Crime:</strong> {row.crime}</div>}
+                    {row.dataExpedicao && <div><strong>Expedição:</strong> {row.dataExpedicao}</div>}
+                  </TooltipContent>
+                </Tooltip>
+              </>
+            )}
+          </div>
         </div>
-      </td>
 
-      {/* Tipo Processo (VVD) */}
-      {showTipoProcesso && (
-        <td className="px-2 py-1.5">
+        {/* Tipo Processo badge */}
+        {showTipoProcesso && (
           <span
-            className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+            className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold ${
               row.tipoProcesso === "MPUMPCrim"
-                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                : "bg-muted text-muted-foreground"
+                ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                : "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400"
             }`}
           >
             {row.tipoProcesso === "MPUMPCrim" ? "MPU" : "Geral"}
           </span>
-        </td>
-      )}
+        )}
 
-      {/* Data Expedição */}
-      <td className="px-2 py-1.5">
-        <span className="text-[10px] text-muted-foreground font-mono whitespace-nowrap">
+        {/* Data Expedição */}
+        <span className="flex-shrink-0 text-[11px] text-neutral-400 dark:text-neutral-500 font-mono whitespace-nowrap">
           {row.dataExpedicao ? row.dataExpedicao.split(" ")[0] : "—"}
         </span>
-      </td>
 
-      {/* Ato (dropdown) */}
-      <td className="px-2 py-1.5">
-        <div className="flex items-center gap-1">
+        {/* Ato (dropdown) */}
+        <div className="flex-shrink-0 flex items-center gap-1">
           <Tooltip>
             <TooltipTrigger asChild>
               <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${confidenceClass}`} />
@@ -695,94 +668,88 @@ function PjeReviewRowComponent({
             onChange={(v) => onAtoChange(index, v)}
           />
         </div>
-      </td>
 
-      {/* Prazo */}
-      <td className="px-2 py-1.5">
-        <InlineDatePicker
-          value={row.prazo}
-          onChange={(isoDate) => onPrazoChange(index, isoDate)}
-          showEditIcon
-          placeholder="—"
-        />
-      </td>
+        {/* Prazo */}
+        <div className="flex-shrink-0">
+          <InlineDatePicker
+            value={row.prazo}
+            onChange={(isoDate) => onPrazoChange(index, isoDate)}
+            showEditIcon
+            placeholder="—"
+          />
+        </div>
 
-      {/* Status (dropdown) */}
-      <td className="px-2 py-1.5">
-        <InlineDropdown
-          value={row.status}
-          compact
-          showEditIcon
-          displayValue={
-            <div
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
-              style={{ backgroundColor: `${statusColor}20`, color: statusColor }}
-            >
-              <span
-                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                style={{ backgroundColor: statusColor }}
-              />
-              <span className="truncate max-w-[70px]">
-                {statusConfig?.label || row.status}
+        {/* Status */}
+        <div className="flex-shrink-0">
+          <InlineDropdown
+            value={row.status}
+            compact
+            showEditIcon
+            displayValue={
+              <div
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                style={{ backgroundColor: `${statusColor}20`, color: statusColor }}
+              >
+                <span
+                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: statusColor }}
+                />
+                <span className="truncate max-w-[70px]">
+                  {statusConfig?.label || row.status}
+                </span>
+              </div>
+            }
+            options={statusOptions}
+            onChange={(v) => onStatusChange(index, v)}
+          />
+        </div>
+
+        {/* Estado Prisional */}
+        <div className="flex-shrink-0">
+          <InlineDropdown
+            value={row.estadoPrisional}
+            compact
+            showEditIcon
+            displayValue={
+              <span className={`text-[10px] font-medium ${
+                row.estadoPrisional === "preso"
+                  ? "text-red-600 dark:text-red-400"
+                  : row.estadoPrisional === "monitorado"
+                  ? "text-amber-600 dark:text-amber-400"
+                  : "text-muted-foreground"
+              }`}>
+                {row.estadoPrisional === "preso"
+                  ? "Preso"
+                  : row.estadoPrisional === "monitorado"
+                  ? "Monitor."
+                  : "Solto"}
               </span>
-            </div>
-          }
-          options={statusOptions}
-          onChange={(v) => onStatusChange(index, v)}
-        />
-      </td>
+            }
+            options={estadoPrisionalOptions}
+            onChange={(v) => onEstadoPrisionalChange(index, v)}
+          />
+        </div>
 
-      {/* Estado Prisional */}
-      <td className="px-2 py-1.5">
-        <InlineDropdown
-          value={row.estadoPrisional}
-          compact
-          showEditIcon
-          displayValue={
-            <span className={`text-[10px] font-medium ${
-              row.estadoPrisional === "preso"
-                ? "text-red-600 dark:text-red-400"
-                : row.estadoPrisional === "monitorado"
-                ? "text-amber-600 dark:text-amber-400"
-                : "text-muted-foreground"
-            }`}>
-              {row.estadoPrisional === "preso"
-                ? "Preso"
-                : row.estadoPrisional === "monitorado"
-                ? "Monitor."
-                : "Solto"}
-            </span>
-          }
-          options={estadoPrisionalOptions}
-          onChange={(v) => onEstadoPrisionalChange(index, v)}
-        />
-      </td>
-
-      {/* Providências — botão de toggle */}
-      <td className="px-2 py-1.5 text-center">
+        {/* Providências toggle */}
         <button
           ref={toggleButtonRef}
           onClick={() => setExpandedProv((v) => !v)}
           aria-expanded={expandedProv}
           title={row.providencias?.trim() ? "Ver/editar providências" : "Adicionar providências"}
-          className={`transition-colors rounded p-0.5 ${
+          className={`flex-shrink-0 transition-colors rounded p-0.5 ${
             row.providencias?.trim()
-              ? "text-emerald-700 dark:text-emerald-400 hover:text-emerald-700"
-              : "text-muted-foreground/50 hover:text-muted-foreground"
+              ? "text-emerald-700 dark:text-emerald-400 hover:text-emerald-800"
+              : "text-neutral-300 dark:text-neutral-600 hover:text-neutral-500"
           }`}
         >
           <FileText className="h-3.5 w-3.5" />
         </button>
-      </td>
-    </tr>
+      </div>
 
-    {expandedProv && (
-      <tr className={row.excluded ? "opacity-40" : ""}>
-        <td
-          colSpan={showTipoProcesso ? 11 : 10}
-          className="px-3 pb-2 pt-0 bg-muted/50"
-        >
-          <div className="flex items-start gap-2">
+      {/* Expandable: Providências */}
+      {expandedProv && (
+        <div className={`px-4 pb-3 pt-1 ${row.excluded ? "opacity-40" : ""}`}>
+          <div className="flex items-start gap-2 ml-7">
             <FileText className="h-3 w-3 text-muted-foreground mt-1.5 flex-shrink-0" />
             <textarea
               autoFocus
@@ -798,21 +765,19 @@ function PjeReviewRowComponent({
                 if (e.key === "Escape") {
                   setExpandedProv(false);
                   setProvDraft(row.providencias ?? "");
-                  // Return focus to toggle button
                   setTimeout(() => toggleButtonRef.current?.focus(), 0);
                 }
               }}
               placeholder="Providências para esta demanda..."
-              className="flex-1 text-xs bg-background border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 outline-none resize-none w-full"
+              className="flex-1 text-xs bg-background border-l-2 border-emerald-300 dark:border-emerald-700 border-y border-r border-neutral-200 dark:border-neutral-700 rounded-r px-2 py-1 outline-none resize-none w-full"
             />
           </div>
-        </td>
-      </tr>
-    )}
+        </div>
+      )}
 
-    {isAudienciaAto(row.ato) && (
-      <tr className="border-b border-emerald-100">
-        <td colSpan={99} className="px-4 py-2">
+      {/* Expandable: Audiência inline */}
+      {isAudienciaAto(row.ato) && (
+        <div className="px-4 py-2 ml-7">
           <AudienciaInlineForm
             data={row.audienciaData || ""}
             hora={row.audienciaHora || ""}
@@ -820,9 +785,8 @@ function PjeReviewRowComponent({
             criarEvento={row.criarEventoAgenda ?? true}
             onChange={(fields) => onAudienciaChange(index, fields)}
           />
-        </td>
-      </tr>
-    )}
-    </>
+        </div>
+      )}
+    </div>
   );
 }
