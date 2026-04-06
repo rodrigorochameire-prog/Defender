@@ -30,7 +30,6 @@ export class OneDriveProvider implements DriveProvider {
     return res;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapItem(item: any): StorageFile {
     return {
       id: item.id,
@@ -57,7 +56,6 @@ export class OneDriveProvider implements DriveProvider {
       `/me/drive/items/${folderId}/children?$top=${pageSize}&$select=${select}`
     );
     const data = await res.json();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (data.value as any[]).map((item) => this.mapItem(item));
   }
 
@@ -170,7 +168,6 @@ export class OneDriveProvider implements DriveProvider {
       `/me/drive/items/${parentId}/children?$filter=${encodeURIComponent(filter)}&$select=${select}`
     );
     const data = await res.json();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const match = (data.value as any[]).find((item) => !!item.folder);
     return match ? this.mapItem(match) : null;
   }
@@ -183,7 +180,6 @@ export class OneDriveProvider implements DriveProvider {
     const res = await this.graphFetch(path);
     const data = await res.json();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const items: StorageFile[] = (data.value as any[]).map((item) => this.mapItem(item));
 
     // @odata.deltaLink contains the token for the next delta query

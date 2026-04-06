@@ -102,7 +102,6 @@ export const juriRouter = router({
       // Adicionar limite apenas se especificado
       if (limite !== undefined) {
         // Drizzle narrows the query type after .limit() differently when chained conditionally
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         query = query.limit(limite) as any;
       }
       

@@ -19,7 +19,6 @@ export async function getDriveProvider(userId: number): Promise<DriveProvider> {
     columns: { storageProvider: true },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const preferred = (user as any)?.storageProvider ?? "google";
 
   if (preferred === "onedrive") {

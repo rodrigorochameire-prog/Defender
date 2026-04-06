@@ -35,7 +35,6 @@ export class GoogleDriveProvider implements DriveProvider {
       }),
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = await res.json();
     if (!res.ok) throw new Error(`Google token refresh failed: ${data.error}`);
 
@@ -68,7 +67,6 @@ export class GoogleDriveProvider implements DriveProvider {
     return res;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapFile(file: any): StorageFile {
     return {
       id: file.id,
@@ -92,7 +90,6 @@ export class GoogleDriveProvider implements DriveProvider {
       `/drive/v3/files?q=${q}&fields=files(${DRIVE_FILES_FIELDS})&pageSize=${pageSize}`
     );
     const data = await res.json();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (data.files as any[]).map((f) => this.mapFile(f));
   }
 
@@ -229,7 +226,6 @@ export class GoogleDriveProvider implements DriveProvider {
       `/drive/v3/files?q=${q}&fields=files(${DRIVE_FILES_FIELDS})&pageSize=1`
     );
     const data = await res.json();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const files = data.files as any[];
     return files.length > 0 ? this.mapFile(files[0]) : null;
   }
@@ -248,7 +244,6 @@ export class GoogleDriveProvider implements DriveProvider {
     );
     const data = await res.json();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const items: StorageFile[] = (data.changes as any[])
       .filter((c: any) => !!c.file)
       .map((c: any) => this.mapFile(c.file));

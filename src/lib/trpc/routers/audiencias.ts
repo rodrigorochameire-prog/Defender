@@ -75,7 +75,6 @@ export const audienciasRouter = router({
       // Aplicar limite apenas se especificado
       if (limit !== undefined) {
         // Drizzle narrows the query type after .limit() differently when chained conditionally
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         query = query.limit(limit) as any;
       }
 
