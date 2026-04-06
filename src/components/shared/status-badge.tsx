@@ -17,7 +17,7 @@ import {
 
 type StatusType = 
   | "atender" 
-  | "fila" 
+  | "triagem"
   | "monitorar" 
   | "protocolado"
   | "fatal"
@@ -58,9 +58,9 @@ const statusConfig: Record<string, {
     iconColor: "text-red-500 dark:text-red-400",
     pulseColor: "bg-red-400",
   },
-  fila: {
+  triagem: {
     icon: Clock,
-    label: "Fila",
+    label: "Triagem",
     colors: "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50",
     iconColor: "text-amber-500 dark:text-amber-400",
   },

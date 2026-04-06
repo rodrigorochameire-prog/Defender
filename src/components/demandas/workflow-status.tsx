@@ -48,7 +48,7 @@ interface WorkflowStatusProps {
 
 // Definir fluxo de trabalho padrão
 const WORKFLOW_STEPS: { status: string; label: string; group: StatusGroup }[] = [
-  { status: "fila", label: "Triagem", group: "triagem" },
+  { status: "triagem", label: "Triagem", group: "triagem" },
   { status: "analisar", label: "Analisar", group: "preparacao" },
   { status: "elaborar", label: "Elaborar", group: "preparacao" },
   { status: "revisar", label: "Revisar", group: "preparacao" },
@@ -59,12 +59,12 @@ const WORKFLOW_STEPS: { status: string; label: string; group: StatusGroup }[] = 
 // Transições permitidas (status atual -> próximos status possíveis)
 const TRANSICOES_PERMITIDAS: Record<string, string[]> = {
   // Urgente pode ir para qualquer status de preparação
-  urgente: ["analisar", "atender", "elaborar", "investigar", "fila"],
+  urgente: ["analisar", "atender", "elaborar", "investigar", "triagem"],
 
   // Preparação
-  analisar: ["elaborar", "investigar", "buscar", "fila", "sem_atuacao", "constituiu_advogado"],
-  atender: ["elaborar", "fila", "resolvido", "sem_atuacao", "constituiu_advogado"],
-  buscar: ["analisar", "elaborar", "fila"],
+  analisar: ["elaborar", "investigar", "buscar", "triagem", "sem_atuacao", "constituiu_advogado"],
+  atender: ["elaborar", "triagem", "resolvido", "sem_atuacao", "constituiu_advogado"],
+  buscar: ["analisar", "elaborar", "triagem"],
   investigar: ["analisar", "elaborar", "documentos", "testemunhas"],
   elaborar: ["elaborando", "revisar", "protocolar"],
   elaborando: ["revisar", "protocolar"],
@@ -78,14 +78,14 @@ const TRANSICOES_PERMITIDAS: Record<string, string[]> = {
   amanda: ["protocolado", "monitorar", "ciencia"],
   taissa: ["protocolado", "monitorar", "ciencia"],
   emilly: ["protocolado", "monitorar", "ciencia"],
-  monitorar: ["protocolado", "ciencia", "fila"],
+  monitorar: ["protocolado", "ciencia", "triagem"],
 
-  // Fila
-  fila: ["urgente", "analisar", "atender", "elaborar"],
+  // Triagem
+  triagem: ["urgente", "analisar", "atender", "elaborar"],
 
   // Diligencias
-  documentos: ["elaborar", "fila"],
-  testemunhas: ["elaborar", "fila"],
+  documentos: ["elaborar", "triagem"],
+  testemunhas: ["elaborar", "triagem"],
 
   // Concluída (pode reabrir em casos excepcionais)
   protocolado: ["solar", "ciencia"],
@@ -113,7 +113,7 @@ export function WorkflowStatus({
 }: WorkflowStatusProps) {
   const [localLoading, setLocalLoading] = useState(false);
 
-  const normalizedStatus = currentStatus?.toLowerCase().replace(/\s+/g, "_") || "fila";
+  const normalizedStatus = currentStatus?.toLowerCase().replace(/\s+/g, "_") || "triagem";
   const statusConfig = DEMANDA_STATUS[normalizedStatus as keyof typeof DEMANDA_STATUS];
   const groupConfig = statusConfig ? STATUS_GROUPS[statusConfig.group] : STATUS_GROUPS.triagem;
   const Icon = statusConfig?.icon || Inbox;

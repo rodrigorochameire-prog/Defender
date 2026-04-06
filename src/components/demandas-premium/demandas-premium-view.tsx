@@ -133,7 +133,7 @@ const EMPTY_DEMANDAS: any[] = [];
 const DB_STATUS_TO_UI: Record<string, string> = {
   "2_ATENDER": "atender",
   "4_MONITORAR": "monitorar",
-  "5_FILA": "fila",
+  "5_FILA": "triagem",
   "7_PROTOCOLADO": "protocolado",
   "7_CIENCIA": "ciencia",
   "7_SEM_ATUACAO": "sem_atuacao",
@@ -262,7 +262,7 @@ const getStatusIcon = (status: string): LucideIcon => {
   if (statusLower.includes("protocolar")) return Upload;
   if (statusLower.includes("protocolado")) return CheckCircle2;
   if (statusLower.includes("monitorar")) return Eye;
-  if (statusLower.includes("fila")) return ListTodo;
+  if (statusLower.includes("triagem")) return ListTodo;
   if (statusLower.includes("resolvido") || statusLower.includes("concluído")) return CheckCircle2;
   if (statusLower.includes("ciência") || statusLower.includes("ciencia")) return Bell;
   if (statusLower.includes("sem atuação") || statusLower.includes("sem atuacao")) return BellOff;
@@ -305,7 +305,7 @@ const atribuicaoOptions = [
 
 const statusOptions = [
   // Triagem
-  { value: "fila", label: "Fila", icon: ListTodo },
+  { value: "triagem", label: "Triagem", icon: ListTodo },
   { value: "atender", label: "Atender", icon: User },
   { value: "urgente", label: "Urgente", icon: AlertTriangle },
   // Preparação
@@ -755,7 +755,7 @@ export default function Demandas() {
       assistidoId: d.assistido?.id || d.assistidoId || null,
       processoId: d.processo?.id || d.processoId || null,
       // Usar substatus granular quando disponível, senão mapear do status coarse do DB
-      status: d.substatus || DB_STATUS_TO_UI[d.status] || d.status?.toLowerCase().replace(/_/g, " ") || "fila", // "fila" is a valid substatus key in DEMANDA_STATUS
+      status: d.substatus || DB_STATUS_TO_UI[d.status] || d.status?.toLowerCase().replace(/_/g, " ") || "triagem", // "triagem" is a valid substatus key in DEMANDA_STATUS
       prazo: d.prazo ? new Date(d.prazo + "T12:00:00").toLocaleDateString("pt-BR") : "",
       data: d.dataEntrada ? new Date(d.dataEntrada + "T12:00:00").toLocaleDateString("pt-BR") : new Date(d.createdAt).toLocaleDateString("pt-BR"),
       // dataInclusao: timestamp ISO para ordenação por recentes (usado na importação do PJe)
@@ -826,7 +826,7 @@ export default function Demandas() {
 
   // Mapeamento de status granular da UI para status coarse do banco
   const UI_STATUS_TO_DB: Record<string, string> = {
-    "fila": "5_FILA",
+    "triagem": "5_FILA",
     "atender": "2_ATENDER",
     "analisar": "2_ATENDER",
     "elaborar": "2_ATENDER",
@@ -1100,7 +1100,7 @@ export default function Demandas() {
     // para selecionar assistidos e processos do banco de dados
     const newDemanda = {
       id: `new-${Date.now()}`,
-      status: demandaData.status || "fila",
+      status: demandaData.status || "triagem",
       prazo: demandaData.prazo,
       data: demandaData.data || new Date().toLocaleDateString("pt-BR"),
       assistido: demandaData.assistido,
@@ -1407,7 +1407,7 @@ export default function Demandas() {
       dataExpedicaoCompleta: data.pjeData?.dataExpedicao || data.data || undefined,
       // Usar dataInclusao se fornecida (para ordenação precisa do SEEU/PJe)
       dataInclusao: data.dataInclusao || undefined,
-      status: data.status || "fila",
+      status: data.status || "triagem",
       estadoPrisional: data.estadoPrisional || "solto",
       providencias: data.providencias || undefined,
       atribuicao: data.atribuicao || "Substituição Criminal",
@@ -1467,8 +1467,8 @@ export default function Demandas() {
       'emilly': 'Emilly',
       'monitorar': 'Monitorar',
 
-      // 5 - Fila
-      'fila': 'Fila',
+      // 5 - Triagem
+      'triagem': 'Triagem',
 
       // 6 - Documentos/Testemunhas
       'documentos': 'Documentos',
@@ -1512,9 +1512,9 @@ export default function Demandas() {
             continue;
           }
 
-          const statusNormalizado = data.status?.toLowerCase?.() || 'fila';
+          const statusNormalizado = data.status?.toLowerCase?.() || 'triagem';
           // Busca no mapa, se não encontrar usa o status original (capitalizado)
-          const substatusValido = statusMap[statusNormalizado] || data.status || 'Fila';
+          const substatusValido = statusMap[statusNormalizado] || data.status || 'Triagem';
 
           // A mutation espera {id, ...campos} não {id, data: {...}}
           // O status da planilha vai para substatus (status granular)

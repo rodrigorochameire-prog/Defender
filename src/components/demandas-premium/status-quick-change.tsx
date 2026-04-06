@@ -11,7 +11,7 @@ interface StatusQuickChangeProps {
 
 // Statuses mais usados no dia-a-dia (order intencional)
 const COMMON_STATUSES = [
-  "urgente", "atender", "fila",
+  "urgente", "atender", "triagem",
   "analisar", "elaborar", "elaborando", "revisar",
   "documentos", "oficiar",
   "protocolar", "monitorar",

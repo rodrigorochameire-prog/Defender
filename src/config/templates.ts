@@ -14,7 +14,7 @@ export enum TipoTemplate {
 // Status disponíveis no sistema (conforme especificação)
 export const SYSTEM_STATUS_OPTIONS = [
   // Triagem
-  "Fila",
+  "Triagem",
   "Atender",
   "Urgente",
   // Preparação

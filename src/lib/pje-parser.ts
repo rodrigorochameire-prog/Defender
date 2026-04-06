@@ -931,7 +931,7 @@ function gerarProvidencias(intimacao: IntimacaoPJeSimples): string {
 
 /**
  * Statuses do grupo "concluída" — únicos que sobrevivem à importação sem serem
- * remapeados para triagem. Todos os outros ficam em "fila" (triagem).
+ * remapeados para triagem. Todos os outros ficam em "triagem".
  */
 const IMPORT_CONCLUIDA_STATUSES = new Set([
   'protocolado', 'ciencia', 'resolvido', 'constituiu_advogado', 'sem_atuacao',
@@ -940,12 +940,12 @@ const IMPORT_CONCLUIDA_STATUSES = new Set([
 /**
  * Resolve o status para importação:
  * - Se for do grupo "concluída" → mantém
- * - Qualquer outro status → força "fila" (triagem)
+ * - Qualquer outro status → força "triagem"
  * Garante que demandas recém-importadas sempre entrem na triagem.
  */
 export function resolveImportStatus(status: string | undefined | null): string {
   if (status && IMPORT_CONCLUIDA_STATUSES.has(status)) return status;
-  return 'fila';
+  return 'triagem';
 }
 
 export function intimacaoToDemanda(

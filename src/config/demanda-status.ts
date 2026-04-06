@@ -216,7 +216,7 @@ export interface StatusConfig {
 
 export const DEMANDA_STATUS: Record<string, StatusConfig> = {
   // === TRIAGEM (2) ===
-  fila:     { label: "Fila",     group: "triagem", icon: Inbox },
+  triagem:  { label: "Triagem",  group: "triagem", icon: Inbox },
   urgente:  { label: "Urgente",  group: "triagem", icon: AlertCircle },
 
   // === PREPARAÇÃO (7) — 3 seções: Elaborar, Monitorar, Revisar ===
@@ -288,7 +288,7 @@ export function mapDbStatusToGroup(dbStatus: string | null | undefined, substatu
   }
   // Urgente
   if (s === "URGENTE") return "triagem";
-  // Fila → triagem, Atender sem substatus → diligências, Monitorar → monitorar
+  // Triagem → triagem, Atender sem substatus → diligências, Monitorar → monitorar
   if (s === "5_FILA") return "triagem";
   if (s === "2_ATENDER") return "diligencias";
   if (s === "4_MONITORAR") return "preparacao";
@@ -344,7 +344,7 @@ export function getStatusConfig(status: string | null | undefined): StatusConfig
 
   // Mapeamento de status DB antigos para novos grupos
   const dbMap: Record<string, StatusConfig> = {
-    "5_fila":         { label: "Fila",         group: "triagem",      icon: Inbox },
+    "5_fila":         { label: "Triagem",      group: "triagem",      icon: Inbox },
     "2_atender":      { label: "Atender",      group: "diligencias",  icon: User },
     "4_monitorar":    { label: "Monitorar",    group: "preparacao",   icon: Eye },
     "7_protocolado":  { label: "Protocolado",  group: "concluida", icon: CheckCircle2 },
@@ -377,7 +377,7 @@ export function getStatusConfig(status: string | null | undefined): StatusConfig
 
 export const STATUS_OPTIONS_BY_COLUMN: Record<KanbanColumn, Array<{ value: string; label: string; group: StatusGroup }>> = {
   triagem: [
-    { value: "fila", label: "Fila", group: "triagem" },
+    { value: "triagem", label: "Triagem", group: "triagem" },
   ],
   em_andamento: [
     // Preparação — Elaborar
@@ -443,7 +443,7 @@ export function getStageIndex(group: StatusGroup): number {
 // ==========================================
 
 export const UI_STATUS_TO_DB: Record<string, string> = {
-  "fila": "5_FILA",
+  "triagem": "5_FILA",
   "atender": "2_ATENDER",
   "analisar": "2_ATENDER",
   "elaborar": "2_ATENDER",

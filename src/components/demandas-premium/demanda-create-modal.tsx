@@ -210,7 +210,7 @@ export function DemandaCreateModal({
   const [formData, setFormData] = useState<DemandaFormData>(
     initialData || {
       assistido: "",
-      status: "fila",
+      status: "triagem",
       data: new Date().toISOString().split("T")[0],
       prazo: "",
       processos: [{ tipo: "AP", numero: "" }],

@@ -84,7 +84,7 @@ export function ImportModal({ isOpen, onClose, onImport }: ImportModalProps) {
               row.atribuicao = "Criminal Geral";
             }
             if (!row.status) {
-              row.status = "fila";
+              row.status = "triagem";
             }
             if (!row.processos) {
               row.processos = [{ tipo: "AP", numero: "" }];

@@ -95,7 +95,7 @@ export default function VVDPage() {
       ato: data.ato || "Ciência",
       prazo: data.prazo || undefined,
       dataEntrada: data.data || data.dataExpedicao || undefined,
-      status: "fila",
+      status: "triagem",
       providencias: data.providencias || "Classificar demanda",
       atribuicao: "Violência Doméstica",
     }));

@@ -42,7 +42,7 @@ export function AdminConfigModal({ isOpen, onClose }: AdminConfigModalProps) {
   // Estados para Status
   const [statusList, setStatusList] = useState<StatusConfig[]>([
     // Triagem
-    { value: "fila", label: "Fila", group: "triagem", color: "#A1A1AA" },
+    { value: "triagem", label: "Triagem", group: "triagem", color: "#A1A1AA" },
     { value: "atender", label: "Atender", group: "triagem", color: "#A1A1AA" },
     { value: "urgente", label: "Urgente", group: "triagem", color: "#D4A4A4" },
     // Preparação

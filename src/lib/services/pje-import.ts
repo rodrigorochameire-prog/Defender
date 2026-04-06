@@ -50,7 +50,7 @@ export interface ImportResult {
 // ============================================================================
 
 const STATUS_TO_DB: Record<string, string> = {
-  "fila": "5_FILA",
+  "triagem": "5_FILA",
   "atender": "2_ATENDER",
   "analisar": "2_ATENDER",
   "elaborar": "2_ATENDER",

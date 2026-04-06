@@ -215,8 +215,8 @@ const STATUS_MAP: Record<string, string> = {
   "emilly": "Emilly",
   "monitorar": "Monitorar",
 
-  // 5 - Fila
-  "fila": "Fila",
+  // 5 - Triagem
+  "triagem": "Triagem",
 
   // 6 - Documentos/Testemunhas
   "documentos": "Documentos",
@@ -397,7 +397,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
 
   // Função para extrair status do texto (ex: "2 - Analisar" -> "Analisar")
   const parseStatus = (statusText: string): string => {
-    if (!statusText) return "Fila";
+    if (!statusText) return "Triagem";
 
     // Remove números e traços do início (ex: "2 - Analisar" -> "Analisar")
     const cleaned = statusText.replace(/^\d+\s*-\s*/i, "").trim();

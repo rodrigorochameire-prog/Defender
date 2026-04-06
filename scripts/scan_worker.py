@@ -126,7 +126,7 @@ ATO_TO_SUBSTATUS: dict[str, str] = {
 
 # Substatus → DB status mapping (mirrors STATUS_TO_DB from pje-import.ts)
 SUBSTATUS_TO_DB: dict[str, str] = {
-    "fila": "5_FILA",
+    "triagem": "5_FILA",
     "atender": "2_ATENDER",
     "analisar": "2_ATENDER",
     "elaborar": "2_ATENDER",

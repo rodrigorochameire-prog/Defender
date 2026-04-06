@@ -59,10 +59,10 @@ const STATUS_CONFIG: Record<string, {
     icon: Clock,
     order: 4
   },
-  "fila": { 
-    label: "FILA", 
-    rowColor: "bg-purple-50 dark:bg-purple-950/20 border-l-4 border-l-purple-500", 
-    badgeColor: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/50 dark:text-purple-400 dark:border-purple-800", 
+  "triagem": {
+    label: "TRIAGEM",
+    rowColor: "bg-purple-50 dark:bg-purple-950/20 border-l-4 border-l-purple-500",
+    badgeColor: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/50 dark:text-purple-400 dark:border-purple-800",
     icon: Archive,
     order: 5
   },
@@ -129,7 +129,7 @@ const MOCK_DEMANDAS = [
   },
   { 
     id: 6, 
-    status: "fila", 
+    status: "triagem",
     preso: false, 
     data: "20/01/2026", 
     assistido: "Mariana Costa", 
@@ -170,7 +170,7 @@ function DemandasLista({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; o
               item.status === "protocolar" && "border-l-orange-500",
               item.status === "a_fazer" && "border-l-yellow-500",
               item.status === "monitorar" && "border-l-blue-500",
-              item.status === "fila" && "border-l-purple-500",
+              item.status === "triagem" && "border-l-purple-500",
               item.status === "concluido" && "border-l-neutral-300"
             )}
           >
@@ -262,7 +262,7 @@ function DemandasGrid({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; on
               item.status === "protocolar" && "border-l-orange-500",
               item.status === "a_fazer" && "border-l-yellow-500",
               item.status === "monitorar" && "border-l-blue-500",
-              item.status === "fila" && "border-l-purple-500",
+              item.status === "triagem" && "border-l-purple-500",
               item.status === "concluido" && "border-l-neutral-300 dark:border-l-border opacity-75"
             )}
           >
@@ -348,7 +348,7 @@ function DemandasKanban({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; 
               status === "protocolar" && "border-b-orange-500 bg-orange-50 dark:bg-orange-950/20",
               status === "a_fazer" && "border-b-yellow-500 bg-yellow-50 dark:bg-yellow-950/20",
               status === "monitorar" && "border-b-blue-500 bg-blue-50 dark:bg-blue-950/20",
-              status === "fila" && "border-b-purple-500 bg-purple-50 dark:bg-purple-950/20",
+              status === "triagem" && "border-b-purple-500 bg-purple-50 dark:bg-purple-950/20",
               status === "concluido" && "border-b-stone-300 bg-stone-100 dark:bg-muted"
             )}>
               <div className="flex items-center justify-between">

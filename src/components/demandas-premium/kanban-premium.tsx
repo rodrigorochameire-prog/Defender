@@ -108,7 +108,7 @@ function KanbanCard({
   onDragStart?: (id: string) => void;
   onDragEnd?: () => void;
 }) {
-  const rawStatus = demanda.substatus || demanda.status || "fila";
+  const rawStatus = demanda.substatus || demanda.status || "triagem";
   const statusCfg = getStatusConfig(rawStatus);
   // Show original substatus label (e.g. "2 - Elaborar") for planilha fidelity
   const statusDisplay = rawStatus.match(/^\d+\s*-\s*/) ? rawStatus : statusCfg?.label || rawStatus;
@@ -151,7 +151,7 @@ function KanbanCard({
     }
   }
 
-  const currentStatusKey = (demanda.substatus || demanda.status || "fila").toLowerCase().replace(/\s+/g, "_");
+  const currentStatusKey = (demanda.substatus || demanda.status || "triagem").toLowerCase().replace(/\s+/g, "_");
 
   return (
     <div
@@ -272,7 +272,7 @@ function KanbanCard({
             title={onStatusChange ? "Alterar status" : undefined}
           >
             {(() => {
-              const statusKey = (demanda.substatus || demanda.status || "fila").toLowerCase().replace(/\s+/g, "_");
+              const statusKey = (demanda.substatus || demanda.status || "triagem").toLowerCase().replace(/\s+/g, "_");
               const StatusIcon = statusCfg?.icon || STATUS_ICONS[statusKey] || ListTodo;
               return <StatusIcon className="w-3 h-3 shrink-0" />;
             })()}
@@ -737,7 +737,7 @@ export function KanbanPremium({
     };
 
     for (const d of demandas) {
-      const rawKey = (d.substatus || d.status || "fila");
+      const rawKey = (d.substatus || d.status || "triagem");
       const statusKey = rawKey.replace(/^\d+\s*-\s*/, "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
       const statusCfg = getStatusConfig(statusKey);
       const group: StatusGroup = statusCfg.group;
@@ -958,7 +958,7 @@ export function KanbanPremium({
                   ) : (
                     <div className="space-y-2.5 flex-1">
                       {items.slice(0, 30).map((d) => {
-                        const rawKey2 = (d.substatus || d.status || "fila");
+                        const rawKey2 = (d.substatus || d.status || "triagem");
                         const statusKey = rawKey2.replace(/^\d+\s*-\s*/, "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
                         const sCfg = getStatusConfig(statusKey);
                         return (
@@ -995,7 +995,7 @@ export function KanbanPremium({
             const groupKey = col as StatusGroup;
             // Map column to a representative status for onStatusChange drop
             const colDropStatus: Record<string, string> = {
-              triagem: "fila",
+              triagem: "triagem",
               concluida: "protocolado",
               arquivado: "arquivado",
             };
@@ -1009,7 +1009,7 @@ export function KanbanPremium({
                 onDrop={(e) => {
                   e.preventDefault();
                   const id = e.dataTransfer.getData("demandaId");
-                  if (id && onStatusChange) onStatusChange(id, colDropStatus[col] || "fila");
+                  if (id && onStatusChange) onStatusChange(id, colDropStatus[col] || "triagem");
                   setDragOverColumn(null);
                 }}
               >

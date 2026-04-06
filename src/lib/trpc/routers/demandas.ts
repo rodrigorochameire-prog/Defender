@@ -732,7 +732,7 @@ export const demandasRouter = router({
 
       // Mapeamento de status do frontend para enum do banco
       const STATUS_TO_DB: Record<string, string> = {
-        "fila": "5_FILA",
+        "triagem": "5_FILA",
         "atender": "2_ATENDER",
         "analisar": "2_ATENDER",
         "elaborar": "2_ATENDER",
@@ -1550,7 +1550,7 @@ export const demandasRouter = router({
       }
 
       const STATUS_LABELS: Record<string, string> = {
-        "5_fila": "Fila",
+        "5_fila": "Triagem",
         "2_atender": "Atender",
         "4_monitorar": "Monitorar",
         "7_protocolado": "Protocolado",

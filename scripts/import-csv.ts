@@ -82,7 +82,7 @@ function mapStatus(statusStr: string): "2_ATENDER" | "4_MONITORAR" | "5_FILA" | 
   
   if (cleaned.includes("2") || cleaned.includes("atender")) return "2_ATENDER";
   if (cleaned.includes("4") || cleaned.includes("monitorar")) return "4_MONITORAR";
-  if (cleaned.includes("5") || cleaned.includes("fila")) return "5_FILA";
+  if (cleaned.includes("5") || cleaned.includes("fila") || cleaned.includes("triagem")) return "5_FILA";
   if (cleaned.includes("7") && cleaned.includes("protocolado")) return "7_PROTOCOLADO";
   if (cleaned.includes("7") && cleaned.includes("ciência")) return "7_CIENCIA";
   if (cleaned.includes("7") && cleaned.includes("sem")) return "7_SEM_ATUACAO";

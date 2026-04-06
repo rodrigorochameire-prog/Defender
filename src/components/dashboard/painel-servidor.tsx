@@ -1039,7 +1039,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                         className="text-[9px] border-neutral-200 dark:border-border text-muted-foreground"
                       >
                         {demanda.status === "5_FILA"
-                          ? "Fila"
+                          ? "Triagem"
                           : demanda.status === "2_ATENDER"
                           ? "Atender"
                           : demanda.status === "7_PROTOCOLADO"

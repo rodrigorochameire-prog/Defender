@@ -247,7 +247,7 @@ async function populateOmbuds(intimacoes: IntimacaoParsed[], atribuicao: string)
     processoNumero: int.numero_processo,
     ato: int.tipo_documento || "Intimação",
     prazo: int.data_limite || undefined,
-    status: int.urgencia === "critical" ? "urgente" : "fila",
+    status: int.urgencia === "critical" ? "urgente" : "triagem",
     atribuicao,
     tipoDocumento: int.tipo_documento,
     crime: int.crime,
