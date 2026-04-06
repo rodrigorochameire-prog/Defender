@@ -45,7 +45,7 @@ const SHEETS_LABEL_TO_STATUS: Record<string, { status: string; substatus: string
   "4 - ESTÁGIO - TAISSA":   { status: "4_MONITORAR",   substatus: "4 - Estágio - Taissa" },
   "4 - EMILLY":             { status: "4_MONITORAR",   substatus: "4 - Emilly" },
   "4 - MONITORAR":          { status: "4_MONITORAR",   substatus: "4 - Monitorar" },
-  "5 - FILA":               { status: "5_FILA",        substatus: null },
+  "5 - TRIAGEM":             { status: "5_TRIAGEM",      substatus: null },
   "6 - DOCUMENTOS":         { status: "2_ATENDER",     substatus: "6 - Documentos" },
   "6 - TESTEMUNHAS":        { status: "2_ATENDER",     substatus: "6 - Testemunhas" },
   "7 - PROTOCOLADO":        { status: "7_PROTOCOLADO", substatus: null },

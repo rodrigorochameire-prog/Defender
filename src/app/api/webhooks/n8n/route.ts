@@ -144,7 +144,7 @@ async function handleCreateDemanda(data: Record<string, unknown>) {
     tipoAto: tipoAto ? String(tipoAto) : null,
     prazo: prazo ? String(prazo) : null,
     dataEntrada: dataEntrada ? String(dataEntrada) : null,
-    status: (status as "5_FILA" | "2_ATENDER" | "4_MONITORAR" | "7_PROTOCOLADO") || "5_FILA",
+    status: (status as "5_TRIAGEM" | "2_ATENDER" | "4_MONITORAR" | "7_PROTOCOLADO") || "5_TRIAGEM",
     prioridade: (prioridade as "NORMAL" | "ALTA" | "URGENTE" | "REU_PRESO") || "NORMAL",
     providencias: providencias ? String(providencias) : null,
     defensorId: defensorId ? Number(defensorId) : null,

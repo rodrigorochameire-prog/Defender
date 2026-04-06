@@ -395,7 +395,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
       processoId,
       assistidoId: registroRapido.assistidoId,
       ato: `${tipoLabel}: ${registroRapido.descricao.trim().slice(0, 100)}`,
-      status: "5_FILA",
+      status: "5_TRIAGEM",
       prioridade: "NORMAL",
       reuPreso: false,
     });
@@ -1038,7 +1038,7 @@ export function PainelServidor({ user }: PainelServidorProps) {
                         variant="outline"
                         className="text-[9px] border-neutral-200 dark:border-border text-muted-foreground"
                       >
-                        {demanda.status === "5_FILA"
+                        {demanda.status === "5_TRIAGEM"
                           ? "Triagem"
                           : demanda.status === "2_ATENDER"
                           ? "Atender"

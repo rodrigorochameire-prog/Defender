@@ -66,7 +66,7 @@ const DEMANDA_PRIORITY: Record<string, number> = {
   "1_URGENTE": 1,
   "2_VENCER": 2,
   "3_PROXIMO": 3,
-  "5_FILA": 4,
+  "5_TRIAGEM": 4,
   "4_REVISAO": 5,
   "6_REVISAO_FINAL": 6,
 };

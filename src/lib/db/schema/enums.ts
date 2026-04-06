@@ -48,7 +48,7 @@ export const statusPrisionalEnum = pgEnum("status_prisional", [
 export const statusDemandaEnum = pgEnum("status_demanda", [
   "2_ATENDER",
   "4_MONITORAR",
-  "5_FILA",
+  "5_TRIAGEM",
   "7_PROTOCOLADO",
   "7_CIENCIA",
   "7_SEM_ATUACAO",

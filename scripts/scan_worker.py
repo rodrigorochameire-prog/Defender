@@ -126,7 +126,7 @@ ATO_TO_SUBSTATUS: dict[str, str] = {
 
 # Substatus → DB status mapping (mirrors STATUS_TO_DB from pje-import.ts)
 SUBSTATUS_TO_DB: dict[str, str] = {
-    "triagem": "5_FILA",
+    "triagem": "5_TRIAGEM",
     "atender": "2_ATENDER",
     "analisar": "2_ATENDER",
     "elaborar": "2_ATENDER",
@@ -166,12 +166,12 @@ def update_demanda_from_scan(job: dict, result: dict):
 
     processo_id = proc_resp.data[0]["id"]
 
-    # Find demanda with status 5_FILA for this processo
+    # Find demanda with status 5_TRIAGEM for this processo
     dem_resp = (
         supabase.table("demandas")
         .select("id, status")
         .eq("processo_id", processo_id)
-        .eq("status", "5_FILA")
+        .eq("status", "5_TRIAGEM")
         .order("created_at", desc=True)
         .limit(1)
         .execute()

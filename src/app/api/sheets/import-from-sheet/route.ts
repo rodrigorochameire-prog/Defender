@@ -37,7 +37,7 @@ const LABEL_TO_DB: Record<string, { status: string; substatus: string | null }> 
   "4 - Estágio - Taissa":   { status: "4_MONITORAR", substatus: "4 - Estágio - Taissa" },
   "4 - Emilly":             { status: "4_MONITORAR", substatus: "4 - Emilly" },
   "4 - Monitorar":          { status: "4_MONITORAR", substatus: "4 - Monitorar" },
-  "5 - Fila":               { status: "5_FILA", substatus: null },
+  "5 - Triagem":             { status: "5_TRIAGEM", substatus: null },
   "6 - Documentos":         { status: "2_ATENDER", substatus: "6 - Documentos" },
   "6 - Testemunhas":        { status: "2_ATENDER", substatus: "6 - Testemunhas" },
   "7 - Protocolado":        { status: "7_PROTOCOLADO", substatus: null },

@@ -268,7 +268,7 @@ export const demandasRouter = router({
         or(
           eq(demandas.status, "2_ATENDER"),
           eq(demandas.status, "4_MONITORAR"),
-          eq(demandas.status, "5_FILA"),
+          eq(demandas.status, "5_TRIAGEM"),
           eq(demandas.status, "URGENTE")
         ),
       ];
@@ -393,9 +393,9 @@ export const demandasRouter = router({
         prazo: z.string().optional(),
         dataEntrada: z.string().optional(),
         status: z.enum([
-          "2_ATENDER", "4_MONITORAR", "5_FILA", "7_PROTOCOLADO", 
+          "2_ATENDER", "4_MONITORAR", "5_TRIAGEM", "7_PROTOCOLADO",
           "7_CIENCIA", "7_SEM_ATUACAO", "URGENTE", "CONCLUIDO", "ARQUIVADO"
-        ]).default("5_FILA"),
+        ]).default("5_TRIAGEM"),
         prioridade: z.enum(["BAIXA", "NORMAL", "ALTA", "URGENTE", "REU_PRESO"]).default("NORMAL"),
         providencias: z.string().optional(),
         reuPreso: z.boolean().default(false),
@@ -448,7 +448,7 @@ export const demandasRouter = router({
         ato: z.string().min(1).optional(),
         prazo: z.string().optional(),
         status: z.enum([
-          "2_ATENDER", "4_MONITORAR", "5_FILA", "7_PROTOCOLADO",
+          "2_ATENDER", "4_MONITORAR", "5_TRIAGEM", "7_PROTOCOLADO",
           "7_CIENCIA", "7_SEM_ATUACAO", "URGENTE", "CONCLUIDO", "ARQUIVADO"
         ]).optional(),
         substatus: z.string().max(50).optional().nullable(),
@@ -662,7 +662,7 @@ export const demandasRouter = router({
     const fila = await db
       .select({ count: sql<number>`count(*)` })
       .from(demandas)
-      .where(and(baseCondition, eq(demandas.status, "5_FILA")));
+      .where(and(baseCondition, eq(demandas.status, "5_TRIAGEM")));
     
     const protocolados = await db
       .select({ count: sql<number>`count(*)` })
@@ -732,7 +732,7 @@ export const demandasRouter = router({
 
       // Mapeamento de status do frontend para enum do banco
       const STATUS_TO_DB: Record<string, string> = {
-        "triagem": "5_FILA",
+        "triagem": "5_TRIAGEM",
         "atender": "2_ATENDER",
         "analisar": "2_ATENDER",
         "elaborar": "2_ATENDER",
@@ -746,7 +746,7 @@ export const demandasRouter = router({
         "investigar": "2_ATENDER",
         "oficiar": "2_ATENDER",
         "monitorar": "4_MONITORAR",
-        "protocolar": "5_FILA",
+        "protocolar": "5_TRIAGEM",
         "protocolado": "7_PROTOCOLADO",
         "ciencia": "7_CIENCIA",
         "sem_atuacao": "7_SEM_ATUACAO",
@@ -1028,15 +1028,15 @@ export const demandasRouter = router({
           const statusKey = (row.status || "analisar").toLowerCase().replace(/\s+/g, "_").trim();
 
           // Statuses de conclusão mantêm seu DB status; todos os demais são forçados
-          // para "5_FILA" (coluna Triagem), independente do substatus escolhido.
+          // para "5_TRIAGEM" (coluna Triagem), independente do substatus escolhido.
           // O substatus (label granular: analisar, elaborar, revisar...) é preservado
           // para exibição — o usuário que move para Andamento quando quiser.
           const CONCLUIDA_IMPORT_KEYS = new Set([
             "protocolado", "ciencia", "sem_atuacao", "constituiu_advogado", "resolvido", "arquivado",
           ]);
           const dbStatus = CONCLUIDA_IMPORT_KEYS.has(statusKey)
-            ? (STATUS_TO_DB[statusKey] || "5_FILA")
-            : "5_FILA";
+            ? (STATUS_TO_DB[statusKey] || "5_TRIAGEM")
+            : "5_TRIAGEM";
 
           const reuPreso = row.estadoPrisional === "preso";
 
@@ -1387,7 +1387,7 @@ export const demandasRouter = router({
     .input(z.object({
       ids: z.array(z.number()).min(1),
       status: z.enum([
-        "2_ATENDER", "4_MONITORAR", "5_FILA", "7_PROTOCOLADO",
+        "2_ATENDER", "4_MONITORAR", "5_TRIAGEM", "7_PROTOCOLADO",
         "7_CIENCIA", "7_SEM_ATUACAO", "URGENTE", "CONCLUIDO", "ARQUIVADO"
       ]).optional(),
       substatus: z.string().optional(),

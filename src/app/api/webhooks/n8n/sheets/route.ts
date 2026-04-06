@@ -22,7 +22,7 @@ import { eq, and } from "drizzle-orm";
  *       "ato": "Resposta à Acusação",
  *       "prazo": "2025-01-20",
  *       "area": "JURI",
- *       "status": "5_FILA",
+ *       "status": "5_TRIAGEM",
  *       "reuPreso": true
  *     }
  *   ]
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
           assistidoId: assistido.id,
           ato: row.ato,
           prazo: row.prazo || null,
-          status: (row.status as "5_FILA" | "2_ATENDER" | "4_MONITORAR" | "7_PROTOCOLADO") || "5_FILA",
+          status: (row.status as "5_TRIAGEM" | "2_ATENDER" | "4_MONITORAR" | "7_PROTOCOLADO") || "5_TRIAGEM",
           reuPreso: Boolean(row.reuPreso),
           providencias: row.providencias || null,
         });
@@ -164,7 +164,7 @@ export async function GET() {
           ato: "Resposta à Acusação",
           prazo: "2025-01-20",
           area: "JURI",
-          status: "5_FILA",
+          status: "5_TRIAGEM",
           reuPreso: true,
         },
       ],

@@ -48,7 +48,7 @@ const STATUS_COLORS: Record<string, string> = {
   "4_EMILLY": "blue",
   "4_MONITORAR": "blue",
   "4_ESTAGIO_TARISSA": "blue",
-  "5_FILA": "purple",
+  "5_TRIAGEM": "purple",
   "6_DOCUMENTOS": "gray",
   "6_TESTEMUNHAS": "gray",
   "7_CIENCIA": "green",

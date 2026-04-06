@@ -197,7 +197,7 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
     // Mapear status coarse do banco
     const statusMap: Record<string, string> = {
       "2_ATENDER": "2 - Atender",
-      "5_FILA": "2 - Elaborar",
+      "5_TRIAGEM": "2 - Elaborar",
       "4_MONITORAR": "4 - Monitorar",
       "7_PROTOCOLADO": "7 - Protocolado",
       "7_CIENCIA": "7 - Ciência",

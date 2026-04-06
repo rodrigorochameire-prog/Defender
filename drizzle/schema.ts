@@ -33,7 +33,7 @@ export const simulacaoStatus = pgEnum("simulacao_status", ['RASCUNHO', 'PRONTO',
 export const statusApelacao = pgEnum("status_apelacao", ['interposta', 'admitida', 'em_julgamento', 'julgada', 'transitada'])
 export const statusAudiencia = pgEnum("status_audiencia", ['A_DESIGNAR', 'DESIGNADA', 'REALIZADA', 'AGUARDANDO_ATA', 'CONCLUIDA', 'ADIADA', 'CANCELADA'])
 export const statusCaso = pgEnum("status_caso", ['ATIVO', 'SUSPENSO', 'ARQUIVADO'])
-export const statusDemanda = pgEnum("status_demanda", ['2_ATENDER', '4_MONITORAR', '5_FILA', '7_PROTOCOLADO', '7_CIENCIA', '7_SEM_ATUACAO', 'URGENTE', 'CONCLUIDO', 'ARQUIVADO'])
+export const statusDemanda = pgEnum("status_demanda", ['2_ATENDER', '4_MONITORAR', '5_TRIAGEM', '7_PROTOCOLADO', '7_CIENCIA', '7_SEM_ATUACAO', 'URGENTE', 'CONCLUIDO', 'ARQUIVADO'])
 export const statusMpu = pgEnum("status_mpu", ['ATIVA', 'EXPIRADA', 'REVOGADA', 'RENOVADA', 'MODULADA', 'AGUARDANDO_DECISAO'])
 export const statusPrisional = pgEnum("status_prisional", ['SOLTO', 'CADEIA_PUBLICA', 'PENITENCIARIA', 'COP', 'HOSPITAL_CUSTODIA', 'DOMICILIAR', 'MONITORADO'])
 export const statusProcesso = pgEnum("status_processo", ['FLAGRANTE', 'INQUERITO', 'INSTRUCAO', 'RECURSO', 'EXECUCAO', 'ARQUIVADO'])
@@ -652,7 +652,7 @@ export const demandas = pgTable("demandas", {
 	dataEntrada: date("data_entrada"),
 	dataIntimacao: date("data_intimacao"),
 	dataConclusao: timestamp("data_conclusao", { withTimezone: true, mode: 'string' }),
-	status: statusDemanda().default('5_FILA'),
+	status: statusDemanda().default('5_TRIAGEM'),
 	prioridade: prioridade().default('NORMAL'),
 	providencias: text(),
 	defensorId: integer("defensor_id"),

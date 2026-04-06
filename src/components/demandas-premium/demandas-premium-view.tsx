@@ -133,7 +133,7 @@ const EMPTY_DEMANDAS: any[] = [];
 const DB_STATUS_TO_UI: Record<string, string> = {
   "2_ATENDER": "atender",
   "4_MONITORAR": "monitorar",
-  "5_FILA": "triagem",
+  "5_TRIAGEM": "triagem",
   "7_PROTOCOLADO": "protocolado",
   "7_CIENCIA": "ciencia",
   "7_SEM_ATUACAO": "sem_atuacao",
@@ -826,7 +826,7 @@ export default function Demandas() {
 
   // Mapeamento de status granular da UI para status coarse do banco
   const UI_STATUS_TO_DB: Record<string, string> = {
-    "triagem": "5_FILA",
+    "triagem": "5_TRIAGEM",
     "atender": "2_ATENDER",
     "analisar": "2_ATENDER",
     "elaborar": "2_ATENDER",
@@ -840,7 +840,7 @@ export default function Demandas() {
     "investigar": "2_ATENDER",
     "oficiar": "2_ATENDER",
     "monitorar": "4_MONITORAR",
-    "protocolar": "5_FILA",
+    "protocolar": "5_TRIAGEM",
     "protocolado": "7_PROTOCOLADO",
     "ciencia": "7_CIENCIA",
     "sem_atuacao": "7_SEM_ATUACAO",
@@ -1162,7 +1162,7 @@ export default function Demandas() {
     // Desarquivar = mudar status de volta para FILA
     const numericId = parseInt(id, 10);
     if (!isNaN(numericId)) {
-      updateDemandaMutation.mutate({ id: numericId, status: "5_FILA" });
+      updateDemandaMutation.mutate({ id: numericId, status: "5_TRIAGEM" });
     } else {
       // Para demandas mock (string id), apenas atualiza estado local
       setDemandas((prev) =>

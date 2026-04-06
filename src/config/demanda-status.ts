@@ -289,7 +289,7 @@ export function mapDbStatusToGroup(dbStatus: string | null | undefined, substatu
   // Urgente
   if (s === "URGENTE") return "triagem";
   // Triagem → triagem, Atender sem substatus → diligências, Monitorar → monitorar
-  if (s === "5_FILA") return "triagem";
+  if (s === "5_TRIAGEM") return "triagem";
   if (s === "2_ATENDER") return "diligencias";
   if (s === "4_MONITORAR") return "preparacao";
 
@@ -443,7 +443,7 @@ export function getStageIndex(group: StatusGroup): number {
 // ==========================================
 
 export const UI_STATUS_TO_DB: Record<string, string> = {
-  "triagem": "5_FILA",
+  "triagem": "5_TRIAGEM",
   "atender": "2_ATENDER",
   "analisar": "2_ATENDER",
   "elaborar": "2_ATENDER",
@@ -458,7 +458,7 @@ export const UI_STATUS_TO_DB: Record<string, string> = {
   "investigar": "2_ATENDER",
   "oficiar": "2_ATENDER",
   "monitorar": "4_MONITORAR",
-  "protocolar": "5_FILA",
+  "protocolar": "5_TRIAGEM",
   "protocolado": "7_PROTOCOLADO",
   "ciencia": "7_CIENCIA",
   "sem_atuacao": "7_SEM_ATUACAO",

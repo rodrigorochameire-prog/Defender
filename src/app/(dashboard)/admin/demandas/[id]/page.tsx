@@ -39,7 +39,7 @@ import { UI_STATUS_TO_DB, ALL_STATUS_OPTIONS, getStatusConfig } from "@/config/d
 const STATUS_BADGE_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   "2_ATENDER":      { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-300", label: "Atender" },
   "4_MONITORAR":    { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-700 dark:text-purple-300", label: "Monitorar" },
-  "5_FILA":         { bg: "bg-neutral-100 dark:bg-neutral-800/50", text: "text-neutral-600 dark:text-neutral-400", label: "Triagem" },
+  "5_TRIAGEM":      { bg: "bg-neutral-100 dark:bg-neutral-800/50", text: "text-neutral-600 dark:text-neutral-400", label: "Triagem" },
   "7_PROTOCOLADO":  { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-300", label: "Protocolado" },
   "7_CIENCIA":      { bg: "bg-sky-100 dark:bg-sky-900/30", text: "text-sky-700 dark:text-sky-300", label: "Ciência" },
   "7_SEM_ATUACAO":  { bg: "bg-neutral-100 dark:bg-neutral-800/50", text: "text-neutral-500 dark:text-neutral-500", label: "Sem Atuação" },

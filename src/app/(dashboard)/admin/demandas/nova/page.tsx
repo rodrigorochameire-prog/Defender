@@ -78,7 +78,7 @@ export default function NovaDemandaPage() {
     prazo: "",
     dataEntrada: new Date().toISOString().split("T")[0],
     dataExpedicao: new Date().toISOString().split("T")[0],
-    status: "5_FILA",
+    status: "5_TRIAGEM",
     providencias: "",
     reuPreso: false,
   });
@@ -813,7 +813,7 @@ export default function NovaDemandaPage() {
                 <SelectContent>
                   <SelectItem value="URGENTE">Urgente</SelectItem>
                   <SelectItem value="2_ATENDER">Atender</SelectItem>
-                  <SelectItem value="5_FILA">Fila</SelectItem>
+                  <SelectItem value="5_TRIAGEM">Triagem</SelectItem>
                   <SelectItem value="4_MONITORAR">Monitorar</SelectItem>
                 </SelectContent>
               </Select>

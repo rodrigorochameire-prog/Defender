@@ -399,7 +399,7 @@ export function RegistroRapidoAprimorado({
           ato: `[${tipoLabel}] ${data.descricao.slice(0, 250)}`,
           prazo: data.prazo || undefined,
           prioridade: (data.prioridade as "BAIXA" | "NORMAL" | "ALTA" | "URGENTE" | "REU_PRESO") || "NORMAL",
-          status: "5_FILA",
+          status: "5_TRIAGEM",
           providencias: data.descricao,
         });
       } else if (data.criarDemanda && !data.processoId) {

@@ -75,22 +75,22 @@ function parseCSVLine(line: string): string[] {
 }
 
 // Mapear status da planilha para enum
-function mapStatus(statusStr: string): "2_ATENDER" | "4_MONITORAR" | "5_FILA" | "7_PROTOCOLADO" | "7_CIENCIA" | "7_SEM_ATUACAO" | "URGENTE" | "CONCLUIDO" | "ARQUIVADO" {
-  if (!statusStr) return "5_FILA";
-  
+function mapStatus(statusStr: string): "2_ATENDER" | "4_MONITORAR" | "5_TRIAGEM" | "7_PROTOCOLADO" | "7_CIENCIA" | "7_SEM_ATUACAO" | "URGENTE" | "CONCLUIDO" | "ARQUIVADO" {
+  if (!statusStr) return "5_TRIAGEM";
+
   const cleaned = statusStr.toLowerCase().trim();
-  
+
   if (cleaned.includes("2") || cleaned.includes("atender")) return "2_ATENDER";
   if (cleaned.includes("4") || cleaned.includes("monitorar")) return "4_MONITORAR";
-  if (cleaned.includes("5") || cleaned.includes("fila") || cleaned.includes("triagem")) return "5_FILA";
+  if (cleaned.includes("5") || cleaned.includes("fila") || cleaned.includes("triagem")) return "5_TRIAGEM";
   if (cleaned.includes("7") && cleaned.includes("protocolado")) return "7_PROTOCOLADO";
   if (cleaned.includes("7") && cleaned.includes("ciência")) return "7_CIENCIA";
   if (cleaned.includes("7") && cleaned.includes("sem")) return "7_SEM_ATUACAO";
   if (cleaned.includes("urgente")) return "URGENTE";
   if (cleaned.includes("concluído") || cleaned.includes("concluido")) return "CONCLUIDO";
   if (cleaned.includes("arquivado")) return "ARQUIVADO";
-  
-  return "5_FILA";
+
+  return "5_TRIAGEM";
 }
 
 // Mapear área da planilha para enum

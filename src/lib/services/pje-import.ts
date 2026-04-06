@@ -50,7 +50,7 @@ export interface ImportResult {
 // ============================================================================
 
 const STATUS_TO_DB: Record<string, string> = {
-  "triagem": "5_FILA",
+  "triagem": "5_TRIAGEM",
   "atender": "2_ATENDER",
   "analisar": "2_ATENDER",
   "elaborar": "2_ATENDER",
@@ -64,7 +64,7 @@ const STATUS_TO_DB: Record<string, string> = {
   "investigar": "2_ATENDER",
   "oficiar": "2_ATENDER",
   "monitorar": "4_MONITORAR",
-  "protocolar": "5_FILA",
+  "protocolar": "5_TRIAGEM",
   "protocolado": "7_PROTOCOLADO",
   "ciencia": "7_CIENCIA",
   "sem_atuacao": "7_SEM_ATUACAO",
@@ -340,8 +340,8 @@ export async function importarDemandas(
       // 5. Determinar status do banco
       const statusKey = (row.status || "analisar").toLowerCase().replace(/\s+/g, "_").trim();
       const dbStatus = CONCLUIDA_IMPORT_KEYS.has(statusKey)
-        ? (STATUS_TO_DB[statusKey] || "5_FILA")
-        : "5_FILA";
+        ? (STATUS_TO_DB[statusKey] || "5_TRIAGEM")
+        : "5_TRIAGEM";
       const reuPreso = row.estadoPrisional === "preso";
       const substatus = statusKey || null;
 

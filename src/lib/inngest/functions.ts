@@ -2042,7 +2042,7 @@ export const syncSheetPollingFn = inngest.createFunction(
         "2 - Elaborar": { status: "2_ATENDER", substatus: "2 - Elaborar" },
         "2 - Buscar": { status: "2_ATENDER", substatus: "2 - Buscar" },
         "4 - Monitorar": { status: "4_MONITORAR", substatus: null },
-        "5 - Fila": { status: "5_FILA", substatus: null },
+        "5 - Triagem": { status: "5_TRIAGEM", substatus: null },
         "7 - Protocolado": { status: "7_PROTOCOLADO", substatus: null },
         "7 - Ciência": { status: "7_CIENCIA", substatus: null },
         "7 - Sem atuação": { status: "7_SEM_ATUACAO", substatus: null },

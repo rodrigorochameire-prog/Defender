@@ -238,7 +238,7 @@ export const demandas = pgTable("demandas", {
   dataExpedicao: date("data_expedicao"),
   dataConclusao: timestamp("data_conclusao"),
   tipoPrazoId: integer("tipo_prazo_id"),
-  status: statusDemandaEnum("status").default("5_FILA"),
+  status: statusDemandaEnum("status").default("5_TRIAGEM"),
   substatus: varchar("substatus", { length: 50 }),
   prioridade: prioridadeEnum("prioridade").default("NORMAL"),
   providencias: text("providencias"),

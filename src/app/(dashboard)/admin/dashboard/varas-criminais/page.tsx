@@ -202,7 +202,7 @@ export default function DashboardVarasCriminaisPage() {
       assistidoId: assistido.id,
       ato: data.ato || "Providência",
       prazo: data.prazo || undefined,
-      status: data.status as any || "5_FILA",
+      status: data.status as any || "5_TRIAGEM",
       prioridade: data.reuPreso ? "REU_PRESO" : "NORMAL",
       providencias: data.providencias || undefined,
       reuPreso: data.reuPreso || false,

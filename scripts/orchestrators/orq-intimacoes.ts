@@ -379,7 +379,7 @@ async function insertDirectly(intimacoes: IntimacaoParsed[], atribuicao: string)
             ato: int.tipo_documento || "Intimação",
             tipo_ato: int.tipo_prazo || "ciencia",
             prazo: int.data_limite,
-            status: int.urgencia === "critical" ? "1_URGENTE" : "5_FILA",
+            status: int.urgencia === "critical" ? "1_URGENTE" : "5_TRIAGEM",
             observacoes: int.texto_expediente,
           }),
         });

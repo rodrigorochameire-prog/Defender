@@ -659,7 +659,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                                 : isUrgente ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
                                 : isConcluido || d.status === "7_PROTOCOLADO" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
                                 : d.status === "4_MONITORAR" ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400"
-                                : d.status === "5_FILA" ? "bg-muted text-muted-foreground"
+                                : d.status === "5_TRIAGEM" ? "bg-muted text-muted-foreground"
                                 : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
                             )}>
                               {d.status?.replace(/^\d+_/, "") ?? "—"}

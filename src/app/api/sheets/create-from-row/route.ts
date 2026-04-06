@@ -175,7 +175,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         processoId,
         assistidoId,
         ato: ato.trim(),
-        status: (statusNormalizado || "5_FILA") as never,
+        status: (statusNormalizado || "5_TRIAGEM") as never,
         prazo: parseDateValue(body.prazo ?? "") ?? undefined,
         dataEntrada: parseDateValue(body.dataEntrada ?? "") ?? undefined,
         reuPreso,
@@ -210,8 +210,9 @@ function normalizarStatus(valor: string): string {
     "2_ATENDER": "2_ATENDER",
     "4 - MONITORAR": "4_MONITORAR",
     "4_MONITORAR": "4_MONITORAR",
-    "5 - FILA": "5_FILA",
-    "5_FILA": "5_FILA",
+    "5 - FILA": "5_TRIAGEM",
+    "5 - TRIAGEM": "5_TRIAGEM",
+    "5_TRIAGEM": "5_TRIAGEM",
     "7 - PROTOCOLADO": "7_PROTOCOLADO",
     "7_PROTOCOLADO": "7_PROTOCOLADO",
     "7 - CIÊNCIA": "7_CIENCIA",
@@ -226,7 +227,7 @@ function normalizarStatus(valor: string): string {
     ARQUIVADO: "ARQUIVADO",
   };
 
-  return mapa[upper] ?? "5_FILA";
+  return mapa[upper] ?? "5_TRIAGEM";
 }
 
 function parseDateValue(valor: string): string | null {
