@@ -282,6 +282,10 @@ export function PJeImportModal({
           }
         }
 
+        // Se confiança é baixa, não preencher ato — deixar para o usuário ou scan automático
+        const atoFinal = suggestion.confidence === "low" ? "" : suggestion.ato;
+        const prazoFinal = atoFinal ? prazoCalculado : "";
+
         return {
           assistidoNome: intimacao.assistido,
           numeroProcesso: intimacao.numeroProcesso,
@@ -290,10 +294,10 @@ export function PJeImportModal({
           tipoProcesso: intimacao.tipoProcesso,
           crime: intimacao.crime,
           ordemOriginal: intimacao.ordemOriginal ?? index,
-          ato: suggestion.ato,
+          ato: atoFinal,
           atoConfidence: suggestion.confidence,
-          status: suggestion.ato.startsWith("Ciência") ? "ciencia" : "analisar",
-          prazo: prazoCalculado,
+          status: atoFinal && atoFinal.startsWith("Ciência") ? "ciencia" : "analisar",
+          prazo: prazoFinal,
           estadoPrisional: "Solto",
           excluded: false,
           prazoManual: false,
