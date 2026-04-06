@@ -21,6 +21,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { trpc } from "@/lib/trpc/client";
 import { PIPELINE_STEPS } from "@/lib/preparar-audiencia-pipeline";
 import type { PipelineResult } from "@/lib/preparar-audiencia-pipeline";
 
@@ -32,15 +33,6 @@ type Phase = "levantamento" | "progresso" | "resultado";
 
 type StatusPrep = "completo" | "parcial" | "pendente";
 
-interface AudienciaPrep {
-  id: number;
-  assistidoNome: string;
-  data: string;
-  tipo: string;
-  statusPrep: StatusPrep;
-  semIntimacao: number;
-}
-
 interface ProgressItem {
   audienciaId: number;
   assistidoNome: string;
@@ -48,37 +40,6 @@ interface ProgressItem {
   testemunhasCount?: number;
   alertCount?: number;
 }
-
-// ---------------------------------------------------------------------------
-// Stub data (until tRPC endpoint statusPreparacao is wired — Task 12/13)
-// ---------------------------------------------------------------------------
-
-const STUB_AUDIENCIAS: AudienciaPrep[] = [
-  {
-    id: 1,
-    assistidoNome: "João da Silva",
-    data: "2026-04-16",
-    tipo: "AIJ",
-    statusPrep: "pendente",
-    semIntimacao: 2,
-  },
-  {
-    id: 2,
-    assistidoNome: "Maria Souza",
-    data: "2026-04-17",
-    tipo: "Júri (Plenário)",
-    statusPrep: "parcial",
-    semIntimacao: 1,
-  },
-  {
-    id: 3,
-    assistidoNome: "Carlos Oliveira",
-    data: "2026-04-18",
-    tipo: "AIJ",
-    statusPrep: "completo",
-    semIntimacao: 0,
-  },
-];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -123,10 +84,14 @@ export function PrepararAudienciasModal() {
   // Result state
   const [results, setResults] = useState<PipelineResult[]>([]);
 
-  // --- Data (stub until tRPC endpoint is wired) ---
-  // TODO: Replace with trpc.audiencias.statusPreparacao.useQuery({ diasAntecedencia: 10 })
-  const audiencias = STUB_AUDIENCIAS;
-  const pendentes = audiencias.filter((a) => a.statusPrep !== "completo");
+  // --- Data from real tRPC endpoint ---
+  const { data: audiencias, isLoading } = trpc.audiencias.statusPreparacao.useQuery(
+    { diasAntecedencia: 10 },
+    { enabled: open }
+  );
+  const prepararMutation = trpc.audiencias.prepararAudiencia.useMutation();
+
+  const pendentes = audiencias?.filter((a) => a.statusPrep !== "completo") ?? [];
   const totalPendentes = pendentes.length;
 
   // ---------------------------------------------------------------------------
@@ -145,18 +110,92 @@ export function PrepararAudienciasModal() {
     }
   }
 
-  function handlePrepararTodos() {
-    // Set up progress state — actual mutation wiring is Task 13
+  async function handlePrepararTodos() {
+    setPhase("progresso");
+    setIsRunning(true);
+    setResults([]);
+
     const items: ProgressItem[] = pendentes.map((a, i) => ({
       audienciaId: a.id,
       assistidoNome: a.assistidoNome,
-      status: i === 0 ? "current" : "waiting",
+      status: i === 0 ? ("current" as const) : ("waiting" as const),
     }));
     setProgressItems(items);
     setCurrentIndex(0);
     setCurrentStepIndex(0);
-    setIsRunning(true);
-    setPhase("progresso");
+
+    const newResults: PipelineResult[] = [];
+
+    for (let i = 0; i < pendentes.length; i++) {
+      setCurrentIndex(i);
+      const aud = pendentes[i];
+
+      // Update progress items to reflect current
+      setProgressItems((prev) =>
+        prev.map((item, idx) => ({
+          ...item,
+          status: idx < i ? "done" as const : idx === i ? "current" as const : "waiting" as const,
+        }))
+      );
+
+      try {
+        // Steps 1-3 are external (PJe + Mac Mini) — skip to step 4
+        setCurrentStepIndex(3); // "Identificando testemunhas"
+
+        const result = await prepararMutation.mutateAsync({
+          audienciaId: aud.id,
+        });
+
+        setCurrentStepIndex(4); // "Verificando intimação"
+
+        const naoIntimadas = result.testemunhas
+          .filter((t) => t.status === "ARROLADA" || t.status === "NAO_LOCALIZADA")
+          .map((t) => ({ nome: t.nome, status: t.status }));
+
+        newResults.push({
+          audienciaId: aud.id,
+          assistidoNome: result.assistidoNome,
+          success: true,
+          testemunhas: result.testemunhas,
+          naoIntimadas,
+        });
+
+        // Update progress item with counts
+        setProgressItems((prev) =>
+          prev.map((item, idx) =>
+            idx === i
+              ? {
+                  ...item,
+                  status: "done" as const,
+                  testemunhasCount: result.testemunhas.length,
+                  alertCount: naoIntimadas.length,
+                }
+              : item
+          )
+        );
+      } catch (error) {
+        newResults.push({
+          audienciaId: aud.id,
+          assistidoNome: aud.assistidoNome,
+          success: false,
+          error: error instanceof Error ? error.message : "Erro desconhecido",
+          testemunhas: [],
+          naoIntimadas: [],
+        });
+
+        // Mark as done (with error) in progress
+        setProgressItems((prev) =>
+          prev.map((item, idx) =>
+            idx === i ? { ...item, status: "done" as const } : item
+          )
+        );
+      }
+
+      setResults([...newResults]);
+    }
+
+    setIsRunning(false);
+    setPhase("resultado");
   }
 
   function handlePause() {
@@ -238,6 +277,16 @@ export function PrepararAudienciasModal() {
           {/* ================================================================ */}
           {phase === "levantamento" && (
             <div className="space-y-3">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8 text-xs text-zinc-400">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Carregando audiências...
+                </div>
+              ) : !audiencias || audiencias.length === 0 ? (
+                <div className="flex items-center justify-center py-8 text-xs text-zinc-400">
+                  Nenhuma audiência nos próximos 10 dias.
+                </div>
+              ) : (
               <div className="max-h-80 overflow-y-auto rounded border border-zinc-200">
                 <table className="w-full text-xs">
                   <thead className="sticky top-0 bg-zinc-50">
@@ -273,7 +322,7 @@ export function PrepararAudienciasModal() {
                           {a.assistidoNome}
                         </td>
                         <td className="px-3 py-2 text-zinc-500">
-                          {new Date(a.data + "T12:00:00").toLocaleDateString(
+                          {new Date(a.dataAudiencia).toLocaleDateString(
                             "pt-BR",
                             {
                               day: "2-digit",
@@ -296,12 +345,12 @@ export function PrepararAudienciasModal() {
                             >
                               {a.statusPrep}
                             </span>
-                            {a.semIntimacao > 0 && (
+                            {a.naoIntimadas > 0 && (
                               <Badge
                                 variant="outline"
                                 className="ml-1 text-[10px] px-1 py-0 border-red-300 text-red-600"
                               >
-                                {a.semIntimacao} sem intimação
+                                {a.naoIntimadas} sem intimação
                               </Badge>
                             )}
                           </div>
@@ -311,6 +360,7 @@ export function PrepararAudienciasModal() {
                   </tbody>
                 </table>
               </div>
+              )}
 
               {/* Bottom bar */}
               <div className="flex items-center justify-between rounded-md bg-amber-50 border border-amber-200 px-3 py-2">
