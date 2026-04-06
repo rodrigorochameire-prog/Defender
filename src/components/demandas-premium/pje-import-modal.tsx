@@ -3,7 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { FileText, AlertCircle, CheckCircle2, Upload, Download, Settings, User, Scale, ArrowRight, Sparkles, Info, Edit3, AlertTriangle, ChevronDown, Shield, MessageCircle, RefreshCw, Loader2, Radar, ScanSearch } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,8 @@ import {
   type ResultadoParserVVD,
 } from "@/lib/pje-parser";
 import { suggestAtoWithText } from "@/lib/ato-suggestion";
-import type { ScanIntimacaoResult } from "@/lib/services/enrichment-client";
+import { getSupabaseClient } from "@/lib/supabase/client";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { calcularPrazoPorAto } from "@/lib/prazo-calculator";
 import { PjeReviewTable, type PjeReviewRow } from "./pje-review-table";
 
@@ -97,11 +98,12 @@ export function PJeImportModal({
   const [isScraping, setIsScraping] = useState(false);
   const [scrapeProgress, setScrapeProgress] = useState<string | null>(null);
 
-  // PJe Scan — escanear intimações para preencher ato/providências
+  // PJe Scan — escanear intimações para preencher ato/providências (job queue)
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState<{ current: number; total: number; currentProcesso: string }>({ current: 0, total: 0, currentProcesso: "" });
-  const [scanResults, setScanResults] = useState<Map<string, ScanIntimacaoResult>>(new Map());
   const [scanningRowIndex, setScanningRowIndex] = useState<number | undefined>(undefined);
+  const scanChannelRef = useRef<RealtimeChannel | null>(null);
+  const scanCompletedRef = useRef(0);
 
   // Mutation para importação VVD
   const importarVVDMutation = trpc.vvd.importarIntimacoesPJe.useMutation({
@@ -164,66 +166,114 @@ export function PJeImportModal({
     scrapePjeMutation.mutate({ processos: processosParaScrape });
   };
 
-  // Mutation para scan de intimações PJe
-  const scanIntimacoesMutation = trpc.enrichment.scanIntimacoessPje.useMutation({
-    onSuccess: (result) => {
-      setIsScanning(false);
-      setScanningRowIndex(undefined);
-      if (result.success && result.data) {
-        const newResults = new Map(scanResults);
-        const newRows = [...reviewRows];
-        for (const r of result.data.resultados) {
-          newResults.set(r.numero_processo, r);
-          // Update matching row
-          const rowIdx = newRows.findIndex((row) => row.numeroProcesso === r.numero_processo);
-          if (rowIdx >= 0 && r.status === "success") {
-            if (r.ato_sugerido) {
-              newRows[rowIdx] = {
-                ...newRows[rowIdx],
-                ato: r.ato_sugerido,
-                atoConfidence: r.ato_confianca || "medium",
-              };
-              // Recalculate prazo if not manual
-              if (!newRows[rowIdx].prazoManual && r.ato_sugerido) {
-                const novoPrazo = calcularPrazoPorAto(
-                  (() => {
-                    const de = newRows[rowIdx].dataExpedicao;
-                    if (!de) return new Date();
-                    if (de.includes("-")) return new Date(de + "T12:00:00");
-                    const parts = de.split(/[\s/]/);
-                    return new Date(parseInt(parts[2]) < 100 ? 2000 + parseInt(parts[2]) : parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-                  })(),
-                  r.ato_sugerido,
-                );
-                if (novoPrazo) newRows[rowIdx].prazo = novoPrazo;
-              }
-            }
-            if (r.providencias) newRows[rowIdx].providencias = r.providencias;
-            if (r.audiencia_data) newRows[rowIdx].audienciaData = r.audiencia_data;
-            if (r.audiencia_hora) newRows[rowIdx].audienciaHora = r.audiencia_hora;
-            if (r.audiencia_tipo) newRows[rowIdx].audienciaTipo = r.audiencia_tipo;
-          }
-        }
-        setScanResults(newResults);
-        setReviewRows(newRows);
-        toast.success(
-          `${result.data.total_success} intimações escaneadas${result.data.total_errors > 0 ? ` (${result.data.total_errors} erros)` : ""}`,
-          { duration: 4000 },
-        );
-      } else {
-        toast.error(result.error || "Erro no scan de intimações");
-      }
-    },
-    onError: (error) => {
-      setIsScanning(false);
-      setScanningRowIndex(undefined);
-      toast.error(`Erro no scan: ${error.message}`);
-    },
-  });
+  // Mutation para criar jobs de scan (job queue pattern)
+  const scanIntimacoesMutation = trpc.enrichment.scanIntimacoessPje.useMutation();
 
   const DRIVE_BASE_PATH = "/Users/rodrigorochameire/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP";
 
-  const handleScan = () => {
+  // Cleanup Realtime channel on unmount
+  useEffect(() => {
+    return () => {
+      if (scanChannelRef.current) {
+        const supabase = getSupabaseClient();
+        supabase.removeChannel(scanChannelRef.current);
+        scanChannelRef.current = null;
+      }
+    };
+  }, []);
+
+  // Helper: apply a completed job result to a review row
+  const applyJobToRow = useCallback((job: Record<string, any>) => {
+    if (job.status === "completed") {
+      setReviewRows((prev) => {
+        const rowIdx = prev.findIndex((r) => r.numeroProcesso === job.numero_processo);
+        if (rowIdx < 0) return prev;
+        const newRows = [...prev];
+        const row = { ...newRows[rowIdx] };
+        if (job.ato_sugerido) {
+          row.ato = job.ato_sugerido;
+          row.atoConfidence = job.ato_confianca === "high" ? "high" : "medium";
+          // Recalculate prazo if not manual
+          if (!row.prazoManual) {
+            const novoPrazo = calcularPrazoPorAto(
+              (() => {
+                const de = row.dataExpedicao;
+                if (!de) return new Date();
+                if (de.includes("-")) return new Date(de + "T12:00:00");
+                const parts = de.split(/[\s/]/);
+                return new Date(parseInt(parts[2]) < 100 ? 2000 + parseInt(parts[2]) : parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+              })(),
+              job.ato_sugerido,
+            );
+            if (novoPrazo) row.prazo = novoPrazo;
+          }
+        }
+        if (job.providencias) row.providencias = job.providencias;
+        if (job.audiencia_data) row.audienciaData = job.audiencia_data;
+        if (job.audiencia_hora) row.audienciaHora = job.audiencia_hora;
+        if (job.audiencia_tipo) row.audienciaTipo = job.audiencia_tipo;
+        newRows[rowIdx] = row;
+        return newRows;
+      });
+    }
+  }, []);
+
+  // Helper: subscribe to Realtime updates for a batch
+  const subscribeToBatch = useCallback((batchId: string, totalJobs: number) => {
+    const supabase = getSupabaseClient();
+
+    // Clean up previous channel if any
+    if (scanChannelRef.current) {
+      supabase.removeChannel(scanChannelRef.current);
+    }
+
+    scanCompletedRef.current = 0;
+
+    const channel = supabase
+      .channel(`scan-batch-${batchId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "scan_intimacoes_jobs",
+          filter: `batch_id=eq.${batchId}`,
+        },
+        (payload: any) => {
+          const job = payload.new;
+          if (job.status === "completed" || job.status === "failed") {
+            // Apply result to review row
+            applyJobToRow(job);
+
+            // Update progress
+            scanCompletedRef.current += 1;
+            const completed = scanCompletedRef.current;
+            setScanProgress((prev) => ({
+              ...prev,
+              current: completed,
+              currentProcesso: job.numero_processo,
+            }));
+
+            // Check if all done
+            if (completed >= totalJobs) {
+              setIsScanning(false);
+              setScanningRowIndex(undefined);
+              supabase.removeChannel(channel);
+              scanChannelRef.current = null;
+              toast.success(
+                `${totalJobs} intimações escaneadas`,
+                { duration: 4000 },
+              );
+            }
+          }
+        },
+      )
+      .subscribe();
+
+    scanChannelRef.current = channel;
+  }, [applyJobToRow]);
+
+  const handleScan = async () => {
     const vazios = reviewRows
       .map((r, i) => ({ r, i }))
       .filter(({ r }) => !r.excluded && !r.ato);
@@ -233,29 +283,49 @@ export function PJeImportModal({
     setIsScanning(true);
     setScanProgress({ current: 0, total: vazios.length, currentProcesso: vazios[0].r.numeroProcesso });
 
-    scanIntimacoesMutation.mutate({
-      intimacoes: vazios.map(({ r }) => ({
-        numeroProcesso: r.numeroProcesso,
-        assistidoNome: r.assistidoNome,
-        atribuicao: atribuicao,
-      })),
-      driveBasePath: DRIVE_BASE_PATH,
-    });
+    try {
+      const result = await scanIntimacoesMutation.mutateAsync({
+        intimacoes: vazios.map(({ r }) => ({
+          numeroProcesso: r.numeroProcesso,
+          assistidoNome: r.assistidoNome,
+          atribuicao: atribuicao,
+        })),
+        driveBasePath: DRIVE_BASE_PATH,
+      });
+
+      // Subscribe to Realtime updates for this batch
+      subscribeToBatch(result.batchId, result.totalJobs);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao criar jobs de scan");
+      setIsScanning(false);
+    }
   };
 
-  const handleScanRow = (index: number) => {
+  const handleScanRow = async (index: number) => {
     const row = reviewRows[index];
     if (!row || row.ato) return;
 
     setScanningRowIndex(index);
-    scanIntimacoesMutation.mutate({
-      intimacoes: [{
-        numeroProcesso: row.numeroProcesso,
-        assistidoNome: row.assistidoNome,
-        atribuicao: atribuicao,
-      }],
-      driveBasePath: DRIVE_BASE_PATH,
-    });
+    setIsScanning(true);
+    setScanProgress({ current: 0, total: 1, currentProcesso: row.numeroProcesso });
+
+    try {
+      const result = await scanIntimacoesMutation.mutateAsync({
+        intimacoes: [{
+          numeroProcesso: row.numeroProcesso,
+          assistidoNome: row.assistidoNome,
+          atribuicao: atribuicao,
+        }],
+        driveBasePath: DRIVE_BASE_PATH,
+      });
+
+      // Subscribe to Realtime updates for this single-job batch
+      subscribeToBatch(result.batchId, result.totalJobs);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao criar job de scan");
+      setIsScanning(false);
+      setScanningRowIndex(undefined);
+    }
   };
 
   // Batch match de assistidos (PJe Import v2)

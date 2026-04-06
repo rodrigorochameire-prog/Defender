@@ -15,7 +15,7 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db } from "@/lib/db";
-import { documentos, atendimentos, demandas, driveFiles, processos, assistidos } from "@/lib/db/schema";
+import { documentos, atendimentos, demandas, driveFiles, processos, assistidos, scanIntimacoesJobs } from "@/lib/db/schema";
 import { eq, and, or, isNull, notInArray, sql } from "drizzle-orm";
 import {
   enrichmentClient,
@@ -23,7 +23,6 @@ import {
   type EnrichPjeOutput,
   type EnrichTranscriptOutput,
   type EnrichAudienciaOutput,
-  type ScanIntimacoesOutput,
 } from "@/lib/services/enrichment-client";
 
 // ==========================================
@@ -380,34 +379,34 @@ export const enrichmentRouter = router({
     }),
 
   /**
-   * Escanear intimações PJe — extrai ato, providências e audiência de PDFs
-   * Retorna dados estruturados para preencher a review table
+   * Escanear intimações PJe — cria jobs na fila para o worker local processar.
+   * Retorna batchId + totalJobs. Frontend escuta via Supabase Realtime.
    */
   scanIntimacoessPje: protectedProcedure
     .input(scanIntimacoesInputSchema)
+    .output(z.object({
+      batchId: z.string(),
+      totalJobs: z.number(),
+    }))
     .mutation(async ({ input }) => {
-      try {
-        const result = await enrichmentClient.scanIntimacoessPje(
-          input.intimacoes.map((i) => ({
-            numero_processo: i.numeroProcesso,
-            assistido_nome: i.assistidoNome,
-            atribuicao: i.atribuicao,
-            id_documento: i.idDocumento,
-          })),
-          input.driveBasePath,
-        );
+      const batchId = crypto.randomUUID();
 
-        return {
-          success: true,
-          data: result,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : "Erro no scan de intimações",
-          data: null,
-        };
-      }
+      const jobRows = input.intimacoes.map((i) => ({
+        numeroProcesso: i.numeroProcesso,
+        assistidoNome: i.assistidoNome,
+        atribuicao: i.atribuicao,
+        idDocumento: i.idDocumento ?? null,
+        driveBasePath: input.driveBasePath,
+        status: "pending" as const,
+        batchId,
+      }));
+
+      await db.insert(scanIntimacoesJobs).values(jobRows);
+
+      return {
+        batchId,
+        totalJobs: input.intimacoes.length,
+      };
     }),
 
   /**

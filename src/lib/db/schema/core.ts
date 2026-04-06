@@ -536,3 +536,36 @@ export const analysisJobs = pgTable("analysis_jobs", {
 
 export type AnalysisJob = typeof analysisJobs.$inferSelect;
 export type InsertAnalysisJob = typeof analysisJobs.$inferInsert;
+
+// ==========================================
+// SCAN INTIMAÇÕES JOBS (Worker Queue)
+// ==========================================
+
+export const scanIntimacoesJobs = pgTable("scan_intimacoes_jobs", {
+  id: serial("id").primaryKey(),
+  numeroProcesso: varchar("numero_processo", { length: 30 }).notNull(),
+  assistidoNome: varchar("assistido_nome", { length: 200 }).notNull(),
+  atribuicao: varchar("atribuicao", { length: 50 }).notNull(),
+  idDocumento: varchar("id_documento", { length: 30 }),
+  driveBasePath: text("drive_base_path"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  atoSugerido: varchar("ato_sugerido", { length: 100 }),
+  atoConfianca: varchar("ato_confianca", { length: 10 }),
+  providencias: text("providencias"),
+  audienciaData: varchar("audiencia_data", { length: 10 }),
+  audienciaHora: varchar("audiencia_hora", { length: 5 }),
+  audienciaTipo: varchar("audiencia_tipo", { length: 50 }),
+  pdfPath: text("pdf_path"),
+  conteudoResumo: text("conteudo_resumo"),
+  error: text("error"),
+  batchId: varchar("batch_id", { length: 50 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+}, (table) => ({
+  statusIdx: index("scan_jobs_status_idx").on(table.status),
+  batchIdx: index("scan_jobs_batch_idx").on(table.batchId),
+}));
+
+export type ScanIntimacoesJob = typeof scanIntimacoesJobs.$inferSelect;
+export type InsertScanIntimacoesJob = typeof scanIntimacoesJobs.$inferInsert;
