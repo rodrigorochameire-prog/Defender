@@ -254,9 +254,9 @@ export function mapDbStatusToGroup(dbStatus: string | null | undefined, substatu
   }
   // Urgente
   if (s === "URGENTE") return "triagem";
-  // Fila, Atender
+  // Fila → triagem, Atender sem substatus → preparação, Monitorar → saída
   if (s === "5_FILA") return "triagem";
-  if (s === "2_ATENDER") return "triagem";
+  if (s === "2_ATENDER") return "preparacao";
   if (s === "4_MONITORAR") return "saida";
 
   return "triagem";
@@ -295,7 +295,9 @@ export function getStatusConfig(status: string | null | undefined): StatusConfig
     };
   }
 
-  const normalizedStatus = status.toLowerCase().replace(/\s+/g, "_");
+  // Remove prefixo numérico ("2 - Elaborar" → "Elaborar") e normaliza
+  const withoutPrefix = status.replace(/^\d+\s*-\s*/, "");
+  const normalizedStatus = withoutPrefix.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
 
   // Tenta achar no mapa de status individuais
   const config = DEMANDA_STATUS[normalizedStatus];
@@ -308,8 +310,8 @@ export function getStatusConfig(status: string | null | undefined): StatusConfig
 
   // Mapeamento de status DB antigos para novos grupos
   const dbMap: Record<string, StatusConfig> = {
-    "5_fila":         { label: "Fila",         group: "triagem",   icon: Inbox },
-    "2_atender":      { label: "Atender",      group: "triagem",   icon: User },
+    "5_fila":         { label: "Fila",         group: "triagem",     icon: Inbox },
+    "2_atender":      { label: "Atender",      group: "preparacao", icon: User },
     "4_monitorar":    { label: "Monitorar",    group: "saida",     icon: Eye },
     "7_protocolado":  { label: "Protocolado",  group: "concluida", icon: CheckCircle2 },
     "7_ciencia":      { label: "Ciência",      group: "concluida", icon: Eye },

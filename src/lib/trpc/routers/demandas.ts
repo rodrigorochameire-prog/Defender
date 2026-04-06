@@ -166,7 +166,7 @@ export const demandasRouter = router({
         .leftJoin(processos, eq(demandas.processoId, processos.id))
         .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(sql`${demandas.createdAt} DESC, ${demandas.ordemManual} ASC NULLS LAST, ${demandas.prazo} ASC NULLS LAST`)
+        .orderBy(sql`${demandas.ordemManual} ASC NULLS LAST, ${demandas.createdAt} DESC, ${demandas.prazo} ASC NULLS LAST`)
         .limit(limit)
         .offset(offset);
 

@@ -705,7 +705,8 @@ export function KanbanPremium({
     };
 
     for (const d of demandas) {
-      const statusKey = (d.substatus || d.status || "fila").toLowerCase().replace(/\s+/g, "_");
+      const rawKey = (d.substatus || d.status || "fila");
+      const statusKey = rawKey.replace(/^\d+\s*-\s*/, "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
       const statusCfg = getStatusConfig(statusKey);
       const group: StatusGroup = statusCfg.group;
       const column = GROUP_TO_COLUMN[group];
@@ -925,7 +926,8 @@ export function KanbanPremium({
                   ) : (
                     <div className="space-y-2.5 flex-1">
                       {items.slice(0, 30).map((d) => {
-                        const statusKey = (d.substatus || d.status || "fila").toLowerCase().replace(/\s+/g, "_");
+                        const rawKey2 = (d.substatus || d.status || "fila");
+                        const statusKey = rawKey2.replace(/^\d+\s*-\s*/, "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
                         const sCfg = getStatusConfig(statusKey);
                         return (
                           <KanbanCard
