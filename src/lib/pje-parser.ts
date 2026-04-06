@@ -172,24 +172,38 @@ function toTitleCase(nome: string): string {
 export function detectarAtribuicao(texto: string): { atribuicao: string | null; vara: string | null } {
   const textoLower = texto.toLowerCase();
 
-  // Detecção baseada em padrões de VARA (mais específico, evita falsos positivos)
-  // A ordem importa: padrões mais específicos primeiro
+  // Detecção baseada em padrões de VARA — conta ocorrências para resolver ambiguidade
+  // (texto colado pode conter referências a múltiplas varas)
 
-  // Júri (checar ANTES de Execução e VVD, pois "Júri e Execuções" contém "execuções")
-  if (textoLower.includes('vara do júri') || textoLower.includes('vara do juri') ||
-      textoLower.includes('júri e execuções') || textoLower.includes('juri e execucoes') ||
-      textoLower.includes('tribunal do júri') || textoLower.includes('tribunal do juri')) {
+  // Contar ocorrências de cada vara no texto
+  const countVVD = (textoLower.match(/vara\s+de\s+viol[eê]ncia|vara\s+da\s+viol[eê]ncia|juizado\s+de\s+viol[eê]ncia|violência doméstica fam|violencia domestica fam/g) || []).length;
+  const countJuri = (textoLower.match(/vara\s+do\s+j[uú]ri|j[uú]ri\s+e\s+execu[çc][oõ]es|tribunal\s+do\s+j[uú]ri/g) || []).length;
+  const countEP = (textoLower.match(/execu[çc][oõ]es\s+penais|vara\s+de\s+execu[çc][aã]o/g) || []).length;
+
+  // VVD tem prioridade quando é a vara mais mencionada (ou quando há empate com Júri)
+  if (countVVD > 0 && countVVD >= countJuri) {
+    return { atribuicao: 'Violência Doméstica', vara: 'Vara de Violência Doméstica' };
+  }
+
+  // Júri
+  if (countJuri > 0 && countJuri > countVVD) {
     return { atribuicao: 'Tribunal do Júri', vara: 'Vara do Júri' };
   }
 
-  // Violência Doméstica — buscar por padrão de VARA, não texto genérico
-  // "vara de violência" ou "vara da violência" ou "vara vvd" ou "juizado de violência"
+  // Fallback: detecção simples para VVD (patterns adicionais)
   if (textoLower.includes('vara de violência') || textoLower.includes('vara de violencia') ||
       textoLower.includes('vara da violência') || textoLower.includes('vara da violencia') ||
       textoLower.includes('juizado de violência') || textoLower.includes('juizado de violencia') ||
       /\/vara\s+.*viol[eê]ncia/i.test(texto) ||
       /\/\d+ª?\s*v[.]?\s*.*viol[eê]ncia/i.test(texto)) {
     return { atribuicao: 'Violência Doméstica', vara: 'Vara de Violência Doméstica' };
+  }
+
+  // Fallback: Júri
+  if (textoLower.includes('vara do júri') || textoLower.includes('vara do juri') ||
+      textoLower.includes('júri e execuções') || textoLower.includes('juri e execucoes') ||
+      textoLower.includes('tribunal do júri') || textoLower.includes('tribunal do juri')) {
+    return { atribuicao: 'Tribunal do Júri', vara: 'Vara do Júri' };
   }
 
   // Execução Penal
