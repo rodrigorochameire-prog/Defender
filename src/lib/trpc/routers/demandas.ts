@@ -81,12 +81,12 @@ export const demandasRouter = router({
         area: z.string().optional(),
         reuPreso: z.boolean().optional(),
         defensorId: z.number().optional(), // Filtro explícito por defensor
-        limit: z.number().min(1).max(1000).default(50),
+        limit: z.number().min(1).max(10000).optional(),
         offset: z.number().min(0).default(0),
       }).optional()
     )
     .query(async ({ ctx, input }) => {
-      const { search, status, area, reuPreso, defensorId, limit = 50, offset = 0 } = input || {};
+      const { search, status, area, reuPreso, defensorId, limit, offset = 0 } = input || {};
       const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
       const defensorResponsavel = getDefensorResponsavel(ctx.user);
       
@@ -130,7 +130,7 @@ export const demandasRouter = router({
       }
       // Se defensoresVisiveis === "all", não filtra (admin/servidor)
       
-      const result = await db
+      let query = db
         .select({
           id: demandas.id,
           ato: demandas.ato,
@@ -167,10 +167,12 @@ export const demandasRouter = router({
         .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(sql`${demandas.ordemManual} ASC NULLS LAST, ${demandas.createdAt} DESC, ${demandas.prazo} ASC NULLS LAST`)
-        .limit(limit)
-        .offset(offset);
+        .$dynamic();
 
-      return result;
+      if (limit) query = query.limit(limit);
+      if (offset) query = query.offset(offset);
+
+      return await query;
     }),
 
   // Buscar demanda por ID
