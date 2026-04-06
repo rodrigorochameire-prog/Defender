@@ -60,7 +60,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 import google.generativeai as genai
 
 genai.configure(api_key=GEMINI_API_KEY)
-gemini_model = genai.GenerativeModel("gemini-2.0-flash-lite")
+gemini_model = genai.GenerativeModel("models/gemini-2.5-flash")
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -88,8 +88,8 @@ def now_iso() -> str:
 
 
 def clean_processo(numero: str) -> str:
-    """Keep only digits and dashes."""
-    return re.sub(r"[^\d\-]", "", numero)
+    """Keep digits, dashes and dots (PJe format: 8007645-94.2026.8.05.0039)."""
+    return re.sub(r"[^\d\-\.]", "", numero)
 
 
 def update_job(job_id: int, **fields):
@@ -153,62 +153,54 @@ async def process_job(job: dict):
         from playwright.async_api import async_playwright
 
         async with async_playwright() as pw:
-            # 2. Connect to existing Chrome
+            # 2. Connect to existing Chrome — use the tab that already has PJe open
             browser = await pw.chromium.connect_over_cdp(CDP_ENDPOINT)
             context = browser.contexts[0]
-            page = await context.new_page()
 
-            # 3. Navigate to PJe search
-            print(f"[JOB {job_id}] Navigating to PJe search ...")
-            await page.goto(PJE_SEARCH_URL, wait_until="domcontentloaded")
-            await page.wait_for_timeout(3000)
-
-            # Find search input
-            search_input = None
-            for selector in [
-                "input[id*='pesquisarProcesso']",
-                "input[id*='numProcesso']",
-                "input[name*='numProcesso']",
-                "input.numeracao-unica",
-                "input[type='text']",
-            ]:
-                search_input = await page.query_selector(selector)
-                if search_input:
+            # Find the PJe Painel tab (already open and logged in)
+            painel_page = None
+            for p in context.pages:
+                if "pje" in p.url.lower() and "painel" in p.url.lower():
+                    painel_page = p
                     break
 
-            if not search_input:
-                raise Exception("Could not find PJe search input")
+            if not painel_page:
+                # Fallback: use first PJe tab
+                for p in context.pages:
+                    if "pje" in p.url.lower():
+                        painel_page = p
+                        break
+
+            if not painel_page:
+                raise Exception("PJe tab not found. Open PJe Painel do Defensor first.")
 
             numero_clean = clean_processo(numero)
-            await search_input.fill(numero_clean)
-            print(f"[JOB {job_id}] Filled search: {numero_clean}")
+            print(f"[JOB {job_id}] Using PJe tab: {painel_page.url[:80]}")
 
-            # Find and click search button
-            search_btn = None
-            for selector in [
-                "button[id*='pesquisar']",
-                "input[type='submit']",
-                "button[type='submit']",
-            ]:
-                search_btn = await page.query_selector(selector)
-                if search_btn:
-                    break
+            # 3. Find the process link in Expedientes
+            # PJe links have class 'numero-processo-expediente' and use window.open() onclick
+            # Extract the authenticated URL from onclick and open in new tab
+            process_url = await painel_page.evaluate(f"""() => {{
+                const links = document.querySelectorAll('a.numero-processo-expediente');
+                for (const a of links) {{
+                    if (a.textContent.includes('{numero_clean}')) {{
+                        const onclick = a.getAttribute('onclick') || '';
+                        const match = onclick.match(/window\\.open\\('([^']+)'/);
+                        if (match) return match[1];
+                    }}
+                }}
+                return null;
+            }}""")
 
-            if not search_btn:
-                raise Exception("Could not find PJe search button")
+            if not process_url:
+                raise Exception(f"Process {numero_clean} not found in PJe Expedientes")
 
-            await search_btn.click()
-            await page.wait_for_timeout(3000)
-
-            # 4. Click on process result
-            result_link = await page.query_selector(f"a:has-text('{numero_clean}')")
-            if not result_link:
-                result_link = await page.query_selector("a[href*='ConsultaProcesso']")
-            if not result_link:
-                raise Exception("No result found for process number")
-
-            await result_link.click()
-            await page.wait_for_timeout(4000)  # JSF render
+            # Open in new tab using the authenticated URL
+            full_url = f"https://pje.tjba.jus.br{process_url}" if process_url.startswith("/") else process_url
+            print(f"[JOB {job_id}] Opening process in new tab ...")
+            page = await context.new_page()
+            await page.goto(full_url, wait_until="domcontentloaded", timeout=30000)
+            await page.wait_for_timeout(5000)  # JSF render
 
             # 5. Extract content
             print(f"[JOB {job_id}] Extracting content ...")
@@ -302,6 +294,7 @@ Responda APENAS com JSON valido (sem markdown):
         update_job(job_id, status="failed", completed_at=now_iso(), error=err_msg)
 
     finally:
+        # Close the process detail tab (but NOT the Painel tab)
         if page:
             try:
                 await page.close()
