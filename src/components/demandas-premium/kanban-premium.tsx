@@ -107,7 +107,10 @@ function KanbanCard({
   onDragStart?: (id: string) => void;
   onDragEnd?: () => void;
 }) {
-  const statusCfg = getStatusConfig(demanda.substatus || demanda.status);
+  const rawStatus = demanda.substatus || demanda.status || "fila";
+  const statusCfg = getStatusConfig(rawStatus);
+  // Show original substatus label (e.g. "2 - Elaborar") for planilha fidelity
+  const statusDisplay = rawStatus.match(/^\d+\s*-\s*/) ? rawStatus : statusCfg?.label || rawStatus;
   const processo = demanda.processos?.[0]?.numero || "";
   const isUrgente = demanda.prioridade === "URGENTE" || demanda.prioridade === "REU_PRESO";
   const isPreso = demanda.estadoPrisional === "preso" || demanda.reuPreso;
@@ -272,7 +275,7 @@ function KanbanCard({
               const StatusIcon = statusCfg?.icon || STATUS_ICONS[statusKey] || ListTodo;
               return <StatusIcon className="w-3 h-3 shrink-0" />;
             })()}
-            {statusCfg?.label || demanda.status}
+            {statusDisplay}
             {onStatusChange && (
               <ChevronDown className="w-2.5 h-2.5 opacity-0 group-hover/kcard:opacity-70 transition-opacity" />
             )}

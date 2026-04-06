@@ -156,6 +156,8 @@ function Row({
 
   const prazoInfo = calcularPrazo(demanda.prazo);
   const statusConfig = getStatusConfig(demanda.status);
+  // Show the original substatus label (e.g. "2 - Elaborar") for fidelity with planilha
+  const statusLabel = demanda.status?.match(/^\d+\s*-\s*/) ? demanda.status : statusConfig.label;
   const isUrgente = demanda.prioridade === "URGENTE" || demanda.prioridade === "REU_PRESO";
   const isPreso = demanda.estadoPrisional === "preso";
   const Icon = atribuicaoIcons[demanda.atribuicao];
@@ -270,7 +272,7 @@ function Row({
                   <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
                     style={{ backgroundColor: `${statusColor}20`, color: statusColor }}>
                     <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
-                    <span className="truncate max-w-[80px]">{statusConfig.label}</span>
+                    <span className="truncate max-w-[80px]">{statusLabel}</span>
                   </div>
                 }
                 options={statusOptions}
@@ -401,7 +403,7 @@ function Row({
                   <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
                     style={{ backgroundColor: `${statusColor}20`, color: statusColor }}>
                     <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
-                    <span className="truncate max-w-[80px]">{statusConfig.label}</span>
+                    <span className="truncate max-w-[80px]">{statusLabel}</span>
                   </div>
                 }
                 options={statusOptions}
