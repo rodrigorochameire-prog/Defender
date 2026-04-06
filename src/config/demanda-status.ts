@@ -31,8 +31,8 @@ import {
 /** Colunas principais do Kanban (4) */
 export type KanbanColumn = "triagem" | "em_andamento" | "concluida" | "arquivado";
 
-/** Sub-grupos dentro de "Em Andamento" (4) */
-export type EmAndamentoSubGroup = "preparacao" | "diligencias" | "saida" | "monitorar";
+/** Sub-grupos dentro de "Em Andamento" (3) */
+export type EmAndamentoSubGroup = "preparacao" | "diligencias" | "saida";
 
 /** Todos os grupos de status (granular) */
 export type StatusGroup =
@@ -40,7 +40,6 @@ export type StatusGroup =
   | "preparacao"
   | "diligencias"
   | "saida"
-  | "monitorar"
   | "concluida"
   | "arquivado";
 
@@ -68,7 +67,7 @@ export const KANBAN_COLUMNS: Record<KanbanColumn, KanbanColumnConfig> = {
     label: "Em Andamento",
     color: "#E8C87A",
     icon: Activity,
-    subGroups: ["preparacao", "diligencias", "saida", "monitorar"],
+    subGroups: ["preparacao", "diligencias", "saida"],
   },
   concluida: {
     label: "Concluída",
@@ -108,11 +107,6 @@ export const SUB_GROUPS: Record<EmAndamentoSubGroup, SubGroupConfig> = {
     color: "#D4A574",   // Laranja pastel
     icon: Send,
   },
-  monitorar: {
-    label: "Monitorar",
-    color: "#B8A9C9",   // Roxo pastel
-    icon: Eye,
-  },
 };
 
 // ==========================================
@@ -139,11 +133,6 @@ export const STATUS_GROUPS: Record<StatusGroup, { label: string; color: string; 
     label: "Saída",
     color: "#D4A574",  // Laranja pastel
     icon: Send,
-  },
-  monitorar: {
-    label: "Monitorar",
-    color: "#B8A9C9",  // Roxo pastel
-    icon: Eye,
   },
   concluida: {
     label: "Concluída",
@@ -183,7 +172,6 @@ export const GROUP_TO_COLUMN: Record<StatusGroup, KanbanColumn> = {
   preparacao: "em_andamento",
   diligencias: "em_andamento",
   saida: "em_andamento",
-  monitorar: "em_andamento",
   concluida: "concluida",
   arquivado: "arquivado",
 };
@@ -226,8 +214,8 @@ export const DEMANDA_STATUS: Record<string, StatusConfig> = {
   amanda:     { label: "Amanda",     group: "saida", icon: UserPlus },
   taissa:     { label: "Taissa",     group: "saida", icon: UserPlus },
 
-  // === MONITORAR (1) ===
-  monitorar:  { label: "Monitorar",  group: "monitorar", icon: Eye },
+  // Monitorar fica em Preparação (acompanhamento ativo)
+  monitorar:  { label: "Monitorar",  group: "preparacao", icon: Eye },
 
   // === CONCLUÍDA (5) ===
   protocolado:        { label: "Protocolado",        group: "concluida", icon: CheckCircle2 },
@@ -275,7 +263,7 @@ export function mapDbStatusToGroup(dbStatus: string | null | undefined, substatu
   // Fila → triagem, Atender sem substatus → diligências, Monitorar → monitorar
   if (s === "5_FILA") return "triagem";
   if (s === "2_ATENDER") return "diligencias";
-  if (s === "4_MONITORAR") return "monitorar";
+  if (s === "4_MONITORAR") return "preparacao";
 
   return "triagem";
 }
@@ -330,7 +318,7 @@ export function getStatusConfig(status: string | null | undefined): StatusConfig
   const dbMap: Record<string, StatusConfig> = {
     "5_fila":         { label: "Fila",         group: "triagem",      icon: Inbox },
     "2_atender":      { label: "Atender",      group: "diligencias",  icon: User },
-    "4_monitorar":    { label: "Monitorar",    group: "monitorar",    icon: Eye },
+    "4_monitorar":    { label: "Monitorar",    group: "preparacao",   icon: Eye },
     "7_protocolado":  { label: "Protocolado",  group: "concluida", icon: CheckCircle2 },
     "7_ciencia":      { label: "Ciência",      group: "concluida", icon: Eye },
     "7_sem_atuacao":  { label: "Sem atuação",  group: "concluida", icon: XCircle },
@@ -384,8 +372,8 @@ export const STATUS_OPTIONS_BY_COLUMN: Record<KanbanColumn, Array<{ value: strin
     { value: "emilly", label: "Emilly", group: "saida" },
     { value: "amanda", label: "Amanda", group: "saida" },
     { value: "taissa", label: "Taissa", group: "saida" },
-    // Monitorar
-    { value: "monitorar", label: "Monitorar", group: "monitorar" },
+    // Monitorar (em Preparação)
+    { value: "monitorar", label: "Monitorar", group: "preparacao" },
   ],
   concluida: [
     { value: "protocolado", label: "Protocolado", group: "concluida" },
@@ -411,7 +399,6 @@ export const PIPELINE_STAGES: { key: StatusGroup; label: string; short: string }
   { key: "preparacao", label: "Preparação", short: "Prep." },
   { key: "diligencias", label: "Diligências", short: "Dilig." },
   { key: "saida", label: "Saída", short: "Saída" },
-  { key: "monitorar", label: "Monitorar", short: "Monit." },
   { key: "concluida", label: "Concluída", short: "Concl." },
 ];
 
