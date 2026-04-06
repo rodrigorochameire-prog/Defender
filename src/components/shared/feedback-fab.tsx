@@ -123,7 +123,7 @@ export function FeedbackFAB() {
     if (!tipo || !mensagem.trim()) return;
 
     createFeedback.mutate({
-      tipo,
+      tipo: tipo.toLowerCase() as "bug" | "sugestao" | "duvida",
       mensagem: mensagem.trim(),
       pagina: pathname,
       contexto: {
