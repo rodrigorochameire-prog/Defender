@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
-import { db, withTransaction, audiencias, processos, assistidos, sessoesJuri } from "@/lib/db";
-import { eq, and, gte, desc, asc, isNull, or, sql, ilike, inArray } from "drizzle-orm";
+import { db, withTransaction, audiencias, processos, assistidos, sessoesJuri, testemunhas } from "@/lib/db";
+import { eq, and, gte, lte, desc, asc, isNull, or, sql, ilike, inArray } from "drizzle-orm";
 import { addDays } from "date-fns";
 
 export const audienciasRouter = router({
@@ -296,6 +296,96 @@ export const audienciasRouter = router({
         .orderBy(desc(audiencias.dataAudiencia));
 
       return results.filter(r => r.registroAudiencia != null);
+    }),
+
+  // Status de preparação para audiências próximas
+  statusPreparacao: protectedProcedure
+    .input(z.object({
+      diasAntecedencia: z.number().default(10),
+    }))
+    .query(async ({ input }) => {
+      const { diasAntecedencia } = input;
+      const agora = new Date();
+      const dataLimite = addDays(agora, diasAntecedencia);
+
+      // 1. Buscar audiências agendadas dentro do período
+      const audienciasProximas = await db
+        .select({
+          id: audiencias.id,
+          processoId: audiencias.processoId,
+          dataAudiencia: audiencias.dataAudiencia,
+          tipo: audiencias.tipo,
+          titulo: audiencias.titulo,
+          assistidoNome: assistidos.nome,
+          analysisStatus: processos.analysisStatus,
+          analysisData: processos.analysisData,
+        })
+        .from(audiencias)
+        .leftJoin(processos, eq(audiencias.processoId, processos.id))
+        .leftJoin(assistidos, eq(audiencias.assistidoId, assistidos.id))
+        .where(
+          and(
+            gte(audiencias.dataAudiencia, agora),
+            lte(audiencias.dataAudiencia, dataLimite),
+            eq(audiencias.status, "agendada")
+          )
+        )
+        .orderBy(asc(audiencias.dataAudiencia));
+
+      if (audienciasProximas.length === 0) return [];
+
+      // 2. Buscar testemunhas para todas as audiências de uma vez
+      const audienciaIds = audienciasProximas.map((a) => a.id);
+      const todasTestemunhas = await db
+        .select({
+          audienciaId: testemunhas.audienciaId,
+          status: testemunhas.status,
+        })
+        .from(testemunhas)
+        .where(inArray(testemunhas.audienciaId, audienciaIds));
+
+      // Agrupar testemunhas por audiência
+      const testemunhasPorAudiencia = new Map<number, typeof todasTestemunhas>();
+      for (const t of todasTestemunhas) {
+        if (t.audienciaId == null) continue;
+        const lista = testemunhasPorAudiencia.get(t.audienciaId) ?? [];
+        lista.push(t);
+        testemunhasPorAudiencia.set(t.audienciaId, lista);
+      }
+
+      // 3. Montar resultado com statusPrep calculado
+      return audienciasProximas.map((a) => {
+        const hasAnalysis =
+          a.analysisStatus === "completed" && a.analysisData != null;
+
+        const tList = testemunhasPorAudiencia.get(a.id) ?? [];
+        const testemunhasCount = tList.length;
+        const naoIntimadas = tList.filter(
+          (t) => t.status === "ARROLADA" || t.status === "NAO_LOCALIZADA"
+        ).length;
+
+        let statusPrep: "completo" | "parcial" | "pendente";
+        if (hasAnalysis && testemunhasCount > 0 && naoIntimadas === 0) {
+          statusPrep = "completo";
+        } else if (hasAnalysis || testemunhasCount > 0) {
+          statusPrep = "parcial";
+        } else {
+          statusPrep = "pendente";
+        }
+
+        return {
+          id: a.id,
+          processoId: a.processoId,
+          assistidoNome: a.assistidoNome ?? "Não identificado",
+          dataAudiencia: a.dataAudiencia,
+          tipo: a.tipo,
+          titulo: a.titulo,
+          statusPrep,
+          hasAnalysis,
+          testemunhasCount,
+          naoIntimadas,
+        };
+      });
     }),
 
   // Importar audiências em batch (do PJe)
