@@ -7,6 +7,7 @@ import { InlineDatePicker } from "@/components/shared/inline-date-picker";
 import { getAtosPorAtribuicao, getTodosAtosUnicos } from "@/config/atos-por-atribuicao";
 import { DEMANDA_STATUS, STATUS_GROUPS } from "@/config/demanda-status";
 import { calcularPrazoPorAto, converterISOParaBR } from "@/lib/prazo-calculator";
+import { AudienciaInlineForm } from "./audiencia-inline-form";
 import {
   Tooltip,
   TooltipContent,
@@ -47,6 +48,12 @@ export interface PjeReviewRow {
   prazoManual: boolean;
   providencias?: string;
 
+  // Audiência fields (when ato = ciência designação/redesignação)
+  audienciaData?: string;      // YYYY-MM-DD
+  audienciaHora?: string;      // HH:MM
+  audienciaTipo?: string;      // tipo da audiência
+  criarEventoAgenda?: boolean; // default true
+
   // Match
   assistidoMatch: AssistidoMatch;
 }
@@ -61,6 +68,15 @@ interface PjeReviewTableProps {
 // ============================================================================
 // HELPERS
 // ============================================================================
+
+const AUDIENCIA_ATOS = [
+  "Ciência designação de audiência",
+  "Ciência redesignação de audiência",
+] as const;
+
+function isAudienciaAto(ato: string): boolean {
+  return AUDIENCIA_ATOS.some(a => a === ato);
+}
 
 function getConfidenceDot(confidence: "high" | "medium" | "low") {
   switch (confidence) {
@@ -196,6 +212,11 @@ export function PjeReviewTable({
       updates.prazo = novoPrazo;
     }
 
+    // Quando o ato é de audiência e criarEventoAgenda ainda não foi definido, default true
+    if (isAudienciaAto(novoAto) && row.criarEventoAgenda === undefined) {
+      updates.criarEventoAgenda = true;
+    }
+
     updateRow(index, updates);
   };
 
@@ -211,6 +232,18 @@ export function PjeReviewTable({
 
   const handleProvidenciasChange = (index: number, value: string) => {
     updateRow(index, { providencias: value });
+  };
+
+  const handleAudienciaChange = (
+    index: number,
+    fields: { data?: string; hora?: string; tipo?: string; criarEvento?: boolean }
+  ) => {
+    const updates: Partial<PjeReviewRow> = {};
+    if (fields.data !== undefined) updates.audienciaData = fields.data;
+    if (fields.hora !== undefined) updates.audienciaHora = fields.hora;
+    if (fields.tipo !== undefined) updates.audienciaTipo = fields.tipo;
+    if (fields.criarEvento !== undefined) updates.criarEventoAgenda = fields.criarEvento;
+    updateRow(index, updates);
   };
 
   const handleToggleAll = () => {
@@ -452,6 +485,7 @@ export function PjeReviewTable({
                     onEstadoPrisionalChange={(i, v) => updateRow(i, { estadoPrisional: v })}
                     onToggleExclude={handleToggleExclude}
                     onProvidenciasChange={handleProvidenciasChange}
+                    onAudienciaChange={handleAudienciaChange}
                     showTipoProcesso={showTipoProcesso}
                   />
                 ))}
@@ -485,6 +519,7 @@ interface PjeReviewRowProps {
   onEstadoPrisionalChange: (index: number, value: string) => void;
   onToggleExclude: (index: number) => void;
   onProvidenciasChange: (index: number, value: string) => void;
+  onAudienciaChange: (index: number, fields: { data?: string; hora?: string; tipo?: string; criarEvento?: boolean }) => void;
   showTipoProcesso?: boolean;
 }
 
@@ -500,6 +535,7 @@ function PjeReviewRowComponent({
   onEstadoPrisionalChange,
   onToggleExclude,
   onProvidenciasChange,
+  onAudienciaChange,
   showTipoProcesso = false,
 }: PjeReviewRowProps) {
   const [expandedProv, setExpandedProv] = useState(false);
@@ -770,6 +806,20 @@ function PjeReviewRowComponent({
               className="flex-1 text-xs bg-background border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 outline-none resize-none w-full"
             />
           </div>
+        </td>
+      </tr>
+    )}
+
+    {isAudienciaAto(row.ato) && (
+      <tr className="border-b border-emerald-100">
+        <td colSpan={99} className="px-4 py-2">
+          <AudienciaInlineForm
+            data={row.audienciaData || ""}
+            hora={row.audienciaHora || ""}
+            tipo={row.audienciaTipo || ""}
+            criarEvento={row.criarEventoAgenda ?? true}
+            onChange={(fields) => onAudienciaChange(index, fields)}
+          />
         </td>
       </tr>
     )}
