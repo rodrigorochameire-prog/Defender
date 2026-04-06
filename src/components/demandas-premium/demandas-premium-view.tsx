@@ -1994,7 +1994,7 @@ export default function Demandas() {
             {(() => {
               const total = demandas.filter(d => !d.arquivado).length;
               const concluida = demandas.filter(d => d.arquivado || d.status === "CONCLUIDO" || d.status === "ARQUIVADO").length;
-              const triagem = demandas.filter(d => !d.arquivado && ["TRIAGEM", "FILA", "ATENDER", "URGENTE"].includes(d.status?.toUpperCase?.() || "")).length;
+              const triagem = demandas.filter(d => !d.arquivado && ["TRIAGEM", "5_TRIAGEM", "ATENDER", "URGENTE"].includes(d.status?.toUpperCase?.() || "")).length;
               const andamento = total - triagem - concluida;
               return (
                 <>

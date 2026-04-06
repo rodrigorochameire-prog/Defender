@@ -1550,7 +1550,7 @@ export const demandasRouter = router({
       }
 
       const STATUS_LABELS: Record<string, string> = {
-        "5_fila": "Triagem",
+        "5_triagem": "Triagem",
         "2_atender": "Atender",
         "4_monitorar": "Monitorar",
         "7_protocolado": "Protocolado",

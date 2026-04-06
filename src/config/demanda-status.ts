@@ -344,7 +344,7 @@ export function getStatusConfig(status: string | null | undefined): StatusConfig
 
   // Mapeamento de status DB antigos para novos grupos
   const dbMap: Record<string, StatusConfig> = {
-    "5_fila":         { label: "Triagem",      group: "triagem",      icon: Inbox },
+    "5_triagem":      { label: "Triagem",      group: "triagem",      icon: Inbox },
     "2_atender":      { label: "Atender",      group: "diligencias",  icon: User },
     "4_monitorar":    { label: "Monitorar",    group: "preparacao",   icon: Eye },
     "7_protocolado":  { label: "Protocolado",  group: "concluida", icon: CheckCircle2 },
