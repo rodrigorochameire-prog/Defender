@@ -9,6 +9,13 @@ import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 // TIPOS
 // ============================================================================
 
+export interface AudienciaDetection {
+  tipo: "designacao" | "redesignacao";
+  data?: string;       // ISO date (YYYY-MM-DD)
+  hora?: string;       // HH:MM
+  tipoAudiencia?: string;
+}
+
 export interface AtoSuggestion {
   ato: string;
   confidence: "high" | "medium" | "low";
@@ -236,4 +243,159 @@ export function suggestAto(
     confidence: "low",
     reason: "Tipo não identificado — ajustar manualmente",
   };
+}
+
+// ============================================================================
+// DETECCAO DE AUDIENCIA
+// ============================================================================
+
+const REDESIGNACAO_PATTERNS = [
+  /redesigna[çc][aã]o\s+(?:de\s+|da\s+)?audi[eê]ncia/i,
+  /audi[eê]ncia\s+redesignada/i,
+  /transferida\s+.*audi[eê]ncia/i,
+  /adiada\s+.*audi[eê]ncia.*nova\s+data/i,
+  /redesignou.*audi[eê]ncia/i,
+];
+
+const DESIGNACAO_PATTERNS = [
+  /designa[çc][aã]o\s+(?:de\s+|da\s+)?audi[eê]ncia/i,
+  /audi[eê]ncia\s+designada\s+para/i,
+  /fica\s+designad[ao].*dia/i,
+  /pauta.*audi[eê]ncia/i,
+  /designou.*audi[eê]ncia/i,
+];
+
+const MESES: Record<string, string> = {
+  janeiro: "01",
+  fevereiro: "02",
+  março: "03",
+  marco: "03",
+  abril: "04",
+  maio: "05",
+  junho: "06",
+  julho: "07",
+  agosto: "08",
+  setembro: "09",
+  outubro: "10",
+  novembro: "11",
+  dezembro: "12",
+};
+
+function extractDate(text: string): string | undefined {
+  // dd/mm/yyyy
+  const numericMatch = text.match(/\b(\d{2})\/(\d{2})\/(\d{4})\b/);
+  if (numericMatch) {
+    const [, dd, mm, yyyy] = numericMatch;
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  // dd de mês de yyyy
+  const extensoMatch = text.match(
+    /\b(\d{1,2})\s+de\s+(janeiro|fevereiro|mar[çc]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\s+de\s+(\d{4})\b/i
+  );
+  if (extensoMatch) {
+    const [, dd, mes, yyyy] = extensoMatch;
+    const mm = MESES[mes.toLowerCase().replace("ç", "c").replace("ã", "a")];
+    if (mm) {
+      return `${yyyy}-${mm}-${dd.padStart(2, "0")}`;
+    }
+  }
+
+  return undefined;
+}
+
+function extractTime(text: string): string | undefined {
+  // HH:MM
+  const colonMatch = text.match(/\b(\d{1,2}):(\d{2})\b/);
+  if (colonMatch) {
+    const [, hh, mm] = colonMatch;
+    return `${hh.padStart(2, "0")}:${mm}`;
+  }
+
+  // HHhMM
+  const hMatch = text.match(/\b(\d{1,2})h(\d{2})\b/i);
+  if (hMatch) {
+    const [, hh, mm] = hMatch;
+    return `${hh.padStart(2, "0")}:${mm}`;
+  }
+
+  // HH horas
+  const horasMatch = text.match(/\b(\d{1,2})\s+horas\b/i);
+  if (horasMatch) {
+    const [, hh] = horasMatch;
+    return `${hh.padStart(2, "0")}:00`;
+  }
+
+  return undefined;
+}
+
+function extractTipoAudiencia(text: string): string | undefined {
+  const lower = text.toLowerCase();
+  if (/instru[çc][aã]o/.test(lower)) return "Instrução e Julgamento";
+  if (/concilia[çc][aã]o/.test(lower)) return "Conciliação";
+  if (/justifica[çc][aã]o/.test(lower)) return "Justificação";
+  if (/cust[oó]dia/.test(lower)) return "Custódia";
+  if (/admonit[oó]ria/.test(lower)) return "Admonitória";
+  if (/j[uú]ri|plen[aá]rio/.test(lower)) return "Júri";
+  return undefined;
+}
+
+export function detectAudiencia(texto: string): AudienciaDetection | null {
+  // Check redesignação first (more specific)
+  for (const pattern of REDESIGNACAO_PATTERNS) {
+    if (pattern.test(texto)) {
+      return {
+        tipo: "redesignacao",
+        data: extractDate(texto),
+        hora: extractTime(texto),
+        tipoAudiencia: extractTipoAudiencia(texto),
+      };
+    }
+  }
+
+  // Check designação
+  for (const pattern of DESIGNACAO_PATTERNS) {
+    if (pattern.test(texto)) {
+      return {
+        tipo: "designacao",
+        data: extractDate(texto),
+        hora: extractTime(texto),
+        tipoAudiencia: extractTipoAudiencia(texto),
+      };
+    }
+  }
+
+  return null;
+}
+
+export function suggestAtoWithText(
+  tipoDocumento?: string,
+  tipoProcesso?: string,
+  atribuicao?: string,
+  textoIntimacao?: string
+): AtoSuggestion & { audienciaDetection?: AudienciaDetection } {
+  if (textoIntimacao) {
+    const detection = detectAudiencia(textoIntimacao);
+    if (detection) {
+      const isRedesignacao = detection.tipo === "redesignacao";
+      const ato = isRedesignacao
+        ? "Ciência redesignação de audiência"
+        : "Ciência designação de audiência";
+      const hasDataHora = Boolean(detection.data && detection.hora);
+      const confidence: "high" | "medium" = hasDataHora ? "high" : "medium";
+      const tipoLabel = isRedesignacao ? "redesignação" : "designação";
+      const dataStr = detection.data ? ` para ${detection.data}` : "";
+      const horaStr = detection.hora ? ` às ${detection.hora}` : "";
+      const reason = `Detectada ${tipoLabel} de audiência${dataStr}${horaStr} no texto da intimação`;
+
+      return {
+        ato,
+        confidence,
+        reason,
+        audienciaDetection: detection,
+      };
+    }
+  }
+
+  return suggestAto(tipoDocumento, tipoProcesso, atribuicao);
 }
