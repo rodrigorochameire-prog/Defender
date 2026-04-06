@@ -3,6 +3,7 @@ import { router, protectedProcedure } from "../init";
 import { db, withTransaction, audiencias, processos, assistidos, sessoesJuri, testemunhas } from "@/lib/db";
 import { eq, and, gte, lte, desc, asc, isNull, or, sql, ilike, inArray } from "drizzle-orm";
 import { addDays } from "date-fns";
+import { TRPCError } from "@trpc/server";
 
 export const audienciasRouter = router({
   // Listar audiências
@@ -870,5 +871,196 @@ export const audienciasRouter = router({
           assistidosCriados: assistidosCriados.length,
         };
       });
+    }),
+
+  // ==========================================
+  // PIPELINE: Preparar audiência (popular testemunhas)
+  // ==========================================
+
+  prepararAudiencia: protectedProcedure
+    .input(z.object({
+      audienciaId: z.number(),
+      skipDownload: z.boolean().optional(),
+      skipAnalysis: z.boolean().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { audienciaId } = input;
+
+      // 1. Fetch audiência
+      const [audiencia] = await db
+        .select()
+        .from(audiencias)
+        .where(eq(audiencias.id, audienciaId))
+        .limit(1);
+
+      if (!audiencia) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Audiência ${audienciaId} não encontrada`,
+        });
+      }
+
+      // 2. Fetch linked processo (for analysisData)
+      const [processo] = await db
+        .select()
+        .from(processos)
+        .where(eq(processos.id, audiencia.processoId))
+        .limit(1);
+
+      if (!processo) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Processo ${audiencia.processoId} não encontrado`,
+        });
+      }
+
+      // 3. Fetch linked assistido (for name)
+      let assistidoNome = "Não identificado";
+      if (audiencia.assistidoId) {
+        const [assistido] = await db
+          .select({ nome: assistidos.nome })
+          .from(assistidos)
+          .where(eq(assistidos.id, audiencia.assistidoId))
+          .limit(1);
+        if (assistido) {
+          assistidoNome = assistido.nome;
+        }
+      }
+
+      // 4. Extract depoimentos from analysisData
+      const analysisData = processo.analysisData as Record<string, any> | null;
+      const depoimentos: Array<{ nome: string; papel: string; resumo?: string }> =
+        analysisData?.depoimentos ?? analysisData?.testemunhas ?? [];
+
+      if (!Array.isArray(depoimentos) || depoimentos.length === 0) {
+        return {
+          audienciaId,
+          assistidoNome,
+          testemunhas: [],
+        };
+      }
+
+      // 5. Map papel to tipo enum
+      const mapPapelToTipo = (papel: string): "DEFESA" | "ACUSACAO" | "COMUM" | "INFORMANTE" | "PERITO" | "VITIMA" => {
+        const p = (papel || "").toLowerCase().replace(/\s+/g, "_");
+        if (p === "testemunha_acusacao" || p === "acusacao") return "ACUSACAO";
+        if (p === "testemunha_defesa" || p === "defesa") return "DEFESA";
+        if (p === "vitima" || p === "vítima") return "VITIMA";
+        if (p === "policial_condutor" || p === "policial") return "ACUSACAO";
+        if (p === "perito") return "PERITO";
+        if (p === "informante") return "INFORMANTE";
+        return "COMUM";
+      };
+
+      const testemunhasResult: Array<{ nome: string; tipo: string; status: string }> = [];
+
+      for (const dep of depoimentos) {
+        if (!dep.nome) continue;
+
+        const tipo = mapPapelToTipo(dep.papel);
+
+        // 6. Check if testemunha already exists (same audienciaId + nome)
+        const [existing] = await db
+          .select({ id: testemunhas.id })
+          .from(testemunhas)
+          .where(
+            and(
+              eq(testemunhas.audienciaId, audienciaId),
+              ilike(testemunhas.nome, dep.nome)
+            )
+          )
+          .limit(1);
+
+        if (!existing) {
+          // 7. Insert with status ARROLADA
+          await db.insert(testemunhas).values({
+            processoId: audiencia.processoId,
+            audienciaId,
+            nome: dep.nome,
+            tipo,
+            status: "ARROLADA",
+            resumoDepoimento: dep.resumo || null,
+          });
+        }
+
+        testemunhasResult.push({
+          nome: dep.nome,
+          tipo,
+          status: existing ? "JA_EXISTENTE" : "ARROLADA",
+        });
+      }
+
+      // 8. Return result
+      return {
+        audienciaId,
+        assistidoNome,
+        testemunhas: testemunhasResult,
+      };
+    }),
+
+  // ==========================================
+  // PIPELINE: Atualizar intimação de testemunhas
+  // ==========================================
+
+  atualizarIntimacaoTestemunhas: protectedProcedure
+    .input(z.object({
+      audienciaId: z.number(),
+      intimacoes: z.array(z.object({
+        testemunhaNome: z.string().optional(),
+        status: z.enum(["INTIMADA", "NAO_LOCALIZADA", "CARTA_PRECATORIA"]),
+        movimentacao: z.string(),
+        data: z.string(),
+      })),
+    }))
+    .mutation(async ({ input }) => {
+      const { audienciaId, intimacoes } = input;
+
+      // Fetch all testemunhas for this audiência
+      const testemunhasDaAudiencia = await db
+        .select()
+        .from(testemunhas)
+        .where(eq(testemunhas.audienciaId, audienciaId));
+
+      if (testemunhasDaAudiencia.length === 0) {
+        return { updated: [] };
+      }
+
+      const updated: string[] = [];
+
+      for (const intimacao of intimacoes) {
+        if (!intimacao.testemunhaNome) continue;
+
+        const nomeIntimacao = intimacao.testemunhaNome.toLowerCase().trim();
+
+        // Case-insensitive partial match
+        const match = testemunhasDaAudiencia.find((t) => {
+          const nomeTest = t.nome.toLowerCase().trim();
+          return (
+            nomeTest === nomeIntimacao ||
+            nomeTest.includes(nomeIntimacao) ||
+            nomeIntimacao.includes(nomeTest)
+          );
+        });
+
+        if (match) {
+          const obsText = `[${intimacao.data}] ${intimacao.movimentacao}`;
+          const newObs = match.observacoes
+            ? `${match.observacoes}\n${obsText}`
+            : obsText;
+
+          await db
+            .update(testemunhas)
+            .set({
+              status: intimacao.status,
+              observacoes: newObs,
+              updatedAt: new Date(),
+            })
+            .where(eq(testemunhas.id, match.id));
+
+          updated.push(match.nome);
+        }
+      }
+
+      return { updated };
     }),
 });
