@@ -21,6 +21,7 @@ import {
   Mail,
   Archive,
   Clock,
+  UserPlus,
 } from "lucide-react";
 
 // ==========================================
@@ -30,8 +31,8 @@ import {
 /** Colunas principais do Kanban (4) */
 export type KanbanColumn = "triagem" | "em_andamento" | "concluida" | "arquivado";
 
-/** Sub-grupos dentro de "Em Andamento" (3) */
-export type EmAndamentoSubGroup = "preparacao" | "diligencias" | "saida";
+/** Sub-grupos dentro de "Em Andamento" (4) */
+export type EmAndamentoSubGroup = "preparacao" | "diligencias" | "saida" | "monitorar";
 
 /** Todos os grupos de status (granular) */
 export type StatusGroup =
@@ -39,6 +40,7 @@ export type StatusGroup =
   | "preparacao"
   | "diligencias"
   | "saida"
+  | "monitorar"
   | "concluida"
   | "arquivado";
 
@@ -66,7 +68,7 @@ export const KANBAN_COLUMNS: Record<KanbanColumn, KanbanColumnConfig> = {
     label: "Em Andamento",
     color: "#E8C87A",
     icon: Activity,
-    subGroups: ["preparacao", "diligencias", "saida"],
+    subGroups: ["preparacao", "diligencias", "saida", "monitorar"],
   },
   concluida: {
     label: "Concluída",
@@ -106,6 +108,11 @@ export const SUB_GROUPS: Record<EmAndamentoSubGroup, SubGroupConfig> = {
     color: "#D4A574",   // Laranja pastel
     icon: Send,
   },
+  monitorar: {
+    label: "Monitorar",
+    color: "#B8A9C9",   // Roxo pastel
+    icon: Eye,
+  },
 };
 
 // ==========================================
@@ -132,6 +139,11 @@ export const STATUS_GROUPS: Record<StatusGroup, { label: string; color: string; 
     label: "Saída",
     color: "#D4A574",  // Laranja pastel
     icon: Send,
+  },
+  monitorar: {
+    label: "Monitorar",
+    color: "#B8A9C9",  // Roxo pastel
+    icon: Eye,
   },
   concluida: {
     label: "Concluída",
@@ -171,6 +183,7 @@ export const GROUP_TO_COLUMN: Record<StatusGroup, KanbanColumn> = {
   preparacao: "em_andamento",
   diligencias: "em_andamento",
   saida: "em_andamento",
+  monitorar: "em_andamento",
   concluida: "concluida",
   arquivado: "arquivado",
 };
@@ -186,20 +199,18 @@ export interface StatusConfig {
 }
 
 export const DEMANDA_STATUS: Record<string, StatusConfig> = {
-  // === TRIAGEM (3) ===
+  // === TRIAGEM (2) ===
   fila:     { label: "Fila",     group: "triagem", icon: Inbox },
-  atender:  { label: "Atender",  group: "triagem", icon: User },
   urgente:  { label: "Urgente",  group: "triagem", icon: AlertCircle },
 
-  // === PREPARAÇÃO (6) ===
+  // === PREPARAÇÃO (4) ===
   elaborar:   { label: "Elaborar",   group: "preparacao", icon: Edit },
   elaborando: { label: "Elaborando", group: "preparacao", icon: Edit },
   analisar:   { label: "Analisar",   group: "preparacao", icon: FileSearch },
   relatorio:  { label: "Relatório",  group: "preparacao", icon: ClipboardList },
-  revisar:    { label: "Revisar",    group: "preparacao", icon: FileCheck },
-  revisando:  { label: "Revisando",  group: "preparacao", icon: FileCheck },
 
-  // === DILIGÊNCIAS (5) ===
+  // === DILIGÊNCIAS (7) ===
+  atender:     { label: "Atender",     group: "diligencias", icon: User },
   documentos:  { label: "Documentos",  group: "diligencias", icon: FileText },
   testemunhas: { label: "Testemunhas", group: "diligencias", icon: Users },
   investigar:  { label: "Investigar",  group: "diligencias", icon: Eye },
@@ -207,9 +218,16 @@ export const DEMANDA_STATUS: Record<string, StatusConfig> = {
   diligenciar: { label: "Diligenciar", group: "diligencias", icon: FileText },
   oficiar:     { label: "Oficiar",     group: "diligencias", icon: Mail },
 
-  // === SAÍDA (2) ===
+  // === SAÍDA (6) ===
+  revisar:    { label: "Revisar",    group: "saida", icon: FileCheck },
+  revisando:  { label: "Revisando",  group: "saida", icon: FileCheck },
   protocolar: { label: "Protocolar", group: "saida", icon: Send },
-  monitorar:  { label: "Monitorar",  group: "saida", icon: Eye },
+  emilly:     { label: "Emilly",     group: "saida", icon: UserPlus },
+  amanda:     { label: "Amanda",     group: "saida", icon: UserPlus },
+  taissa:     { label: "Taissa",     group: "saida", icon: UserPlus },
+
+  // === MONITORAR (1) ===
+  monitorar:  { label: "Monitorar",  group: "monitorar", icon: Eye },
 
   // === CONCLUÍDA (5) ===
   protocolado:        { label: "Protocolado",        group: "concluida", icon: CheckCircle2 },
@@ -254,10 +272,10 @@ export function mapDbStatusToGroup(dbStatus: string | null | undefined, substatu
   }
   // Urgente
   if (s === "URGENTE") return "triagem";
-  // Fila → triagem, Atender sem substatus → preparação, Monitorar → saída
+  // Fila → triagem, Atender sem substatus → diligências, Monitorar → monitorar
   if (s === "5_FILA") return "triagem";
-  if (s === "2_ATENDER") return "preparacao";
-  if (s === "4_MONITORAR") return "saida";
+  if (s === "2_ATENDER") return "diligencias";
+  if (s === "4_MONITORAR") return "monitorar";
 
   return "triagem";
 }
@@ -310,9 +328,9 @@ export function getStatusConfig(status: string | null | undefined): StatusConfig
 
   // Mapeamento de status DB antigos para novos grupos
   const dbMap: Record<string, StatusConfig> = {
-    "5_fila":         { label: "Fila",         group: "triagem",     icon: Inbox },
-    "2_atender":      { label: "Atender",      group: "preparacao", icon: User },
-    "4_monitorar":    { label: "Monitorar",    group: "saida",     icon: Eye },
+    "5_fila":         { label: "Fila",         group: "triagem",      icon: Inbox },
+    "2_atender":      { label: "Atender",      group: "diligencias",  icon: User },
+    "4_monitorar":    { label: "Monitorar",    group: "monitorar",    icon: Eye },
     "7_protocolado":  { label: "Protocolado",  group: "concluida", icon: CheckCircle2 },
     "7_ciencia":      { label: "Ciência",      group: "concluida", icon: Eye },
     "7_sem_atuacao":  { label: "Sem atuação",  group: "concluida", icon: XCircle },
@@ -344,7 +362,6 @@ export function getStatusConfig(status: string | null | undefined): StatusConfig
 export const STATUS_OPTIONS_BY_COLUMN: Record<KanbanColumn, Array<{ value: string; label: string; group: StatusGroup }>> = {
   triagem: [
     { value: "fila", label: "Fila", group: "triagem" },
-    { value: "atender", label: "Atender", group: "triagem" },
   ],
   em_andamento: [
     // Preparação
@@ -352,9 +369,8 @@ export const STATUS_OPTIONS_BY_COLUMN: Record<KanbanColumn, Array<{ value: strin
     { value: "elaborando", label: "Elaborando", group: "preparacao" },
     { value: "analisar", label: "Analisar", group: "preparacao" },
     { value: "relatorio", label: "Relatório", group: "preparacao" },
-    { value: "revisar", label: "Revisar", group: "preparacao" },
-    { value: "revisando", label: "Revisando", group: "preparacao" },
     // Diligências
+    { value: "atender", label: "Atender", group: "diligencias" },
     { value: "documentos", label: "Documentos", group: "diligencias" },
     { value: "testemunhas", label: "Testemunhas", group: "diligencias" },
     { value: "investigar", label: "Investigar", group: "diligencias" },
@@ -362,8 +378,14 @@ export const STATUS_OPTIONS_BY_COLUMN: Record<KanbanColumn, Array<{ value: strin
     { value: "diligenciar", label: "Diligenciar", group: "diligencias" },
     { value: "oficiar", label: "Oficiar", group: "diligencias" },
     // Saída
+    { value: "revisar", label: "Revisar", group: "saida" },
+    { value: "revisando", label: "Revisando", group: "saida" },
     { value: "protocolar", label: "Protocolar", group: "saida" },
-    { value: "monitorar", label: "Monitorar", group: "saida" },
+    { value: "emilly", label: "Emilly", group: "saida" },
+    { value: "amanda", label: "Amanda", group: "saida" },
+    { value: "taissa", label: "Taissa", group: "saida" },
+    // Monitorar
+    { value: "monitorar", label: "Monitorar", group: "monitorar" },
   ],
   concluida: [
     { value: "protocolado", label: "Protocolado", group: "concluida" },
@@ -389,6 +411,7 @@ export const PIPELINE_STAGES: { key: StatusGroup; label: string; short: string }
   { key: "preparacao", label: "Preparação", short: "Prep." },
   { key: "diligencias", label: "Diligências", short: "Dilig." },
   { key: "saida", label: "Saída", short: "Saída" },
+  { key: "monitorar", label: "Monitorar", short: "Monit." },
   { key: "concluida", label: "Concluída", short: "Concl." },
 ];
 
