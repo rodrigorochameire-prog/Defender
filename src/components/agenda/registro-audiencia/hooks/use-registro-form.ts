@@ -21,17 +21,21 @@ interface UseRegistroFormProps {
 }
 
 export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: UseRegistroFormProps) {
-  // Determine if this is a DB-backed audiencia or local event.
-  // On the agenda page, DB audiencias receive a prefixed string id like "audiencia-179".
-  // Calendar events use "calendar-<id>" and are NOT backed by the audiencias table.
-  // We accept: raw number, "audiencia-<number>", or any numeric string.
+  // Resolve o id numérico da audiência-fonte (tabela `audiencias`).
+  // Estratégia preferida: usar `evento.rawId` + `evento.fonte === "audiencias"` diretamente do AgendaItem.
+  // Fallback: aceitar `evento.id` como número cru ou string no formato "audiencia-<n>" (compat).
+  // Importante: eventos do tipo "calendar" NÃO são backados pela tabela `audiencias`
+  // — para esses retornamos null e o fluxo cai no fallback in-memory / localStorage.
   const audienciaId = (() => {
+    if (evento?.fonte === "audiencias" && typeof evento.rawId === "number") {
+      return evento.rawId;
+    }
+    if (evento?.fonte === "calendar") return null;
     const raw = evento?.id;
     if (typeof raw === "number" && Number.isFinite(raw)) return raw;
     if (typeof raw === "string") {
       const match = raw.match(/^audiencia-(\d+)$/);
       if (match) return parseInt(match[1], 10);
-      // accept plain numeric strings for backward compatibility
       if (/^\d+$/.test(raw)) return parseInt(raw, 10);
     }
     return null;

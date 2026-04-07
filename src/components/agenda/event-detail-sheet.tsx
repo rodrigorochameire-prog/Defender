@@ -265,8 +265,10 @@ interface EventDetailSheetProps {
 export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailSheetProps) {
   const [copied, setCopied] = useState(false);
 
-  // Parse numeric audiencia id — aceita número cru ou prefixo "audiencia-<id>"
+  // Resolve numeric audiencia id — prioriza `rawId`/`fonte` do AgendaItem, com fallback ao parse do id composto.
   const audienciaIdNum = (() => {
+    if (evento?.fonte === "audiencias" && typeof evento.rawId === "number") return evento.rawId;
+    if (evento?.fonte === "calendar") return null;
     const raw = evento?.id;
     if (typeof raw === "number" && Number.isFinite(raw)) return raw;
     if (typeof raw === "string") {

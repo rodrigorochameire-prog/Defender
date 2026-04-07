@@ -94,7 +94,10 @@ import { ptBR } from "date-fns/locale";
 // ==========================================
 
 interface AgendaItem {
+  /** Id composto para React keys e lookup (ex: "audiencia-179", "calendar-42"). */
   id: string;
+  /** Id numérico cru da fonte (audiencias.id OU calendar_events.id). Use com `fonte`. */
+  rawId: number;
   titulo: string;
   tipo: string;
   data: string;
@@ -728,6 +731,7 @@ export default function AgendaPage() {
 
         items.push({
           id: `audiencia-${a.id}`,
+          rawId: a.id,
           titulo: a.titulo || `Audiência - ${a.tipo}`,
           tipo: "audiencia",
           data: dataFormatada,
@@ -789,6 +793,7 @@ export default function AgendaPage() {
 
         items.push({
           id: `calendar-${e.id}`,
+          rawId: e.id,
           titulo: e.title || `Evento - ${tipoEvento}`,
           tipo: tipoEvento,
           data: dataFormatada,
@@ -999,61 +1004,64 @@ export default function AgendaPage() {
     },
   });
 
+  // Resolve um id composto (ex: "audiencia-179") para o AgendaItem correspondente.
+  // Evita reparsing de string — usa `rawId` e `fonte` do próprio item.
+  const findAgendaItemById = (compositeId: string): AgendaItem | undefined =>
+    eventos.find((e) => e.id === compositeId);
+
   const handleSaveEdit = (data: EventoFormData) => {
-    if (editingEvento && editingEvento.id) {
-      // Extrair ID numérico e fonte do ID composto (ex: "audiencia-123" ou "calendar-456")
-      const idParts = editingEvento.id.split("-");
-      const fonte = idParts[0]; // "audiencia" ou "calendar"
-      const numericId = parseInt(idParts.slice(1).join("-")); // Pegar número após o prefixo
+    if (!editingEvento || !editingEvento.id) return;
+    const item = findAgendaItemById(editingEvento.id);
+    if (!item) return;
 
-      // Converter data para formato ISO com horário
-      const dataStr = data.data || format(new Date(), "yyyy-MM-dd");
-      const dataHora = `${dataStr}T${data.horarioInicio || "09:00"}:00`;
+    // Converter data para formato ISO com horário
+    const dataStr = data.data || format(new Date(), "yyyy-MM-dd");
+    const dataHora = `${dataStr}T${data.horarioInicio || "09:00"}:00`;
 
-      // Por enquanto, só atualiza eventos da tabela audiencias
-      if (fonte === "audiencia") {
-        updateEvento.mutate({
-          id: numericId,
-          dataAudiencia: dataHora,
-          tipo: data.tipo,
-          local: data.local,
-          titulo: data.titulo,
-          descricao: data.descricao,
-          horario: data.horarioInicio,
-          status: data.status,
-        });
-      } else if (fonte === "calendar") {
-        updateCalendarEvent.mutate({
-          id: numericId,
-          title: data.titulo,
-          description: data.descricao,
-          eventDate: dataHora,
-          eventType: data.tipo,
-          location: data.local,
-          ...(data.status && { status: data.status as "scheduled" | "completed" | "cancelled" }),
-        });
-      }
+    if (item.fonte === "audiencias") {
+      updateEvento.mutate({
+        id: item.rawId,
+        dataAudiencia: dataHora,
+        tipo: data.tipo,
+        local: data.local,
+        titulo: data.titulo,
+        descricao: data.descricao,
+        horario: data.horarioInicio,
+        status: data.status,
+      });
+    } else if (item.fonte === "calendar") {
+      updateCalendarEvent.mutate({
+        id: item.rawId,
+        title: data.titulo,
+        description: data.descricao,
+        eventDate: dataHora,
+        eventType: data.tipo,
+        location: data.local,
+        ...(data.status && { status: data.status as "scheduled" | "completed" | "cancelled" }),
+      });
     }
   };
 
   const handleDeleteEvento = (id: string) => {
-    if (confirm("Tem certeza que deseja deletar este evento?")) {
-      // Extrair ID numérico e fonte do ID composto
-      const idParts = id.split("-");
-      const fonte = idParts[0];
-      const numericId = parseInt(idParts.slice(1).join("-"));
+    if (!confirm("Tem certeza que deseja deletar este evento?")) return;
+    const item = findAgendaItemById(id);
+    if (!item) return;
 
-      if (fonte === "audiencia") {
-        deleteEvento.mutate({ id: numericId });
-      } else if (fonte === "calendar") {
-        deleteCalendarEvent.mutate({ id: numericId });
-      }
+    if (item.fonte === "audiencias") {
+      deleteEvento.mutate({ id: item.rawId });
+    } else if (item.fonte === "calendar") {
+      deleteCalendarEvent.mutate({ id: item.rawId });
     }
   };
 
   const handleStatusChange = (id: string, newStatus: string) => {
+    const item = findAgendaItemById(id);
+    if (!item) return;
+    // Mutação de status só está implementada para audiências;
+    // calendar_events têm seu próprio fluxo via updateCalendarEvent.
+    if (item.fonte !== "audiencias") return;
     updateEvento.mutate({
-      id: parseInt(id),
+      id: item.rawId,
       status: newStatus,
     });
   };
@@ -1642,9 +1650,7 @@ export default function AgendaPage() {
                   }}
                   onExportCowork={(e) => {
                     if (!e.assistidoId) return;
-                    const audienciaId = e.fonte === "audiencias"
-                      ? Number(e.id.replace("audiencia-", ""))
-                      : undefined;
+                    const audienciaId = e.fonte === "audiencias" ? e.rawId : undefined;
                     setExportingAgendaId(e.id);
                     exportarParaCowork.mutate({
                       assistidoId: e.assistidoId,
