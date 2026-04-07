@@ -154,7 +154,7 @@ export const VALID_SHEET_LABELS = new Set([
   "2 - Revisar", "2 - Revisando",
   "3 - Protocolar",
   "4 - Amanda", "4 - Estágio - Taissa", "4 - Emilly", "4 - Monitorar",
-  "5 - Triagem",
+  "5 - Triagem", "5 - Suspensa",
   "6 - Documentos", "6 - Testemunhas",
   "7 - Protocolado", "7 - Peticionamento intermediário", "7 - Sigad",
   "7 - Ciência", "7 - Constituiu advogado", "7 - Sem atuação", "7 - Resolvido",
@@ -195,6 +195,8 @@ const SUBSTATUS_NORMALIZE: Record<string, string> = {
   monitorar: "4 - Monitorar",
   triagem: "5 - Triagem",
   fila: "5 - Triagem",
+  suspensa: "5 - Suspensa",
+  suspenso: "5 - Suspensa",
   documentos: "6 - Documentos",
   testemunhas: "6 - Testemunhas",
   protocolado: "7 - Protocolado",
@@ -429,8 +431,9 @@ const STATUS_COLORS: Record<string, RGBColor> = {
   "4 - Amanda":             { red: 0.910, green: 0.878, blue: 0.975 },
   "4 - Emilly":             { red: 0.893, green: 0.855, blue: 0.968 },
 
-  // ── 5 · Triagem — cinza muito claro ──
+  // ── 5 · Triagem / Suspensa — cinza muito claro ──
   "5 - Triagem":             { red: 0.935, green: 0.935, blue: 0.935 },
+  "5 - Suspensa":            { red: 0.880, green: 0.880, blue: 0.880 },
 
   // ── 6 · Preparação — azul-gelo pastel ──
   "6 - Documentos":         { red: 0.878, green: 0.937, blue: 0.965 },
