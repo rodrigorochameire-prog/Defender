@@ -755,8 +755,12 @@ export function KanbanPremium({
       }
     }
 
-    // Sort each column/subgroup by most recent first (dataInclusao DESC)
+    // Sort each column/subgroup by PJe order (ordemOriginal ASC, then createdAt DESC)
     const sortRecent = (a: KanbanDemanda, b: KanbanDemanda) => {
+      const oa = Number(a.ordemOriginal ?? 9999);
+      const ob = Number(b.ordemOriginal ?? 9999);
+      if (oa !== ob) return oa - ob;
+      // Fallback: most recent created_at first
       const da = String(a.dataInclusao || "");
       const db = String(b.dataInclusao || "");
       return db.localeCompare(da);
