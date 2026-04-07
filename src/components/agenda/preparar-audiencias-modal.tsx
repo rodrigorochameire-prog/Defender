@@ -37,8 +37,9 @@ type StatusPrep = "completo" | "parcial" | "pendente";
 interface ProgressItem {
   audienciaId: number;
   assistidoNome: string;
-  status: "done" | "current" | "waiting" | "failed" | "queued";
+  status: "done" | "unchanged" | "current" | "waiting" | "failed" | "queued";
   testemunhasCount?: number;
+  newCount?: number;
   enrichedCount?: number;
   alertCount?: number;
   errorMessage?: string;
@@ -65,6 +66,8 @@ function progressIcon(status: ProgressItem["status"]) {
   switch (status) {
     case "done":
       return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
+    case "unchanged":
+      return <CheckCircle2 className="h-4 w-4 text-zinc-400" />;
     case "failed":
       return <XCircle className="h-4 w-4 text-rose-500" />;
     case "queued":
@@ -191,9 +194,13 @@ export function PrepararAudienciasModal() {
           .filter((t) => t.status === "ARROLADA" || t.status === "NAO_LOCALIZADA")
           .map((t) => ({ nome: t.nome, status: t.status }));
 
+        const newCount = result.testemunhas.filter(
+          (t) => t.status === "ARROLADA"
+        ).length;
         const enrichedCount = result.testemunhas.filter(
           (t) => t.status === "ENRIQUECIDA"
         ).length;
+        const changed = newCount + enrichedCount > 0;
 
         newResults.push({
           audienciaId: aud.id,
@@ -203,14 +210,17 @@ export function PrepararAudienciasModal() {
           naoIntimadas,
         });
 
-        // Update progress item with counts
+        // Distinguish "done" (real work happened) from "unchanged"
+        // (mutation ran but every depoente was already saved with full data)
+        // so the user can see at a glance which audiências need attention.
         setProgressItems((prev) =>
           prev.map((item, idx) =>
             idx === i
               ? {
                   ...item,
-                  status: "done" as const,
+                  status: changed ? ("done" as const) : ("unchanged" as const),
                   testemunhasCount: result.testemunhas.length,
+                  newCount,
                   enrichedCount,
                   alertCount: naoIntimadas.length,
                 }
@@ -483,6 +493,7 @@ export function PrepararAudienciasModal() {
                       "flex items-start justify-between rounded px-3 py-1.5 text-xs gap-3",
                       item.status === "current" && "bg-emerald-50",
                       item.status === "done" && "bg-zinc-50",
+                      item.status === "unchanged" && "bg-zinc-50/50",
                       item.status === "failed" && "bg-rose-50",
                       item.status === "queued" && "bg-violet-50",
                       item.status === "waiting" && "bg-white",
@@ -510,10 +521,18 @@ export function PrepararAudienciasModal() {
                         )}
                       </div>
                     </div>
-                    {item.status === "done" && (
+                    {(item.status === "done" || item.status === "unchanged") && (
                       <div className="flex items-center gap-2 text-[10px] text-zinc-400 shrink-0">
                         {item.testemunhasCount !== undefined && (
                           <span>{item.testemunhasCount} testemunhas</span>
+                        )}
+                        {item.newCount !== undefined && item.newCount > 0 && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] px-1 py-0 border-emerald-400 text-emerald-700"
+                          >
+                            +{item.newCount} nova{item.newCount !== 1 ? "s" : ""}
+                          </Badge>
                         )}
                         {item.enrichedCount !== undefined && item.enrichedCount > 0 && (
                           <Badge
@@ -521,6 +540,14 @@ export function PrepararAudienciasModal() {
                             className="text-[10px] px-1 py-0 border-emerald-300 text-emerald-600"
                           >
                             +{item.enrichedCount} enriquec.
+                          </Badge>
+                        )}
+                        {item.status === "unchanged" && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] px-1 py-0 border-zinc-300 text-zinc-500"
+                          >
+                            sem mudanças
                           </Badge>
                         )}
                         {item.alertCount !== undefined && item.alertCount > 0 && (
@@ -586,21 +613,25 @@ export function PrepararAudienciasModal() {
               {/* Summary */}
               {(() => {
                 const queuedItems = progressItems.filter((p) => p.status === "queued");
+                const unchangedItems = progressItems.filter((p) => p.status === "unchanged");
                 const failed = results.filter((r) => !r.success);
-                const okFullyPrepared = results.filter(
-                  (r) =>
-                    r.success &&
-                    r.testemunhas.length > 0 &&
-                    !queuedItems.some((q) => q.audienciaId === r.audienciaId),
-                );
+                const preparedItems = progressItems.filter((p) => p.status === "done");
                 return (
                   <div className="space-y-2">
                     <div className="flex items-center gap-3 text-sm flex-wrap">
-                      <span className="flex items-center gap-1.5 text-emerald-700 font-medium">
-                        <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                        {okFullyPrepared.length} preparada
-                        {okFullyPrepared.length !== 1 ? "s" : ""}
-                      </span>
+                      {preparedItems.length > 0 && (
+                        <span className="flex items-center gap-1.5 text-emerald-700 font-medium">
+                          <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                          {preparedItems.length} preparada
+                          {preparedItems.length !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                      {unchangedItems.length > 0 && (
+                        <span className="flex items-center gap-1.5 text-zinc-600 font-medium">
+                          <CheckCircle2 className="h-5 w-5 text-zinc-400" />
+                          {unchangedItems.length} sem mudanças
+                        </span>
+                      )}
                       {queuedItems.length > 0 && (
                         <span className="flex items-center gap-1.5 text-violet-700 font-medium">
                           <Sparkles className="h-5 w-5 text-violet-500" />
@@ -615,6 +646,16 @@ export function PrepararAudienciasModal() {
                         </span>
                       )}
                     </div>
+
+                    {unchangedItems.length > 0 && preparedItems.length === 0 && queuedItems.length === 0 && (
+                      <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
+                        <p className="text-[10px] text-zinc-600 italic">
+                          Nada foi alterado nesta execução. As testemunhas já estavam todas
+                          salvas com os campos enriquecidos. Para regenerar a análise (e
+                          obter perguntas/pontos novos), enfileire um job novo no worker.
+                        </p>
+                      </div>
+                    )}
 
                     {queuedItems.length > 0 && (
                       <div className="rounded-md border border-violet-200 bg-violet-50 p-3 space-y-2">
