@@ -19,6 +19,7 @@ import {
   Loader2,
   Pause,
   XCircle,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
@@ -36,9 +37,13 @@ type StatusPrep = "completo" | "parcial" | "pendente";
 interface ProgressItem {
   audienciaId: number;
   assistidoNome: string;
-  status: "done" | "current" | "waiting";
+  status: "done" | "current" | "waiting" | "failed" | "queued";
   testemunhasCount?: number;
+  enrichedCount?: number;
   alertCount?: number;
+  errorMessage?: string;
+  /** When the mutation enqueued a worker job because analysis_data was empty. */
+  jobQueued?: { id: number; created: boolean };
 }
 
 // ---------------------------------------------------------------------------
@@ -56,10 +61,14 @@ function statusIcon(status: StatusPrep) {
   }
 }
 
-function progressIcon(status: "done" | "current" | "waiting") {
+function progressIcon(status: ProgressItem["status"]) {
   switch (status) {
     case "done":
       return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
+    case "failed":
+      return <XCircle className="h-4 w-4 text-rose-500" />;
+    case "queued":
+      return <Sparkles className="h-4 w-4 text-violet-500" />;
     case "current":
       return <Loader2 className="h-4 w-4 animate-spin text-emerald-500" />;
     case "waiting":
@@ -146,11 +155,45 @@ export function PrepararAudienciasModal() {
           audienciaId: aud.id,
         });
 
+        // ── Step D: when the mutation enqueued a worker job (no analysis
+        // yet), surface it as "queued" — not done, not failed.
+        if (result.jobQueued) {
+          newResults.push({
+            audienciaId: aud.id,
+            assistidoNome: result.assistidoNome,
+            success: true,
+            testemunhas: [],
+            naoIntimadas: [],
+          });
+
+          setProgressItems((prev) =>
+            prev.map((item, idx) =>
+              idx === i
+                ? {
+                    ...item,
+                    status: "queued" as const,
+                    jobQueued: {
+                      id: result.jobQueued!.id,
+                      created: result.jobQueued!.created,
+                    },
+                  }
+                : item
+            )
+          );
+
+          setResults([...newResults]);
+          continue;
+        }
+
         setCurrentStepIndex(4); // "Verificando intimação"
 
         const naoIntimadas = result.testemunhas
           .filter((t) => t.status === "ARROLADA" || t.status === "NAO_LOCALIZADA")
           .map((t) => ({ nome: t.nome, status: t.status }));
+
+        const enrichedCount = result.testemunhas.filter(
+          (t) => t.status === "ENRIQUECIDA"
+        ).length;
 
         newResults.push({
           audienciaId: aud.id,
@@ -168,25 +211,31 @@ export function PrepararAudienciasModal() {
                   ...item,
                   status: "done" as const,
                   testemunhasCount: result.testemunhas.length,
+                  enrichedCount,
                   alertCount: naoIntimadas.length,
                 }
               : item
           )
         );
       } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Erro desconhecido";
+
         newResults.push({
           audienciaId: aud.id,
           assistidoNome: aud.assistidoNome,
           success: false,
-          error: error instanceof Error ? error.message : "Erro desconhecido",
+          error: errorMessage,
           testemunhas: [],
           naoIntimadas: [],
         });
 
-        // Mark as done (with error) in progress
+        // Mark as failed (distinct from done) so the UI can render the error
         setProgressItems((prev) =>
           prev.map((item, idx) =>
-            idx === i ? { ...item, status: "done" as const } : item
+            idx === i
+              ? { ...item, status: "failed" as const, errorMessage }
+              : item
           )
         );
       }
@@ -431,28 +480,48 @@ export function PrepararAudienciasModal() {
                   <div
                     key={item.audienciaId}
                     className={cn(
-                      "flex items-center justify-between rounded px-3 py-1.5 text-xs",
+                      "flex items-start justify-between rounded px-3 py-1.5 text-xs gap-3",
                       item.status === "current" && "bg-emerald-50",
                       item.status === "done" && "bg-zinc-50",
+                      item.status === "failed" && "bg-rose-50",
+                      item.status === "queued" && "bg-violet-50",
                       item.status === "waiting" && "bg-white",
                     )}
                   >
-                    <div className="flex items-center gap-2">
-                      {progressIcon(item.status)}
-                      <span
-                        className={cn(
-                          item.status === "current"
-                            ? "text-zinc-700 font-medium"
-                            : "text-zinc-500",
+                    <div className="flex items-start gap-2 min-w-0 flex-1">
+                      <div className="pt-0.5 shrink-0">{progressIcon(item.status)}</div>
+                      <div className="min-w-0 flex-1">
+                        <div
+                          className={cn(
+                            "truncate",
+                            item.status === "current"
+                              ? "text-zinc-700 font-medium"
+                              : item.status === "failed"
+                                ? "text-rose-700 font-medium"
+                                : "text-zinc-500",
+                          )}
+                        >
+                          {item.assistidoNome}
+                        </div>
+                        {item.status === "failed" && item.errorMessage && (
+                          <div className="text-[10px] text-rose-600 mt-0.5 truncate">
+                            {item.errorMessage}
+                          </div>
                         )}
-                      >
-                        {item.assistidoNome}
-                      </span>
+                      </div>
                     </div>
                     {item.status === "done" && (
-                      <div className="flex items-center gap-2 text-[10px] text-zinc-400">
+                      <div className="flex items-center gap-2 text-[10px] text-zinc-400 shrink-0">
                         {item.testemunhasCount !== undefined && (
                           <span>{item.testemunhasCount} testemunhas</span>
+                        )}
+                        {item.enrichedCount !== undefined && item.enrichedCount > 0 && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] px-1 py-0 border-emerald-300 text-emerald-600"
+                          >
+                            +{item.enrichedCount} enriquec.
+                          </Badge>
                         )}
                         {item.alertCount !== undefined && item.alertCount > 0 && (
                           <Badge
@@ -463,6 +532,22 @@ export function PrepararAudienciasModal() {
                           </Badge>
                         )}
                       </div>
+                    )}
+                    {item.status === "failed" && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1 py-0 border-rose-300 text-rose-600 shrink-0"
+                      >
+                        falhou
+                      </Badge>
+                    )}
+                    {item.status === "queued" && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1 py-0 border-violet-300 text-violet-600 shrink-0"
+                      >
+                        {item.jobQueued?.created ? "fila criada" : "fila já existe"}
+                      </Badge>
                     )}
                   </div>
                 ))}
@@ -499,13 +584,97 @@ export function PrepararAudienciasModal() {
           {phase === "resultado" && (
             <div className="space-y-4">
               {/* Summary */}
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                <span className="font-medium text-zinc-700">
-                  {results.length} audiência{results.length !== 1 ? "s" : ""}{" "}
-                  preparada{results.length !== 1 ? "s" : ""}
-                </span>
-              </div>
+              {(() => {
+                const queuedItems = progressItems.filter((p) => p.status === "queued");
+                const failed = results.filter((r) => !r.success);
+                const okFullyPrepared = results.filter(
+                  (r) =>
+                    r.success &&
+                    r.testemunhas.length > 0 &&
+                    !queuedItems.some((q) => q.audienciaId === r.audienciaId),
+                );
+                return (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3 text-sm flex-wrap">
+                      <span className="flex items-center gap-1.5 text-emerald-700 font-medium">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                        {okFullyPrepared.length} preparada
+                        {okFullyPrepared.length !== 1 ? "s" : ""}
+                      </span>
+                      {queuedItems.length > 0 && (
+                        <span className="flex items-center gap-1.5 text-violet-700 font-medium">
+                          <Sparkles className="h-5 w-5 text-violet-500" />
+                          {queuedItems.length} em fila
+                        </span>
+                      )}
+                      {failed.length > 0 && (
+                        <span className="flex items-center gap-1.5 text-rose-700 font-medium">
+                          <XCircle className="h-5 w-5 text-rose-500" />
+                          {failed.length} falhou
+                          {failed.length !== 1 ? "ram" : ""}
+                        </span>
+                      )}
+                    </div>
+
+                    {queuedItems.length > 0 && (
+                      <div className="rounded-md border border-violet-200 bg-violet-50 p-3 space-y-2">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-violet-700">
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Análises enfileiradas no worker
+                        </div>
+                        <div className="space-y-1">
+                          {queuedItems.map((q) => (
+                            <div
+                              key={q.audienciaId}
+                              className="text-xs text-violet-800 bg-violet-100/50 rounded px-2 py-1"
+                            >
+                              <div className="font-medium">{q.assistidoNome}</div>
+                              <div className="text-[10px] text-violet-600 mt-0.5">
+                                {q.jobQueued?.created
+                                  ? `Job #${q.jobQueued.id} criado · `
+                                  : `Job #${q.jobQueued?.id} já estava em fila · `}
+                                Worker do Mac Mini vai processar e popular a análise.
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-violet-600 italic">
+                          Quando o worker terminar (alguns minutos), reabra este modal e clique em
+                          "Preparar Audiências" para extrair os depoentes.
+                        </p>
+                      </div>
+                    )}
+
+                    {failed.length > 0 && (
+                      <div className="rounded-md border border-rose-200 bg-rose-50 p-3 space-y-2">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-rose-700">
+                          <XCircle className="h-3.5 w-3.5" />
+                          Audiências que falharam
+                        </div>
+                        <div className="space-y-1">
+                          {failed.map((r) => (
+                            <div
+                              key={r.audienciaId}
+                              className="text-xs text-rose-800 bg-rose-100/50 rounded px-2 py-1"
+                            >
+                              <div className="font-medium">{r.assistidoNome}</div>
+                              {r.error && (
+                                <div className="text-[10px] text-rose-600 mt-0.5">
+                                  {r.error}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-rose-600 italic">
+                          Ação sugerida: rodar a análise (skill <code>preparar-audiencia</code>) no
+                          Cowork antes de re-tentar essas audiências.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Alert box for naoIntimadas */}
               {allNaoIntimadas.length > 0 && (

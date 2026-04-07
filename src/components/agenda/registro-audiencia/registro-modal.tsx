@@ -7,11 +7,13 @@ import { Badge } from "@/components/ui/badge";
 // motion/AnimatePresence removed — exit animations were stalling tab switches
 import {
   FileText, Users, Notebook, MessageSquare, Eye, BookOpen,
-  Sparkles, Gavel, X, Save, CheckCircle2, HardDrive,
+  Sparkles, Gavel, X, Save, CheckCircle2, HardDrive, Wand2, Zap,
 } from "lucide-react";
 import { BriefingSection } from "@/components/briefing";
 import { useRegistroForm } from "./hooks/use-registro-form";
 import { TabGeral } from "./tabs/tab-geral";
+import { TabRapido } from "./tabs/tab-rapido";
+import { TabPreparacao } from "./tabs/tab-preparacao";
 import { TabDepoentes } from "./tabs/tab-depoentes";
 import { TabAnotacoes } from "./tabs/tab-anotacoes";
 import { TabManifestacoes } from "./tabs/tab-manifestacoes";
@@ -30,8 +32,10 @@ interface RegistroAudienciaModalProps {
 }
 
 const tabConfig: { key: TabKey; label: string; icon: any; countKey?: "depoentes" | "historico" }[] = [
+  { key: "rapido", label: "Rápido", icon: Zap },
   { key: "geral", label: "Geral", icon: FileText },
   { key: "briefing", label: "Briefing", icon: Sparkles },
+  { key: "preparacao", label: "Preparação", icon: Wand2 },
   { key: "depoentes", label: "Depoentes", icon: Users, countKey: "depoentes" },
   { key: "anotacoes", label: "Anotações", icon: Notebook },
   { key: "manifestacoes", label: "Manifestações", icon: MessageSquare },
@@ -189,6 +193,18 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
         {/* Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="p-4">
+              {form.activeTab === "rapido" && (
+                  <TabRapido
+                    registro={form.registro}
+                    updateRegistro={form.updateRegistro}
+                    statusAudiencia={form.statusAudiencia}
+                    setStatusAudiencia={form.setStatusAudiencia}
+                    handleUpdateDepoente={form.handleUpdateDepoente}
+                    handleSubmit={form.handleSubmit}
+                    registroSalvo={form.registroSalvo}
+                  />
+              )}
+
               {form.activeTab === "geral" && (
                   <TabGeral
                     registro={form.registro}
@@ -215,6 +231,26 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                 <div className="max-w-5xl mx-auto">
                   <BriefingSection evento={evento} />
                 </div>
+              )}
+
+              {form.activeTab === "preparacao" && (
+                <TabPreparacao
+                  audienciaId={form.audienciaId}
+                  evento={evento}
+                  onImportarParaDepoentes={(depoentes) => {
+                    form.setRegistro((prev) => {
+                      // Merge by name (case-insensitive) — keep existing entries.
+                      const existingNames = new Set(
+                        prev.depoentes.map((d) => d.nome.trim().toLowerCase()),
+                      );
+                      const novos = depoentes.filter(
+                        (d) => !existingNames.has(d.nome.trim().toLowerCase()),
+                      );
+                      return { ...prev, depoentes: [...prev.depoentes, ...novos] };
+                    });
+                    form.setActiveTab("depoentes");
+                  }}
+                />
               )}
 
               {form.activeTab === "depoentes" && (
