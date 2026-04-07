@@ -302,7 +302,7 @@ export const audienciasRouter = router({
   // Status de preparação para audiências próximas
   statusPreparacao: protectedProcedure
     .input(z.object({
-      diasAntecedencia: z.number().default(10),
+      diasAntecedencia: z.number().default(8),
     }))
     .query(async ({ input }) => {
       const { diasAntecedencia } = input;

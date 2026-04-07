@@ -28,7 +28,7 @@ Estas especificações são o padrão fixo definitivo. Não altere sem instruç�
 - Footer distance: 567 twips
 
 ### Fonte
-- **Corpo do texto**: Verdana, 12pt
+- **Corpo do texto**: Garamond, 12pt
 - **Rodapé**: Arial Narrow, 8pt
 
 ### Corpo do Texto

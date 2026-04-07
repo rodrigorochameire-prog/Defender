@@ -11,7 +11,7 @@
 - Header distance: 567 twips / Footer distance: 567 twips
 
 ### Fonte e Corpo do Texto
-- **Corpo**: Verdana, 12pt, justificado, recuo 1ª linha 720 twips, espaçamento 1.5, espaço após 10pt
+- **Corpo**: Garamond, 12pt, justificado, recuo 1ª linha 720 twips, espaçamento 1.5, espaço após 10pt
 - **Rodapé**: Arial Narrow, 8pt
 - **Títulos de seção**: justificado, negrito, sem recuo, linha em branco real antes, espaço após 6pt
 

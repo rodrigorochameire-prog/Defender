@@ -86,7 +86,7 @@ export function PrepararAudienciasModal() {
 
   // --- Data from real tRPC endpoint ---
   const { data: audiencias, isLoading } = trpc.audiencias.statusPreparacao.useQuery(
-    { diasAntecedencia: 10 },
+    { diasAntecedencia: 8 },
     { enabled: open }
   );
   const prepararMutation = trpc.audiencias.prepararAudiencia.useMutation();
@@ -284,7 +284,7 @@ export function PrepararAudienciasModal() {
                 </div>
               ) : !audiencias || audiencias.length === 0 ? (
                 <div className="flex items-center justify-center py-8 text-xs text-zinc-400">
-                  Nenhuma audiência nos próximos 10 dias.
+                  Nenhuma audiência nos próximos 8 dias.
                 </div>
               ) : (
               <div className="max-h-80 overflow-y-auto rounded border border-zinc-200">
