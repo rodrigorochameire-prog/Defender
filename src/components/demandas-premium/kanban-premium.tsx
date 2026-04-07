@@ -184,11 +184,17 @@ function KanbanCard({
       />
 
       <div className="pl-4 pr-3 py-3">
-        {/* Row 1: Nome + Flags */}
+        {/* Row 1: Nome + Data expedição + Flags */}
         <div className="flex items-center gap-2 mb-1">
           <p className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 truncate flex-1 leading-tight">
             {demanda.assistido}
           </p>
+          {/* Data de expedição — canto superior direito */}
+          {(demanda.data) && (
+            <span className="text-[9px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 shrink-0">
+              {demanda.data as string}
+            </span>
+          )}
           {isPreso && (
             <span className="flex items-center text-[8px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-1 py-0.5 rounded shrink-0">
               <Lock className="w-2.5 h-2.5" />

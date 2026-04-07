@@ -725,7 +725,8 @@ export async function pushDemanda(demanda: DemandaParaSync): Promise<{ pushed: b
 
     // Sem conflito — escrever normalmente
     const rowData = demandaToRow(demanda);
-    const range = `${sheetName}!A${rowIndex ?? rows.length + 1}:${colToLetter(HEADERS.length)}${rowIndex ?? rows.length + 1}`;
+    const targetRow = rowIndex ?? Math.max(rows.length + 1, DATA_START_ROW);
+    const range = `${sheetName}!A${targetRow}:${colToLetter(HEADERS.length)}${targetRow}`;
 
     await sheetsPut(
       `/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
