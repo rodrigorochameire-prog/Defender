@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -97,14 +97,108 @@ export function PrepararAudienciasModal() {
   const [results, setResults] = useState<PipelineResult[]>([]);
 
   // --- Data from real tRPC endpoint ---
-  const { data: audiencias, isLoading } = trpc.audiencias.statusPreparacao.useQuery(
-    { diasAntecedencia: 8 },
-    { enabled: open }
-  );
+  const { data: audiencias, isLoading, refetch: refetchStatus } =
+    trpc.audiencias.statusPreparacao.useQuery(
+      { diasAntecedencia: 8 },
+      { enabled: open },
+    );
   const prepararMutation = trpc.audiencias.prepararAudiencia.useMutation();
 
   const pendentes = audiencias?.filter((a) => a.statusPrep !== "completo") ?? [];
   const totalPendentes = pendentes.length;
+
+  // ---------------------------------------------------------------------------
+  // Auto-refresh polling: when there are queued jobs from the previous run,
+  // poll statusPreparacao every 30s to detect when the worker has finished.
+  // Once a queued audience flips to hasAnalysis === true, auto-trigger a
+  // re-prepare for it so the user doesn't have to keep clicking.
+  // ---------------------------------------------------------------------------
+  const [autoRefreshing, setAutoRefreshing] = useState(false);
+  const [autoRefreshTick, setAutoRefreshTick] = useState(0);
+  const autoTriggeredIds = useRef<Set<number>>(new Set());
+
+  const queuedAudienciaIds = progressItems
+    .filter((p) => p.status === "queued")
+    .map((p) => p.audienciaId);
+  const hasQueued = queuedAudienciaIds.length > 0 && phase === "resultado";
+
+  useEffect(() => {
+    if (!hasQueued) return;
+    setAutoRefreshing(true);
+    const interval = setInterval(() => {
+      setAutoRefreshTick((t) => t + 1);
+      refetchStatus();
+    }, 30_000);
+    return () => {
+      clearInterval(interval);
+      setAutoRefreshing(false);
+    };
+  }, [hasQueued, refetchStatus]);
+
+  // When the refetched status shows a queued audience now has analysis,
+  // auto-trigger prepararAudiencia and update its row in place.
+  useEffect(() => {
+    if (!hasQueued || !audiencias) return;
+
+    const readyToProcess = queuedAudienciaIds.filter((id) => {
+      if (autoTriggeredIds.current.has(id)) return false;
+      const aud = audiencias.find((a) => a.id === id);
+      return aud?.hasAnalysis === true;
+    });
+
+    if (readyToProcess.length === 0) return;
+
+    (async () => {
+      for (const id of readyToProcess) {
+        autoTriggeredIds.current.add(id);
+        try {
+          const result = await prepararMutation.mutateAsync({ audienciaId: id });
+          if (result.jobQueued) {
+            // Worker re-enqueued (rare race) — leave as queued
+            continue;
+          }
+          const newCount = result.testemunhas.filter(
+            (t) => t.status === "ARROLADA",
+          ).length;
+          const enrichedCount = result.testemunhas.filter(
+            (t) => t.status === "ENRIQUECIDA",
+          ).length;
+          const naoIntimadas = result.testemunhas.filter(
+            (t) => t.status === "ARROLADA" || t.status === "NAO_LOCALIZADA",
+          );
+          setProgressItems((prev) =>
+            prev.map((item) =>
+              item.audienciaId === id
+                ? {
+                    ...item,
+                    status:
+                      newCount + enrichedCount > 0 ? "done" : "unchanged",
+                    testemunhasCount: result.testemunhas.length,
+                    newCount,
+                    enrichedCount,
+                    alertCount: naoIntimadas.length,
+                    jobQueued: undefined,
+                  }
+                : item,
+            ),
+          );
+        } catch (err) {
+          setProgressItems((prev) =>
+            prev.map((item) =>
+              item.audienciaId === id
+                ? {
+                    ...item,
+                    status: "failed",
+                    errorMessage:
+                      err instanceof Error ? err.message : "Erro desconhecido",
+                  }
+                : item,
+            ),
+          );
+        }
+      }
+    })();
+  }, [autoRefreshTick, audiencias, hasQueued, queuedAudienciaIds, prepararMutation]);
 
   // ---------------------------------------------------------------------------
   // Handlers
@@ -659,9 +753,17 @@ export function PrepararAudienciasModal() {
 
                     {queuedItems.length > 0 && (
                       <div className="rounded-md border border-violet-200 bg-violet-50 p-3 space-y-2">
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-violet-700">
-                          <Sparkles className="h-3.5 w-3.5" />
-                          Análises enfileiradas no worker
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-violet-700">
+                            <Sparkles className="h-3.5 w-3.5" />
+                            Análises enfileiradas no worker
+                          </div>
+                          {autoRefreshing && (
+                            <div className="flex items-center gap-1 text-[10px] text-violet-600">
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              Auto-refresh ativo (30s)
+                            </div>
+                          )}
                         </div>
                         <div className="space-y-1">
                           {queuedItems.map((q) => (
@@ -680,8 +782,9 @@ export function PrepararAudienciasModal() {
                           ))}
                         </div>
                         <p className="text-[10px] text-violet-600 italic">
-                          Quando o worker terminar (alguns minutos), reabra este modal e clique em
-                          &quot;Preparar Audiências&quot; para extrair os depoentes.
+                          Pode deixar este modal aberto. Quando o worker terminar cada análise,
+                          a extração de depoentes acontece automaticamente — não precisa clicar
+                          de novo.
                         </p>
                       </div>
                     )}

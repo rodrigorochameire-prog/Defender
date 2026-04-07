@@ -266,6 +266,25 @@ async function computePreparacao(audienciaId: number): Promise<PreparacaoCompute
   }
   raws = Array.from(dedupMap.values());
 
+  // Merge enrichment from pessoas[] when depoimentos[] entries are slim.
+  // The cowork worker writes a master `pessoas[]` array with endereco /
+  // telefones / observacoes for the entire cast, and a leaner `depoimentos[]`
+  // for who will testify. Match by normalized name and copy missing fields.
+  const pessoasList = collect(ad?.pessoas);
+  const pessoasByName = new Map<string, RawDep>();
+  for (const p of pessoasList) {
+    if (!p.nome) continue;
+    pessoasByName.set(_normalizeName(p.nome), p);
+  }
+  for (const dep of raws) {
+    if (!dep.nome) continue;
+    const match = pessoasByName.get(_normalizeName(dep.nome));
+    if (!match) continue;
+    if (!dep.endereco && match.endereco) dep.endereco = match.endereco;
+    if (!dep.telefones?.length && match.telefones?.length) dep.telefones = match.telefones;
+    if (!dep.observacoes && match.observacoes) dep.observacoes = match.observacoes;
+  }
+
   const depoentes: PreparedDepoente[] = raws
     .filter((d): d is RawDep & { nome: string } => !!d.nome)
     .map((dep) => {
