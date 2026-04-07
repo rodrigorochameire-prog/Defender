@@ -757,9 +757,27 @@ export default function AgendaPage() {
     }
 
     // 2. Processar eventos do calendário (tabela calendarEvents)
+    // Dedup defensivo: se já existe uma audiência com mesmo processoId no mesmo dia,
+    // pular o calendar_event correspondente (`audiencias` é fonte de verdade para audiências).
+    const audienciaKeys = new Set<string>();
+    if (audienciasData) {
+      audienciasData.forEach((a) => {
+        if (a.processo?.id) {
+          const dia = format(new Date(a.dataHora), "yyyy-MM-dd");
+          audienciaKeys.add(`${a.processo.id}|${dia}`);
+        }
+      });
+    }
     if (calendarData) {
       calendarData.forEach((e) => {
         const tipoEvento = e.eventType || "custom";
+        // Skip calendar_events do tipo "audiencia" que duplicam uma audiência real
+        if (tipoEvento === "audiencia" && e.processo?.id) {
+          const dia = format(new Date(e.eventDate), "yyyy-MM-dd");
+          if (audienciaKeys.has(`${e.processo.id}|${dia}`)) {
+            return;
+          }
+        }
         // Usar atribuição do processo vinculado quando disponível
         const atribuicaoKey = e.processo?.atribuicao
           ? mapAtribuicaoToKey(e.processo.atribuicao, e.processo.area)

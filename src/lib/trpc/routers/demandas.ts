@@ -2,7 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction } from "@/lib/db";
 import { demandas, processos, assistidos, users } from "@/lib/db/schema";
-import { audiencias, calendarEvents } from "@/lib/db/schema/agenda";
+import { audiencias } from "@/lib/db/schema/agenda";
 import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull, not, asc, type SQL } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getDefensorResponsavel, getDefensoresVisiveis } from "../defensor-scope";
@@ -1100,7 +1100,10 @@ export const demandasRouter = router({
             // createdAt usa defaultNow() — momento real da importação
           }).returning();
 
-          // 7. Criar audiência + evento de calendário quando a intimação é de audiência
+          // 7. Criar audiência quando a intimação é de audiência
+          // Nota: NÃO criar calendar_event aqui — `audiencias` é a única fonte
+          // de verdade para audiências; a UI da agenda mescla as duas tabelas e
+          // criar nas duas gera duplicatas visíveis no calendário.
           const isAudienciaAto = row.ato === "Ciência designação de audiência" ||
             row.ato === "Ciência redesignação de audiência";
 
@@ -1113,7 +1116,6 @@ export const demandasRouter = router({
               const tipoAud = row.audienciaTipo || "Instrução e Julgamento";
               const titulo = `${tipoAud} — ${row.assistido}`;
 
-              // Create audiencia record
               await db.insert(audiencias).values({
                 processoId: processo.id,
                 assistidoId: assistido.id,
@@ -1122,21 +1124,7 @@ export const demandasRouter = router({
                 titulo,
                 status: "agendada",
               });
-
-              // Create calendar event
-              await db.insert(calendarEvents).values({
-                title: titulo,
-                eventDate: dataAudiencia,
-                eventType: "audiencia",
-                processoId: processo.id,
-                assistidoId: assistido.id,
-                demandaId: insertedDemanda.id,
-                priority: "high",
-                isAllDay: false,
-                createdById: ctx.user.id,
-              });
             } catch (audienciaError) {
-              // Don't fail the import if audiencia/calendar creation fails
               console.error(`[import] Audiência creation failed for ${row.assistido}:`, audienciaError);
             }
           }
