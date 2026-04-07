@@ -648,7 +648,8 @@ export async function readSheet(title: string): Promise<string[][]> {
 export function findRowById(rows: string[][], id: number): number | null {
   for (let i = DATA_START_ROW - 1; i < rows.length; i++) {
     if (String(rows[i]?.[COL.ID - 1]) === String(id)) {
-      return i + 1; // 1-indexed
+      const row = i + 1; // 1-indexed
+      return row >= DATA_START_ROW ? row : null; // Nunca retornar header rows
     }
   }
   return null;
@@ -801,7 +802,7 @@ export async function pushPlenario(plenario: PlenarioParaSync): Promise<void> {
 
     const rowIndex = findRowById(rows, plenario.id);
     const rowData = plenarioToRow(plenario);
-    const targetRow = rowIndex ?? rows.length + 1;
+    const targetRow = rowIndex ?? Math.max(rows.length + 1, DATA_START_ROW);
     const range = `${PLENARIOS_SHEET}!A${targetRow}:${colToLetter(PLENARIOS_HEADERS.length)}${targetRow}`;
 
     await sheetsPut(
