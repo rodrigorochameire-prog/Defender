@@ -120,22 +120,27 @@ export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
                   </InfoBlock>
                 )}
 
-                {/* Presença do Assistido */}
-                <InfoBlock icon={Users} label="Presença do Assistido" borderColor="border-l-neutral-400 dark:border-l-neutral-600">
-                  <Badge
-                    className={
-                      reg.assistidoPresente
-                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 mt-1"
-                        : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 mt-1"
-                    }
-                  >
-                    {reg.assistidoPresente ? (
-                      <><UserCheck className="w-3 h-3 mr-1" />Presente</>
-                    ) : (
-                      <><UserX className="w-3 h-3 mr-1" />Ausente</>
-                    )}
-                  </Badge>
-                </InfoBlock>
+                {/* Presença do Assistido — aceita ambos os nomes de campo por compatibilidade */}
+                {(() => {
+                  const presente = reg.assistidoCompareceu ?? reg.assistidoPresente;
+                  return (
+                    <InfoBlock icon={Users} label="Presença do Assistido" borderColor="border-l-neutral-400 dark:border-l-neutral-600">
+                      <Badge
+                        className={
+                          presente
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 mt-1"
+                            : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 mt-1"
+                        }
+                      >
+                        {presente ? (
+                          <><UserCheck className="w-3 h-3 mr-1" />Presente</>
+                        ) : (
+                          <><UserX className="w-3 h-3 mr-1" />Ausente</>
+                        )}
+                      </Badge>
+                    </InfoBlock>
+                  );
+                })()}
 
                 {/* Depoentes */}
                 {reg.depoentes && reg.depoentes.length > 0 && (

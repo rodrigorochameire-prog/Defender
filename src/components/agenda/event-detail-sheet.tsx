@@ -265,9 +265,21 @@ interface EventDetailSheetProps {
 export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailSheetProps) {
   const [copied, setCopied] = useState(false);
 
+  // Parse numeric audiencia id — aceita número cru ou prefixo "audiencia-<id>"
+  const audienciaIdNum = (() => {
+    const raw = evento?.id;
+    if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+    if (typeof raw === "string") {
+      const match = raw.match(/^audiencia-(\d+)$/);
+      if (match) return parseInt(match[1], 10);
+      if (/^\d+$/.test(raw)) return parseInt(raw, 10);
+    }
+    return null;
+  })();
+
   const { data: registro } = trpc.audiencias.buscarRegistro.useQuery(
-    { audienciaId: evento?.id ?? 0 },
-    { enabled: !!evento?.id && open }
+    { audienciaId: audienciaIdNum ?? 0 },
+    { enabled: audienciaIdNum !== null && open }
   );
 
   const { data: historico } = trpc.audiencias.buscarHistoricoRegistros.useQuery(

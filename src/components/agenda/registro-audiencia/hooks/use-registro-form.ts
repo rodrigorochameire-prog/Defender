@@ -21,8 +21,21 @@ interface UseRegistroFormProps {
 }
 
 export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: UseRegistroFormProps) {
-  // Determine if this is a DB-backed audiencia (numeric ID) or local event (string ID)
-  const audienciaId = typeof evento.id === "number" ? evento.id : null;
+  // Determine if this is a DB-backed audiencia or local event.
+  // On the agenda page, DB audiencias receive a prefixed string id like "audiencia-179".
+  // Calendar events use "calendar-<id>" and are NOT backed by the audiencias table.
+  // We accept: raw number, "audiencia-<number>", or any numeric string.
+  const audienciaId = (() => {
+    const raw = evento?.id;
+    if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+    if (typeof raw === "string") {
+      const match = raw.match(/^audiencia-(\d+)$/);
+      if (match) return parseInt(match[1], 10);
+      // accept plain numeric strings for backward compatibility
+      if (/^\d+$/.test(raw)) return parseInt(raw, 10);
+    }
+    return null;
+  })();
 
   // Extract numeric processoId and assistidoId for DB queries
   const processoId = (() => {
