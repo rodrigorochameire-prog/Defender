@@ -61,6 +61,10 @@ export function AdminConfigModal({ isOpen, onClose }: AdminConfigModalProps) {
     // Saída
     { value: "protocolar", label: "Protocolar", group: "saida", color: "#D4A574" },
     { value: "monitorar", label: "Monitorar", group: "saida", color: "#D4A574" },
+    // Delegações
+    { value: "emilly", label: "Emilly", group: "delegacoes", color: "#B8A4C9" },
+    { value: "amanda", label: "Amanda", group: "delegacoes", color: "#B8A4C9" },
+    { value: "taissa", label: "Taissa", group: "delegacoes", color: "#B8A4C9" },
     // Concluída
     { value: "protocolado", label: "Protocolado", group: "concluida", color: "#84CC9B" },
     { value: "ciencia", label: "Ciência", group: "concluida", color: "#84CC9B" },
@@ -321,6 +325,7 @@ export function AdminConfigModal({ isOpen, onClose }: AdminConfigModalProps) {
                     <option value="preparacao">Preparação</option>
                     <option value="diligencias">Diligências</option>
                     <option value="saida">Saída</option>
+                    <option value="delegacoes">Delegações</option>
                     <option value="concluida">Concluída</option>
                     <option value="arquivado">Arquivado</option>
                   </select>

@@ -90,6 +90,28 @@ import {
 import { ptBR } from "date-fns/locale";
 
 // ==========================================
+// TZ HELPERS — render BRT (America/Sao_Paulo) regardless of host TZ.
+// `format(new Date(...), "HH:mm")` from date-fns uses the local TZ of the
+// runtime, which is UTC on Vercel. That makes 08:30 BRT show as 05:30.
+// ==========================================
+const BRT_DATE_FMT = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Sao_Paulo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+const BRT_TIME_FMT = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+const formatBrtDate = (d: Date | string) =>
+  BRT_DATE_FMT.format(new Date(d)); // returns YYYY-MM-DD
+const formatBrtTime = (d: Date | string) =>
+  BRT_TIME_FMT.format(new Date(d)); // returns HH:mm
+
+// ==========================================
 // TIPOS
 // ==========================================
 
@@ -724,14 +746,14 @@ export default function AgendaPage() {
       audienciasData.forEach((a) => {
         const atribuicaoKey = mapAtribuicaoToKey(a.processo?.atribuicao, a.processo?.area);
         const atribuicaoConfig = getAtribuicaoColors(atribuicaoKey);
-        const dataFormatada = format(new Date(a.dataHora), "yyyy-MM-dd");
+        const dataFormatada = formatBrtDate(a.dataHora);
 
         items.push({
           id: `audiencia-${a.id}`,
           titulo: a.titulo || `Audiência - ${a.tipo}`,
           tipo: "audiencia",
           data: dataFormatada,
-          horarioInicio: a.horario || format(new Date(a.dataHora), "HH:mm"),
+          horarioInicio: a.horario || formatBrtTime(a.dataHora),
           horarioFim: "",
           local: a.local || "",
           assistido: a.assistido?.nome || "",
@@ -767,15 +789,15 @@ export default function AgendaPage() {
             tipoEvento === "juri" ? "JURI" :
             "SUBSTITUICAO";
         const atribuicaoConfig = getAtribuicaoColors(atribuicaoKey);
-        const dataFormatada = format(new Date(e.eventDate), "yyyy-MM-dd");
+        const dataFormatada = formatBrtDate(e.eventDate);
 
         items.push({
           id: `calendar-${e.id}`,
           titulo: e.title || `Evento - ${tipoEvento}`,
           tipo: tipoEvento,
           data: dataFormatada,
-          horarioInicio: e.isAllDay ? "" : format(new Date(e.eventDate), "HH:mm"),
-          horarioFim: e.endDate ? format(new Date(e.endDate), "HH:mm") : "",
+          horarioInicio: e.isAllDay ? "" : formatBrtTime(e.eventDate),
+          horarioFim: e.endDate ? formatBrtTime(e.endDate) : "",
           local: e.location || "",
           assistido: e.assistido?.nome || "",
           assistidoId: e.assistido?.id ?? e.assistidoId ?? undefined,
